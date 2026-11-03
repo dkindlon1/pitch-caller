@@ -154,4 +154,30 @@ a_, b_, c_ = sl_mid(fresh), sl_mid(missing), sl_mid(landing_ok)
 check("v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more",
       b_ < 0.55 * a_ and abs(c_ - a_) < 0.02, f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9")
 
+# v0.7c Drew (2026-11-03): 3-0 leans on the cheaper pitch (tightest mix, like 3-2); 3-1 is left as it was
+AVG3 = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", velo=86),
+        Pitch("Slider", "SL", grade=3, command=3, conf=0.75, shape="tight", velo=78),
+        Pitch("Changeup", "CH", grade=3, command=3, conf=0.65, shape="fade", velo=78)]
+def fb_share(b, k, lvl):
+    _, d_ = call_mixed(AVG3, Situation(b, k, 0, E, level=lvl), rng=random.Random(0))
+    return sum(pr for pr, _, p, q in d_ if p.kind == "FB")
+f30 = {l: fb_share(3, 0, l) for l in ("hs", "college_d3", "college_d1")}
+f31 = fb_share(3, 1, "college_d3")
+check("v0.7c 3-0: an average arsenal throws mostly fastballs (60%+ at every level), 3-1 still mixes",
+      all(v >= 0.60 for v in f30.values()) and 0.6 < f31 < 0.95,
+      ", ".join(f"{l} 3-0 fastball {v:.0%}" for l, v in f30.items()) + f", college_d3 3-1 fastball {f31:.0%}")
+
+# v0.7c learning mode is scored the way calls are made: the engine's own top call always grades as in the mix,
+# and a chase call at 3-0 or 3-1 is marked against the rule
+gc_ok, gc_rule = True, None
+for (b, k) in ((0, 0), (1, 2), (3, 0), (2, 2)):
+    s_ = Situation(b, k, 1, E, level="college_d3")
+    _, d_ = call_mixed(AVG3, s_, rng=random.Random(0))
+    g_ = grade_call(AVG3, s_, d_[0][2].name, d_[0][3])
+    gc_ok &= g_["verdict"] == "in the engine's mix" and g_["runs_vs_best"] < 0.011
+gc_rule = grade_call(AVG3, Situation(3, 1, 1, E, level="college_d3"), "Slider", "chase")
+check("v0.7c learning mode: the engine's own top call grades 'in the mix'; chase at 3-1 is against the rule",
+      gc_ok and gc_rule["allowed"] is False and gc_rule["verdict"] == "costly",
+      f"top calls in the mix: {gc_ok}; Slider chase at 3-1: {gc_rule['verdict']}, {gc_rule['runs_vs_best']:+.3f} runs")
+
 print(f"\n{sum(results)}/{len(results)} checks passed")

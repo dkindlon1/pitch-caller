@@ -217,6 +217,7 @@
     college_d1: { AVG: 0.265, OBP: 0.368, SLG: 0.395, K: 0.193, BB: 0.108 },
     mlb: { AVG: 0.255, OBP: 0.320, SLG: 0.405, K: 0.200, BB: 0.079 },
   };
+  LEVEL_AVG.travel = LEVEL_AVG.hs;   // travel ball uses the high school numbers (engine v0.7c)
   const isOS = (k) => k === "SL" || k === "CB" || k === "CH";
   function damageEvent(ev) {
     if (ev.res === "whiff") return "whiff";

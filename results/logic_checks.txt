@@ -36,4 +36,3 @@ PART B: learning over game-like sequences
 
 27/29 logic and learning checks passed
 Tiny reversals are expected baseball, not bugs: in 3-ball and 2-0 counts a ball in play (usually an out) is worth more to the pitcher than a swing-and-miss that leaves a hitter's count, and more precise chase pitches mean more balls; at two strikes a miss off the plate is cheap and often chased.
-exit 0

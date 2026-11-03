@@ -1,5 +1,6 @@
 """
-Pitch Caller - scoring engine, v0.6e prototype (v0.6c stakes-scaled randomness; v0.6d pitches not landing today miss more; v0.6e two-way wildness, timing affects contact, hitter damage scaled to real pitch values).
+Pitch Caller - scoring engine, v0.7c (3-0 mixes tightest, travel ball uses the high school tables, clear errors on
+impossible input). Earlier: v0.6e prototype (v0.6c stakes-scaled randomness; v0.6d pitches not landing today miss more; v0.6e two-way wildness, timing affects contact, hitter damage scaled to real pitch values).
 
 Cost(p, q | s) = sum_e P(e | p, q, s) * [R(e) + V(s'_e)]
 Calls are drawn at random, weighted toward low cost, at a game-theory balance point.
@@ -470,7 +471,9 @@ def pairing(p: Pitch, q: str, s: Situation, arsenal):
         return 0.0
     last_name, last_q = s.last[0], s.last[1]
     last_result = s.last[2] if len(s.last) > 2 else None
-    last = next(x for x in arsenal if x.name == last_name)
+    last = next((x for x in arsenal if x.name == last_name), None)
+    if last is None:      # the last pitch came from someone else (a pitching change mid at-bat): no sequencing read
+        return 0.0
     up_last, up_now = last_q.startswith("up"), q.startswith("up")
 
     # [R6] if he can't hit it, make him prove it
@@ -748,6 +751,11 @@ try:   # walk and strikeout run values by level (college_rates.py / hs_rates.py)
 except Exception:
     LW_BY_LEVEL = {}
 
+# v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
+for _t in (LEVEL, OUTCOME_ADJ, RE_BY_LEVEL, CV_BY_LEVEL, IN_PLAY_BY_LEVEL, LW_BY_LEVEL):
+    if "hs" in _t:
+        _t["travel"] = _t["hs"]
+
 
 def count_stakes(b, k, level):
     """Runs between a ball and a strike from this count (strike = K at 2 strikes, ball = walk at 3 balls)."""
@@ -762,6 +770,11 @@ def stakes_factor(b, k, level):
     """v0.6c: lean harder on the best calls in big counts (2-2, 3-2), mix more freely in small ones."""
     if level not in LW_BY_LEVEL:
         return 1.0
+    if (b, k) == (3, 0):
+        # v0.7c (Drew, 2026-11-03): 3-0 gets the tightest setting, like 3-2. By the stakes formula it looked like a small
+        # count (a ball there only turns a near-walk into a walk), so the mix was at its loosest and off-speed took about
+        # half the calls even when the engine's own costs favored the fastball.
+        return 0.5
     avg = sum(count_stakes(b_, k_, level) for (b_, k_) in COUNTS) / len(COUNTS)
     return min(1.5, max(0.5, avg / count_stakes(b, k, level)))
 
@@ -820,6 +833,29 @@ def at_bat_values(arsenal, s, T=0.010, window=0.030, sweeps=10, iters=4):
 LOC_WINDOW = 0.010   # v0.3: a location this much worse than the best call is never picked
 
 
+KINDS = ("FB", "SL", "CB", "CH")
+
+
+def check_inputs(arsenal, s: Situation):
+    """v0.7c: reject impossible input with a clear message instead of a crash deep inside (or a silent empty call)."""
+    if not arsenal:
+        raise ValueError("no pitches: the arsenal is empty")
+    names = [x.name for x in arsenal]
+    if len(set(names)) != len(names):
+        raise ValueError(f"two pitches share a name: {names}")
+    for x in arsenal:
+        if x.kind not in KINDS:
+            raise ValueError(f"unknown pitch kind {x.kind!r} for {x.name} (expected one of {KINDS})")
+    if s.level not in LEVEL or s.level not in RE_BY_LEVEL:
+        raise ValueError(f"unknown level {s.level!r}")
+    if not (0 <= s.balls <= 3 and 0 <= s.strikes <= 2):
+        raise ValueError(f"impossible count {s.balls}-{s.strikes}")
+    if not (0 <= s.outs <= 2):
+        raise ValueError(f"impossible number of outs {s.outs}")
+    if len(s.bases) != 3:
+        raise ValueError(f"bases must be three flags (1st, 2nd, 3rd), got {s.bases!r}")
+
+
 def call_mixed(arsenal, s: Situation, T=0.010, window=0.030, forced=None, rng=None, iters=8, at_bat=True, exclude=None):
     """
     Probabilistic call, in two stages, at a game-theory balance point.
@@ -829,6 +865,7 @@ def call_mixed(arsenal, s: Situation, T=0.010, window=0.030, forced=None, rng=No
     at_bat=True uses count values solved for this matchup [R2] instead of MLB averages.
     Returns (pick, dist) with dist = list of (prob, cost, pitch, quad), for logging.
     """
+    check_inputs(arsenal, s)
     rng = rng or _random
     cv = at_bat_values(arsenal, s, T, window)[1] if at_bat else None
     policy, costs, temp = mixed_policy(arsenal, s, T, window, forced, iters, cv)
@@ -864,6 +901,7 @@ def call_mixed(arsenal, s: Situation, T=0.010, window=0.030, forced=None, rng=No
 
 def call(arsenal, s: Situation, forced=None):
     """Single best option (lowest cost). Kept for inspection and tests."""
+    check_inputs(arsenal, s)
     scored = []
     for p in candidates(arsenal, s, forced):
         for q in QUADS:
@@ -882,16 +920,21 @@ def grade_call(arsenal, s: Situation, pitch_name: str, quad: str, **kw):
     """How the engine rates a human call: its pick probability, run cost vs the best,
     and the engine's own top calls. Used to teach, not to overrule."""
     _, dist = call_mixed(arsenal, s, **kw)
-    policy, costs, _ = mixed_policy(arsenal, s)
+    # v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
+    cv = at_bat_values(arsenal, s)[1] if kw.get("at_bat", True) else None
+    policy, costs, _ = mixed_policy(arsenal, s, cv=cv)
     p = next(x for x in arsenal if x.name == pitch_name)
-    c_human = costs.get((pitch_name, quad), cost(p, quad, s, arsenal, policy)[0])
-    best = min(costs.values())
+    c_human = costs.get((pitch_name, quad), cost(p, quad, s, arsenal, policy, cv)[0])
+    tq = targets(s.balls, s.strikes)
+    best = min(c for (_, q), c in costs.items() if q in tq)
     prob = sum(pr for pr, _, pp, q in dist if pp.name == pitch_name and q == quad)
+    allowed = quad in tq
     return {
         "call": f"{pitch_name} {quad}",
         "engine_prob": prob,
         "runs_vs_best": c_human - best,
-        "verdict": "in the engine's mix" if prob >= 0.02 else
+        "allowed": allowed,
+        "verdict": "costly" if not allowed else "in the engine's mix" if prob >= 0.02 else
                    ("close" if c_human - best <= 0.03 * run_scale(s.level) else "costly"),
         "engine_top": [(pp.name, q, pr) for pr, _, pp, q in dist[:3]],
     }

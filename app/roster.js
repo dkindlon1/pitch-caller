@@ -3,7 +3,7 @@
 // Reads during a game come from an in-memory copy (the engine needs answers instantly); writes go straight through.
 const DB = { D: null, ready: false, failed: null, teams: new Map(), pitchers: new Map(), catchers: new Map(), hitters: new Map(),
   checkins: new Map(), models: new Map(), sessions: new Map(), counts: new Map() };
-const FATIGUE = { hs: 60, college_d3: 75, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
+const FATIGUE = { hs: 60, travel: 60, college_d3: 75, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
 const LOCZ = ["heart", "edge", "off", "noncomp"];
 let pendingLoc = null;
 let saveWarned = false;

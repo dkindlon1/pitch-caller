@@ -1,7 +1,7 @@
 [PASS] R1 mixing: 1-2 with a runner on 3rd is mostly slider, not all slider
        slider 77%, fastball 15%, changeup 8%
 [PASS] R2 at-bat values: a strikeout pitcher's 0-2 is worth more to him than a contact pitcher's
-       0-2 value (hitter runs vs 0-0): strikeout pitcher -0.135, contact pitcher -0.106, MLB average -0.106  (solve took 0.4s)
+       0-2 value (hitter runs vs 0-0): strikeout pitcher -0.135, contact pitcher -0.106, MLB average -0.106  (solve took 0.2s)
        Full solved table, strikeout pitcher vs MLB average:
          0-0: +0.000  (MLB +0.000)
          1-0: +0.041  (MLB +0.038)
@@ -34,17 +34,20 @@
 [PASS] R8 no third-time cliff: batter 19 is barely worse than batter 18
        fastball up-in hard contact by batters faced: 0: 4.28%, 9: 4.65%, 18: 5.04%, 19: 5.08%, 27: 5.45%
 [PASS] Learning mode: a grooved 0-2 fastball is outside the engine's mix and clearly worse; slider chase is in the mix
-       Fastball middle: close (+0.033 runs); Slider chase: in the engine's mix (picked 23% of the time)
+       Fastball middle: close (+0.041 runs); Slider chase: in the engine's mix (picked 23% of the time)
 [PASS] v0.6 hit by pitch: inside pitches hit batters more than away pitches (HS)
        HBP per pitch: down-in 2.82%, down-away 0.53%
 [PASS] v0.6 realism (mlb): strikeouts, walks and HBP within 1 point of real
        K 19.9% vs 20.0%, BB 8.0% vs 7.9%, HBP 0.9% vs 0.9%
 [PASS] v0.6 realism (college_d3): strikeouts, walks and HBP within 1 point of real
-       K 16.3% vs 16.2%, BB 11.4% vs 11.4%, HBP 4.2% vs 4.2%
+       K 16.3% vs 16.2%, BB 11.3% vs 11.4%, HBP 4.2% vs 4.2%
 [PASS] v0.6 realism (hs): strikeouts, walks and HBP within 1 point of real
-       K 21.1% vs 21.0%, BB 14.1% vs 14.1%, HBP 4.1% vs 4.1%
+       K 21.1% vs 21.0%, BB 14.0% vs 14.1%, HBP 4.1% vs 4.1%
 [PASS] v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more
        slider get-it-over at 2-1: 26% fresh, 14% at 3 of 9 strikes, 26% at 7 of 9
+[PASS] v0.7c 3-0: an average arsenal throws mostly fastballs (60%+ at every level), 3-1 still mixes
+       hs 3-0 fastball 66%, college_d3 3-0 fastball 72%, college_d1 3-0 fastball 77%, college_d3 3-1 fastball 78%
+[PASS] v0.7c learning mode: the engine's own top call grades 'in the mix'; chase at 3-1 is against the rule
+       top calls in the mix: True; Slider chase at 3-1: costly, +0.124 runs
 
-17/17 checks passed
-exit 0
+19/19 checks passed

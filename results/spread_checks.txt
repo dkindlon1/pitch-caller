@@ -1,24 +1,23 @@
 college_d3
   ok   strikeouts 0.163 vs real 0.162
-  ok   walks 0.114 vs real 0.114
+  ok   walks 0.113 vs real 0.114
   ok   HBP 0.042 vs real 0.042
-  ok   walk+HBP spread 0.0488 vs real 0.0491
+  ok   walk+HBP spread 0.0482 vs real 0.0491
   ok   strikeout spread 0.0461 vs real 0.0462
-  (walk/strikeout correlation -0.11, real -0.10: an open question, not checked, spec 17)
+  (walk/strikeout correlation -0.09, real -0.10: an open question, not checked, spec 17)
 college_d1
   ok   strikeouts 0.194 vs real 0.193
-  ok   walks 0.108 vs real 0.108
+  ok   walks 0.107 vs real 0.108
   ok   HBP 0.034 vs real 0.034
-  ok   walk+HBP spread 0.0390 vs real 0.0394
-  ok   strikeout spread 0.0418 vs real 0.0414
+  ok   walk+HBP spread 0.0389 vs real 0.0394
+  ok   strikeout spread 0.0414 vs real 0.0414
   (walk/strikeout correlation -0.16, real -0.14: an open question, not checked, spec 17)
 hs (high school spread is estimated)
   ok   strikeouts 0.211 vs real 0.210
-  ok   walks 0.141 vs real 0.141
+  ok   walks 0.140 vs real 0.141
   ok   HBP 0.041 vs real 0.041
-  ok   walk+HBP spread 0.0584 vs real 0.0588
-  ok   strikeout spread 0.0558 vs real 0.0560
-  (walk/strikeout correlation -0.10, real -0.10: an open question, not checked, spec 17)
+  ok   walk+HBP spread 0.0576 vs real 0.0588
+  ok   strikeout spread 0.0559 vs real 0.0560
+  (walk/strikeout correlation -0.11, real -0.10: an open question, not checked, spec 17)
 
 all spread checks passed
-exit 0

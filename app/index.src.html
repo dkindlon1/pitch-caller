@@ -554,7 +554,7 @@ PitchEngine.init(PC_DATA);
 const E = PitchEngine;
 
 // ------------------------------------------------------------------ vocabulary
-const LEVELS = { hs: "High school", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
+const LEVELS = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
 const TIERS = [
   { n: 1, t: "Results only", d: "Ball, strike, foul, in play, hit or out. The minimum a coach can keep up with." },
   { n: 2, t: "Plus contact", d: "Weak, solid or hard on every ball in play." },
@@ -1082,7 +1082,7 @@ function pickBox() {
   const go = () => {
     const gr = E.gradeCall(ars, situation(), pickSel.pitch, pickSel.quad), g = G();
     g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
-      verdict: gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
+      verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
   };
   return h("div", { class: "pick" }, h("span", { class: "t" }, "Your call"),
@@ -1149,7 +1149,7 @@ function atBatList() {
 }
 
 function pitcherPanel(ars, st) {
-  const g = G(), cutoff = { hs: 0.5, college_d3: 0.45, college_d1: 0.4, mlb: 0.4 }[S.setup.level];
+  const g = G(), cutoff = { hs: 0.5, travel: 0.5, college_d3: 0.45, college_d1: 0.4, mlb: 0.4 }[S.setup.level];
   const status = st.status === "ok" ? null
     : h("p", { class: `pstat ${st.status}` }, h("b", {}, st.status === "change" ? "Time for a change? " : "Keep an eye on him. "),
       st.reasons.map((r) => r[0].toUpperCase() + r.slice(1)).join(". ") + ".");
@@ -1302,7 +1302,7 @@ function kpis(rows) {
 }
 
 function bullpenPanel() {
-  const g = G(), maxPc = { hs: 105, college_d3: 110, college_d1: 110, mlb: 110 }[S.setup.level];
+  const g = G(), maxPc = { hs: 105, travel: 105, college_d3: 110, college_d1: 110, mlb: 110 }[S.setup.level];
   return h("section", { class: "panel glass span-5", "aria-label": "Bullpen" },
     h("div", { class: "panel-head" }, h("h2", {}, "Bullpen"), h("span", { class: "meta" }, `${ord(g.inning)} inning`)),
     h("div", { class: "pen" }, S.setup.staff.map((pd, i) => {
@@ -1424,7 +1424,7 @@ function setupView() {
   const changed = (re) => { G().call = null; save(); if (re) render(); };
   const row = (title, desc, ...panel) => h("section", { class: title === "Staff" ? "srow wide" : "srow" }, h("div", {}, h("h2", {}, title), h("p", { class: "desc" }, desc)), h("div", { class: "spanel glass" }, panel));
   const levelChoices = h("div", { class: "choices" }, [
-    ["hs", "High school", "MaxPreps 2026 national averages, 7-inning games"], ["college_d3", "College D3", "2026 Liberty League, Empire 8, NESCAC and UAA"],
+    ["hs", "High school", "MaxPreps 2026 national averages, 7-inning games"], ["travel", "Travel ball", "Uses the high school numbers until there's travel-ball data"], ["college_d3", "College D3", "2026 Liberty League, Empire 8, NESCAC and UAA"],
     ["college_d1", "College D1", "2026 Big East, America East and Ivy"], ["mlb", "Pro", "MLB 2010-15 run values, for comparison"],
   ].map(([k, t, d]) => h("button", { class: "choice", "aria-pressed": String(st.level === k), on: { click: () => { st.level = k; changed(true); } } }, h("b", {}, t), h("span", {}, d))));
   const tierChoices = h("div", { class: "choices" }, TIERS.map((t) => h("button", { class: "choice", "aria-pressed": String(st.inputs === t.n), on: { click: () => { st.inputs = t.n; changed(true); } } }, h("b", {}, t.t), h("span", {}, t.d))));

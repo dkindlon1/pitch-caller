@@ -54,5 +54,5 @@
 13. The learner's fast strike-rate table matches the exact calculation
   ok   largest difference 0.0080 (must be under 0.01)
 
-581s, 5 seasons per world
+178s, 5 seasons per world
 all worlds checks passed

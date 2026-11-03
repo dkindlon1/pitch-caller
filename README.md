@@ -25,7 +25,7 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 
 | File | What it is |
 | --- | --- |
-| `engine.py` | The engine (v0.7b: per-pitcher traits; command and stuff spread and the walk/strikeout link calibrated to real pitchers, one grade point = one SD at the level; no chase target at 3-0 or 3-1) |
+| `engine.py` | The engine (v0.7c: per-pitcher traits; command and stuff spread and the walk/strikeout link calibrated to real pitchers, one grade point = one SD at the level; no chase target at 3-0 or 3-1; 3-0 mixes as tightly as 3-2; travel ball uses the high school tables; clear errors on impossible input) |
 | `pitcher_lines.py`, `talent_spread.py`, `fit_spread.py`, `spread_params.py`, `spread_test.py` | Spread calibration: real 2026 per-pitcher lines, the true spread between pitchers, the fitted scales, and the check |
 | `flags.py` | "Time for a change" flag |
 | `simulate.py` | Full-game simulator with hidden hitter traits and pitch off-days; presets for pitcher and lineup types |
@@ -33,7 +33,8 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 | `batch.py`, `regrade.py`, `inputs_report.py` | Run many games and summarize them |
 | `college_rates.py`, `hs_rates.py`, `run_tables.py` | Run values from real stats |
 | `calib.py`, `fit_all.py`, `refit_mlb.py` | Fit the outcome model to real rates |
-| `tests.py` | 17 regression checks |
+| `tests.py` | 19 regression checks |
+| `statcast_check.py` | The hitter-vs-pitch model against MLB Statcast pitches, by attack zone and count (`results/statcast_check.txt`) |
 | `fuzz.py` | 29 logic and learning checks on thousands of random situations |
 | `matrix/` | 21-setup test matrix: levels, pitcher types, lineups, input levels, shake-offs, coach overrides |
 | `results/` | Latest logic-check and matrix reports |
@@ -43,7 +44,7 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 
 Python 3.11+ with `numpy` and `scipy`. Node 18+ for the app checks (Playwright for the browser test).
 
-    python3 tests.py                                     # 17 regression checks
+    python3 tests.py                                     # 19 regression checks
     python3 spread_test.py                               # calibrated spread between pitchers (about 2 minutes)
     python3 fuzz.py 3000 300                             # logic and learning checks
     LEVEL=college_d3 python3 batch.py runs/d3 1 10        # 10 simulated D3 games, graded
@@ -88,7 +89,8 @@ first real file). Break and release side are normalised to arm side positive usi
 | `app/roster.js` | Database glue and the Roster screen (inlined into the page by `build.py`) |
 | `app/learn_test.js`, `db_test.js`, `import_test.js` | Node checks (`db_test.js` needs `npm i fake-indexeddb`) |
 | `app/db_e2e.js` | Browser test of the whole loop, served over http; screenshots in `app/e2e_shots/` |
-| `app/learner.js`, `app/worker.js` | Learner v2 (spec in `docs/LEARNING_SPEC.md`): replay, talent filter, traits, caps, flags, scoreboard. Drives the calls; runs after End game in a background worker. No trait passes the gate on v0.7b, so traits are off |
+| `app/learner.js`, `app/worker.js` | Learner v2 (spec in `docs/LEARNING_SPEC.md`): replay, talent filter, traits, caps, flags, scoreboard. Drives the calls; runs after End game in a background worker. No trait passes the gate on v0.7b/c, so traits are off |
+| `app/travel_e2e.js` | Browser check: travel ball in Setup, calls at that level, a coach's chase call at 3-1 graded against the rule |
 | `app/replay_e2e.js`, `app/replay_check.js` | Proof that a charted game replays exactly from the raw log (browser game, then any backup) |
 | `app/shadow.js`, `app/sim_backup.js` | Learner v2 scored against the coach's grades and what the app served, on a backup; seasons charted through the app from a hidden true pitcher |
 | `app/worlds.js`, `app/worlds_test.js` | Simulated seasons played pitch by pitch, and the 13 worlds checks for learner v2 |
@@ -99,6 +101,16 @@ first real file). Break and release side are normalised to arm side positive usi
     python3 build.py && node db_e2e.js
 
 ## Status
+
+Engine v0.7c (2026-11-03): 3-0 gets the tightest mix (an average arsenal throws about two fastballs in three there),
+learning mode is scored the way calls are made, travel ball is a level (high school tables), impossible input gets a clear
+error. Regression 19 of 19, logic 27 of 29 (same two explained), parity, spread, worlds 13 of 13, app tests all pass.
+
+**Statcast check** (`statcast_check.py`, 2025 MLB, about 86,000 pitches): the engine's run values per zone are close in
+many spots, but its hitter model is too flat. It has about half the real swing-and-miss rate in every zone and makes up
+the strikeouts with too many chase swings, and in pitcher's counts it charges off-speed over the heart about a third of
+what real hitters do (0.016 runs more than the edge, real 0.045). That's why "middle" stays in the two-strike mix.
+Not yet refit.
 
 Tested in simulation only. Engine v0.7b (spec section 18): command and stuff spread and the walk/strikeout link match
 real 2026 pitchers; no chase target at 3-0 or 3-1. Regression checks 17 of 17, logic checks 27 of 29 (the two failures

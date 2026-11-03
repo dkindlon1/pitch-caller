@@ -541,7 +541,7 @@ td.wrapcell .line { display: block; }
 
 <script>
 /*
- * Pitch Caller engine v0.7, JavaScript port of engine.py (same math, same order of operations).
+ * Pitch Caller engine v0.7c, JavaScript port of engine.py (same math, same order of operations).
  * Cost(p,q|s) = sum_e P(e|p,q,s) * [R(e) + V(s'_e)]; calls drawn at a game-theory balance point.
  * Data tables (run values, outcome fit) come from engine_data.json, exported from the Python engine.
  * Works in the browser (window.PitchEngine) and in Node (module.exports) for parity tests.
@@ -577,8 +577,12 @@ td.wrapcell .line { display: block; }
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
-  const VERSION = "0.7b";      // engine logic version; the tables carry their own fingerprint (data.version)
-  function init(data) { D = data; }
+  const VERSION = "0.7c";      // engine logic version; the tables carry their own fingerprint (data.version)
+  function init(data) {
+    D = data;
+    // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
+    for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.hs && !t.travel) t.travel = t.hs;
+  }
   const dataVersion = () => (D && D.version) || null;
 
   // ---------------------------------------------------------------- objects
@@ -961,6 +965,7 @@ td.wrapcell .line { display: block; }
   }
   function stakesFactor(b, k, level) {
     if (!D.LW[level]) return 1.0;
+    if (b === 3 && k === 0) return 0.5;   // v0.7c (Drew): 3-0 gets the tightest setting, like 3-2 (engine.py)
     let avg = 0; for (const [b_, k_] of COUNTS) avg += countStakes(b_, k_, level);
     avg /= COUNTS.length;
     return Math.min(1.5, Math.max(0.5, avg / countStakes(b, k, level)));
@@ -986,7 +991,6 @@ td.wrapcell .line { display: block; }
     }
     return [policy, costs, temp];
   }
-  const minCost = (costs) => Math.min(...costs.values());
   const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
 
   function atBatValues(arsenal, s, T = 0.010, window = 0.030, sweeps = 10, iters = 4) {
@@ -1024,7 +1028,20 @@ td.wrapcell .line { display: block; }
     return [rel, cv];
   }
 
+  const KINDS = ["FB", "SL", "CB", "CH"];
+  function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
+    if (!arsenal || !arsenal.length) throw new Error("no pitches: the arsenal is empty");
+    const names = arsenal.map((x) => x.name);
+    if (new Set(names).size !== names.length) throw new Error(`two pitches share a name: ${names.join(", ")}`);
+    for (const x of arsenal) if (!KINDS.includes(x.kind)) throw new Error(`unknown pitch kind "${x.kind}" for ${x.name}`);
+    if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
+    if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
+    if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
+    if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
+  }
+
   function callMixed(arsenal, s, opts = {}) {
+    checkInputs(arsenal, s);
     const T = opts.T ?? 0.010, window = opts.window ?? 0.030, forced = opts.forced ?? null, iters = opts.iters ?? 8;
     const rng = opts.rng || Math.random, atBat = opts.atBat ?? true;
     const cv = atBat ? atBatValues(arsenal, s, T, window)[1] : null;
@@ -1057,13 +1074,15 @@ td.wrapcell .line { display: block; }
 
   function gradeCall(arsenal, s, pitchName, quad, opts = {}) {
     const { dist } = callMixed(arsenal, s, opts);
-    const [policy, costs] = mixedPolicy(arsenal, s);
+    // v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
+    const cv = (opts.atBat ?? true) ? atBatValues(arsenal, s)[1] : null;
+    const [policy, costs] = mixedPolicy(arsenal, s, 0.010, 0.030, null, 8, cv);
     const p = arsenal.find((x) => x.name === pitchName);
-    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy)[0];
-    const best = minCost(costs);
+    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy, cv)[0];
+    const tq = targets(s.balls, s.strikes), best = minAllowed(costs, tq), allowed = tq.includes(quad);
     let prob = 0; for (const d of dist) if (d.pitch.name === pitchName && d.quad === quad) prob += d.prob;
-    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best,
-      verdict: prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
+    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best, allowed,
+      verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
       engine_top: dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
 
@@ -1499,6 +1518,7 @@ td.wrapcell .line { display: block; }
     college_d1: { AVG: 0.265, OBP: 0.368, SLG: 0.395, K: 0.193, BB: 0.108 },
     mlb: { AVG: 0.255, OBP: 0.320, SLG: 0.405, K: 0.200, BB: 0.079 },
   };
+  LEVEL_AVG.travel = LEVEL_AVG.hs;   // travel ball uses the high school numbers (engine v0.7c)
   const isOS = (k) => k === "SL" || k === "CB" || k === "CH";
   function damageEvent(ev) {
     if (ev.res === "whiff") return "whiff";
@@ -2145,6 +2165,7 @@ td.wrapcell .line { display: block; }
     college_d1: { AVG: 0.265, OBP: 0.368, SLG: 0.395, K: 0.193, BB: 0.108 },
     mlb: { AVG: 0.255, OBP: 0.320, SLG: 0.405, K: 0.200, BB: 0.079 },
   };
+  LEVEL_AVG.travel = LEVEL_AVG.hs;   // travel ball uses the high school numbers (engine v0.7c)
   function statPrior(st, level) {
     if (!st) return null;
     const L = LEVEL_AVG[level] || LEVEL_AVG.college_d3;
@@ -2404,7 +2425,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 </script>
 <script type="text/plain" id="pc-worker">
 /*
- * Pitch Caller engine v0.7, JavaScript port of engine.py (same math, same order of operations).
+ * Pitch Caller engine v0.7c, JavaScript port of engine.py (same math, same order of operations).
  * Cost(p,q|s) = sum_e P(e|p,q,s) * [R(e) + V(s'_e)]; calls drawn at a game-theory balance point.
  * Data tables (run values, outcome fit) come from engine_data.json, exported from the Python engine.
  * Works in the browser (window.PitchEngine) and in Node (module.exports) for parity tests.
@@ -2440,8 +2461,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
-  const VERSION = "0.7b";      // engine logic version; the tables carry their own fingerprint (data.version)
-  function init(data) { D = data; }
+  const VERSION = "0.7c";      // engine logic version; the tables carry their own fingerprint (data.version)
+  function init(data) {
+    D = data;
+    // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
+    for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.hs && !t.travel) t.travel = t.hs;
+  }
   const dataVersion = () => (D && D.version) || null;
 
   // ---------------------------------------------------------------- objects
@@ -2824,6 +2849,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   }
   function stakesFactor(b, k, level) {
     if (!D.LW[level]) return 1.0;
+    if (b === 3 && k === 0) return 0.5;   // v0.7c (Drew): 3-0 gets the tightest setting, like 3-2 (engine.py)
     let avg = 0; for (const [b_, k_] of COUNTS) avg += countStakes(b_, k_, level);
     avg /= COUNTS.length;
     return Math.min(1.5, Math.max(0.5, avg / countStakes(b, k, level)));
@@ -2849,7 +2875,6 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     }
     return [policy, costs, temp];
   }
-  const minCost = (costs) => Math.min(...costs.values());
   const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
 
   function atBatValues(arsenal, s, T = 0.010, window = 0.030, sweeps = 10, iters = 4) {
@@ -2887,7 +2912,20 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return [rel, cv];
   }
 
+  const KINDS = ["FB", "SL", "CB", "CH"];
+  function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
+    if (!arsenal || !arsenal.length) throw new Error("no pitches: the arsenal is empty");
+    const names = arsenal.map((x) => x.name);
+    if (new Set(names).size !== names.length) throw new Error(`two pitches share a name: ${names.join(", ")}`);
+    for (const x of arsenal) if (!KINDS.includes(x.kind)) throw new Error(`unknown pitch kind "${x.kind}" for ${x.name}`);
+    if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
+    if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
+    if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
+    if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
+  }
+
   function callMixed(arsenal, s, opts = {}) {
+    checkInputs(arsenal, s);
     const T = opts.T ?? 0.010, window = opts.window ?? 0.030, forced = opts.forced ?? null, iters = opts.iters ?? 8;
     const rng = opts.rng || Math.random, atBat = opts.atBat ?? true;
     const cv = atBat ? atBatValues(arsenal, s, T, window)[1] : null;
@@ -2920,13 +2958,15 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   function gradeCall(arsenal, s, pitchName, quad, opts = {}) {
     const { dist } = callMixed(arsenal, s, opts);
-    const [policy, costs] = mixedPolicy(arsenal, s);
+    // v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
+    const cv = (opts.atBat ?? true) ? atBatValues(arsenal, s)[1] : null;
+    const [policy, costs] = mixedPolicy(arsenal, s, 0.010, 0.030, null, 8, cv);
     const p = arsenal.find((x) => x.name === pitchName);
-    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy)[0];
-    const best = minCost(costs);
+    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy, cv)[0];
+    const tq = targets(s.balls, s.strikes), best = minAllowed(costs, tq), allowed = tq.includes(quad);
     let prob = 0; for (const d of dist) if (d.pitch.name === pitchName && d.quad === quad) prob += d.prob;
-    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best,
-      verdict: prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
+    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best, allowed,
+      verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
       engine_top: dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
 
@@ -3527,6 +3567,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     college_d1: { AVG: 0.265, OBP: 0.368, SLG: 0.395, K: 0.193, BB: 0.108 },
     mlb: { AVG: 0.255, OBP: 0.320, SLG: 0.405, K: 0.200, BB: 0.079 },
   };
+  LEVEL_AVG.travel = LEVEL_AVG.hs;   // travel ball uses the high school numbers (engine v0.7c)
   function statPrior(st, level) {
     if (!st) return null;
     const L = LEVEL_AVG[level] || LEVEL_AVG.college_d3;
@@ -3589,7 +3630,7 @@ PitchEngine.init(PC_DATA);
 const E = PitchEngine;
 
 // ------------------------------------------------------------------ vocabulary
-const LEVELS = { hs: "High school", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
+const LEVELS = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
 const TIERS = [
   { n: 1, t: "Results only", d: "Ball, strike, foul, in play, hit or out. The minimum a coach can keep up with." },
   { n: 2, t: "Plus contact", d: "Weak, solid or hard on every ball in play." },
@@ -4117,7 +4158,7 @@ function pickBox() {
   const go = () => {
     const gr = E.gradeCall(ars, situation(), pickSel.pitch, pickSel.quad), g = G();
     g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
-      verdict: gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
+      verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
   };
   return h("div", { class: "pick" }, h("span", { class: "t" }, "Your call"),
@@ -4184,7 +4225,7 @@ function atBatList() {
 }
 
 function pitcherPanel(ars, st) {
-  const g = G(), cutoff = { hs: 0.5, college_d3: 0.45, college_d1: 0.4, mlb: 0.4 }[S.setup.level];
+  const g = G(), cutoff = { hs: 0.5, travel: 0.5, college_d3: 0.45, college_d1: 0.4, mlb: 0.4 }[S.setup.level];
   const status = st.status === "ok" ? null
     : h("p", { class: `pstat ${st.status}` }, h("b", {}, st.status === "change" ? "Time for a change? " : "Keep an eye on him. "),
       st.reasons.map((r) => r[0].toUpperCase() + r.slice(1)).join(". ") + ".");
@@ -4337,7 +4378,7 @@ function kpis(rows) {
 }
 
 function bullpenPanel() {
-  const g = G(), maxPc = { hs: 105, college_d3: 110, college_d1: 110, mlb: 110 }[S.setup.level];
+  const g = G(), maxPc = { hs: 105, travel: 105, college_d3: 110, college_d1: 110, mlb: 110 }[S.setup.level];
   return h("section", { class: "panel glass span-5", "aria-label": "Bullpen" },
     h("div", { class: "panel-head" }, h("h2", {}, "Bullpen"), h("span", { class: "meta" }, `${ord(g.inning)} inning`)),
     h("div", { class: "pen" }, S.setup.staff.map((pd, i) => {
@@ -4456,7 +4497,7 @@ function hittersPanel(rows) {
 // Reads during a game come from an in-memory copy (the engine needs answers instantly); writes go straight through.
 const DB = { D: null, ready: false, failed: null, teams: new Map(), pitchers: new Map(), catchers: new Map(), hitters: new Map(),
   checkins: new Map(), models: new Map(), sessions: new Map(), counts: new Map() };
-const FATIGUE = { hs: 60, college_d3: 75, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
+const FATIGUE = { hs: 60, travel: 60, college_d3: 75, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
 const LOCZ = ["heart", "edge", "off", "noncomp"];
 let pendingLoc = null;
 let saveWarned = false;
@@ -5062,7 +5103,7 @@ function setupView() {
   const changed = (re) => { G().call = null; save(); if (re) render(); };
   const row = (title, desc, ...panel) => h("section", { class: title === "Staff" ? "srow wide" : "srow" }, h("div", {}, h("h2", {}, title), h("p", { class: "desc" }, desc)), h("div", { class: "spanel glass" }, panel));
   const levelChoices = h("div", { class: "choices" }, [
-    ["hs", "High school", "MaxPreps 2026 national averages, 7-inning games"], ["college_d3", "College D3", "2026 Liberty League, Empire 8, NESCAC and UAA"],
+    ["hs", "High school", "MaxPreps 2026 national averages, 7-inning games"], ["travel", "Travel ball", "Uses the high school numbers until there's travel-ball data"], ["college_d3", "College D3", "2026 Liberty League, Empire 8, NESCAC and UAA"],
     ["college_d1", "College D1", "2026 Big East, America East and Ivy"], ["mlb", "Pro", "MLB 2010-15 run values, for comparison"],
   ].map(([k, t, d]) => h("button", { class: "choice", "aria-pressed": String(st.level === k), on: { click: () => { st.level = k; changed(true); } } }, h("b", {}, t), h("span", {}, d))));
   const tierChoices = h("div", { class: "choices" }, TIERS.map((t) => h("button", { class: "choice", "aria-pressed": String(st.inputs === t.n), on: { click: () => { st.inputs = t.n; changed(true); } } }, h("b", {}, t.t), h("span", {}, t.d))));

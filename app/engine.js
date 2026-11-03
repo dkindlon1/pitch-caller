@@ -1,5 +1,5 @@
 /*
- * Pitch Caller engine v0.7, JavaScript port of engine.py (same math, same order of operations).
+ * Pitch Caller engine v0.7c, JavaScript port of engine.py (same math, same order of operations).
  * Cost(p,q|s) = sum_e P(e|p,q,s) * [R(e) + V(s'_e)]; calls drawn at a game-theory balance point.
  * Data tables (run values, outcome fit) come from engine_data.json, exported from the Python engine.
  * Works in the browser (window.PitchEngine) and in Node (module.exports) for parity tests.
@@ -35,8 +35,12 @@
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
-  const VERSION = "0.7b";      // engine logic version; the tables carry their own fingerprint (data.version)
-  function init(data) { D = data; }
+  const VERSION = "0.7c";      // engine logic version; the tables carry their own fingerprint (data.version)
+  function init(data) {
+    D = data;
+    // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
+    for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.hs && !t.travel) t.travel = t.hs;
+  }
   const dataVersion = () => (D && D.version) || null;
 
   // ---------------------------------------------------------------- objects
@@ -419,6 +423,7 @@
   }
   function stakesFactor(b, k, level) {
     if (!D.LW[level]) return 1.0;
+    if (b === 3 && k === 0) return 0.5;   // v0.7c (Drew): 3-0 gets the tightest setting, like 3-2 (engine.py)
     let avg = 0; for (const [b_, k_] of COUNTS) avg += countStakes(b_, k_, level);
     avg /= COUNTS.length;
     return Math.min(1.5, Math.max(0.5, avg / countStakes(b, k, level)));
@@ -444,7 +449,6 @@
     }
     return [policy, costs, temp];
   }
-  const minCost = (costs) => Math.min(...costs.values());
   const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
 
   function atBatValues(arsenal, s, T = 0.010, window = 0.030, sweeps = 10, iters = 4) {
@@ -482,7 +486,20 @@
     return [rel, cv];
   }
 
+  const KINDS = ["FB", "SL", "CB", "CH"];
+  function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
+    if (!arsenal || !arsenal.length) throw new Error("no pitches: the arsenal is empty");
+    const names = arsenal.map((x) => x.name);
+    if (new Set(names).size !== names.length) throw new Error(`two pitches share a name: ${names.join(", ")}`);
+    for (const x of arsenal) if (!KINDS.includes(x.kind)) throw new Error(`unknown pitch kind "${x.kind}" for ${x.name}`);
+    if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
+    if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
+    if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
+    if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
+  }
+
   function callMixed(arsenal, s, opts = {}) {
+    checkInputs(arsenal, s);
     const T = opts.T ?? 0.010, window = opts.window ?? 0.030, forced = opts.forced ?? null, iters = opts.iters ?? 8;
     const rng = opts.rng || Math.random, atBat = opts.atBat ?? true;
     const cv = atBat ? atBatValues(arsenal, s, T, window)[1] : null;
@@ -515,13 +532,15 @@
 
   function gradeCall(arsenal, s, pitchName, quad, opts = {}) {
     const { dist } = callMixed(arsenal, s, opts);
-    const [policy, costs] = mixedPolicy(arsenal, s);
+    // v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
+    const cv = (opts.atBat ?? true) ? atBatValues(arsenal, s)[1] : null;
+    const [policy, costs] = mixedPolicy(arsenal, s, 0.010, 0.030, null, 8, cv);
     const p = arsenal.find((x) => x.name === pitchName);
-    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy)[0];
-    const best = minCost(costs);
+    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy, cv)[0];
+    const tq = targets(s.balls, s.strikes), best = minAllowed(costs, tq), allowed = tq.includes(quad);
     let prob = 0; for (const d of dist) if (d.pitch.name === pitchName && d.quad === quad) prob += d.prob;
-    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best,
-      verdict: prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
+    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best, allowed,
+      verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
       engine_top: dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
 
