@@ -1,4 +1,4 @@
-"""Summarize the test matrix: one row per setup. usage: python3 matrix/report.py"""
+"""Summarize the test matrix: one row per setup. usage: python3 matrix/report.py [configs file, default matrix/configs.txt]"""
 import csv, glob, json, os, re, subprocess, sys
 from collections import Counter, defaultdict
 
@@ -6,7 +6,7 @@ os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 RV = json.load(open("college_run_values.json"))
 REAL = {"mlb": "mlb_check", "college_d1": "college_d1", "college_d3": "college_d3", "hs": "hs"}
 S = {"cstrike", "whiff", "foul", "weak", "solid", "hard"}
-tags = [l.split()[0] for l in open("matrix/configs.txt") if l.strip()]
+tags = [l.split()[0] for l in open(sys.argv[1] if len(sys.argv) > 1 else "matrix/configs.txt") if l.strip()]
 rows_out = []
 print(f"{'setup':20}{'games':>6}{'clean':>7}{'wrong':>7}  {'top flags /100':24}{'K':>6}{'BB':>6}{'H':>6}{'R/PA':>7}{'real':>7}{'FB?':>5}{'mem?':>5}{'info':>6}{'mix':>6}  masher gap 1st->3rd")
 for tag in tags:

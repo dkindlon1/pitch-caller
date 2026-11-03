@@ -1,0 +1,82 @@
+{
+ "source": "data/pitcher_lines_2026.csv (2026 seasons, team stats pages)",
+ "levels": {
+  "college_d3": {
+   "pitchers": 597,
+   "teams": 35,
+   "bf": 52054,
+   "walk_hbp": {
+    "mean": 0.1517,
+    "true_sd": 0.0491,
+    "sd_se": 0.0034,
+    "mom_mean": 0.16,
+    "mom_sd": 0.0623,
+    "observed_sd_100bf": 0.0504
+   },
+   "k": {
+    "mean": 0.1732,
+    "true_sd": 0.0462,
+    "sd_se": 0.0026,
+    "mom_mean": 0.17,
+    "mom_sd": 0.0466,
+    "observed_sd_100bf": 0.0558
+   },
+   "hr": {
+    "mean": 0.013,
+    "true_sd": 0.0005,
+    "sd_se": 0.0013,
+    "mom_mean": 0.0134,
+    "mom_sd": 0.0034,
+    "observed_sd_100bf": 0.0099
+   },
+   "corr_walk_k": -0.101
+  },
+  "college_d1": {
+   "pitchers": 361,
+   "teams": 22,
+   "bf": 44253,
+   "walk_hbp": {
+    "mean": 0.1392,
+    "true_sd": 0.0394,
+    "sd_se": 0.0027,
+    "mom_mean": 0.1466,
+    "mom_sd": 0.0506,
+    "observed_sd_100bf": 0.0436
+   },
+   "k": {
+    "mean": 0.1809,
+    "true_sd": 0.0414,
+    "sd_se": 0.0025,
+    "mom_mean": 0.1779,
+    "mom_sd": 0.0433,
+    "observed_sd_100bf": 0.0492
+   },
+   "hr": {
+    "mean": 0.021,
+    "true_sd": 0.0061,
+    "sd_se": 0.0015,
+    "mom_mean": 0.022,
+    "mom_sd": 0.0072,
+    "observed_sd_100bf": 0.013
+   },
+   "corr_walk_k": -0.143
+  },
+  "hs": {
+   "estimated": true,
+   "how": "D3 true SD scaled by HS average / D3 average (same coefficient of variation)",
+   "walk_hbp": {
+    "mean": 0.1817,
+    "true_sd": 0.0588
+   },
+   "k": {
+    "mean": 0.2101,
+    "true_sd": 0.056
+   },
+   "hr": {
+    "mean": 0.0063,
+    "true_sd": 0.0002
+   },
+   "corr_walk_k": -0.101
+  }
+ }
+}

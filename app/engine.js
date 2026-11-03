@@ -1,5 +1,5 @@
 /*
- * Pitch Caller engine v0.6e, JavaScript port of engine.py (same math, same order of operations).
+ * Pitch Caller engine v0.7, JavaScript port of engine.py (same math, same order of operations).
  * Cost(p,q|s) = sum_e P(e|p,q,s) * [R(e) + V(s'_e)]; calls drawn at a game-theory balance point.
  * Data tables (run values, outcome fit) come from engine_data.json, exported from the Python engine.
  * Works in the browser (window.PitchEngine) and in Node (module.exports) for parity tests.
@@ -9,6 +9,8 @@
   let D = null;                       // tables, set by init(data)
 
   const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"];
+  // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
+  const targets = (b, k) => ((b === 3 && (k === 0 || k === 1)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
@@ -33,12 +35,14 @@
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
+  const VERSION = "0.7b";      // engine logic version; the tables carry their own fingerprint (data.version)
   function init(data) { D = data; }
+  const dataVersion = () => (D && D.version) || null;
 
   // ---------------------------------------------------------------- objects
   function Pitch(o) {
     const p = Object.assign({ shape: "", velo: 0, base_conf: -1, ivb: null, hb: null, slot: "three-quarter",
-      height_ft: 6.1, release_offset_in: [0, 0] }, o);
+      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, traits: null }, o);
     if (p.base_conf < 0) p.base_conf = p.conf;
     return p;
   }
@@ -61,6 +65,11 @@
   function updateConfidence(p, event) {
     let d = CONF_DELTA[event];
     if (event === "whiff" && p.kind === "FB") d += 0.02;
+    if (p.strike_rate !== null && p.strike_rate !== undefined) {   // v0.7: news measured against his usual strike rate
+      const c = LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"], q = Math.min(0.95, Math.max(0.05, p.strike_rate));
+      if (event === "ball") d *= (1 - c) / (1 - q);
+      else if (event === "cstrike" || event === "whiff") d *= c / q;
+    }
     p.conf = Math.max(0.0, Math.min(p.base_conf + CONF_CAP_ABOVE, 1.0, p.conf + d));
   }
   function regressConfidence(p) { p.conf += CONF_REGRESS * (p.base_conf - p.conf); }
@@ -77,7 +86,7 @@
   const DMG_SCALE = 3.0;   // v0.6e: a strong masher is worth ~+0.03 runs per pitch, like the best real fastball hitters
   function landingEstimate(p, s) {
     const ev = s.landing_today ? s.landing_today[p.name] : null;
-    const center = LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"];
+    const center = p.strike_rate !== null && p.strike_rate !== undefined ? p.strike_rate : LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"];
     if (!ev) return [center, center, 0];
     const [st, n] = ev;
     return [(center * LAND_K + st) / (LAND_K + n), center, n];
@@ -89,15 +98,42 @@
   }
 
   // ---------------------------------------------------------------- landing
+  // v0.7 personal traits (see engine.py TRAIT_KEYS); absent = the default engine
+  const TRAIT_KEYS = ["side_cmd", "side_grade", "ahead_cmd", "behind_cmd", "stretch_cmd", "miss_heart"];
+  function effective(p, s) {
+    const t = p.traits;
+    if (!t) return [p.command, p.grade];
+    const side = s.same_side ? 0.5 : -0.5, g = (k) => t[k] || 0.0;
+    let cmd = p.command + side * g("side_cmd") + g("stretch_cmd") * ((s.bases[0] || s.bases[1] || s.bases[2]) ? 1.0 : 0.0);
+    if (s.strikes > s.balls) cmd += g("ahead_cmd");
+    else if (s.balls > s.strikes) cmd += g("behind_cmd");
+    return [cmd, p.grade + side * g("side_grade")];
+  }
+
   function landing(p, q, s) {
     const A = D.OUTCOME_ADJ[s.level];
-    const eff = Math.min(5, Math.max(1, p.command + A.cmd + 2.0 * (p.conf - 0.6)));
-    const d = eff - 3;
-    let z;
-    if (q === "chase") z = { heart: 0.05 - 0.01 * d, edge: 0.24, off: 0.57 + 0.04 * d, noncomp: 0.14 - 0.03 * d };
-    else if (q === "middle") z = { heart: 0.50 + 0.03 * d, edge: 0.30, off: 0.13 - 0.02 * d, noncomp: 0.07 - 0.01 * d };
-    else z = { heart: 0.26 - 0.03 * d, edge: 0.42 + 0.08 * d, off: 0.22 - 0.03 * d, noncomp: 0.10 - 0.02 * d };
-    if (isOffspeed(p.kind)) { z.edge -= 0.12; z.off += 0.07; z.noncomp += 0.05; }
+    const [command] = effective(p, s);
+    const sc = D.LEVEL[s.level].cmd_scale ?? 1.0;   // v0.7 spread calibration (engine.py)
+    const d = sc === 1.0 ? Math.min(5, Math.max(1, command + A.cmd + 2.0 * (p.conf - 0.6))) - 3   // the v0.6 formula exactly
+      : Math.min(8.0, Math.max(-8.0, sc * (command - 3) + A.cmd + 2.0 * (p.conf - 0.6)));
+    let z0, sl, z;
+    if (q === "chase") { z0 = { heart: 0.05, edge: 0.24, off: 0.57, noncomp: 0.14 }; sl = { heart: -0.01, edge: 0.0, off: 0.04, noncomp: -0.03 }; }
+    else if (q === "middle") { z0 = { heart: 0.50, edge: 0.30, off: 0.13, noncomp: 0.07 }; sl = { heart: 0.03, edge: 0.0, off: -0.02, noncomp: -0.01 }; }
+    else { z0 = { heart: 0.26, edge: 0.42, off: 0.22, noncomp: 0.10 }; sl = { heart: -0.03, edge: 0.08, off: -0.03, noncomp: -0.02 }; }
+    if (sc === 1.0) {   // the v0.6 straight-line shares, exactly
+      z = {}; for (const k of ZONES) z[k] = z0[k] + sl[k] * d;
+      if (isOffspeed(p.kind)) { z.edge -= 0.12; z.off += 0.07; z.noncomp += 0.05; }
+    } else {            // v0.7: exponential shares, same first-order change around an average pitcher (engine.py)
+      if (isOffspeed(p.kind)) z0 = { heart: z0.heart, edge: z0.edge - 0.12, off: z0.off + 0.07, noncomp: z0.noncomp + 0.05 };
+      const w = {}; let t = 0; for (const k of ZONES) { w[k] = z0[k] * Math.exp(sl[k] / z0[k] * d); t += w[k]; }
+      z = {}; for (const k of ZONES) z[k] = w[k] / t;
+    }
+    let mhT = p.traits ? p.traits.miss_heart || 0.0 : 0.0;
+    if (mhT) {   // v0.7: where his misses go, beyond what command says
+      mhT = Math.min(1.0, Math.max(-1.0, mhT));
+      if (mhT > 0) { const m = 0.3 * mhT * z.off; z.off -= m; z.heart += m; }
+      else { const m = 0.3 * -mhT * z.heart; z.heart -= m; z.off += m; }
+    }
     const w = A.wild;
     if (w) {
       const mh = w * z.heart, me = w * z.edge;
@@ -235,7 +271,7 @@
   }
 
   // ---------------------------------------------------------------- outcome model
-  function outcomeProbs(p, q, s, arsenal, policy) {
+  function outcomeProbs(p, q, s, arsenal, policy, byZone) {   // byZone (optional): filled with each landing zone's own outcome mix
     const L = D.LEVEL[s.level], A = D.OUTCOME_ADJ[s.level];
     const big = isBigSpot(s);
     const cL = L.cL * (big ? 1.5 : 1.0);
@@ -248,6 +284,9 @@
     const tauEff = p.kind === "FB" ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
+    const [command, grade] = effective(p, s);
+    const gs = 0.25 * (L.stuff_scale ?? 1.0);
+    const cw = (L.cmd_whiff ?? 0.0) * (command - 3);   // v0.7b: better command adds contact, not strikeouts (fit_spread.py)
     const out = { ball: 0, cstrike: 0, whiff: 0, foul: 0, weak: 0, solid: 0, hard: 0, wp_ball: 0, hbp: 0 };
     for (const z of ZONES) {
       const pz = land[z];
@@ -261,13 +300,14 @@
       sl += wz * A.zsw + (1 - wz) * A.osw;
       const S = S0[z] > 0 ? sig(sl) : 0;
       const C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs) : C0[z];
-      let wl = logit(W0[z]) + KIND_W[p.kind] + 0.25 * (p.grade - 3) + cL * 1.5 * (p.conf - 0.6);
+      let wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
       wl += L.hL * (-1.5 * (E - neutral) + 0.6 * tauEff - 0.4 * DMG_SCALE * dmg);
       wl += bT * T + 0.25 * f;
       wl += wz * A.wz + (1 - wz) * A.wo;
+      if (cw) wl -= cw;
       const W = sig(wl);
       const F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
-      let hl = -0.25 * (p.grade - 3) - cL * 0.5 * (p.conf - 0.6) + L.hL * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f;
+      let hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L.hL * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f;
       hl += 0.012 * s.batters_faced;
       hl -= L.hL * 0.5 * tauEff;   // v0.6e: off-time swings make weaker contact too
       if (p.kind === "CH" && s.same_side) hl += 0.2;
@@ -295,6 +335,14 @@
       out.foul += pz * S * (1 - W) * F;
       const contact = pz * S * (1 - W) * (1 - F);
       out.weak += contact * weak2; out.solid += contact * solid2; out.hard += contact * hard2;
+      if (byZone) {   // v0.7: the outcome mix given the pitch landed in this zone (for learning from logged location)
+        const take_ = 1 - S, bp = take_ * (1 - C);
+        let hbpZ = 0, wpZ = 0, ballZ = bp;
+        if ((z === "noncomp" || z === "off") && A.hbp > 0) { const hb = Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)); hbpZ = ballZ * hb; ballZ *= (1 - hb); }
+        if (z === "noncomp" && anyBase(s.bases)) { const wp = (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)); wpZ = ballZ * wp; ballZ *= (1 - wp); }
+        const ct = S * (1 - W) * (1 - F);
+        byZone[z] = { land: pz, ball: ballZ, wp_ball: wpZ, hbp: hbpZ, cstrike: take_ * C, whiff: S * W, foul: S * (1 - W) * F, weak: ct * weak2, solid: ct * solid2, hard: ct * hard2 };
+      }
     }
     return out;
   }
@@ -387,7 +435,8 @@
     for (let it = 0; it < iters; it++) {
       costs = new Map();
       for (const p of cands) for (const q of QUADS) costs.set(ck(p.name, q), cost(p, q, s, arsenal, policy, cv)[0]);
-      const bestBy = cands.map((p) => [p.name, Math.min(...QUADS.map((q) => costs.get(ck(p.name, q))))]);
+      const tq = targets(s.balls, s.strikes);
+      const bestBy = cands.map((p) => [p.name, Math.min(...tq.map((q) => costs.get(ck(p.name, q))))]);
       const pp = new Map(softmax(bestBy, temp, window));
       const nw = {}; for (const x of arsenal) nw[x.name] = pp.get(x.name) || 0.0;
       if (policy === null) policy = nw;
@@ -396,6 +445,7 @@
     return [policy, costs, temp];
   }
   const minCost = (costs) => Math.min(...costs.values());
+  const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
 
   function atBatValues(arsenal, s, T = 0.010, window = 0.030, sweeps = 10, iters = 4) {
     const cv = Object.assign({}, D.CV[s.level]);
@@ -408,13 +458,14 @@
         const sc = replace(s, { balls: b, strikes: k, last: same ? s.last : null, usage_this_count: same ? s.usage_this_count : {} });
         const [policy, costs, temp] = mixedPolicy(arsenal, sc, T, window, null, iters, cv);
         let ev = 0.0;
+        const tq = targets(b, k), bestOk = minAllowed(costs, tq);
         for (const name in policy) {
           const pp = policy[name];
           if (pp <= 0) continue;
-          let loc = softmax(QUADS.map((q) => [q, costs.get(ck(name, q))]), temp,
-            LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(b, k, s.level)), minCost(costs));
+          let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
+            LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(b, k, s.level)), bestOk);
           if (!loc.length) {
-            let bq = QUADS[0]; for (const q of QUADS) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
+            let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
             loc = [[bq, 1.0]];
           }
           let sub = 0; for (const [q, pq] of loc) sub += pq * costs.get(ck(name, q));
@@ -440,12 +491,12 @@
     let t = 0; for (const [, v] of pPitch) t += v;
     pPitch = pPitch.map(([kk, v]) => [kk, v / t]);
     const dist = [];
-    const overall = minCost(costs);
+    const tq = targets(s.balls, s.strikes), overall = minAllowed(costs, tq);
     for (const [name, pp] of pPitch) {
-      let loc = softmax(QUADS.map((q) => [q, costs.get(ck(name, q))]), temp,
+      let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
         LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(s.balls, s.strikes, s.level)), overall);
       if (!loc.length) {
-        let bq = QUADS[0]; for (const q of QUADS) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
+        let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
         loc = [[bq, 1.0]];
       }
       const p = arsenal.find((x) => x.name === name);
@@ -493,9 +544,9 @@
     return { status: score >= 3 ? "change" : (score >= 1 ? "watch" : "ok"), reasons, trusted: trusted.map((p) => p.name), score };
   }
 
-  const api = { init, Pitch, Situation, QUADS, COUNTS, landing, expectation, movement, tunnelScore, pairing,
+  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
-    runScale, re, updateConfidence, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday };
+    runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);

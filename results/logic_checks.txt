@@ -3,10 +3,11 @@ PART A: rules on 3000 random situations (300 with full calls)
 [PASS] Outcome probabilities add to 1: 3000/3000 hold
 [PASS] No negative probabilities: 3000/3000 hold
 [PASS] Landing shares add to 1 and are all positive: 3000/3000 hold
-[PASS] Better stuff never makes a pitch cost more: 3000/3000 hold (103 tiny reversals under 0.002 runs)
-[PASS] More confidence never makes a pitch cost more: 3000/3000 hold (272 tiny reversals under 0.002 runs)
-[PASS] A hitter crushing a pitch class makes it cost more: 3000/3000 hold (19 tiny reversals under 0.002 runs)
-[PASS] Fastball costs less vs a hitter late on fastballs than one early (outside 2-0, 3-0, 3-1): 3000/3000 hold (2 tiny reversals under 0.002 runs)
+[FAIL] Better stuff never makes a pitch cost more (outside 2-0, 3-0, 3-1): 2997/3000 hold (12 tiny reversals under 0.002 runs)
+       e.g. ('Curveball', 'chase', 1, 1)
+[PASS] More confidence never makes a pitch cost more: 3000/3000 hold (255 tiny reversals under 0.002 runs)
+[PASS] A hitter crushing a pitch class makes it cost more (outside 2-0, 3-0, 3-1): 3000/3000 hold (1 tiny reversals under 0.002 runs)
+[FAIL] Fastball costs less vs a hitter late on fastballs than one early (outside 2-0, 3-0, 3-1): 2999/3000 hold (4 tiny reversals under 0.002 runs)
 [PASS] Inside misses hit batters at least as often as away misses: 3000/3000 hold
 [PASS] No wild pitches with the bases empty: 3000/3000 hold
 [PASS] Run tables: an out lowers expected runs, a walk or an extra runner raises them: 192/192 hold
@@ -16,23 +17,23 @@ PART A: rules on 3000 random situations (300 with full calls)
 [PASS] Every option in the mix is within the never-pick window (or its pitch's best spot): 300/300 hold
 [PASS] Nothing below the trust line is called while a trusted pitch exists: 300/300 hold
 [PASS] No chase pitch in the mix at 3-0 or 3-1: 60/60 hold
-[FAIL] A pitch going 2-for-10 for strikes is never called more than when it's 8-for-10: 149/150 hold
-       e.g. ('Changeup', 0, 2, 'college_d3', '8% landing, 10% not landing')
+[PASS] A pitch going 2-for-10 for strikes is never called more than when it's 8-for-10: 150/150 hold
 
 PART B: learning over game-like sequences
 
-[PASS] college_d3 (hitter-read weight 0.8): fastball share falls as evidence builds that he crushes fastballs, by 10+ points: 49% -> 45% -> 42% -> 40% -> 37% -> 34%  (0,3,6,10,20,40 looks)
-[PASS] college_d3: a fastball hole barely moves the call on thin evidence, then pays off: 49% -> 51% -> 52% -> 53% -> 57% -> 59%
-[PASS] college_d3: 5+ points more fastballs to a hitter late on them (52%) than to one out in front (45%)
-[PASS] college_d3: slider share at 2-1 falls as it stops landing: 22% -> 22% -> 15% -> 7% -> 7%  (9,7,5,3,1 of 10 strikes)
-[PASS] hs (hitter-read weight 0.5): fastball share falls as evidence builds that he crushes fastballs, by 6+ points: 46% -> 44% -> 42% -> 41% -> 39% -> 38%  (0,3,6,10,20,40 looks)
-[PASS] hs: a fastball hole barely moves the call on thin evidence, then pays off: 46% -> 47% -> 47% -> 48% -> 51% -> 52%
-[PASS] hs: 3+ points more fastballs to a hitter late on them (48%) than to one out in front (43%)
-[PASS] hs: slider share at 2-1 falls as it stops landing: 25% -> 25% -> 18% -> 9% -> 9%  (9,7,5,3,1 of 10 strikes)
+[PASS] college_d3 (hitter-read weight 0.8): fastball share falls as evidence builds that he crushes fastballs, by 10+ points: 52% -> 48% -> 46% -> 43% -> 40% -> 37%  (0,3,6,10,20,40 looks)
+[PASS] college_d3: a fastball hole barely moves the call on thin evidence, then pays off: 52% -> 54% -> 55% -> 56% -> 60% -> 61%
+[PASS] college_d3: 5+ points more fastballs to a hitter late on them (55%) than to one out in front (48%)
+[PASS] college_d3: slider share at 2-1 falls as it stops landing: 21% -> 21% -> 15% -> 7% -> 7%  (9,7,5,3,1 of 10 strikes)
+[PASS] hs (hitter-read weight 0.5): fastball share falls as evidence builds that he crushes fastballs, by 6+ points: 48% -> 46% -> 45% -> 43% -> 42% -> 40%  (0,3,6,10,20,40 looks)
+[PASS] hs: a fastball hole barely moves the call on thin evidence, then pays off: 48% -> 49% -> 50% -> 50% -> 53% -> 54%
+[PASS] hs: 3+ points more fastballs to a hitter late on them (50%) than to one out in front (46%)
+[PASS] hs: slider share at 2-1 falls as it stops landing: 24% -> 24% -> 18% -> 9% -> 9%  (9,7,5,3,1 of 10 strikes)
 [PASS] 12 straight balls on the changeup: confidence 0.36, below the 0.45 line, and it leaves the mix
-[PASS] After a slider shake-off the slider is called less: 23% -> 19%
+[PASS] After a slider shake-off the slider is called less: 21% -> 18%
 [PASS] Change flag: cruising = ok, tired with traffic = change, trusts nothing = change
 [PASS] Change flag: at his fatigue point, otherwise fine = watch
 
-28/29 logic and learning checks passed
+27/29 logic and learning checks passed
 Tiny reversals are expected baseball, not bugs: in 3-ball and 2-0 counts a ball in play (usually an out) is worth more to the pitcher than a swing-and-miss that leaves a hitter's count, and more precise chase pitches mean more balls; at two strikes a miss off the plate is cheap and often chased.
+exit 0

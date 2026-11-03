@@ -1,0 +1,50 @@
+[PASS] R1 mixing: 1-2 with a runner on 3rd is mostly slider, not all slider
+       slider 77%, fastball 15%, changeup 8%
+[PASS] R2 at-bat values: a strikeout pitcher's 0-2 is worth more to him than a contact pitcher's
+       0-2 value (hitter runs vs 0-0): strikeout pitcher -0.135, contact pitcher -0.106, MLB average -0.106  (solve took 0.4s)
+       Full solved table, strikeout pitcher vs MLB average:
+         0-0: +0.000  (MLB +0.000)
+         1-0: +0.041  (MLB +0.038)
+         2-0: +0.113  (MLB +0.104)
+         3-0: +0.272  (MLB +0.214)
+         0-1: -0.061  (MLB -0.044)
+         1-1: -0.028  (MLB -0.011)
+         2-1: +0.037  (MLB +0.049)
+         3-1: +0.178  (MLB +0.162)
+         0-2: -0.135  (MLB -0.106)
+         1-2: -0.113  (MLB -0.077)
+         2-2: -0.064  (MLB -0.039)
+         3-2: +0.073  (MLB +0.059)
+[PASS] R4 expand, don't waste: a chase slider lands just off the plate far more than way off
+       just off 65%, way off 18%, edge 12%
+[PASS] R5 strengths: a hitter who crushes fastballs (30 pitches of evidence) sees fewer
+       fastball share 51% -> 30%
+[PASS] R5 holes: a thin fastball hole (5 pitches) barely moves the call; a proven one (40) does
+       fastball share 51% -> 56% (thin evidence) vs 76% (proven)
+[PASS] R6 repeat after a whiff: same slider, same spot is called more after a whiff than after a foul
+       slider down-away 19% after a whiff vs 13% after a foul
+[PASS] R7 perceived speed: after fastball up-in, changeup down-away looks slower than changeup down-in
+       perceived speed gap 15 mph (down-away) vs 12 mph (down-in)
+[PASS] Tunnel: riding fastball up + 12-6 curve down is a strong tunnel
+       score +0.62: 2.5 in apart at the decision point, 25.7 in of break difference after it
+[PASS] Tunnel: the same curve from a different slot loses the tunnel
+       score -0.01 vs +0.62
+[PASS] Tunnel: sinker + sweeper separate early and rank below the classic pair
+       score -0.04: 6.4 in apart at the decision point
+[PASS] R8 no third-time cliff: batter 19 is barely worse than batter 18
+       fastball up-in hard contact by batters faced: 0: 4.28%, 9: 4.65%, 18: 5.04%, 19: 5.08%, 27: 5.45%
+[PASS] Learning mode: a grooved 0-2 fastball is outside the engine's mix and clearly worse; slider chase is in the mix
+       Fastball middle: close (+0.033 runs); Slider chase: in the engine's mix (picked 23% of the time)
+[PASS] v0.6 hit by pitch: inside pitches hit batters more than away pitches (HS)
+       HBP per pitch: down-in 2.82%, down-away 0.53%
+[PASS] v0.6 realism (mlb): strikeouts, walks and HBP within 1 point of real
+       K 19.9% vs 20.0%, BB 8.0% vs 7.9%, HBP 0.9% vs 0.9%
+[PASS] v0.6 realism (college_d3): strikeouts, walks and HBP within 1 point of real
+       K 16.3% vs 16.2%, BB 11.4% vs 11.4%, HBP 4.2% vs 4.2%
+[PASS] v0.6 realism (hs): strikeouts, walks and HBP within 1 point of real
+       K 21.1% vs 21.0%, BB 14.1% vs 14.1%, HBP 4.1% vs 4.1%
+[PASS] v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more
+       slider get-it-over at 2-1: 26% fresh, 14% at 3 of 9 strikes, 26% at 7 of 9
+
+17/17 checks passed
+exit 0

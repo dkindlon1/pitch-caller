@@ -1,0 +1,58 @@
+1. Steady pitcher, right grades: holds still, no false flags
+     average learned minus truth -0.045, average size 0.18; grade flags 0,0,0,0,0; change suggestions 0,0,0,0,0
+  ok   no drift on average (within ±0.15)
+  ok   no grade flags
+  ok   change suggestions in at most 1 in 10 seasons
+2. Wrong grades: moves toward the truth and flags it
+     fastball command: entered 4, truth 2, learned 2.08 | slider stuff: entered 3, truth 4.2, learned 4.07 | fastball flagged 5/5
+  ok   fastball command error cut by half or more
+  ok   slider stuff error cut by half or more
+  ok   the fastball command disagreement is flagged in most seasons
+3. The in-game leak: a low-command pitcher, in-game state live (v1 learner vs v2 on the same seasons)
+     truth 2: v1 learned 2.12, v2 learned 2.03
+  ok   v2 within 0.2 of the truth
+  ok   v2 at least as close as v1
+4. Sudden change (injury at game 12: command 3 -> 1.8): with the coach's mark vs without
+     3 games after: with the mark 1.89, without 2.48 (truth 1.8) | suggested by game 20 without a mark: 4/5
+  ok   with the mark, within 0.5 three games later
+  ok   the mark makes it faster
+     (results-only suggestion is low-power by design; reported, not required: 4/5)
+5. Charter mistakes (10% of results and locations wrong), right grades: stays put, no false grade flags
+     fastball learned minus truth 0.22 on average; grade flags 0,0,0,0,0
+  ok   stays within 0.6 of the truth on average
+  ok   no false grade flags
+6. Selective logging (hard contact always logged, the rest 40%): the 90% rule keeps stuff honest
+     fastball stuff, truth 3: with the rule 2.93, without it 2.36
+  ok   with the rule, within 0.25
+  ok   the rule removes the bias
+7. Coach calls driven by unlogged feel: excluding them keeps stuff honest
+     changeup stuff, truth 3 on average: excluding coach calls 2.78, including them 2.98
+  ok   excluded: within 0.3
+8. Population honesty: grades off by coach-typical amounts; truth inside ±1 sd how often?
+     truth within ±1 sd: 44 of 60 (73%)
+  ok   between 60% and 90% (68% is exact)
+9. Replay determinism, renames and cross-ups
+  ok   same events in any order give the identical profile
+  ok   a renamed pitch keeps its history (183 vs 183 pitches)
+  ok   a cross-up counts as the pitch actually thrown
+  ok   an undone pitch is skipped
+10. What the engine gets: caps, steps, phase-in, learning off
+  ok   first game moves at most 0.15 (command 3.85, stuff 3.15)
+  ok   never more than 1.0 from his grade without his OK (command 3)
+  ok   traits capped at ±0.5
+  ok   after he accepts, it phases in over 3 games (2.53, 2.06, 1.6)
+  ok   one step per game: same games served three times 3.85, 3.85, 3.85; a new game 3.7; re-graded 4 -> 3.5 with no new game 3.2
+  ok   learning off: back to his grades
+  ok   the coach's off switch: his grades
+11. Hitter memory: a hitter who only faced an ace isn't marked as weak
+     an average hitter facing an ace: v1 fastball score -0.108, v2 0.004 (0 = average)
+  ok   v2 within 0.1 of average
+12. Scoreboard (scored before each game): learning beats wrong grades, and doesn't switch itself off on right ones
+     wrong grades: surprise per pitch learned 2.4813 vs his grades 2.6002 over 326 | right grades: 2.4753 vs 2.4658
+  ok   beats wrong grades
+  ok   no false switch-off on right grades
+13. The learner's fast strike-rate table matches the exact calculation
+  ok   largest difference 0.0080 (must be under 0.01)
+
+581s, 5 seasons per world
+all worlds checks passed

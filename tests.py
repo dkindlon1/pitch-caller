@@ -150,7 +150,8 @@ def sl_mid(s_):
     _, d_ = call_mixed(A, s_, rng=random.Random(0))
     return sum(pr for pr, _, p, q in d_ if p.name == "Slider" and q == "middle")
 a_, b_, c_ = sl_mid(fresh), sl_mid(missing), sl_mid(landing_ok)
-check("v0.6d get it over only when it's landing: a slider 3-for-9 today loses most of its get-it-over calls",
-      b_ < a_ / 2 and abs(c_ - a_) < 0.02, f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9")
+# bar set by Drew (2026-11-02): losing about half is right ("it's good"); v0.6f lost 50.4%, the calibrated engine 47%
+check("v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more",
+      b_ < 0.55 * a_ and abs(c_ - a_) < 0.02, f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9")
 
 print(f"\n{sum(results)}/{len(results)} checks passed")

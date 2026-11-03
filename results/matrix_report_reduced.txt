@@ -1,0 +1,13 @@
+setup                games  clean  wrong  top flags /100               K    BB     H   R/PA   real  FB? mem?  info   mix  masher gap 1st->3rd
+lvl_hs                   4  74.1%   2.3%  Q2 12.6, Q7 8.0, Q1 2.8  24.6% 14.2% 19.1%  0.164  0.207  60%  53%  0.28  1.11  +1 -> +1
+lvl_d3                   4  76.8%   0.8%  Q2 13.2, Q7 4.3, Q1 3.9  19.1% 11.0% 19.7%  0.145  0.184  50%  46%  0.40  1.17  -7 -> -7
+lvl_d1                   4  79.6%   1.4%  Q2 12.8, Q7 2.4, Q6 2.0  19.9% 12.0% 27.2%  0.168  0.149  53%  45%  0.82  0.77  -5 -> +14
+lvl_mlb                  4  89.8%   0.3%  Q7 4.0, Q2 3.8, Q1 1.2   21.0%  9.0% 24.6%  0.150  0.112  48%  42%  0.80  0.55  -7 -> +6
+staff_shaky              4  66.9%   4.9%  Q7 16.8, Q2 8.6, Q1 6.1  14.2% 13.1% 23.0%  0.142  0.184  48%  39%  0.13  0.58  +19 -> -9
+staff_finesse            4  79.3%   0.5%  Q1 8.8, Q2 7.8, Q7 2.6   16.6%  8.6% 21.5%  0.117  0.184  32%  34%  0.65  1.05  +7 -> +0
+
+clean/wrong: share of the engine's calls the checker passes or marks wrong (coach overrides not graded)
+K, BB, H, R/PA: simulated per plate appearance; real = the level's real runs per PA
+FB?: how often 'always fastball' guesses the pitch type; mem?: how often a by-count memory guess is right
+info / mix: runs lost per 100 pitches to not knowing the hitter / paid for staying unpredictable
+masher gap: fastball share to true fastball mashers minus share to everyone else, in points, first vs third time up

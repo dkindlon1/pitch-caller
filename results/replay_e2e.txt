@@ -1,0 +1,18 @@
+  ok   with the database closed, the pitches wait in the saved state (2 queued) and are written when it opens
+  ok   learning ran in the background worker, not on the screen's thread
+scripted game: 52 pitches charted; coach call true, cross-up true, wild pitch true, undo true, inning change true, pitching change true
+  ok   every pitch is in the backup, numbered 1..52 with no holes (52)
+  ok   the undone pitch is kept as a deletion, not counted
+  ok   End game saved the game as final with its completeness ({"pitches":52,"located":1,"contact":1,"engineCalls":0.8653846153846154})
+  ok   every pitch carries app, engine, table and learner versions, the device and who chose it
+  ok   a coach call, a re-call after a shake-off, a cross-up and a wild pitch fixed afterwards (with its edit history) are all logged
+  ok   both pitchers' pitches are in the game
+  ok   learner v2's replay rebuilds his confidence before every pitch exactly (52 pitches, largest difference 0)
+  ok   "landing today" rebuilt exactly before every pitch (0 mismatches)
+  ok   raw pitch count and the fatigue-adjusted count rebuilt exactly (0 mismatches)
+  ok   every pitch sorts into its game, and the learner uses exactly the engine's own calls
+  ok   a re-grade is logged with the grade before it and whether he'd seen what was learned ([{"ts":1793704055076,"command":4,"grade":3},{"ts":1793704093577,"command":4,"grade":4,"sawLearned":true}])
+  ok   a change mark is saved with its pitch and time
+  ok   no page errors
+
+all replay checks passed

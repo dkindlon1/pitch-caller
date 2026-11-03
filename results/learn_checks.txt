@@ -1,0 +1,53 @@
+1. Stuff from results alone, averaged over 8 simulated seasons (D3)
+     Slider: true stuff 4.5, entered 3 | 500 pitches: mean 4.46, avg error 0.23 | 1500: mean 4.40, avg error 0.13
+  ok   Slider: 500 pitches cut the stuff error by a quarter or more
+  ok   Slider: 1500 pitches cut it by 60% or more
+     Changeup: true stuff 2, entered 3.5 | 500 pitches: mean 2.40, avg error 0.40 | 1500: mean 2.16, avg error 0.19
+  ok   Changeup: 500 pitches cut the stuff error by a quarter or more
+  ok   Changeup: 1500 pitches cut it by 60% or more
+     (6.4s)
+2. Command: results alone are weak evidence; with location logged it's recovered
+     fastball true command 2, entered 4, 500 pitches: results only mean 2.34 (avg error 0.34); with location mean 2.01 (avg error 0.09)
+  ok   results only doesn't drift the wrong way (it mostly holds still: command needs location)
+  ok   with location, average error under 0.5 (from 2.0)
+  ok   location beats results only clearly
+3. Learned inputs predict new pitches better than the entered ones (held-out data)
+     results only: surprise per pitch entered 1.5893, learned 1.5873, truth 1.5901
+  ok   results only: learned is no worse than entered on new pitches
+     with location: surprise per pitch entered 3.3045, learned 2.9535, truth 2.9531
+  ok   with location: learned is no worse than entered on new pitches
+  ok   with location: learned closes most of the gap to the truth
+4. Doesn't overreact: 15 pitches barely move a correct entry; a right entry stays put with lots of data
+  ok   15 pitches moved a correct slider by 0.18 on average in the calls (raw fit 0.42, limited to 0.15 per game)
+     correct slider (3 / 4.5), 700 pitches, mean over 8 seasons: 2.99 / 4.43
+  ok   no systematic drift on a correct entry
+5. Slices: finds a fastball he can't command against opposite-side hitters (location logged); measured, not served
+     overall 2.64; same side 3.45 (true 3.5), opposite 1.49 (true 1.5)
+  ok   the slice fit finds same-side command clearly above opposite-side
+  ok   slices aren't served to the calls (spec 18: no trait passes the gate): same side 2.64, opposite 2.64
+6. Recent games count more: he fixed his changeup command (2 -> 4) two months ago
+     500 pitches at command 2 from 400 days ago + 250 at command 4 from 20 days ago: learned 3.54; same pitches with no fading 2.92
+  ok   fading old games moves it toward the recent changeup
+7. High school, results plus location, no contact quality
+     HS fastball, true cmd 2 entered 4, 800 pitches: mean 2.06, avg error 0.07
+  ok   command recovered at high school (from 2.0; HS pitchers are wilder, so each pitch says less)
+8. Hitter memory: a fastball masher across two games makes the engine throw him fewer fastballs
+     fastball share at 1-1: unknown hitter 31%, known masher 24%  (FB score 0.767, OS -0.6)
+  ok   fewer fastballs to the masher
+9. Season stats lean the right way and stay small
+     .480/.620 hitter {"FB":0.408,"OS":0.396} | .300/.300 with 30% K {"FB":-0.342,"OS":-0.504} | 8 PA hot streak {"FB":0.116,"OS":0.077}
+  ok   good hitter leans up, weak hitter leans down, high K rate hurts vs off-speed
+  ok   eight plate appearances count for less than 150
+10. Check-in maps to feel and today's limit
+  ok   confidence 1..10 -> feel 0.30..0.95, blank stays blank
+  ok   sore arm and short sleep take pitches off his limit
+11. Limits on what the calls get (spec 11): one step a game, never more than 1.0 from his grade, coach calls ignored
+     fit 1.33 (truth about 1.2); served 3
+  ok   never more than 1.0 from his grade in any spot (largest 1.00)
+  ok   at most 0.15 per game (largest 0.15)
+  ok   after enough games it reaches the cap (3.0) and stops there
+  ok   20 games loaded at once: served 3.85 (one step from 4)
+  ok   relearning with no new game changes nothing
+  ok   coach calls and re-calls are left out (1200 pitches used of 1500)
+
+all learning checks passed

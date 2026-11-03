@@ -1,0 +1,359 @@
+{
+ "fetched": "2026-11-03 02:47",
+ "log": [
+  {
+   "team": "Ithaca",
+   "url": "https://athletics.ithaca.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "Union",
+   "url": "https://unionathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "St. Lawrence",
+   "url": "https://saintsathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 19
+  },
+  {
+   "team": "Hobart",
+   "url": "https://hwsathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "RIT",
+   "url": "https://ritathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "Skidmore",
+   "url": "https://skidmoreathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "RPI",
+   "url": "https://rpiathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Rochester",
+   "url": "https://uofrathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Clarkson",
+   "url": "https://clarksonathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "Bard",
+   "url": "https://bardathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "Vassar",
+   "url": "https://www.vassarathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 14
+  },
+  {
+   "team": "Russell Sage",
+   "url": "https://sagegators.com/sports/baseball/stats/2026",
+   "ok": false,
+   "why": "HTTP Error 404: Not Found"
+  },
+  {
+   "team": "St. John Fisher",
+   "url": "https://sjfathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 20
+  },
+  {
+   "team": "Utica",
+   "url": "https://uticapioneers.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Brockport",
+   "url": "https://gobrockport.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 21
+  },
+  {
+   "team": "Poly",
+   "url": "https://wildcats.sunypoly.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 20
+  },
+  {
+   "team": "Houghton",
+   "url": "https://athletics.houghton.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Elmira",
+   "url": "https://athletics.elmira.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 19
+  },
+  {
+   "team": "Keuka",
+   "url": "https://keukaathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Alfred",
+   "url": "https://gosaxons.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "Middlebury",
+   "url": "https://athletics.middlebury.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "Amherst",
+   "url": "https://athletics.amherst.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 15
+  },
+  {
+   "team": "Tufts",
+   "url": "https://gotuftsjumbos.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 14
+  },
+  {
+   "team": "Trinity",
+   "url": "https://bantamsports.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Bates",
+   "url": "https://gobatesbobcats.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 14
+  },
+  {
+   "team": "Colby",
+   "url": "https://colbyathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Williams",
+   "url": "https://ephsports.williams.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Wesleyan",
+   "url": "https://athletics.wesleyan.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "Hamilton",
+   "url": "https://athletics.hamilton.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "Bowdoin",
+   "url": "https://athletics.bowdoin.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "WashU",
+   "url": "https://washubears.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Chicago",
+   "url": "https://athletics.uchicago.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 23
+  },
+  {
+   "team": "NYU",
+   "url": "https://gonyuathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 22
+  },
+  {
+   "team": "Brandeis",
+   "url": "https://brandeisjudges.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 15
+  },
+  {
+   "team": "Emory",
+   "url": "https://emoryathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 15
+  },
+  {
+   "team": "Case Western",
+   "url": "https://athletics.case.edu/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "UConn",
+   "url": "https://uconnhuskies.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 21
+  },
+  {
+   "team": "Creighton",
+   "url": "https://gocreighton.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "St. John's",
+   "url": "https://redstormsports.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 19
+  },
+  {
+   "team": "Georgetown",
+   "url": "https://guhoyas.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "Xavier",
+   "url": "https://goxavier.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 21
+  },
+  {
+   "team": "Villanova",
+   "url": "https://villanova.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "Butler",
+   "url": "https://butlersports.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 18
+  },
+  {
+   "team": "Seton Hall",
+   "url": "https://shupirates.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 15
+  },
+  {
+   "team": "UMBC",
+   "url": "https://umbcretrievers.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Bryant",
+   "url": "https://bryantbulldogs.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 19
+  },
+  {
+   "team": "UMass Lowell",
+   "url": "https://goriverhawks.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "Binghamton",
+   "url": "https://binghamtonbearcats.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Maine",
+   "url": "https://goblackbears.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 14
+  },
+  {
+   "team": "UAlbany",
+   "url": "https://ualbanysports.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "NJIT",
+   "url": "https://njithighlanders.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 15
+  },
+  {
+   "team": "Yale",
+   "url": "https://yalebulldogs.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 11
+  },
+  {
+   "team": "Columbia",
+   "url": "https://gocolumbialions.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Penn",
+   "url": "https://pennathletics.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 13
+  },
+  {
+   "team": "Brown",
+   "url": "https://brownbears.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 16
+  },
+  {
+   "team": "Cornell",
+   "url": "https://cornellbigred.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 17
+  },
+  {
+   "team": "Princeton",
+   "url": "https://goprincetontigers.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 13
+  },
+  {
+   "team": "Harvard",
+   "url": "https://gocrimson.com/sports/baseball/stats/2026",
+   "ok": false,
+   "why": "no 'Individual Overall Pitching Statistics' table"
+  },
+  {
+   "team": "Dartmouth",
+   "url": "https://dartmouthsports.com/sports/baseball/stats/2026",
+   "ok": true,
+   "pitchers": 14
+  }
+ ]
+}

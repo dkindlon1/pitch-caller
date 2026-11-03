@@ -1,0 +1,9 @@
+yardstick: fastball stuff off by one point costs 0.255 runs per 100 pitches; a trait must cost 0.064 or more
+side_cmd     true  0.8 -> learned  0.71 | true 0 ->  0.03 | ignoring it costs 0.01 runs/100 pitches | learnable, not worth it => stays at default
+side_grade   true  0.8 -> learned  0.57 | true 0 -> -0.10 | ignoring it costs 0.04 runs/100 pitches | learnable, not worth it => stays at default
+ahead_cmd    true -0.6 -> learned -0.36 | true 0 -> -0.02 | ignoring it costs 0.00 runs/100 pitches | learnable, not worth it => stays at default
+behind_cmd   true -0.6 -> learned -0.46 | true 0 ->  0.02 | ignoring it costs 0.05 runs/100 pitches | learnable, not worth it => stays at default
+stretch_cmd  true -0.8 -> learned -0.50 | true 0 ->  0.03 | ignoring it costs 0.06 runs/100 pitches | learnable, not worth it => stays at default
+miss_heart   true  0.6 -> learned  0.43 | true 0 ->  0.01 | ignoring it costs 0.00 runs/100 pitches | learnable, not worth it => stays at default
+(zero-size check: 0.0000 runs/100; 12 seasons per row; 515s)
+exit 0

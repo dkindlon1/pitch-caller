@@ -25,7 +25,8 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 
 | File | What it is |
 | --- | --- |
-| `engine.py` | The engine (v0.6f) |
+| `engine.py` | The engine (v0.7b: per-pitcher traits; command and stuff spread and the walk/strikeout link calibrated to real pitchers, one grade point = one SD at the level; no chase target at 3-0 or 3-1) |
+| `pitcher_lines.py`, `talent_spread.py`, `fit_spread.py`, `spread_params.py`, `spread_test.py` | Spread calibration: real 2026 per-pitcher lines, the true spread between pitchers, the fitted scales, and the check |
 | `flags.py` | "Time for a change" flag |
 | `simulate.py` | Full-game simulator with hidden hitter traits and pitch off-days; presets for pitcher and lineup types |
 | `review.py` | Grades every call against coaching rules (wrong / questionable) and measures predictability |
@@ -43,6 +44,7 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 Python 3.11+ with `numpy` and `scipy`. Node 18+ for the app checks (Playwright for the browser test).
 
     python3 tests.py                                     # 17 regression checks
+    python3 spread_test.py                               # calibrated spread between pitchers (about 2 minutes)
     python3 fuzz.py 3000 300                             # logic and learning checks
     LEVEL=college_d3 python3 batch.py runs/d3 1 10        # 10 simulated D3 games, graded
     STAFF=power LINEUP=fb_mashers LEVEL=hs python3 batch.py runs/x 1 10
@@ -57,8 +59,49 @@ finesse, two_pitch, lefty, four_pitch, shaky), `LINEUP` (default, strong, weak, 
 os_killers, late), `INPUTS` (1 results only, 2 plus contact, 3 plus hitter reads, 4 plus measured movement),
 `NOISE` (share of optional entries logged wrong), `TRUE_MOVE`, `SHAKE`, `OVERRIDE`.
 
+## Database and learning (app/)
+
+Everything lives on the device in IndexedDB (`app/db.js`): our team, pitchers with their arsenals, catchers, opponents
+and their hitters, pre-game check-ins, TrackMan/Rapsodo sessions, games, every pitch thrown, and the learned models.
+Records carry ids and timestamps and are soft-deleted, so a sync service (Supabase or similar) can be added later
+without changing the data. Back up and Restore on the Roster screen write and merge a JSON file (newer edits win).
+
+**Every logged pitch stores** the pitcher, pitch, hitter, catcher, target, result, where it ended up (if logged), the
+exact situation and inputs the engine used, and what the engine expected to happen.
+
+**The flywheel** (`app/learner.js`, learner v2, spec in `docs/LEARNING_SPEC.md`): after End game, every pitch he has
+thrown is replayed against what the engine expected, and each pitch's command and stuff are tracked game by game
+(starting from the coach's grades, allowing for drift, a new season and changes the coach marks). The calls move toward
+what's learned at most 0.15 a game and never more than 1.0 from the coach's grade unless he accepts a flag. Big
+disagreements are flagged, not applied. A scoreboard compares learning with the coach's grades and switches learning off
+if it predicts worse. Only the engine's own calls teach it. Hitters carry what they did against what the engine expected
+across games. Check-ins set the day's starting feel per pitch and can lower his fatigue point.
+
+**Imports** (`app/import.js`): TrackMan CSVs by its documented column names; Rapsodo by loose name matching (check the
+first real file). Break and release side are normalised to arm side positive using his fastballs. Opponent hitter sheets.
+
+| File | What it is |
+| --- | --- |
+| `app/db.js` | Database: stores, backup/restore, migration from the old saved state |
+| `app/learn.js` | Learner v1 (now only check-ins, predictions and logging helpers in the app; its limits fixed in 1.1.0) |
+| `app/import.js` | TrackMan, Rapsodo and hitter-sheet import |
+| `app/roster.js` | Database glue and the Roster screen (inlined into the page by `build.py`) |
+| `app/learn_test.js`, `db_test.js`, `import_test.js` | Node checks (`db_test.js` needs `npm i fake-indexeddb`) |
+| `app/db_e2e.js` | Browser test of the whole loop, served over http; screenshots in `app/e2e_shots/` |
+| `app/learner.js`, `app/worker.js` | Learner v2 (spec in `docs/LEARNING_SPEC.md`): replay, talent filter, traits, caps, flags, scoreboard. Drives the calls; runs after End game in a background worker. No trait passes the gate on v0.7b, so traits are off |
+| `app/replay_e2e.js`, `app/replay_check.js` | Proof that a charted game replays exactly from the raw log (browser game, then any backup) |
+| `app/shadow.js`, `app/sim_backup.js` | Learner v2 scored against the coach's grades and what the app served, on a backup; seasons charted through the app from a hidden true pitcher |
+| `app/worlds.js`, `app/worlds_test.js` | Simulated seasons played pitch by pitch, and the 13 worlds checks for learner v2 |
+| `app/gate_test.js`, `app/gate_result.json` | The trait gate and its latest result |
+| `app/same_engine_test.py` | Proves engine v0.7 with no traits and spread scales at 1 is identical to v0.6f (needs the old engine file as an argument) |
+
+    cd app && node learn_test.js && node db_test.js && node import_test.js
+    python3 build.py && node db_e2e.js
+
 ## Status
 
-Tested in simulation only. Logic checks: 28 of 29 hold. Game matrix: wrong calls 0.8-2.8% across 21 setups.
-Open: full games run 1-3 walk points above real at D3 and D1; amateur hitters' swing and chase behavior is assumed
-MLB-like until real pitch-by-pitch data is available.
+Tested in simulation only. Engine v0.7b (spec section 18): command and stuff spread and the walk/strikeout link match
+real 2026 pitchers; no chase target at 3-0 or 3-1. Regression checks 17 of 17, logic checks 27 of 29 (the two failures
+are explained in the spec), learner worlds 13 of 13, spread checks all pass; reduced matrix (6 setups × 4 games) wrong
+calls 0.3-4.9%. Open: amateur hitters' swing and chase behavior
+is assumed MLB-like until real pitch-by-pitch data is available; HS spread is estimated from D3.

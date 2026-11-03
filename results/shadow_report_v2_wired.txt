@@ -1,0 +1,118 @@
+=== wrong_1
+14 games, 1705 pitches: confidence largest difference 0, landing-today mismatches 0, pitch-count mismatches 0, games with holes 0, unversioned pitches 0 -> PASS
+
+Sim Pitcher (college_d3), 14 games
+game  pitches  located   coach    app      v2    | v2 serves (command/stuff per pitch)
+   1       88    yes    2.516  2.516  2.516  | Fastball 4/3, Slider 3/3, Changeup 3/3
+   2      116    yes    2.431  2.433  2.433  | Fastball 3.85/3.15, Slider 2.85/3.15, Changeup 2.85/2.95
+   3      118    yes    2.766  2.740  2.740  | Fastball 3.7/3.3, Slider 2.99/3, Changeup 2.7/3.1
+   4      105    yes    2.560  2.529  2.529  | Fastball 3.55/3.37, Slider 2.84/2.97, Changeup 2.85/3.25
+   5      132    yes    2.243  2.231  2.231  | Fastball 3.4/3.37, Slider 2.76/3.12, Changeup 2.98/3.4
+   6      135    yes    2.332  2.283  2.283  | Fastball 3.25/3.22, Slider 2.68/3.26, Changeup 2.92/3.41
+   7       89    yes    2.559  2.544  2.544  | Fastball 3.1/3.25, Slider 2.61/3.15, Changeup 2.83/3.35
+   8      102    yes    2.419  2.406  2.406  | Fastball 3/3.31, Slider 2.76/3.3, Changeup 2.98/3.48
+   9      132    yes    2.218  2.195  2.195  | Fastball 3/3.26, Slider 2.79/3.45, Changeup 3.11/3.33
+  10      110    yes    2.551  2.537  2.537  | Fastball 3/3.38, Slider 2.73/3.46, Changeup 3.09/3.22
+  11       99    yes    2.588  2.564  2.564  | Fastball 3/3.23, Slider 2.88/3.61, Changeup 3.01/3.25
+  12      132    yes    2.327  2.310  2.310  | Fastball 3/3.38, Slider 2.91/3.62, Changeup 3.05/3.28
+  13      130    yes    2.365  2.356  2.356  | Fastball 3/3.23, Slider 2.86/3.67, Changeup 3.02/3.21
+  14      109    yes    2.734  2.672  2.672  | Fastball 3/3.08, Slider 2.89/3.56, Changeup 3.1/3.08
+from game 4 on, 1275 pitches: surprise per pitch  coach 2.4286  app 2.4039  v2 2.4039
+  Fastball: learned command 2.43 ± 0.2, stuff 3.03 ± 0.29 from 722 pitches; scoreboard learned 2.360 vs grades 2.415
+  Slider: learned command 2.77 ± 0.21, stuff 3.53 ± 0.28 from 519 pitches; scoreboard learned 2.504 vs grades 2.508
+  Changeup: learned command 3.06 ± 0.21, stuff 3.02 ± 0.32 from 356 pitches; scoreboard learned 2.463 vs grades 2.458
+  FLAG grade: Fastball: command plays like 2.4, you have 4 (±0.20, 722 pitches)
+=== wrong_2
+14 games, 1733 pitches: confidence largest difference 0, landing-today mismatches 0, pitch-count mismatches 0, games with holes 0, unversioned pitches 0 -> PASS
+
+Sim Pitcher (college_d3), 14 games
+game  pitches  located   coach    app      v2    | v2 serves (command/stuff per pitch)
+   1      109    yes    2.432  2.432  2.432  | Fastball 4/3, Slider 3/3, Changeup 3/3
+   2      109    yes    2.764  2.754  2.754  | Fastball 3.85/3, Slider 2.86/3.15, Changeup 2.85/3.13
+   3      100    yes    2.527  2.516  2.516  | Fastball 3.7/2.85, Slider 2.71/3.3, Changeup 3/3.28
+   4      124    yes    2.463  2.451  2.451  | Fastball 3.55/2.76, Slider 2.71/3.19, Changeup 3.09/3.35
+   5      125    yes    2.491  2.451  2.451  | Fastball 3.4/2.85, Slider 2.84/3.34, Changeup 3.02/3.5
+   6      127    yes    2.530  2.508  2.508  | Fastball 3.25/3, Slider 2.94/3.49, Changeup 3.16/3.49
+   7       91    yes    2.676  2.594  2.594  | Fastball 3.1/2.89, Slider 3.05/3.64, Changeup 3.05/3.58
+   8      116    yes    2.559  2.541  2.541  | Fastball 3/2.93, Slider 3.01/3.78, Changeup 3.04/3.43
+   9      120    yes    2.516  2.465  2.465  | Fastball 3/2.85, Slider 3.04/3.83, Changeup 3.01/3.32
+  10      129    yes    2.476  2.455  2.455  | Fastball 3/2.78, Slider 3.05/3.98, Changeup 2.98/3.46
+  11       96    yes    2.603  2.562  2.562  | Fastball 3/2.68, Slider 3.13/4, Changeup 2.86/3.43
+  12      129    yes    2.554  2.538  2.538  | Fastball 3/2.66, Slider 3.12/4, Changeup 2.82/3.4
+  13      134    yes    2.418  2.392  2.392  | Fastball 3/2.77, Slider 3.21/3.89, Changeup 2.92/3.28
+  14      119    yes    2.510  2.497  2.497  | Fastball 3/2.92, Slider 3.15/3.88, Changeup 2.87/3.37
+from game 4 on, 1310 pitches: surprise per pitch  coach 2.5205  app 2.4910  v2 2.4910
+  Fastball: learned command 2.39 ± 0.21, stuff 2.94 ± 0.3 from 653 pitches; scoreboard learned 2.446 vs grades 2.502
+  Slider: learned command 3.1 ± 0.19, stuff 3.8 ± 0.26 from 609 pitches; scoreboard learned 2.536 vs grades 2.543
+  Changeup: learned command 2.91 ± 0.24, stuff 3.43 ± 0.33 from 366 pitches; scoreboard learned 2.446 vs grades 2.446
+  FLAG grade: Fastball: command plays like 2.4, you have 4 (±0.21, 653 pitches)
+=== right_1
+14 games, 1681 pitches: confidence largest difference 0, landing-today mismatches 0, pitch-count mismatches 0, games with holes 0, unversioned pitches 0 -> PASS
+
+Sim Pitcher (college_d3), 14 games
+game  pitches  located   coach    app      v2    | v2 serves (command/stuff per pitch)
+   1      102    yes    2.530  2.530  2.530  | Fastball 4/3, Slider 3/3, Changeup 3/3
+   2      110    yes    2.399  2.407  2.407  | Fastball 4.13/2.85, Slider 2.87/2.97, Changeup 3/2.88
+   3      112    yes    2.600  2.608  2.608  | Fastball 3.98/2.7, Slider 3.02/3.01, Changeup 2.85/2.99
+   4      123    yes    2.563  2.572  2.572  | Fastball 4.13/2.85, Slider 3.04/2.86, Changeup 2.82/2.9
+   5      127    yes    2.480  2.486  2.486  | Fastball 4.21/3, Slider 2.91/2.87, Changeup 2.97/3.05
+   6      135    yes    2.464  2.465  2.465  | Fastball 4.14/3.05, Slider 2.94/2.99, Changeup 3.12/3.2
+   7       95    yes    2.538  2.538  2.538  | Fastball 4.09/3.13, Slider 2.85/2.95, Changeup 3.17/3.15
+   8      102    yes    2.620  2.624  2.624  | Fastball 4.17/3.28, Slider 2.91/3.08, Changeup 3.14/3.19
+   9      128    yes    2.372  2.372  2.372  | Fastball 4.11/3.29, Slider 2.85/3.04, Changeup 3.13/3.24
+  10       96    yes    2.595  2.590  2.590  | Fastball 4.04/3.39, Slider 2.87/3, Changeup 3.06/3.23
+  11       92    yes    2.616  2.621  2.621  | Fastball 3.92/3.53, Slider 2.91/2.99, Changeup 3.16/3.16
+  12      132    yes    2.358  2.360  2.360  | Fastball 3.93/3.38, Slider 3.01/3.02, Changeup 3.25/3.25
+  13      120    yes    2.424  2.429  2.429  | Fastball 3.8/3.28, Slider 2.99/2.87, Changeup 3.26/3.12
+  14      105    yes    2.521  2.521  2.521  | Fastball 3.88/3.2, Slider 3.05/2.74, Changeup 3.2/3.21
+from game 4 on, 1255 pitches: surprise per pitch  coach 2.4952  app 2.4977  v2 2.4977
+  Fastball: learned command 3.95 ± 0.24, stuff 3.13 ± 0.29 from 726 pitches; scoreboard learned 2.448 vs grades 2.447
+  Slider: learned command 3.04 ± 0.18, stuff 2.68 ± 0.29 from 489 pitches; scoreboard learned 2.492 vs grades 2.492
+  Changeup: learned command 3.21 ± 0.22, stuff 3.11 ± 0.33 from 364 pitches; scoreboard learned 2.577 vs grades 2.572
+=== right_2
+14 games, 1661 pitches: confidence largest difference 0, landing-today mismatches 0, pitch-count mismatches 0, games with holes 0, unversioned pitches 0 -> PASS
+
+Sim Pitcher (college_d3), 14 games
+game  pitches  located   coach    app      v2    | v2 serves (command/stuff per pitch)
+   1      128    yes    2.406  2.406  2.406  | Fastball 4/3, Slider 3/3, Changeup 3/3
+   2      105    yes    2.590  2.594  2.594  | Fastball 3.92/3.15, Slider 2.85/3.15, Changeup 2.94/3.14
+   3       82    yes    2.551  2.537  2.537  | Fastball 3.82/3.21, Slider 3/3, Changeup 3.02/3.29
+   4      130    yes    2.367  2.359  2.359  | Fastball 3.67/3.3, Slider 3.01/3, Changeup 3.08/3.4
+   5      127    yes    2.650  2.646  2.646  | Fastball 3.52/3.41, Slider 3.02/3.15, Changeup 3.09/3.55
+   6       83    yes    2.677  2.663  2.663  | Fastball 3.51/3.26, Slider 3.03/3.21, Changeup 3.24/3.52
+   7      105    yes    2.554  2.555  2.555  | Fastball 3.48/3.34, Slider 2.88/3.16, Changeup 3.34/3.63
+   8      128    yes    2.443  2.437  2.437  | Fastball 3.5/3.27, Slider 2.82/3.3, Changeup 3.25/3.62
+   9      115    yes    2.601  2.587  2.587  | Fastball 3.43/3.34, Slider 2.77/3.16, Changeup 3.18/3.64
+  10      130    yes    2.477  2.472  2.472  | Fastball 3.35/3.35, Slider 2.81/3.2, Changeup 3.18/3.57
+  11       87    yes    2.653  2.672  2.672  | Fastball 3.34/3.29, Slider 2.79/3.24, Changeup 3.14/3.59
+  12      127    yes    2.440  2.445  2.445  | Fastball 3.48/3.43, Slider 2.94/3.22, Changeup 3.14/3.47
+  13      102    yes    2.681  2.685  2.685  | Fastball 3.51/3.34, Slider 3.04/3.15, Changeup 3.14/3.33
+  14      115    yes    2.408  2.414  2.414  | Fastball 3.64/3.39, Slider 3.12/3.05, Changeup 3.09/3.46
+from game 4 on, 1249 pitches: surprise per pitch  coach 2.5297  app 2.5279  v2 2.5279
+  Fastball: learned command 3.67 ± 0.2, stuff 3.38 ± 0.28 from 762 pitches; scoreboard learned 2.560 vs grades 2.562
+  Slider: learned command 3.07 ± 0.22, stuff 2.94 ± 0.3 from 446 pitches; scoreboard learned 2.580 vs grades 2.577
+  Changeup: learned command 3.02 ± 0.24, stuff 3.36 ± 0.33 from 356 pitches; scoreboard learned 2.474 vs grades 2.473
+=== change_1
+14 games, 1721 pitches: confidence largest difference 0, landing-today mismatches 0, pitch-count mismatches 0, games with holes 0, unversioned pitches 0 -> PASS
+
+Sim Pitcher (college_d3), 14 games
+game  pitches  located   coach    app      v2    | v2 serves (command/stuff per pitch)
+   1      116    yes    2.661  2.661  2.661  | Fastball 4/3, Slider 3/3, Changeup 3/3
+   2       94    yes    2.722  2.724  2.724  | Fastball 4.1/3, Slider 2.89/2.85, Changeup 3.15/2.85
+   3      106    yes    2.676  2.660  2.660  | Fastball 4.08/3.15, Slider 3.04/2.7, Changeup 3.3/2.79
+   4      109    yes    2.469  2.484  2.484  | Fastball 4.08/3.3, Slider 3.02/2.55, Changeup 3.45/2.88
+   5      132    yes    2.492  2.479  2.479  | Fastball 4.03/3.45, Slider 3.17/2.49, Changeup 3.34/3.03
+   6      135    yes    2.352  2.372  2.372  | Fastball 3.97/3.55, Slider 3.19/2.54, Changeup 3.47/3.09
+   7       97    yes    2.593  2.600  2.600  | Fastball 3.88/3.4, Slider 3.04/2.68, Changeup 3.39/3.09
+   8      115    yes    2.393  2.399  2.399  | Fastball 3.88/3.33, Slider 2.89/2.83, Changeup 3.37/3.13
+   9      133    yes    2.250  2.250  2.250  | Fastball 3.93/3.29, Slider 2.95/3, Changeup 3.35/3.09
+  10      131    yes    2.325  2.297  2.297  | Fastball 3.43/2.79, Slider 2.73/3.05, Changeup 3.15/3.59
+  11      102    yes    2.484  2.463  2.463  | Fastball 3/2.52, Slider 2.45/2.92, Changeup 3.46/3.46
+  12      132    yes    2.226  2.224  2.224  | Fastball 3/2.54, Slider 2.47/2.76, Changeup 3.44/3.73
+  13      123    yes    2.475  2.450  2.450  | Fastball 3/2.69, Slider 2.41/2.29, Changeup 3.07/3.25
+  14       94    yes    2.619  2.609  2.609  | Fastball 3/2.75, Slider 2.47/2.24, Changeup 3.05/3.16
+from game 4 on, 1303 pitches: surprise per pitch  coach 2.4127  app 2.4082  v2 2.4082
+  Fastball: learned command 2.07 ± 0.25, stuff 2.68 ± 0.4 from 754 pitches; scoreboard learned 2.319 vs grades 2.350
+  Slider: learned command 2.7 ± 0.31, stuff 2.61 ± 0.43 from 436 pitches; scoreboard learned 2.406 vs grades 2.399
+  Changeup: learned command 2.99 ± 0.25, stuff 3 ± 0.4 from 429 pitches; scoreboard learned 2.414 vs grades 2.414
+  FLAG grade: Fastball: command plays like 2.1, you have 4 (±0.25, 754 pitches)

@@ -74,6 +74,12 @@ def V(balls, strikes, outs, bases, cv=None, level="mlb"):
 # ---------------------------------------------------------------------------
 
 QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"]
+NO_CHASE = {(3, 0), (3, 1)}     # v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
+
+
+def targets(balls, strikes):
+    """The targets the engine may call in this count."""
+    return [q for q in QUADS if q != "chase"] if (balls, strikes) in NO_CHASE else QUADS
 ZONES = ["heart", "edge", "off", "noncomp"]
 
 LEVEL = {  # c_L confidence weight, h_L hitter-read weight, confidence cutoff, fatigue start
@@ -96,6 +102,15 @@ try:
     from outcome_params import OUTCOME_FIT
     for _lvl, _d in OUTCOME_FIT.items():
         OUTCOME_ADJ[_lvl].update(_d)
+except ImportError:
+    pass
+try:   # v0.7: one grade point = one SD of real pitchers at the level (fit_spread.py); absent = scale 1, the v0.6 engine
+    from spread_params import SPREAD_FIT
+    for _lvl, _d in SPREAD_FIT.items():
+        for _l in ([_lvl, "college"] if _lvl == "college_d1" else [_lvl]):
+            LEVEL[_l]["cmd_scale"] = _d["cmd_scale"]; LEVEL[_l]["stuff_scale"] = _d["stuff_scale"]
+            if _d.get("cmd_whiff"):
+                LEVEL[_l]["cmd_whiff"] = _d["cmd_whiff"]
 except ImportError:
     pass
 
@@ -123,6 +138,9 @@ class Pitch:
     slot: str = "three-quarter"
     height_ft: float = 6.1
     release_offset_in: tuple = (0.0, 0.0)   # (side, height) vs his fastball slot; nonzero = tips the pitch
+    # v0.7 personal traits (learned per pitcher; None/absent = the default engine, exactly as before)
+    strike_rate: float = None  # his expected strike rate with this pitch; "landing today" and confidence measure against it
+    traits: dict = None        # situational effects and miss tendency, see TRAIT_KEYS
 
     def __post_init__(self):
         if self.base_conf < 0:
@@ -167,6 +185,13 @@ def update_confidence(p, event):
     d = CONF_DELTA[event]
     if event == "whiff" and p.kind == "FB":
         d += 0.02                       # blowing a fastball by someone still counts extra
+    if p.strike_rate is not None:       # v0.7: news is measured against HIS usual strike rate, so a pitcher who is
+        c = LAND_CENTER["OS" if is_offspeed(p.kind) else "FB"]     # always wild doesn't sink all game, and the drift
+        q = min(0.95, max(0.05, p.strike_rate))                     # from his normal mix matches an average pitcher's
+        if event == "ball":
+            d *= (1 - c) / (1 - q)
+        elif event in ("cstrike", "whiff"):
+            d *= c / q
     p.conf = max(0.0, min(p.base_conf + CONF_CAP_ABOVE, 1.0, p.conf + d))
 
 
@@ -210,7 +235,7 @@ LAND_MAX = 0.6
 
 def landing_estimate(p: Pitch, s: Situation):
     ev = s.landing_today.get(p.name) if s.landing_today else None
-    center = LAND_CENTER["OS" if is_offspeed(p.kind) else "FB"]
+    center = p.strike_rate if p.strike_rate is not None else LAND_CENTER["OS" if is_offspeed(p.kind) else "FB"]
     if not ev:
         return center, center, 0
     st, n = ev
@@ -224,21 +249,70 @@ def wild_today(p: Pitch, s: Situation):
     return min(LAND_MAX, max(0.0, LAND_GAIN * (center - est))) if n else 0.0
 
 
+# v0.7 personal traits. Effects are offsets in grade points; all default to 0, which is the default engine.
+#   side_cmd, side_grade: same-side minus opposite-side hitters (coded +1/2 same, -1/2 opposite, so the base value is the average)
+#   ahead_cmd, behind_cmd: command when ahead / behind in the count, relative to an even count
+#   stretch_cmd: command with anyone on base, relative to the bases empty
+#   miss_heart: -1..1, where his misses go: + leaks over the heart (hittable), - goes off the plate (balls)
+TRAIT_KEYS = ("side_cmd", "side_grade", "ahead_cmd", "behind_cmd", "stretch_cmd", "miss_heart")
+
+
+def effective(p: Pitch, s: Situation):
+    """His command and stuff in this situation: the base values plus his personal situational effects."""
+    t = p.traits
+    if not t:
+        return p.command, p.grade
+    side = 0.5 if s.same_side else -0.5
+    cmd = p.command + side * t.get("side_cmd", 0.0) + t.get("stretch_cmd", 0.0) * (1.0 if any(s.bases) else 0.0)
+    if s.strikes > s.balls:
+        cmd += t.get("ahead_cmd", 0.0)
+    elif s.balls > s.strikes:
+        cmd += t.get("behind_cmd", 0.0)
+    return cmd, p.grade + side * t.get("side_grade", 0.0)
+
+
 def landing(p: Pitch, q: str, s: Situation):
-    eff = min(5, max(1, p.command + OUTCOME_ADJ[s.level]["cmd"] + 2.0 * (p.conf - 0.6)))   # low confidence = worse command
-    d = eff - 3
+    command, _ = effective(p, s)
+    # v0.7 spread calibration: one grade point of command = one SD of real pitchers at this level (talent_spread.py,
+    # fit_spread.py). cmd_scale 1 = the v0.6 engine. The level offset and confidence keep their own (unscaled) effect.
+    sc = LEVEL[s.level].get("cmd_scale", 1.0)
+    if sc == 1.0:   # the v0.6 formula exactly (same rounding)
+        d = min(5, max(1, command + OUTCOME_ADJ[s.level]["cmd"] + 2.0 * (p.conf - 0.6))) - 3   # low confidence = worse command
+    else:
+        d = min(8.0, max(-8.0, sc * (command - 3) + OUTCOME_ADJ[s.level]["cmd"] + 2.0 * (p.conf - 0.6)))
     if q == "chase":
         # [R4] expand, don't waste: aim just off the zone, not way off
-        z = {"heart": 0.05 - 0.01 * d, "edge": 0.24, "off": 0.57 + 0.04 * d, "noncomp": 0.14 - 0.03 * d}
+        z0, sl = {"heart": 0.05, "edge": 0.24, "off": 0.57, "noncomp": 0.14}, {"heart": -0.01, "edge": 0.0, "off": 0.04, "noncomp": -0.03}
     elif q == "middle":   # "get it over": aim at the heart
-        z = {"heart": 0.50 + 0.03 * d, "edge": 0.30, "off": 0.13 - 0.02 * d, "noncomp": 0.07 - 0.01 * d}
+        z0, sl = {"heart": 0.50, "edge": 0.30, "off": 0.13, "noncomp": 0.07}, {"heart": 0.03, "edge": 0.0, "off": -0.02, "noncomp": -0.01}
     else:
-        z = {"heart": 0.26 - 0.03 * d, "edge": 0.42 + 0.08 * d, "off": 0.22 - 0.03 * d, "noncomp": 0.10 - 0.02 * d}
-    if is_offspeed(p.kind):
-        # breaking balls and changeups are harder to land for strikes
-        z["edge"] -= 0.12
-        z["off"] += 0.07
-        z["noncomp"] += 0.05
+        z0, sl = {"heart": 0.26, "edge": 0.42, "off": 0.22, "noncomp": 0.10}, {"heart": -0.03, "edge": 0.08, "off": -0.03, "noncomp": -0.02}
+    if sc == 1.0:   # the v0.6 straight-line shares, exactly
+        z = {k: z0[k] + sl[k] * d for k in z0}
+        if is_offspeed(p.kind):
+            # breaking balls and changeups are harder to land for strikes
+            z["edge"] -= 0.12
+            z["off"] += 0.07
+            z["noncomp"] += 0.05
+    else:
+        # v0.7: with command spread to real pitchers, d gets large and straight lines run into zero. Each zone's share
+        # moves exponentially instead, with the same first-order change around an average pitcher, so nothing saturates.
+        if is_offspeed(p.kind):
+            z0 = {"heart": z0["heart"], "edge": z0["edge"] - 0.12, "off": z0["off"] + 0.07, "noncomp": z0["noncomp"] + 0.05}
+        w = {k: z0[k] * exp(sl[k] / z0[k] * d) for k in z0}
+        t = sum(w.values())
+        z = {k: v / t for k, v in w.items()}
+    mh = p.traits.get("miss_heart", 0.0) if p.traits else 0.0
+    if mh:                                   # v0.7: where his misses go, beyond what command says
+        mh = min(1.0, max(-1.0, mh))
+        if mh > 0:
+            m = 0.3 * mh * z["off"]
+            z["off"] -= m
+            z["heart"] += m
+        else:
+            m = 0.3 * -mh * z["heart"]
+            z["heart"] -= m
+            z["off"] += m
     w = OUTCOME_ADJ[s.level]["wild"]          # v0.6: league-level wildness (amateur pitchers miss more)
     if w:
         mh, me = w * z["heart"], w * z["edge"]
@@ -473,6 +547,12 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
 
     hitters_count = s.balls > s.strikes and s.strikes < 2
     land = landing(p, q, s)
+    command, grade = effective(p, s)
+    gs = 0.25 * L.get("stuff_scale", 1.0)        # v0.7: one grade point of stuff = one SD of real pitchers (fit_spread.py)
+    # v0.7b command and swing-and-miss: real pitchers' walk and strikeout rates are nearly independent (correlation about
+    # -0.1 in 2026 D3 and D1 lines), so better command must not also buy many more strikeouts. Precise pitchers work in
+    # and around the zone, where hitters make more contact; this term sets how much (fit_spread.py). 0 = off.
+    cw = L.get("cmd_whiff", 0.0) * (command - 3)
     out = {"ball": 0, "cstrike": 0, "whiff": 0, "foul": 0, "weak": 0, "solid": 0, "hard": 0, "wp_ball": 0, "hbp": 0}
 
     for z, pz in land.items():
@@ -493,14 +573,16 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         S = sig(sl) if S0[z] > 0 else 0
         C = sig(logit(C0[z]) + A["cs"]) if z in ("edge", "off") else C0[z]
         # whiff
-        wl = logit(W0[z]) + KIND_W[p.kind] + 0.25 * (p.grade - 3) + cL * 1.5 * (p.conf - 0.6)
+        wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6)
         wl += L["hL"] * (-1.5 * (E - neutral) + 0.6 * tau_eff - 0.4 * DMG_SCALE * dmg)
         wl += bT * T + 0.25 * f
         wl += wz_ * A["wz"] + (1 - wz_) * A["wo"]
+        if cw:
+            wl -= cw
         W = sig(wl)
         F = sig(logit(F0[z]) + (0.3 if s.strikes == 2 else 0))
         # contact quality: shift hard share
-        hl = -0.25 * (p.grade - 3) - cL * 0.5 * (p.conf - 0.6) + L["hL"] * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f
+        hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L["hL"] * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f
         hl += 0.012 * s.batters_faced                  # [R8] steady decline, no cliff
         hl -= L["hL"] * 0.5 * tau_eff                  # v0.6e: off-time swings make weaker contact too
         if p.kind == "CH" and s.same_side:
@@ -692,9 +774,10 @@ def mixed_policy(arsenal, s, T=0.010, window=0.030, forced=None, iters=8, cv=Non
     T, window = T * k, window * k * min(1.0, f)        # big counts: tighter never-pick window too
     temp = T * (0.5 if is_big_spot(s) else 1.0) * f
     policy = None
+    tq = targets(s.balls, s.strikes)
     for _ in range(iters):
         costs = {(p.name, q): cost(p, q, s, arsenal, policy, cv)[0] for p in cands for q in QUADS}
-        best_by_pitch = {p.name: min(costs[(p.name, q)] for q in QUADS) for p in cands}
+        best_by_pitch = {p.name: min(costs[(p.name, q)] for q in tq) for p in cands}
         p_pitch = _softmax(best_by_pitch, temp, window)
         new = {x.name: p_pitch.get(x.name, 0.0) for x in arsenal}
         policy = new if policy is None else {k: 0.5 * policy[k] + 0.5 * new[k] for k in new}
@@ -716,11 +799,13 @@ def at_bat_values(arsenal, s, T=0.010, window=0.030, sweeps=10, iters=4):
                          usage_this_count={} if (b, k) != (s.balls, s.strikes) else s.usage_this_count)
             policy, costs, temp = mixed_policy(arsenal, sc, T, window, iters=iters, cv=cv)
             ev = 0.0
+            tq = targets(b, k)
+            best_ok = min(c for (_, q), c in costs.items() if q in tq)
             for name, pp in policy.items():
                 if pp <= 0:
                     continue
-                loc = _softmax({q: costs[(name, q)] for q in QUADS}, temp, LOC_WINDOW * run_scale(s.level) * min(1.0, stakes_factor(b, k, s.level)), min(costs.values())) \
-                      or {min(QUADS, key=lambda q: costs[(name, q)]): 1.0}
+                loc = _softmax({q: costs[(name, q)] for q in tq}, temp, LOC_WINDOW * run_scale(s.level) * min(1.0, stakes_factor(b, k, s.level)), best_ok) \
+                      or {min(tq, key=lambda q: costs[(name, q)]): 1.0}
                 ev += pp * sum(pq * costs[(name, q)] for q, pq in loc.items())
             new = ev - base
             delta = max(delta, abs(new - cv[(b, k)]))
@@ -751,12 +836,13 @@ def call_mixed(arsenal, s: Situation, T=0.010, window=0.030, forced=None, rng=No
     t = sum(p_pitch.values())
     p_pitch = {k: v / t for k, v in p_pitch.items()}
     dist = []
-    overall_best = min(costs.values())
+    tq = targets(s.balls, s.strikes)
+    overall_best = min(c for (_, q), c in costs.items() if q in tq)
     for name, pp in p_pitch.items():
-        loc = _softmax({q: costs[(name, q)] for q in QUADS}, temp,
+        loc = _softmax({q: costs[(name, q)] for q in tq}, temp,
                        LOC_WINDOW * run_scale(s.level) * min(1.0, stakes_factor(s.balls, s.strikes, s.level)), overall_best)
         if not loc:   # pitch made the mix but none of its spots are close: use its best spot
-            bq = min(QUADS, key=lambda q: costs[(name, q)])
+            bq = min(tq, key=lambda q: costs[(name, q)])
             loc = {bq: 1.0}
         p = next(x for x in arsenal if x.name == name)
         for q, pq in loc.items():

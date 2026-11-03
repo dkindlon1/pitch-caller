@@ -77,10 +77,13 @@ for i in range(N_CHEAP):
     L = e.landing(p, q, s)
     if abs(sum(L.values()) - 1) > 1e-9 or min(L.values()) <= 0: f["land"] += 1
     c0 = e.cost(p, q, s, ars)[0]
-    # better stuff never makes the pitch worse
-    if p.grade < 5:
+    # better stuff never makes the pitch worse. Outside 2-0, 3-0, 3-1, like the timing rule below: in those counts more
+    # swing-and-misses replace balls in play that are usually outs, and the miss leaves a hitter's count. With stuff
+    # spread to real pitchers (v0.7) that reversal reaches 0.002-0.003 runs (8 of 3000, all in those counts).
+    hitters_count = (s.balls, s.strikes) in ((2, 0), (3, 0), (3, 1))
+    if p.grade < 5 and not hitters_count:
         p2 = replace(p, grade=p.grade + 1); ars2 = [p2 if x is p else x for x in ars]
-        if worse(e.cost(p2, q, s, ars2)[0] - c0, "Better stuff never makes a pitch cost more"): f["grade"] += 1; ex["grade"] = (p.name, q, s.balls, s.strikes)
+        if worse(e.cost(p2, q, s, ars2)[0] - c0, "Better stuff never makes a pitch cost more (outside 2-0, 3-0, 3-1)"): f["grade"] += 1; ex["grade"] = (p.name, q, s.balls, s.strikes)
     # more confidence never makes the pitch worse
     if p.conf < 0.9:
         p3 = replace(p, conf=p.conf + 0.05, base_conf=p.base_conf); ars3 = [p3 if x is p else x for x in ars]
@@ -88,7 +91,7 @@ for i in range(N_CHEAP):
     # a hitter who crushes this pitch class makes it costlier (more damage evidence, same n)
     key = "OS" if e.is_offspeed(p.kind) else "FB"
     s_hi = replace(s, hitter_damage={**s.hitter_damage, key: (0.8, 20)}); s_lo = replace(s, hitter_damage={**s.hitter_damage, key: (-0.2, 20)})
-    if worse(e.cost(p, q, s_lo, ars)[0] - e.cost(p, q, s_hi, ars)[0], "A hitter crushing a pitch class makes it cost more"): f["dmg"] += 1
+    if not hitters_count and worse(e.cost(p, q, s_lo, ars)[0] - e.cost(p, q, s_hi, ars)[0], "A hitter crushing a pitch class makes it cost more (outside 2-0, 3-0, 3-1)"): f["dmg"] += 1
     # a fastball looks better to a hitter who is late on fastballs than to one who is early
     if p.kind == "FB" and (s.balls, s.strikes) not in ((2, 0), (3, 0), (3, 1)):   # hitter's counts: a ball in play beats a whiff
         s_late = replace(s, timing={**s.timing, "FB": 0.8}); s_early = replace(s, timing={**s.timing, "FB": -0.8})
@@ -104,9 +107,9 @@ for i in range(N_CHEAP):
 report("Outcome probabilities add to 1", f["sum"], N_CHEAP, ex.get("sum"))
 report("No negative probabilities", f["neg"], N_CHEAP, ex.get("neg"))
 report("Landing shares add to 1 and are all positive", f["land"], N_CHEAP)
-report("Better stuff never makes a pitch cost more", f["grade"], N_CHEAP, ex.get("grade"))
+report("Better stuff never makes a pitch cost more (outside 2-0, 3-0, 3-1)", f["grade"], N_CHEAP, ex.get("grade"))
 report("More confidence never makes a pitch cost more", f["conf"], N_CHEAP, ex.get("conf"))
-report("A hitter crushing a pitch class makes it cost more", f["dmg"], N_CHEAP)
+report("A hitter crushing a pitch class makes it cost more (outside 2-0, 3-0, 3-1)", f["dmg"], N_CHEAP)
 report("Fastball costs less vs a hitter late on fastballs than one early (outside 2-0, 3-0, 3-1)", f["timing"], N_CHEAP)
 report("Inside misses hit batters at least as often as away misses", f["hbp"], N_CHEAP)
 report("No wild pitches with the bases empty", f["wp"], N_CHEAP)
@@ -151,9 +154,10 @@ for i in range(N_FULL):
     best = min(d[1] for d in dist)
     k_ = e.run_scale(s.level) * min(1.0, e.stakes_factor(s.balls, s.strikes, s.level))
     policy, costs, _ = e.mixed_policy(ars, s, cv=e.at_bat_values(ars, s)[1])
-    allbest = min(costs.values())
+    tq = e.targets(s.balls, s.strikes)            # v0.7b: no chase target at 3-0 or 3-1
+    allbest = min(c for (_, qq), c in costs.items() if qq in tq)
     for d in dist:
-        pbest = min(costs[(d[2].name, qq)] for qq in e.QUADS)
+        pbest = min(costs[(d[2].name, qq)] for qq in tq)
         if d[1] - allbest > 0.030 * k_ + 1e-9 and d[1] - pbest > 1e-12:
             f2["window"] += 1; ex2["window"] = (d[2].name, d[3], round(d[1] - allbest, 4), s.level, s.balls, s.strikes); break
     cut = e.LEVEL[s.level]["cutoff"]

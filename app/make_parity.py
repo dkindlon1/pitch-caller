@@ -21,6 +21,10 @@ def rand_arsenal():
             d["ivb"], d["hb"] = round(rng.uniform(-15, 20), 1), round(rng.uniform(-15, 16), 1)
         if rng.random() < 0.15:
             d["release_offset_in"] = [rng.choice([-3, 0, 2]), rng.choice([0, 4])]
+        if rng.random() < 0.35:   # v0.7 personal traits
+            d["traits"] = {k: round(rng.uniform(-0.8, 0.8), 2) for k in e.TRAIT_KEYS if rng.random() < 0.7}
+        if rng.random() < 0.35:
+            d["strike_rate"] = round(rng.uniform(0.4, 0.8), 3)
         out.append(d)
     return out
 
@@ -62,6 +66,11 @@ for i in range(int(sys.argv[1]) if len(sys.argv) > 1 else 120):
         _, dist = e.call_mixed(ars, s, rng=random.Random(0))
         case["atbat"] = {f"{bb}-{kk}": v for (bb, kk), v in rel.items()}
         case["dist"] = [[pr, c, p.name, q] for pr, c, p, q in dist]
+    conf = {}   # v0.7: confidence updates measured against his strike rate
+    for d in ars_d:
+        for ev in ("ball", "cstrike", "whiff", "hard"):
+            p = mk_pitch(d); e.update_confidence(p, ev); conf[f"{d['name']}|{ev}"] = p.conf
+    case["conf"] = conf
     cases.append(case)
 json.dump(cases, open("app/parity_cases.json", "w"))
 print(len(cases), "cases")
