@@ -1,0 +1,21 @@
+lvl_hs LEVEL=hs
+lvl_d3 LEVEL=college_d3
+lvl_d1 LEVEL=college_d1
+lvl_mlb LEVEL=mlb
+staff_power LEVEL=college_d3 STAFF=power
+staff_finesse LEVEL=college_d3 STAFF=finesse
+staff_two_pitch_hs LEVEL=hs STAFF=two_pitch
+staff_lefty LEVEL=college_d3 STAFF=lefty
+staff_four_pitch LEVEL=college_d1 STAFF=four_pitch
+staff_shaky LEVEL=college_d3 STAFF=shaky
+lu_strong LEVEL=college_d3 LINEUP=strong
+lu_weak LEVEL=college_d3 LINEUP=weak
+lu_lefty_heavy LEVEL=college_d3 LINEUP=lefty_heavy
+lu_switch LEVEL=college_d3 LINEUP=switch
+lu_fb_mashers LEVEL=college_d3 LINEUP=fb_mashers
+lu_os_killers LEVEL=college_d3 LINEUP=os_killers
+lu_late LEVEL=college_d3 LINEUP=late
+in1_results LEVEL=college_d3 INPUTS=1 TRUE_MOVE=1
+in3_noise30 LEVEL=college_d3 INPUTS=3 NOISE=0.30 TRUE_MOVE=1
+beh_shakes LEVEL=college_d3 SHAKE=3
+beh_override LEVEL=college_d3 OVERRIDE=0.2

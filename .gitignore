@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+# simulated game logs (regenerate with batch.py / matrix/run.sh)
+runs/
+matrix/*/
+matrix/*.txt
+!matrix/configs.txt
+app/parity_cases.json
+app/*.png
