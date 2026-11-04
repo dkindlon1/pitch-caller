@@ -560,7 +560,7 @@ body.is-live { background:
   linear-gradient(var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px,
   linear-gradient(90deg, var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px, var(--lv-bg); }
 body.is-live .stage { display: none; }
-#app.live-wrap { max-width: 1440px; height: 100vh; height: 100dvh; min-height: 740px; display: flex; flex-direction: column; gap: 10px;
+#app.live-wrap { max-width: 1440px; height: 100vh; height: 100dvh; min-height: 790px; display: flex; flex-direction: column; gap: 10px;
   padding: max(10px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
 #app.live-wrap > .bar { height: 46px; flex: none; background: var(--lv-glass); border-color: var(--lv-glass-line); font-family: var(--fb-text); }
 #app.live-wrap > .bar .wordmark { font-family: var(--fd); font-size: 19px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
@@ -591,6 +591,7 @@ body.is-live .stage { display: none; }
 .lv-strip { display: flex; align-items: center; height: 64px; padding: 0 8px; min-width: 0; }
 .lv-strip .sc { display: flex; flex-direction: column; gap: 6px; padding: 0 14px; border-left: 1px solid var(--lv-glass-line); min-width: 0; justify-content: center; }
 .lv-strip .sc:first-child { border-left: 0; padding-left: 10px; }
+.lv-strip .sc { flex: none; } .lv-strip .sc.who { flex: 0 1 auto; } .lv-strip .sc.who .v { min-width: 0; }
 .lv-strip .sc .k { font: 600 12px/1 var(--fb-text); letter-spacing: .12em; text-transform: uppercase; color: var(--lv-text3); white-space: nowrap; }
 .lv-strip .sc .v { font: 800 30px/1 var(--fm); letter-spacing: -.03em; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 .lv-strip .inn .v { font: 700 24px/1 var(--fd); letter-spacing: .01em; text-transform: uppercase; }
@@ -634,6 +635,7 @@ body.is-live .stage { display: none; }
 .lv-pitcher { flex: none; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
 .lv-pitcher .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
 .lv-pitcher .top > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lv-pitcher .top > div:last-child { flex: none; }
 .lv-pitcher .top b { font: 700 23px/1 var(--fd); }
 .lv-pitcher .top .n { font: 800 25px/1 var(--fm); text-align: right; }
 .lv-meter { position: relative; height: 8px; border-radius: 4px; background: var(--lv-surface3); }
@@ -657,7 +659,7 @@ body.is-live .stage { display: none; }
 .lv-trustnote::before { content: ""; width: 2px; height: 14px; flex: none; background: var(--lv-text); }
 
 /* pitch log */
-.lv-log { flex: 1; min-height: 100px; padding: 8px 8px 8px; display: flex; flex-direction: column; gap: 4px; }
+.lv-log { container-type: inline-size; container-name: log; flex: 1; min-height: 100px; padding: 8px 8px 8px; display: flex; flex-direction: column; gap: 4px; }
 .lv-log .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 4px 2px 6px; min-height: 44px; }
 .lv-log .hd > div { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .lv-log .hd small { font: 500 12px/1 var(--fb-text); color: var(--lv-text3); }
@@ -672,13 +674,14 @@ body.is-live .stage { display: none; }
 .log-row .tx small { font: 500 11px/1 var(--fb-text); color: var(--lv-text3); }
 .log-row .ct { font: 800 13px/1 var(--fm); color: var(--lv-text2); flex: none; }
 .log-row svg { flex: none; }
+@container log (max-width: 250px) { .log-row > span:last-child { display: none; } .log-row { gap: 7px; padding: 0 8px; } }
 
 /* the call */
 .lv-call { border-radius: 22px; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 .lv-band { flex: none; display: flex; gap: 16px; align-items: center; padding: 16px 18px; background: var(--lv-call); color: #07090C; }
 .lv-sign { width: 104px; height: 118px; flex: none; border-radius: 16px; background: #07090C; color: var(--lv-call); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .lv-sign small { font: 700 12px/1 var(--fb-text); letter-spacing: .18em; color: #C9D2DB; }
-.lv-sign span { font: 800 84px/.9 var(--fm); }
+.lv-sign span { font: 800 84px/1 var(--fm); }
 .lv-band .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .lv-band .badges { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .lv-badge { font: 800 12px/1 var(--fb-text); letter-spacing: .14em; text-transform: uppercase; padding: 6px 9px; border-radius: 6px; background: #07090C; color: var(--lv-call); white-space: nowrap; }
@@ -688,13 +691,15 @@ body.is-live .stage { display: none; }
 .lv-band .spot { margin: 0; font: 700 30px/1 var(--fd); text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #07090C; }
 .lv-body { flex: 1; min-height: 0; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
 .lv-body .split { display: flex; gap: 16px; flex: 1; min-height: 0; overflow: hidden; }
+@media (min-width: 1001px) { .lv-body .split { container-type: size; container-name: split; } }
+@container split (max-height: 270px) { .lv-read .tile small { display: none; } .lv-read .tile { padding-block: 6px; } }
 .lv-body .why { margin: 0; flex: none; font: 500 16px/1.35 var(--fb-text); color: var(--lv-text2); text-wrap: pretty; max-width: none; grid-column: auto; }
 .lv-body .why b { color: var(--lv-text); font-weight: 700; }
 
 /* where it ended up (with the target ringed) */
-.locpick { flex: none; display: flex; flex-direction: column; gap: 8px; }
+.live .locpick { flex: none; display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; background: none; border: 0; border-radius: 0; }
 .locpick .grid5 { display: flex; gap: 8px; }
-.lgrid { display: grid; grid-template-columns: repeat(5, 42px); grid-template-rows: repeat(5, 42px); gap: 4px; }
+.lgrid { display: grid; grid-template-columns: repeat(5, 44px); grid-template-rows: repeat(5, 44px); gap: 4px; }
 .lc { position: relative; padding: 0; border-radius: 8px; box-sizing: border-box; cursor: pointer; background: transparent; border: 2px dashed var(--lv-line); }
 .lc.z-edge { background: var(--lv-surface2); border: 2px solid var(--lv-line); }
 .lc.z-heart { background: var(--lv-surface3); border: 2px solid var(--lv-text3); }
@@ -715,10 +720,13 @@ body.is-live .stage { display: none; }
 
 /* the target when location logging is off */
 .lv-zone { flex: none; display: flex; flex-direction: column; gap: 8px; }
-.lv-zone svg { display: block; width: 236px; height: auto; max-height: calc(100dvh - 520px); min-height: 180px; }
+.lv-zone svg { display: block; width: 236px; height: auto; }
+@container split (min-height: 1px) { .lv-zone svg { width: auto; height: min(calc(100cqh - 28px), 300px); max-width: 260px; } }
 
 /* readout */
-.lv-read { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.lv-read { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; container-type: inline-size; container-name: read; }
+@container read (max-width: 150px) { .lv-read .tile { padding: 6px 10px; } .lv-read .tile .v b { font-size: 21px; } .lv-read .tile .v span { font-size: 13px; } .lv-read .tile small { display: none; } }
+.lv-read .tile .lab { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lv-read .tile { flex: 1; min-height: 0; padding: 9px 14px; border-radius: 14px; background: var(--lv-surface2); display: flex; flex-direction: column; justify-content: center; gap: 6px; }
 .lv-read .tile .v { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
 .lv-read .tile .v b { font: 800 28px/1 var(--fm); letter-spacing: -.03em; }
@@ -751,6 +759,7 @@ body.is-live .stage { display: none; }
 .opt .pc { width: 34px; height: 28px; border-radius: 7px; font-size: 12px; }
 .opt .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .opt .tx b { font: 700 15px/1 var(--fb-text); }
+.opt .nl { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .opt.struck .tx b { text-decoration: line-through; }
 .opt .tx small { font: 500 13px/1 var(--fb-text); color: var(--lv-text2); }
 .opt .tag { font: 800 10px/1 var(--fb-text); letter-spacing: .1em; text-transform: uppercase; padding: 5px 6px; border-radius: 5px; white-space: nowrap; flex: none; background: var(--pf); color: #07090C; }
@@ -869,14 +878,16 @@ body.is-live .stage { display: none; }
 .lv-ov .x { width: 52px; height: 52px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0; }
 
 /* the toast above the result bar, with its actions */
-body.is-live .toast { bottom: auto; top: max(10px, env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 8px 6px 22px; border-radius: 30px; background: var(--lv-sel); color: var(--lv-sel-text); border: 0; font: 700 17px/1.2 var(--fb-text); box-shadow: var(--lv-shadow); -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.is-live .toast { bottom: auto; top: max(9px, env(safe-area-inset-top, 0px)); left: auto; right: max(14px, env(safe-area-inset-right, 0px)); transform: none; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 2px 2px 2px 20px; border-radius: 26px; background: var(--lv-sel); color: var(--lv-sel-text); border: 0; font: 700 17px/1.2 var(--fb-text); box-shadow: var(--lv-shadow); -webkit-backdrop-filter: none; backdrop-filter: none; }
 body.is-live .toast[hidden] { display: none; }
 .toast { pointer-events: none; }
 .toast button { pointer-events: auto; }
 .toast .sub { font: 700 14px/1 var(--fm); opacity: .7; white-space: nowrap; }
-.toast button { height: 44px; padding: 0 16px; border-radius: 22px; border: 0; background: var(--lv-toast-btn); color: inherit; font: 700 15px/1 var(--fb-text); cursor: pointer; flex: none; }
-.toast:not(:has(button)) { padding-right: 22px; }
+.toast button { height: 44px; padding: 0 16px; border-radius: 22px; min-width: 56px; border: 0; background: var(--lv-toast-btn); color: inherit; font: 700 15px/1 var(--fb-text); cursor: pointer; flex: none; }
+body.is-live .toast:not(:has(button)) { padding-right: 22px; }
 
+/* narrower iPads in landscape (10.2-inch, mini): slimmer side columns so the call keeps its room */
+@media (max-width: 1150px) and (min-width: 1001px) { .lv-mid { grid-template-columns: 240px minmax(0, 1fr) 288px; } }
 /* bigger iPad (12.9-inch landscape) */
 @media (min-width: 1300px) and (min-height: 960px) {
   .lv-mid { grid-template-columns: 300px minmax(0, 1fr) 354px; gap: 14px; }
@@ -897,7 +908,6 @@ body.is-live .toast[hidden] { display: none; }
 @media (max-height: 820px) and (min-width: 1001px) {
   .lv-band { padding: 12px 16px; } .lv-sign { width: 92px; height: 104px; } .lv-sign span { font-size: 72px; }
   .lv-band .pitch { font-size: 58px; } .lv-band .spot { font-size: 26px; }
-  .lgrid { grid-template-columns: repeat(5, 38px); grid-template-rows: repeat(5, 38px); }
   .lv-results { height: 88px; }
   .lv-hitter .nm b { font-size: 28px; }
   .lv-hitter, .lv-pitcher { padding: 11px 14px; gap: 7px; }
@@ -911,7 +921,6 @@ body.is-live .toast[hidden] { display: none; }
   .lv-strip .stamp, .lv-strip .icon, .lv-strip .correct { height: 44px; } .lv-strip .icon { width: 44px; }
   .lv-band { padding: 10px 14px; gap: 12px; } .lv-sign { width: 76px; height: 86px; } .lv-sign span { font-size: 58px; } .lv-sign small { font-size: 10px; }
   .lv-band .pitch { font-size: 48px; } .lv-band .spot { font-size: 22px; } .lv-band .words { gap: 5px; }
-  .lgrid { grid-template-columns: repeat(5, 34px); grid-template-rows: repeat(5, 34px); }
   .locpick .legend { display: none; }
   .lv-results { height: 80px; } .lv-results .key { padding: 12px 10px 11px 13px; } .lv-results .key b { font-size: 21px; }
   .lv-hitter .nm b { font-size: 25px; } .lv-pitcher .top b { font-size: 20px; } .lv-pitcher .top .n { font-size: 21px; }
@@ -936,12 +945,18 @@ body.is-live .toast[hidden] { display: none; }
   .lv-undo { width: 84px; }
 }
 @media (max-width: 640px) {
+  .lv-band { padding: 12px; gap: 12px; } .lv-sign { width: 76px; height: 88px; } .lv-sign span { font-size: 58px; }
+  .lv-band .pitch { font-size: 46px; } .lv-band .spot { font-size: 22px; }
+  .done .tiles { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .lv-mid { grid-template-columns: minmax(0, 1fr); }
   .lv-body .split { flex-direction: column; }
   .lv-results { flex-wrap: wrap; height: auto; }
   .lv-results .key { flex: 1 1 30%; height: 64px; }
   .lv-undo { width: 100%; height: 48px; flex-direction: row; }
   .fixbox, .corr.sheet, .done.sheet, .chg.sheet { width: 100%; }
+  .corr .steps { grid-template-columns: minmax(0, 1fr); }
+  .lv-ov .row2 { flex-wrap: wrap; }
+  .chg .who { flex-wrap: wrap; } .chg .who .ci { width: auto; align-items: flex-start; text-align: left; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .thinking .lv-band .pitch, .thinking .lv-band .spot, .thinking .lv-sign span { opacity: .35; transition: opacity .12s ease; }
@@ -1121,7 +1136,8 @@ function makeCall() {
 }
 function recall() {
   document.body.classList.add("thinking");
-  setTimeout(() => { makeCall(); document.body.classList.remove("thinking"); save(); render(); }, 15);
+  // between innings (three outs) there is no pitch to call yet: "Take the field" makes the next one
+  setTimeout(() => { if (!G().inningOver) makeCall(); else G().call = null; document.body.classList.remove("thinking"); save(); render(); }, 15);
 }
 
 // ------------------------------------------------------------------ learning (same rules as the simulator)
@@ -1350,6 +1366,19 @@ function applyTheme() {
   document.documentElement.style.setProperty("--lv-call-ink", `var(--pi-${k})`);
 }
 
+// The game board is laid out for a landscape iPad (740px tall or more). In a shorter window (a laptop, a phone on its
+// side) it's scaled down as a whole instead of squeezed, so nothing overlaps and the result buttons stay on screen.
+const BOARD_MIN_H = 790;
+function fitBoard() {
+  const app = document.getElementById("app");
+  const live = app.classList.contains("live-wrap");
+  const z = live && innerWidth > 1000 && innerHeight < BOARD_MIN_H ? Math.max(0.55, innerHeight / BOARD_MIN_H) : 1;
+  app.style.zoom = z === 1 ? "" : String(z);
+  app.style.height = z === 1 ? "" : `${BOARD_MIN_H}px`;
+  const t = document.getElementById("toast"); if (t) t.style.zoom = z === 1 ? "" : String(z);   // the toast sits on the board's top bar
+}
+addEventListener("resize", () => fitBoard());
+
 function render() {
   applyTheme();
   const app = document.getElementById("app");
@@ -1360,6 +1389,7 @@ function render() {
   document.body.classList.toggle("is-live", live); app.classList.toggle("live-wrap", live);
   if (!live) liveOverlay = null;
   app.replaceChildren(...[topBar(), dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : liveView()].filter(Boolean));
+  fitBoard();
   applyTheme();
 }
 
@@ -1633,9 +1663,9 @@ function readout(name, ars) {
   return h("div", { class: "lv-read", "aria-label": `About the ${name.toLowerCase()}` },
     h("span", { class: "lab ellip" }, `${name} today`),
     tile("Velo", +d.velo ? String(Math.round(+d.velo)) : "–", +d.velo ? "mph" : null, breakTxt || (+d.velo ? "Listed on his roster" : "No velo on his roster")),
-    tile("Confidence today", p ? p.conf.toFixed(2) : "–", null, p ? `${fromCheckin ? "Check-in" : "Bullpen feel"} ${p.base_conf.toFixed(2)}` : "",
+    tile("Confidence", p ? p.conf.toFixed(2) : "–", null, p ? `${fromCheckin ? "Check-in" : "Bullpen feel"} ${p.base_conf.toFixed(2)}` : "",
       p ? h("div", { class: "tbar" }, h("i", { style: { width: `${Math.min(100, p.conf * 100)}%` } }), h("b", { style: { left: `${cut * 100}%` } })) : null),
-    tile("Strikes today", l ? `${l[0]} of ${l[1]}` : "–", null, l ? "for strikes" : "Not thrown yet"));
+    tile("Strikes", l ? `${l[0]} of ${l[1]}` : "–", null, l ? "for strikes" : "Not thrown yet"));
 }
 
 // ---------------------------------------------------------------- right column
@@ -1669,12 +1699,11 @@ function mixPanel() {
     h("div", { class: "segs", "aria-hidden": "true" }, live.map((r) => h("i", { class: `k-${kindSafe(kindOf(r.pitch))}`, style: { flex: `${r.prob} 1 0` } }))),
     h("div", { class: "rows" }, rows.map((r) => {
       const k = kindSafe(kindOf(r.pitch)), match = r.pitch === c.pitch && r.quad === c.quad && !r.struck;
-      const tag = r.struck ? ["Shaken off", "gone"] : match ? (c.coach ? ["Your call", "own"] : ["Called", ""]) : null;
+      const tag = r.struck ? null : match ? (c.coach ? ["Your call", "own"] : ["Called", ""]) : null;
       return h("div", { class: `opt k-${k}${match && !c.coach ? " is-call" : ""}${r.struck ? " struck" : ""}` },
         pchip(k),
-        h("span", { class: "tx" }, h("b", { class: "ellip" }, r.pitch), h("small", { class: "ellip" }, SPOT[r.quad])),
-        tag ? h("span", { class: `tag ${tag[1]}` }, tag[0]) : null,
-        h("span", { class: "p" }, r.prob == null ? "—" : pct(r.prob)),
+        h("span", { class: "tx" }, h("span", { class: "nl" }, h("b", { class: "ellip" }, r.pitch), tag ? h("span", { class: `tag ${tag[1]}` }, tag[0]) : null), h("small", { class: "ellip" }, SPOT[r.quad])),
+        r.struck ? h("span", { class: "tag gone" }, "Shaken off") : h("span", { class: "p" }, pct(r.prob)),
         r.prob == null ? null : h("i", { style: { width: `${Math.min(100, r.prob * 100)}%` } }));
     })));
 }
