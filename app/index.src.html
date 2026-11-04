@@ -560,7 +560,7 @@ body.is-live { background:
   linear-gradient(var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px,
   linear-gradient(90deg, var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px, var(--lv-bg); }
 body.is-live .stage { display: none; }
-#app.live-wrap { max-width: 1440px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 10px;
+#app.live-wrap { max-width: 1440px; height: 100vh; height: 100dvh; min-height: 740px; display: flex; flex-direction: column; gap: 10px;
   padding: max(10px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
 #app.live-wrap > .bar { height: 46px; flex: none; background: var(--lv-glass); border-color: var(--lv-glass-line); font-family: var(--fb-text); }
 #app.live-wrap > .bar .wordmark { font-family: var(--fd); font-size: 19px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
@@ -617,6 +617,7 @@ body.is-live .stage { display: none; }
 /* three columns */
 .lv-mid { display: grid; grid-template-columns: 268px minmax(0, 1fr) 312px; gap: 10px; min-height: 0; }
 .lv-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
+.lv-col.left { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }   /* a long arsenal scrolls inside the column, never over the results */
 
 /* hitter */
 .lv-hitter { flex: none; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
@@ -656,7 +657,7 @@ body.is-live .stage { display: none; }
 .lv-trustnote::before { content: ""; width: 2px; height: 14px; flex: none; background: var(--lv-text); }
 
 /* pitch log */
-.lv-log { flex: 1; min-height: 120px; padding: 8px 8px 8px; display: flex; flex-direction: column; gap: 4px; }
+.lv-log { flex: 1; min-height: 100px; padding: 8px 8px 8px; display: flex; flex-direction: column; gap: 4px; }
 .lv-log .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 4px 2px 6px; min-height: 44px; }
 .lv-log .hd > div { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .lv-log .hd small { font: 500 12px/1 var(--fb-text); color: var(--lv-text3); }
@@ -686,7 +687,7 @@ body.is-live .stage { display: none; }
 .lv-band .pitch { margin: 0; font: 800 68px/.86 var(--fd); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lv-band .spot { margin: 0; font: 700 30px/1 var(--fd); text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #07090C; }
 .lv-body { flex: 1; min-height: 0; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
-.lv-body .split { display: flex; gap: 16px; flex: 1; min-height: 0; }
+.lv-body .split { display: flex; gap: 16px; flex: 1; min-height: 0; overflow: hidden; }
 .lv-body .why { margin: 0; flex: none; font: 500 16px/1.35 var(--fb-text); color: var(--lv-text2); text-wrap: pretty; max-width: none; grid-column: auto; }
 .lv-body .why b { color: var(--lv-text); font-weight: 700; }
 
@@ -714,7 +715,7 @@ body.is-live .stage { display: none; }
 
 /* the target when location logging is off */
 .lv-zone { flex: none; display: flex; flex-direction: column; gap: 8px; }
-.lv-zone svg { display: block; width: 236px; height: auto; }
+.lv-zone svg { display: block; width: 236px; height: auto; max-height: calc(100dvh - 520px); min-height: 180px; }
 
 /* readout */
 .lv-read { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -892,13 +893,31 @@ body.is-live .toast[hidden] { display: none; }
   .lv-read .tile .v b { font-size: 36px; }
   .lv-body .why { font-size: 19px; }
 }
-/* shorter screens: tighten the call */
-@media (max-height: 800px) and (min-width: 1001px) {
+/* shorter windows (an iPad in a browser tab, a laptop): tighten so nothing overlaps; under 740px tall the page scrolls instead */
+@media (max-height: 820px) and (min-width: 1001px) {
   .lv-band { padding: 12px 16px; } .lv-sign { width: 92px; height: 104px; } .lv-sign span { font-size: 72px; }
   .lv-band .pitch { font-size: 58px; } .lv-band .spot { font-size: 26px; }
   .lgrid { grid-template-columns: repeat(5, 38px); grid-template-rows: repeat(5, 38px); }
   .lv-results { height: 88px; }
   .lv-hitter .nm b { font-size: 28px; }
+  .lv-hitter, .lv-pitcher { padding: 11px 14px; gap: 7px; }
+  .lv-trust { gap: 4px; }
+  .lv-log { min-height: 96px; }
+  .lv-body { padding: 12px 16px; gap: 8px; }
+  .lv-read .tile { padding: 7px 12px; gap: 4px; } .lv-read .tile .v b { font-size: 24px; }
+}
+@media (max-height: 770px) and (min-width: 1001px) {
+  .lv-strip { height: 56px; } .lv-strip .cell .v, .lv-strip .sc .v { font-size: 26px; }
+  .lv-strip .stamp, .lv-strip .icon, .lv-strip .correct { height: 44px; } .lv-strip .icon { width: 44px; }
+  .lv-band { padding: 10px 14px; gap: 12px; } .lv-sign { width: 76px; height: 86px; } .lv-sign span { font-size: 58px; } .lv-sign small { font-size: 10px; }
+  .lv-band .pitch { font-size: 48px; } .lv-band .spot { font-size: 22px; } .lv-band .words { gap: 5px; }
+  .lgrid { grid-template-columns: repeat(5, 34px); grid-template-rows: repeat(5, 34px); }
+  .locpick .legend { display: none; }
+  .lv-results { height: 80px; } .lv-results .key { padding: 12px 10px 11px 13px; } .lv-results .key b { font-size: 21px; }
+  .lv-hitter .nm b { font-size: 25px; } .lv-pitcher .top b { font-size: 20px; } .lv-pitcher .top .n { font-size: 21px; }
+  .lv-trust .line { height: 20px; }
+  .lv-body .why { font-size: 14px; }
+  .lv-read .tile small { display: none; }
 }
 /* portrait and narrow: the board stacks and the page scrolls; the result bar stays on screen */
 @media (max-width: 1000px) {
