@@ -1,6 +1,6 @@
 # Pitch Caller v0.8: Math Spec (build version)
 
-Status: rewritten 2026-11-04 to resolve every finding of the fresh review (blockers, majors, minors). Every term below has
+Status: rewritten 2026-11-04; revised after a second fresh review (4 blockers, 6 majors, 7 minors fixed). Every term below has
 a definition, a starting value, a switch, an input source and an acceptance test. Where a number is a guess it says so.
 
 ## 0. Ground rules
@@ -79,7 +79,9 @@ once per count per value-solve sweep (it doesn't depend on π or σ). Then:
 - Engine: π = Φ(Mσ), where Φ is today's two-stage operator (pitch-type softmax over each pitch's best cost with the
   never-pick window, then location softmax with LOC_WINDOW), at temperature T(b,k) from section 6.6.
 - Hitter's belief of our mix includes what a dugout saw today (today's usage blend, k = 4):
-  π̃(a) = (4·π(a) + usage_a) / (4 + n_usage), with usage counted per pitch name in this count, as today.
+  π̃(a) = (4·π(a) + usage_a) / (4 + n_usage), where usage_a counts calls a = (pitch, target) thrown in this count
+  today by this pitcher (v0.7c counted per pitch name; the target is now logged with it).
+- The hitter uses the same temperature T(b,k) as the engine (section 6.6).
 - Hitter:
 
 ```latex
@@ -87,9 +89,10 @@ once per count per value-solve sweep (it doesn't depend on π or σ). Then:
 ```
 
 - b_h(k) is the hitter's persistent lean (2.5). It is the only other input to σ; there are no separate multipliers.
-- Solve by averaged iteration from uniform π, σ:
-  π_{t+1} = (1 − w_t)π_t + w_t Φ(Mσ_t), σ_{t+1} = (1 − w_t)σ_t + w_t σ*(π_{t+1}), w_t = 1/(t + 2),
-  stop when max |Δπ|, |Δσ| < 1e-4 or at 60 iterations; log the final residual.
+- Solve from uniform π, σ: π_{t+1} = (1 − w_t)π_t + w_t Φ(Mσ_t), σ_{t+1} = (1 − w_t)σ_t + w_t σ*(π̃_{t+1}),
+  with w_t = 0.5 for t < 20, then w_t = 1/(t − 18) (averaging) up to t = 60.
+- Residual = max( ‖π − Φ(Mσ)‖∞, ‖σ − σ*(π̃)‖∞ ), the distance from a fixed point (not the step size). Stop when the
+  residual < 1e-3 or at t = 60; log the final residual and use the last iterate.
 - Exploitability at the count (runs a hitter gains by sitting on the single best option):
 
 ```latex
@@ -167,7 +170,9 @@ s(r) = \operatorname{clip}\!\left(\frac{|r| - 0.03}{0.05},\,0,\,1\right)
 | r < 0 (faster than expected) | 0.6·s(r) |
 
 B is continuous everywhere (at r = 0.12 the changeup curve is 1 from both sides, since s = 1 from r = 0.08).
-Moving the same fastball between locations changes v_p by at most 3 mph, so r ≤ about 3.5% and B ≤ 0.1.
+Example: when he's timed near his fastball (ṽ ≈ v_FB), moving the same fastball between locations changes v_p by at
+most 3 mph, so |r| ≤ about 3.5% and B ≤ 0.1. When he's timed for off-speed (ṽ well below v_FB) a fastball is a real
+surprise and B can be large; that is intended.
 
 ### 3.2 Where it enters
 
@@ -181,13 +186,14 @@ Moving the same fastball between locations changes v_p by at most 3 mph, so r �
 
 The app's existing reads stay exactly as they are: θ_c per class c, updated θ_c ← θ_c + 0.35(signal − θ_c) with
 signals: whiff front −0.8, whiff late +0.8, foul pulled −0.6, foul opposite way +0.6 (only when the target wasn't away
-or chase), whiff fooled 0 (and 2.5); halved at each new plate appearance. Engine terms unchanged:
+or chase), whiff fooled 0 (fooled also feeds the sit evidence in 2.5); halved at each new plate appearance. Engine terms unchanged:
 Δlogit W = +0.6 h_L θ_eff, Δlogit H = −0.5 h_L θ_eff, θ_eff = θ for fastballs and −θ for off-speed.
 
 ### 3.4 Cap on combined expectation effects
 
 On whiff, the sum of the sit shift (2.2), the timing term (3.2) and the θ term (3.3) is clipped to ±1.6·h_L logits
-(v0.7c's maximum is 1.0 + 0.6 = 1.6, so the cap never binds in v0.7c mode). The same cap at ±1.2·h_L applies on hard
+when `expect_v07` is off (it is not applied in v0.7c mode, where a four-pitch arsenal can reach 1.5·0.75 + 0.6 =
+1.725). The same cap at ±1.2·h_L applies on hard
 contact. Rationale: these are separate mechanisms (type recognition, sequence timing, measured timing) but they are
 collinear in data; the cap bounds the double-count risk.
 
@@ -201,7 +207,7 @@ With `pairing_v07` off, the pairing term T and its 0.4 weight are removed. Its p
 | Perceived-speed gap | Timing B (3.1), against the look | Root and value solve (uses v̂) |
 | Tunnel bonus | τ_tun (4.2) | Root only |
 | Repeat after a whiff | Repeat term (4.3) | Root only |
-| Same pitch, same spot, no whiff | Repeat term (4.3) | Root only |
+| Same pitch, same spot, no whiff | Repeat term (4.3), unchanged −0.32 | Root only |
 
 Root only means it needs the exact previous pitch, which the value-solve state doesn't carry; in future counts these
 terms are 0. **Big spot** (inning ≥ 7, margin ≤ 2, runner in scoring position): every pair term is multiplied by 0.5,
@@ -231,14 +237,15 @@ curveballs, 1.0 otherwise. Maximum effect: 0.225 logits on breaking balls, 0.15 
 ### 4.3 Repeat terms
 
 Same pitch after a whiff: +0.16 (same spot) or +0.12 (different spot) on whiff logit (v0.7c's 0.4 and 0.3 times its
-0.4 weight). Same off-speed pitch, same spot, previous pitch not a whiff: −0.15 on whiff logit (v0.7c: −0.32 for any
-pitch; smaller and off-speed-only because familiarity now covers part of it).
+0.4 weight). Same pitch, same spot, previous pitch not a whiff: −0.32 on whiff logit, any pitch type (v0.7c's −0.8 × 0.4,
+kept unchanged: familiarity counts only earlier at-bats and B is 0 for a same-speed repeat, so nothing else covers it).
 
 ## 5. Familiarity
 
 - Key: (pitcher, hitter, class c ∈ {FB, OS}). n_{h,c} counts pitches of class c that hitter h saw **from this
   pitcher in earlier plate appearances today** (the current at-bat is handled by the look and repeat terms). A
-  pitching change starts at 0. This replaces the app's per-lineup-slot `seen` count keyed by pitch name.
+  pitching change starts at 0. This replaces the app's per-lineup-slot `seen` count keyed by pitch name. When a hitter has no database id (the app
+  allows `hitterId` = null), key by (game, lineup slot, typed name).
 - Term (replaces the batters-faced term when `bf_term_v07` is off):
 
 ```latex
@@ -270,6 +277,16 @@ V(b,k,h) = \sum_a \pi(a \mid b,k,h)\, \sum_e P(e \mid a, b, k, h)\,\big[R(e) + V
 - next_e for an outcome that ends the plate appearance uses V_end (7.2), which is r + RE(o′, B′) with the win
   objective off.
 - π(a | b, k, h) = Φ(costs) with the sit applied as the expected shift under the count's σ (2.4).
+- Other base-out states. A wild pitch or passed ball (v0.7c's `after_ball` with advanced runners) and the steal cost
+  (7.4) need values at a base-out state other than the frozen one. They shift the table by the end-value difference,
+  which is v0.7c's relative count-value rule generalized to the win objective:
+
+```latex
+V(b,k,o',B',h) = V(b,k,o,B,h) + V_{end}(o',B',r) - V_{end}(o,B,0)
+```
+
+  r is runs that scored on the play; o′ = 3 ends the half-inning (the batter leads off next inning; use V_end(3, ·, r)).
+  With ω = 0 this is exactly v0.7c's rule (count value relative to RE, plus runs).
 - Solve by sweeps over counts, deepest first, until the largest change is < 0.001 runs, at most 10 sweeps (as today).
   The count's σ (2.3) is re-solved at the start of each sweep from that sweep's values. The chain is transient
   (P(foul) < 1), so the two-strike self-loop converges.
@@ -284,8 +301,10 @@ pitch's confidence moves by > 0.10, any pitch's wild-today value moves by > 0.10
 
 ### 6.3 Root call
 
-At the root the engine uses the exact current look and last pitch: all pair terms, exact sit expectation
-(Σ_k σ(k) C(a|k)), and future values from the table. Then calls are drawn as today.
+At the root the engine uses the exact current look and last pitch, all pair terms, and future values from the table.
+It **re-solves the current count's sit game (2.3) with live b_h** (so a "fooled" read in this at-bat reaches the
+call), building M at the exact current look, and prices calls with the exact Σ_k σ(k) C(a|k). Then calls are drawn as
+today.
 
 ### 6.4 Myopic cost, look value and the setup guardrail
 
@@ -299,15 +318,20 @@ At the root the engine uses the exact current look and last pitch: all pair term
 
 ### 6.5 Compute plan and budget
 
-Per plate appearance (in the background worker), per sweep and count: K·|calls| cost evaluations for the sit matrix
-(6 × 18 = 108) plus |looks|·|calls| for the value solve (6 × 18 = 108). Today's at_bat_values does 4 × 18 = 72 per
-count per sweep, so this is about 3× today's work; per pitch the root adds 108 evaluations.
+Per plate appearance (in the background worker), per sweep and count: the sit matrix M is built once at the count's
+starting look h₀ (6 sits × 18 calls = 108 evaluations; it is not rebuilt per look bin), plus |looks|·|calls| for the
+value solve (6 × 18 = 108). Today's at_bat_values does 4 × 18 = 72 per count per sweep (verified: one D3 call_mixed
+makes 4,464 outcome evaluations, 0.15 s in Python). So v0.8 does 3× the evaluations, and each evaluation is heavier
+(four batted-ball types, typed runner tables, four-bin interpolation): plan on about 2.5× per evaluation, roughly 7.5×
+today's time per plate-appearance solve. Per pitch the root adds 108 evaluations plus its sit re-solve. The why line
+(section 9) needs about 11 terms × 2 calls × 6 sits ≈ 130 evaluations; it runs after the call is shown, off the
+critical path.
 
 | Budget (gate before step 6 ships) | Limit |
 | --- | --- |
 | Plate-appearance solve, desktop Chrome with 4× CPU throttle (iPad stand-in; no iPad available) | ≤ 1.0 s |
 | Root call, same setting | ≤ 50 ms |
-| Python call_mixed, desktop | ≤ 1.0 s |
+| Python call_mixed, desktop | ≤ 2.0 s |
 
 Fallbacks if over budget, in order: sweeps cap 10 → 6; look bins 6 → 3 (speed only); QRE cap 60 → 30; one σ solved at
 0-0 and shifted by the count prior for other counts. tests.py keeps running in v0.7c mode; v0.8 tests use sweeps cap 6.
@@ -315,7 +339,7 @@ Fallbacks if over budget, in order: sweeps cap 10 → 6; look bins 6 → 3 (spee
 ### 6.6 Temperature
 
 T_final(b, k) = max(T_v07(b, k), T_unc(level, b, k)), where T_v07 is today's temperature (base × run scale × stakes
-factor, halved in a big spot) and T_unc = 0.5·sd_θ of the gap between the top two calls, from `perturb.py`: 30 draws
+factor, halved in a big spot) and T_unc = 0.5·sd_par of the gap between the top two calls, from `perturb.py`: 30 draws
 of logit noise SD 0.25 on S0, C0, W0, F0, the hard-contact baselines and KIND_W, and ±50% on every new β, for three
 reference arsenals (two-, three- and four-pitch; the nearest is used) at bases empty, no outs. The windows are
 unchanged. Report how often T_unc binds. Acceptance: exploitability X is not worse than v0.7c by more than 0.002 runs
@@ -342,6 +366,19 @@ hits, errors, wild pitches, steals, double plays and sac flies):
 3. Leverage index: LI(state) = E|ΔWE over the plate appearance from this state| divided by the frequency-weighted mean
    of that quantity over all plate appearances (frequencies from forward propagation through an average game).
 4. Stored as `we_tables.json` per level and N ∈ {7, 9}.
+
+Prerequisites and consistency (part of step 7):
+
+- Fix the caught-stealing rate in `college_rates.py`'s `rates()`: today SB is summed over all teams but stolen-base
+  attempts only over teams that report them, which makes D3's CS negative (−0.0094) and a negative transition
+  probability in the chain. Compute SB and CS from the reporting teams only. Do not regenerate `run_tables.py` (the
+  golden test depends on it).
+- Calibrate the chain to the engine's run tables: multiply the chain's walk, hit-by-pitch and hit rates by one common
+  factor per level until its RE(0 outs, empty) equals RE_BY_LEVEL's within 0.5% (D1's table was scaled ×1.072 and the
+  raw chain gives 0.653 vs 0.700).
+- Use the same runner-on-third and double-play totals as 7.3 (both are calibrated to the same level data), so the WE
+  chain and the engine score outs the same way on average. Check: the calibrated chain's RE matches RE_BY_LEVEL in
+  every base-out state within 5%; report the largest gap.
 
 New game inputs: we're home or away; scheduled innings (default HS/travel 7, college 9, editable for doubleheaders);
 extra-innings runner flag. The half follows from home/away.
@@ -386,8 +423,11 @@ Outcome given (c, t) over {out, 1B, 2B, 3B, HR, error}, starting shapes (relativ
 
 Calibration (new `inplay_fit.py`): for each level and c, iterative proportional fitting (rows normalized, then each
 outcome column scaled so the type-weighted marginal at the reference mix, three-pitch average arsenal at 2.5 ft,
-equals today's IN_PLAY_BY_LEVEL[level][c]; 50 iterations or max error 1e-6). Then rerun `fit_all.py` so the engine and
-simulator reproduce each level's strikeout, walk, hit-by-pitch and hit rates within the current fit's tolerances.
+equals today's IN_PLAY_BY_LEVEL[level][c]; 50 iterations or max error 1e-6). Order: run `fit_all.py` first (it refits
+IN_PLAY_FIT and the outcome shifts), then run `inplay_fit.py` against its output. While `inplay_typed` is on,
+`fit_all.py`'s `fit_inplay` stage is skipped on later runs so it can't overwrite the typed tables; instead the typed
+tables are refit by `inplay_fit.py` after each `fit_all.py` run. Acceptance: the engine and simulator reproduce each
+level's strikeout, walk, hit-by-pitch and hit rates within the current fit's tolerances.
 
 Runner advances on outs, fewer than 2 outs:
 
@@ -397,8 +437,20 @@ Runner advances on outs, fewer than 2 outs:
 | Runner on 2nd (3rd open) to 3rd | 0.50 | 0.25 | 0 |
 | Double play (runner on 1st), given a GB out | weak 0.30, solid 0.20, hard 0.10, × s_dp | 0 | 0 |
 
-s_sf and s_dp are scaled so the chain reproduces each level's sac-fly rate (`_sf_rate`) and double-play rate
-(`_gdp_rate`) from `college_run_values.json`.
+Calibration targets come from the (corrected) chain in `college_rates.py`:
+
+- **Runner scoring from third on an out.** The chain lets the runner score on a ball-in-play out (with runner on third,
+  fewer than 2 outs) at the total rate T_L = sf + 0.25·(1 − gdp − sf − sh) using its fitted `_sf_rate`, `_gdp_rate`,
+  `_sh_rate`. The typed model's matching rate is Σ_t share_t(out)·p_t with p_GB = 0.35·s, p_FB = 0.60·s,
+  p_LD = p_PU = 0.01. Solve one common multiplier s (applied to GB and FB together, each capped at 0.95) so the typed
+  rate equals T_L at the reference mix. A separate sac-fly-only target is not used: at the reference mix fly-ball outs
+  are only about 27% of ball-in-play outs, so the chain's sac-fly share (0.40 for D3) cannot be reached by fly balls
+  alone.
+- If T_L exceeds the capped maximum, first audit `calibrate_out_rates`' opportunity count s_opp (the review suspects it
+  undercounts runner-on-third states, which inflates `_sf_rate`); if it still exceeds after the audit, use the cap and
+  report the shortfall.
+- **Double plays.** One multiplier s_dp on the weak/solid/hard rates so the typed model's double-play rate per
+  opportunity equals `_gdp_rate` (feasible: s_dp ≈ 0.7 for D3).
 
 ### 7.4 Running game
 
@@ -426,16 +478,24 @@ Called-strike logit on edge and off bands (where today's cs shift applies):
 ```
 
 - κ(b, k) = log(A(b, k)/Ā) with A(b, k) = 3.03 + 0.22·b − 0.30·k sq ft (matches 3.7 at 3-0 and 2.4 at 0-2; the
-  in-between counts are a linear interpolation until the Statcast fit replaces them). Ā is the pitch-weighted mean of A
-  over simulated counts, so the average κ is 0 and c_L's calibration is unchanged.
-- u (today's umpire), from every taken pitch i today with the engine's expected strike chance p_i (stored with each
-  pitch) and outcome s_i (1 = called strike):
+  in-between counts are a linear interpolation until the Statcast fit replaces them). Ā is the **geometric** mean of A,
+  weighted by how often each count has a taken pitch in the edge or off bands in simulation, so the weighted average κ
+  is exactly 0 and c_L's calibration is unchanged.
+- u (today's umpire) is a one-step Newton estimate from every taken pitch i today. At call time the engine stores, at
+  u = u₀: p_i = P(called strike | take) = cstrike / (cstrike + ball + wp_ball + hbp), and d_i = ∂p_i/∂u, which counts
+  only the edge and off bands (the only bands u moves):
 
 ```latex
-u = u_0 + \frac{\sum_i (s_i - p_i)}{a_0\,\bar p(1-\bar p) + \sum_i p_i(1-p_i)}, \qquad a_0 = 20,\ \bar p = 0.3,\ u \in [-1.5, 1.5]
+d_i = \frac{\sum_{z \in \{edge,\,off\}} L_z\,(1-S_z)\,C_z(1-C_z)}{\sum_{z} L_z\,(1-S_z)}
 ```
 
-u₀ is the coach's optional seed: wide +0.4, normal 0, tight −0.4. Needs no logged location.
+```latex
+u = u_0 + \frac{\sum_i (s_i - p_i)\,d_i/\big(p_i(1-p_i)\big)}{a_0\,\bar I + \sum_i d_i^2/\big(p_i(1-p_i)\big)}, \qquad a_0 = 20,\quad u \in [-1.5,\,1.5]
+```
+
+  s_i = 1 for a called strike. Ī is the average per-take information d²/(p(1−p)) at the level (computed once from
+  simulation), so a₀ = 20 is worth 20 typical takes. u₀ is the coach's optional seed: wide +0.4, normal 0, tight −0.4.
+  Needs no logged location.
 
 ### 7.6 High school pitch cap
 
@@ -477,15 +537,23 @@ strikeout rate by the level's sd_k, one discipline point raises walk rate by sd_
 i.e. assuming hitters spread like pitchers until hitter data exists), one power point raises hard-contact share by 0.03
 (assumption). Starting value 0.25 each.
 
-Learning across games (worker, after End game), one grade at a time, by a one-step logistic estimate against what the
-engine expected:
+Learning across games (worker, after End game), one grade at a time, by the same one-step Newton estimate as the
+umpire. For each pitch the engine stores, computed with that grade at 3, the predicted probability p_i of the
+observed event and its derivative d_i = ∂p_i/∂grade (the derivative carries the sign, so more whiffs than expected
+lower the contact grade):
 
 ```latex
-\hat g_{obs} = 3 + \frac{\sum_i (y_i - p_i)}{g\,\sum_i p_i(1-p_i)}, \qquad \hat g = \frac{I_0\,g_{coach} + I\,\hat g_{obs}}{I_0 + I}, \quad I = g^2\sum_i p_i(1-p_i)
+\hat g_{obs} = 3 + \frac{\sum_i (y_i - p_i)\,d_i/\big(p_i(1-p_i)\big)}{\sum_i d_i^2/\big(p_i(1-p_i)\big)}, \qquad \hat g = \frac{I_0\,g_{coach} + I\,\hat g_{obs}}{I_0 + I}, \quad I = \sum_i \frac{d_i^2}{p_i(1-p_i)}
 ```
 
-y_i/p_i: whiff on swings (contact), hard on contact (power), swing on off-zone pitches (discipline). I₀ is the
-information of 50 average plate appearances at the level (computed once from simulation). Learner v2 rails apply: a cap
+| Grade | Event y_i (pitches used) | p_i | d_i |
+| --- | --- | --- | --- |
+| Contact | Whiff (swings) | P(whiff given swing) | −g_c·Σ_z w_z W_z(1−W_z), w_z = landing-and-swing weight of band z |
+| Power | Hard contact (balls in play and fouls excluded) | P(hard given contact) | +g_w·Σ_z w_z H_z(1−H_z) |
+| Discipline | Swing (all pitches) | P(swing) | −g_d·Σ_{z off-zone} L_z S_z(1−S_z) |
+
+Discipline uses every pitch and the engine's own band split, so it needs no logged location. I₀ is the information of
+50 average plate appearances at the level (computed once from simulation). Learner v2 rails apply: a cap
 of 0.5 grade points per game, a flag instead of a change when the estimate differs from the coach by more than 1 point,
 and no effect on calls until 30 pitches are logged for the hitter.
 
@@ -506,7 +574,11 @@ differences and the grades carry his overall level.
 | Umpire seed | Game setup | Optional |
 | Radar reading | Per pitch | Optional |
 
-Each needs a field in the IndexedDB records and a column in a new Supabase migration (same sync design). Familiarity
+Each needs a field in the IndexedDB records and a column in a new Supabase migration (same sync design).
+
+Per-pitch log additions (in the existing situation snapshot `snapSituation` and prediction `pred`): v̂, ŷ, σ (the sit
+mix), the umpire pair (p_i, d_i), the three grade pairs (p_i, d_i), and the flags in force. These let every v0.8
+expectation be recomputed exactly from the log (replay test). Familiarity
 is re-keyed to (pitcher, hitter, class).
 
 ## 9. "Why" line
@@ -546,7 +618,8 @@ C_{−k} switches term k off; for look value it's c_my. Show the template of the
   engine's flight model; familiarity n by class; GB_p and β_y on balls in play; κ by count on called pitches.
 - A term ships only if held-out log loss improves by more than 2 bootstrap SDs and its β interval excludes 0; shape
   parameters (λ, d*, the changeup band, 18 in) ship at their best grid value only if their term ships. Report the
-  correlation matrix of the fitted parameters (sit proxy, α, β_T are expected to correlate).
+  correlation matrix of the fitted parameters. If |corr(α, β_T)| > 0.8, α is fixed at 0.4 and only β_T is fit; the
+  sit weights are never fit on Statcast (σ is not observed there) and stay at their v0.7c values.
 - Familiarity: fit on starts reaching ≥ 18 batters and on all starts; report both (survivor bias check).
 - Transfer: MLB logit effects are applied unchanged at college and scaled by ρ_L = 0.6 for HS/travel. This is an
   assumption no available data can test; the scaling is the weakest number in the spec.
@@ -581,8 +654,10 @@ Any v0.7c behavior check that changes with a flag on is reported and updated onl
    never changes the ranking.
 3. Big spot halves every pair term.
 4. Repeat after a whiff raises the same pitch's share versus no whiff.
-5. A changeup 9% slower than ṽ gets B = 1; the same fastball moved between targets gets B ≤ 0.1.
+5. A changeup 9% slower than ṽ gets B = 1; with ṽ = v_FB, the same fastball moved between targets gets B ≤ 0.1.
 
 **WE table checks (step 7):** the chain's mean runs per half-inning equals RE_BY_LEVEL at (0 outs, empty) within 2%;
-WE for the home team at the start of a tied game is between 0.50 and 0.56 (last at-bat edge); both teams' WE sum to 1 in every state; LI averages 1.0
+WE for the home team at the start of a tied game is 0.50 ± 0.005 (both teams are level-average, so batting last gives
+no edge in this model); both teams' WE sum to 1 in every state; the calibrated chain's RE matches RE_BY_LEVEL within 5%
+in every base-out state; LI averages 1.0
 over game states by construction; m₀ > 0 in every state.
