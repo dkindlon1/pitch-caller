@@ -25,7 +25,7 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
   await su.query(fs.readFileSync(path.join(__dirname, "auth_stub.sql"), "utf8"));
   await su.query(fs.readFileSync(path.join(__dirname, "../migrations/20261103000000_pitch_caller.sql"), "utf8"));
   const users = { "coach@test.local": crypto.randomUUID(), "charter@test.local": crypto.randomUUID() };
-  for (const [email, id] of Object.entries(users)) await su.query("insert into auth.users (id, email) values ($1, $2)", [id, email]);
+  for (const [email, id] of Object.entries(users)) await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, $2, now())", [id, email]);
   const db = await connect();
   const asUser = async (sub, text, params) => {
     await db.query("begin");
@@ -37,7 +37,14 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
     pc_pull: (a) => ["select public.pc_pull($1, $2, $3, $4, $5) as r", [a.p, a.tbl, a.after_xid, a.after_id, a.lim]],
     pc_my_programs: () => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_my_programs() x", []],
     pc_create_program: (a) => ["select to_jsonb(public.pc_create_program($1, $2)) as r", [a.name, a.level]],
-    pc_set_member: (a) => ["select to_jsonb(public.pc_set_member($1, $2, $3, $4)) as r", [a.p, a.email, a.member_role, a.member_pitcher]],
+    pc_invite: (a) => ["select to_jsonb(public.pc_invite($1, $2, $3, $4)) as r", [a.p, a.invite_email, a.member_role, a.member_pitcher]],
+    pc_my_invites: () => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_my_invites() x", []],
+    pc_accept_invite: (a) => ["select to_jsonb(public.pc_accept_invite($1)) as r", [a.p]],
+    pc_decline_invite: (a) => ["select to_jsonb(public.pc_decline_invite($1)) as r", [a.p]],
+    pc_cancel_invite: (a) => ["select to_jsonb(public.pc_cancel_invite($1, $2)) as r", [a.p, a.invite_email]],
+    pc_staff: (a) => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_staff($1) x", [a.p]],
+    pc_set_role: (a) => ["select to_jsonb(public.pc_set_role($1, $2, $3, $4)) as r", [a.p, a.member, a.member_role, a.member_pitcher]],
+    pc_remove_member: (a) => ["select to_jsonb(public.pc_remove_member($1, $2)) as r", [a.p, a.member]],
   };
   let queue = Promise.resolve();   // one Postgres connection: requests take turns
   const server = http.createServer((req, res) => {
@@ -104,14 +111,18 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
 
   console.log("3. The charter signs in on another iPad and gets everything");
   await toSetup(coach);
-  await coach.locator("#sync-member").fill("nobody@test.local"); await coach.getByRole("button", { name: "Add", exact: true }).click(); await coach.waitForTimeout(500);
-  check(/no account with that email yet/.test(await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText()), "adding an email with no account says to sign up first");
-  await coach.locator("#sync-member").fill("charter@test.local"); await coach.getByRole("button", { name: "Add", exact: true }).click(); await coach.waitForTimeout(500);
-  const role = (await su.query("select m.role from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0];
-  check(role && role.role === "charter", "the head coach adds the charter from Setup");
+  await coach.locator("#sync-member").fill("nobody@test.local"); await coach.getByRole("button", { name: "Invite", exact: true }).click(); await coach.waitForTimeout(600);
+  const staffText = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check(/nobody@test\.local/.test(staffText) && /invited as charter/.test(staffText) && !/no account/.test(staffText), "inviting an email with no account looks like any invite (nothing says who has signed up)");
+  await coach.locator("#sync-member").fill("charter@test.local"); await coach.getByRole("button", { name: "Invite", exact: true }).click(); await coach.waitForTimeout(600);
+  const notYet = (await su.query("select count(*)::int n from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0].n;
+  check(notYet === 0, "the invited charter isn't a member until he accepts");
   const charter = await open();
   await signIn(charter, "charter@test.local");
-  await charter.locator(".srow", { hasText: "Sync with Supabase" }).getByRole("button", { name: /RIT Tigers/ }).click(); await charter.waitForTimeout(1500);
+  await charter.waitForTimeout(500);
+  await charter.locator(".srow", { hasText: "Sync with Supabase" }).getByRole("button", { name: "Accept" }).click(); await charter.waitForTimeout(1800);
+  const role = (await su.query("select m.role from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0];
+  check(role && role.role === "charter", "he signs in on his iPad, accepts, and joins as charter");
   const got2 = await charter.evaluate(async () => ({ events: (await DB.D.all("events")).filter((e) => e.type === "pitch").length, games: (await DB.D.all("games")).length }));
   check(got2.events === 8 && got2.games >= 1, `the charter's iPad has the coach's game (${got2.events} pitches)`);
   const ours = await charter.evaluate(() => [...DB.teams.values()].filter((t) => t.isOurs).map((t) => t.name));
@@ -125,8 +136,10 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
 
   console.log("4. The charter charts a pitch; the coach's Sync now brings it back");
   await charter.locator(".tabs button", { hasText: "Game" }).click(); await charter.waitForTimeout(300);
-  await charter.keyboard.press("b"); await charter.waitForTimeout(200);
-  await charter.evaluate(() => syncNow(true)); await charter.waitForTimeout(800);
+  const n0 = await charter.evaluate(() => G().pitchNo);
+  for (let i = 0; i < 10 && (await charter.evaluate(() => G().pitchNo)) === n0; i++) { await charter.keyboard.press("b"); await charter.waitForTimeout(150); }
+  const synced = await charter.evaluate(async () => { const r = await syncNow(true); return r ? r.push.applied : "no sync"; });
+  console.log(`     (charter logged a pitch: ${(await charter.evaluate(() => G().pitchNo)) > n0}; his sync pushed ${synced})`);
   await toSetup(coach);
   await coach.getByRole("button", { name: "Sync now" }).click(); await coach.waitForTimeout(1200);
   const back = await coach.evaluate(async () => (await DB.D.all("events")).filter((e) => e.type === "pitch").length);
@@ -199,6 +212,31 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
   check(prof.includes(kept.id) && !prof.includes(dropped.id), "the coach's iPad learns from it once (the learned record came down with the duplicate left out)");
   await toSetup(coach); await coach.evaluate(async (g) => { S.view = "data"; await pastFixLoad(g); }, dropped.id); await coach.waitForTimeout(400);
   check(await coach.getByText(/same game as another iPad/).count() === 1, "Data, Fix a pitch says so, with a way to say they're different games");
+
+  console.log("9. One iPad holds one program; a join with no signal saves nothing");
+  {
+    const other = (await su.query("select id from public.programs where name = 'RIT Tigers'")).rows[0];
+    await asUser(users["coach@test.local"], "select public.pc_create_program('Summer ball')");
+    await toSetup(coach);
+    await coach.getByRole("button", { name: "Sign out" }).click(); await coach.waitForTimeout(300);
+    await coach.locator("#sync-pass").fill("anything"); await coach.getByRole("button", { name: "Sign in" }).click(); await coach.waitForTimeout(900);
+    const summer = coach.locator(".srow", { hasText: "Sync with Supabase" }).getByRole("button", { name: /Summer ball/ });
+    const disabled = await summer.isDisabled();
+    const msg = await coach.evaluate(() => joinProgram({ program_id: SYNC.programs.find((p) => p.name === "Summer ball").program_id, name: "Summer ball", role: "head_coach" }).then(() => "joined", (e) => e.message));
+    const leaked = (await su.query("select count(*)::int n from public.events e join public.programs p on p.id = e.program_id where p.name = 'Summer ball'")).rows[0].n;
+    check(disabled && /holds the data for RIT Tigers/.test(msg) && leaked === 0, `the coach's iPad can't take Summer ball: the choice is greyed out, joining says why, nothing of RIT's went there ("${msg.slice(0, 60)}...", ${leaked} pitches)`);
+    check(await coach.getByRole("button", { name: /start this iPad fresh/ }).count() === 1, "and it offers to back up and start this iPad fresh");
+    const fresh = await open();
+    await fresh.evaluate(async () => { const t = ourTeam(); t.name = "Placeholder"; await dbPut("teams", t); });
+    await signIn(fresh, "charter@test.local");
+    await fresh.context().setOffline(true);
+    await fresh.locator(".srow", { hasText: "Sync with Supabase" }).getByRole("button", { name: /RIT Tigers/ }).click(); await fresh.waitForTimeout(600);
+    const cfg = await fresh.evaluate(async () => ({ prog: (await DB.D.get("meta", "syncConfig")).programId || null, text: document.querySelector(".srow").innerText }));
+    await fresh.context().setOffline(false);
+    await fresh.evaluate(() => endGame()); await fresh.waitForTimeout(1500);
+    const placeholders = (await su.query("select count(*)::int n from public.teams where doc->>'name' = 'Placeholder'")).rows[0].n;
+    check(!cfg.prog && placeholders === 0, `joining with no signal leaves the iPad unjoined and its placeholder team off the server (program saved: ${cfg.prog}, placeholder teams up: ${placeholders})`);
+  }
 
   check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
   await browser.close(); server.close(); await db.end(); await su.end();

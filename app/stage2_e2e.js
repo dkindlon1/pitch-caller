@@ -58,11 +58,14 @@ const server = http.createServer((req, res) => {
   const fbId = await page.evaluate(() => pitcherDef().pitches[0].id);
   await page.evaluate(() => { window.__end = endGame(); });     // not awaited: learning runs in the worker
   await page.waitForFunction(() => G().pitchNo === 0, null, { timeout: 5000 });
-  await page.evaluate(async ({ pid }) => {
+  const during = await page.evaluate(async ({ pid }) => {
+    const running = (await DB.D.all("meta")).some((m) => /^toLearn/.test(m.id)) && !pModel(pid);   // learning hasn't landed yet
     const p = DB.pitchers.get(pid), d = p.pitches[0], old = d.command; d.command = 2; logGrade(p, d, "command", old); savePitcher(p, false);
+    return running;
   }, { pid });
+  check(during, "(the setup: the re-grade happened while that learning was still running)");
   await page.evaluate(() => window.__end);
-  await page.waitForFunction(async () => !(await DB.D.get("meta", "toLearn")), null, { timeout: 20000 });
+  await page.waitForFunction(async () => !(await DB.D.all("meta")).some((m) => /^toLearn/.test(m.id)), null, { timeout: 20000 });
   const r3 = await page.evaluate(({ pid, fbId }) => { const m = pModel(pid); const sv = m && m.served.pitches[fbId]; G().pitcher = 0; const a = arsenal().find((x) => x.name === pitcherDef().pitches[0].name); return { served: sv && sv.command, coach: sv && sv.coach && sv.coach.command, calls: a.command }; }, { pid, fbId });
   check(r3.coach === 2 && Math.abs(r3.served - 2) <= 0.15 + 1e-9 && Math.abs(r3.calls - 2) <= 0.15 + 1e-9, `re-graded 4 -> 2 during learning: served ${r3.served} from his ${r3.coach}, the calls use ${r3.calls} (the bug was 3.7)`);
 
@@ -73,12 +76,12 @@ const server = http.createServer((req, res) => {
   const modelAt = await page.evaluate(({ pid }) => (pModel(pid) || {}).at || 0, { pid });
   await page.evaluate(() => { endGame(); });
   await page.waitForFunction(() => G().pitchNo === 0, null, { timeout: 5000 });
-  const midway = await page.evaluate(async ({ pid, at }) => ({ job: !!(await DB.D.get("meta", "toLearn")), relearned: ((pModel(pid) || {}).at || 0) > at }), { pid, at: modelAt });
+  const midway = await page.evaluate(async ({ pid, at }) => ({ job: !!(await DB.D.all("meta")).some((m) => /^toLearn/.test(m.id)), relearned: ((pModel(pid) || {}).at || 0) > at }), { pid, at: modelAt });
   await page.reload(); await ready();
   const after = await page.evaluate(async ({ g2 }) => ({ cur: G().dbId, n: G().pitchNo, rec: (await DB.D.get("games", g2)).status, hist: (S.history || []).length }), { g2 });
   check(midway.job && !midway.relearned, `closed while learning was still to do (job saved: ${midway.job}, finished: ${midway.relearned})`);
   check(after.cur !== g2 && after.n === 0 && after.rec === "final" && after.hist >= 2, `after reopening: that game is final and archived, a fresh game is up (${after.rec}, ${after.n} pitches)`);
-  await page.waitForFunction(async ({ pid, at }) => !(await DB.D.get("meta", "toLearn")) && ((pModel(pid) || {}).at || 0) > at, { pid, at: modelAt }, { timeout: 20000 });
+  await page.waitForFunction(async ({ pid, at }) => !(await DB.D.all("meta")).some((m) => /^toLearn/.test(m.id)) && ((pModel(pid) || {}).at || 0) > at, { pid, at: modelAt }, { timeout: 20000 });
   check(true, "and the learning it missed ran on launch");
 
   console.log("D1 D2 D4. Answering a grade flag, through the Roster");
@@ -106,6 +109,24 @@ const server = http.createServer((req, res) => {
   await page.getByRole("button", { name: /^Use 0\.6/ }).click(); await wait(300);
   const acc = await page.evaluate(({ pid, fbId }) => DB.pitchers.get(pid).accepted[fbId].command, { pid, fbId });
   check(acc && acc.to === 0.6 && typeof acc.from === "number", `Accept stores the learned value (${acc && acc.to}) and where the calls were (${acc && acc.from}), to phase in over 3 games`);
+
+  console.log("D2 (review). Answers after an Accept");
+  const r2 = await page.evaluate(({ pid, fbId }) => {
+    const p = DB.pitchers.get(pid), d = p.pitches.find((x) => x.id === fbId);
+    const flag = (ref) => ({ type: "grade", pitchId: fbId, dim: "command", coach: +d.command, ref, learned: 0.2, sd: 0.2 });
+    const shownBefore = flagShown(p, flag(+d.command), pModel(pid));                 // a stale flag against his old grade
+    const old = d.command; d.command = 3; logGrade(p, d, "command", old);           // he re-grades after accepting
+    const cleared = !(p.flagState || {})[`${fbId}|command`] && !((p.accepted || {})[fbId] || {}).command;
+    const shownAfter = flagShown(p, flag(3), pModel(pid));
+    flagAnswer(p, flag(3), "accept"); flagAnswer(p, Object.assign(flag(p.accepted[fbId].command.to), { learned: 2.9 }), "keep");
+    const kept = !((p.accepted || {})[fbId] || {}).command;
+    d.grade = ""; const og = 3; logGrade(p, d, "command", 3);
+    return { shownBefore, cleared, shownAfter, kept, blankLogged: d.gradeLog[d.gradeLog.length - 1].grade };
+  }, { pid, fbId });
+  check(!r2.shownBefore && r2.cleared && r2.shownAfter, `a re-grade after Accept clears that answer, so the next flag shows (cleared ${r2.cleared}, shown ${r2.shownAfter})`);
+  check(r2.kept, "Keep mine retires the accept it answers");
+  check(r2.blankLogged === null, `a blank stuff box is logged as blank, not 0 (${r2.blankLogged})`);
+  await page.evaluate(({ pid }) => { const p = DB.pitchers.get(pid); p.pitches[0].grade = 3; p.flagState = {}; p.accepted = {}; savePitcher(p); }, { pid });
 
   console.log("D8. A blank grade");
   await page.evaluate(({ pid }) => { const p = DB.pitchers.get(pid); p.pitches[1].command = ""; p.useLearned = false; savePitcher(p); S.view = "roster"; rosterSel = pid; render(); }, { pid });

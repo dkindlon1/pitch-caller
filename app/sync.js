@@ -15,10 +15,21 @@
  */
 (function (root) {
   "use strict";
-  const VERSION = "1.1.0";
+  const VERSION = "1.2.0";
   // the device stores that sync, in the order they go up (parents before what points at them); meta stays on the device
   const TABLES = ["teams", "pitchers", "catchers", "hitters", "checkins", "sessions", "readings", "games", "packs", "events", "learned"];
   const BATCH = 400;
+
+  // Strings the server can't store: a NUL character, or half of an emoji (a lone surrogate, as a cut-off paste leaves).
+  // Postgres refuses the whole request over either, so they're cleaned before anything goes up.
+  const BAD_CHARS = /\u0000|[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g;
+  function clean(v) {
+    if (typeof v === "string") return BAD_CHARS.test(v) ? v.replace(BAD_CHARS, (c) => (c === "\u0000" ? "" : "\ufffd")) : v;
+    if (Array.isArray(v)) return v.map(clean);
+    if (v && typeof v === "object") { const o = {}; for (const k of Object.keys(v)) o[k] = clean(v[k]); return o; }
+    return v;
+  }
+  const DAY = 864e5;
 
   function createSync(opts) {
     const db = opts.db, transport = opts.transport, programId = opts.programId;
@@ -28,61 +39,125 @@
 
     async function state() {
       const s = await db.get("meta", key);
-      return s || { id: key, programId, lastPush: {}, cursor: {}, rejected: [], log: [] };
+      return Object.assign({ id: key, programId, lastPush: {}, cursor: {}, parked: {}, rejected: [], log: [], access: null }, s || {});
     }
     async function saveState(s) { s.log = (s.log || []).slice(-30); return db.put("meta", s); }
 
-    // A record that came down from the server carries _pulled (the updatedAt it arrived with). Until it's changed here
-    // its updatedAt still equals _pulled, so it isn't sent back up: the server already has it, and an account that
-    // can only read it (a charter and the pitcher records) would otherwise see it refused on every sync.
-    const changedHere = (x, since) => (x.updatedAt || 0) > since && x._pulled !== x.updatedAt;
-    const forServer = (x) => { if (!("_pulled" in x)) return x; const y = Object.assign({}, x); delete y._pulled; return y; };
+    // One iPad holds one program's data. The first program it syncs with claims it; another program is refused (its
+    // records would otherwise go up into the wrong program), until the iPad is started fresh.
+    async function bind() {
+      const b = await db.get("meta", "boundProgram");
+      if (b && b.programId !== programId) {
+        const e = new Error(`This iPad holds the data for ${b.programName || "another program"}. To use it for this program, back it up and start this iPad fresh.`);
+        e.code = "other-program"; e.boundTo = b; throw e;
+      }
+      if (!b) await db.put("meta", { id: "boundProgram", programId, programName: opts.programName || null, at: now() });
+    }
 
-    // what's waiting to go up, per table
-    async function pending() {
-      const s = await state(), out = {};
-      const changed = await db.changedSince(0);
-      for (const t of TABLES) { const since = s.lastPush[t] || 0; out[t] = (changed[t] || []).filter((x) => changedHere(x, since)).length; }
+    // A record that came down from the server carries _pulled (the updatedAt it arrived with). Until it's changed here
+    // its updatedAt still equals _pulled, so it isn't sent back up: the server already has it.
+    const changedHere = (x, since) => (x.updatedAt || 0) > since && x._pulled !== x.updatedAt;
+    const forServer = (x) => { const y = Object.assign({}, x); delete y._pulled; return clean(y); };
+    // records to send whatever the watermark says: ones refused before (another account may be allowed to write them,
+    // e.g. the head coach after a charter used this iPad) and ones a restore brought in
+    async function wanted(s) {
+      const extra = (await db.get("meta", "pushExtra")) || { tables: {} }, out = {};
+      for (const t of TABLES) out[t] = new Set([...((s.parked || {})[t] || []), ...((extra.tables || {})[t] || [])]);
       return out;
     }
 
+    // what's waiting to go up, per table
+    async function pending() {
+      const s = await state(), out = {}, w = await wanted(s);
+      const changed = await db.changedSince(0);
+      for (const t of TABLES) {
+        const since = s.lastPush[t] || 0, ids = new Set((changed[t] || []).filter((x) => changedHere(x, since)).map((x) => x.id));
+        for (const id of w[t]) ids.add(id);
+        out[t] = ids.size;
+      }
+      return out;
+    }
+
+    // one batch; if the server can't take it whole (a 400 over something in it), halves until the bad record is alone
+    async function pushBatch(t, rows) {
+      try { return await transport.push(t, rows); }
+      catch (e) {
+        if (e.status !== 400) throw e;   // no signal, signed out, server down: nothing is marked pushed
+        if (rows.length === 1) return { applied: 0, skipped: 0, rejected: [{ id: rows[0].id, reason: "bad record: " + e.message }], server: [] };
+        const h = Math.ceil(rows.length / 2), a = await pushBatch(t, rows.slice(0, h)), b = await pushBatch(t, rows.slice(h));
+        return { applied: a.applied + b.applied, skipped: (a.skipped || 0) + (b.skipped || 0), rejected: (a.rejected || []).concat(b.rejected || []), server: (a.server || []).concat(b.server || []) };
+      }
+    }
+
     async function push() {
-      const s = await state();
+      await bind();
+      const s = await state(), w = await wanted(s);
       const started = now();                 // anything written from here on goes up next time
       const changed = await db.changedSince(Math.min(...TABLES.map((t) => s.lastPush[t] || 0)));
-      const stats = { applied: 0, skipped: 0, rejected: [] };
+      const stats = { applied: 0, skipped: 0, rejected: [] }, parked = {}, restamp = [];
       for (const t of TABLES) {
         const since = s.lastPush[t] || 0;
-        const rows = (changed[t] || []).filter((x) => changedHere(x, since)).sort((a, b) => a.updatedAt - b.updatedAt).map(forServer);
-        for (let i = 0; i < rows.length; i += BATCH) {
-          const r = await transport.push(t, rows.slice(i, i + BATCH));   // a network failure throws: nothing is marked pushed
-          stats.applied += r.applied; stats.skipped += r.skipped;
-          for (const x of r.rejected || []) stats.rejected.push(Object.assign({ table: t }, x));
+        const rows = (changed[t] || []).filter((x) => changedHere(x, since));
+        if (w[t].size) {
+          const have = new Set(rows.map((x) => x.id));
+          for (const x of await db.all(t, true)) if (w[t].has(x.id) && !have.has(x.id)) rows.push(x);
         }
-        // a refused record isn't retried forever: it's reported (the account isn't allowed to write it)
+        rows.sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0));
+        const take = [];
+        for (let i = 0; i < rows.length; i += BATCH) {
+          const r = await pushBatch(t, rows.slice(i, i + BATCH).map(forServer));
+          stats.applied += r.applied || 0; stats.skipped += r.skipped || 0;
+          // the server's copy of what it didn't take because its own is as new or newer: this iPad takes it
+          for (const x of r.server || []) if (x && x.doc) take.push(x.doc);
+          for (const x of r.rejected || []) {
+            stats.rejected.push(Object.assign({ table: t }, x));
+            (parked[t] = parked[t] || []).push(x.id);     // kept and tried again (never written off)
+            if (/^clock/.test(x.reason || "")) restamp.push([t, x.id]);
+          }
+        }
+        if (take.length) await db.mergeRows(t, take.map((d) => Object.assign({}, d, { _pulled: d.updatedAt })), { force: true });
         s.lastPush[t] = started - 1;
       }
+      // a record stamped by a clock more than a day fast: once this iPad's clock is right again it gets a fresh stamp
+      for (const [t, id] of restamp) {
+        const x = (await db.all(t, true)).find((y) => y.id === id);
+        if (x && (x.updatedAt || 0) > now() + DAY) await db.put(t, Object.assign({}, x, { updatedAt: 0 }));
+      }
+      for (const t of Object.keys(parked)) parked[t] = [...new Set(parked[t])].slice(0, 500);
+      s.parked = parked;
       s.rejected = stats.rejected.slice(0, 50);
       s.lastPushAt = started;
       s.log = (s.log || []).concat({ at: started, push: { applied: stats.applied, skipped: stats.skipped, rejected: stats.rejected.length } });
       await saveState(s);
+      if (await db.get("meta", "pushExtra")) { if (db.forget) await db.forget("meta", "pushExtra"); else await db.del("meta", "pushExtra"); }
       return stats;
     }
 
     async function pull() {
+      await bind();
       const s = await state();
-      const stats = { merged: 0, received: 0 };
-      for (const t of TABLES) {
-        let cur = s.cursor[t] || { xid: 0, id: "" };
-        for (let guard = 0; guard < 10000; guard++) {
-          const r = await transport.pull(t, cur);
-          stats.received += r.rows.length;
-          if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
-          cur = r.next || cur;
-          s.cursor[t] = cur;
-          await saveState(s);                 // a pull cut off halfway resumes from here
-          if (!r.more) break;
+      const stats = { merged: 0, received: 0, held: false };
+      for (let pass = 0; pass < 2; pass++) {
+        let restart = false;
+        for (const t of TABLES) {
+          let cur = s.cursor[t] || { xid: 0, id: "" };
+          for (let guard = 0; guard < 10000; guard++) {
+            const r = await transport.pull(t, cur);
+            // a new role or pitcher record: rows it couldn't see before were stepped past, so every cursor starts over
+            if (r.access && s.access && r.access !== s.access) { s.access = r.access; s.cursor = {}; await saveState(s); restart = true; break; }
+            if (r.access) s.access = r.access;
+            if (r.reset) { cur = { xid: 0, id: "" }; s.cursor[t] = cur; continue; }   // the server was restored: from the start
+            stats.received += r.rows.length;
+            if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
+            if (r.held) stats.held = true;
+            cur = r.next || cur;
+            s.cursor[t] = cur;
+            await saveState(s);                 // a pull cut off halfway resumes from here
+            if (!r.more) break;
+          }
+          if (restart) break;
         }
+        if (!restart) break;
       }
       s.lastPullAt = now();
       s.log = (s.log || []).concat({ at: s.lastPullAt, pull: stats });
@@ -90,11 +165,15 @@
       return stats;
     }
 
-    // push first, so this device's newest work is on the server before it merges anyone else's
+    // push first, so this device's newest work is on the server before it merges anyone else's. A push the server
+    // couldn't finish doesn't stop the pull (other iPads' games still come down); no signal, a sign-in problem or the
+    // wrong program stops both.
     async function syncNow() {
-      const up = await push();
+      let up, upErr = null;
+      try { up = await push(); }
+      catch (e) { if (!e.status || e.status === 401 || e.status === 403 || e.code === "other-program") throw e; upErr = e; up = { applied: 0, skipped: 0, rejected: [], error: e.message }; }
       const down = await pull();
-      return { push: up, pull: down };
+      return { push: up, pull: down, error: upErr ? upErr.message : null };
     }
 
     return { push, pull, syncNow, pending, state, TABLES };
@@ -127,8 +206,15 @@
       pull: (table, cur) => rpc("pc_pull", { p: programId, tbl: table, after_xid: cur.xid || 0, after_id: cur.id || "", lim: 500 }),
       myPrograms: () => rpc("pc_my_programs", {}),
       createProgram: (name, level) => rpc("pc_create_program", { name, level }),
-      // head coach only (the server checks): give an account a role in this program; a pitcher is tied to his roster record
-      setMember: (email, role, pitcherId) => rpc("pc_set_member", { p: programId, email, member_role: role, member_pitcher: pitcherId || null }),
+      // staff: the server checks who may do each of these (the head coach, or the invited person for their own invite)
+      myInvites: () => rpc("pc_my_invites", {}),
+      acceptInvite: (p) => rpc("pc_accept_invite", { p }),
+      declineInvite: (p) => rpc("pc_decline_invite", { p }),
+      invite: (email, role, pitcherId) => rpc("pc_invite", { p: programId, invite_email: email, member_role: role, member_pitcher: pitcherId || null }),
+      cancelInvite: (email) => rpc("pc_cancel_invite", { p: programId, invite_email: email }),
+      staff: () => rpc("pc_staff", { p: programId }),
+      setRole: (userId, role, pitcherId) => rpc("pc_set_role", { p: programId, member: userId, member_role: role, member_pitcher: pitcherId || null }),
+      removeMember: (userId) => rpc("pc_remove_member", { p: programId, member: userId }),
     };
   }
 
@@ -148,16 +234,21 @@
       await db.put("meta", s);
       return s;
     }
+    // one refresh at a time: calls that need a token while a refresh is under way wait for it (two refreshes with the
+    // same refresh token can make Supabase treat the second as a stolen token and end the session)
+    let refreshing = null;
     return {
       signIn: (email, password) => call("password", { email, password }),
       async token() {
         const s = await db.get("meta", key);
         if (!s) return null;
         if (s.expiresAt - clock() > 60000) return s.access;
-        return (await call("refresh_token", { refresh_token: s.refresh })).access;
+        if (!refreshing) refreshing = call("refresh_token", { refresh_token: s.refresh }).finally(() => { refreshing = null; });
+        return (await refreshing).access;
       },
       async session() { return db.get("meta", key); },
-      async signOut() { return db.del("meta", key); },
+      // a hard delete: a soft-deleted session would still hold the refresh token on the device
+      async signOut() { return db.forget ? db.forget("meta", key) : db.del("meta", key); },
     };
   }
 

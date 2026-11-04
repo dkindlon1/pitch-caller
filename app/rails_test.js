@@ -50,6 +50,45 @@ console.log("D2. Accept: the value at that moment, over 3 games, then the limit 
   check(L.railsFor(p2, { pitches: [p2], accepted: pit.accepted, flagState: pit.flagState }, "command").center === 1.6, "a re-grade of stuff only leaves an accepted command alone");
 }
 
+console.log("D2 (review). Accept: no jump between games, steps not games, phases end, old accepts, Keep mine retires it");
+{
+  // accepted between games: nothing moves until the next game, then it phases in from where the calls were
+  const p = pd(), pit = { id: "p1", pitches: [p] };
+  const before = run(pit, () => ({ command: 1.6, grade: 3 }), 10);                 // served 3 (the ±1.0 limit around 4)
+  pit.accepted = { fb: { command: { ts: T0 + 10.5 * day, from: before.pitches.fb.command, to: 1.6 } } };
+  pit.flagState = { "fb|command": { how: "accept", ts: T0 + 10.5 * day } };
+  const tapped = L.serve(prof(10, { command: 1.6, grade: 3 }), pit, before);
+  check(tapped.pitches.fb.command === 3 && L.clampServed(p, pit, tapped.pitches.fb).command === 3, `tapping Accept between games moves nothing yet (${tapped.pitches.fb.command}, clamp ${L.clampServed(p, pit, tapped.pitches.fb).command})`);
+  const g11 = L.serve(prof(11, { command: 1.6, grade: 3 }), pit, tapped);
+  check(Math.abs(g11.pitches.fb.command - 2.53) < 0.011, `then a third of the way at the next game (${g11.pitches.fb.command})`);
+  // two games arrive in one relearn (a sync): two steps of the phase, not one
+  const two = L.serve(prof(13, { command: 1.6, grade: 3 }), pit, g11);
+  check(two.pitches.fb.command === 1.6, `two games arriving at once take two steps: at the accepted 1.6 after three games' worth (${two.pitches.fb.command})`);
+  // a profile with no game list (older callers): the phase still ends after three serves, then the limit is around 1.6
+  const ng = (c) => ({ at: T0, pitches: { fb: { n: 600, talent: { command: c, grade: 3 }, sd: { command: .2, grade: .2 }, traits: {} } } });
+  let sv = { pitches: { fb: { command: 3, grade: 3, learned: true, coach: { command: 4, grade: 3 } } } };
+  for (let i = 0; i < 3; i++) sv = L.serve(ng(1.6), pit, sv);
+  for (let i = 0; i < 20; i++) sv = L.serve(ng(4.5), pit, sv);
+  check(sv.pitches.fb.command === 2.6, `without a game list the phase ends too: learned swings to 4.5, the calls stop at 2.6 (${sv.pitches.fb.command})`);
+  // an accept saved by the earlier version (no "to"): it keeps meaning what it meant then (follow what's learned)
+  const old = { id: "p1", pitches: [pd()], accepted: { fb: { command: { ts: T0 + 5 * day, from: 3 } } }, flagState: { "fb|command": { how: "accept" } } };
+  const stored = { games: games(10).map((g) => g.id), pitches: { fb: { command: 1.6, grade: 3, learned: true, coach: { command: 4, grade: 3 } } } };
+  const o1 = L.serve(prof(10, { command: 1.6, grade: 3 }), old, stored);
+  check(o1.pitches.fb.command === 1.6, `an accept saved before this change still holds (served ${o1.pitches.fb.command}, was 3)`);
+  // Keep mine retires an accept: answering a later flag "remind me" doesn't bring it back
+  const k = { id: "p1", pitches: [pd()], accepted: { fb: { command: { ts: T0, from: 3, to: 1.6 } } }, flagState: { "fb|command": { how: "keep", ts: T0 + 3 * day } } };
+  const held = { games: games(10).map((g) => g.id), pitches: { fb: { command: 4, grade: 3, learned: true, coach: { command: 4, grade: 3 } } } };
+  const rem = L.serve(prof(10, { command: 1.6, grade: 3 }), Object.assign({}, k, { flagState: { "fb|command": { how: "remind", untilGames: 15, ts: T0 + 6 * day } } }), held);
+  check(rem.pitches.fb.command === 4, `Keep mine, then "ask me in 5 games" on a later flag: still his 4, no jump to the old accept (${rem.pitches.fb.command})`);
+}
+
+console.log("D8 (review). A blank grade in the grade history isn't a 0");
+{
+  const p = Object.assign(pd(), { command: "" }); p.gradeLog = [{ ts: 0, command: "", grade: 3 }, { ts: 5, command: 0, grade: 3.5 }];
+  check(L.railsFor(p, { pitches: [p] }, "command").coach === 3 && !L.graded(p, "command"), "a 0 or blank is not a grade (level average 3, not graded)");
+  check(L.coachValue({ grade: 0 }, "grade") === 3 && L.coachValue({ grade: 7 }, "grade") === 3 && L.coachValue({ grade: 4.5 }, "grade") === 4.5, "only 1 to 5 counts as a grade");
+}
+
 console.log("D4. The final clamp where the calls build his arsenal");
 {
   const p = pd(), pit = { id: "p1", pitches: [p] };

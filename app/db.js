@@ -71,6 +71,11 @@
     if (!factory) throw new Error("This browser has no IndexedDB");
     const name = opts.name || NAME;
     const r = factory.open(name, VERSION);
+    // an older copy of the app open in another tab holds the database at its old version, so this one can't upgrade it
+    // until that tab closes: say so instead of waiting forever
+    let blocked = null;
+    const opened = new Promise((res, rej) => { blocked = rej; });
+    r.onblocked = () => blocked(Object.assign(new Error("Pitch Caller is open in another tab or window (an older version). Close it there, then reload this page."), { code: "blocked" }));
     r.onupgradeneeded = (e) => {
       const db = r.result, tx = r.transaction, from = e.oldVersion || 0;
       for (const [store, idx] of Object.entries(STORES)) {
@@ -83,23 +88,30 @@
         cur.onsuccess = () => { const c = cur.result; if (!c) return; if (c.value.type === undefined) { const v = c.value; v.type = "pitch"; c.update(v); } c.continue(); };
       }
     };
-    const db = await req(r);
-    return api(db, factory, name);
+    const db = await Promise.race([req(r), opened]);
+    // a newer copy opened elsewhere wants to upgrade: let it (this page would only block it), and say why it stopped
+    db.onversionchange = () => { db.close(); if (opts.onVersionChange) opts.onVersionChange(); };
+    return api(db, factory, name, opts.now || now);
   }
 
-  function api(db, factory, name) {
+  function api(db, factory, name, now) {   // now: the clock (a test can give an iPad a wrong one)
     const os = (store, mode = "readonly") => db.transaction(store, mode).objectStore(store);
     const live = (x) => x && !x.deletedAt;
 
     async function get(store, id) { const x = await req(os(store).get(id)); return live(x) ? x : null; }
     async function all(store, withDeleted = false) { const xs = await req(os(store).getAll()); return withDeleted ? xs : xs.filter(live); }
-    async function byIndex(store, index, value) { const xs = await req(os(store).index(index).getAll(value)); return xs.filter(live); }
+    async function byIndex(store, index, value, withDeleted = false) { const xs = await req(os(store).index(index).getAll(value)); return withDeleted ? xs : xs.filter(live); }
+    // updatedAt is what "newest wins" compares, on this iPad and on the server. An edit is always stamped later than
+    // the version it was made from, even when this iPad's clock is behind the one that wrote that version (otherwise a
+    // later edit made here would lose to an earlier one made on an iPad whose clock runs fast). A version stamped more
+    // than a day ahead of this clock came from a clock that was wrong; it isn't carried forward.
     function stamp(store, o) {
       const t = now();
       const x = Object.assign({}, o);
       if (!x.id) x.id = uid(store.slice(0, 3));
       if (!x.createdAt) x.createdAt = t;
-      x.updatedAt = t;
+      const prev = +o.updatedAt || 0;
+      x.updatedAt = prev >= t && prev < t + 864e5 ? prev + 1 : t;
       return x;
     }
     async function put(store, o) { const x = stamp(store, o); const tx = db.transaction(store, "readwrite"); tx.objectStore(store).put(x); await done(tx); return x; }
@@ -110,7 +122,8 @@
     }
     async function del(store, id) {   // soft delete, so a later sync can carry the delete to other devices
       const x = await req(os(store).get(id)); if (!x) return false;
-      x.deletedAt = now(); x.updatedAt = x.deletedAt;
+      const t = now(), prev = +x.updatedAt || 0;
+      x.deletedAt = t; x.updatedAt = prev >= t && prev < t + 864e5 ? prev + 1 : t;
       const tx = db.transaction(store, "readwrite"); tx.objectStore(store).put(x); await done(tx); return true;
     }
     // a hard delete, only for records that never left this device (a new iPad's placeholder team and pitchers when it
@@ -119,9 +132,13 @@
     async function count(store) { return (await all(store)).length; }
 
     // ------------------------------------------------------------ backup
+    // The meta store is this device's own: its id, the sign-in session, sync positions, jobs. It never goes into a
+    // backup file and is never taken from one (a backup is shared by email or AirDrop; a session in it would let
+    // whoever restores it sign in as the coach, and a copied device id would make two iPads look like one).
+    const DEVICE_ONLY = new Set(["meta"]);
     async function exportAll() {
       const out = { app: "pitch-caller", schema: VERSION, exportedAt: new Date().toISOString(), stores: {} };
-      for (const s of Object.keys(STORES)) out.stores[s] = await all(s, true);
+      for (const s of Object.keys(STORES)) if (!DEVICE_ONLY.has(s)) out.stores[s] = await all(s, true);
       return out;
     }
     // Merge a backup into this device: newer updatedAt wins, so restoring an old backup never overwrites newer work.
@@ -133,30 +150,44 @@
       const unknown = Object.keys(data.stores).filter((s) => !(s in STORES));
       if (unknown.length) throw new Error(`That backup has data this app doesn't know (${unknown.join(", ")}), so nothing was restored.`);
       const stores = upgradeBackup(data.stores, schema);
-      const stats = {};
+      const stats = {}, restored = {};
       for (const s of Object.keys(STORES)) {
+        if (DEVICE_ONLY.has(s)) continue;
+        const written = [];   // never taken from a file, even one made to carry it
         const incoming = stores[s] || [];
         const tx = db.transaction(s, "readwrite"), st = tx.objectStore(s);
         if (replace) st.clear();
         const have = replace ? new Map() : new Map((await new Promise((res, rej) => { const r = st.getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })).map((x) => [x.id, x]));
         let n = 0;
         for (const x of incoming) {
+          if (!x || typeof x.id !== "string" || !x.id) continue;   // a row with no id can't be stored; skip it, don't abort
           const cur = have.get(x.id);
-          if (!cur || (x.updatedAt || 0) > (cur.updatedAt || 0)) { st.put(x); n++; }
+          if (!cur || (x.updatedAt || 0) > (cur.updatedAt || 0)) { st.put(x); have.set(x.id, x); written.push(x.id); n++; }   // repeats: newest wins
         }
         await done(tx); stats[s] = n;
+        if (n) restored[s] = written;
+      }
+      // what came in from the file goes up at the next sync even if its timestamps are older than this iPad's last push
+      if (Object.keys(restored).length) {
+        const prev = (await get("meta", "pushExtra")) || { id: "pushExtra", tables: {} };
+        for (const [t, ids] of Object.entries(restored)) prev.tables[t] = [...new Set((prev.tables[t] || []).concat(ids))];
+        await put("meta", prev);
       }
       return stats;
     }
     // rows from somewhere else (a sync pull): kept as they are, timestamps included, and only where newer than ours
-    async function mergeRows(store, rows) {
+    // force: take these rows even where ours is newer (the server's copy of a record it refused to replace)
+    async function mergeRows(store, rows, { force = false } = {}) {
       if (!(store in STORES)) throw new Error(`Unknown store ${store}`);
+      // the same id twice in one batch: only the newest copy is considered; a row with no id is skipped, not fatal
+      const best = new Map();
+      for (const x of rows) { if (!x || typeof x.id !== "string" || !x.id) continue; const o = best.get(x.id); if (!o || (x.updatedAt || 0) > (o.updatedAt || 0)) best.set(x.id, x); }
       // every read is issued inside the transaction's own callbacks (no await between them), so it can't close early
       const tx = db.transaction(store, "readwrite"), st = tx.objectStore(store);
       let n = 0;
-      for (const x of rows) {
+      for (const x of best.values()) {
         const g = st.get(x.id);
-        g.onsuccess = () => { const cur = g.result; if (!cur || (x.updatedAt || 0) > (cur.updatedAt || 0)) { st.put(x); n++; } };
+        g.onsuccess = () => { const cur = g.result; if (force || !cur || (x.updatedAt || 0) > (cur.updatedAt || 0)) { st.put(x); n++; } };
       }
       await done(tx); return n;
     }
@@ -244,8 +275,12 @@
   function likelyDuplicates(games, eventsOf, opts = {}) {
     const share = opts.share || 0.8, minPitches = opts.minPitches || 10, out = [];
     const sig = (e) => [e.sit ? e.sit.inning : "", e.sit ? e.sit.batters_faced ?? "" : "", e.sit ? `${e.sit.balls}-${e.sit.strikes}` : "", e.pitchName, e.res].join("|");
-    const seq = new Map();
-    for (const g of games) seq.set(g.id, (eventsOf(g.id) || []).filter((e) => isPitch(e) && !e.deletedAt).sort((a, b) => (a.seq || a.n || 0) - (b.seq || b.n || 0)).map(sig));
+    const seq = new Map(), charted = new Map();
+    for (const g of games) {
+      const evs = (eventsOf(g.id) || []).filter(isPitch);
+      charted.set(g.id, evs.length);   // everything charted, pitches later left out included: the choice of which to keep doesn't flip
+      seq.set(g.id, evs.filter((e) => !e.deletedAt).sort((a, b) => (a.seq || a.n || 0) - (b.seq || b.n || 0)).map(sig));
+    }
     const lcs = (a, b) => { let prev = new Array(b.length + 1).fill(0); for (let i = 1; i <= a.length; i++) { const cur = [0]; for (let j = 1; j <= b.length; j++) cur[j] = a[i - 1] === b[j - 1] ? prev[j - 1] + 1 : Math.max(prev[j], cur[j - 1]); prev = cur; } return prev[b.length]; };
     const live = games.filter((g) => !g.deletedAt);
     for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
@@ -257,7 +292,8 @@
       if (Math.min(a.length, b.length) < minPitches) continue;
       const r = lcs(a, b) / Math.min(a.length, b.length);
       if (r < share) continue;
-      const [keep, drop] = a.length !== b.length ? (a.length > b.length ? [A, B] : [B, A]) : ((A.startedAt || 0) <= (B.startedAt || 0) ? [A, B] : [B, A]);
+      const ca = charted.get(A.id), cb = charted.get(B.id);
+      const [keep, drop] = ca !== cb ? (ca > cb ? [A, B] : [B, A]) : ((A.startedAt || 0) !== (B.startedAt || 0) ? ((A.startedAt || 0) < (B.startedAt || 0) ? [A, B] : [B, A]) : (A.id < B.id ? [A, B] : [B, A]));
       out.push({ keep: keep.id, drop: drop.id, match: Math.round(r * 100) / 100 });
     }
     return out;

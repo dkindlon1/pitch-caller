@@ -48,7 +48,7 @@ console.log("D7. A bad logged row is skipped, not fatal");
   Object.assign(b(hit[3]), { res: "play", contact: "mega" });          // a contact value the app doesn't have
   let oldErr = null;
   try {
-    const OldL = (() => { const m = { exports: {} }; new Function("module", "exports", require("child_process").execSync("git show HEAD:app/learner.js", { cwd: __dirname }).toString())(m, m.exports); return m.exports; })();
+    const OldL = (() => { const m = { exports: {} }; new Function("module", "exports", require("child_process").execSync("git show 8b3b4fc:app/learner.js", { cwd: __dirname }).toString())(m, m.exports); return m.exports; })();
     OldL.learnPitcher(E, pitcherOf(G3), bad, { now: 1, scoreboard: false });
   } catch (e) { oldErr = e.message; }
   console.log(`     the learner before this change on the same rows: ${oldErr ? "crashed (" + oldErr.slice(0, 60) + ")" : "did not crash"}`);
@@ -60,6 +60,33 @@ console.log("D7. A bad logged row is skipped, not fatal");
   const clean = L.learnPitcher(E, pitcherOf(G3), evs.filter((e) => !hit.includes(e.id)), { now: 1, scoreboard: false });
   check(prof && JSON.stringify(prof.pitches) === JSON.stringify(clean.pitches), "the result is exactly learning without those rows");
   check(L.learnPitcher(E, pitcherOf(G3), evs, { now: 1, scoreboard: false }).skipped.n === 0, "a clean season skips nothing");
+}
+
+console.log("D7 (review). The rows that still crashed, and rows with no id");
+{
+  const evs = season({ pitches: P3, entered: G3, truth: () => G3, games: 3, pas: 20, seed: 430, loc: true });
+  const muts = [["a coach call saved without its arsenal", (e) => { delete e.ars; e.choice = "coach"; e.coach = true; }],
+    ["a shake-off list with a hole in it", (e) => { e.shaken = [null]; }], ["a shake-off list of numbers", (e) => { e.shaken = [5]; }]];
+  for (const [name, f] of muts) {
+    const b = clone(evs); f(b.filter((e) => e.pitchName === "Fastball")[6]);
+    let err = null, prof = null; try { prof = L.learnPitcher(E, pitcherOf(G3), b, { now: 1, scoreboard: false }); } catch (e) { err = e.message; }
+    check(!err && prof.skipped.n === 1, `${name}: skipped, not fatal (${err || "skipped " + prof.skipped.n})`);
+  }
+  const noIds = clone(evs).map((e) => { delete e.id; return e; });
+  noIds.filter((e) => e.pitchName === "Fastball")[3].quad = null;
+  const a = L.learnPitcher(E, pitcherOf(G3), noIds, { now: 1, scoreboard: false });
+  check(a.skipped.n === 1 && a.pitches.fb.n > 50, `one bad row with no id doesn't drop every row without an id (fastball rows learned: ${a.pitches.fb.n})`);
+}
+
+console.log("D8 (review). A blank grade in the grade history doesn't pull the fit to 0");
+{
+  const evs = season({ pitches: P3, entered: G3, truth: () => G3, games: 3, pas: 20, seed: 440, loc: true });
+  const base = pitcherOf(G3); base.pitches[0].command = "";
+  const withLog = clone(base); withLog.pitches[0].gradeLog = [{ ts: 0, command: "", grade: 3 }, { ts: evs[0].ts + 1, command: 0, grade: 3.5, sawLearned: false }];
+  const noLog = clone(base); noLog.pitches[0].gradeLog = [{ ts: 0, command: "", grade: 3 }];
+  const a = L.learnPitcher(E, withLog, evs, { now: 1, scoreboard: false }).pitches.fb.talent.command;
+  const b = L.learnPitcher(E, noLog, evs, { now: 1, scoreboard: false }).pitches.fb.talent.command;
+  check(Math.abs(a - b) < 0.05, `a logged 0 for a blank command isn't a re-grade to 0 (learned ${a} with it, ${b} without)`);
 }
 
 console.log("D10. The starved flag counts the engine's calls only");

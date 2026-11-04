@@ -47,7 +47,7 @@ const doc = (id, extra = {}) => Object.assign({ id, createdAt: 1, updatedAt: 100
   await su.query(sql("auth_stub.sql"));
   await su.query(sql("../migrations/20261103000000_pitch_caller.sql"));
   const users = { coach: crypto.randomUUID(), charter: crypto.randomUUID(), pitcher: crypto.randomUUID(), other: crypto.randomUUID(), stranger: crypto.randomUUID() };
-  for (const [name, id] of Object.entries(users)) await su.query("insert into auth.users (id, email) values ($1, $2)", [id, name + "@test.local"]);
+  for (const [name, id] of Object.entries(users)) await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, $2, now())", [id, name + "@test.local"]);
   const conns = {}, q = {};
   for (const name of Object.keys(users)) { conns[name] = await connect(); q[name] = as(conns[name], users[name]); }
   const qAnon = as(await connect(), null);
@@ -55,8 +55,9 @@ const doc = (id, extra = {}) => Object.assign({ id, createdAt: 1, updatedAt: 100
   console.log("1. Who sees and writes what");
   const prog = (await q.coach("select public.pc_create_program('RIT', 'college_d3') as id")).rows[0].id;
   const prog2 = (await q.other("select public.pc_create_program('Other U', 'college_d3') as id")).rows[0].id;
-  await q.coach("select public.pc_set_member($1, 'charter@test.local', 'charter')", [prog]);
-  await q.coach("select public.pc_set_member($1, 'pitcher@test.local', 'pitcher', 'pit_me')", [prog]);
+  // staff join by invitation (the head coach invites, they accept); review_test.js checks the invite rules in detail
+  await q.coach("select public.pc_invite($1, 'charter@test.local', 'charter')", [prog]); await q.charter("select public.pc_accept_invite($1)", [prog]);
+  await q.coach("select public.pc_invite($1, 'pitcher@test.local', 'pitcher', 'pit_me')", [prog]); await q.pitcher("select public.pc_accept_invite($1)", [prog]);
   const push = (who, p, t, rows) => q[who]("select public.pc_push($1, $2, $3::jsonb) as r", [p, t, JSON.stringify(rows)]).then((r) => r.rows[0].r);
   const pull = (who, p, t, cur = { xid: 0, id: "" }) => q[who]("select public.pc_pull($1, $2, $3, $4, 500) as r", [p, t, cur.xid, cur.id]).then((r) => r.rows[0].r);
   const mine = await q.coach("select * from public.pc_my_programs()");
@@ -91,9 +92,9 @@ const doc = (id, extra = {}) => Object.assign({ id, createdAt: 1, updatedAt: 100
   check(anon && /permission denied/.test(anon.message), "anon (the public key alone) can't read the tables");
   const anonRpc = await fails_with(() => qAnon("select public.pc_pull($1, 'events')", [prog]));
   check(anonRpc && /permission denied/.test(anonRpc.message), "or call the sync functions");
-  const stranger = await fails_with(() => q.stranger("select public.pc_set_member($1, 'stranger@test.local', 'head_coach')", [prog]));
-  check(stranger && /only the head coach/.test(stranger.message), "only the head coach adds members");
-  const last = await fails_with(() => q.coach("select public.pc_set_member($1, 'coach@test.local', 'charter')", [prog]));
+  const stranger = await fails_with(() => q.stranger("select public.pc_invite($1, 'stranger@test.local', 'head_coach')", [prog]));
+  check(stranger && /only the head coach/.test(stranger.message), "only the head coach invites");
+  const last = await fails_with(() => q.coach("select public.pc_set_role($1, $2, 'charter')", [prog, users.coach]));
   check(last && /at least one head coach/.test(last.message), "the last head coach can't demote himself");
 
   console.log("2. Push keeps the newer record");

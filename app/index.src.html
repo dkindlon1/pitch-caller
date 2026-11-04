@@ -640,7 +640,7 @@ function arsenal() {
     const fin = PCLearner.clampServed(d, pd, sv && sv.learned ? sv : null);
     const adj = sv && sv.learned ? { grade: fin.grade, command: fin.command, traits: sv.traits && Object.keys(sv.traits).length ? sv.traits : null,
       strike_rate: fin.grade === sv.grade && fin.command === sv.command ? sv.strike_rate ?? null
-        : PCLearner.strikeRateFast(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level) }
+        : PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level) }
       : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
     return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, conf: c === undefined ? feel : c,
@@ -863,7 +863,7 @@ function undoLast() {
   S.game = JSON.parse(undo.pop());
   // the game's identity isn't undone: its record id, its pack versions (a re-grade since then still stands) and the
   // running event order stay, so undoing the first pitch can't start a second game record, and no pack version repeats
-  for (const k of ["dbId", "packId", "packV", "seq"]) if (before[k] !== undefined) S.game[k] = before[k];
+  for (const k of ["dbId", "packId", "packV", "seq", "keepEvIds"]) if (before[k] !== undefined) S.game[k] = before[k];
   pending = null; pickMode = false; pendingLoc = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
 }
 function changePitcher() {
@@ -894,7 +894,9 @@ const spotLower = (q) => SPOT[q].toLowerCase();
 let fixing = false;
 
 let lastZoneKey = null;
-const PCOLOR = (k) => `var(--${String(k || "FB").toLowerCase()})`;
+// a pitch kind is drawn into SVG markup: only the four known kinds ever reach it (a synced or restored record could
+// carry anything)
+const PCOLOR = (k) => `var(--${["FB", "SL", "CB", "CH"].includes(k) ? k.toLowerCase() : "fb"})`;
 const chip = (kind) => h("span", { class: `chip k-${kind}`, "aria-hidden": "true" }, String(SIGN[kind]));
 
 function applyTheme() {
@@ -908,7 +910,10 @@ function applyTheme() {
 function render() {
   applyTheme();
   const app = document.getElementById("app");
-  app.replaceChildren(topBar(), S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : liveView());
+  // the database didn't open (another tab holds an older version, or it failed): said on every screen, not just once
+  const dbNote = typeof DB !== "undefined" && DB.failed ? h("p", { class: "pstat change", role: "alert", style: { margin: "8px 16px" } },
+    DB.failed.code === "blocked" || /another tab/.test(DB.failed.message || "") ? DB.failed.message : "The database didn't open, so this game is kept on this page only. Reload to try again.") : null;
+  app.replaceChildren(...[topBar(), dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : liveView()].filter(Boolean));
   applyTheme();
 }
 
@@ -1054,7 +1059,8 @@ function hitterRead() {
 
 function zoneSVG(c) {
   // Catcher's view. A right-handed hitter stands on the catcher's left, so his inside half is on the left.
-  const hand = batterDef().hand === "S" ? (pitcherDef().hand === "R" ? "L" : "R") : batterDef().hand;
+  // "R" or "L" only: the hand is written into the SVG markup, and a hitter's bats can come from a synced record
+  const hand = batterDef().hand === "S" ? (pitcherDef().hand === "L" ? "R" : "L") : batterDef().hand === "L" ? "L" : "R";
   const inLeft = hand === "R";
   const kind = kindOf(c.pitch);
   const VW = 260, X = 70, Y = 44, W = 120, H = 150, cw = W / 3, ch = H / 3;
@@ -1257,7 +1263,7 @@ async function endGame() {
   const had = G().log.length;
   undo = [];
   const comp = had ? await finishGameRecord() : null;
-  archiveGame(); S.game = newGame(); S.sample = false; S.view = "live"; save(); render();
+  archiveGame(); S.game = newGame(); S.sample = false; S.view = "live"; pastFix.games = null; save(); render();
   if (!comp) { toast("New game started. First pitch is up."); return; }
   const pct = (x) => Math.round(100 * x) + "%";
   const used = comp.located >= 0.9 ? "locations will be used" : "under 90% located, so locations from it won't be used";

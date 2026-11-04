@@ -26,7 +26,7 @@ const hModel = (hid) => DB.models.get("h2:" + hid);
 async function boot() {
   if (typeof PCDB === "undefined") return;
   try {
-    const D = await PCDB.open();
+    const D = await PCDB.open({ onVersionChange: () => { DB.ready = false; DB.failed = new Error("A newer version of Pitch Caller opened in another tab. Reload this page."); toast(DB.failed.message); render(); } });
     DB.D = D;
     const mig = await PCDB.migrateLegacy(D, S);
     for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) for (const x of await D.all(store)) map.set(x.id, x);
@@ -49,8 +49,8 @@ async function boot() {
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
-      const job = await D.get("meta", "toLearn");   // D9: learning that a closed page never finished
-      if (job) await learnAfterGame(job);
+      // D9: learning that a closed page never finished (one job per game; "toLearn" alone is the older single slot)
+      for (const job of (await D.all("meta")).filter((m) => m.id === "toLearn" || /^toLearn:/.test(m.id))) await learnAfterGame(job);
       if (await D.get("meta", "checkDups")) { await checkDuplicates().catch((e) => console.warn("duplicate check", e)); await D.del("meta", "checkDups"); }
       for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
       for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
@@ -58,7 +58,9 @@ async function boot() {
       if (S.view === "roster") render();
     }, 50);
   } catch (e) {
-    DB.failed = e; console.warn("Database unavailable, running without it:", e && e.message); render();
+    DB.failed = e; console.warn("Database unavailable, running without it:", e && e.message);
+    toast(e && e.code === "blocked" ? e.message : "The database couldn't open, so pitches are kept on this page only. Reload to try again.");
+    render();
   }
 }
 
@@ -166,7 +168,9 @@ function ensureGameRecord() {
 // replays with exactly what the iPad saw.
 function packContents() {
   const ids = S.setup.staffIds || [];
-  const staff = ids.map((id) => DB.pitchers.get(id)).filter(Boolean).map((p) => {
+  // before the database has opened (the first pitch at launch), the staff on this page is what the calls read
+  const found = ids.map((id) => DB.pitchers.get(id) || (S.setup.staff || []).find((x) => x.id === id)).filter(Boolean);
+  const staff = (found.length ? found : (S.setup.staff || [])).map((p) => {
     const m = pModel(p.id), ci = todayCheckin(p.id);
     return { pitcherId: p.id, name: p.name, hand: p.hand, useLearned: p.useLearned !== false, pitchLimit: p.pitchLimit || null,
       pitches: (p.pitches || []).map((d) => ({ id: d.id, name: d.name, kind: d.kind, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"),
@@ -192,6 +196,15 @@ function makePack(reason) {
 }
 // something the calls read changed: if a game is under way, that's a new pack version from here on
 function packChanged(reason) { if (G().dbId) { makePack(reason); save(); } }
+// after something changed in the background (learning finished, a sync): a new pack version only if what the calls
+// read is now different from the version the game is on
+async function refreshPack(reason) {
+  const g = G(); if (!g.dbId || !g.packId || !DB.ready) return false;
+  const cur = await DB.D.get("packs", g.packId); if (!cur) return false;
+  const now = packContents(), strip = (x) => JSON.stringify({ staff: x.staff, catcher: x.catcher, hitters: x.hitters });
+  if (strip(now) === strip(cur)) return false;
+  makePack(reason); save(); return true;
+}
 function logEvent(ev) {
   ev.id = PCDB.uid("evt");
   const g = G();
@@ -214,6 +227,9 @@ function logPlay(play, detail = {}) {
     bases: g.bases.slice(), us: g.us, them: g.them, batter: g.batter, slot: slotIdx(), pitcherId: pd.id || null, hitterId: b.hitterId || null,
     catcherId: S.setup.catcherId || null, deviceId: DB.deviceId || null }, detail));
   g.evIds = (g.evIds || []).concat(id);
+  // a catcher change or a pinch hitter changes the setup, not the game state Undo steps back through: Undo never
+  // deletes these plays (the change itself stays, so the log has to keep saying so)
+  if (play === "sub_catcher" || play === "sub_hitter") g.keepEvIds = (g.keepEvIds || []).concat(id);
   return id;
 }
 async function flushQueued() {
@@ -226,7 +242,10 @@ async function flushQueued() {
 }
 // an edit to a logged pitch after the fact (where it ended up, contact, a cross-up, a wild pitch). The original values
 // are kept in the record's edit history; the game's flow (count, outs, runners) isn't changed, use Undo for that.
-async function editEvent(evId, changes) {
+// one edit at a time: two quick taps on the same pitch each read the record the other just saved
+let editChain = Promise.resolve();
+function editEvent(evId, changes) { const run = editChain.then(() => editEventNow(evId, changes)); editChain = run.catch(() => {}); return run; }
+async function editEventNow(evId, changes) {
   const q = S.queue && S.queue.events.find((e) => e.id === evId);
   const ev = q || (DB.ready ? await DB.D.get("events", evId) : null);
   if (!ev) return false;
@@ -239,7 +258,7 @@ async function editEvent(evId, changes) {
 // after an undo: the pitches that are no longer in the game come out of the database too
 function syncUndone(before, after) {
   if (!DB.ready) return;
-  const keep = new Set(after.evIds || []);
+  const keep = new Set((after.evIds || []).concat(after.keepEvIds || []));
   for (const id of before.evIds || []) if (!keep.has(id)) DB.D.del("events", id).catch(dbErr);
 }
 // how completely a game was charted: the learner only uses locations or contact quality from a game where they were
@@ -261,8 +280,10 @@ async function finishGameRecord() {
   // a page killed mid-learning finishes the job on the next launch instead of losing it.
   const pids = new Set(), hids = new Set();
   for (const e of g.log) { const pid = e.pid || (S.setup.staff[e.p ?? 0] || {}).id; if (pid && DB.pitchers.has(pid)) pids.add(pid); const b = S.setup.lineup[e.slot]; if (b && b.hitterId) hids.add(b.hitterId); }
-  if (pids.size || hids.size) await DB.D.put("meta", { id: "toLearn", pids: [...pids], hids: [...hids], gameId: g.dbId });
-  comp.learn = { pids: [...pids], hids: [...hids] };
+  // one job per game, so a second game ended while the first is still learning doesn't overwrite it (D9)
+  const job = { id: "toLearn:" + g.dbId, pids: [...pids], hids: [...hids], gameId: g.dbId };
+  if (pids.size || hids.size) await DB.D.put("meta", job);
+  comp.learn = job;
   return comp;
 }
 // the flywheel, after the game is closed and the next one is up (D9): refit, then sync
@@ -270,7 +291,8 @@ async function learnAfterGame(job) {
   if (!DB.ready || !job) return;
   for (const id of job.pids || []) if (DB.pitchers.has(id)) await relearnPitcher(id);
   for (const id of job.hids || []) if (DB.hitters.has(id)) await relearnHitter(id);
-  await DB.D.del("meta", "toLearn").catch(() => {});
+  await DB.D.forget("meta", job.id || "toLearn").catch(() => {});
+  await refreshPack("learned");   // the next game may be under way: what the calls read changed, so a new pack version
   const names = (job.pids || []).filter((id) => DB.pitchers.has(id)).map((id) => DB.pitchers.get(id).name);
   if (names.length) toast(`Learned from the game: ${names.join(", ")}`);
   if (S.view === "roster") render();
@@ -367,7 +389,13 @@ function logGrade(p, d, key, old) {
   const m = pModel(p.id), x = m && m.profile && m.profile.pitches[d.id];
   const now = Date.now();
   if (!d.gradeLog || !d.gradeLog.length) d.gradeLog = [{ ts: d.createdAt || p.createdAt || 0, command: key === "command" ? old : d.command, grade: key === "grade" ? old : d.grade }];
-  d.gradeLog.push({ ts: now, command: +d.command, grade: +d.grade, sawLearned: !!(x && x.n) });
+  // a blank box is logged as blank (it used to become 0, which the learner read as a re-grade to 0)
+  const val = (v) => (PCLearner.graded({ v }, "v") ? +v : null);
+  d.gradeLog.push({ ts: now, command: val(d.command), grade: val(d.grade), sawLearned: !!(x && x.n) });
+  // his new number is the centre now: an answer he gave to a flag about the old one no longer applies
+  const fk = `${d.id}|${key}`;
+  if (p.flagState && p.flagState[fk]) { const fs = Object.assign({}, p.flagState); delete fs[fk]; p.flagState = fs; }
+  if (p.accepted && p.accepted[d.id] && p.accepted[d.id][key]) { const a = Object.assign({}, p.accepted[d.id]); delete a[key]; p.accepted = Object.assign({}, p.accepted, { [d.id]: a }); }
 }
 function markChanged(p, pitchId) {
   p.changes = (p.changes || []).concat({ ts: Date.now(), pitchId: pitchId || null });
@@ -457,7 +485,11 @@ function flagAnswer(p, f, how) {
     toast(`Accepted: the calls move to ${fmt(f.learned)} over his next 3 games`);
   } else {
     const games = m && m.profile && m.profile.games ? m.profile.games.length : 0;
-    p.flagState = Object.assign({}, p.flagState, { [key]: how === "keep" ? { how, learned: f.learned, ts: Date.now() } : { how, untilGames: games + 5, ts: Date.now() } });
+    const pd = (p.pitches || []).find((d) => d.id === f.pitchId);
+    const accepting = pd && PCLearner.railsFor(pd, p, f.dim).acc;
+    // Keep mine retires an earlier accept (his number again); "ask me later" leaves an accept he made standing
+    if (how === "keep" && p.accepted && p.accepted[f.pitchId]) { const a = Object.assign({}, p.accepted[f.pitchId]); delete a[f.dim]; p.accepted = Object.assign({}, p.accepted, { [f.pitchId]: a }); }
+    p.flagState = Object.assign({}, p.flagState, { [key]: how === "keep" ? { how, learned: f.learned, ts: Date.now() } : { how, untilGames: games + 5, ts: Date.now(), keepAccept: !!accepting } });
     toast(how === "keep" ? "Kept your grade: the calls use your number. It'll only ask again if what it learns moves another half point." : "It'll ask again in 5 games");
   }
   savePitcher(p);
@@ -467,7 +499,11 @@ function flagShown(p, f, m) {
   const st = (p.flagState || {})[`${f.pitchId}|${f.dim}`];
   if (!st) return true;
   // after an Accept, a new flag (measured against the accepted value) is shown; the one he answered isn't
-  if (st.how === "accept") { const a = ((p.accepted || {})[f.pitchId] || {})[f.dim]; return !!(a && a.to !== undefined && f.ref !== undefined && Math.abs(f.ref - a.to) < 1e-6); }
+  if (st.how === "accept") {
+    const a = ((p.accepted || {})[f.pitchId] || {})[f.dim], pd = (p.pitches || []).find((d) => d.id === f.pitchId);
+    if (!a || !pd || !PCLearner.railsFor(pd, p, f.dim).acc) return true;   // the accept no longer stands (a re-grade replaced it)
+    return a.to !== undefined && f.ref !== undefined && Math.abs(f.ref - a.to) < 1e-6;
+  }
   if (st.how === "keep") return Math.abs(f.learned - st.learned) >= 0.5;
   return (m.profile.games || []).length >= st.untilGames;
 }
@@ -519,7 +555,7 @@ function learnedPanel(p) {
       h("thead", {}, h("tr", {}, h("th", {}, "Pitch"), h("th", {}, "Stuff: yours → learned"), h("th", {}, "Command: yours → learned"), h("th", { class: "num" }, "Pitches"), h("th", {}, "Scoreboard"))),
       h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map(row)))),
     h("p", { class: "note" }, n
-      ? `Each pitch is relearned after every game from what happened against what the engine expected, starting from your grades. ${on ? "The calls move toward what's learned by what each game showed (at most 0.15 a game; a short outing barely moves them) and never more than 1.0 from your grade, or from the value you accepted. Keep mine holds your number." : "Learning is switched off for him: the calls use your grades."} Only the engine's own calls teach it, not yours or re-calls after a shake-off. Command needs "where it ended up" logged (Setup).`
+      ? `Each pitch is relearned after every game from what happened against what the engine expected, starting from your grades. ${on ? "The calls move toward what's learned at most 0.15 a game and never more than 1.0 from your grade, or from the value you accepted. Keep mine holds your number." : "Learning is switched off for him: the calls use your grades."} Only the engine's own calls teach it, not yours or re-calls after a shake-off. Command needs "where it ended up" logged (Setup).`
       : "After he pitches in a charted game, this shows how his pitches actually play compared with your grades, and the calls start using it."));
 }
 
@@ -731,7 +767,7 @@ function pastFixPanel() {
         const bad = !PCLearner.readable(E, ev);
         const extra = [ev.loc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[ev.loc] : null, ev.contact || null, ev.thrown ? `threw ${ev.thrown}` : null, ev.wp ? (ev.wp === "pb" ? "passed ball" : "wild pitch") : null, ev.edits && ev.edits.length ? "fixed" : null].filter(Boolean);
         const tr = h("tr", { class: bad ? "bad-row" : "" }, h("td", { class: "num" }, String(ev.n || "")), h("td", {}, name(ev)),
-          h("td", { class: "num" }, ev.sit ? `${ev.sit.balls}-${ev.sit.strikes}` : "?"), h("td", {}, `${ev.pitchName || "?"}, ${ev.quad ? spotLower(ev.quad) : "no spot saved"}`),
+          h("td", { class: "num" }, ev.sit ? `${ev.sit.balls}-${ev.sit.strikes}` : "?"), h("td", {}, `${ev.pitchName || "?"}, ${SPOT[ev.quad] ? spotLower(ev.quad) : ev.quad ? String(ev.quad) : "no spot saved"}`),
           h("td", {}, ev.res || "?", extra.length ? h("small", { class: "muted" }, ` · ${extra.join(", ")}`) : null, bad ? h("small", { class: "pstat change" }, " · skipped by learning") : null),
           h("td", {}, h("button", { class: "btn text", "aria-expanded": String(pastFix.open === ev.id), on: { click: () => { pastFix.open = pastFix.open === ev.id ? null : ev.id; render(); } } }, pastFix.open === ev.id ? "Close" : "Fix")));
         return pastFix.open === ev.id ? [tr, editor(ev)] : [tr];
@@ -767,17 +803,19 @@ async function restore(e) {
 // ---------------------------------------------------------------- sync with Supabase (build step 2)
 // The device stays the place every pitch is written first; sync copies changes up and down in the background, never
 // during a call. Settings and the session live in the device's meta store (not synced).
-const SYNC = { cfg: null, auth: null, sync: null, busy: false, last: null, error: null, pending: null, programs: null };
+const SYNC = { cfg: null, auth: null, sync: null, busy: false, last: null, error: null, pending: null, programs: null, invites: null, staff: null, bound: null };
+const restUrl = () => SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1";
+const transportFor = (programId) => PCSync.restTransport({ restUrl: restUrl(), apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId });
 async function syncSetup() {
   if (!DB.D || typeof PCSync === "undefined") return;
   SYNC.cfg = await DB.D.get("meta", "syncConfig");
+  SYNC.bound = await DB.D.get("meta", "boundProgram");
   SYNC.auth = SYNC.sync = null;
   if (!SYNC.cfg || !SYNC.cfg.url || !SYNC.cfg.apiKey) return;
   SYNC.auth = PCSync.supabaseAuth({ url: SYNC.cfg.url, apiKey: SYNC.cfg.apiKey, db: DB.D });
   SYNC.authSession = await SYNC.auth.session();
   if (SYNC.cfg.programId) {
-    const transport = PCSync.restTransport({ restUrl: SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1", apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId: SYNC.cfg.programId });
-    SYNC.sync = PCSync.createSync({ db: DB.D, transport, programId: SYNC.cfg.programId });
+    SYNC.sync = PCSync.createSync({ db: DB.D, transport: transportFor(SYNC.cfg.programId), programId: SYNC.cfg.programId, programName: SYNC.cfg.programName });
     SYNC.pending = await SYNC.sync.pending();
   }
 }
@@ -785,40 +823,70 @@ async function syncConfig(patch) {
   SYNC.cfg = await DB.D.put("meta", Object.assign({ id: "syncConfig" }, SYNC.cfg || {}, patch));
   await syncSetup();
 }
-const programTransport = () => PCSync.restTransport({ restUrl: SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1", apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId: null });
-async function syncNow(quiet) {
-  if (!SYNC.sync || SYNC.busy) return null;
+const programTransport = () => transportFor(null);
+const syncMessage = (e) => /fetch|network|offline|Failed to fetch|Load failed/i.test(e.message) ? "Couldn't reach the server: everything stays on this iPad and goes up next time." : e.message.replace(/^pc_\w+: /, "");
+// A sync asked for while one is running (a game just ended, the button tapped twice) waits for it and then runs once
+// more, and whoever asked gets that second run's result: nothing ends up quietly skipped.
+let syncRun = null, syncQueued = null;
+function syncNow(quiet) {
+  if (!SYNC.sync) return Promise.resolve(null);
+  if (SYNC.busy && syncRun) {
+    if (!syncQueued) syncQueued = syncRun.catch(() => {}).then(() => { syncQueued = null; return syncNow(quiet); });
+    return syncQueued;
+  }
+  syncRun = syncOnce(quiet).finally(() => { syncRun = null; });
+  return syncRun;
+}
+async function syncOnce(quiet) {
   if (typeof navigator !== "undefined" && navigator.onLine === false) { SYNC.error = "No signal: everything stays on this iPad and goes up next time."; if (S.view === "setup") render(); return null; }
   SYNC.busy = true; SYNC.error = null; if (S.view === "setup") render();
   try {
     const r = await SYNC.sync.syncNow();
     SYNC.last = { at: Date.now(), r };
     SYNC.pending = await SYNC.sync.pending();
-    if (r.pull.merged) { await reloadFromDb(); if (await checkDuplicates().then((x) => x.length).catch(() => 0)) await SYNC.sync.push().catch(() => {}); }
-    if (!quiet) toast(`Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} not allowed for this account` : ""}`);
+    if (r.error) SYNC.error = `Some changes couldn't go up: ${r.error}. Everything stays on this iPad and is tried again next time.`;
+    if (r.pull.merged || (r.push.skipped && r.push.skipped > 0)) { await reloadFromDb(); if (await checkDuplicates().then((x) => x.length).catch(() => 0)) await SYNC.sync.push().catch(() => {}); }
+    if (!quiet) toast(`Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} kept on this iPad` : ""}`);
     return r;
   } catch (e) {
     if (/refresh token|JWT expired|invalid jwt/i.test(e.message) || e.status === 401) {
       // the sign-in ran out (or was revoked): nothing is lost, the program stays picked, he signs in again
       await SYNC.auth.signOut().catch(() => {}); SYNC.authSession = null;
       SYNC.error = "Your sign-in expired: sign in again. Everything stays on this iPad until then.";
-    } else SYNC.error = /fetch|network|offline/i.test(e.message) ? "Couldn't reach the server: everything stays on this iPad and goes up next time." : e.message;
+    } else SYNC.error = syncMessage(e);
     return null;
   } finally { SYNC.busy = false; if (S.view === "setup") render(); }
+}
+// One iPad holds one program. Using it for another means starting it fresh: a backup file first (everything on it,
+// to keep or restore later), then the iPad's database and game state are cleared and the app starts over.
+async function startFresh() {
+  if (!confirmTwice("startfresh")) { toast("Tap again to back up and start this iPad fresh"); return; }
+  await backup();
+  await new Promise((r) => setTimeout(r, 1200));   // let the download start before the database goes
+  try { localStorage.removeItem("pitchcaller.v2"); } catch (e) {}
+  await DB.D.destroy();
+  location.reload();
+}
+function otherProgram(name) {
+  const b = SYNC.bound;
+  return b && b.programId && name && b.programId !== name ? b : null;
 }
 // Joining a program that already exists: pull before anything goes up. Every new install makes a placeholder "Our team"
 // with default pitchers; once the program's own team has come down, the placeholder goes, and any of its pitchers or
 // catchers that already have work on this iPad (pitches, bullpens, check-ins, velo) move to the program's team instead
-// of being lost. Only then does this iPad's own work go up.
+// of being lost. The program is saved as this iPad's only once that has worked, so a join cut off halfway (no signal)
+// never leaves the placeholders to go up at the next sync.
 async function joinProgram(p) {
   const D = DB.D;
-  const before = { teams: new Set((await D.all("teams")).map((t) => t.id)) };
-  await syncConfig({ programId: p.program_id, programName: p.name, role: p.role });
+  const b = otherProgram(p.program_id);
+  if (b) throw new Error(`This iPad holds the data for ${b.programName || "another program"}. To use it for ${p.name}, back it up and start this iPad fresh.`);
   if (navigator.onLine === false) throw new Error("No signal: join the program once this iPad is online.");
+  const before = { teams: new Set((await D.all("teams")).map((t) => t.id)) };
+  const sync = PCSync.createSync({ db: D, transport: transportFor(p.program_id), programId: p.program_id, programName: p.name });
   SYNC.busy = true; render();
   let moved = 0, dropped = 0;
   try {
-    await SYNC.sync.pull();
+    await sync.pull();
     const ours = (await D.all("teams")).filter((t) => t.isOurs);
     const theirs = ours.find((t) => !before.teams.has(t.id));
     if (theirs) {
@@ -840,29 +908,48 @@ async function joinProgram(p) {
     if (S.setup.catcherId && !DB.catchers.has(S.setup.catcherId)) S.setup.catcherId = null;
     attachStaff(); save();
   } finally { SYNC.busy = false; }
+  await syncConfig({ programId: p.program_id, programName: p.name, role: p.role });
   await syncNow(true);
   toast(`Joined ${p.name}${moved ? `: ${moved} pitcher${moved === 1 ? "" : "s"} with work on this iPad kept (check the roster for doubles)` : ""}.`);
   return { moved, dropped };
 }
-// what came down from other devices: refresh the in-memory copies the screens read
-// Head coach: give someone a role. They sign up first (Supabase, with their own email and password); a charter charts
-// and plans, a pitcher sees and logs only his own check-ins, bullpens and velo, a head coach can do everything.
+async function startProgram() {
+  const name = (ourTeam() || {}).name || "Our team";
+  if (SYNC.bound) throw new Error(`This iPad holds the data for ${SYNC.bound.programName || "another program"}. To start a new program, back it up and start this iPad fresh.`);
+  const id = await programTransport().createProgram(name, S.setup.level);
+  await syncConfig({ programId: id, programName: name, role: "head_coach" });
+  await syncNow();
+}
+// Head coach: invite staff. They sign in with that email (confirmed in Supabase) and accept; nobody joins without
+// accepting. A charter charts and plans, a pitcher sees and logs only his own check-ins, bullpens and velo, a head coach
+// can do everything.
 let staffRole = "charter";
+const ROLE_NAMES = [["charter", "Charter"], ["pitcher", "Pitcher"], ["head_coach", "Head coach"]];
 function staffAdder() {
-  return h("div", { class: "fields" },
-    h("label", { class: "f", style: { flex: "1 1 200px" } }, "Add staff by email", h("input", { id: "sync-member", type: "email", autocomplete: "off" })),
+  const tr = () => transportFor(SYNC.cfg.programId);
+  const refresh = () => tr().staff().then((x) => { SYNC.staff = x || []; render(); }).catch((e) => { SYNC.error = syncMessage(e); render(); });
+  if (!SYNC.staff) { SYNC.staff = []; refresh(); }
+  const act = (fn, done) => async () => { try { await fn(); SYNC.error = null; if (done) toast(done); } catch (e) { SYNC.error = syncMessage(e); } refresh(); };
+  const pitcherName = (id) => (DB.pitchers.get(id) || {}).name || "a pitcher";
+  return [h("div", { class: "fields" },
+    h("label", { class: "f", style: { flex: "1 1 200px" } }, "Invite staff by email", h("input", { id: "sync-member", type: "email", autocomplete: "off" })),
     h("label", { class: "f", style: { flex: "0 1 150px" } }, "Role", h("select", { id: "sync-member-role", on: { change: (e) => { staffRole = e.target.value; render(); } } },
-      [["charter", "Charter"], ["pitcher", "Pitcher"], ["head_coach", "Head coach"]].map(([v, l]) => h("option", { value: v, selected: staffRole === v ? true : null }, l)))),
+      ROLE_NAMES.map(([v, l]) => h("option", { value: v, selected: staffRole === v ? true : null }, l)))),
     staffRole === "pitcher" ? h("label", { class: "f", style: { flex: "1 1 160px" } }, "Which pitcher", h("select", { id: "sync-member-pitcher" },
       rosterPitchers().map((p) => h("option", { value: p.id }, p.name || "Pitcher")))) : null,
     h("button", { class: "btn", on: { click: async () => {
       const email = document.getElementById("sync-member").value.trim(); if (!email) return;
       const pid = staffRole === "pitcher" ? document.getElementById("sync-member-pitcher").value : null;
-      try { await PCSync.restTransport({ restUrl: SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1", apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId: SYNC.cfg.programId }).setMember(email, staffRole, pid);
-        SYNC.error = null; toast(`${email} added as ${staffRole.replace("_", " ")}`); }
-      catch (e) { SYNC.error = e.message.replace(/^pc_set_member: /, ""); }
-      render();
-    } } }, "Add"));
+      await act(() => tr().invite(email, staffRole, pid), `Invited ${email} as ${staffRole.replace("_", " ")}. They sign in with that email and accept.`)();
+      const el = document.getElementById("sync-member"); if (el) el.value = "";
+    } } }, "Invite")),
+    SYNC.staff.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl", "aria-label": "Staff" },
+      h("tbody", {}, SYNC.staff.map((m) => h("tr", {},
+        h("td", {}, m.email || "?"),
+        h("td", {}, m.pending ? `invited as ${m.role.replace("_", " ")}` : h("select", { "aria-label": `Role for ${m.email}`, on: { change: (e) => act(() => tr().setRole(m.user_id, e.target.value, e.target.value === "pitcher" ? m.pitcher_id || (rosterPitchers()[0] || {}).id : null), "Role changed")() } },
+          ROLE_NAMES.map(([v, l]) => h("option", { value: v, selected: m.role === v ? true : null }, l)))),
+        h("td", {}, m.role === "pitcher" && m.pitcher_id ? pitcherName(m.pitcher_id) : ""),
+        h("td", {}, h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.email), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${m.email}`) } }, m.pending ? "Cancel invite" : "Remove"))))))) : null];
 }
 // D12: games charted twice (two iPads on one game). Checked whenever games arrive from elsewhere (a sync, a restore).
 // The duplicate stays in the database (nothing is deleted) and is left out of learning; the coach can say they're
@@ -872,11 +959,12 @@ async function checkDuplicates() {
   if (!DB.ready) return [];
   const games = (await DB.D.all("games")).filter((g) => g.status === "final" || g.status === "live" || !g.status);
   const byGame = new Map();
-  for (const g of games) byGame.set(g.id, await DB.D.byIndex("events", "gameId", g.id));
+  for (const g of games) byGame.set(g.id, await DB.D.byIndex("events", "gameId", g.id, true));   // left-out pitches too (D12)
   const pairs = PCDB.likelyDuplicates(games, (id) => byGame.get(id));
   const marked = [];
   for (const pr of pairs) {
-    const d = games.find((g) => g.id === pr.drop);
+    const d = games.find((g) => g.id === pr.drop), k = games.find((g) => g.id === pr.keep);
+    if (k.dupOf === d.id) { k.dupOf = null; await dbPut("games", k); }   // never both: the kept game is not a copy
     if (d.dupOf === pr.keep) continue;
     d.dupOf = pr.keep; d.dupMatch = pr.match; await dbPut("games", d); marked.push(pr);
   }
@@ -902,11 +990,20 @@ async function notDuplicate(gameId) {
 // here; and a call already showing for a pitch this pitcher no longer has is dropped so the next one is made fresh.
 async function reloadFromDb() {
   const live = !!G().dbId, before = live ? JSON.stringify(packContents()) : null;
-  for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) { map.clear(); for (const x of await DB.D.all(store)) map.set(x.id, x); }
-  for (const x of await DB.D.all("learned")) DB.models.set(x.id, x);
-  for (const x of await DB.D.byIndex("checkins", "date", PCDB.today())) DB.checkins.set(x.pitcherId, x);
+  const on = live ? pitcherDef() : null;
+  // read everything first, then swap it in at once: the screens never see a half-loaded (empty) list
+  const fresh = {};
+  for (const store of ["teams", "pitchers", "catchers", "hitters", "learned"]) fresh[store] = await DB.D.all(store);
+  const checkins = await DB.D.byIndex("checkins", "date", PCDB.today());
+  for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) { map.clear(); for (const x of fresh[store]) map.set(x.id, x); }
+  for (const x of fresh.learned) DB.models.set(x.id, x);
+  for (const x of checkins) DB.checkins.set(x.pitcherId, x);
+  // the pitcher in the game stays in the game: removed by another iPad mid-game, he's kept on this page until it ends
+  if (on && on.id && !DB.pitchers.has(on.id)) DB.pitchers.set(on.id, on);
   S.setup.staffIds = (S.setup.staffIds || []).filter((id) => DB.pitchers.has(id));
   attachStaff();
+  if (on && on.id) { const i = S.setup.staff.findIndex((p) => p.id === on.id); if (i >= 0) G().pitcher = i; }
+  pastFix.games = null;
   const c = G().call;
   if (c && typeof arsenal === "function" && !arsenal().some((x) => x.name === c.pitch)) G().call = null;
   if (live && JSON.stringify(packContents()) !== before) packChanged("sync");
@@ -916,6 +1013,8 @@ function syncPanel() {
   const c = SYNC.cfg || {};
   const field = (label, key, attrs = {}) => h("label", { class: "f", style: { flex: attrs.flex || "1 1 220px" } }, label,
     h("input", Object.assign({ value: c[key] || "", autocomplete: "off", spellcheck: "false", on: { change: (e) => syncConfig({ [key]: e.target.value.trim() }).then(render) } }, attrs)));
+  const err = SYNC.error ? h("p", { class: "pstat change" }, SYNC.error) : null;
+  const fresh = SYNC.bound ? h("button", { class: "btn text", on: { click: () => startFresh() } }, `Back up and start this iPad fresh`) : null;
   if (!c.url || !c.apiKey) return [h("div", { class: "fields" }, field("Project URL", "url", { placeholder: "https://xyzcompany.supabase.co" }), field("Publishable key", "apiKey", { placeholder: "sb_publishable_..." })),
     h("p", { class: "note" }, "From your Supabase project's API keys page: the Project URL and the publishable key (the older anon key works too). Both are safe to keep on the iPad; the server's row rules decide what each account can see. Never paste the secret or service_role key here.")];
   const signIn = h("div", { class: "fields" },
@@ -923,29 +1022,37 @@ function syncPanel() {
     h("label", { class: "f", style: { flex: "1 1 160px" } }, "Password", h("input", { id: "sync-pass", type: "password", autocomplete: "current-password" })),
     h("button", { class: "btn primary", on: { click: async () => {
       const email = document.getElementById("sync-email").value.trim(), pw = document.getElementById("sync-pass").value;
-      try { SYNC.authSession = await SYNC.auth.signIn(email, pw); await syncConfig({ email }); SYNC.error = null; if (!SYNC.cfg.programId) SYNC.programs = await programTransport().myPrograms(); else await syncNow(true); }
-      catch (e) { SYNC.error = e.message; }
+      try { SYNC.authSession = await SYNC.auth.signIn(email, pw); await syncConfig({ email }); SYNC.error = null; SYNC.programs = SYNC.invites = null; if (SYNC.cfg.programId) await syncNow(true); }
+      catch (e) { SYNC.error = syncMessage(e); }
       render();
     } } }, "Sign in"));
   const signedIn = SYNC.authSession;
-  if (!signedIn) return [c.programId ? h("p", { class: "note" }, `${c.programName || "Program"}: sign in to sync.`) : null, signIn, SYNC.error ? h("p", { class: "pstat change" }, SYNC.error) : null];
+  if (!signedIn) return [c.programId ? h("p", { class: "note" }, `${c.programName || "Program"}: sign in to sync.`) : null, signIn, err];
   if (!c.programId) {
-    if (!SYNC.programs) programTransport().myPrograms().then((x) => { SYNC.programs = x || []; render(); }).catch((e) => { SYNC.error = e.message; render(); });
-    return [h("p", { class: "note" }, `Signed in as ${signedIn.email || "you"}. Pick your program, or start one (you become its head coach).`),
-      h("div", { class: "staffpick" }, (SYNC.programs || []).map((p) => h("button", { class: "choice", on: { click: () => joinProgram(p).catch((e) => { SYNC.error = e.message; }).then(render) } },
+    if (!SYNC.programs) { SYNC.programs = []; SYNC.invites = [];
+      Promise.all([programTransport().myPrograms(), programTransport().myInvites()]).then(([x, y]) => { SYNC.programs = x || []; SYNC.invites = y || []; render(); }).catch((e) => { SYNC.error = syncMessage(e); render(); }); }
+    const go = (p) => joinProgram(p).catch((e) => { SYNC.error = syncMessage(e); }).then(render);
+    return [h("p", { class: "note" }, `Signed in as ${signedIn.email || "you"}. ${SYNC.bound ? `This iPad holds the data for ${SYNC.bound.programName || "a program"}.` : "Pick your program, accept an invitation, or start one (you become its head coach)."}`),
+      (SYNC.invites || []).length ? h("div", { class: "staffpick" }, SYNC.invites.map((i) => h("div", { class: "choice" },
+        h("b", {}, i.name), h("span", {}, `invited as ${i.role.replace("_", " ")}`),
+        h("button", { class: "btn pill primary", on: { click: async () => {
+          try { const role = await programTransport().acceptInvite(i.program_id); SYNC.programs = null; await go({ program_id: i.program_id, name: i.name, role }); } catch (e) { SYNC.error = syncMessage(e); render(); }
+        } } }, "Accept"),
+        h("button", { class: "btn text", on: { click: async () => { await programTransport().declineInvite(i.program_id).catch(() => {}); SYNC.programs = null; render(); } } }, "Decline")))) : null,
+      h("div", { class: "staffpick" }, (SYNC.programs || []).map((p) => h("button", { class: "choice", disabled: otherProgram(p.program_id) ? true : null, on: { click: () => go(p) } },
         h("b", {}, p.name), h("span", {}, p.role.replace("_", " "))))),
-      h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => {
-        try { const id = await programTransport().createProgram((ourTeam() || {}).name || "Our team", S.setup.level); await syncConfig({ programId: id, programName: (ourTeam() || {}).name || "Our team", role: "head_coach" }); await syncNow(); }
-        catch (e) { SYNC.error = e.message; } render(); } } }, "Start a program for this team")),
-      SYNC.error ? h("p", { class: "pstat change" }, SYNC.error) : null];
+      h("div", { class: "row-acts" }, SYNC.bound ? null : h("button", { class: "btn", on: { click: () => startProgram().catch((e) => { SYNC.error = syncMessage(e); }).then(render) } }, "Start a program for this team"), fresh),
+      err];
   }
   const pend = SYNC.pending ? Object.values(SYNC.pending).reduce((a, n) => a + n, 0) : 0;
   const last = SYNC.last ? new Date(SYNC.last.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null;
   const rej = SYNC.last && SYNC.last.r.push.rejected.length;
+  const held = SYNC.last && SYNC.last.r.pull.held;
   return [h("p", { class: "note" }, `${c.programName || "Program"} as ${(c.role || "").replace("_", " ")}, signed in as ${signedIn.email || "you"}. ${pend ? `${pend} change${pend === 1 ? "" : "s"} waiting to go up.` : "Nothing waiting to go up."}${last ? ` Last synced ${last}.` : ""}`),
-    rej ? h("p", { class: "pstat watch" }, `${rej} change${rej === 1 ? " wasn't" : "s weren't"} allowed for your role and stayed on this iPad only.`) : null,
-    SYNC.error ? h("p", { class: "pstat change" }, SYNC.error) : null,
+    rej ? h("p", { class: "pstat watch" }, `${rej} change${rej === 1 ? " wasn't" : "s weren't"} taken by the server (not allowed for your role, or a broken record). ${rej === 1 ? "It stays" : "They stay"} on this iPad and ${rej === 1 ? "is" : "are"} tried again at every sync, so a head coach signing in here can send ${rej === 1 ? "it" : "them"}.`) : null,
+    held ? h("p", { class: "note" }, "Some changes are still being saved on the server; they come down at the next sync.") : null,
+    err,
     c.role === "head_coach" ? staffAdder() : null,
     h("div", { class: "row-acts" }, h("button", { class: "btn primary", disabled: SYNC.busy ? true : null, on: { click: () => syncNow() } }, SYNC.busy ? "Syncing…" : "Sync now"),
-      h("button", { class: "btn text", on: { click: async () => { await SYNC.auth.signOut(); SYNC.authSession = null; await syncConfig({ programId: null }); render(); } } }, "Sign out"))];
+      h("button", { class: "btn text", on: { click: async () => { await SYNC.auth.signOut(); SYNC.authSession = null; SYNC.staff = null; await syncConfig({ programId: null }); render(); } } }, "Sign out"), fresh)];
 }

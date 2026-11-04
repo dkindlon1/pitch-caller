@@ -42,7 +42,21 @@ const memDb = () => { const m = new Map(); return { get: async (s, id) => m.get(
   let e2 = null; try { await PCSync.supabaseAuth({ url: "https://proj.supabase.co", apiKey: "anon", db, fetch, now: () => clock }).token(); } catch (e) { e2 = e.message; }
   check(e2 === "Invalid Refresh Token", "a refresh the server refuses (R2 unknown here) is an error, not a silent anonymous call");
 
-  console.log("3. Sign out");
+  console.log("3. Several calls needing a token at once");
+  {
+    const db2 = memDb(); let refreshes = 0, t = 1_000_000;
+    const slow = async (url, opts) => {
+      if (url.endsWith("grant_type=password")) return { ok: true, status: 200, json: async () => ({ access_token: "A1", refresh_token: "R1", expires_in: 3600, user: { id: "u1", email: "c@x" } }) };
+      refreshes++; await new Promise((r) => setTimeout(r, 30));
+      return { ok: true, status: 200, json: async () => ({ access_token: "A" + (refreshes + 1), refresh_token: "R" + (refreshes + 1), expires_in: 3600, user: { id: "u1", email: "c@x" } }) };
+    };
+    const au = PCSync.supabaseAuth({ url: "https://proj.supabase.co", apiKey: "anon", db: db2, fetch: slow, now: () => t });
+    await au.signIn("c@x", "pw"); t += 3600_000;
+    const got = await Promise.all([au.token(), au.token(), au.token()]);
+    check(refreshes === 1 && new Set(got).size === 1, `three at once near expiry: one refresh, the same token for all (${refreshes} refresh${refreshes === 1 ? "" : "es"})`);
+  }
+
+  console.log("4. Sign out");
   await auth.signOut();
   check(await auth.session() === null && await auth.token() === null, "sign out forgets the session; no token after");
 

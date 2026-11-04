@@ -7,7 +7,9 @@ do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin noinherit; end if;
 end $$;
 create schema if not exists auth;
-create table if not exists auth.users (id uuid primary key, email text unique);
+-- like Supabase's auth.users: email is not unique on its own (SSO and password users can share one), and an email
+-- counts only once it's confirmed (email_confirmed_at)
+create table if not exists auth.users (id uuid primary key, email text, email_confirmed_at timestamptz);
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
     (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')), '')::uuid
