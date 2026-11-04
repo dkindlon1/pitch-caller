@@ -96,7 +96,7 @@ const server = http.createServer((req, res) => {
   bk.sim = { scenario, games, seed: +SEED, entered: ENTERED.map((d) => ({ name: d.name, grade: d.grade, command: d.command })),
     truth: Array.from({ length: games }, (_, g) => TRUTH(g)), pitcherId: pid };
   fs.writeFileSync(out, JSON.stringify(bk));
-  console.log(`wrote ${out}: ${bk.stores.events.filter((e) => !e.deletedAt).length} pitches${errs.length ? ", page errors: " + errs.join(" | ") : ""}`);
+  console.log(`wrote ${out}: ${bk.stores.events.filter((e) => !e.deletedAt && e.type !== "play").length} pitches${errs.length ? ", page errors: " + errs.join(" | ") : ""}`);
   await browser.close(); server.close();
   process.exit(errs.length ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

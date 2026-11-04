@@ -117,10 +117,13 @@ const server = http.createServer((req, res) => {
   // ---------------------------------------------------------------- from the backup alone
   const bk = JSON.parse(fs.readFileSync(file, "utf8"));
   const game = bk.stores.games.find((g) => g.id === charted.gameId);
-  const evs = bk.stores.events.filter((e) => e.gameId === charted.gameId && !e.deletedAt).sort((a, b) => a.n - b.n);
+  // D0: a game's events are its pitches and the plays between them (here, the pitching change); these checks are about pitches
+  const evs = bk.stores.events.filter((e) => e.gameId === charted.gameId && !e.deletedAt && e.type === "pitch").sort((a, b) => a.n - b.n);
+  const playsHere = bk.stores.events.filter((e) => e.gameId === charted.gameId && !e.deletedAt && e.type === "play");
   console.log(`scripted game: ${charted.n} pitches charted; coach call ${didCoach}, cross-up ${didCross}, wild pitch ${didWP}, undo ${didUndo}, inning change ${didInning}, pitching change ${didChange}`);
   check(evs.length === charted.n && evs.every((e, i) => e.n === i + 1), `every pitch is in the backup, numbered 1..${charted.n} with no holes (${evs.length})`);
   check(bk.stores.events.filter((e) => e.gameId === charted.gameId && e.deletedAt).length === 1, "the undone pitch is kept as a deletion, not counted");
+  check(playsHere.length === 1 && playsHere[0].play === "sub_pitcher" && playsHere[0].afterPitch === 24, `the pitching change is logged as a play after pitch 24 (${playsHere.map((e) => e.play + "@" + e.afterPitch).join(", ")})`);
   check(game && game.status === "final" && game.completeness && game.completeness.located === 1, `End game saved the game as final with its completeness (${game && JSON.stringify(game.completeness)})`);
   check(evs.every((e) => e.v && e.v.engine && e.v.data && e.v.learn && e.v.app && e.deviceId && e.choice), "every pitch carries app, engine, table and learner versions, the device and who chose it");
   check(evs.some((e) => e.choice === "coach") && evs.some((e) => e.choice === "recall") && evs.some((e) => e.thrown) && evs.some((e) => e.wp === "wp" && e.edits && e.edits.length),

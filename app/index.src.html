@@ -849,12 +849,17 @@ function shakeOff() {
 function undoLast() {
   if (!undo.length) return;
   const before = S.game;
-  S.game = JSON.parse(undo.pop()); pending = null; pickMode = false; pendingLoc = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
+  S.game = JSON.parse(undo.pop());
+  // the game's identity isn't undone: its record id, its pack versions (a re-grade since then still stands) and the
+  // running event order stay, so undoing the first pitch can't start a second game record, and no pack version repeats
+  for (const k of ["dbId", "packId", "packV", "seq"]) if (before[k] !== undefined) S.game[k] = before[k];
+  pending = null; pickMode = false; pendingLoc = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
 }
 function changePitcher() {
   const g = G(), n = S.setup.staff.length;
   if (n < 2) { toast("Add another pitcher in Setup first"); return; }
-  snapshot(); g.pitcher = (g.pitcher + 1) % n; g.last = null;
+  snapshot(); const out = pitcherDef().id || null; g.pitcher = (g.pitcher + 1) % n; g.last = null;
+  if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pitcherDef().id || null });
   toast(`${pitcherDef().name} is in`); recall();
 }
 
@@ -964,16 +969,18 @@ function strip() {
 function fixRow() {
   const g = G();
   const step = (label, key, min, max) => h("div", { class: "stepper" }, h("span", { class: "lab" }, label),
-    h("button", { "aria-label": `${label} down`, on: { click: () => { if (g[key] > min) { snapshot(); g[key]--; pending = null; recall(); } } } }, "−"),
+    h("button", { "aria-label": `${label} down`, on: { click: () => { if (g[key] > min) { snapshot(); g[key]--; corrected(key, g[key] + 1, g[key]); pending = null; recall(); } } } }, "−"),
     h("output", {}, String(g[key])),
-    h("button", { "aria-label": `${label} up`, on: { click: () => { if (g[key] < max) { snapshot(); g[key]++; pending = null; recall(); } } } }, "+"));
+    h("button", { "aria-label": `${label} up`, on: { click: () => { if (g[key] < max) { snapshot(); g[key]++; corrected(key, g[key] - 1, g[key]); pending = null; recall(); } } } }, "+"));
   return h("section", { class: "fix glass", "aria-label": "Correct the game state" },
     step("Balls", "balls", 0, 3), step("Strikes", "strikes", 0, 2), step("Outs", "outs", 0, 2),
     h("div", { class: "stepper" }, h("span", { class: "lab" }, "Runners"), h("div", { class: "toggles" },
-      ["1st", "2nd", "3rd"].map((l, i) => h("button", { "aria-pressed": String(g.bases[i]), on: { click: () => { snapshot(); g.bases[i] = !g.bases[i]; recall(); } } }, l)))),
+      ["1st", "2nd", "3rd"].map((l, i) => h("button", { "aria-pressed": String(g.bases[i]), on: { click: () => { snapshot(); g.bases[i] = !g.bases[i]; corrected("base" + (i + 1), !g.bases[i], g.bases[i]); recall(); } } }, l)))),
     step("Them", "them", 0, 99), step("Us", "us", 0, 99),
-    h("button", { class: "btn", on: { click: () => { snapshot(); nextBatter(); recall(); } } }, "Skip to next hitter"));
+    h("button", { class: "btn", on: { click: () => { snapshot(); nextBatter(); corrected("batter", g.batter - 1, g.batter); recall(); } } }, "Skip to next hitter"));
 }
+// a Correct edit is a play (D0): logged once a game is under way, so the game state can be rebuilt from its events
+function corrected(field, from, to) { if (G().dbId) logPlay("correct", { field, from, to }); }
 
 function callPanel() {
   const g = G(), c = g.call, b = batterDef(), i = slotIdx();
@@ -1316,7 +1323,7 @@ function bullpenPanel() {
           h("span", {}, `${pc} pitches, ${g.bf[String(i)] || 0} faced`)),
         h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind), p.conf.toFixed(2)))),
         inNow ? h("span", { class: "pen-act muted" }, "On the mound")
-          : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); g.pitcher = i; g.last = null; makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
+          : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); const out = pitcherDef().id || null; g.pitcher = i; g.last = null; if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pd.id || null }); makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
     })),
     h("p", { class: "note" }, `The bar is his pitch count against about ${maxPc} for the level. Status uses the same rules as the Game screen.`));
 }
@@ -1510,7 +1517,8 @@ function opponentPick() {
 function catcherPick() {
   const list = [...DB.catchers.values()];
   return h("div", { class: "fields" }, h("label", { class: "f", style: { flex: "1 1 240px" } }, "Today's catcher",
-    h("select", { on: { change: (e) => { S.setup.catcherId = e.target.value || null; G().call = null; save(); render(); } } },
+    h("select", { on: { change: (e) => { const was = S.setup.catcherId || null; S.setup.catcherId = e.target.value || null;
+      if (G().dbId) { logPlay("sub_catcher", { outId: was, inId: S.setup.catcherId }); makePack("catcher"); } G().call = null; save(); render(); } } },
       h("option", { value: "" }, "Average blocker (3)"), list.map((c) => h("option", { value: c.id, selected: S.setup.catcherId === c.id ? true : null }, `${c.name}, blocking ${c.block}`)))),
     h("button", { class: "btn", on: { click: () => { S.view = "roster"; rosterTab = "ours"; save(); render(); } } }, list.length ? "Edit catchers" : "Add catchers"));
 }
@@ -1525,6 +1533,7 @@ async function linkHitter(b, i) {
     await relearnHitter(x.id);
   } else b.hitterId = null;
   delete G().know[String(i)];
+  if (G().dbId) { logPlay("sub_hitter", { slotChanged: i, inId: b.hitterId || null, name: b.name, hand: b.hand }); makePack("lineup"); }
   G().call = null; save(); render();
 }
 function uniqueName(pd, base) { let n = base, i = 2; while (pd.pitches.some((p) => p.name === n)) n = `${base} ${i++}`; return n; }

@@ -11,21 +11,47 @@
  *   hitters    opponent hitters with season stats                index: teamId
  *   checkins   a pitcher's pre-game check-in                     index: pitcherId, date
  *   sessions   TrackMan / Rapsodo bullpen sessions               index: pitcherId
- *   games      one per game charted                              index: date, opponentId
- *   events     one per pitch thrown, with what the engine predicted for it   index: gameId, pitcherId, hitterId
+ *   games      one per game, made at Game plan (status planned) index: date, opponentId, status
+ *   events     one per pitch thrown (type "pitch"), or one per play between pitches (type "play")
+ *                                                                 index: gameId, pitcherId, hitterId, type
+ *   packs      what the calls read for a game: a new version each time it changes mid-game   index: gameId
+ *   readings   one velo reading per pitch (bullpen log, imports, game gun)    index: pitcherId, sessionId
  *   learned    the learning models, one per pitcher and one per hitter       (id "p:<pitcherId>" / "h:<hitterId>")
  *   meta       schema version, settings
+ *
+ * Schema versions: 1 (Nov 2) the first database; 2 (Nov 3, D0) events get a type and a play sequence, games get
+ * statuses, packs and readings stores. Version 1 events have no type and are pitches: isPitch() treats them so, and the
+ * upgrade marks them "pitch" on the device. Edit rule (D0): a fix changes the event in place, keeps the old values in
+ * its edits list and moves updatedAt; a sync keeps the newest updatedAt.
  *
  * Works in the browser (window.PCDB) and in Node with fake-indexeddb (module.exports) for tests.
  */
 (function (root) {
   "use strict";
-  const NAME = "pitchcaller", VERSION = 1;
+  const NAME = "pitchcaller", VERSION = 2;
   const STORES = {
     teams: ["isOurs"], pitchers: ["teamId"], catchers: ["teamId"], hitters: ["teamId"],
-    checkins: ["pitcherId", "date"], sessions: ["pitcherId"], games: ["date", "opponentId"],
-    events: ["gameId", "pitcherId", "hitterId"], learned: [], meta: [],
+    checkins: ["pitcherId", "date"], sessions: ["pitcherId"], games: ["date", "opponentId", "status"],
+    events: ["gameId", "pitcherId", "hitterId", "type"], packs: ["gameId"], readings: ["pitcherId", "sessionId"],
+    learned: [], meta: [],
   };
+  // what each event is. A version 1 event has no type and is always a pitch.
+  const isPitch = (ev) => !!ev && (ev.type === undefined || ev.type === null || ev.type === "pitch");
+  const isPlay = (ev) => !!ev && ev.type === "play";
+  // plays between pitches. They rebuild the game state and are an audit trail; the learner never reads them.
+  const PLAY_KINDS = ["sb", "cs", "pickoff", "balk", "advance", "out_on_bases", "sub_hitter", "sub_pitcher", "sub_catcher", "correct"];
+  // a game's life: made at Game plan, live from its first pitch, suspended (rain, a doubleheader split), final
+  const GAME_STATUS = ["planned", "live", "suspended", "final"];
+  const GAME_MOVES = { planned: ["live", "final"], live: ["suspended", "final"], suspended: ["live", "final"], final: [] };
+  function moveGame(rec, to) {
+    const from = rec.status || "live";
+    if (from === to) return rec;
+    if (!GAME_STATUS.includes(to)) throw new Error(`Unknown game status "${to}"`);
+    if (!(GAME_MOVES[from] || []).includes(to)) throw new Error(`A ${from} game can't become ${to}`);
+    rec.status = to;
+    rec.statusLog = (rec.statusLog || []).concat({ at: Date.now(), from, to });
+    return rec;
+  }
 
   function uid(prefix) {
     const c = (typeof crypto !== "undefined" && crypto.getRandomValues) ? crypto : null;
@@ -45,12 +71,16 @@
     if (!factory) throw new Error("This browser has no IndexedDB");
     const name = opts.name || NAME;
     const r = factory.open(name, VERSION);
-    r.onupgradeneeded = () => {
-      const db = r.result;
+    r.onupgradeneeded = (e) => {
+      const db = r.result, tx = r.transaction, from = e.oldVersion || 0;
       for (const [store, idx] of Object.entries(STORES)) {
-        if (db.objectStoreNames.contains(store)) continue;
-        const os = db.createObjectStore(store, { keyPath: "id" });
-        for (const i of idx) os.createIndex(i, i, { unique: false });
+        // new stores are made; stores that exist get any index they're missing (an upgrade never drops data)
+        const os = db.objectStoreNames.contains(store) ? tx.objectStore(store) : db.createObjectStore(store, { keyPath: "id" });
+        for (const i of idx) if (!os.indexNames.contains(i)) os.createIndex(i, i, { unique: false });
+      }
+      if (from >= 1 && from < 2) {   // 1 -> 2: every event so far is a pitch; mark it so the type index finds it
+        const cur = tx.objectStore("events").openCursor();
+        cur.onsuccess = () => { const c = cur.result; if (!c) return; if (c.value.type === undefined) { const v = c.value; v.type = "pitch"; c.update(v); } c.continue(); };
       }
     };
     const db = await req(r);
@@ -92,11 +122,17 @@
       return out;
     }
     // Merge a backup into this device: newer updatedAt wins, so restoring an old backup never overwrites newer work.
+    // The backup's schema is checked first: a newer one than this app reads is refused, never half-read (D0).
     async function importAll(data, { replace = false } = {}) {
       if (!data || data.app !== "pitch-caller" || !data.stores) throw new Error("That file isn't a Pitch Caller backup");
+      const schema = +data.schema || 1;
+      if (schema > VERSION) throw new Error(`That backup is from a newer version of the app (database version ${schema}; this app reads up to ${VERSION}). Update the app, then restore it.`);
+      const unknown = Object.keys(data.stores).filter((s) => !(s in STORES));
+      if (unknown.length) throw new Error(`That backup has data this app doesn't know (${unknown.join(", ")}), so nothing was restored.`);
+      const stores = upgradeBackup(data.stores, schema);
       const stats = {};
       for (const s of Object.keys(STORES)) {
-        const incoming = data.stores[s] || [];
+        const incoming = stores[s] || [];
         const tx = db.transaction(s, "readwrite"), st = tx.objectStore(s);
         if (replace) st.clear();
         const have = replace ? new Map() : new Map((await new Promise((res, rej) => { const r = st.getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })).map((x) => [x.id, x]));
@@ -109,6 +145,18 @@
       }
       return stats;
     }
+    // rows from somewhere else (a sync pull): kept as they are, timestamps included, and only where newer than ours
+    async function mergeRows(store, rows) {
+      if (!(store in STORES)) throw new Error(`Unknown store ${store}`);
+      // every read is issued inside the transaction's own callbacks (no await between them), so it can't close early
+      const tx = db.transaction(store, "readwrite"), st = tx.objectStore(store);
+      let n = 0;
+      for (const x of rows) {
+        const g = st.get(x.id);
+        g.onsuccess = () => { const cur = g.result; if (!cur || (x.updatedAt || 0) > (cur.updatedAt || 0)) { st.put(x); n++; } };
+      }
+      await done(tx); return n;
+    }
     async function changedSince(t) {   // what a sync would push: everything touched after t, deletes included
       const out = {};
       for (const s of Object.keys(STORES)) out[s] = (await all(s, true)).filter((x) => (x.updatedAt || 0) > t);
@@ -117,7 +165,14 @@
     function close() { db.close(); }
     async function destroy() { db.close(); await req(factory.deleteDatabase(name)); }
 
-    return { get, all, byIndex, put, putMany, del, count, exportAll, importAll, changedSince, close, destroy, raw: db };
+    return { get, all, byIndex, put, putMany, del, count, exportAll, importAll, mergeRows, changedSince, close, destroy, raw: db };
+  }
+
+  // a backup's stores brought up to this schema (pure: the backup object isn't changed)
+  function upgradeBackup(stores, schema) {
+    const out = Object.assign({}, stores);
+    if (schema < 2) out.events = (stores.events || []).map((e) => (e.type === undefined ? Object.assign({}, e, { type: "pitch" }) : e));
+    return out;
   }
 
   // ------------------------------------------------------------ pitch types
@@ -178,7 +233,8 @@
     return { ourTeamId: ours.id, staffIds, opponentId: opp && opp.id, games, events };
   }
 
-  const PCDB = { open, uid, today, STORES, VERSION, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy };
+  const PCDB = { open, uid, today, STORES, VERSION, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy,
+    isPitch, isPlay, PLAY_KINDS, GAME_STATUS, moveGame, upgradeBackup };
   if (typeof module !== "undefined" && module.exports) module.exports = PCDB;
   else root.PCDB = PCDB;
 })(typeof window !== "undefined" ? window : this);

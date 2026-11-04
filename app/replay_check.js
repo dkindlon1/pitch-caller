@@ -10,7 +10,7 @@ const bk = JSON.parse(fs.readFileSync(process.argv[2], "utf8")), st = bk.stores;
 const pitchers = new Map(st.pitchers.map((p) => [p.id, p]));
 let games = 0, pitches = 0, confWorst = 0, landBad = 0, pcBad = 0, holes = 0, unversioned = 0;
 for (const g of st.games) {
-  const evs = st.events.filter((e) => e.gameId === g.id && !e.deletedAt && !e.legacy).sort((a, b) => a.n - b.n);
+  const evs = st.events.filter((e) => e.gameId === g.id && !e.deletedAt && !e.legacy && e.type !== "play").sort((a, b) => a.n - b.n);
   if (!evs.length) continue;
   games++; pitches += evs.length;
   if (!evs.every((e, i) => e.n === i + 1)) holes++;

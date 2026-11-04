@@ -36,6 +36,9 @@
   const ALL_TRAITS = ["side_cmd", "side_grade", "ahead_cmd", "behind_cmd", "stretch_cmd", "miss_heart"];
   const ACTIVE_TRAITS = [];
   const DAY = 864e5;
+  // D0: events are pitches or plays between pitches (a steal, a sub). Only pitches are learned from; a version 1 event has
+  // no type and is a pitch.
+  const isPitch = (ev) => !!ev && (ev.type === undefined || ev.type === null || ev.type === "pitch");
   const isOS = (k) => k === "SL" || k === "CB" || k === "CH";
 
   // ---------------------------------------------------------------- small linear algebra
@@ -164,7 +167,7 @@
   const LOCS = ["heart", "edge", "off", "noncomp"];
   // which pitches the fit may use (spec 5.4): engine calls only; coach calls and re-calls after a shake-off are scored apart
   function usable(ev) {
-    if (ev.legacy || ev.deletedAt || !ev.sit || !ev.ars || !category(ev)) return false;
+    if (ev.legacy || ev.deletedAt || !isPitch(ev) || !ev.sit || !ev.ars || !category(ev)) return false;
     if (ev.choice) return ev.choice === "engine" || ev.choice === "variety";
     return !ev.coach && !(ev.shaken && ev.shaken.length);
   }
@@ -173,7 +176,7 @@
   // events of one pitcher -> games in order, each with every pitch (for in-game replay) and logging completeness
   function gamesOf(events) {
     const by = new Map();
-    for (const ev of events) { if (ev.deletedAt || ev.legacy) continue; const k = ev.gameId || "g?"; if (!by.has(k)) by.set(k, []); by.get(k).push(ev); }
+    for (const ev of events) { if (ev.deletedAt || ev.legacy || !isPitch(ev)) continue; const k = ev.gameId || "g?"; if (!by.has(k)) by.set(k, []); by.get(k).push(ev); }
     const games = [...by.entries()].map(([id, evs]) => {
       evs.sort((a, b) => (a.n || 0) - (b.n || 0));
       const plays = evs.filter((e) => e.res === "play"), ts = Math.min(...evs.map((e) => e.ts || 0));
@@ -544,7 +547,7 @@
     if (prior) { add("FB", prior.FB, 3); add("OS", prior.OS, 3); }
     const games = new Set(); let n = 0;
     for (const ev of events) {
-      if (ev.deletedAt || ev.legacy || !ev.sit || !ev.ars) continue;
+      if (ev.deletedAt || ev.legacy || !isPitch(ev) || !ev.sit || !ev.ars) continue;
       const swing = ev.res === "whiff" || ev.res === "foul" || (ev.res === "play" && ev.contact);
       if (!swing) continue;
       const obs = ev.res === "play" ? DMG_VAL[ev.contact] : DMG_VAL[ev.res];
@@ -590,7 +593,7 @@
   }
 
   const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
-    category, usable, gamesOf, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
+    category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
 })(typeof window !== "undefined" ? window : this);

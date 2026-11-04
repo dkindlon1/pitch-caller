@@ -48,7 +48,7 @@ async function boot() {
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
-      for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy).length);
+      for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
       for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
       await refreshLineupMemory();
       if (S.view === "roster") render();
@@ -103,7 +103,7 @@ const levelOf = () => S.setup.level;
 // learn from every pitch he's thrown, then serve one step toward it (spec 11). Serving steps once per new game only.
 async function relearnPitcher(pid) {
   const p = DB.pitchers.get(pid); if (!p || !DB.D) return null;
-  const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt);
+  const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt && PCDB.isPitch(e));
   DB.counts.set(pid, evs.length);
   const was = pModel(pid);
   let r;
@@ -121,7 +121,7 @@ function reserve(p) {
 }
 async function relearnHitter(hid) {
   const x = DB.hitters.get(hid); if (!x || !DB.D) return null;
-  const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt);
+  const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt && PCDB.isPitch(e));
   const team = DB.teams.get(x.teamId);
   let r;
   try { r = await learnCall({ type: "hitter", hitter: x, events: evs, level: (team && team.level) || levelOf() }); } catch (e) { console.error(e); return hModel(hid) || null; }
@@ -130,31 +130,83 @@ async function relearnHitter(hid) {
   return m;
 }
 
-// one games record per game, made when the first pitch is logged. If the database isn't open yet (it opens a moment
-// after the page, or failed), the record and its pitches wait in the saved state and are written once it opens:
-// a pitch is never dropped, because the learner replays games in order and a hole would break the replay.
+// one games record per game. Made at the first pitch for now (the Game plan screen will make it ahead, as planned).
+// If the database isn't open yet (it opens a moment after the page, or failed), the record and its pitches wait in the
+// saved state and are written once it opens: a pitch is never dropped, because the learner replays games in order and a
+// hole would break the replay.
+const queue = () => { S.queue = S.queue || { games: [], events: [], packs: [] }; if (!S.queue.packs) S.queue.packs = []; return S.queue; };
 function ensureGameRecord() {
   const g = G();
   if (g.dbId) return g.dbId;
   g.dbId = PCDB.uid("gam");
-  const rec = { id: g.dbId, date: PCDB.today(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
+  const rec = PCDB.moveGame({ id: g.dbId, date: PCDB.today(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
     catcherId: S.setup.catcherId || null, staffIds: (S.setup.staffIds || []).slice(), lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
-    status: "live", startedAt: Date.now(), deviceId: DB.deviceId || null };
-  if (DB.ready) dbPut("games", rec); else (S.queue = S.queue || { games: [], events: [] }).games.push(rec);
+    status: "planned", startedAt: Date.now(), deviceId: DB.deviceId || null }, "live");
+  if (DB.ready) dbPut("games", rec); else queue().games.push(rec);
+  makePack("start");
   return g.dbId;
 }
+// what the calls are reading right now (D0, spec 16): today's staff with their grades and what the calls are served,
+// check-ins, the catcher, the lineup and what's known about every hitter on the opponent's roster. A new version is
+// written whenever any of it changes mid-game, and every event after it carries the new version's id, so a game
+// replays with exactly what the iPad saw.
+function packContents() {
+  const ids = S.setup.staffIds || [];
+  const staff = ids.map((id) => DB.pitchers.get(id)).filter(Boolean).map((p) => {
+    const m = pModel(p.id), ci = todayCheckin(p.id);
+    return { pitcherId: p.id, name: p.name, hand: p.hand, useLearned: p.useLearned !== false, pitchLimit: p.pitchLimit || null,
+      pitches: (p.pitches || []).map((d) => ({ id: d.id, name: d.name, kind: d.kind, grade: +d.grade, command: +d.command, feel: +d.feel, active: d.active !== false })),
+      served: m && m.served ? JSON.parse(JSON.stringify(m.served.pitches)) : null, checkinId: ci ? ci.id : null,
+      checkin: ci ? { arm: ci.arm, sleep: ci.sleep, conf: Object.assign({}, ci.conf) } : null };
+  });
+  const tid = S.setup.opponentId, roster = tid ? teamHitters(tid) : [];
+  const hitters = {};
+  for (const x of roster) { const m = hModel(x.id); hitters[x.id] = { name: x.name, bats: x.bats, damage: m ? JSON.parse(JSON.stringify(m.damage)) : null }; }
+  const c = S.setup.catcherId && DB.catchers.get(S.setup.catcherId);
+  return { staff, catcher: c ? { id: c.id, block: +c.block || 3 } : null, opponentId: tid || null, hitters,
+    lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
+    level: S.setup.level, versions: { app: APP_VERSION, engine: E.VERSION, data: E.dataVersion(), learn: PCLearn.VERSION, learner: PCLearner.VERSION } };
+}
+function makePack(reason) {
+  const g = G(); if (!g.dbId) return null;
+  const v = (g.packV || 0) + 1;
+  const rec = Object.assign({ id: PCDB.uid("pak"), gameId: g.dbId, v, reason, at: Date.now(), prevId: g.packId || null }, packContents());
+  g.packV = v; g.packId = rec.id;
+  if (DB.ready) dbPut("packs", rec); else queue().packs.push(rec);
+  return rec;
+}
+// something the calls read changed: if a game is under way, that's a new pack version from here on
+function packChanged(reason) { if (G().dbId) { makePack(reason); save(); } }
 function logEvent(ev) {
   ev.id = PCDB.uid("evt");
-  if (!DB.ready) { (S.queue = S.queue || { games: [], events: [] }).events.push(ev); return ev.id; }
+  const g = G();
+  ev.type = ev.type || "pitch";
+  ev.seq = g.seq = (g.seq || 0) + 1;         // one running order for pitches and plays together
+  ev.packId = g.packId || null;
+  if (!DB.ready) { queue().events.push(ev); return ev.id; }
   DB.D.put("events", ev).catch(dbErr);
-  DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1);
+  if (PCDB.isPitch(ev)) DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1);
   return ev.id;
 }
+// a play between pitches (D0): a pitching change, a pinch hitter, a catcher change, a Correct edit, and later steals and
+// pickoffs. Logged with the game state after it, so the state can be rebuilt; the learner never reads plays.
+function logPlay(play, detail = {}) {
+  const g = G();
+  if (!PCDB.PLAY_KINDS.includes(play)) throw new Error("unknown play " + play);
+  ensureGameRecord();
+  const pd = pitcherDef(), b = batterDef() || {};
+  const id = logEvent(Object.assign({ type: "play", play, gameId: g.dbId, ts: Date.now(), afterPitch: g.pitchNo, inning: g.inning, outs: g.outs, balls: g.balls, strikes: g.strikes,
+    bases: g.bases.slice(), us: g.us, them: g.them, batter: g.batter, slot: slotIdx(), pitcherId: pd.id || null, hitterId: b.hitterId || null,
+    catcherId: S.setup.catcherId || null, deviceId: DB.deviceId || null }, detail));
+  g.evIds = (g.evIds || []).concat(id);
+  return id;
+}
 async function flushQueued() {
-  const q = S.queue; if (!q || (!q.games.length && !q.events.length)) return;
+  const q = S.queue; if (!q || (!q.games.length && !q.events.length && !(q.packs || []).length)) return;
   for (const r of q.games) { r.deviceId = r.deviceId || DB.deviceId; await dbPut("games", r); }
-  for (const ev of q.events) { ev.deviceId = ev.deviceId || DB.deviceId; await DB.D.put("events", ev).catch(dbErr); DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1); }
-  const n = q.events.length; S.queue = { games: [], events: [] }; save();
+  for (const r of q.packs || []) await dbPut("packs", r);
+  for (const ev of q.events) { ev.deviceId = ev.deviceId || DB.deviceId; await DB.D.put("events", ev).catch(dbErr); if (PCDB.isPitch(ev)) DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1); }
+  const n = q.events.filter(PCDB.isPitch).length; S.queue = { games: [], events: [], packs: [] }; save();
   if (n) toast(`Saved ${n} pitch${n === 1 ? "" : "es"} charted before the database opened`);
 }
 // an edit to a logged pitch after the fact (where it ended up, contact, a cross-up, a wild pitch). The original values
@@ -186,9 +238,10 @@ async function finishGameRecord() {
   const g = G();
   if (!g.dbId) return null;
   const comp = completeness(g);
-  if (!DB.ready) { const r = S.queue && S.queue.games.find((x) => x.id === g.dbId); if (r) Object.assign(r, { status: "final", endedAt: Date.now(), us: g.us, them: g.them, innings: g.inning, pitches: g.pitchNo, completeness: comp }); save(); return comp; }
+  const close = (r) => Object.assign(PCDB.moveGame(r, "final"), { endedAt: Date.now(), us: g.us, them: g.them, innings: g.inning, pitches: g.pitchNo, completeness: comp, packs: g.packV || 0 });
+  if (!DB.ready) { const r = S.queue && S.queue.games.find((x) => x.id === g.dbId); if (r) close(r); save(); return comp; }
   const rec = await DB.D.get("games", g.dbId);
-  if (rec) await dbPut("games", Object.assign(rec, { status: "final", endedAt: Date.now(), us: g.us, them: g.them, innings: g.inning, pitches: g.pitchNo, completeness: comp }));
+  if (rec) await dbPut("games", close(rec));
   // the flywheel: refit everyone who pitched and every hitter he faced
   const pids = new Set(), hids = new Set();
   for (const e of g.log) { const pid = e.pid || (S.setup.staff[e.p ?? 0] || {}).id; if (pid && DB.pitchers.has(pid)) pids.add(pid); const b = S.setup.lineup[e.slot]; if (b && b.hitterId) hids.add(b.hitterId); }
@@ -243,7 +296,7 @@ function oursView() {
     p ? h("div", { class: "span-12 col" }, learnedPanel(p), importPanel(p)) : null);
 }
 
-function savePitcher(p, re = true) { reserve(p); dbPut("pitchers", p); G().call = null; save(); if (re) render(); }
+function savePitcher(p, re = true) { reserve(p); dbPut("pitchers", p); if ((S.setup.staffIds || []).includes(p.id)) packChanged("pitcher"); G().call = null; save(); if (re) render(); }
 
 function profilePanel(p) {
   const today = S.setup.staffIds.includes(p.id);
@@ -359,7 +412,7 @@ function checkinPanel(p) {
       })),
     h("div", { class: "row-acts" },
       h("button", { class: "btn primary", on: { click: async () => {
-        const rec = await dbPut("checkins", Object.assign(prev || {}, c)); DB.checkins.set(p.id, rec); G().call = null; save(); render(); toast(`${p.name}'s check-in saved. His starting feel uses it today.`);
+        const rec = await dbPut("checkins", Object.assign(prev || {}, c)); DB.checkins.set(p.id, rec); if ((S.setup.staffIds || []).includes(p.id)) packChanged("checkin"); G().call = null; save(); render(); toast(`${p.name}'s check-in saved. His starting feel uses it today.`);
       } } }, prev ? "Update check-in" : "Save check-in"),
       shift ? h("span", { class: "note" }, `Today his fatigue point comes down ${shift} pitches.`) : null),
     h("p", { class: "note" }, "A pitch he rates 1 starts the game at feel 0.30; a 10 starts at 0.95. A sore or tight arm, or under six hours of sleep, brings his fatigue point down."));
@@ -487,7 +540,7 @@ function catchersPanel() {
     list.length ? h("div", { class: "clist" }, list.map((c) => h("div", { class: "crow2" },
       h("input", { value: c.name, "aria-label": "Catcher name", on: { change: (e) => { c.name = e.target.value; dbPut("catchers", c); } } }),
       h("span", { class: "blk" }, "Blocking"),
-      h("div", { class: "seg small", role: "group", "aria-label": "Blocking, 1 to 5" }, [1, 2, 3, 4, 5].map((v) => h("button", { "aria-pressed": String(+c.block === v), on: { click: () => { c.block = v; dbPut("catchers", c); G().call = null; render(); } } }, String(v)))),
+      h("div", { class: "seg small", role: "group", "aria-label": "Blocking, 1 to 5" }, [1, 2, 3, 4, 5].map((v) => h("button", { "aria-pressed": String(+c.block === v), on: { click: () => { c.block = v; dbPut("catchers", c); if (S.setup.catcherId === c.id) packChanged("catcher"); G().call = null; render(); } } }, String(v)))),
       h("button", { class: "x", "aria-label": `Remove ${c.name}`, on: { click: async () => { await DB.D.del("catchers", c.id); DB.catchers.delete(c.id); if (S.setup.catcherId === c.id) S.setup.catcherId = null; save(); render(); } } }, "×"))))
       : h("p", { class: "note" }, "None yet. Without one, every catcher blocks like an average one (3)."),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => { const c = await dbPut("catchers", { teamId: ourTeam().id, name: `Catcher ${DB.catchers.size + 1}`, block: 3 }); DB.catchers.set(c.id, c); render(); } } }, "Add a catcher")));
@@ -591,7 +644,7 @@ async function backup() {
   const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pitch-caller-backup-${PCDB.today()}.json`;
   document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  toast(`Backup saved: ${data.stores.events.length} pitches, ${data.stores.pitchers.length} pitchers`);
+  toast(`Backup saved: ${data.stores.events.filter((e) => !e.deletedAt && PCDB.isPitch(e)).length} pitches, ${data.stores.pitchers.length} pitchers`);
 }
 async function restore(e) {
   const f = e.target.files[0]; if (!f || !DB.D) return;

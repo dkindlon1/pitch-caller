@@ -1127,21 +1127,47 @@ td.wrapcell .line { display: block; }
  *   hitters    opponent hitters with season stats                index: teamId
  *   checkins   a pitcher's pre-game check-in                     index: pitcherId, date
  *   sessions   TrackMan / Rapsodo bullpen sessions               index: pitcherId
- *   games      one per game charted                              index: date, opponentId
- *   events     one per pitch thrown, with what the engine predicted for it   index: gameId, pitcherId, hitterId
+ *   games      one per game, made at Game plan (status planned) index: date, opponentId, status
+ *   events     one per pitch thrown (type "pitch"), or one per play between pitches (type "play")
+ *                                                                 index: gameId, pitcherId, hitterId, type
+ *   packs      what the calls read for a game: a new version each time it changes mid-game   index: gameId
+ *   readings   one velo reading per pitch (bullpen log, imports, game gun)    index: pitcherId, sessionId
  *   learned    the learning models, one per pitcher and one per hitter       (id "p:<pitcherId>" / "h:<hitterId>")
  *   meta       schema version, settings
+ *
+ * Schema versions: 1 (Nov 2) the first database; 2 (Nov 3, D0) events get a type and a play sequence, games get
+ * statuses, packs and readings stores. Version 1 events have no type and are pitches: isPitch() treats them so, and the
+ * upgrade marks them "pitch" on the device. Edit rule (D0): a fix changes the event in place, keeps the old values in
+ * its edits list and moves updatedAt; a sync keeps the newest updatedAt.
  *
  * Works in the browser (window.PCDB) and in Node with fake-indexeddb (module.exports) for tests.
  */
 (function (root) {
   "use strict";
-  const NAME = "pitchcaller", VERSION = 1;
+  const NAME = "pitchcaller", VERSION = 2;
   const STORES = {
     teams: ["isOurs"], pitchers: ["teamId"], catchers: ["teamId"], hitters: ["teamId"],
-    checkins: ["pitcherId", "date"], sessions: ["pitcherId"], games: ["date", "opponentId"],
-    events: ["gameId", "pitcherId", "hitterId"], learned: [], meta: [],
+    checkins: ["pitcherId", "date"], sessions: ["pitcherId"], games: ["date", "opponentId", "status"],
+    events: ["gameId", "pitcherId", "hitterId", "type"], packs: ["gameId"], readings: ["pitcherId", "sessionId"],
+    learned: [], meta: [],
   };
+  // what each event is. A version 1 event has no type and is always a pitch.
+  const isPitch = (ev) => !!ev && (ev.type === undefined || ev.type === null || ev.type === "pitch");
+  const isPlay = (ev) => !!ev && ev.type === "play";
+  // plays between pitches. They rebuild the game state and are an audit trail; the learner never reads them.
+  const PLAY_KINDS = ["sb", "cs", "pickoff", "balk", "advance", "out_on_bases", "sub_hitter", "sub_pitcher", "sub_catcher", "correct"];
+  // a game's life: made at Game plan, live from its first pitch, suspended (rain, a doubleheader split), final
+  const GAME_STATUS = ["planned", "live", "suspended", "final"];
+  const GAME_MOVES = { planned: ["live", "final"], live: ["suspended", "final"], suspended: ["live", "final"], final: [] };
+  function moveGame(rec, to) {
+    const from = rec.status || "live";
+    if (from === to) return rec;
+    if (!GAME_STATUS.includes(to)) throw new Error(`Unknown game status "${to}"`);
+    if (!(GAME_MOVES[from] || []).includes(to)) throw new Error(`A ${from} game can't become ${to}`);
+    rec.status = to;
+    rec.statusLog = (rec.statusLog || []).concat({ at: Date.now(), from, to });
+    return rec;
+  }
 
   function uid(prefix) {
     const c = (typeof crypto !== "undefined" && crypto.getRandomValues) ? crypto : null;
@@ -1161,12 +1187,16 @@ td.wrapcell .line { display: block; }
     if (!factory) throw new Error("This browser has no IndexedDB");
     const name = opts.name || NAME;
     const r = factory.open(name, VERSION);
-    r.onupgradeneeded = () => {
-      const db = r.result;
+    r.onupgradeneeded = (e) => {
+      const db = r.result, tx = r.transaction, from = e.oldVersion || 0;
       for (const [store, idx] of Object.entries(STORES)) {
-        if (db.objectStoreNames.contains(store)) continue;
-        const os = db.createObjectStore(store, { keyPath: "id" });
-        for (const i of idx) os.createIndex(i, i, { unique: false });
+        // new stores are made; stores that exist get any index they're missing (an upgrade never drops data)
+        const os = db.objectStoreNames.contains(store) ? tx.objectStore(store) : db.createObjectStore(store, { keyPath: "id" });
+        for (const i of idx) if (!os.indexNames.contains(i)) os.createIndex(i, i, { unique: false });
+      }
+      if (from >= 1 && from < 2) {   // 1 -> 2: every event so far is a pitch; mark it so the type index finds it
+        const cur = tx.objectStore("events").openCursor();
+        cur.onsuccess = () => { const c = cur.result; if (!c) return; if (c.value.type === undefined) { const v = c.value; v.type = "pitch"; c.update(v); } c.continue(); };
       }
     };
     const db = await req(r);
@@ -1208,11 +1238,17 @@ td.wrapcell .line { display: block; }
       return out;
     }
     // Merge a backup into this device: newer updatedAt wins, so restoring an old backup never overwrites newer work.
+    // The backup's schema is checked first: a newer one than this app reads is refused, never half-read (D0).
     async function importAll(data, { replace = false } = {}) {
       if (!data || data.app !== "pitch-caller" || !data.stores) throw new Error("That file isn't a Pitch Caller backup");
+      const schema = +data.schema || 1;
+      if (schema > VERSION) throw new Error(`That backup is from a newer version of the app (database version ${schema}; this app reads up to ${VERSION}). Update the app, then restore it.`);
+      const unknown = Object.keys(data.stores).filter((s) => !(s in STORES));
+      if (unknown.length) throw new Error(`That backup has data this app doesn't know (${unknown.join(", ")}), so nothing was restored.`);
+      const stores = upgradeBackup(data.stores, schema);
       const stats = {};
       for (const s of Object.keys(STORES)) {
-        const incoming = data.stores[s] || [];
+        const incoming = stores[s] || [];
         const tx = db.transaction(s, "readwrite"), st = tx.objectStore(s);
         if (replace) st.clear();
         const have = replace ? new Map() : new Map((await new Promise((res, rej) => { const r = st.getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })).map((x) => [x.id, x]));
@@ -1225,6 +1261,18 @@ td.wrapcell .line { display: block; }
       }
       return stats;
     }
+    // rows from somewhere else (a sync pull): kept as they are, timestamps included, and only where newer than ours
+    async function mergeRows(store, rows) {
+      if (!(store in STORES)) throw new Error(`Unknown store ${store}`);
+      // every read is issued inside the transaction's own callbacks (no await between them), so it can't close early
+      const tx = db.transaction(store, "readwrite"), st = tx.objectStore(store);
+      let n = 0;
+      for (const x of rows) {
+        const g = st.get(x.id);
+        g.onsuccess = () => { const cur = g.result; if (!cur || (x.updatedAt || 0) > (cur.updatedAt || 0)) { st.put(x); n++; } };
+      }
+      await done(tx); return n;
+    }
     async function changedSince(t) {   // what a sync would push: everything touched after t, deletes included
       const out = {};
       for (const s of Object.keys(STORES)) out[s] = (await all(s, true)).filter((x) => (x.updatedAt || 0) > t);
@@ -1233,7 +1281,14 @@ td.wrapcell .line { display: block; }
     function close() { db.close(); }
     async function destroy() { db.close(); await req(factory.deleteDatabase(name)); }
 
-    return { get, all, byIndex, put, putMany, del, count, exportAll, importAll, changedSince, close, destroy, raw: db };
+    return { get, all, byIndex, put, putMany, del, count, exportAll, importAll, mergeRows, changedSince, close, destroy, raw: db };
+  }
+
+  // a backup's stores brought up to this schema (pure: the backup object isn't changed)
+  function upgradeBackup(stores, schema) {
+    const out = Object.assign({}, stores);
+    if (schema < 2) out.events = (stores.events || []).map((e) => (e.type === undefined ? Object.assign({}, e, { type: "pitch" }) : e));
+    return out;
   }
 
   // ------------------------------------------------------------ pitch types
@@ -1294,7 +1349,8 @@ td.wrapcell .line { display: block; }
     return { ourTeamId: ours.id, staffIds, opponentId: opp && opp.id, games, events };
   }
 
-  const PCDB = { open, uid, today, STORES, VERSION, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy };
+  const PCDB = { open, uid, today, STORES, VERSION, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy,
+    isPitch, isPlay, PLAY_KINDS, GAME_STATUS, moveGame, upgradeBackup };
   if (typeof module !== "undefined" && module.exports) module.exports = PCDB;
   else root.PCDB = PCDB;
 })(typeof window !== "undefined" ? window : this);
@@ -1417,7 +1473,7 @@ td.wrapcell .line { display: block; }
     if (typeof pd === "string") pd = { name: pd };
     const out = [];
     for (const ev of events) {
-      if (ev.legacy || ev.deletedAt || !ev.sit || !ev.ars) continue;
+      if (ev.legacy || ev.deletedAt || (ev.type && ev.type !== "pitch") || !ev.sit || !ev.ars) continue;
       // spec 5.4: only the engine's own calls teach it. A coach's call or a re-call after a shake-off was chosen on
       // something the engine didn't see (how he looks tonight), so its result would bias the fit.
       if (ev.choice ? !(ev.choice === "engine" || ev.choice === "variety") : (ev.coach || (ev.shaken && ev.shaken.length))) continue;
@@ -1540,6 +1596,7 @@ td.wrapcell .line { display: block; }
     if (prior) { add("FB", prior.FB, 3); add("OS", prior.OS, 3); }
     const games = new Set();
     for (const ev of events) {
+      if (ev.type && ev.type !== "pitch") continue;   // plays between pitches (D0) say nothing about the hitter
       const d = damageEvent(ev); if (!d) continue;
       const w = ageWeight(ev.ts, t0);
       add(isOS(ev.kind) ? "OS" : "FB", DMG_VAL[d], w);
@@ -1548,7 +1605,7 @@ td.wrapcell .line { display: block; }
     }
     const damage = {};
     for (const [k, [s, n]] of Object.entries(acc)) if (n > 0) damage[k] = [Math.round((s / n) * 1000) / 1000, Math.round(n * 10) / 10];
-    return { hitterId: hitter && hitter.id, damage, games: games.size, n: events.filter(damageEvent).length, prior };
+    return { hitterId: hitter && hitter.id, damage, games: games.size, n: events.filter((ev) => !(ev.type && ev.type !== "pitch") && damageEvent(ev)).length, prior };
   }
 
   // OPS against the level average -> lean on fastballs; strikeout rate against the level -> lean on off-speed
@@ -1632,6 +1689,9 @@ td.wrapcell .line { display: block; }
   const ALL_TRAITS = ["side_cmd", "side_grade", "ahead_cmd", "behind_cmd", "stretch_cmd", "miss_heart"];
   const ACTIVE_TRAITS = [];
   const DAY = 864e5;
+  // D0: events are pitches or plays between pitches (a steal, a sub). Only pitches are learned from; a version 1 event has
+  // no type and is a pitch.
+  const isPitch = (ev) => !!ev && (ev.type === undefined || ev.type === null || ev.type === "pitch");
   const isOS = (k) => k === "SL" || k === "CB" || k === "CH";
 
   // ---------------------------------------------------------------- small linear algebra
@@ -1760,7 +1820,7 @@ td.wrapcell .line { display: block; }
   const LOCS = ["heart", "edge", "off", "noncomp"];
   // which pitches the fit may use (spec 5.4): engine calls only; coach calls and re-calls after a shake-off are scored apart
   function usable(ev) {
-    if (ev.legacy || ev.deletedAt || !ev.sit || !ev.ars || !category(ev)) return false;
+    if (ev.legacy || ev.deletedAt || !isPitch(ev) || !ev.sit || !ev.ars || !category(ev)) return false;
     if (ev.choice) return ev.choice === "engine" || ev.choice === "variety";
     return !ev.coach && !(ev.shaken && ev.shaken.length);
   }
@@ -1769,7 +1829,7 @@ td.wrapcell .line { display: block; }
   // events of one pitcher -> games in order, each with every pitch (for in-game replay) and logging completeness
   function gamesOf(events) {
     const by = new Map();
-    for (const ev of events) { if (ev.deletedAt || ev.legacy) continue; const k = ev.gameId || "g?"; if (!by.has(k)) by.set(k, []); by.get(k).push(ev); }
+    for (const ev of events) { if (ev.deletedAt || ev.legacy || !isPitch(ev)) continue; const k = ev.gameId || "g?"; if (!by.has(k)) by.set(k, []); by.get(k).push(ev); }
     const games = [...by.entries()].map(([id, evs]) => {
       evs.sort((a, b) => (a.n || 0) - (b.n || 0));
       const plays = evs.filter((e) => e.res === "play"), ts = Math.min(...evs.map((e) => e.ts || 0));
@@ -2140,7 +2200,7 @@ td.wrapcell .line { display: block; }
     if (prior) { add("FB", prior.FB, 3); add("OS", prior.OS, 3); }
     const games = new Set(); let n = 0;
     for (const ev of events) {
-      if (ev.deletedAt || ev.legacy || !ev.sit || !ev.ars) continue;
+      if (ev.deletedAt || ev.legacy || !isPitch(ev) || !ev.sit || !ev.ars) continue;
       const swing = ev.res === "whiff" || ev.res === "foul" || (ev.res === "play" && ev.contact);
       if (!swing) continue;
       const obs = ev.res === "play" ? DMG_VAL[ev.contact] : DMG_VAL[ev.res];
@@ -2186,7 +2246,7 @@ td.wrapcell .line { display: block; }
   }
 
   const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
-    category, usable, gamesOf, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
+    category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
 })(typeof window !== "undefined" ? window : this);
@@ -3034,6 +3094,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const ALL_TRAITS = ["side_cmd", "side_grade", "ahead_cmd", "behind_cmd", "stretch_cmd", "miss_heart"];
   const ACTIVE_TRAITS = [];
   const DAY = 864e5;
+  // D0: events are pitches or plays between pitches (a steal, a sub). Only pitches are learned from; a version 1 event has
+  // no type and is a pitch.
+  const isPitch = (ev) => !!ev && (ev.type === undefined || ev.type === null || ev.type === "pitch");
   const isOS = (k) => k === "SL" || k === "CB" || k === "CH";
 
   // ---------------------------------------------------------------- small linear algebra
@@ -3162,7 +3225,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const LOCS = ["heart", "edge", "off", "noncomp"];
   // which pitches the fit may use (spec 5.4): engine calls only; coach calls and re-calls after a shake-off are scored apart
   function usable(ev) {
-    if (ev.legacy || ev.deletedAt || !ev.sit || !ev.ars || !category(ev)) return false;
+    if (ev.legacy || ev.deletedAt || !isPitch(ev) || !ev.sit || !ev.ars || !category(ev)) return false;
     if (ev.choice) return ev.choice === "engine" || ev.choice === "variety";
     return !ev.coach && !(ev.shaken && ev.shaken.length);
   }
@@ -3171,7 +3234,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // events of one pitcher -> games in order, each with every pitch (for in-game replay) and logging completeness
   function gamesOf(events) {
     const by = new Map();
-    for (const ev of events) { if (ev.deletedAt || ev.legacy) continue; const k = ev.gameId || "g?"; if (!by.has(k)) by.set(k, []); by.get(k).push(ev); }
+    for (const ev of events) { if (ev.deletedAt || ev.legacy || !isPitch(ev)) continue; const k = ev.gameId || "g?"; if (!by.has(k)) by.set(k, []); by.get(k).push(ev); }
     const games = [...by.entries()].map(([id, evs]) => {
       evs.sort((a, b) => (a.n || 0) - (b.n || 0));
       const plays = evs.filter((e) => e.res === "play"), ts = Math.min(...evs.map((e) => e.ts || 0));
@@ -3542,7 +3605,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (prior) { add("FB", prior.FB, 3); add("OS", prior.OS, 3); }
     const games = new Set(); let n = 0;
     for (const ev of events) {
-      if (ev.deletedAt || ev.legacy || !ev.sit || !ev.ars) continue;
+      if (ev.deletedAt || ev.legacy || !isPitch(ev) || !ev.sit || !ev.ars) continue;
       const swing = ev.res === "whiff" || ev.res === "foul" || (ev.res === "play" && ev.contact);
       if (!swing) continue;
       const obs = ev.res === "play" ? DMG_VAL[ev.contact] : DMG_VAL[ev.res];
@@ -3588,7 +3651,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   }
 
   const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
-    category, usable, gamesOf, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
+    category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
 })(typeof window !== "undefined" ? window : this);
@@ -3925,12 +3988,17 @@ function shakeOff() {
 function undoLast() {
   if (!undo.length) return;
   const before = S.game;
-  S.game = JSON.parse(undo.pop()); pending = null; pickMode = false; pendingLoc = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
+  S.game = JSON.parse(undo.pop());
+  // the game's identity isn't undone: its record id, its pack versions (a re-grade since then still stands) and the
+  // running event order stay, so undoing the first pitch can't start a second game record, and no pack version repeats
+  for (const k of ["dbId", "packId", "packV", "seq"]) if (before[k] !== undefined) S.game[k] = before[k];
+  pending = null; pickMode = false; pendingLoc = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
 }
 function changePitcher() {
   const g = G(), n = S.setup.staff.length;
   if (n < 2) { toast("Add another pitcher in Setup first"); return; }
-  snapshot(); g.pitcher = (g.pitcher + 1) % n; g.last = null;
+  snapshot(); const out = pitcherDef().id || null; g.pitcher = (g.pitcher + 1) % n; g.last = null;
+  if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pitcherDef().id || null });
   toast(`${pitcherDef().name} is in`); recall();
 }
 
@@ -4040,16 +4108,18 @@ function strip() {
 function fixRow() {
   const g = G();
   const step = (label, key, min, max) => h("div", { class: "stepper" }, h("span", { class: "lab" }, label),
-    h("button", { "aria-label": `${label} down`, on: { click: () => { if (g[key] > min) { snapshot(); g[key]--; pending = null; recall(); } } } }, "−"),
+    h("button", { "aria-label": `${label} down`, on: { click: () => { if (g[key] > min) { snapshot(); g[key]--; corrected(key, g[key] + 1, g[key]); pending = null; recall(); } } } }, "−"),
     h("output", {}, String(g[key])),
-    h("button", { "aria-label": `${label} up`, on: { click: () => { if (g[key] < max) { snapshot(); g[key]++; pending = null; recall(); } } } }, "+"));
+    h("button", { "aria-label": `${label} up`, on: { click: () => { if (g[key] < max) { snapshot(); g[key]++; corrected(key, g[key] - 1, g[key]); pending = null; recall(); } } } }, "+"));
   return h("section", { class: "fix glass", "aria-label": "Correct the game state" },
     step("Balls", "balls", 0, 3), step("Strikes", "strikes", 0, 2), step("Outs", "outs", 0, 2),
     h("div", { class: "stepper" }, h("span", { class: "lab" }, "Runners"), h("div", { class: "toggles" },
-      ["1st", "2nd", "3rd"].map((l, i) => h("button", { "aria-pressed": String(g.bases[i]), on: { click: () => { snapshot(); g.bases[i] = !g.bases[i]; recall(); } } }, l)))),
+      ["1st", "2nd", "3rd"].map((l, i) => h("button", { "aria-pressed": String(g.bases[i]), on: { click: () => { snapshot(); g.bases[i] = !g.bases[i]; corrected("base" + (i + 1), !g.bases[i], g.bases[i]); recall(); } } }, l)))),
     step("Them", "them", 0, 99), step("Us", "us", 0, 99),
-    h("button", { class: "btn", on: { click: () => { snapshot(); nextBatter(); recall(); } } }, "Skip to next hitter"));
+    h("button", { class: "btn", on: { click: () => { snapshot(); nextBatter(); corrected("batter", g.batter - 1, g.batter); recall(); } } }, "Skip to next hitter"));
 }
+// a Correct edit is a play (D0): logged once a game is under way, so the game state can be rebuilt from its events
+function corrected(field, from, to) { if (G().dbId) logPlay("correct", { field, from, to }); }
 
 function callPanel() {
   const g = G(), c = g.call, b = batterDef(), i = slotIdx();
@@ -4392,7 +4462,7 @@ function bullpenPanel() {
           h("span", {}, `${pc} pitches, ${g.bf[String(i)] || 0} faced`)),
         h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind), p.conf.toFixed(2)))),
         inNow ? h("span", { class: "pen-act muted" }, "On the mound")
-          : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); g.pitcher = i; g.last = null; makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
+          : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); const out = pitcherDef().id || null; g.pitcher = i; g.last = null; if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pd.id || null }); makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
     })),
     h("p", { class: "note" }, `The bar is his pitch count against about ${maxPc} for the level. Status uses the same rules as the Game screen.`));
 }
@@ -4542,7 +4612,7 @@ async function boot() {
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
-      for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy).length);
+      for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
       for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
       await refreshLineupMemory();
       if (S.view === "roster") render();
@@ -4597,7 +4667,7 @@ const levelOf = () => S.setup.level;
 // learn from every pitch he's thrown, then serve one step toward it (spec 11). Serving steps once per new game only.
 async function relearnPitcher(pid) {
   const p = DB.pitchers.get(pid); if (!p || !DB.D) return null;
-  const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt);
+  const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt && PCDB.isPitch(e));
   DB.counts.set(pid, evs.length);
   const was = pModel(pid);
   let r;
@@ -4615,7 +4685,7 @@ function reserve(p) {
 }
 async function relearnHitter(hid) {
   const x = DB.hitters.get(hid); if (!x || !DB.D) return null;
-  const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt);
+  const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt && PCDB.isPitch(e));
   const team = DB.teams.get(x.teamId);
   let r;
   try { r = await learnCall({ type: "hitter", hitter: x, events: evs, level: (team && team.level) || levelOf() }); } catch (e) { console.error(e); return hModel(hid) || null; }
@@ -4624,31 +4694,83 @@ async function relearnHitter(hid) {
   return m;
 }
 
-// one games record per game, made when the first pitch is logged. If the database isn't open yet (it opens a moment
-// after the page, or failed), the record and its pitches wait in the saved state and are written once it opens:
-// a pitch is never dropped, because the learner replays games in order and a hole would break the replay.
+// one games record per game. Made at the first pitch for now (the Game plan screen will make it ahead, as planned).
+// If the database isn't open yet (it opens a moment after the page, or failed), the record and its pitches wait in the
+// saved state and are written once it opens: a pitch is never dropped, because the learner replays games in order and a
+// hole would break the replay.
+const queue = () => { S.queue = S.queue || { games: [], events: [], packs: [] }; if (!S.queue.packs) S.queue.packs = []; return S.queue; };
 function ensureGameRecord() {
   const g = G();
   if (g.dbId) return g.dbId;
   g.dbId = PCDB.uid("gam");
-  const rec = { id: g.dbId, date: PCDB.today(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
+  const rec = PCDB.moveGame({ id: g.dbId, date: PCDB.today(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
     catcherId: S.setup.catcherId || null, staffIds: (S.setup.staffIds || []).slice(), lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
-    status: "live", startedAt: Date.now(), deviceId: DB.deviceId || null };
-  if (DB.ready) dbPut("games", rec); else (S.queue = S.queue || { games: [], events: [] }).games.push(rec);
+    status: "planned", startedAt: Date.now(), deviceId: DB.deviceId || null }, "live");
+  if (DB.ready) dbPut("games", rec); else queue().games.push(rec);
+  makePack("start");
   return g.dbId;
 }
+// what the calls are reading right now (D0, spec 16): today's staff with their grades and what the calls are served,
+// check-ins, the catcher, the lineup and what's known about every hitter on the opponent's roster. A new version is
+// written whenever any of it changes mid-game, and every event after it carries the new version's id, so a game
+// replays with exactly what the iPad saw.
+function packContents() {
+  const ids = S.setup.staffIds || [];
+  const staff = ids.map((id) => DB.pitchers.get(id)).filter(Boolean).map((p) => {
+    const m = pModel(p.id), ci = todayCheckin(p.id);
+    return { pitcherId: p.id, name: p.name, hand: p.hand, useLearned: p.useLearned !== false, pitchLimit: p.pitchLimit || null,
+      pitches: (p.pitches || []).map((d) => ({ id: d.id, name: d.name, kind: d.kind, grade: +d.grade, command: +d.command, feel: +d.feel, active: d.active !== false })),
+      served: m && m.served ? JSON.parse(JSON.stringify(m.served.pitches)) : null, checkinId: ci ? ci.id : null,
+      checkin: ci ? { arm: ci.arm, sleep: ci.sleep, conf: Object.assign({}, ci.conf) } : null };
+  });
+  const tid = S.setup.opponentId, roster = tid ? teamHitters(tid) : [];
+  const hitters = {};
+  for (const x of roster) { const m = hModel(x.id); hitters[x.id] = { name: x.name, bats: x.bats, damage: m ? JSON.parse(JSON.stringify(m.damage)) : null }; }
+  const c = S.setup.catcherId && DB.catchers.get(S.setup.catcherId);
+  return { staff, catcher: c ? { id: c.id, block: +c.block || 3 } : null, opponentId: tid || null, hitters,
+    lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
+    level: S.setup.level, versions: { app: APP_VERSION, engine: E.VERSION, data: E.dataVersion(), learn: PCLearn.VERSION, learner: PCLearner.VERSION } };
+}
+function makePack(reason) {
+  const g = G(); if (!g.dbId) return null;
+  const v = (g.packV || 0) + 1;
+  const rec = Object.assign({ id: PCDB.uid("pak"), gameId: g.dbId, v, reason, at: Date.now(), prevId: g.packId || null }, packContents());
+  g.packV = v; g.packId = rec.id;
+  if (DB.ready) dbPut("packs", rec); else queue().packs.push(rec);
+  return rec;
+}
+// something the calls read changed: if a game is under way, that's a new pack version from here on
+function packChanged(reason) { if (G().dbId) { makePack(reason); save(); } }
 function logEvent(ev) {
   ev.id = PCDB.uid("evt");
-  if (!DB.ready) { (S.queue = S.queue || { games: [], events: [] }).events.push(ev); return ev.id; }
+  const g = G();
+  ev.type = ev.type || "pitch";
+  ev.seq = g.seq = (g.seq || 0) + 1;         // one running order for pitches and plays together
+  ev.packId = g.packId || null;
+  if (!DB.ready) { queue().events.push(ev); return ev.id; }
   DB.D.put("events", ev).catch(dbErr);
-  DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1);
+  if (PCDB.isPitch(ev)) DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1);
   return ev.id;
 }
+// a play between pitches (D0): a pitching change, a pinch hitter, a catcher change, a Correct edit, and later steals and
+// pickoffs. Logged with the game state after it, so the state can be rebuilt; the learner never reads plays.
+function logPlay(play, detail = {}) {
+  const g = G();
+  if (!PCDB.PLAY_KINDS.includes(play)) throw new Error("unknown play " + play);
+  ensureGameRecord();
+  const pd = pitcherDef(), b = batterDef() || {};
+  const id = logEvent(Object.assign({ type: "play", play, gameId: g.dbId, ts: Date.now(), afterPitch: g.pitchNo, inning: g.inning, outs: g.outs, balls: g.balls, strikes: g.strikes,
+    bases: g.bases.slice(), us: g.us, them: g.them, batter: g.batter, slot: slotIdx(), pitcherId: pd.id || null, hitterId: b.hitterId || null,
+    catcherId: S.setup.catcherId || null, deviceId: DB.deviceId || null }, detail));
+  g.evIds = (g.evIds || []).concat(id);
+  return id;
+}
 async function flushQueued() {
-  const q = S.queue; if (!q || (!q.games.length && !q.events.length)) return;
+  const q = S.queue; if (!q || (!q.games.length && !q.events.length && !(q.packs || []).length)) return;
   for (const r of q.games) { r.deviceId = r.deviceId || DB.deviceId; await dbPut("games", r); }
-  for (const ev of q.events) { ev.deviceId = ev.deviceId || DB.deviceId; await DB.D.put("events", ev).catch(dbErr); DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1); }
-  const n = q.events.length; S.queue = { games: [], events: [] }; save();
+  for (const r of q.packs || []) await dbPut("packs", r);
+  for (const ev of q.events) { ev.deviceId = ev.deviceId || DB.deviceId; await DB.D.put("events", ev).catch(dbErr); if (PCDB.isPitch(ev)) DB.counts.set(ev.pitcherId, (DB.counts.get(ev.pitcherId) || 0) + 1); }
+  const n = q.events.filter(PCDB.isPitch).length; S.queue = { games: [], events: [], packs: [] }; save();
   if (n) toast(`Saved ${n} pitch${n === 1 ? "" : "es"} charted before the database opened`);
 }
 // an edit to a logged pitch after the fact (where it ended up, contact, a cross-up, a wild pitch). The original values
@@ -4680,9 +4802,10 @@ async function finishGameRecord() {
   const g = G();
   if (!g.dbId) return null;
   const comp = completeness(g);
-  if (!DB.ready) { const r = S.queue && S.queue.games.find((x) => x.id === g.dbId); if (r) Object.assign(r, { status: "final", endedAt: Date.now(), us: g.us, them: g.them, innings: g.inning, pitches: g.pitchNo, completeness: comp }); save(); return comp; }
+  const close = (r) => Object.assign(PCDB.moveGame(r, "final"), { endedAt: Date.now(), us: g.us, them: g.them, innings: g.inning, pitches: g.pitchNo, completeness: comp, packs: g.packV || 0 });
+  if (!DB.ready) { const r = S.queue && S.queue.games.find((x) => x.id === g.dbId); if (r) close(r); save(); return comp; }
   const rec = await DB.D.get("games", g.dbId);
-  if (rec) await dbPut("games", Object.assign(rec, { status: "final", endedAt: Date.now(), us: g.us, them: g.them, innings: g.inning, pitches: g.pitchNo, completeness: comp }));
+  if (rec) await dbPut("games", close(rec));
   // the flywheel: refit everyone who pitched and every hitter he faced
   const pids = new Set(), hids = new Set();
   for (const e of g.log) { const pid = e.pid || (S.setup.staff[e.p ?? 0] || {}).id; if (pid && DB.pitchers.has(pid)) pids.add(pid); const b = S.setup.lineup[e.slot]; if (b && b.hitterId) hids.add(b.hitterId); }
@@ -4737,7 +4860,7 @@ function oursView() {
     p ? h("div", { class: "span-12 col" }, learnedPanel(p), importPanel(p)) : null);
 }
 
-function savePitcher(p, re = true) { reserve(p); dbPut("pitchers", p); G().call = null; save(); if (re) render(); }
+function savePitcher(p, re = true) { reserve(p); dbPut("pitchers", p); if ((S.setup.staffIds || []).includes(p.id)) packChanged("pitcher"); G().call = null; save(); if (re) render(); }
 
 function profilePanel(p) {
   const today = S.setup.staffIds.includes(p.id);
@@ -4853,7 +4976,7 @@ function checkinPanel(p) {
       })),
     h("div", { class: "row-acts" },
       h("button", { class: "btn primary", on: { click: async () => {
-        const rec = await dbPut("checkins", Object.assign(prev || {}, c)); DB.checkins.set(p.id, rec); G().call = null; save(); render(); toast(`${p.name}'s check-in saved. His starting feel uses it today.`);
+        const rec = await dbPut("checkins", Object.assign(prev || {}, c)); DB.checkins.set(p.id, rec); if ((S.setup.staffIds || []).includes(p.id)) packChanged("checkin"); G().call = null; save(); render(); toast(`${p.name}'s check-in saved. His starting feel uses it today.`);
       } } }, prev ? "Update check-in" : "Save check-in"),
       shift ? h("span", { class: "note" }, `Today his fatigue point comes down ${shift} pitches.`) : null),
     h("p", { class: "note" }, "A pitch he rates 1 starts the game at feel 0.30; a 10 starts at 0.95. A sore or tight arm, or under six hours of sleep, brings his fatigue point down."));
@@ -4981,7 +5104,7 @@ function catchersPanel() {
     list.length ? h("div", { class: "clist" }, list.map((c) => h("div", { class: "crow2" },
       h("input", { value: c.name, "aria-label": "Catcher name", on: { change: (e) => { c.name = e.target.value; dbPut("catchers", c); } } }),
       h("span", { class: "blk" }, "Blocking"),
-      h("div", { class: "seg small", role: "group", "aria-label": "Blocking, 1 to 5" }, [1, 2, 3, 4, 5].map((v) => h("button", { "aria-pressed": String(+c.block === v), on: { click: () => { c.block = v; dbPut("catchers", c); G().call = null; render(); } } }, String(v)))),
+      h("div", { class: "seg small", role: "group", "aria-label": "Blocking, 1 to 5" }, [1, 2, 3, 4, 5].map((v) => h("button", { "aria-pressed": String(+c.block === v), on: { click: () => { c.block = v; dbPut("catchers", c); if (S.setup.catcherId === c.id) packChanged("catcher"); G().call = null; render(); } } }, String(v)))),
       h("button", { class: "x", "aria-label": `Remove ${c.name}`, on: { click: async () => { await DB.D.del("catchers", c.id); DB.catchers.delete(c.id); if (S.setup.catcherId === c.id) S.setup.catcherId = null; save(); render(); } } }, "×"))))
       : h("p", { class: "note" }, "None yet. Without one, every catcher blocks like an average one (3)."),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => { const c = await dbPut("catchers", { teamId: ourTeam().id, name: `Catcher ${DB.catchers.size + 1}`, block: 3 }); DB.catchers.set(c.id, c); render(); } } }, "Add a catcher")));
@@ -5085,7 +5208,7 @@ async function backup() {
   const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pitch-caller-backup-${PCDB.today()}.json`;
   document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  toast(`Backup saved: ${data.stores.events.length} pitches, ${data.stores.pitchers.length} pitchers`);
+  toast(`Backup saved: ${data.stores.events.filter((e) => !e.deletedAt && PCDB.isPitch(e)).length} pitches, ${data.stores.pitchers.length} pitchers`);
 }
 async function restore(e) {
   const f = e.target.files[0]; if (!f || !DB.D) return;
@@ -5189,7 +5312,8 @@ function opponentPick() {
 function catcherPick() {
   const list = [...DB.catchers.values()];
   return h("div", { class: "fields" }, h("label", { class: "f", style: { flex: "1 1 240px" } }, "Today's catcher",
-    h("select", { on: { change: (e) => { S.setup.catcherId = e.target.value || null; G().call = null; save(); render(); } } },
+    h("select", { on: { change: (e) => { const was = S.setup.catcherId || null; S.setup.catcherId = e.target.value || null;
+      if (G().dbId) { logPlay("sub_catcher", { outId: was, inId: S.setup.catcherId }); makePack("catcher"); } G().call = null; save(); render(); } } },
       h("option", { value: "" }, "Average blocker (3)"), list.map((c) => h("option", { value: c.id, selected: S.setup.catcherId === c.id ? true : null }, `${c.name}, blocking ${c.block}`)))),
     h("button", { class: "btn", on: { click: () => { S.view = "roster"; rosterTab = "ours"; save(); render(); } } }, list.length ? "Edit catchers" : "Add catchers"));
 }
@@ -5204,6 +5328,7 @@ async function linkHitter(b, i) {
     await relearnHitter(x.id);
   } else b.hitterId = null;
   delete G().know[String(i)];
+  if (G().dbId) { logPlay("sub_hitter", { slotChanged: i, inId: b.hitterId || null, name: b.name, hand: b.hand }); makePack("lineup"); }
   G().call = null; save(); render();
 }
 function uniqueName(pd, base) { let n = base, i = 2; while (pd.pitches.some((p) => p.name === n)) n = `${base} ${i++}`; return n; }

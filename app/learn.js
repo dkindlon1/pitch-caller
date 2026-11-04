@@ -116,7 +116,7 @@
     if (typeof pd === "string") pd = { name: pd };
     const out = [];
     for (const ev of events) {
-      if (ev.legacy || ev.deletedAt || !ev.sit || !ev.ars) continue;
+      if (ev.legacy || ev.deletedAt || (ev.type && ev.type !== "pitch") || !ev.sit || !ev.ars) continue;
       // spec 5.4: only the engine's own calls teach it. A coach's call or a re-call after a shake-off was chosen on
       // something the engine didn't see (how he looks tonight), so its result would bias the fit.
       if (ev.choice ? !(ev.choice === "engine" || ev.choice === "variety") : (ev.coach || (ev.shaken && ev.shaken.length))) continue;
@@ -239,6 +239,7 @@
     if (prior) { add("FB", prior.FB, 3); add("OS", prior.OS, 3); }
     const games = new Set();
     for (const ev of events) {
+      if (ev.type && ev.type !== "pitch") continue;   // plays between pitches (D0) say nothing about the hitter
       const d = damageEvent(ev); if (!d) continue;
       const w = ageWeight(ev.ts, t0);
       add(isOS(ev.kind) ? "OS" : "FB", DMG_VAL[d], w);
@@ -247,7 +248,7 @@
     }
     const damage = {};
     for (const [k, [s, n]] of Object.entries(acc)) if (n > 0) damage[k] = [Math.round((s / n) * 1000) / 1000, Math.round(n * 10) / 10];
-    return { hitterId: hitter && hitter.id, damage, games: games.size, n: events.filter(damageEvent).length, prior };
+    return { hitterId: hitter && hitter.id, damage, games: games.size, n: events.filter((ev) => !(ev.type && ev.type !== "pitch") && damageEvent(ev)).length, prior };
   }
 
   // OPS against the level average -> lean on fastballs; strikeout rate against the level -> lean on off-speed
