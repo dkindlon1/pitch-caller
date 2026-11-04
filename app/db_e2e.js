@@ -104,14 +104,15 @@ const server = http.createServer((req, res) => {
   console.log("7. Chart a game: Kindlon pitches with location, one undo");
   await tab("Game"); await wait(300);
   await page.evaluate((id) => { const i = S.setup.staff.findIndex((p) => p.id === id); G().pitcher = i; G().call = null; render(); }, pid); await wait(300);
-  check(await page.locator(".locpick").count() === 1, "location grid shows on the entry panel");
+  check(await page.locator(".locpick").count() === 1, "location grid shows on the game screen");
   await shot("game_location");
   const seq = ["b", "c", "s", "f", "b", "x", "b", "b", "c", "s", "c", "b", "f", "x", "c", "c", "s", "b", "c", "x", "b", "s", "c", "c"];
   let logged = 0;
   for (const k of seq) {
     if (await page.locator(".done").count()) { await page.getByRole("button", { name: /Take the field/ }).click(); await wait(200); }
     const cell = Math.floor(rnd() * 25); await page.locator(".lgrid .lc").nth(cell).click();
-    if (k === "x") { await page.locator(".key", { hasText: "In play" }).click(); await page.locator(".detail .seg button", { hasText: rnd() < 0.6 ? "Out" : "Single" }).first().click(); await page.locator(".detail .seg button", { hasText: "Solid" }).click(); await page.getByRole("button", { name: "Log pitch" }).click(); }
+    // in play: contact first, then the result, which logs it
+    if (k === "x") { const res = rnd() < 0.6 ? "Out" : "Single"; await page.locator(".key", { hasText: "In play" }).click(); await page.locator(".lv-tray .ct", { hasText: "Solid" }).click(); await page.locator(".lv-tray .out", { hasText: res }).first().click(); }
     else if (k === "s" || k === "f") { await page.keyboard.press(k); await page.keyboard.press("Enter"); }
     else await page.keyboard.press(k);
     await wait(80); logged++;

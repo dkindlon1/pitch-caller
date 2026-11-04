@@ -86,6 +86,7 @@ first real file). Break and release side are normalised to arm side positive usi
 | `app/db.js` | Database: stores, backup/restore, migration from the old saved state |
 | `app/learn.js` | Learner v1 (now only check-ins, predictions and logging helpers in the app; its limits fixed in 1.1.0) |
 | `app/import.js` | TrackMan, Rapsodo and hitter-sheet import |
+| `app/grade_all.js`, `grade_all_test.js` | Grades every pitch and spot at once for the game screen's "Call my own" picker; the test checks it matches `gradeCall` call by call |
 | `app/roster.js` | Database glue and the Roster screen (inlined into the page by `build.py`) |
 | `app/learn_test.js`, `db_test.js`, `import_test.js` | Node checks (`db_test.js` needs `npm i fake-indexeddb`) |
 | `app/db_e2e.js` | Browser test of the whole loop, served over http; screenshots in `app/e2e_shots/` |
@@ -97,7 +98,7 @@ first real file). Break and release side are normalised to arm side positive usi
 | `app/gate_test.js`, `app/gate_result.json` | The trait gate and its latest result |
 | `app/same_engine_test.py` | Proves engine v0.7 with no traits and spread scales at 1 is identical to v0.6f (needs the old engine file as an argument) |
 
-    cd app && node learn_test.js && node db_test.js && node import_test.js
+    cd app && node learn_test.js && node db_test.js && node import_test.js && node grade_all_test.js
     python3 build.py && node db_e2e.js
 
 ## Status

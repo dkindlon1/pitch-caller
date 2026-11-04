@@ -4,6 +4,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@50..125,300..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700;800&display=swap">
 <style>
 /* Night game broadcast.
    - Ground: a stadium at night. Faint infield line art and two light towers sit behind frosted-glass panels.
@@ -516,6 +517,415 @@ td.wrapcell .line { display: block; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root { --glass: rgba(14, 20, 29, 0.94); --glass-2: rgba(28, 38, 52, 0.96); }
   :root[data-theme="day"] { --glass: rgba(250, 252, 255, 0.95); --glass-2: #ffffff; }
+}
+
+/* ================================================================== live game screen (2026-11 redesign)
+   From the Claude Design canvas "Pitch Caller": Barlow for text, Barlow Condensed for names and the call,
+   JetBrains Mono for numbers. The call sits on a solid surface in the called pitch's colour so it reads in sun;
+   glass is for the panels around it. Everything here is scoped to .live / .lv-* so the other screens keep their look. */
+:root {
+  --lv-bg: #07090C; --lv-grid: rgba(255,255,255,.035); --lv-glass: rgba(17,23,31,.68); --lv-glass-line: rgba(255,255,255,.09);
+  --lv-surface: #11161D; --lv-surface2: #19212A; --lv-surface3: #26303B; --lv-line: #2C3744;
+  --lv-text: #F3F6F9; --lv-text2: #AEB9C5; --lv-text3: #828E9B;
+  --lv-btn: #19212A; --lv-btn-line: #384655; --lv-btn-text: #F3F6F9; --lv-sel: #F3F6F9; --lv-sel-text: #07090C;
+  --lv-warn: #FFB224; --lv-warn-text: #FFC861; --lv-warn-bg: rgba(255,178,36,.10); --lv-warn-line: rgba(255,178,36,.45);
+  --lv-chip-bg: rgba(255,255,255,.04); --lv-row-bg: rgba(255,255,255,.03); --lv-zone: #151B23; --lv-chase: rgba(255,255,255,.025);
+  --lv-shadow: 0 24px 60px rgba(0,0,0,.55); --lv-scrim: rgba(3,5,8,.66); --lv-toast-btn: rgba(7,9,12,.10);
+  --p-fb: #FF5A4E; --p-sl: #FFD43B; --p-cb: #52A9FF; --p-ch: #3FE08C;
+  --pi-fb: var(--p-fb); --pi-sl: var(--p-sl); --pi-cb: var(--p-cb); --pi-ch: var(--p-ch);
+  --lv-call: var(--p-cb); --lv-call-ink: var(--pi-cb);
+  --fb-text: Barlow, "Helvetica Neue", Arial, sans-serif;
+  --fd: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --fm: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+:root[data-theme="day"] {
+  --lv-bg: #D7DCE1; --lv-grid: rgba(8,11,14,.06); --lv-glass: rgba(255,255,255,.80); --lv-glass-line: rgba(8,11,14,.14);
+  --lv-surface: #FFFFFF; --lv-surface2: #EEF1F4; --lv-surface3: #DCE2E8; --lv-line: #B9C3CD;
+  --lv-text: #080B0E; --lv-text2: #323E4A; --lv-text3: #525E6A;
+  --lv-btn: #FFFFFF; --lv-btn-line: #080B0E; --lv-btn-text: #080B0E; --lv-sel: #080B0E; --lv-sel-text: #FFFFFF;
+  --lv-warn-text: #7A4700; --lv-warn-bg: #FFF1D6; --lv-warn-line: #E09A1A;
+  --lv-chip-bg: rgba(8,11,14,.04); --lv-row-bg: rgba(255,255,255,.7); --lv-zone: #F3F5F7; --lv-chase: rgba(8,11,14,.035);
+  --lv-shadow: 0 14px 36px rgba(20,30,40,.20); --lv-scrim: rgba(8,11,14,.42); --lv-toast-btn: rgba(255,255,255,.16);
+  --pi-fb: #C41F17; --pi-sl: #7F6400; --pi-cb: #0A5BC0; --pi-ch: #0B7F43;
+}
+
+/* the page around the game screen: a fixed-height board, no page scroll on a landscape iPad */
+body.is-live, html:has(body.is-live) { background: var(--lv-bg); }
+body.is-live { background:
+  radial-gradient(56vw 54vh at 47% 46%, color-mix(in srgb, var(--lv-call) 13%, transparent), transparent 70%),
+  linear-gradient(var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px,
+  linear-gradient(90deg, var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px, var(--lv-bg); color: var(--lv-text); font-family: var(--fb-text); }
+:root[data-theme="day"] body.is-live { background:
+  radial-gradient(56vw 54vh at 47% 46%, color-mix(in srgb, var(--lv-call) 22%, transparent), transparent 70%),
+  linear-gradient(var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px,
+  linear-gradient(90deg, var(--lv-grid) 1px, transparent 1px) 0 0 / 44px 44px, var(--lv-bg); }
+body.is-live .stage { display: none; }
+#app.live-wrap { max-width: 1440px; height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 10px;
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
+#app.live-wrap > .bar { height: 46px; flex: none; background: var(--lv-glass); border-color: var(--lv-glass-line); font-family: var(--fb-text); }
+#app.live-wrap > .bar .wordmark { font-family: var(--fd); font-size: 19px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; }
+#app.live-wrap > .bar .tabs button { height: 34px; min-width: 44px; font-family: var(--fb-text); font-weight: 600; }
+#app.live-wrap > .bar .tabs button[aria-current="page"] { background: var(--lv-sel); color: var(--lv-sel-text); }
+#app.live-wrap > .bar .btn { font-family: var(--fb-text); }
+
+.live { flex: 1; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; font-family: var(--fb-text); color: var(--lv-text); font-variant-numeric: tabular-nums; }
+.live button { font-family: inherit; color: inherit; }
+.live .lab { font: 600 12px/1 var(--fb-text); letter-spacing: .12em; text-transform: uppercase; color: var(--lv-text3); }
+.live .glassy { box-sizing: border-box; border-radius: 18px; background: var(--lv-glass); border: 1px solid var(--lv-glass-line); -webkit-backdrop-filter: blur(18px) saturate(140%); backdrop-filter: blur(18px) saturate(140%); }
+.live .solid { box-sizing: border-box; border-radius: 20px; background: var(--lv-surface); border: 1px solid var(--lv-line); box-shadow: var(--lv-shadow); }
+.live .b2 { box-sizing: border-box; border-radius: 14px; border: 2px solid var(--lv-btn-line); background: var(--lv-btn); color: var(--lv-btn-text); cursor: pointer; min-height: 44px; }
+.live .b2[aria-pressed="true"], .lv-ov .b2[aria-pressed="true"] { background: var(--lv-sel); color: var(--lv-sel-text); border-color: var(--lv-sel); }
+.live .b2:disabled { opacity: .45; cursor: default; }
+.live .bp { box-sizing: border-box; border-radius: 14px; border: 2px solid var(--lv-sel); background: var(--lv-sel); color: var(--lv-sel-text); cursor: pointer; min-height: 44px; font-weight: 700; }
+.live .bp:disabled { opacity: .4; cursor: default; }
+.live .ghost { box-sizing: border-box; border-radius: 12px; border: 1px solid var(--lv-glass-line); background: transparent; cursor: pointer; min-height: 44px; }
+.live .ellip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.live :focus-visible, .lv-ov :focus-visible { outline: 3px solid var(--lv-call-ink); outline-offset: 2px; }
+
+/* pitch chips: the two-letter code on the pitch's colour */
+.pc { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 30px; height: 22px; border-radius: 6px; font: 800 11px/1 var(--fm); color: #07090C; background: var(--pf); }
+:root[data-theme="day"] .pc { box-shadow: inset 0 0 0 1px rgba(8,11,14,.3); }
+.k-FB { --pf: var(--p-fb); --ci: var(--pi-fb); } .k-SL { --pf: var(--p-sl); --ci: var(--pi-sl); } .k-CB { --pf: var(--p-cb); --ci: var(--pi-cb); } .k-CH { --pf: var(--p-ch); --ci: var(--pi-ch); }
+
+/* game state strip */
+.lv-strip { display: flex; align-items: center; height: 64px; padding: 0 8px; min-width: 0; }
+.lv-strip .sc { display: flex; flex-direction: column; gap: 6px; padding: 0 14px; border-left: 1px solid var(--lv-glass-line); min-width: 0; justify-content: center; }
+.lv-strip .sc:first-child { border-left: 0; padding-left: 10px; }
+.lv-strip .sc .k { font: 600 12px/1 var(--fb-text); letter-spacing: .12em; text-transform: uppercase; color: var(--lv-text3); white-space: nowrap; }
+.lv-strip .sc .v { font: 800 30px/1 var(--fm); letter-spacing: -.03em; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.lv-strip .inn .v { font: 700 24px/1 var(--fd); letter-spacing: .01em; text-transform: uppercase; }
+.lv-strip .row { display: flex; align-items: center; gap: 14px; }
+.lv-strip .dots { display: flex; flex-direction: column; gap: 6px; }
+.lv-strip .dots span { display: flex; align-items: center; gap: 5px; font: 700 11px/1 var(--fm); color: var(--lv-text3); }
+.lv-strip .dots span b { width: 13px; font-weight: 700; }
+.lv-strip i.d { width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; border: 2px solid var(--lv-text3); display: inline-block; }
+.lv-strip i.d.on { background: var(--lv-text); border-color: var(--lv-text); }
+.lv-strip i.d.o { width: 16px; height: 16px; }
+.lv-strip .score .v { font-size: 26px; gap: 14px; }
+.lv-strip .score small { display: flex; flex-direction: column; align-items: center; gap: 5px; font: inherit; }
+.lv-strip .score small .k { font-size: 12px; }
+.lv-strip .score .them { color: var(--lv-text2); }
+.lv-strip .who .v { font: 700 21px/1 var(--fd); letter-spacing: 0; gap: 8px; }
+.lv-strip .who .v span { font: 700 15px/1 var(--fm); color: var(--lv-text2); }
+.lv-strip .end { margin-left: auto; display: flex; gap: 8px; align-items: center; flex: none; padding-left: 10px; }
+.lv-strip .stamp { height: 50px; padding: 0 12px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 5px; max-width: 170px; text-align: left; }
+.lv-strip .stamp .k { font: 600 11px/1 var(--fb-text); letter-spacing: .12em; text-transform: uppercase; color: var(--lv-text3); max-width: 100%; }
+.lv-strip .stamp .t { font: 700 14px/1 var(--fb-text); max-width: 100%; }
+.lv-strip .icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; padding: 0; }
+.lv-strip .correct { height: 50px; padding: 0 16px; display: flex; align-items: center; gap: 8px; font: 700 16px/1 var(--fb-text); border-radius: 12px; }
+
+/* three columns */
+.lv-mid { display: grid; grid-template-columns: 268px minmax(0, 1fr) 312px; gap: 10px; min-height: 0; }
+.lv-col { display: flex; flex-direction: column; gap: 10px; min-height: 0; min-width: 0; }
+
+/* hitter */
+.lv-hitter { flex: none; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
+.lv-hitter .top { display: flex; justify-content: space-between; gap: 8px; }
+.lv-hitter .nm { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lv-hitter .nm b { font: 700 32px/1 var(--fd); }
+.lv-tag { height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 8px; background: var(--lv-chip-bg); border: 1px solid var(--lv-glass-line); font: 700 14px/1 var(--fb-text); flex: none; white-space: nowrap; }
+.lv-hitter .read { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.lv-hitter .read em { font: 800 10px/1 var(--fb-text); font-style: normal; letter-spacing: .12em; padding: 4px 6px; border-radius: 4px; background: var(--lv-text); color: var(--lv-bg); flex: none; }
+.lv-hitter .read span { font: 700 16px/1.15 var(--fb-text); }
+.lv-hitter .read span.none { color: var(--lv-text2); font-weight: 600; }
+
+/* pitcher */
+.lv-pitcher { flex: none; padding: 13px 14px; display: flex; flex-direction: column; gap: 9px; }
+.lv-pitcher .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.lv-pitcher .top > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lv-pitcher .top b { font: 700 23px/1 var(--fd); }
+.lv-pitcher .top .n { font: 800 25px/1 var(--fm); text-align: right; }
+.lv-meter { position: relative; height: 8px; border-radius: 4px; background: var(--lv-surface3); }
+.lv-meter > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--lv-text); }
+.lv-meter > i.over { background: var(--lv-warn); }
+.lv-meter > b { position: absolute; top: -5px; width: 3px; height: 18px; border-radius: 2px; background: var(--lv-text); transform: translateX(-1px); }
+.lv-pitcher .fat { font: 500 13px/1.2 var(--fb-text); color: var(--lv-text2); }
+.lv-pitcher .hdr { display: flex; justify-content: space-between; gap: 8px; }
+.lv-trust { display: flex; flex-direction: column; gap: 7px; }
+.lv-trust .tr { display: flex; flex-direction: column; gap: 4px; }
+.lv-trust .line { display: flex; align-items: center; gap: 8px; height: 24px; }
+.lv-trust .tbar { flex: 1; position: relative; height: 10px; border-radius: 5px; background: var(--lv-surface3); }
+.lv-trust .tbar > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: var(--ci); }
+.lv-trust .tr.below .tbar > i { background: var(--lv-text3); }
+.lv-trust .tbar > b, .lv-read .tbar > b { position: absolute; top: -4px; width: 2px; height: 18px; background: var(--lv-text); transform: translateX(-1px); }
+.lv-trust .v { width: 38px; text-align: right; font: 800 15px/1 var(--fm); }
+.lv-trust .tr.below .v { color: var(--lv-warn-text); }
+.lv-trust .s { width: 36px; text-align: right; font: 600 12px/1 var(--fm); color: var(--lv-text3); }
+.lv-trust .msg { padding-left: 38px; font: 700 12px/1.2 var(--fb-text); color: var(--lv-warn-text); }
+.lv-trustnote { display: flex; align-items: center; gap: 8px; min-width: 0; font: 600 12px/1.2 var(--fb-text); color: var(--lv-text2); }
+.lv-trustnote::before { content: ""; width: 2px; height: 14px; flex: none; background: var(--lv-text); }
+
+/* pitch log */
+.lv-log { flex: 1; min-height: 120px; padding: 8px 8px 8px; display: flex; flex-direction: column; gap: 4px; }
+.lv-log .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0 4px 2px 6px; min-height: 44px; }
+.lv-log .hd > div { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.lv-log .hd small { font: 500 12px/1 var(--fb-text); color: var(--lv-text3); }
+.lv-log .hd .b2 { height: 44px; padding: 0 12px; font: 700 14px/1 var(--fb-text); border-width: 1.5px; flex: none; }
+.lv-log .rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; overscroll-behavior: contain; }
+.lv-log .empty { padding: 10px 8px; font: 500 14px/1.35 var(--fb-text); color: var(--lv-text2); }
+.log-row { flex: none; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--lv-glass-line); background: var(--lv-row-bg); text-align: left; cursor: pointer; width: 100%; }
+.log-row.pa-end { border-color: var(--lv-line); }
+.log-row .n { width: 24px; flex: none; font: 700 12px/1 var(--fm); color: var(--lv-text3); }
+.log-row .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.log-row .tx b { font: 700 14px/1 var(--fb-text); }
+.log-row .tx small { font: 500 11px/1 var(--fb-text); color: var(--lv-text3); }
+.log-row .ct { font: 800 13px/1 var(--fm); color: var(--lv-text2); flex: none; }
+.log-row svg { flex: none; }
+
+/* the call */
+.lv-call { border-radius: 22px; min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.lv-band { flex: none; display: flex; gap: 16px; align-items: center; padding: 16px 18px; background: var(--lv-call); color: #07090C; }
+.lv-sign { width: 104px; height: 118px; flex: none; border-radius: 16px; background: #07090C; color: var(--lv-call); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.lv-sign small { font: 700 12px/1 var(--fb-text); letter-spacing: .18em; color: #C9D2DB; }
+.lv-sign span { font: 800 84px/.9 var(--fm); }
+.lv-band .words { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.lv-band .badges { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.lv-badge { font: 800 12px/1 var(--fb-text); letter-spacing: .14em; text-transform: uppercase; padding: 6px 9px; border-radius: 6px; background: #07090C; color: var(--lv-call); white-space: nowrap; }
+.lv-badge.own { background: #FFFFFF; color: #07090C; box-shadow: inset 0 0 0 2px #07090C; }
+.lv-grade { font: 800 13px/1 var(--fm); padding: 4px 8px; border-radius: 6px; border: 2px solid #07090C; white-space: nowrap; }
+.lv-band .pitch { margin: 0; font: 800 68px/.86 var(--fd); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lv-band .spot { margin: 0; font: 700 30px/1 var(--fd); text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #07090C; }
+.lv-body { flex: 1; min-height: 0; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.lv-body .split { display: flex; gap: 16px; flex: 1; min-height: 0; }
+.lv-body .why { margin: 0; flex: none; font: 500 16px/1.35 var(--fb-text); color: var(--lv-text2); text-wrap: pretty; max-width: none; grid-column: auto; }
+.lv-body .why b { color: var(--lv-text); font-weight: 700; }
+
+/* where it ended up (with the target ringed) */
+.locpick { flex: none; display: flex; flex-direction: column; gap: 8px; }
+.locpick .grid5 { display: flex; gap: 8px; }
+.lgrid { display: grid; grid-template-columns: repeat(5, 42px); grid-template-rows: repeat(5, 42px); gap: 4px; }
+.lc { position: relative; padding: 0; border-radius: 8px; box-sizing: border-box; cursor: pointer; background: transparent; border: 2px dashed var(--lv-line); }
+.lc.z-edge { background: var(--lv-surface2); border: 2px solid var(--lv-line); }
+.lc.z-heart { background: var(--lv-surface3); border: 2px solid var(--lv-text3); }
+.lc.tgt.z-edge, .lc.tgt.z-heart { background: var(--lv-call); border-color: var(--lv-call); }
+.lc.tgt.z-off { background: color-mix(in srgb, var(--lv-call) 22%, transparent); border-color: var(--lv-call-ink); }
+.lc.tgt.z-edge::after, .lc.tgt.z-heart::after { content: ""; position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; box-sizing: border-box; border: 3px solid #07090C; }
+.lc.on { background: var(--lv-sel); border: 2px solid var(--lv-sel); }
+.lc.on::before { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--lv-sel-text); }
+.lc.on.tgt::after { border-color: var(--lv-call); }
+.lwild { width: 56px; flex: none; border-radius: 10px; box-sizing: border-box; cursor: pointer; padding: 0; font: 700 15px/1.15 var(--fb-text); background: transparent; color: var(--lv-text2); border: 2px dashed var(--lv-text3); }
+.lwild.on { background: var(--lv-sel); color: var(--lv-sel-text); border: 2px solid var(--lv-sel); }
+.locpick .legend { display: flex; gap: 12px; align-items: center; font: 500 12px/1 var(--fb-text); color: var(--lv-text3); margin: 0; }
+.locpick .legend span { display: flex; align-items: center; gap: 5px; }
+.locpick .legend i { width: 12px; height: 12px; border-radius: 3px; box-sizing: border-box; }
+.locpick .legend .m { background: var(--lv-surface3); box-shadow: inset 0 0 0 2px var(--lv-text3); }
+.locpick .legend .e { background: var(--lv-surface2); box-shadow: inset 0 0 0 1px var(--lv-line); }
+.locpick .legend .o { border: 1.5px dashed var(--lv-text3); }
+
+/* the target when location logging is off */
+.lv-zone { flex: none; display: flex; flex-direction: column; gap: 8px; }
+.lv-zone svg { display: block; width: 236px; height: auto; }
+
+/* readout */
+.lv-read { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.lv-read .tile { flex: 1; min-height: 0; padding: 9px 14px; border-radius: 14px; background: var(--lv-surface2); display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.lv-read .tile .v { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+.lv-read .tile .v b { font: 800 28px/1 var(--fm); letter-spacing: -.03em; }
+.lv-read .tile .v span { font: 600 15px/1 var(--fb-text); color: var(--lv-text2); }
+.lv-read .tile small { font: 500 13px/1.2 var(--fb-text); color: var(--lv-text3); }
+.lv-read .tbar { position: relative; height: 6px; border-radius: 3px; background: var(--lv-surface3); }
+.lv-read .tbar > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--lv-call-ink); }
+.lv-read .tbar > b { top: -3px; height: 12px; }
+
+/* right column: status, the mix, actions */
+.lv-status { flex: none; padding: 13px 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 7px; }
+.lv-status.watch { background: var(--lv-warn-bg); border: 1.5px solid var(--lv-warn-line); }
+.lv-status.watch .h { color: var(--lv-warn-text); }
+.lv-status.change { background: #FFB224; color: #140C00; }
+.lv-status .h { display: flex; align-items: center; gap: 10px; font: 800 22px/1 var(--fd); }
+.lv-status.change .h { font-size: 25px; }
+.lv-status p { margin: 0; padding-left: 30px; font: 500 14px/1.3 var(--fb-text); color: var(--lv-text2); }
+.lv-status.change p { font-weight: 600; color: #140C00; }
+.lv-status .go { margin-top: 4px; height: 50px; border-radius: 12px; border: 0; background: #140C00; color: #FFFFFF !important; font: 700 18px/1 var(--fb-text); cursor: pointer; }
+.lv-mix { flex: 1; min-height: 0; padding: 13px; display: flex; flex-direction: column; gap: 9px; }
+.lv-mix .hd { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lv-mix .hd b { font: 800 21px/1 var(--fd); letter-spacing: .04em; text-transform: uppercase; }
+.lv-mix .hd small { font: 500 13px/1 var(--fb-text); color: var(--lv-text3); white-space: nowrap; }
+.lv-mix .segs { display: flex; height: 10px; gap: 2px; border-radius: 5px; overflow: hidden; flex: none; }
+.lv-mix .segs i { height: 100%; background: var(--pf); }
+.lv-mix .rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; overscroll-behavior: contain; }
+.opt { position: relative; height: 44px; flex: none; padding: 0 12px 0 9px; border-radius: 12px; display: flex; align-items: center; gap: 9px; overflow: hidden; background: var(--lv-row-bg); box-shadow: inset 0 0 0 1px var(--lv-glass-line); }
+.opt.is-call { background: var(--lv-surface); box-shadow: inset 0 0 0 2px var(--ci); }
+.opt.struck { opacity: .6; }
+.opt .pc { width: 34px; height: 28px; border-radius: 7px; font-size: 12px; }
+.opt .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.opt .tx b { font: 700 15px/1 var(--fb-text); }
+.opt.struck .tx b { text-decoration: line-through; }
+.opt .tx small { font: 500 13px/1 var(--fb-text); color: var(--lv-text2); }
+.opt .tag { font: 800 10px/1 var(--fb-text); letter-spacing: .1em; text-transform: uppercase; padding: 5px 6px; border-radius: 5px; white-space: nowrap; flex: none; background: var(--pf); color: #07090C; }
+.opt .tag.own { background: var(--lv-text); color: var(--lv-bg); }
+.opt .tag.gone { background: var(--lv-surface3); color: var(--lv-text2); }
+.opt .p { width: 48px; flex: none; text-align: right; font: 800 21px/1 var(--fm); letter-spacing: -.03em; color: var(--lv-text2); }
+.opt.is-call .p { color: var(--lv-text); }
+.opt > i { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--pf); }
+.lv-acts { flex: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.lv-acts button { height: 58px; font: 700 16px/1.1 var(--fb-text); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 10px; }
+.lv-acts svg { flex: none; }
+
+/* call my own, and the follow-ups after a result */
+.pick, .lv-tray { flex: 1; min-height: 0; padding: 14px; display: flex; flex-direction: column; gap: 9px; overflow-y: auto; }
+.lv-panelhead { display: flex; align-items: flex-start; gap: 10px; }
+.lv-panelhead > div { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lv-panelhead b { font: 800 25px/1 var(--fd); text-transform: uppercase; letter-spacing: .02em; }
+.lv-panelhead small { font: 500 14px/1.25 var(--fb-text); color: var(--lv-text2); }
+.lv-x { width: 50px; height: 50px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0; }
+.pick .seg { display: grid; gap: 6px; }
+.pick .seg.pitches { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
+.pick .seg.spots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pick .seg.pitches button { height: 62px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0; font: 700 13px/1 var(--fb-text); }
+.pick .seg.pitches button[aria-pressed="true"] { background: var(--lv-surface2); color: var(--lv-text); border: 3px solid var(--ci); }
+.pick .seg.pitches .pc { width: 34px; height: 24px; font-size: 12px; }
+.pick .seg.spots button { height: 58px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 7px; padding: 0 12px; text-align: left; }
+.pick .seg.spots button b { font: 700 15px/1 var(--fb-text); }
+.pick .seg.spots button small { font: 800 13px/1 var(--fm); color: var(--lv-text2); }
+.pick .seg.spots button small.cost { color: var(--lv-warn-text); }
+.pick .seg.spots button[aria-pressed="true"] small { color: var(--lv-sel-text); opacity: .75; }
+.pick .two { display: flex; justify-content: space-between; }
+.pick .go { margin-top: auto; height: 58px; font-size: 17px; flex: none; }
+.pick .wait { font: 500 14px/1.3 var(--fb-text); color: var(--lv-text2); }
+.lv-tray .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.lv-tray .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.lv-tray .out { height: 70px; font: 700 24px/1 var(--fd); }
+.lv-tray .out.tall { height: 96px; }
+.lv-tray .ct { height: 50px; font: 700 17px/1 var(--fb-text); }
+.lv-tray .rd { height: 58px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; width: 100%; }
+.lv-tray .rd b { font: 700 24px/1 var(--fd); }
+.lv-tray .rd small { font: 600 13px/1 var(--fb-text); color: var(--lv-text3); }
+.lv-tray .plain { height: 58px; font: 700 18px/1 var(--fb-text); flex: none; }
+.lv-tray .note1 { padding: 12px 14px; border-radius: 12px; background: var(--lv-surface2); font: 500 14px/1.35 var(--fb-text); color: var(--lv-text2); }
+.lv-tray .tucked { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+.lv-tray .tucked > div { display: flex; gap: 8px; }
+.lv-tray .dash { flex: 1; height: 46px; box-sizing: border-box; border-radius: 12px; border: 1.5px dashed var(--lv-line); background: transparent; color: var(--lv-text2); font: 600 14px/1 var(--fb-text); cursor: pointer; }
+.lv-tray .dash[aria-expanded="true"], .lv-tray .dash[aria-pressed="true"] { border-style: solid; border-color: var(--lv-text2); color: var(--lv-text); }
+.lv-tray .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.lv-tray .opts button { height: 46px; padding: 0 12px; font: 700 14px/1 var(--fb-text); display: inline-flex; align-items: center; gap: 8px; border-width: 1.5px; }
+
+/* result bar */
+.lv-results { height: 100px; display: flex; gap: 10px; }
+.lv-undo { width: 112px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; color: var(--lv-text); }
+.lv-undo b { font: 700 18px/1 var(--fb-text); }
+.lv-undo small { font: 700 12px/1 var(--fm); color: var(--lv-text3); max-width: 100px; }
+.lv-undo:disabled { opacity: .45; cursor: default; }
+.lv-results .key { flex: 1; min-width: 0; height: auto; border-radius: 18px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 17px 12px 15px 15px; text-align: left; box-sizing: border-box; border: 2px solid var(--lv-btn-line); background: var(--lv-btn); color: var(--lv-btn-text); cursor: pointer; transition: opacity .12s; }
+.lv-results .key b { font: 700 24px/1 var(--fd); max-width: 100%; overflow-wrap: anywhere; }
+.lv-results .key small { font: 700 13px/1 var(--fm); color: var(--lv-text3); }
+.lv-results .key[aria-pressed="true"] { background: var(--lv-sel); color: var(--lv-sel-text); border-color: var(--lv-sel); }
+.lv-results .key[aria-pressed="true"] small { color: var(--lv-sel-text); opacity: .7; }
+.lv-results.has-pending .key[aria-pressed="false"] { opacity: .45; }
+.lv-results .key:active { transform: scale(.985); }
+
+/* overlays: correct, fix a pitch, inning over, pitching change */
+.lv-ov { position: fixed; inset: 0; z-index: 30; background: var(--lv-scrim); display: flex; align-items: center; justify-content: center; padding: 16px; font-family: var(--fb-text); color: var(--lv-text); }
+.lv-ov button { font-family: inherit; color: inherit; }
+.lv-ov .sheet { max-width: 100%; max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 24px; box-sizing: border-box; border-radius: 20px; background: var(--lv-surface); border: 1px solid var(--lv-line); box-shadow: var(--lv-shadow); }
+.lv-ov .b2 { box-sizing: border-box; border-radius: 12px; border: 2px solid var(--lv-btn-line); background: var(--lv-btn); color: var(--lv-btn-text); cursor: pointer; min-height: 48px; font: 700 16px/1 var(--fb-text); }
+.lv-ov .bp { box-sizing: border-box; border-radius: 14px; border: 2px solid var(--lv-sel); background: var(--lv-sel); color: var(--lv-sel-text) !important; cursor: pointer; min-height: 58px; font: 700 19px/1 var(--fb-text); }
+.lv-ov .lab { font: 600 12px/1 var(--fb-text); letter-spacing: .12em; text-transform: uppercase; color: var(--lv-text3); }
+.lv-ov .note { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--lv-surface2); font: 600 15px/1.3 var(--fb-text); color: var(--lv-text2); }
+.lv-ov .row2 { display: flex; gap: 10px; }
+.lv-ov .row2 > * { flex: 1; }
+.lv-ov .row2 > .bp { flex: 2; }
+.fixbox { width: 640px; }
+.fixbox .fixrow { display: flex; flex-direction: column; gap: 8px; }
+.fixbox .opts { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 8px; }
+.fixbox .opts button { height: 52px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.corr.sheet { width: 640px; }
+.corr .steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 18px; }
+.stepper { display: flex; align-items: center; gap: 10px; font: 600 16px/1 var(--fb-text); }
+.stepper .lab { min-width: 70px; }
+.stepper button { width: 52px; height: 52px; font: 700 24px/1 var(--fb-text); }
+.stepper output { min-width: 34px; text-align: center; font: 800 26px/1 var(--fm); }
+.corr .toggles { display: flex; gap: 8px; }
+.corr .toggles button { height: 52px; padding: 0 18px; }
+.done.sheet { width: 600px; gap: 18px; padding: 30px; align-items: stretch; }
+.done .big { display: flex; flex-direction: column; gap: 6px; }
+.done h2 { margin: 0; font: 800 62px/.9 var(--fd); text-transform: uppercase; }
+.done .big span { font: 700 32px/1 var(--fd); text-transform: uppercase; color: var(--lv-text2); }
+.done .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.done .tiles > div { padding: 14px 16px; border-radius: 14px; background: var(--lv-surface2); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.done .tiles b { font: 800 38px/1 var(--fm); }
+.done .tiles b span { font: 600 15px/1 var(--fb-text); color: var(--lv-text2); }
+.done .runs { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1.5px dashed var(--lv-line); }
+.done .runs p { flex: 1; margin: 0; font: 500 16px/1.35 var(--fb-text); color: var(--lv-text2); }
+.done .runs .b2 { padding: 0 18px; display: flex; align-items: center; gap: 8px; }
+.chg.sheet { width: 760px; }
+.chg .who { min-height: 74px; display: flex; align-items: center; gap: 16px; padding: 12px 18px; text-align: left; border-radius: 14px; }
+.chg .who[aria-pressed="true"] { background: var(--lv-surface2); color: var(--lv-text); border: 3px solid var(--lv-text); }
+.chg .who .radio { width: 22px; height: 22px; flex: none; border-radius: 50%; box-sizing: border-box; border: 2px solid var(--lv-text3); }
+.chg .who[aria-pressed="true"] .radio { border: 7px solid var(--lv-text); }
+.chg .who .nm { width: 180px; display: flex; flex-direction: column; gap: 5px; }
+.chg .who .nm b { font: 700 23px/1 var(--fd); }
+.chg .who .nm small, .chg .who .ci small { font: 600 13px/1.2 var(--fb-text); color: var(--lv-text2); }
+.chg .who .chips { display: flex; gap: 5px; flex: 1; flex-wrap: wrap; }
+.chg .who .ci { width: 210px; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; text-align: right; }
+.chg .who .ci b { font: 700 15px/1.1 var(--fb-text); }
+.chg .who .ci b.no { color: var(--lv-warn-text); }
+.lv-ov h2 { margin: 0; font: 800 30px/1 var(--fd); text-transform: uppercase; }
+.lv-ov .head2 { display: flex; align-items: flex-start; gap: 14px; }
+.lv-ov .head2 > div { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lv-ov .head2 small { font: 500 16px/1.25 var(--fb-text); color: var(--lv-text2); }
+.lv-ov .head2 .pc { width: 46px; height: 36px; font-size: 14px; border-radius: 8px; }
+.lv-ov .x { width: 52px; height: 52px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0; }
+
+/* the toast above the result bar, with its actions */
+body.is-live .toast { bottom: auto; top: max(10px, env(safe-area-inset-top, 0px)); display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 8px 6px 22px; border-radius: 30px; background: var(--lv-sel); color: var(--lv-sel-text); border: 0; font: 700 17px/1.2 var(--fb-text); box-shadow: var(--lv-shadow); -webkit-backdrop-filter: none; backdrop-filter: none; }
+body.is-live .toast[hidden] { display: none; }
+.toast { pointer-events: none; }
+.toast button { pointer-events: auto; }
+.toast .sub { font: 700 14px/1 var(--fm); opacity: .7; white-space: nowrap; }
+.toast button { height: 44px; padding: 0 16px; border-radius: 22px; border: 0; background: var(--lv-toast-btn); color: inherit; font: 700 15px/1 var(--fb-text); cursor: pointer; flex: none; }
+.toast:not(:has(button)) { padding-right: 22px; }
+
+/* bigger iPad (12.9-inch landscape) */
+@media (min-width: 1300px) and (min-height: 960px) {
+  .lv-mid { grid-template-columns: 300px minmax(0, 1fr) 354px; gap: 14px; }
+  .live, #app.live-wrap { gap: 14px; }
+  .lv-strip { height: 76px; }
+  .lv-band { padding: 22px 24px; gap: 22px; }
+  .lv-sign { width: 140px; height: 156px; } .lv-sign span { font-size: 112px; }
+  .lv-band .pitch { font-size: 90px; } .lv-band .spot { font-size: 38px; }
+  .lgrid { grid-template-columns: repeat(5, 52px); grid-template-rows: repeat(5, 52px); }
+  .lwild { width: 66px; }
+  .lv-results { height: 124px; } .lv-undo { width: 140px; }
+  .lv-results .key b { font-size: 29px; }
+  .opt { height: 52px; }
+  .lv-read .tile .v b { font-size: 36px; }
+  .lv-body .why { font-size: 19px; }
+}
+/* shorter screens: tighten the call */
+@media (max-height: 800px) and (min-width: 1001px) {
+  .lv-band { padding: 12px 16px; } .lv-sign { width: 92px; height: 104px; } .lv-sign span { font-size: 72px; }
+  .lv-band .pitch { font-size: 58px; } .lv-band .spot { font-size: 26px; }
+  .lgrid { grid-template-columns: repeat(5, 38px); grid-template-rows: repeat(5, 38px); }
+  .lv-results { height: 88px; }
+  .lv-hitter .nm b { font-size: 28px; }
+}
+/* portrait and narrow: the board stacks and the page scrolls; the result bar stays on screen */
+@media (max-width: 1000px) {
+  #app.live-wrap { height: auto; }
+  .live { grid-template-rows: auto auto auto; }
+  .lv-strip { height: auto; flex-wrap: wrap; row-gap: 10px; padding: 10px 8px; }
+  .lv-strip .end { margin-left: 0; width: 100%; justify-content: flex-end; }
+  .lv-mid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .lv-mid > .lv-call { grid-column: 1 / -1; order: -1; }
+  .lv-col.right { order: 0; } .lv-col.left { order: 1; }
+  .lv-log { max-height: 420px; }
+  .lv-mix .rows { max-height: 360px; }
+  .lv-results { position: sticky; bottom: 8px; z-index: 5; }
+  .lv-results .key b { font-size: 20px; white-space: normal; }
+  .lv-results .key { padding: 12px 10px; }
+  .lv-undo { width: 84px; }
+}
+@media (max-width: 640px) {
+  .lv-mid { grid-template-columns: minmax(0, 1fr); }
+  .lv-body .split { flex-direction: column; }
+  .lv-results { flex-wrap: wrap; height: auto; }
+  .lv-results .key { flex: 1 1 30%; height: 64px; }
+  .lv-undo { width: 100%; height: 48px; flex-direction: row; }
+  .fixbox, .corr.sheet, .done.sheet, .chg.sheet { width: 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .thinking .lv-band .pitch, .thinking .lv-band .spot, .thinking .lv-sign span { opacity: .35; transition: opacity .12s ease; }
 }
 </style>
 
@@ -2899,6 +3309,41 @@ td.wrapcell .line { display: block; }
   else root.PCSync = PCSync;
 })(typeof window !== "undefined" ? window : this);
 
+/*
+ * Grades every pitch and spot the coach could call, in one pass, for the "Call my own" picker.
+ * E.gradeCall grades one call and costs two full policy solves; doing it for every button would take seconds on an
+ * iPad. This is the same arithmetic as E.gradeCall (engine.js), sharing one solve across all the calls:
+ * grade_all_test.js checks it against E.gradeCall call by call.
+ */
+(function (root) {
+  const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
+
+  // -> { [pitchName]: { [quad]: { runs_vs_best, allowed, verdict, engine_prob } } }
+  function gradeAll(E, arsenal, s) {
+    const { dist } = E.callMixed(arsenal, s, { rng: () => 0 });
+    const cv = E.atBatValues(arsenal, s)[1];
+    const [policy, costs] = E.mixedPolicy(arsenal, s, 0.010, 0.030, null, 8, cv);
+    const tq = E.targets(s.balls, s.strikes), best = minAllowed(costs, tq);
+    const out = {};
+    for (const p of arsenal) {
+      out[p.name] = {};
+      for (const quad of E.QUADS) {
+        const key = p.name + "|" + quad;
+        const cHuman = costs.has(key) ? costs.get(key) : E.cost(p, quad, s, arsenal, policy, cv)[0];
+        const allowed = tq.includes(quad);
+        let prob = 0; for (const d of dist) if (d.pitch.name === p.name && d.quad === quad) prob += d.prob;
+        out[p.name][quad] = { runs_vs_best: cHuman - best, allowed, engine_prob: prob,
+          verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * E.runScale(s.level) ? "close" : "costly") };
+      }
+    }
+    return out;
+  }
+
+  const api = { gradeAll };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.PCGrade = api;
+})(typeof window !== "undefined" ? window : this);
+
 // The learning worker: learner v2 runs here, off the screen's thread, so learning after a game never freezes the app.
 // build.py puts engine.js, learner.js and this file together as the worker's source. The same messages are answered on
 // the main thread if a worker can't start (learnLocal in roster.js), so the result is identical either way.
@@ -4309,7 +4754,13 @@ let pickSel = { pitch: null, quad: null };
 
 function save() { try { localStorage.setItem("pitchcaller.v2", JSON.stringify(S)); } catch (e) {} }
 function load() { try { const s = localStorage.getItem("pitchcaller.v2"); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
-function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400); }
+function toast(msg, opts = {}) {
+  const t = document.getElementById("toast"), acts = opts.actions || [];
+  t.replaceChildren(document.createTextNode(msg));
+  if (opts.sub) { const s = document.createElement("span"); s.className = "sub"; s.textContent = opts.sub; t.append(s); }
+  for (const a of acts) { const b = document.createElement("button"); b.textContent = a.label; b.addEventListener("click", () => { t.hidden = true; a.fn(); }); t.append(b); }
+  t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), acts.length ? 4000 : 2400);
+}
 
 const G = () => S.game;
 const APP_VERSION = "2026.11.03";   // logged with every pitch
@@ -4390,7 +4841,7 @@ let shakenNow = [];   // pitch-and-spot calls he shook off on this pitch
 function makeCall() {
   const r = E.callMixed(arsenal(), situation(), { exclude: shakenNow });
   G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false,
-    dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
+    dist: r.dist.slice(0, 8).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
 }
 function recall() {
   document.body.classList.add("thinking");
@@ -4524,6 +4975,11 @@ function record(res) {
     else nextBatter();
   }
   pending = null; pickMode = false;
+  if (S.view === "live") {
+    const n = g.pitchNo;
+    toast(text, { sub: paEnd ? "At-bat over" : `Count ${g.balls}-${g.strikes}`,
+      actions: [{ label: "Fix", fn: () => { if (G().log.some((x) => x.n === n)) { fixingPitch = n; liveOverlay = "fix"; render(); } } }, { label: "Undo", fn: undoLast }] });
+  }
   if (g.inningOver) { save(); render(); return; }
   recall();
 }
@@ -4574,10 +5030,11 @@ function undoLast() {
   for (const k of ["dbId", "packId", "packV", "seq", "keepEvIds"]) if (before[k] !== undefined) S.game[k] = before[k];
   pending = null; pickMode = false; pendingLoc = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
 }
-function changePitcher() {
+function changePitcher(to) {
   const g = G(), n = S.setup.staff.length;
   if (n < 2) { toast("Add another pitcher in Setup first"); return; }
-  snapshot(); const out = pitcherDef().id || null; g.pitcher = (g.pitcher + 1) % n; g.last = null;
+  const next = Number.isInteger(to) && to !== g.pitcher && S.setup.staff[to] ? to : (g.pitcher + 1) % n;
+  snapshot(); const out = pitcherDef().id || null; g.pitcher = next; g.last = null;
   if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pitcherDef().id || null });
   toast(`${pitcherDef().name} is in`); recall();
 }
@@ -4599,7 +5056,6 @@ const pct = (x) => Math.round(x * 100) + "%";
 const ord = (n) => n + (["th", "st", "nd", "rd"][((n % 100) - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
 const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase it" };
 const spotLower = (q) => SPOT[q].toLowerCase();
-let fixing = false;
 
 let lastZoneKey = null;
 // a pitch kind is drawn into SVG markup: only the four known kinds ever reach it (a synced or restored record could
@@ -4613,6 +5069,9 @@ function applyTheme() {
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", day ? "#d7e0ea" : "#04070c");
   const c = S.view === "live" && G().call ? PCOLOR(kindOf(G().call.pitch)) : "var(--cb)";
   document.documentElement.style.setProperty("--call", c);
+  const k = S.view === "live" && G().call ? kindSafe(kindOf(G().call.pitch)).toLowerCase() : "cb";
+  document.documentElement.style.setProperty("--lv-call", `var(--p-${k})`);
+  document.documentElement.style.setProperty("--lv-call-ink", `var(--pi-${k})`);
 }
 
 function render() {
@@ -4621,6 +5080,9 @@ function render() {
   // the database didn't open (another tab holds an older version, or it failed): said on every screen, not just once
   const dbNote = typeof DB !== "undefined" && DB.failed ? h("p", { class: "pstat change", role: "alert", style: { margin: "8px 16px" } },
     DB.failed.code === "blocked" || /another tab/.test(DB.failed.message || "") ? DB.failed.message : "The database didn't open, so this game is kept on this page only. Reload to try again.") : null;
+  const live = S.view !== "setup" && S.view !== "data" && S.view !== "roster";
+  document.body.classList.toggle("is-live", live); app.classList.toggle("live-wrap", live);
+  if (!live) liveOverlay = null;
   app.replaceChildren(...[topBar(), dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : liveView()].filter(Boolean));
   applyTheme();
 }
@@ -4637,13 +5099,38 @@ function topBar() {
       h("button", { "aria-current": S.view === "data" ? "page" : null, on: { click: () => go("data") } }, "Data"),
       h("button", { "aria-current": S.view === "roster" ? "page" : null, on: { click: () => go("roster") } }, "Roster"),
       h("button", { "aria-current": S.view === "setup" ? "page" : null, on: { click: () => go("setup") } }, "Setup")),
-    h("div", { class: "end" },
+    S.view === "live" ? null : h("div", { class: "end" },
       h("span", { class: "stamp" }, `${LEVELS[S.setup.level]}, logging ${TIERS[S.setup.inputs - 1].t.toLowerCase()}`),
       h("button", { class: "btn pill", "aria-label": day ? "Switch to the night screen" : "Switch to the brighter day screen", title: "Brighter screen for day games", on: { click: () => { S.theme = day ? "night" : "day"; save(); render(); } } }, day ? "Night" : "Day"),
-      S.view === "live" ? h("button", { class: "btn pill", on: { click: undoLast }, disabled: !undo.length, title: "Undo (U)" }, "Undo") : null));
+      null));
 }
 
 // ------------------------------------------------------------------ game screen
+// Laid out from the Claude Design canvas ("Live game · 11-inch"): the state strip; hitter, pitcher and the pitch log on
+// the left; the call in the middle on a solid band in the called pitch's colour; the pitcher's status, the mix and the
+// shake-off / call-my-own actions on the right (or the follow-ups after a result); the six results along the bottom.
+// Nothing here decides anything: every number comes from the engine, the learner or the pitch log.
+const KEYS = [["ball", "Ball", "B"], ["cstrike", "Called strike", "C"], ["whiff", "Swing and miss", "S"], ["foul", "Foul", "F"], ["play", "In play", "X"], ["hbp", "Hit by pitch", "H"]];
+const CUTOFF = { hs: 0.5, travel: 0.5, college_d3: 0.45, college_d1: 0.4, mlb: 0.4 };   // the engine's trust lines (LEVEL.cutoff)
+const kindSafe = (k) => (["FB", "SL", "CB", "CH"].includes(k) ? k : "FB");
+const pchip = (kind) => h("span", { class: `pc k-${kindSafe(kind)}`, "aria-hidden": "true" }, kindSafe(kind));
+const ICON = {
+  warn: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18v.5"/></svg>',
+  shake: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16"/><path d="M3 21v-5h5"/></svg>',
+  own: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><path d="M12 1.5v5M12 17.5v5M1.5 12h5M17.5 12h5"/></svg>',
+  back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+  pen: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
+  x: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  sun: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
+};
+const icon = (name) => h("span", { html: ICON[name], style: { display: "inline-flex", flex: "none" }, "aria-hidden": "true" });
+const capFirst = (x) => (x ? x[0].toUpperCase() + x.slice(1) : x);
+let liveOverlay = null;     // "correct" | "fix" | "change" (the inning-over sheet comes from the game state)
+let chgSel = null;          // the pitcher picked in the pitching-change sheet
+let fixingPitch = null;     // the logged pitch open in the fix sheet
+let gradeCache = { key: null, all: null };
+
 function liveView() {
   const g = G();
   if (!g.call && !g.inningOver) makeCall();
@@ -4651,110 +5138,63 @@ function liveView() {
   const pcReal = g.pc[pKey()] || 0, pcAdj = pcReal + fatigueShift(pitcherDef());
   const st = E.pitcherStatus(ars, S.setup.level, pcAdj, g.recent[pKey()] || []);
   st.reasons = st.reasons.map((r) => r.replace(`(${pcAdj} pitches)`, `(${pcReal} pitches)`).replace("his usual fatigue point", "his fatigue point"));
-  return h("main", {}, titleRow(st), strip(), fixing ? fixRow() : null,
-    h("div", { class: "grid" },
-      g.inningOver ? inningDone() : callPanel(),
-      h("div", { class: "span-4 col side" }, g.inningOver ? null : entryPanel(), pitcherPanel(ars, st)),
-      logPanel()));
+  const ov = liveOverlayView(ars);
+  const board = h("div", { class: "live", "aria-hidden": ov ? "true" : null, inert: ov ? "" : null },
+    strip(),
+    h("div", { class: "lv-mid" },
+      h("div", { class: "lv-col left" }, hitterCard(), pitcherCard(ars), logPanel()),
+      callPanel(ars),
+      h("div", { class: "lv-col right" }, statusCard(st), sidePanel(ars))),
+    resultBar());
+  const frag = document.createDocumentFragment();
+  frag.append(board); if (ov) frag.append(ov);
+  return frag;
 }
 
-function titleRow(st) {
-  const g = G();
-  const outs = ["nobody out", "one out", "two outs", "three outs"][Math.min(g.outs, 3)];
-  const name = pitcherDef().name;
-  const sub = st.status === "ok"
-    ? `${name} trusts all ${st.trusted.length} of his pitches. ${g.pc[pKey()] || 0} pitches so far.`
-    : `${name}: ${st.reasons[0]}.`;
-  const nextName = S.setup.staff.length > 1 ? S.setup.staff[(g.pitcher + 1) % S.setup.staff.length].name : null;
-  return h("div", { class: "head" },
-    h("div", {}, h("h1", {}, `${ord(g.inning)} inning, ${outs}`),
-      h("p", { class: "sub" }, st.status === "ok" ? null : h("span", { class: "dot", style: { background: st.status === "change" ? "var(--neg)" : "var(--warn)" } }), sub)),
-    nextName ? h("button", { class: st.status === "change" ? "btn warn pill" : "btn pill", on: { click: changePitcher } }, `Bring in ${nextName}`) : null);
-}
-
+// ---------------------------------------------------------------- the state strip
 function strip() {
-  const g = G();
-  const runners = g.bases.some(Boolean) ? ["1st", "2nd", "3rd"].filter((_, i) => g.bases[i]).join(" and ") : "Empty";
-  const dots = (n, max, cls) => h("span", {}, Array.from({ length: max }, (_, i) => h("i", { class: `${cls}${i < n ? " on" : ""}` })));
-  return h("section", { class: "strip glass", "aria-label": "Game state" },
-    h("div", { class: "cell" }, h("span", { class: "k" }, "Count"),
-      h("span", { class: "v" }, `${g.balls}–${g.strikes}`,
-        h("span", { class: "lights", "aria-hidden": "true" }, "B", dots(g.balls, 3, "b"), "S", dots(g.strikes, 2, "s")))),
-    h("div", { class: "cell" }, h("span", { class: "k" }, "Outs"),
-      h("span", { class: "v" }, String(g.outs), h("span", { class: "outs", "aria-hidden": "true" }, [0, 1].map((i) => h("i", { class: i < g.outs ? "on" : "" }))))),
-    h("div", { class: "cell" }, h("span", { class: "k" }, "Runners"),
-      h("span", { class: "v" }, h("span", { class: "diamond", "aria-hidden": "true" }, [1, 0, 2].map((i) => h("i", { class: `b${i + 1}${g.bases[i] ? " on" : ""}` }))),
-        h("small", {}, runners))),
-    h("div", { class: "cell" }, h("span", { class: "k" }, "Score, them–us"), h("span", { class: "v" }, `${g.them}–${g.us}`)),
-    h("div", { class: "cell" }, h("span", { class: "k" }, `${pitcherDef().name}`), h("span", { class: "v" }, String(g.pc[pKey()] || 0), h("small", {}, "pitches"))),
-    h("div", { class: "cell edit" }, h("button", { class: "btn text", "aria-expanded": String(fixing), on: { click: () => { fixing = !fixing; render(); } } }, fixing ? "Done" : "Correct")));
+  const g = G(), pd = pitcherDef();
+  const dot = (on, o) => h("i", { class: `d${o ? " o" : ""}${on ? " on" : ""}` });
+  const on = g.bases;
+  const named = ["first", "second", "third"].filter((_, i) => on[i]);
+  const runners = named.length ? `Runner${named.length > 1 ? "s" : ""} on ${named.join(" and ")}` : "Bases empty";
+  const base = (pts, x) => `<polygon points="${pts}" fill="${x ? "var(--lv-text)" : "none"}" stroke="${x ? "var(--lv-text)" : "var(--lv-text3)"}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  const diamond = `<svg width="56" height="44" viewBox="0 0 62 48" aria-hidden="true">${base("31,2 41,12 31,22 21,12", on[1])}${base("12,21 22,31 12,41 2,31", on[2])}${base("50,21 60,31 50,41 40,31", on[0])}</svg>`;
+  const tier = TIERS[S.setup.inputs - 1];
+  const day = S.theme === "day";
+  return h("header", { class: "lv-strip glassy", "aria-label": "Game state" },
+    h("div", { class: "sc inn" }, h("span", { class: "k" }, "Inning"), h("span", { class: "v" }, ord(g.inning))),
+    h("div", { class: "sc cell count" }, h("span", { class: "k" }, "Count"),
+      h("span", { class: "v" }, `${g.balls}-${g.strikes}`,
+        h("span", { class: "dots", "aria-hidden": "true" },
+          h("span", {}, h("b", {}, "B"), [0, 1, 2].map((i) => dot(i < g.balls))),
+          h("span", {}, h("b", {}, "S"), [0, 1].map((i) => dot(i < g.strikes)))))),
+    h("div", { class: "sc outs" }, h("span", { class: "k" }, `${g.outs} out${g.outs === 1 ? "" : "s"}`), h("span", { class: "v", "aria-hidden": "true" }, [0, 1].map((i) => dot(i < g.outs, true)))),
+    h("div", { class: "sc bases", role: "img", "aria-label": runners, title: runners }, h("span", { html: diamond, style: { display: "flex" } })),
+    h("div", { class: "sc score" }, h("span", { class: "v" },
+      h("small", {}, h("span", { class: "k" }, "Them"), h("span", { class: "them" }, String(g.them))),
+      h("small", {}, h("span", { class: "k" }, "Us"), h("span", {}, String(g.us))))),
+    h("div", { class: "sc who" }, h("span", { class: "k" }, "Pitching"), h("span", { class: "v" }, h("span", { class: "ellip", style: { font: "inherit", color: "inherit" } }, pd.name), h("span", {}, `${g.pc[pKey()] || 0} P`))),
+    h("div", { class: "end" },
+      h("button", { class: "ghost stamp", title: "Level and logging detail: change them in Setup", on: { click: () => { S.view = "setup"; save(); render(); } } },
+        h("span", { class: "k ellip" }, `${LEVELS[S.setup.level]} · L${tier.n}`), h("span", { class: "t ellip" }, tier.t.replace(/^Plus /, "+ "))),
+      h("button", { class: "ghost icon", "aria-label": day ? "Switch to the night screen" : "Switch to the brighter day screen", title: "Day screen for sun, night screen for lights",
+        on: { click: () => { S.theme = day ? "night" : "day"; save(); render(); } } }, icon(day ? "moon" : "sun")),
+      h("button", { class: "b2 correct", "aria-label": "Correct the game state", on: { click: () => { liveOverlay = "correct"; render(); } } }, icon("pen"), "Correct")));
 }
 
-function fixRow() {
-  const g = G();
-  const step = (label, key, min, max) => h("div", { class: "stepper" }, h("span", { class: "lab" }, label),
-    h("button", { "aria-label": `${label} down`, on: { click: () => { if (g[key] > min) { snapshot(); g[key]--; corrected(key, g[key] + 1, g[key]); pending = null; recall(); } } } }, "−"),
-    h("output", {}, String(g[key])),
-    h("button", { "aria-label": `${label} up`, on: { click: () => { if (g[key] < max) { snapshot(); g[key]++; corrected(key, g[key] - 1, g[key]); pending = null; recall(); } } } }, "+"));
-  return h("section", { class: "fix glass", "aria-label": "Correct the game state" },
-    step("Balls", "balls", 0, 3), step("Strikes", "strikes", 0, 2), step("Outs", "outs", 0, 2),
-    h("div", { class: "stepper" }, h("span", { class: "lab" }, "Runners"), h("div", { class: "toggles" },
-      ["1st", "2nd", "3rd"].map((l, i) => h("button", { "aria-pressed": String(g.bases[i]), on: { click: () => { snapshot(); g.bases[i] = !g.bases[i]; corrected("base" + (i + 1), !g.bases[i], g.bases[i]); recall(); } } }, l)))),
-    step("Them", "them", 0, 99), step("Us", "us", 0, 99),
-    h("button", { class: "btn", on: { click: () => { snapshot(); nextBatter(); corrected("batter", g.batter - 1, g.batter); recall(); } } }, "Skip to next hitter"));
-}
-// a Correct edit is a play (D0): logged once a game is under way, so the game state can be rebuilt from its events
-function corrected(field, from, to) { if (G().dbId) logPlay("correct", { field, from, to }); }
-
-function callPanel() {
-  const g = G(), c = g.call, b = batterDef(), i = slotIdx();
+// ---------------------------------------------------------------- left column
+function hitterCard() {
+  const g = G(), b = batterDef(), i = slotIdx();
   const trip = g.log.filter((l) => l.slot === i && l.end).length + 1;
-  const handTxt = { R: "bats right", L: "bats left", S: "switch hitter" }[b.hand];
-  const hitter = h("div", { class: "hitter" },
-    h("div", {}, h("b", {}, b.name || `${ord(i + 1)} hitter`), h("span", {}, `  ${handTxt}, ${ord(trip)} time up`)),
-    h("span", {}, hitterRead()));
-  if (!c) return h("section", { class: "panel glass span-8 call-panel" }, hitter, h("p", { class: "why" }, "Working out the call…"));
-  const kind = kindOf(c.pitch);
-  const ck = `${g.pitchNo}|${g.balls}${g.strikes}|${c.pitch}|${c.quad}|${!!c.coach}`, fresh = ck !== lastZoneKey; lastZoneKey = ck;
-  const why = c.coach
-    ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs more than the engine's best call here.` : "."]
-    : [`Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
-       c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : ""];
-  const call = h("div", { class: "call" },
-    h("div", { class: "call-main" },
-      h("div", { class: "sign", "aria-label": `Sign ${SIGN[kind]}` }, String(SIGN[kind])),
-      h("div", { style: { minWidth: 0 } },
-        h("p", { class: "pitch", "aria-live": "polite" }, c.pitch, c.coach ? h("span", { class: "coachmark" }, "Your call") : null),
-        h("p", { class: "spot" }, SPOT[c.quad])),
-      h("p", { class: "why" }, why),
-      readout(c.pitch)),
-    h("div", { class: `zone${fresh ? " fresh" : ""}`, html: zoneSVG(c) }));
-  const acts = h("div", { class: "call-acts" },
-    h("button", { class: "btn", on: { click: shakeOff }, title: "Shake-off (K)" }, "He shook it off"),
-    h("button", { class: "btn", "aria-expanded": String(pickMode), on: { click: () => { pickMode = !pickMode; pickSel = { pitch: null, quad: null }; render(); } } }, pickMode ? "Cancel my call" : "Call my own"),
-    c.coach ? h("button", { class: "btn text", on: { click: recall } }, "Go back to the engine's call") : null);
-  const options = h("details", { class: "options", open: window.matchMedia("(max-width: 700px)").matches ? null : true },
-    h("summary", { class: "t" }, c.coach ? "What the engine would mix here" : "The mix in this spot"),
-    c.dist.map((d) => {
-      const k = kindOf(d.pitch), isCall = !c.coach && d.pitch === c.pitch && d.quad === c.quad;
-      return h("div", { class: `opt k-${k}${isCall ? " is-call" : ""}` },
-        chip(k), h("span", {}, `${d.pitch}, ${spotLower(d.quad)}`),
-        h("span", { class: "track" }, h("i", { style: { width: `${Math.max(4, d.prob * 100)}%` } })),
-        h("span", { class: "p" }, pct(d.prob)));
-    }));
-  return h("section", { class: "panel glass span-8 call-panel", "aria-label": "The call" }, hitter, call, acts, pickMode ? pickBox() : null, options);
+  const read = hitterRead();
+  return h("section", { class: "lv-hitter glassy", "aria-label": "Hitter" },
+    h("div", { class: "top" }, h("span", { class: "lab" }, `At bat · #${i + 1}`), h("span", { class: "lab" }, `${ord(trip)} time up`)),
+    h("div", { class: "nm" }, h("b", { class: "ellip" }, b.name || `${ord(i + 1)} hitter`), h("span", { class: "lv-tag" }, { R: "Bats R", L: "Bats L", S: "Switch" }[b.hand] || "Bats R")),
+    h("div", { class: "read", title: read.text }, h("em", {}, "APP"), h("span", { class: `ellip${read.none ? " none" : ""}` }, read.text)));
 }
 
-function readout(name) {
-  const d = pitcherDef().pitches.find((p) => p.name === name) || {}, p = arsenal().find((x) => x.name === name);
-  const l = ((G().land || {})[pKey()] || {})[name];
-  const cellR = (k, v, u) => h("div", {}, h("span", { class: "k" }, k), h("span", { class: "v" }, v, u ? h("small", {}, u) : null));
-  return h("div", { class: "readout", "aria-label": `About the ${name.toLowerCase()}` },
-    cellR("Velo", +d.velo ? String(Math.round(+d.velo)) : "–", +d.velo ? "mph" : null),
-    cellR("His confidence", p ? p.conf.toFixed(2) : "–"),
-    cellR("Strikes today", l ? `${l[0]}/${l[1]}` : "–", l ? null : null));
-}
-
+// what tonight has shown about him: damage from his swings, and his timing once hitter reads are logged (level 3+)
 function hitterRead() {
   const kn = know(), bits = [];
   for (const [k, w] of [["FB", "fastballs"], ["OS", "off-speed"]]) {
@@ -4762,153 +5202,331 @@ function hitterRead() {
     if (d && d[1] >= 2) bits.push(`${d[0] > 0.25 ? "squaring up" : d[0] < -0.25 ? "missing" : "even on"} ${w}`);
     if (S.setup.inputs >= 3 && Math.abs(kn.timing[k]) >= 0.2) bits.push(`${kn.timing[k] > 0 ? "late" : "early"} on ${w}`);
   }
-  return bits.length ? "Today he's " + bits.join(", ") : "No read on him yet";
+  return bits.length ? { text: capFirst(bits.join(", ")) + " today", none: false } : { text: "No read on him yet", none: true };
 }
 
-function zoneSVG(c) {
-  // Catcher's view. A right-handed hitter stands on the catcher's left, so his inside half is on the left.
-  // "R" or "L" only: the hand is written into the SVG markup, and a hitter's bats can come from a synced record
-  const hand = batterDef().hand === "S" ? (pitcherDef().hand === "L" ? "R" : "L") : batterDef().hand === "L" ? "L" : "R";
-  const inLeft = hand === "R";
+// his fatigue point in real pitches today: his own limit (or the level's), less what today's check-in takes off
+function fatiguePoint(pd) {
+  const ci = DB.ready && pd && pd.id ? todayCheckin(pd.id) : null;
+  return (+pd.pitchLimit || FATIGUE[S.setup.level] || 75) - PCLearn.todayLimitShift(ci);
+}
+
+function pitcherCard(ars) {
+  const g = G(), pd = pitcherDef(), pc = g.pc[pKey()] || 0, cut = CUTOFF[S.setup.level] ?? 0.45;
+  const fp = DB.ready ? fatiguePoint(pd) : (FATIGUE[S.setup.level] || 75);
+  const max = fp * 1.25, over = pc - fp;
+  const fat = over < 0 ? `${-over} pitches to his fatigue point (${fp})` : over === 0 ? `At his fatigue point (${fp})` : `${over} past his fatigue point (${fp})`;
+  return h("section", { class: "lv-pitcher glassy", "aria-label": `${pd.name}'s confidence` },
+    h("div", { class: "top" },
+      h("div", {}, h("span", { class: "lab" }, `On the mound · ${pd.hand === "L" ? "LHP" : "RHP"}`), h("b", { class: "ellip" }, pd.name)),
+      h("div", {}, h("span", { class: "lab" }, "Pitches"), h("span", { class: "n" }, String(pc)))),
+    h("div", { class: "lv-meter", role: "img", "aria-label": fat }, h("i", { class: over >= 0 ? "over" : "", style: { width: `${Math.min(100, (pc / max) * 100)}%` } }), h("b", { style: { left: `${(fp / max) * 100}%` } })),
+    h("span", { class: "fat" }, fat),
+    h("div", { class: "hdr" }, h("span", { class: "lab ellip" }, "Confidence today"), h("span", { class: "lab", title: "Where each pitch started today: his check-in, or his bullpen feel" }, "Start")),
+    h("div", { class: "lv-trust" }, ars.map((p) => {
+      const below = p.conf < cut;
+      return h("div", { class: `tr k-${kindSafe(p.kind)}${below ? " below" : ""}` },
+        h("div", { class: "line" }, pchip(p.kind),
+          h("div", { class: "tbar", role: "img", "aria-label": `${p.name} ${p.conf.toFixed(2)}, trust line ${cut.toFixed(2)}` }, h("i", { style: { width: `${Math.min(100, p.conf * 100)}%` } }), h("b", { style: { left: `${cut * 100}%` } })),
+          h("span", { class: "v" }, p.conf.toFixed(2)), h("span", { class: "s" }, p.base_conf.toFixed(2))),
+        below ? h("span", { class: "msg" }, "Below his trust line, out of the calls") : null);
+    })),
+    h("div", { class: "lv-trustnote" }, h("span", { class: "ellip" }, `Trust line ${cut.toFixed(2)} · ${LEVELS[S.setup.level]}`)));
+}
+
+const LOCWORD = { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" };
+function logText(l) { return l.text.replace(/ \(crossed up: [^)]*\)|, (wild pitch|passed ball)$/g, ""); }
+function logPanel() {
+  const g = G();
+  return h("section", { class: "lv-log glassy", "aria-label": "Pitch log" },
+    h("div", { class: "hd" },
+      h("div", {}, h("span", { class: "lab" }, "Pitch log"), h("small", {}, g.log.length ? `${g.log.length} pitches · tap one to fix it` : "Every pitch you log shows up here")),
+      g.log.length ? h("button", { class: "b2", title: "Save this game, learn from it and start a fresh one", on: { click: () => {
+        if (!confirmTwice("endgame")) { toast("Tap End game again to save it and start a fresh one"); return; }
+        endGame();
+      } } }, "End game") : null),
+    g.log.length ? h("div", { class: "rows" }, g.log.map((l) => {
+      const extra = [l.loc ? LOCWORD[l.loc] : null, l.thrown ? `threw ${l.thrown}` : null, l.wp ? (l.wp === "pb" ? "passed ball" : "wild pitch") : null].filter(Boolean);
+      const txt = logText(l);
+      return h("button", { class: `log-row${l.end ? " pa-end" : ""}`, "data-n": String(l.n), "aria-label": `Fix pitch ${l.n}: ${l.pitch}, ${txt}`,
+        on: { click: () => { fixingPitch = l.n; liveOverlay = "fix"; render(); } } },
+        h("span", { class: "n" }, String(l.n)), pchip(l.kind),
+        h("span", { class: "tx" }, h("b", { class: "ellip" }, txt + (l.coach ? " · your call" : "")), h("small", { class: "ellip" }, [`${l.pitch}, ${spotLower(l.quad)}`].concat(extra).join(" · "))),
+        h("span", { class: "ct" }, l.count), icon("pen"));
+    })) : h("p", { class: "empty" }, "First pitch is up."));
+}
+
+// ---------------------------------------------------------------- the call
+function callPanel(ars) {
+  const g = G(), c = g.call;
+  if (!c) return h("main", { class: "lv-call solid", "aria-label": "The call" }, h("div", { class: "lv-body" }, h("p", { class: "why" }, g.inningOver ? "Three outs." : "Working out the call…")));
   const kind = kindOf(c.pitch);
-  const VW = 260, X = 70, Y = 44, W = 120, H = 150, cw = W / 3, ch = H / 3;
-  const F = `font-family="Saira, sans-serif"`;
-  const cell = (q) => { const a = inLeft ? 0 : 2, b = inLeft ? 2 : 0; return { "up-in": [a, 0], "up-away": [b, 0], "down-in": [a, 2], "down-away": [b, 2], middle: [1, 1] }[q]; };
-  const at = (q, k) => {
-    if (q === "chase") return E.isOffspeed(k) ? [inLeft ? X + W + 26 : X - 26, Y + H + 22] : [X + W / 2, Y - 24];
-    const [cx, cy] = cell(q); return [X + cw * cx + cw / 2, Y + ch * cy + ch / 2];
-  };
-  let s = `<svg viewBox="0 0 ${VW} 262" role="img" aria-label="Target ${SPOT[c.quad].toLowerCase()}, catcher's view, hitter ${hand === "R" ? "right" : "left"}-handed">`;
-  // chase band around the zone
-  s += `<rect x="${X - 20}" y="${Y - 20}" width="${W + 40}" height="${H + 40}" rx="10" fill="none" stroke="var(--stroke-2)" stroke-dasharray="3 5"/>`;
-  s += `<rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="var(--rule)"/>`;
-  if (c.quad !== "chase") { const [cx, cy] = cell(c.quad); s += `<rect x="${X + cw * cx}" y="${Y + ch * cy}" width="${cw}" height="${ch}" fill="var(--call)" fill-opacity=".2"/>`; }
-  for (let i = 1; i < 3; i++) {
-    s += `<line x1="${X + cw * i}" y1="${Y}" x2="${X + cw * i}" y2="${Y + H}" stroke="var(--stroke)"/>`;
-    s += `<line x1="${X}" y1="${Y + ch * i}" x2="${X + W}" y2="${Y + ch * i}" stroke="var(--stroke)"/>`;
+  const repicked = !c.coach && shakenNow.length > 0;
+  const badge = c.coach ? "Your call" : repicked ? "Engine call · re-picked" : "Engine call";
+  const grade = c.coach ? (c.verdict && c.verdict.startsWith("Against") ? "AGAINST THE RULE" : c.runs > 0.0005 ? `+${c.runs.toFixed(2)} RUNS` : "EVEN") : null;
+  let why;
+  if (c.coach) why = [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs more than the engine's best call here.` : "."];
+  else {
+    const note = c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "";
+    why = repicked
+      ? [`He shook off the ${shakenNow[shakenNow.length - 1][0].toLowerCase()}. Re-picked from what's left, where this comes up `, h("b", {}, pct(c.prob)), ` of the time.${note}`]
+      : [`Picked from the mix, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.${note}`];
   }
-  s += `<rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="none" stroke="var(--ink)" stroke-opacity=".8" stroke-width="1.5"/>`;
-  // hitter
-  const bx = inLeft ? 8 : VW - 8 - 24;
-  s += `<rect x="${bx}" y="${Y + 10}" width="24" height="${H - 20}" rx="12" fill="var(--rule)" stroke="var(--stroke-2)"/>`;
-  s += `<text x="${bx + 12}" y="${Y + H / 2 + 5}" text-anchor="middle" ${F} font-size="14" font-weight="650" fill="var(--muted)">${hand}</text>`;
-  s += `<text x="${bx + 12}" y="${Y + H + 4}" text-anchor="middle" ${F} font-size="11" fill="var(--muted)">inside</text>`;
-  // plate, in perspective
-  s += `<path d="M${X + 18} ${Y + H + 40} h${W - 36} l10 8 l-${W / 2 - 8} 10 l-${W / 2 - 8} -10 z" fill="var(--rule)" stroke="var(--stroke-2)" stroke-width="1.2"/>`;
-  for (const d of c.dist) {
-    if (d.pitch === c.pitch && d.quad === c.quad) continue;
-    const k = kindOf(d.pitch), [x, y] = at(d.quad, k), r = 5 + 10 * d.prob;
-    s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${PCOLOR(k)}" fill-opacity=".08" stroke="${PCOLOR(k)}" stroke-opacity=".75" stroke-width="1.5"/>`;
-    if (r >= 8) s += `<text x="${x}" y="${y + 4}" text-anchor="middle" ${F} font-size="11" font-weight="700" fill="${PCOLOR(k)}" fill-opacity=".9">${SIGN[k]}</text>`;
-  }
-  const [tx, ty] = at(c.quad, kind);
-  s += `<circle class="ring r2" cx="${tx}" cy="${ty}" r="31" fill="none" stroke="var(--call)" stroke-opacity=".25" stroke-width="1.5"/>`;
-  s += `<circle class="ring" cx="${tx}" cy="${ty}" r="24" fill="none" stroke="var(--call)" stroke-opacity=".55" stroke-width="1.5"/>`;
-  s += `<g class="core"><circle cx="${tx}" cy="${ty}" r="17" fill="var(--call)"/>`;
-  s += `<text x="${tx}" y="${ty + 7}" text-anchor="middle" ${F} font-stretch="70%" font-weight="750" font-size="21" fill="var(--ground)">${SIGN[kind]}</text></g>`;
-  return s + `</svg>`;
+  return h("main", { class: "lv-call solid", "aria-label": "The call" },
+    h("div", { class: "lv-band" },
+      h("div", { class: "lv-sign", "aria-label": `Sign ${SIGN[kindSafe(kind)]}` }, h("small", {}, "SIGN"), h("span", {}, String(SIGN[kindSafe(kind)]))),
+      h("div", { class: "words" },
+        h("div", { class: "badges" }, h("span", { class: `lv-badge${c.coach ? " own" : ""}` }, badge), grade ? h("span", { class: "lv-grade" }, grade) : null),
+        h("p", { class: "pitch", "aria-live": "polite" }, c.pitch),
+        h("p", { class: "spot" }, SPOT[c.quad]))),
+    h("div", { class: "lv-body" },
+      h("div", { class: "split" }, S.setup.logLoc ? locPicker(c, kind) : zoneBox(c, kind), readout(c.pitch, ars)),
+      h("p", { class: "why" }, why)));
 }
 
-function pickBox() {
-  const ars = arsenal();
+// catcher's view: a right-handed hitter stands on the catcher's left, so his inside half is on the left.
+// "R" or "L" only: the hand ends up in markup and a hitter's bats can come from a synced record.
+function hitterSide() { const b = batterDef().hand; return b === "S" ? (pitcherDef().hand === "L" ? "R" : "L") : b === "L" ? "L" : "R"; }
+function targetCells(quad, kind) {
+  const inLeft = hitterSide() === "R", inC = inLeft ? 1 : 3, awayC = inLeft ? 3 : 1;
+  if (quad === "middle") return ["2,2"];
+  if (quad === "chase") {
+    if (!E.isOffspeed(kindSafe(kind))) return ["0,1", "0,2", "0,3"];                  // a fastball chases up, over the zone
+    const aw = inLeft ? [2, 3, 4] : [0, 1, 2], edge = inLeft ? 4 : 0;                // off-speed chases down and away
+    return aw.map((cc) => `4,${cc}`).concat([`3,${edge}`]);
+  }
+  const r = quad.startsWith("up") ? 1 : 3, cc = quad.endsWith("in") ? inC : awayC;
+  return [`${r},${cc}`];
+}
+// where the catcher caught it: the middle of the zone, its edges, just off, or way off (the engine's four landing zones)
+function locPicker(c, kind) {
+  const tg = new Set(targetCells(c.quad, kind)), cells = [];
+  for (let r = 0; r < 5; r++) for (let cc = 0; cc < 5; cc++) {
+    const z = r === 0 || r === 4 || cc === 0 || cc === 4 ? "off" : r === 2 && cc === 2 ? "heart" : "edge";
+    const on = pendingLoc && pendingLoc.cell && pendingLoc.cell[0] === r && pendingLoc.cell[1] === cc;
+    const t = tg.has(`${r},${cc}`);
+    cells.push(h("button", { class: `lc z-${z}${on ? " on" : ""}${t ? " tgt" : ""}`, "aria-pressed": String(!!on),
+      "aria-label": `${{ heart: "Middle of the zone", edge: "Edge of the zone", off: "Just off the plate" }[z]}, row ${r + 1}, column ${cc + 1}${t ? " (the target)" : ""}`,
+      on: { click: () => { pendingLoc = on ? null : { z, cell: [r, cc] }; render(); } } }));
+  }
+  const wild = pendingLoc && pendingLoc.z === "noncomp";
+  return h("div", { class: "locpick" },
+    h("span", { class: "lab" }, `Where it ended up · hitter ${hitterSide()}`),
+    h("div", { class: "grid5" }, h("div", { class: "lgrid", role: "group", "aria-label": "Where it ended up, catcher's view" }, cells),
+      h("button", { class: `lwild${wild ? " on" : ""}`, "aria-pressed": String(!!wild), on: { click: () => { pendingLoc = wild ? null : { z: "noncomp", cell: null }; render(); } } }, "Way", h("br"), "off")),
+    h("p", { class: "legend" }, h("span", {}, h("i", { class: "m" }), "Middle"), h("span", {}, h("i", { class: "e" }), "Edge"), h("span", {}, h("i", { class: "o" }), "Just off")));
+}
+// the target when location logging is off: the four quadrants, "over" the middle, and the chase band
+function zoneBox(c, kind) {
+  const side = hitterSide(), inLeft = side === "R";
+  const mx = (x, w) => (inLeft ? 300 - x - w : x);       // drawn for a left-handed hitter, mirrored for a right-handed one
+  const q = c.quad, chase = q === "chase";
+  const F = `font-family="Barlow, sans-serif"`;
+  let s = `<svg viewBox="0 0 300 372" role="img" aria-label="Target ${SPOT[q].toLowerCase()}, catcher's view, hitter ${side === "R" ? "right" : "left"}-handed">`;
+  s += `<rect x="${mx(12, 228)}" y="6" width="228" height="304" rx="12" fill="${chase ? "color-mix(in srgb, var(--lv-call) 28%, transparent)" : "var(--lv-chase)"}" stroke="${chase ? "var(--lv-call)" : "var(--lv-line)"}" stroke-width="${chase ? 3 : 2}" ${chase ? "" : 'stroke-dasharray="6 5"'}/>`;
+  s += `<text x="${mx(22, 0)}" y="24" ${F} font-size="10" font-weight="700" letter-spacing="1.4" fill="var(--lv-text3)" text-anchor="${inLeft ? "end" : "start"}">CHASE BAND</text>`;
+  const cellsDef = [["up-away", 46, 44], ["up-in", 126, 44], ["down-away", 46, 158], ["down-in", 126, 158]];
+  for (const [k, x, y] of cellsDef) {
+    const hit = k === q, X = mx(x, 80);
+    s += `<rect x="${X}" y="${y}" width="80" height="114" fill="${hit ? "var(--lv-call)" : "var(--lv-zone)"}" stroke="var(--lv-line)" stroke-width="1"/>`;
+    s += `<text x="${X + 40}" y="${k.startsWith("up") ? y + 18 : y + 104}" text-anchor="middle" ${F} font-size="10" font-weight="700" letter-spacing="1" fill="${hit ? "#07090C" : "var(--lv-text3)"}">${k.replace("-", " · ").toUpperCase()}</text>`;
+    if (hit) s += `<circle cx="${X + 40}" cy="${y + 50}" r="21" fill="none" stroke="#07090C" stroke-width="4"/>`;
+  }
+  s += `<rect x="${mx(46, 160)}" y="44" width="160" height="228" fill="none" stroke="var(--lv-text)" stroke-width="3"/>`;
+  const ox = mx(100, 52) + 26, over = q === "middle";
+  s += `<circle cx="${ox}" cy="158" r="26" fill="${over ? "var(--lv-call)" : "var(--lv-surface)"}" stroke="${over ? "#07090C" : "var(--lv-text3)"}" stroke-width="${over ? 3 : 2}" ${over ? "" : 'stroke-dasharray="4 3"'}/>`;
+  s += `<text x="${ox}" y="161" text-anchor="middle" ${F} font-size="9" font-weight="800" letter-spacing=".7" fill="${over ? "#07090C" : "var(--lv-text3)"}">OVER</text>`;
+  const px = mx(66, 120);
+  s += `<path d="M${px} 322 h120 v15 l-60 19 l-60 -19 z" fill="var(--lv-surface3)"/>`;
+  const hx = mx(254, 38);
+  s += `<circle cx="${hx + 19}" cy="57" r="13" fill="var(--lv-surface3)"/><rect x="${hx + 2}" y="74" width="34" height="168" rx="17" fill="var(--lv-surface3)"/>`;
+  s += `<text x="${hx + 19}" y="262" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="14" font-weight="800" fill="var(--lv-text2)">${side}</text>`;
+  return h("div", { class: "lv-zone" }, h("span", { class: "lab" }, "Target · catcher's view"), h("div", { html: s + "</svg>" }));
+}
+
+function readout(name, ars) {
+  const pd = pitcherDef(), d = pd.pitches.find((p) => p.name === name) || {}, p = ars.find((x) => x.name === name);
+  const l = ((G().land || {})[pKey()] || {})[name];
+  const cut = CUTOFF[S.setup.level] ?? 0.45;
+  const has = (v) => v !== "" && v !== undefined && v !== null && !Number.isNaN(+v);
+  const ci = DB.ready && pd.id ? todayCheckin(pd.id) : null;
+  const fromCheckin = !!(ci && d.id && PCLearn.checkinFeel(ci, d.id) != null);
+  const breakTxt = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb) ? `Break ${(+d.ivb).toFixed(1)} V · ${+d.hb > 0 ? "+" : ""}${(+d.hb).toFixed(1)} H in` : null;
+  const tile = (k, v, u, sub, bar) => h("div", { class: "tile" }, h("span", { class: "lab" }, k),
+    h("span", { class: "v" }, h("b", {}, v), u ? h("span", {}, u) : null), bar || null, h("small", {}, sub));
+  return h("div", { class: "lv-read", "aria-label": `About the ${name.toLowerCase()}` },
+    h("span", { class: "lab ellip" }, `${name} today`),
+    tile("Velo", +d.velo ? String(Math.round(+d.velo)) : "–", +d.velo ? "mph" : null, breakTxt || (+d.velo ? "Listed on his roster" : "No velo on his roster")),
+    tile("Confidence today", p ? p.conf.toFixed(2) : "–", null, p ? `${fromCheckin ? "Check-in" : "Bullpen feel"} ${p.base_conf.toFixed(2)}` : "",
+      p ? h("div", { class: "tbar" }, h("i", { style: { width: `${Math.min(100, p.conf * 100)}%` } }), h("b", { style: { left: `${cut * 100}%` } })) : null),
+    tile("Strikes today", l ? `${l[0]} of ${l[1]}` : "–", null, l ? "for strikes" : "Not thrown yet"));
+}
+
+// ---------------------------------------------------------------- right column
+function statusCard(st) {
+  if (st.status === "ok") return null;
+  const change = st.status === "change";
+  return h("section", { class: `lv-status ${st.status}`, "aria-label": "Pitcher status" },
+    h("div", { class: "h" }, icon("warn"), change ? "Time for a change?" : "Keep an eye on him."),
+    st.reasons.map((r) => h("p", {}, capFirst(r))),
+    change && S.setup.staff.length > 1 ? h("button", { class: "go", on: { click: () => openChange() } }, "Pitching change") : null);
+}
+
+function sidePanel(ars) {
+  const g = G();
+  if (g.inningOver || !g.call) return null;
+  if (pending) return tray();
+  if (pickMode) return picker(ars);
+  return [mixPanel(), h("div", { class: "lv-acts" },
+    h("button", { class: "b2", title: "Shake-off (K)", on: { click: shakeOff } }, icon("shake"), "He shook it off"),
+    g.call.coach
+      ? h("button", { class: "bp", on: { click: recall } }, icon("back"), "Back to the engine's call")
+      : h("button", { class: "b2", on: { click: () => { pickMode = true; pickSel = { pitch: null, quad: null }; render(); } } }, icon("own"), "Call my own"))];
+}
+
+function mixPanel() {
+  const c = G().call, shaken = shakenNow.slice();
+  const rows = shaken.map(([p, q]) => ({ pitch: p, quad: q, prob: null, struck: true })).concat(c.dist.filter((d) => d.prob >= 0.005));
+  const live = rows.filter((r) => !r.struck);
+  return h("section", { class: "lv-mix glassy", "aria-label": "The mix" },
+    h("div", { class: "hd" }, h("b", {}, c.coach ? "Engine's mix" : "The mix"), h("small", {}, `${live.length} option${live.length === 1 ? "" : "s"} this pitch`)),
+    h("div", { class: "segs", "aria-hidden": "true" }, live.map((r) => h("i", { class: `k-${kindSafe(kindOf(r.pitch))}`, style: { flex: `${r.prob} 1 0` } }))),
+    h("div", { class: "rows" }, rows.map((r) => {
+      const k = kindSafe(kindOf(r.pitch)), match = r.pitch === c.pitch && r.quad === c.quad && !r.struck;
+      const tag = r.struck ? ["Shaken off", "gone"] : match ? (c.coach ? ["Your call", "own"] : ["Called", ""]) : null;
+      return h("div", { class: `opt k-${k}${match && !c.coach ? " is-call" : ""}${r.struck ? " struck" : ""}` },
+        pchip(k),
+        h("span", { class: "tx" }, h("b", { class: "ellip" }, r.pitch), h("small", { class: "ellip" }, SPOT[r.quad])),
+        tag ? h("span", { class: `tag ${tag[1]}` }, tag[0]) : null,
+        h("span", { class: "p" }, r.prob == null ? "—" : pct(r.prob)),
+        r.prob == null ? null : h("i", { style: { width: `${Math.min(100, r.prob * 100)}%` } }));
+    })));
+}
+
+// every pitch and spot graded at once (grade_all.js, checked against E.gradeCall); cached for this pitch
+function gradesNow() {
+  const g = G(), key = [g.pitchNo, g.balls, g.strikes, g.outs, g.bases.join(""), pKey(), slotIdx(), g.us - g.them, JSON.stringify(G().conf[pKey()] || {})].join("|");
+  if (gradeCache.key !== key) gradeCache = { key, all: PCGrade.gradeAll(E, arsenal(), situation()) };
+  return gradeCache.all;
+}
+const PICK_SPOTS = ["up-in", "up-away", "down-in", "down-away", "middle", "chase"];
+function picker(ars) {
+  const all = gradesNow();
   const go = () => {
-    const gr = E.gradeCall(ars, situation(), pickSel.pitch, pickSel.quad), g = G();
+    const gr = all[pickSel.pitch][pickSel.quad], g = G();
     g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
       verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
   };
-  return h("div", { class: "pick" }, h("span", { class: "t" }, "Your call"),
-    h("div", { class: "seg", role: "group", "aria-label": "Pitch" }, ars.map((p) => h("button", { "aria-pressed": String(pickSel.pitch === p.name), on: { click: () => { pickSel.pitch = p.name; render(); } } }, chip(p.kind), p.name))),
-    h("div", { class: "seg", role: "group", "aria-label": "Spot" }, E.QUADS.map((q) => h("button", { "aria-pressed": String(pickSel.quad === q), on: { click: () => { pickSel.quad = q; render(); } } }, SPOT[q]))),
-    h("div", {}, h("button", { class: "btn primary", disabled: !(pickSel.pitch && pickSel.quad), on: { click: go } }, "Grade and use my call")));
+  const gradeTxt = (gr) => !gr.allowed ? "Against the rule" : gr.verdict === "in the engine's mix" ? `In mix · ${pct(gr.engine_prob)}` : gr.runs_vs_best < 0.005 ? "Even" : `+${gr.runs_vs_best.toFixed(2)} runs`;
+  const both = pickSel.pitch && pickSel.quad;
+  return h("section", { class: "pick solid", "aria-label": "Call my own" },
+    h("div", { class: "lv-panelhead" }, h("div", {}, h("b", {}, "Call my own"), h("small", {}, "Graded in runs against the engine's best call")),
+      h("button", { class: "b2 lv-x", "aria-label": "Cancel my call", on: { click: () => { pickMode = false; render(); } } }, icon("x"))),
+    h("span", { class: "lab" }, "Pitch"),
+    h("div", { class: "seg pitches", role: "group", "aria-label": "Pitch", style: `--n:${Math.min(4, ars.length)}` }, ars.map((p) =>
+      h("button", { class: `b2 k-${kindSafe(p.kind)}`, "aria-pressed": String(pickSel.pitch === p.name), on: { click: () => { pickSel.pitch = p.name; render(); } } }, pchip(p.kind), h("span", { class: "ellip" }, p.name)))),
+    h("div", { class: "two" }, h("span", { class: "lab" }, "Spot"), h("span", { class: "lab" }, pickSel.pitch ? "Runs vs best" : "Pick a pitch first")),
+    h("div", { class: "seg spots", role: "group", "aria-label": "Spot" }, PICK_SPOTS.map((q) => {
+      const gr = pickSel.pitch ? all[pickSel.pitch][q] : null;
+      return h("button", { class: "b2", "aria-pressed": String(pickSel.quad === q), on: { click: () => { pickSel.quad = q; render(); } } },
+        h("b", {}, SPOT[q]), gr ? h("small", { class: gr.verdict === "costly" ? "cost" : "" }, gradeTxt(gr)) : null);
+    })),
+    h("button", { class: "bp go", disabled: !both, on: { click: go } }, both ? `Call ${pickSel.pitch.toLowerCase()}, ${spotLower(pickSel.quad)}` : "Pick a pitch and a spot"));
 }
 
-const KEYS = [["ball", "Ball", "B"], ["cstrike", "Called strike", "C"], ["whiff", "Swing and miss", "S"], ["foul", "Foul", "F"], ["play", "In play", "X"], ["hbp", "Hit by pitch", "H"]];
-
-function entryPanel() {
-  const tier = S.setup.inputs, P = pending;
-  const keys = h("div", { class: "keys" }, KEYS.map(([r, l, k]) => h("button", { class: "key", "aria-pressed": String(!!(P && P.result === r)), "aria-keyshortcuts": k, on: { click: () => tapResult(r) } }, l, h("kbd", {}, k))));
-  let detail = null;
-  if (P) {
-    const choose = (k, v) => { P[k] = P[k] === v ? undefined : v; render(); };
-    const seg = (label, k, opts) => [h("span", { class: "t" }, label), h("div", { class: "seg", role: "group", "aria-label": label },
-      opts.map(([v, l]) => h("button", { "aria-pressed": String(P[k] === v), on: { click: () => choose(k, v) } }, l)))];
-    const rows = [];
-    if (P.result === "play") {
-      rows.push(seg("Result", "out", [["OUT", "Out"], ["1B", "Single"], ["2B", "Double"], ["3B", "Triple"], ["HR", "Home run"], ["E", "Error"]]));
-      if (tier >= 2) rows.push(seg("Contact, if you saw it", "contact", [["weak", "Weak"], ["solid", "Solid"], ["hard", "Hard"]]));
-    }
-    if (P.result === "whiff") rows.push(seg("His swing, if you saw it", "read", [["front", "Out in front"], ["late", "Late"], ["fooled", "Fooled"]]));
-    if (P.result === "foul") rows.push(seg("Where it went, if you saw it", "read", [["pull", "Pulled"], ["opposite", "Opposite way"], ["back", "Straight back"]]));
-    // rarer things, kept out of the way: a cross-up, and a wild pitch or passed ball with runners on
-    const g = G(), others = pitcherDef().pitches.filter((d) => d.active !== false && g.call && d.name !== g.call.pitch);
-    const extra = [];
-    if (others.length) extra.push(seg("Crossed up? He threw", "thrown", others.map((d) => [d.name, d.name])));
-    if (g.bases.some(Boolean) && ["ball", "whiff", "cstrike"].includes(P.result)) extra.push(seg("Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]));
-    if (extra.length) rows.push(h("details", { class: "more", open: P.thrown || P.wp ? true : null }, h("summary", { class: "t" }, "Cross-up or wild pitch"), extra,
-      P.wp ? h("p", { class: "note" }, "Move the runners with Correct after you log it.") : null));
-    detail = h("div", { class: "detail" }, rows, h("div", { class: "go" },
-      h("button", { class: "btn primary", disabled: !(P.result !== "play" || P.out), on: { click: () => record(P) } }, "Log pitch"),
-      h("button", { class: "btn", on: { click: () => { pending = null; render(); } } }, "Cancel")));
+function nextCount(result) {
+  const g = G(), b = g.balls, s = g.strikes;
+  if (result === "ball") return b === 3 ? "Walk" : `${b + 1}-${s}`;
+  if (result === "cstrike" || result === "whiff") return s === 2 ? "Strikeout" : `${b}-${s + 1}`;
+  if (result === "foul") return s === 2 ? `Stays ${b}-2` : `${b}-${s + 1}`;
+  return null;
+}
+function tray() {
+  const P = pending, tier = S.setup.inputs, g = G();
+  const choose = (k, v) => { P[k] = P[k] === v ? undefined : v; render(); };
+  const play = P.result === "play", foul = P.result === "foul";
+  const nc = nextCount(P.result);
+  const sub = play ? "Tap the result to log it. Contact first if you have it."
+    : `${/^\d/.test(nc) ? `Count goes to ${nc}.` : `${nc}.`} Tap ${foul ? "where it went" : "how he missed"}, or just log it.`;
+  const others = pitcherDef().pitches.filter((d) => d.active !== false && g.call && d.name !== g.call.pitch);
+  const canWp = g.bases.some(Boolean) && ["ball", "whiff", "cstrike"].includes(P.result);
+  const body = [];
+  if (play) {
+    body.push(h("span", { class: "lab" }, "Result · tap to log"),
+      h("div", { class: "grid2" }, [["OUT", "Out"], ["1B", "Single"], ["2B", "Double"], ["3B", "Triple"], ["HR", "Home run"], ["E", "Error"]].map(([v, l]) =>
+        h("button", { class: `b2 out${tier === 1 ? " tall" : ""}`, on: { click: () => record(Object.assign(P, { out: v })) } }, l))));
+    if (tier >= 2) body.push(h("span", { class: "lab" }, "Contact · optional"),
+      h("div", { class: "grid3" }, [["weak", "Weak"], ["solid", "Solid"], ["hard", "Hard"]].map(([v, l]) =>
+        h("button", { class: "b2 ct", "aria-pressed": String(P.contact === v), on: { click: () => choose("contact", v) } }, l))));
+    else body.push(h("div", { class: "note1" }, `Logging level 1 records results only, so an in-play is two taps.${S.setup.logLoc ? " Where it ended up still works here." : ""}`));
+  } else {
+    const reads = foul ? [["pull", "Pulled"], ["opposite", "Opposite way"], ["back", "Straight back"]] : [["front", "Out in front"], ["late", "Late"], ["fooled", "Fooled"]];
+    body.push(h("span", { class: "lab" }, foul ? "Where it went · tap to log" : "How he missed · tap to log"),
+      reads.map(([v, l]) => h("button", { class: "b2 rd", on: { click: () => record(Object.assign(P, { read: v })) } }, h("b", {}, l), h("small", {}, "Logs it"))),
+      h("button", { class: "bp plain", on: { click: () => record(P) } }, foul ? "Log foul" : "Log swing and miss"));
   }
-  return h("section", { class: "panel glass", "aria-label": "Log the pitch" },
-    h("div", { class: "panel-head" }, h("h2", {}, "What happened"), h("span", { class: "meta" }, `Pitch ${G().pitchNo + 1}`)),
-    S.setup.logLoc ? locPicker() : null, keys, detail, atBatList());
+  const tucked = [];
+  if (others.length) tucked.push(h("button", { class: "dash", "aria-expanded": String(!!P.showCross || !!P.thrown), on: { click: () => { P.showCross = !(P.showCross || P.thrown); if (!P.showCross) P.thrown = undefined; render(); } } }, P.thrown ? `Crossed up: he threw the ${P.thrown.toLowerCase()}` : "Cross-up: he threw…"));
+  if (canWp) tucked.push(h("button", { class: "dash", "aria-expanded": String(!!P.showWp || !!P.wp), on: { click: () => { P.showWp = !(P.showWp || P.wp); if (!P.showWp) P.wp = undefined; render(); } } }, P.wp ? (P.wp === "pb" ? "Passed ball" : "Wild pitch") : "Wild pitch / PB"));
+  const expand = [];
+  if ((P.showCross || P.thrown) && others.length) expand.push(h("div", { class: "opts", role: "group", "aria-label": "Crossed up? He threw" }, others.map((d) =>
+    h("button", { class: `b2 k-${kindSafe(d.kind)}`, "aria-pressed": String(P.thrown === d.name), on: { click: () => choose("thrown", d.name) } }, pchip(d.kind), d.name))));
+  if ((P.showWp || P.wp) && canWp) expand.push(h("div", { class: "opts", role: "group", "aria-label": "Got away?" }, [["wp", "Wild pitch"], ["pb", "Passed ball"]].map(([v, l]) =>
+    h("button", { class: "b2", "aria-pressed": String(P.wp === v), on: { click: () => choose("wp", v) } }, l))),
+    P.wp ? h("p", { class: "note1" }, "Move the runners with Correct after you log it.") : null);
+  return h("section", { class: "lv-tray solid", "aria-label": play ? "In play" : foul ? "Foul" : "Swing and miss" },
+    h("div", { class: "lv-panelhead" }, h("div", {}, h("b", {}, play ? "In play" : foul ? "Foul" : "Swing and miss"), h("small", {}, sub)),
+      h("button", { class: "b2 lv-x", "aria-label": "Cancel", on: { click: () => { pending = null; render(); } } }, icon("x"))),
+    body, tucked.length ? h("div", { class: "tucked" }, expand, h("div", {}, tucked)) : null);
 }
 
-// where the catcher caught it: the middle of the zone, its edges, just off, or way off (the engine's four landing zones)
-function locPicker() {
-  const cells = [];
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
-    const z = r === 0 || r === 4 || c === 0 || c === 4 ? "off" : r === 2 && c === 2 ? "heart" : "edge";
-    const on = pendingLoc && pendingLoc.cell && pendingLoc.cell[0] === r && pendingLoc.cell[1] === c;
-    cells.push(h("button", { class: `lc z-${z}${on ? " on" : ""}`, "aria-pressed": String(!!on), "aria-label": `${{ heart: "Middle of the zone", edge: "Edge of the zone", off: "Just off the plate" }[z]}, row ${r + 1}, column ${c + 1}`,
-      on: { click: () => { pendingLoc = on ? null : { z, cell: [r, c] }; render(); } } }));
-  }
-  const wild = pendingLoc && pendingLoc.z === "noncomp";
-  return h("div", { class: "locpick" },
-    h("div", { class: "lg-head" }, h("span", { class: "t" }, "Where it ended up"), h("span", { class: "muted" }, pendingLoc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[pendingLoc.z] : "catcher's view, optional")),
-    h("div", { class: "lg-body" }, h("div", { class: "lgrid", role: "group", "aria-label": "Where it ended up, catcher's view" }, cells),
-      h("button", { class: `btn pill lwild${wild ? " on" : ""}`, "aria-pressed": String(!!wild), on: { click: () => { pendingLoc = wild ? null : { z: "noncomp", cell: null }; render(); } } }, "Way off")));
+function resultBar() {
+  const g = G(), P = pending, last = g.log[0];
+  const sub = { ball: nextCount("ball"), cstrike: nextCount("cstrike"), whiff: nextCount("whiff"), foul: nextCount("foul"), play: "Pick result", hbp: "Takes 1st" };
+  const arrow = (x) => (/^\d/.test(x) ? `→ ${x}` : x);
+  return h("div", { class: `lv-results${P ? " has-pending" : ""}`, role: "group", "aria-label": "What happened" },
+    h("button", { class: "lv-undo glassy", "aria-label": "Undo the last pitch", title: "Undo (U)", disabled: !undo.length, on: { click: undoLast } },
+      icon("back"), h("b", {}, "Undo"), h("small", { class: "ellip" }, last ? `#${last.n} ${logText(last).split(",")[0]}` : "Nothing yet")),
+    KEYS.map(([r, l, k]) => h("button", { class: "key", "aria-pressed": String(!!(P && P.result === r)), "aria-keyshortcuts": k, title: `${l} (${k})`, disabled: g.inningOver || !g.call,
+      on: { click: () => tapResult(r) } }, h("b", {}, l), h("small", {}, arrow(sub[r])))));
 }
 
-function atBatList() {
-  const g = G(), i = slotIdx(), cur = [];
-  for (const l of g.log) { if (l.slot !== i || l.inning !== g.inning || l.end) break; cur.unshift(l); }
-  return h("div", { class: "ab" }, h("div", { class: "t" }, "This at-bat"),
-    cur.length ? h("ol", {}, cur.map((l) => h("li", {}, h("span", { class: "c" }, l.count), chip(l.kind), h("span", {}, `${l.pitch}, ${spotLower(l.quad)}`), h("span", { class: "r" }, l.text))))
-      : h("p", { class: "empty" }, "First pitch is up."));
-}
-
-function pitcherPanel(ars, st) {
-  const g = G(), cutoff = { hs: 0.5, travel: 0.5, college_d3: 0.45, college_d1: 0.4, mlb: 0.4 }[S.setup.level];
-  const status = st.status === "ok" ? null
-    : h("p", { class: `pstat ${st.status}` }, h("b", {}, st.status === "change" ? "Time for a change? " : "Keep an eye on him. "),
-      st.reasons.map((r) => r[0].toUpperCase() + r.slice(1)).join(". ") + ".");
-  return h("section", { class: "panel glass", "aria-label": `${pitcherDef().name}'s confidence` },
-    h("div", { class: "panel-head" }, h("h2", {}, `${pitcherDef().name}'s confidence`), h("span", { class: "meta" }, `${g.pc[pKey()] || 0} pitches`)),
-    status,
-    h("div", { class: "trust" }, ars.map((p) => h("div", { class: `trow k-${p.kind}` },
-      chip(p.kind),
-      h("span", { class: "nm" }, p.name, (() => { const l = ((g.land || {})[pKey()] || {})[p.name]; return l ? h("span", {}, `  ${l[0]} of ${l[1]} for strikes`) : null; })()),
-      h("span", { class: "v" }, p.conf.toFixed(2)),
-      h("div", { class: `bullet${p.conf < cutoff ? " out" : ""}`, title: `Bullpen feel ${p.base_conf.toFixed(2)}` },
-        h("i", { style: { width: `${Math.min(100, p.conf * 100)}%` } }), h("b", { style: { left: `calc(${cutoff * 100}% - 1px)` } }))))),
-    h("p", { class: "trust-note" }, `The tick is his trust line, ${cutoff.toFixed(2)}. A pitch below it drops out of the calls.`));
-}
-
-function inningDone() {
+// ---------------------------------------------------------------- sheets over the board
+function liveOverlayView(ars) {
   const g = G();
-  return h("section", { class: "panel glass span-8 done" }, h("h2", {}, `Three outs. End of the ${ord(g.inning)}.`),
-    h("p", {}, "Add your runs with Correct while you hit, then take the field."),
-    h("button", { class: "btn primary", on: { click: startNextInning } }, `Take the field for the ${ord(g.inning + 1)}`));
+  if (liveOverlay === "fix") { const l = g.log.find((x) => x.n === fixingPitch); if (l) return sheet(fixSheet(l)); liveOverlay = null; }
+  if (liveOverlay === "correct") return sheet(correctSheet());
+  if (liveOverlay === "change") return sheet(changeSheet());
+  if (g.inningOver) return sheet(inningSheet());
+  return null;
+}
+const sheet = (inner) => h("div", { class: "lv-ov", role: "dialog", "aria-modal": "true" }, inner);
+const closeX = (label, fn) => h("button", { class: "b2 x", "aria-label": label, on: { click: fn } }, icon("x"));
+
+// a Correct edit is a play (D0): logged once a game is under way, so the game state can be rebuilt from its events
+function corrected(field, from, to) { if (G().dbId) logPlay("correct", { field, from, to }); }
+function correctSheet() {
+  const g = G();
+  const step = (label, key, min, max) => h("div", { class: "stepper" }, h("span", { class: "lab" }, label),
+    h("button", { class: "b2", "aria-label": `${label} down`, on: { click: () => { if (g[key] > min) { snapshot(); g[key]--; corrected(key, g[key] + 1, g[key]); pending = null; recall(); } } } }, "−"),
+    h("output", {}, String(g[key])),
+    h("button", { class: "b2", "aria-label": `${label} up`, on: { click: () => { if (g[key] < max) { snapshot(); g[key]++; corrected(key, g[key] - 1, g[key]); pending = null; recall(); } } } }, "+"));
+  return h("section", { class: "corr sheet", "aria-label": "Correct the game state" },
+    h("div", { class: "head2" }, h("div", {}, h("h2", {}, "Correct the game"), h("small", {}, "Each change is saved with the game, and the next call uses it.")),
+      closeX("Close", () => { liveOverlay = null; render(); })),
+    h("div", { class: "steps" }, step("Balls", "balls", 0, 3), step("Strikes", "strikes", 0, 2), step("Outs", "outs", 0, 2), step("Them", "them", 0, 99), step("Us", "us", 0, 99)),
+    h("div", { class: "stepper" }, h("span", { class: "lab" }, "Runners"), h("div", { class: "toggles" },
+      ["1st", "2nd", "3rd"].map((l, i) => h("button", { class: "b2", "aria-pressed": String(g.bases[i]), on: { click: () => { snapshot(); g.bases[i] = !g.bases[i]; corrected("base" + (i + 1), !g.bases[i], g.bases[i]); recall(); } } }, l)))),
+    h("div", { class: "row2" },
+      h("button", { class: "b2", on: { click: () => { snapshot(); nextBatter(); corrected("batter", g.batter - 1, g.batter); recall(); } } }, "Skip to next hitter"),
+      h("button", { class: "bp", on: { click: () => { liveOverlay = null; render(); } } }, "Done")));
 }
 
 // fixing a logged pitch after the fact: where it ended up, contact, a cross-up, a wild pitch. Not the result itself
 // (that changes the count and the runners): Undo is for that.
-let fixingPitch = null, logAll = false;
-function fixEditor(l) {
-  const g = G(), others = pitcherDef().pitches.filter((d) => d.active !== false && d.name !== l.pitch);
+function fixSheet(l) {
+  const others = pitcherDef().pitches.filter((d) => d.active !== false && d.name !== l.pitch);
   const set = async (k, v) => {
     const nv = l[k] === v ? undefined : v;
     l[k] = nv;
@@ -4916,39 +5534,67 @@ function fixEditor(l) {
     if (l.evId) await editEvent(l.evId, k === "loc" ? { loc: nv ?? null, locCell: null } : { [k]: nv ?? null });
     save(); render();
   };
-  const seg = (label, k, opts) => h("div", { class: "fixrow" }, h("span", { class: "t" }, label), h("div", { class: "seg" },
-    opts.map(([v, t]) => h("button", { "aria-pressed": String(l[k] === v), on: { click: () => set(k, v) } }, t))));
-  return h("tr", { class: "fix" }, h("td", { colspan: "8" }, h("div", { class: "fixbox" },
-    seg("Where it ended up", "loc", [["heart", "Middle"], ["edge", "Edge"], ["off", "Just off"], ["noncomp", "Way off"]]),
-    l.res === "play" ? seg("Contact", "contact", [["weak", "Weak"], ["solid", "Solid"], ["hard", "Hard"]]) : null,
-    others.length ? seg("Crossed up? He threw", "thrown", others.map((d) => [d.name, d.name])) : null,
-    ["ball", "whiff", "cstrike"].includes(l.res) && l.on !== false ? seg("Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]) : null,
-    h("p", { class: "note" }, "Saved as you tap, with the original kept. To change the result itself, use Undo."),
-    h("button", { class: "btn", on: { click: () => { fixingPitch = null; render(); } } }, "Done"))));
+  const group = (label, k, opts, chips) => h("div", { class: "fixrow" }, h("span", { class: "lab" }, label),
+    h("div", { class: "opts", role: "group", "aria-label": label, style: `--n:${opts.length}` }, opts.map(([v, t, kind]) =>
+      h("button", { class: "b2", "aria-pressed": String(l[k] === v), on: { click: () => set(k, v) } }, chips && kind ? pchip(kind) : null, t))));
+  const txt = logText(l);
+  return h("section", { class: "fixbox sheet", "aria-label": "Fix a logged pitch" },
+    h("div", { class: "head2" }, pchip(l.kind), h("div", {}, h("h2", {}, `Fix pitch ${l.n}`), h("small", {}, `${l.pitch}, ${spotLower(l.quad)} · ${txt} · count ${l.count}`)),
+      closeX("Close", () => { liveOverlay = null; fixingPitch = null; render(); })),
+    h("p", { class: "note" }, `The result can't be changed here. To change it, use Undo.${l.res === "play" ? "" : " Contact only applies to balls in play."}`),
+    group("Where it ended up", "loc", [["heart", "Middle"], ["edge", "Edge"], ["off", "Just off"], ["noncomp", "Way off"]]),
+    l.res === "play" ? group("Contact", "contact", [["weak", "Weak"], ["solid", "Solid"], ["hard", "Hard"]]) : null,
+    others.length ? group("Cross-up · he threw", "thrown", others.map((d) => [d.name, d.name, d.kind]), true) : null,
+    ["ball", "whiff", "cstrike"].includes(l.res) && l.on !== false ? group("Wild pitch / passed ball", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]) : null,
+    h("p", { class: "note" }, "Saved as you tap, with the original kept."),
+    h("button", { class: "bp", on: { click: () => { liveOverlay = null; fixingPitch = null; render(); } } }, "Done"));
 }
-function logPanel() {
-  const g = G(), rows = logAll ? g.log : g.log.slice(0, 14);   // D11: every pitch of this game can be fixed
-  return h("section", { class: "panel glass span-12", "aria-label": "Pitch log" },
-    h("div", { class: "panel-head" }, h("h2", {}, "Pitch log"),
-      h("div", { class: "row-acts" }, h("span", { class: "meta" }, `${g.log.length} pitches charted`),
-        g.log.length ? h("button", { class: "btn pill", title: "Save this game, learn from it and start a fresh one", on: { click: () => {
-          if (!confirmTwice("endgame")) { toast("Tap End game again to save it and start a fresh one"); return; }
-          endGame();
-        } } }, "End game") : null)),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" },
-      h("thead", {}, h("tr", {}, h("th", { class: "num" }, "#"), h("th", {}, "Inning"), h("th", {}, "Hitter"), h("th", { class: "num" }, "Count"), h("th", {}, "Sign"), h("th", {}, "Pitch and spot"), h("th", {}, "Result"), h("th", {}, h("span", { class: "sr" }, "Fix")))),
-      h("tbody", {}, rows.length ? rows.flatMap((l) => {
-        const extra = [l.loc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[l.loc] : null, l.thrown ? `threw ${l.thrown}` : null, l.wp ? (l.wp === "pb" ? "passed ball" : "wild pitch") : null].filter(Boolean);
-        const tr = h("tr", { class: l.end ? "pa-end" : "" },
-          h("td", { class: "num" }, String(l.n)), h("td", {}, ord(l.inning)), h("td", {}, S.setup.lineup[l.slot].name || `${ord(l.slot + 1)} hitter`),
-          h("td", { class: "num" }, l.count), h("td", {}, chip(l.kind)),
-          h("td", {}, `${l.pitch}, ${spotLower(l.quad)}${l.coach ? " (your call)" : ""}`),
-          h("td", { class: l.end ? "res-strong" : "" }, l.text.replace(/ \(crossed up: [^)]*\)|, (wild pitch|passed ball)$/g, ""), extra.length ? h("small", { class: "muted" }, ` · ${extra.join(", ")}`) : null),
-          h("td", {}, h("button", { class: "btn text", "aria-expanded": String(fixingPitch === l.n), on: { click: () => { fixingPitch = fixingPitch === l.n ? null : l.n; render(); } } }, fixingPitch === l.n ? "Close" : "Fix")));
-        return fixingPitch === l.n ? [tr, fixEditor(l)] : [tr];
-      })
-        : h("tr", { class: "empty-row" }, h("td", { colspan: "8" }, "Every pitch you log shows up here, newest first."))))),
-    g.log.length > 14 ? h("div", { class: "row-acts" }, h("button", { class: "btn text", on: { click: () => { logAll = !logAll; render(); } } }, logAll ? "Show the last 14" : `Show all ${g.log.length} pitches`)) : null);
+
+function inningSheet() {
+  const g = G(), pd = pitcherDef();
+  return h("section", { class: "done sheet", "aria-label": "Inning over" },
+    h("div", { class: "big" }, h("h2", {}, "Three outs."), h("span", {}, `End of their ${ord(g.inning)}.`)),
+    h("div", { class: "tiles" },
+      h("div", {}, h("span", { class: "lab" }, "Them"), h("b", { style: { color: "var(--lv-text2)" } }, String(g.them))),
+      h("div", {}, h("span", { class: "lab" }, "Us"), h("b", {}, String(g.us))),
+      h("div", {}, h("span", { class: "lab ellip" }, pd.name), h("b", {}, String(g.pc[pKey()] || 0), h("span", {}, " P")))),
+    h("div", { class: "runs" }, h("p", {}, "Add your runs with Correct while you hit."),
+      h("button", { class: "b2", on: { click: () => { liveOverlay = "correct"; render(); } } }, icon("pen"), "Correct")),
+    h("div", { class: "row2" },
+      S.setup.staff.length > 1 ? h("button", { class: "b2", on: { click: () => openChange() } }, "Pitching change") : null,
+      h("button", { class: "b2", title: "Save this game, learn from it and start a fresh one", on: { click: () => {
+        if (!confirmTwice("endgame")) { toast("Tap End game again to save it and start a fresh one"); return; }
+        endGame();
+      } } }, "End game")),
+    h("button", { class: "bp", on: { click: startNextInning } }, `Take the field for the ${ord(g.inning + 1)}`));
+}
+
+function openChange() {
+  const g = G(), n = S.setup.staff.length;
+  if (n < 2) { toast("Add another pitcher to today's staff in Setup first"); return; }
+  chgSel = (g.pitcher + 1) % n; liveOverlay = "change"; render();
+}
+function changeSheet() {
+  const g = G(), pd = pitcherDef();
+  const rows = S.setup.staff.map((x, i) => [x, i]).filter(([, i]) => i !== g.pitcher);
+  if (chgSel === null || chgSel === g.pitcher || !S.setup.staff[chgSel]) chgSel = rows.length ? rows[0][1] : null;
+  const pick = S.setup.staff[chgSel];
+  return h("section", { class: "chg sheet", "aria-label": "Pitching change" },
+    h("div", { class: "head2" }, h("div", {}, h("h2", {}, "Who's coming in?"), h("small", {}, `${pd.name} comes out at ${g.pc[pKey()] || 0} pitches. Pick from today's staff.`)),
+      closeX("Close", () => { liveOverlay = null; render(); })),
+    rows.map(([x, i]) => {
+      const ci = DB.ready && x.id ? todayCheckin(x.id) : null;
+      const fp = (+x.pitchLimit || FATIGUE[S.setup.level] || 75) - PCLearn.todayLimitShift(ci);
+      return h("button", { class: "b2 who", "aria-pressed": String(chgSel === i), on: { click: () => { chgSel = i; render(); } } },
+        h("span", { class: "radio", "aria-hidden": "true" }),
+        h("span", { class: "nm" }, h("b", { class: "ellip" }, x.name), h("small", {}, [x.hand === "L" ? "LHP" : "RHP", x.role === "RP" ? "Reliever" : x.role === "SP" ? "Starter" : null].filter(Boolean).join(" · "))),
+        h("span", { class: "chips" }, (x.pitches || []).filter((d) => d.active !== false).map((d) => pchip(d.kind))),
+        h("span", { class: "ci" }, h("b", { class: ci ? "" : "no" }, ci ? "Checked in" : "No check-in today"), h("small", {}, ci ? `Fatigue point ${fp}` : `Starts at his bullpen feel · fatigue point ${fp}`)));
+    }),
+    h("p", { class: "note" }, "Not on today's staff? Add him in Setup."),
+    h("div", { class: "row2" },
+      h("button", { class: "b2", on: { click: () => { liveOverlay = null; render(); } } }, "Cancel"),
+      h("button", { class: "bp", disabled: !pick, on: { click: () => { liveOverlay = null; changePitcher(chgSel); } } }, pick ? `Bring in ${pick.name}` : "Pick a pitcher")));
 }
 
 
@@ -6335,6 +6981,8 @@ document.addEventListener("keydown", (e) => {
   if (S.view !== "live" || e.metaKey || e.ctrlKey || e.altKey) return;
   const t = e.target; if (t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA")) return;
   const k = e.key.toUpperCase();
+  if (k === "ESCAPE" && liveOverlay && !G().inningOver) { e.preventDefault(); liveOverlay = null; fixingPitch = null; render(); return; }
+  if (liveOverlay) return;
   const hit = KEYS.find((x) => x[2] === k);
   if (hit) { e.preventDefault(); tapResult(hit[0]); }
   else if (k === "U") { e.preventDefault(); undoLast(); }

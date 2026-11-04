@@ -38,7 +38,8 @@ const server = http.createServer((req, res) => {
   await wait(300);
   const live = () => page.evaluate(() => ({ over: G().inningOver, n: G().pitchNo, bases: G().bases.some(Boolean), call: G().call && G().call.pitch }));
   const tapLoc = async () => { await page.locator(".lgrid .lc").nth(Math.floor(rnd() * 25)).click(); };
-  const logDetail = async () => { const b = page.getByRole("button", { name: "Log pitch" }); if (await b.count()) await b.click(); };
+  // a swing-and-miss or a foul with hitter reads open the follow-ups; Enter logs it without a read
+  const logDetail = async () => { if (await page.locator(".lv-tray").count()) await page.keyboard.press("Enter"); };
   let pitched = 0, didCoach = false, didCross = false, didWP = false, didUndo = false, didChange = false, didInning = false;
   while (pitched < 46) {
     let st = await live();
@@ -52,17 +53,16 @@ const server = http.createServer((req, res) => {
       await page.getByRole("button", { name: "Call my own" }).click();
       await page.locator(".pick .seg").first().locator("button").nth(1).click();
       await page.locator(".pick .seg").nth(1).locator("button").first().click();
-      await page.getByRole("button", { name: "Grade and use my call" }).click(); await wait(150); didCoach = true;
+      await page.locator(".pick .go").click(); await wait(150); didCoach = true;
     }
     await tapLoc();
     const r = rnd();
     if (pitched === 15 && !didCross) {                                                        // in play, crossed up
       await page.locator(".key", { hasText: "In play" }).click();
-      await page.locator(".detail .seg button", { hasText: "Out" }).first().click();
-      await page.locator(".detail .seg button", { hasText: "Weak" }).click();
-      await page.locator(".detail details.more summary").click();
-      await page.locator(".detail details.more .seg").first().locator("button").first().click();
-      await logDetail(); didCross = true;
+      await page.locator(".lv-tray .ct", { hasText: "Weak" }).click();
+      await page.locator(".lv-tray .dash", { hasText: "Cross-up" }).click();
+      await page.locator('.lv-tray .opts[aria-label="Crossed up? He threw"] button').first().click();
+      await page.locator(".lv-tray .out", { hasText: "Out" }).first().click(); didCross = true;   // the result logs it
     } else if (r < 0.36) await page.keyboard.press("b");
     else if (r < 0.52) await page.keyboard.press("c");
     else if (r < 0.64) { await page.keyboard.press("s"); await wait(60); await logDetail(); }
@@ -70,9 +70,8 @@ const server = http.createServer((req, res) => {
     else {
       await page.locator(".key", { hasText: "In play" }).click();
       const out = rnd() < 0.7 ? "Out" : rnd() < 0.7 ? "Single" : "Double";
-      await page.locator(".detail .seg button", { hasText: out }).first().click();
-      await page.locator(".detail .seg button", { hasText: ["Weak", "Solid", "Hard"][Math.floor(rnd() * 3)] }).click();
-      await logDetail();
+      await page.locator(".lv-tray .ct", { hasText: ["Weak", "Solid", "Hard"][Math.floor(rnd() * 3)] }).click();
+      await page.locator(".lv-tray .out", { hasText: out }).first().click();
     }
     await wait(140);
     pitched++;
@@ -91,9 +90,8 @@ const server = http.createServer((req, res) => {
   await tapLoc(); await page.keyboard.press("b"); await wait(160);
   const wpN = await page.evaluate(() => { const l = G().log.find((x) => x.res === "ball" && x.on); return l ? l.n : null; });
   if (wpN) {
-    const row = page.locator(".log-tbl tbody tr", { has: page.locator("td.num", { hasText: new RegExp(`^${wpN}$`) }) }).first();
-    await row.getByRole("button", { name: "Fix" }).click(); await wait(150);
-    await page.locator(".fixbox .fixrow", { hasText: "Got away?" }).locator("button", { hasText: "Wild pitch" }).click(); await wait(200);
+    await page.locator(`.log-row[data-n="${wpN}"]`).click(); await wait(150);
+    await page.locator(".fixbox .fixrow", { hasText: "Wild pitch / passed ball" }).locator("button", { hasText: "Wild pitch" }).click(); await wait(200);
     await page.locator(".fixbox").getByRole("button", { name: "Done" }).click(); didWP = true;
   }
   await page.screenshot({ path: path.join(OUT, "replay_game.png"), fullPage: true });

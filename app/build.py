@@ -5,7 +5,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 src = open("index.src.html").read()
 eng = open("engine.js").read()
 data = json.dumps(json.load(open("engine_data.json")), separators=(",", ":"))
-modules = "\n".join(open(f).read() for f in ("db.js", "learn.js", "learner.js", "import.js", "sync.js", "worker.js"))
+modules = "\n".join(open(f).read() for f in ("db.js", "learn.js", "learner.js", "import.js", "sync.js", "grade_all.js", "worker.js"))
 # the learning worker's source: the engine, learner v2 and the message handler, started from a blob by roster.js
 worker = "\n".join(open(f).read() for f in ("engine.js", "learner.js", "worker.js"))
 roster = open("roster.js").read()

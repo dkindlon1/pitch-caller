@@ -16,7 +16,7 @@ const path = require("path"), fs = require("fs");
   await page.locator(".tabs button", { hasText: "Game" }).click(); await page.waitForTimeout(400);
   const call = (await page.locator(".pitch").innerText()) + " / " + (await page.locator(".spot").innerText());
   ok(call.trim().length > 3, `the game screen makes a call at travel ball: ${call.replace(/\n/g, " ")}`);
-  ok((await page.locator(".stamp").innerText()).includes("Travel ball"), "the game screen shows the level as Travel ball");
+  ok(/travel ball/i.test(await page.locator(".stamp").innerText()), "the game screen shows the level as Travel ball");   // shown as an uppercase label
   // 3-1 count: three balls then a called strike
   for (const k of ["b", "b", "b"]) { await page.keyboard.press(k); await page.waitForTimeout(150); }
   await page.keyboard.press("c"); await page.waitForTimeout(250);
@@ -25,7 +25,7 @@ const path = require("path"), fs = require("fs");
   await page.getByRole("button", { name: "Call my own" }).click();
   await page.locator(".pick .seg").first().locator("button").nth(1).click();
   await page.locator(".pick .seg").nth(1).locator("button", { hasText: "Chase it" }).click();
-  await page.getByRole("button", { name: "Grade and use my call" }).click(); await page.waitForTimeout(200);
+  await page.locator(".pick .go").click(); await page.waitForTimeout(200);
   const why = await page.locator(".why").innerText();
   ok(/no chase pitch at 3-0 or 3-1/.test(why), `coach's chase call at 3-1 is graded against the rule: "${why.replace(/\n/g, " ").slice(0, 90)}"`);
   ok(errs.length === 0, `no page errors${errs.length ? ": " + errs.join(" | ") : ""}`);
