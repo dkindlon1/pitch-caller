@@ -634,8 +634,14 @@ function arsenal() {
     const c = g.conf[pKey()][d.name];
     const feel = (ci && PCLearn.checkinFeel(ci, d.id)) ?? +d.feel;
     const sv = model && model.served && model.served.pitches[d.id];
-    const adj = sv && sv.learned ? { grade: sv.grade, command: sv.command, traits: sv.traits && Object.keys(sv.traits).length ? sv.traits : null, strike_rate: sv.strike_rate ?? null }
-      : { grade: +d.grade, command: +d.command, traits: null, strike_rate: null };
+    // D4: the last word, here where the calls are built: within 1.0 of his current grade (or the value he accepted), his
+    // own number after "Keep mine", and a blank grade is the level average (D8). A stored served value from before a
+    // re-grade can't get past this.
+    const fin = PCLearner.clampServed(d, pd, sv && sv.learned ? sv : null);
+    const adj = sv && sv.learned ? { grade: fin.grade, command: fin.command, traits: sv.traits && Object.keys(sv.traits).length ? sv.traits : null,
+      strike_rate: fin.grade === sv.grade && fin.command === sv.command ? sv.strike_rate ?? null
+        : PCLearner.strikeRateFast(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level) }
+      : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
     return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
@@ -1186,7 +1192,7 @@ function inningDone() {
 
 // fixing a logged pitch after the fact: where it ended up, contact, a cross-up, a wild pitch. Not the result itself
 // (that changes the count and the runners): Undo is for that.
-let fixingPitch = null;
+let fixingPitch = null, logAll = false;
 function fixEditor(l) {
   const g = G(), others = pitcherDef().pitches.filter((d) => d.active !== false && d.name !== l.pitch);
   const set = async (k, v) => {
@@ -1207,7 +1213,7 @@ function fixEditor(l) {
     h("button", { class: "btn", on: { click: () => { fixingPitch = null; render(); } } }, "Done"))));
 }
 function logPanel() {
-  const g = G(), rows = g.log.slice(0, 14);
+  const g = G(), rows = logAll ? g.log : g.log.slice(0, 14);   // D11: every pitch of this game can be fixed
   return h("section", { class: "panel glass span-12", "aria-label": "Pitch log" },
     h("div", { class: "panel-head" }, h("h2", {}, "Pitch log"),
       h("div", { class: "row-acts" }, h("span", { class: "meta" }, `${g.log.length} pitches charted`),
@@ -1227,7 +1233,8 @@ function logPanel() {
           h("td", {}, h("button", { class: "btn text", "aria-expanded": String(fixingPitch === l.n), on: { click: () => { fixingPitch = fixingPitch === l.n ? null : l.n; render(); } } }, fixingPitch === l.n ? "Close" : "Fix")));
         return fixingPitch === l.n ? [tr, fixEditor(l)] : [tr];
       })
-        : h("tr", { class: "empty-row" }, h("td", { colspan: "8" }, "Every pitch you log shows up here, newest first."))))));
+        : h("tr", { class: "empty-row" }, h("td", { colspan: "8" }, "Every pitch you log shows up here, newest first."))))),
+    g.log.length > 14 ? h("div", { class: "row-acts" }, h("button", { class: "btn text", on: { click: () => { logAll = !logAll; render(); } } }, logAll ? "Show the last 14" : `Show all ${g.log.length} pitches`)) : null);
 }
 
 
@@ -1244,6 +1251,8 @@ const rate = (a, b) => (b ? Math.round((100 * a) / b) + "%" : "–");
 const COUNTS = ["0-0", "1-0", "0-1", "2-0", "1-1", "0-2", "3-0", "2-1", "1-2", "3-1", "2-2", "3-2"];
 
 // the end of a game: final record with how completely it was charted, learning from it, then a fresh game
+// D9: the game is closed in the database and on the iPad, and the next one is up, before any learning runs. Learning
+// then happens in the background; if the page is closed mid-learning, it finishes on the next launch.
 async function endGame() {
   const had = G().log.length;
   undo = [];
@@ -1253,6 +1262,7 @@ async function endGame() {
   const pct = (x) => Math.round(100 * x) + "%";
   const used = comp.located >= 0.9 ? "locations will be used" : "under 90% located, so locations from it won't be used";
   toast(`Game saved: ${comp.pitches} pitches, ${pct(comp.located)} located (${used}). New game is up.`);
+  if (comp.learn) await learnAfterGame(comp.learn);
 }
 function archiveGame() {
   const g = G(); if (!g.log.length) return;
@@ -1270,7 +1280,7 @@ function dataRows() {
 
 function arsenalFor(idx) {
   const pd = S.setup.staff[idx], g = G(), conf = (g.conf || {})[keyOf(idx)] || {};
-  return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, grade: +d.grade, command: +d.command, conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
+  return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
     base_conf: +d.feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1, ivb: null, hb: null }));
 }
 
@@ -1294,7 +1304,8 @@ function dataView() {
       arsenalPanel(rows),
       zonePanel(rows),
       countPanel(rows),
-      hittersPanel(rows)));
+      hittersPanel(rows),
+      pastFixPanel()));
 }
 
 function kpis(rows) {
@@ -1452,7 +1463,9 @@ function setupView() {
           on: { change: (e) => { const nn = e.target.value.trim() || KINDS[d.kind]; renamePitch(pi, d.name, nn); d.name = nn; changed(true); } } })),
         h("td", {}, h("div", { class: "typ" }, chip(d.kind), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; changed(true); } } },
           Object.entries(KINDS).map(([k, v]) => h("option", { value: k, selected: k === d.kind ? true : null }, `${SIGN[k]}  ${v}`))))),
-        h("td", {}, num(d, "grade", i, 1, 1, 5, "", "Stuff, 1 to 5")), h("td", {}, num(d, "command", i, 1, 1, 5, "", "Command, 1 to 5")),
+        // D8: a blank grade is "not graded": the calls use the level average (3) and nothing is flagged until he sets it
+        ...["grade", "command"].map((k) => h("td", {}, num(d, k, i, 1, 1, 5, "3", k === "grade" ? "Stuff, 1 to 5" : "Command, 1 to 5"),
+          PCLearner.graded(d, k) ? null : h("small", { class: "muted", style: { display: "block" } }, "not graded: calls use 3"))),
         h("td", {}, h("div", { class: "feel" }, h("input", { id: `p${pi}-${i}-feel`, type: "range", min: 0.3, max: 0.95, step: 0.05, value: d.feel, "aria-label": "Bullpen feel",
           on: { input: (e) => { d.feel = +e.target.value; out.textContent = (+d.feel).toFixed(2); }, change: () => changed() } }), out)),
         h("td", {}, h("select", { id: `p${pi}-${i}-shape`, "aria-label": "Shape", style: { minWidth: "110px" }, on: { change: (e) => { d.shape = e.target.value; changed(); } } },

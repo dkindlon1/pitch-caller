@@ -14,7 +14,7 @@
  */
 (function (root) {
   "use strict";
-  const VERSION = "2.0.0";
+  const VERSION = "2.1.0";
   const CFG = {
     priorSd: 0.7,               // how far a coach's grade is assumed to be off (measured later from data, spec 4.6)
     driftPerGame: 0.08,         // talent sd added per game
@@ -25,7 +25,13 @@
     effectSd: { side_cmd: 0.5, side_grade: 0.5, ahead_cmd: 0.4, behind_cmd: 0.4, stretch_cmd: 0.5, miss_heart: 0.4 },
     completeness: 0.9,          // contact / location detail used only from games logged at least this completely
     caps: { total: 1.0, step: 0.15, stepAfterChange: 0.5, changeGames: 5, phaseGames: 3,
-      effectTotal: 0.5, effectStep: 0.1 },
+      effectTotal: 0.5, effectStep: 0.1,
+      // D6: each game moves the calls by what that game told the learner (how far it moved the estimate: its length and
+      // how much it disagreed), never more than the step. A game he didn't throw the pitch in moves nothing.
+      // OFF: tested against the flat step on 5 simulated worlds x 6 seasons (d6_test.js, decision rule fixed before the
+      // run). It helped short relief outings with wrong grades (-0.0016 surprise per pitch) but did worse after a marked
+      // change (+0.0022, over 2 standard errors) and slightly worse pooled (+0.0007), so the flat step stays.
+      evidence: false, evidenceRef: 0.15 },
     flags: { gradeGap: 1.0, gradeZ: 2.5, stuffMinN: 400, cmdMinLoc: 150, changeWindow: 8, changeZ2: 9.21,
       starvedShare: 0.05, starvedGames: 5, scoreMinRows: 150, scoreMargin: 0.02, scoreWindow: 300 },
   };
@@ -40,6 +46,38 @@
   // no type and is a pitch.
   const isPitch = (ev) => !!ev && (ev.type === undefined || ev.type === null || ev.type === "pitch");
   const isOS = (k) => k === "SL" || k === "CB" || k === "CH";
+  // D8: a blank or unreadable grade is "not graded": the level average (3 on the engine's scale), never 0
+  const has = (v) => v !== "" && v !== undefined && v !== null && Number.isFinite(+v);
+  const coachValue = (pd, dim) => (pd && has(pd[dim]) ? +pd[dim] : 3);
+  const graded = (pd, dim) => !!pd && has(pd[dim]);
+  const clamp15 = (x) => Math.min(5, Math.max(1, x));
+
+  // D1, D2: the coach's answer to a grade flag, per pitch and dimension.
+  //   keep    "Keep mine": the calls use his number until he answers a new flag
+  //   accept  "Accept": the learned value at that moment ("to") becomes the centre; it phases in over phaseGames games
+  //           from what the calls had ("from"), then the usual ±total limit applies around it. A re-grade after he
+  //           accepted replaces it (his new number is the centre again).
+  function railsFor(pd, pitcher, dim) {
+    const id = pd.id || pd.name, coach = coachValue(pd, dim);
+    const st = pitcher && pitcher.flagState && pitcher.flagState[`${id}|${dim}`];
+    let acc = pitcher && pitcher.accepted && pitcher.accepted[id] && pitcher.accepted[id][dim];
+    if (acc && typeof acc === "number") acc = { ts: acc };
+    const log = pd.gradeLog || [];
+    if (acc && log.some((e, i) => i > 0 && (e.ts || 0) > (acc.ts || 0) && +e[dim] !== +log[i - 1][dim])) acc = null;
+    const keep = !!(st && st.how === "keep");
+    const center = acc && has(acc.to) ? clamp15(+acc.to) : coach;
+    return { coach, center, keep, acc: keep ? null : acc };
+  }
+  // D4: the last word on what the calls use, applied where the arsenal is built: never more than the limit from the
+  // centre (his grade, or the value he accepted), and his own number when he said "Keep mine"
+  function clampServed(pd, pitcher, sv) {
+    const out = {};
+    for (const dim of ["command", "grade"]) {
+      const R = railsFor(pd, pitcher, dim), v = sv && has(sv[dim]) ? +sv[dim] : R.coach;
+      out[dim] = R.keep ? R.coach : r2(clamp15(Math.min(R.center + CFG.caps.total, Math.max(R.center - CFG.caps.total, v))));
+    }
+    return out;
+  }
 
   // ---------------------------------------------------------------- small linear algebra
   function solve(A, b) {           // Gaussian elimination with pivoting; A square
@@ -351,8 +389,8 @@
     const changeAt = new Set();
     for (const c of opts.changes || []) { const g = games.find((x) => x.ts >= c.ts); if (g) changeAt.add(g.id); }
     for (let i = 1; i < games.length; i++) if (games[i].spec.kind !== games[i - 1].spec.kind) changeAt.add(games[i].id);
-    const prior = opts.prior || { command: +pd.command, grade: +pd.grade };
-    const coachEdits = (opts.coachEdits || []).filter((e) => !e.sawLearned).map((e) => ({ gameIdx: games.findIndex((g) => g.ts >= e.ts), command: e.command, grade: e.grade })).filter((e) => e.gameIdx >= 0);
+    const prior = opts.prior || { command: coachValue(pd, "command"), grade: coachValue(pd, "grade") };
+    const coachEdits = (opts.coachEdits || []).filter((e) => !e.sawLearned && has(e.command) && has(e.grade)).map((e) => ({ gameIdx: games.findIndex((g) => g.ts >= e.ts), command: e.command, grade: e.grade })).filter((e) => e.gameIdx >= 0);
     const n = games.reduce((a, g) => a + g.rows.length, 0), nLoc = games.reduce((a, g) => a + g.rows.filter((r) => r.loc).length, 0);
     if (!n) return { n: 0, nLoc: 0, entered: prior, talent: prior, sd: { command: CFG.priorSd, grade: CFG.priorSd }, traits: {}, traitSd: {}, games: games.length, changeAt: [] };
     let effects = {}, filt = null, sm = null, eff = { traits: {}, sd: {} };
@@ -366,14 +404,21 @@
     const last = filt[filt.length - 1];
     const daysSince = Math.max(0, ((opts.now || last.ts) - last.ts) / DAY);
     const P = madd(last.P, diag([CFG.driftPerDay ** 2 * daysSince, CFG.driftPerDay ** 2 * daysSince]));
-    const out = { n, nLoc, games: games.length, entered: prior,
+    // D6: what each game told the learner, per dimension: how far that game moved the estimate (filtered, so it only
+    // looks back). Kept for the last few games in the profile; the scoreboard gets every game.
+    const evidenceAll = {};
+    for (const f of filt) if (f.n) evidenceAll[f.gameId] = [r3(Math.abs(f.m[0] - f.pred.m[0])), r3(Math.abs(f.m[1] - f.pred.m[1]))];
+    const evidence = {};
+    for (const f of filt.slice(-12)) if (evidenceAll[f.gameId]) evidence[f.gameId] = evidenceAll[f.gameId];
+    const out = { n, nLoc, games: games.length, entered: prior, evidence,
       talent: { command: r2(last.m[0]), grade: r2(last.m[1]) }, sd: { command: r2(Math.sqrt(P[0][0])), grade: r2(Math.sqrt(P[1][1])) },
       traits: effects, traitSd: eff.sd, changeAt: [...changeAt], path: filt.map((f) => ({ ts: f.ts, command: r2(f.m[0]), grade: r2(f.m[1]) })) };
     out.possibleChange = detectChange(E, games, filt, effects, level, changeAt);
-    out._games = games;
+    out._games = games; out._evidenceAll = evidenceAll;
     return out;
   }
   const r2 = (x) => Math.round(x * 100) / 100;
+  const r3 = (x) => Math.round(x * 1000) / 1000;
 
   // results-only change suggestion (spec 5.2): low-power, so it only ever suggests
   function detectChange(E, games, filt, effects, level, changeAt) {
@@ -402,16 +447,17 @@
     // game, 1.0 in total, traits ±0.5 and 0.1 per game). Scoring the raw fit instead charged learning for noise the
     // limits never let through: on right grades a 265-pitch fit can sit 0.6 off in stuff, which since the calibration
     // costs real surprise per pitch.
-    const one = { id: pd.id || pd.name, name: pd.name, command: pd.command, grade: pd.grade };
+    const one = { id: pd.id || pd.name, name: pd.name, command: coachValue(pd, "command"), grade: coachValue(pd, "grade") };
     for (let gi = minGames; gi < games.length; gi++) {
       if (!games[gi].rows.length) continue;
       if (!fitted || (gi - minGames) % every === 0) fitted = learnPitch(E, pd, games.slice(0, gi).map((g) => g._game), level, Object.assign({}, opts, { traits: traitKeys, rounds: 1 }));
       const G = games[gi];
-      const sv = serve({ at: 0, pitches: { [one.id]: { n: 1, talent: fitted.talent, traits: fitted.traits } } }, { pitches: [one] }, prev);
+      const sv = serve({ at: 0, games: games.slice(0, gi).map((g) => ({ id: g.id, ts: g.ts })),
+        pitches: { [one.id]: { n: 1, talent: fitted.talent, traits: fitted.traits, evidence: opts.evidence || null } } }, { pitches: [one] }, prev);
       prev = sv;
       const u = sv.pitches[one.id];
       const l = loglikGames(E, [G], { command: u.command, grade: u.grade, traits: u.traits }, level, new Map());
-      const c = loglikGames(E, [G], { command: +pd.command, grade: +pd.grade, traits: null }, level, new Map(), { noStrikeRate: true });
+      const c = loglikGames(E, [G], { command: coachValue(pd, "command"), grade: coachValue(pd, "grade"), traits: null }, level, new Map(), { noStrikeRate: true });
       scored.push({ n: G.rows.length, l, c });
     }
     // the last scoreWindow pitches
@@ -426,7 +472,9 @@
     // right (about 1/(2n) per pitch per learned number), and that price must not read as "learning is broken".
     const gap = rows ? (coachLL - learnedLL) / rows : 0;       // + = learned predicted worse (more surprise per pitch)
     const se = rows ? Math.sqrt(win.reduce((a, g) => a + ((g.c - g.l) - gap * g.n) ** 2, 0)) / rows : 0;
+    const allN = scored.reduce((a, g) => a + g.n, 0);
     return { rows, learned: rows ? -learnedLL / rows : null, coach: rows ? -coachLL / rows : null, gap, se,
+      all: { n: allN, learned: allN ? -scored.reduce((a, g) => a + g.l, 0) / allN : null, coach: allN ? -scored.reduce((a, g) => a + g.c, 0) / allN : null },
       worse: rows >= CFG.flags.scoreMinRows && gap > CFG.flags.scoreMargin && gap > 2 * se };
   }
 
@@ -437,40 +485,74 @@
    *   events: every logged pitch he threw (soft-deleted ones are skipped)
    *   opts: { level, now, scoreboard: true|false, traits: [...] }
    */
+  // D7: a logged row the engine can't read (a broken arsenal snapshot, an impossible count) is skipped, never fatal.
+  // Each candidate row is tried once against the engine; whatever throws is set aside and counted.
+  const CONTACTS = ["weak", "solid", "hard"];
+  function readable(E, ev) {
+    // every pitch is replayed for in-game confidence, so its shape must be sound even if it isn't learned from
+    if (!ev || typeof ev !== "object") return false;
+    if (ev.ars !== undefined && ev.ars !== null && !(Array.isArray(ev.ars) && ev.ars.every((x) => x && typeof x === "object" && typeof x.name === "string"))) return false;
+    if (ev.ars === null || (ev.sit !== undefined && (ev.sit === null || typeof ev.sit !== "object"))) return false;
+    if (ev.res === "play" && ev.contact && !CONTACTS.includes(ev.contact)) return false;
+    if (ev.shaken !== undefined && ev.shaken !== null && !Array.isArray(ev.shaken)) return false;
+    if (!usable(ev)) return true;   // not learned from: the shape is enough
+    try {
+      if (!Array.isArray(ev.ars) || !ev.ars.length || !ev.ars.some((x) => x && x.name === (ev.thrown || ev.pitchName))) return false;
+      const s = ev.sit;
+      if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2 && s.outs >= 0 && s.outs <= 2)) return false;
+      const ars = ev.ars.map((x) => E.Pitch(Object.assign({}, x)));
+      const p = ars.find((x) => x.name === (ev.thrown || ev.pitchName));
+      const P = E.outcomeProbs(p, ev.quad, E.Situation(Object.assign({}, s, { hitter_damage: {}, timing: {} })), ars, null);
+      return Object.values(P).every((v) => typeof v !== "number" || Number.isFinite(v));
+    } catch (e) { return false; }
+  }
   function learnPitcher(E, pitcher, events, opts = {}) {
     const level = opts.level || "college_d3";
-    const gamesAll = gamesOf(events.filter((e) => !e.pitcherId || e.pitcherId === pitcher.id));
-    const total = gamesAll.reduce((a, g) => a + g.evs.length, 0);
+    // D12: an event that arrives twice (the same id, from a restore and a sync) counts once: the newest copy
+    const byId = new Map();
+    for (const e of events) { if (e.pitcherId && e.pitcherId !== pitcher.id) continue; const k = e.id || "_" + byId.size; const o = byId.get(k); if (!o || (e.updatedAt || 0) > (o.updatedAt || 0)) byId.set(k, e); }
+    const mine = [...byId.values()];
+    const bad = mine.filter((e) => isPitch(e) && !e.deletedAt && !e.legacy && !readable(E, e));
+    const badIds = new Set(bad.map((e) => e.id));
+    const gamesAll = gamesOf(bad.length ? mine.filter((e) => !badIds.has(e.id)) : mine);
+    // D10: the starved flag compares the engine's own calls (coach calls and shake-offs aren't the engine starving it)
+    const total = gamesAll.reduce((a, g) => a + g.evs.filter(usable).length, 0);
     const prof = { pitcherId: pitcher.id, learner: VERSION, at: opts.now || Date.now(), level, pitches: {}, flags: [],
-      games: gamesAll.map((g) => ({ id: g.id, ts: g.ts })) };   // serve() steps once per game in this list it hasn't seen
+      games: gamesAll.map((g) => ({ id: g.id, ts: g.ts })),   // serve() steps once per game in this list it hasn't seen
+      skipped: { n: bad.length, ids: bad.slice(0, 50).map((e) => e.id), games: [...new Set(bad.map((e) => e.gameId))].slice(0, 20) } };
     for (const pd of pitcher.pitches || []) {
       if (pd.active === false) continue;
       const changes = (pitcher.changes || []).filter((c) => !c.pitchId || c.pitchId === pd.id);
       const edits = (pd.gradeLog || []).slice(1);   // the first entry is the starting grade itself
+      const g0 = pd.gradeLog && pd.gradeLog.length ? pd.gradeLog[0] : null;
       const L = learnPitch(E, pd, gamesAll, level, Object.assign({}, opts, { changes, coachEdits: edits,
-        prior: pd.gradeLog && pd.gradeLog.length ? { command: +pd.gradeLog[0].command, grade: +pd.gradeLog[0].grade } : undefined }));
+        prior: g0 ? { command: has(g0.command) ? +g0.command : coachValue(pd, "command"), grade: has(g0.grade) ? +g0.grade : coachValue(pd, "grade") } : undefined }));
       const games = L._games || []; delete L._games;
+      const evAll = L._evidenceAll || {}; delete L._evidenceAll;
       if (opts.scoreboard !== false && L.n >= CFG.flags.scoreMinRows) {
         for (const g of games) g._game = gamesAll.find((x) => x.id === g.id);
-        L.score = scoreboard(E, pd, games, level, Object.assign({}, opts, { changes, coachEdits: edits }));
+        L.score = scoreboard(E, pd, games, level, Object.assign({}, opts, { changes, coachEdits: edits, evidence: evAll }));
       }
       L.strike_rate = r2(strikeRate(E, { name: pd.name, kind: pd.kind, shape: pd.shape, velo: pd.velo, command: L.talent.command, grade: L.talent.grade, traits: L.traits }, level) * 100) / 100;
       prof.pitches[pd.id || pd.name] = L;
-      prof.flags.push(...flagsFor(pd, L, total, gamesAll.length));
+      prof.flags.push(...flagsFor(pd, L, total, gamesAll.length, pitcher));
     }
     return prof;
   }
 
-  function flagsFor(pd, L, total, nGames) {
+  function flagsFor(pd, L, total, nGames, pitcher) {
     const F = CFG.flags, out = [], id = pd.id || pd.name, name = pd.name;
     for (const dim of ["grade", "command"]) {
-      const coach = +pd[dim], val = L.talent[dim], sd = L.sd[dim], gap = val - coach;
+      if (!graded(pd, dim)) continue;   // D8: not graded yet, so nothing to disagree with until he sets it
+      // after an Accept, later flags are against the value he accepted (D2); otherwise against his grade
+      const R = railsFor(pd, pitcher, dim), ref = R.acc && has(R.acc.to) ? R.center : R.coach;
+      const coach = R.coach, val = L.talent[dim], sd = L.sd[dim], gap = val - ref;
       const enough = dim === "grade" ? L.n >= F.stuffMinN : L.nLoc >= F.cmdMinLoc;
       if (enough && Math.abs(gap) > F.gradeGap && Math.abs(gap) > F.gradeZ * sd)
-        out.push({ type: "grade", pitchId: id, dim, coach, learned: val, sd, text: `${name}: ${dim === "grade" ? "stuff" : "command"} plays like ${val.toFixed(1)}, you have ${coach} (±${sd.toFixed(2)}, ${L.n} pitches)` });
+        out.push({ type: "grade", pitchId: id, dim, coach, ref, learned: val, sd, text: `${name}: ${dim === "grade" ? "stuff" : "command"} plays like ${val.toFixed(1)}, ${ref === coach ? `you have ${coach}` : `the calls are centred on ${ref} (accepted)`} (±${sd.toFixed(2)}, ${L.n} pitches)` });
     }
     if (L.possibleChange) out.push({ type: "change", pitchId: id, text: `${name} may have changed over his last ${CFG.flags.changeWindow} games. Mark it changed if you know why.`, detail: L.possibleChange });
-    if (nGames >= F.starvedGames && L.n < F.starvedShare * total) out.push({ type: "starved", pitchId: id, text: `${name} has barely been called in games (${L.n} of ${total} pitches), so there's little to learn from.` });
+    if (nGames >= F.starvedGames && total > 0 && L.n < F.starvedShare * total) out.push({ type: "starved", pitchId: id, text: `${name} has barely been called by the engine (${L.n} of its ${total} calls), so there's little to learn from. Use it in a low-leverage spot or a bullpen if you want it learned.` });
     if (L.n >= 100 && L.nLoc < 0.5 * L.n) out.push({ type: "noLocation", pitchId: id, text: `${name}: command can't be learned without "where it ended up" logged.` });
     if (L.score && L.score.worse) out.push({ type: "learningOff", pitchId: id, text: `${name}: what it learned predicted worse than your grades over the last ${L.score.rows} pitches, so the calls use your grades.` });
     return out;
@@ -490,42 +572,55 @@
     // without a game list (older callers) step on every call, as before.
     const gameIds = profile.games ? profile.games.map((g) => g.id) : null;
     const seen = new Set((prev && prev.games) || []);
-    const newGame = !prev || !gameIds || gameIds.some((g) => !seen.has(g));
+    const newIds = gameIds ? gameIds.filter((g) => !seen.has(g)) : null;
+    const newGame = !prev || !gameIds || newIds.length > 0;
     out.games = gameIds || (prev && prev.games) || [];
+    const tsOf = new Map((profile.games || []).map((g) => [g.id, g.ts]));
     for (const pd of pitcher.pitches || []) {
       const id = pd.id || pd.name, L = profile.pitches[id], was = prev && prev.pitches && prev.pitches[id];
+      const coachNow = { command: coachValue(pd, "command"), grade: coachValue(pd, "grade") };
       const learningOff = off || !L || !L.n || (L.score && L.score.worse);
-      if (learningOff) { out.pitches[id] = { command: +pd.command, grade: +pd.grade, traits: null, strike_rate: null, learned: false }; continue; }
+      if (learningOff) { out.pitches[id] = { command: coachNow.command, grade: coachNow.grade, traits: null, strike_rate: null, learned: false }; continue; }
       if (!newGame && was && was.learned) {
-        // same games as last time: keep what was served, but follow a coach re-grade since (the offset from his grade holds)
-        const coachWas = was.coach || { command: +pd.command, grade: +pd.grade };
-        out.pitches[id] = Object.assign({}, was, { command: r2(Math.min(5, Math.max(1, was.command + (+pd.command - coachWas.command)))),
-          grade: r2(Math.min(5, Math.max(1, was.grade + (+pd.grade - coachWas.grade)))), coach: { command: +pd.command, grade: +pd.grade } });
+        // same games as last time: keep what was served, but follow a coach re-grade since (the offset from his grade
+        // holds), and his answers to flags (Keep mine, Accept) through the same final limits as everywhere else
+        const coachWas = was.coach || coachNow;
+        const moved = { command: was.command + (coachNow.command - coachWas.command), grade: was.grade + (coachNow.grade - coachWas.grade) };
+        out.pitches[id] = Object.assign({}, was, clampServed(pd, pitcher, moved), { coach: coachNow });
         continue;
       }
       // spec 11: bigger steps for the first games after a change mark (counted in games, not days)
       const changedLately = (pitcher.changes || []).some((c) => (!c.pitchId || c.pitchId === id) &&
         (profile.games ? profile.games.filter((g) => g.ts >= c.ts).length < C.changeGames : profile.at - c.ts < 30 * DAY));
       const v = {};
-      for (const dim of ["command", "grade"]) {
-        const coach = +pd[dim], acc = pitcher.accepted && pitcher.accepted[id] && pitcher.accepted[id][dim];
-        let target = L.talent[dim];
-        if (!acc) target = Math.min(coach + C.total, Math.max(coach - C.total, target));
-        const from = was ? was[dim] : coach;
-        let step = changedLately ? C.stepAfterChange : C.step;
-        if (acc) {   // accepted: phase in over C.phaseGames games, in equal steps of the gap at the moment he accepted
-          const a0 = typeof acc === "number" ? { ts: acc, from: Math.min(coach + C.total, Math.max(coach - C.total, L.talent[dim])) } : acc;
-          step = Math.max(step, Math.abs(target - a0.from) / C.phaseGames + 1e-9);
+      ["command", "grade"].forEach((dim, k) => {
+        const R = railsFor(pd, pitcher, dim);
+        if (R.keep) { v[dim] = R.coach; return; }                       // D1: Keep mine holds his number
+        let target = Math.min(R.center + C.total, Math.max(R.center - C.total, L.talent[dim]));
+        const from = was && has(was[dim]) ? +was[dim] : R.coach;
+        const cap = changedLately ? C.stepAfterChange : C.step;
+        // D6: per new game, a step in proportion to what that game told the learner, up to the cap
+        let step = cap;
+        if (C.evidence && newIds && L.evidence) {
+          const ids = prev ? newIds : gameIds;
+          step = ids.reduce((a, g) => a + (L.evidence[g] ? Math.min(cap, cap * L.evidence[g][k] / C.evidenceRef) : 0), 0);
         }
-        v[dim] = r2(Math.min(5, Math.max(1, from + Math.max(-step, Math.min(step, target - from)))));
-      }
+        // D2: accepted: phase in to the value he accepted over phaseGames games, in equal steps of the gap at that
+        // moment; then the usual limit around it (target above)
+        if (R.acc) {
+          const to = has(R.acc.to) ? R.center : target, fromA = has(R.acc.from) ? +R.acc.from : R.coach;
+          const after = profile.games ? profile.games.filter((g) => (g.ts || 0) > (R.acc.ts || 0)).length : 0;
+          if (!profile.games || after <= C.phaseGames) { target = to; step = Math.max(step, Math.abs(to - fromA) / C.phaseGames + 1e-9); }
+        }
+        v[dim] = r2(clamp15(from + Math.max(-step, Math.min(step, target - from))));
+      });
       const traits = {};
       for (const [k, val] of Object.entries(L.traits || {})) {
         const from = was && was.traits ? was.traits[k] || 0 : 0;
         const target = Math.max(-C.effectTotal, Math.min(C.effectTotal, val));
         traits[k] = r2(from + Math.max(-C.effectStep, Math.min(C.effectStep, target - from)));
       }
-      out.pitches[id] = { command: v.command, grade: v.grade, traits, learned: true, sd: L.sd, coach: { command: +pd.command, grade: +pd.grade } };
+      out.pitches[id] = Object.assign({ traits, learned: true, sd: L.sd, coach: coachNow }, clampServed(pd, pitcher, v));
     }
     return out;
   }
@@ -592,7 +687,7 @@
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;

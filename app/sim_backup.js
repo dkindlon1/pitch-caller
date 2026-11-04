@@ -83,7 +83,7 @@ const server = http.createServer((req, res) => {
         record(res); pitches++;
         if (G().inningOver && G().inning >= 6) break;
       }
-      const c = await finishGameRecord(); archiveGame(); S.game = newGame(); S.view = "live"; makeCall(); save();
+      const c = await finishGameRecord(); archiveGame(); S.game = newGame(); S.view = "live"; makeCall(); save(); if (c && c.learn) await learnAfterGame(c.learn);
       return { pitches, located: c && c.located };
     }, { truth, seed: (+SEED * 7919 + gi * 104729) % 4294967296 });
     process.stdout.write(`game ${gi + 1}: ${n.pitches} pitches\n`);

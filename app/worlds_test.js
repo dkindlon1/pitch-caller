@@ -163,7 +163,8 @@ console.log("10. What the engine gets: caps, steps, phase-in, learning off");
   for (let i = 0; i < 30; i++) sv = L.serve(prof, pit, sv);
   check(sv.pitches.fb.command === 3 && Math.abs(sv.pitches.fb.grade - 3.4) < 1e-9, `never more than 1.0 from his grade without his OK (command ${sv.pitches.fb.command})`);
   check(sv.pitches.fb.traits.side_cmd === -0.5, "traits capped at ±0.5");
-  const acc = Object.assign({}, pit, { accepted: { fb: { command: { ts: prof.at, from: sv.pitches.fb.command } } } });
+  // D2: Accept stores the learned value at that moment ("to"); it phases in over 3 games (detail in rails_test.js)
+  const acc = Object.assign({}, pit, { accepted: { fb: { command: { ts: prof.at, from: sv.pitches.fb.command, to: 1.6 } } } });
   const s1 = L.serve(prof, acc, sv), s2 = L.serve(prof, acc, s1), s3 = L.serve(prof, acc, s2);
   check(s1.pitches.fb.command < 3 && s3.pitches.fb.command === 1.6, `after he accepts, it phases in over 3 games (${s1.pitches.fb.command}, ${s2.pitches.fb.command}, ${s3.pitches.fb.command})`);
   // bound to games: serving again with no new game moves nothing; a new game moves one step; a re-grade carries over

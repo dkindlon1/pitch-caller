@@ -49,6 +49,9 @@ async function boot() {
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
+      const job = await D.get("meta", "toLearn");   // D9: learning that a closed page never finished
+      if (job) await learnAfterGame(job);
+      if (await D.get("meta", "checkDups")) { await checkDuplicates().catch((e) => console.warn("duplicate check", e)); await D.del("meta", "checkDups"); }
       for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
       for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
       await refreshLineupMemory();
@@ -103,17 +106,26 @@ function learnCall(msg) {
 const levelOf = () => S.setup.level;
 // learn from every pitch he's thrown, then serve one step toward it (spec 11). Serving steps once per new game only.
 async function relearnPitcher(pid) {
-  const p = DB.pitchers.get(pid); if (!p || !DB.D) return null;
-  const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt && PCDB.isPitch(e));
+  const p0 = DB.pitchers.get(pid); if (!p0 || !DB.D) return null;
+  const p = JSON.parse(JSON.stringify(p0));   // the record as it was when learning started (D3 compares against it)
+  const dups = await dupGameIds();
+  const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt && PCDB.isPitch(e) && !dups.has(e.gameId));
   DB.counts.set(pid, evs.length);
   const was = pModel(pid);
   let r;
   try { r = await learnCall({ type: "pitcher", pitcher: p, events: evs, level: levelOf(), prev: was ? was.served : null }); }
   catch (e) { console.error(e); toast("Couldn't learn from his games just now; the calls keep using what they had"); return was || null; }
   const m = { id: "v2:" + pid, pitcherId: pid, profile: r.profile, served: r.served, at: Date.now() };
+  // D3: the coach may have re-graded, answered a flag or switched learning off while the worker ran. The worker served
+  // from the record as it was; serve again from the record as it is now (same games, same step), so his change stands.
+  const now = DB.pitchers.get(pid);
+  if (now && railsKey(now) !== railsKey(p)) m.served = PCLearner.finishServe(E, PCLearner.serve(r.profile, now, was ? was.served : null), now, levelOf());
   DB.models.set(m.id, await dbPut("learned", m));
   return m;
 }
+// what serving reads from a pitcher record: if any of it changes while learning runs, serve again
+const railsKey = (p) => JSON.stringify([p.useLearned, p.accepted || null, p.flagState || null, p.changes || null,
+  (p.pitches || []).map((d) => [d.id, d.grade, d.command, d.active, (d.gradeLog || []).length])]);
 // a re-grade, an accepted flag or the learning switch takes effect now, without waiting for a game (no step is taken)
 function reserve(p) {
   const m = pModel(p.id); if (!m || !m.profile) return;
@@ -122,7 +134,8 @@ function reserve(p) {
 }
 async function relearnHitter(hid) {
   const x = DB.hitters.get(hid); if (!x || !DB.D) return null;
-  const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt && PCDB.isPitch(e));
+  const dups = await dupGameIds();
+  const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt && PCDB.isPitch(e) && !dups.has(e.gameId));
   const team = DB.teams.get(x.teamId);
   let r;
   try { r = await learnCall({ type: "hitter", hitter: x, events: evs, level: (team && team.level) || levelOf() }); } catch (e) { console.error(e); return hModel(hid) || null; }
@@ -156,7 +169,8 @@ function packContents() {
   const staff = ids.map((id) => DB.pitchers.get(id)).filter(Boolean).map((p) => {
     const m = pModel(p.id), ci = todayCheckin(p.id);
     return { pitcherId: p.id, name: p.name, hand: p.hand, useLearned: p.useLearned !== false, pitchLimit: p.pitchLimit || null,
-      pitches: (p.pitches || []).map((d) => ({ id: d.id, name: d.name, kind: d.kind, grade: +d.grade, command: +d.command, feel: +d.feel, active: d.active !== false })),
+      pitches: (p.pitches || []).map((d) => ({ id: d.id, name: d.name, kind: d.kind, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"),
+        graded: PCLearner.graded(d, "grade") && PCLearner.graded(d, "command"), feel: +d.feel, active: d.active !== false })),
       served: m && m.served ? JSON.parse(JSON.stringify(m.served.pitches)) : null, checkinId: ci ? ci.id : null,
       checkin: ci ? { arm: ci.arm, sleep: ci.sleep, conf: Object.assign({}, ci.conf) } : null };
   });
@@ -243,14 +257,24 @@ async function finishGameRecord() {
   if (!DB.ready) { const r = S.queue && S.queue.games.find((x) => x.id === g.dbId); if (r) close(r); save(); return comp; }
   const rec = await DB.D.get("games", g.dbId);
   if (rec) await dbPut("games", close(rec));
-  // the flywheel: refit everyone who pitched and every hitter he faced
+  // who to learn from: everyone who pitched and every hitter he faced. Written down before anything is learned (D9), so
+  // a page killed mid-learning finishes the job on the next launch instead of losing it.
   const pids = new Set(), hids = new Set();
   for (const e of g.log) { const pid = e.pid || (S.setup.staff[e.p ?? 0] || {}).id; if (pid && DB.pitchers.has(pid)) pids.add(pid); const b = S.setup.lineup[e.slot]; if (b && b.hitterId) hids.add(b.hitterId); }
-  for (const id of pids) await relearnPitcher(id);
-  for (const id of hids) await relearnHitter(id);
-  if (pids.size) toast(`Learned from the game: ${[...pids].map((id) => DB.pitchers.get(id).name).join(", ")}`);
-  if (SYNC.sync) setTimeout(() => syncNow(true), 0);   // the finished game goes up in the background
+  if (pids.size || hids.size) await DB.D.put("meta", { id: "toLearn", pids: [...pids], hids: [...hids], gameId: g.dbId });
+  comp.learn = { pids: [...pids], hids: [...hids] };
   return comp;
+}
+// the flywheel, after the game is closed and the next one is up (D9): refit, then sync
+async function learnAfterGame(job) {
+  if (!DB.ready || !job) return;
+  for (const id of job.pids || []) if (DB.pitchers.has(id)) await relearnPitcher(id);
+  for (const id of job.hids || []) if (DB.hitters.has(id)) await relearnHitter(id);
+  await DB.D.del("meta", "toLearn").catch(() => {});
+  const names = (job.pids || []).filter((id) => DB.pitchers.has(id)).map((id) => DB.pitchers.get(id).name);
+  if (names.length) toast(`Learned from the game: ${names.join(", ")}`);
+  if (S.view === "roster") render();
+  if (SYNC.sync) setTimeout(() => syncNow(true), 0);   // the finished game goes up in the background
 }
 
 // ------------------------------------------------------------------ roster screen
@@ -371,8 +395,9 @@ function arsenalEditor(p) {
           if (p.pitches.some((x) => x !== d && x.name === nn)) { toast("He already has a pitch with that name"); render(); return; }
           const si = S.setup.staff.indexOf(p); if (si >= 0) renamePitch(si, d.name, nn);
           d.name = nn; savePitcher(p); } } }), "a-name"),
-        lab("Stuff", num(d, "grade", 0.5, 1, 5, "", "Stuff, 1 to 5", "100%"), "a-n"),
-        lab("Command", num(d, "command", 0.5, 1, 5, "", "Command, 1 to 5", "100%"), "a-n"),
+        // D8: a blank grade is "not graded": the calls use the level average (3), nothing is flagged until it's set
+        lab("Stuff", h("div", {}, num(d, "grade", 0.5, 1, 5, "3", "Stuff, 1 to 5", "100%"), PCLearner.graded(d, "grade") ? null : h("small", { class: "muted" }, "not graded: calls use 3")), "a-n"),
+        lab("Command", h("div", {}, num(d, "command", 0.5, 1, 5, "3", "Command, 1 to 5", "100%"), PCLearner.graded(d, "command") ? null : h("small", { class: "muted" }, "not graded: calls use 3")), "a-n"),
         lab("Usual feel", h("div", { class: "feel" }, h("input", { type: "range", min: 0.3, max: 0.95, step: 0.05, value: d.feel, "aria-label": "Usual bullpen feel",
           on: { input: (e) => { d.feel = +e.target.value; out.textContent = (+d.feel).toFixed(2); }, change: () => savePitcher(p, false) } }), out), "a-feel"),
         h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (p.pitches.length > 1) { p.pitches.splice(i, 1); savePitcher(p); } } } }, "×")),
@@ -426,13 +451,14 @@ function flagAnswer(p, f, how) {
   const key = `${f.pitchId}|${f.dim}`, m = pModel(p.id);
   if (how === "accept") {
     const sv = m && m.served && m.served.pitches[f.pitchId];
-    p.accepted = Object.assign({}, p.accepted, { [f.pitchId]: Object.assign({}, (p.accepted || {})[f.pitchId], { [f.dim]: { ts: Date.now(), from: sv ? sv[f.dim] : +f.coach } }) });
+    // D2: the learned value at this moment is what he accepted; the calls phase in to it, then learn within 1.0 of it
+    p.accepted = Object.assign({}, p.accepted, { [f.pitchId]: Object.assign({}, (p.accepted || {})[f.pitchId], { [f.dim]: { ts: Date.now(), from: sv ? sv[f.dim] : +f.coach, to: Math.round(f.learned * 100) / 100 } }) });
     p.flagState = Object.assign({}, p.flagState, { [key]: { how, ts: Date.now() } });
     toast(`Accepted: the calls move to ${fmt(f.learned)} over his next 3 games`);
   } else {
     const games = m && m.profile && m.profile.games ? m.profile.games.length : 0;
     p.flagState = Object.assign({}, p.flagState, { [key]: how === "keep" ? { how, learned: f.learned, ts: Date.now() } : { how, untilGames: games + 5, ts: Date.now() } });
-    toast(how === "keep" ? "Kept your grade. It'll only ask again if what it learns moves another half point." : "It'll ask again in 5 games");
+    toast(how === "keep" ? "Kept your grade: the calls use your number. It'll only ask again if what it learns moves another half point." : "It'll ask again in 5 games");
   }
   savePitcher(p);
 }
@@ -440,7 +466,8 @@ function flagShown(p, f, m) {
   if (f.type !== "grade") return true;
   const st = (p.flagState || {})[`${f.pitchId}|${f.dim}`];
   if (!st) return true;
-  if (st.how === "accept") return false;
+  // after an Accept, a new flag (measured against the accepted value) is shown; the one he answered isn't
+  if (st.how === "accept") { const a = ((p.accepted || {})[f.pitchId] || {})[f.dim]; return !!(a && a.to !== undefined && f.ref !== undefined && Math.abs(f.ref - a.to) < 1e-6); }
   if (st.how === "keep") return Math.abs(f.learned - st.learned) >= 0.5;
   return (m.profile.games || []).length >= st.untilGames;
 }
@@ -486,11 +513,13 @@ function learnedPanel(p) {
       h("div", { class: "row-acts" }, h("span", { class: "meta" }, m ? `Updated ${new Date(m.at).toLocaleDateString([], { month: "short", day: "numeric" })}${prof && prof.games ? `, ${prof.games.length} game${prof.games.length === 1 ? "" : "s"}` : ""}` : ""),
         h("button", { class: "btn pill", disabled: !n, on: { click: async (e) => { e.currentTarget.disabled = true; await relearnPitcher(p.id); render(); toast("Relearned from every pitch he's thrown. The calls only move after his next game."); } } }, "Relearn now"))),
     flags.length ? h("div", { class: "lflags" }, flags.map(flagEl)) : null,
+    prof && prof.skipped && prof.skipped.n ? h("p", { class: "pstat watch" }, `${prof.skipped.n} logged pitch${prof.skipped.n === 1 ? " was" : "es were"} skipped: learning couldn't read ${prof.skipped.n === 1 ? "it" : "them"}. `,
+      h("button", { class: "btn text", on: { click: () => openSkipped(prof) } }, "Fix or leave out")) : null,
     h("div", { class: "tbl-wrap" }, h("table", { class: "ltable" },
       h("thead", {}, h("tr", {}, h("th", {}, "Pitch"), h("th", {}, "Stuff: yours → learned"), h("th", {}, "Command: yours → learned"), h("th", { class: "num" }, "Pitches"), h("th", {}, "Scoreboard"))),
       h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map(row)))),
     h("p", { class: "note" }, n
-      ? `Each pitch is relearned after every game from what happened against what the engine expected, starting from your grades. ${on ? "The calls move toward what's learned at most 0.15 a game and never more than 1.0 from your grade unless you accept a flag." : "Learning is switched off for him: the calls use your grades."} Only the engine's own calls teach it, not yours or re-calls after a shake-off. Command needs "where it ended up" logged (Setup).`
+      ? `Each pitch is relearned after every game from what happened against what the engine expected, starting from your grades. ${on ? "The calls move toward what's learned by what each game showed (at most 0.15 a game; a short outing barely moves them) and never more than 1.0 from your grade, or from the value you accepted. Keep mine holds your number." : "Learning is switched off for him: the calls use your grades."} Only the engine's own calls teach it, not yours or re-calls after a shake-off. Command needs "where it ended up" logged (Setup).`
       : "After he pitches in a charted game, this shows how his pitches actually play compared with your grades, and the calls start using it."));
 }
 
@@ -638,6 +667,83 @@ function useOpponent(tid) {
 }
 function syncLineupHands() { for (const b of S.setup.lineup) { const x = b.hitterId && DB.hitters.get(b.hitterId); if (x) { b.hand = x.bats; b.name = x.name; } } }
 
+// ---------------------------------------------------------------- fix a pitch in an earlier game (D11, D7)
+// The same fixes as the live log (where it ended up, contact, a cross-up, a wild pitch), on any saved game. Each edit is
+// made in place with the original kept (D0); the pitchers in that game are learned again when he's done. A pitch the
+// learner couldn't read (D7) is marked here, and can be left out of learning.
+const pastFix = { games: null, gameId: null, evs: null, open: null, touched: new Set(), loading: false };
+async function pastFixLoad(gameId) {
+  if (!DB.ready) return;
+  pastFix.loading = true;
+  if (!pastFix.games) pastFix.games = (await DB.D.all("games")).filter((g) => g.status !== "planned").sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.createdAt || 0) - (a.createdAt || 0));
+  if (gameId !== undefined) {
+    pastFix.gameId = gameId; pastFix.open = null;
+    pastFix.evs = gameId ? (await DB.D.byIndex("events", "gameId", gameId)).filter(PCDB.isPitch).sort((a, b) => (a.seq || a.n || 0) - (b.seq || b.n || 0)) : null;
+  }
+  pastFix.loading = false; render();
+}
+async function pastFixDone() {
+  const pids = [...pastFix.touched]; pastFix.touched.clear(); pastFix.open = null; render();
+  for (const id of pids) if (DB.pitchers.has(id)) await relearnPitcher(id);
+  if (pids.length) toast(`Fixed and learned again: ${pids.map((id) => DB.pitchers.get(id).name).join(", ")}`);
+}
+function pastFixPanel() {
+  if (!DB.ready) return null;
+  if (!pastFix.games && !pastFix.loading) { pastFixLoad(); return null; }
+  const games = (pastFix.games || []).filter((g) => g.id !== G().dbId);
+  const label = (g) => `${g.date || "?"}${g.opponentId && DB.teams.get(g.opponentId) ? ` vs ${DB.teams.get(g.opponentId).name}` : ""}${g.pitches ? `, ${g.pitches} pitches` : ""}${g.dupOf ? " (charted twice: left out)" : ""}`;
+  const cur = games.find((g) => g.id === pastFix.gameId);
+  const name = (ev) => (DB.pitchers.get(ev.pitcherId) || {}).name || "Pitcher";
+  const set = async (ev, k, v) => {
+    const changes = k === "thrown" ? { thrown: ev.thrown === v ? null : v, thrownId: ev.thrown === v ? null : (((DB.pitchers.get(ev.pitcherId) || {}).pitches || []).find((d) => d.name === v) || {}).id || null }
+      : { [k]: ev[k] === v ? null : v };
+    if (k === "loc") changes.locCell = null;
+    await editEvent(ev.id, changes); Object.assign(ev, changes); pastFix.touched.add(ev.pitcherId); render();
+  };
+  const seg = (ev, label, k, opts) => h("div", { class: "fixrow" }, h("span", { class: "t" }, label), h("div", { class: "seg" },
+    opts.map(([v, t]) => h("button", { "aria-pressed": String(ev[k] === v), on: { click: () => set(ev, k, v) } }, t))));
+  const editor = (ev) => {
+    const others = ((DB.pitchers.get(ev.pitcherId) || {}).pitches || []).filter((d) => d.active !== false && d.name !== ev.pitchName);
+    const ok = PCLearner.readable(E, ev);
+    return h("tr", { class: "fix" }, h("td", { colspan: "6" }, h("div", { class: "fixbox" },
+      ok ? null : h("p", { class: "pstat change" }, "Learning couldn't read this pitch (its saved situation or arsenal is broken), so it's skipped. Fix what you can below, or leave it out."),
+      seg(ev, "Where it ended up", "loc", [["heart", "Middle"], ["edge", "Edge"], ["off", "Just off"], ["noncomp", "Way off"]]),
+      ev.res === "play" ? seg(ev, "Contact", "contact", [["weak", "Weak"], ["solid", "Solid"], ["hard", "Hard"]]) : null,
+      others.length ? seg(ev, "Crossed up? He threw", "thrown", others.map((d) => [d.name, d.name])) : null,
+      ["ball", "whiff", "cstrike"].includes(ev.res) ? seg(ev, "Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]) : null,
+      h("div", { class: "row-acts" },
+        h("button", { class: "btn", on: { click: () => { pastFix.open = null; render(); } } }, "Close"),
+        h("button", { class: "btn text", on: { click: async () => { await DB.D.del("events", ev.id); pastFix.touched.add(ev.pitcherId); pastFix.evs = pastFix.evs.filter((x) => x.id !== ev.id); pastFix.open = null; render(); } } }, "Leave this pitch out of learning")),
+      h("p", { class: "note" }, "Saved as you tap, with the original kept. The count and the result can't be changed here."))));
+  };
+  const rows = pastFix.evs || [];
+  return h("section", { class: "panel glass span-12", "aria-label": "Fix a pitch in an earlier game" },
+    h("div", { class: "panel-head" }, h("h2", {}, "Fix a pitch in an earlier game"),
+      h("div", { class: "row-acts" }, pastFix.touched.size ? h("button", { class: "btn primary", on: { click: () => pastFixDone() } }, "Done: learn again") : null)),
+    games.length ? h("label", { class: "f", style: { maxWidth: "420px" } }, "Game", h("select", { id: "pastfix-game", on: { change: (e) => pastFixLoad(e.target.value || null) } },
+      [h("option", { value: "" }, "Pick a game")].concat(games.map((g) => h("option", { value: g.id, selected: g.id === pastFix.gameId ? true : null }, label(g))))))
+      : h("p", { class: "note" }, "Saved games show up here once you end one."),
+    cur && cur.dupOf ? h("p", { class: "pstat watch" }, `This looks like the same game as another iPad's (${Math.round((cur.dupMatch || 0) * 100)}% of pitches line up), so it's left out of learning and the other one counts. `,
+      h("button", { class: "btn text", on: { click: () => notDuplicate(cur.id) } }, "They're different games")) : null,
+    rows.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" },
+      h("thead", {}, h("tr", {}, ["#", "Pitcher", "Count", "Pitch and spot", "Result", ""].map((t) => h("th", {}, t)))),
+      h("tbody", {}, rows.flatMap((ev) => {
+        const bad = !PCLearner.readable(E, ev);
+        const extra = [ev.loc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[ev.loc] : null, ev.contact || null, ev.thrown ? `threw ${ev.thrown}` : null, ev.wp ? (ev.wp === "pb" ? "passed ball" : "wild pitch") : null, ev.edits && ev.edits.length ? "fixed" : null].filter(Boolean);
+        const tr = h("tr", { class: bad ? "bad-row" : "" }, h("td", { class: "num" }, String(ev.n || "")), h("td", {}, name(ev)),
+          h("td", { class: "num" }, ev.sit ? `${ev.sit.balls}-${ev.sit.strikes}` : "?"), h("td", {}, `${ev.pitchName || "?"}, ${ev.quad ? spotLower(ev.quad) : "no spot saved"}`),
+          h("td", {}, ev.res || "?", extra.length ? h("small", { class: "muted" }, ` · ${extra.join(", ")}`) : null, bad ? h("small", { class: "pstat change" }, " · skipped by learning") : null),
+          h("td", {}, h("button", { class: "btn text", "aria-expanded": String(pastFix.open === ev.id), on: { click: () => { pastFix.open = pastFix.open === ev.id ? null : ev.id; render(); } } }, pastFix.open === ev.id ? "Close" : "Fix")));
+        return pastFix.open === ev.id ? [tr, editor(ev)] : [tr];
+      })))) : pastFix.gameId ? h("p", { class: "note" }, "No pitches saved for that game.") : null);
+}
+// from Roster: open the first game with a pitch learning skipped
+function openSkipped(prof) {
+  const gid = prof && prof.skipped && prof.skipped.games && prof.skipped.games[0];
+  S.view = "data"; save();
+  pastFix.games = null; pastFixLoad(gid || null);
+}
+
 // ---------------------------------------------------------------- backup
 async function backup() {
   if (!DB.D) return;
@@ -652,6 +758,7 @@ async function restore(e) {
   const f = e.target.files[0]; if (!f || !DB.D) return;
   try {
     const st = await DB.D.importAll(JSON.parse(await f.text()));
+    if (st.games || st.events) await DB.D.put("meta", { id: "checkDups" });   // D12: checked once the app is back up
     toast(`Restored: ${Object.entries(st).filter(([, n]) => n).map(([k, n]) => `${n} ${k}`).join(", ") || "nothing newer than what's here"}`);
     setTimeout(() => location.reload(), 900);
   } catch (err) { toast(err.message || "That file couldn't be read"); }
@@ -687,7 +794,7 @@ async function syncNow(quiet) {
     const r = await SYNC.sync.syncNow();
     SYNC.last = { at: Date.now(), r };
     SYNC.pending = await SYNC.sync.pending();
-    if (r.pull.merged) await reloadFromDb();
+    if (r.pull.merged) { await reloadFromDb(); if (await checkDuplicates().then((x) => x.length).catch(() => 0)) await SYNC.sync.push().catch(() => {}); }
     if (!quiet) toast(`Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} not allowed for this account` : ""}`);
     return r;
   } catch (e) {
@@ -756,6 +863,39 @@ function staffAdder() {
       catch (e) { SYNC.error = e.message.replace(/^pc_set_member: /, ""); }
       render();
     } } }, "Add"));
+}
+// D12: games charted twice (two iPads on one game). Checked whenever games arrive from elsewhere (a sync, a restore).
+// The duplicate stays in the database (nothing is deleted) and is left out of learning; the coach can say they're
+// different games, and that answer syncs like any other change.
+async function dupGameIds() { return new Set((await DB.D.all("games")).filter((g) => g.dupOf).map((g) => g.id)); }
+async function checkDuplicates() {
+  if (!DB.ready) return [];
+  const games = (await DB.D.all("games")).filter((g) => g.status === "final" || g.status === "live" || !g.status);
+  const byGame = new Map();
+  for (const g of games) byGame.set(g.id, await DB.D.byIndex("events", "gameId", g.id));
+  const pairs = PCDB.likelyDuplicates(games, (id) => byGame.get(id));
+  const marked = [];
+  for (const pr of pairs) {
+    const d = games.find((g) => g.id === pr.drop);
+    if (d.dupOf === pr.keep) continue;
+    d.dupOf = pr.keep; d.dupMatch = pr.match; await dbPut("games", d); marked.push(pr);
+  }
+  if (marked.length) {
+    const pids = new Set();
+    for (const pr of marked) for (const e of byGame.get(pr.drop) || []) if (e.pitcherId) pids.add(e.pitcherId);
+    for (const id of pids) if (DB.pitchers.has(id)) await relearnPitcher(id);
+    toast(`${marked.length} game${marked.length === 1 ? " was" : "s were"} charted on two iPads: counted once. See Data, Fix a pitch.`);
+    pastFix.games = null;
+  }
+  return marked;
+}
+async function notDuplicate(gameId) {
+  const d = await DB.D.get("games", gameId); if (!d || !d.dupOf) return;
+  const other = d.dupOf; d.notDup = [...new Set((d.notDup || []).concat(other))]; d.dupOf = null; await dbPut("games", d);
+  const pids = new Set((await DB.D.byIndex("events", "gameId", gameId)).map((e) => e.pitcherId).filter(Boolean));
+  pastFix.games = null; await pastFixLoad();
+  for (const id of pids) if (DB.pitchers.has(id)) await relearnPitcher(id);
+  toast("Counted as separate games");
 }
 // what came down from other devices: refresh the in-memory copies the screens read. Mid-game, a change that reaches
 // tonight's calls (another iPad re-graded a pitch, logged a check-in) is a new pack version, the same as an edit made

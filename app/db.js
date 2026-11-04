@@ -236,7 +236,34 @@
     return { ourTeamId: ours.id, staffIds, opponentId: opp && opp.id, games, events };
   }
 
-  const PCDB = { open, uid, today, STORES, VERSION, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy,
+  // D12: the same game charted on two iPads. Same date, the opponent not different, two devices, and the two pitch
+  // sequences (inning, hitters faced, count, pitch, result) line up by at least `share` (longest common run over the shorter
+  // game). A doubleheader doesn't line up like that; the same game charted twice does. The game with fewer pitches is the
+  // duplicate (then the later one), so every device that runs this reaches the same answer. Pure: games and their
+  // pitches in, pairs out.
+  function likelyDuplicates(games, eventsOf, opts = {}) {
+    const share = opts.share || 0.8, minPitches = opts.minPitches || 10, out = [];
+    const sig = (e) => [e.sit ? e.sit.inning : "", e.sit ? e.sit.batters_faced ?? "" : "", e.sit ? `${e.sit.balls}-${e.sit.strikes}` : "", e.pitchName, e.res].join("|");
+    const seq = new Map();
+    for (const g of games) seq.set(g.id, (eventsOf(g.id) || []).filter((e) => isPitch(e) && !e.deletedAt).sort((a, b) => (a.seq || a.n || 0) - (b.seq || b.n || 0)).map(sig));
+    const lcs = (a, b) => { let prev = new Array(b.length + 1).fill(0); for (let i = 1; i <= a.length; i++) { const cur = [0]; for (let j = 1; j <= b.length; j++) cur[j] = a[i - 1] === b[j - 1] ? prev[j - 1] + 1 : Math.max(prev[j], cur[j - 1]); prev = cur; } return prev[b.length]; };
+    const live = games.filter((g) => !g.deletedAt);
+    for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+      const A = live[i], B = live[j];
+      if (A.date !== B.date || (A.opponentId && B.opponentId && A.opponentId !== B.opponentId)) continue;
+      if (A.deviceId && B.deviceId && A.deviceId === B.deviceId) continue;
+      if ((A.notDup || []).includes(B.id) || (B.notDup || []).includes(A.id)) continue;
+      const a = seq.get(A.id), b = seq.get(B.id);
+      if (Math.min(a.length, b.length) < minPitches) continue;
+      const r = lcs(a, b) / Math.min(a.length, b.length);
+      if (r < share) continue;
+      const [keep, drop] = a.length !== b.length ? (a.length > b.length ? [A, B] : [B, A]) : ((A.startedAt || 0) <= (B.startedAt || 0) ? [A, B] : [B, A]);
+      out.push({ keep: keep.id, drop: drop.id, match: Math.round(r * 100) / 100 });
+    }
+    return out;
+  }
+
+  const PCDB = { open, uid, today, STORES, VERSION, likelyDuplicates, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy,
     isPitch, isPlay, PLAY_KINDS, GAME_STATUS, moveGame, upgradeBackup };
   if (typeof module !== "undefined" && module.exports) module.exports = PCDB;
   else root.PCDB = PCDB;

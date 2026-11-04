@@ -4,10 +4,10 @@
 function pcSlimProfile(prof) {
   const pitches = {};
   for (const [id, p] of Object.entries(prof.pitches)) {
-    pitches[id] = { n: p.n, nLoc: p.nLoc, talent: p.talent, sd: p.sd, traits: p.traits, strike_rate: p.strike_rate, possibleChange: p.possibleChange || null,
+    pitches[id] = { n: p.n, nLoc: p.nLoc, talent: p.talent, sd: p.sd, traits: p.traits, strike_rate: p.strike_rate, possibleChange: p.possibleChange || null, evidence: p.evidence || null,
       score: p.score ? { learned: p.score.learned, coach: p.score.coach, rows: p.score.rows, gap: p.score.gap, se: p.score.se, worse: p.score.worse } : null };
   }
-  return { pitcherId: prof.pitcherId, learner: prof.learner, at: prof.at, level: prof.level, games: prof.games, flags: prof.flags, pitches };
+  return { pitcherId: prof.pitcherId, learner: prof.learner, at: prof.at, level: prof.level, games: prof.games, flags: prof.flags, skipped: prof.skipped || null, pitches };
 }
 function pcLearnMessage(E, L, d) {
   if (d.type === "pitcher") {

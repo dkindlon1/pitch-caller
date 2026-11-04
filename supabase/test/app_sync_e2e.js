@@ -172,6 +172,34 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
   await coach.locator("#sync-pass").fill("anything"); await coach.getByRole("button", { name: "Sign in" }).click(); await coach.waitForTimeout(1000);
   check(/RIT Tigers as head coach/.test(await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText()), "signing in again goes straight back to the program and syncs");
 
+  console.log("8. Both iPads chart the same game (D12): it counts once");
+  for (const pg of [coach, charter]) await pg.evaluate(() => { endGame(); });   // close the games from the sections above
+  await coach.waitForTimeout(2500);
+  const pidSame = await coach.evaluate(() => S.setup.staffIds[0]);
+  const chartSame = async (pg) => {
+    await pg.evaluate((pid) => { S.setup.staffIds = [pid].concat(S.setup.staffIds.filter((x) => x !== pid)); attachStaff(); G().pitcher = 0; S.view = "live"; save(); render(); }, pidSame);
+    for (let i = 0; i < 12; i++) {
+      // the coach's own call, the way the "Your call" box sets it, so both iPads record the same pitch
+      await pg.evaluate(() => { if (!G().call) makeCall(); const d = pitcherDef().pitches[0], gr = E.gradeCall(arsenal(), situation(), d.name, "middle");
+        G().call = Object.assign({}, G().call, { pitch: d.name, quad: "middle", coach: true, runs: gr.runs_vs_best, verdict: "In the engine's mix" }); render(); });
+      await pg.keyboard.press(i % 3 === 2 ? "c" : "b"); await pg.waitForTimeout(110);
+      if (await pg.evaluate(() => !!G().inningOver)) { await pg.getByRole("button", { name: /^Take the field/ }).click(); await pg.waitForTimeout(120); }
+    }
+    const id = await pg.evaluate(() => G().dbId); await pg.evaluate(() => endGame()); await pg.waitForTimeout(2500); return id;
+  };
+  const gCoach = await chartSame(coach), gCharter = await chartSame(charter);
+  await charter.evaluate(() => syncNow(true)); await charter.waitForTimeout(2500);
+  await coach.evaluate(() => syncNow(true)); await coach.waitForTimeout(2500);
+  const twins = (await su.query("select id, doc->>'dupOf' dup from public.games where program_id = $1 and id = any($2)", [progId, [gCoach, gCharter]])).rows;
+  const dropped = twins.find((r) => r.dup), kept = twins.find((r) => !r.dup);
+  check(twins.length === 2 && dropped && kept && dropped.dup === kept.id, `the two records of one game: one marked as charted twice, pointing at the other (${twins.map((r) => (r.dup ? "dup" : "kept")).join(", ")})`);
+  const others = (await su.query("select count(*)::int n from public.games where program_id = $1 and doc->>'dupOf' is not null", [progId])).rows[0].n;
+  check(others === 1, `the short games from the sections above aren't marked (${others} marked in all)`);
+  const prof = await coach.evaluate((pid) => { const m = pModel(pid); return m ? m.profile.games.map((g) => g.id) : []; }, pidSame);
+  check(prof.includes(kept.id) && !prof.includes(dropped.id), "the coach's iPad learns from it once (the learned record came down with the duplicate left out)");
+  await toSetup(coach); await coach.evaluate(async (g) => { S.view = "data"; await pastFixLoad(g); }, dropped.id); await coach.waitForTimeout(400);
+  check(await coach.getByText(/same game as another iPad/).count() === 1, "Data, Fix a pitch says so, with a way to say they're different games");
+
   check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
   await browser.close(); server.close(); await db.end(); await su.end();
   console.log(fails ? `\n${fails} app sync check(s) FAILED` : "\nall app sync checks passed");
