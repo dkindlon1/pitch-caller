@@ -706,6 +706,11 @@ function confEvent(ars, name, ev) { const p = ars.find((x) => x.name === name); 
 function snapshot() { undo.push(JSON.stringify(S.game)); if (undo.length > 80) undo.shift(); }
 
 function record(res) {
+  { // the call on screen was for a pitch this pitcher no longer has (a roster change came down mid-at-bat): nothing is
+    // recorded against a pitch that isn't there; a fresh call is made and the coach records the result again
+    const c = G().call;
+    if (!c || !arsenal().some((x) => x.name === c.pitch)) { G().call = null; render(); toast("The roster changed under that call. Here's a fresh one: record the pitch again."); return; }
+  }
   const shakenBefore = shakenNow.slice();
   shakenNow = [];
   if (pendingLoc && !res.loc) { res.loc = pendingLoc.z; res.locCell = pendingLoc.cell; }
@@ -1491,6 +1496,7 @@ function setupView() {
     DB.ready ? row("Their lineup", "Pick today's opponent and their hitters fill in by number. Type a new name and he's added to their roster. A hitter you've seen before starts with what you learned about him.", opponentPick(), lineup, h("datalist", { id: "hitter-names" }, (S.setup.opponentId ? teamHitters(S.setup.opponentId) : []).map((x) => h("option", { value: x.name }))))
       : row("Their lineup", "Only how each hitter bats is needed. With no scouting, every hitter starts as average and the engine learns him as the game goes.", lineup),
     DB.ready ? row("Catcher", "How well today's catcher blocks. It changes how often the engine calls a pitch in the dirt with runners on.", catcherPick()) : null,
+    DB.ready ? row("Sync with Supabase", "Every pitch is saved on this iPad first. Sync copies your program's data to Supabase and brings back what other devices charted. It runs after each game and when you tap Sync now; a game never waits on it.", syncPanel()) : null,
     row("Game", "Your staff, lineup and the game in progress are saved on this device. Starting a new game files this one under Data.",
       h("div", { class: "fields" },
         h("button", { class: "btn primary", on: { click: () => endGame() } }, "Start a new game"),

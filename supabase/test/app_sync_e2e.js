@@ -1,0 +1,179 @@
+/*
+ * The Setup screen's "Sync with Supabase" section, driven in a real browser. Run from the repo root:
+ *   PGURL=postgres://postgres@localhost:55432/postgres node supabase/test/app_sync_e2e.js
+ * A stand-in for a Supabase project, on top of a real local Postgres with the migration applied:
+ *   /auth/v1/token   email + password -> an access token for that user (stand-in for Supabase Auth; any password works)
+ *   /rest/v1/rpc/*   the sync functions, called as the user in the token (stand-in for Supabase's REST server)
+ * Neither is Supabase's own server: this checks the app's screens, requests and data flow, not Supabase itself.
+ * Two iPads (separate browser profiles): the head coach signs in, starts a program and charts a game; the charter signs
+ * in on the other, picks the program and gets the game; the charter's pitch goes back to the coach.
+ */
+const { chromium } = require("playwright");
+const { Client } = require("pg");
+const http = require("http"), fs = require("fs"), path = require("path"), crypto = require("crypto");
+const BASE = process.env.PGURL || "postgres://postgres@localhost:55432/postgres";
+const DBNAME = "pc_app_sync_e2e";
+const DIST = path.join(__dirname, "../../app/dist/pitch-caller.html");
+let fails = 0;
+const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if (!ok) fails++; };
+const connect = async () => { const c = new Client({ connectionString: BASE.replace(/\/[^/]*$/, "/" + DBNAME) }); await c.connect(); return c; };
+
+(async () => {
+  const admin = new Client({ connectionString: BASE }); await admin.connect();
+  await admin.query(`drop database if exists ${DBNAME}`); await admin.query(`create database ${DBNAME}`); await admin.end();
+  const su = await connect();
+  await su.query(fs.readFileSync(path.join(__dirname, "auth_stub.sql"), "utf8"));
+  await su.query(fs.readFileSync(path.join(__dirname, "../migrations/20261103000000_pitch_caller.sql"), "utf8"));
+  const users = { "coach@test.local": crypto.randomUUID(), "charter@test.local": crypto.randomUUID() };
+  for (const [email, id] of Object.entries(users)) await su.query("insert into auth.users (id, email) values ($1, $2)", [id, email]);
+  const db = await connect();
+  const asUser = async (sub, text, params) => {
+    await db.query("begin");
+    try { await db.query("set local role authenticated"); await db.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub })]);
+      const r = await db.query(text, params); await db.query("commit"); return r; } catch (e) { await db.query("rollback"); throw e; }
+  };
+  const calls = {
+    pc_push: (a) => ["select public.pc_push($1, $2, $3::jsonb) as r", [a.p, a.tbl, JSON.stringify(a.rows)]],
+    pc_pull: (a) => ["select public.pc_pull($1, $2, $3, $4, $5) as r", [a.p, a.tbl, a.after_xid, a.after_id, a.lim]],
+    pc_my_programs: () => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_my_programs() x", []],
+    pc_create_program: (a) => ["select to_jsonb(public.pc_create_program($1, $2)) as r", [a.name, a.level]],
+    pc_set_member: (a) => ["select to_jsonb(public.pc_set_member($1, $2, $3, $4)) as r", [a.p, a.email, a.member_role, a.member_pitcher]],
+  };
+  let queue = Promise.resolve();   // one Postgres connection: requests take turns
+  const server = http.createServer((req, res) => {
+    let body = ""; req.on("data", (c) => (body += c)); req.on("end", () => { queue = queue.then(async () => {
+      const send = (code, obj) => { res.writeHead(code, { "content-type": "application/json" }); res.end(JSON.stringify(obj)); };
+      if (req.url === "/" || req.url.startsWith("/?")) { res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+        return res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${fs.readFileSync(DIST, "utf8")}</body></html>`); }
+      if (req.headers.apikey !== "anon-key") return send(401, { message: "no api key" });
+      if (/^Bearer anon-key$/.test(req.headers.authorization || "")) return send(401, { message: "stand-in: the project key was sent as a Bearer token" });
+      const a = JSON.parse(body || "{}");
+      if (req.url.startsWith("/auth/v1/token")) {
+        if (req.url.includes("grant_type=refresh_token") && a.refresh_token !== "r") return send(400, { error_description: "Invalid Refresh Token: Refresh Token Not Found" });
+        if (req.url.includes("grant_type=refresh_token")) return send(400, { error_description: "stand-in: refresh not modelled" });
+        const id = users[a.email]; if (!id) return send(400, { error_description: "Invalid login credentials" });
+        return send(200, { access_token: ["e30", Buffer.from(JSON.stringify({ sub: id })).toString("base64url"), "x"].join("."), refresh_token: "r", expires_in: 3600, user: { id, email: a.email } });
+      }
+      const fn = (req.url.match(/^\/rest\/v1\/rpc\/(\w+)$/) || [])[1];
+      if (!calls[fn]) return send(404, { message: "not found" });
+      const tok = (req.headers.authorization || "").replace(/^Bearer /, "");
+      const sub = tok.includes(".") ? JSON.parse(Buffer.from(tok.split(".")[1], "base64url").toString()).sub : null;
+      try { const r = await asUser(sub, ...calls[fn](a)); send(200, r.rows[0].r); } catch (e) { send(e.code === "42501" ? 403 : 400, { code: e.code, message: e.message }); }
+    }); });
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const url = `http://127.0.0.1:${server.address().port}`;
+  const browser = await chromium.launch();
+  const errs = [];
+  const open = async () => {
+    const page = await (await browser.newContext({ viewport: { width: 1180, height: 900 } })).newPage();
+    page.on("pageerror", (e) => errs.push(String(e) + " @ " + (e.stack || "").split("\n").slice(1, 4).join(" "))); page.on("console", (m) => { if (m.type() === "error" && !/403|Failed to load resource/.test(m.text())) errs.push(m.text()); });
+    await page.goto(url + "/"); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 8000 });
+    return page;
+  };
+  const toSetup = async (page) => { await page.locator(".tabs button", { hasText: "Setup" }).click(); await page.waitForTimeout(200); };
+  const signIn = async (page, email) => {
+    await toSetup(page);
+    await page.getByLabel("Project URL").fill(url); await page.getByLabel("Project URL").press("Tab"); await page.waitForTimeout(200);
+    await page.getByLabel("Publishable key").fill("anon-key"); await page.getByLabel("Publishable key").press("Tab"); await page.waitForTimeout(300);
+    await page.locator("#sync-email").fill(email); await page.locator("#sync-pass").fill("anything");
+    await page.getByRole("button", { name: "Sign in" }).click(); await page.waitForTimeout(500);
+  };
+
+  console.log("1. The head coach signs in and starts a program");
+  const coach = await open();
+  await coach.evaluate(async () => { const t = ourTeam(); t.name = "RIT Tigers"; await dbPut("teams", t); });
+  await signIn(coach, "coach@test.local");
+  check(await coach.getByText("Signed in as coach@test.local").count() === 1, "signed in, asked to pick or start a program");
+  await coach.getByRole("button", { name: "Start a program for this team" }).click(); await coach.waitForTimeout(1200);
+  const status = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check(/RIT Tigers as head coach/.test(status) && /Nothing waiting to go up/.test(status), `program started and the roster synced up ("${status.split("\n").find((l) => /head coach/.test(l))}")`);
+  const progId = (await su.query("select id from public.programs where name = 'RIT Tigers'")).rows[0].id;
+  check(!!progId && +(await su.query("select count(*) from public.pitchers where program_id = $1", [progId])).rows[0].count >= 1, "the program and its pitchers are on the server");
+
+  console.log("2. The coach charts a game; End game syncs it in the background");
+  await coach.locator(".tabs button", { hasText: "Game" }).click(); await coach.waitForTimeout(300);
+  for (const k of ["b", "c", "b", "c", "b", "c"]) { await coach.keyboard.press(k); await coach.waitForTimeout(120); }
+  await coach.evaluate(() => changePitcher()); await coach.waitForTimeout(200);
+  for (const k of ["b", "c"]) { await coach.keyboard.press(k); await coach.waitForTimeout(120); }
+  await coach.evaluate(() => endGame()); await coach.waitForTimeout(2500);
+  const onServer = (await su.query("select count(*) filter (where type = 'pitch')::int p, count(*) filter (where type = 'play')::int pl from public.events where program_id = $1", [progId])).rows[0];
+  check(onServer.p === 8 && onServer.pl === 1, `the game is on the server without tapping Sync: ${onServer.p} pitches, ${onServer.pl} play`);
+  const g = (await su.query("select doc from public.games where program_id = $1", [progId])).rows[0].doc;
+  check(g.status === "final" && g.packs >= 1, `the game record went up final (${g.status}, ${g.packs} pack)`);
+
+  console.log("3. The charter signs in on another iPad and gets everything");
+  await toSetup(coach);
+  await coach.locator("#sync-member").fill("nobody@test.local"); await coach.getByRole("button", { name: "Add", exact: true }).click(); await coach.waitForTimeout(500);
+  check(/no account with that email yet/.test(await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText()), "adding an email with no account says to sign up first");
+  await coach.locator("#sync-member").fill("charter@test.local"); await coach.getByRole("button", { name: "Add", exact: true }).click(); await coach.waitForTimeout(500);
+  const role = (await su.query("select m.role from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0];
+  check(role && role.role === "charter", "the head coach adds the charter from Setup");
+  const charter = await open();
+  await signIn(charter, "charter@test.local");
+  await charter.locator(".srow", { hasText: "Sync with Supabase" }).getByRole("button", { name: /RIT Tigers/ }).click(); await charter.waitForTimeout(1500);
+  const got2 = await charter.evaluate(async () => ({ events: (await DB.D.all("events")).filter((e) => e.type === "pitch").length, games: (await DB.D.all("games")).length }));
+  check(got2.events === 8 && got2.games >= 1, `the charter's iPad has the coach's game (${got2.events} pitches)`);
+  const ours = await charter.evaluate(() => [...DB.teams.values()].filter((t) => t.isOurs).map((t) => t.name));
+  check(ours.length === 1 && ours[0] === "RIT Tigers", `the new iPad's placeholder team gave way to the program's (our teams on it: ${ours.join(", ")})`);
+  const staff = await charter.evaluate(() => S.setup.staff.map((p) => p.name).sort().join(", "));
+  check(staff === "Reliever, Starter", `his staff is the program's pitchers (${staff})`);
+  const srvOurs = (await su.query("select count(*)::int n from public.teams where program_id = $1 and (doc->>'isOurs')::boolean", [progId])).rows[0].n;
+  check(srvOurs === 1, `the server still has one team of ours (${srvOurs})`);
+  const cs = await charter.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check(/as charter/.test(cs) && !/weren't allowed|wasn't allowed/.test(cs), "and shows his role, with nothing refused (the placeholders never went up)");
+
+  console.log("4. The charter charts a pitch; the coach's Sync now brings it back");
+  await charter.locator(".tabs button", { hasText: "Game" }).click(); await charter.waitForTimeout(300);
+  await charter.keyboard.press("b"); await charter.waitForTimeout(200);
+  await charter.evaluate(() => syncNow(true)); await charter.waitForTimeout(800);
+  await toSetup(coach);
+  await coach.getByRole("button", { name: "Sync now" }).click(); await coach.waitForTimeout(1200);
+  const back = await coach.evaluate(async () => (await DB.D.all("events")).filter((e) => e.type === "pitch").length);
+  check(back === 9, `the coach's iPad now has the charter's pitch too (${back} pitches)`);
+
+  console.log("5. No signal: the button says so and nothing is lost");
+  await coach.context().setOffline(true);
+  await coach.locator(".tabs button", { hasText: "Game" }).click(); await coach.waitForTimeout(200);
+  await coach.keyboard.press("c"); await coach.waitForTimeout(200);
+  await toSetup(coach);
+  await coach.getByRole("button", { name: "Sync now" }).click(); await coach.waitForTimeout(600);
+  const msg = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check(/No signal|Couldn't reach/.test(msg), `offline sync says so ("${(msg.match(/(No signal|Couldn't reach)[^.]*/) || [""])[0]}")`);
+  await coach.context().setOffline(false);
+  await coach.getByRole("button", { name: "Sync now" }).click(); await coach.waitForTimeout(1200);
+  const n = (await su.query("select count(*)::int n from public.events where program_id = $1 and type = 'pitch'", [progId])).rows[0].n;
+  check(n === 10, `back online, the pitch charted with no signal is on the server (${n} pitches)`);
+
+  console.log("6. Mid-game, the coach re-grades and renames the pitch the charter's screen is calling");
+  await charter.locator(".tabs button", { hasText: "Game" }).click(); await charter.waitForTimeout(300);
+  const before = await charter.evaluate(() => ({ v: G().packV || 0, pitch: G().call && G().call.pitch, pid: pitcherDef().id }));
+  await coach.evaluate(async ({ pid, pitch }) => {
+    const p = DB.pitchers.get(pid); const d = p.pitches.find((x) => x.name === pitch);
+    d.grade = Math.min(80, +d.grade + 5); d.name = pitch + " (new grip)"; await dbPut("pitchers", p); await syncNow(true);
+  }, before);
+  await coach.waitForTimeout(600);
+  await charter.evaluate(() => syncNow(true)); await charter.waitForTimeout(1000);
+  const after = await charter.evaluate(async () => ({ v: G().packV, call: G().call && G().call.pitch, last: (await DB.D.get("packs", G().packId)) }));
+  check(after.v === before.v + 1 && after.last && after.last.reason === "sync", `the charter's game logged a new pack version for it (v${before.v} -> v${after.v}, reason "${after.last && after.last.reason}")`);
+  check(after.call !== before.pitch, `the call for "${before.pitch}" (no longer on his arsenal) was replaced ("${after.call}")`);
+  const pitchesBefore = await charter.evaluate(async () => (await DB.D.all("events")).filter((e) => e.type === "pitch").length);
+  await charter.keyboard.press("c"); await charter.waitForTimeout(300);
+  const ev = await charter.evaluate(async () => { const xs = (await DB.D.all("events")).filter((e) => e.type === "pitch").sort((a, b) => b.createdAt - a.createdAt); return { n: xs.length, packId: xs[0].packId, now: G().packId }; });
+  check(ev.n === pitchesBefore + 1 && ev.packId === ev.now, `the next pitch records normally, under the new pack (${ev.n} pitches)`);
+  const rejected = await charter.evaluate(async () => (await SYNC.sync.state()).rejected.length);
+  check(rejected === 0, `the charter has nothing refused after pulling the coach's pitcher edit (${rejected})`);
+
+  console.log("7. The sign-in runs out");
+  await coach.evaluate(async () => { const a = await DB.D.get("meta", "auth"); a.refresh = "revoked"; a.expiresAt = Date.now() - 1000; await DB.D.put("meta", a); });
+  await toSetup(coach); await coach.getByRole("button", { name: "Sync now" }).click(); await coach.waitForTimeout(800);
+  const t7 = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check(/sign-in expired/.test(t7) && (await coach.locator("#sync-pass").count()) === 1, "a refused refresh says to sign in again and shows the sign-in form");
+  await coach.locator("#sync-pass").fill("anything"); await coach.getByRole("button", { name: "Sign in" }).click(); await coach.waitForTimeout(1000);
+  check(/RIT Tigers as head coach/.test(await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText()), "signing in again goes straight back to the program and syncs");
+
+  check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
+  await browser.close(); server.close(); await db.end(); await su.end();
+  console.log(fails ? `\n${fails} app sync check(s) FAILED` : "\nall app sync checks passed");
+  process.exit(fails ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });

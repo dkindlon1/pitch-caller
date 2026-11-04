@@ -1229,6 +1229,9 @@ td.wrapcell .line { display: block; }
       x.deletedAt = now(); x.updatedAt = x.deletedAt;
       const tx = db.transaction(store, "readwrite"); tx.objectStore(store).put(x); await done(tx); return true;
     }
+    // a hard delete, only for records that never left this device (a new iPad's placeholder team and pitchers when it
+    // joins a program that already has a roster): a soft delete would send a tombstone for something no one else has
+    async function forget(store, id) { const tx = db.transaction(store, "readwrite"); tx.objectStore(store).delete(id); await done(tx); return true; }
     async function count(store) { return (await all(store)).length; }
 
     // ------------------------------------------------------------ backup
@@ -1281,7 +1284,7 @@ td.wrapcell .line { display: block; }
     function close() { db.close(); }
     async function destroy() { db.close(); await req(factory.deleteDatabase(name)); }
 
-    return { get, all, byIndex, put, putMany, del, count, exportAll, importAll, mergeRows, changedSince, close, destroy, raw: db };
+    return { get, all, byIndex, put, putMany, del, forget, count, exportAll, importAll, mergeRows, changedSince, close, destroy, raw: db };
   }
 
   // a backup's stores brought up to this schema (pure: the backup object isn't changed)
@@ -2450,6 +2453,174 @@ td.wrapcell .line { display: block; }
   const api = { parse, parseCSV, parseHitters, typeOf, commandHint, KIND };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCImport = api;
+})(typeof window !== "undefined" ? window : this);
+
+/*
+ * Pitch Caller sync: the iPad's database (app/db.js) is the outbox, Supabase is the copy every device shares.
+ *
+ *   push  every record changed on this device since its last push goes up; the server keeps whichever version is
+ *         newer (updatedAt), the same rule as Restore, and reports any record this account may not write
+ *   pull  every record changed on the server since this device's cursor comes down and is merged the same way
+ *
+ * Nothing waits on the network during a game: pitches are written to the device first, and a push that fails (no
+ * signal) leaves them pending until the next sync. Sync state (last push time, pull cursors, the session) lives in the
+ * device's meta store, which is never synced.
+ *
+ * Works in the browser (window.PCSync) and in Node (module.exports) for tests. A transport carries the calls:
+ *   restTransport  Supabase's REST API (the pc_push / pc_pull functions in supabase/migrations)
+ *   any object with push(table, rows) and pull(table, cursor) works the same (tests use one that talks to Postgres)
+ */
+(function (root) {
+  "use strict";
+  const VERSION = "1.1.0";
+  // the device stores that sync, in the order they go up (parents before what points at them); meta stays on the device
+  const TABLES = ["teams", "pitchers", "catchers", "hitters", "checkins", "sessions", "readings", "games", "packs", "events", "learned"];
+  const BATCH = 400;
+
+  function createSync(opts) {
+    const db = opts.db, transport = opts.transport, programId = opts.programId;
+    if (!db || !transport || !programId) throw new Error("sync needs a database, a transport and a program");
+    const now = opts.now || (() => Date.now());
+    const key = "sync:" + programId;
+
+    async function state() {
+      const s = await db.get("meta", key);
+      return s || { id: key, programId, lastPush: {}, cursor: {}, rejected: [], log: [] };
+    }
+    async function saveState(s) { s.log = (s.log || []).slice(-30); return db.put("meta", s); }
+
+    // A record that came down from the server carries _pulled (the updatedAt it arrived with). Until it's changed here
+    // its updatedAt still equals _pulled, so it isn't sent back up: the server already has it, and an account that
+    // can only read it (a charter and the pitcher records) would otherwise see it refused on every sync.
+    const changedHere = (x, since) => (x.updatedAt || 0) > since && x._pulled !== x.updatedAt;
+    const forServer = (x) => { if (!("_pulled" in x)) return x; const y = Object.assign({}, x); delete y._pulled; return y; };
+
+    // what's waiting to go up, per table
+    async function pending() {
+      const s = await state(), out = {};
+      const changed = await db.changedSince(0);
+      for (const t of TABLES) { const since = s.lastPush[t] || 0; out[t] = (changed[t] || []).filter((x) => changedHere(x, since)).length; }
+      return out;
+    }
+
+    async function push() {
+      const s = await state();
+      const started = now();                 // anything written from here on goes up next time
+      const changed = await db.changedSince(Math.min(...TABLES.map((t) => s.lastPush[t] || 0)));
+      const stats = { applied: 0, skipped: 0, rejected: [] };
+      for (const t of TABLES) {
+        const since = s.lastPush[t] || 0;
+        const rows = (changed[t] || []).filter((x) => changedHere(x, since)).sort((a, b) => a.updatedAt - b.updatedAt).map(forServer);
+        for (let i = 0; i < rows.length; i += BATCH) {
+          const r = await transport.push(t, rows.slice(i, i + BATCH));   // a network failure throws: nothing is marked pushed
+          stats.applied += r.applied; stats.skipped += r.skipped;
+          for (const x of r.rejected || []) stats.rejected.push(Object.assign({ table: t }, x));
+        }
+        // a refused record isn't retried forever: it's reported (the account isn't allowed to write it)
+        s.lastPush[t] = started - 1;
+      }
+      s.rejected = stats.rejected.slice(0, 50);
+      s.lastPushAt = started;
+      s.log = (s.log || []).concat({ at: started, push: { applied: stats.applied, skipped: stats.skipped, rejected: stats.rejected.length } });
+      await saveState(s);
+      return stats;
+    }
+
+    async function pull() {
+      const s = await state();
+      const stats = { merged: 0, received: 0 };
+      for (const t of TABLES) {
+        let cur = s.cursor[t] || { xid: 0, id: "" };
+        for (let guard = 0; guard < 10000; guard++) {
+          const r = await transport.pull(t, cur);
+          stats.received += r.rows.length;
+          if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
+          cur = r.next || cur;
+          s.cursor[t] = cur;
+          await saveState(s);                 // a pull cut off halfway resumes from here
+          if (!r.more) break;
+        }
+      }
+      s.lastPullAt = now();
+      s.log = (s.log || []).concat({ at: s.lastPullAt, pull: stats });
+      await saveState(s);
+      return stats;
+    }
+
+    // push first, so this device's newest work is on the server before it merges anyone else's
+    async function syncNow() {
+      const up = await push();
+      const down = await pull();
+      return { push: up, pull: down };
+    }
+
+    return { push, pull, syncNow, pending, state, TABLES };
+  }
+
+  // ------------------------------------------------------------------ Supabase REST transport
+  // restUrl: "<project url>/rest/v1". apiKey: the project's publishable key (sb_publishable_..., or the legacy anon key). token(): the signed-in user's access token.
+  function restTransport({ restUrl, apiKey, token, programId, fetch: f }) {
+    const fx = f || (typeof fetch !== "undefined" ? fetch.bind(root) : null);
+    if (!fx) throw new Error("no fetch available");
+    async function rpc(name, body) {
+      const t = await token();
+      const res = await fx(`${restUrl.replace(/\/$/, "")}/rpc/${name}`, {
+        method: "POST",
+        // the project key goes on apikey only (Supabase's publishable keys must not be sent as a Bearer token); the
+        // signed-in user's own token, when there is one, is what Authorization carries
+        headers: Object.assign({ "content-type": "application/json", apikey: apiKey }, t ? { authorization: `Bearer ${t}` } : {}),
+        body: JSON.stringify(body),
+      });
+      const text = await res.text();
+      let json = null; try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+      if (!res.ok) {
+        const msg = (json && (json.message || json.error_description || json.error)) || text || `HTTP ${res.status}`;
+        const err = new Error(`${name}: ${msg}`); err.status = res.status; err.code = json && json.code; throw err;
+      }
+      return json;
+    }
+    return {
+      push: (table, rows) => rpc("pc_push", { p: programId, tbl: table, rows }),
+      pull: (table, cur) => rpc("pc_pull", { p: programId, tbl: table, after_xid: cur.xid || 0, after_id: cur.id || "", lim: 500 }),
+      myPrograms: () => rpc("pc_my_programs", {}),
+      createProgram: (name, level) => rpc("pc_create_program", { name, level }),
+      // head coach only (the server checks): give an account a role in this program; a pitcher is tied to his roster record
+      setMember: (email, role, pitcherId) => rpc("pc_set_member", { p: programId, email, member_role: role, member_pitcher: pitcherId || null }),
+    };
+  }
+
+  // ------------------------------------------------------------------ Supabase auth (email and password)
+  // The session is kept in the device's meta store; the access token is refreshed a minute before it expires.
+  function supabaseAuth({ url, apiKey, db, fetch: f, now }) {
+    const fx = f || (typeof fetch !== "undefined" ? fetch.bind(root) : null);
+    const clock = now || (() => Date.now());
+    const key = "auth";
+    async function call(grant, body) {
+      const res = await fx(`${url.replace(/\/$/, "")}/auth/v1/token?grant_type=${grant}`, {
+        method: "POST", headers: { "content-type": "application/json", apikey: apiKey }, body: JSON.stringify(body) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error_description || json.msg || json.error || `sign-in failed (HTTP ${res.status})`);
+      const s = { id: key, access: json.access_token, refresh: json.refresh_token, expiresAt: clock() + (json.expires_in || 3600) * 1000,
+        userId: json.user && json.user.id, email: json.user && json.user.email };
+      await db.put("meta", s);
+      return s;
+    }
+    return {
+      signIn: (email, password) => call("password", { email, password }),
+      async token() {
+        const s = await db.get("meta", key);
+        if (!s) return null;
+        if (s.expiresAt - clock() > 60000) return s.access;
+        return (await call("refresh_token", { refresh_token: s.refresh })).access;
+      },
+      async session() { return db.get("meta", key); },
+      async signOut() { return db.del("meta", key); },
+    };
+  }
+
+  const PCSync = { VERSION, TABLES, createSync, restTransport, supabaseAuth };
+  if (typeof module !== "undefined" && module.exports) module.exports = PCSync;
+  else root.PCSync = PCSync;
 })(typeof window !== "undefined" ? window : this);
 
 // The learning worker: learner v2 runs here, off the screen's thread, so learning after a game never freezes the app.
@@ -3845,6 +4016,11 @@ function confEvent(ars, name, ev) { const p = ars.find((x) => x.name === name); 
 function snapshot() { undo.push(JSON.stringify(S.game)); if (undo.length > 80) undo.shift(); }
 
 function record(res) {
+  { // the call on screen was for a pitch this pitcher no longer has (a roster change came down mid-at-bat): nothing is
+    // recorded against a pitch that isn't there; a fresh call is made and the coach records the result again
+    const c = G().call;
+    if (!c || !arsenal().some((x) => x.name === c.pitch)) { G().call = null; render(); toast("The roster changed under that call. Here's a fresh one: record the pitch again."); return; }
+  }
   const shakenBefore = shakenNow.slice();
   shakenNow = [];
   if (pendingLoc && !res.loc) { res.loc = pendingLoc.z; res.locCell = pendingLoc.cell; }
@@ -4609,6 +4785,7 @@ async function boot() {
     DB.deviceId = dev.uid;
     DB.ready = true;
     await flushQueued();
+    await syncSetup().catch((e) => console.warn("sync setup", e));
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
@@ -4812,6 +4989,7 @@ async function finishGameRecord() {
   for (const id of pids) await relearnPitcher(id);
   for (const id of hids) await relearnHitter(id);
   if (pids.size) toast(`Learned from the game: ${[...pids].map((id) => DB.pitchers.get(id).name).join(", ")}`);
+  if (SYNC.sync) setTimeout(() => syncNow(true), 0);   // the finished game goes up in the background
   return comp;
 }
 
@@ -5219,6 +5397,159 @@ async function restore(e) {
   } catch (err) { toast(err.message || "That file couldn't be read"); }
 }
 
+// ---------------------------------------------------------------- sync with Supabase (build step 2)
+// The device stays the place every pitch is written first; sync copies changes up and down in the background, never
+// during a call. Settings and the session live in the device's meta store (not synced).
+const SYNC = { cfg: null, auth: null, sync: null, busy: false, last: null, error: null, pending: null, programs: null };
+async function syncSetup() {
+  if (!DB.D || typeof PCSync === "undefined") return;
+  SYNC.cfg = await DB.D.get("meta", "syncConfig");
+  SYNC.auth = SYNC.sync = null;
+  if (!SYNC.cfg || !SYNC.cfg.url || !SYNC.cfg.apiKey) return;
+  SYNC.auth = PCSync.supabaseAuth({ url: SYNC.cfg.url, apiKey: SYNC.cfg.apiKey, db: DB.D });
+  SYNC.authSession = await SYNC.auth.session();
+  if (SYNC.cfg.programId) {
+    const transport = PCSync.restTransport({ restUrl: SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1", apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId: SYNC.cfg.programId });
+    SYNC.sync = PCSync.createSync({ db: DB.D, transport, programId: SYNC.cfg.programId });
+    SYNC.pending = await SYNC.sync.pending();
+  }
+}
+async function syncConfig(patch) {
+  SYNC.cfg = await DB.D.put("meta", Object.assign({ id: "syncConfig" }, SYNC.cfg || {}, patch));
+  await syncSetup();
+}
+const programTransport = () => PCSync.restTransport({ restUrl: SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1", apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId: null });
+async function syncNow(quiet) {
+  if (!SYNC.sync || SYNC.busy) return null;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) { SYNC.error = "No signal: everything stays on this iPad and goes up next time."; if (S.view === "setup") render(); return null; }
+  SYNC.busy = true; SYNC.error = null; if (S.view === "setup") render();
+  try {
+    const r = await SYNC.sync.syncNow();
+    SYNC.last = { at: Date.now(), r };
+    SYNC.pending = await SYNC.sync.pending();
+    if (r.pull.merged) await reloadFromDb();
+    if (!quiet) toast(`Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} not allowed for this account` : ""}`);
+    return r;
+  } catch (e) {
+    if (/refresh token|JWT expired|invalid jwt/i.test(e.message) || e.status === 401) {
+      // the sign-in ran out (or was revoked): nothing is lost, the program stays picked, he signs in again
+      await SYNC.auth.signOut().catch(() => {}); SYNC.authSession = null;
+      SYNC.error = "Your sign-in expired: sign in again. Everything stays on this iPad until then.";
+    } else SYNC.error = /fetch|network|offline/i.test(e.message) ? "Couldn't reach the server: everything stays on this iPad and goes up next time." : e.message;
+    return null;
+  } finally { SYNC.busy = false; if (S.view === "setup") render(); }
+}
+// Joining a program that already exists: pull before anything goes up. Every new install makes a placeholder "Our team"
+// with default pitchers; once the program's own team has come down, the placeholder goes, and any of its pitchers or
+// catchers that already have work on this iPad (pitches, bullpens, check-ins, velo) move to the program's team instead
+// of being lost. Only then does this iPad's own work go up.
+async function joinProgram(p) {
+  const D = DB.D;
+  const before = { teams: new Set((await D.all("teams")).map((t) => t.id)) };
+  await syncConfig({ programId: p.program_id, programName: p.name, role: p.role });
+  if (navigator.onLine === false) throw new Error("No signal: join the program once this iPad is online.");
+  SYNC.busy = true; render();
+  let moved = 0, dropped = 0;
+  try {
+    await SYNC.sync.pull();
+    const ours = (await D.all("teams")).filter((t) => t.isOurs);
+    const theirs = ours.find((t) => !before.teams.has(t.id));
+    if (theirs) {
+      const events = await D.all("events");
+      const used = new Set();
+      for (const e of events) { if (e.pitcherId) used.add(e.pitcherId); if (e.catcherId) used.add(e.catcherId); }
+      for (const st of ["sessions", "checkins", "readings"]) for (const x of await D.all(st)) if (x.pitcherId) used.add(x.pitcherId);
+      for (const mine of ours.filter((t) => before.teams.has(t.id))) {
+        for (const st of ["pitchers", "catchers"]) for (const x of await D.byIndex(st, "teamId", mine.id)) {
+          if (used.has(x.id)) { await D.put(st, Object.assign(x, { teamId: theirs.id })); moved++; }
+          else { await D.forget(st, x.id); dropped++; }
+        }
+        await D.forget("teams", mine.id);
+      }
+    }
+    await reloadFromDb();
+    S.setup.staffIds = (S.setup.staffIds || []).filter((id) => DB.pitchers.has(id));
+    if (!S.setup.staffIds.length) S.setup.staffIds = rosterPitchers().slice(0, 2).map((x) => x.id);
+    if (S.setup.catcherId && !DB.catchers.has(S.setup.catcherId)) S.setup.catcherId = null;
+    attachStaff(); save();
+  } finally { SYNC.busy = false; }
+  await syncNow(true);
+  toast(`Joined ${p.name}${moved ? `: ${moved} pitcher${moved === 1 ? "" : "s"} with work on this iPad kept (check the roster for doubles)` : ""}.`);
+  return { moved, dropped };
+}
+// what came down from other devices: refresh the in-memory copies the screens read
+// Head coach: give someone a role. They sign up first (Supabase, with their own email and password); a charter charts
+// and plans, a pitcher sees and logs only his own check-ins, bullpens and velo, a head coach can do everything.
+let staffRole = "charter";
+function staffAdder() {
+  return h("div", { class: "fields" },
+    h("label", { class: "f", style: { flex: "1 1 200px" } }, "Add staff by email", h("input", { id: "sync-member", type: "email", autocomplete: "off" })),
+    h("label", { class: "f", style: { flex: "0 1 150px" } }, "Role", h("select", { id: "sync-member-role", on: { change: (e) => { staffRole = e.target.value; render(); } } },
+      [["charter", "Charter"], ["pitcher", "Pitcher"], ["head_coach", "Head coach"]].map(([v, l]) => h("option", { value: v, selected: staffRole === v ? true : null }, l)))),
+    staffRole === "pitcher" ? h("label", { class: "f", style: { flex: "1 1 160px" } }, "Which pitcher", h("select", { id: "sync-member-pitcher" },
+      rosterPitchers().map((p) => h("option", { value: p.id }, p.name || "Pitcher")))) : null,
+    h("button", { class: "btn", on: { click: async () => {
+      const email = document.getElementById("sync-member").value.trim(); if (!email) return;
+      const pid = staffRole === "pitcher" ? document.getElementById("sync-member-pitcher").value : null;
+      try { await PCSync.restTransport({ restUrl: SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1", apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId: SYNC.cfg.programId }).setMember(email, staffRole, pid);
+        SYNC.error = null; toast(`${email} added as ${staffRole.replace("_", " ")}`); }
+      catch (e) { SYNC.error = e.message.replace(/^pc_set_member: /, ""); }
+      render();
+    } } }, "Add"));
+}
+// what came down from other devices: refresh the in-memory copies the screens read. Mid-game, a change that reaches
+// tonight's calls (another iPad re-graded a pitch, logged a check-in) is a new pack version, the same as an edit made
+// here; and a call already showing for a pitch this pitcher no longer has is dropped so the next one is made fresh.
+async function reloadFromDb() {
+  const live = !!G().dbId, before = live ? JSON.stringify(packContents()) : null;
+  for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) { map.clear(); for (const x of await DB.D.all(store)) map.set(x.id, x); }
+  for (const x of await DB.D.all("learned")) DB.models.set(x.id, x);
+  for (const x of await DB.D.byIndex("checkins", "date", PCDB.today())) DB.checkins.set(x.pitcherId, x);
+  S.setup.staffIds = (S.setup.staffIds || []).filter((id) => DB.pitchers.has(id));
+  attachStaff();
+  const c = G().call;
+  if (c && typeof arsenal === "function" && !arsenal().some((x) => x.name === c.pitch)) G().call = null;
+  if (live && JSON.stringify(packContents()) !== before) packChanged("sync");
+  save(); render();
+}
+function syncPanel() {
+  const c = SYNC.cfg || {};
+  const field = (label, key, attrs = {}) => h("label", { class: "f", style: { flex: attrs.flex || "1 1 220px" } }, label,
+    h("input", Object.assign({ value: c[key] || "", autocomplete: "off", spellcheck: "false", on: { change: (e) => syncConfig({ [key]: e.target.value.trim() }).then(render) } }, attrs)));
+  if (!c.url || !c.apiKey) return [h("div", { class: "fields" }, field("Project URL", "url", { placeholder: "https://xyzcompany.supabase.co" }), field("Publishable key", "apiKey", { placeholder: "sb_publishable_..." })),
+    h("p", { class: "note" }, "From your Supabase project's API keys page: the Project URL and the publishable key (the older anon key works too). Both are safe to keep on the iPad; the server's row rules decide what each account can see. Never paste the secret or service_role key here.")];
+  const signIn = h("div", { class: "fields" },
+    h("label", { class: "f", style: { flex: "1 1 200px" } }, "Email", h("input", { id: "sync-email", type: "email", autocomplete: "username", value: c.email || "" })),
+    h("label", { class: "f", style: { flex: "1 1 160px" } }, "Password", h("input", { id: "sync-pass", type: "password", autocomplete: "current-password" })),
+    h("button", { class: "btn primary", on: { click: async () => {
+      const email = document.getElementById("sync-email").value.trim(), pw = document.getElementById("sync-pass").value;
+      try { SYNC.authSession = await SYNC.auth.signIn(email, pw); await syncConfig({ email }); SYNC.error = null; if (!SYNC.cfg.programId) SYNC.programs = await programTransport().myPrograms(); else await syncNow(true); }
+      catch (e) { SYNC.error = e.message; }
+      render();
+    } } }, "Sign in"));
+  const signedIn = SYNC.authSession;
+  if (!signedIn) return [c.programId ? h("p", { class: "note" }, `${c.programName || "Program"}: sign in to sync.`) : null, signIn, SYNC.error ? h("p", { class: "pstat change" }, SYNC.error) : null];
+  if (!c.programId) {
+    if (!SYNC.programs) programTransport().myPrograms().then((x) => { SYNC.programs = x || []; render(); }).catch((e) => { SYNC.error = e.message; render(); });
+    return [h("p", { class: "note" }, `Signed in as ${signedIn.email || "you"}. Pick your program, or start one (you become its head coach).`),
+      h("div", { class: "staffpick" }, (SYNC.programs || []).map((p) => h("button", { class: "choice", on: { click: () => joinProgram(p).catch((e) => { SYNC.error = e.message; }).then(render) } },
+        h("b", {}, p.name), h("span", {}, p.role.replace("_", " "))))),
+      h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => {
+        try { const id = await programTransport().createProgram((ourTeam() || {}).name || "Our team", S.setup.level); await syncConfig({ programId: id, programName: (ourTeam() || {}).name || "Our team", role: "head_coach" }); await syncNow(); }
+        catch (e) { SYNC.error = e.message; } render(); } } }, "Start a program for this team")),
+      SYNC.error ? h("p", { class: "pstat change" }, SYNC.error) : null];
+  }
+  const pend = SYNC.pending ? Object.values(SYNC.pending).reduce((a, n) => a + n, 0) : 0;
+  const last = SYNC.last ? new Date(SYNC.last.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null;
+  const rej = SYNC.last && SYNC.last.r.push.rejected.length;
+  return [h("p", { class: "note" }, `${c.programName || "Program"} as ${(c.role || "").replace("_", " ")}, signed in as ${signedIn.email || "you"}. ${pend ? `${pend} change${pend === 1 ? "" : "s"} waiting to go up.` : "Nothing waiting to go up."}${last ? ` Last synced ${last}.` : ""}`),
+    rej ? h("p", { class: "pstat watch" }, `${rej} change${rej === 1 ? " wasn't" : "s weren't"} allowed for your role and stayed on this iPad only.`) : null,
+    SYNC.error ? h("p", { class: "pstat change" }, SYNC.error) : null,
+    c.role === "head_coach" ? staffAdder() : null,
+    h("div", { class: "row-acts" }, h("button", { class: "btn primary", disabled: SYNC.busy ? true : null, on: { click: () => syncNow() } }, SYNC.busy ? "Syncing…" : "Sync now"),
+      h("button", { class: "btn text", on: { click: async () => { await SYNC.auth.signOut(); SYNC.authSession = null; await syncConfig({ programId: null }); render(); } } }, "Sign out"))];
+}
+
 
 // ------------------------------------------------------------------ setup screen
 function setupView() {
@@ -5286,6 +5617,7 @@ function setupView() {
     DB.ready ? row("Their lineup", "Pick today's opponent and their hitters fill in by number. Type a new name and he's added to their roster. A hitter you've seen before starts with what you learned about him.", opponentPick(), lineup, h("datalist", { id: "hitter-names" }, (S.setup.opponentId ? teamHitters(S.setup.opponentId) : []).map((x) => h("option", { value: x.name }))))
       : row("Their lineup", "Only how each hitter bats is needed. With no scouting, every hitter starts as average and the engine learns him as the game goes.", lineup),
     DB.ready ? row("Catcher", "How well today's catcher blocks. It changes how often the engine calls a pitch in the dirt with runners on.", catcherPick()) : null,
+    DB.ready ? row("Sync with Supabase", "Every pitch is saved on this iPad first. Sync copies your program's data to Supabase and brings back what other devices charted. It runs after each game and when you tap Sync now; a game never waits on it.", syncPanel()) : null,
     row("Game", "Your staff, lineup and the game in progress are saved on this device. Starting a new game files this one under Data.",
       h("div", { class: "fields" },
         h("button", { class: "btn primary", on: { click: () => endGame() } }, "Start a new game"),

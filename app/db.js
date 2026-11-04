@@ -113,6 +113,9 @@
       x.deletedAt = now(); x.updatedAt = x.deletedAt;
       const tx = db.transaction(store, "readwrite"); tx.objectStore(store).put(x); await done(tx); return true;
     }
+    // a hard delete, only for records that never left this device (a new iPad's placeholder team and pitchers when it
+    // joins a program that already has a roster): a soft delete would send a tombstone for something no one else has
+    async function forget(store, id) { const tx = db.transaction(store, "readwrite"); tx.objectStore(store).delete(id); await done(tx); return true; }
     async function count(store) { return (await all(store)).length; }
 
     // ------------------------------------------------------------ backup
@@ -165,7 +168,7 @@
     function close() { db.close(); }
     async function destroy() { db.close(); await req(factory.deleteDatabase(name)); }
 
-    return { get, all, byIndex, put, putMany, del, count, exportAll, importAll, mergeRows, changedSince, close, destroy, raw: db };
+    return { get, all, byIndex, put, putMany, del, forget, count, exportAll, importAll, mergeRows, changedSince, close, destroy, raw: db };
   }
 
   // a backup's stores brought up to this schema (pure: the backup object isn't changed)
