@@ -5,6 +5,8 @@
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin noinherit; end if;
   if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin noinherit; end if;
+  -- Supabase's server-side role (the service key): skips row level security
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin noinherit bypassrls; end if;
 end $$;
 create schema if not exists auth;
 -- like Supabase's auth.users: email is not unique on its own (SSO and password users can share one), and an email

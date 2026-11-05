@@ -47,18 +47,33 @@ jobs:
       - run: scripts/test-app.sh
 
   web:
-    name: Web app (when web/ exists)
+    name: Web app (landing page and waitlist)
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGURL: postgresql://postgres@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
-      - id: has_web
-        run: echo "present=$([ -f web/package.json ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
-      - if: steps.has_web.outputs.present == 'yes'
-        uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
-      - if: steps.has_web.outputs.present == 'yes'
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: "package-lock.json\nweb/package-lock.json" }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npm run typecheck
+      - name: Unit tests
         working-directory: web
-        run: npm ci && npm run typecheck && npm run build
-      - if: steps.has_web.outputs.present == 'no'
-        run: echo "No web/ app yet; skipped."
+        run: npm test
+      - working-directory: web
+        run: npm run build
+      - name: Landing page end to end (built site + real waitlist function)
+        run: scripts/run-check.sh landing_e2e node web/tests/landing_e2e.js
