@@ -1,8 +1,8 @@
-v0.8 steps 5-6 acceptance on 3000 random situations (150 tables x 20 root calls; tests_v08_solve.py seeds 11, 23)
-Sit game residual < 1e-3: 2999/3000 (99.97%; spec >= 99%) PASS; worst 0.5785 (one 3-2 case)
-Deterministic (same inputs twice): 3000/3000 PASS
-Linearization, pi-weighted mean |exact - linearized|: 0.00105 runs (spec <= 0.003) PASS; max over any call 0.0159
-Guardrail (scenario 2): drawn calls with c_my - min c_my > delta: 0 PASS; three-ball counts rank by c_my by construction
-No chase at 3-0/3-1: 0 violations PASS
-Python timing: PA solve mean 1.47 s, p95 3.23, max 4.49; root mean 31 ms, p95 71 ms
-Sweeps to converge: {3: 4, 4: 51, 5: 70, 6: 21, 7: 4}
+v0.8 steps 5-6 acceptance on 3000 random situations (150 tables x 20 root calls; tests_v08_solve.py seeds 11, 23), final solver (A2)
+Sit game residual < 1e-3: 2999/3000 (99.97%; spec >= 99%) PASS; worst 0.0017
+Deterministic (same inputs twice): 3000/3000
+Linearization, pi-weighted mean |exact - linearized|: 0.00114 runs (spec <= 0.003); max over any call 0.0107
+Guardrail (scenario 2): drawn calls with c_my - min c_my > delta: 0; three-ball counts rank by c_my by construction
+No chase at 3-0/3-1: 0 violations
+Python timing (shared CPU): PA solve mean 1.32 s, p95 2.66; root mean 25 ms
+Sweeps: {3: 2, 4: 33, 5: 70, 6: 37, 7: 8}

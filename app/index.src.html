@@ -282,6 +282,15 @@ input[type="range"] { height: 24px; padding: 0; border: 0; background: none; acc
 .staff-head h3 { margin: 0; font-size: 17px; font-weight: 650; }
 .lineup { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; }
 .slot { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+/* v0.8 inputs */
+.slot .hgrades { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12px; color: var(--muted, inherit); }
+.hgrades .g { display: inline-flex; gap: 4px; align-items: center; }
+.hgrades select { min-width: 46px; padding: 2px 4px; }
+.strip .sitctl { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; border-top: 1px solid var(--line, rgba(127,127,127,.25)); padding-top: 8px; }
+.sitctl .seg .t { margin-right: 6px; font-size: 12px; }
+.whyline { display: block; margin-bottom: 2px; }
+.walk-note { display: block; margin-top: 4px; font-weight: 600; }
+.detail .radar { display: inline-flex; gap: 8px; align-items: center; margin-top: 6px; }
 .slot .i { color: var(--muted); font-size: 14px; text-align: right; }
 .hands { display: inline-flex; padding: 2px; border-radius: 999px; background: var(--well); border: 1px solid var(--stroke-2); }
 .hands button { width: 36px; height: 36px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--muted); }
@@ -588,12 +597,21 @@ function sampleSetup() {
 function newGame() {
   return { inning: 1, outs: 0, balls: 0, strikes: 0, bases: [false, false, false], us: 0, them: 0,
     pitcher: 0, pc: {}, bf: {}, recent: {}, conf: {}, batter: 0, last: null, v: 2,
-    know: {}, usage: {}, log: [], call: null, inningOver: false, pitchNo: 0 };
+    know: {}, usage: {}, log: [], call: null, inningOver: false, pitchNo: 0,
+    // v0.8: this plate appearance (frozen solve, look, sit evidence), familiarity, umpire takes, usage by call, radar
+    pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {} };
 }
+// v0.8 engine mode (docs/SPEC_v0.8.md): "v08" plans the at-bat ahead; "v07" is the v0.7c engine exactly
+function applyEngineMode() { E.setFlags(S.setup.engine === "v07" ? E.FLAGS_V07 : E.FLAGS_V08); }
+const isV08 = () => S.setup.engine !== "v07";
+const defaultInnings = () => (S.setup.level === "hs" || S.setup.level === "travel" ? 7 : 9);
 
 // ------------------------------------------------------------------ state
 let S = load() || { setup: sampleSetup(), game: null, view: "live", sample: true };
 if (!S.game || S.game.v !== 2) S.game = newGame();
+for (const [k, v] of Object.entries({ pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {} })) if (S.game[k] === undefined) S.game[k] = v;
+if (S.setup.engine === undefined) S.setup.engine = "v08";
+applyEngineMode();
 let undo = [];
 let pending = null;
 let pickMode = false;
@@ -661,7 +679,7 @@ function know() {
   const k = G().know, i = String(slotIdx());
   if (!k[i]) {   // a hitter we've seen before starts with what we learned about him (capped, so tonight still matters most)
     const b = batterDef(), m = DB.ready && b && b.hitterId ? hModel(b.hitterId) : null;
-    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m) : {}, seen: {} };
+    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m, 8, isV08()) : {}, seen: {} };
   }
   return k[i];
 }
@@ -674,15 +692,97 @@ function situation() {
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
     landing_today: Object.assign({}, (g.land || {})[pKey()] || {}),
-    catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3 });
+    catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
+    ...(isV08() ? v08Inputs() : {}) });
+}
+// ---- v0.8 inputs (spec 8.3): each optional, each inert at its default
+const hitterKey = () => { const b = batterDef() || {}; return b.hitterId || `g:${G().dbId || "local"}|${slotIdx()}|${b.name || ""}`; };
+function famFor() { const f = ((G().fam || {})[pKey()] || {})[hitterKey()]; return f ? { FB: f.FB || 0, OS: f.OS || 0 } : {}; }
+function hitterGrades() {   // coach's grades, then what's been learned (served) when there's enough of it
+  const b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
+  const coach = Object.assign({}, (x && x.grades) || b.grades || {});
+  const m = DB.ready && b.hitterId ? hModel(b.hitterId) : null;
+  if (m && m.grades) for (const g of ["c", "w", "d"]) if (m.grades[g] && m.grades[g].served !== undefined && !m.grades[g].flag) coach[g] = m.grades[g].served;
+  const out = {}; for (const g of ["c", "w", "d"]) if (coach[g] !== undefined && coach[g] !== "" && +coach[g] !== 3) out[g] = +coach[g];
+  return Object.keys(out).length ? out : null;
+}
+const UMP_SEED = { tight: -0.4, normal: 0, wide: 0.4 };
+const umpSeed = () => UMP_SEED[S.setup.umpSeed || "normal"] ?? 0;
+function radarFor(pk) {   // 8.1: with at least 3 readings today, (5 v_base + sum of the last 8) / (5 + n)
+  const out = {}, r = (G().radar || {})[pk] || {};
+  for (const d of pitcherDef().pitches) {
+    const xs = (r[d.name] || []).slice(-8);
+    if (xs.length >= 3 && +d.velo) out[d.name] = (5 * +d.velo + xs.reduce((a, b) => a + b, 0)) / (5 + xs.length);
+  }
+  return out;
+}
+function stealFor() {   // 7.4: the lead runner who can go (1st with 2nd open, or 2nd with 3rd open) and his threat
+  const g = G(), b = g.bases, A = { some: 0.04, high: 0.10 };
+  const ttp = +pitcherDef().ttp || null;
+  if (b[0] && !b[1] && A[g.steal["1"]]) return { a: A[g.steal["1"]], runner: 1, t: ttp };
+  if (b[1] && !b[2] && A[g.steal["2"]]) return { a: A[g.steal["2"]], runner: 2, t: ttp };
+  return null;
+}
+function v08Inputs() {
+  const g = G(), pd = pitcherDef(), b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
+  return { familiar: famFor(), crowding: !!((x && x.crowd) || b.crowd), grades: hitterGrades(),
+    ump_u: E.v08.umpEstimate(g.takes || [], S.setup.level, umpSeed()), radar: radarFor(pKey()), infield_in: !!g.infieldIn,
+    usage_by_call: Object.assign({}, ((g.usageCall || {})[pKey()] || {})[g.balls + "-" + g.strikes] || {}), steal: stealFor(),
+    pitch_cap: +pd.pitchCap || 105, home: S.setup.home === undefined ? null : S.setup.home, sched_innings: +S.setup.innings || null,
+    extras_runner: !!S.setup.extrasRunner, look: g.pa ? g.pa.look : null, win: g.pa ? g.pa.win : null };
 }
 
 // ------------------------------------------------------------------ the call
 let shakenNow = [];   // pitch-and-spot calls he shook off on this pitch
+// v0.8 (spec 6.2): one table per plate appearance, solved with the inputs frozen when he steps in; re-solved only when
+// the pitcher changes, a confidence or wild-today value moves by more than 0.10, or the umpire read by more than 0.20.
+// The table isn't saved: g.pa keeps the exact situation and arsenal it was solved from, so a reload rebuilds the same one.
+let paTab = null, paTabId = null;
+function paTable(ars, s) {
+  const g = G();
+  if (!g.pa || g.pa.batter !== g.batter || g.pa.pk !== pKey()) {
+    const s0 = E.Situation(Object.assign({}, s, { balls: 0, strikes: 0, last: null, look: null, win: null }));
+    const win = E.v08.winConstants(s0);
+    g.pa = { id: `${g.pitchNo}|${g.batter}|${pKey()}`, batter: g.batter, pk: pKey(), fooled: [], look: null, win, cls: { FB: 0, OS: 0 }, solve: null };
+  }
+  const pa = g.pa;
+  const live = Object.assign({}, s, { win: pa.win });
+  if (!pa.solve || E.v08.needsResolve(pa.solve.frozen, ars, live)) {
+    pa.solve = { sit: PCLearn.snapSituation(Object.assign({}, live, { balls: 0, strikes: 0, last: null, look: null })), ars: PCLearn.snapArsenal(ars),
+      frozen: E.v08.frozenInputs(ars, live), n: (pa.solve ? pa.solve.n : 0) + 1 };
+    paTab = null;
+  }
+  const id = pa.id + "#" + pa.solve.n;
+  if (!paTab || paTabId !== id) {
+    const sars = pa.solve.ars.map((x) => E.Pitch(Object.assign({}, x)));
+    paTab = E.v08.solveTable(sars, E.Situation(Object.assign({}, pa.solve.sit, { win: pa.win }))); paTabId = id;
+    if (!pa.look) pa.look = paTab.h0.slice();
+  }
+  return paTab;
+}
 function makeCall() {
-  const r = E.callMixed(arsenal(), situation(), { exclude: shakenNow });
-  G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false,
+  const ars = arsenal();
+  if (!isV08()) {
+    const r = E.callMixed(ars, situation(), { exclude: shakenNow });
+    G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false,
+      dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
+    return;
+  }
+  let s = situation();
+  const tab = paTable(ars, s);
+  s = Object.assign({}, situation(), { look: G().pa.look });
+  s.b_h = E.v08.leanBh(ars, s, G().pa.fooled);
+  const r = E.callV08(ars, s, { exclude: shakenNow, tab });
+  const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
+  const c = G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
+    sigma: r.info.sigma, why: null,
     dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
+  // spec 9: the "why" line runs after the call is shown, off the critical path
+  setTimeout(() => {
+    if (G().call !== c) return;
+    try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info)[0]; } catch (e) { c.why = null; }
+    save(); render();
+  }, 0);
 }
 function recall() {
   document.body.classList.add("thinking");
@@ -740,6 +840,12 @@ function record(res) {
     pcRaw: g.pc[pKey()] || 0, fatigueShift: fatigueShift(pd0), checkinId: ci ? ci.id : null, regs: (g.regs || {})[pKey()] || 0,
     v: { app: APP_VERSION, engine: E.VERSION, data: E.dataVersion(), learn: PCLearn.VERSION }, deviceId: DB.deviceId || null,
     pred: PCLearn.predict(E, ars, sitNow, called.name, call.quad), sit: PCLearn.snapSituation(sitNow), ars: PCLearn.snapArsenal(ars) };
+  if (isV08()) {   // spec 8.3: what the v0.8 expectations were built from, so a replay can recompute every one of them
+    const s0 = Object.assign({}, sitNow, { look: g.pa ? g.pa.look : null, ump_u: umpSeed() });
+    evBase.v08 = { look: g.pa ? g.pa.look : null, sigma: call.sigma || null, why: call.why || null, walk: !!call.walk,
+      ump: E.v08.takeStats(p, call.quad, s0, ars), grades: E.v08.gradeStats(p, call.quad, Object.assign({}, sitNow, { look: s0.look }), ars, null, sitNow.grades),
+      flags: Object.assign({}, E.FLAGS), radar: res.radar ? +res.radar : undefined };
+  }
   snapshot();
   g.pitchNo++;
   g.pc[pKey()] = (g.pc[pKey()] || 0) + 1;
@@ -749,6 +855,14 @@ function record(res) {
   const lt = g.land[pKey()][p.name] || [0, 0];
   g.land[pKey()][p.name] = [lt[0] + (res.result === "ball" || res.result === "hbp" ? 0 : 1), lt[1] + 1];
   const uk = g.balls + "-" + g.strikes; g.usage[uk] = g.usage[uk] || {}; g.usage[uk][p.name] = (g.usage[uk][p.name] || 0) + 1;
+  if (isV08()) {   // v0.8 state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
+    const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
+    uc[uk] = uc[uk] || {}; uc[uk][ck_] = (uc[uk][ck_] || 0) + 1;
+    if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow); g.pa.cls[cls]++; }
+    if (["ball", "cstrike", "hbp"].includes(res.result) && evBase.v08) g.takes.push([res.result === "cstrike" ? 1 : 0, evBase.v08.ump[0], evBase.v08.ump[1]]);
+    if (res.result === "whiff" && res.read === "fooled" && g.pa) g.pa.fooled.push(cls);
+    if (res.radar && +res.radar > 40) { const rr = (g.radar[pk] = g.radar[pk] || {}); (rr[p.name] = rr[p.name] || []).push(+res.radar); }
+  }
   const countTxt = g.balls + "-" + g.strikes;
   let text = "", paEnd = null, runs = 0, glyph = GLYPH[res.result];
   const b = g.bases;
@@ -811,6 +925,11 @@ function record(res) {
 
   if (paEnd) {
     const rk = pKey(); g.recent[rk] = g.recent[rk] || []; g.recent[rk].push(paEnd);
+    g.steal = {}; if (!g.bases[2]) g.infieldIn = false;
+    if (g.pa) {   // familiarity (spec 5): what this hitter saw from this pitcher, counted for his later at-bats today
+      const fm = (g.fam[rk] = g.fam[rk] || {}), hk = hitterKey(), f = (fm[hk] = fm[hk] || { FB: 0, OS: 0 });
+      f.FB += g.pa.cls.FB; f.OS += g.pa.cls.OS; g.pa = null;
+    }
     g.balls = 0; g.strikes = 0; g.last = null;
     if (g.outs >= 3) { g.inningOver = true; g.batter++; }
     else nextBatter();
@@ -844,7 +963,7 @@ function startNextInning() {
 }
 
 // ------------------------------------------------------------------ actions
-function needsDetail(result) { return result === "play" || (S.setup.inputs >= 3 && (result === "whiff" || result === "foul")); }
+function needsDetail(result) { return result === "play" || (S.setup.inputs >= 3 && (result === "whiff" || result === "foul")) || (isV08() && !!S.setup.radar); }
 function tapResult(result) {
   if (G().inningOver || !G().call) return;
   if (needsDetail(result)) { pending = { result }; render(); return; }
@@ -869,7 +988,7 @@ function undoLast() {
 function changePitcher() {
   const g = G(), n = S.setup.staff.length;
   if (n < 2) { toast("Add another pitcher in Setup first"); return; }
-  snapshot(); const out = pitcherDef().id || null; g.pitcher = (g.pitcher + 1) % n; g.last = null;
+  snapshot(); const out = pitcherDef().id || null; g.pitcher = (g.pitcher + 1) % n; g.last = null; g.pa = null;
   if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pitcherDef().id || null });
   toast(`${pitcherDef().name} is in`); recall();
 }
@@ -979,7 +1098,22 @@ function strip() {
         h("small", {}, runners))),
     h("div", { class: "cell" }, h("span", { class: "k" }, "Score, them–us"), h("span", { class: "v" }, `${g.them}–${g.us}`)),
     h("div", { class: "cell" }, h("span", { class: "k" }, `${pitcherDef().name}`), h("span", { class: "v" }, String(g.pc[pKey()] || 0), h("small", {}, "pitches"))),
-    h("div", { class: "cell edit" }, h("button", { class: "btn text", "aria-expanded": String(fixing), on: { click: () => { fixing = !fixing; render(); } } }, fixing ? "Done" : "Correct")));
+    h("div", { class: "cell edit" }, h("button", { class: "btn text", "aria-expanded": String(fixing), on: { click: () => { fixing = !fixing; render(); } } }, fixing ? "Done" : "Correct")),
+    isV08() ? sitControls() : null);
+}
+// v0.8 game inputs (spec 8.3): infield in with a runner on 3rd; steal threat for a runner on 1st (2nd open) or 2nd (3rd open)
+function sitControls() {
+  const g = G(), b = g.bases, kids = [];
+  const set = (fn) => { snapshot(); fn(); pending = null; recall(); };
+  if (b[2] && g.outs < 2) kids.push(h("button", { class: "btn pill", "aria-pressed": String(!!g.infieldIn), on: { click: () => set(() => { g.infieldIn = !g.infieldIn; }) } }, g.infieldIn ? "Infield in" : "Infield back"));
+  for (const [i, open, lab] of [[0, 1, "1st"], [1, 2, "2nd"]]) {
+    if (!b[i] || b[open]) continue;
+    const cur = g.steal[String(i + 1)] || "none";
+    kids.push(h("div", { class: "seg", role: "group", "aria-label": `Runner on ${lab} may run` },
+      h("span", { class: "t" }, `Runner on ${lab}`), [["none", "Holding"], ["some", "Might go"], ["high", "Running"]].map(([v, l]) =>
+        h("button", { "aria-pressed": String(cur === v), on: { click: () => set(() => { g.steal[String(i + 1)] = v; }) } }, l))));
+  }
+  return kids.length ? h("div", { class: "cell sitctl" }, kids) : null;
 }
 
 function fixRow() {
@@ -1010,8 +1144,9 @@ function callPanel() {
   const ck = `${g.pitchNo}|${g.balls}${g.strikes}|${c.pitch}|${c.quad}|${!!c.coach}`, fresh = ck !== lastZoneKey; lastZoneKey = ck;
   const why = c.coach
     ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs more than the engine's best call here.` : "."]
-    : [`Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
-       c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : ""];
+    : [c.v08 && c.why ? h("b", { class: "whyline" }, c.why + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
+       c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
+       c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
   const call = h("div", { class: "call" },
     h("div", { class: "call-main" },
       h("div", { class: "sign", "aria-label": `Sign ${SIGN[kind]}` }, String(SIGN[kind])),
@@ -1104,7 +1239,12 @@ function zoneSVG(c) {
 function pickBox() {
   const ars = arsenal();
   const go = () => {
-    const gr = E.gradeCall(ars, situation(), pickSel.pitch, pickSel.quad), g = G();
+    let gr; const g = G();
+    if (isV08()) {
+      const tab = paTable(ars, situation());
+      const s = Object.assign({}, situation(), { look: g.pa.look }); s.b_h = E.v08.leanBh(ars, s, g.pa.fooled);
+      gr = E.v08.gradeCall(ars, s, pickSel.pitch, pickSel.quad, tab);
+    } else gr = E.gradeCall(ars, situation(), pickSel.pitch, pickSel.quad);
     g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
       verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
@@ -1139,6 +1279,8 @@ function entryPanel() {
     if (g.bases.some(Boolean) && ["ball", "whiff", "cstrike"].includes(P.result)) extra.push(seg("Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]));
     if (extra.length) rows.push(h("details", { class: "more", open: P.thrown || P.wp ? true : null }, h("summary", { class: "t" }, "Cross-up or wild pitch"), extra,
       P.wp ? h("p", { class: "note" }, "Move the runners with Correct after you log it.") : null));
+    if (isV08()) rows.push(h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: P.radar ?? "",
+      "aria-label": "Radar reading, mph", style: { width: "90px" }, on: { change: (e) => { P.radar = e.target.value === "" ? undefined : +e.target.value; } } })));
     detail = h("div", { class: "detail" }, rows, h("div", { class: "go" },
       h("button", { class: "btn primary", disabled: !(P.result !== "play" || P.out), on: { click: () => record(P) } }, "Log pitch"),
       h("button", { class: "btn", on: { click: () => { pending = null; render(); } } }, "Cancel")));
@@ -1487,7 +1629,9 @@ function setupView() {
         h("label", { class: "f", style: { flex: "1 1 160px" } }, "Name", h("input", { id: `pn${pi}`, name: `pn${pi}`, autocomplete: "off", value: pd.name, on: { change: (e) => { pd.name = e.target.value || `Pitcher ${pi + 1}`; changed(true); } } })),
         h("div", { class: "f" }, "Throws", h("div", { class: "hands", role: "group", "aria-label": "Throws" }, ["R", "L"].map((x) => h("button", { "aria-pressed": String(pd.hand === x), on: { click: () => { pd.hand = x; changed(true); } } }, x)))),
         h("label", { class: "f", style: { flex: "1 1 180px" } }, "Arm slot", h("select", { id: `ps${pi}`, on: { change: (e) => { pd.slot = e.target.value; changed(); } } }, SLOT_OPTS.map((s) => h("option", { value: s, selected: s === pd.slot ? true : null }, s)))),
-        h("label", { class: "f", style: { width: "100px" } }, "Height, ft", h("input", { id: `pht${pi}`, type: "number", inputmode: "decimal", step: 0.1, min: 4.5, max: 7.5, value: pd.height_ft, on: { change: (e) => { pd.height_ft = +e.target.value; changed(); } } }))),
+        h("label", { class: "f", style: { width: "100px" } }, "Height, ft", h("input", { id: `pht${pi}`, type: "number", inputmode: "decimal", step: 0.1, min: 4.5, max: 7.5, value: pd.height_ft, on: { change: (e) => { pd.height_ft = +e.target.value; changed(); } } })),
+        h("label", { class: "f", style: { width: "110px" } }, "Pitch cap", h("input", { id: `pcap${pi}`, type: "number", inputmode: "numeric", min: 30, max: 150, value: pd.pitchCap || "", placeholder: "105", on: { change: (e) => { pd.pitchCap = e.target.value === "" ? null : +e.target.value; changed(); } } })),
+        h("label", { class: "f", style: { width: "130px" } }, "Time to plate, s", h("input", { id: `pttp${pi}`, type: "number", inputmode: "decimal", step: 0.05, min: 0.9, max: 2.5, value: pd.ttp || "", placeholder: "optional", on: { change: (e) => { pd.ttp = e.target.value === "" ? null : +e.target.value; changed(); } } }))),
       h("div", { class: "tbl-wrap" }, h("table", { class: "ptable" },
         h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Velo"].map((t) => h("th", {}, t)),
           measured ? [h("th", {}, "V break"), h("th", {}, "H break")] : null, h("th", {}, ""))),
@@ -1499,11 +1643,26 @@ function setupView() {
     h("span", { class: "i" }, String(i + 1)),
     h("input", { id: `ln${i}`, name: `ln${i}`, autocomplete: "off", list: DB.ready ? "hitter-names" : null, placeholder: `${ord(i + 1)} hitter…`, value: b.name, "aria-label": `Hitter ${i + 1} name`, on: { change: (e) => { b.name = e.target.value.trim(); DB.ready ? linkHitter(b, i) : changed(); } } }),
     h("div", { class: "hands", role: "group", "aria-label": `Hitter ${i + 1} bats` }, ["R", "L", "S"].map((x) => h("button", { "aria-pressed": String(b.hand === x), "aria-label": { R: "Bats right", L: "Bats left", S: "Switch hitter" }[x], on: { click: () => {
-      b.hand = x; const hx = DB.ready && b.hitterId && DB.hitters.get(b.hitterId); if (hx) { hx.bats = x; dbPut("hitters", hx); } changed(true); } } }, x))))));
+      b.hand = x; const hx = DB.ready && b.hitterId && DB.hitters.get(b.hitterId); if (hx) { hx.bats = x; dbPut("hitters", hx); } changed(true); } } }, x))),
+    (st.engine || "v08") === "v08" ? hitterGradeInputs(b, i, changed) : null)));
 
   return h("main", {},
     h("div", { class: "head" }, h("div", {}, h("h1", {}, "Setup"), h("p", { class: "sub" }, "Your level, what you'll log, your staff and their lineup. Changes apply to the game right away."))),
     row("Level", "Sets what a walk, a strikeout and a runner on third are worth, and how wild the average pitcher is.", levelChoices),
+    row("Engine", "v0.8 plans each at-bat ahead (setups, timing, what he's sitting on, the game situation). v0.7c is the previous engine, exactly as it was.",
+      h("div", { class: "choices" }, [["v08", "v0.8: plans the at-bat", "Default. Learns the umpire, tracks what each hitter has seen, and weighs the game score late."],
+        ["v07", "v0.7c: the previous engine", "For comparison, or if anything looks off."]].map(([k, t, d]) =>
+        h("button", { class: "choice", "aria-pressed": String((st.engine || "v08") === k), on: { click: () => { st.engine = k; applyEngineMode(); G().pa = null; changed(true); } } }, h("b", {}, t), h("span", {}, d))))),
+    (st.engine || "v08") === "v08" ? row("Game situation", "Home or away and the scheduled innings let the engine weigh the score late in close games. Leave home/away unset and it plays for runs only.",
+      h("div", { class: "fields" },
+        h("div", { class: "f" }, "We're", h("div", { class: "hands wide", role: "group", "aria-label": "Home or away" }, [[true, "Home"], [false, "Away"], [null, "Not set"]].map(([v, l]) =>
+          h("button", { "aria-pressed": String((st.home === undefined ? null : st.home) === v), on: { click: () => { st.home = v; G().pa = null; changed(true); } } }, l)))),
+        h("label", { class: "f", style: { width: "130px" } }, "Scheduled innings", h("input", { type: "number", inputmode: "numeric", min: 5, max: 12, value: st.innings || "", placeholder: String(defaultInnings()),
+          on: { change: (e) => { st.innings = e.target.value === "" ? null : +e.target.value; G().pa = null; changed(); } } })),
+        h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.extrasRunner ? true : null, on: { change: (e) => { st.extrasRunner = e.target.checked; G().pa = null; changed(); } } }), "Extra innings start with a runner on 2nd"),
+        h("div", { class: "f" }, "Umpire", h("div", { class: "hands wide", role: "group", "aria-label": "Umpire's zone" }, [["tight", "Tight"], ["normal", "Normal"], ["wide", "Wide"]].map(([v, l]) =>
+          h("button", { "aria-pressed": String((st.umpSeed || "normal") === v), on: { click: () => { st.umpSeed = v; changed(true); } } }, l)))),
+        h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.radar ? true : null, on: { change: (e) => { st.radar = e.target.checked; changed(); } } }), "Log radar readings (optional, per pitch)"))) : null,
     row("What you'll log", "Pick what your charter can keep up with. Every option calls the game; more detail mostly helps it learn each hitter.", tierChoices,
       h("button", { class: "choice", "aria-pressed": String(!!st.logLoc), on: { click: () => { st.logLoc = !st.logLoc; changed(true); } } },
         h("b", {}, "Also log where each pitch ended up"), h("span", {}, "One more tap on a small zone grid. It's what lets the app learn each pitcher's real command; results alone barely show it."))),
@@ -1520,6 +1679,18 @@ function setupView() {
       h("div", { class: "fields" },
         h("button", { class: "btn primary", on: { click: () => endGame() } }, "Start a new game"),
         DB.ready ? null : h("button", { class: "btn", on: { click: () => { undo = []; const th = S.theme; S = { setup: sampleSetup(), game: newGame(), view: "setup", sample: true, theme: th }; save(); render(); toast("Sample staff and lineup loaded"); } } }, "Load the sample staff"))));
+}
+// v0.8 hitter scouting (spec 8.2): contact, power, eye (discipline), 1 to 5 with 3 = average, and a crowds-the-plate flag.
+// Kept on his roster record when he has one, so they carry from game to game.
+function hitterGradeInputs(b, i, changed) {
+  const hx = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null, rec = hx || b;
+  rec.grades = rec.grades || {};
+  const put = () => { if (hx) dbPut("hitters", hx); changed(); };
+  return h("div", { class: "hgrades" },
+    [["c", "Contact"], ["w", "Power"], ["d", "Eye"]].map(([k, l]) => h("label", { class: "g" }, l,
+      h("select", { "aria-label": `Hitter ${i + 1} ${l.toLowerCase()} grade`, on: { change: (e) => { rec.grades[k] = +e.target.value; put(); } } },
+        [1, 2, 3, 4, 5].map((v) => h("option", { value: v, selected: (+rec.grades[k] || 3) === v ? true : null }, String(v)))))),
+    h("label", { class: "check" }, h("input", { type: "checkbox", checked: rec.crowd ? true : null, on: { change: (e) => { rec.crowd = e.target.checked; put(); } } }), "Crowds the plate"));
 }
 function staffPick() {
   const list = rosterPitchers();

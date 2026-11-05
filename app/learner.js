@@ -686,7 +686,31 @@
     }
     const damage = {};
     for (const [k, [s, w]] of Object.entries(acc)) if (w > 0) damage[k] = [Math.max(-1, Math.min(1, Math.round((s / w) * 1000) / 1000)), Math.round(w * 10) / 10];
-    return { hitterId: hitter && hitter.id, damage, games: games.size, n, prior, learner: VERSION };
+    const grades = hitterGrades(E, hitter, events, level, opts.prev);
+    return Object.assign({ hitterId: hitter && hitter.id, damage, games: games.size, n, prior, learner: VERSION }, grades ? { grades } : {});
+  }
+  // v0.8 (spec 8.2): contact, power and discipline grades from the (p_i, d_i) pairs logged with each pitch (each computed
+  // with that grade at 3 and the others at their values then), shrunk to the coach's grade by I0. Rails: no effect before
+  // 30 pitches, at most 0.5 a game from what was served before, and a flag instead of a change past 1 point from the coach.
+  function hitterGrades(E, hitter, events, level, prev) {
+    if (!E.v08 || !E.v08.SIM || !E.v08.SIM.I0_GRADE) return null;
+    const obs = { c: [], w: [], d: [] }; let n = 0;
+    for (const ev of events) {
+      if (ev.deletedAt || ev.legacy || !isPitch(ev) || !ev.v08 || !ev.v08.grades) continue;
+      const g = ev.v08.grades, swing = ev.res === "whiff" || ev.res === "foul" || ev.res === "play";
+      n++;
+      if (g.d) obs.d.push([swing ? 1 : 0, g.d[0], g.d[1]]);
+      if (swing && g.c) obs.c.push([ev.res === "whiff" ? 1 : 0, g.c[0], g.c[1]]);
+      if (ev.res === "play" && ev.contact && g.w) obs.w.push([ev.contact === "hard" ? 1 : 0, g.w[0], g.w[1]]);
+    }
+    if (!n) return null;
+    const I0 = E.v08.SIM.I0_GRADE[level] || E.v08.SIM.I0_GRADE.college_d3, coach = (hitter && hitter.grades) || {}, out = {};
+    for (const g of ["c", "w", "d"]) {
+      const gc = +coach[g] || 3, pv = prev && prev.grades && prev.grades[g] ? prev.grades[g].served : null;
+      const [used, est, flag] = E.v08.gradeEstimate(obs[g], gc, I0[g], pv === undefined ? null : pv, n);
+      out[g] = { served: r2(used), est: r2(est), flag, n: obs[g].length, coach: gc };
+    }
+    return out;
   }
   const LEVEL_AVG = {
     hs: { AVG: 0.286, OBP: 0.415, SLG: 0.383, K: 0.210, BB: 0.141 },
@@ -707,10 +731,14 @@
     const clamp = (x) => Math.max(-0.6, Math.min(0.6, x));
     return { FB: Math.round(clamp(rel * opsGap * 1.5) * 1000) / 1000, OS: Math.round(clamp(rel * (opsGap * 1.0 - kGap * 2.0)) * 1000) / 1000 };
   }
-  function seedDamage(model, cap = 8) {
+  function seedDamage(model, cap = 8, center = false) {
     const out = {};
     if (!model || !model.damage) return out;
-    for (const [k, [s, n]] of Object.entries(model.damage)) out[k] = [s, Math.min(n, cap)];
+    // v0.8 (8.2): with hitter grades on, the seed is centered (his mean damage across classes and spots taken out), so
+    // damage carries only class and spot differences and the grades carry his overall level: no double count
+    const vals = Object.values(model.damage).map((x) => x[0]);
+    const mean = center && vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    for (const [k, [s, n]] of Object.entries(model.damage)) out[k] = [Math.round((s - mean) * 1000) / 1000, Math.min(n, cap)];
     return out;
   }
 

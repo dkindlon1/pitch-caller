@@ -36,10 +36,10 @@ except ImportError:
 # ---------------------------------------------------------------------------
 FLAGS_V07 = dict(pairing_v07=True, bf_term_v07=True, ev_full=True, expect_v07=True, look_state=False, timing_B=False,
                  objective_win=False, inplay_typed=False, running_game=False, umpire_learn=False, fatigue_v08=False,
-                 hitter_grades=False, hs_pitch_cost=False, temp_unc=False)
+                 hitter_grades=False, hs_pitch_cost=False, temp_unc=False, zone_22=False)
 FLAGS_V08 = dict(pairing_v07=False, bf_term_v07=False, ev_full=False, expect_v07=False, look_state=True, timing_B=True,
                  objective_win=True, inplay_typed=True, running_game=True, umpire_learn=True, fatigue_v08=True,
-                 hitter_grades=True, hs_pitch_cost=True, temp_unc=True)
+                 hitter_grades=True, hs_pitch_cost=True, temp_unc=True, zone_22=True)
 FLAGS = dict(FLAGS_V07)
 
 
@@ -156,8 +156,10 @@ NO_CHASE = {(3, 0), (3, 1)}     # v0.7b coach rule W1 (Drew): never a chase targ
 
 
 def targets(balls, strikes):
-    """The targets the engine may call in this count."""
-    return [q for q in QUADS if q != "chase"] if (balls, strikes) in NO_CHASE else QUADS
+    """The targets the engine may call in this count. v0.8 (zone_22, Drew's rule): attack the zone at 2-2 too."""
+    if (balls, strikes) in NO_CHASE or (FLAGS.get("zone_22") and (balls, strikes) == (2, 2)):
+        return [q for q in QUADS if q != "chase"]
+    return QUADS
 ZONES = ["heart", "edge", "off", "noncomp"]
 
 LEVEL = {  # c_L confidence weight, h_L hitter-read weight, confidence cutoff, fatigue start

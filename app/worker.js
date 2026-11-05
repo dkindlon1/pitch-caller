@@ -15,7 +15,7 @@ function pcLearnMessage(E, L, d) {
     const served = L.finishServe(E, L.serve(prof, d.pitcher, d.prev || null), d.pitcher, d.level);
     return { profile: pcSlimProfile(prof), served };
   }
-  if (d.type === "hitter") return { model: L.hitterModel(E, d.hitter, d.events, d.level) };
+  if (d.type === "hitter") return { model: L.hitterModel(E, d.hitter, d.events, d.level, { prev: d.prev || null }) };
   throw new Error("unknown message " + d.type);
 }
 if (typeof self !== "undefined" && typeof window === "undefined" && typeof module === "undefined") {

@@ -78,7 +78,7 @@ async function refreshLineupMemory() {
   const k = G().know; let redo = false;
   S.setup.lineup.forEach((b, i) => {
     const e = k[String(i)], m = b.hitterId && hModel(b.hitterId);
-    if (e && m && !Object.keys(e.seen).length) { e.damage = PCLearner.seedDamage(m); if (i === slotIdx()) redo = true; }
+    if (e && m && !Object.keys(e.seen).length) { e.damage = PCLearner.seedDamage(m, 8, S.setup.engine !== "v07"); if (i === slotIdx()) redo = true; }
   });
   if (redo && G().call && !G().call.coach && !G().inningOver) makeCall();
 }
@@ -140,7 +140,7 @@ async function relearnHitter(hid) {
   const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt && PCDB.isPitch(e) && !dups.has(e.gameId));
   const team = DB.teams.get(x.teamId);
   let r;
-  try { r = await learnCall({ type: "hitter", hitter: x, events: evs, level: (team && team.level) || levelOf() }); } catch (e) { console.error(e); return hModel(hid) || null; }
+  try { r = await learnCall({ type: "hitter", hitter: x, events: evs, level: (team && team.level) || levelOf(), prev: hModel(hid) || null }); } catch (e) { console.error(e); return hModel(hid) || null; }
   const m = Object.assign({ id: "h2:" + hid }, r.model);
   DB.models.set(m.id, await dbPut("learned", m));
   return m;
@@ -157,7 +157,10 @@ function ensureGameRecord() {
   g.dbId = PCDB.uid("gam");
   const rec = PCDB.moveGame({ id: g.dbId, date: PCDB.today(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
     catcherId: S.setup.catcherId || null, staffIds: (S.setup.staffIds || []).slice(), lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
-    status: "planned", startedAt: Date.now(), deviceId: DB.deviceId || null }, "live");
+    status: "planned", startedAt: Date.now(), deviceId: DB.deviceId || null,
+    // v0.8 game inputs (spec 8.3)
+    setup: { engine: S.setup.engine || "v08", home: S.setup.home === undefined ? null : S.setup.home, innings: S.setup.innings || null,
+      extrasRunner: !!S.setup.extrasRunner, umpSeed: S.setup.umpSeed || "normal" } }, "live");
   if (DB.ready) dbPut("games", rec); else queue().games.push(rec);
   makePack("start");
   return g.dbId;
@@ -173,6 +176,7 @@ function packContents() {
   const staff = (found.length ? found : (S.setup.staff || [])).map((p) => {
     const m = pModel(p.id), ci = todayCheckin(p.id);
     return { pitcherId: p.id, name: p.name, hand: p.hand, useLearned: p.useLearned !== false, pitchLimit: p.pitchLimit || null,
+      pitchCap: p.pitchCap || null, ttp: p.ttp || null,
       pitches: (p.pitches || []).map((d) => ({ id: d.id, name: d.name, kind: d.kind, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"),
         graded: PCLearner.graded(d, "grade") && PCLearner.graded(d, "command"), feel: +d.feel, active: d.active !== false })),
       served: m && m.served ? JSON.parse(JSON.stringify(m.served.pitches)) : null, checkinId: ci ? ci.id : null,
@@ -180,7 +184,8 @@ function packContents() {
   });
   const tid = S.setup.opponentId, roster = tid ? teamHitters(tid) : [];
   const hitters = {};
-  for (const x of roster) { const m = hModel(x.id); hitters[x.id] = { name: x.name, bats: x.bats, damage: m ? JSON.parse(JSON.stringify(m.damage)) : null }; }
+  for (const x of roster) { const m = hModel(x.id); hitters[x.id] = { name: x.name, bats: x.bats, damage: m ? JSON.parse(JSON.stringify(m.damage)) : null,
+    grades: x.grades ? Object.assign({}, x.grades) : null, crowd: !!x.crowd, learnedGrades: m && m.grades ? JSON.parse(JSON.stringify(m.grades)) : null }; }
   const c = S.setup.catcherId && DB.catchers.get(S.setup.catcherId);
   return { staff, catcher: c ? { id: c.id, block: +c.block || 3 } : null, opponentId: tid || null, hitters,
     lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
@@ -361,7 +366,9 @@ function profilePanel(p) {
       h("label", { class: "f", style: { flex: "1 1 170px" } }, "Arm slot", h("select", { on: { change: (e) => { p.slot = e.target.value; savePitcher(p); } } }, SLOT_OPTS.map((s) => h("option", { value: s, selected: s === p.slot ? true : null }, s)))),
       f("Height, ft", "height_ft", { type: "number", step: 0.1, min: 4.5, max: 7.5, inputmode: "decimal" }, "0 1 100px"),
       f("Class of", "gradYear", { inputmode: "numeric", placeholder: "2028" }, "0 1 100px"),
-      f("Fatigue point", "pitchLimit", { type: "number", min: 20, max: 140, inputmode: "numeric", placeholder: String(FATIGUE[S.setup.level]) }, "0 1 130px")),
+      f("Fatigue point", "pitchLimit", { type: "number", min: 20, max: 140, inputmode: "numeric", placeholder: String(FATIGUE[S.setup.level]) }, "0 1 130px"),
+      f("Pitch cap", "pitchCap", { type: "number", min: 30, max: 150, inputmode: "numeric", placeholder: "105" }, "0 1 110px"),
+      f("Time to plate, s", "ttp", { type: "number", min: 0.9, max: 2.5, step: 0.05, inputmode: "decimal", placeholder: "optional" }, "0 1 130px")),
     h("label", { class: "f" }, "Notes", h("input", { value: p.notes || "", placeholder: "Anything a coach should know", on: { change: (e) => { p.notes = e.target.value; savePitcher(p, false); } } })),
     h("div", { class: "row-acts spread" },
       h("label", { class: "check" }, h("input", { type: "checkbox", checked: p.useLearned !== false ? true : null, on: { change: (e) => { p.useLearned = e.target.checked; savePitcher(p); } } }),

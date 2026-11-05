@@ -12,4 +12,4 @@
 [PASS] familiarity raises hard contact with looks and caps at 0.5 logits (off-speed: ~4.3 looks)
        hard share 0 looks 0.0387, 2 0.0451, 4 0.0520, 20 0.0531, 50 0.0531
 
-6/6 v0.8 checks passed (6 s)
+6/6 v0.8 checks passed (8 s)

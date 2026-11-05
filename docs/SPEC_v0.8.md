@@ -699,3 +699,45 @@ WE for the home team at the start of a tied game is 0.50 ± 0.005 (both teams ar
 no edge in this model); both teams' WE sum to 1 in every state; the 7.0 gate holds (D1, D3) and the HS/travel/MLB report is
 attached; LI averages 1.0
 over game states by construction; m₀ > 0 in every state.
+
+## 12. Amendments made during the build
+
+Each was needed to make the spec buildable or to follow its own rules; each is in both engines and covered by parity.
+
+**A1. Middle is its own sit option (2.1).** HEIGHTS = (up, middle, down); a target's height membership is 1 for its own
+option (up-in, up-away, fastball chase → up; middle → middle; down-in, down-away, off-speed chase → down) and
+m_h = member − 1/3. With up/down only and middle counted as half of each, the middle target could never be exploited
+by a sit, which made "get it over" free of any guessing cost.
+
+**A2. A continuous call operator and a solver that reaches the balance point (2.3).** With hard never-pick windows, a
+call sitting at a window edge flips in and out of the mix, so the quantal-response iteration has no fixed point and
+cycled (3-2 and 0-2 failed to converge). In v0.8 mode (v0.7c keeps its exact operator for the golden test):
+- each window's last 20% tapers linearly to zero (nothing outside a window is ever picked);
+- locations are weighted from the pitch's own best cost, in a location window that shrinks from LOC_WINDOW as the
+  pitch's best falls behind the overall best (floor 20%): the continuous form of v0.7c's fallback;
+- the solver iterates on σ only, with π = Φ(Mσ) exactly at every step; step w = 0.3, halved whenever the residual
+  grows, floor 0.002; stop at residual ‖σ − σ*(π̃)‖∞ < 1e-3 or 3,000 steps (typically 30-70; the slowest cases need
+  ~2,500 steps, about 10 ms in JavaScript).
+Result: 2,999 of 3,000 random situations converge (99.97%; spec ≥ 99%).
+
+**A3. Fit decisions (10).** The spec said when a term ships but not what happens when it doesn't. Rule used: a term
+that ships takes its fitted value; one that doesn't keeps the spec's guess if the guess is inside the 95% interval;
+if the interval excludes the guess, the fitted value is used when its interval also excludes 0, else the term is 0.
+A block of coefficients (count zone, familiarity) ships on the held-out gain plus a joint 95% Wald test. Eye level's
+whiff and off-zone-swing coefficients are fitted and applied separately (β_E, β_E,S). Shipped values: β_T 0.24,
+λ 0.8, α 0.6, β_E −0.14, β_E,S −0.25, d* 2.0, β_tun 0 (off), φ_FB 0.030, φ_OS 0.116 (kept), γ_T 0.3 (kept),
+β_y −0.36, κ(b, k) fitted by count (centered on the simulated take mix). Full report: results/seq_fit_report.txt.
+
+**A4. The learners iterate Newton's step to the posterior mode (7.5, 8.2).** The spec's formulas are exactly the first
+Newton step of the posterior mode from u₀ (umpire) or 3 (grades). With one step, a hitter 1.5 grade points from
+average came out a full point short. The same stored pairs (p_i, d_i) are used, each pitch extrapolated as
+p_i(x) = sig(logit p_i + a_i (x − x₀)), a_i = d_i / (p_i(1 − p_i)); up to 20 steps. Nothing new needs logging.
+
+**A5. No chase target at 2-2 in v0.8 (Drew's rule: attack the zone at 2-2).** v0.7c met it by its count stakes
+alone (100% zone calls at 2-2 in simulation); v0.8's fuller solve called a 2-2 slider chase once in 8 games, so the
+rule is now explicit (flag `zone_22`, on in v0.8 only), like the 3-0/3-1 rule.
+
+**Speed (6.5).** Both engines cache values that don't depend on the count, look or sit (ball-in-play values and
+end-of-plate-appearance values per base-out state and objective), and the JavaScript outcome model is computed in a
+sit-independent part and a sit part with every sum in the original order. Results are identical (parity) and the
+4× throttled at-bat solve went from 6.8 s to 0.8 s at worst.

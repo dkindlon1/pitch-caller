@@ -21,6 +21,28 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 - **Coach rules built in**: get it over with off-speed only when that pitch is landing today; attack the zone at
   2-2; never re-call what he just shook off; nothing below the pitcher's trust line while he trusts something.
 
+## v0.8: planning the at-bat (default engine)
+
+v0.8 (spec: `docs/SPEC_v0.8.md`, amendments in its section 12) keeps the cost equation and adds what a pitching coach
+thinks about between pitches:
+
+- **What he's sitting on.** The hitter guesses a pitch and a height; the engine and the hitter settle at a
+  quantal-response balance point each count, and a "fooled" read shifts his guess for the rest of the at-bat.
+- **Planning ahead.** Each at-bat is solved once over count × the hitter's look (the speed and height he's tuned to),
+  so a pitch is valued for what it sets up. A guardrail keeps every call within 0.010 runs of the best call on its own.
+- **Timing, eye level, repeats, familiarity** by class from earlier at-bats today (replacing v0.7c's pairing and
+  batters-faced terms), with Statcast-fitted sizes (`seq_fit.py`, `fit_v08.json`): timing surprise ships at half the
+  guess, a change of eye level slightly *hurts* in MLB data, and the tunnel score showed no effect, so it's off.
+- **The game situation.** Win expectancy and leverage tables (`we_tables.py`) blend runs with winning late in close
+  games; typed batted balls with runner-on-third and double-play rules; the running game; an intentional-walk
+  suggestion.
+- **Today's umpire**, fatigue (speed and stuff, or radar), hitter grades (contact, power, eye) learned across games.
+- **A why line** on every call.
+
+Switches: `engine.FLAGS_V07` reproduces v0.7c exactly (golden test, 500 cases, Python and JavaScript); the app has an
+Engine choice in Setup. Checks: `tests_v08*.py`, `golden/`, `app/parity_v08.js`, `app/budget_v08.js`, `app/v08_e2e.js`.
+Build report: `docs/BUILD_v0.8_REPORT.md`.
+
 ## Files
 
 | File | What it is |

@@ -10,7 +10,8 @@
 
   const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"];
   // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
-  const targets = (b, k) => ((b === 3 && (k === 0 || k === 1)) ? QUADS.filter((q) => q !== "chase") : QUADS);
+  // v0.8 (zone_22, Drew's rule): attack the zone at 2-2 too
+  const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (FLAGS.zone_22 && b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
@@ -38,10 +39,10 @@
   // v0.8 compatibility flags (docs/SPEC_v0.8.md section 1); FLAGS_V07 reproduces v0.7c exactly (golden/golden.js)
   const FLAGS_V07 = { pairing_v07: true, bf_term_v07: true, ev_full: true, expect_v07: true, look_state: false, timing_B: false,
     objective_win: false, inplay_typed: false, running_game: false, umpire_learn: false, fatigue_v08: false,
-    hitter_grades: false, hs_pitch_cost: false, temp_unc: false };
+    hitter_grades: false, hs_pitch_cost: false, temp_unc: false, zone_22: false };
   const FLAGS_V08 = { pairing_v07: false, bf_term_v07: false, ev_full: false, expect_v07: false, look_state: true, timing_B: true,
     objective_win: true, inplay_typed: true, running_game: true, umpire_learn: true, fatigue_v08: true,
-    hitter_grades: true, hs_pitch_cost: true, temp_unc: true };
+    hitter_grades: true, hs_pitch_cost: true, temp_unc: true, zone_22: true };
   const FLAGS = Object.assign({}, FLAGS_V07);
   function setFlags(kw) {
     const prev = Object.assign({}, FLAGS);
@@ -1446,7 +1447,21 @@
     else line = "Tunnels off the last pitch";
     return [line, deltas, b];
   }
-  const v08 = { psum, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
+  function gradeCallV08(arsenal, s, pitchName, quad, tab, opts = {}) {
+    // the coach's own call priced the way v0.8 prices its calls: against the hitter's sit mix at the root, with the table
+    const r = callV08(arsenal, s, Object.assign({ tab }, opts));
+    const sg = r.info.sigma, costs = rootCosts(arsenal, r.info.s, tab, sg), ks = sitOptions(arsenal);
+    const key = ck(pitchName, quad), p = byName(arsenal, pitchName);
+    const look = r.info.s.look || tab.h0;
+    const cHuman = key in costs ? costs[key] : psum(ks.filter((k) => sg[k] > 1e-4).map((k) => sg[k] * cost08(p, quad, r.info.s, arsenal, tab, look, pureSit(k))[0]));
+    let best = Infinity; for (const a in r.info.M) { const c = psum(ks.map((k) => sg[k] * r.info.M[a][k])); if (c < best) best = c; }
+    const tq = targets(s.balls, s.strikes), allowed = tq.includes(quad);
+    let prob = 0; for (const d of r.dist) if (d.pitch.name === pitchName && d.quad === quad) prob += d.prob;
+    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best, allowed,
+      verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
+      engine_top: r.dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
+  }
+  const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine,
