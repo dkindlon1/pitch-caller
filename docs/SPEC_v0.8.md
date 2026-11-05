@@ -1,6 +1,7 @@
 # Pitch Caller v0.8: Math Spec (build version)
 
-Status: rewritten 2026-11-04; revised after a second fresh review (4 blockers, 6 majors, 7 minors fixed) and a third (5 majors, 6 minors fixed). Every term below has
+Status: rewritten 2026-11-04; revised after a second fresh review (4 blockers, 6 majors, 7 minors fixed) a third (5 majors, 6 minors fixed) and a fourth (2 majors, 10 minors
+fixed). Every term below has
 a definition, a starting value, a switch, an input source and an acceptance test. Where a number is a guess it says so.
 
 ## 0. Ground rules
@@ -34,6 +35,11 @@ a definition, a starting value, a switch, an input source and an acceptance test
 | `hitter_grades` | off | on | Scouting grades (section 8.2) |
 | `hs_pitch_cost` | off | on (HS, travel) | Pitch-cap cost (section 7.6) |
 | `temp_unc` | off | on | Uncertainty floor on temperature (section 6.6) |
+
+**Look tracking.** The look (v̂, ŷ, 2.6) is updated after every pitch whenever `pairing_v07` is off, because the
+root's timing and eye-level terms use it. `look_state` only decides whether the look is also a state in the value
+solve (off: future counts are valued at the plate appearance's starting look h₀, which equals the myopic cost of
+6.4).
 
 **Golden test (gates every step):** with all flags at v0.7c, `call_mixed` distributions on 500 fixed random situations
 (seeded) equal the committed v0.7c outputs to 1e-12, in Python and JavaScript; tests.py 19/19.
@@ -83,7 +89,8 @@ gives back the blended ṽ. Then:
   never-pick window, then location softmax with LOC_WINDOW), at temperature T(b,k) from section 6.6.
 - Hitter's belief of our mix includes what a dugout saw today (today's usage blend, k = 4):
   π̃(a) = (4·π(a) + usage_a) / (4 + n_usage), where usage_a counts calls a = (pitch, target) thrown in this count
-  today by this pitcher (v0.7c counted per pitch name; the target is now logged with it).
+  today by this pitcher. This is a new Situation field, `usage_by_call`; v0.7c's `usage_this_count` (keyed by pitch
+  name) stays as it is so the golden test holds.
 - The hitter uses the same temperature T(b,k) as the engine (section 6.6).
 - Hitter:
 
@@ -176,8 +183,8 @@ s(r) = \operatorname{clip}\!\left(\frac{|r| - 0.03}{0.05},\,0,\,1\right)
 | r < 0 (faster than expected) | 0.6·s(r) |
 
 B is continuous everywhere (at r = 0.12 the changeup curve is 1 from both sides, since s = 1 from r = 0.08).
-Example: when he's timed near his fastball (ṽ ≈ v_FB), moving the same fastball between locations changes v_p by at
-most 3 mph, so |r| ≤ about 3.5% and B ≤ 0.1. When he's timed for off-speed (ṽ well below v_FB) a fastball is a real
+Example: when he's timed near his fastball (ṽ ≈ v_FB), moving the same fastball between locations moves v_p by at
+most ±1.5 mph around his speed, so |r| ≤ about 1.8%, inside the 3% dead zone: B = 0. When he's timed for off-speed (ṽ well below v_FB) a fastball is a real
 surprise and B can be large; that is intended.
 
 ### 3.2 Where it enters
@@ -199,7 +206,8 @@ or chase), whiff fooled 0 (fooled also feeds the sit evidence in 2.5); halved at
 
 On whiff, the sum of the sit shift (2.2), the timing term (3.2) and the θ term (3.3) is clipped to ±1.6·h_L logits
 when `expect_v07` is off (it is not applied in v0.7c mode, where a four-pitch arsenal can reach 1.5·0.75 + 0.6 =
-1.725). The same cap at ±1.2·h_L applies on hard
+1.725). The cap is applied inside each pure-sit cost C(a | k) at the root and to the expected
+shift in the linearized solve (2.4), so the linearization test includes it. The same cap at ±1.2·h_L applies on hard
 contact. Rationale: these are separate mechanisms (type recognition, sequence timing, measured timing) but they are
 collinear in data; the cap bounds the double-count risk.
 
@@ -324,8 +332,8 @@ today.
 
 ### 6.5 Compute plan and budget
 
-Per plate appearance (in the background worker), per sweep and count: the sit matrix M is built once at the count's
-starting look h₀ (6 sits × 18 calls = 108 evaluations; it is not rebuilt per look bin), plus |looks|·|calls| for the
+Per plate appearance (in the background worker), per sweep and count: the sit matrix M is built once at the plate
+appearance's starting look h₀ (6 sits × 18 calls = 108 evaluations; it is not rebuilt per look bin), plus |looks|·|calls| for the
 value solve (6 × 18 = 108). Today's at_bat_values does 4 × 18 = 72 per count per sweep (verified: one D3 call_mixed
 makes 4,464 outcome evaluations, 0.15 s in Python). So v0.8 does 3× the evaluations, and each evaluation is heavier
 (four batted-ball types, typed runner tables, four-bin interpolation): plan on about 2.5× per evaluation, roughly 7.5×
@@ -373,20 +381,26 @@ hits, errors, wild pitches, steals, double plays and sac flies):
    of that quantity over all plate appearances (frequencies from forward propagation through an average game).
 4. Stored as `we_tables.json` per level and N ∈ {7, 9}.
 
-Prerequisites and consistency (part of step 7):
+The chain used here is the **corrected, calibrated chain** built in step 3 (section 7.0). The WE chain is the source of
+the runner-on-third and double-play totals; 7.3's typed table is calibrated to match it, not the other way round.
 
-- Fix the caught-stealing rate in `college_rates.py`'s `rates()`: today SB is summed over all teams but stolen-base
-  attempts only over teams that report them, which makes D3's CS negative (−0.0094) and a negative transition
-  probability in the chain. Compute SB and CS from the reporting teams only. Write the corrected rates to a **new**
-  file, `we_rates.json`; never rewrite `college_run_values.json` or `run_tables.py` (the engine's walk/strikeout
-  linear weights and RE tables come from them, and the golden test depends on them).
-- Calibrate the chain to the engine's run tables: multiply the chain's walk, hit-by-pitch and hit rates by one common
-  factor per level until its RE(0 outs, empty) equals RE_BY_LEVEL's within 0.5% (D1's table was scaled ×1.072 and the
-  raw chain gives 0.653 vs 0.700).
-- Use the same runner-on-third and double-play totals as 7.3 (both are calibrated to the same level data), so the WE
-  chain and the engine score outs the same way on average. Check: the calibrated chain's RE matches RE_BY_LEVEL in
-  every base-out state within max(5%, 0.035 runs); report the largest gap (the third review measured D1 4.1%, D3 5.4%
-  at 2 outs with runners on first and second, which passes on the 0.035-run arm).
+### 7.0 Corrected, calibrated chain (built in step 3)
+
+- **Rates.** College levels from `college_rates.py`, high school and travel from `hs_rates.py`, MLB from the
+  `mlb_check` rates. The caught-stealing fix goes in a new function, `rates_v08()`, in `college_rates.py`: today SB is
+  summed over all teams but stolen-base attempts only over the teams that report them, which makes D3's CS negative
+  (−0.0094) and a negative transition probability. `rates_v08()` takes SB and CS from the reporting teams only. The
+  old `rates()` and the script's existing output path are unchanged; never rewrite `college_run_values.json` or
+  `run_tables.py` (the engine's walk/strikeout linear weights and RE tables come from them, and the golden test
+  depends on them). Corrected rates and the calibration factor go to a new file, `we_rates.json`.
+- **Calibration.** Multiply the chain's walk, hit-by-pitch and hit rates by one common factor per level until its
+  RE(0 outs, empty) equals RE_BY_LEVEL's within 0.5% (D1's table was scaled ×1.072; the raw chain gives 0.653 vs 0.700).
+- **Gate.** For D1 and D3 the calibrated chain's RE must match RE_BY_LEVEL in every base-out state within max(5%,
+  0.035 runs) (the fourth review measured D3 5.4% = 0.033 runs and D1 4.1%: both pass). HS's RE table is a uniform
+  ×1.111 rescale of the chain's shape and MLB's is an external table, so a hit-rate factor can't match their shape
+  everywhere (the fourth review found 5.4% gaps, up to 0.19 runs at HS bases loaded, 0 outs). For HS, travel and MLB
+  the gate is report-only: list every state over max(5%, 0.035 runs). These tables matter only through the win blend
+  late in close games.
 
 New game inputs: we're home or away; scheduled innings (default HS/travel 7, college 9, editable for doubleheaders);
 extra-innings runner flag. The half follows from home/away.
@@ -443,18 +457,20 @@ Runner advances on outs, fewer than 2 outs:
 
 | Situation | GB out | FB out | LD or PU out |
 | --- | --- | --- | --- |
-| Runner on 3rd scores | 0.35 (0.10 if the coach sets infield in) | 0.60 × s_sf | 0.01 |
+| Runner on 3rd scores | p_GB = min(0.95, 0.35·s_G) (0.10 if the coach sets infield in) | p_FB = min(0.85, 0.60·s_F) | 0.01 |
 | Runner on 2nd (3rd open) to 3rd | 0.50 | 0.25 | 0 |
 | Double play (runner on 1st), given a GB out | weak 0.30, solid 0.20, hard 0.10, × s_dp | 0 | 0 |
 
-Calibration targets come from the (corrected) chain in `college_rates.py`:
+Calibration targets come from the corrected, calibrated chain (7.0), built earlier in the same step:
 
 - **Runner scoring from third on an out.** In the chain (`pa_transitions`), on a ball-in-play out with a runner on
   third and fewer than 2 outs the runner scores with probability sf + 0.25·(1 − g_s − sf) + g_s·1[0 outs], where
   g_s = `_gdp_rate` only when first base is also occupied (else 0), and the bunt rate does not apply (it is gated off
   with a runner on third). The target T_L is that rate averaged over the chain's visits to runner-on-third, fewer-than-2-out
   states (the third review measured about 0.554 for D3 and 0.573 for D1 before the CS fix). The typed model's
-  matching rate is Σ_t share_t(out)·p_t. Calibrate with **separate** multipliers: p_FB = min(0.85, 0.60·s_F) and
+  matching rate is computed the same way, visit-weighted over the same states:
+  share_GB(out)·[d·1[0 outs] + (1 − d)·p_GB] + share_FB(out)·p_FB + share_LD+PU(out)·0.01, where d is the typed
+  double-play rate given a ground-ball out (only with first base occupied; else 0). Calibrate with **separate** multipliers: p_FB = min(0.85, 0.60·s_F) and
   p_GB = min(0.95, 0.35·s_G), p_LD = p_PU = 0.01; set s_F = s_G first, and if p_FB hits its 0.85 cap, hold it there and
   raise s_G alone until the typed rate equals T_L at the reference mix (fly-ball outs at 0.95 would be poor baseball
   sense).
@@ -548,7 +564,8 @@ Three grades, 1 to 5, default 3 (3 everywhere = v0.7c): contact c, power w, disc
 \Delta\text{logit}\,W = -g_c(c-3), \qquad \Delta\text{logit}\,H = +g_w(w-3), \qquad \Delta\text{logit}\,S_{\text{off zone}} = -g_d(d-3)
 ```
 
-g values are fit by a new `fit_hitter_spread.py` (same method as `fit_spread.py`): one contact point lowers simulated
+g values are fit by a new `fit_hitter_spread.py` (same method as `fit_spread.py`, its own writer; output
+`hitter_spread_params.py`, never `spread_params.py`): one contact point lowers simulated
 strikeout rate by the level's sd_k, one discipline point raises walk rate by sd_walk (both from `spread_params.py`,
 i.e. assuming hitters spread like pitchers until hitter data exists), one power point raises hard-contact share by 0.03
 (assumption). Starting value 0.25 each. `spread_params.py` has no MLB entry, so MLB uses D1's fitted values.
@@ -650,11 +667,11 @@ weights (0.75, 0.5), swing sit weights (0.3, 0.15), crowding 0.3, steal threat r
 | 0 | Compatibility flags; golden file of v0.7c outputs (Python and JS) | Golden test exact; tests.py 19/19; parity |
 | 1 | Pure-sit cost evaluator C(a | k) (2.2; diagnostic only, it changes no call); metrics: X per count (2.3) on v0.7c's mix π, ρ, location shares; `perturb.py`; baseline report | Baseline report committed; golden exact |
 | 2 | `seq_fit.py` and fits (independent of the engine) | Fit report with ship / no-ship per term |
-| 3 | Typed batted balls (7.3), `inplay_fit.py` → `inplay_typed_params.py`, simulator switch (no `fit_all.py` rerun) | Level rates within current tolerances with flag on; golden test exact with flag off |
-| 4 | Familiarity (5) with re-keying, fatigue (8.1), umpire (7.5), HS cost (7.6), app inputs (8.3) | Section acceptance tests; golden exact with flags off |
+| 3 | Corrected, calibrated chain (7.0: `rates_v08()`, `we_rates.json`); typed batted balls (7.3), `inplay_fit.py` → `inplay_typed_params.py`, simulator switch (no `fit_all.py` rerun) | 7.0 gate; level rates within current tolerances with flag on; golden test exact with flag off |
+| 4 | Familiarity (5) with re-keying in the app **and** the simulator (which today counts `seen` per pitch name: it must pass per-class, earlier-at-bat counts), fatigue (8.1), umpire (7.5), app inputs (8.3) | Section acceptance tests; golden exact with flags off |
 | 5 | Sit game (2.1-2.5) at root and per count | Residual and linearization tests; X report |
-| 6 | Look, timing, eye level, pair terms, planning (2.6-2.7, 3, 4, 6) | Budget (6.5); scenario tests below |
-| 7 | `we_tables.py`, objective blend (7.1-7.2), running game (7.4), walk suggestion (7.7) | WE table checks below |
+| 6 | Look, timing, eye level, pair terms, planning (2.6-2.7, 3, 4, 6); HS pitch cost (7.6, needs the solve's N) | Budget (6.5); scenario tests below |
+| 7 | `we_tables.py` on the step-3 chain, objective blend (7.1-7.2), running game (7.4), walk suggestion (7.7) | WE table checks below |
 | 8 | Hitter grades (8.2), why line (9), temperature floor (6.6) | Section tests; X not worse than v0.7c by > 0.002 runs |
 
 After every step: tests.py (v0.7c mode) 19/19, the golden test with the step's flag off, Python/JS parity on 150 fresh
@@ -670,10 +687,10 @@ Any v0.7c behavior check that changes with a flag on is reported and updated onl
    never changes the ranking.
 3. Big spot halves every pair term.
 4. Repeat after a whiff raises the same pitch's share versus no whiff.
-5. A changeup 9% slower than ṽ gets B = 1; with ṽ = v_FB, the same fastball moved between targets gets B ≤ 0.1.
+5. A changeup 9% slower than ṽ gets B = 1; with ṽ = v_FB, the same fastball moved between targets gets B = 0.
 
 **WE table checks (step 7):** the chain's mean runs per half-inning equals RE_BY_LEVEL at (0 outs, empty) within 2%;
 WE for the home team at the start of a tied game is 0.50 ± 0.005 (both teams are level-average, so batting last gives
-no edge in this model); both teams' WE sum to 1 in every state; the calibrated chain's RE matches RE_BY_LEVEL within
-max(5%, 0.035 runs) in every base-out state; LI averages 1.0
+no edge in this model); both teams' WE sum to 1 in every state; the 7.0 gate holds (D1, D3) and the HS/travel/MLB report is
+attached; LI averages 1.0
 over game states by construction; m₀ > 0 in every state.
