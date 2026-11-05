@@ -30,7 +30,9 @@
 >   A second review of the fixes found 1 high, 2 medium and 5 low more (the new under-13 claim stripped a pitcher before
 >   any coach agreed; players could still read coach notes from the table; approval could revive old invites). All are
 >   fixed. A third review found 2 medium and 1 low (a pack naming a deleted child became NULL; a release didn't bring the
->   data back and holding a child wiped his profile on the iPads; a coach-made team id could carry text), also fixed.
+>   data back and holding a child wiped his profile on the iPads; a coach-made team id could carry text)), also fixed;
+>   its check found the release could let an older iPad's copy undo a newer edit or a delete (fixed: copies keep their
+>   own stamps, the server lets one full record replace the placeholder, an already-stripped record isn't re-stamped).
 >   Each finding has a check in `rls_matrix_test.js` sections 12-15 or `client_review_test.js` sections 13-14, plus one more found while fixing them (a NULL
 >   pitcherId slipped through the write check). Additions: one open invite per pitcher; a parent's email typed by a
 >   player waits for a coach's approval, and only that approval marks him under 13 (`pc_approve_invite`,

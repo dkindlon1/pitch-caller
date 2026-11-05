@@ -273,6 +273,52 @@ const MIN = 60e3;
     check((await srvName("pk3")) === "Not A Kid" && (await onServer("pk3")) === 1 && (await local("pk3")).name === "Not A Kid", "a wrong mark taken off: his record and check-in go back up from the iPad");
   }
 
+  console.log("15. Several coaches' iPads after a release: nobody's newer work is undone");
+  {
+    const srv = async (pid) => ((await su.query("select doc from public.pitchers where program_id = $1 and id = $2", [P, pid])).rows[0] || {}).doc || {};
+    const loc = async (D, pid) => (await D.D.all("pitchers", true)).find((x) => x.id === pid) || {};
+    const hold = async (pid) => { await as("coach", "select public.pc_mark_minor($1, $2)", [P, pid]); };
+    const agree = async (pid) => {
+      const t = (await as("coach", "select public.pc_invite($1, 'player', $2, 'pitcher2@x.org', true) r", [P, pid])).rows[0].r;
+      await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [t]);
+      return t;
+    };
+    const A = await device(), B = await device(), C = await device();
+    await A.D.put("pitchers", { id: "q2", name: "v1", number: "22", notes: "coach note", pitches: [{ id: "f", name: "Fastball", grade: 4 }] });
+    await A.sync("coach", P, true).syncNow(); await B.sync("coach", P, true).syncNow();
+    await hold("q2");
+    await A.sync("coach", P, true).syncNow(); await B.sync("coach", P, true).syncNow();
+    await C.sync("coach", P, true).syncNow();                                   // a new iPad: it only ever sees the placeholder
+    check((await loc(A, "q2")).name === "v1" && (await loc(B, "q2")).name === "v1" && !(await loc(C, "q2")).name, "(held: A and B keep v1, the new iPad C has only the placeholder)");
+    const tok = await agree("q2");
+    await A.sync("coach", P, true).syncNow();
+    const a = await loc(A, "q2"); await sleep(5); await A.D.put("pitchers", Object.assign({}, a, { name: "v2 corrected on A" })); await A.sync("coach", P, true).syncNow();
+    await B.sync("coach", P, true).syncNow();                                   // B acts on the release later, with its older v1
+    await C.sync("coach", P, true).syncNow();                                   // C acts on it with only a placeholder
+    await A.sync("coach", P, true).syncNow();
+    const sv = await srv("q2");
+    check(sv.name === "v2 corrected on A" && sv.notes === "coach note" && sv.pitches.length === 1, `P2/P3: the server keeps A's correction and the full record (${sv.name})`);
+    check((await loc(A, "q2")).name === "v2 corrected on A" && (await loc(B, "q2")).name === "v2 corrected on A" && (await loc(C, "q2")).name === "v2 corrected on A",
+      "and every iPad ends up with it, the one that had only the placeholder too");
+    // P4: deleted on one iPad while held
+    await B.D.put("pitchers", { id: "q4", name: "Seven", number: "7", pitches: [] });
+    await B.sync("coach", P, true).syncNow(); await A.sync("coach", P, true).syncNow();
+    await hold("q4");
+    await A.sync("coach", P, true).syncNow(); await B.sync("coach", P, true).syncNow();
+    await sleep(5); await A.D.del("pitchers", "q4"); await A.sync("coach", P, true).syncNow();
+    await agree("q4");
+    await B.sync("coach", P, true).syncNow();                                   // B's live copy goes first
+    await A.sync("coach", P, true).syncNow();                                   // then A's delete, made later
+    await B.sync("coach", P, true).syncNow();
+    const s4 = await srv("q4");
+    check(!!s4.deletedAt && s4.name === "Seven" && !!(await loc(B, "q4")).deletedAt, `P4: a delete made while he was held stands (deletedAt ${s4.deletedAt ? "set" : "missing"})`);
+    // P5: one release per consent, however many times it's sent
+    const n0 = +(await su.query("select count(*) n from public.minor_releases where pitcher_id = 'q2'")).rows[0].n;
+    await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [tok]).catch(() => {});
+    const n1 = +(await su.query("select count(*) n from public.minor_releases where pitcher_id = 'q2'")).rows[0].n;
+    check(n0 === 1 && n1 === 1, `P5: agreeing again isn't another release (${n0} -> ${n1})`);
+  }
+
   await c.end(); await su.end();
   console.log(fails ? `\n${fails} client check(s) FAILED` : "\nall client checks passed");
   process.exit(fails ? 1 : 0);

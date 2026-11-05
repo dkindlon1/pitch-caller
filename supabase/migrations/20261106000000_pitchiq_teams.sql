@@ -355,6 +355,8 @@ declare cur jsonb; keep jsonb := '{}'::jsonb; k text;
 begin
   select doc into cur from public.pitchers where program_id = p and id = pitcher;
   if cur is null then return; end if;
+  -- already only the placeholder: leave it (and its stamp) alone, so a change an iPad made since still wins
+  if not exists (select 1 from jsonb_object_keys(cur) j where not j = any (private.pc_placeholder_keys())) then return; end if;
   foreach k in array private.pc_placeholder_keys() loop
     if cur ? k and (k <> 'teamId' or ((cur ->> 'teamId') ~ '^[a-z]{3,4}_[a-z0-9]{8,40}$'
                                        and exists (select 1 from public.teams t where t.program_id = p and t.id = cur ->> 'teamId')))
@@ -660,8 +662,13 @@ begin
   end if;
   insert into public.guardian_consents (program_id, pitcher_id, guardian_user_id, method)
   values (inv.program_id, inv.pitcher_id, auth.uid(), method)
-  on conflict (program_id, pitcher_id) do update set method = excluded.method, consented_at = now();
-  perform private.pc_release_minor(inv.program_id, inv.pitcher_id);
+  on conflict (program_id, pitcher_id) do nothing;
+  if found then
+    perform private.pc_release_minor(inv.program_id, inv.pitcher_id);   -- held -> agreed: a release, once
+  else
+    update public.guardian_consents set method = pc_record_guardian_consent.method, consented_at = now()
+    where program_id = inv.program_id and pitcher_id = inv.pitcher_id;
+  end if;
 end $$;
 
 -- accept an invite. A player who says he is under 13 on an invite with no parent email is never linked: he gives a
@@ -921,7 +928,7 @@ language sql stable security definer set search_path = '' as $$
     'held', coalesce((select jsonb_agg(m.pitcher_id order by m.pitcher_id) from public.minors m
                       where m.program_id = p and private.pc_minor_unconsented(p, m.pitcher_id)), '[]'::jsonb),
     'released', coalesce((select jsonb_agg(jsonb_build_object('id', x.pitcher_id, 'key', x.id::text) order by x.id)
-                          from public.minor_releases x where x.program_id = p and x.released_at > now() - interval '400 days'), '[]'::jsonb))
+                          from public.minor_releases x where x.program_id = p), '[]'::jsonb))
   else jsonb_build_object('held', '[]'::jsonb, 'released', '[]'::jsonb) end
 $$;
 -- a player's own pitcher records, without the coaches' notes (players can't select the pitchers table directly)
@@ -1037,6 +1044,16 @@ begin
     end if;
     if tbl = 'pitchers' and private.pc_minor_unconsented(p, rid) and not private.pc_placeholder_ok(p, r, cur) then
       rejected := rejected || jsonb_build_object('id', rid, 'reason', 'not allowed: a parent has to give consent first'); continue;
+    end if;
+    -- a player let go after being held: the server has only the placeholder it stripped him to, stamped when it did.
+    -- The first full record an iPad sends back replaces it whatever its own stamp (an iPad's copy is older than the
+    -- strip), taking a stamp just after it; from then on it's newest-wins as usual, so a later edit on any iPad stands.
+    if tbl = 'pitchers' and cur is not null and not private.pc_minor_unconsented(p, rid)
+       and exists (select 1 from public.minor_releases x where x.program_id = p and x.pitcher_id = rid)
+       and not exists (select 1 from jsonb_object_keys(cur) j where not j = any (private.pc_placeholder_keys()))
+       and exists (select 1 from jsonb_object_keys(r) j where not j = any (private.pc_placeholder_keys()))
+       and (r ->> 'updatedAt')::bigint <= (cur ->> 'updatedAt')::bigint then
+      r := jsonb_set(r, '{updatedAt}', to_jsonb((cur ->> 'updatedAt')::bigint + 1)); fixed := true;
     end if;
     n := 0;
     if cur is null or (r ->> 'updatedAt')::bigint > (cur ->> 'updatedAt')::bigint then
