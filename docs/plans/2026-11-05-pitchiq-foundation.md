@@ -33,6 +33,8 @@
 >   data back and holding a child wiped his profile on the iPads; a coach-made team id could carry text)), also fixed;
 >   its check found the release could let an older iPad's copy undo a newer edit or a delete (fixed: copies keep their
 >   own stamps, the server lets one full record replace the placeholder, an already-stripped record isn't re-stamped).
+>   A last check found a thin copy (a parent's edit, a placeholder-only iPad's edit) could still wipe the coaches'
+>   fields; a thin copy is now merged field by field on the iPad, and a placeholder-only push only changes its fields.
 >   Each finding has a check in `rls_matrix_test.js` sections 12-15 or `client_review_test.js` sections 13-14, plus one more found while fixing them (a NULL
 >   pitcherId slipped through the write check). Additions: one open invite per pitcher; a parent's email typed by a
 >   player waits for a coach's approval, and only that approval marks him under 13 (`pc_approve_invite`,

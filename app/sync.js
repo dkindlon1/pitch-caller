@@ -141,7 +141,9 @@
             if (/^clock/.test(x.reason || "")) restamp.push([t, x.id]);
           }
         }
-        if (take.length) await db.mergeRows(t, take.map((d) => Object.assign({}, d, { _pulled: d.updatedAt })), { force: true });
+        let keep = take;
+        if (t === "pitchers" && take.length) { const k = await keepFuller(take, new Set()); keep = k.rows; stats.remerge = (stats.remerge || 0) + k.merged; }
+        if (keep.length) await db.mergeRows(t, keep.map((d) => Object.assign({}, d, { _pulled: d.updatedAt })), { force: true });
         s.lastPush[t] = started - 1;
       }
       // a record stamped by a clock more than a day fast: once this iPad's clock is right again it gets a fresh stamp
@@ -155,7 +157,10 @@
       s.lastPushAt = started;
       s.log = (s.log || []).concat({ at: started, push: { applied: stats.applied, skipped: stats.skipped, rejected: stats.rejected.length } });
       await saveState(s);
+      const again = ((await db.get("meta", "pushExtra")) || { tables: {} }).tables.pitchers || [];
       if (await db.get("meta", "pushExtra")) { if (db.forget) await db.forget("meta", "pushExtra"); else await db.del("meta", "pushExtra"); }
+      // records merged from a thin server answer during this push go up on the next one
+      if (stats.remerge && again.length) await db.put("meta", { id: "pushExtra", tables: { pitchers: again } });
       return stats;
     }
 
@@ -178,6 +183,33 @@
     // edit or delete made on another iPad isn't undone. A copy that is itself only a placeholder isn't sent.
     const PLACEHOLDER = new Set(["id", "createdAt", "updatedAt", "deletedAt", "teamId", "number", "_pulled"]);
     const onlyPlaceholder = (x) => Object.keys(x).every((k) => PLACEHOLDER.has(k));
+    // A pitcher record always has its arsenal (pitches); a copy without one is thin: the placeholder the server keeps
+    // for a held under-13 player, or what a parent or player typed in before anyone sent the full record back. A thin
+    // copy never replaces a fuller one here, from a pull or from the server's answer to a push: a bare placeholder of a
+    // held player is kept out, anything else thin is merged in field by field (its fields win, the rest stay) and the
+    // merge goes up, so the server ends up with both.
+    const thin = (x) => !Array.isArray(x.pitches);
+    async function keepFuller(rows, held) {
+      const ids = new Set(rows.filter(thin).map((x) => x.id));
+      if (!ids.size) return { rows, merged: 0 };
+      const local = new Map((await db.all("pitchers", true)).filter((x) => ids.has(x.id) && !thin(x)).map((x) => [x.id, x]));
+      const out = [], merged = [];
+      for (const x of rows) {
+        const mine = local.get(x.id);
+        if (!mine || !thin(x)) { out.push(x); continue; }
+        if (onlyPlaceholder(x) && held.has(x.id)) continue;
+        const m = Object.assign({}, mine, x, { updatedAt: Math.max(+x.updatedAt || 0, +mine.updatedAt || 0) + 1 });
+        delete m._pulled; merged.push(m);
+      }
+      if (merged.length) {
+        await db.mergeRows("pitchers", merged, { force: true });
+        const extra = (await db.get("meta", "pushExtra")) || { id: "pushExtra", tables: {} };
+        extra.tables = extra.tables || {}; extra.tables.pitchers = [...new Set((extra.tables.pitchers || []).concat(merged.map((x) => x.id)))];
+        await db.put("meta", extra);
+      }
+      return { rows: out, merged: merged.length };
+    }
+
     async function resend(releases, s) {
       const cursor = +s.releaseCursor || 0;
       const fresh = releases.filter((x) => x && x.id && +x.key > cursor);
@@ -219,12 +251,7 @@
             // (also while a release this iPad hasn't acted on yet is waiting: the placeholder may still be the newest copy)
             const relCursor = +s.releaseCursor || 0;
             const held = new Set(t === "pitchers" && r.minors ? (r.minors.held || []).concat((r.minors.released || []).filter((x) => +x.key > relCursor).map((x) => x.id)) : []);
-            if (held.size) {
-              // only a bare placeholder is kept out, and only over a fuller copy here: a full record (sent back by
-              // another iPad after a release) comes down as usual, newest wins
-              const fuller = new Set((await db.all("pitchers", true)).filter((x) => held.has(x.id) && !onlyPlaceholder(x)).map((x) => x.id));
-              rows = rows.filter((x) => !(fuller.has(x.id) && onlyPlaceholder(x)));
-            }
+            if (t === "pitchers") { const k = await keepFuller(rows, held); rows = k.rows; stats.resend += k.merged; }
             if (rows.length) stats.merged += await db.mergeRows(t, rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
             if (t === "pitchers" && Array.isArray(r.purged) && r.purged.length) stats.purged += await purge(r.purged);
             if (t === "pitchers" && r.minors && Array.isArray(r.minors.released)) stats.resend += await resend(r.minors.released, s);
@@ -252,7 +279,7 @@
       try { up = await push(); }
       catch (e) { if (!e.status || e.status === 401 || e.status === 403 || e.code === "other-program" || e.code === "other-user") throw e; upErr = e; up = { applied: 0, skipped: 0, rejected: [], error: e.message }; }
       let down = await pull();
-      if (down.resend) { try { const again = await push(); up = { applied: (up.applied || 0) + again.applied, skipped: (up.skipped || 0) + again.skipped, rejected: (up.rejected || []).concat(again.rejected), error: up.error }; } catch (e) {} }
+      if (down.resend || up.remerge) { try { const again = await push(); up = { applied: (up.applied || 0) + again.applied, skipped: (up.skipped || 0) + again.skipped, rejected: (up.rejected || []).concat(again.rejected), error: up.error }; } catch (e) {} }
       const locked = down.locked || (up.rejected || []).some((x) => x.reason === "team_locked");
       return { push: up, pull: down, locked, error: upErr ? upErr.message : null };
     }

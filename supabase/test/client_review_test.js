@@ -314,9 +314,43 @@ const MIN = 60e3;
     check(!!s4.deletedAt && s4.name === "Seven" && !!(await loc(B, "q4")).deletedAt, `P4: a delete made while he was held stands (deletedAt ${s4.deletedAt ? "set" : "missing"})`);
     // P5: one release per consent, however many times it's sent
     const n0 = +(await su.query("select count(*) n from public.minor_releases where pitcher_id = 'q2'")).rows[0].n;
-    await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [tok]).catch(() => {});
+    const again = await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [tok]).then(() => "ok", (e) => e.message);
     const n1 = +(await su.query("select count(*) n from public.minor_releases where pitcher_id = 'q2'")).rows[0].n;
-    check(n0 === 1 && n1 === 1, `P5: agreeing again isn't another release (${n0} -> ${n1})`);
+    check(again === "ok" && n0 === 1 && n1 === 1, `P5: agreeing again goes through but isn't another release (${again}, ${n0} -> ${n1})`);
+    // P6: the parent types the child's name before any coach's iPad has sent the full record back
+    await A.D.put("pitchers", { id: "q6", name: "Full Name", number: "16", notes: "coach-only note", pitchLimit: 60, pitches: [{ id: "f", name: "Fastball", grade: 4 }] });
+    await A.sync("coach", P, true).syncNow();
+    await hold("q6"); await A.sync("coach", P, true).syncNow();
+    const t6 = (await as("coach", "select public.pc_invite($1, 'player', 'q6', 'pitcher2@x.org', true) r", [P])).rows[0].r;
+    await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [t6]);
+    await as("pitcher2", "select public.pc_accept_invite($1)", [t6]);
+    await as("pitcher2", "select public.pc_push($1, 'pitchers', $2::jsonb)", [P, JSON.stringify([{ id: "q6", updatedAt: Date.now(), name: "Parent typed name" }])]);
+    await A.sync("coach", P, true).syncNow();
+    await A.sync("coach", P, true).syncNow();
+    const s6 = await srv("q6"), l6 = await loc(A, "q6");
+    check(s6.name === "Parent typed name" && s6.notes === "coach-only note" && s6.pitchLimit === 60 && (s6.pitches || []).length === 1 && l6.notes === "coach-only note" && l6.name === "Parent typed name",
+      `P6: the parent's edit and the coach's notes, limit and grades all survive, on the server and the iPad (${JSON.stringify(s6).slice(0, 140)})`);
+    // P6b: the same, when the coach's iPad sends its copy first and the server answers with the parent's thinner one
+    await A.D.put("pitchers", { id: "q7", name: "Full Seven", number: "17", notes: "coach-only 7", pitches: [{ id: "f", name: "Fastball", grade: 3 }] });
+    await A.sync("coach", P, true).syncNow();
+    await hold("q7"); await A.sync("coach", P, true).syncNow();
+    const t7b = (await as("coach", "select public.pc_invite($1, 'player', 'q7', 'pitcher2@x.org', true) r", [P])).rows[0].r;
+    await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [t7b]);
+    await as("pitcher2", "select public.pc_accept_invite($1)", [t7b]);
+    await as("pitcher2", "select public.pc_push($1, 'pitchers', $2::jsonb)", [P, JSON.stringify([{ id: "q7", updatedAt: Date.now(), name: "Parent seven" }])]);
+    await A.D.put("meta", { id: "pushExtra", tables: { pitchers: ["q7"] } });   // its copy goes up first, and loses on the stamp
+    const r7 = await A.sync("coach", P, true).syncNow();
+    const s7b = await srv("q7"), l7b = await loc(A, "q7");
+    check(r7.push.skipped >= 1 && s7b.name === "Parent seven" && s7b.notes === "coach-only 7" && (s7b.pitches || []).length === 1 && l7b.notes === "coach-only 7",
+      `P6b: answered with the thinner copy, the iPad merges it in and sends the merge (${JSON.stringify(s7b).slice(0, 120)})`);
+    // R4: an iPad that only ever had the placeholder changes his number after the full record is back
+    const t7 = (await su.query("select 1")).rows;   // (C is the placeholder-only iPad from above)
+    const c2 = await loc(C, "q2");
+    await C.D.put("pitchers", Object.assign({}, c2, { number: "21" }));
+    await C.sync("coach", P, true).syncNow(); await A.sync("coach", P, true).syncNow();
+    const s7 = await srv("q2");
+    check(s7.number === "21" && s7.name === "v2 corrected on A" && s7.notes === "coach note" && (await loc(A, "q2")).notes === "coach note",
+      `R4: his new number goes in and nothing else of the record is lost (${JSON.stringify(s7).slice(0, 140)})`);
   }
 
   await c.end(); await su.end();

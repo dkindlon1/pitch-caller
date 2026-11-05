@@ -1045,6 +1045,13 @@ begin
     if tbl = 'pitchers' and private.pc_minor_unconsented(p, rid) and not private.pc_placeholder_ok(p, r, cur) then
       rejected := rejected || jsonb_build_object('id', rid, 'reason', 'not allowed: a parent has to give consent first'); continue;
     end if;
+    -- a copy that is only the placeholder (an iPad that only ever saw him held, then changed his number) changes the
+    -- fields it has and leaves the rest of a fuller record alone: missing there means unchanged, not removed
+    if tbl = 'pitchers' and cur is not null and role <> 'player' and not private.pc_minor_unconsented(p, rid)
+       and not exists (select 1 from jsonb_object_keys(r) j where not j = any (private.pc_placeholder_keys()))
+       and exists (select 1 from jsonb_object_keys(cur) j where not j = any (private.pc_placeholder_keys())) then
+      r := cur || r; fixed := true;
+    end if;
     -- a player let go after being held: the server has only the placeholder it stripped him to, stamped when it did.
     -- The first full record an iPad sends back replaces it whatever its own stamp (an iPad's copy is older than the
     -- strip), taking a stamp just after it; from then on it's newest-wins as usual, so a later edit on any iPad stands.
