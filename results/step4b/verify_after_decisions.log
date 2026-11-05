@@ -1,0 +1,32 @@
+== golden v0.8 python
+500 cases, largest difference 0.00e+00
+PASS: v0.8 reproduced exactly
+== golden v0.8 js
+PASS: JS engine reproduces v0.8
+== golden v0.7c python
+PASS: v0.7c reproduced exactly
+== golden v0.7c js
+PASS: JS engine reproduces v0.7c
+== parity v0.9 (150 cases, seed 909)
+  ump        2.50e-16
+  gradeEst   4.44e-16
+PASS: JS v0.8 engine matches Python
+== parity v0.8 (150 cases, seed 808)
+PASS: JS v0.8 engine matches Python
+== labels parity
+PASS: JS intent labels match Python on 150 cases
+== tests.py
+
+19/19 checks passed
+== step 4b
+all step 4b checks passed
+== step 5
+all step 5 checks passed
+== step 6
+all step 6 checks passed
+== power
+all power checks passed
+== scenario grader
+all grader checks passed
+== read checks
+all reader checks passed

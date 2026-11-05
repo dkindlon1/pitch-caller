@@ -106,16 +106,16 @@ Inside share of calls, 3-pitch starter, both sides, by count (`readthrough/insid
 v0.8 1.8% / 0.2% / 1.0% (HS / D3 / D1); v0.9 without the term 1.2% / 0.2% / 0.7%; with it 3.0% / 6.7% / 6.5%, mostly
 at 1-0, 2-0, 2-1 and 1-1. No target was set.
 
-## Verification (all run in this session)
+## Verification (all run in this session, re-run after the decisions)
 
 | Check | Result |
 |---|---|
 | v0.8 golden, Python and JS (`golden/golden_v08.py check`, `node golden/golden_v08.js`) | exact (largest difference 0) |
 | v0.7c golden, Python and JS | exact |
-| Python/JS parity, every v0.9 term on, 150 new cases. 40% have a non-landing pitch and 50% an earlier-trip matchup record (`PARITY_FLAGS=v09`) | pass (largest difference 9e-14) |
+| Python/JS parity, all five v0.9 terms on, 150 new cases. 40% have a non-landing pitch, 50% an earlier-trip matchup record, about half a power grade (`PARITY_FLAGS=v09`) | pass (largest difference 9e-14) |
 | Python/JS parity, v0.8, 150 cases | pass |
 | Intent labels parity | 150/150 |
-| `tests_v09_step4b.py` (guardrail, landing) / `tests_v09_step5.py` (inside) / `tests_v09_step6.py` (matchup) | 28 / 20 / 17 checks, all pass |
+| `tests_v09_step4b.py` (guardrail, landing) / `tests_v09_step5.py` (inside) / `tests_v09_step6.py` (matchup) / `tests_v09_power.py` (item 8) | 28 / 20 / 17 / 8 checks, all pass |
 | `tests.py`, scenario grader tests (`readthrough/test_scenarios.py`), read-through tests (`readthrough/test_read.py`) | 19/19; all pass; all pass |
 | App rebuilt (`app/build.py`); browser suites `v09_labels_e2e`, `gameday_e2e`, `replay_e2e`, `smoke` | all pass, no page errors (the app is still on `FLAGS_V08`) |
 | Not rerun this step | the older v0.8 suites (`tests_v08*.py`). Every change here is behind a flag that is off in v0.8, and both v0.8 goldens are exact, but those suites were not run again |
