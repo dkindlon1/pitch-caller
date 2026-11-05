@@ -376,6 +376,7 @@ def play_game(log_path):
     batter_idx = 0
     pitch_no = 0
     fam = defaultdict(lambda: {"FB": 0, "OS": 0})   # v0.8 (5): (pitcher, hitter) -> class -> pitches seen in earlier PAs
+    mm = defaultdict(lambda: defaultdict(int))      # v0.9 (item 6): (pitcher, hitter) -> 'succ|KIND' / 'hard|KIND|target' -> n
     ump_true = rng.gauss(0, UMP_SD) if UMP_SD > 0 else 0.0
     takes = []                                       # v0.8 (7.5): (called strike?, p_i, d_i) for the umpire learner
 
@@ -398,6 +399,7 @@ def play_game(log_path):
             last = None
             pa_done = False
             fam_prev = dict(fam[(pitcher["name"], h)])
+            mm_prev = dict(mm[(pitcher["name"], h)])     # earlier trips only: this PA's pitches count from his next PA
             v08 = engine.FLAGS["look_state"]
             tab, frozen, look, fooled = None, None, None, []      # v0.8 (6): this PA's table, its inputs, the look
             win_pa = None                                         # v0.8 (7.2): objective constants, fixed at PA start
@@ -422,7 +424,7 @@ def play_game(log_path):
                               timing=dict(K.timing[h]), hitter_damage=dict(K.damage[h]),
                               landing_today={x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
                                              if land[(pitcher["name"], x.name)][1]},
-                              familiar=fam_prev,
+                              familiar=fam_prev, matchup=mm_prev,
                               ump_u=engine.ump_estimate(takes, LEVEL_NAME) if engine.FLAGS["umpire_learn"] else 0.0,
                               home=True, sched_innings=9)
                 if engine.FLAGS["objective_win"]:
@@ -503,6 +505,10 @@ def play_game(log_path):
                 detail, runs_scored = "", 0
                 K.seen[h][p.name] += 1
                 fam[(pitcher["name"], h)][cls] += 1
+                if ev in ("whiff", "cstrike"):
+                    mm[(pitcher["name"], h)]["succ|" + p.kind] += 1
+                elif ev == "hard":
+                    mm[(pitcher["name"], h)]["hard|" + p.kind + "|" + q] += 1
                 if engine.FLAGS["umpire_learn"] and ev in ("ball", "wp_ball", "cstrike", "hbp"):
                     p0, d0 = engine.take_stats(p, q, replace(s, ump_u=0.0), ars)
                     takes.append((1 if ev == "cstrike" else 0, p0, d0))
@@ -650,9 +656,9 @@ SEED_FOR_MOVE = [SEED]
 
 
 def apply_engine_env():
-    """ENGINE=v07 | v08 | v07+flag,flag | v08-flag,flag : the engine flags for this run (v0.8 build)."""
+    """ENGINE=v07 | v08 | v09 | v07+flag,flag | v08-flag,flag : the engine flags for this run (v0.8 build; v09 added in v0.9)."""
     spec = ENGINE
-    base = engine.FLAGS_V08 if spec.startswith("v08") else engine.FLAGS_V07
+    base = {"v08": engine.FLAGS_V08, "v09": engine.FLAGS_V09}.get(spec[:3], engine.FLAGS_V07)
     engine.set_flags(**base)
     for sign, rest in (("+", spec[3:]) if spec[3:4] == "+" else ("-", spec[3:]) if spec[3:4] == "-" else ("", ""),):
         for f in [x for x in rest[1:].split(",") if x]:

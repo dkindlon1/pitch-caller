@@ -36,10 +36,15 @@ except ImportError:
 # ---------------------------------------------------------------------------
 FLAGS_V07 = dict(pairing_v07=True, bf_term_v07=True, ev_full=True, expect_v07=True, look_state=False, timing_B=False,
                  objective_win=False, inplay_typed=False, running_game=False, umpire_learn=False, fatigue_v08=False,
-                 hitter_grades=False, hs_pitch_cost=False, temp_unc=False, zone_22=False)
+                 hitter_grades=False, hs_pitch_cost=False, temp_unc=False, zone_22=False,
+                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False)
 FLAGS_V08 = dict(pairing_v07=False, bf_term_v07=False, ev_full=False, expect_v07=False, look_state=True, timing_B=True,
                  objective_win=True, inplay_typed=True, running_game=True, umpire_learn=True, fatigue_v08=True,
-                 hitter_grades=True, hs_pitch_cost=True, temp_unc=True, zone_22=True)
+                 hitter_grades=True, hs_pitch_cost=True, temp_unc=True, zone_22=True,
+                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False)
+# v0.9 (docs/STEP4b_v0.9_REPORT.md): v0.8 plus the v0.9 items. Every v0.9 flag is False in FLAGS_V07 and FLAGS_V08,
+# so both keep reproducing their golden files exactly.
+FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=True, landing_v09=True, matchup_memory=True, inside_v09=True)
 FLAGS = dict(FLAGS_V07)
 
 
@@ -83,6 +88,39 @@ TYPED = dict(beta_y=-0.8, gamma={"weak": 0.3, "solid": 0.0, "hard": -0.3},      
              nongb={"weak": (0.10, 0.40, 0.50), "solid": (0.45, 0.45, 0.10), "hard": (0.45, 0.55, 0.0)},
              dp={"weak": 0.30, "solid": 0.20, "hard": 0.10}, gb_infield_in=0.10, r2_to_3rd={"GB": 0.50, "FB": 0.25})
 RHO_L = {"hs": 0.6, "travel": 0.6}            # 3.2 level scaling of MLB-fitted timing effects (others 1.0)
+# v0.9 item 6 (matchup_memory), fitted in Step 3 (readthrough/step3_fits.py, results/step3): whiff | swing on a pitch class
+# rises with the whiffs and called strikes that class got from this hitter in earlier trips today (M1, capped at 4), and
+# falls after he hit that class hard at that spot in an earlier trip (M2, capped at 2). The total sits under the
+# familiarity cap and is scaled by RHO_L (HS and travel 0.6). Their hard-contact effects did not ship.
+MM = dict(succ=0.107, succ_cap=4, hard=-0.346, hard_cap=2)
+
+# v0.9 item 3, widened (inside_v09), fitted in Step 5 (readthrough/step5_inside_fit.py, results/step5): on and near the
+# plate (heart and edge), MLB pitches on the inner half play differently from the outer half at the same height: an
+# elevated fastball inside gets far less hard contact, fewer whiffs and more swings, and so on by class, height and
+# platoon side. Each value is the fitted inside-minus-away logit difference (0 where it did not ship); a target on the
+# inner half gets +half of it and one on the outer half -half, so the in/away average the outcome model was calibrated
+# on is unchanged. Scaled by RHO_L (HS and travel 0.6) like the other MLB-fitted terms.
+SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}}
+
+
+def side_shift(p, q, s, z, what):
+    """Logit shift for 'swing' / 'whiff' / 'hard' at target q, landing band z (heart and edge only)."""
+    if z not in ("heart", "edge") or q in ("middle", "chase"):
+        return 0.0
+    h, side = q.split("-")
+    b = SIDE[what][("OS" if is_offspeed(p.kind) else "FB") + "|" + h + "|" + ("same" if s.same_side else "opp")]
+    return RHO_L.get(s.level, 1.0) * (0.5 if side == "in" else -0.5) * b
+
+
+def matchup_whiff(p, q, s):
+    """Logit shift on whiff | swing from earlier trips (s.matchup: 'succ|KIND' and 'hard|KIND|target' -> counts)."""
+    m = s.matchup
+    if not m:
+        return 0.0
+    x = MM["succ"] * min(MM["succ_cap"], m.get("succ|" + p.kind, 0)) + \
+        MM["hard"] * min(MM["hard_cap"], m.get("hard|" + p.kind + "|" + q, 0))
+    x = max(-P08["fam_cap"], min(P08["fam_cap"], x))
+    return RHO_L.get(s.level, 1.0) * x
 Y_TARGET = {"up-in": 3.2, "up-away": 3.2, "middle": 2.5, "down-in": 1.8, "down-away": 1.8}
 HEIGHTS = ("up", "middle", "down")   # amendment A1: middle is its own sit option (spec had up/down with middle = half)
 
@@ -267,6 +305,8 @@ class Situation:
     home: bool = None               # 7.1 we're the home team (None: unknown, win objective off)
     sched_innings: int = None       # 7.1 scheduled innings (default 7 HS/travel, 9 otherwise)
     extras_runner: bool = False     # 7.1 runner on 2nd to start extra innings
+    # v0.9 inputs (inert at their defaults)
+    matchup: dict = field(default_factory=dict)           # item 6: earlier trips today, 'succ|KIND' / 'hard|KIND|target' -> n
 
 
 # ---------------------------------------------------------------------------
@@ -791,6 +831,8 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             sl += ps
         if gr and offz:
             sl -= gval("g_d", s.level) * (gr.get("d", 3) - 3)
+        if FLAGS["inside_v09"]:
+            sl += side_shift(p, q, s, z, "swing")
         S = sig(sl) if S0[z] > 0 else 0
         if FLAGS["umpire_learn"] and z in ("edge", "off"):
             C = sig(logit(C0[z]) + A["cs"] + count_kappa(s.balls, s.strikes, s.level) + s.ump_u)
@@ -816,6 +858,10 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             wl -= cw
         if gr:
             wl -= gval("g_c", s.level) * (gr.get("c", 3) - 3)
+        if FLAGS["matchup_memory"] and s.matchup:
+            wl += matchup_whiff(p, q, s)
+        if FLAGS["inside_v09"]:
+            wl += side_shift(p, q, s, z, "whiff")
         W = sig(wl)
         F = sig(logit(F0[z]) + (0.3 if s.strikes == 2 else 0))
         # contact quality: shift hard share
@@ -845,6 +891,8 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             hl += 0.5          # hanger: off-speed over the middle gets hit hard
         if is_offspeed(p.kind) and (q.startswith("up") or q == "middle"):
             hl += 0.4          # v0.3: aiming off-speed up or at the middle leaves it up
+        if FLAGS["inside_v09"]:
+            hl += side_shift(p, q, s, z, "hard")
         weak, solid, hard = Q0[z]
         hard2 = sig(logit(hard) + hl)
         if zout is not None:
@@ -1544,9 +1592,31 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
     return pi, sg, max(abs(sg[k] - f[k]) for k in ks)
 
 
+# v0.9 item 9 (landing_v09): a pitch that isn't landing today (at least LAND_BLOCK_N thrown and its shrunk strike rate
+# at or below LAND_BLOCK_EST) gives way to the pitches that are. With two strikes and fewer than three balls it may still
+# be called as a chase; otherwise it is left out. If nothing is landing, or the rule would leave nothing to call, the
+# filter stands down (there is no landing pitch to give way to).
+LAND_BLOCK_N = 4
+LAND_BLOCK_EST = 0.40
+
+
+def not_landing(p, s):
+    est, _, n = landing_estimate(p, s)
+    return n >= LAND_BLOCK_N and est <= LAND_BLOCK_EST
+
+
 def allowed_calls(arsenal, s, exclude=None):
     tq = targets(s.balls, s.strikes)
-    return [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
+    out = [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
+    if FLAGS["landing_v09"] and s.landing_today and out:
+        names = {a[0] for a in out}
+        bad = {p.name for p in arsenal if p.name in names and not_landing(p, s)}
+        if bad and bad != names:
+            chase_ok = s.strikes == 2 and s.balls < 3
+            kept = [a for a in out if a[0] not in bad or (chase_ok and a[1] == "chase")]
+            if kept:
+                out = kept
+    return out
 
 
 def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
@@ -1737,7 +1807,8 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
         cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
         best = min(cmy.values())
         delta = 0.010 * run_scale(s.level)
-        keep = [a for a in calls if cmy[a] - best <= delta]
+        # v0.9 item 10 (guardrail_v09): the myopic guardrail comes off; the never-pick windows still apply to full cost
+        keep = list(calls) if FLAGS["guardrail_v09"] else [a for a in calls if cmy[a] - best <= delta]
         if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch
             M = {a: Mmy[a] for a in keep}
         else:

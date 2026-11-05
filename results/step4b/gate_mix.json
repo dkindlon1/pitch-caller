@@ -1,0 +1,308 @@
+{
+ "v08|hs|two_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.8302
+  },
+  "Curveball": {
+   "cells": 10,
+   "of": 24,
+   "share": 0.1698
+  }
+ },
+ "v08|hs|default": {
+  "Fastball": {
+   "cells": 23,
+   "of": 24,
+   "share": 0.6583
+  },
+  "Slider": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.3417
+  },
+  "Changeup": {
+   "cells": 0,
+   "of": 24,
+   "share": 0.0
+  }
+ },
+ "v08|hs|four_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.6574
+  },
+  "Slider": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.2966
+  },
+  "Curveball": {
+   "cells": 5,
+   "of": 24,
+   "share": 0.0384
+  },
+  "Changeup": {
+   "cells": 1,
+   "of": 24,
+   "share": 0.0076
+  }
+ },
+ "v08|college_d3|two_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.8686
+  },
+  "Curveball": {
+   "cells": 8,
+   "of": 24,
+   "share": 0.1314
+  }
+ },
+ "v08|college_d3|default": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.7198
+  },
+  "Slider": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.2648
+  },
+  "Changeup": {
+   "cells": 2,
+   "of": 24,
+   "share": 0.0154
+  }
+ },
+ "v08|college_d3|four_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.6908
+  },
+  "Slider": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.2294
+  },
+  "Curveball": {
+   "cells": 8,
+   "of": 24,
+   "share": 0.0686
+  },
+  "Changeup": {
+   "cells": 2,
+   "of": 24,
+   "share": 0.0112
+  }
+ },
+ "v08|college_d1|two_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.8192
+  },
+  "Curveball": {
+   "cells": 10,
+   "of": 24,
+   "share": 0.1808
+  }
+ },
+ "v08|college_d1|default": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.7105
+  },
+  "Slider": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.2435
+  },
+  "Changeup": {
+   "cells": 6,
+   "of": 24,
+   "share": 0.046
+  }
+ },
+ "v08|college_d1|four_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.6618
+  },
+  "Slider": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.201
+  },
+  "Curveball": {
+   "cells": 12,
+   "of": 24,
+   "share": 0.1071
+  },
+  "Changeup": {
+   "cells": 5,
+   "of": 24,
+   "share": 0.03
+  }
+ },
+ "v09|hs|two_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.7441
+  },
+  "Curveball": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2559
+  }
+ },
+ "v09|hs|default": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.5641
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.3479
+  },
+  "Changeup": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.088
+  }
+ },
+ "v09|hs|four_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.5008
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2871
+  },
+  "Curveball": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.1207
+  },
+  "Changeup": {
+   "cells": 18,
+   "of": 24,
+   "share": 0.0914
+  }
+ },
+ "v09|college_d3|two_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.7655
+  },
+  "Curveball": {
+   "cells": 18,
+   "of": 24,
+   "share": 0.2345
+  }
+ },
+ "v09|college_d3|default": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.6236
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2872
+  },
+  "Changeup": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.0892
+  }
+ },
+ "v09|college_d3|four_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.553
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2351
+  },
+  "Curveball": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.124
+  },
+  "Changeup": {
+   "cells": 18,
+   "of": 24,
+   "share": 0.0879
+  }
+ },
+ "v09|college_d1|two_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.7378
+  },
+  "Curveball": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2622
+  }
+ },
+ "v09|college_d1|default": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.623
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2719
+  },
+  "Changeup": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.1051
+  }
+ },
+ "v09|college_d1|four_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.5439
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2144
+  },
+  "Curveball": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.143
+  },
+  "Changeup": {
+   "cells": 19,
+   "of": 24,
+   "share": 0.0987
+  }
+ }
+}

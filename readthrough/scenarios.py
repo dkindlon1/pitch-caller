@@ -1,5 +1,5 @@
 """v0.9 Step 1: grade an engine version against the frozen scenario suite (readthrough/scenarios_v09.json).
-usage (repo root): python3 readthrough/scenarios.py [v07c|v08 ...] [--out results/scenarios_<tag>.json]
+usage (repo root): python3 readthrough/scenarios.py [v07c|v08|v09|v08g|v08l ...] [--out results/scenarios_<tag>.json]
 Every row's full call spread is sorted into Acceptable / Arguable / Not acceptable (see make_scenarios_v09.py) and
 graded by the frozen pass rule. Refuses to run if the scenario file no longer matches its recorded sha256."""
 import hashlib, json, os, sys
@@ -14,7 +14,10 @@ SHA = os.path.join(HERE, "scenarios_v09.sha256")
 CORNERS = ["up-in", "up-away", "down-in", "down-away"]
 GROUPS = {"zone": CORNERS + ["middle"], "corners": CORNERS, "down": ["down-in", "down-away"], "up": ["up-in", "up-away"],
           "away": ["up-away", "down-away"], "in": ["up-in", "down-in"], "any": CORNERS + ["middle", "chase"]}
-MODES = {"v07c": e.FLAGS_V07, "v08": e.FLAGS_V08}
+MODES = {"v07c": e.FLAGS_V07, "v08": e.FLAGS_V08, "v09": e.FLAGS_V09,
+         # one v0.9 item at a time on top of v0.8, to see what each does
+         "v08g": dict(e.FLAGS_V08, guardrail_v09=True), "v08l": dict(e.FLAGS_V08, landing_v09=True),
+         "v08m": dict(e.FLAGS_V08, matchup_memory=True), "v08i": dict(e.FLAGS_V08, inside_v09=True)}
 
 
 class Half:
@@ -58,6 +61,19 @@ def build(doc, row):
     for k in ("hitter_damage", "landing_today"):
         if k in sd:
             sd[k] = {a: tuple(v) for a, v in sd[k].items()}
+    # v0.9 item 6: the row's earlier-trip events as the engine's matchup input (inert unless matchup_memory is on)
+    kind = {x.name: x.kind for x in ars}
+    mm = {}
+    for ev in row.get("matchup", []):
+        if ev["result"] in ("whiff", "cstrike"):
+            key = "succ|" + kind[ev["pitch"]]
+        elif ev["result"] == "hard":
+            key = "hard|" + kind[ev["pitch"]] + "|" + ev["target"]
+        else:
+            continue
+        mm[key] = mm.get(key, 0) + 1
+    if mm:
+        sd["matchup"] = mm
     s = e.Situation(**sd)
     return ars, s, {tuple(x) for x in row["exclude"]}
 

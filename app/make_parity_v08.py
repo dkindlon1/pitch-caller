@@ -1,5 +1,8 @@
 """v0.8 parity cases: random situations (every v0.8 input) -> Python engine outputs in v0.8 mode.
-usage (repo root): python3 app/make_parity_v08.py [N] [seed]  -> app/parity_v08_cases.json; then node app/parity_v08.js"""
+usage (repo root): python3 app/make_parity_v08.py [N] [seed]  -> app/parity_v08_cases.json; then node app/parity_v08.js
+v0.9: PARITY_FLAGS=v09 runs in FLAGS_V09 and writes app/parity_v09_cases.json (some pitches given a bad landing record
+so the item 9 filter is exercised, and some an earlier-trip matchup record for item 6); check it with PARITY_FLAGS=v09 node app/parity_v08.js"""
+import os
 import json, random, sys
 sys.path.insert(0, ".")
 import engine as e
@@ -9,7 +12,9 @@ N = int(sys.argv[1]) if len(sys.argv) > 1 else 150
 seed = int(sys.argv[2]) if len(sys.argv) > 2 else 808
 F.rng.seed(seed)
 rng = random.Random(seed + 1)
-e.set_flags(**e.FLAGS_V08)
+MODE = os.environ.get("PARITY_FLAGS", "v08")
+e.set_flags(**{"v08": e.FLAGS_V08, "v09": e.FLAGS_V09}[MODE])
+OUT = f"app/parity_{MODE}_cases.json"
 
 
 class Half:
@@ -31,6 +36,8 @@ def sd(s):
              radar=s.radar, infield_in=s.infield_in, usage_by_call={f"{a[0]}|{a[1]}": v for a, v in s.usage_by_call.items()},
              b_h={f"{a[0]}|{a[1]}": v for a, v in s.b_h.items()}, steal=s.steal, pitch_cap=s.pitch_cap, home=s.home,
              sched_innings=s.sched_innings, extras_runner=s.extras_runner)
+    if s.matchup:
+        d["matchup"] = dict(s.matchup)
     return d
 
 
@@ -53,6 +60,16 @@ for i in range(N):
                 b_h=e.lean_b_h(ars, s, tuple(rng.choice(["FB", "OS"]) for _ in range(rng.randint(0, 2)))),
                 steal={"a": rng.choice([0.04, 0.10]), "runner": 1 if s.bases[0] else 2, "t": rng.choice([None, 1.3, 1.6])}
                 if (s.bases[0] or s.bases[1]) and rng.random() < 0.5 else None)
+    if MODE == "v09" and rng.random() < 0.4:        # a pitch that isn't landing today (item 9)
+        bad = rng.choice(ars).name
+        s = replace(s, landing_today=dict(s.landing_today, **{bad: (rng.randint(0, 2), rng.randint(4, 10))}))
+    if MODE == "v09" and rng.random() < 0.5:        # earlier trips today (item 6)
+        mm = {}
+        for _ in range(rng.randint(1, 6)):
+            x = rng.choice(ars)
+            key = "succ|" + x.kind if rng.random() < 0.7 else "hard|" + x.kind + "|" + rng.choice(e.QUADS)
+            mm[key] = mm.get(key, 0) + 1
+        s = replace(s, matchup=mm)
     s_w = replace(s, win=e.win_constants(s)) if s.home is not None else s
     c = dict(arsenal=[pd(p) for p in ars], s=sd(s))
     ks = e.sit_options(ars)
@@ -84,5 +101,5 @@ for i in range(N):
         c["ump"] = dict(takes=takes, u=e.ump_estimate(takes, s.level), g=e.grade_estimate(takes, 3, 2.5, 3.0, len(takes) + 20))
     cases.append(c)
     print(i, flush=True) if i % 25 == 0 else None
-json.dump(cases, open("app/parity_v08_cases.json", "w"))
+json.dump(cases, open(OUT, "w"))
 print(len(cases), "cases")

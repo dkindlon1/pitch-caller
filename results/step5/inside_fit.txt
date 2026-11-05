@@ -1,0 +1,31 @@
+heart + edge pitches: 221762
+
+hard | ball in play: train n=28056, test n=27194; held-out gain +94.50 x1e-4 (SD 7.86) -> passes the gain test
+   inside, FB up same    -0.818 logits (95% -0.935 to -0.701)  raw 32.5% in vs 53.3% away  SHIP
+   inside, FB up opp     -0.989 logits (95% -1.094 to -0.885)  raw 30.5% in vs 51.9% away  SHIP
+   inside, FB down same  -0.037 logits (95% -0.147 to +0.072)  raw 47.4% in vs 50.0% away  no ship
+   inside, FB down opp   -0.033 logits (95% -0.144 to +0.078)  raw 48.9% in vs 53.7% away  no ship
+   inside, OS up same    -0.212 logits (95% -0.398 to -0.026)  raw 34.3% in vs 37.1% away  SHIP
+   inside, OS up opp     -0.465 logits (95% -0.663 to -0.267)  raw 29.7% in vs 41.7% away  SHIP
+   inside, OS down same  +0.596 logits (95% +0.458 to +0.734)  raw 47.1% in vs 29.5% away  SHIP
+   inside, OS down opp   +0.388 logits (95% +0.276 to +0.500)  raw 43.6% in vs 35.5% away  SHIP
+
+whiff | swing: train n=69915, test n=67287; held-out gain +47.42 x1e-4 (SD 3.71) -> passes the gain test
+   inside, FB up same    -0.435 logits (95% -0.526 to -0.344)  raw 15.2% in vs 20.5% away  SHIP
+   inside, FB up opp     -0.329 logits (95% -0.416 to -0.242)  raw 13.5% in vs 21.8% away  SHIP
+   inside, FB down same  -0.852 logits (95% -0.983 to -0.721)  raw 8.7% in vs 14.2% away  SHIP
+   inside, FB down opp   -0.635 logits (95% -0.758 to -0.512)  raw 8.3% in vs 10.0% away  SHIP
+   inside, OS up same    -0.856 logits (95% -1.023 to -0.690)  raw 12.6% in vs 15.8% away  SHIP
+   inside, OS up opp     -0.853 logits (95% -1.060 to -0.645)  raw 9.4% in vs 15.5% away  SHIP
+   inside, OS down same  -0.251 logits (95% -0.365 to -0.137)  raw 18.5% in vs 27.9% away  SHIP
+   inside, OS down opp   +0.276 logits (95% +0.194 to +0.357)  raw 23.9% in vs 21.2% away  SHIP
+
+swing: train n=112281, test n=109481; held-out gain +88.85 x1e-4 (SD 4.30) -> passes the gain test
+   inside, FB up same    +1.077 logits (95% +1.011 to +1.144)  raw 74.3% in vs 59.8% away  SHIP
+   inside, FB up opp     +0.560 logits (95% +0.495 to +0.625)  raw 71.1% in vs 64.1% away  SHIP
+   inside, FB down same  +0.551 logits (95% +0.482 to +0.619)  raw 64.6% in vs 42.8% away  SHIP
+   inside, FB down opp   -0.128 logits (95% -0.195 to -0.060)  raw 54.3% in vs 53.3% away  SHIP
+   inside, OS up same    -0.394 logits (95% -0.491 to -0.298)  raw 53.8% in vs 58.8% away  SHIP
+   inside, OS up opp     -0.436 logits (95% -0.553 to -0.319)  raw 57.6% in vs 46.4% away  SHIP
+   inside, OS down same  +0.257 logits (95% +0.175 to +0.338)  raw 68.6% in vs 68.5% away  SHIP
+   inside, OS down opp   +0.343 logits (95% +0.275 to +0.410)  raw 69.1% in vs 67.0% away  SHIP

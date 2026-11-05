@@ -1,0 +1,12 @@
+balls in play with launch speed and location: 59123
+hitters in both seasons: 499; rows kept 53943; league hard rate 2024 0.388 2025 0.408; power SD (raw hard rate) 0.053
+balls in play by zone: heart 25547 (47%), hard 0.504, edge 24842 (46%), hard 0.331, off 3467 (6%), hard 0.149, noncomp 87 (0%), hard 0.057
+
+Base: one power slope +0.221 logits per SD (95% +0.196 to +0.246)
+P1: power slope on the edge (reference) +0.242 (+/- 0.037)
+    power x heart    -0.033 (95% -0.084 to +0.018)  interval includes 0
+    power x off      -0.095 (95% -0.237 to +0.047)  interval includes 0
+    power x noncomp  +0.016 (95% -0.412 to +0.444)  interval includes 0
+    held-out gain -1.31 x1e-4 per ball in play, bootstrap SD 0.60; ship rule (gain > 2 SD and power x heart interval excludes 0): does not ship
+P2 (report only): power slope by zone, logits per SD: heart +0.208, edge +0.242, off +0.147, noncomp +0.258
+    as multipliers of the ball-in-play-weighted average slope: heart 0.95, edge 1.10, off 0.67, noncomp 1.17

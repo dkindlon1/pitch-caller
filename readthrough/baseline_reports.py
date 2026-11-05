@@ -18,7 +18,7 @@ import simulate
 COUNTS = [(0, 0), (1, 0), (0, 1), (1, 1), (2, 0), (2, 1), (1, 2), (0, 2), (3, 0), (3, 1), (2, 2), (3, 2)]
 LEVELS = ["hs", "college_d3", "college_d1"]
 STAFFS = ["two_pitch", "default", "four_pitch"]
-MODES = {"v07": e.FLAGS_V07, "v08": e.FLAGS_V08}
+MODES = {"v07": e.FLAGS_V07, "v08": e.FLAGS_V08, "v09": e.FLAGS_V09, "v09_no_inside": dict(e.FLAGS_V09, inside_v09=False)}
 MLB = dict(first_pitch_fb=0.58, first_pitch_strike=0.62, pitchers_count=(0.449, 0.510), hitters_count=(0.168, 0.200))
 
 
@@ -40,12 +40,12 @@ def grid(mode, level, staff):
     for same in (True, False):
         s0 = e.Situation(0, 0, 0, (False, False, False), inning=4, margin=0, pitch_count=40, batters_faced=4, level=level,
                          same_side=same, home=True, sched_innings=9)
-        if mode == "v08":
+        if mode != "v07":
             s0 = replace(s0, win=e.win_constants(s0))
             tab = e.solve_table(ars, s0)
         for b, k in COUNTS:
             s = replace(s0, balls=b, strikes=k)
-            if mode == "v08":
+            if mode != "v07":
                 s = replace(s, look=tab.h0)
                 _, dist, _, info = e.call_v08(ars, s, rng=Half(), tab=tab)
                 full = {a: sum(info["sigma"][kk] * info["M"][a][kk] for kk in info["M"][a]) for a in info["M"]}

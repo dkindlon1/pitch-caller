@@ -1,0 +1,6 @@
+hard balls in play: 21614; HR rate 0.114; heart share 60%
+  bottom third of power : HR per hard ball 0.100, run value per hard ball +0.232; heart 0.106 / edge+ 0.090
+  middle third          : HR per hard ball 0.112, run value per hard ball +0.240; heart 0.121 / edge+ 0.099
+  top third             : HR per hard ball 0.130, run value per hard ball +0.268; heart 0.146 / edge+ 0.107
+P3 power -> HR given hard contact: +0.112 logits per SD (95% +0.051 to +0.172); held-out gain +6.8 x1e-4 (SD 3.0): SHIPS
+P4 power x heart on HR given hard: +0.076 (95% -0.041 to +0.194); held-out gain +0.5 x1e-4 (SD 1.1): does not ship

@@ -2,9 +2,10 @@
 const fs = require("fs");
 const E = require("./engine.js");
 E.init(JSON.parse(fs.readFileSync(__dirname + "/engine_data.json")));
-E.setFlags(E.FLAGS_V08);
+const MODE = process.env.PARITY_FLAGS || "v08";     // v09: FLAGS_V09 against app/parity_v09_cases.json
+E.setFlags({ v08: E.FLAGS_V08, v09: E.FLAGS_V09 }[MODE]);
 const V = E.v08;
-const cases = JSON.parse(fs.readFileSync(__dirname + "/parity_v08_cases.json"));
+const cases = JSON.parse(fs.readFileSync(__dirname + `/parity_${MODE}_cases.json`));
 const worst = {}; let fails = 0; const notes = [];
 const upd = (k, d) => { worst[k] = Math.max(worst[k] || 0, Math.abs(d)); };
 for (const [i, c] of cases.entries()) {
