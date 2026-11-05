@@ -54,12 +54,12 @@ def main():
         if not ns:
             continue
         L.append(f"\n[{lvl or 'all'}] {len(ns)} games")
-        L.append(f"  {'':16s}{ta[:14]:>14s}{tb[:14]:>14s}{'diff':>9s}{'SE':>8s}")
+        L.append(f"  {'':16s}{ta[:17]:>18s}{tb[:17]:>18s}{'diff':>9s}{'SE':>8s}")
         for c in ["runs", "pitches"] + COLS:
             if not any(c in GA[n][0] for n in ns) and c not in ("runs", "pitches"):
                 continue
             a, b, m, se = paired([GA[n][0][c] for n in ns], [GB[n][0][c] for n in ns])
-            L.append(f"  {c:16s}{a:14.3f}{b:14.3f}{m:+9.3f}{se:8.3f}")
+            L.append(f"  {c:16s}{a:18.3f}{b:18.3f}{m:+9.3f}{se:8.3f}")
     if any("regret_w_pick" in GA[n][0] for n in names):
         for title, idx in (("call", 1), ("count", 2)):
             agg = {}
