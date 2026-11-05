@@ -31,4 +31,5 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/app/:path*", "/join/:path*", "/login"] };
+// The game app (/app/game/) signs in on its own and has to open with no signal: the proxy leaves it alone.
+export const config = { matcher: ["/app", "/app/((?!game).*)", "/join/:path*", "/login"] };

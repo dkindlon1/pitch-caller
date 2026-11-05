@@ -959,7 +959,7 @@ function liveView() {
   const pcReal = g.pc[pKey()] || 0, pcAdj = pcReal + fatigueShift(pitcherDef());
   const st = E.pitcherStatus(ars, S.setup.level, pcAdj, g.recent[pKey()] || []);
   st.reasons = st.reasons.map((r) => r.replace(`(${pcAdj} pitches)`, `(${pcReal} pitches)`).replace("his usual fatigue point", "his fatigue point"));
-  return h("main", {}, titleRow(st), strip(), fixing ? fixRow() : null,
+  return h("main", {}, typeof prepNotice === "function" ? prepNotice() : null, titleRow(st), strip(), fixing ? fixRow() : null,
     h("div", { class: "grid" },
       g.inningOver ? inningDone() : callPanel(),
       h("div", { class: "span-4 col side" }, g.inningOver ? null : entryPanel(), pitcherPanel(ars, st)),
@@ -1286,6 +1286,7 @@ async function endGame() {
   const used = comp.located >= 0.9 ? "locations will be used" : "under 90% located, so locations from it won't be used";
   toast(`Game saved: ${comp.pitches} pitches, ${pct(comp.located)} located (${used}). New game is up.`);
   if (comp.learn) await learnAfterGame(comp.learn);
+  if (typeof window !== "undefined" && window.PC_UPDATE_WAITING && window.PC_APPLY_UPDATE) window.PC_APPLY_UPDATE();   // an update that waited for this game
 }
 function archiveGame() {
   const g = G(); if (!g.log.length) return;
@@ -1525,6 +1526,7 @@ function setupView() {
     row("What you'll log", "Pick what your charter can keep up with. Every option calls the game; more detail mostly helps it learn each hitter.", tierChoices,
       h("button", { class: "choice", "aria-pressed": String(!!st.logLoc), on: { click: () => { st.logLoc = !st.logLoc; changed(true); } } },
         h("b", {}, "Also log where each pitch ended up"), h("span", {}, "One more tap on a small zone grid. It's what lets the app learn each pitcher's real command; results alone barely show it."))),
+    DB.ready ? row("Game day", "On Wi-Fi before the game: syncs, checks the app opens with no signal and today's staff and opponent are on this iPad. Then call the game anywhere; it syncs once there's a signal.", prepPanel()) : null,
     DB.ready ? row("Pitch counts", "Your league's pitch-count rule: each pitcher's rest, the day he can pitch again, and a warning on the Game screen as he nears the limit.", pitchRulePanel()) : null,
     DB.ready ? row("Today's staff", "Who's available today. Pitchers, their arsenals, check-ins and what's been learned live on the Roster screen.", staffPick()) :
     row("Staff", "Bullpen feel is how much he trusts each pitch warming up. It moves with every result once the game starts.", staff,

@@ -46,6 +46,7 @@ async function boot() {
     DB.ready = true;
     await flushQueued();
     await syncSetup().catch((e) => console.warn("sync setup", e));
+    await loadPrep().catch(() => {});
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
@@ -943,6 +944,49 @@ function pitchingLogPanel() {
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: printSignCard } }, "Print the sign card")));
 }
 
+// ---------------------------------------------------------------- game day prep (Plan 5): one step on Wi-Fi, so the
+// game can be called with no signal. Syncs, checks what the calls need is on this iPad, and records when it was done.
+let PREP = null;
+async function loadPrep() { if (DB.ready) PREP = await DB.D.get("meta", "prep"); }
+const prepToday = () => !!(PREP && PREP.date === todayT());
+async function prepGame() {
+  const checks = [], add = (ok, text, must) => checks.push({ ok: !!ok, text, must: !!must });
+  PREP_BUSY = true; render();
+  try {
+    if (SYNC.sync && SYNC.authSession) {
+      const r = navigator.onLine === false ? null : await syncNow(true);
+      add(r && !r.locked && !r.error, !r ? "Couldn't reach the server: connect to Wi-Fi and try again" : r.locked ? "The team isn't switched on (billing): nothing synced" : r.error ? "Some changes didn't go up; they'll go next time" : "Synced with the team", true);
+    } else add(true, "Not signed in to a team: this iPad calls with its own data");
+    const offline = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+    add(offline, offline ? "The app opens with no signal" : "Open the app once more with a signal (or add it to the home screen) so it opens offline", true);
+    let kept = null; try { kept = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : null; } catch (e) {}
+    add(kept !== false, kept ? "The iPad keeps this app's data" : "The iPad may clear this app's data when space runs low: add it to the home screen");
+    const rule = teamRule();
+    add(rule, rule ? `Pitch counts: ${rule.name}` : "No pitch-count rule (Setup, Pitch counts)");
+    const staff = (S.setup.staffIds || []).map((id) => DB.pitchers.get(id)).filter(Boolean);
+    const notYet = staff.filter((p) => { const e = eligibility(p.id); return e && !e.today; });
+    add(staff.length, `${staff.length} pitcher${staff.length === 1 ? "" : "s"} on today's staff${notYet.length ? `; not eligible: ${notYet.map((p) => p.name).join(", ")}` : ""}`, true);
+    const opp = S.setup.opponentId && DB.teams.get(S.setup.opponentId);
+    add(opp, opp ? `Opponent: ${opp.name}, ${teamHitters(opp.id).length} hitters` : "No opponent picked: every hitter starts as average");
+    PREP = { id: "prep", at: Date.now(), date: todayT(), checks, ready: checks.every((c) => c.ok || !c.must) };
+    await DB.D.put("meta", PREP);
+    toast(PREP.ready ? "Ready to call this game offline." : "Not ready yet: see what's missing in Setup.");
+  } finally { PREP_BUSY = false; render(); }
+}
+let PREP_BUSY = false;
+function prepPanel() {
+  const when = PREP && PREP.at ? new Date(PREP.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null;
+  return [h("div", { class: "row-acts" }, h("button", { class: "btn primary", id: "prep-game", disabled: PREP_BUSY ? true : null, on: { click: () => prepGame() } }, PREP_BUSY ? "Getting ready…" : "Get ready for offline")),
+    PREP ? h("p", { class: prepToday() && PREP.ready ? "note" : "pstat watch" }, prepToday() ? `${PREP.ready ? "Ready" : "Not ready"} as of ${when} today.` : `Last ready ${new Date(PREP.at).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}: get ready again for today's game.`) : null,
+    PREP ? h("ul", { class: "warns", "aria-label": "Offline checks", style: { color: "inherit" } }, PREP.checks.map((c) => h("li", { style: c.ok ? null : { color: "var(--warn)" } }, `${c.ok ? "✓" : "!"} ${c.text}`))) : null];
+}
+// the Game screen's one line about it: not ready today (when the iPad is on a team), or an update waiting for the game to end
+function prepNotice() {
+  if (typeof window !== "undefined" && window.PC_UPDATE_WAITING && G().dbId) return h("p", { class: "pstat note", role: "status" }, "An update is ready. It installs after this game.");
+  if (SYNC.cfg && SYNC.cfg.programId && !(prepToday() && PREP.ready)) return h("p", { class: "pstat watch", role: "status", id: "prep-notice" }, "This iPad isn't ready for offline today: Setup, Get ready for offline (on Wi-Fi).");
+  return null;
+}
+
 // ---------------------------------------------------------------- sync with Supabase (build step 2)
 // The device stays the place every pitch is written first; sync copies changes up and down in the background, never
 // during a call. Settings and the session live in the device's meta store (not synced).
@@ -962,6 +1006,14 @@ const inviteToken = (s) => { const m = String(s || "").match(/[0-9a-f]{64}/i); r
 async function syncSetup() {
   if (!DB.D || typeof PCSync === "undefined") return;
   SYNC.cfg = await DB.D.get("meta", "syncConfig");
+  // served by PitchIQ (/app/game/): the project's URL and publishable key come from the site, nobody types them
+  if ((!SYNC.cfg || !SYNC.cfg.url) && typeof window !== "undefined" && window.PC_CONFIG_URL && navigator.onLine !== false) {
+    try {
+      const r = await fetch(window.PC_CONFIG_URL, { cache: "no-cache" });
+      const c = r.ok ? await r.json() : null;
+      if (c && c.url && c.apiKey) SYNC.cfg = await DB.D.put("meta", Object.assign({ id: "syncConfig" }, SYNC.cfg || {}, { url: c.url, apiKey: c.apiKey, managed: true }));
+    } catch (e) {}
+  }
   SYNC.bound = await DB.D.get("meta", "boundProgram");
   SYNC.auth = SYNC.sync = null;
   if (!SYNC.cfg || !SYNC.cfg.url || !SYNC.cfg.apiKey) return;

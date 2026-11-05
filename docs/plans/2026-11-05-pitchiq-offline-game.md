@@ -34,6 +34,11 @@ rest rules, no log or sign card, and dates use the device's time zone.
 - **Only game pitches count.** Bullpens, live BP and warmups don't (they're tracked, not counted). A pitcher's day is
   the sum over every game that day.
 
+> **Status, Nov 5.** Tasks 1 to 11 are done on `pitchiq-platform`: `pitch_rules_test.js` (41 checks against the
+> sources' tables), `rules_e2e.js` (20), `offline_game_e2e.js` (D12, all passing against a real local Supabase and the
+> built site). S8 is waiting on a deploy (Vercel); its checklist is `2026-11-05-pitchiq-s8-ipad-checklist.md`.
+> Not in this plan, still open: more state presets; the coach portal's "Prep game" card (Plan 3).
+
 ## Tasks
 
 1. **Rules module and tests** (`app/pitch_rules.js`, `app/pitch_rules_test.js`). `restFor(rule, pitches, date)`,

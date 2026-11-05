@@ -79,7 +79,7 @@ jobs:
         run: scripts/run-check.sh landing_e2e node web/tests/landing_e2e.js
 
   web-shell:
-    name: Web shell on a real local Supabase (sign-in, teams, join)
+    name: Web shell and offline game on a real local Supabase
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -96,5 +96,7 @@ jobs:
         run: npm run build
       - name: Shell end to end (the test resets the database first)
         run: scripts/run-check.sh shell_e2e node web/tests/shell_e2e.js
+      - name: Offline game end to end (D12, the installed game app)
+        run: scripts/run-check.sh offline_game_e2e node web/tests/offline_game_e2e.js
       - if: always()
         run: npx -y supabase@2.122.1 stop --no-backup
