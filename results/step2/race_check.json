@@ -1,0 +1,257 @@
+{
+ "levels": {
+  "hs": {
+   "v07": {
+    "games": 30,
+    "pas": 1487,
+    "pitchers_count": 0.3389374579690652,
+    "hitters_count": 0.29186281102891726,
+    "first_pitch_strike": 0.48890383322125086,
+    "early_ball": 0.0,
+    "after_two": {
+     "0-2": 0.08203677510608204,
+     "1-1": 0.44130127298444133,
+     "2-0": 0.4766619519094767
+    },
+    "ended_within_two": 0.33154001344989914,
+    "one_one_to_one_two": 0.4742014742014742,
+    "three_ball_pas": 408,
+    "three_ball_first_two_off": {
+     "0": 0.9828431372549019,
+     "1": 0.01715686274509804,
+     "2": 0.0
+    },
+    "k_rate": 0.1882985877605918,
+    "bb_rate": 0.17215870880968392
+   },
+   "v08": {
+    "games": 30,
+    "pas": 1489,
+    "pitchers_count": 0.31229012760241776,
+    "hitters_count": 0.28542646071188715,
+    "first_pitch_strike": 0.506380120886501,
+    "early_ball": 0.0,
+    "after_two": {
+     "0-2": 0.0821917808219178,
+     "1-1": 0.46986301369863015,
+     "2-0": 0.44794520547945205
+    },
+    "ended_within_two": 0.3277367360644728,
+    "one_one_to_one_two": 0.428927680798005,
+    "three_ball_pas": 420,
+    "three_ball_first_two_off": {
+     "0": 0.9928571428571429,
+     "1": 0.007142857142857143,
+     "2": 0.0
+    },
+    "k_rate": 0.16319677635997312,
+    "bb_rate": 0.16252518468770988
+   },
+   "decision": {
+    "pitchers_count_ok": false,
+    "first_pitch_strike_ok": true,
+    "early_ball_ok": true,
+    "no_engine_change": false
+   }
+  },
+  "college_d3": {
+   "v07": {
+    "games": 30,
+    "pas": 1460,
+    "pitchers_count": 0.3089041095890411,
+    "hitters_count": 0.2856164383561644,
+    "first_pitch_strike": 0.47534246575342465,
+    "early_ball": 0.0006849315068493151,
+    "after_two": {
+     "0-2": 0.06619718309859154,
+     "1-1": 0.46619718309859154,
+     "2-0": 0.4676056338028169
+    },
+    "ended_within_two": 0.3219178082191781,
+    "one_one_to_one_two": 0.42676767676767674,
+    "three_ball_pas": 381,
+    "three_ball_first_two_off": {
+     "0": 0.9658792650918635,
+     "1": 0.031496062992125984,
+     "2": 0.0026246719160104987
+    },
+    "k_rate": 0.15205479452054796,
+    "bb_rate": 0.1541095890410959
+   },
+   "v08": {
+    "games": 30,
+    "pas": 1396,
+    "pitchers_count": 0.3302292263610315,
+    "hitters_count": 0.25,
+    "first_pitch_strike": 0.5351002865329513,
+    "early_ball": 0.0,
+    "after_two": {
+     "0-2": 0.08702290076335878,
+     "1-1": 0.5435114503816794,
+     "2-0": 0.36946564885496186
+    },
+    "ended_within_two": 0.3359598853868195,
+    "one_one_to_one_two": 0.42431761786600497,
+    "three_ball_pas": 356,
+    "three_ball_first_two_off": {
+     "0": 0.9803370786516854,
+     "1": 0.019662921348314606,
+     "2": 0.0
+    },
+    "k_rate": 0.14111747851002865,
+    "bb_rate": 0.1353868194842407
+   },
+   "decision": {
+    "pitchers_count_ok": true,
+    "first_pitch_strike_ok": true,
+    "early_ball_ok": true,
+    "no_engine_change": true
+   }
+  },
+  "college_d1": {
+   "v07": {
+    "games": 30,
+    "pas": 1330,
+    "pitchers_count": 0.32781954887218046,
+    "hitters_count": 0.2721804511278195,
+    "first_pitch_strike": 0.5218045112781955,
+    "early_ball": 0.0007518796992481203,
+    "after_two": {
+     "0-2": 0.09538950715421304,
+     "1-1": 0.46740858505564387,
+     "2-0": 0.43720190779014306
+    },
+    "ended_within_two": 0.32706766917293234,
+    "one_one_to_one_two": 0.46524064171123,
+    "three_ball_pas": 338,
+    "three_ball_first_two_off": {
+     "0": 0.9644970414201184,
+     "1": 0.03254437869822485,
+     "2": 0.0029585798816568047
+    },
+    "k_rate": 0.18796992481203006,
+    "bb_rate": 0.1511278195488722
+   },
+   "v08": {
+    "games": 30,
+    "pas": 1262,
+    "pitchers_count": 0.3478605388272583,
+    "hitters_count": 0.24247226624405704,
+    "first_pitch_strike": 0.5293185419968305,
+    "early_ball": 0.0,
+    "after_two": {
+     "0-2": 0.08205128205128205,
+     "1-1": 0.517948717948718,
+     "2-0": 0.4
+    },
+    "ended_within_two": 0.3256735340729002,
+    "one_one_to_one_two": 0.4942528735632184,
+    "three_ball_pas": 291,
+    "three_ball_first_two_off": {
+     "0": 0.979381443298969,
+     "1": 0.020618556701030927,
+     "2": 0.0
+    },
+    "k_rate": 0.1774960380348653,
+    "bb_rate": 0.12757527733755944
+   },
+   "decision": {
+    "pitchers_count_ok": true,
+    "first_pitch_strike_ok": true,
+    "early_ball_ok": true,
+    "no_engine_change": true
+   }
+  }
+ },
+ "early_count_why": {
+  "0-0": {
+   "Today's umpire": 0.182,
+   "He's sitting": 0.142,
+   "Game situation": 0.139,
+   "He's looking": 0.139,
+   "He's timed": 0.125,
+   "He's seen": 0.094,
+   "Changes his eye": 0.059,
+   "Sets up": 0.057,
+   "Only call": 0.036,
+   "Tying run": 0.023,
+   "Best call": 0.005
+  },
+  "1-0": {
+   "Today's umpire": 0.151,
+   "Only call": 0.138,
+   "Game situation": 0.127,
+   "He's timed": 0.12,
+   "He's looking": 0.12,
+   "Changes his eye": 0.088,
+   "He's seen": 0.082,
+   "He's sitting": 0.079,
+   "Sets up": 0.046,
+   "Back to what": 0.028,
+   "Tying run": 0.02,
+   "Best call": 0.002
+  },
+  "0-1": {
+   "He's looking": 0.135,
+   "He's timed": 0.131,
+   "Game situation": 0.128,
+   "He's sitting": 0.118,
+   "Today's umpire": 0.117,
+   "Changes his eye": 0.096,
+   "Sets up": 0.087,
+   "Back to what": 0.077,
+   "He's seen": 0.076,
+   "Tying run": 0.027,
+   "Only call": 0.007,
+   "Best call": 0.002
+  },
+  "1-1": {
+   "Today's umpire": 0.188,
+   "Game situation": 0.132,
+   "He's timed": 0.115,
+   "Changes his eye": 0.107,
+   "He's sitting": 0.093,
+   "He's looking": 0.084,
+   "Only call": 0.082,
+   "Sets up": 0.063,
+   "He's seen": 0.063,
+   "Back to what": 0.041,
+   "Tying run": 0.028,
+   "Best call": 0.004
+  }
+ },
+ "count_values": {
+  "v07": {
+   "0-0": 0.0,
+   "1-0": 0.05463494801564539,
+   "2-0": 0.15555605137466277,
+   "3-0": 0.38712086781218424,
+   "0-1": -0.079977975555236,
+   "1-1": -0.03136004134420711,
+   "2-1": 0.06014322126630256,
+   "3-1": 0.2474116835094642,
+   "0-2": -0.19294886082305163,
+   "1-2": -0.15489560254487322,
+   "2-2": -0.06882083052305765,
+   "3-2": 0.1188822859765073
+  },
+  "v08": {
+   "0-0": 0.8565569367875834,
+   "1-0": 0.9045432744798604,
+   "2-0": 0.9946320227423402,
+   "3-0": 1.2224166010605462,
+   "0-1": 0.7885839851595703,
+   "1-1": 0.8349084856310368,
+   "2-1": 0.9169246582287968,
+   "3-1": 1.0983378300515771,
+   "0-2": 0.6863106138423867,
+   "1-2": 0.7250341006066228,
+   "2-2": 0.8074633009271961,
+   "3-2": 0.988652017344342
+  }
+ },
+ "count_value_rank_vs_mlb": {
+  "v07": 0.893,
+  "v08": 0.893
+ }
+}
