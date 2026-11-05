@@ -30,6 +30,42 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
+# v0.8 compatibility flags (docs/SPEC_v0.8.md section 1). FLAGS_V07 = every flag in its v0.7c position, which must
+# reproduce v0.7c exactly (golden/golden.py check). FLAGS_V08 = the v0.8 engine.
+# ---------------------------------------------------------------------------
+FLAGS_V07 = dict(pairing_v07=True, bf_term_v07=True, ev_full=True, expect_v07=True, look_state=False, timing_B=False,
+                 objective_win=False, inplay_typed=False, running_game=False, umpire_learn=False, fatigue_v08=False,
+                 hitter_grades=False, hs_pitch_cost=False, temp_unc=False)
+FLAGS_V08 = dict(pairing_v07=False, bf_term_v07=False, ev_full=False, expect_v07=False, look_state=True, timing_B=True,
+                 objective_win=True, inplay_typed=True, running_game=True, umpire_learn=True, fatigue_v08=True,
+                 hitter_grades=True, hs_pitch_cost=True, temp_unc=True)
+FLAGS = dict(FLAGS_V07)
+
+
+def set_flags(**kw):
+    """Set flags by name; unknown names are an error. Returns the previous flags so a caller can restore them."""
+    prev = dict(FLAGS)
+    for k, v in kw.items():
+        if k not in FLAGS:
+            raise KeyError(f"unknown flag {k!r}")
+        FLAGS[k] = bool(v)
+    return prev
+
+
+class flags:
+    """Context manager: `with flags(**FLAGS_V08): ...` runs with those flags and restores the old ones after."""
+    def __init__(self, **kw):
+        self.kw = kw
+
+    def __enter__(self):
+        self.prev = set_flags(**self.kw)
+        return FLAGS
+
+    def __exit__(self, *a):
+        FLAGS.clear(); FLAGS.update(self.prev)
+
+
+# ---------------------------------------------------------------------------
 # State values
 # ---------------------------------------------------------------------------
 

@@ -35,6 +35,20 @@
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
+  // v0.8 compatibility flags (docs/SPEC_v0.8.md section 1); FLAGS_V07 reproduces v0.7c exactly (golden/golden.js)
+  const FLAGS_V07 = { pairing_v07: true, bf_term_v07: true, ev_full: true, expect_v07: true, look_state: false, timing_B: false,
+    objective_win: false, inplay_typed: false, running_game: false, umpire_learn: false, fatigue_v08: false,
+    hitter_grades: false, hs_pitch_cost: false, temp_unc: false };
+  const FLAGS_V08 = { pairing_v07: false, bf_term_v07: false, ev_full: false, expect_v07: false, look_state: true, timing_B: true,
+    objective_win: true, inplay_typed: true, running_game: true, umpire_learn: true, fatigue_v08: true,
+    hitter_grades: true, hs_pitch_cost: true, temp_unc: true };
+  const FLAGS = Object.assign({}, FLAGS_V07);
+  function setFlags(kw) {
+    const prev = Object.assign({}, FLAGS);
+    for (const k in kw) { if (!(k in FLAGS)) throw new Error("unknown flag " + k); FLAGS[k] = !!kw[k]; }
+    return prev;
+  }
+
   const VERSION = "0.7c";      // engine logic version; the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
@@ -563,7 +577,7 @@
     return { status: score >= 3 ? "change" : (score >= 1 ? "watch" : "ok"), reasons, trusted: trusted.map((p) => p.name), score };
   }
 
-  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
+  const api = { VERSION, dataVersion, init, FLAGS, FLAGS_V07, FLAGS_V08, setFlags, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
