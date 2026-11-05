@@ -1550,7 +1550,7 @@ def allowed_calls(arsenal, s, exclude=None):
 def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
     """Cost of call (p, q) in the v0.8 solve: outcome probabilities at this look and sit, next counts read from the
     table at the look this pitch leaves (myopic: at the PA's starting look), every PA end through v_end."""
-    s_ = replace(s, look=look)
+    s_ = s if s.look is look else replace(s, look=look)
     P = outcome_probs(p, q, s_, arsenal, sit=sit)
     b, k, o, B = s.balls, s.strikes, s.outs, s.bases
     nl = tab.h0 if myopic else look_update(look, p, q, s)
@@ -1571,8 +1571,9 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
     v += P["hbp"] * walk_end(B, 0)
     v += (P["cstrike"] + P["whiff"]) * (v_end(s, o + 1, B, 0) if k + 1 == 3 else tv(b, k + 1))
     v += P["foul"] * (tv(b, k + 1) if k < 2 else tv(b, k))
-    for c in ("weak", "solid", "hard"):
-        v += P[c] * (in_play_value_typed(c, p, q, s) if FLAGS["inplay_typed"] else in_play_value_ev(c, s))
+    ipv = _ipv_cached(tab, p, q, s)
+    for j, c in enumerate(("weak", "solid", "hard")):
+        v += P[c] * ipv[j]
     if FLAGS["running_game"] and s.steal and s.steal.get("a", 0) > 0:
         v += steal_cost(p, q, s, tab, nl)
     if FLAGS["hs_pitch_cost"] and s.level in ("hs", "travel"):
@@ -1583,6 +1584,20 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
                   P["foul"] * tab.value(b, min(k + 1, 2), nl, "N") + P["wp_ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N"))
             v += 0.002 * run_scale(s.level) * w_ * (1 + nxt)
     return v, P
+
+
+def _ipv_cached(tab, p, q, s):
+    """Speed only: the ball-in-play values of (p, q) don't depend on the count, look or sit; cached per base-out state and
+    objective on the table (same numbers)."""
+    w = s.win
+    key = (p.name, q, s.outs, s.bases, s.infield_in, s.level, FLAGS["inplay_typed"],
+           (w["omega"], w["WE0"], w["m0"], w["margin0"]) if (FLAGS["objective_win"] and w and w["omega"] > 0) else None)
+    cache = tab.__dict__.setdefault("ipv", {})
+    v = cache.get(key)
+    if v is None:
+        v = tuple(in_play_value_typed(c, p, q, s) if FLAGS["inplay_typed"] else in_play_value_ev(c, s) for c in ("weak", "solid", "hard"))
+        cache[key] = v
+    return v
 
 
 def pitches_left(P, s, tab, nl):
@@ -1675,15 +1690,17 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
             temp = temperature(arsenal, sc)
             calls = allowed_calls(arsenal, sc)
             # sit game at the PA's starting look
-            M = {a: {kk: cost08(by[a[0]], a[1], sc, arsenal, tab, tab.h0, ("pure",) + kk)[0] for kk in ks} for a in calls}
+            scH = replace(sc, look=tab.h0)
+            M = {a: {kk: cost08(by[a[0]], a[1], scH, arsenal, tab, tab.h0, ("pure",) + kk)[0] for kk in ks} for a in calls}
             pi, sg, res = solve_sit_game(M, ks, sc, temp, sc.b_h)
             tab.sigma[(b, k)] = sg
             tab.residuals.append(res)
             for bn in tab.bins:
                 look = tab.bin_look(bn)
                 cs, Ps = {}, {}
+                scL = replace(sc, look=look)
                 for a in calls:
-                    cs[a], Ps[a] = cost08(by[a[0]], a[1], sc, arsenal, tab, look, ("mix", sg))
+                    cs[a], Ps[a] = cost08(by[a[0]], a[1], scL, arsenal, tab, look, ("mix", sg))
                 pol = policy_from_costs(cs, sc, temp)
                 new = sum(pv * cs[a] for a, pv in pol.items())
                 delta = max(delta, abs(new - tab.V[(b, k)][bn]))
@@ -1709,11 +1726,12 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     calls = allowed_calls(arsenal, s, exclude)
     if not calls:
         calls = allowed_calls(arsenal, s)
-    M = {a: {kk: cost08(by[a[0]], a[1], s, arsenal, tab, look, ("pure",) + kk)[0] for kk in ks} for a in calls}
+    sL = replace(s, look=look)
+    M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk)[0] for kk in ks} for a in calls}
     sg_tab = tab.sigma.get((s.balls, s.strikes))
     look_on = FLAGS["look_state"]
     if look_on:
-        Mmy = {a: {kk: cost08(by[a[0]], a[1], s, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
+        Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
         cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
         best = min(cmy.values())
         delta = 0.010 * run_scale(s.level)
