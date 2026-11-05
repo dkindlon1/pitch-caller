@@ -1,0 +1,121 @@
+{
+ "v08": {
+  "023": [
+   "wrong",
+   "landing",
+   "2-2 slider landing 3 of 13 today; a coach calls a pitch that's landing"
+  ],
+  "078": [
+   "wrong",
+   "landing",
+   "1-0 slider landing 3 of 12; risks 2-0 (your row E2 logic)"
+  ],
+  "007": [
+   "questionable",
+   "S",
+   "same slider middle right after he fouled it back"
+  ],
+  "063": [
+   "questionable",
+   "landing",
+   "3-2 slider landing 11 of 23 (under half)"
+  ],
+  "077": [
+   "questionable",
+   "landing",
+   "first pitch curveball landing 3 of 10"
+  ],
+  "083": [
+   "questionable",
+   "S",
+   "same fastball up-away after a called strike (your row B4: Arguable)"
+  ],
+  "084": [
+   "questionable",
+   "C",
+   "elevated fastball, runners on 2nd and 3rd, 1 out, before two strikes (Arguable)"
+  ],
+  "088": [
+   "questionable",
+   "landing",
+   "1-1 tie game slider landing 1 of 4"
+  ]
+ },
+ "v07": {
+  "018": [
+   "wrong",
+   "landing",
+   "2-2 slider landing 4 of 15, runners on 1st and 3rd"
+  ],
+  "021": [
+   "wrong",
+   "R",
+   "chase at 2-2 (flagged; rule added in v0.8)"
+  ],
+  "022": [
+   "wrong",
+   "R",
+   "chase at 2-2 (flagged)"
+  ],
+  "026": [
+   "wrong",
+   "R",
+   "chase at 2-2 (flagged)"
+  ],
+  "067": [
+   "wrong",
+   "R",
+   "chase at 2-2 (flagged)"
+  ],
+  "024": [
+   "wrong",
+   "R",
+   "re-called the fastball middle he shook off (flagged)"
+  ],
+  "029": [
+   "wrong",
+   "R",
+   "re-called a shaken-off call (flagged)"
+  ],
+  "047": [
+   "wrong",
+   "R",
+   "re-called a shaken-off call (flagged)"
+  ],
+  "030": [
+   "questionable",
+   "X",
+   "slider up-away after a slider whiff: hanger risk"
+  ],
+  "033": [
+   "questionable",
+   "X",
+   "first-pitch slider up-away: hanger risk"
+  ],
+  "034": [
+   "questionable",
+   "landing",
+   "0-1 curveball landing 5 of 13, 9th, down 1"
+  ],
+  "036": [
+   "questionable",
+   "landing",
+   "first-pitch curveball landing 1 of 5"
+  ],
+  "041": [
+   "questionable",
+   "landing",
+   "1-0 changeup landing 1 of 4"
+  ],
+  "042": [
+   "questionable",
+   "C",
+   "elevated fastball, runner on 3rd, 1 out, before two strikes (Arguable)"
+  ],
+  "050": [
+   "questionable",
+   "landing",
+   "3-2 slider landing 14 of 33, the only call allowed"
+  ]
+ }
+}

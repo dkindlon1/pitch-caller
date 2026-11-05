@@ -1,0 +1,247 @@
+{
+ "engine": "v07",
+ "games": 36,
+ "pitches": 5769,
+ "pas": 1620,
+ "flags": {
+  "R1": 0,
+  "R2": 4,
+  "R3": 3,
+  "E1": 1,
+  "E2": 0,
+  "S1": 754
+ },
+ "flags_per_100": {
+  "R1": 0.0,
+  "R2": 0.07,
+  "R3": 0.05,
+  "E1": 0.02,
+  "E2": 0.0,
+  "S1": 13.07
+ },
+ "hard_rule_violations": 7,
+ "reported": {
+  "two_strike_middle_share": 0.374,
+  "elevated_r3_share": 0.082,
+  "wild_low_breaker_r3": 17
+ },
+ "count_paths": {
+  "pas": 1620,
+  "pitchers_count_rate": 0.3512345679012346,
+  "hitters_count_rate": 0.2598765432098765,
+  "first_pitch_fb": 0.5555555555555556,
+  "first_pitch_strike": 0.5067901234567901,
+  "early_ball_rate": 0.0006172839506172839,
+  "one_one_to_one_two": 0.486784140969163
+ },
+ "predictability": {
+  "predictor_acc": 0.5916103310799099,
+  "always_fb_acc": 0.5465418616744669,
+  "edge": 0.04506846940544289,
+  "behind_predictor_acc": 0.6166832174776564,
+  "behind_always_fb_acc": 0.602780536246276,
+  "behind_n": 2014,
+  "by_count": {
+   "0-0": {
+    "n": 1620,
+    "predictor": 0.556,
+    "always_fb": 0.556,
+    "edge": 0.0
+   },
+   "0-1": {
+    "n": 539,
+    "predictor": 0.614,
+    "always_fb": 0.529,
+    "edge": 0.085
+   },
+   "0-2": {
+    "n": 233,
+    "predictor": 0.579,
+    "always_fb": 0.395,
+    "edge": 0.185
+   },
+   "1-0": {
+    "n": 778,
+    "predictor": 0.571,
+    "always_fb": 0.571,
+    "edge": 0.0
+   },
+   "1-1": {
+    "n": 543,
+    "predictor": 0.606,
+    "always_fb": 0.562,
+    "edge": 0.044
+   },
+   "1-2": {
+    "n": 423,
+    "predictor": 0.558,
+    "always_fb": 0.423,
+    "edge": 0.135
+   },
+   "2-0": {
+    "n": 343,
+    "predictor": 0.633,
+    "always_fb": 0.633,
+    "edge": 0.0
+   },
+   "2-1": {
+    "n": 362,
+    "predictor": 0.68,
+    "always_fb": 0.646,
+    "edge": 0.033
+   },
+   "2-2": {
+    "n": 397,
+    "predictor": 0.605,
+    "always_fb": 0.448,
+    "edge": 0.156
+   },
+   "3-0": {
+    "n": 125,
+    "predictor": 0.664,
+    "always_fb": 0.664,
+    "edge": 0.0
+   },
+   "3-1": {
+    "n": 169,
+    "predictor": 0.68,
+    "always_fb": 0.645,
+    "edge": 0.036
+   },
+   "3-2": {
+    "n": 237,
+    "predictor": 0.578,
+    "always_fb": 0.536,
+    "edge": 0.042
+   }
+  },
+  "rho_consecutive_fb": 0.14825570206370256,
+  "rho_within_pa": 0.16109289546649166,
+  "fb_after_fb": 0.6159260888693356,
+  "fb_after_os": 0.4546908315565032
+ },
+ "usage_by_count": {
+  "0-0": {
+   "fb": 0.556,
+   "chase": 0.014,
+   "middle": 0.499,
+   "inside": 0.08,
+   "n": 1620
+  },
+  "0-1": {
+   "fb": 0.529,
+   "chase": 0.019,
+   "middle": 0.319,
+   "inside": 0.109,
+   "n": 539
+  },
+  "0-2": {
+   "fb": 0.395,
+   "chase": 0.227,
+   "middle": 0.09,
+   "inside": 0.047,
+   "n": 233
+  },
+  "1-0": {
+   "fb": 0.571,
+   "chase": 0.0,
+   "middle": 0.676,
+   "inside": 0.078,
+   "n": 778
+  },
+  "1-1": {
+   "fb": 0.562,
+   "chase": 0.006,
+   "middle": 0.578,
+   "inside": 0.07,
+   "n": 543
+  },
+  "1-2": {
+   "fb": 0.423,
+   "chase": 0.128,
+   "middle": 0.173,
+   "inside": 0.038,
+   "n": 423
+  },
+  "2-0": {
+   "fb": 0.633,
+   "chase": 0.003,
+   "middle": 0.828,
+   "inside": 0.061,
+   "n": 343
+  },
+  "2-1": {
+   "fb": 0.646,
+   "chase": 0.0,
+   "middle": 0.826,
+   "inside": 0.064,
+   "n": 362
+  },
+  "2-2": {
+   "fb": 0.448,
+   "chase": 0.01,
+   "middle": 0.423,
+   "inside": 0.05,
+   "n": 397
+  },
+  "3-0": {
+   "fb": 0.664,
+   "chase": 0.0,
+   "middle": 0.928,
+   "inside": 0.016,
+   "n": 125
+  },
+  "3-1": {
+   "fb": 0.645,
+   "chase": 0.0,
+   "middle": 0.893,
+   "inside": 0.065,
+   "n": 169
+  },
+  "3-2": {
+   "fb": 0.536,
+   "chase": 0.0,
+   "middle": 0.928,
+   "inside": 0.03,
+   "n": 237
+  }
+ },
+ "by_level": {
+  "college_d1": {
+   "count_paths": {
+    "pas": 512,
+    "pitchers_count_rate": 0.35546875,
+    "hitters_count_rate": 0.255859375,
+    "first_pitch_fb": 0.546875,
+    "first_pitch_strike": 0.521484375,
+    "early_ball_rate": 0.001953125,
+    "one_one_to_one_two": 0.4788732394366197
+   },
+   "fb_share": 0.545
+  },
+  "college_d3": {
+   "count_paths": {
+    "pas": 553,
+    "pitchers_count_rate": 0.33815551537070526,
+    "hitters_count_rate": 0.25316455696202533,
+    "first_pitch_fb": 0.5551537070524413,
+    "first_pitch_strike": 0.4936708860759494,
+    "early_ball_rate": 0.0,
+    "one_one_to_one_two": 0.46296296296296297
+   },
+   "fb_share": 0.552
+  },
+  "hs": {
+   "count_paths": {
+    "pas": 555,
+    "pitchers_count_rate": 0.36036036036036034,
+    "hitters_count_rate": 0.2702702702702703,
+    "first_pitch_fb": 0.563963963963964,
+    "first_pitch_strike": 0.5063063063063064,
+    "early_ball_rate": 0.0,
+    "one_one_to_one_two": 0.52
+   },
+   "fb_share": 0.543
+  }
+ }
+}

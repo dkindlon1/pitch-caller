@@ -1,0 +1,3670 @@
+# Read-through pack: v07
+
+36 games, 5769 pitches. Flags: R1 chase at 3-0/3-1 = 0, R2 chase at 2-2 = 4, R3 re-called a shaken-off call = 3, E1 first two calls off the zone = 1, E2 chase at 3-2, bases loaded = 0, S1 same pitch, same spot, no whiff = 754.
+
+## Sampled calls (1464: every flagged call, 20% of high-stakes calls, 5% of the rest; seed 909)
+
+- **college_d1_default_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 2**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 46%; Slider middle 37%; Changeup middle 17% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → cstrike | top: Slider middle 22%; Fastball middle 21%; Changeup middle 18% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s101 · PA 6 · inning 2, 2 out, bases empty, score 3-0 · #6 (L, opposite side) vs Starter (R), pitch 16**
+  - `0-0` **Changeup down-away** → foul — foul pull | top: Changeup middle 8%; Changeup down-away 8%; Fastball middle 7% | before: first pitch
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 67%; Fastball middle 20%; Changeup middle 13% | before: Fastball middle (foul), Changeup down-away (ball), Fastball middle (foul)
+- **college_d1_default_s101 · PA 9 · inning 3, 0 out, bases empty, score 3-1 · #9 (R, same side) vs Starter (R), pitch 31**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 20%; Slider middle 19%; Changeup middle 18% | before: first pitch
+  - `2-2` **Fastball up-in** → cstrike — STRIKEOUT | top: Slider down-away 29%; Slider middle 23%; Fastball up-away 17% | before: Slider middle (ball), Fastball up-away (ball), Fastball middle (foul)
+- **college_d1_default_s101 · PA 11 · inning 3, 2 out, bases empty, score 3-1 · #2 (R, same side) vs Starter (R), pitch 40**
+  - `0-0` **Fastball up-in** → ball | top: Changeup down-away 9%; Changeup middle 9%; Fastball middle 8% | before: first pitch
+  - `1-0` **Changeup middle** → cstrike | top: Changeup middle 12%; Changeup down-away 11%; Fastball middle 10% | before: Fastball up-in (ball)
+- **college_d1_default_s101 · PA 12 · inning 4, 0 out, bases empty, score 6-1 · #3 (R, same side) vs Starter (R), pitch 46**
+  - `2-0` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 75%; Slider middle 25% | before: Fastball down-away (ball), Slider middle (ball)
+- **college_d1_default_s101 · PA 13 · inning 4, 0 out, bases 1, score 6-1 · #4 (R, same side) vs Starter (R), pitch 48**
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 60%; Slider middle 35%; Changeup middle 5% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s101 · PA 15 · inning 4, 1 out, bases 23, score 6-1 · #6 (L, opposite side) vs Starter (R), pitch 53**
+  - `2-1` **Fastball middle** → weak — weak contact: SAC FLY | top: Slider middle 65%; Fastball middle 28%; Changeup middle 7% | before: Fastball middle (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s101 · PA 16 · inning 4, 2 out, bases 2, score 6-2 · #7 (R, same side) vs Starter (R), pitch 55**
+  - `1-0` **Fastball down-in** → whiff — whiff (fooled) | top: Changeup middle 21%; Slider middle 10%; Slider down-away 9% | before: Slider down-away (ball)
+- **college_d1_default_s101 · PA 18 · inning 5, 1 out, bases empty, score 8-2 · #9 (R, same side) vs Starter (R), pitch 60**
+  - `0-0` **Fastball up-in** → ball | top: Slider middle 14%; Fastball middle 13%; Changeup middle 12% | before: first pitch
+- **college_d1_default_s101 · PA 19 · inning 5, 1 out, bases 2, score 8-2 · #1 (L, opposite side) vs Starter (R), pitch 64**
+  - `0-2` **Fastball up-away** → foul — foul opposite | top: Fastball up-away 30%; Slider down-away 28%; Slider chase 28% | before: Changeup middle (foul), Slider middle (foul)
+- **college_d1_default_s101 · PA 23 · inning 6, 1 out, bases 2, score 8-2 · #5 (R, same side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball middle** → foul — foul straight back | top: Slider middle 18%; Changeup middle 17%; Fastball middle 17% | before: first pitch
+  - `0-2` **Slider down-away** → foul — foul opposite | top: Slider down-away 38%; Slider chase 33%; Fastball up-away 19% | before: Fastball middle (foul), Fastball up-in (foul)
+  - `0-2` **Slider down-away** → foul — foul straight back | top: Slider chase 34%; Fastball up-away 22%; Slider down-away 20% | before: Fastball middle (foul), Fastball up-in (foul), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s101 · PA 26 · inning 7, 1 out, bases empty, score 9-2 · #8 (R, same side) vs Starter (R), pitch 88**
+  - `3-0` **Slider middle** → ball — WALK | top: Fastball middle 79%; Slider middle 21% | before: Fastball up-away (ball), Fastball up-in (ball), Fastball middle (ball)
+- **college_d1_default_s101 · PA 27 · inning 7, 1 out, bases 1, score 9-2 · #9 (R, same side) vs Starter (R), pitch 89**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 21%; Slider middle 19%; Changeup middle 16% | before: first pitch
+- **college_d1_default_s101 · PA 30 · inning 8, 1 out, bases empty, score 9-2 · #3 (R, same side) vs Reliever (R), pitch 6**
+  - `0-0` **Curveball middle** → ball | top: Changeup middle 23%; Fastball middle 15%; Curveball middle 13% | before: first pitch
+- **college_d1_default_s101 · PA 34 · inning 9, 2 out, bases empty, score 12-2 · #7 (R, same side) vs Reliever (R), pitch 23**
+  - `2-2` **Curveball down-in** → cstrike — STRIKEOUT | top: Curveball down-away 15%; Fastball middle 14%; Curveball middle 13% | before: Changeup down-away (cstrike), Fastball down-away (ball), Changeup down-away (foul)
+- **college_d1_default_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 12**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 90%; Slider middle 10% | before: Fastball middle (foul), Slider down-away (ball), Slider middle (ball)
+- **college_d1_default_s102 · PA 3 · inning 1, 1 out, bases 1, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 14**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 29%; Fastball up-away 19%; Slider middle 19% | before: Slider middle (ball)
+- **college_d1_default_s102 · PA 5 · inning 1, 1 out, bases 1, score 0-2 · #5 (R, same side) vs Starter (R), pitch 24**
+  - `3-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball down-in (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 9 · inning 2, 0 out, bases 1, score 0-2 · #9 (R, same side) vs Starter (R), pitch 37**
+  - `0-1` **Changeup down-away** → ball | top: Slider middle 20%; Slider down-away 18%; Fastball middle 18% | before: Fastball middle (cstrike)
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 77%; Slider middle 23% | before: Fastball middle (cstrike), Changeup down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 94%; Slider middle 6% | before: Changeup down-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 10 · inning 2, 1 out, bases 2, score 0-2 · #1 (R, same side) vs Starter (R), pitch 43**
+  - `0-1` **Fastball down-away** → foul — foul pull | top: Slider middle 18%; Slider down-away 17%; Changeup down-away 17% | before: Fastball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 11 · inning 2, 1 out, bases 12, score 0-2 · #2 (R, same side) vs Starter (R), pitch 47**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 73%; Slider middle 27% | before: Slider middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 90%; Slider middle 10% | before: Slider middle (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 13 · inning 3, 0 out, bases empty, score 0-2 · #4 (L, opposite side) vs Starter (R), pitch 52**
+  - `0-0` **Fastball up-away** → ball | top: Slider middle 29%; Changeup middle 22%; Fastball middle 22% | before: first pitch
+- **college_d1_default_s102 · PA 16 · inning 3, 2 out, bases 3, score 0-2 · #7 (R, same side) vs Starter (R), pitch 59**
+  - `2-0` **Fastball down-away** → foul — foul pull | top: Slider middle 33%; Fastball middle 14%; Fastball up-away 12% | before: Fastball down-away (ball), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → solid — solid contact: OUT | top: Slider middle 36%; Fastball middle 18%; Fastball up-in 11% | before: Fastball up-away (ball), Fastball down-away (foul), Slider middle (ball)
+- **college_d1_default_s102 · PA 17 · inning 4, 0 out, bases empty, score 0-2 · #8 (L, opposite side) vs Starter (R), pitch 65**
+  - `2-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 48%; Slider middle 44%; Changeup middle 8% | before: Slider middle (whiff), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 18 · inning 4, 0 out, bases empty, score 0-3 · #9 (R, same side) vs Starter (R), pitch 66**
+  - `0-0` **Changeup middle** → ball | top: Slider middle 21%; Changeup middle 21%; Fastball middle 19% | before: first pitch
+  - `1-0` **Changeup middle** → ball | top: Slider middle 41%; Fastball middle 30%; Fastball up-away 16% | before: Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 19 · inning 4, 1 out, bases empty, score 0-3 · #1 (R, same side) vs Starter (R), pitch 73**
+  - `3-1` **Slider middle** → ball — WALK | top: Fastball middle 74%; Slider middle 26% | before: Slider middle (ball), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 20 · inning 4, 2 out, bases empty, score 0-3 · #2 (R, same side) vs Starter (R), pitch 74**
+  - `0-0` **Fastball chase** → whiff — whiff (fooled) | top: Fastball middle 9%; Slider middle 8%; Slider down-away 7% | before: first pitch
+  - `0-1` **Slider chase** → ball | top: Slider middle 8%; Slider down-away 7%; Fastball middle 7% | before: Fastball chase (whiff)  **⚑ E1 first two calls off the zone**
+  - `2-1` **Fastball up-in** → whiff — whiff (out in front) | top: Slider middle 19%; Changeup middle 18%; Fastball middle 15% | before: Fastball chase (whiff), Slider chase (ball), Slider up-away (ball)
+- **college_d1_default_s102 · PA 22 · inning 5, 0 out, bases empty, score 0-3 · #4 (L, opposite side) vs Starter (R), pitch 88**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-away (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 25 · inning 5, 2 out, bases 1, score 0-3 · #7 (R, same side) vs Starter (R), pitch 93**
+  - `0-0` **Slider middle** → ball | top: Changeup middle 21%; Slider middle 14%; Fastball middle 12% | before: first pitch
+- **college_d1_default_s102 · PA 26 · inning 6, 0 out, bases empty, score 0-3 · #8 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Changeup middle** → cstrike | top: Curveball middle 31%; Changeup middle 23%; Fastball middle 20% | before: first pitch
+  - `1-1` **Fastball middle** → cstrike | top: Fastball middle 33%; Changeup middle 26%; Curveball middle 26% | before: Changeup middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 28 · inning 6, 2 out, bases empty, score 0-3 · #1 (R, same side) vs Reliever (R), pitch 10**
+  - `1-2` **Fastball chase** → whiff — whiff (fooled); STRIKEOUT | top: Changeup down-away 15%; Curveball down-away 13%; Curveball middle 10% | before: Fastball down-in (ball), Curveball down-away (whiff), Fastball chase (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 29 · inning 7, 0 out, bases empty, score 0-3 · #2 (R, same side) vs Reliever (R), pitch 12**
+  - `0-1` **Fastball middle** → foul — foul pull | top: Changeup down-away 19%; Fastball middle 18%; Curveball middle 17% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Curveball down-away** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 36%; Curveball down-away 24%; Fastball middle 19% | before: Fastball middle (cstrike), Fastball middle (foul), Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 32 · inning 7, 2 out, bases 2, score 0-3 · #5 (R, same side) vs Reliever (R), pitch 26**
+  - `3-0` **Fastball middle** → ball — WALK | top: Curveball middle 43%; Fastball middle 35%; Changeup middle 23% | before: Fastball up-in (ball), Fastball middle (ball), Curveball down-away (ball)
+- **college_d1_default_s102 · PA 33 · inning 7, 2 out, bases 12, score 0-3 · #6 (R, same side) vs Reliever (R), pitch 28**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 49%; Curveball middle 23%; Curveball down-away 16% | before: Changeup down-away (ball)
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 51%; Curveball middle 37%; Changeup middle 12% | before: Changeup down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → cstrike | top: Curveball middle 55%; Fastball middle 35%; Changeup middle 10% | before: Changeup down-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Curveball down-away** → ball | top: Curveball down-away 82%; Fastball up-away 18% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (cstrike)
+  - `3-2` **Curveball middle** → whiff — whiff (late); STRIKEOUT | top: Curveball middle 60%; Fastball middle 40% | before: Fastball middle (foul), Fastball middle (cstrike), Curveball down-away (ball)
+- **college_d1_default_s102 · PA 35 · inning 8, 1 out, bases empty, score 0-3 · #8 (L, opposite side) vs Reliever (R), pitch 37**
+  - `0-0` **Changeup down-away** → cstrike | top: Curveball middle 16%; Changeup middle 15%; Fastball middle 14% | before: first pitch
+  - `1-2` **Curveball down-in** → solid — solid contact: OUT | top: Curveball down-away 16%; Changeup down-away 15%; Fastball up-away 15% | before: Changeup down-away (cstrike), Curveball down-in (ball), Curveball middle (foul)
+- **college_d1_default_s102 · PA 36 · inning 8, 2 out, bases empty, score 0-3 · #9 (R, same side) vs Reliever (R), pitch 41**
+  - `0-0` **Changeup chase** → ball | top: Fastball middle 8%; Curveball middle 8%; Curveball down-away 7% | before: first pitch
+- **college_d1_default_s102 · PA 37 · inning 8, 2 out, bases 1, score 0-3 · #1 (R, same side) vs Reliever (R), pitch 45**
+  - `0-0` **Curveball down-in** → ball | top: Changeup middle 20%; Fastball middle 17%; Fastball up-away 13% | before: first pitch
+  - `3-2` **Curveball middle** → cstrike — STRIKEOUT | top: Curveball middle 91%; Fastball middle 9% | before: Curveball down-away (foul), Curveball middle (whiff), Fastball middle (ball)
+- **college_d1_default_s102 · PA 38 · inning 9, 0 out, bases empty, score 0-3 · #2 (R, same side) vs Reliever (R), pitch 54**
+  - `2-1` **Fastball middle** → ball | top: Curveball middle 55%; Fastball middle 33%; Changeup middle 13% | before: Fastball middle (ball), Curveball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 39 · inning 9, 1 out, bases empty, score 0-3 · #3 (L, opposite side) vs Reliever (R), pitch 56**
+  - `0-0` **Curveball down-away** → ball | top: Curveball middle 16%; Changeup middle 15%; Fastball middle 14% | before: first pitch
+  - `3-2` **Curveball middle** → ball — WALK | top: Curveball middle 72%; Fastball middle 16%; Changeup middle 12% | before: Fastball middle (ball), Curveball middle (ball), Fastball middle (cstrike)
+- **college_d1_default_s102 · PA 40 · inning 9, 1 out, bases 1, score 0-3 · #4 (L, opposite side) vs Reliever (R), pitch 63**
+  - `0-1` **Curveball down-away** → hard — hard contact: SINGLE | top: Fastball middle 22%; Changeup down-away 18%; Curveball middle 16% | before: Curveball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s102 · PA 41 · inning 9, 1 out, bases 12, score 0-3 · #5 (R, same side) vs Reliever (R), pitch 65**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 74%; Changeup middle 26% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 2 · inning 1, 0 out, bases 1, score 0-0 · #2 (L, opposite side) vs Starter (R), pitch 6**
+  - `1-0` **Slider middle** → cstrike | top: Fastball middle 48%; Slider middle 45%; Changeup middle 7% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (R, same side) vs Starter (R), pitch 14**
+  - `0-1` **Fastball up-away** → solid — solid contact: SINGLE | top: Changeup down-away 23%; Fastball middle 13%; Slider middle 12% | before: Changeup middle (foul)
+- **college_d1_default_s103 · PA 6 · inning 2, 0 out, bases empty, score 1-0 · #6 (R, same side) vs Starter (R), pitch 22**
+  - `2-2` **Fastball middle** → ball | top: Slider down-away 48%; Slider middle 35%; Fastball middle 10% | before: Slider middle (whiff), Slider down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 7 · inning 2, 1 out, bases empty, score 1-0 · #7 (R, same side) vs Starter (R), pitch 25**
+  - `0-1` **Slider middle** → hbp — HIT BY PITCH | top: Changeup down-away 23%; Slider middle 17%; Slider down-away 15% | before: Slider middle (whiff)
+- **college_d1_default_s103 · PA 9 · inning 2, 2 out, bases 1, score 1-0 · #9 (R, same side) vs Starter (R), pitch 28**
+  - `1-0` **Slider down-away** → whiff — whiff (fooled) | top: Slider middle 21%; Fastball middle 20%; Slider down-away 17% | before: Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider down-away** → ball | top: Changeup middle 19%; Fastball middle 16%; Slider middle 15% | before: Slider down-away (ball), Slider down-away (whiff)
+- **college_d1_default_s103 · PA 11 · inning 3, 1 out, bases empty, score 1-0 · #2 (L, opposite side) vs Starter (R), pitch 38**
+  - `3-0` **Slider middle** → ball — WALK | top: Slider middle 51%; Fastball middle 43%; Changeup middle 6% | before: Slider up-away (ball), Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 12 · inning 3, 1 out, bases 1, score 1-0 · #3 (R, same side) vs Starter (R), pitch 39**
+  - `0-0` **Slider middle** → ball | top: Slider middle 33%; Fastball middle 33%; Fastball up-away 18% | before: first pitch
+- **college_d1_default_s103 · PA 13 · inning 3, 2 out, bases 1, score 1-0 · #4 (R, same side) vs Starter (R), pitch 46**
+  - `1-2` **Slider down-away** → foul — foul pull | top: Fastball up-away 13%; Changeup down-away 12%; Slider down-away 10% | before: Fastball middle (whiff), Slider up-away (whiff), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 14 · inning 4, 0 out, bases empty, score 1-0 · #5 (R, same side) vs Starter (R), pitch 50**
+  - `1-1` **Slider middle** → ball | top: Changeup middle 22%; Slider middle 21%; Fastball middle 21% | before: Changeup middle (whiff), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 16 · inning 4, 0 out, bases 12, score 1-0 · #7 (R, same side) vs Starter (R), pitch 60**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 87%; Slider middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 18 · inning 4, 0 out, bases 123, score 1-1 · #9 (R, same side) vs Starter (R), pitch 65**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 86%; Slider middle 14% | before: Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 19 · inning 4, 1 out, bases 123, score 1-1 · #1 (L, opposite side) vs Starter (R), pitch 69**
+  - `1-0` **Slider middle** → weak — weak contact: OUT | top: Slider middle 100% | before: Fastball middle (ball)
+- **college_d1_default_s103 · PA 20 · inning 4, 2 out, bases 123, score 1-1 · #2 (L, opposite side) vs Starter (R), pitch 72**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 68%; Slider middle 20%; Changeup middle 12% | before: Changeup middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 89%; Slider middle 11% | before: Changeup middle (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 22 · inning 5, 0 out, bases 1, score 3-1 · #4 (R, same side) vs Starter (R), pitch 77**
+  - `1-1` **Slider middle** → foul — foul straight back | top: Fastball middle 59%; Slider middle 28%; Changeup middle 12% | before: Changeup middle (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 23 · inning 5, 1 out, bases 1, score 3-1 · #5 (R, same side) vs Starter (R), pitch 80**
+  - `0-1` **Fastball middle** → foul — foul pull | top: Slider middle 15%; Slider down-away 15%; Changeup middle 12% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Slider down-away** → foul — foul straight back | top: Slider down-away 41%; Slider chase 30%; Fastball up-away 18% | before: Fastball middle (foul), Fastball middle (foul), Changeup down-away (foul)
+  - `1-2` **Fastball up-away** → cstrike — STRIKEOUT | top: Fastball up-away 20%; Slider down-away 18%; Changeup down-away 16% | before: Slider down-away (foul), Slider chase (ball), Slider down-away (foul)
+- **college_d1_default_s103 · PA 28 · inning 6, 0 out, bases 1, score 3-2 · #1 (L, opposite side) vs Starter (R), pitch 95**
+  - `1-2` **Fastball up-away** → ball | top: Slider down-away 39%; Changeup down-away 21%; Slider middle 17% | before: Changeup middle (cstrike), Fastball down-away (ball), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 34 · inning 7, 2 out, bases 3, score 3-2 · #7 (R, same side) vs Reliever (R), pitch 19**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 89%; Curveball middle 7%; Changeup middle 4% | before: Fastball down-away (ball), Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 35 · inning 7, 2 out, bases 23, score 3-2 · #8 (R, same side) vs Reliever (R), pitch 20**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 47%; Fastball up-away 21%; Fastball down-away 17% | before: first pitch
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 98%; Curveball middle 2% | before: Fastball up-away (ball), Curveball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul pull | top: Fastball middle 53%; Fastball up-in 19%; Curveball middle 18% | before: Curveball middle (ball), Fastball middle (cstrike), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 36 · inning 7, 2 out, bases 123, score 3-2 · #9 (R, same side) vs Reliever (R), pitch 27**
+  - `0-0` **Curveball middle** → ball | top: Fastball middle 93%; Curveball middle 4%; Changeup middle 2% | before: first pitch
+  - `1-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 95%; Changeup middle 3%; Curveball middle 2% | before: Curveball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → whiff — whiff (fooled); STRIKEOUT | top: Fastball middle 75%; Fastball up-away 21%; Curveball middle 4% | before: Fastball middle (foul), Fastball middle (whiff), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 38 · inning 8, 1 out, bases empty, score 3-2 · #2 (L, opposite side) vs Reliever (R), pitch 34**
+  - `1-0` **Curveball middle** → ball | top: Changeup middle 26%; Curveball middle 24%; Fastball middle 24% | before: Changeup middle (ball)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 64%; Changeup middle 20%; Curveball middle 17% | before: Changeup middle (ball), Curveball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 41 · inning 9, 1 out, bases empty, score 4-2 · #5 (R, same side) vs Reliever (R), pitch 45**
+  - `1-0` **Curveball middle** → foul — foul opposite | top: Changeup middle 25%; Fastball middle 24%; Curveball middle 23% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s103 · PA 42 · inning 9, 2 out, bases empty, score 4-2 · #6 (R, same side) vs Reliever (R), pitch 50**
+  - `0-0` **Curveball middle** → whiff — whiff (fooled) | top: Curveball middle 9%; Fastball middle 9%; Curveball down-away 8% | before: first pitch
+- **college_d1_default_s104 · PA 3 · inning 1, 1 out, bases 2, score 0-0 · #3 (R, same side) vs Starter (R), pitch 7**
+  - `0-0` **Slider middle** → foul — foul opposite | top: Slider middle 26%; Fastball middle 26%; Changeup middle 19% | before: first pitch
+  - `0-1` **Slider middle** → ball | top: Changeup down-away 19%; Fastball middle 18%; Slider down-away 17% | before: Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 5 · inning 2, 0 out, bases empty, score 1-0 · #5 (R, same side) vs Starter (R), pitch 13**
+  - `0-0` **Slider middle** → hbp — HIT BY PITCH | top: Fastball middle 31%; Slider middle 27%; Changeup middle 25% | before: first pitch
+- **college_d1_default_s104 · PA 6 · inning 2, 0 out, bases 1, score 1-0 · #6 (R, same side) vs Starter (R), pitch 14**
+  - `0-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 60%; Slider middle 21%; Changeup middle 18% | before: first pitch
+- **college_d1_default_s104 · PA 8 · inning 2, 1 out, bases 13, score 1-0 · #8 (R, same side) vs Starter (R), pitch 18**
+  - `1-0` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 68%; Slider middle 19%; Changeup middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 10 · inning 2, 2 out, bases 12, score 1-1 · #1 (L, opposite side) vs Starter (R), pitch 25**
+  - `1-0` **Slider middle** → ball | top: Fastball middle 26%; Slider middle 24%; Changeup middle 19% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Slider middle (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 90%; Slider middle 5%; Changeup middle 5% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 11 · inning 3, 0 out, bases empty, score 2-1 · #2 (R, same side) vs Starter (R), pitch 33**
+  - `1-2` **Changeup down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 34%; Fastball up-away 27%; Slider middle 22% | before: Slider middle (ball), Fastball middle (cstrike), Changeup middle (foul)
+- **college_d1_default_s104 · PA 12 · inning 3, 1 out, bases empty, score 2-1 · #3 (R, same side) vs Starter (R), pitch 38**
+  - `2-2` **Fastball up-in** → weak — weak contact: OUT | top: Fastball middle 18%; Fastball up-away 17%; Changeup middle 17% | before: Fastball middle (foul), Slider middle (ball), Slider chase (ball)
+- **college_d1_default_s104 · PA 14 · inning 3, 2 out, bases empty, score 2-2 · #5 (R, same side) vs Starter (R), pitch 44**
+  - `1-0` **Fastball up-away** → foul — foul opposite | top: Slider middle 15%; Changeup middle 14%; Slider down-away 13% | before: Changeup up-away (ball)
+- **college_d1_default_s104 · PA 16 · inning 4, 0 out, bases 2, score 2-2 · #7 (L, opposite side) vs Starter (R), pitch 55**
+  - `2-2` **Fastball up-away** → foul — foul opposite | top: Fastball up-away 48%; Slider middle 23%; Fastball middle 20% | before: Fastball down-away (cstrike), Fastball up-in (ball), Slider down-away (ball)
+  - `2-2` **Changeup middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Slider middle 37%; Changeup middle 20%; Slider down-away 17% | before: Fastball up-in (ball), Slider down-away (ball), Fastball up-away (foul)
+- **college_d1_default_s104 · PA 18 · inning 4, 2 out, bases empty, score 2-3 · #9 (L, opposite side) vs Starter (R), pitch 58**
+  - `0-0` **Fastball chase** → ball | top: Slider middle 9%; Fastball middle 8%; Changeup middle 8% | before: first pitch
+  - `2-1` **Fastball down-in** → ball | top: Changeup middle 22%; Slider middle 22%; Fastball middle 16% | before: Fastball chase (ball), Changeup down-away (whiff), Slider down-away (ball)
+- **college_d1_default_s104 · PA 19 · inning 4, 2 out, bases 1, score 2-3 · #1 (L, opposite side) vs Starter (R), pitch 65**
+  - `1-1` **Fastball up-in** → ball | top: Slider middle 28%; Changeup middle 23%; Fastball middle 12% | before: Fastball down-in (cstrike), Slider up-away (ball)
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Slider up-away (ball), Fastball up-in (ball), Slider middle (ball)
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 65%; Slider middle 17%; Changeup middle 17% | before: Fastball up-in (ball), Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul pull | top: Fastball middle 57%; Slider middle 23%; Changeup middle 20% | before: Slider middle (ball), Fastball middle (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 63%; Changeup middle 20%; Slider middle 18% | before: Fastball middle (foul), Slider middle (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 21 · inning 5, 0 out, bases empty, score 2-3 · #3 (R, same side) vs Starter (R), pitch 78**
+  - `0-1` **Fastball middle** → cstrike | top: Changeup down-away 25%; Slider down-away 14%; Slider middle 14% | before: Fastball up-away (cstrike)
+- **college_d1_default_s104 · PA 25 · inning 5, 2 out, bases 2, score 2-4 · #7 (L, opposite side) vs Starter (R), pitch 87**
+  - `0-0` **Changeup down-away** → whiff — whiff (out in front) | top: Changeup down-away 25%; Slider middle 16%; Slider down-away 15% | before: first pitch
+- **college_d1_default_s104 · PA 27 · inning 6, 1 out, bases empty, score 2-4 · #9 (L, opposite side) vs Starter (R), pitch 95**
+  - `3-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 100% | before: Fastball down-away (ball), Slider middle (whiff), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 28 · inning 6, 1 out, bases 2, score 2-4 · #1 (L, opposite side) vs Reliever (R), pitch 5**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 64%; Changeup middle 23%; Curveball middle 13% | before: Fastball up-away (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 32 · inning 7, 0 out, bases 12, score 2-4 · #5 (R, same side) vs Reliever (R), pitch 12**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 91%; Curveball middle 5%; Changeup middle 4% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 91%; Curveball middle 7%; Changeup middle 3% | before: Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 35 · inning 8, 1 out, bases empty, score 2-4 · #8 (R, same side) vs Reliever (R), pitch 22**
+  - `2-1` **Curveball middle** → whiff — whiff (fooled) | top: Fastball middle 60%; Curveball middle 30%; Changeup middle 10% | before: Fastball down-away (ball), Changeup middle (ball), Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 36 · inning 8, 2 out, bases empty, score 2-4 · #9 (L, opposite side) vs Reliever (R), pitch 24**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 8%; Curveball middle 8%; Changeup middle 7% | before: first pitch
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 46%; Curveball middle 39%; Changeup middle 15% | before: Changeup down-away (ball), Changeup middle (cstrike), Curveball middle (ball)
+- **college_d1_default_s104 · PA 37 · inning 8, 2 out, bases 1, score 2-4 · #1 (L, opposite side) vs Reliever (R), pitch 30**
+  - `1-0` **Fastball middle** → ball | top: Curveball middle 21%; Fastball middle 21%; Changeup middle 18% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 38 · inning 9, 0 out, bases empty, score 3-4 · #2 (R, same side) vs Reliever (R), pitch 32**
+  - `0-0` **Changeup middle** → cstrike | top: Curveball middle 27%; Fastball middle 21%; Changeup middle 21% | before: first pitch
+  - `1-1` **Curveball down-away** → ball | top: Fastball middle 34%; Curveball middle 27%; Changeup middle 23% | before: Changeup middle (cstrike), Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 41 · inning 9, 1 out, bases 12, score 3-4 · #5 (R, same side) vs Reliever (R), pitch 48**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 89%; Changeup middle 6%; Curveball middle 5% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 87%; Changeup middle 12%; Curveball middle 1% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Changeup middle** → cstrike | top: Changeup middle 64%; Fastball middle 36% | before: Fastball middle (ball), Fastball middle (ball), Changeup middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s104 · PA 42 · inning 9, 2 out, bases 12, score 3-4 · #6 (R, same side) vs Reliever (R), pitch 54**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 30%; Fastball up-away 19%; Curveball middle 14% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 37%; Curveball middle 28%; Fastball up-away 14% | before: Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 5**
+  - `2-2` **Changeup middle** → foul — foul pull | top: Slider middle 31%; Fastball up-away 20%; Slider down-away 16% | before: Fastball middle (foul), Slider middle (cstrike), Curveball down-away (ball)
+- **college_d1_four_pitch_s101 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (R, same side) vs Starter (R), pitch 8**
+  - `0-0` **Fastball up-in** → foul — foul straight back | top: Fastball middle 6%; Slider middle 6%; Curveball middle 6% | before: first pitch
+  - `0-2` **Fastball chase** → weak — weak contact: OUT | top: Changeup down-away 10%; Changeup chase 10%; Slider down-away 10% | before: Fastball up-in (foul), Fastball up-away (foul)
+- **college_d1_four_pitch_s101 · PA 8 · inning 3, 1 out, bases empty, score 4-0 · #8 (R, same side) vs Starter (R), pitch 27**
+  - `3-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball middle 84%; Slider middle 10%; Changeup middle 5% | before: Fastball middle (foul), Fastball down-away (foul), Slider down-away (ball)
+- **college_d1_four_pitch_s101 · PA 10 · inning 3, 2 out, bases 2, score 4-0 · #1 (L, opposite side) vs Starter (R), pitch 32**
+  - `0-0` **Curveball middle** → whiff — whiff (out in front) | top: Changeup down-away 19%; Slider middle 11%; Slider down-away 11% | before: first pitch
+  - `3-2` **Fastball up-in** → ball — WALK | top: Slider middle 49%; Fastball up-away 17%; Fastball middle 12% | before: Slider down-in (ball), Slider middle (foul), Curveball down-away (ball)
+- **college_d1_four_pitch_s101 · PA 14 · inning 4, 1 out, bases 1, score 4-0 · #5 (R, same side) vs Starter (R), pitch 49**
+  - `0-0` **Fastball up-away** → weak — weak contact: SINGLE | top: Fastball middle 23%; Slider middle 18%; Fastball up-away 16% | before: first pitch
+- **college_d1_four_pitch_s101 · PA 15 · inning 4, 1 out, bases 12, score 4-0 · #6 (L, opposite side) vs Starter (R), pitch 53**
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball up-away (ball), Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s101 · PA 17 · inning 5, 0 out, bases empty, score 6-0 · #8 (R, same side) vs Starter (R), pitch 58**
+  - `1-0` **Slider middle** → weak — weak contact: OUT | top: Fastball middle 26%; Fastball up-away 16%; Changeup middle 16% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s101 · PA 19 · inning 5, 1 out, bases 2, score 6-0 · #1 (L, opposite side) vs Starter (R), pitch 61**
+  - `0-0` **Changeup middle** → foul — foul straight back | top: Changeup middle 21%; Slider middle 19%; Curveball middle 14% | before: first pitch
+- **college_d1_four_pitch_s101 · PA 20 · inning 5, 2 out, bases 2, score 6-0 · #2 (R, same side) vs Starter (R), pitch 70**
+  - `3-2` **Changeup middle** → whiff — whiff (fooled); STRIKEOUT | top: Slider middle 48%; Changeup middle 15%; Fastball middle 11% | before: Slider chase (ball), Changeup chase (ball), Slider down-away (ball)
+- **college_d1_four_pitch_s101 · PA 25 · inning 7, 0 out, bases empty, score 9-1 · #7 (R, same side) vs Starter (R), pitch 86**
+  - `0-0` **Changeup middle** → solid — solid contact: SINGLE | top: Slider middle 20%; Curveball middle 19%; Fastball middle 18% | before: first pitch
+- **college_d1_four_pitch_s101 · PA 27 · inning 7, 0 out, bases 13, score 9-1 · #9 (R, same side) vs Starter (R), pitch 90**
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 39%; Fastball up-away 26%; Fastball down-away 21% | before: Fastball middle (cstrike), Changeup down-away (ball)
+- **college_d1_four_pitch_s101 · PA 29 · inning 7, 1 out, bases 12, score 9-2 · #2 (R, same side) vs Reliever (R), pitch 2**
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 62%; Curveball middle 29%; Changeup middle 9% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Curveball middle** → ball | top: Fastball middle 51%; Curveball middle 26%; Fastball up-away 23% | before: Curveball middle (cstrike), Fastball up-away (ball), Curveball down-away (foul)
+- **college_d1_four_pitch_s101 · PA 30 · inning 7, 2 out, bases 12, score 9-2 · #3 (R, same side) vs Reliever (R), pitch 8**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 28%; Curveball middle 27%; Fastball up-away 17% | before: first pitch
+- **college_d1_four_pitch_s101 · PA 31 · inning 8, 0 out, bases empty, score 10-2 · #4 (R, same side) vs Reliever (R), pitch 13**
+  - `1-1` **Fastball middle** → weak — weak contact: OUT | top: Curveball middle 37%; Fastball middle 24%; Changeup middle 14% | before: Changeup middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s101 · PA 32 · inning 8, 1 out, bases empty, score 10-2 · #5 (R, same side) vs Reliever (R), pitch 15**
+  - `1-0` **Fastball down-away** → ball | top: Curveball middle 35%; Fastball middle 23%; Changeup middle 15% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s101 · PA 33 · inning 8, 2 out, bases empty, score 10-2 · #6 (L, opposite side) vs Reliever (R), pitch 17**
+  - `0-0` **Changeup up-away** → ball | top: Fastball middle 8%; Curveball middle 8%; Changeup middle 7% | before: first pitch
+  - `1-0` **Changeup down-away** → cstrike | top: Changeup middle 13%; Changeup down-away 12%; Fastball middle 10% | before: Changeup up-away (ball)
+- **college_d1_four_pitch_s101 · PA 34 · inning 9, 0 out, bases empty, score 11-2 · #7 (R, same side) vs Reliever (R), pitch 23**
+  - `0-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball up-away 33%; Fastball middle 18%; Fastball down-away 18% | before: Fastball middle (cstrike), Curveball middle (foul)
+- **college_d1_four_pitch_s101 · PA 36 · inning 9, 1 out, bases 1, score 11-2 · #9 (R, same side) vs Reliever (R), pitch 26**
+  - `0-0` **Changeup down-away** → foul — foul opposite | top: Fastball middle 30%; Curveball middle 22%; Fastball up-away 19% | before: first pitch
+  - `2-1` **Curveball middle** → ball | top: Fastball middle 78%; Curveball middle 21%; Changeup middle 1% | before: Changeup down-away (foul), Fastball up-away (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s101 · PA 37 · inning 9, 1 out, bases 12, score 11-2 · #1 (L, opposite side) vs Reliever (R), pitch 34**
+  - `0-2` **Fastball down-away** → whiff — whiff (late); STRIKEOUT | top: Fastball up-away 58%; Fastball down-away 29%; Curveball down-away 13% | before: Fastball middle (cstrike), Fastball up-away (whiff)
+- **college_d1_four_pitch_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 5**
+  - `0-0` **Slider middle** → cstrike | top: Fastball middle 11%; Curveball middle 11%; Slider middle 11% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 4 · inning 2, 0 out, bases empty, score 2-0 · #4 (L, opposite side) vs Starter (R), pitch 11**
+  - `1-0` **Slider middle** → ball | top: Slider middle 22%; Fastball middle 20%; Curveball middle 17% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Slider middle (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 5 · inning 2, 0 out, bases 2, score 2-0 · #5 (R, same side) vs Starter (R), pitch 17**
+  - `0-2` **Fastball up-away** → ball | top: Slider chase 19%; Fastball up-away 16%; Slider down-away 16% | before: Slider middle (foul), Fastball middle (foul), Slider down-away (foul)
+- **college_d1_four_pitch_s102 · PA 6 · inning 2, 1 out, bases 2, score 2-0 · #6 (R, same side) vs Starter (R), pitch 23**
+  - `1-0` **Slider middle** → ball | top: Slider middle 18%; Curveball middle 18%; Fastball middle 14% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 63%; Curveball middle 15%; Slider middle 12% | before: Slider middle (ball), Slider middle (ball)
+- **college_d1_four_pitch_s102 · PA 8 · inning 3, 0 out, bases empty, score 6-0 · #8 (L, opposite side) vs Starter (R), pitch 29**
+  - `0-0` **Fastball down-away** → ball | top: Slider middle 20%; Changeup middle 20%; Curveball middle 19% | before: first pitch
+  - `1-1` **Curveball middle** → whiff — whiff (out in front) | top: Changeup middle 20%; Curveball middle 19%; Slider middle 16% | before: Fastball down-away (ball), Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 9 · inning 3, 1 out, bases empty, score 6-0 · #9 (R, same side) vs Starter (R), pitch 33**
+  - `0-0` **Curveball middle** → solid — solid contact: SINGLE | top: Slider middle 12%; Curveball middle 12%; Slider down-away 11% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 10 · inning 3, 2 out, bases empty, score 6-0 · #1 (R, same side) vs Starter (R), pitch 34**
+  - `0-0` **Changeup down-in** → whiff — whiff (fooled) | top: Fastball middle 6%; Changeup middle 6%; Changeup down-away 6% | before: first pitch
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Slider middle 45%; Fastball middle 28%; Curveball middle 15% | before: Curveball down-away (foul), Changeup down-away (ball), Curveball down-in (ball)
+  - `3-2` **Fastball middle** → foul — foul pull | top: Slider middle 35%; Curveball middle 21%; Fastball middle 15% | before: Changeup down-away (ball), Curveball down-in (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Slider middle 38%; Curveball middle 21%; Changeup middle 15% | before: Curveball down-in (ball), Fastball middle (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 11 · inning 3, 2 out, bases 1, score 6-0 · #2 (R, same side) vs Starter (R), pitch 42**
+  - `0-0` **Fastball middle** → hard — hard contact: HOME RUN | top: Changeup middle 18%; Slider middle 12%; Slider down-away 11% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 12 · inning 3, 2 out, bases empty, score 6-2 · #3 (L, opposite side) vs Starter (R), pitch 43**
+  - `0-0` **Curveball up-away** → ball | top: Fastball middle 6%; Slider middle 6%; Fastball up-away 5% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 16 · inning 4, 2 out, bases empty, score 6-2 · #7 (R, same side) vs Starter (R), pitch 53**
+  - `0-2` **Curveball down-in** → whiff — whiff (fooled); STRIKEOUT | top: Changeup chase 10%; Changeup down-away 9%; Slider down-away 7% | before: Changeup middle (cstrike), Curveball middle (whiff)
+- **college_d1_four_pitch_s102 · PA 17 · inning 5, 0 out, bases empty, score 6-2 · #8 (L, opposite side) vs Starter (R), pitch 54**
+  - `0-0` **Fastball up-away** → solid — solid contact: OUT | top: Slider middle 23%; Changeup middle 20%; Curveball middle 19% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 19 · inning 5, 1 out, bases 1, score 6-2 · #1 (R, same side) vs Starter (R), pitch 56**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Slider middle 23%; Curveball middle 18%; Fastball middle 18% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 20 · inning 6, 0 out, bases empty, score 6-2 · #2 (R, same side) vs Starter (R), pitch 58**
+  - `1-0` **Slider middle** → ball | top: Slider middle 22%; Fastball middle 20%; Curveball middle 18% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 63%; Curveball middle 14%; Slider middle 14% | before: Slider middle (ball), Slider middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 21 · inning 6, 0 out, bases 1, score 6-2 · #3 (L, opposite side) vs Starter (R), pitch 61**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 27%; Slider middle 22%; Curveball middle 20% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 23 · inning 6, 2 out, bases 1, score 6-2 · #5 (R, same side) vs Starter (R), pitch 64**
+  - `0-0` **Curveball down-away** → ball | top: Curveball down-away 20%; Changeup down-away 18%; Slider middle 12% | before: first pitch
+  - `1-0` **Curveball down-away** → ball | top: Slider middle 21%; Curveball down-away 16%; Changeup middle 15% | before: Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Changeup middle** → ball | top: Slider middle 20%; Fastball middle 19%; Curveball middle 14% | before: Curveball down-away (ball), Curveball down-away (ball), Changeup middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 79%; Slider middle 8%; Curveball middle 7% | before: Curveball down-away (ball), Changeup middle (cstrike), Changeup middle (ball)
+- **college_d1_four_pitch_s102 · PA 27 · inning 7, 2 out, bases empty, score 7-2 · #9 (R, same side) vs Starter (R), pitch 77**
+  - `0-1` **Fastball up-in** → ball | top: Slider down-away 7%; Slider middle 7%; Fastball up-away 7% | before: Fastball up-in (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball down-in** → whiff — whiff (late) | top: Slider middle 17%; Fastball middle 13%; Curveball middle 13% | before: Fastball up-in (cstrike), Fastball up-in (ball), Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 28 · inning 7, 2 out, bases 1, score 7-2 · #1 (R, same side) vs Starter (R), pitch 84**
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Curveball middle 17%; Changeup middle 16%; Slider middle 14% | before: Curveball middle (ball)
+- **college_d1_four_pitch_s102 · PA 29 · inning 8, 0 out, bases empty, score 8-2 · #2 (R, same side) vs Starter (R), pitch 88**
+  - `0-2` **Slider chase** → foul — foul pull | top: Slider down-away 30%; Fastball up-away 26%; Slider chase 16% | before: Fastball middle (cstrike), Fastball down-away (foul), Slider chase (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Changeup down-away** → cstrike — STRIKEOUT | top: Fastball up-away 26%; Slider down-away 24%; Changeup down-away 18% | before: Fastball down-away (foul), Slider chase (foul), Slider chase (foul)
+- **college_d1_four_pitch_s102 · PA 32 · inning 9, 0 out, bases empty, score 8-2 · #5 (R, same side) vs Starter (R), pitch 95**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 23%; Fastball middle 18%; Curveball middle 18% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 23%; Slider middle 20%; Fastball up-away 16% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 70%; Slider middle 13%; Curveball middle 10% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 33 · inning 9, 0 out, bases 1, score 8-2 · #6 (R, same side) vs Reliever (R), pitch 4**
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 80%; Curveball middle 20% | before: Fastball middle (cstrike), Changeup down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 34 · inning 9, 1 out, bases 1, score 8-2 · #7 (R, same side) vs Reliever (R), pitch 5**
+  - `0-0` **Curveball middle** → hbp — HIT BY PITCH | top: Curveball middle 27%; Fastball middle 26%; Fastball up-away 17% | before: first pitch
+- **college_d1_four_pitch_s102 · PA 35 · inning 9, 1 out, bases 12, score 8-2 · #8 (L, opposite side) vs Reliever (R), pitch 9**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (whiff), Changeup down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s102 · PA 37 · inning 9, 2 out, bases 12, score 8-3 · #1 (R, same side) vs Reliever (R), pitch 17**
+  - `1-2` **Curveball down-away** → solid — solid contact: SINGLE | top: Curveball down-away 50%; Curveball chase 24%; Fastball down-away 23% | before: Curveball middle (foul), Fastball down-away (foul), Fastball up-away (foul)
+- **college_d1_four_pitch_s102 · PA 38 · inning 9, 2 out, bases 123, score 8-3 · #2 (R, same side) vs Reliever (R), pitch 18**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 85%; Curveball middle 15% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 80%; Curveball middle 20% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s103 · PA 3 · inning 1, 1 out, bases 1, score 0-0 · #3 (R, same side) vs Starter (R), pitch 5**
+  - `0-0` **Slider down-away** → ball | top: Fastball middle 20%; Slider middle 20%; Changeup middle 20% | before: first pitch
+- **college_d1_four_pitch_s103 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (R, same side) vs Starter (R), pitch 12**
+  - `0-0` **Slider up-away** → ball — wild pitch, runners move up | top: Slider middle 11%; Curveball middle 11%; Fastball middle 11% | before: first pitch
+  - `3-0` **Fastball middle** → weak — weak contact: OUT | top: Slider middle 37%; Fastball middle 32%; Changeup middle 19% | before: Slider up-away (ball), Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s103 · PA 5 · inning 2, 0 out, bases empty, score 0-0 · #5 (R, same side) vs Starter (R), pitch 16**
+  - `0-0` **Curveball middle** → ball | top: Changeup middle 21%; Curveball middle 18%; Slider middle 17% | before: first pitch
+- **college_d1_four_pitch_s103 · PA 6 · inning 2, 1 out, bases empty, score 0-0 · #6 (R, same side) vs Starter (R), pitch 19**
+  - `0-0` **Fastball up-away** → ball | top: Curveball middle 17%; Fastball middle 14%; Changeup middle 12% | before: first pitch
+- **college_d1_four_pitch_s103 · PA 8 · inning 3, 0 out, bases empty, score 0-0 · #8 (R, same side) vs Starter (R), pitch 24**
+  - `0-0` **Changeup middle** → ball | top: Changeup middle 20%; Curveball middle 18%; Slider middle 16% | before: first pitch
+  - `1-0` **Slider middle** → foul — foul opposite | top: Fastball middle 37%; Slider middle 30%; Curveball middle 18% | before: Changeup middle (ball)
+  - `1-1` **Slider middle** → foul — foul opposite | top: Slider middle 28%; Fastball middle 25%; Curveball middle 20% | before: Changeup middle (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s103 · PA 9 · inning 3, 1 out, bases empty, score 0-0 · #9 (R, same side) vs Starter (R), pitch 28**
+  - `0-0` **Slider down-away** → whiff — whiff (fooled) | top: Fastball middle 14%; Slider middle 11%; Curveball middle 11% | before: first pitch
+- **college_d1_four_pitch_s103 · PA 11 · inning 4, 0 out, bases empty, score 0-0 · #2 (L, opposite side) vs Starter (R), pitch 34**
+  - `0-0` **Slider middle** → solid — solid contact: OUT | top: Changeup middle 20%; Curveball middle 19%; Fastball middle 16% | before: first pitch
+- **college_d1_four_pitch_s103 · PA 15 · inning 4, 2 out, bases 12, score 0-0 · #6 (R, same side) vs Starter (R), pitch 47**
+  - `0-0` **Fastball middle** → ball | top: Curveball middle 20%; Fastball middle 17%; Slider middle 16% | before: first pitch
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 38%; Slider middle 29%; Curveball middle 21% | before: Fastball middle (ball), Changeup middle (ball)
+- **college_d1_four_pitch_s103 · PA 16 · inning 5, 0 out, bases empty, score 2-0 · #7 (R, same side) vs Starter (R), pitch 52**
+  - `1-0` **Slider middle** → ball | top: Slider middle 30%; Fastball middle 29%; Curveball middle 23% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s103 · PA 21 · inning 6, 0 out, bases empty, score 2-1 · #3 (R, same side) vs Starter (R), pitch 67**
+  - `0-0` **Curveball middle** → ball | top: Slider middle 24%; Curveball middle 21%; Changeup middle 17% | before: first pitch
+  - `1-1` **Curveball middle** → solid — solid contact: OUT | top: Curveball middle 22%; Slider middle 21%; Fastball middle 19% | before: Curveball middle (ball), Fastball up-away (foul)
+- **college_d1_four_pitch_s103 · PA 24 · inning 6, 2 out, bases 1, score 2-1 · #6 (R, same side) vs Starter (R), pitch 78**
+  - `0-0` **Fastball up-in** → whiff — whiff (late) | top: Changeup down-away 18%; Slider middle 13%; Slider down-away 12% | before: first pitch
+  - `1-2` **Fastball up-in** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 14%; Fastball up-away 11%; Curveball down-away 9% | before: Fastball up-in (whiff), Fastball down-away (foul), Slider chase (ball)
+- **college_d1_four_pitch_s103 · PA 26 · inning 7, 1 out, bases empty, score 3-1 · #8 (R, same side) vs Starter (R), pitch 89**
+  - `0-0` **Changeup middle** → ball | top: Changeup middle 18%; Slider middle 13%; Slider down-away 12% | before: first pitch
+  - `2-1` **Changeup middle** → foul — foul opposite | top: Fastball middle 28%; Slider middle 22%; Curveball middle 17% | before: Changeup middle (ball), Fastball down-in (ball), Fastball middle (foul)
+  - `2-2` **Changeup down-away** → solid — solid contact: OUT | top: Slider down-away 21%; Curveball down-away 17%; Fastball up-away 14% | before: Fastball down-in (ball), Fastball middle (foul), Changeup middle (foul)
+- **college_d1_four_pitch_s103 · PA 29 · inning 8, 1 out, bases empty, score 5-1 · #2 (L, opposite side) vs Reliever (R), pitch 4**
+  - `1-0` **Changeup middle** → foul — foul pull | top: Curveball middle 28%; Fastball middle 24%; Changeup middle 19% | before: Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Curveball middle** → solid — solid contact: SINGLE | top: Fastball middle 33%; Fastball up-away 32%; Curveball middle 17% | before: Fastball up-away (ball), Fastball middle (cstrike), Curveball down-away (foul)
+- **college_d1_four_pitch_s103 · PA 32 · inning 8, 2 out, bases 3, score 5-2 · #5 (R, same side) vs Reliever (R), pitch 15**
+  - `1-0` **Fastball down-away** → hard — hard contact: TRIPLE | top: Fastball middle 21%; Curveball down-away 19%; Fastball up-away 17% | before: Changeup down-away (ball)
+- **college_d1_four_pitch_s103 · PA 34 · inning 9, 0 out, bases empty, score 5-3 · #7 (R, same side) vs Reliever (R), pitch 20**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 57%; Curveball middle 29%; Changeup middle 14% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 58%; Curveball middle 30%; Changeup middle 11% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s103 · PA 36 · inning 9, 1 out, bases 2, score 5-3 · #9 (R, same side) vs Reliever (R), pitch 27**
+  - `0-1` **Fastball down-away** → ball | top: Fastball middle 36%; Fastball up-away 22%; Fastball down-away 18% | before: Fastball down-away (whiff)
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 82%; Curveball middle 15%; Changeup middle 3% | before: Fastball down-away (whiff), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 91%; Curveball middle 5%; Changeup middle 3% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 65%; Curveball middle 35% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s103 · PA 37 · inning 9, 2 out, bases 2, score 5-3 · #1 (L, opposite side) vs Reliever (R), pitch 33**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 21%; Changeup down-away 17%; Fastball up-away 14% | before: Fastball up-in (ball)
+  - `3-0` **Changeup down-away** → whiff — whiff (fooled) | top: Curveball middle 32%; Changeup middle 23%; Curveball down-in 10% | before: Fastball up-in (ball), Fastball middle (ball), Changeup down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s103 · PA 38 · inning 9, 2 out, bases 12, score 5-3 · #2 (L, opposite side) vs Reliever (R), pitch 38**
+  - `1-0` **Changeup middle** → ball | top: Fastball middle 56%; Fastball up-away 17%; Curveball middle 17% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 84%; Curveball middle 11%; Changeup middle 5% | before: Fastball middle (ball), Changeup middle (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 84%; Changeup middle 9%; Curveball middle 7% | before: Fastball middle (ball), Changeup middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 94%; Curveball middle 4%; Changeup middle 2% | before: Changeup middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 8 · inning 2, 1 out, bases 12, score 0-0 · #8 (R, same side) vs Starter (R), pitch 22**
+  - `1-1` **Slider middle** → ball | top: Fastball middle 47%; Fastball up-away 29%; Curveball middle 12% | before: Fastball middle (cstrike), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 12 · inning 3, 1 out, bases 2, score 1-0 · #3 (R, same side) vs Starter (R), pitch 34**
+  - `1-0` **Fastball down-away** → ball | top: Curveball middle 18%; Changeup middle 16%; Slider middle 15% | before: Slider middle (ball)
+- **college_d1_four_pitch_s104 · PA 19 · inning 5, 0 out, bases empty, score 1-1 · #1 (L, opposite side) vs Starter (R), pitch 54**
+  - `0-1` **Changeup middle** → hard — hard contact: SINGLE | top: Changeup down-away 12%; Curveball down-away 11%; Slider middle 11% | before: Changeup middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 23 · inning 5, 2 out, bases 13, score 1-1 · #5 (R, same side) vs Starter (R), pitch 66**
+  - `1-0` **Slider middle** → whiff — whiff (fooled) | top: Fastball up-away 15%; Changeup middle 13%; Curveball middle 13% | before: Fastball up-in (ball)
+- **college_d1_four_pitch_s104 · PA 24 · inning 6, 0 out, bases empty, score 2-1 · #6 (R, same side) vs Starter (R), pitch 73**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 78%; Changeup middle 10%; Curveball middle 7% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → whiff — whiff (late); STRIKEOUT | top: Fastball middle 58%; Slider middle 24%; Changeup middle 12% | before: Fastball middle (cstrike), Slider down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 27 · inning 6, 2 out, bases 1, score 2-1 · #9 (L, opposite side) vs Starter (R), pitch 84**
+  - `0-0` **Curveball middle** → solid — solid contact: OUT | top: Slider middle 20%; Changeup middle 11%; Changeup down-away 11% | before: first pitch
+- **college_d1_four_pitch_s104 · PA 28 · inning 7, 0 out, bases empty, score 2-1 · #1 (L, opposite side) vs Starter (R), pitch 86**
+  - `1-0` **Fastball up-away** → foul — foul opposite | top: Fastball middle 23%; Changeup middle 19%; Fastball up-away 16% | before: Curveball middle (ball)
+- **college_d1_four_pitch_s104 · PA 29 · inning 7, 0 out, bases 2, score 2-1 · #2 (R, same side) vs Starter (R), pitch 93**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Curveball down-away (ball), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 32 · inning 7, 2 out, bases 12, score 2-1 · #5 (R, same side) vs Reliever (R), pitch 2**
+  - `1-0` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 44%; Curveball middle 27%; Fastball up-away 12% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 34 · inning 8, 0 out, bases empty, score 2-3 · #7 (L, opposite side) vs Reliever (R), pitch 5**
+  - `1-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 44%; Curveball middle 32%; Changeup middle 24% | before: Fastball up-away (ball)
+- **college_d1_four_pitch_s104 · PA 36 · inning 8, 0 out, bases 12, score 2-3 · #9 (L, opposite side) vs Reliever (R), pitch 8**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 88%; Curveball middle 10%; Changeup middle 2% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 90%; Curveball middle 10% | before: Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 39 · inning 9, 1 out, bases empty, score 2-3 · #3 (R, same side) vs Reliever (R), pitch 18**
+  - `2-1` **Curveball middle** → whiff — whiff (fooled) | top: Fastball middle 48%; Curveball middle 34%; Changeup middle 17% | before: Fastball up-in (ball), Fastball middle (ball), Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_four_pitch_s104 · PA 40 · inning 9, 2 out, bases empty, score 2-3 · #4 (R, same side) vs Reliever (R), pitch 22**
+  - `0-0` **Changeup down-away** → ball | top: Fastball middle 8%; Changeup down-away 7%; Changeup middle 7% | before: first pitch
+- **college_d1_four_pitch_s104 · PA 41 · inning 9, 2 out, bases 1, score 2-3 · #5 (R, same side) vs Reliever (R), pitch 26**
+  - `0-0` **Curveball middle** → ball | top: Changeup middle 20%; Curveball middle 13%; Fastball middle 11% | before: first pitch
+- **college_d1_two_pitch_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 2**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 3 · inning 1, 0 out, bases 13, score 0-0 · #3 (R, same side) vs Starter (R), pitch 11**
+  - `2-2` **Fastball middle** → solid — solid contact: SAC FLY | top: Fastball middle 59%; Curveball down-away 22%; Curveball middle 18% | before: Curveball down-away (ball), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 5 · inning 1, 2 out, bases 1, score 0-1 · #5 (R, same side) vs Starter (R), pitch 19**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 45%; Curveball middle 20%; Fastball down-away 18% | before: Fastball up-away (ball), Fastball down-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 88%; Curveball middle 12% | before: Fastball down-away (foul), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 89%; Curveball middle 11% | before: Fastball middle (ball), Fastball middle (cstrike), Curveball middle (foul)
+- **college_d1_two_pitch_s101 · PA 7 · inning 1, 2 out, bases empty, score 0-4 · #7 (R, same side) vs Starter (R), pitch 31**
+  - `2-1` **Fastball down-in** → foul — foul opposite | top: Fastball middle 30%; Fastball down-away 19%; Fastball up-away 19% | before: Fastball middle (cstrike), Fastball up-away (ball), Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball down-in** → ball | top: Fastball middle 30%; Fastball up-away 21%; Fastball down-away 21% | before: Fastball up-away (ball), Fastball down-in (ball), Fastball down-in (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-in (foul), Fastball down-in (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 10 · inning 2, 0 out, bases 3, score 3-4 · #1 (L, opposite side) vs Starter (R), pitch 40**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 44%; Fastball up-away 28%; Fastball down-away 28% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball up-away (ball)
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (foul), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 11 · inning 2, 0 out, bases 13, score 3-4 · #2 (R, same side) vs Starter (R), pitch 45**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 70%; Curveball middle 30% | before: first pitch
+  - `1-1` **Curveball middle** → cstrike | top: Curveball middle 100% | before: Fastball middle (ball), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 13 · inning 2, 0 out, bases 123, score 3-5 · #4 (R, same side) vs Starter (R), pitch 55**
+  - `1-0` **Fastball middle** → hard — hard contact: SAC FLY | top: Fastball middle 73%; Curveball middle 27% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 14 · inning 2, 1 out, bases 12, score 3-6 · #5 (R, same side) vs Starter (R), pitch 56**
+  - `0-0` **Fastball middle** → ball — wild pitch, runners move up | top: Fastball middle 62%; Curveball middle 38% | before: first pitch
+  - `2-0` **Curveball middle** → foul — foul pull | top: Fastball middle 65%; Curveball middle 35% | before: Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Curveball middle** → foul — foul pull | top: Fastball middle 53%; Curveball middle 47% | before: Fastball middle (ball), Curveball middle (ball), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 15 · inning 2, 2 out, bases 23, score 3-6 · #6 (L, opposite side) vs Starter (R), pitch 65**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 58%; Curveball middle 42% | before: Fastball middle (ball), Fastball up-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 16 · inning 2, 2 out, bases 123, score 3-6 · #7 (R, same side) vs Starter (R), pitch 67**
+  - `0-1` **Curveball middle** → weak — weak contact: OUT | top: Fastball middle 71%; Curveball middle 29% | before: Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 18 · inning 3, 0 out, bases 1, score 3-6 · #9 (R, same side) vs Starter (R), pitch 70**
+  - `0-1` **Curveball middle** → whiff — whiff (out in front) | top: Curveball middle 33%; Fastball middle 30%; Fastball up-away 18% | before: Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 19 · inning 3, 1 out, bases 1, score 3-6 · #1 (L, opposite side) vs Starter (R), pitch 74**
+  - `1-1` **Curveball middle** → ball | top: Fastball middle 55%; Curveball middle 27%; Curveball down-away 19% | before: Fastball down-away (cstrike), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 65%; Curveball middle 35% | before: Fastball up-away (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 22 · inning 4, 1 out, bases empty, score 4-6 · #4 (R, same side) vs Starter (R), pitch 80**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 21%; Curveball middle 18%; Curveball down-away 16% | before: first pitch
+  - `3-0` **Curveball middle** → ball — WALK | top: Fastball middle 51%; Curveball middle 49% | before: Fastball down-away (ball), Curveball up-away (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 23 · inning 4, 1 out, bases 1, score 4-6 · #5 (R, same side) vs Starter (R), pitch 84**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 27%; Curveball middle 23%; Curveball down-away 19% | before: first pitch
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 56%; Curveball middle 44% | before: Fastball middle (cstrike), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → foul — foul opposite | top: Fastball middle 55%; Fastball up-away 23%; Fastball down-away 22% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 100% | before: Fastball middle (foul), Fastball middle (foul), Fastball down-away (foul)
+- **college_d1_two_pitch_s101 · PA 24 · inning 4, 1 out, bases 23, score 4-6 · #6 (L, opposite side) vs Starter (R), pitch 91**
+  - `0-0` **Curveball middle** → whiff — whiff (out in front) | top: Curveball middle 38%; Fastball middle 28%; Fastball up-away 17% | before: first pitch
+- **college_d1_two_pitch_s101 · PA 25 · inning 4, 2 out, bases 23, score 4-6 · #7 (R, same side) vs Reliever (R), pitch 5**
+  - `1-2` **Slider chase** → ball — wild pitch, runners move up | top: Slider down-away 35%; Fastball down-away 26%; Fastball up-away 20% | before: Fastball down-away (cstrike), Slider down-away (foul), Slider chase (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider chase** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 59%; Slider chase 33%; Fastball up-away 8% | before: Slider chase (ball), Slider chase (ball), Fastball down-away (foul)  **⚑ R2 chase at 2-2**
+- **college_d1_two_pitch_s101 · PA 26 · inning 5, 0 out, bases empty, score 4-7 · #8 (R, same side) vs Reliever (R), pitch 10**
+  - `1-1` **Fastball middle** → ball | top: Slider middle 37%; Fastball middle 29%; Fastball up-away 17% | before: Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 95%; Slider middle 5% | before: Fastball middle (cstrike), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 28 · inning 5, 1 out, bases 2, score 4-7 · #1 (L, opposite side) vs Reliever (R), pitch 17**
+  - `1-0` **Fastball up-away** → ball | top: Fastball middle 43%; Fastball up-away 28%; Fastball down-away 28% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball up-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 29 · inning 5, 2 out, bases 2, score 4-7 · #2 (R, same side) vs Reliever (R), pitch 23**
+  - `2-0` **Fastball up-in** → foul — foul straight back | top: Fastball middle 28%; Fastball up-away 19%; Fastball down-away 19% | before: Fastball chase (ball), Fastball up-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball chase** → ball | top: Fastball up-away 23%; Fastball down-away 22%; Fastball middle 16% | before: Fastball up-in (ball), Fastball up-in (foul), Fastball middle (foul)  **⚑ R2 chase at 2-2**
+- **college_d1_two_pitch_s101 · PA 30 · inning 5, 2 out, bases 12, score 4-7 · #3 (R, same side) vs Reliever (R), pitch 28**
+  - `0-0` **Slider middle** → cstrike | top: Slider middle 36%; Fastball middle 29%; Fastball up-away 18% | before: first pitch
+- **college_d1_two_pitch_s101 · PA 32 · inning 6, 0 out, bases 1, score 4-7 · #5 (R, same side) vs Reliever (R), pitch 32**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 63%; Slider middle 37% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 61%; Slider middle 39% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 55%; Slider middle 45% | before: Fastball middle (ball), Fastball middle (foul)
+- **college_d1_two_pitch_s101 · PA 33 · inning 6, 1 out, bases 1, score 4-7 · #6 (L, opposite side) vs Reliever (R), pitch 36**
+  - `0-0` **Slider down-away** → cstrike | top: Slider middle 27%; Fastball middle 24%; Slider down-away 19% | before: first pitch
+- **college_d1_two_pitch_s101 · PA 34 · inning 6, 1 out, bases 12, score 4-7 · #7 (R, same side) vs Reliever (R), pitch 38**
+  - `0-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 63%; Slider middle 37% | before: first pitch
+  - `0-2` **Slider down-away** → weak — weak contact: DOUBLE | top: Slider down-away 39%; Fastball up-away 37%; Slider chase 24% | before: Fastball middle (foul), Fastball down-away (foul)
+- **college_d1_two_pitch_s101 · PA 35 · inning 6, 1 out, bases 23, score 4-8 · #8 (R, same side) vs Reliever (R), pitch 42**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 59%; Slider middle 41% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Fastball middle 66%; Slider middle 34% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (cstrike)
+- **college_d1_two_pitch_s101 · PA 40 · inning 7, 0 out, bases 13, score 5-8 · #4 (R, same side) vs Reliever (R), pitch 57**
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 66%; Slider middle 34% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 44 · inning 7, 2 out, bases 2, score 5-11 · #8 (R, same side) vs Reliever (R), pitch 66**
+  - `0-0` **Fastball up-in** → ball | top: Slider down-away 13%; Fastball middle 12%; Slider middle 12% | before: first pitch
+  - `2-0` **Slider down-in** → foul — foul straight back | top: Fastball middle 18%; Fastball down-away 13%; Fastball up-away 12% | before: Fastball up-in (ball), Slider down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 47 · inning 8, 2 out, bases empty, score 7-11 · #2 (R, same side) vs Reliever (R), pitch 75**
+  - `0-0` **Slider middle** → hbp — HIT BY PITCH | top: Fastball middle 11%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+- **college_d1_two_pitch_s101 · PA 48 · inning 8, 2 out, bases 2, score 7-11 · #3 (R, same side) vs Reliever (R), pitch 79**
+  - `1-2` **Fastball up-away** → foul — foul opposite | top: Slider down-away 35%; Slider chase 35%; Fastball up-away 10% | before: Fastball down-away (ball), Slider middle (cstrike), Fastball middle (cstrike)
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-away (foul), Fastball chase (ball), Slider down-away (ball)  **⚑ R3 re-called a shaken-off call**
+- **college_d1_two_pitch_s101 · PA 51 · inning 9, 0 out, bases 1, score 7-11 · #6 (L, opposite side) vs Reliever (R), pitch 85**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 27%; Slider middle 24%; Slider down-away 17% | before: first pitch
+- **college_d1_two_pitch_s101 · PA 52 · inning 9, 1 out, bases 1, score 7-11 · #7 (R, same side) vs Reliever (R), pitch 88**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 27%; Slider middle 20%; Slider down-away 18% | before: first pitch
+- **college_d1_two_pitch_s101 · PA 53 · inning 9, 2 out, bases 1, score 7-11 · #8 (R, same side) vs Reliever (R), pitch 91**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 16%; Slider down-away 16%; Fastball middle 15% | before: first pitch
+  - `1-0` **Slider down-away** → hard — hard contact: SINGLE | top: Slider middle 21%; Slider down-away 20%; Fastball middle 16% | before: Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s101 · PA 54 · inning 9, 2 out, bases 13, score 7-11 · #9 (R, same side) vs Reliever (R), pitch 93**
+  - `0-0` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 41%; Fastball up-away 30%; Fastball down-away 30% | before: first pitch
+  - `2-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 100% | before: Fastball middle (whiff), Fastball down-in (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 4**
+  - `1-2` **Fastball middle** → foul — foul pull | top: Curveball down-away 32%; Curveball middle 20%; Fastball up-away 18% | before: Curveball middle (cstrike), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 8**
+  - `2-0` **Curveball middle** → foul — foul opposite | top: Fastball middle 72%; Curveball middle 28% | before: Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Curveball middle** → ball | top: Fastball middle 73%; Curveball middle 27% | before: Fastball middle (ball), Curveball middle (ball), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → ball — WALK | top: Fastball middle 85%; Curveball middle 15% | before: Curveball middle (ball), Curveball middle (foul), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 3 · inning 1, 1 out, bases 2, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 12**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 24%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 5 · inning 1, 2 out, bases 1, score 0-1 · #5 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Fastball down-in** → ball | top: Curveball down-away 32%; Fastball middle 18%; Fastball up-away 14% | before: first pitch
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 85%; Curveball middle 15% | before: Fastball down-in (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 91%; Curveball middle 9% | before: Fastball down-in (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 8 · inning 2, 1 out, bases empty, score 0-1 · #8 (L, opposite side) vs Starter (R), pitch 30**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 85%; Curveball middle 15% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 87%; Curveball middle 13% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 9 · inning 2, 2 out, bases empty, score 0-1 · #9 (R, same side) vs Starter (R), pitch 35**
+  - `0-2` **Curveball up-away** → solid — solid contact: OUT | top: Curveball down-away 13%; Curveball middle 10%; Fastball up-away 10% | before: Curveball down-away (foul), Fastball up-away (whiff)
+- **college_d1_two_pitch_s102 · PA 11 · inning 3, 1 out, bases empty, score 1-1 · #2 (R, same side) vs Starter (R), pitch 43**
+  - `2-0` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 82%; Curveball middle 18% | before: Fastball middle (ball), Curveball middle (ball)
+- **college_d1_two_pitch_s102 · PA 12 · inning 3, 1 out, bases empty, score 1-2 · #3 (L, opposite side) vs Starter (R), pitch 44**
+  - `0-0` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 28%; Fastball up-away 21%; Fastball down-away 21% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 13 · inning 3, 1 out, bases empty, score 1-3 · #4 (L, opposite side) vs Starter (R), pitch 47**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 41%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 14 · inning 3, 2 out, bases empty, score 1-3 · #5 (R, same side) vs Starter (R), pitch 53**
+  - `1-2` **Fastball chase** → foul — foul straight back | top: Fastball up-away 20%; Fastball down-away 19%; Fastball middle 18% | before: Fastball middle (cstrike), Curveball middle (ball), Fastball middle (foul)
+- **college_d1_two_pitch_s102 · PA 15 · inning 4, 0 out, bases empty, score 3-3 · #6 (R, same side) vs Starter (R), pitch 55**
+  - `0-0` **Fastball middle** → ball | top: Curveball middle 30%; Fastball middle 30%; Fastball up-away 20% | before: first pitch
+  - `1-0` **Fastball middle** → solid — solid contact: TRIPLE | top: Fastball middle 81%; Curveball middle 19% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 16 · inning 4, 0 out, bases 3, score 3-3 · #7 (R, same side) vs Starter (R), pitch 57**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 31%; Curveball middle 28%; Fastball up-away 20% | before: first pitch
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → solid — solid contact: SAC FLY | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 17 · inning 4, 1 out, bases empty, score 3-4 · #8 (L, opposite side) vs Starter (R), pitch 65**
+  - `2-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 100% | before: Fastball down-away (whiff), Fastball down-in (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 20 · inning 5, 0 out, bases empty, score 3-5 · #2 (R, same side) vs Starter (R), pitch 70**
+  - `0-0` **Fastball down-away** → cstrike | top: Curveball middle 34%; Fastball middle 28%; Fastball up-away 19% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 21 · inning 5, 1 out, bases empty, score 3-5 · #3 (L, opposite side) vs Starter (R), pitch 72**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 17%; Curveball middle 14%; Curveball down-away 14% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 23 · inning 5, 2 out, bases 1, score 3-5 · #5 (R, same side) vs Starter (R), pitch 74**
+  - `0-0` **Fastball down-in** → hard — hard contact: OUT | top: Curveball middle 20%; Curveball down-away 19%; Fastball middle 17% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 25 · inning 6, 1 out, bases empty, score 4-5 · #7 (R, same side) vs Starter (R), pitch 77**
+  - `1-0` **Curveball down-in** → ball | top: Curveball middle 28%; Curveball down-away 21%; Curveball up-away 19% | before: Fastball up-away (ball)
+  - `2-0` **Curveball down-in** → ball | top: Curveball middle 30%; Curveball down-away 20%; Curveball down-in 19% | before: Fastball up-away (ball), Curveball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 26 · inning 6, 1 out, bases 1, score 4-5 · #8 (L, opposite side) vs Starter (R), pitch 86**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-away (whiff), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 27 · inning 6, 1 out, bases 12, score 4-5 · #9 (R, same side) vs Starter (R), pitch 87**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 47%; Fastball up-away 26%; Fastball down-away 26% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball up-away** → ball | top: Fastball up-away 36%; Fastball down-away 35%; Fastball middle 29% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (cstrike)
+  - `2-2` **Curveball middle** → weak — weak contact: OUT, RUNNER TO 3RD | top: Curveball down-away 52%; Curveball middle 48% | before: Fastball middle (cstrike), Fastball up-away (ball), Fastball middle (foul)
+- **college_d1_two_pitch_s102 · PA 28 · inning 6, 2 out, bases 13, score 4-5 · #1 (R, same side) vs Starter (R), pitch 93**
+  - `0-0` **Curveball up-away** → foul — foul straight back | top: Curveball middle 33%; Curveball down-away 27%; Curveball down-in 24% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 29 · inning 6, 2 out, bases 12, score 4-6 · #2 (R, same side) vs Starter (R), pitch 98**
+  - `3-0` **Curveball middle** → ball — WALK | top: Curveball middle 48%; Curveball down-in 26%; Curveball down-away 26% | before: Curveball up-away (ball), Curveball down-away (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 30 · inning 6, 2 out, bases 123, score 4-6 · #3 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 62%; Slider middle 38% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 31 · inning 6, 2 out, bases 12, score 4-8 · #4 (L, opposite side) vs Reliever (R), pitch 4**
+  - `1-1` **Fastball middle** → cstrike | top: Fastball middle 40%; Slider middle 35%; Slider down-away 24% | before: Slider down-away (whiff), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider chase** → foul — foul pull | top: Slider down-away 70%; Slider chase 30% | before: Slider down-away (whiff), Fastball middle (ball), Fastball middle (cstrike)
+- **college_d1_two_pitch_s102 · PA 32 · inning 7, 0 out, bases empty, score 5-8 · #5 (R, same side) vs Reliever (R), pitch 12**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 90%; Slider middle 10% | before: Slider middle (ball), Slider down-away (ball), Slider middle (ball)
+- **college_d1_two_pitch_s102 · PA 35 · inning 7, 1 out, bases 12, score 5-8 · #8 (L, opposite side) vs Reliever (R), pitch 20**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 54%; Slider middle 46% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 36 · inning 7, 2 out, bases 12, score 5-8 · #9 (R, same side) vs Reliever (R), pitch 24**
+  - `0-1` **Slider down-away** → ball | top: Fastball middle 21%; Slider down-away 19%; Slider middle 17% | before: Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 38 · inning 8, 1 out, bases empty, score 6-8 · #2 (R, same side) vs Reliever (R), pitch 30**
+  - `0-0` **Slider down-away** → weak — weak contact: OUT | top: Slider middle 20%; Slider down-away 16%; Fastball middle 14% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 40 · inning 9, 0 out, bases empty, score 10-8 · #4 (L, opposite side) vs Reliever (R), pitch 37**
+  - `1-1` **Slider middle** → ball | top: Fastball middle 26%; Slider middle 26%; Slider down-away 18% | before: Slider up-away (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Fastball middle 75%; Slider middle 25% | before: Slider middle (foul), Slider middle (ball), Fastball middle (ball)
+- **college_d1_two_pitch_s102 · PA 42 · inning 9, 1 out, bases 2, score 10-8 · #6 (R, same side) vs Reliever (R), pitch 44**
+  - `0-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 24%; Slider down-away 19%; Slider middle 17% | before: Slider middle (whiff)
+- **college_d1_two_pitch_s102 · PA 43 · inning 9, 2 out, bases 2, score 10-8 · #7 (R, same side) vs Reliever (R), pitch 46**
+  - `0-1` **Fastball down-in** → ball | top: Slider down-away 16%; Fastball middle 13%; Fastball down-away 12% | before: Fastball down-away (whiff)
+  - `1-1` **Fastball up-away** → foul — foul pull | top: Fastball middle 20%; Slider down-away 17%; Fastball up-away 13% | before: Fastball down-away (whiff), Fastball down-in (ball)
+  - `2-2` **Slider chase** → whiff — whiff (late); STRIKEOUT | top: Slider down-away 42%; Slider chase 26%; Slider down-in 13% | before: Fastball down-in (ball), Fastball up-away (foul), Slider down-away (ball)  **⚑ R2 chase at 2-2**
+- **college_d1_two_pitch_s103 · PA 2 · inning 1, 0 out, bases 1, score 0-0 · #2 (L, opposite side) vs Starter (R), pitch 6**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 78%; Curveball middle 22% | before: Curveball middle (ball)
+- **college_d1_two_pitch_s103 · PA 3 · inning 1, 1 out, bases 1, score 0-0 · #3 (R, same side) vs Starter (R), pitch 11**
+  - `1-1` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 75%; Curveball middle 25% | before: Fastball up-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball middle** → solid — solid contact: OUT | top: Curveball down-away 31%; Fastball middle 18%; Curveball middle 17% | before: Fastball up-away (ball), Fastball middle (cstrike), Fastball middle (whiff)
+- **college_d1_two_pitch_s103 · PA 6 · inning 2, 0 out, bases empty, score 1-0 · #6 (R, same side) vs Starter (R), pitch 23**
+  - `3-2` **Curveball middle** → whiff — whiff (fooled); STRIKEOUT | top: Curveball middle 100% | before: Fastball up-away (ball), Curveball middle (whiff), Curveball down-away (ball)
+- **college_d1_two_pitch_s103 · PA 9 · inning 3, 0 out, bases empty, score 1-0 · #9 (R, same side) vs Starter (R), pitch 34**
+  - `1-1` **Curveball down-away** → solid — solid contact: OUT | top: Curveball middle 59%; Curveball down-away 41% | before: Curveball down-away (ball), Curveball middle (whiff)
+- **college_d1_two_pitch_s103 · PA 10 · inning 3, 1 out, bases empty, score 1-0 · #1 (L, opposite side) vs Starter (R), pitch 35**
+  - `0-0` **Curveball down-away** → ball | top: Curveball middle 32%; Curveball down-away 28%; Curveball up-away 23% | before: first pitch
+  - `3-1` **Curveball middle** → ball — WALK | top: Curveball middle 100% | before: Curveball middle (whiff), Curveball down-away (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 12 · inning 3, 2 out, bases 2, score 1-0 · #3 (R, same side) vs Starter (R), pitch 42**
+  - `0-0` **Fastball middle** → whiff — whiff (fooled) | top: Curveball down-away 19%; Curveball middle 19%; Fastball middle 16% | before: first pitch
+  - `0-1` **Fastball down-away** → foul — foul straight back | top: Curveball down-away 17%; Curveball middle 15%; Fastball middle 12% | before: Fastball middle (whiff)
+- **college_d1_two_pitch_s103 · PA 13 · inning 4, 0 out, bases empty, score 1-0 · #4 (R, same side) vs Starter (R), pitch 49**
+  - `1-1` **Curveball middle** → ball | top: Curveball middle 33%; Fastball middle 33%; Fastball up-away 17% | before: Curveball middle (whiff), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 14 · inning 4, 1 out, bases empty, score 1-0 · #5 (R, same side) vs Starter (R), pitch 51**
+  - `0-0` **Curveball down-away** → ball | top: Fastball middle 25%; Curveball middle 20%; Curveball down-away 19% | before: first pitch
+  - `2-2` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 52%; Fastball up-away 26%; Curveball down-away 22% | before: Fastball up-away (ball), Fastball middle (cstrike), Curveball middle (foul)
+- **college_d1_two_pitch_s103 · PA 15 · inning 4, 1 out, bases 1, score 1-0 · #6 (R, same side) vs Starter (R), pitch 56**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 33%; Curveball middle 27%; Fastball up-away 20% | before: first pitch
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 69%; Curveball middle 31% | before: Curveball down-away (foul), Curveball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 16 · inning 4, 1 out, bases 12, score 1-0 · #7 (R, same side) vs Starter (R), pitch 65**
+  - `1-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 87%; Curveball middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 19 · inning 5, 0 out, bases empty, score 4-1 · #1 (L, opposite side) vs Starter (R), pitch 72**
+  - `0-0` **Curveball middle** → whiff — whiff (out in front) | top: Curveball middle 33%; Fastball middle 29%; Fastball up-away 19% | before: first pitch
+  - `1-2` **Curveball middle** → solid — solid contact: DOUBLE | top: Curveball down-away 63%; Curveball middle 37% | before: Curveball middle (whiff), Fastball down-away (ball), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 21 · inning 5, 1 out, bases 2, score 4-1 · #3 (R, same side) vs Starter (R), pitch 77**
+  - `0-0` **Curveball down-away** → whiff — whiff (out in front) | top: Curveball middle 34%; Curveball down-away 28%; Curveball down-in 19% | before: first pitch
+  - `0-2` **Curveball down-away** → cstrike — STRIKEOUT | top: Curveball down-away 30%; Curveball chase 29%; Curveball middle 27% | before: Curveball down-away (whiff), Curveball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 24 · inning 6, 0 out, bases 3, score 4-1 · #6 (R, same side) vs Starter (R), pitch 87**
+  - `1-1` **Fastball middle** → foul — foul pull | top: Fastball middle 35%; Curveball middle 27%; Fastball up-away 19% | before: Curveball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 25 · inning 6, 0 out, bases 1, score 4-2 · #7 (R, same side) vs Starter (R), pitch 92**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → weak — weak contact: DOUBLE | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball middle (whiff), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 26 · inning 6, 0 out, bases 23, score 4-2 · #8 (R, same side) vs Reliever (R), pitch 2**
+  - `1-0` **Fastball middle** → ball | top: Slider middle 53%; Fastball middle 47% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → solid — solid contact: SINGLE | top: Slider middle 65%; Fastball middle 35% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 29 · inning 6, 1 out, bases 3, score 4-5 · #2 (L, opposite side) vs Reliever (R), pitch 13**
+  - `2-0` **Fastball middle** → weak — weak contact: SAC FLY | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 31 · inning 7, 0 out, bases empty, score 5-6 · #4 (R, same side) vs Reliever (R), pitch 21**
+  - `2-2` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball up-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 35 · inning 7, 1 out, bases 123, score 5-6 · #8 (R, same side) vs Reliever (R), pitch 29**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 38 · inning 8, 1 out, bases empty, score 6-6 · #2 (L, opposite side) vs Reliever (R), pitch 40**
+  - `1-1` **Fastball middle** → foul — foul opposite | top: Slider middle 23%; Fastball middle 20%; Slider down-away 17% | before: Slider middle (ball), Slider up-away (foul)
+  - `1-2` **Slider down-away** → foul — foul straight back | top: Fastball middle 17%; Fastball up-away 15%; Slider middle 14% | before: Slider up-away (foul), Fastball middle (foul), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball up-away** → foul — foul pull | top: Fastball middle 18%; Fastball up-away 16%; Fastball down-away 15% | before: Fastball middle (foul), Slider down-away (foul), Slider down-away (foul)
+  - `1-2` **Slider down-away** → foul — foul straight back | top: Slider down-away 28%; Fastball middle 26%; Slider middle 22% | before: Slider down-away (foul), Slider down-away (foul), Fastball up-away (foul)
+  - `2-2` **Slider down-away** → ball | top: Slider down-away 100% | before: Slider down-away (foul), Fastball down-away (ball), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s103 · PA 39 · inning 8, 1 out, bases 1, score 6-6 · #3 (R, same side) vs Reliever (R), pitch 49**
+  - `0-0` **Slider middle** → solid — solid contact: SINGLE | top: Slider middle 43%; Slider down-away 34%; Slider up-away 23% | before: first pitch
+- **college_d1_two_pitch_s103 · PA 41 · inning 8, 2 out, bases 1, score 6-7 · #5 (R, same side) vs Reliever (R), pitch 58**
+  - `3-2` **Slider down-away** → ball — WALK | top: Slider middle 72%; Slider down-away 28% | before: Slider up-away (ball), Slider middle (cstrike), Slider down-in (ball)
+- **college_d1_two_pitch_s103 · PA 43 · inning 9, 0 out, bases empty, score 8-7 · #7 (R, same side) vs Reliever (R), pitch 63**
+  - `1-1` **Fastball down-away** → ball | top: Fastball down-away 50%; Fastball up-away 50% | before: Fastball middle (cstrike), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball down-away (ball), Fastball down-away (ball)  **⚑ R3 re-called a shaken-off call**
+- **college_d1_two_pitch_s103 · PA 44 · inning 9, 1 out, bases empty, score 8-7 · #8 (R, same side) vs Reliever (R), pitch 68**
+  - `2-1` **Slider middle** → whiff — whiff (late) | top: Slider middle 67%; Slider down-away 33% | before: Fastball up-in (ball), Slider down-away (whiff), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider middle** → foul — foul opposite | top: Slider middle 56%; Slider down-away 44% | before: Slider down-away (whiff), Slider middle (ball), Slider middle (whiff)
+  - `2-2` **Slider down-away** → ball | top: Slider down-away 54%; Slider middle 46% | before: Slider middle (ball), Slider middle (whiff), Slider middle (foul)
+- **college_d1_two_pitch_s104 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 5**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 78%; Curveball middle 22% | before: Fastball down-away (ball), Curveball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball up-away** → ball | top: Fastball middle 24%; Curveball down-away 22%; Curveball middle 21% | before: Curveball middle (ball), Fastball middle (foul), Fastball middle (cstrike)
+- **college_d1_two_pitch_s104 · PA 6 · inning 1, 2 out, bases 12, score 0-1 · #6 (R, same side) vs Starter (R), pitch 18**
+  - `0-2` **Fastball middle** → ball | top: Curveball down-away 29%; Curveball chase 23%; Fastball up-away 17% | before: Fastball middle (foul), Fastball down-away (foul)
+  - `1-2` **Curveball down-away** → ball | top: Curveball down-away 42%; Curveball middle 17%; Fastball up-away 16% | before: Fastball middle (foul), Fastball down-away (foul), Fastball middle (ball)
+- **college_d1_two_pitch_s104 · PA 7 · inning 1, 2 out, bases 123, score 0-1 · #7 (L, opposite side) vs Starter (R), pitch 22**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 36%; Curveball middle 24%; Fastball up-away 20% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Curveball middle** → ball | top: Fastball middle 81%; Curveball middle 19% | before: Fastball middle (cstrike), Fastball middle (ball)
+- **college_d1_two_pitch_s104 · PA 9 · inning 2, 1 out, bases empty, score 1-1 · #9 (L, opposite side) vs Starter (R), pitch 31**
+  - `1-1` **Fastball down-away** → foul — foul pull | top: Curveball middle 31%; Fastball middle 29%; Fastball up-away 20% | before: Fastball up-away (ball), Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Curveball middle** → ball | top: Curveball down-away 23%; Curveball middle 16%; Fastball up-away 15% | before: Fastball up-away (ball), Fastball down-away (cstrike), Fastball down-away (foul)
+- **college_d1_two_pitch_s104 · PA 11 · inning 3, 0 out, bases empty, score 1-1 · #2 (R, same side) vs Starter (R), pitch 36**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 84%; Curveball middle 16% | before: Curveball middle (ball)
+  - `2-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 13 · inning 3, 1 out, bases 1, score 1-1 · #4 (R, same side) vs Starter (R), pitch 41**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 86%; Curveball middle 14% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 14 · inning 3, 1 out, bases empty, score 1-3 · #5 (R, same side) vs Starter (R), pitch 43**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 35%; Fastball middle 27%; Fastball up-away 19% | before: first pitch
+  - `1-2` **Fastball up-away** → foul — foul opposite | top: Curveball down-away 24%; Curveball middle 17%; Fastball middle 15% | before: Curveball middle (ball), Fastball down-away (foul), Fastball up-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 46%; Fastball up-away 21%; Curveball down-away 18% | before: Fastball up-away (cstrike), Fastball up-away (foul), Fastball down-away (ball)
+- **college_d1_two_pitch_s104 · PA 15 · inning 3, 2 out, bases empty, score 1-3 · #6 (R, same side) vs Starter (R), pitch 51**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **college_d1_two_pitch_s104 · PA 16 · inning 4, 0 out, bases empty, score 1-3 · #7 (L, opposite side) vs Starter (R), pitch 55**
+  - `1-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 17 · inning 4, 1 out, bases empty, score 1-3 · #8 (R, same side) vs Starter (R), pitch 56**
+  - `0-0` **Fastball down-away** → hard — hard contact: SINGLE | top: Fastball middle 27%; Fastball up-away 20%; Fastball down-away 20% | before: first pitch
+- **college_d1_two_pitch_s104 · PA 21 · inning 5, 0 out, bases empty, score 4-3 · #3 (R, same side) vs Starter (R), pitch 64**
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 34%; Curveball middle 27%; Fastball up-away 19% | before: Curveball middle (foul), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 22 · inning 5, 0 out, bases 1, score 4-3 · #4 (R, same side) vs Starter (R), pitch 69**
+  - `1-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 79%; Curveball middle 21% | before: Curveball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 24 · inning 5, 2 out, bases 3, score 4-3 · #6 (R, same side) vs Starter (R), pitch 73**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 26%; Fastball middle 18%; Fastball up-away 15% | before: first pitch
+  - `2-1` **Fastball down-away** → ball | top: Fastball middle 26%; Curveball middle 17%; Fastball up-away 15% | before: Curveball middle (ball), Fastball down-in (ball), Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 25 · inning 5, 2 out, bases 3, score 4-4 · #7 (L, opposite side) vs Starter (R), pitch 82**
+  - `2-2` **Curveball down-away** → ball | top: Curveball down-away 55%; Curveball middle 45% | before: Curveball middle (whiff), Curveball middle (whiff), Curveball down-in (ball)
+- **college_d1_two_pitch_s104 · PA 27 · inning 5, 2 out, bases 2, score 4-6 · #9 (L, opposite side) vs Starter (R), pitch 88**
+  - `1-2` **Fastball up-away** → weak — weak contact: SINGLE | top: Curveball down-away 23%; Curveball chase 15%; Fastball up-away 13% | before: Fastball up-away (ball), Curveball down-in (whiff), Fastball middle (foul)
+- **college_d1_two_pitch_s104 · PA 28 · inning 5, 2 out, bases 1, score 4-7 · #1 (L, opposite side) vs Starter (R), pitch 90**
+  - `0-1` **Curveball middle** → ball — wild pitch, runners move up | top: Curveball down-away 16%; Curveball middle 16%; Fastball middle 15% | before: Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 29 · inning 5, 2 out, bases 12, score 4-7 · #2 (R, same side) vs Starter (R), pitch 94**
+  - `0-0` **Curveball middle** → foul — foul pull | top: Curveball middle 33%; Fastball middle 29%; Fastball up-away 19% | before: first pitch
+  - `0-1` **Curveball middle** → whiff — whiff (late) | top: Curveball down-away 23%; Fastball middle 22%; Curveball middle 20% | before: Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 30 · inning 6, 0 out, bases empty, score 5-7 · #3 (R, same side) vs Reliever (R), pitch 4**
+  - `2-1` **Fastball middle** → ball | top: Slider middle 61%; Fastball middle 39% | before: Fastball middle (cstrike), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → foul — foul straight back | top: Slider middle 78%; Fastball middle 22% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (ball)
+  - `3-2` **Slider middle** → weak — weak contact: OUT | top: Slider middle 85%; Fastball middle 15% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 32 · inning 6, 1 out, bases 3, score 5-7 · #5 (R, same side) vs Reliever (R), pitch 8**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 25%; Fastball middle 19%; Slider down-away 17% | before: first pitch
+  - `1-0` **Slider down-away** → ball | top: Fastball middle 45%; Slider middle 34%; Slider down-away 22% | before: Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 33 · inning 6, 1 out, bases 2, score 5-8 · #6 (R, same side) vs Reliever (R), pitch 11**
+  - `0-0` **Fastball middle** → hard — hard contact: SINGLE | top: Slider middle 27%; Fastball middle 23%; Slider down-away 21% | before: first pitch
+- **college_d1_two_pitch_s104 · PA 36 · inning 6, 2 out, bases 12, score 5-9 · #9 (L, opposite side) vs Reliever (R), pitch 23**
+  - `1-2` **Slider down-away** → ball | top: Fastball up-away 16%; Slider down-away 16%; Fastball middle 16% | before: Fastball up-away (whiff), Fastball middle (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 37 · inning 7, 0 out, bases empty, score 6-9 · #1 (L, opposite side) vs Reliever (R), pitch 25**
+  - `0-0` **Fastball down-away** → weak — weak contact: OUT | top: Fastball middle 45%; Fastball up-away 28%; Fastball down-away 28% | before: first pitch
+- **college_d1_two_pitch_s104 · PA 38 · inning 7, 1 out, bases empty, score 6-9 · #2 (R, same side) vs Reliever (R), pitch 28**
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 39 · inning 7, 2 out, bases empty, score 6-9 · #3 (R, same side) vs Reliever (R), pitch 33**
+  - `3-1` **Fastball down-in** → foul — foul pull | top: Fastball middle 37%; Fastball down-away 16%; Fastball down-in 16% | before: Fastball down-in (ball), Slider down-in (ball), Slider down-away (ball)
+- **college_d1_two_pitch_s104 · PA 40 · inning 7, 2 out, bases 1, score 6-9 · #4 (R, same side) vs Reliever (R), pitch 35**
+  - `0-0` **Slider up-away** → ball | top: Slider middle 16%; Fastball middle 16%; Slider down-away 15% | before: first pitch
+  - `1-2` **Slider middle** → ball | top: Slider down-away 29%; Slider chase 18%; Slider middle 16% | before: Slider up-away (ball), Slider down-away (whiff), Slider down-in (cstrike)
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 53%; Fastball middle 47% | before: Slider down-in (cstrike), Slider middle (ball), Slider down-away (ball)
+- **college_d1_two_pitch_s104 · PA 41 · inning 7, 2 out, bases 12, score 6-9 · #5 (R, same side) vs Reliever (R), pitch 42**
+  - `1-0` **Slider middle** → ball | top: Fastball middle 66%; Slider middle 34% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — wild pitch, runners move up; WALK | top: Fastball middle 81%; Slider middle 19% | before: Slider middle (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 42 · inning 7, 2 out, bases 123, score 6-9 · #6 (R, same side) vs Reliever (R), pitch 46**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 86%; Slider middle 14% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 95%; Slider middle 5% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 43 · inning 7, 2 out, bases 123, score 6-10 · #7 (L, opposite side) vs Reliever (R), pitch 52**
+  - `0-1` **Fastball middle** → cstrike | top: Fastball middle 72%; Slider middle 28% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 44 · inning 8, 0 out, bases empty, score 6-10 · #8 (R, same side) vs Reliever (R), pitch 55**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 62%; Slider middle 38% | before: Slider down-away (ball)
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (foul), Slider down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 46 · inning 8, 1 out, bases 1, score 6-10 · #1 (L, opposite side) vs Reliever (R), pitch 63**
+  - `0-1` **Fastball down-away** → foul — foul opposite | top: Fastball middle 42%; Fastball down-away 29%; Fastball up-away 29% | before: Fastball up-away (foul)
+  - `0-2` **Fastball down-away** → ball | top: Fastball up-away 33%; Fastball middle 29%; Fastball down-away 22% | before: Fastball up-away (foul), Fastball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 50 · inning 9, 1 out, bases 1, score 6-10 · #5 (R, same side) vs Reliever (R), pitch 78**
+  - `0-1` **Fastball down-away** → cstrike | top: Fastball up-away 50%; Fastball down-away 50% | before: Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball up-away** → ball | top: Fastball middle 34%; Fastball up-away 33%; Fastball down-away 33% | before: Fastball middle (foul), Fastball up-away (foul), Fastball middle (foul)
+- **college_d1_two_pitch_s104 · PA 51 · inning 9, 1 out, bases 13, score 6-10 · #6 (R, same side) vs Reliever (R), pitch 86**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 46%; Fastball up-away 27%; Fastball down-away 27% | before: first pitch
+- **college_d1_two_pitch_s104 · PA 52 · inning 9, 1 out, bases 13, score 6-11 · #7 (L, opposite side) vs Reliever (R), pitch 88**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 62%; Slider down-away 38% | before: first pitch
+  - `1-1` **Slider middle** → whiff — whiff (out in front) | top: Slider middle 65%; Slider down-away 35% | before: Slider down-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider middle** → ball | top: Slider middle 56%; Slider down-away 44% | before: Slider down-away (ball), Slider middle (cstrike), Slider middle (whiff)
+  - `2-2` **Slider middle** → ball | top: Slider down-away 63%; Slider middle 37% | before: Slider middle (cstrike), Slider middle (whiff), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider middle (whiff), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 53 · inning 9, 1 out, bases 123, score 6-11 · #8 (R, same side) vs Reliever (R), pitch 95**
+  - `1-0` **Slider middle** → cstrike | top: Slider middle 100% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider middle** → weak — weak contact: OUT, RUN SCORES | top: Slider middle 100% | before: Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s104 · PA 54 · inning 9, 2 out, bases 12, score 6-12 · #9 (L, opposite side) vs Reliever (R), pitch 98**
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 46%; Fastball down-away 27%; Fastball up-away 27% | before: Slider down-away (ball)
+- **college_d3_default_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 2**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 48%; Slider middle 37%; Changeup middle 15% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (R, same side) vs Starter (R), pitch 8**
+  - `0-0` **Fastball up-in** → foul — foul straight back | top: Changeup down-away 9%; Changeup middle 9%; Changeup up-away 8% | before: first pitch
+- **college_d3_default_s101 · PA 5 · inning 2, 1 out, bases empty, score 4-0 · #5 (R, same side) vs Starter (R), pitch 14**
+  - `0-0` **Fastball down-in** → ball | top: Changeup down-away 23%; Slider middle 12%; Fastball middle 12% | before: first pitch
+- **college_d3_default_s101 · PA 7 · inning 3, 0 out, bases empty, score 5-0 · #7 (R, same side) vs Starter (R), pitch 21**
+  - `2-2` **Fastball up-away** → cstrike — STRIKEOUT | top: Slider middle 39%; Fastball middle 20%; Fastball up-away 17% | before: Fastball down-away (ball), Fastball up-away (cstrike), Slider down-away (ball)
+- **college_d3_default_s101 · PA 9 · inning 3, 2 out, bases empty, score 5-0 · #9 (R, same side) vs Starter (R), pitch 27**
+  - `0-0` **Fastball up-in** → ball | top: Changeup down-away 9%; Changeup middle 9%; Changeup up-away 8% | before: first pitch
+  - `2-0` **Slider middle** → hbp — HIT BY PITCH | top: Slider middle 29%; Changeup middle 19%; Fastball middle 14% | before: Fastball up-in (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 10 · inning 3, 2 out, bases 1, score 5-0 · #1 (L, opposite side) vs Starter (R), pitch 31**
+  - `0-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Slider middle 13%; Changeup down-away 12%; Slider down-away 12% | before: Fastball up-away (foul)
+- **college_d3_default_s101 · PA 12 · inning 4, 0 out, bases empty, score 6-2 · #3 (R, same side) vs Starter (R), pitch 37**
+  - `0-0` **Slider middle** → ball | top: Slider middle 29%; Fastball middle 21%; Changeup down-away 19% | before: first pitch
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 15 · inning 4, 0 out, bases 12, score 6-3 · #6 (L, opposite side) vs Starter (R), pitch 44**
+  - `0-0` **Slider middle** → hbp — HIT BY PITCH | top: Slider middle 64%; Changeup middle 36% | before: first pitch
+- **college_d3_default_s101 · PA 16 · inning 4, 0 out, bases 123, score 6-3 · #7 (R, same side) vs Starter (R), pitch 48**
+  - `1-2` **Slider down-away** → weak — weak contact: SINGLE | top: Slider down-away 88%; Changeup down-away 12% | before: Changeup middle (ball), Slider middle (whiff), Slider middle (foul)
+- **college_d3_default_s101 · PA 17 · inning 4, 0 out, bases 123, score 6-4 · #8 (R, same side) vs Starter (R), pitch 52**
+  - `2-1` **Fastball middle** → weak — weak contact: OUT, RUN SCORES | top: Fastball middle 100% | before: Slider middle (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 18 · inning 4, 1 out, bases 12, score 6-5 · #9 (R, same side) vs Starter (R), pitch 53**
+  - `0-0` **Slider middle** → ball | top: Slider middle 26%; Fastball middle 25%; Fastball up-away 20% | before: first pitch
+  - `1-1` **Fastball up-away** → solid — solid contact: SINGLE | top: Fastball middle 31%; Fastball up-away 24%; Slider middle 24% | before: Slider middle (ball), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 19 · inning 4, 1 out, bases 123, score 6-5 · #1 (L, opposite side) vs Starter (R), pitch 56**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 32%; Fastball up-away 25%; Slider middle 23% | before: first pitch
+- **college_d3_default_s101 · PA 22 · inning 4, 2 out, bases 123, score 6-7 · #4 (R, same side) vs Starter (R), pitch 64**
+  - `2-1` **Slider middle** → foul — foul opposite | top: Slider middle 93%; Changeup middle 7% | before: Slider middle (cstrike), Fastball down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 25 · inning 5, 0 out, bases empty, score 6-10 · #7 (R, same side) vs Starter (R), pitch 72**
+  - `0-0` **Fastball up-away** → cstrike | top: Slider middle 29%; Fastball middle 21%; Changeup down-away 19% | before: first pitch
+- **college_d3_default_s101 · PA 26 · inning 5, 0 out, bases 1, score 6-10 · #8 (R, same side) vs Starter (R), pitch 77**
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 91%; Slider middle 9% | before: Slider middle (cstrike), Changeup down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 27 · inning 5, 1 out, bases 1, score 6-10 · #9 (R, same side) vs Starter (R), pitch 81**
+  - `2-1` **Slider middle** → ball | top: Slider middle 85%; Changeup middle 15% | before: Changeup down-away (ball), Changeup middle (foul), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 91%; Changeup middle 9% | before: Changeup middle (foul), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 29 · inning 5, 1 out, bases 12, score 6-11 · #2 (R, same side) vs Starter (R), pitch 85**
+  - `0-1` **Changeup down-away** → ball | top: Fastball up-away 22%; Fastball down-away 18%; Slider middle 17% | before: Fastball middle (cstrike)
+  - `1-1` **Slider middle** → ball | top: Fastball middle 30%; Slider middle 25%; Fastball up-away 25% | before: Fastball middle (cstrike), Changeup down-away (ball)
+  - `2-2` **Slider down-away** → whiff — whiff (late); STRIKEOUT | top: Slider down-away 61%; Slider middle 39% | before: Changeup down-away (ball), Slider middle (ball), Fastball middle (foul)
+- **college_d3_default_s101 · PA 30 · inning 5, 2 out, bases 12, score 6-11 · #3 (R, same side) vs Starter (R), pitch 89**
+  - `0-0` **Slider down-away** → whiff — whiff (out in front) | top: Slider middle 30%; Changeup down-away 30%; Slider down-away 23% | before: first pitch
+- **college_d3_default_s101 · PA 31 · inning 6, 0 out, bases empty, score 6-11 · #4 (R, same side) vs Starter (R), pitch 94**
+  - `1-2` **Slider down-away** → foul — foul pull | top: Changeup down-away 31%; Slider down-away 24%; Slider middle 19% | before: Slider middle (foul), Slider up-away (foul), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → hard — hard contact: OUT | top: Slider middle 100% | before: Slider down-away (foul), Slider chase (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 32 · inning 6, 1 out, bases empty, score 6-11 · #5 (R, same side) vs Reliever (R), pitch 3**
+  - `2-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 45%; Changeup middle 30%; Curveball middle 25% | before: Curveball middle (ball), Fastball up-away (ball)
+- **college_d3_default_s101 · PA 38 · inning 8, 0 out, bases empty, score 9-11 · #2 (R, same side) vs Reliever (R), pitch 21**
+  - `0-0` **Fastball up-away** → whiff — whiff (out in front) | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 28% | before: first pitch
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 45%; Fastball up-away 29%; Fastball down-away 27% | before: Fastball up-away (whiff), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 42 · inning 8, 2 out, bases 23, score 9-11 · #6 (L, opposite side) vs Reliever (R), pitch 38**
+  - `0-0` **Fastball down-in** → cstrike | top: Fastball middle 33%; Fastball up-away 21%; Fastball down-away 17% | before: first pitch
+- **college_d3_default_s101 · PA 43 · inning 8, 2 out, bases 13, score 9-12 · #7 (R, same side) vs Reliever (R), pitch 45**
+  - `2-2` **Curveball down-away** → hard — hard contact: OUT | top: Fastball up-away 33%; Curveball down-away 32%; Fastball middle 22% | before: Fastball down-away (ball), Fastball up-away (foul), Fastball down-away (ball)
+- **college_d3_default_s101 · PA 44 · inning 9, 0 out, bases empty, score 9-12 · #8 (R, same side) vs Reliever (R), pitch 50**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 78%; Changeup middle 15%; Curveball middle 7% | before: Changeup down-away (ball), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 46 · inning 9, 0 out, bases 3, score 9-13 · #1 (L, opposite side) vs Reliever (R), pitch 52**
+  - `0-0` **Curveball middle** → cstrike | top: Curveball middle 26%; Fastball middle 23%; Changeup middle 23% | before: first pitch
+- **college_d3_default_s102 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 17**
+  - `0-2` **Slider down-away** → weak — weak contact: OUT | top: Slider down-away 25%; Fastball up-away 21%; Changeup down-away 21% | before: Slider middle (cstrike), Slider up-away (foul)
+- **college_d3_default_s102 · PA 8 · inning 2, 1 out, bases 2, score 0-1 · #8 (L, opposite side) vs Starter (R), pitch 22**
+  - `1-0` **Slider middle** → foul — foul opposite | top: Slider middle 32%; Fastball middle 15%; Fastball up-away 12% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s102 · PA 12 · inning 3, 2 out, bases empty, score 4-1 · #3 (L, opposite side) vs Starter (R), pitch 35**
+  - `1-2` **Slider down-in** → ball | top: Slider down-away 11%; Changeup down-away 11%; Changeup middle 9% | before: Slider up-away (foul), Slider chase (whiff), Slider chase (ball)
+- **college_d3_default_s102 · PA 13 · inning 3, 2 out, bases 1, score 4-1 · #4 (L, opposite side) vs Starter (R), pitch 38**
+  - `0-0` **Slider down-away** → cstrike | top: Changeup down-away 21%; Slider middle 12%; Fastball middle 12% | before: first pitch
+  - `2-1` **Fastball up-in** → foul — foul pull | top: Slider middle 25%; Fastball middle 21%; Slider down-away 14% | before: Slider down-away (cstrike), Fastball middle (ball), Fastball down-in (ball)
+  - `2-2` **Slider down-in** → foul — foul pull | top: Slider down-away 28%; Slider middle 25%; Fastball up-away 18% | before: Fastball middle (ball), Fastball down-in (ball), Fastball up-in (foul)
+- **college_d3_default_s102 · PA 14 · inning 3, 2 out, bases 12, score 4-1 · #5 (R, same side) vs Starter (R), pitch 49**
+  - `2-2` **Slider down-away** → ball | top: Fastball up-away 50%; Slider down-away 50% | before: Slider down-away (ball), Fastball up-away (cstrike), Changeup down-away (ball)
+  - `3-2` **Slider middle** → ball — WALK | top: Fastball middle 51%; Slider middle 49% | before: Fastball up-away (cstrike), Changeup down-away (ball), Slider down-away (ball)
+- **college_d3_default_s102 · PA 15 · inning 3, 2 out, bases 123, score 4-1 · #6 (R, same side) vs Starter (R), pitch 52**
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 77%; Slider middle 23% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → foul — foul straight back | top: Slider middle 34%; Fastball middle 30%; Fastball up-away 20% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s102 · PA 17 · inning 4, 1 out, bases empty, score 4-1 · #8 (L, opposite side) vs Starter (R), pitch 61**
+  - `2-2` **Slider down-away** → ball | top: Slider down-away 26%; Slider middle 23%; Fastball middle 20% | before: Fastball down-in (foul), Slider middle (cstrike), Fastball down-away (ball)
+  - `3-2` **Slider middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 72%; Slider middle 28% | before: Slider down-away (ball), Fastball middle (foul), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s102 · PA 19 · inning 5, 0 out, bases empty, score 5-1 · #1 (R, same side) vs Starter (R), pitch 69**
+  - `2-0` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 72%; Slider middle 28% | before: Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → cstrike | top: Fastball middle 85%; Slider middle 15% | before: Slider middle (ball), Slider middle (whiff), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s102 · PA 21 · inning 5, 0 out, bases 13, score 5-1 · #3 (L, opposite side) vs Starter (R), pitch 77**
+  - `2-0` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 73%; Slider middle 27% | before: Fastball down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Fastball middle 73%; Slider middle 27% | before: Slider middle (ball), Slider middle (whiff), Fastball middle (ball)
+- **college_d3_default_s102 · PA 23 · inning 5, 0 out, bases 12, score 5-3 · #5 (R, same side) vs Starter (R), pitch 86**
+  - `0-0` **Slider middle** → ball | top: Slider middle 36%; Fastball middle 26%; Fastball up-away 16% | before: first pitch
+  - `1-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 84%; Changeup down-away 9%; Fastball up-away 8% | before: Fastball middle (foul), Slider middle (foul), Fastball up-away (foul)
+- **college_d3_default_s102 · PA 28 · inning 6, 2 out, bases empty, score 7-4 · #1 (R, same side) vs Reliever (R), pitch 8**
+  - `1-2` **Fastball chase** → foul — foul pull | top: Changeup down-away 13%; Fastball up-away 12%; Curveball down-away 11% | before: Curveball up-away (cstrike), Curveball middle (ball), Changeup middle (foul)
+  - `1-2` **Fastball chase** → whiff — whiff (fooled); STRIKEOUT | top: Changeup down-away 15%; Curveball down-away 12%; Curveball middle 10% | before: Curveball middle (ball), Changeup middle (foul), Fastball chase (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s102 · PA 29 · inning 7, 0 out, bases empty, score 7-4 · #2 (R, same side) vs Reliever (R), pitch 10**
+  - `0-0` **Changeup middle** → cstrike | top: Curveball middle 27%; Fastball middle 24%; Changeup middle 18% | before: first pitch
+  - `1-2` **Curveball middle** → whiff — whiff (fooled); STRIKEOUT | top: Curveball down-away 36%; Curveball middle 16%; Fastball down-away 15% | before: Changeup middle (cstrike), Fastball middle (foul), Fastball up-away (ball)
+- **college_d3_default_s102 · PA 30 · inning 7, 1 out, bases empty, score 7-4 · #3 (L, opposite side) vs Reliever (R), pitch 18**
+  - `2-2` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 41%; Fastball up-away 39%; Curveball down-away 20% | before: Fastball middle (foul), Fastball up-away (ball), Curveball middle (foul)
+- **college_d3_default_s102 · PA 32 · inning 7, 2 out, bases 2, score 7-4 · #5 (R, same side) vs Reliever (R), pitch 26**
+  - `3-0` **Curveball middle** → ball — WALK | top: Fastball middle 61%; Curveball middle 23%; Changeup middle 16% | before: Fastball up-in (ball), Curveball down-away (ball), Fastball up-away (ball)
+- **college_d3_default_s102 · PA 33 · inning 7, 2 out, bases 12, score 7-4 · #6 (R, same side) vs Reliever (R), pitch 29**
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 68%; Curveball middle 20%; Changeup middle 12% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 77%; Curveball middle 16%; Changeup middle 6% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s102 · PA 38 · inning 9, 0 out, bases empty, score 8-4 · #2 (R, same side) vs Reliever (R), pitch 50**
+  - `0-2` **Fastball up-away** → foul — foul pull | top: Curveball down-away 30%; Fastball up-away 27%; Fastball down-away 21% | before: Fastball middle (whiff), Fastball down-away (whiff)
+- **college_d3_default_s102 · PA 39 · inning 9, 1 out, bases empty, score 8-4 · #3 (L, opposite side) vs Reliever (R), pitch 54**
+  - `0-1` **Fastball middle** → cstrike | top: Fastball middle 17%; Fastball up-away 14%; Fastball down-away 13% | before: Changeup down-away (foul)
+  - `0-2` **Fastball middle** → foul — foul straight back | top: Fastball up-away 16%; Curveball down-away 15%; Changeup down-away 15% | before: Changeup down-away (foul), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s102 · PA 40 · inning 9, 2 out, bases empty, score 8-4 · #4 (L, opposite side) vs Reliever (R), pitch 62**
+  - `3-1` **Changeup middle** → hard — hard contact: SINGLE | top: Changeup middle 27%; Curveball middle 24%; Fastball middle 19% | before: Curveball up-away (ball), Fastball down-away (ball), Curveball middle (cstrike)
+- **college_d3_default_s102 · PA 41 · inning 9, 2 out, bases 1, score 8-4 · #5 (R, same side) vs Reliever (R), pitch 64**
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Curveball middle 29%; Changeup middle 20%; Fastball middle 18% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (R, same side) vs Starter (R), pitch 15**
+  - `0-2` **Fastball up-away** → ball | top: Slider down-away 24%; Fastball up-away 21%; Slider chase 17% | before: Slider down-in (cstrike), Fastball up-in (foul)
+- **college_d3_default_s103 · PA 5 · inning 2, 0 out, bases empty, score 0-0 · #5 (R, same side) vs Starter (R), pitch 17**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 19%; Slider middle 17%; Changeup down-away 16% | before: first pitch
+  - `1-1` **Fastball middle** → cstrike | top: Slider middle 23%; Fastball middle 22%; Slider down-away 16% | before: Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 6 · inning 2, 0 out, bases 1, score 0-0 · #6 (R, same side) vs Starter (R), pitch 22**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 38%; Fastball middle 26%; Fastball up-away 19% | before: first pitch
+  - `1-1` **Slider middle** → hbp — HIT BY PITCH | top: Slider middle 28%; Fastball middle 25%; Slider down-away 18% | before: Fastball middle (ball), Slider middle (whiff)
+- **college_d3_default_s103 · PA 7 · inning 2, 0 out, bases 12, score 0-0 · #7 (R, same side) vs Starter (R), pitch 25**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 39%; Fastball middle 28%; Fastball up-away 17% | before: first pitch
+- **college_d3_default_s103 · PA 8 · inning 2, 1 out, bases 12, score 0-0 · #8 (R, same side) vs Starter (R), pitch 27**
+  - `0-0` **Slider middle** → whiff — whiff (fooled) | top: Slider middle 26%; Fastball middle 26%; Slider down-away 18% | before: first pitch
+- **college_d3_default_s103 · PA 10 · inning 3, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 41**
+  - `1-2` **Changeup down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 51%; Slider middle 31%; Changeup down-away 12% | before: Slider middle (whiff), Fastball middle (foul), Fastball up-away (foul)
+- **college_d3_default_s103 · PA 14 · inning 4, 0 out, bases 2, score 0-0 · #5 (R, same side) vs Starter (R), pitch 46**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 21%; Slider middle 20%; Fastball up-away 16% | before: first pitch
+  - `1-1` **Slider middle** → ball | top: Fastball middle 23%; Slider middle 20%; Fastball up-away 16% | before: Fastball up-away (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 82%; Slider middle 18% | before: Slider middle (foul), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 16 · inning 4, 1 out, bases 3, score 0-1 · #7 (R, same side) vs Starter (R), pitch 62**
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 52%; Slider down-away 24%; Fastball middle 24% | before: Fastball middle (cstrike), Fastball down-away (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 17 · inning 4, 1 out, bases 13, score 0-1 · #8 (R, same side) vs Starter (R), pitch 66**
+  - `2-1` **Slider middle** → foul — foul opposite | top: Fastball middle 57%; Slider middle 43% | before: Slider down-away (ball), Fastball middle (foul), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 18 · inning 4, 2 out, bases 13, score 0-1 · #9 (R, same side) vs Starter (R), pitch 70**
+  - `1-1` **Fastball middle** → ball | top: Slider middle 30%; Fastball middle 15%; Fastball up-away 14% | before: Fastball up-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 21 · inning 5, 1 out, bases 1, score 2-1 · #3 (R, same side) vs Starter (R), pitch 80**
+  - `3-2` **Fastball middle** → weak — weak contact: DOUBLE PLAY | top: Slider middle 68%; Fastball middle 32% | before: Changeup down-away (ball), Fastball up-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 23 · inning 6, 1 out, bases empty, score 2-1 · #5 (R, same side) vs Starter (R), pitch 84**
+  - `0-0` **Slider up-away** → ball | top: Changeup down-away 20%; Slider middle 14%; Slider down-away 12% | before: first pitch
+- **college_d3_default_s103 · PA 25 · inning 6, 2 out, bases 1, score 2-1 · #7 (R, same side) vs Starter (R), pitch 98**
+  - `2-2` **Changeup down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 39%; Slider middle 30%; Changeup down-away 16% | before: Fastball up-in (ball), Slider up-away (foul), Fastball up-in (ball)
+- **college_d3_default_s103 · PA 28 · inning 7, 1 out, bases 2, score 3-1 · #1 (L, opposite side) vs Reliever (R), pitch 6**
+  - `1-0` **Curveball middle** → ball | top: Fastball middle 42%; Curveball middle 19%; Fastball up-away 17% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 82%; Curveball middle 13%; Changeup middle 6% | before: Fastball middle (ball), Curveball middle (ball)
+- **college_d3_default_s103 · PA 30 · inning 7, 2 out, bases 2, score 3-2 · #3 (R, same side) vs Reliever (R), pitch 10**
+  - `0-0` **Fastball up-in** → ball | top: Fastball middle 19%; Fastball up-away 14%; Curveball down-away 14% | before: first pitch
+  - `1-0` **Fastball up-in** → hard — hard contact: TRIPLE | top: Fastball middle 19%; Fastball up-away 13%; Fastball down-away 12% | before: Fastball up-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 31 · inning 7, 2 out, bases 3, score 3-3 · #4 (R, same side) vs Reliever (R), pitch 12**
+  - `0-0` **Changeup down-away** → ball | top: Fastball middle 25%; Curveball middle 18%; Fastball up-away 16% | before: first pitch
+- **college_d3_default_s103 · PA 32 · inning 8, 0 out, bases empty, score 3-3 · #5 (R, same side) vs Reliever (R), pitch 17**
+  - `2-0` **Curveball middle** → hard — hard contact: OUT | top: Curveball middle 36%; Fastball middle 33%; Changeup middle 31% | before: Curveball down-away (ball), Fastball middle (ball)
+- **college_d3_default_s103 · PA 33 · inning 8, 1 out, bases empty, score 3-3 · #6 (R, same side) vs Reliever (R), pitch 21**
+  - `3-0` **Curveball middle** → ball — WALK | top: Changeup middle 49%; Curveball middle 34%; Fastball middle 17% | before: Fastball down-away (ball), Curveball up-away (ball), Fastball middle (ball)
+- **college_d3_default_s103 · PA 34 · inning 8, 1 out, bases 2, score 3-3 · #7 (R, same side) vs Reliever (R), pitch 25**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 65%; Changeup middle 12%; Curveball middle 12% | before: Changeup down-away (foul), Curveball down-away (ball), Curveball middle (ball)
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 79%; Changeup middle 15%; Curveball middle 6% | before: Curveball down-away (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 63%; Curveball middle 36%; Changeup middle 1% | before: Curveball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 37 · inning 8, 2 out, bases 12, score 3-4 · #1 (L, opposite side) vs Reliever (R), pitch 32**
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 42%; Fastball up-away 16%; Curveball middle 15% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 38 · inning 9, 0 out, bases empty, score 3-4 · #2 (L, opposite side) vs Reliever (R), pitch 33**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 26%; Fastball middle 19%; Changeup middle 17% | before: first pitch
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 52%; Curveball middle 48% | before: Changeup middle (ball), Curveball middle (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 57%; Curveball middle 43% | before: Curveball middle (foul), Fastball middle (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 62%; Curveball middle 38% | before: Fastball middle (foul), Fastball middle (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 40 · inning 9, 2 out, bases empty, score 3-4 · #4 (R, same side) vs Reliever (R), pitch 49**
+  - `1-0` **Curveball middle** → cstrike | top: Curveball middle 21%; Curveball down-away 18%; Fastball middle 16% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → ball — WALK | top: Curveball middle 28%; Fastball middle 27%; Fastball up-away 11% | before: Curveball middle (cstrike), Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s103 · PA 41 · inning 9, 2 out, bases 2, score 3-4 · #5 (R, same side) vs Reliever (R), pitch 54**
+  - `0-1` **Fastball middle** → foul — foul pull | top: Fastball up-away 17%; Curveball down-away 17%; Fastball middle 16% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 3**
+  - `1-0` **Slider middle** → ball | top: Slider middle 26%; Changeup middle 18%; Fastball middle 15% | before: Slider down-away (ball)
+- **college_d3_default_s104 · PA 3 · inning 1, 1 out, bases 2, score 0-0 · #3 (R, same side) vs Starter (R), pitch 11**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 75%; Slider middle 16%; Changeup middle 9% | before: Fastball down-away (ball), Fastball up-away (ball), Slider middle (ball)
+- **college_d3_default_s104 · PA 7 · inning 2, 0 out, bases 12, score 1-0 · #7 (L, opposite side) vs Starter (R), pitch 16**
+  - `1-0` **Slider middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 68%; Slider middle 20%; Changeup middle 13% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 8 · inning 2, 1 out, bases 13, score 1-0 · #8 (R, same side) vs Starter (R), pitch 18**
+  - `1-0` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 58%; Slider middle 28%; Changeup middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 9 · inning 2, 1 out, bases 12, score 1-1 · #9 (L, opposite side) vs Starter (R), pitch 20**
+  - `0-1` **Fastball middle** → foul — foul pull | top: Slider middle 22%; Changeup down-away 19%; Fastball middle 18% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 10 · inning 2, 2 out, bases 12, score 1-1 · #1 (L, opposite side) vs Starter (R), pitch 24**
+  - `1-0` **Changeup middle** → ball | top: Slider middle 32%; Fastball middle 23%; Changeup middle 20% | before: Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 71%; Slider middle 24%; Changeup middle 6% | before: Changeup middle (ball), Changeup middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 16 · inning 4, 0 out, bases empty, score 5-1 · #7 (L, opposite side) vs Starter (R), pitch 43**
+  - `1-1` **Slider middle** → ball | top: Fastball middle 37%; Slider middle 26%; Changeup middle 19% | before: Fastball middle (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → foul — foul opposite | top: Slider middle 70%; Fastball middle 24%; Changeup middle 6% | before: Slider middle (ball), Fastball middle (foul), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → whiff — whiff (out in front); STRIKEOUT | top: Slider middle 63%; Fastball middle 30%; Changeup middle 6% | before: Fastball middle (foul), Slider middle (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 17 · inning 4, 1 out, bases empty, score 5-1 · #8 (R, same side) vs Starter (R), pitch 48**
+  - `0-0` **Slider middle** → weak — weak contact: SINGLE | top: Fastball middle 16%; Slider middle 15%; Slider down-away 12% | before: first pitch
+- **college_d3_default_s104 · PA 18 · inning 4, 1 out, bases 2, score 5-1 · #9 (L, opposite side) vs Starter (R), pitch 49**
+  - `0-0` **Changeup middle** → cstrike | top: Changeup middle 22%; Fastball middle 18%; Slider middle 15% | before: first pitch
+  - `1-2` **Changeup down-away** → solid — solid contact: SINGLE | top: Slider down-away 38%; Changeup down-away 19%; Slider chase 19% | before: Changeup down-away (ball), Slider down-away (foul), Fastball up-away (foul)
+- **college_d3_default_s104 · PA 19 · inning 4, 1 out, bases 2, score 5-2 · #1 (L, opposite side) vs Starter (R), pitch 57**
+  - `2-0` **Slider middle** → ball | top: Slider middle 44%; Fastball middle 42%; Changeup middle 14% | before: Fastball up-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Slider middle** → cstrike | top: Fastball middle 49%; Slider middle 47%; Changeup middle 5% | before: Fastball up-away (ball), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 50%; Fastball middle 43%; Changeup middle 6% | before: Slider middle (ball), Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 21 · inning 4, 1 out, bases 12, score 5-3 · #3 (R, same side) vs Starter (R), pitch 65**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 56%; Slider middle 44% | before: Fastball up-away (ball), Slider down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → foul — foul opposite | top: Slider middle 61%; Fastball middle 36%; Changeup middle 4% | before: Fastball middle (ball), Fastball middle (cstrike), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → foul — foul opposite | top: Fastball middle 49%; Slider middle 48%; Changeup middle 3% | before: Fastball middle (cstrike), Slider middle (foul), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 22 · inning 4, 1 out, bases 123, score 5-3 · #4 (R, same side) vs Starter (R), pitch 74**
+  - `1-2` **Slider down-away** → solid — solid contact: DOUBLE PLAY | top: Slider down-away 37%; Fastball up-away 27%; Slider middle 17% | before: Slider middle (cstrike), Fastball middle (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 23 · inning 5, 0 out, bases empty, score 6-3 · #5 (R, same side) vs Starter (R), pitch 75**
+  - `0-0` **Fastball middle** → foul — foul opposite | top: Changeup middle 20%; Fastball middle 19%; Slider middle 17% | before: first pitch
+  - `0-1` **Fastball middle** → solid — solid contact: OUT | top: Changeup down-away 22%; Slider middle 18%; Fastball middle 17% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 24 · inning 5, 1 out, bases empty, score 6-3 · #6 (R, same side) vs Starter (R), pitch 83**
+  - `3-2` **Slider middle** → weak — weak contact: OUT | top: Slider middle 45%; Fastball middle 41%; Changeup middle 14% | before: Fastball middle (ball), Changeup middle (whiff), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 26 · inning 6, 0 out, bases empty, score 6-3 · #8 (R, same side) vs Starter (R), pitch 86**
+  - `0-0` **Slider middle** → ball | top: Changeup middle 20%; Fastball middle 19%; Slider middle 17% | before: first pitch
+  - `1-0` **Slider middle** → foul — foul opposite | top: Fastball middle 45%; Slider middle 40%; Changeup middle 15% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider down-away** → foul — foul pull | top: Slider down-away 18%; Changeup down-away 17%; Fastball up-away 15% | before: Slider middle (foul), Fastball middle (foul), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Changeup middle** → whiff — whiff (fooled); STRIKEOUT | top: Slider middle 34%; Slider down-away 28%; Fastball middle 25% | before: Slider down-away (foul), Slider down-away (foul), Slider chase (ball)
+- **college_d3_default_s104 · PA 27 · inning 6, 1 out, bases empty, score 6-3 · #9 (L, opposite side) vs Starter (R), pitch 94**
+  - `1-0` **Fastball middle** → whiff — whiff (out in front) | top: Changeup middle 22%; Fastball middle 19%; Slider middle 16% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Changeup middle** → whiff — whiff (late) | top: Fastball middle 39%; Slider middle 32%; Changeup middle 15% | before: Fastball middle (ball), Fastball middle (whiff), Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 29 · inning 6, 2 out, bases 2, score 6-3 · #2 (R, same side) vs Reliever (R), pitch 6**
+  - `0-1` **Changeup down-away** → weak — weak contact: OUT | top: Changeup down-away 18%; Curveball down-away 17%; Curveball middle 15% | before: Changeup down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 32 · inning 7, 0 out, bases 12, score 6-3 · #5 (R, same side) vs Reliever (R), pitch 11**
+  - `1-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 82%; Curveball middle 18% | before: Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 33 · inning 7, 1 out, bases 12, score 6-3 · #6 (R, same side) vs Reliever (R), pitch 13**
+  - `0-0` **Fastball middle** → solid — solid contact: DOUBLE PLAY | top: Fastball middle 35%; Fastball up-away 21%; Curveball middle 21% | before: first pitch
+- **college_d3_default_s104 · PA 34 · inning 8, 0 out, bases empty, score 7-3 · #7 (L, opposite side) vs Reliever (R), pitch 14**
+  - `0-0` **Fastball down-away** → ball | top: Curveball middle 27%; Fastball middle 23%; Changeup middle 20% | before: first pitch
+- **college_d3_default_s104 · PA 36 · inning 8, 1 out, bases 1, score 7-3 · #9 (L, opposite side) vs Reliever (R), pitch 19**
+  - `0-1` **Fastball up-away** → whiff — whiff (fooled) | top: Fastball middle 19%; Changeup down-away 18%; Curveball down-away 17% | before: Fastball up-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 37 · inning 8, 2 out, bases 1, score 7-3 · #1 (L, opposite side) vs Reliever (R), pitch 22**
+  - `0-1` **Curveball middle** → foul — foul pull | top: Changeup down-away 21%; Curveball down-away 17%; Curveball middle 14% | before: Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Curveball down-away** → ball | top: Curveball down-away 26%; Fastball up-away 22%; Fastball chase 13% | before: Curveball middle (cstrike), Curveball middle (foul)
+  - `1-2` **Curveball down-away** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 34%; Fastball down-away 19%; Fastball middle 19% | before: Curveball middle (cstrike), Curveball middle (foul), Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 38 · inning 9, 0 out, bases empty, score 7-3 · #2 (R, same side) vs Reliever (R), pitch 26**
+  - `1-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 62%; Curveball middle 25%; Changeup middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 39 · inning 9, 1 out, bases empty, score 7-3 · #3 (R, same side) vs Reliever (R), pitch 27**
+  - `0-0` **Curveball down-away** → foul — foul opposite | top: Changeup down-away 21%; Fastball middle 20%; Curveball middle 16% | before: first pitch
+  - `0-1` **Curveball down-away** → ball | top: Changeup down-away 21%; Fastball middle 15%; Fastball up-away 13% | before: Curveball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball up-away** → ball | top: Curveball middle 29%; Fastball middle 23%; Changeup middle 18% | before: Curveball down-away (foul), Curveball down-away (ball)
+  - `3-1` **Fastball middle** → foul — foul pull | top: Fastball middle 77%; Curveball middle 15%; Changeup middle 7% | before: Curveball down-away (ball), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 40 · inning 9, 1 out, bases 1, score 7-3 · #4 (R, same side) vs Reliever (R), pitch 38**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 91%; Curveball middle 9% | before: Changeup down-away (cstrike), Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 41 · inning 9, 1 out, bases 12, score 7-3 · #5 (R, same side) vs Reliever (R), pitch 39**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 31%; Curveball middle 20%; Fastball up-away 19% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 81%; Curveball middle 19% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 83%; Curveball middle 17% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 42 · inning 9, 1 out, bases 123, score 7-3 · #6 (R, same side) vs Reliever (R), pitch 48**
+  - `3-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 64%; Curveball middle 36% | before: Fastball middle (ball), Changeup middle (cstrike), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s104 · PA 43 · inning 9, 2 out, bases 123, score 7-3 · #7 (L, opposite side) vs Reliever (R), pitch 50**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 31%; Fastball up-away 23%; Fastball down-away 20% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 85%; Curveball middle 15% | before: Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 2 · inning 1, 0 out, bases 2, score 0-0 · #2 (R, same side) vs Starter (R), pitch 5**
+  - `0-0` **Curveball middle** → hard — hard contact: DOUBLE | top: Curveball middle 19%; Slider middle 18%; Fastball middle 17% | before: first pitch
+- **college_d3_four_pitch_s101 · PA 7 · inning 2, 0 out, bases empty, score 1-1 · #7 (R, same side) vs Starter (R), pitch 20**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 36%; Slider middle 33%; Curveball middle 24% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul opposite | top: Slider middle 40%; Fastball middle 35%; Curveball middle 20% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 9 · inning 2, 1 out, bases empty, score 1-2 · #9 (R, same side) vs Starter (R), pitch 31**
+  - `1-1` **Slider down-away** → ball | top: Changeup middle 18%; Fastball middle 14%; Slider middle 13% | before: Changeup middle (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 12 · inning 3, 0 out, bases 2, score 4-2 · #3 (R, same side) vs Starter (R), pitch 46**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 76%; Slider middle 16%; Curveball middle 9% | before: Changeup down-away (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → solid — solid contact: DOUBLE | top: Slider middle 80%; Fastball middle 16%; Curveball middle 5% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (cstrike)
+- **college_d3_four_pitch_s101 · PA 14 · inning 3, 1 out, bases 3, score 4-3 · #5 (R, same side) vs Starter (R), pitch 52**
+  - `0-0` **Slider middle** → ball | top: Slider middle 25%; Curveball middle 19%; Fastball middle 19% | before: first pitch
+- **college_d3_four_pitch_s101 · PA 17 · inning 3, 2 out, bases 12, score 4-4 · #8 (R, same side) vs Starter (R), pitch 69**
+  - `1-2` **Slider chase** → ball | top: Slider down-away 40%; Fastball up-away 29%; Slider chase 20% | before: Slider down-away (ball), Slider middle (foul), Fastball middle (cstrike)
+- **college_d3_four_pitch_s101 · PA 18 · inning 3, 2 out, bases 123, score 4-4 · #9 (R, same side) vs Starter (R), pitch 75**
+  - `0-2` **Fastball up-away** → foul — foul pull | top: Slider down-away 43%; Curveball down-away 22%; Slider chase 17% | before: Fastball up-away (cstrike), Slider down-away (foul), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 20 · inning 4, 1 out, bases empty, score 4-4 · #2 (R, same side) vs Starter (R), pitch 79**
+  - `0-0` **Fastball down-away** → ball | top: Curveball middle 21%; Changeup down-away 16%; Slider middle 12% | before: first pitch
+- **college_d3_four_pitch_s101 · PA 22 · inning 5, 0 out, bases empty, score 4-4 · #4 (R, same side) vs Starter (R), pitch 86**
+  - `2-0` **Curveball middle** → ball | top: Fastball middle 77%; Slider middle 13%; Curveball middle 10% | before: Changeup down-away (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 23 · inning 5, 0 out, bases 1, score 4-4 · #5 (R, same side) vs Starter (R), pitch 88**
+  - `0-0` **Fastball down-away** → ball | top: Slider middle 22%; Fastball middle 21%; Curveball down-away 16% | before: first pitch
+  - `2-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 93%; Curveball middle 7% | before: Fastball down-away (ball), Slider middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 24 · inning 5, 0 out, bases 23, score 4-4 · #6 (L, opposite side) vs Starter (R), pitch 94**
+  - `0-0` **Slider middle** → foul — foul pull | top: Slider middle 21%; Fastball middle 17%; Curveball down-away 17% | before: first pitch
+  - `0-2` **Slider down-away** → ball | top: Slider down-away 24%; Curveball down-away 17%; Slider chase 14% | before: Slider middle (foul), Fastball middle (foul)
+- **college_d3_four_pitch_s101 · PA 26 · inning 5, 2 out, bases 23, score 4-4 · #8 (R, same side) vs Reliever (R), pitch 3**
+  - `0-0` **Changeup down-away** → solid — solid contact: OUT | top: Curveball down-away 24%; Fastball middle 22%; Fastball up-away 16% | before: first pitch
+- **college_d3_four_pitch_s101 · PA 27 · inning 6, 0 out, bases empty, score 5-4 · #9 (R, same side) vs Reliever (R), pitch 7**
+  - `1-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball up-away 35%; Curveball down-away 27%; Fastball down-away 23% | before: Changeup middle (ball), Fastball middle (whiff), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 29 · inning 6, 2 out, bases empty, score 5-4 · #2 (R, same side) vs Reliever (R), pitch 13**
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Changeup middle 22%; Fastball middle 14%; Curveball middle 11% | before: Changeup up-away (ball), Changeup middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 31 · inning 7, 1 out, bases empty, score 6-4 · #4 (R, same side) vs Reliever (R), pitch 18**
+  - `0-1` **Fastball middle** → weak — weak contact: DOUBLE | top: Changeup down-away 20%; Fastball middle 19%; Curveball down-away 16% | before: Curveball middle (cstrike)
+- **college_d3_four_pitch_s101 · PA 32 · inning 7, 1 out, bases 2, score 6-4 · #5 (R, same side) vs Reliever (R), pitch 22**
+  - `2-1` **Fastball middle** → foul — foul pull | top: Fastball middle 82%; Fastball up-away 14%; Curveball middle 5% | before: Curveball middle (ball), Changeup down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Curveball middle** → ball — WALK | top: Fastball middle 76%; Curveball middle 24% | before: Fastball middle (foul), Fastball up-in (ball), Fastball middle (foul)
+- **college_d3_four_pitch_s101 · PA 34 · inning 7, 2 out, bases 12, score 6-4 · #7 (R, same side) vs Reliever (R), pitch 29**
+  - `0-0` **Fastball up-away** → foul — foul opposite | top: Fastball middle 43%; Fastball up-away 22%; Fastball down-away 20% | before: first pitch
+  - `0-2` **Fastball up-away** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 52%; Fastball down-away 19%; Fastball chase 15% | before: Fastball up-away (foul), Fastball middle (cstrike)
+- **college_d3_four_pitch_s101 · PA 35 · inning 8, 0 out, bases empty, score 7-4 · #8 (R, same side) vs Reliever (R), pitch 35**
+  - `1-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball up-away 46%; Fastball middle 23%; Fastball down-away 19% | before: Curveball middle (foul), Curveball down-away (ball), Curveball middle (whiff)
+- **college_d3_four_pitch_s101 · PA 38 · inning 8, 1 out, bases 12, score 7-4 · #2 (R, same side) vs Reliever (R), pitch 40**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 38%; Fastball up-away 23%; Fastball down-away 21% | before: first pitch
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 95%; Curveball middle 5% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 40 · inning 8, 2 out, bases 123, score 7-4 · #4 (R, same side) vs Reliever (R), pitch 49**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (foul), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 41 · inning 8, 2 out, bases 123, score 7-5 · #5 (R, same side) vs Reliever (R), pitch 53**
+  - `1-1` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 97%; Curveball middle 3% | before: Fastball up-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 43 · inning 9, 0 out, bases empty, score 8-6 · #7 (R, same side) vs Reliever (R), pitch 63**
+  - `3-2` **Fastball middle** → whiff — whiff (late); STRIKEOUT | top: Fastball middle 68%; Curveball middle 32% | before: Fastball middle (foul), Fastball up-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s101 · PA 47 · inning 9, 2 out, bases 13, score 8-6 · #2 (R, same side) vs Reliever (R), pitch 72**
+  - `0-1` **Fastball up-away** → hard — hard contact: OUT | top: Fastball middle 32%; Fastball up-away 28%; Fastball down-away 24% | before: Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 4**
+  - `1-2` **Fastball up-away** → foul — foul pull | top: Slider down-away 41%; Curveball down-away 17%; Slider middle 16% | before: Changeup middle (cstrike), Fastball down-in (ball), Fastball middle (foul)
+- **college_d3_four_pitch_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 6**
+  - `0-0` **Changeup middle** → ball | top: Changeup middle 18%; Curveball middle 11%; Curveball down-away 10% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 10**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 6%; Curveball middle 6%; Slider middle 6% | before: first pitch
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 54%; Slider middle 20%; Curveball middle 18% | before: Slider middle (ball), Fastball middle (ball), Changeup middle (ball)
+- **college_d3_four_pitch_s102 · PA 4 · inning 1, 2 out, bases 2, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 18**
+  - `1-2` **Fastball chase** → foul — foul opposite | top: Slider down-away 19%; Slider chase 16%; Changeup down-away 16% | before: Slider up-away (foul), Slider chase (foul), Fastball up-away (ball)
+- **college_d3_four_pitch_s102 · PA 5 · inning 1, 2 out, bases 12, score 0-0 · #5 (R, same side) vs Starter (R), pitch 23**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 19%; Slider middle 15%; Fastball middle 14% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 6 · inning 1, 2 out, bases 123, score 0-0 · #6 (R, same side) vs Starter (R), pitch 33**
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 87%; Slider middle 13% | before: Fastball middle (cstrike), Slider down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 8 · inning 2, 1 out, bases empty, score 1-0 · #8 (L, opposite side) vs Starter (R), pitch 39**
+  - `0-2` **Slider down-away** → ball | top: Changeup down-away 18%; Slider down-away 13%; Curveball down-away 12% | before: Slider down-away (whiff), Curveball middle (cstrike)
+- **college_d3_four_pitch_s102 · PA 11 · inning 2, 2 out, bases 1, score 1-1 · #2 (R, same side) vs Starter (R), pitch 51**
+  - `2-2` **Fastball up-away** → ball | top: Slider down-away 33%; Fastball up-away 28%; Slider middle 25% | before: Changeup down-away (ball), Slider up-away (cstrike), Curveball down-away (ball)
+  - `3-2` **Fastball middle** → cstrike — STRIKEOUT | top: Slider middle 68%; Fastball middle 32% | before: Slider up-away (cstrike), Curveball down-away (ball), Fastball up-away (ball)
+- **college_d3_four_pitch_s102 · PA 12 · inning 3, 0 out, bases empty, score 2-1 · #3 (L, opposite side) vs Starter (R), pitch 54**
+  - `1-0` **Slider middle** → whiff — whiff (late) | top: Slider middle 24%; Fastball middle 24%; Fastball up-away 15% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 14 · inning 3, 2 out, bases empty, score 2-1 · #5 (R, same side) vs Starter (R), pitch 58**
+  - `0-0` **Fastball middle** → solid — solid contact: HOME RUN | top: Curveball middle 7%; Changeup middle 7%; Changeup down-away 7% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 15 · inning 3, 2 out, bases empty, score 2-2 · #6 (R, same side) vs Starter (R), pitch 63**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 33%; Slider middle 25%; Fastball up-away 12% | before: Changeup middle (ball), Fastball middle (ball), Slider middle (cstrike)
+- **college_d3_four_pitch_s102 · PA 16 · inning 3, 2 out, bases 1, score 2-2 · #7 (R, same side) vs Starter (R), pitch 64**
+  - `0-0` **Curveball down-away** → ball | top: Changeup down-away 17%; Slider middle 11%; Slider down-away 10% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 20 · inning 4, 2 out, bases empty, score 5-3 · #2 (R, same side) vs Starter (R), pitch 74**
+  - `1-0` **Slider middle** → cstrike | top: Changeup middle 19%; Curveball middle 11%; Curveball down-away 9% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 21 · inning 4, 2 out, bases 1, score 5-3 · #3 (L, opposite side) vs Starter (R), pitch 78**
+  - `0-0` **Fastball down-in** → solid — solid contact: OUT | top: Slider middle 11%; Curveball middle 10%; Changeup middle 9% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 25 · inning 6, 0 out, bases empty, score 7-3 · #7 (R, same side) vs Starter (R), pitch 91**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 80%; Slider middle 20% | before: Changeup middle (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 84%; Slider middle 16% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 26 · inning 6, 0 out, bases 1, score 7-3 · #8 (L, opposite side) vs Starter (R), pitch 97**
+  - `2-2` **Slider down-away** → foul — foul pull | top: Slider middle 43%; Slider down-away 34%; Fastball middle 19% | before: Changeup down-away (ball), Fastball up-away (cstrike), Changeup down-away (ball)
+  - `2-2` **Slider down-away** → whiff — whiff (late); STRIKEOUT | top: Slider middle 52%; Slider down-away 21%; Fastball middle 16% | before: Fastball up-away (cstrike), Changeup down-away (ball), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 28 · inning 6, 2 out, bases 2, score 7-3 · #1 (R, same side) vs Reliever (R), pitch 6**
+  - `1-0` **Curveball down-away** → ball | top: Curveball down-away 24%; Changeup down-away 17%; Fastball middle 15% | before: Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 29 · inning 6, 2 out, bases 1, score 7-4 · #2 (R, same side) vs Reliever (R), pitch 10**
+  - `1-1` **Changeup down-away** → ball | top: Curveball middle 25%; Changeup down-away 20%; Fastball middle 15% | before: Fastball middle (foul), Changeup down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 31 · inning 7, 0 out, bases 1, score 11-4 · #4 (L, opposite side) vs Reliever (R), pitch 13**
+  - `0-0` **Curveball middle** → ball | top: Fastball middle 28%; Curveball middle 20%; Fastball up-away 19% | before: first pitch
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 90%; Changeup middle 10% | before: Curveball middle (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 32 · inning 7, 0 out, bases 12, score 11-4 · #5 (R, same side) vs Reliever (R), pitch 21**
+  - `1-2` **Fastball up-away** → weak — weak contact: OUT, RUNNER TO 3RD | top: Fastball up-away 56%; Fastball down-away 28%; Curveball down-away 15% | before: Fastball middle (whiff), Curveball middle (ball), Fastball middle (foul)
+- **college_d3_four_pitch_s102 · PA 33 · inning 7, 1 out, bases 13, score 11-4 · #6 (R, same side) vs Reliever (R), pitch 24**
+  - `2-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 34 · inning 7, 1 out, bases 12, score 11-5 · #7 (R, same side) vs Reliever (R), pitch 25**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 35%; Fastball up-away 20%; Fastball down-away 19% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 54%; Fastball up-away 28%; Curveball middle 18% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s102 · PA 35 · inning 7, 2 out, bases 12, score 11-5 · #8 (L, opposite side) vs Reliever (R), pitch 29**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 32%; Fastball up-away 19%; Curveball middle 18% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball middle 30%; Curveball down-away 24%; Curveball middle 19% | before: Fastball middle (cstrike), Fastball down-away (foul), Fastball up-away (ball)
+- **college_d3_four_pitch_s102 · PA 37 · inning 8, 0 out, bases 2, score 12-5 · #1 (R, same side) vs Reliever (R), pitch 34**
+  - `0-0` **Curveball middle** → cstrike | top: Fastball middle 29%; Curveball middle 20%; Fastball up-away 19% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 39 · inning 8, 1 out, bases 1, score 12-6 · #3 (L, opposite side) vs Reliever (R), pitch 39**
+  - `0-0` **Fastball down-away** → hbp — HIT BY PITCH | top: Curveball middle 26%; Fastball middle 24%; Changeup middle 19% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 42 · inning 9, 0 out, bases empty, score 16-6 · #6 (R, same side) vs Reliever (R), pitch 42**
+  - `0-0` **Fastball down-away** → ball | top: Curveball middle 30%; Fastball middle 23%; Changeup middle 19% | before: first pitch
+- **college_d3_four_pitch_s102 · PA 43 · inning 9, 1 out, bases empty, score 16-6 · #7 (R, same side) vs Reliever (R), pitch 47**
+  - `1-2` **Fastball up-away** → foul — foul pull | top: Curveball down-away 29%; Fastball up-away 24%; Fastball middle 20% | before: Fastball up-away (ball), Changeup middle (foul), Fastball down-away (whiff)
+- **college_d3_four_pitch_s102 · PA 44 · inning 9, 2 out, bases empty, score 16-6 · #8 (L, opposite side) vs Reliever (R), pitch 50**
+  - `0-0` **Fastball down-in** → foul — foul pull | top: Fastball middle 9%; Changeup middle 8%; Changeup down-away 8% | before: first pitch
+- **college_d3_four_pitch_s103 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 3**
+  - `2-0` **Changeup middle** → weak — weak contact: OUT | top: Fastball middle 46%; Slider middle 25%; Curveball middle 20% | before: Changeup middle (ball), Fastball middle (ball)
+- **college_d3_four_pitch_s103 · PA 3 · inning 1, 1 out, bases 1, score 0-0 · #3 (R, same side) vs Starter (R), pitch 7**
+  - `2-0` **Slider middle** → foul — foul pull | top: Fastball middle 41%; Curveball middle 26%; Slider middle 17% | before: Fastball up-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Slider middle** → foul — foul straight back | top: Fastball middle 32%; Slider middle 31%; Curveball middle 23% | before: Fastball up-away (ball), Slider middle (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider middle** → foul — foul pull | top: Slider down-away 45%; Slider middle 21%; Curveball down-away 18% | before: Slider middle (ball), Slider middle (foul), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider middle** → solid — solid contact: OUT | top: Slider middle 33%; Slider down-away 32%; Changeup middle 13% | before: Slider middle (foul), Slider down-away (foul), Curveball down-away (foul)
+- **college_d3_four_pitch_s103 · PA 5 · inning 2, 0 out, bases empty, score 1-0 · #5 (R, same side) vs Starter (R), pitch 17**
+  - `1-2` **Slider down-away** → weak — weak contact: OUT | top: Slider down-away 44%; Curveball down-away 19%; Slider middle 18% | before: Fastball up-away (whiff), Curveball middle (ball), Fastball middle (foul)
+- **college_d3_four_pitch_s103 · PA 6 · inning 2, 1 out, bases empty, score 1-0 · #6 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Changeup middle** → ball | top: Fastball middle 12%; Slider middle 12%; Slider down-away 9% | before: first pitch
+  - `1-0` **Changeup middle** → ball | top: Curveball middle 22%; Changeup middle 19%; Fastball middle 15% | before: Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 9 · inning 3, 1 out, bases empty, score 5-0 · #9 (R, same side) vs Starter (R), pitch 32**
+  - `1-0` **Changeup middle** → foul — foul pull | top: Curveball middle 18%; Changeup middle 18%; Slider middle 17% | before: Slider up-away (ball)
+  - `1-2` **Slider chase** → solid — solid contact: SINGLE | top: Slider down-away 26%; Changeup down-away 18%; Fastball up-away 17% | before: Slider up-away (ball), Changeup middle (foul), Slider up-away (whiff)
+- **college_d3_four_pitch_s103 · PA 10 · inning 3, 1 out, bases 1, score 5-0 · #1 (L, opposite side) vs Starter (R), pitch 35**
+  - `0-0` **Slider middle** → ball | top: Curveball middle 16%; Fastball middle 15%; Slider middle 13% | before: first pitch
+- **college_d3_four_pitch_s103 · PA 12 · inning 3, 2 out, bases 12, score 5-0 · #3 (R, same side) vs Starter (R), pitch 44**
+  - `0-0` **Slider middle** → ball | top: Curveball down-away 17%; Slider middle 16%; Changeup down-away 15% | before: first pitch
+- **college_d3_four_pitch_s103 · PA 13 · inning 3, 2 out, bases 123, score 5-0 · #4 (R, same side) vs Starter (R), pitch 51**
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 88%; Slider middle 12% | before: Fastball down-away (ball), Curveball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 17 · inning 4, 1 out, bases 3, score 5-3 · #8 (R, same side) vs Starter (R), pitch 62**
+  - `0-1` **Slider middle** → whiff — whiff (late) | top: Curveball down-away 20%; Slider down-away 13%; Slider middle 12% | before: Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider down-away** → foul — foul opposite | top: Fastball up-away 25%; Slider chase 13%; Curveball down-away 13% | before: Slider middle (cstrike), Slider middle (whiff), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 18 · inning 4, 2 out, bases 3, score 5-3 · #9 (R, same side) vs Starter (R), pitch 69**
+  - `1-0` **Slider down-away** → ball | top: Curveball middle 19%; Slider middle 13%; Slider down-away 11% | before: Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 20 · inning 5, 1 out, bases empty, score 7-3 · #2 (L, opposite side) vs Starter (R), pitch 73**
+  - `0-0` **Curveball middle** → hbp — HIT BY PITCH | top: Curveball middle 19%; Fastball middle 14%; Changeup middle 11% | before: first pitch
+- **college_d3_four_pitch_s103 · PA 21 · inning 5, 1 out, bases 1, score 7-3 · #3 (R, same side) vs Starter (R), pitch 75**
+  - `0-1` **Fastball down-away** → foul — foul straight back | top: Changeup down-away 17%; Curveball down-away 16%; Slider down-away 15% | before: Fastball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Fastball up-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 28%; Fastball up-away 23%; Slider chase 22% | before: Fastball down-away (foul), Fastball down-away (foul)
+- **college_d3_four_pitch_s103 · PA 22 · inning 5, 2 out, bases 1, score 7-3 · #4 (R, same side) vs Starter (R), pitch 77**
+  - `0-0` **Fastball down-away** → ball | top: Changeup down-away 19%; Curveball middle 18%; Slider middle 10% | before: first pitch
+- **college_d3_four_pitch_s103 · PA 23 · inning 6, 0 out, bases empty, score 10-3 · #5 (R, same side) vs Starter (R), pitch 84**
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 67%; Slider middle 23%; Changeup middle 9% | before: Changeup middle (ball), Fastball up-away (ball)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 60%; Slider middle 27%; Changeup middle 9% | before: Changeup middle (ball), Fastball up-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 24 · inning 6, 1 out, bases empty, score 10-3 · #6 (R, same side) vs Starter (R), pitch 89**
+  - `0-2` **Slider chase** → foul — foul pull | top: Fastball up-away 22%; Slider down-away 21%; Curveball down-away 20% | before: Fastball middle (cstrike), Slider middle (cstrike)
+  - `1-2` **Slider down-away** → ball | top: Curveball down-away 24%; Slider down-away 23%; Fastball up-away 18% | before: Slider middle (cstrike), Slider chase (foul), Slider up-away (ball)
+  - `2-2` **Slider down-away** → foul — foul straight back | top: Slider middle 29%; Slider down-away 19%; Fastball middle 15% | before: Slider chase (foul), Slider up-away (ball), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 38%; Slider middle 24%; Fastball up-away 16% | before: Slider down-away (ball), Slider down-away (foul), Fastball down-away (foul)
+- **college_d3_four_pitch_s103 · PA 25 · inning 6, 2 out, bases empty, score 10-3 · #7 (R, same side) vs Starter (R), pitch 95**
+  - `0-0` **Fastball chase** → ball | top: Curveball middle 9%; Curveball down-away 9%; Curveball up-away 8% | before: first pitch
+  - `2-2` **Slider up-away** → ball | top: Curveball down-away 16%; Slider down-away 15%; Slider middle 12% | before: Slider up-away (foul), Slider down-in (ball), Slider up-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 27 · inning 7, 0 out, bases 2, score 10-3 · #9 (R, same side) vs Reliever (R), pitch 4**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 55%; Curveball middle 45% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Curveball middle 51%; Fastball middle 49% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 28 · inning 7, 1 out, bases 2, score 10-3 · #1 (L, opposite side) vs Reliever (R), pitch 7**
+  - `1-0` **Curveball middle** → solid — solid contact: HOME RUN | top: Fastball middle 27%; Curveball middle 23%; Curveball down-away 18% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 29 · inning 7, 1 out, bases empty, score 10-5 · #2 (L, opposite side) vs Reliever (R), pitch 11**
+  - `3-0` **Fastball middle** → ball — WALK | top: Curveball middle 68%; Fastball middle 32% | before: Fastball middle (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 30 · inning 7, 1 out, bases 1, score 10-5 · #3 (R, same side) vs Reliever (R), pitch 12**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 25%; Curveball middle 24%; Curveball down-away 19% | before: first pitch
+  - `1-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 61%; Curveball middle 39% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 33 · inning 8, 0 out, bases 1, score 10-5 · #6 (R, same side) vs Reliever (R), pitch 24**
+  - `3-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Curveball middle 67%; Fastball middle 33% | before: Curveball middle (foul), Fastball middle (whiff), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 34 · inning 8, 1 out, bases 1, score 10-5 · #7 (R, same side) vs Reliever (R), pitch 27**
+  - `1-1` **Fastball down-away** → ball | top: Curveball middle 22%; Fastball middle 22%; Curveball down-away 16% | before: Curveball down-away (cstrike), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Curveball middle** → whiff — whiff (fooled) | top: Curveball middle 48%; Fastball middle 43%; Changeup middle 10% | before: Curveball down-away (cstrike), Fastball down-away (ball), Fastball down-away (ball)
+  - `2-2` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 38%; Fastball up-away 27%; Curveball middle 20% | before: Fastball down-away (ball), Fastball down-away (ball), Curveball middle (whiff)
+- **college_d3_four_pitch_s103 · PA 35 · inning 8, 1 out, bases 12, score 10-5 · #8 (R, same side) vs Reliever (R), pitch 30**
+  - `0-0` **Fastball down-away** → ball | top: Curveball middle 24%; Fastball middle 23%; Curveball down-away 16% | before: first pitch
+- **college_d3_four_pitch_s103 · PA 36 · inning 8, 2 out, bases 23, score 10-5 · #9 (R, same side) vs Reliever (R), pitch 34**
+  - `1-0` **Fastball middle** → cstrike | top: Curveball down-away 27%; Fastball middle 18%; Fastball up-away 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s103 · PA 37 · inning 9, 0 out, bases empty, score 10-5 · #1 (L, opposite side) vs Reliever (R), pitch 39**
+  - `2-0` **Changeup middle** → ball | top: Curveball middle 50%; Fastball middle 33%; Changeup middle 17% | before: Fastball down-away (ball), Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Curveball middle 90%; Fastball middle 10% | before: Fastball down-away (ball), Changeup middle (ball), Changeup middle (ball)
+  - `3-1` **Fastball middle** → cstrike | top: Curveball middle 68%; Fastball middle 28%; Changeup middle 4% | before: Changeup middle (ball), Changeup middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 69%; Curveball middle 31% | before: Fastball middle (cstrike), Fastball middle (cstrike), Curveball middle (foul)
+- **college_d3_four_pitch_s103 · PA 39 · inning 9, 2 out, bases empty, score 10-5 · #3 (R, same side) vs Reliever (R), pitch 52**
+  - `3-1` **Fastball down-in** → ball — WALK | top: Fastball middle 35%; Fastball up-away 16%; Fastball up-in 16% | before: Changeup middle (whiff), Changeup middle (ball), Fastball middle (ball)
+- **college_d3_four_pitch_s104 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 2**
+  - `0-0` **Slider middle** → cstrike | top: Changeup middle 18%; Curveball middle 11%; Curveball down-away 10% | before: first pitch
+- **college_d3_four_pitch_s104 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (R, same side) vs Starter (R), pitch 6**
+  - `0-0` **Fastball down-in** → ball | top: Changeup down-away 7%; Changeup middle 7%; Fastball middle 7% | before: first pitch
+- **college_d3_four_pitch_s104 · PA 6 · inning 1, 2 out, bases 12, score 0-1 · #6 (R, same side) vs Starter (R), pitch 16**
+  - `0-0` **Slider down-away** → whiff — whiff (late) | top: Curveball down-away 19%; Changeup down-away 15%; Slider middle 14% | before: first pitch
+  - `0-2` **Fastball up-away** → ball | top: Slider down-away 38%; Slider chase 28%; Curveball down-away 14% | before: Slider down-away (whiff), Fastball up-in (foul)
+  - `2-2` **Fastball up-away** → hard — hard contact: SINGLE | top: Fastball up-away 31%; Slider down-away 21%; Slider middle 20% | before: Fastball up-in (foul), Fastball up-away (ball), Slider down-away (ball)
+- **college_d3_four_pitch_s104 · PA 7 · inning 1, 2 out, bases 123, score 0-1 · #7 (L, opposite side) vs Starter (R), pitch 27**
+  - `3-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball middle 89%; Slider middle 11% | before: Fastball middle (foul), Fastball up-away (foul), Slider down-away (ball)
+- **college_d3_four_pitch_s104 · PA 8 · inning 2, 0 out, bases empty, score 1-1 · #8 (R, same side) vs Starter (R), pitch 30**
+  - `0-2` **Slider chase** → ball | top: Slider down-away 23%; Fastball up-away 21%; Curveball down-away 13% | before: Curveball middle (whiff), Curveball down-away (foul)
+  - `2-2` **Curveball middle** → whiff — whiff (fooled); STRIKEOUT | top: Slider middle 22%; Curveball down-away 20%; Slider down-away 19% | before: Slider chase (ball), Changeup down-away (foul), Fastball up-away (ball)
+- **college_d3_four_pitch_s104 · PA 9 · inning 2, 1 out, bases empty, score 1-1 · #9 (L, opposite side) vs Starter (R), pitch 34**
+  - `0-0` **Fastball down-away** → weak — weak contact: OUT | top: Slider middle 21%; Curveball middle 12%; Curveball down-away 11% | before: first pitch
+- **college_d3_four_pitch_s104 · PA 11 · inning 2, 2 out, bases 1, score 1-1 · #2 (R, same side) vs Starter (R), pitch 38**
+  - `0-0` **Changeup middle** → ball | top: Slider middle 12%; Curveball middle 11%; Curveball down-away 11% | before: first pitch
+- **college_d3_four_pitch_s104 · PA 12 · inning 3, 0 out, bases empty, score 1-1 · #3 (R, same side) vs Starter (R), pitch 40**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 22%; Slider middle 20%; Fastball middle 17% | before: first pitch
+  - `1-0` **Curveball middle** → foul — foul straight back | top: Fastball middle 22%; Curveball middle 20%; Slider middle 16% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 14 · inning 3, 1 out, bases 1, score 1-1 · #5 (R, same side) vs Starter (R), pitch 52**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Slider middle (ball), Fastball up-in (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball up-in (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball middle 72%; Curveball middle 14%; Slider middle 14% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 15 · inning 3, 2 out, bases 2, score 1-1 · #6 (R, same side) vs Starter (R), pitch 56**
+  - `0-1` **Slider middle** → hard — hard contact: SINGLE | top: Curveball down-away 22%; Changeup down-away 17%; Slider down-away 10% | before: Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 16 · inning 3, 2 out, bases 1, score 1-2 · #7 (L, opposite side) vs Starter (R), pitch 57**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 12%; Slider down-away 11%; Curveball down-away 11% | before: first pitch
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Slider middle 22%; Curveball middle 20%; Changeup middle 17% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 18 · inning 4, 0 out, bases 2, score 2-2 · #9 (L, opposite side) vs Starter (R), pitch 67**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 20 · inning 4, 1 out, bases 12, score 2-2 · #2 (R, same side) vs Starter (R), pitch 69**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 22%; Slider middle 20%; Curveball middle 18% | before: first pitch
+  - `0-1` **Fastball up-away** → cstrike | top: Slider down-away 21%; Curveball down-away 18%; Fastball up-away 17% | before: Fastball up-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider down-away** → cstrike — STRIKEOUT | top: Fastball up-away 39%; Slider down-away 36%; Slider middle 15% | before: Fastball up-away (cstrike), Fastball up-away (cstrike), Curveball down-away (ball)
+- **college_d3_four_pitch_s104 · PA 21 · inning 4, 2 out, bases 12, score 2-2 · #3 (R, same side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball down-away** → ball | top: Curveball down-away 20%; Changeup down-away 15%; Slider middle 13% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Slider middle 26%; Curveball down-away 19%; Changeup middle 13% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 22 · inning 4, 2 out, bases 123, score 2-2 · #4 (R, same side) vs Starter (R), pitch 78**
+  - `0-1` **Curveball down-away** → ball | top: Slider middle 25%; Fastball middle 18%; Fastball up-away 17% | before: Fastball up-away (cstrike)
+  - `2-1` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 100% | before: Fastball up-away (cstrike), Curveball down-away (ball), Slider middle (ball)
+- **college_d3_four_pitch_s104 · PA 24 · inning 5, 1 out, bases empty, score 4-2 · #6 (R, same side) vs Starter (R), pitch 83**
+  - `1-0` **Curveball middle** → weak — weak contact: OUT | top: Slider middle 23%; Curveball middle 21%; Changeup middle 17% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 27 · inning 6, 1 out, bases empty, score 5-2 · #9 (L, opposite side) vs Starter (R), pitch 88**
+  - `0-0` **Fastball middle** → weak — weak contact: OUT | top: Slider middle 13%; Fastball middle 11%; Curveball middle 11% | before: first pitch
+- **college_d3_four_pitch_s104 · PA 28 · inning 6, 2 out, bases empty, score 5-2 · #1 (L, opposite side) vs Starter (R), pitch 89**
+  - `0-0` **Curveball down-away** → cstrike | top: Fastball middle 6%; Fastball up-away 5%; Fastball down-away 5% | before: first pitch
+- **college_d3_four_pitch_s104 · PA 33 · inning 7, 2 out, bases 3, score 6-2 · #6 (R, same side) vs Reliever (R), pitch 3**
+  - `2-0` **Fastball middle** → ball | top: Curveball middle 22%; Fastball middle 18%; Changeup down-in 16% | before: Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball down-in** → ball — WALK | top: Fastball middle 34%; Changeup middle 22%; Curveball middle 19% | before: Curveball down-away (ball), Fastball middle (ball), Fastball middle (ball)
+- **college_d3_four_pitch_s104 · PA 36 · inning 7, 2 out, bases 12, score 6-4 · #9 (L, opposite side) vs Reliever (R), pitch 10**
+  - `1-0` **Fastball down-away** → cstrike | top: Fastball middle 40%; Curveball middle 15%; Fastball up-away 13% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 37 · inning 7, 2 out, bases 2, score 6-6 · #1 (L, opposite side) vs Reliever (R), pitch 14**
+  - `0-0` **Fastball down-away** → cstrike | top: Fastball middle 20%; Changeup down-away 14%; Fastball up-away 13% | before: first pitch
+- **college_d3_four_pitch_s104 · PA 38 · inning 8, 0 out, bases empty, score 10-6 · #2 (R, same side) vs Reliever (R), pitch 18**
+  - `0-1` **Curveball middle** → ball | top: Fastball middle 20%; Changeup down-away 19%; Curveball middle 17% | before: Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 39 · inning 8, 0 out, bases 1, score 10-6 · #3 (R, same side) vs Reliever (R), pitch 28**
+  - `2-2` **Curveball down-away** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 37%; Curveball down-away 25%; Curveball middle 22% | before: Fastball middle (ball), Changeup middle (cstrike), Fastball down-away (ball)
+- **college_d3_four_pitch_s104 · PA 40 · inning 8, 1 out, bases 1, score 10-6 · #4 (R, same side) vs Reliever (R), pitch 29**
+  - `0-0` **Fastball up-away** → foul — foul opposite | top: Changeup middle 21%; Curveball middle 20%; Fastball middle 18% | before: first pitch
+  - `3-1` **Fastball middle** → foul — foul pull | top: Curveball middle 46%; Fastball middle 32%; Changeup middle 22% | before: Curveball middle (ball), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Curveball middle 84%; Fastball middle 16% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 41 · inning 8, 1 out, bases 12, score 10-6 · #5 (R, same side) vs Reliever (R), pitch 37**
+  - `1-1` **Curveball middle** → hard — hard contact: SINGLE | top: Fastball middle 50%; Curveball middle 38%; Changeup middle 13% | before: Fastball up-away (ball), Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 42 · inning 8, 1 out, bases 12, score 10-7 · #6 (R, same side) vs Reliever (R), pitch 39**
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 48%; Curveball middle 36%; Changeup middle 16% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Curveball down-away** → foul — foul pull | top: Curveball down-away 47%; Fastball up-away 33%; Fastball middle 20% | before: Fastball middle (ball), Fastball middle (foul), Changeup middle (cstrike)
+  - `1-2` **Fastball middle** → ball | top: Fastball up-away 54%; Fastball middle 30%; Curveball down-away 16% | before: Fastball middle (foul), Changeup middle (cstrike), Curveball down-away (foul)
+- **college_d3_four_pitch_s104 · PA 43 · inning 8, 1 out, bases 123, score 10-7 · #7 (L, opposite side) vs Reliever (R), pitch 47**
+  - `3-0` **Curveball middle** → cstrike | top: Curveball middle 57%; Changeup middle 39%; Fastball middle 4% | before: Curveball middle (ball), Changeup middle (ball), Fastball middle (ball)
+  - `3-1` **Curveball middle** → cstrike | top: Curveball middle 65%; Changeup middle 19%; Fastball middle 16% | before: Changeup middle (ball), Fastball middle (ball), Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 44 · inning 8, 2 out, bases 123, score 10-7 · #8 (R, same side) vs Reliever (R), pitch 51**
+  - `0-1` **Fastball middle** → cstrike | top: Fastball middle 29%; Curveball down-away 28%; Fastball up-away 18% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 46 · inning 9, 1 out, bases empty, score 10-7 · #1 (L, opposite side) vs Reliever (R), pitch 61**
+  - `1-1` **Curveball down-away** → foul — foul pull | top: Fastball middle 23%; Curveball middle 20%; Curveball down-away 15% | before: Fastball middle (ball), Curveball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_four_pitch_s104 · PA 47 · inning 9, 2 out, bases empty, score 10-7 · #2 (R, same side) vs Reliever (R), pitch 69**
+  - `2-2` **Fastball down-away** → cstrike — STRIKEOUT | top: Fastball middle 17%; Curveball down-away 16%; Fastball up-away 14% | before: Curveball up-away (ball), Fastball up-away (whiff), Fastball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 1**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 3 · inning 1, 0 out, bases 2, score 0-1 · #3 (R, same side) vs Starter (R), pitch 6**
+  - `0-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 30%; Curveball middle 29%; Fastball up-away 20% | before: first pitch
+- **college_d3_two_pitch_s101 · PA 7 · inning 2, 0 out, bases empty, score 1-2 · #7 (R, same side) vs Starter (R), pitch 15**
+  - `0-1` **Fastball down-away** → ball | top: Curveball down-away 35%; Fastball middle 25%; Fastball up-away 20% | before: Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 8 · inning 2, 1 out, bases empty, score 1-2 · #8 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Curveball down-away** → ball | top: Fastball middle 25%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Curveball down-away (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 9 · inning 2, 1 out, bases 1, score 1-2 · #9 (R, same side) vs Starter (R), pitch 23**
+  - `0-0` **Curveball down-away** → ball | top: Curveball down-away 31%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+  - `3-0` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 100% | before: Curveball down-away (ball), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 11 · inning 2, 2 out, bases 12, score 1-2 · #2 (R, same side) vs Starter (R), pitch 29**
+  - `0-0` **Fastball middle** → ball | top: Curveball down-away 30%; Fastball middle 29%; Fastball up-away 21% | before: first pitch
+  - `1-0` **Fastball down-away** → foul — foul straight back | top: Fastball middle 33%; Curveball middle 26%; Fastball down-away 21% | before: Fastball middle (ball)
+  - `2-1` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 84%; Curveball middle 16% | before: Fastball middle (ball), Fastball down-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 14 · inning 3, 0 out, bases empty, score 4-5 · #5 (R, same side) vs Starter (R), pitch 40**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `2-0` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 15 · inning 3, 0 out, bases 1, score 4-5 · #6 (L, opposite side) vs Starter (R), pitch 43**
+  - `0-0` **Curveball down-away** → ball | top: Fastball middle 33%; Curveball down-away 28%; Fastball up-away 20% | before: first pitch
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → solid — solid contact: DOUBLE | top: Fastball middle 100% | before: Curveball down-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 16 · inning 3, 0 out, bases 2, score 4-6 · #7 (R, same side) vs Starter (R), pitch 47**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 32%; Curveball down-away 28%; Fastball up-away 20% | before: first pitch
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 34%; Curveball middle 27%; Fastball up-away 19% | before: Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 86%; Curveball middle 14% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 17 · inning 3, 0 out, bases 13, score 4-6 · #8 (R, same side) vs Starter (R), pitch 54**
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 89%; Curveball middle 11% | before: Fastball middle (ball), Curveball middle (whiff), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Curveball middle (whiff), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 19 · inning 3, 1 out, bases 12, score 4-7 · #1 (L, opposite side) vs Starter (R), pitch 62**
+  - `1-0` **Curveball down-away** → ball | top: Curveball middle 42%; Curveball down-away 36%; Curveball up-away 22% | before: Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Curveball down-away** → whiff — whiff (late) | top: Curveball middle 41%; Curveball down-away 32%; Curveball down-in 26% | before: Curveball down-away (ball), Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → ball — WALK | top: Curveball middle 51%; Curveball down-in 25%; Curveball down-away 24% | before: Curveball down-away (ball), Curveball down-away (whiff), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 20 · inning 3, 1 out, bases 123, score 4-7 · #2 (R, same side) vs Starter (R), pitch 68**
+  - `2-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 24 · inning 4, 0 out, bases empty, score 4-10 · #6 (L, opposite side) vs Starter (R), pitch 76**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 36%; Curveball down-away 35%; Curveball up-away 29% | before: first pitch
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Curveball down-in (foul), Curveball middle (ball), Curveball up-away (ball)
+- **college_d3_two_pitch_s101 · PA 29 · inning 5, 0 out, bases empty, score 5-11 · #2 (R, same side) vs Starter (R), pitch 95**
+  - `1-2` **Curveball down-away** → weak — weak contact: OUT | top: Curveball down-away 64%; Curveball middle 36% | before: Fastball middle (cstrike), Fastball down-away (cstrike), Curveball middle (ball)
+- **college_d3_two_pitch_s101 · PA 33 · inning 6, 0 out, bases empty, score 6-11 · #6 (L, opposite side) vs Reliever (R), pitch 10**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 46%; Fastball down-away 27%; Fastball up-away 27% | before: Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 34 · inning 6, 1 out, bases empty, score 6-11 · #7 (R, same side) vs Reliever (R), pitch 12**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: first pitch
+  - `1-0` **Fastball down-away** → cstrike | top: Fastball middle 44%; Fastball down-away 28%; Fastball up-away 28% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 100% | before: Fastball down-away (cstrike), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 36 · inning 6, 2 out, bases 1, score 6-11 · #9 (R, same side) vs Reliever (R), pitch 22**
+  - `0-2` **Fastball up-in** → ball | top: Slider down-away 14%; Slider chase 12%; Fastball up-away 12% | before: Fastball down-away (foul), Slider middle (foul), Slider down-away (foul)
+- **college_d3_two_pitch_s101 · PA 39 · inning 7, 2 out, bases empty, score 8-11 · #3 (R, same side) vs Reliever (R), pitch 28**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 25%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball up-away (ball)
+  - `2-2` **Fastball down-away** → weak — weak contact: SINGLE | top: Fastball middle 31%; Fastball up-away 22%; Fastball down-away 19% | before: Fastball up-in (foul), Fastball middle (foul), Fastball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 42 · inning 7, 2 out, bases empty, score 8-14 · #6 (L, opposite side) vs Reliever (R), pitch 39**
+  - `2-0` **Fastball down-in** → ball | top: Fastball middle 27%; Fastball down-away 19%; Fastball up-away 19% | before: Fastball down-in (ball), Slider down-in (ball)
+  - `3-0` **Fastball down-in** → cstrike | top: Fastball middle 40%; Fastball down-in 15%; Fastball down-away 15% | before: Fastball down-in (ball), Slider down-in (ball), Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 44 · inning 8, 0 out, bases empty, score 9-14 · #8 (R, same side) vs Reliever (R), pitch 46**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 47 · inning 9, 0 out, bases empty, score 10-14 · #2 (R, same side) vs Reliever (R), pitch 54**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 49%; Fastball down-away 25%; Fastball up-away 25% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s101 · PA 48 · inning 9, 1 out, bases empty, score 10-14 · #3 (R, same side) vs Reliever (R), pitch 58**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Fastball middle 39%; Fastball up-away 31%; Fastball down-away 31% | before: first pitch
+- **college_d3_two_pitch_s101 · PA 50 · inning 9, 2 out, bases 1, score 10-14 · #5 (R, same side) vs Reliever (R), pitch 67**
+  - `0-1` **Fastball down-in** → ball | top: Fastball middle 21%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball down-in (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 30%; Fastball up-away 24%; Fastball down-away 23% | before: Fastball down-away (ball), Fastball up-in (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 1**
+  - `0-0` **Curveball down-away** → cstrike | top: Curveball down-away 30%; Fastball middle 30%; Fastball up-away 20% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 8**
+  - `2-0` **Curveball middle** → foul — foul opposite | top: Fastball middle 65%; Curveball middle 35% | before: Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Curveball middle** → ball | top: Fastball middle 67%; Curveball middle 33% | before: Fastball middle (ball), Curveball middle (ball), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → ball — WALK | top: Fastball middle 73%; Curveball middle 27% | before: Curveball middle (ball), Curveball middle (foul), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 3 · inning 1, 1 out, bases 2, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 11**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 27%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 23%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 4 · inning 1, 2 out, bases 3, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 17**
+  - `0-0` **Fastball up-away** → weak — weak contact: OUT | top: Fastball middle 22%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 5 · inning 2, 0 out, bases empty, score 1-0 · #5 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 30%; Curveball down-away 29%; Fastball up-away 20% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 6 · inning 2, 1 out, bases empty, score 1-0 · #6 (R, same side) vs Starter (R), pitch 24**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 7 · inning 2, 1 out, bases 3, score 1-0 · #7 (R, same side) vs Starter (R), pitch 30**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → weak — weak contact: SAC FLY | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 8 · inning 2, 2 out, bases empty, score 1-1 · #8 (L, opposite side) vs Starter (R), pitch 33**
+  - `0-0` **Fastball chase** → cstrike | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 9 · inning 3, 0 out, bases empty, score 2-1 · #9 (R, same side) vs Starter (R), pitch 36**
+  - `0-0` **Fastball up-away** → foul — foul pull | top: Fastball middle 41%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `2-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball up-away (ball), Fastball middle (whiff)
+- **college_d3_two_pitch_s102 · PA 10 · inning 3, 1 out, bases empty, score 2-1 · #1 (R, same side) vs Starter (R), pitch 41**
+  - `0-0` **Fastball down-in** → ball | top: Fastball middle 27%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `1-1` **Fastball up-away** → foul — foul pull | top: Fastball middle 41%; Fastball down-away 30%; Fastball up-away 30% | before: Fastball down-in (ball), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 11 · inning 3, 1 out, bases empty, score 2-2 · #2 (R, same side) vs Starter (R), pitch 46**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 42%; Fastball down-away 29%; Fastball up-away 29% | before: Fastball down-away (ball)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 41%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball down-away** → ball | top: Fastball middle 53%; Fastball up-away 27%; Fastball down-away 20% | before: Fastball middle (foul), Fastball middle (ball), Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 13 · inning 3, 2 out, bases 1, score 2-2 · #4 (L, opposite side) vs Starter (R), pitch 55**
+  - `0-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 26%; Fastball up-away 21%; Fastball down-away 21% | before: first pitch
+  - `2-2` **Fastball middle** → ball | top: Fastball middle 45%; Fastball up-away 31%; Fastball down-away 24% | before: Fastball down-away (ball), Fastball chase (ball), Fastball down-away (foul)
+  - `3-2` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 100% | before: Fastball chase (ball), Fastball down-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 14 · inning 4, 0 out, bases empty, score 2-2 · #5 (R, same side) vs Starter (R), pitch 65**
+  - `2-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 100% | before: Fastball up-away (whiff), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 18 · inning 4, 2 out, bases 2, score 2-3 · #9 (R, same side) vs Starter (R), pitch 77**
+  - `2-1` **Fastball down-in** → cstrike | top: Fastball middle 20%; Curveball middle 15%; Curveball down-away 14% | before: Fastball chase (whiff), Fastball up-in (ball), Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Curveball down-away** → ball | top: Curveball down-away 41%; Curveball middle 27%; Curveball down-in 19% | before: Fastball up-in (ball), Fastball down-in (ball), Fastball down-in (cstrike)
+- **college_d3_two_pitch_s102 · PA 19 · inning 5, 0 out, bases empty, score 3-3 · #1 (R, same side) vs Starter (R), pitch 83**
+  - `1-2` **Fastball middle** → ball | top: Fastball up-away 35%; Fastball down-away 34%; Fastball middle 31% | before: Fastball down-away (whiff), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 20 · inning 5, 0 out, bases 1, score 3-3 · #2 (R, same side) vs Starter (R), pitch 89**
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 21 · inning 5, 1 out, bases 1, score 3-3 · #3 (L, opposite side) vs Starter (R), pitch 91**
+  - `1-0` **Fastball up-away** → cstrike | top: Fastball middle 62%; Fastball up-away 38% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 23 · inning 6, 0 out, bases empty, score 3-3 · #5 (R, same side) vs Reliever (R), pitch 4**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 90%; Slider middle 10% | before: Slider up-away (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → hard — hard contact: OUT | top: Fastball middle 81%; Slider middle 19% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (foul)
+- **college_d3_two_pitch_s102 · PA 24 · inning 6, 1 out, bases empty, score 3-3 · #6 (R, same side) vs Reliever (R), pitch 9**
+  - `1-1` **Slider middle** → cstrike | top: Slider middle 35%; Fastball middle 27%; Fastball up-away 19% | before: Fastball down-away (whiff), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball chase** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 25%; Fastball up-away 15%; Slider middle 15% | before: Slider middle (ball), Slider middle (cstrike), Slider up-away (foul)
+- **college_d3_two_pitch_s102 · PA 26 · inning 6, 2 out, bases 2, score 3-3 · #8 (L, opposite side) vs Reliever (R), pitch 14**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 11%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 12%; Slider down-away 12%; Slider middle 11% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 27 · inning 6, 2 out, bases 12, score 3-3 · #9 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Slider middle** → ball | top: Slider middle 34%; Fastball middle 26%; Fastball up-away 20% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 30 · inning 7, 2 out, bases empty, score 5-3 · #3 (L, opposite side) vs Reliever (R), pitch 28**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 71%; Slider middle 29% | before: Slider down-in (ball), Slider middle (ball), Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 34 · inning 8, 0 out, bases 3, score 9-3 · #7 (R, same side) vs Reliever (R), pitch 38**
+  - `0-0` **Fastball middle** → whiff — whiff (fooled) | top: Slider middle 37%; Fastball middle 28%; Fastball up-away 18% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 38 · inning 8, 2 out, bases 123, score 9-3 · #2 (R, same side) vs Reliever (R), pitch 55**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 64%; Slider middle 36% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 65%; Slider middle 35% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 39 · inning 9, 0 out, bases empty, score 9-3 · #3 (L, opposite side) vs Reliever (R), pitch 60**
+  - `3-0` **Slider middle** → cstrike | top: Slider middle 100% | before: Fastball down-away (ball), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → weak — weak contact: OUT | top: Slider middle 100% | before: Slider down-away (ball), Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 40 · inning 9, 1 out, bases empty, score 9-3 · #4 (L, opposite side) vs Reliever (R), pitch 63**
+  - `1-0` **Slider up-away** → cstrike | top: Slider middle 43%; Slider down-away 30%; Slider up-away 26% | before: Slider up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Slider middle** → ball | top: Slider middle 68%; Slider down-away 32% | before: Slider up-away (ball), Slider up-away (cstrike), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider up-away (cstrike), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 41 · inning 9, 1 out, bases 1, score 9-3 · #5 (R, same side) vs Reliever (R), pitch 70**
+  - `3-0` **Slider middle** → cstrike | top: Slider middle 100% | before: Slider up-away (ball), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider down-away (ball), Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 42 · inning 9, 1 out, bases 12, score 9-3 · #6 (R, same side) vs Reliever (R), pitch 75**
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 86%; Fastball middle 14% | before: Fastball up-away (cstrike), Slider down-away (ball), Fastball middle (foul)
+- **college_d3_two_pitch_s102 · PA 43 · inning 9, 1 out, bases 12, score 9-4 · #7 (R, same side) vs Reliever (R), pitch 79**
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 48%; Fastball down-away 26%; Fastball up-away 26% | before: Fastball middle (foul), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → solid — solid contact: OUT | top: Slider middle 100% | before: Fastball down-away (ball), Fastball down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 46 · inning 9, 2 out, bases 12, score 9-6 · #1 (R, same side) vs Reliever (R), pitch 88**
+  - `0-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 37%; Fastball up-away 31%; Fastball down-away 31% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (R, same side) vs Starter (R), pitch 15**
+  - `1-0` **Fastball down-away** → ball | top: Curveball middle 20%; Curveball down-away 18%; Fastball middle 18% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 62%; Curveball middle 16%; Curveball down-in 11% | before: Fastball down-away (ball), Fastball down-away (ball), Fastball down-in (ball)
+- **college_d3_two_pitch_s103 · PA 6 · inning 1, 2 out, bases 12, score 0-1 · #6 (R, same side) vs Starter (R), pitch 25**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 71%; Curveball middle 29% | before: Fastball middle (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 80%; Curveball middle 20% | before: Curveball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 9 · inning 2, 1 out, bases empty, score 1-1 · #9 (R, same side) vs Starter (R), pitch 39**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 68%; Curveball middle 32% | before: Curveball up-away (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 12 · inning 2, 2 out, bases 12, score 1-1 · #3 (R, same side) vs Starter (R), pitch 47**
+  - `1-0` **Curveball middle** → hard — hard contact: SINGLE | top: Curveball middle 34%; Fastball middle 30%; Fastball down-away 18% | before: Fastball down-away (ball)
+- **college_d3_two_pitch_s103 · PA 13 · inning 2, 2 out, bases 13, score 1-2 · #4 (R, same side) vs Starter (R), pitch 50**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 31%; Curveball middle 29%; Fastball up-away 20% | before: Curveball middle (foul), Curveball down-away (ball)
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 40%; Curveball middle 26%; Fastball down-away 17% | before: Curveball middle (foul), Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 15 · inning 3, 0 out, bases empty, score 1-3 · #6 (R, same side) vs Starter (R), pitch 55**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 26%; Curveball middle 20%; Curveball down-away 19% | before: first pitch
+- **college_d3_two_pitch_s103 · PA 16 · inning 3, 0 out, bases 1, score 1-3 · #7 (R, same side) vs Starter (R), pitch 63**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 66%; Curveball middle 34% | before: Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 71%; Curveball middle 29% | before: Fastball down-away (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball middle (foul), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 19 · inning 4, 0 out, bases empty, score 4-3 · #1 (L, opposite side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Fastball middle 43%; Fastball up-away 28%; Fastball down-away 28% | before: first pitch
+- **college_d3_two_pitch_s103 · PA 21 · inning 4, 2 out, bases empty, score 4-3 · #3 (R, same side) vs Starter (R), pitch 79**
+  - `0-0` **Fastball down-in** → weak — weak contact: OUT | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+- **college_d3_two_pitch_s103 · PA 23 · inning 5, 1 out, bases empty, score 4-3 · #5 (R, same side) vs Starter (R), pitch 88**
+  - `0-2` **Fastball middle** → cstrike — STRIKEOUT | top: Curveball down-away 39%; Curveball middle 25%; Fastball up-away 13% | before: Fastball down-away (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 24 · inning 5, 2 out, bases empty, score 4-3 · #6 (R, same side) vs Starter (R), pitch 89**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `1-0` **Fastball up-away** → cstrike | top: Fastball middle 15%; Fastball up-away 12%; Fastball down-away 12% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 25 · inning 6, 0 out, bases empty, score 8-3 · #7 (R, same side) vs Starter (R), pitch 93**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 24%; Curveball down-away 20%; Fastball up-away 19% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 32%; Curveball middle 31%; Fastball up-away 19% | before: Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 26 · inning 6, 1 out, bases empty, score 8-3 · #8 (R, same side) vs Starter (R), pitch 95**
+  - `0-0` **Curveball up-away** → cstrike | top: Fastball middle 24%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **college_d3_two_pitch_s103 · PA 29 · inning 7, 0 out, bases empty, score 8-3 · #2 (L, opposite side) vs Reliever (R), pitch 10**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 25%; Fastball middle 24%; Slider down-away 19% | before: first pitch
+- **college_d3_two_pitch_s103 · PA 31 · inning 7, 1 out, bases 3, score 8-3 · #4 (R, same side) vs Reliever (R), pitch 14**
+  - `0-0` **Slider down-away** → ball | top: Fastball middle 26%; Slider middle 20%; Fastball up-away 18% | before: first pitch
+- **college_d3_two_pitch_s103 · PA 33 · inning 8, 0 out, bases empty, score 9-4 · #6 (R, same side) vs Reliever (R), pitch 22**
+  - `1-1` **Slider up-away** → ball | top: Slider middle 45%; Slider down-away 31%; Slider up-away 24% | before: Slider down-away (whiff), Slider up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider up-away (ball), Slider middle (foul), Slider down-away (ball)
+- **college_d3_two_pitch_s103 · PA 35 · inning 8, 0 out, bases 12, score 9-4 · #8 (R, same side) vs Reliever (R), pitch 28**
+  - `0-1` **Slider down-away** → whiff — whiff (late) | top: Slider middle 55%; Slider down-away 45% | before: Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Fastball up-away** → ball | top: Fastball up-away 36%; Fastball down-away 34%; Fastball middle 30% | before: Slider down-away (cstrike), Slider down-away (whiff)
+  - `1-2` **Fastball down-away** → ball | top: Fastball middle 48%; Fastball down-away 31%; Fastball up-away 21% | before: Slider down-away (cstrike), Slider down-away (whiff), Fastball up-away (ball)
+  - `2-2` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Slider down-away (whiff), Fastball up-away (ball), Fastball down-away (ball)
+- **college_d3_two_pitch_s103 · PA 36 · inning 8, 0 out, bases 12, score 9-5 · #9 (R, same side) vs Reliever (R), pitch 33**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ R3 re-called a shaken-off call, S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 38 · inning 8, 1 out, bases 12, score 9-6 · #2 (L, opposite side) vs Reliever (R), pitch 39**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball middle** → weak — weak contact: DOUBLE PLAY | top: Fastball middle 44%; Fastball up-away 33%; Fastball down-away 23% | before: Fastball middle (cstrike), Fastball middle (ball), Fastball down-away (foul)
+- **college_d3_two_pitch_s103 · PA 39 · inning 9, 0 out, bases empty, score 10-6 · #3 (R, same side) vs Reliever (R), pitch 43**
+  - `1-0` **Fastball down-away** → foul — foul pull | top: Fastball middle 48%; Fastball down-away 26%; Fastball up-away 26% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball down-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 40 · inning 9, 0 out, bases 2, score 10-6 · #4 (R, same side) vs Reliever (R), pitch 46**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+- **college_d3_two_pitch_s103 · PA 41 · inning 9, 0 out, bases 12, score 10-6 · #5 (R, same side) vs Reliever (R), pitch 52**
+  - `0-2` **Slider down-away** → hard — hard contact: OUT, RUNNER TO 3RD | top: Slider down-away 64%; Slider middle 36% | before: Slider middle (whiff), Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 42 · inning 9, 1 out, bases 13, score 10-6 · #6 (R, same side) vs Reliever (R), pitch 55**
+  - `2-0` **Slider middle** → hard — hard contact: DOUBLE | top: Slider middle 65%; Slider down-away 35% | before: Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s103 · PA 43 · inning 9, 1 out, bases 2, score 10-8 · #7 (R, same side) vs Reliever (R), pitch 59**
+  - `2-1` **Slider down-in** → ball | top: Slider middle 50%; Slider down-away 26%; Slider down-in 15% | before: Slider up-away (ball), Slider middle (cstrike), Slider down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider down-in** → weak — weak contact: OUT | top: Slider middle 61%; Slider down-in 21%; Slider down-away 19% | before: Slider middle (cstrike), Slider down-in (ball), Slider down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 5**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 79%; Curveball middle 21% | before: Fastball down-away (ball), Curveball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball up-away** → ball | top: Fastball middle 28%; Curveball down-away 21%; Curveball middle 19% | before: Curveball middle (ball), Fastball middle (foul), Fastball middle (cstrike)
+  - `3-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 67%; Curveball middle 33% | before: Fastball middle (foul), Fastball middle (cstrike), Fastball up-away (ball)
+- **college_d3_two_pitch_s104 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (R, same side) vs Starter (R), pitch 8**
+  - `0-0` **Curveball down-in** → ball | top: Fastball middle 13%; Curveball down-away 11%; Curveball middle 11% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 6 · inning 1, 2 out, bases 123, score 0-0 · #6 (R, same side) vs Starter (R), pitch 24**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 35%; Curveball down-away 24%; Fastball up-away 21% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 10 · inning 2, 2 out, bases 2, score 1-0 · #1 (L, opposite side) vs Starter (R), pitch 37**
+  - `0-0` **Fastball up-away** → foul — foul pull | top: Curveball down-away 19%; Curveball middle 18%; Fastball middle 13% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 12 · inning 3, 0 out, bases empty, score 3-1 · #3 (R, same side) vs Starter (R), pitch 43**
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 86%; Curveball middle 14% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 13 · inning 3, 1 out, bases empty, score 3-1 · #4 (R, same side) vs Starter (R), pitch 44**
+  - `0-0` **Fastball middle** → hard — hard contact: TRIPLE | top: Fastball middle 26%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 14 · inning 3, 1 out, bases 3, score 3-1 · #5 (R, same side) vs Starter (R), pitch 45**
+  - `0-0` **Fastball down-away** → whiff — whiff (out in front) | top: Curveball middle 32%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 16 · inning 3, 2 out, bases 23, score 3-1 · #7 (L, opposite side) vs Starter (R), pitch 55**
+  - `0-1` **Fastball up-in** → whiff — whiff (fooled) | top: Curveball down-away 18%; Curveball middle 17%; Fastball middle 14% | before: Fastball down-away (cstrike)
+- **college_d3_two_pitch_s104 · PA 17 · inning 4, 0 out, bases empty, score 3-1 · #8 (R, same side) vs Starter (R), pitch 61**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 35%; Curveball middle 25%; Fastball up-away 20% | before: Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 19 · inning 4, 1 out, bases 1, score 3-1 · #1 (L, opposite side) vs Starter (R), pitch 69**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 92%; Curveball middle 8% | before: Fastball down-away (ball), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 23 · inning 5, 1 out, bases empty, score 3-1 · #5 (R, same side) vs Starter (R), pitch 79**
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Curveball middle 34%; Fastball middle 29%; Fastball down-away 18% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → ball | top: Curveball middle 35%; Fastball middle 27%; Fastball up-away 19% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 76%; Curveball middle 24% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 24 · inning 5, 2 out, bases empty, score 3-1 · #6 (R, same side) vs Starter (R), pitch 82**
+  - `0-0` **Fastball down-in** → ball | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 25 · inning 6, 0 out, bases empty, score 6-1 · #7 (L, opposite side) vs Starter (R), pitch 90**
+  - `3-2` **Curveball middle** → foul — foul opposite | top: Curveball middle 73%; Curveball down-away 27% | before: Fastball middle (ball), Curveball down-away (foul), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Curveball middle** → foul — foul straight back | top: Curveball middle 100% | before: Curveball down-away (foul), Curveball middle (foul), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Curveball middle** → weak — weak contact: SINGLE | top: Curveball middle 100% | before: Curveball middle (foul), Curveball middle (foul), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 26 · inning 6, 0 out, bases 1, score 6-1 · #8 (R, same side) vs Starter (R), pitch 93**
+  - `0-0` **Fastball down-away** → foul — foul opposite | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 27 · inning 6, 0 out, bases 12, score 6-1 · #9 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Slider middle** → foul — foul pull | top: Slider middle 36%; Fastball middle 29%; Fastball up-away 17% | before: first pitch
+  - `0-2` **Fastball up-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 61%; Fastball up-away 15%; Fastball down-away 15% | before: Slider middle (foul), Fastball middle (whiff)
+- **college_d3_two_pitch_s104 · PA 28 · inning 6, 1 out, bases 12, score 6-1 · #1 (L, opposite side) vs Reliever (R), pitch 7**
+  - `2-1` **Slider middle** → ball | top: Fastball middle 85%; Slider middle 15% | before: Slider middle (cstrike), Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 31 · inning 6, 1 out, bases 12, score 6-4 · #4 (R, same side) vs Reliever (R), pitch 14**
+  - `1-1` **Slider middle** → ball | top: Fastball middle 65%; Slider middle 35% | before: Slider down-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 35 · inning 6, 2 out, bases 1, score 6-8 · #8 (R, same side) vs Reliever (R), pitch 22**
+  - `0-0` **Fastball up-away** → ball | top: Slider middle 15%; Fastball middle 15%; Slider down-away 15% | before: first pitch
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 72%; Slider middle 28% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 36 · inning 6, 2 out, bases 12, score 6-8 · #9 (L, opposite side) vs Reliever (R), pitch 28**
+  - `1-1` **Slider middle** → ball | top: Slider middle 34%; Slider down-away 29%; Slider up-away 18% | before: Slider up-away (foul), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Slider middle** → weak — weak contact: OUT | top: Slider middle 66%; Slider down-away 34% | before: Slider up-away (foul), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 37 · inning 7, 0 out, bases empty, score 8-8 · #1 (L, opposite side) vs Reliever (R), pitch 32**
+  - `2-0` **Slider middle** → ball | top: Fastball middle 75%; Slider middle 25% | before: Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 38 · inning 7, 0 out, bases 1, score 8-8 · #2 (R, same side) vs Reliever (R), pitch 34**
+  - `0-0` **Fastball up-away** → hard — hard contact: SINGLE | top: Slider middle 36%; Fastball middle 29%; Fastball up-away 18% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 39 · inning 7, 0 out, bases 13, score 8-8 · #3 (R, same side) vs Reliever (R), pitch 38**
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 73%; Slider middle 27% | before: Fastball up-away (ball), Slider middle (foul), Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider down-away (cstrike), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 40 · inning 7, 0 out, bases 123, score 8-8 · #4 (R, same side) vs Reliever (R), pitch 41**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 51%; Slider middle 20%; Fastball up-away 14% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 88%; Slider middle 12% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 89%; Slider middle 11% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 41 · inning 7, 0 out, bases 123, score 8-9 · #5 (R, same side) vs Reliever (R), pitch 46**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 89%; Slider middle 11% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 42 · inning 7, 0 out, bases 123, score 8-10 · #6 (R, same side) vs Reliever (R), pitch 50**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 87%; Slider middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 44 · inning 7, 0 out, bases 12, score 8-13 · #8 (R, same side) vs Reliever (R), pitch 55**
+  - `1-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 72%; Slider middle 28% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 45 · inning 7, 1 out, bases 12, score 8-13 · #9 (L, opposite side) vs Reliever (R), pitch 56**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Slider middle 36%; Fastball middle 30%; Fastball up-away 17% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 46 · inning 7, 2 out, bases 12, score 8-13 · #1 (L, opposite side) vs Reliever (R), pitch 59**
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Slider middle 37%; Fastball middle 28%; Fastball down-away 17% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball down-away** → ball | top: Slider middle 35%; Fastball middle 29%; Fastball up-away 18% | before: Fastball middle (ball), Fastball middle (foul)
+  - `2-2` **Fastball up-away** → foul — foul straight back | top: Slider down-away 36%; Fastball middle 33%; Fastball up-away 16% | before: Fastball middle (foul), Fastball down-away (ball), Slider middle (foul)
+- **college_d3_two_pitch_s104 · PA 47 · inning 8, 0 out, bases empty, score 9-13 · #2 (R, same side) vs Reliever (R), pitch 67**
+  - `1-0` **Slider middle** → foul — foul pull | top: Fastball middle 58%; Slider middle 42% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (foul), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 49 · inning 8, 1 out, bases 1, score 9-13 · #4 (R, same side) vs Reliever (R), pitch 73**
+  - `0-0` **Slider down-away** → hard — hard contact: HOME RUN | top: Fastball middle 22%; Slider middle 19%; Slider down-away 16% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 50 · inning 8, 1 out, bases empty, score 9-15 · #5 (R, same side) vs Reliever (R), pitch 78**
+  - `2-2` **Fastball up-away** → ball | top: Fastball middle 51%; Fastball up-away 25%; Fastball down-away 24% | before: Fastball up-away (foul), Fastball down-away (ball), Fastball middle (cstrike)
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Fastball middle (cstrike), Fastball up-away (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 51 · inning 8, 1 out, bases 1, score 9-15 · #6 (R, same side) vs Reliever (R), pitch 81**
+  - `0-0` **Slider down-away** → cstrike | top: Slider middle 41%; Slider down-away 34%; Slider up-away 26% | before: first pitch
+  - `0-1` **Slider down-away** → hard — hard contact: OUT | top: Slider middle 37%; Slider down-away 37%; Slider up-away 26% | before: Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 54 · inning 8, 2 out, bases 13, score 9-16 · #9 (L, opposite side) vs Reliever (R), pitch 92**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (whiff), Fastball up-away (ball), Fastball down-away (ball)
+- **college_d3_two_pitch_s104 · PA 55 · inning 8, 2 out, bases 123, score 9-16 · #1 (L, opposite side) vs Reliever (R), pitch 94**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 57 · inning 9, 0 out, bases empty, score 10-17 · #3 (R, same side) vs Reliever (R), pitch 97**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 22%; Slider middle 20%; Slider down-away 16% | before: first pitch
+- **college_d3_two_pitch_s104 · PA 58 · inning 9, 1 out, bases empty, score 10-17 · #4 (R, same side) vs Reliever (R), pitch 100**
+  - `2-0` **Slider down-away** → ball | top: Slider middle 39%; Slider down-away 23%; Slider down-in 20% | before: Slider down-away (ball), Fastball middle (ball)
+  - `3-1` **Slider middle** → hard — hard contact: HOME RUN | top: Slider middle 100% | before: Fastball middle (ball), Slider down-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s104 · PA 60 · inning 9, 2 out, bases empty, score 10-18 · #6 (R, same side) vs Reliever (R), pitch 109**
+  - `1-1` **Fastball down-in** → ball | top: Fastball middle 11%; Slider middle 10%; Fastball down-away 10% | before: Slider chase (ball), Fastball down-in (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Slider down-in** → hard — hard contact: DOUBLE | top: Fastball middle 16%; Slider middle 13%; Fastball down-away 10% | before: Slider chase (ball), Fastball down-in (cstrike), Fastball down-in (ball)
+- **college_d3_two_pitch_s104 · PA 62 · inning 9, 2 out, bases 12, score 10-18 · #8 (R, same side) vs Reliever (R), pitch 112**
+  - `0-0` **Slider middle** → ball | top: Slider middle 31%; Slider down-away 30%; Slider up-away 20% | before: first pitch
+- **hs_default_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 2**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 46%; Slider middle 38%; Changeup middle 16% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → cstrike | top: Slider middle 23%; Fastball middle 19%; Changeup middle 18% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 7 · inning 3, 0 out, bases empty, score 5-0 · #7 (R, same side) vs Starter (R), pitch 21**
+  - `2-2` **Slider down-away** → ball | top: Slider middle 51%; Slider down-away 24%; Fastball up-away 18% | before: Fastball down-away (ball), Changeup middle (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 8 · inning 3, 0 out, bases 2, score 5-0 · #8 (R, same side) vs Starter (R), pitch 24**
+  - `0-1` **Fastball middle** → foul — foul opposite | top: Changeup down-away 17%; Slider middle 15%; Slider down-away 15% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Slider down-away** → ball | top: Slider down-away 44%; Slider chase 27%; Fastball up-away 17% | before: Fastball middle (foul), Fastball middle (foul)
+- **hs_default_s101 · PA 9 · inning 3, 0 out, bases 12, score 5-0 · #9 (R, same side) vs Starter (R), pitch 29**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 31%; Slider middle 22%; Fastball up-away 18% | before: first pitch
+- **hs_default_s101 · PA 10 · inning 3, 1 out, bases 12, score 5-0 · #1 (L, opposite side) vs Starter (R), pitch 34**
+  - `2-1` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 100% | before: Slider middle (ball), Fastball up-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 11 · inning 3, 1 out, bases 2, score 5-2 · #2 (R, same side) vs Starter (R), pitch 39**
+  - `3-1` **Fastball middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 100% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 12 · inning 3, 2 out, bases 3, score 5-2 · #3 (R, same side) vs Starter (R), pitch 40**
+  - `0-0` **Fastball middle** → hard — hard contact: SINGLE | top: Slider middle 27%; Changeup middle 21%; Fastball middle 12% | before: first pitch
+- **hs_default_s101 · PA 14 · inning 3, 2 out, bases 3, score 5-4 · #5 (R, same side) vs Starter (R), pitch 47**
+  - `3-2` **Slider down-away** → ball — WALK | top: Fastball up-in 23%; Slider down-away 18%; Fastball up-away 14% | before: Fastball middle (cstrike), Slider down-away (ball), Slider middle (ball)
+- **hs_default_s101 · PA 16 · inning 4, 1 out, bases empty, score 8-4 · #7 (R, same side) vs Starter (R), pitch 51**
+  - `1-0` **Fastball middle** → solid — solid contact: SINGLE | top: Slider middle 24%; Changeup middle 19%; Fastball middle 15% | before: Slider middle (ball)
+- **hs_default_s101 · PA 21 · inning 4, 2 out, bases 123, score 8-5 · #3 (R, same side) vs Starter (R), pitch 67**
+  - `0-0` **Slider middle** → weak — weak contact: SINGLE | top: Fastball middle 36%; Fastball up-away 25%; Fastball down-away 22% | before: first pitch
+- **hs_default_s101 · PA 24 · inning 5, 0 out, bases 1, score 8-7 · #6 (L, opposite side) vs Starter (R), pitch 74**
+  - `0-1` **Fastball middle** → ball | top: Slider middle 28%; Changeup down-away 18%; Fastball up-away 17% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 25 · inning 5, 1 out, bases 2, score 8-7 · #7 (R, same side) vs Starter (R), pitch 77**
+  - `0-0` **Slider middle** → ball | top: Slider middle 26%; Changeup middle 18%; Fastball middle 15% | before: first pitch
+  - `3-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball up-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 26 · inning 5, 1 out, bases 2, score 8-8 · #8 (R, same side) vs Starter (R), pitch 83**
+  - `1-0` **Fastball down-in** → ball | top: Slider middle 24%; Fastball middle 16%; Changeup middle 15% | before: Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 27 · inning 5, 1 out, bases 2, score 8-9 · #9 (R, same side) vs Starter (R), pitch 85**
+  - `0-0` **Changeup middle** → ball | top: Slider middle 27%; Changeup middle 18%; Fastball middle 15% | before: first pitch
+- **hs_default_s101 · PA 29 · inning 5, 1 out, bases 23, score 8-10 · #2 (R, same side) vs Starter (R), pitch 92**
+  - `0-0` **Slider middle** → foul — foul opposite | top: Slider middle 27%; Fastball middle 25%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Slider middle** → ball | top: Slider down-away 18%; Slider middle 16%; Fastball up-away 16% | before: Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 31 · inning 6, 0 out, bases empty, score 9-10 · #4 (R, same side) vs Reliever (R), pitch 8**
+  - `2-2` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 51%; Fastball down-away 29%; Fastball up-away 20% | before: Fastball middle (whiff), Curveball middle (foul), Fastball up-away (ball)
+- **hs_default_s101 · PA 32 · inning 6, 0 out, bases 2, score 9-10 · #5 (R, same side) vs Reliever (R), pitch 13**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 93%; Changeup middle 7% | before: Fastball middle (whiff), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 33 · inning 6, 0 out, bases 12, score 9-10 · #6 (L, opposite side) vs Reliever (R), pitch 17**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 67%; Curveball middle 20%; Changeup middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 34 · inning 6, 0 out, bases 2, score 9-12 · #7 (R, same side) vs Reliever (R), pitch 22**
+  - `2-1` **Changeup middle** → ball | top: Fastball middle 74%; Curveball middle 18%; Changeup middle 8% | before: Fastball down-away (whiff), Fastball up-away (ball), Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Curveball middle** → ball — WALK | top: Fastball middle 86%; Curveball middle 14% | before: Changeup middle (ball), Changeup middle (ball), Fastball middle (foul)
+- **hs_default_s101 · PA 36 · inning 6, 1 out, bases 12, score 9-12 · #9 (R, same side) vs Reliever (R), pitch 28**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 40%; Fastball up-away 22%; Fastball down-away 21% | before: first pitch
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball up-away (cstrike), Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 37 · inning 6, 1 out, bases 12, score 9-13 · #1 (L, opposite side) vs Reliever (R), pitch 34**
+  - `2-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 38 · inning 6, 1 out, bases 123, score 9-13 · #2 (R, same side) vs Reliever (R), pitch 37**
+  - `1-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 40 · inning 6, 1 out, bases 123, score 9-15 · #4 (R, same side) vs Reliever (R), pitch 40**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 46 · inning 7, 1 out, bases 13, score 11-16 · #1 (L, opposite side) vs Reliever (R), pitch 55**
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 66%; Curveball middle 25%; Changeup middle 9% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → whiff — whiff (late); STRIKEOUT | top: Fastball middle 81%; Curveball middle 19% | before: Fastball up-away (foul), Curveball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 48 · inning 7, 2 out, bases 13, score 11-17 · #3 (R, same side) vs Reliever (R), pitch 65**
+  - `0-0` **Curveball middle** → ball | top: Fastball middle 30%; Fastball up-away 21%; Curveball middle 20% | before: first pitch
+- **hs_default_s101 · PA 50 · inning 8, 1 out, bases empty, score 15-17 · #5 (R, same side) vs Reliever (R), pitch 73**
+  - `0-2` **Fastball down-away** → ball | top: Curveball down-away 25%; Fastball up-away 24%; Fastball chase 15% | before: Fastball up-in (cstrike), Curveball middle (whiff)
+  - `1-2` **Fastball down-away** → ball | top: Fastball up-away 25%; Curveball down-away 15%; Curveball chase 14% | before: Fastball up-in (cstrike), Curveball middle (whiff), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 51 · inning 8, 2 out, bases empty, score 15-17 · #6 (L, opposite side) vs Reliever (R), pitch 77**
+  - `0-1` **Fastball up-away** → ball | top: Fastball middle 12%; Fastball up-away 11%; Fastball down-away 10% | before: Fastball up-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 54 · inning 9, 1 out, bases 2, score 15-17 · #9 (R, same side) vs Reliever (R), pitch 93**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 99%; Curveball middle 1% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 56 · inning 9, 2 out, bases 2, score 15-18 · #2 (R, same side) vs Reliever (R), pitch 96**
+  - `0-0` **Fastball middle** → ball | top: Curveball middle 18%; Curveball down-away 17%; Fastball middle 16% | before: first pitch
+- **hs_default_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 6**
+  - `0-0` **Changeup down-away** → ball | top: Changeup down-away 21%; Slider middle 13%; Fastball middle 12% | before: first pitch
+- **hs_default_s102 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 12**
+  - `0-0` **Slider up-away** → ball | top: Fastball middle 9%; Slider middle 9%; Changeup down-away 8% | before: first pitch
+  - `3-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 54%; Slider middle 38%; Changeup middle 8% | before: Fastball middle (ball), Fastball down-in (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 5 · inning 1, 2 out, bases 12, score 0-0 · #5 (R, same side) vs Starter (R), pitch 24**
+  - `0-0` **Slider middle** → ball | top: Slider middle 35%; Fastball middle 23%; Fastball up-away 16% | before: first pitch
+  - `1-0` **Slider middle** → foul — foul opposite | top: Slider middle 30%; Fastball middle 20%; Fastball up-away 15% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 7 · inning 2, 1 out, bases empty, score 2-0 · #7 (R, same side) vs Starter (R), pitch 33**
+  - `2-1` **Fastball middle** → ball | top: Slider middle 33%; Fastball middle 33%; Fastball up-away 15% | before: Fastball down-in (ball), Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 77%; Slider middle 23% | before: Slider middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 9 · inning 3, 0 out, bases empty, score 3-0 · #9 (R, same side) vs Starter (R), pitch 42**
+  - `2-2` **Slider middle** → foul — foul opposite | top: Slider down-away 59%; Slider middle 23%; Changeup middle 12% | before: Slider middle (ball), Fastball down-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 11 · inning 3, 1 out, bases 2, score 3-0 · #2 (R, same side) vs Starter (R), pitch 51**
+  - `2-2` **Slider down-away** → ball | top: Slider down-away 74%; Changeup middle 15%; Fastball up-away 11% | before: Slider middle (ball), Slider down-away (cstrike), Slider middle (ball)
+- **hs_default_s102 · PA 12 · inning 3, 1 out, bases 12, score 3-0 · #3 (L, opposite side) vs Starter (R), pitch 54**
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 59%; Slider middle 30%; Changeup middle 11% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 13 · inning 3, 2 out, bases 12, score 3-0 · #4 (L, opposite side) vs Starter (R), pitch 62**
+  - `2-2` **Slider middle** → ball | top: Slider middle 43%; Slider down-away 38%; Changeup middle 19% | before: Slider down-away (ball), Slider chase (ball), Fastball up-away (foul)
+- **hs_default_s102 · PA 14 · inning 4, 0 out, bases empty, score 3-0 · #5 (R, same side) vs Starter (R), pitch 64**
+  - `0-0` **Fastball middle** → foul — foul straight back | top: Slider middle 32%; Fastball middle 22%; Changeup middle 19% | before: first pitch
+- **hs_default_s102 · PA 20 · inning 5, 1 out, bases empty, score 5-1 · #2 (R, same side) vs Starter (R), pitch 81**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 71%; Slider middle 29% | before: Slider down-away (ball), Fastball up-in (ball)
+- **hs_default_s102 · PA 21 · inning 5, 2 out, bases empty, score 5-1 · #3 (L, opposite side) vs Starter (R), pitch 87**
+  - `0-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider chase 14%; Slider down-away 13%; Slider middle 11% | before: Slider middle (whiff), Slider middle (whiff), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 24 · inning 6, 2 out, bases empty, score 6-1 · #6 (R, same side) vs Starter (R), pitch 95**
+  - `0-0` **Slider down-away** → whiff — whiff (out in front) | top: Changeup middle 9%; Changeup down-away 9%; Fastball middle 8% | before: first pitch
+- **hs_default_s102 · PA 25 · inning 7, 0 out, bases empty, score 9-1 · #7 (R, same side) vs Reliever (R), pitch 6**
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 61%; Curveball middle 39% | before: Changeup middle (cstrike), Fastball middle (ball), Changeup middle (cstrike)
+  - `3-2` **Fastball middle** → solid — solid contact: OUT | top: Curveball middle 69%; Fastball middle 26%; Changeup middle 5% | before: Fastball middle (ball), Changeup middle (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 28 · inning 7, 2 out, bases 2, score 9-1 · #1 (R, same side) vs Reliever (R), pitch 18**
+  - `2-1` **Changeup middle** → ball | top: Changeup middle 17%; Curveball middle 17%; Fastball middle 15% | before: Fastball middle (ball), Curveball down-away (ball), Changeup middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s102 · PA 29 · inning 7, 2 out, bases 12, score 9-1 · #2 (R, same side) vs Reliever (R), pitch 20**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 21%; Changeup middle 20%; Fastball middle 19% | before: first pitch
+- **hs_default_s102 · PA 31 · inning 8, 1 out, bases empty, score 11-1 · #4 (L, opposite side) vs Reliever (R), pitch 26**
+  - `1-2` **Fastball chase** → ball | top: Curveball down-away 26%; Fastball up-away 26%; Fastball middle 17% | before: Changeup up-away (cstrike), Curveball up-away (ball), Curveball middle (foul)
+  - `2-2` **Curveball middle** → ball | top: Curveball middle 38%; Curveball down-away 23%; Fastball middle 18% | before: Curveball up-away (ball), Curveball middle (foul), Fastball chase (ball)
+- **hs_default_s102 · PA 32 · inning 8, 1 out, bases 1, score 11-1 · #5 (R, same side) vs Reliever (R), pitch 32**
+  - `1-2` **Curveball down-away** → ball | top: Fastball up-away 36%; Curveball down-away 31%; Fastball middle 20% | before: Changeup middle (cstrike), Fastball up-away (ball), Curveball middle (cstrike)
+- **hs_default_s103 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 4**
+  - `2-1` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 54%; Slider middle 41%; Changeup middle 4% | before: Changeup down-away (ball), Fastball middle (ball), Slider middle (foul)
+- **hs_default_s103 · PA 2 · inning 1, 0 out, bases 1, score 0-0 · #2 (L, opposite side) vs Starter (R), pitch 7**
+  - `2-0` **Slider middle** → foul — foul pull | top: Fastball middle 78%; Slider middle 22% | before: Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 56%; Slider middle 44% | before: Slider down-away (ball), Slider middle (ball), Slider middle (foul)
+- **hs_default_s103 · PA 5 · inning 2, 0 out, bases empty, score 2-0 · #5 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 21%; Slider middle 20%; Changeup down-away 16% | before: first pitch
+  - `2-2` **Slider down-away** → ball | top: Slider middle 51%; Slider down-away 48%; Fastball middle 1% | before: Fastball middle (foul), Fastball down-away (ball), Slider middle (whiff)
+- **hs_default_s103 · PA 7 · inning 2, 2 out, bases empty, score 2-0 · #7 (R, same side) vs Starter (R), pitch 30**
+  - `1-2` **Slider down-away** → whiff — whiff (late); STRIKEOUT | top: Fastball up-away 30%; Slider down-away 19%; Slider middle 14% | before: Slider up-in (whiff), Slider up-away (ball), Slider down-in (whiff)
+- **hs_default_s103 · PA 9 · inning 3, 1 out, bases empty, score 3-0 · #9 (R, same side) vs Starter (R), pitch 33**
+  - `0-1` **Fastball down-in** → foul — foul pull | top: Slider middle 15%; Slider down-away 15%; Slider up-away 12% | before: Fastball middle (foul)
+  - `0-2` **Slider down-away** → whiff — whiff (late); STRIKEOUT | top: Slider down-away 30%; Slider chase 24%; Fastball up-away 21% | before: Fastball middle (foul), Fastball down-in (foul)
+- **hs_default_s103 · PA 10 · inning 3, 2 out, bases empty, score 3-0 · #1 (L, opposite side) vs Starter (R), pitch 37**
+  - `2-0` **Slider middle** → ball | top: Slider middle 37%; Fastball middle 18%; Fastball up-away 12% | before: Slider chase (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 80%; Slider middle 20% | before: Slider chase (ball), Slider middle (ball), Slider middle (ball)
+- **hs_default_s103 · PA 11 · inning 3, 2 out, bases 2, score 3-0 · #2 (L, opposite side) vs Starter (R), pitch 41**
+  - `2-0` **Fastball down-in** → foul — foul opposite | top: Slider middle 22%; Slider down-away 17%; Fastball middle 16% | before: Fastball down-away (ball), Slider middle (ball)
+- **hs_default_s103 · PA 14 · inning 4, 1 out, bases 3, score 7-0 · #5 (R, same side) vs Starter (R), pitch 52**
+  - `0-1` **Fastball down-away** → hard — hard contact: DOUBLE | top: Changeup middle 20%; Slider middle 17%; Slider down-away 16% | before: Fastball up-away (cstrike)
+- **hs_default_s103 · PA 15 · inning 4, 1 out, bases 2, score 7-1 · #6 (R, same side) vs Starter (R), pitch 54**
+  - `0-1` **Fastball middle** → weak — weak contact: OUT, RUNNER TO 3RD | top: Changeup down-away 18%; Slider down-away 15%; Slider middle 15% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s103 · PA 17 · inning 5, 0 out, bases empty, score 7-1 · #8 (R, same side) vs Starter (R), pitch 60**
+  - `2-0` **Slider middle** → hbp — HIT BY PITCH | top: Fastball middle 82%; Slider middle 18% | before: Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s103 · PA 19 · inning 5, 0 out, bases 2, score 7-2 · #1 (L, opposite side) vs Starter (R), pitch 68**
+  - `0-2` **Fastball up-away** → ball | top: Changeup down-away 41%; Changeup middle 26%; Fastball down-away 12% | before: Fastball up-away (foul), Changeup down-away (foul), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s103 · PA 21 · inning 5, 2 out, bases 3, score 7-2 · #3 (R, same side) vs Starter (R), pitch 72**
+  - `0-0` **Fastball middle** → ball | top: Changeup middle 19%; Slider middle 15%; Slider down-away 14% | before: first pitch
+  - `2-0` **Fastball down-in** → foul — foul opposite | top: Slider middle 23%; Changeup middle 14%; Fastball middle 14% | before: Fastball middle (ball), Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball down-in** → foul — foul straight back | top: Slider middle 23%; Fastball middle 16%; Fastball up-away 14% | before: Fastball middle (ball), Fastball down-in (ball), Fastball down-in (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s103 · PA 22 · inning 6, 0 out, bases empty, score 9-2 · #4 (R, same side) vs Starter (R), pitch 80**
+  - `1-2` **Fastball down-away** → ball | top: Fastball up-away 20%; Slider down-away 15%; Changeup down-away 14% | before: Slider middle (whiff), Slider up-away (cstrike), Slider down-away (ball)
+- **hs_default_s103 · PA 23 · inning 6, 1 out, bases empty, score 9-2 · #5 (R, same side) vs Starter (R), pitch 88**
+  - `2-2` **Slider down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 44%; Fastball up-away 30%; Slider middle 19% | before: Slider middle (whiff), Fastball down-in (ball), Slider middle (cstrike)
+- **hs_default_s103 · PA 25 · inning 6, 2 out, bases 1, score 9-2 · #7 (R, same side) vs Starter (R), pitch 94**
+  - `0-0` **Fastball down-in** → cstrike | top: Changeup middle 21%; Slider middle 13%; Slider down-away 12% | before: first pitch
+- **hs_default_s103 · PA 31 · inning 7, 2 out, bases 3, score 9-4 · #4 (R, same side) vs Reliever (R), pitch 17**
+  - `2-0` **Fastball up-away** → ball | top: Changeup middle 17%; Fastball middle 14%; Curveball middle 13% | before: Fastball down-in (ball), Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s103 · PA 34 · inning 8, 0 out, bases 1, score 9-4 · #7 (R, same side) vs Reliever (R), pitch 25**
+  - `1-0` **Curveball middle** → ball | top: Curveball middle 45%; Fastball middle 41%; Changeup middle 15% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s103 · PA 36 · inning 8, 1 out, bases 12, score 9-4 · #9 (R, same side) vs Reliever (R), pitch 37**
+  - `2-0` **Curveball middle** → ball — wild pitch, runners move up | top: Curveball middle 47%; Fastball middle 42%; Changeup middle 11% | before: Fastball up-away (ball), Fastball middle (ball)
+  - `3-0` **Curveball middle** → ball — WALK | top: Curveball middle 57%; Fastball middle 30%; Changeup middle 13% | before: Fastball up-away (ball), Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s103 · PA 37 · inning 8, 1 out, bases 123, score 9-4 · #1 (L, opposite side) vs Reliever (R), pitch 39**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 51%; Curveball middle 34%; Changeup middle 15% | before: first pitch
+- **hs_default_s103 · PA 38 · inning 8, 1 out, bases 123, score 9-5 · #2 (L, opposite side) vs Reliever (R), pitch 42**
+  - `0-0` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 64%; Curveball middle 36% | before: first pitch
+- **hs_default_s103 · PA 39 · inning 8, 2 out, bases 12, score 9-6 · #3 (R, same side) vs Reliever (R), pitch 44**
+  - `0-0` **Fastball middle** → solid — solid contact: OUT | top: Curveball middle 39%; Fastball middle 27%; Fastball up-away 17% | before: first pitch
+- **hs_default_s104 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 5**
+  - `2-2` **Slider down-away** → cstrike — STRIKEOUT | top: Slider middle 43%; Slider down-away 25%; Fastball up-away 17% | before: Slider up-away (ball), Slider middle (ball), Fastball middle (foul)
+- **hs_default_s104 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 7**
+  - `1-0` **Fastball down-away** → solid — solid contact: SINGLE | top: Slider middle 36%; Fastball middle 18%; Fastball up-away 13% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s104 · PA 4 · inning 2, 0 out, bases empty, score 1-0 · #4 (R, same side) vs Starter (R), pitch 13**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 85%; Slider middle 15% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → whiff — whiff (fooled); STRIKEOUT | top: Slider middle 67%; Fastball middle 33% | before: Fastball middle (cstrike), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s104 · PA 6 · inning 2, 2 out, bases empty, score 1-0 · #6 (R, same side) vs Starter (R), pitch 23**
+  - `3-2` **Slider middle** → ball — WALK | top: Fastball middle 53%; Slider middle 47% | before: Slider down-away (ball), Slider middle (cstrike), Slider down-away (ball)
+- **hs_default_s104 · PA 7 · inning 2, 2 out, bases 2, score 1-0 · #7 (L, opposite side) vs Starter (R), pitch 24**
+  - `0-0` **Slider down-away** → ball | top: Changeup down-away 22%; Slider middle 13%; Slider down-away 11% | before: first pitch
+  - `3-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 28%; Slider middle 16%; Fastball up-in 12% | before: Changeup middle (foul), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s104 · PA 9 · inning 3, 1 out, bases empty, score 3-0 · #9 (L, opposite side) vs Starter (R), pitch 34**
+  - `2-2` **Fastball middle** → foul — foul pull | top: Slider middle 24%; Slider down-away 23%; Fastball up-away 17% | before: Fastball down-away (ball), Fastball middle (foul), Fastball down-away (foul)
+- **hs_default_s104 · PA 12 · inning 4, 0 out, bases 3, score 3-0 · #3 (R, same side) vs Starter (R), pitch 46**
+  - `1-2` **Fastball up-away** → foul — foul pull | top: Slider down-away 45%; Fastball up-away 30%; Slider middle 25% | before: Fastball down-away (whiff), Fastball down-away (foul), Slider chase (ball)
+- **hs_default_s104 · PA 14 · inning 4, 2 out, bases empty, score 3-1 · #5 (R, same side) vs Starter (R), pitch 53**
+  - `0-2` **Slider down-in** → ball | top: Slider down-away 15%; Slider chase 14%; Slider middle 10% | before: Fastball up-in (cstrike), Slider down-in (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider chase** → ball | top: Slider down-away 17%; Slider chase 14%; Slider middle 13% | before: Fastball up-in (cstrike), Slider down-in (cstrike), Slider down-in (ball)
+  - `2-2` **Fastball middle** → hard — hard contact: SINGLE | top: Slider down-away 15%; Fastball up-away 13%; Fastball up-in 12% | before: Slider down-in (ball), Slider chase (ball), Slider middle (foul)
+- **hs_default_s104 · PA 15 · inning 5, 0 out, bases empty, score 4-1 · #6 (R, same side) vs Starter (R), pitch 57**
+  - `0-0` **Fastball down-away** → cstrike | top: Slider middle 37%; Fastball middle 26%; Fastball up-away 19% | before: first pitch
+- **hs_default_s104 · PA 17 · inning 5, 1 out, bases 2, score 4-1 · #8 (R, same side) vs Starter (R), pitch 65**
+  - `1-0` **Fastball up-in** → ball | top: Slider middle 31%; Fastball middle 18%; Fastball up-away 15% | before: Fastball up-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-in (ball), Fastball up-in (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s104 · PA 21 · inning 6, 1 out, bases empty, score 4-1 · #3 (R, same side) vs Starter (R), pitch 82**
+  - `1-0` **Fastball down-away** → ball | top: Slider middle 19%; Changeup middle 18%; Slider down-away 14% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → hard — hard contact: SINGLE | top: Fastball middle 78%; Slider middle 22% | before: Fastball down-away (ball), Fastball middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s104 · PA 23 · inning 6, 1 out, bases 2, score 4-2 · #5 (R, same side) vs Starter (R), pitch 88**
+  - `0-0` **Slider middle** → foul — foul pull | top: Changeup middle 17%; Slider middle 16%; Fastball middle 15% | before: first pitch
+- **hs_default_s104 · PA 24 · inning 6, 2 out, bases 2, score 4-2 · #6 (R, same side) vs Starter (R), pitch 96**
+  - `3-2` **Slider middle** → whiff — whiff (out in front); STRIKEOUT | top: Slider middle 71%; Slider down-in 29% | before: Fastball up-away (ball), Slider down-in (whiff), Slider down-away (ball)
+- **hs_default_s104 · PA 25 · inning 7, 0 out, bases empty, score 5-2 · #7 (L, opposite side) vs Reliever (R), pitch 5**
+  - `1-2` **Fastball middle** → ball | top: Fastball up-away 41%; Curveball down-away 21%; Fastball middle 19% | before: Fastball down-away (cstrike), Curveball chase (ball), Fastball down-away (foul)
+- **hs_default_s104 · PA 28 · inning 7, 2 out, bases empty, score 5-3 · #1 (L, opposite side) vs Reliever (R), pitch 15**
+  - `1-0` **Curveball up-in** → ball | top: Fastball middle 10%; Curveball middle 9%; Changeup middle 8% | before: Changeup up-away (ball)
+  - `2-1` **Curveball middle** → ball | top: Changeup middle 13%; Fastball middle 12%; Curveball middle 12% | before: Changeup up-away (ball), Curveball up-in (ball), Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s104 · PA 29 · inning 8, 0 out, bases empty, score 6-3 · #2 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Fastball middle** → ball | top: Curveball middle 21%; Changeup middle 20%; Fastball middle 19% | before: first pitch
+- **hs_default_s104 · PA 31 · inning 8, 2 out, bases empty, score 6-3 · #4 (R, same side) vs Reliever (R), pitch 28**
+  - `3-1` **Fastball middle** → ball — WALK | top: Changeup middle 19%; Curveball middle 16%; Fastball middle 12% | before: Fastball up-in (ball), Curveball up-in (ball), Changeup down-away (ball)
+- **hs_default_s104 · PA 33 · inning 9, 0 out, bases empty, score 7-3 · #6 (R, same side) vs Reliever (R), pitch 30**
+  - `0-0` **Fastball down-away** → ball | top: Changeup middle 19%; Curveball middle 19%; Fastball middle 17% | before: first pitch
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Curveball middle 59%; Fastball middle 32%; Changeup middle 9% | before: Fastball down-away (ball), Curveball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s104 · PA 35 · inning 9, 2 out, bases empty, score 7-3 · #8 (R, same side) vs Reliever (R), pitch 41**
+  - `1-1` **Curveball up-in** → cstrike | top: Fastball middle 10%; Curveball middle 9%; Curveball down-away 8% | before: Changeup up-away (ball), Fastball down-in (foul)
+- **hs_four_pitch_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 4**
+  - `2-1` **Slider middle** → weak — weak contact: OUT | top: Fastball middle 50%; Slider middle 38%; Changeup middle 11% | before: Changeup middle (ball), Fastball up-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 5 · inning 2, 0 out, bases empty, score 3-1 · #5 (R, same side) vs Starter (R), pitch 14**
+  - `0-1` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 12%; Curveball down-away 11%; Curveball middle 11% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 7 · inning 2, 1 out, bases 2, score 3-1 · #7 (R, same side) vs Starter (R), pitch 19**
+  - `2-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 48%; Slider middle 19%; Curveball middle 18% | before: Fastball middle (ball), Slider middle (ball)
+  - `2-1` **Fastball middle** → foul — foul pull | top: Fastball middle 55%; Slider middle 19%; Curveball middle 15% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 9 · inning 2, 2 out, bases 12, score 3-1 · #9 (R, same side) vs Starter (R), pitch 29**
+  - `2-1` **Fastball up-away** → foul — foul opposite | top: Fastball middle 50%; Fastball up-away 23%; Slider middle 20% | before: Slider middle (cstrike), Slider down-away (ball), Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 42%; Slider middle 34%; Slider down-away 24% | before: Fastball up-away (foul), Fastball down-away (ball), Slider middle (foul)
+- **hs_four_pitch_s101 · PA 10 · inning 2, 2 out, bases 123, score 3-1 · #1 (L, opposite side) vs Starter (R), pitch 34**
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 64%; Slider middle 26%; Curveball middle 9% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 11 · inning 3, 0 out, bases empty, score 3-1 · #2 (R, same side) vs Starter (R), pitch 39**
+  - `0-1` **Curveball middle** → ball | top: Slider down-away 14%; Slider middle 14%; Curveball down-away 11% | before: Fastball down-away (cstrike)
+  - `1-2` **Slider middle** → cstrike — STRIKEOUT | top: Slider down-away 43%; Slider middle 23%; Slider chase 19% | before: Fastball down-away (cstrike), Curveball middle (ball), Slider middle (whiff)
+- **hs_four_pitch_s101 · PA 12 · inning 3, 1 out, bases empty, score 3-1 · #3 (R, same side) vs Starter (R), pitch 42**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Slider middle 18%; Fastball middle 15%; Slider down-away 15% | before: first pitch
+- **hs_four_pitch_s101 · PA 14 · inning 3, 2 out, bases 3, score 3-1 · #5 (R, same side) vs Starter (R), pitch 45**
+  - `0-0` **Fastball down-in** → ball | top: Changeup middle 20%; Slider middle 11%; Fastball middle 10% | before: first pitch
+  - `1-1` **Slider middle** → ball | top: Changeup middle 18%; Slider middle 13%; Slider down-away 12% | before: Fastball down-in (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 16 · inning 4, 0 out, bases empty, score 5-2 · #7 (R, same side) vs Starter (R), pitch 54**
+  - `1-0` **Curveball middle** → solid — solid contact: OUT | top: Slider middle 32%; Changeup middle 31%; Curveball middle 19% | before: Changeup middle (ball)
+- **hs_four_pitch_s101 · PA 22 · inning 5, 2 out, bases empty, score 7-2 · #4 (R, same side) vs Starter (R), pitch 73**
+  - `0-2` **Slider middle** → ball | top: Curveball down-away 17%; Slider down-away 17%; Curveball chase 16% | before: Slider chase (cstrike), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider down-away** → ball — WALK | top: Slider middle 62%; Slider down-away 29%; Curveball middle 9% | before: Slider chase (ball), Slider down-away (foul), Slider up-away (ball)
+- **hs_four_pitch_s101 · PA 23 · inning 6, 0 out, bases empty, score 7-2 · #5 (R, same side) vs Starter (R), pitch 79**
+  - `1-0` **Fastball up-away** → foul — foul opposite | top: Slider middle 30%; Changeup middle 18%; Fastball middle 17% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 26 · inning 6, 1 out, bases 23, score 7-2 · #8 (R, same side) vs Starter (R), pitch 93**
+  - `2-1` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 49%; Slider middle 38%; Changeup middle 7% | before: Fastball middle (ball), Curveball middle (foul), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider middle** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 68%; Slider middle 32% | before: Curveball middle (foul), Slider middle (ball), Slider middle (whiff)
+- **hs_four_pitch_s101 · PA 27 · inning 6, 2 out, bases 23, score 7-2 · #9 (R, same side) vs Starter (R), pitch 99**
+  - `2-2` **Slider down-away** → hard — hard contact: SINGLE | top: Slider chase 66%; Slider down-away 30%; Curveball chase 3% | before: Slider down-in (whiff), Slider chase (ball), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 29 · inning 7, 0 out, bases empty, score 9-4 · #2 (R, same side) vs Reliever (R), pitch 9**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 61%; Curveball middle 39% | before: Curveball middle (ball), Changeup middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 86%; Curveball middle 14% | before: Changeup middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 30 · inning 7, 1 out, bases empty, score 9-4 · #3 (R, same side) vs Reliever (R), pitch 11**
+  - `0-0` **Fastball middle** → ball | top: Changeup middle 21%; Fastball middle 18%; Curveball middle 14% | before: first pitch
+  - `2-0` **Curveball middle** → ball | top: Fastball middle 44%; Curveball middle 35%; Changeup middle 21% | before: Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 34 · inning 7, 2 out, bases 2, score 9-6 · #7 (R, same side) vs Reliever (R), pitch 24**
+  - `1-2` **Curveball chase** → ball | top: Fastball up-away 19%; Curveball down-away 17%; Curveball chase 16% | before: Changeup down-away (ball), Curveball middle (whiff), Fastball up-in (cstrike)
+  - `2-2` **Fastball middle** → foul — foul pull | top: Fastball up-away 40%; Fastball middle 30%; Fastball down-away 22% | before: Curveball middle (whiff), Fastball up-in (cstrike), Curveball chase (ball)
+- **hs_four_pitch_s101 · PA 35 · inning 7, 2 out, bases 1, score 9-7 · #8 (R, same side) vs Reliever (R), pitch 28**
+  - `0-0` **Fastball up-away** → ball | top: Changeup middle 21%; Curveball middle 14%; Fastball middle 13% | before: first pitch
+- **hs_four_pitch_s101 · PA 36 · inning 7, 2 out, bases 12, score 9-7 · #9 (R, same side) vs Reliever (R), pitch 32**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 46%; Curveball middle 18%; Fastball up-away 17% | before: first pitch
+  - `1-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 81%; Curveball middle 18%; Changeup middle 2% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 38 · inning 7, 2 out, bases 123, score 9-8 · #2 (R, same side) vs Reliever (R), pitch 35**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 94%; Curveball middle 6% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 95%; Curveball middle 5% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 93%; Curveball middle 7% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 40 · inning 8, 0 out, bases empty, score 9-9 · #4 (R, same side) vs Reliever (R), pitch 45**
+  - `3-1` **Curveball middle** → ball — WALK | top: Curveball middle 57%; Fastball middle 36%; Changeup middle 7% | before: Fastball up-away (ball), Curveball down-away (ball), Fastball middle (ball)
+- **hs_four_pitch_s101 · PA 43 · inning 8, 1 out, bases 2, score 9-10 · #7 (R, same side) vs Reliever (R), pitch 49**
+  - `0-0` **Fastball up-away** → solid — solid contact: SINGLE | top: Fastball middle 30%; Curveball middle 24%; Curveball down-away 13% | before: first pitch
+- **hs_four_pitch_s101 · PA 44 · inning 8, 1 out, bases 13, score 9-10 · #8 (R, same side) vs Reliever (R), pitch 51**
+  - `1-0` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 63%; Curveball middle 35%; Changeup middle 2% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 78%; Curveball middle 22% | before: Fastball up-away (ball), Fastball middle (foul), Fastball up-away (ball)
+  - `3-2` **Fastball middle** → whiff — whiff (late); STRIKEOUT | top: Fastball middle 68%; Curveball middle 32% | before: Fastball middle (foul), Fastball up-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 45 · inning 8, 2 out, bases 13, score 9-10 · #9 (R, same side) vs Reliever (R), pitch 59**
+  - `1-0` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 63%; Fastball up-away 18%; Curveball middle 17% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 48 · inning 9, 1 out, bases empty, score 13-11 · #3 (R, same side) vs Reliever (R), pitch 69**
+  - `2-0` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 39%; Curveball middle 28%; Changeup middle 19% | before: Curveball down-away (ball), Curveball middle (ball)
+  - `3-1` **Curveball middle** → ball — WALK | top: Fastball middle 46%; Curveball middle 43%; Changeup middle 11% | before: Curveball middle (ball), Fastball middle (whiff), Curveball down-away (ball)
+- **hs_four_pitch_s101 · PA 49 · inning 9, 1 out, bases 1, score 13-11 · #4 (R, same side) vs Reliever (R), pitch 75**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 66%; Curveball middle 27%; Changeup middle 8% | before: Fastball middle (ball), Curveball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s101 · PA 50 · inning 9, 2 out, bases 2, score 13-11 · #5 (R, same side) vs Reliever (R), pitch 79**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 24%; Fastball up-away 15%; Fastball down-away 14% | before: first pitch
+- **hs_four_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 1**
+  - `0-0` **Changeup middle** → cstrike | top: Curveball middle 20%; Changeup middle 17%; Fastball middle 16% | before: first pitch
+  - `3-2` **Fastball middle** → ball — WALK | top: Curveball middle 31%; Fastball middle 30%; Changeup middle 23% | before: Changeup middle (whiff), Slider chase (ball), Slider middle (ball)
+- **hs_four_pitch_s102 · PA 3 · inning 1, 1 out, bases 2, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 12**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 43%; Curveball middle 25%; Changeup middle 25% | before: Fastball up-away (ball), Fastball middle (whiff), Changeup middle (ball)
+- **hs_four_pitch_s102 · PA 4 · inning 1, 1 out, bases 12, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 16**
+  - `1-2` **Curveball down-away** → weak — weak contact: OUT | top: Curveball down-away 27%; Slider down-away 25%; Slider middle 22% | before: Fastball middle (ball), Curveball middle (cstrike), Changeup middle (foul)
+- **hs_four_pitch_s102 · PA 5 · inning 1, 2 out, bases 12, score 0-0 · #5 (R, same side) vs Starter (R), pitch 17**
+  - `0-0` **Fastball down-away** → whiff — whiff (fooled) | top: Slider middle 22%; Fastball middle 15%; Curveball middle 14% | before: first pitch
+- **hs_four_pitch_s102 · PA 6 · inning 2, 0 out, bases empty, score 1-0 · #6 (R, same side) vs Starter (R), pitch 26**
+  - `0-0` **Fastball up-away** → foul — foul straight back | top: Slider middle 20%; Fastball middle 14%; Changeup middle 13% | before: first pitch
+- **hs_four_pitch_s102 · PA 7 · inning 2, 1 out, bases empty, score 1-0 · #7 (R, same side) vs Starter (R), pitch 28**
+  - `0-0` **Slider up-away** → ball | top: Fastball middle 12%; Curveball middle 10%; Changeup middle 9% | before: first pitch
+  - `2-1` **Curveball middle** → ball | top: Fastball middle 37%; Curveball middle 27%; Changeup middle 22% | before: Slider up-away (ball), Slider middle (ball), Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s102 · PA 8 · inning 2, 2 out, bases empty, score 1-0 · #8 (L, opposite side) vs Starter (R), pitch 33**
+  - `0-0` **Fastball up-away** → foul — foul opposite | top: Fastball middle 6%; Slider middle 5%; Curveball middle 5% | before: first pitch
+- **hs_four_pitch_s102 · PA 10 · inning 3, 1 out, bases empty, score 2-0 · #1 (R, same side) vs Starter (R), pitch 41**
+  - `0-0` **Slider middle** → ball | top: Changeup middle 11%; Slider middle 11%; Changeup down-away 10% | before: first pitch
+- **hs_four_pitch_s102 · PA 11 · inning 3, 1 out, bases 2, score 2-0 · #2 (R, same side) vs Starter (R), pitch 46**
+  - `0-1` **Curveball down-away** → ball | top: Slider middle 16%; Curveball down-away 14%; Curveball middle 14% | before: Curveball middle (whiff)
+- **hs_four_pitch_s102 · PA 12 · inning 3, 2 out, bases 2, score 2-0 · #3 (L, opposite side) vs Starter (R), pitch 49**
+  - `0-0` **Slider middle** → cstrike | top: Slider middle 11%; Slider down-away 10%; Fastball middle 10% | before: first pitch
+  - `2-1` **Fastball up-in** → ball | top: Slider middle 23%; Curveball middle 23%; Fastball middle 15% | before: Slider middle (cstrike), Curveball middle (ball), Fastball up-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s102 · PA 14 · inning 4, 1 out, bases empty, score 3-0 · #5 (R, same side) vs Starter (R), pitch 57**
+  - `0-0` **Slider up-away** → ball | top: Fastball middle 12%; Curveball middle 11%; Slider middle 11% | before: first pitch
+- **hs_four_pitch_s102 · PA 17 · inning 5, 0 out, bases empty, score 6-1 · #8 (L, opposite side) vs Starter (R), pitch 66**
+  - `0-0` **Changeup middle** → ball | top: Slider middle 22%; Changeup middle 22%; Curveball middle 21% | before: first pitch
+- **hs_four_pitch_s102 · PA 22 · inning 6, 1 out, bases empty, score 8-1 · #4 (L, opposite side) vs Starter (R), pitch 76**
+  - `0-0` **Slider down-away** → ball | top: Fastball middle 9%; Curveball middle 9%; Changeup middle 9% | before: first pitch
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 79%; Changeup middle 15%; Slider middle 6% | before: Fastball down-away (ball), Changeup middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s102 · PA 25 · inning 7, 0 out, bases empty, score 10-1 · #7 (R, same side) vs Starter (R), pitch 89**
+  - `0-1` **Slider down-away** → whiff — whiff (out in front) | top: Changeup down-away 20%; Slider middle 16%; Slider down-away 16% | before: Slider middle (cstrike)
+  - `0-2` **Slider chase** → ball | top: Slider down-away 47%; Slider chase 34%; Fastball up-away 11% | before: Slider middle (cstrike), Slider down-away (whiff)
+  - `2-2` **Slider middle** → foul — foul pull | top: Slider down-away 58%; Slider middle 42% | before: Slider down-away (whiff), Slider chase (ball), Fastball up-away (ball)
+- **hs_four_pitch_s102 · PA 27 · inning 7, 2 out, bases empty, score 10-1 · #9 (R, same side) vs Reliever (R), pitch 4**
+  - `1-2` **Fastball up-in** → solid — solid contact: OUT | top: Curveball down-away 15%; Fastball up-away 13%; Changeup down-away 12% | before: Fastball up-away (ball), Fastball middle (cstrike), Changeup middle (foul)
+- **hs_four_pitch_s102 · PA 29 · inning 8, 1 out, bases empty, score 11-1 · #2 (R, same side) vs Reliever (R), pitch 10**
+  - `0-0` **Changeup middle** → ball | top: Fastball middle 18%; Fastball up-away 13%; Changeup middle 13% | before: first pitch
+- **hs_four_pitch_s102 · PA 30 · inning 8, 1 out, bases 2, score 11-1 · #3 (L, opposite side) vs Reliever (R), pitch 15**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 70%; Curveball middle 18%; Changeup middle 11% | before: Curveball middle (ball), Fastball up-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s102 · PA 31 · inning 8, 1 out, bases 12, score 11-1 · #4 (L, opposite side) vs Reliever (R), pitch 18**
+  - `1-0` **Fastball middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 58%; Changeup middle 22%; Curveball middle 19% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s102 · PA 32 · inning 8, 2 out, bases 13, score 11-1 · #5 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 27%; Curveball middle 23%; Fastball up-away 17% | before: first pitch
+- **hs_four_pitch_s102 · PA 33 · inning 8, 2 out, bases 23, score 11-2 · #6 (R, same side) vs Reliever (R), pitch 23**
+  - `1-0` **Curveball middle** → whiff — whiff (fooled) | top: Fastball middle 23%; Curveball middle 21%; Changeup down-away 16% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball up-away** → ball | top: Fastball up-away 58%; Fastball down-away 27%; Curveball down-away 15% | before: Curveball middle (whiff), Fastball middle (foul), Curveball chase (foul)
+- **hs_four_pitch_s102 · PA 34 · inning 9, 0 out, bases empty, score 12-2 · #7 (R, same side) vs Reliever (R), pitch 28**
+  - `0-0` **Fastball middle** → cstrike | top: Curveball middle 17%; Fastball middle 16%; Changeup middle 14% | before: first pitch
+  - `0-1` **Fastball middle** → cstrike | top: Changeup down-away 21%; Fastball middle 16%; Curveball middle 15% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball down-away** → foul — foul pull | top: Curveball down-away 40%; Fastball down-away 20%; Curveball middle 19% | before: Fastball middle (cstrike), Fastball middle (cstrike), Fastball up-away (ball)
+- **hs_four_pitch_s102 · PA 36 · inning 9, 2 out, bases empty, score 12-2 · #9 (R, same side) vs Reliever (R), pitch 39**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 10%; Curveball middle 9%; Changeup middle 8% | before: Changeup chase (ball)
+  - `3-0` **Fastball middle** → ball — WALK | top: Curveball middle 41%; Fastball middle 32%; Changeup middle 27% | before: Changeup chase (ball), Fastball middle (ball), Curveball down-in (ball)
+- **hs_four_pitch_s103 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 1**
+  - `0-0` **Changeup middle** → ball | top: Curveball middle 19%; Changeup middle 19%; Fastball middle 16% | before: first pitch
+- **hs_four_pitch_s103 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (R, same side) vs Starter (R), pitch 10**
+  - `0-0` **Slider down-away** → ball | top: Fastball middle 11%; Curveball middle 9%; Slider middle 9% | before: first pitch
+- **hs_four_pitch_s103 · PA 5 · inning 2, 0 out, bases empty, score 0-0 · #5 (R, same side) vs Starter (R), pitch 16**
+  - `0-2` **Slider down-away** → ball | top: Slider down-away 41%; Slider chase 25%; Curveball down-away 18% | before: Slider down-away (cstrike), Fastball up-away (foul)
+- **hs_four_pitch_s103 · PA 9 · inning 2, 2 out, bases 12, score 0-0 · #9 (R, same side) vs Starter (R), pitch 27**
+  - `1-0` **Slider down-away** → foul — foul straight back | top: Fastball middle 40%; Curveball middle 25%; Slider middle 22% | before: Curveball down-away (ball)
+  - `2-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 83%; Curveball down-away 17% | before: Slider down-away (foul), Curveball middle (ball), Slider middle (foul)
+- **hs_four_pitch_s103 · PA 10 · inning 3, 0 out, bases empty, score 1-0 · #1 (L, opposite side) vs Starter (R), pitch 35**
+  - `2-2` **Slider middle** → foul — foul opposite | top: Slider middle 50%; Slider down-away 25%; Curveball down-away 20% | before: Slider up-away (ball), Slider middle (ball), Curveball middle (foul)
+- **hs_four_pitch_s103 · PA 11 · inning 3, 1 out, bases empty, score 1-0 · #2 (L, opposite side) vs Starter (R), pitch 39**
+  - `2-0` **Slider middle** → ball | top: Fastball middle 38%; Slider middle 33%; Curveball middle 29% | before: Curveball middle (ball), Fastball middle (ball)
+  - `3-0` **Fastball middle** → ball — WALK | top: Curveball middle 35%; Fastball middle 33%; Slider middle 32% | before: Curveball middle (ball), Fastball middle (ball), Slider middle (ball)
+- **hs_four_pitch_s103 · PA 12 · inning 3, 1 out, bases 2, score 1-0 · #3 (R, same side) vs Starter (R), pitch 43**
+  - `1-1` **Curveball middle** → whiff — whiff (out in front) | top: Fastball middle 31%; Slider middle 24%; Slider down-away 17% | before: Fastball middle (ball), Fastball down-away (foul)
+- **hs_four_pitch_s103 · PA 16 · inning 4, 0 out, bases 2, score 1-0 · #7 (R, same side) vs Starter (R), pitch 54**
+  - `0-0` **Slider middle** → whiff — whiff (fooled) | top: Fastball middle 20%; Changeup middle 18%; Slider middle 17% | before: first pitch
+  - `0-2` **Curveball down-away** → ball | top: Slider down-away 36%; Slider chase 22%; Curveball down-away 16% | before: Slider middle (whiff), Fastball up-away (foul)
+  - `1-2` **Slider down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 38%; Fastball up-away 21%; Slider middle 16% | before: Slider middle (whiff), Fastball up-away (foul), Curveball down-away (ball)
+- **hs_four_pitch_s103 · PA 17 · inning 4, 1 out, bases 2, score 1-0 · #8 (R, same side) vs Starter (R), pitch 58**
+  - `0-0` **Curveball middle** → ball | top: Changeup middle 18%; Fastball middle 14%; Slider middle 14% | before: first pitch
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 38%; Slider middle 30%; Curveball middle 16% | before: Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s103 · PA 18 · inning 4, 1 out, bases 12, score 1-0 · #9 (R, same side) vs Starter (R), pitch 62**
+  - `0-0` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 35%; Slider middle 22%; Changeup middle 16% | before: first pitch
+- **hs_four_pitch_s103 · PA 19 · inning 4, 1 out, bases 123, score 1-0 · #1 (L, opposite side) vs Starter (R), pitch 63**
+  - `0-0` **Changeup middle** → ball | top: Fastball middle 35%; Slider middle 34%; Changeup middle 17% | before: first pitch
+  - `1-1` **Fastball middle** → ball | top: Slider middle 43%; Fastball middle 31%; Changeup middle 13% | before: Changeup middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s103 · PA 20 · inning 4, 2 out, bases 123, score 1-0 · #2 (L, opposite side) vs Starter (R), pitch 70**
+  - `2-0` **Slider middle** → ball | top: Fastball middle 50%; Slider middle 32%; Changeup middle 10% | before: Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Slider middle** → cstrike | top: Slider middle 52%; Fastball middle 30%; Changeup middle 14% | before: Fastball middle (ball), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → whiff — whiff (out in front) | top: Slider middle 50%; Fastball middle 38%; Changeup middle 9% | before: Slider middle (ball), Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s103 · PA 23 · inning 5, 2 out, bases empty, score 1-0 · #5 (R, same side) vs Starter (R), pitch 80**
+  - `0-2` **Changeup down-away** → cstrike — STRIKEOUT | top: Curveball chase 10%; Slider down-away 10%; Curveball down-away 10% | before: Slider middle (cstrike), Curveball down-in (foul)
+- **hs_four_pitch_s103 · PA 25 · inning 6, 1 out, bases empty, score 3-0 · #7 (R, same side) vs Starter (R), pitch 89**
+  - `3-1` **Fastball middle** → hard — hard contact: SINGLE | top: Slider middle 44%; Fastball middle 42%; Curveball middle 14% | before: Curveball middle (whiff), Curveball middle (ball), Slider middle (ball)
+- **hs_four_pitch_s103 · PA 26 · inning 6, 1 out, bases 2, score 3-0 · #8 (R, same side) vs Starter (R), pitch 90**
+  - `0-0` **Fastball middle** → hard — hard contact: SINGLE | top: Curveball middle 22%; Slider middle 18%; Fastball middle 16% | before: first pitch
+- **hs_four_pitch_s103 · PA 28 · inning 6, 1 out, bases 12, score 3-1 · #1 (L, opposite side) vs Starter (R), pitch 95**
+  - `0-0` **Curveball middle** → ball | top: Fastball middle 29%; Slider middle 23%; Curveball middle 17% | before: first pitch
+  - `2-0` **Slider middle** → ball | top: Fastball middle 68%; Slider middle 32% | before: Curveball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Slider middle** → cstrike | top: Fastball middle 69%; Slider middle 31% | before: Curveball middle (ball), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → whiff — whiff (fooled); STRIKEOUT | top: Slider middle 100% | before: Slider middle (ball), Slider middle (cstrike), Fastball middle (foul)
+- **hs_four_pitch_s103 · PA 29 · inning 6, 2 out, bases 12, score 3-1 · #2 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 26%; Curveball middle 26%; Fastball up-away 17% | before: first pitch
+- **hs_four_pitch_s103 · PA 31 · inning 7, 0 out, bases 2, score 3-1 · #4 (R, same side) vs Reliever (R), pitch 5**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 44%; Curveball middle 22%; Fastball up-away 15% | before: first pitch
+  - `1-0` **Curveball middle** → cstrike | top: Fastball middle 55%; Curveball middle 41%; Changeup middle 5% | before: Fastball middle (ball)
+- **hs_four_pitch_s103 · PA 32 · inning 7, 1 out, bases 2, score 3-1 · #5 (R, same side) vs Reliever (R), pitch 10**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 43%; Curveball middle 27%; Fastball up-away 13% | before: Fastball up-away (ball)
+- **hs_four_pitch_s103 · PA 33 · inning 7, 1 out, bases empty, score 3-3 · #6 (R, same side) vs Reliever (R), pitch 17**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 61%; Fastball up-away 25%; Changeup middle 14% | before: Curveball up-away (ball), Changeup middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball up-away 37%; Fastball middle 23%; Fastball down-away 22% | before: Changeup middle (ball), Fastball middle (foul), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s103 · PA 34 · inning 7, 2 out, bases empty, score 3-3 · #7 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Changeup down-away** → hard — hard contact: OUT | top: Fastball middle 9%; Changeup middle 9%; Changeup down-away 9% | before: first pitch
+- **hs_four_pitch_s103 · PA 35 · inning 8, 0 out, bases empty, score 4-3 · #8 (R, same side) vs Reliever (R), pitch 21**
+  - `0-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 24%; Fastball up-away 21%; Fastball down-away 20% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Curveball down-away** → ball | top: Fastball up-away 56%; Fastball middle 26%; Curveball down-away 19% | before: Fastball middle (foul), Fastball middle (whiff), Fastball down-away (ball)
+  - `2-2` **Fastball middle** → ball | top: Fastball up-away 47%; Fastball down-away 22%; Fastball middle 21% | before: Fastball down-away (ball), Curveball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Curveball down-away (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s103 · PA 38 · inning 8, 1 out, bases 12, score 4-3 · #2 (L, opposite side) vs Reliever (R), pitch 34**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 96%; Curveball middle 4% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → solid — solid contact: DOUBLE PLAY | top: Fastball middle 97%; Curveball middle 3% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s103 · PA 40 · inning 9, 1 out, bases empty, score 4-3 · #4 (R, same side) vs Reliever (R), pitch 38**
+  - `0-0` **Fastball down-away** → whiff — whiff (fooled) | top: Fastball middle 25%; Curveball middle 22%; Curveball down-away 18% | before: first pitch
+  - `3-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 100% | before: Fastball chase (ball), Fastball down-away (foul), Curveball middle (ball)
+- **hs_four_pitch_s103 · PA 41 · inning 9, 2 out, bases empty, score 4-3 · #5 (R, same side) vs Reliever (R), pitch 46**
+  - `0-0` **Fastball up-in** → foul — foul pull | top: Fastball middle 12%; Curveball middle 11%; Fastball up-away 10% | before: first pitch
+  - `0-1` **Fastball up-in** → foul — foul pull | top: Fastball middle 12%; Fastball up-away 11%; Fastball down-away 11% | before: Fastball up-in (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Fastball down-away** → ball | top: Fastball up-away 12%; Fastball down-away 11%; Curveball down-away 11% | before: Fastball up-in (foul), Fastball up-in (foul)
+- **hs_four_pitch_s104 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 2**
+  - `0-0` **Fastball middle** → cstrike | top: Changeup middle 19%; Curveball middle 11%; Curveball down-away 10% | before: first pitch
+- **hs_four_pitch_s104 · PA 8 · inning 2, 0 out, bases empty, score 2-1 · #8 (R, same side) vs Starter (R), pitch 27**
+  - `1-0` **Slider middle** → cstrike | top: Fastball middle 23%; Slider middle 17%; Changeup middle 16% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider middle** → whiff — whiff (fooled) | top: Slider middle 23%; Fastball middle 19%; Curveball middle 16% | before: Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s104 · PA 9 · inning 2, 1 out, bases empty, score 2-1 · #9 (L, opposite side) vs Starter (R), pitch 32**
+  - `1-0` **Changeup middle** → ball | top: Slider middle 23%; Changeup middle 19%; Curveball middle 17% | before: Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s104 · PA 12 · inning 3, 1 out, bases empty, score 3-1 · #3 (R, same side) vs Starter (R), pitch 42**
+  - `1-2` **Slider middle** → ball | top: Slider down-away 19%; Fastball up-away 17%; Fastball down-away 13% | before: Fastball up-in (foul), Slider down-away (cstrike), Slider chase (ball)
+- **hs_four_pitch_s104 · PA 13 · inning 3, 1 out, bases 3, score 3-1 · #4 (R, same side) vs Starter (R), pitch 50**
+  - `2-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 46%; Fastball up-away 22%; Fastball up-in 21% | before: Slider down-away (foul), Slider chase (ball), Slider middle (foul)
+- **hs_four_pitch_s104 · PA 19 · inning 4, 2 out, bases 1, score 3-2 · #1 (L, opposite side) vs Starter (R), pitch 65**
+  - `2-1` **Fastball down-away** → ball | top: Slider middle 25%; Fastball middle 15%; Changeup middle 15% | before: Curveball middle (cstrike), Fastball chase (ball), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s104 · PA 22 · inning 5, 1 out, bases empty, score 3-2 · #4 (R, same side) vs Starter (R), pitch 75**
+  - `1-2` **Fastball up-away** → ball | top: Fastball up-away 19%; Changeup down-away 14%; Curveball down-away 12% | before: Slider down-away (ball), Slider middle (whiff), Slider down-away (foul)
+- **hs_four_pitch_s104 · PA 29 · inning 7, 1 out, bases empty, score 6-2 · #2 (R, same side) vs Starter (R), pitch 95**
+  - `2-1` **Changeup middle** → cstrike | top: Slider middle 23%; Fastball middle 21%; Curveball middle 15% | before: Slider down-away (ball), Fastball up-away (ball), Changeup middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s104 · PA 30 · inning 7, 2 out, bases empty, score 6-2 · #3 (R, same side) vs Reliever (R), pitch 4**
+  - `2-1` **Curveball down-away** → ball | top: Fastball middle 12%; Curveball middle 10%; Changeup middle 9% | before: Fastball middle (ball), Curveball middle (ball), Curveball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball down-away** → foul — foul pull | top: Curveball middle 18%; Changeup middle 15%; Fastball middle 14% | before: Curveball middle (ball), Curveball down-away (cstrike), Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball up-away** → ball — WALK | top: Fastball middle 36%; Curveball middle 26%; Fastball up-away 16% | before: Curveball down-away (cstrike), Curveball down-away (ball), Curveball down-away (foul)
+- **hs_four_pitch_s104 · PA 32 · inning 7, 2 out, bases 2, score 6-3 · #5 (R, same side) vs Reliever (R), pitch 9**
+  - `0-1` **Changeup down-away** → weak — weak contact: OUT | top: Changeup down-away 21%; Curveball down-away 17%; Curveball middle 16% | before: Changeup down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s104 · PA 35 · inning 8, 0 out, bases 2, score 7-4 · #8 (R, same side) vs Reliever (R), pitch 17**
+  - `2-2` **Fastball middle** → ball | top: Curveball middle 38%; Curveball down-away 37%; Fastball middle 25% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball up-away (ball)
+- **hs_four_pitch_s104 · PA 37 · inning 8, 1 out, bases 2, score 7-5 · #1 (L, opposite side) vs Reliever (R), pitch 24**
+  - `1-0` **Changeup middle** → cstrike | top: Fastball middle 31%; Curveball middle 26%; Changeup middle 13% | before: Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → cstrike | top: Curveball middle 56%; Fastball middle 25%; Changeup middle 19% | before: Changeup middle (cstrike), Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s104 · PA 40 · inning 9, 0 out, bases empty, score 9-5 · #4 (R, same side) vs Reliever (R), pitch 33**
+  - `1-0` **Curveball middle** → ball | top: Fastball middle 34%; Changeup middle 26%; Curveball middle 25% | before: Curveball down-away (ball)
+- **hs_four_pitch_s104 · PA 43 · inning 9, 0 out, bases 1, score 9-7 · #7 (L, opposite side) vs Reliever (R), pitch 43**
+  - `1-2` **Fastball down-away** → ball | top: Curveball down-away 33%; Fastball middle 26%; Fastball down-away 24% | before: Fastball middle (whiff), Changeup middle (cstrike), Fastball up-away (foul)
+  - `2-2` **Fastball middle** → ball — wild pitch, runners move up | top: Fastball middle 55%; Fastball up-away 33%; Curveball down-away 12% | before: Changeup middle (cstrike), Fastball up-away (foul), Fastball down-away (ball)
+  - `3-2` **Fastball middle** → foul — foul opposite | top: Fastball middle 86%; Curveball middle 14% | before: Fastball up-away (foul), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_four_pitch_s104 · PA 44 · inning 9, 1 out, bases 2, score 9-7 · #8 (R, same side) vs Reliever (R), pitch 49**
+  - `2-0` **Curveball middle** → ball | top: Fastball middle 44%; Curveball middle 32%; Changeup middle 16% | before: Fastball down-away (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Changeup middle** → ball — WALK | top: Changeup middle 49%; Curveball middle 38%; Fastball middle 13% | before: Fastball down-away (ball), Curveball middle (ball), Curveball middle (ball)
+- **hs_four_pitch_s104 · PA 45 · inning 9, 1 out, bases 12, score 9-7 · #9 (L, opposite side) vs Reliever (R), pitch 52**
+  - `0-1` **Fastball middle** → cstrike | top: Fastball middle 40%; Curveball middle 21%; Fastball up-away 18% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Fastball down-away** → whiff — whiff (late); STRIKEOUT | top: Fastball up-away 40%; Fastball down-away 30%; Fastball middle 15% | before: Fastball middle (foul), Fastball middle (cstrike), Fastball up-away (foul)
+- **hs_two_pitch_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 4**
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 3 · inning 1, 0 out, bases 2, score 0-1 · #3 (R, same side) vs Starter (R), pitch 8**
+  - `1-1` **Fastball down-away** → solid — solid contact: OUT | top: Fastball middle 47%; Fastball up-away 27%; Fastball down-away 26% | before: Fastball middle (foul), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 4 · inning 1, 1 out, bases 2, score 0-1 · #4 (R, same side) vs Starter (R), pitch 11**
+  - `1-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 7 · inning 2, 0 out, bases empty, score 1-2 · #7 (R, same side) vs Starter (R), pitch 14**
+  - `0-0` **Fastball down-away** → cstrike | top: Curveball middle 33%; Fastball middle 29%; Fastball up-away 19% | before: first pitch
+  - `2-2` **Fastball up-away** → cstrike — STRIKEOUT | top: Fastball middle 63%; Fastball up-away 37% | before: Curveball down-away (ball), Fastball up-away (cstrike), Curveball middle (ball)
+- **hs_two_pitch_s101 · PA 8 · inning 2, 1 out, bases empty, score 1-2 · #8 (R, same side) vs Starter (R), pitch 19**
+  - `0-0` **Curveball down-away** → ball | top: Curveball down-away 34%; Fastball middle 18%; Fastball up-away 14% | before: first pitch
+  - `2-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 11 · inning 2, 2 out, bases 2, score 1-3 · #2 (R, same side) vs Starter (R), pitch 28**
+  - `0-0` **Fastball chase** → ball | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+  - `3-1` **Fastball up-in** → hbp — HIT BY PITCH | top: Fastball middle 36%; Fastball down-in 16%; Fastball up-in 16% | before: Fastball up-away (ball), Fastball down-away (foul), Fastball middle (ball)
+- **hs_two_pitch_s101 · PA 12 · inning 2, 2 out, bases 12, score 1-3 · #3 (R, same side) vs Starter (R), pitch 34**
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 46%; Fastball down-away 27%; Fastball up-away 27% | before: Fastball middle (ball)
+- **hs_two_pitch_s101 · PA 13 · inning 3, 0 out, bases empty, score 1-3 · #4 (R, same side) vs Starter (R), pitch 36**
+  - `0-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `1-2` **Fastball middle** → foul — foul opposite | top: Fastball up-away 33%; Fastball down-away 32%; Fastball middle 22% | before: Fastball middle (foul), Fastball up-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball down-away** → ball | top: Fastball up-away 33%; Fastball down-away 32%; Fastball middle 22% | before: Fastball up-away (ball), Fastball middle (cstrike), Fastball middle (foul)
+  - `2-2` **Fastball middle** → ball | top: Fastball middle 70%; Fastball down-away 30% | before: Fastball middle (foul), Fastball down-away (ball), Fastball up-away (foul)
+  - `3-2` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball up-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 14 · inning 3, 0 out, bases 2, score 1-3 · #5 (R, same side) vs Starter (R), pitch 46**
+  - `2-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 17 · inning 3, 0 out, bases 13, score 1-5 · #8 (R, same side) vs Starter (R), pitch 54**
+  - `1-2` **Curveball middle** → whiff — whiff (fooled); STRIKEOUT | top: Curveball down-away 56%; Curveball middle 31%; Fastball up-away 13% | before: Fastball middle (ball), Curveball middle (cstrike), Fastball middle (foul)
+- **hs_two_pitch_s101 · PA 18 · inning 3, 1 out, bases 23, score 1-5 · #9 (R, same side) vs Starter (R), pitch 56**
+  - `1-0` **Curveball middle** → ball | top: Curveball middle 40%; Curveball down-away 33%; Curveball down-in 27% | before: Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 100% | before: Curveball middle (ball), Curveball up-in (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 20 · inning 3, 2 out, bases 2, score 1-7 · #2 (R, same side) vs Starter (R), pitch 65**
+  - `3-0` **Curveball middle** → ball — WALK | top: Curveball middle 22%; Curveball down-in 22%; Curveball down-away 21% | before: Fastball middle (ball), Fastball down-in (ball), Curveball chase (ball)
+- **hs_two_pitch_s101 · PA 22 · inning 3, 2 out, bases 13, score 1-8 · #4 (R, same side) vs Starter (R), pitch 68**
+  - `1-0` **Curveball up-in** → weak — weak contact: SINGLE | top: Curveball middle 25%; Curveball down-away 22%; Curveball down-in 21% | before: Curveball up-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 23 · inning 3, 2 out, bases 13, score 1-9 · #5 (R, same side) vs Starter (R), pitch 71**
+  - `0-2` **Curveball down-away** → whiff — whiff (fooled); STRIKEOUT | top: Curveball middle 57%; Curveball down-away 43% | before: Curveball middle (whiff), Curveball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 24 · inning 4, 0 out, bases empty, score 1-9 · #6 (L, opposite side) vs Starter (R), pitch 73**
+  - `0-1` **Curveball middle** → ball | top: Curveball middle 37%; Curveball down-away 36%; Curveball up-away 27% | before: Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Curveball middle** → ball | top: Curveball middle 40%; Curveball down-away 34%; Curveball up-away 26% | before: Curveball middle (foul), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Curveball middle** → ball — WALK | top: Curveball middle 40%; Curveball down-away 33%; Curveball down-in 27% | before: Curveball middle (ball), Curveball up-away (foul), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 26 · inning 4, 1 out, bases 2, score 1-9 · #8 (R, same side) vs Starter (R), pitch 81**
+  - `1-1` **Fastball down-away** → ball | top: Curveball middle 33%; Fastball middle 29%; Fastball up-away 19% | before: Fastball middle (foul), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → solid — solid contact: DOUBLE | top: Curveball middle 31%; Curveball down-in 21%; Curveball down-away 20% | before: Fastball down-away (ball), Fastball down-away (ball), Curveball up-away (ball)
+- **hs_two_pitch_s101 · PA 27 · inning 4, 1 out, bases 2, score 1-10 · #9 (R, same side) vs Starter (R), pitch 85**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 31%; Curveball middle 30%; Fastball down-away 20% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 29 · inning 4, 1 out, bases 23, score 1-11 · #2 (R, same side) vs Starter (R), pitch 91**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 37%; Fastball up-away 31%; Fastball down-away 31% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → foul — foul pull | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 29% | before: Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 31 · inning 5, 0 out, bases empty, score 5-11 · #4 (R, same side) vs Reliever (R), pitch 3**
+  - `0-2` **Slider down-away** → ball | top: Slider down-away 26%; Slider chase 20%; Fastball up-away 20% | before: Slider down-away (foul), Slider up-away (whiff)
+- **hs_two_pitch_s101 · PA 33 · inning 5, 2 out, bases empty, score 5-11 · #6 (L, opposite side) vs Reliever (R), pitch 9**
+  - `0-0` **Slider up-away** → ball | top: Fastball middle 11%; Slider middle 11%; Slider down-away 9% | before: first pitch
+- **hs_two_pitch_s101 · PA 34 · inning 6, 0 out, bases empty, score 6-11 · #7 (R, same side) vs Reliever (R), pitch 14**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Slider middle 23%; Fastball middle 19%; Slider down-away 17% | before: first pitch
+  - `1-2` **Slider middle** → foul — foul straight back | top: Fastball middle 26%; Slider down-away 24%; Slider middle 20% | before: Fastball middle (foul), Slider middle (cstrike), Slider down-away (ball)
+- **hs_two_pitch_s101 · PA 35 · inning 6, 0 out, bases 1, score 6-11 · #8 (R, same side) vs Reliever (R), pitch 21**
+  - `1-1` **Slider middle** → ball | top: Fastball middle 62%; Slider middle 38% | before: Fastball down-away (whiff), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Slider middle** → ball | top: Fastball middle 78%; Slider middle 22% | before: Fastball down-away (whiff), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 86%; Slider middle 14% | before: Slider middle (ball), Slider middle (ball), Slider middle (ball)
+  - `3-2` **Fastball middle** → ball — WALK | top: Slider middle 59%; Fastball middle 41% | before: Slider middle (ball), Slider middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 36 · inning 6, 0 out, bases 12, score 6-11 · #9 (R, same side) vs Reliever (R), pitch 26**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 62%; Slider middle 38% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 37 · inning 6, 1 out, bases 12, score 6-11 · #1 (L, opposite side) vs Reliever (R), pitch 32**
+  - `1-2` **Fastball up-away** → foul — foul pull | top: Slider down-away 88%; Fastball up-away 12% | before: Fastball middle (cstrike), Fastball down-away (ball), Fastball middle (foul)
+- **hs_two_pitch_s101 · PA 41 · inning 6, 2 out, bases 123, score 6-13 · #5 (R, same side) vs Reliever (R), pitch 40**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 65%; Slider middle 35% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Slider middle** → cstrike | top: Slider middle 64%; Fastball middle 36% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Fastball middle 54%; Slider middle 46% | before: Fastball middle (ball), Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 43 · inning 7, 0 out, bases empty, score 6-14 · #7 (R, same side) vs Reliever (R), pitch 45**
+  - `0-0` **Fastball down-away** → whiff — whiff (fooled) | top: Fastball middle 23%; Slider middle 19%; Fastball up-away 15% | before: first pitch
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 23%; Slider middle 21%; Slider down-away 15% | before: Fastball down-away (whiff), Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 56%; Slider middle 44% | before: Fastball up-away (ball), Fastball up-away (ball), Slider middle (ball)
+- **hs_two_pitch_s101 · PA 47 · inning 7, 1 out, bases 13, score 6-15 · #2 (R, same side) vs Reliever (R), pitch 54**
+  - `0-0` **Slider middle** → ball | top: Slider middle 41%; Fastball middle 27%; Fastball up-away 16% | before: first pitch
+- **hs_two_pitch_s101 · PA 48 · inning 7, 2 out, bases 13, score 6-15 · #3 (R, same side) vs Reliever (R), pitch 63**
+  - `1-0` **Slider middle** → foul — foul pull | top: Fastball middle 33%; Slider middle 26%; Fastball up-away 21% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s101 · PA 50 · inning 8, 0 out, bases empty, score 10-16 · #5 (R, same side) vs Reliever (R), pitch 70**
+  - `1-2` **Fastball down-away** → cstrike — STRIKEOUT | top: Fastball middle 29%; Fastball up-away 29%; Fastball down-away 29% | before: Fastball down-away (foul), Slider up-away (ball), Fastball middle (whiff)
+- **hs_two_pitch_s101 · PA 51 · inning 8, 1 out, bases empty, score 10-16 · #6 (L, opposite side) vs Reliever (R), pitch 73**
+  - `2-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 63%; Slider middle 37% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball up-away** → ball | top: Fastball middle 35%; Slider middle 34%; Fastball up-away 15% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (foul)
+- **hs_two_pitch_s101 · PA 52 · inning 8, 1 out, bases 1, score 10-16 · #7 (R, same side) vs Reliever (R), pitch 77**
+  - `1-0` **Fastball middle** → ball | top: Slider middle 33%; Fastball middle 32%; Fastball down-away 17% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 71%; Slider middle 29% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 75%; Slider middle 25% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → foul — foul opposite | top: Slider down-away 47%; Fastball middle 29%; Slider middle 24% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball middle 74%; Slider middle 26% | before: Fastball middle (cstrike), Fastball middle (foul), Fastball down-away (ball)
+- **hs_two_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 1**
+  - `0-0` **Curveball middle** → cstrike | top: Curveball middle 32%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+  - `0-1` **Curveball middle** → ball | top: Fastball middle 25%; Fastball up-away 20%; Fastball down-away 20% | before: Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 9**
+  - `0-1` **Curveball down-in** → ball | top: Curveball down-away 12%; Fastball middle 12%; Curveball middle 12% | before: Curveball down-in (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball up-in** → ball | top: Fastball middle 15%; Curveball middle 14%; Curveball down-away 14% | before: Curveball down-in (foul), Curveball down-in (ball)
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 30%; Curveball middle 21%; Fastball down-away 12% | before: Curveball down-in (ball), Fastball up-in (ball), Curveball middle (ball)
+- **hs_two_pitch_s102 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 17**
+  - `1-2` **Curveball down-away** → weak — weak contact: OUT | top: Curveball down-away 27%; Curveball middle 19%; Fastball down-away 13% | before: Curveball middle (ball), Fastball middle (cstrike), Fastball down-away (whiff)
+- **hs_two_pitch_s102 · PA 6 · inning 2, 0 out, bases 2, score 0-0 · #6 (R, same side) vs Starter (R), pitch 19**
+  - `0-0` **Fastball up-away** → solid — solid contact: SINGLE | top: Fastball middle 35%; Curveball middle 22%; Fastball up-away 21% | before: first pitch
+- **hs_two_pitch_s102 · PA 7 · inning 2, 0 out, bases 2, score 0-1 · #7 (R, same side) vs Starter (R), pitch 22**
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Curveball middle** → foul — foul opposite | top: Curveball down-away 25%; Fastball up-away 20%; Fastball down-away 19% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (foul)
+- **hs_two_pitch_s102 · PA 8 · inning 2, 0 out, bases 23, score 0-1 · #8 (L, opposite side) vs Starter (R), pitch 32**
+  - `1-2` **Curveball down-away** → solid — solid contact: SINGLE | top: Curveball down-away 32%; Fastball up-away 25%; Fastball down-away 23% | before: Fastball up-away (ball), Fastball middle (whiff), Fastball middle (foul)
+- **hs_two_pitch_s102 · PA 9 · inning 2, 0 out, bases 13, score 0-2 · #9 (R, same side) vs Starter (R), pitch 34**
+  - `0-1` **Fastball down-away** → whiff — whiff (late) | top: Fastball middle 31%; Fastball up-away 24%; Curveball down-away 23% | before: Fastball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 10 · inning 2, 1 out, bases 3, score 0-3 · #1 (R, same side) vs Starter (R), pitch 43**
+  - `1-2` **Fastball chase** → ball | top: Curveball middle 29%; Fastball up-away 28%; Fastball down-away 15% | before: Curveball middle (whiff), Fastball down-away (foul), Curveball down-away (ball)
+- **hs_two_pitch_s102 · PA 11 · inning 2, 1 out, bases 2, score 0-4 · #2 (R, same side) vs Starter (R), pitch 45**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 31%; Curveball middle 27%; Fastball up-away 21% | before: first pitch
+- **hs_two_pitch_s102 · PA 13 · inning 2, 2 out, bases 12, score 0-4 · #4 (L, opposite side) vs Starter (R), pitch 51**
+  - `0-0` **Fastball up-away** → whiff — whiff (late) | top: Fastball middle 32%; Curveball down-away 25%; Fastball up-away 21% | before: first pitch
+- **hs_two_pitch_s102 · PA 16 · inning 3, 1 out, bases 1, score 1-4 · #7 (R, same side) vs Starter (R), pitch 61**
+  - `1-0` **Curveball middle** → hard — hard contact: HOME RUN | top: Fastball middle 39%; Fastball down-away 21%; Fastball up-away 21% | before: Curveball down-away (ball)
+- **hs_two_pitch_s102 · PA 17 · inning 3, 1 out, bases empty, score 1-6 · #8 (L, opposite side) vs Starter (R), pitch 64**
+  - `2-0` **Fastball down-away** → solid — solid contact: OUT | top: Fastball middle 67%; Fastball down-away 33% | before: Fastball up-away (ball), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 19 · inning 4, 0 out, bases empty, score 1-6 · #1 (R, same side) vs Starter (R), pitch 66**
+  - `0-0` **Fastball down-away** → hard — hard contact: SINGLE | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+- **hs_two_pitch_s102 · PA 21 · inning 4, 2 out, bases empty, score 1-6 · #3 (L, opposite side) vs Starter (R), pitch 71**
+  - `3-0` **Fastball middle** → weak — weak contact: ERROR | top: Fastball middle 29%; Curveball middle 25%; Fastball down-in 12% | before: Fastball up-in (ball), Curveball up-away (ball), Fastball down-in (ball)
+- **hs_two_pitch_s102 · PA 23 · inning 5, 0 out, bases empty, score 3-6 · #5 (R, same side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball middle** → solid — solid contact: OUT | top: Curveball middle 32%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+- **hs_two_pitch_s102 · PA 24 · inning 5, 1 out, bases empty, score 3-6 · #6 (R, same side) vs Starter (R), pitch 78**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-in (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 27 · inning 6, 0 out, bases empty, score 5-6 · #9 (R, same side) vs Starter (R), pitch 89**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 29 · inning 6, 0 out, bases 23, score 5-6 · #2 (R, same side) vs Starter (R), pitch 93**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 43%; Fastball up-away 28%; Fastball down-away 28% | before: first pitch
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 46%; Fastball up-away 27%; Fastball down-away 27% | before: Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 33 · inning 6, 2 out, bases 1, score 5-9 · #6 (R, same side) vs Reliever (R), pitch 9**
+  - `1-0` **Fastball middle** → ball | top: Slider middle 39%; Fastball middle 18%; Fastball down-away 12% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 34 · inning 6, 2 out, bases 12, score 5-9 · #7 (R, same side) vs Reliever (R), pitch 14**
+  - `1-0` **Slider middle** → solid — solid contact: OUT | top: Slider middle 36%; Fastball middle 30%; Fastball down-away 17% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 36 · inning 7, 1 out, bases empty, score 7-9 · #9 (R, same side) vs Reliever (R), pitch 17**
+  - `0-1` **Fastball down-away** → ball | top: Slider middle 16%; Slider down-away 16%; Fastball middle 15% | before: Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 37 · inning 7, 1 out, bases 2, score 7-9 · #1 (R, same side) vs Reliever (R), pitch 22**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 79%; Slider middle 21% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 90%; Slider middle 10% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 38 · inning 7, 1 out, bases 12, score 7-9 · #2 (R, same side) vs Reliever (R), pitch 24**
+  - `0-0` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 44%; Slider middle 30%; Fastball up-away 13% | before: first pitch
+  - `0-1` **Slider down-away** → ball | top: Slider middle 27%; Fastball middle 26%; Slider down-away 18% | before: Slider middle (whiff)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 56%; Slider middle 44% | before: Slider middle (whiff), Slider down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 43 · inning 7, 2 out, bases 123, score 7-12 · #7 (R, same side) vs Reliever (R), pitch 36**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 72%; Slider middle 28% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 58%; Slider middle 42% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (ball)
+- **hs_two_pitch_s102 · PA 44 · inning 7, 2 out, bases 123, score 7-13 · #8 (L, opposite side) vs Reliever (R), pitch 40**
+  - `1-0` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 66%; Slider middle 34% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Slider middle** → ball | top: Fastball middle 63%; Slider middle 37% | before: Fastball middle (ball), Fastball middle (whiff), Fastball middle (ball)
+- **hs_two_pitch_s102 · PA 45 · inning 7, 2 out, bases 123, score 7-14 · #9 (R, same side) vs Reliever (R), pitch 44**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 65%; Slider middle 35% | before: first pitch
+- **hs_two_pitch_s102 · PA 46 · inning 8, 0 out, bases empty, score 8-14 · #1 (R, same side) vs Reliever (R), pitch 48**
+  - `0-0` **Slider up-away** → ball | top: Slider middle 43%; Slider down-away 31%; Slider up-away 27% | before: first pitch
+  - `3-0` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider up-away (ball), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 47 · inning 8, 0 out, bases 2, score 8-14 · #2 (R, same side) vs Reliever (R), pitch 55**
+  - `1-2` **Fastball down-away** → foul — foul straight back | top: Fastball middle 42%; Fastball up-away 38%; Fastball down-away 20% | before: Slider down-away (ball), Fastball down-away (whiff), Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 71%; Slider down-away 29% | before: Fastball down-away (foul), Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 48 · inning 8, 0 out, bases 12, score 8-14 · #3 (L, opposite side) vs Reliever (R), pitch 61**
+  - `1-1` **Slider middle** → foul — foul pull | top: Slider middle 100% | before: Slider down-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 49 · inning 8, 1 out, bases 12, score 8-14 · #4 (L, opposite side) vs Reliever (R), pitch 67**
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 100% | before: Slider down-away (cstrike), Slider chase (foul), Slider middle (ball)
+- **hs_two_pitch_s102 · PA 51 · inning 8, 2 out, bases 2, score 8-16 · #6 (R, same side) vs Reliever (R), pitch 71**
+  - `0-0` **Slider down-away** → ball | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `2-0` **Fastball up-away** → ball | top: Fastball middle 25%; Fastball up-away 19%; Fastball down-away 19% | before: Slider down-away (ball), Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball down-away** → whiff — whiff (out in front) | top: Fastball middle 32%; Fastball up-away 17%; Fastball up-in 17% | before: Slider down-away (ball), Fastball up-away (ball), Fastball up-away (ball)
+  - `3-2` **Fastball down-in** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 31%; Fastball up-in 20%; Fastball up-away 17% | before: Fastball up-away (ball), Fastball down-away (whiff), Fastball middle (foul)
+- **hs_two_pitch_s102 · PA 52 · inning 9, 0 out, bases empty, score 8-16 · #7 (R, same side) vs Reliever (R), pitch 78**
+  - `0-1` **Slider down-away** → cstrike | top: Fastball middle 24%; Slider middle 21%; Slider down-away 20% | before: Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Slider down-away** → ball | top: Fastball up-away 20%; Fastball down-away 18%; Fastball middle 18% | before: Slider down-away (foul), Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider down-away** → weak — weak contact: OUT | top: Fastball middle 26%; Fastball up-away 22%; Fastball down-away 20% | before: Slider down-away (foul), Slider down-away (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 55 · inning 9, 1 out, bases 12, score 8-16 · #1 (R, same side) vs Reliever (R), pitch 92**
+  - `2-0` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 79%; Slider middle 21% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 56 · inning 9, 2 out, bases 12, score 8-16 · #2 (R, same side) vs Reliever (R), pitch 97**
+  - `2-1` **Fastball middle** → foul — foul pull | top: Fastball middle 73%; Slider middle 27% | before: Slider middle (foul), Slider down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 64%; Fastball up-away 36% | before: Fastball middle (ball), Fastball middle (foul), Fastball down-away (foul)
+  - `2-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball up-away 36%; Fastball down-away 34%; Fastball middle 31% | before: Fastball middle (foul), Fastball down-away (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 2 · inning 1, 0 out, bases 1, score 0-0 · #2 (L, opposite side) vs Starter (R), pitch 5**
+  - `0-0` **Fastball up-away** → ball | top: Curveball middle 33%; Fastball middle 33%; Fastball up-away 17% | before: first pitch
+- **hs_two_pitch_s103 · PA 4 · inning 1, 2 out, bases 2, score 0-0 · #4 (R, same side) vs Starter (R), pitch 17**
+  - `1-2` **Curveball down-away** → weak — weak contact: OUT | top: Curveball middle 28%; Curveball down-away 27%; Fastball up-away 23% | before: Curveball down-in (whiff), Fastball middle (ball), Curveball middle (whiff)
+- **hs_two_pitch_s103 · PA 5 · inning 2, 0 out, bases empty, score 2-0 · #5 (R, same side) vs Starter (R), pitch 19**
+  - `1-0` **Curveball down-away** → cstrike | top: Fastball middle 29%; Curveball middle 23%; Curveball down-away 18% | before: Curveball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 10 · inning 3, 1 out, bases empty, score 4-1 · #1 (L, opposite side) vs Starter (R), pitch 36**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (ball), Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 11 · inning 3, 1 out, bases 1, score 4-1 · #2 (L, opposite side) vs Starter (R), pitch 38**
+  - `0-1` **Fastball up-away** → ball | top: Fastball middle 24%; Curveball middle 20%; Fastball up-away 19% | before: Curveball middle (whiff)
+  - `3-1` **Curveball middle** → whiff — whiff (late) | top: Fastball middle 90%; Curveball middle 10% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (ball)
+  - `3-2` **Curveball middle** → cstrike — STRIKEOUT | top: Curveball middle 91%; Fastball middle 9% | before: Fastball middle (ball), Curveball middle (whiff), Fastball middle (foul)
+- **hs_two_pitch_s103 · PA 15 · inning 3, 2 out, bases 13, score 4-3 · #6 (R, same side) vs Starter (R), pitch 48**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 31%; Curveball middle 27%; Fastball up-away 21% | before: first pitch
+- **hs_two_pitch_s103 · PA 18 · inning 4, 1 out, bases 2, score 4-3 · #9 (R, same side) vs Starter (R), pitch 57**
+  - `1-1` **Curveball middle** → ball | top: Curveball middle 33%; Fastball middle 29%; Fastball up-away 19% | before: Fastball up-away (cstrike), Fastball middle (ball)
+- **hs_two_pitch_s103 · PA 20 · inning 4, 2 out, bases 2, score 4-4 · #2 (L, opposite side) vs Starter (R), pitch 60**
+  - `0-0` **Fastball middle** → cstrike | top: Curveball middle 19%; Curveball down-away 19%; Fastball middle 15% | before: first pitch
+  - `2-2` **Fastball middle** → cstrike — STRIKEOUT | top: Fastball up-away 25%; Fastball down-away 24%; Fastball up-in 15% | before: Fastball chase (ball), Fastball up-in (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 21 · inning 5, 0 out, bases empty, score 4-4 · #3 (R, same side) vs Starter (R), pitch 70**
+  - `3-1` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (whiff), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 22 · inning 5, 1 out, bases empty, score 4-4 · #4 (R, same side) vs Starter (R), pitch 71**
+  - `0-0` **Fastball down-in** → ball | top: Fastball middle 28%; Fastball up-away 21%; Fastball down-away 21% | before: first pitch
+  - `1-0` **Fastball down-in** → ball | top: Fastball middle 35%; Fastball down-away 23%; Fastball up-away 23% | before: Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 23 · inning 5, 2 out, bases empty, score 4-4 · #5 (R, same side) vs Starter (R), pitch 74**
+  - `0-0` **Fastball chase** → cstrike | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **hs_two_pitch_s103 · PA 24 · inning 6, 0 out, bases empty, score 5-4 · #6 (R, same side) vs Starter (R), pitch 79**
+  - `2-1` **Fastball middle** → foul — foul pull | top: Fastball middle 78%; Curveball middle 22% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 25 · inning 6, 1 out, bases empty, score 5-4 · #7 (R, same side) vs Starter (R), pitch 81**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 17%; Curveball middle 14%; Curveball down-away 13% | before: first pitch
+  - `3-1` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 81%; Curveball middle 19% | before: Curveball middle (whiff), Fastball middle (ball), Curveball middle (ball)
+- **hs_two_pitch_s103 · PA 26 · inning 6, 1 out, bases 2, score 5-4 · #8 (R, same side) vs Starter (R), pitch 86**
+  - `0-0` **Fastball middle** → hard — hard contact: SINGLE | top: Curveball middle 36%; Fastball middle 27%; Fastball up-away 19% | before: first pitch
+- **hs_two_pitch_s103 · PA 27 · inning 6, 1 out, bases 13, score 5-4 · #9 (R, same side) vs Starter (R), pitch 88**
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 24%; Curveball middle 20%; Curveball down-away 19% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 28 · inning 6, 1 out, bases 12, score 5-5 · #1 (L, opposite side) vs Starter (R), pitch 93**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 89%; Curveball middle 11% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 29 · inning 6, 1 out, bases 123, score 5-5 · #2 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 69%; Slider middle 31% | before: first pitch
+  - `1-1` **Fastball middle** → cstrike | top: Fastball middle 80%; Slider middle 20% | before: Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider down-away** → solid — solid contact: DOUBLE | top: Fastball up-away 34%; Fastball down-away 26%; Slider down-away 24% | before: Fastball middle (cstrike), Fastball middle (cstrike), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 34 · inning 7, 2 out, bases empty, score 7-7 · #7 (R, same side) vs Reliever (R), pitch 18**
+  - `1-0` **Fastball up-away** → weak — weak contact: OUT | top: Fastball middle 25%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 35 · inning 8, 0 out, bases empty, score 7-7 · #8 (R, same side) vs Reliever (R), pitch 20**
+  - `1-0` **Fastball middle** → ball | top: Slider middle 37%; Fastball middle 30%; Fastball down-away 17% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (ball)
+- **hs_two_pitch_s103 · PA 36 · inning 8, 0 out, bases 1, score 7-7 · #9 (R, same side) vs Reliever (R), pitch 25**
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → ball | top: Fastball middle 48%; Fastball up-away 27%; Fastball down-away 25% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 100% | before: Fastball middle (foul), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 37 · inning 8, 1 out, bases 1, score 7-7 · #1 (L, opposite side) vs Reliever (R), pitch 30**
+  - `0-1` **Fastball up-away** → ball | top: Fastball middle 25%; Slider middle 20%; Fastball down-away 19% | before: Fastball up-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball up-away** → ball | top: Slider middle 36%; Fastball middle 30%; Fastball down-away 17% | before: Fastball up-away (cstrike), Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 38 · inning 8, 1 out, bases 12, score 7-7 · #2 (L, opposite side) vs Reliever (R), pitch 36**
+  - `2-0` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 84%; Slider middle 16% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 39 · inning 8, 1 out, bases 23, score 7-8 · #3 (R, same side) vs Reliever (R), pitch 38**
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 43%; Slider middle 31%; Fastball down-away 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 42 · inning 9, 0 out, bases 1, score 7-8 · #6 (R, same side) vs Reliever (R), pitch 53**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 43 · inning 9, 0 out, bases 12, score 7-8 · #7 (R, same side) vs Reliever (R), pitch 55**
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 44 · inning 9, 1 out, bases 13, score 7-8 · #8 (R, same side) vs Reliever (R), pitch 61**
+  - `2-0` **Fastball middle** → solid — solid contact: DOUBLE | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s103 · PA 46 · inning 9, 2 out, bases 2, score 7-10 · #1 (L, opposite side) vs Reliever (R), pitch 67**
+  - `0-0` **Slider chase** → foul — foul pull | top: Slider middle 21%; Slider down-away 20%; Slider down-in 17% | before: first pitch
+  - `1-2` **Fastball down-away** → whiff — whiff (fooled); STRIKEOUT | top: Fastball down-away 23%; Fastball up-away 22%; Fastball middle 21% | before: Slider chase (foul), Slider up-in (foul), Slider chase (ball)
+- **hs_two_pitch_s104 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 1**
+  - `0-0` **Curveball middle** → weak — weak contact: OUT | top: Curveball middle 32%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+- **hs_two_pitch_s104 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 6**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 3 · inning 1, 1 out, bases 1, score 0-0 · #3 (R, same side) vs Starter (R), pitch 10**
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 47%; Fastball up-away 27%; Fastball down-away 27% | before: Fastball up-away (whiff), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 4 · inning 1, 1 out, bases 12, score 0-0 · #4 (R, same side) vs Starter (R), pitch 13**
+  - `0-0` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 48%; Fastball up-away 26%; Fastball down-away 26% | before: first pitch
+  - `2-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball middle (whiff), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 5 · inning 1, 2 out, bases 12, score 0-0 · #5 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 43%; Fastball up-away 28%; Fastball down-away 28% | before: first pitch
+  - `1-0` **Fastball up-away** → solid — solid contact: OUT | top: Fastball middle 47%; Fastball up-away 27%; Fastball down-away 26% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 6 · inning 2, 0 out, bases empty, score 0-0 · #6 (R, same side) vs Starter (R), pitch 21**
+  - `1-0` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 48%; Fastball down-away 26%; Fastball up-away 26% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 8 · inning 2, 1 out, bases 3, score 0-0 · #8 (R, same side) vs Starter (R), pitch 25**
+  - `1-0` **Fastball up-away** → ball | top: Fastball middle 27%; Curveball middle 21%; Curveball down-away 18% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 10 · inning 2, 2 out, bases 23, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 30**
+  - `1-0` **Fastball up-in** → foul — foul pull | top: Curveball middle 33%; Fastball middle 19%; Fastball up-away 13% | before: Fastball up-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 12 · inning 3, 0 out, bases empty, score 0-3 · #3 (R, same side) vs Starter (R), pitch 37**
+  - `0-0` **Fastball down-away** → foul — foul opposite | top: Curveball middle 34%; Fastball middle 29%; Fastball up-away 19% | before: first pitch
+  - `1-2` **Curveball middle** → ball | top: Fastball middle 24%; Fastball up-away 22%; Curveball middle 22% | before: Fastball down-away (foul), Fastball middle (cstrike), Curveball down-away (ball)
+- **hs_two_pitch_s104 · PA 13 · inning 3, 0 out, bases 3, score 0-3 · #4 (R, same side) vs Starter (R), pitch 44**
+  - `0-2` **Fastball up-away** → foul — foul pull | top: Curveball down-away 34%; Curveball middle 19%; Fastball up-away 14% | before: Fastball down-away (cstrike), Fastball up-away (whiff)
+  - `1-2` **Fastball up-away** → foul — foul pull | top: Fastball up-away 34%; Fastball down-away 33%; Fastball middle 19% | before: Fastball down-away (foul), Curveball down-away (ball), Fastball middle (foul)
+- **hs_two_pitch_s104 · PA 14 · inning 3, 0 out, bases 2, score 0-4 · #5 (R, same side) vs Starter (R), pitch 51**
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 46%; Fastball up-away 27%; Fastball down-away 27% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 19 · inning 4, 0 out, bases empty, score 3-5 · #1 (L, opposite side) vs Starter (R), pitch 65**
+  - `3-1` **Curveball middle** → ball — WALK | top: Curveball middle 30%; Curveball down-away 21%; Curveball down-in 19% | before: Curveball middle (ball), Fastball down-away (ball), Curveball down-away (ball)
+- **hs_two_pitch_s104 · PA 22 · inning 4, 2 out, bases 3, score 3-5 · #4 (R, same side) vs Starter (R), pitch 74**
+  - `2-0` **Fastball down-in** → whiff — whiff (late) | top: Fastball middle 26%; Fastball down-away 19%; Fastball up-away 19% | before: Curveball middle (ball), Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 23 · inning 4, 2 out, bases 13, score 3-5 · #5 (R, same side) vs Starter (R), pitch 78**
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 35%; Fastball down-away 23%; Fastball up-away 23% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 41%; Fastball up-away 29%; Fastball down-away 29% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 24 · inning 5, 0 out, bases empty, score 6-5 · #6 (R, same side) vs Starter (R), pitch 81**
+  - `1-0` **Fastball up-away** → foul — foul straight back | top: Fastball middle 46%; Fastball up-away 27%; Fastball down-away 27% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 25 · inning 5, 1 out, bases empty, score 6-5 · #7 (L, opposite side) vs Starter (R), pitch 84**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Fastball middle 27%; Fastball up-away 21%; Fastball down-away 21% | before: first pitch
+  - `0-2` **Fastball up-away** → weak — weak contact: SINGLE | top: Fastball down-away 24%; Fastball middle 19%; Fastball up-away 18% | before: Fastball middle (foul), Fastball down-away (foul), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 27 · inning 5, 1 out, bases 12, score 6-5 · #9 (L, opposite side) vs Starter (R), pitch 92**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball middle (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball middle (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 28 · inning 5, 1 out, bases 123, score 6-5 · #1 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Slider middle** → ball — wild pitch, runners move up | top: Fastball middle 33%; Slider middle 33%; Fastball up-away 17% | before: first pitch
+- **hs_two_pitch_s104 · PA 30 · inning 6, 0 out, bases empty, score 7-8 · #3 (R, same side) vs Reliever (R), pitch 10**
+  - `2-1` **Slider middle** → ball | top: Slider middle 100% | before: Slider down-away (ball), Slider up-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider up-away (ball), Slider middle (cstrike), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 33 · inning 6, 1 out, bases 1, score 7-9 · #6 (R, same side) vs Reliever (R), pitch 16**
+  - `1-0` **Slider middle** → solid — solid contact: SINGLE | top: Fastball middle 34%; Slider middle 26%; Fastball down-away 20% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 34 · inning 6, 1 out, bases 12, score 7-9 · #7 (L, opposite side) vs Reliever (R), pitch 17**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 34%; Slider middle 25%; Fastball up-away 21% | before: first pitch
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 94%; Slider middle 6% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 35 · inning 6, 1 out, bases 123, score 7-9 · #8 (R, same side) vs Reliever (R), pitch 22**
+  - `1-0` **Slider middle** → weak — weak contact: OUT, RUN SCORES | top: Fastball middle 72%; Slider middle 28% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 36 · inning 6, 2 out, bases 12, score 7-10 · #9 (L, opposite side) vs Reliever (R), pitch 27**
+  - `2-2` **Slider middle** → ball | top: Slider down-away 53%; Fastball middle 25%; Slider middle 22% | before: Fastball middle (ball), Fastball up-away (foul), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 37 · inning 6, 2 out, bases 123, score 7-10 · #1 (L, opposite side) vs Reliever (R), pitch 29**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 67%; Slider middle 33% | before: first pitch
+- **hs_two_pitch_s104 · PA 38 · inning 7, 0 out, bases empty, score 8-10 · #2 (R, same side) vs Reliever (R), pitch 35**
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 44%; Slider middle 27%; Slider chase 17% | before: Slider down-away (cstrike), Slider middle (whiff), Fastball up-away (ball)
+- **hs_two_pitch_s104 · PA 40 · inning 7, 1 out, bases 1, score 8-10 · #4 (R, same side) vs Reliever (R), pitch 41**
+  - `0-0` **Slider middle** → cstrike | top: Slider middle 40%; Fastball middle 26%; Fastball up-away 17% | before: first pitch
+- **hs_two_pitch_s104 · PA 41 · inning 8, 0 out, bases empty, score 8-10 · #5 (R, same side) vs Reliever (R), pitch 43**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 43%; Slider down-away 30%; Slider up-away 27% | before: first pitch
+  - `1-0` **Slider down-away** → ball | top: Slider middle 46%; Slider down-away 29%; Slider up-away 24% | before: Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider middle (whiff), Slider middle (foul), Slider down-away (ball)
+- **hs_two_pitch_s104 · PA 42 · inning 8, 0 out, bases 1, score 8-10 · #6 (R, same side) vs Reliever (R), pitch 50**
+  - `1-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 64%; Slider middle 36% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s104 · PA 44 · inning 8, 2 out, bases 2, score 8-10 · #8 (R, same side) vs Reliever (R), pitch 54**
+  - `1-0` **Fastball down-in** → cstrike | top: Fastball middle 18%; Slider middle 13%; Fastball down-away 11% | before: Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider chase** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 53%; Slider middle 27%; Slider chase 19% | before: Fastball down-in (cstrike), Fastball down-away (ball), Fastball up-in (foul)  **⚑ R2 chase at 2-2**
+- **hs_two_pitch_s104 · PA 45 · inning 9, 0 out, bases empty, score 9-10 · #9 (L, opposite side) vs Reliever (R), pitch 58**
+  - `0-0` **Fastball up-away** → foul — foul pull | top: Fastball middle 23%; Slider middle 20%; Fastball up-away 15% | before: first pitch
+  - `0-2` **Slider middle** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 40%; Slider middle 29%; Slider chase 23% | before: Fastball up-away (foul), Slider down-away (cstrike), Fastball up-away (foul)
+- **hs_two_pitch_s104 · PA 47 · inning 9, 1 out, bases 1, score 9-10 · #2 (R, same side) vs Reliever (R), pitch 64**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 26%; Slider middle 24%; Slider down-away 18% | before: first pitch
+- **hs_two_pitch_s104 · PA 49 · inning 9, 1 out, bases 2, score 9-12 · #4 (R, same side) vs Reliever (R), pitch 70**
+  - `0-1` **Slider down-in** → ball | top: Slider middle 32%; Slider down-away 30%; Slider up-away 21% | before: Slider down-in (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider down-away** → foul — foul pull | top: Slider down-away 100% | before: Slider down-in (ball), Slider middle (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+
+## Complete games (6)
+
+
+### hs_default_s101
+
+- **hs_default_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 1**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 20%; Changeup down-away 19%; Slider middle 19% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 46%; Slider middle 38%; Changeup middle 16% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → cstrike | top: Slider middle 23%; Fastball middle 19%; Changeup middle 18% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider middle** → ball | top: Slider down-away 35%; Slider middle 19%; Changeup down-away 15% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (cstrike)
+  - `2-2` **Fastball middle** → foul — foul pull | top: Slider down-away 30%; Fastball up-away 29%; Slider middle 19% | before: Fastball middle (foul), Fastball middle (cstrike), Slider middle (ball)
+  - `2-2` **Slider middle** → cstrike — STRIKEOUT | top: Slider middle 47%; Slider down-away 31%; Fastball up-away 11% | before: Fastball middle (cstrike), Slider middle (ball), Fastball middle (foul)
+- **hs_default_s101 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 7**
+  - `0-0` **Fastball down-in** → weak — weak contact: OUT | top: Changeup down-away 22%; Slider middle 13%; Fastball middle 12% | before: first pitch
+- **hs_default_s101 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (R, same side) vs Starter (R), pitch 8**
+  - `0-0` **Slider up-away** → foul — foul straight back | top: Changeup middle 9%; Changeup down-away 9%; Fastball middle 8% | before: first pitch
+  - `0-1` **Changeup middle** → foul — foul straight back | top: Changeup down-away 8%; Changeup middle 7%; Slider middle 7% | before: Slider up-away (foul)
+  - `0-2` **Slider down-in** → solid — solid contact: OUT | top: Changeup down-away 22%; Slider down-away 13%; Slider chase 11% | before: Slider up-away (foul), Changeup middle (foul)
+- **hs_default_s101 · PA 4 · inning 2, 0 out, bases empty, score 4-0 · #4 (R, same side) vs Starter (R), pitch 11**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 20%; Slider middle 19%; Changeup down-away 18% | before: first pitch
+  - `1-0` **Changeup middle** → ball | top: Slider middle 31%; Fastball middle 19%; Changeup middle 14% | before: Fastball down-away (ball)
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 80%; Slider middle 20% | before: Fastball down-away (ball), Changeup middle (ball)
+- **hs_default_s101 · PA 5 · inning 2, 1 out, bases empty, score 4-0 · #5 (R, same side) vs Starter (R), pitch 14**
+  - `0-0` **Fastball down-in** → ball | top: Changeup down-away 21%; Slider middle 13%; Fastball middle 12% | before: first pitch
+  - `1-0` **Slider middle** → solid — solid contact: OUT | top: Slider middle 34%; Changeup middle 17%; Fastball middle 14% | before: Fastball down-in (ball)
+- **hs_default_s101 · PA 6 · inning 2, 2 out, bases empty, score 4-0 · #6 (L, opposite side) vs Starter (R), pitch 16**
+  - `0-0` **Slider middle** → weak — weak contact: OUT | top: Fastball middle 8%; Slider middle 7%; Changeup middle 7% | before: first pitch
+- **hs_default_s101 · PA 7 · inning 3, 0 out, bases empty, score 5-0 · #7 (R, same side) vs Starter (R), pitch 17**
+  - `0-0` **Fastball up-away** → cstrike | top: Slider middle 20%; Fastball middle 20%; Changeup down-away 18% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Changeup down-away 19%; Slider middle 15%; Slider down-away 15% | before: Fastball up-away (cstrike)
+  - `1-1` **Changeup middle** → cstrike | top: Slider middle 23%; Fastball middle 20%; Slider down-away 17% | before: Fastball up-away (cstrike), Fastball down-away (ball)
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 37%; Fastball up-away 22%; Slider chase 16% | before: Fastball up-away (cstrike), Fastball down-away (ball), Changeup middle (cstrike)
+  - `2-2` **Slider down-away** → ball | top: Slider middle 51%; Slider down-away 24%; Fastball up-away 18% | before: Fastball down-away (ball), Changeup middle (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 65%; Fastball middle 35% | before: Changeup middle (cstrike), Slider down-away (ball), Slider down-away (ball)
+- **hs_default_s101 · PA 8 · inning 3, 0 out, bases 2, score 5-0 · #8 (R, same side) vs Starter (R), pitch 23**
+  - `0-0` **Fastball middle** → foul — foul opposite | top: Slider middle 33%; Fastball middle 23%; Changeup middle 16% | before: first pitch
+  - `0-1` **Fastball middle** → foul — foul opposite | top: Changeup down-away 17%; Slider middle 15%; Slider down-away 15% | before: Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Slider down-away** → ball | top: Slider down-away 44%; Slider chase 27%; Fastball up-away 17% | before: Fastball middle (foul), Fastball middle (foul)
+  - `1-2` **Slider chase** → ball | top: Fastball up-away 37%; Fastball down-away 16%; Slider down-away 13% | before: Fastball middle (foul), Fastball middle (foul), Slider down-away (ball)
+  - `2-2` **Slider middle** → ball | top: Fastball up-away 26%; Slider middle 23%; Slider down-away 19% | before: Fastball middle (foul), Slider down-away (ball), Slider chase (ball)
+  - `3-2` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 100% | before: Slider down-away (ball), Slider chase (ball), Slider middle (ball)
+- **hs_default_s101 · PA 9 · inning 3, 0 out, bases 12, score 5-0 · #9 (R, same side) vs Starter (R), pitch 29**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 31%; Slider middle 22%; Fastball up-away 18% | before: first pitch
+  - `1-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Slider middle (ball)
+- **hs_default_s101 · PA 10 · inning 3, 1 out, bases 12, score 5-0 · #1 (L, opposite side) vs Starter (R), pitch 31**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 28%; Slider middle 20%; Fastball up-away 19% | before: first pitch
+  - `1-0` **Fastball up-away** → foul — foul straight back | top: Fastball middle 38%; Fastball up-away 25%; Fastball down-away 23% | before: Slider middle (ball)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 29%; Slider middle 20%; Fastball up-away 20% | before: Slider middle (ball), Fastball up-away (foul)
+  - `2-1` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 100% | before: Slider middle (ball), Fastball up-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 11 · inning 3, 1 out, bases 2, score 5-2 · #2 (R, same side) vs Starter (R), pitch 35**
+  - `0-0` **Slider middle** → ball | top: Slider middle 26%; Changeup middle 20%; Fastball middle 15% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Slider middle 22%; Fastball middle 17%; Changeup middle 16% | before: Slider middle (ball)
+  - `2-0` **Slider middle** → ball | top: Fastball middle 77%; Slider middle 13%; Changeup middle 10% | before: Slider middle (ball), Fastball middle (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball), Slider middle (ball)
+  - `3-1` **Fastball middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 100% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 12 · inning 3, 2 out, bases 3, score 5-2 · #3 (R, same side) vs Starter (R), pitch 40**
+  - `0-0` **Fastball middle** → hard — hard contact: SINGLE | top: Slider middle 27%; Changeup middle 21%; Fastball middle 12% | before: first pitch
+- **hs_default_s101 · PA 13 · inning 3, 2 out, bases 1, score 5-3 · #4 (R, same side) vs Starter (R), pitch 41**
+  - `0-0` **Fastball down-in** → hard — hard contact: TRIPLE | top: Slider middle 28%; Changeup middle 24%; Fastball middle 13% | before: first pitch
+- **hs_default_s101 · PA 14 · inning 3, 2 out, bases 3, score 5-4 · #5 (R, same side) vs Starter (R), pitch 42**
+  - `0-0` **Changeup middle** → ball | top: Slider middle 28%; Changeup middle 21%; Fastball middle 11% | before: first pitch
+  - `1-0` **Slider middle** → foul — foul straight back | top: Slider middle 27%; Changeup middle 17%; Fastball up-away 12% | before: Changeup middle (ball)
+  - `1-1` **Fastball middle** → cstrike | top: Slider middle 30%; Changeup middle 18%; Fastball up-away 11% | before: Changeup middle (ball), Slider middle (foul)
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 30%; Slider chase 27%; Changeup down-away 16% | before: Changeup middle (ball), Slider middle (foul), Fastball middle (cstrike)
+  - `2-2` **Slider middle** → ball | top: Fastball up-away 22%; Changeup middle 16%; Slider middle 16% | before: Slider middle (foul), Fastball middle (cstrike), Slider down-away (ball)
+  - `3-2` **Slider down-away** → ball — WALK | top: Fastball up-in 23%; Slider down-away 18%; Fastball up-away 14% | before: Fastball middle (cstrike), Slider down-away (ball), Slider middle (ball)
+- **hs_default_s101 · PA 15 · inning 4, 0 out, bases empty, score 8-4 · #6 (L, opposite side) vs Starter (R), pitch 48**
+  - `0-0` **Fastball up-away** → ball | top: Slider middle 26%; Fastball middle 22%; Changeup down-away 22% | before: first pitch
+  - `1-0` **Slider middle** → weak — weak contact: OUT | top: Slider middle 22%; Fastball middle 18%; Changeup middle 17% | before: Fastball up-away (ball)
+- **hs_default_s101 · PA 16 · inning 4, 1 out, bases empty, score 8-4 · #7 (R, same side) vs Starter (R), pitch 50**
+  - `0-0` **Slider middle** → ball | top: Slider middle 28%; Changeup down-away 23%; Fastball middle 13% | before: first pitch
+  - `1-0` **Fastball middle** → solid — solid contact: SINGLE | top: Slider middle 24%; Changeup middle 19%; Fastball middle 15% | before: Slider middle (ball)
+- **hs_default_s101 · PA 17 · inning 4, 1 out, bases 2, score 8-4 · #8 (R, same side) vs Starter (R), pitch 52**
+  - `0-0` **Slider middle** → ball | top: Slider middle 26%; Changeup middle 18%; Fastball middle 15% | before: first pitch
+  - `1-0` **Fastball up-in** → whiff — whiff (fooled) | top: Slider middle 22%; Fastball middle 16%; Changeup middle 15% | before: Slider middle (ball)
+  - `1-1` **Fastball up-away** → ball | top: Slider middle 29%; Changeup middle 16%; Fastball middle 15% | before: Slider middle (ball), Fastball up-in (whiff)
+  - `2-1` **Fastball up-in** → whiff — whiff (fooled) | top: Fastball middle 34%; Fastball up-away 18%; Fastball down-away 16% | before: Slider middle (ball), Fastball up-in (whiff), Fastball up-away (ball)
+  - `2-2` **Fastball down-away** → foul — foul pull | top: Slider middle 24%; Fastball up-away 24%; Slider down-away 19% | before: Fastball up-in (whiff), Fastball up-away (ball), Fastball up-in (whiff)
+  - `2-2` **Fastball up-in** → weak — weak contact: OUT | top: Slider down-away 28%; Fastball up-away 23%; Slider middle 14% | before: Fastball up-away (ball), Fastball up-in (whiff), Fastball down-away (foul)
+- **hs_default_s101 · PA 18 · inning 4, 2 out, bases 2, score 8-4 · #9 (R, same side) vs Starter (R), pitch 58**
+  - `0-0` **Slider middle** → weak — weak contact: SINGLE | top: Slider middle 14%; Fastball middle 14%; Slider down-away 14% | before: first pitch
+- **hs_default_s101 · PA 19 · inning 4, 2 out, bases 1, score 8-5 · #1 (L, opposite side) vs Starter (R), pitch 59**
+  - `0-0` **Fastball down-away** → hard — hard contact: SINGLE | top: Slider middle 19%; Slider down-away 17%; Fastball middle 16% | before: first pitch
+- **hs_default_s101 · PA 20 · inning 4, 2 out, bases 12, score 8-5 · #2 (R, same side) vs Starter (R), pitch 60**
+  - `0-0` **Fastball middle** → cstrike | top: Slider middle 31%; Fastball middle 23%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Fastball up-away** → ball | top: Slider middle 21%; Slider down-away 20%; Fastball up-away 16% | before: Fastball middle (cstrike)
+  - `1-1` **Fastball up-in** → cstrike | top: Slider middle 37%; Fastball middle 17%; Fastball up-away 14% | before: Fastball middle (cstrike), Fastball up-away (ball)
+  - `1-2` **Fastball down-away** → foul — foul opposite | top: Fastball up-away 48%; Fastball down-away 32%; Fastball chase 20% | before: Fastball middle (cstrike), Fastball up-away (ball), Fastball up-in (cstrike)
+  - `1-2` **Fastball up-away** → ball | top: Fastball up-away 67%; Fastball up-in 33% | before: Fastball up-away (ball), Fastball up-in (cstrike), Fastball down-away (foul)
+  - `2-2` **Fastball down-away** → ball | top: Fastball down-away 27%; Fastball up-in 25%; Fastball up-away 23% | before: Fastball up-in (cstrike), Fastball down-away (foul), Fastball up-away (ball)
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (foul), Fastball up-away (ball), Fastball down-away (ball)
+- **hs_default_s101 · PA 21 · inning 4, 2 out, bases 123, score 8-5 · #3 (R, same side) vs Starter (R), pitch 67**
+  - `0-0` **Slider middle** → weak — weak contact: SINGLE | top: Fastball middle 36%; Fastball up-away 25%; Fastball down-away 22% | before: first pitch
+- **hs_default_s101 · PA 22 · inning 4, 2 out, bases 13, score 8-7 · #4 (R, same side) vs Starter (R), pitch 68**
+  - `0-0` **Fastball up-in** → cstrike | top: Slider middle 26%; Fastball middle 19%; Fastball up-away 16% | before: first pitch
+  - `0-1` **Fastball down-in** → foul — foul straight back | top: Slider middle 35%; Fastball up-away 17%; Fastball down-away 15% | before: Fastball up-in (cstrike)
+  - `0-2` **Slider chase** → whiff — whiff (out in front); STRIKEOUT | top: Slider chase 36%; Slider down-away 32%; Fastball up-away 32% | before: Fastball up-in (cstrike), Fastball down-in (foul)
+- **hs_default_s101 · PA 23 · inning 5, 0 out, bases empty, score 8-7 · #5 (R, same side) vs Starter (R), pitch 71**
+  - `0-0` **Fastball up-away** → cstrike | top: Slider middle 26%; Changeup down-away 20%; Fastball middle 18% | before: first pitch
+  - `0-1` **Slider middle** → solid — solid contact: ERROR | top: Changeup down-away 22%; Slider middle 12%; Slider down-away 12% | before: Fastball up-away (cstrike)
+- **hs_default_s101 · PA 24 · inning 5, 0 out, bases 1, score 8-7 · #6 (L, opposite side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 26%; Slider middle 22%; Fastball up-away 19% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Slider middle 28%; Changeup down-away 18%; Fastball up-away 17% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 25%; Slider middle 25%; Fastball up-away 20% | before: Fastball middle (cstrike), Fastball middle (ball)
+  - `2-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball middle (ball), Fastball up-away (ball)
+- **hs_default_s101 · PA 25 · inning 5, 1 out, bases 2, score 8-7 · #7 (R, same side) vs Starter (R), pitch 77**
+  - `0-0` **Slider middle** → ball | top: Slider middle 26%; Changeup middle 18%; Fastball middle 15% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Slider middle 22%; Fastball middle 16%; Changeup middle 14% | before: Slider middle (ball)
+  - `2-0` **Fastball up-away** → ball | top: Fastball middle 57%; Fastball up-away 30%; Slider middle 13% | before: Slider middle (ball), Fastball middle (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball up-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 26 · inning 5, 1 out, bases 2, score 8-8 · #8 (R, same side) vs Starter (R), pitch 82**
+  - `0-0` **Fastball down-in** → ball | top: Slider middle 26%; Changeup middle 18%; Fastball middle 15% | before: first pitch
+  - `1-0` **Fastball down-in** → ball | top: Slider middle 24%; Fastball middle 16%; Changeup middle 15% | before: Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → solid — solid contact: DOUBLE | top: Fastball middle 57%; Fastball up-away 28%; Slider middle 15% | before: Fastball down-in (ball), Fastball down-in (ball)
+- **hs_default_s101 · PA 27 · inning 5, 1 out, bases 2, score 8-9 · #9 (R, same side) vs Starter (R), pitch 85**
+  - `0-0` **Changeup middle** → ball | top: Slider middle 27%; Changeup middle 18%; Fastball middle 15% | before: first pitch
+  - `1-0` **Slider middle** → foul — foul straight back | top: Slider middle 25%; Fastball middle 16%; Fastball up-away 14% | before: Changeup middle (ball)
+  - `1-1` **Fastball up-in** → ball | top: Slider middle 31%; Changeup middle 15%; Fastball middle 15% | before: Changeup middle (ball), Slider middle (foul)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 39%; Fastball up-away 20%; Slider middle 19% | before: Changeup middle (ball), Slider middle (foul), Fastball up-in (ball)
+  - `2-2` **Fastball up-away** → foul — foul opposite | top: Slider down-away 55%; Slider middle 32%; Fastball up-away 9% | before: Slider middle (foul), Fastball up-in (ball), Fastball middle (cstrike)
+  - `2-2` **Slider down-away** → weak — weak contact: SINGLE | top: Slider down-away 51%; Slider middle 38%; Changeup middle 7% | before: Fastball up-in (ball), Fastball middle (cstrike), Fastball up-away (foul)
+- **hs_default_s101 · PA 28 · inning 5, 1 out, bases 23, score 8-9 · #1 (L, opposite side) vs Starter (R), pitch 91**
+  - `0-0` **Fastball down-away** → weak — weak contact: SINGLE | top: Slider middle 28%; Fastball middle 24%; Fastball up-away 18% | before: first pitch
+- **hs_default_s101 · PA 29 · inning 5, 1 out, bases 23, score 8-10 · #2 (R, same side) vs Starter (R), pitch 92**
+  - `0-0` **Slider middle** → foul — foul opposite | top: Slider middle 27%; Fastball middle 25%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Slider middle** → ball | top: Slider down-away 18%; Slider middle 16%; Fastball up-away 16% | before: Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → foul — foul pull | top: Slider middle 30%; Fastball middle 19%; Fastball up-away 16% | before: Slider middle (foul), Slider middle (ball)
+  - `1-2` **Slider chase** → foul — foul opposite | top: Slider down-away 48%; Slider chase 37%; Changeup down-away 9% | before: Slider middle (foul), Slider middle (ball), Fastball middle (foul)
+  - `1-2` **Fastball up-away** → ball | top: Slider down-away 41%; Fastball up-away 24%; Slider chase 22% | before: Slider middle (ball), Fastball middle (foul), Slider chase (foul)
+  - `2-2` **Slider middle** → cstrike — STRIKEOUT | top: Slider down-away 69%; Slider middle 31% | before: Fastball middle (foul), Slider chase (foul), Fastball up-away (ball)
+- **hs_default_s101 · PA 30 · inning 5, 2 out, bases 23, score 8-10 · #3 (R, same side) vs Reliever (R), pitch 1**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 25%; Fastball middle 22%; Fastball up-away 16% | before: first pitch
+  - `1-0` **Changeup down-away** → ball | top: Fastball middle 25%; Fastball up-away 18%; Curveball middle 17% | before: Curveball middle (ball)
+  - `2-0` **Fastball down-away** → weak — weak contact: OUT | top: Fastball middle 43%; Fastball up-away 22%; Fastball down-away 20% | before: Curveball middle (ball), Changeup down-away (ball)
+- **hs_default_s101 · PA 31 · inning 6, 0 out, bases empty, score 9-10 · #4 (R, same side) vs Reliever (R), pitch 4**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 27%; Fastball middle 24%; Changeup middle 19% | before: first pitch
+  - `1-0` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 32%; Curveball middle 19%; Fastball up-away 17% | before: Curveball middle (ball)
+  - `1-1` **Curveball middle** → foul — foul pull | top: Fastball middle 28%; Curveball middle 23%; Fastball up-away 18% | before: Curveball middle (ball), Fastball middle (whiff)
+  - `1-2` **Fastball up-away** → ball | top: Fastball up-away 56%; Fastball middle 22%; Fastball down-away 22% | before: Curveball middle (ball), Fastball middle (whiff), Curveball middle (foul)
+  - `2-2` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 51%; Fastball down-away 29%; Fastball up-away 20% | before: Fastball middle (whiff), Curveball middle (foul), Fastball up-away (ball)
+- **hs_default_s101 · PA 32 · inning 6, 0 out, bases 2, score 9-10 · #5 (R, same side) vs Reliever (R), pitch 9**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 36%; Fastball up-away 23%; Fastball down-away 22% | before: first pitch
+  - `1-0` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 85%; Changeup middle 15% | before: Fastball up-away (ball)
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 41%; Fastball up-away 24%; Fastball down-away 22% | before: Fastball up-away (ball), Fastball middle (whiff)
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 95%; Changeup middle 5% | before: Fastball up-away (ball), Fastball middle (whiff), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 93%; Changeup middle 7% | before: Fastball middle (whiff), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 33 · inning 6, 0 out, bases 12, score 9-10 · #6 (L, opposite side) vs Reliever (R), pitch 16**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 65%; Curveball middle 21%; Changeup middle 15% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 67%; Curveball middle 20%; Changeup middle 13% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Changeup middle** → solid — solid contact: DOUBLE | top: Fastball middle 66%; Curveball middle 22%; Changeup middle 13% | before: Fastball middle (ball), Fastball middle (foul)
+- **hs_default_s101 · PA 34 · inning 6, 0 out, bases 2, score 9-12 · #7 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Fastball down-away** → whiff — whiff (fooled) | top: Curveball middle 26%; Fastball middle 25%; Changeup middle 22% | before: first pitch
+  - `0-1` **Fastball up-away** → ball | top: Fastball middle 25%; Curveball middle 24%; Fastball up-away 19% | before: Fastball down-away (whiff)
+  - `1-1` **Changeup middle** → ball | top: Fastball middle 56%; Curveball middle 26%; Changeup middle 18% | before: Fastball down-away (whiff), Fastball up-away (ball)
+  - `2-1` **Changeup middle** → ball | top: Fastball middle 74%; Curveball middle 18%; Changeup middle 8% | before: Fastball down-away (whiff), Fastball up-away (ball), Changeup middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 86%; Curveball middle 14% | before: Fastball up-away (ball), Changeup middle (ball), Changeup middle (ball)
+  - `3-2` **Curveball middle** → ball — WALK | top: Fastball middle 86%; Curveball middle 14% | before: Changeup middle (ball), Changeup middle (ball), Fastball middle (foul)
+- **hs_default_s101 · PA 35 · inning 6, 0 out, bases 12, score 9-12 · #8 (R, same side) vs Reliever (R), pitch 25**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 73%; Curveball middle 17%; Changeup middle 10% | before: first pitch
+  - `0-1` **Fastball up-away** → cstrike | top: Fastball middle 31%; Fastball up-away 24%; Fastball down-away 21% | before: Fastball middle (cstrike)
+  - `0-2` **Fastball chase** → whiff — whiff (late); STRIKEOUT | top: Fastball down-away 30%; Fastball up-away 22%; Curveball down-away 18% | before: Fastball middle (cstrike), Fastball up-away (cstrike)
+- **hs_default_s101 · PA 36 · inning 6, 1 out, bases 12, score 9-12 · #9 (R, same side) vs Reliever (R), pitch 28**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 40%; Fastball up-away 22%; Fastball down-away 21% | before: first pitch
+  - `0-1` **Curveball down-away** → ball | top: Fastball middle 31%; Fastball up-away 24%; Fastball down-away 24% | before: Fastball up-away (cstrike)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 66%; Fastball up-away 34% | before: Fastball up-away (cstrike), Curveball down-away (ball)
+  - `2-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball up-away (cstrike), Curveball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 37 · inning 6, 1 out, bases 12, score 9-13 · #1 (L, opposite side) vs Reliever (R), pitch 32**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 34%; Fastball up-away 20%; Fastball down-away 19% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 88%; Curveball middle 12% | before: Fastball down-away (ball)
+  - `2-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 38 · inning 6, 1 out, bases 123, score 9-13 · #2 (R, same side) vs Reliever (R), pitch 36**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 86%; Curveball middle 14% | before: first pitch
+  - `1-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 39 · inning 6, 1 out, bases 123, score 9-14 · #3 (R, same side) vs Reliever (R), pitch 38**
+  - `0-0` **Fastball middle** → weak — weak contact: ERROR | top: Fastball middle 85%; Curveball middle 15% | before: first pitch
+- **hs_default_s101 · PA 40 · inning 6, 1 out, bases 123, score 9-15 · #4 (R, same side) vs Reliever (R), pitch 39**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 84%; Curveball middle 16% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 41 · inning 6, 1 out, bases 123, score 9-16 · #5 (R, same side) vs Reliever (R), pitch 44**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 82%; Curveball middle 18% | before: first pitch
+- **hs_default_s101 · PA 42 · inning 6, 2 out, bases 123, score 9-16 · #6 (L, opposite side) vs Reliever (R), pitch 45**
+  - `0-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 82%; Curveball middle 18% | before: first pitch
+- **hs_default_s101 · PA 43 · inning 7, 0 out, bases empty, score 11-16 · #7 (R, same side) vs Reliever (R), pitch 46**
+  - `0-0` **Curveball middle** → cstrike | top: Curveball middle 27%; Fastball middle 23%; Changeup middle 20% | before: first pitch
+  - `0-1` **Changeup down-away** → ball | top: Curveball middle 28%; Fastball middle 21%; Changeup down-away 18% | before: Curveball middle (cstrike)
+  - `1-1` **Fastball middle** → cstrike | top: Curveball middle 28%; Fastball middle 26%; Changeup middle 16% | before: Curveball middle (cstrike), Changeup down-away (ball)
+  - `1-2` **Curveball down-away** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 30%; Curveball down-away 23%; Fastball down-away 19% | before: Curveball middle (cstrike), Changeup down-away (ball), Fastball middle (cstrike)
+- **hs_default_s101 · PA 44 · inning 7, 1 out, bases empty, score 11-16 · #8 (R, same side) vs Reliever (R), pitch 50**
+  - `0-0` **Fastball down-away** → ball | top: Changeup middle 22%; Fastball middle 19%; Curveball middle 17% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Curveball middle 31%; Fastball middle 22%; Changeup middle 19% | before: Fastball down-away (ball)
+  - `1-1` **Curveball middle** → hard — hard contact: DOUBLE | top: Fastball middle 20%; Changeup middle 19%; Curveball middle 19% | before: Fastball down-away (ball), Fastball middle (foul)
+- **hs_default_s101 · PA 45 · inning 7, 1 out, bases 2, score 11-16 · #9 (R, same side) vs Reliever (R), pitch 53**
+  - `0-0` **Fastball up-away** → solid — solid contact: SINGLE | top: Curveball middle 31%; Fastball middle 23%; Changeup middle 16% | before: first pitch
+- **hs_default_s101 · PA 46 · inning 7, 1 out, bases 13, score 11-16 · #1 (L, opposite side) vs Reliever (R), pitch 54**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 28%; Curveball middle 27%; Fastball up-away 17% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 66%; Curveball middle 25%; Changeup middle 9% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball up-away** → foul — foul straight back | top: Fastball middle 40%; Curveball middle 28%; Fastball up-away 23% | before: Fastball middle (ball), Fastball middle (foul)
+  - `1-2` **Curveball down-away** → ball | top: Curveball down-away 40%; Fastball down-away 18%; Curveball chase 17% | before: Fastball middle (ball), Fastball middle (foul), Fastball up-away (foul)
+  - `2-2` **Fastball up-away** → foul — foul pull | top: Fastball up-away 70%; Fastball middle 30% | before: Fastball middle (foul), Fastball up-away (foul), Curveball down-away (ball)
+  - `2-2` **Curveball down-away** → ball | top: Fastball middle 43%; Curveball down-away 30%; Curveball middle 27% | before: Fastball up-away (foul), Curveball down-away (ball), Fastball up-away (foul)
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Curveball down-away (ball), Fastball up-away (foul), Curveball down-away (ball)
+  - `3-2` **Fastball middle** → whiff — whiff (late); STRIKEOUT | top: Fastball middle 81%; Curveball middle 19% | before: Fastball up-away (foul), Curveball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 47 · inning 7, 2 out, bases 13, score 11-16 · #2 (R, same side) vs Reliever (R), pitch 62**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 29%; Fastball up-away 20%; Curveball middle 20% | before: first pitch
+  - `1-0` **Fastball up-away** → whiff — whiff (out in front) | top: Fastball middle 36%; Fastball up-away 23%; Fastball down-away 21% | before: Fastball middle (ball)
+  - `1-1` **Fastball down-away** → solid — solid contact: SINGLE | top: Fastball middle 34%; Fastball up-away 24%; Curveball middle 21% | before: Fastball middle (ball), Fastball up-away (whiff)
+- **hs_default_s101 · PA 48 · inning 7, 2 out, bases 13, score 11-17 · #3 (R, same side) vs Reliever (R), pitch 65**
+  - `0-0` **Curveball middle** → ball | top: Fastball middle 30%; Fastball up-away 21%; Curveball middle 20% | before: first pitch
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 38%; Fastball up-away 24%; Fastball down-away 22% | before: Curveball middle (ball)
+- **hs_default_s101 · PA 49 · inning 8, 0 out, bases empty, score 15-17 · #4 (R, same side) vs Reliever (R), pitch 67**
+  - `0-0` **Changeup middle** → foul — foul pull | top: Curveball middle 25%; Fastball middle 24%; Changeup middle 19% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Curveball middle 28%; Fastball middle 21%; Changeup down-away 18% | before: Changeup middle (foul)
+  - `1-1` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 26%; Curveball middle 26%; Fastball up-away 17% | before: Changeup middle (foul), Fastball down-away (ball)
+  - `1-2` **Fastball middle** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 34%; Curveball down-away 26%; Fastball down-away 21% | before: Changeup middle (foul), Fastball down-away (ball), Fastball middle (whiff)
+- **hs_default_s101 · PA 50 · inning 8, 1 out, bases empty, score 15-17 · #5 (R, same side) vs Reliever (R), pitch 71**
+  - `0-0` **Fastball up-in** → cstrike | top: Curveball middle 27%; Changeup middle 21%; Fastball middle 17% | before: first pitch
+  - `0-1` **Curveball middle** → whiff — whiff (fooled) | top: Curveball middle 18%; Curveball down-away 18%; Fastball middle 17% | before: Fastball up-in (cstrike)
+  - `0-2` **Fastball down-away** → ball | top: Curveball down-away 25%; Fastball up-away 24%; Fastball chase 15% | before: Fastball up-in (cstrike), Curveball middle (whiff)
+  - `1-2` **Fastball down-away** → ball | top: Fastball up-away 25%; Curveball down-away 15%; Curveball chase 14% | before: Fastball up-in (cstrike), Curveball middle (whiff), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball up-away 33%; Fastball middle 29%; Curveball down-away 23% | before: Curveball middle (whiff), Fastball down-away (ball), Fastball down-away (ball)
+- **hs_default_s101 · PA 51 · inning 8, 2 out, bases empty, score 15-17 · #6 (L, opposite side) vs Reliever (R), pitch 76**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 13%; Curveball middle 12%; Curveball down-away 11% | before: first pitch
+  - `0-1` **Fastball up-away** → ball | top: Fastball middle 12%; Fastball up-away 11%; Fastball down-away 10% | before: Fastball up-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Curveball up-away** → ball | top: Curveball middle 16%; Fastball middle 15%; Curveball down-away 14% | before: Fastball up-away (cstrike), Fastball up-away (ball)
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Curveball middle 31%; Fastball middle 21%; Fastball up-away 13% | before: Fastball up-away (cstrike), Fastball up-away (ball), Curveball up-away (ball)
+  - `2-2` **Curveball middle** → ball | top: Fastball up-away 19%; Curveball down-away 16%; Curveball middle 16% | before: Fastball up-away (ball), Curveball up-away (ball), Fastball middle (foul)
+  - `3-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 52%; Fastball up-away 25%; Fastball up-in 23% | before: Curveball up-away (ball), Fastball middle (foul), Curveball middle (ball)
+- **hs_default_s101 · PA 52 · inning 9, 0 out, bases empty, score 15-17 · #7 (R, same side) vs Reliever (R), pitch 82**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 30%; Curveball middle 29%; Fastball up-away 21% | before: first pitch
+  - `1-0` **Fastball up-away** → ball | top: Fastball middle 36%; Curveball middle 24%; Fastball up-away 20% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 86%; Curveball middle 14% | before: Fastball middle (ball), Fastball up-away (ball)
+  - `2-1` **Curveball middle** → whiff — whiff (fooled) | top: Fastball middle 88%; Curveball middle 12% | before: Fastball middle (ball), Fastball up-away (ball), Fastball middle (cstrike)
+  - `2-2` **Fastball up-away** → hard — hard contact: DOUBLE | top: Fastball up-away 53%; Fastball middle 39%; Curveball middle 8% | before: Fastball up-away (ball), Fastball middle (cstrike), Curveball middle (whiff)
+- **hs_default_s101 · PA 53 · inning 9, 0 out, bases 2, score 15-17 · #8 (R, same side) vs Reliever (R), pitch 87**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 49%; Fastball up-away 21%; Fastball down-away 19% | before: first pitch
+  - `0-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 38%; Fastball up-away 26%; Fastball down-away 24% | before: Fastball up-away (cstrike)
+  - `0-2` **Fastball up-away** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 60%; Fastball down-away 22%; Fastball chase 14% | before: Fastball up-away (cstrike), Fastball middle (whiff)
+- **hs_default_s101 · PA 54 · inning 9, 1 out, bases 2, score 15-17 · #9 (R, same side) vs Reliever (R), pitch 90**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 44%; Fastball up-away 24%; Fastball down-away 21% | before: first pitch
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 51%; Fastball up-away 22%; Fastball down-away 18% | before: Fastball down-away (ball)
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 43%; Fastball up-away 26%; Fastball down-away 21% | before: Fastball down-away (ball), Fastball middle (cstrike)
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 99%; Curveball middle 1% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → solid — solid contact: OUT, RUNNER TO 3RD | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_default_s101 · PA 55 · inning 9, 2 out, bases 3, score 15-17 · #1 (L, opposite side) vs Reliever (R), pitch 95**
+  - `0-0` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 28%; Fastball up-away 19%; Fastball down-away 17% | before: first pitch
+- **hs_default_s101 · PA 56 · inning 9, 2 out, bases 2, score 15-18 · #2 (R, same side) vs Reliever (R), pitch 96**
+  - `0-0` **Fastball middle** → ball | top: Curveball middle 18%; Curveball down-away 17%; Fastball middle 16% | before: first pitch
+  - `1-0` **Fastball up-in** → ball | top: Curveball middle 33%; Fastball middle 16%; Fastball up-away 14% | before: Fastball middle (ball)
+  - `2-0` **Fastball down-in** → ball | top: Curveball middle 29%; Fastball middle 19%; Fastball up-away 14% | before: Fastball middle (ball), Fastball up-in (ball)
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 81%; Curveball middle 19% | before: Fastball middle (ball), Fastball up-in (ball), Fastball down-in (ball)
+- **hs_default_s101 · PA 57 · inning 9, 2 out, bases 12, score 15-18 · #3 (R, same side) vs Reliever (R), pitch 100**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 30%; Curveball middle 29%; Fastball up-away 21% | before: first pitch
+  - `1-0` **Fastball down-away** → whiff — whiff (late) | top: Fastball middle 33%; Curveball middle 26%; Fastball up-away 21% | before: Fastball up-away (ball)
+  - `1-1` **Fastball up-away** → cstrike | top: Fastball middle 33%; Curveball middle 24%; Fastball up-away 23% | before: Fastball up-away (ball), Fastball down-away (whiff)
+  - `1-2` **Fastball down-away** → weak — weak contact: OUT | top: Curveball chase 23%; Curveball down-away 21%; Fastball down-away 17% | before: Fastball up-away (ball), Fastball down-away (whiff), Fastball up-away (cstrike)
+
+### hs_two_pitch_s102
+
+- **hs_two_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 1**
+  - `0-0` **Curveball middle** → cstrike | top: Curveball middle 32%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+  - `0-1` **Curveball middle** → ball | top: Fastball middle 25%; Fastball up-away 20%; Fastball down-away 20% | before: Curveball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 32%; Curveball middle 28%; Fastball up-away 20% | before: Curveball middle (cstrike), Curveball middle (ball)
+  - `1-2` **Fastball down-away** → whiff — whiff (out in front); STRIKEOUT | top: Curveball down-away 35%; Curveball middle 23%; Fastball up-away 17% | before: Curveball middle (cstrike), Curveball middle (ball), Fastball middle (foul)
+- **hs_two_pitch_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 5**
+  - `0-0` **Curveball middle** → cstrike | top: Fastball middle 18%; Curveball middle 17%; Curveball down-away 17% | before: first pitch
+  - `0-1` **Fastball up-away** → foul — foul pull | top: Curveball down-away 19%; Curveball middle 18%; Fastball middle 16% | before: Curveball middle (cstrike)
+  - `0-2` **Curveball down-away** → cstrike — STRIKEOUT | top: Curveball down-away 27%; Curveball middle 20%; Fastball down-away 13% | before: Curveball middle (cstrike), Fastball up-away (foul)
+- **hs_two_pitch_s102 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 8**
+  - `0-0` **Curveball down-in** → foul — foul opposite | top: Fastball middle 13%; Curveball middle 11%; Curveball down-away 11% | before: first pitch
+  - `0-1` **Curveball down-in** → ball | top: Curveball down-away 12%; Fastball middle 12%; Curveball middle 12% | before: Curveball down-in (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball up-in** → ball | top: Fastball middle 15%; Curveball middle 14%; Curveball down-away 14% | before: Curveball down-in (foul), Curveball down-in (ball)
+  - `2-1` **Curveball middle** → ball | top: Curveball middle 31%; Fastball middle 21%; Fastball down-away 13% | before: Curveball down-in (foul), Curveball down-in (ball), Fastball up-in (ball)
+  - `3-1` **Fastball middle** → cstrike | top: Fastball middle 30%; Curveball middle 21%; Fastball down-away 12% | before: Curveball down-in (ball), Fastball up-in (ball), Curveball middle (ball)
+  - `3-2` **Curveball middle** → ball — WALK | top: Curveball middle 32%; Fastball middle 31%; Fastball up-in 13% | before: Fastball up-in (ball), Curveball middle (ball), Fastball middle (cstrike)
+- **hs_two_pitch_s102 · PA 4 · inning 1, 2 out, bases 1, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 14**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 32%; Fastball middle 19%; Fastball up-away 14% | before: first pitch
+  - `1-0` **Fastball middle** → cstrike | top: Curveball middle 27%; Fastball middle 21%; Fastball down-away 14% | before: Curveball middle (ball)
+  - `1-1` **Fastball down-away** → whiff — whiff (out in front) | top: Curveball middle 32%; Fastball middle 19%; Fastball up-away 14% | before: Curveball middle (ball), Fastball middle (cstrike)
+  - `1-2` **Curveball down-away** → weak — weak contact: OUT | top: Curveball down-away 27%; Curveball middle 19%; Fastball down-away 13% | before: Curveball middle (ball), Fastball middle (cstrike), Fastball down-away (whiff)
+- **hs_two_pitch_s102 · PA 5 · inning 2, 0 out, bases empty, score 0-0 · #5 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Fastball up-away** → solid — solid contact: DOUBLE | top: Fastball middle 31%; Curveball down-away 27%; Fastball up-away 21% | before: first pitch
+- **hs_two_pitch_s102 · PA 6 · inning 2, 0 out, bases 2, score 0-0 · #6 (R, same side) vs Starter (R), pitch 19**
+  - `0-0` **Fastball up-away** → solid — solid contact: SINGLE | top: Fastball middle 35%; Curveball middle 22%; Fastball up-away 21% | before: first pitch
+- **hs_two_pitch_s102 · PA 7 · inning 2, 0 out, bases 2, score 0-1 · #7 (R, same side) vs Starter (R), pitch 20**
+  - `0-0` **Curveball middle** → ball | top: Fastball middle 35%; Curveball middle 23%; Fastball up-away 21% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 42%; Fastball down-away 22%; Fastball up-away 21% | before: Curveball middle (ball)
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Curveball middle** → foul — foul opposite | top: Curveball down-away 25%; Fastball up-away 20%; Fastball down-away 19% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (foul)
+  - `2-2` **Fastball up-away** → foul — foul opposite | top: Fastball middle 62%; Fastball up-away 38% | before: Fastball middle (foul), Fastball middle (foul), Curveball middle (foul)
+  - `2-2` **Fastball down-away** → foul — foul straight back | top: Fastball middle 46%; Fastball down-away 23%; Curveball down-away 16% | before: Fastball middle (foul), Curveball middle (foul), Fastball up-away (foul)
+  - `2-2` **Curveball down-away** → ball — wild pitch, runners move up | top: Fastball middle 48%; Curveball down-away 26%; Fastball up-away 26% | before: Curveball middle (foul), Fastball up-away (foul), Fastball down-away (foul)
+  - `3-2` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 100% | before: Fastball up-away (foul), Fastball down-away (foul), Curveball down-away (ball)
+- **hs_two_pitch_s102 · PA 8 · inning 2, 0 out, bases 23, score 0-1 · #8 (L, opposite side) vs Starter (R), pitch 29**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 36%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `1-0` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 86%; Curveball middle 14% | before: Fastball up-away (ball)
+  - `1-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 38%; Fastball up-away 21%; Fastball down-away 21% | before: Fastball up-away (ball), Fastball middle (whiff)
+  - `1-2` **Curveball down-away** → solid — solid contact: SINGLE | top: Curveball down-away 32%; Fastball up-away 25%; Fastball down-away 23% | before: Fastball up-away (ball), Fastball middle (whiff), Fastball middle (foul)
+- **hs_two_pitch_s102 · PA 9 · inning 2, 0 out, bases 13, score 0-2 · #9 (R, same side) vs Starter (R), pitch 33**
+  - `0-0` **Fastball down-away** → foul — foul straight back | top: Fastball middle 39%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `0-1` **Fastball down-away** → whiff — whiff (late) | top: Fastball middle 31%; Fastball up-away 24%; Curveball down-away 23% | before: Fastball down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Fastball chase** → ball | top: Fastball down-away 27%; Fastball up-away 24%; Curveball down-away 22% | before: Fastball down-away (foul), Fastball down-away (whiff)
+  - `1-2` **Fastball up-away** → ball | top: Fastball up-away 32%; Curveball down-away 26%; Fastball down-away 23% | before: Fastball down-away (foul), Fastball down-away (whiff), Fastball chase (ball)
+  - `2-2` **Fastball down-away** → ball | top: Fastball middle 61%; Fastball down-away 23%; Curveball down-away 16% | before: Fastball down-away (whiff), Fastball chase (ball), Fastball up-away (ball)
+  - `3-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball chase (ball), Fastball up-away (ball), Fastball down-away (ball)
+  - `3-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 10 · inning 2, 1 out, bases 23, score 0-2 · #1 (R, same side) vs Starter (R), pitch 40**
+  - `0-0` **Curveball middle** → whiff — whiff (out in front) | top: Fastball middle 35%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `0-1` **Fastball down-away** → foul — foul pull | top: Curveball middle 29%; Fastball middle 27%; Fastball up-away 23% | before: Curveball middle (whiff)
+  - `0-2` **Curveball down-away** → ball — wild pitch, runners move up | top: Curveball down-away 34%; Fastball up-away 20%; Fastball chase 17% | before: Curveball middle (whiff), Fastball down-away (foul)
+  - `1-2` **Fastball chase** → ball | top: Curveball middle 29%; Fastball up-away 28%; Fastball down-away 15% | before: Curveball middle (whiff), Fastball down-away (foul), Curveball down-away (ball)
+  - `2-2` **Curveball middle** → hard — hard contact: SINGLE | top: Curveball middle 48%; Curveball down-away 27%; Fastball middle 24% | before: Fastball down-away (foul), Curveball down-away (ball), Fastball chase (ball)
+- **hs_two_pitch_s102 · PA 11 · inning 2, 1 out, bases 2, score 0-4 · #2 (R, same side) vs Starter (R), pitch 45**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 31%; Curveball middle 27%; Fastball up-away 21% | before: first pitch
+  - `1-0` **Curveball middle** → weak — weak contact: OUT | top: Fastball middle 33%; Curveball middle 24%; Fastball down-away 22% | before: Fastball middle (ball)
+- **hs_two_pitch_s102 · PA 12 · inning 2, 2 out, bases 2, score 0-4 · #3 (L, opposite side) vs Starter (R), pitch 47**
+  - `0-0` **Curveball down-away** → ball | top: Curveball down-away 17%; Curveball middle 17%; Fastball middle 16% | before: first pitch
+  - `1-0` **Curveball middle** → ball | top: Curveball middle 32%; Fastball middle 17%; Fastball up-away 14% | before: Curveball down-away (ball)
+  - `2-0` **Fastball up-in** → ball | top: Curveball middle 26%; Fastball middle 20%; Fastball down-away 14% | before: Curveball down-away (ball), Curveball middle (ball)
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 89%; Curveball middle 11% | before: Curveball down-away (ball), Curveball middle (ball), Fastball up-in (ball)
+- **hs_two_pitch_s102 · PA 13 · inning 2, 2 out, bases 12, score 0-4 · #4 (L, opposite side) vs Starter (R), pitch 51**
+  - `0-0` **Fastball up-away** → whiff — whiff (late) | top: Fastball middle 32%; Curveball down-away 25%; Fastball up-away 21% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Curveball down-away 29%; Fastball middle 27%; Fastball up-away 22% | before: Fastball up-away (whiff)
+  - `1-1` **Fastball down-away** → solid — solid contact: OUT | top: Fastball middle 31%; Curveball middle 27%; Fastball up-away 21% | before: Fastball up-away (whiff), Fastball middle (ball)
+- **hs_two_pitch_s102 · PA 14 · inning 3, 0 out, bases empty, score 1-4 · #5 (R, same side) vs Starter (R), pitch 54**
+  - `0-0` **Fastball up-away** → solid — solid contact: OUT | top: Fastball middle 31%; Curveball down-away 29%; Fastball up-away 20% | before: first pitch
+- **hs_two_pitch_s102 · PA 15 · inning 3, 1 out, bases empty, score 1-4 · #6 (R, same side) vs Starter (R), pitch 55**
+  - `0-0` **Fastball down-away** → ball | top: Curveball down-away 34%; Fastball middle 19%; Fastball up-away 14% | before: first pitch
+  - `1-0` **Fastball up-away** → whiff — whiff (out in front) | top: Fastball middle 31%; Curveball middle 29%; Fastball down-away 20% | before: Fastball down-away (ball)
+  - `1-1` **Curveball middle** → ball | top: Curveball middle 34%; Fastball middle 27%; Fastball up-away 19% | before: Fastball down-away (ball), Fastball up-away (whiff)
+  - `2-1` **Fastball up-away** → ball | top: Fastball middle 46%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball down-away (ball), Fastball up-away (whiff), Curveball middle (ball)
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 95%; Curveball middle 5% | before: Fastball up-away (whiff), Curveball middle (ball), Fastball up-away (ball)
+- **hs_two_pitch_s102 · PA 16 · inning 3, 1 out, bases 1, score 1-4 · #7 (R, same side) vs Starter (R), pitch 60**
+  - `0-0` **Curveball down-away** → ball | top: Fastball middle 33%; Curveball down-away 25%; Fastball up-away 21% | before: first pitch
+  - `1-0` **Curveball middle** → hard — hard contact: HOME RUN | top: Fastball middle 39%; Fastball down-away 21%; Fastball up-away 21% | before: Curveball down-away (ball)
+- **hs_two_pitch_s102 · PA 17 · inning 3, 1 out, bases empty, score 1-6 · #8 (L, opposite side) vs Starter (R), pitch 62**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 28%; Fastball up-away 21%; Fastball down-away 21% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 28% | before: Fastball up-away (ball)
+  - `2-0` **Fastball down-away** → solid — solid contact: OUT | top: Fastball middle 67%; Fastball down-away 33% | before: Fastball up-away (ball), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 18 · inning 3, 2 out, bases empty, score 1-6 · #9 (R, same side) vs Starter (R), pitch 65**
+  - `0-0` **Fastball up-in** → solid — solid contact: OUT | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **hs_two_pitch_s102 · PA 19 · inning 4, 0 out, bases empty, score 1-6 · #1 (R, same side) vs Starter (R), pitch 66**
+  - `0-0` **Fastball down-away** → hard — hard contact: SINGLE | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+- **hs_two_pitch_s102 · PA 20 · inning 4, 1 out, bases empty, score 1-6 · #2 (R, same side) vs Starter (R), pitch 67**
+  - `0-0` **Curveball middle** → solid — solid contact: OUT | top: Fastball middle 18%; Curveball down-away 18%; Curveball middle 18% | before: first pitch
+- **hs_two_pitch_s102 · PA 21 · inning 4, 2 out, bases empty, score 1-6 · #3 (L, opposite side) vs Starter (R), pitch 68**
+  - `0-0` **Fastball up-in** → ball | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `1-0` **Curveball up-away** → ball | top: Fastball middle 15%; Fastball up-away 12%; Fastball down-away 12% | before: Fastball up-in (ball)
+  - `2-0` **Fastball down-in** → ball | top: Curveball middle 34%; Fastball middle 18%; Fastball down-away 12% | before: Fastball up-in (ball), Curveball up-away (ball)
+  - `3-0` **Fastball middle** → weak — weak contact: ERROR | top: Fastball middle 29%; Curveball middle 25%; Fastball down-in 12% | before: Fastball up-in (ball), Curveball up-away (ball), Fastball down-in (ball)
+- **hs_two_pitch_s102 · PA 22 · inning 4, 2 out, bases 1, score 1-6 · #4 (L, opposite side) vs Starter (R), pitch 72**
+  - `0-0` **Fastball down-in** → hard — hard contact: OUT | top: Fastball middle 18%; Curveball middle 17%; Curveball down-away 17% | before: first pitch
+- **hs_two_pitch_s102 · PA 23 · inning 5, 0 out, bases empty, score 3-6 · #5 (R, same side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball middle** → solid — solid contact: OUT | top: Curveball middle 32%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+- **hs_two_pitch_s102 · PA 24 · inning 5, 1 out, bases empty, score 3-6 · #6 (R, same side) vs Starter (R), pitch 74**
+  - `0-0` **Fastball up-away** → ball | top: Curveball middle 18%; Fastball middle 18%; Curveball down-away 18% | before: first pitch
+  - `1-0` **Fastball down-in** → ball | top: Fastball middle 29%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball up-away (ball)
+  - `2-0` **Fastball down-away** → ball | top: Fastball middle 50%; Fastball down-away 25%; Fastball up-away 25% | before: Fastball up-away (ball), Fastball down-in (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-in (ball), Fastball down-away (ball)
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-in (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 25 · inning 5, 1 out, bases 2, score 3-6 · #7 (R, same side) vs Starter (R), pitch 79**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: first pitch
+  - `0-1` **Fastball down-away** → cstrike | top: Fastball middle 37%; Fastball up-away 32%; Fastball down-away 31% | before: Fastball middle (foul)
+  - `0-2` **Fastball middle** → weak — weak contact: OUT, RUNNER TO 3RD | top: Fastball up-away 30%; Fastball middle 20%; Fastball chase 20% | before: Fastball middle (foul), Fastball down-away (cstrike)
+- **hs_two_pitch_s102 · PA 26 · inning 5, 2 out, bases 3, score 3-6 · #8 (L, opposite side) vs Starter (R), pitch 82**
+  - `0-0` **Fastball up-in** → ball | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+  - `1-0` **Fastball down-away** → foul — foul opposite | top: Fastball middle 21%; Fastball down-away 18%; Fastball up-away 18% | before: Fastball up-in (ball)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 25%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball up-in (ball), Fastball down-away (foul)
+  - `2-1` **Fastball down-away** → weak — weak contact: OUT | top: Fastball middle 29%; Fastball up-away 19%; Fastball down-away 19% | before: Fastball up-in (ball), Fastball down-away (foul), Fastball middle (ball)
+- **hs_two_pitch_s102 · PA 27 · inning 6, 0 out, bases empty, score 5-6 · #9 (R, same side) vs Starter (R), pitch 86**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball up-away 50%; Fastball down-away 50% | before: Fastball up-away (ball)
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-away (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 28 · inning 6, 0 out, bases 1, score 5-6 · #1 (R, same side) vs Starter (R), pitch 91**
+  - `0-0` **Fastball down-away** → foul — foul straight back | top: Fastball middle 43%; Fastball up-away 28%; Fastball down-away 28% | before: first pitch
+  - `0-1` **Fastball up-away** → hard — hard contact: DOUBLE | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball down-away (foul)
+- **hs_two_pitch_s102 · PA 29 · inning 6, 0 out, bases 23, score 5-6 · #2 (R, same side) vs Starter (R), pitch 93**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 43%; Fastball up-away 28%; Fastball down-away 28% | before: first pitch
+  - `1-0` **Fastball middle** → cstrike | top: Fastball middle 49%; Fastball down-away 26%; Fastball up-away 25% | before: Fastball down-away (ball)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 46%; Fastball up-away 27%; Fastball down-away 27% | before: Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball middle** → solid — solid contact: DOUBLE | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball middle (ball), Fastball middle (whiff)
+- **hs_two_pitch_s102 · PA 30 · inning 6, 0 out, bases 2, score 5-8 · #3 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Fastball down-away** → cstrike | top: Slider middle 39%; Fastball middle 27%; Fastball up-away 17% | before: first pitch
+  - `0-1` **Slider middle** → cstrike | top: Fastball middle 23%; Slider down-away 20%; Slider middle 20% | before: Fastball down-away (cstrike)
+  - `0-2` **Slider chase** → ball | top: Slider down-away 28%; Slider chase 23%; Fastball up-away 18% | before: Fastball down-away (cstrike), Slider middle (cstrike)
+  - `1-2` **Slider down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 34%; Slider middle 19%; Fastball down-away 18% | before: Fastball down-away (cstrike), Slider middle (cstrike), Slider chase (ball)
+- **hs_two_pitch_s102 · PA 31 · inning 6, 1 out, bases 2, score 5-8 · #4 (L, opposite side) vs Reliever (R), pitch 5**
+  - `0-0` **Fastball up-away** → hard — hard contact: OUT | top: Fastball middle 25%; Slider middle 23%; Slider down-away 18% | before: first pitch
+- **hs_two_pitch_s102 · PA 32 · inning 6, 2 out, bases 2, score 5-8 · #5 (R, same side) vs Reliever (R), pitch 6**
+  - `0-0` **Slider down-away** → ball | top: Fastball middle 14%; Slider middle 13%; Slider down-away 12% | before: first pitch
+  - `1-0` **Fastball down-away** → hard — hard contact: SINGLE | top: Fastball middle 15%; Slider middle 15%; Slider down-away 14% | before: Slider down-away (ball)
+- **hs_two_pitch_s102 · PA 33 · inning 6, 2 out, bases 1, score 5-9 · #6 (R, same side) vs Reliever (R), pitch 8**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 16%; Fastball middle 16%; Slider down-away 14% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Slider middle 39%; Fastball middle 18%; Fastball down-away 12% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Slider middle** → cstrike | top: Slider middle 36%; Fastball middle 32%; Fastball down-away 16% | before: Fastball middle (ball), Fastball middle (ball)
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 31%; Slider middle 26%; Slider down-away 15% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (cstrike)
+  - `3-1` **Slider middle** → ball — WALK | top: Fastball middle 50%; Slider middle 50% | before: Fastball middle (ball), Slider middle (cstrike), Fastball middle (ball)
+- **hs_two_pitch_s102 · PA 34 · inning 6, 2 out, bases 12, score 5-9 · #7 (R, same side) vs Reliever (R), pitch 13**
+  - `0-0` **Slider middle** → ball | top: Slider middle 24%; Fastball middle 24%; Slider down-away 19% | before: first pitch
+  - `1-0` **Slider middle** → solid — solid contact: OUT | top: Slider middle 36%; Fastball middle 30%; Fastball down-away 17% | before: Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 35 · inning 7, 0 out, bases empty, score 7-9 · #8 (L, opposite side) vs Reliever (R), pitch 15**
+  - `0-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 23%; Slider middle 20%; Fastball up-away 15% | before: first pitch
+- **hs_two_pitch_s102 · PA 36 · inning 7, 1 out, bases empty, score 7-9 · #9 (R, same side) vs Reliever (R), pitch 16**
+  - `0-0` **Fastball down-away** → cstrike | top: Slider middle 18%; Fastball middle 16%; Slider down-away 15% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Slider middle 16%; Slider down-away 16%; Fastball middle 15% | before: Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 22%; Slider middle 19%; Fastball up-away 15% | before: Fastball down-away (cstrike), Fastball down-away (ball)
+- **hs_two_pitch_s102 · PA 37 · inning 7, 1 out, bases 2, score 7-9 · #1 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 33%; Slider middle 20%; Fastball up-away 17% | before: first pitch
+  - `1-0` **Slider middle** → ball | top: Fastball middle 39%; Slider middle 33%; Fastball down-away 14% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 81%; Slider middle 19% | before: Fastball middle (ball), Slider middle (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 79%; Slider middle 21% | before: Fastball middle (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 90%; Slider middle 10% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 38 · inning 7, 1 out, bases 12, score 7-9 · #2 (R, same side) vs Reliever (R), pitch 24**
+  - `0-0` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 44%; Slider middle 30%; Fastball up-away 13% | before: first pitch
+  - `0-1` **Slider down-away** → ball | top: Slider middle 27%; Fastball middle 26%; Slider down-away 18% | before: Slider middle (whiff)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 58%; Slider middle 42% | before: Slider middle (whiff), Slider down-away (ball)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 56%; Slider middle 44% | before: Slider middle (whiff), Slider down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider down-away** → hard — hard contact: SINGLE | top: Slider down-away 52%; Slider middle 48% | before: Slider down-away (ball), Fastball middle (ball), Fastball middle (cstrike)
+- **hs_two_pitch_s102 · PA 39 · inning 7, 1 out, bases 12, score 7-10 · #3 (L, opposite side) vs Reliever (R), pitch 29**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Slider middle 42%; Fastball middle 28%; Fastball up-away 15% | before: first pitch
+- **hs_two_pitch_s102 · PA 40 · inning 7, 2 out, bases 12, score 7-10 · #4 (L, opposite side) vs Reliever (R), pitch 30**
+  - `0-0` **Fastball middle** → cstrike | top: Slider middle 25%; Fastball middle 24%; Slider down-away 19% | before: first pitch
+  - `0-1` **Fastball up-away** → ball | top: Fastball middle 21%; Slider middle 18%; Slider down-away 17% | before: Fastball middle (cstrike)
+  - `1-1` **Slider middle** → hard — hard contact: SINGLE | top: Slider middle 29%; Fastball middle 22%; Slider down-away 21% | before: Fastball middle (cstrike), Fastball up-away (ball)
+- **hs_two_pitch_s102 · PA 41 · inning 7, 2 out, bases 12, score 7-11 · #5 (R, same side) vs Reliever (R), pitch 33**
+  - `0-0` **Slider up-away** → hbp — HIT BY PITCH | top: Fastball middle 23%; Slider middle 19%; Slider down-away 15% | before: first pitch
+- **hs_two_pitch_s102 · PA 42 · inning 7, 2 out, bases 123, score 7-11 · #6 (R, same side) vs Reliever (R), pitch 34**
+  - `0-0` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 66%; Slider middle 34% | before: first pitch
+- **hs_two_pitch_s102 · PA 43 · inning 7, 2 out, bases 123, score 7-12 · #7 (R, same side) vs Reliever (R), pitch 35**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 69%; Slider middle 31% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 72%; Slider middle 28% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Slider middle** → ball | top: Fastball middle 71%; Slider middle 29% | before: Fastball middle (ball), Fastball middle (ball)
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 58%; Slider middle 42% | before: Fastball middle (ball), Fastball middle (ball), Slider middle (ball)
+- **hs_two_pitch_s102 · PA 44 · inning 7, 2 out, bases 123, score 7-13 · #8 (L, opposite side) vs Reliever (R), pitch 39**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 61%; Slider middle 39% | before: first pitch
+  - `1-0` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 66%; Slider middle 34% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 58%; Slider middle 42% | before: Fastball middle (ball), Fastball middle (whiff)
+  - `2-1` **Slider middle** → ball | top: Fastball middle 63%; Slider middle 37% | before: Fastball middle (ball), Fastball middle (whiff), Fastball middle (ball)
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 71%; Slider middle 29% | before: Fastball middle (whiff), Fastball middle (ball), Slider middle (ball)
+- **hs_two_pitch_s102 · PA 45 · inning 7, 2 out, bases 123, score 7-14 · #9 (R, same side) vs Reliever (R), pitch 44**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 65%; Slider middle 35% | before: first pitch
+  - `1-0` **Slider middle** → foul — foul straight back | top: Slider middle 100% | before: Fastball middle (ball)
+  - `1-1` **Slider down-away** → ball | top: Slider middle 66%; Slider down-away 34% | before: Fastball middle (ball), Slider middle (foul)
+  - `2-1` **Slider middle** → weak — weak contact: OUT | top: Slider middle 100% | before: Fastball middle (ball), Slider middle (foul), Slider down-away (ball)
+- **hs_two_pitch_s102 · PA 46 · inning 8, 0 out, bases empty, score 8-14 · #1 (R, same side) vs Reliever (R), pitch 48**
+  - `0-0` **Slider up-away** → ball | top: Slider middle 43%; Slider down-away 31%; Slider up-away 27% | before: first pitch
+  - `1-0` **Slider down-away** → ball | top: Slider middle 46%; Slider down-away 29%; Slider up-away 25% | before: Slider up-away (ball)
+  - `2-0` **Slider middle** → ball | top: Slider middle 67%; Slider down-away 33% | before: Slider up-away (ball), Slider down-away (ball)
+  - `3-0` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider up-away (ball), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 47 · inning 8, 0 out, bases 2, score 8-14 · #2 (R, same side) vs Reliever (R), pitch 52**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 44%; Slider down-away 30%; Slider up-away 25% | before: first pitch
+  - `1-0` **Fastball down-away** → whiff — whiff (out in front) | top: Fastball middle 66%; Fastball down-away 34% | before: Slider down-away (ball)
+  - `1-1` **Fastball down-away** → cstrike | top: Fastball middle 47%; Fastball down-away 27%; Fastball up-away 26% | before: Slider down-away (ball), Fastball down-away (whiff)
+  - `1-2` **Fastball down-away** → foul — foul straight back | top: Fastball middle 42%; Fastball up-away 38%; Fastball down-away 20% | before: Slider down-away (ball), Fastball down-away (whiff), Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball middle** → ball | top: Fastball middle 42%; Fastball up-away 38%; Fastball down-away 20% | before: Fastball down-away (whiff), Fastball down-away (cstrike), Fastball down-away (foul)
+  - `2-2` **Slider middle** → ball | top: Slider down-away 54%; Slider middle 46% | before: Fastball down-away (cstrike), Fastball down-away (foul), Fastball middle (ball)
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 71%; Slider down-away 29% | before: Fastball down-away (foul), Fastball middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 48 · inning 8, 0 out, bases 12, score 8-14 · #3 (L, opposite side) vs Reliever (R), pitch 59**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 63%; Slider down-away 37% | before: first pitch
+  - `1-0` **Slider middle** → cstrike | top: Slider middle 100% | before: Slider down-away (ball)
+  - `1-1` **Slider middle** → foul — foul pull | top: Slider middle 100% | before: Slider down-away (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 100% | before: Slider down-away (ball), Slider middle (cstrike), Slider middle (foul)
+- **hs_two_pitch_s102 · PA 49 · inning 8, 1 out, bases 12, score 8-14 · #4 (L, opposite side) vs Reliever (R), pitch 63**
+  - `0-0` **Slider middle** → foul — foul straight back | top: Slider middle 62%; Slider down-away 38% | before: first pitch
+  - `0-1` **Slider down-away** → cstrike | top: Slider middle 56%; Slider down-away 44% | before: Slider middle (foul)
+  - `0-2` **Slider chase** → foul — foul straight back | top: Slider chase 36%; Slider down-away 35%; Slider middle 29% | before: Slider middle (foul), Slider down-away (cstrike)
+  - `0-2` **Slider middle** → ball | top: Slider down-away 68%; Slider middle 32% | before: Slider middle (foul), Slider down-away (cstrike), Slider chase (foul)
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 100% | before: Slider down-away (cstrike), Slider chase (foul), Slider middle (ball)
+  - `2-2` **Slider middle** → hard — hard contact: SINGLE | top: Slider middle 100% | before: Slider chase (foul), Slider middle (ball), Slider down-away (ball)
+- **hs_two_pitch_s102 · PA 50 · inning 8, 1 out, bases 23, score 8-15 · #5 (R, same side) vs Reliever (R), pitch 69**
+  - `0-0` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `0-1` **Fastball middle** → solid — solid contact: SAC FLY | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball middle (whiff)
+- **hs_two_pitch_s102 · PA 51 · inning 8, 2 out, bases 2, score 8-16 · #6 (R, same side) vs Reliever (R), pitch 71**
+  - `0-0` **Slider down-away** → ball | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `1-0` **Fastball up-away** → ball | top: Fastball middle 22%; Fastball down-away 18%; Fastball up-away 18% | before: Slider down-away (ball)
+  - `2-0` **Fastball up-away** → ball | top: Fastball middle 25%; Fastball up-away 19%; Fastball down-away 19% | before: Slider down-away (ball), Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball down-away** → whiff — whiff (out in front) | top: Fastball middle 32%; Fastball up-away 17%; Fastball up-in 17% | before: Slider down-away (ball), Fastball up-away (ball), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → foul — foul pull | top: Fastball middle 32%; Fastball up-in 17%; Fastball down-in 17% | before: Fastball up-away (ball), Fastball up-away (ball), Fastball down-away (whiff)
+  - `3-2` **Fastball down-in** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 31%; Fastball up-in 20%; Fastball up-away 17% | before: Fastball up-away (ball), Fastball down-away (whiff), Fastball middle (foul)
+- **hs_two_pitch_s102 · PA 52 · inning 9, 0 out, bases empty, score 8-16 · #7 (R, same side) vs Reliever (R), pitch 77**
+  - `0-0` **Slider down-away** → foul — foul straight back | top: Fastball middle 26%; Slider middle 23%; Slider down-away 18% | before: first pitch
+  - `0-1` **Slider down-away** → cstrike | top: Fastball middle 24%; Slider middle 21%; Slider down-away 20% | before: Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Slider down-away** → ball | top: Fastball up-away 20%; Fastball down-away 18%; Fastball middle 18% | before: Slider down-away (foul), Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider down-away** → weak — weak contact: OUT | top: Fastball middle 26%; Fastball up-away 22%; Fastball down-away 20% | before: Slider down-away (foul), Slider down-away (cstrike), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **hs_two_pitch_s102 · PA 53 · inning 9, 1 out, bases empty, score 8-16 · #8 (L, opposite side) vs Reliever (R), pitch 81**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Slider middle 17%; Fastball middle 16%; Slider down-away 15% | before: first pitch
+  - `0-1` **Slider up-away** → ball | top: Slider middle 17%; Slider down-away 16%; Fastball middle 15% | before: Fastball middle (foul)
+  - `1-1` **Slider down-away** → cstrike | top: Slider middle 24%; Fastball middle 24%; Slider down-away 19% | before: Fastball middle (foul), Slider up-away (ball)
+  - `1-2` **Slider middle** → ball | top: Fastball up-away 18%; Fastball middle 18%; Fastball down-away 17% | before: Fastball middle (foul), Slider up-away (ball), Slider down-away (cstrike)
+  - `2-2` **Fastball up-away** → ball | top: Fastball middle 34%; Slider down-away 30%; Fastball up-away 22% | before: Slider up-away (ball), Slider down-away (cstrike), Slider middle (ball)
+  - `3-2` **Fastball middle** → foul — foul pull | top: Slider middle 73%; Fastball middle 27% | before: Slider down-away (cstrike), Slider middle (ball), Fastball up-away (ball)
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 79%; Fastball middle 21% | before: Slider middle (ball), Fastball up-away (ball), Fastball middle (foul)
+- **hs_two_pitch_s102 · PA 54 · inning 9, 1 out, bases 1, score 8-16 · #9 (R, same side) vs Reliever (R), pitch 88**
+  - `0-0` **Fastball middle** → cstrike | top: Slider middle 38%; Fastball middle 27%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Fastball up-away** → hard — hard contact: SINGLE | top: Fastball middle 24%; Slider down-away 19%; Fastball up-away 19% | before: Fastball middle (cstrike)
+- **hs_two_pitch_s102 · PA 55 · inning 9, 1 out, bases 12, score 8-16 · #1 (R, same side) vs Reliever (R), pitch 90**
+  - `0-0` **Fastball down-away** → ball | top: Slider middle 32%; Fastball middle 32%; Fastball up-away 18% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 73%; Slider middle 27% | before: Fastball down-away (ball)
+  - `2-0` **Fastball middle** → whiff — whiff (out in front) | top: Fastball middle 79%; Slider middle 21% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 82%; Slider middle 18% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (whiff)
+- **hs_two_pitch_s102 · PA 56 · inning 9, 2 out, bases 12, score 8-16 · #2 (R, same side) vs Reliever (R), pitch 94**
+  - `0-0` **Slider middle** → foul — foul straight back | top: Slider middle 36%; Fastball middle 27%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Slider down-away** → ball | top: Fastball middle 24%; Slider down-away 21%; Fastball up-away 19% | before: Slider middle (foul)
+  - `1-1` **Fastball middle** → ball | top: Slider middle 34%; Fastball middle 30%; Fastball up-away 18% | before: Slider middle (foul), Slider down-away (ball)
+  - `2-1` **Fastball middle** → foul — foul pull | top: Fastball middle 73%; Slider middle 27% | before: Slider middle (foul), Slider down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball down-away** → foul — foul pull | top: Fastball up-away 35%; Fastball down-away 34%; Fastball middle 31% | before: Slider down-away (ball), Fastball middle (ball), Fastball middle (foul)
+  - `2-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 64%; Fastball up-away 36% | before: Fastball middle (ball), Fastball middle (foul), Fastball down-away (foul)
+  - `2-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball up-away 36%; Fastball down-away 34%; Fastball middle 31% | before: Fastball middle (foul), Fastball down-away (foul), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+
+### college_d3_default_s101
+
+- **college_d3_default_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 1**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 20%; Changeup down-away 19%; Slider middle 18% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 48%; Slider middle 37%; Changeup middle 15% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider middle** → cstrike | top: Fastball middle 21%; Slider middle 21%; Changeup middle 16% | before: Fastball middle (ball), Fastball middle (foul)
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 59%; Fastball up-away 26%; Changeup down-away 14% | before: Fastball middle (ball), Fastball middle (foul), Slider middle (cstrike)
+  - `2-2` **Fastball middle** → foul — foul pull | top: Slider middle 63%; Fastball middle 30%; Changeup middle 7% | before: Fastball middle (foul), Slider middle (cstrike), Slider down-away (ball)
+  - `2-2` **Slider middle** → cstrike — STRIKEOUT | top: Slider middle 46%; Slider down-away 32%; Fastball up-away 12% | before: Slider middle (cstrike), Slider down-away (ball), Fastball middle (foul)
+- **college_d3_default_s101 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 7**
+  - `0-0` **Fastball down-in** → weak — weak contact: OUT | top: Changeup down-away 22%; Slider middle 13%; Fastball middle 12% | before: first pitch
+- **college_d3_default_s101 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (R, same side) vs Starter (R), pitch 8**
+  - `0-0` **Fastball up-in** → foul — foul straight back | top: Changeup down-away 9%; Changeup middle 9%; Changeup up-away 8% | before: first pitch
+  - `0-1` **Changeup middle** → foul — foul straight back | top: Changeup down-away 10%; Changeup middle 9%; Changeup up-away 8% | before: Fastball up-in (foul)
+  - `0-2` **Fastball up-in** → solid — solid contact: OUT | top: Changeup down-away 22%; Slider down-away 13%; Slider chase 10% | before: Fastball up-in (foul), Changeup middle (foul)
+- **college_d3_default_s101 · PA 4 · inning 2, 0 out, bases empty, score 4-0 · #4 (R, same side) vs Starter (R), pitch 11**
+  - `0-0` **Slider down-away** → ball | top: Changeup down-away 19%; Fastball middle 19%; Fastball up-away 14% | before: first pitch
+  - `1-0` **Fastball up-away** → ball | top: Slider middle 28%; Fastball middle 25%; Fastball up-away 18% | before: Slider down-away (ball)
+  - `2-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 87%; Slider middle 13% | before: Slider down-away (ball), Fastball up-away (ball)
+- **college_d3_default_s101 · PA 5 · inning 2, 1 out, bases empty, score 4-0 · #5 (R, same side) vs Starter (R), pitch 14**
+  - `0-0` **Fastball down-in** → ball | top: Changeup down-away 23%; Slider middle 12%; Fastball middle 12% | before: first pitch
+  - `1-0` **Slider middle** → solid — solid contact: OUT | top: Slider middle 31%; Changeup middle 18%; Fastball middle 14% | before: Fastball down-in (ball)
+- **college_d3_default_s101 · PA 6 · inning 2, 2 out, bases empty, score 4-0 · #6 (L, opposite side) vs Starter (R), pitch 16**
+  - `0-0` **Changeup down-away** → weak — weak contact: OUT | top: Fastball middle 8%; Changeup down-away 8%; Changeup middle 8% | before: first pitch
+- **college_d3_default_s101 · PA 7 · inning 3, 0 out, bases empty, score 5-0 · #7 (R, same side) vs Starter (R), pitch 17**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 19%; Slider middle 19%; Changeup down-away 18% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Changeup down-away 19%; Slider middle 14%; Slider down-away 13% | before: Fastball up-away (cstrike)
+  - `1-1` **Fastball up-away** → cstrike | top: Slider middle 33%; Fastball middle 23%; Fastball up-away 15% | before: Fastball up-away (cstrike), Fastball down-away (ball)
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 48%; Slider middle 19%; Fastball down-away 19% | before: Fastball up-away (cstrike), Fastball down-away (ball), Fastball up-away (cstrike)
+  - `2-2` **Fastball up-away** → cstrike — STRIKEOUT | top: Slider middle 39%; Fastball middle 20%; Fastball up-away 17% | before: Fastball down-away (ball), Fastball up-away (cstrike), Slider down-away (ball)
+- **college_d3_default_s101 · PA 8 · inning 3, 1 out, bases empty, score 5-0 · #8 (R, same side) vs Starter (R), pitch 22**
+  - `0-0` **Changeup down-away** → ball | top: Changeup down-away 22%; Slider middle 12%; Fastball middle 12% | before: first pitch
+  - `1-0` **Slider middle** → ball | top: Slider middle 29%; Changeup middle 18%; Fastball middle 14% | before: Changeup down-away (ball)
+  - `2-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 73%; Slider middle 17%; Changeup middle 10% | before: Changeup down-away (ball), Slider middle (ball)
+  - `2-1` **Slider middle** → whiff — whiff (late) | top: Fastball middle 38%; Fastball up-away 18%; Slider middle 18% | before: Changeup down-away (ball), Slider middle (ball), Fastball middle (foul)
+  - `2-2` **Slider middle** → cstrike — STRIKEOUT | top: Slider middle 34%; Slider down-away 30%; Fastball up-away 15% | before: Slider middle (ball), Fastball middle (foul), Slider middle (whiff)
+- **college_d3_default_s101 · PA 9 · inning 3, 2 out, bases empty, score 5-0 · #9 (R, same side) vs Starter (R), pitch 27**
+  - `0-0` **Fastball up-in** → ball | top: Changeup down-away 9%; Changeup middle 9%; Changeup up-away 8% | before: first pitch
+  - `1-0` **Slider middle** → ball | top: Changeup middle 12%; Changeup down-away 12%; Fastball middle 10% | before: Fastball up-in (ball)
+  - `2-0` **Slider middle** → hbp — HIT BY PITCH | top: Slider middle 29%; Changeup middle 19%; Fastball middle 14% | before: Fastball up-in (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 10 · inning 3, 2 out, bases 1, score 5-0 · #1 (L, opposite side) vs Starter (R), pitch 30**
+  - `0-0` **Fastball up-away** → foul — foul straight back | top: Changeup down-away 12%; Slider middle 12%; Changeup middle 12% | before: first pitch
+  - `0-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Slider middle 13%; Changeup down-away 12%; Slider down-away 12% | before: Fastball up-away (foul)
+- **college_d3_default_s101 · PA 11 · inning 3, 2 out, bases empty, score 5-2 · #2 (R, same side) vs Starter (R), pitch 32**
+  - `0-0` **Changeup down-away** → ball | top: Changeup down-away 9%; Changeup middle 9%; Changeup up-away 8% | before: first pitch
+  - `1-0` **Slider middle** → ball | top: Changeup middle 24%; Slider middle 11%; Fastball middle 11% | before: Changeup down-away (ball)
+  - `2-0` **Fastball down-away** → ball | top: Slider middle 26%; Changeup middle 19%; Fastball middle 15% | before: Changeup down-away (ball), Slider middle (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 84%; Slider middle 10%; Changeup middle 6% | before: Changeup down-away (ball), Slider middle (ball), Fastball down-away (ball)
+  - `3-1` **Fastball up-in** → weak — weak contact: OUT | top: Fastball middle 44%; Fastball up-away 17%; Fastball up-in 17% | before: Slider middle (ball), Fastball down-away (ball), Fastball middle (cstrike)
+- **college_d3_default_s101 · PA 12 · inning 4, 0 out, bases empty, score 6-2 · #3 (R, same side) vs Starter (R), pitch 37**
+  - `0-0` **Slider middle** → ball | top: Slider middle 29%; Fastball middle 21%; Changeup down-away 19% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 28%; Fastball up-away 20%; Slider middle 19% | before: Slider middle (ball)
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 13 · inning 4, 0 out, bases 1, score 6-2 · #4 (R, same side) vs Starter (R), pitch 42**
+  - `0-0` **Fastball up-away** → hard — hard contact: SINGLE | top: Slider middle 27%; Fastball middle 22%; Fastball up-away 18% | before: first pitch
+- **college_d3_default_s101 · PA 14 · inning 4, 0 out, bases 13, score 6-2 · #5 (R, same side) vs Starter (R), pitch 43**
+  - `0-0` **Fastball middle** → hard — hard contact: SINGLE | top: Slider middle 25%; Fastball middle 23%; Fastball up-away 20% | before: first pitch
+- **college_d3_default_s101 · PA 15 · inning 4, 0 out, bases 12, score 6-3 · #6 (L, opposite side) vs Starter (R), pitch 44**
+  - `0-0` **Slider middle** → hbp — HIT BY PITCH | top: Slider middle 64%; Changeup middle 36% | before: first pitch
+- **college_d3_default_s101 · PA 16 · inning 4, 0 out, bases 123, score 6-3 · #7 (R, same side) vs Starter (R), pitch 45**
+  - `0-0` **Changeup middle** → ball | top: Slider middle 68%; Changeup middle 32% | before: first pitch
+  - `1-0` **Slider middle** → whiff — whiff (fooled) | top: Slider middle 76%; Changeup middle 24% | before: Changeup middle (ball)
+  - `1-1` **Slider middle** → foul — foul pull | top: Slider middle 80%; Changeup middle 20% | before: Changeup middle (ball), Slider middle (whiff)
+  - `1-2` **Slider down-away** → weak — weak contact: SINGLE | top: Slider down-away 88%; Changeup down-away 12% | before: Changeup middle (ball), Slider middle (whiff), Slider middle (foul)
+- **college_d3_default_s101 · PA 17 · inning 4, 0 out, bases 123, score 6-4 · #8 (R, same side) vs Starter (R), pitch 49**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 30%; Slider middle 27%; Fastball up-away 23% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 42%; Fastball up-away 28%; Fastball down-away 23% | before: Slider middle (ball)
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Slider middle (ball), Fastball down-away (ball)
+  - `2-1` **Fastball middle** → weak — weak contact: OUT, RUN SCORES | top: Fastball middle 100% | before: Slider middle (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 18 · inning 4, 1 out, bases 12, score 6-5 · #9 (R, same side) vs Starter (R), pitch 53**
+  - `0-0` **Slider middle** → ball | top: Slider middle 26%; Fastball middle 25%; Fastball up-away 20% | before: first pitch
+  - `1-0` **Fastball up-away** → foul — foul opposite | top: Fastball middle 34%; Fastball up-away 27%; Fastball down-away 23% | before: Slider middle (ball)
+  - `1-1` **Fastball up-away** → solid — solid contact: SINGLE | top: Fastball middle 31%; Fastball up-away 24%; Slider middle 24% | before: Slider middle (ball), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 19 · inning 4, 1 out, bases 123, score 6-5 · #1 (L, opposite side) vs Starter (R), pitch 56**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 32%; Fastball up-away 25%; Slider middle 23% | before: first pitch
+  - `1-0` **Fastball down-away** → weak — weak contact: SAC FLY | top: Fastball middle 36%; Fastball up-away 29%; Fastball down-away 22% | before: Fastball middle (ball)
+- **college_d3_default_s101 · PA 20 · inning 4, 2 out, bases 12, score 6-6 · #2 (R, same side) vs Starter (R), pitch 58**
+  - `0-0` **Slider middle** → hbp — HIT BY PITCH | top: Slider middle 30%; Changeup down-away 17%; Fastball middle 13% | before: first pitch
+- **college_d3_default_s101 · PA 21 · inning 4, 2 out, bases 123, score 6-6 · #3 (R, same side) vs Starter (R), pitch 59**
+  - `0-0` **Slider middle** → foul — foul straight back | top: Fastball middle 32%; Fastball up-away 26%; Fastball down-away 21% | before: first pitch
+  - `0-1` **Fastball down-away** → hard — hard contact: SINGLE | top: Slider middle 31%; Fastball up-away 29%; Fastball down-away 22% | before: Slider middle (foul)
+- **college_d3_default_s101 · PA 22 · inning 4, 2 out, bases 123, score 6-7 · #4 (R, same side) vs Starter (R), pitch 61**
+  - `0-0` **Slider middle** → cstrike | top: Fastball middle 31%; Slider middle 25%; Fastball up-away 24% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Fastball up-away 24%; Slider middle 19%; Fastball down-away 18% | before: Slider middle (cstrike)
+  - `1-1` **Slider middle** → ball | top: Slider middle 83%; Changeup middle 17% | before: Slider middle (cstrike), Fastball down-away (ball)
+  - `2-1` **Slider middle** → foul — foul opposite | top: Slider middle 93%; Changeup middle 7% | before: Slider middle (cstrike), Fastball down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Slider down-away** → ball | top: Slider down-away 100% | before: Fastball down-away (ball), Slider middle (ball), Slider middle (foul)
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider middle (ball), Slider middle (foul), Slider down-away (ball)
+- **college_d3_default_s101 · PA 23 · inning 4, 2 out, bases 123, score 6-8 · #5 (R, same side) vs Starter (R), pitch 67**
+  - `0-0` **Slider middle** → cstrike | top: Slider middle 77%; Changeup middle 23% | before: first pitch
+  - `0-1` **Changeup down-away** → weak — weak contact: SINGLE | top: Slider middle 48%; Slider down-away 34%; Changeup down-away 17% | before: Slider middle (cstrike)
+- **college_d3_default_s101 · PA 24 · inning 4, 2 out, bases 13, score 6-10 · #6 (L, opposite side) vs Starter (R), pitch 69**
+  - `0-0` **Fastball up-in** → cstrike | top: Slider middle 27%; Changeup middle 16%; Fastball middle 13% | before: first pitch
+  - `0-1` **Fastball down-in** → foul — foul straight back | top: Slider middle 19%; Slider down-away 16%; Changeup down-away 15% | before: Fastball up-in (cstrike)
+  - `0-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 31%; Slider chase 30%; Changeup down-away 17% | before: Fastball up-in (cstrike), Fastball down-in (foul)
+- **college_d3_default_s101 · PA 25 · inning 5, 0 out, bases empty, score 6-10 · #7 (R, same side) vs Starter (R), pitch 72**
+  - `0-0` **Fastball up-away** → cstrike | top: Slider middle 29%; Fastball middle 21%; Changeup down-away 19% | before: first pitch
+  - `0-1` **Slider middle** → weak — weak contact: ERROR | top: Changeup down-away 21%; Slider middle 14%; Slider down-away 13% | before: Fastball up-away (cstrike)
+- **college_d3_default_s101 · PA 26 · inning 5, 0 out, bases 1, score 6-10 · #8 (R, same side) vs Starter (R), pitch 74**
+  - `0-0` **Slider middle** → cstrike | top: Slider middle 28%; Fastball middle 23%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Changeup down-away** → ball | top: Fastball up-away 18%; Slider down-away 18%; Slider middle 17% | before: Slider middle (cstrike)
+  - `1-1` **Fastball middle** → ball | top: Slider middle 28%; Fastball middle 26%; Fastball up-away 19% | before: Slider middle (cstrike), Changeup down-away (ball)
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 91%; Slider middle 9% | before: Slider middle (cstrike), Changeup down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 27 · inning 5, 1 out, bases 1, score 6-10 · #9 (R, same side) vs Starter (R), pitch 78**
+  - `0-0` **Changeup down-away** → ball | top: Slider middle 31%; Changeup down-away 30%; Slider down-away 22% | before: first pitch
+  - `1-0` **Changeup middle** → foul — foul straight back | top: Slider middle 48%; Slider down-away 29%; Changeup middle 24% | before: Changeup down-away (ball)
+  - `1-1` **Slider middle** → ball | top: Slider middle 43%; Slider down-away 30%; Changeup middle 27% | before: Changeup down-away (ball), Changeup middle (foul)
+  - `2-1` **Slider middle** → ball | top: Slider middle 85%; Changeup middle 15% | before: Changeup down-away (ball), Changeup middle (foul), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 91%; Changeup middle 9% | before: Changeup middle (foul), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 28 · inning 5, 1 out, bases 12, score 6-10 · #1 (L, opposite side) vs Starter (R), pitch 83**
+  - `0-0` **Fastball middle** → hard — hard contact: ERROR | top: Slider middle 26%; Fastball middle 24%; Fastball up-away 20% | before: first pitch
+- **college_d3_default_s101 · PA 29 · inning 5, 1 out, bases 12, score 6-11 · #2 (R, same side) vs Starter (R), pitch 84**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 25%; Slider middle 25%; Fastball up-away 21% | before: first pitch
+  - `0-1` **Changeup down-away** → ball | top: Fastball up-away 22%; Fastball down-away 18%; Slider middle 17% | before: Fastball middle (cstrike)
+  - `1-1` **Slider middle** → ball | top: Fastball middle 30%; Slider middle 25%; Fastball up-away 25% | before: Fastball middle (cstrike), Changeup down-away (ball)
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball middle (cstrike), Changeup down-away (ball), Slider middle (ball)
+  - `2-2` **Slider down-away** → whiff — whiff (late); STRIKEOUT | top: Slider down-away 61%; Slider middle 39% | before: Changeup down-away (ball), Slider middle (ball), Fastball middle (foul)
+- **college_d3_default_s101 · PA 30 · inning 5, 2 out, bases 12, score 6-11 · #3 (R, same side) vs Starter (R), pitch 89**
+  - `0-0` **Slider down-away** → whiff — whiff (out in front) | top: Slider middle 30%; Changeup down-away 30%; Slider down-away 23% | before: first pitch
+  - `0-1` **Slider up-away** → weak — weak contact: OUT | top: Slider middle 32%; Slider down-away 28%; Changeup down-away 22% | before: Slider down-away (whiff)
+- **college_d3_default_s101 · PA 31 · inning 6, 0 out, bases empty, score 6-11 · #4 (R, same side) vs Starter (R), pitch 91**
+  - `0-0` **Slider middle** → foul — foul pull | top: Slider middle 32%; Changeup middle 29%; Slider down-away 21% | before: first pitch
+  - `0-1` **Slider up-away** → foul — foul pull | top: Changeup down-away 29%; Slider middle 28%; Slider down-away 24% | before: Slider middle (foul)
+  - `0-2` **Slider down-away** → ball | top: Slider down-away 41%; Slider chase 24%; Changeup down-away 20% | before: Slider middle (foul), Slider up-away (foul)
+  - `1-2` **Slider down-away** → foul — foul pull | top: Changeup down-away 31%; Slider down-away 24%; Slider middle 19% | before: Slider middle (foul), Slider up-away (foul), Slider down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider chase** → ball | top: Slider down-away 24%; Changeup down-away 19%; Slider middle 18% | before: Slider up-away (foul), Slider down-away (ball), Slider down-away (foul)
+  - `2-2` **Slider middle** → ball | top: Slider middle 53%; Slider down-away 38%; Changeup down-away 9% | before: Slider down-away (ball), Slider down-away (foul), Slider chase (ball)
+  - `3-2` **Slider middle** → hard — hard contact: OUT | top: Slider middle 100% | before: Slider down-away (foul), Slider chase (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 32 · inning 6, 1 out, bases empty, score 6-11 · #5 (R, same side) vs Reliever (R), pitch 1**
+  - `0-0` **Curveball middle** → ball | top: Changeup middle 22%; Fastball middle 19%; Curveball middle 17% | before: first pitch
+  - `1-0` **Fastball up-away** → ball | top: Fastball middle 25%; Curveball middle 24%; Changeup middle 21% | before: Curveball middle (ball)
+  - `2-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 45%; Changeup middle 30%; Curveball middle 25% | before: Curveball middle (ball), Fastball up-away (ball)
+- **college_d3_default_s101 · PA 33 · inning 6, 2 out, bases empty, score 6-11 · #6 (L, opposite side) vs Reliever (R), pitch 4**
+  - `0-0` **Fastball chase** → ball | top: Curveball middle 9%; Fastball middle 9%; Changeup middle 8% | before: first pitch
+  - `1-0` **Changeup up-away** → solid — solid contact: OUT | top: Fastball middle 10%; Curveball middle 8%; Fastball up-away 8% | before: Fastball chase (ball)
+- **college_d3_default_s101 · PA 34 · inning 7, 0 out, bases empty, score 7-11 · #7 (R, same side) vs Reliever (R), pitch 6**
+  - `0-0` **Changeup middle** → ball | top: Changeup middle 27%; Fastball middle 19%; Curveball middle 18% | before: first pitch
+  - `1-0` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 46%; Curveball middle 29%; Changeup middle 25% | before: Changeup middle (ball)
+  - `1-1` **Fastball middle** → foul — foul pull | top: Curveball middle 27%; Fastball middle 26%; Changeup middle 20% | before: Changeup middle (ball), Fastball middle (whiff)
+  - `1-2` **Curveball down-away** → ball | top: Curveball down-away 38%; Fastball up-away 29%; Fastball down-away 19% | before: Changeup middle (ball), Fastball middle (whiff), Fastball middle (foul)
+  - `2-2` **Fastball middle** → hard — hard contact: DOUBLE | top: Fastball middle 56%; Fastball up-away 38%; Curveball middle 7% | before: Fastball middle (whiff), Fastball middle (foul), Curveball down-away (ball)
+- **college_d3_default_s101 · PA 35 · inning 7, 0 out, bases 2, score 7-11 · #8 (R, same side) vs Reliever (R), pitch 11**
+  - `0-0` **Curveball middle** → ball | top: Fastball middle 33%; Curveball middle 24%; Fastball up-away 22% | before: first pitch
+  - `1-0` **Fastball middle** → whiff — whiff (late) | top: Fastball middle 40%; Fastball up-away 22%; Fastball down-away 21% | before: Curveball middle (ball)
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 37%; Fastball up-away 23%; Fastball down-away 21% | before: Curveball middle (ball), Fastball middle (whiff)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Curveball middle (ball), Fastball middle (whiff), Fastball up-away (ball)
+  - `2-2` **Fastball down-away** → cstrike — STRIKEOUT | top: Fastball up-away 47%; Fastball middle 24%; Fastball down-away 20% | before: Fastball middle (whiff), Fastball up-away (ball), Fastball middle (cstrike)
+- **college_d3_default_s101 · PA 36 · inning 7, 1 out, bases 2, score 7-11 · #9 (R, same side) vs Reliever (R), pitch 16**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Fastball middle 30%; Curveball middle 27%; Fastball up-away 22% | before: first pitch
+  - `0-1` **Fastball up-away** → cstrike | top: Fastball middle 29%; Fastball up-away 28%; Fastball down-away 26% | before: Fastball middle (foul)
+  - `0-2` **Curveball down-away** → ball | top: Curveball down-away 19%; Fastball down-away 18%; Fastball up-away 16% | before: Fastball middle (foul), Fastball up-away (cstrike)
+  - `1-2` **Fastball middle** → solid — solid contact: OUT | top: Fastball up-away 73%; Fastball middle 27% | before: Fastball middle (foul), Fastball up-away (cstrike), Curveball down-away (ball)
+- **college_d3_default_s101 · PA 37 · inning 7, 2 out, bases 2, score 7-11 · #1 (L, opposite side) vs Reliever (R), pitch 20**
+  - `0-0` **Curveball down-away** → hard — hard contact: OUT | top: Curveball down-away 35%; Fastball middle 16%; Fastball up-away 14% | before: first pitch
+- **college_d3_default_s101 · PA 38 · inning 8, 0 out, bases empty, score 9-11 · #2 (R, same side) vs Reliever (R), pitch 21**
+  - `0-0` **Fastball up-away** → whiff — whiff (out in front) | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 28% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Fastball middle 37%; Fastball up-away 32%; Fastball down-away 30% | before: Fastball up-away (whiff)
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 45%; Fastball up-away 29%; Fastball down-away 27% | before: Fastball up-away (whiff), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball up-away (whiff), Fastball down-away (ball), Fastball down-away (ball)
+  - `2-2` **Fastball down-away** → ball | top: Fastball up-away 40%; Fastball middle 39%; Fastball down-away 21% | before: Fastball down-away (ball), Fastball down-away (ball), Fastball middle (foul)
+  - `3-2` **Fastball middle** → whiff — whiff (late); STRIKEOUT | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (foul), Fastball down-away (ball)
+- **college_d3_default_s101 · PA 39 · inning 8, 1 out, bases empty, score 9-11 · #3 (R, same side) vs Reliever (R), pitch 27**
+  - `0-0` **Changeup middle** → cstrike | top: Curveball middle 26%; Changeup middle 23%; Fastball middle 21% | before: first pitch
+  - `0-1` **Fastball down-away** → foul — foul opposite | top: Changeup down-away 23%; Fastball middle 15%; Curveball down-away 14% | before: Changeup middle (cstrike)
+  - `0-2` **Fastball up-away** → whiff — whiff (fooled); STRIKEOUT | top: Curveball down-away 27%; Fastball up-away 20%; Changeup down-away 12% | before: Changeup middle (cstrike), Fastball down-away (foul)
+- **college_d3_default_s101 · PA 40 · inning 8, 2 out, bases empty, score 9-11 · #4 (R, same side) vs Reliever (R), pitch 30**
+  - `0-0` **Fastball up-in** → ball | top: Curveball middle 10%; Curveball down-away 10%; Changeup down-away 10% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Curveball middle 27%; Changeup middle 13%; Changeup down-away 13% | before: Fastball up-in (ball)
+  - `2-0` **Changeup middle** → hard — hard contact: SINGLE | top: Changeup middle 26%; Curveball middle 23%; Fastball middle 15% | before: Fastball up-in (ball), Fastball middle (ball)
+- **college_d3_default_s101 · PA 41 · inning 8, 2 out, bases 1, score 9-11 · #5 (R, same side) vs Reliever (R), pitch 33**
+  - `0-0` **Fastball down-away** → ball | top: Curveball middle 34%; Fastball middle 18%; Fastball up-away 14% | before: first pitch
+  - `1-0` **Fastball middle** → cstrike | top: Curveball middle 31%; Fastball middle 19%; Fastball up-away 14% | before: Fastball down-away (ball)
+  - `1-1` **Curveball middle** → foul — foul opposite | top: Curveball middle 33%; Fastball middle 18%; Fastball up-away 15% | before: Fastball down-away (ball), Fastball middle (cstrike)
+  - `1-2` **Fastball down-away** → ball | top: Fastball up-away 29%; Fastball middle 17%; Fastball down-away 15% | before: Fastball down-away (ball), Fastball middle (cstrike), Curveball middle (foul)
+  - `2-2` **Fastball up-in** → solid — solid contact: SINGLE | top: Fastball up-away 27%; Fastball middle 25%; Curveball down-away 24% | before: Fastball middle (cstrike), Curveball middle (foul), Fastball down-away (ball)
+- **college_d3_default_s101 · PA 42 · inning 8, 2 out, bases 23, score 9-11 · #6 (L, opposite side) vs Reliever (R), pitch 38**
+  - `0-0` **Fastball down-in** → cstrike | top: Fastball middle 33%; Fastball up-away 21%; Fastball down-away 17% | before: first pitch
+  - `0-1` **Fastball up-in** → ball | top: Fastball up-away 27%; Fastball middle 24%; Fastball down-away 21% | before: Fastball down-in (cstrike)
+  - `1-1` **Fastball middle** → hard — hard contact: SINGLE | top: Fastball middle 39%; Fastball up-away 25%; Fastball down-away 19% | before: Fastball down-in (cstrike), Fastball up-in (ball)
+- **college_d3_default_s101 · PA 43 · inning 8, 2 out, bases 13, score 9-12 · #7 (R, same side) vs Reliever (R), pitch 41**
+  - `0-0` **Fastball up-away** → foul — foul pull | top: Fastball middle 28%; Fastball up-away 21%; Curveball middle 19% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Curveball down-away 24%; Fastball middle 19%; Fastball up-away 18% | before: Fastball up-away (foul)
+  - `1-1` **Fastball up-away** → foul — foul straight back | top: Fastball middle 28%; Fastball up-away 21%; Curveball middle 19% | before: Fastball up-away (foul), Fastball down-away (ball)
+  - `1-2` **Fastball down-away** → ball | top: Curveball down-away 24%; Fastball down-away 17%; Curveball chase 15% | before: Fastball up-away (foul), Fastball down-away (ball), Fastball up-away (foul)
+  - `2-2` **Curveball down-away** → hard — hard contact: OUT | top: Fastball up-away 33%; Curveball down-away 32%; Fastball middle 22% | before: Fastball down-away (ball), Fastball up-away (foul), Fastball down-away (ball)
+- **college_d3_default_s101 · PA 44 · inning 9, 0 out, bases empty, score 9-12 · #8 (R, same side) vs Reliever (R), pitch 46**
+  - `0-0` **Changeup middle** → foul — foul opposite | top: Curveball middle 25%; Fastball middle 24%; Changeup middle 20% | before: first pitch
+  - `0-1` **Changeup down-away** → ball | top: Curveball down-away 26%; Fastball middle 22%; Changeup down-away 18% | before: Changeup middle (foul)
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 28%; Curveball middle 23%; Changeup middle 18% | before: Changeup middle (foul), Changeup down-away (ball)
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 73%; Changeup middle 14%; Curveball middle 13% | before: Changeup middle (foul), Changeup down-away (ball), Fastball up-away (ball)
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 78%; Changeup middle 15%; Curveball middle 7% | before: Changeup down-away (ball), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_default_s101 · PA 45 · inning 9, 0 out, bases 1, score 9-12 · #9 (R, same side) vs Reliever (R), pitch 51**
+  - `0-0` **Fastball middle** → solid — solid contact: TRIPLE | top: Fastball middle 26%; Curveball middle 26%; Changeup middle 18% | before: first pitch
+- **college_d3_default_s101 · PA 46 · inning 9, 0 out, bases 3, score 9-13 · #1 (L, opposite side) vs Reliever (R), pitch 52**
+  - `0-0` **Curveball middle** → cstrike | top: Curveball middle 26%; Fastball middle 23%; Changeup middle 23% | before: first pitch
+  - `0-1` **Fastball down-away** → cstrike | top: Fastball middle 21%; Changeup down-away 20%; Fastball up-away 16% | before: Curveball middle (cstrike)
+  - `0-2` **Changeup down-away** → weak — weak contact: OUT, RUN SCORES | top: Fastball up-away 34%; Curveball down-away 18%; Fastball middle 15% | before: Curveball middle (cstrike), Fastball down-away (cstrike)
+- **college_d3_default_s101 · PA 47 · inning 9, 1 out, bases empty, score 9-14 · #2 (R, same side) vs Reliever (R), pitch 55**
+  - `0-0` **Fastball down-away** → solid — solid contact: OUT | top: Changeup middle 24%; Fastball middle 19%; Curveball middle 16% | before: first pitch
+- **college_d3_default_s101 · PA 48 · inning 9, 2 out, bases empty, score 9-14 · #3 (R, same side) vs Reliever (R), pitch 56**
+  - `0-0` **Fastball down-in** → hard — hard contact: OUT | top: Fastball middle 9%; Changeup middle 8%; Changeup down-away 8% | before: first pitch
+
+### college_d3_two_pitch_s102
+
+- **college_d3_two_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 1**
+  - `0-0` **Curveball down-away** → cstrike | top: Curveball down-away 30%; Fastball middle 30%; Fastball up-away 20% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Curveball down-away 34%; Fastball middle 26%; Fastball up-away 20% | before: Curveball down-away (cstrike)
+  - `1-1` **Curveball middle** → whiff — whiff (late) | top: Curveball middle 36%; Fastball middle 30%; Fastball down-away 17% | before: Curveball down-away (cstrike), Fastball down-away (ball)
+  - `1-2` **Fastball down-away** → foul — foul pull | top: Curveball down-away 24%; Curveball middle 23%; Fastball middle 21% | before: Curveball down-away (cstrike), Fastball down-away (ball), Curveball middle (whiff)
+  - `1-2` **Curveball down-away** → whiff — whiff (late); STRIKEOUT | top: Curveball down-away 37%; Curveball middle 24%; Fastball middle 15% | before: Fastball down-away (ball), Curveball middle (whiff), Fastball down-away (foul)
+- **college_d3_two_pitch_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 6**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 26%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+  - `1-0` **Curveball middle** → ball | top: Curveball middle 38%; Fastball middle 28%; Fastball down-away 17% | before: Fastball middle (ball)
+  - `2-0` **Curveball middle** → foul — foul opposite | top: Fastball middle 65%; Curveball middle 35% | before: Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Curveball middle** → ball | top: Fastball middle 67%; Curveball middle 33% | before: Fastball middle (ball), Curveball middle (ball), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → ball — WALK | top: Fastball middle 73%; Curveball middle 27% | before: Curveball middle (ball), Curveball middle (foul), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 3 · inning 1, 1 out, bases 2, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 11**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 27%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 23%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Curveball middle** → ball | top: Curveball middle 34%; Fastball middle 28%; Fastball up-away 19% | before: Fastball middle (cstrike), Fastball middle (ball)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 79%; Curveball middle 21% | before: Fastball middle (cstrike), Fastball middle (ball), Curveball middle (ball)
+  - `2-2` **Fastball up-away** → foul — foul straight back | top: Curveball down-away 26%; Curveball middle 23%; Fastball middle 19% | before: Fastball middle (ball), Curveball middle (ball), Fastball middle (cstrike)
+  - `2-2` **Fastball middle** → weak — weak contact: OUT, RUNNER TO 3RD | top: Fastball middle 64%; Fastball down-away 36% | before: Curveball middle (ball), Fastball middle (cstrike), Fastball up-away (foul)
+- **college_d3_two_pitch_s102 · PA 4 · inning 1, 2 out, bases 3, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 17**
+  - `0-0` **Fastball up-away** → weak — weak contact: OUT | top: Fastball middle 22%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 5 · inning 2, 0 out, bases empty, score 1-0 · #5 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Fastball up-away** → cstrike | top: Fastball middle 30%; Curveball down-away 29%; Fastball up-away 20% | before: first pitch
+  - `0-1` **Curveball down-away** → ball | top: Curveball down-away 35%; Fastball middle 25%; Fastball down-away 20% | before: Fastball up-away (cstrike)
+  - `1-1` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 45%; Fastball up-away 28%; Fastball down-away 28% | before: Fastball up-away (cstrike), Curveball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 6 · inning 2, 1 out, bases empty, score 1-0 · #6 (R, same side) vs Starter (R), pitch 21**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 38%; Fastball up-away 31%; Fastball down-away 31% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 43%; Fastball down-away 28%; Fastball up-away 28% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball middle (ball), Fastball down-away (ball)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball down-away** → foul — foul opposite | top: Fastball middle 45%; Fastball up-away 28%; Fastball down-away 27% | before: Fastball down-away (ball), Fastball middle (foul), Fastball middle (cstrike)
+  - `2-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 66%; Fastball up-away 34% | before: Fastball middle (foul), Fastball middle (cstrike), Fastball down-away (foul)
+  - `2-2` **Fastball up-away** → hard — hard contact: TRIPLE | top: Fastball middle 45%; Fastball up-away 28%; Fastball down-away 27% | before: Fastball middle (cstrike), Fastball down-away (foul), Fastball middle (foul)
+- **college_d3_two_pitch_s102 · PA 7 · inning 2, 1 out, bases 3, score 1-0 · #7 (R, same side) vs Starter (R), pitch 28**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 43%; Fastball down-away 28%; Fastball up-away 28% | before: Fastball down-away (ball)
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → weak — weak contact: SAC FLY | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 8 · inning 2, 2 out, bases empty, score 1-1 · #8 (L, opposite side) vs Starter (R), pitch 33**
+  - `0-0` **Fastball chase** → cstrike | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+  - `0-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 20%; Fastball up-away 19%; Fastball down-away 19% | before: Fastball chase (cstrike)
+  - `0-2` **Fastball up-in** → solid — solid contact: OUT | top: Fastball up-away 20%; Fastball down-away 20%; Fastball middle 17% | before: Fastball chase (cstrike), Fastball middle (foul)
+- **college_d3_two_pitch_s102 · PA 9 · inning 3, 0 out, bases empty, score 2-1 · #9 (R, same side) vs Starter (R), pitch 36**
+  - `0-0` **Fastball up-away** → foul — foul pull | top: Fastball middle 41%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 37%; Fastball down-away 32%; Fastball up-away 31% | before: Fastball up-away (foul)
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 44%; Fastball up-away 28%; Fastball down-away 28% | before: Fastball up-away (foul), Fastball middle (ball)
+  - `2-1` **Fastball middle** → whiff — whiff (fooled) | top: Fastball middle 100% | before: Fastball up-away (foul), Fastball middle (ball), Fastball up-away (ball)
+  - `2-2` **Fastball middle** → whiff — whiff (out in front); STRIKEOUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball up-away (ball), Fastball middle (whiff)
+- **college_d3_two_pitch_s102 · PA 10 · inning 3, 1 out, bases empty, score 2-1 · #1 (R, same side) vs Starter (R), pitch 41**
+  - `0-0` **Fastball down-in** → ball | top: Fastball middle 27%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `1-0` **Fastball up-away** → foul — foul pull | top: Fastball middle 43%; Fastball down-away 29%; Fastball up-away 29% | before: Fastball down-in (ball)
+  - `1-1` **Fastball up-away** → foul — foul pull | top: Fastball middle 41%; Fastball down-away 30%; Fastball up-away 30% | before: Fastball down-in (ball), Fastball up-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball down-away** → hard — hard contact: HOME RUN | top: Fastball down-away 25%; Fastball middle 25%; Fastball up-away 20% | before: Fastball down-in (ball), Fastball up-away (foul), Fastball up-away (foul)
+- **college_d3_two_pitch_s102 · PA 11 · inning 3, 1 out, bases empty, score 2-2 · #2 (R, same side) vs Starter (R), pitch 45**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 27%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 42%; Fastball down-away 29%; Fastball up-away 29% | before: Fastball down-away (ball)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 41%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball down-away** → cstrike | top: Fastball middle 55%; Fastball down-away 23%; Fastball up-away 23% | before: Fastball down-away (ball), Fastball middle (foul), Fastball middle (ball)
+  - `2-2` **Fastball down-away** → ball | top: Fastball middle 53%; Fastball up-away 27%; Fastball down-away 20% | before: Fastball middle (foul), Fastball middle (ball), Fastball down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball middle (ball), Fastball down-away (cstrike), Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 12 · inning 3, 1 out, bases 1, score 2-2 · #3 (L, opposite side) vs Starter (R), pitch 51**
+  - `0-0` **Curveball down-away** → ball | top: Curveball down-away 31%; Fastball middle 28%; Fastball up-away 20% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 46%; Fastball down-away 27%; Fastball up-away 27% | before: Curveball down-away (ball)
+  - `1-1` **Fastball up-away** → foul — foul straight back | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: Curveball down-away (ball), Fastball middle (foul)
+  - `1-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball down-away 37%; Fastball middle 35%; Fastball up-away 28% | before: Curveball down-away (ball), Fastball middle (foul), Fastball up-away (foul)
+- **college_d3_two_pitch_s102 · PA 13 · inning 3, 2 out, bases 1, score 2-2 · #4 (L, opposite side) vs Starter (R), pitch 55**
+  - `0-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 26%; Fastball up-away 21%; Fastball down-away 21% | before: first pitch
+  - `0-1` **Fastball chase** → whiff — whiff (late) | top: Fastball middle 21%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball middle (foul)
+  - `0-2` **Fastball down-away** → ball | top: Fastball up-away 22%; Fastball down-away 22%; Fastball chase 18% | before: Fastball middle (foul), Fastball chase (whiff)
+  - `1-2` **Fastball chase** → ball | top: Fastball up-away 24%; Fastball middle 20%; Fastball down-away 19% | before: Fastball middle (foul), Fastball chase (whiff), Fastball down-away (ball)
+  - `2-2` **Fastball down-away** → foul — foul pull | top: Fastball middle 43%; Fastball up-away 30%; Fastball down-away 27% | before: Fastball chase (whiff), Fastball down-away (ball), Fastball chase (ball)
+  - `2-2` **Fastball middle** → ball | top: Fastball middle 45%; Fastball up-away 31%; Fastball down-away 24% | before: Fastball down-away (ball), Fastball chase (ball), Fastball down-away (foul)
+  - `3-2` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 100% | before: Fastball chase (ball), Fastball down-away (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 14 · inning 4, 0 out, bases empty, score 2-2 · #5 (R, same side) vs Starter (R), pitch 62**
+  - `0-0` **Fastball up-away** → whiff — whiff (fooled) | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Fastball middle 37%; Fastball up-away 32%; Fastball down-away 32% | before: Fastball up-away (whiff)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 44%; Fastball up-away 28%; Fastball down-away 28% | before: Fastball up-away (whiff), Fastball down-away (ball)
+  - `2-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 100% | before: Fastball up-away (whiff), Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 15 · inning 4, 0 out, bases empty, score 2-3 · #6 (R, same side) vs Starter (R), pitch 66**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `1-0` **Fastball up-away** → ball | top: Fastball middle 48%; Fastball down-away 26%; Fastball up-away 26% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball up-away (ball)
+- **college_d3_two_pitch_s102 · PA 16 · inning 4, 1 out, bases empty, score 2-3 · #7 (R, same side) vs Starter (R), pitch 69**
+  - `0-0` **Fastball up-away** → weak — weak contact: OUT | top: Fastball middle 39%; Fastball up-away 31%; Fastball down-away 31% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 17 · inning 4, 2 out, bases empty, score 2-3 · #8 (L, opposite side) vs Starter (R), pitch 70**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 25%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball up-away (ball)
+  - `2-0` **Fastball up-in** → ball | top: Fastball middle 28%; Fastball down-away 19%; Fastball up-away 19% | before: Fastball up-away (ball), Fastball down-away (ball)
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball down-away (ball), Fastball up-in (ball)
+- **college_d3_two_pitch_s102 · PA 18 · inning 4, 2 out, bases 2, score 2-3 · #9 (R, same side) vs Starter (R), pitch 74**
+  - `0-0` **Fastball chase** → whiff — whiff (fooled) | top: Curveball down-away 12%; Fastball middle 12%; Curveball middle 11% | before: first pitch
+  - `0-1` **Fastball up-in** → ball | top: Curveball down-away 13%; Curveball middle 12%; Fastball middle 11% | before: Fastball chase (whiff)
+  - `1-1` **Fastball down-in** → ball | top: Curveball down-away 20%; Curveball middle 19%; Fastball middle 13% | before: Fastball chase (whiff), Fastball up-in (ball)
+  - `2-1` **Fastball down-in** → cstrike | top: Fastball middle 20%; Curveball middle 15%; Curveball down-away 14% | before: Fastball chase (whiff), Fastball up-in (ball), Fastball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Curveball down-away** → ball | top: Curveball down-away 41%; Curveball middle 27%; Curveball down-in 19% | before: Fastball up-in (ball), Fastball down-in (ball), Fastball down-in (cstrike)
+  - `3-2` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball down-in (ball), Fastball down-in (cstrike), Curveball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 19 · inning 5, 0 out, bases empty, score 3-3 · #1 (R, same side) vs Starter (R), pitch 80**
+  - `0-0` **Fastball down-away** → whiff — whiff (fooled) | top: Curveball down-away 31%; Fastball middle 29%; Fastball up-away 20% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Curveball down-away 36%; Fastball middle 25%; Fastball down-away 20% | before: Fastball down-away (whiff)
+  - `1-1` **Fastball middle** → cstrike | top: Fastball middle 34%; Curveball down-away 26%; Fastball up-away 20% | before: Fastball down-away (whiff), Fastball down-away (ball)
+  - `1-2` **Fastball middle** → ball | top: Fastball up-away 35%; Fastball down-away 34%; Fastball middle 31% | before: Fastball down-away (whiff), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball down-away** → foul — foul pull | top: Fastball middle 56%; Fastball up-away 22%; Fastball down-away 22% | before: Fastball down-away (ball), Fastball middle (cstrike), Fastball middle (ball)
+  - `2-2` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Fastball middle (cstrike), Fastball middle (ball), Fastball down-away (foul)
+  - `2-2` **Fastball up-away** → ball | top: Fastball middle 56%; Fastball up-away 22%; Fastball down-away 22% | before: Fastball middle (ball), Fastball down-away (foul), Fastball middle (foul)
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball down-away (foul), Fastball middle (foul), Fastball up-away (ball)
+- **college_d3_two_pitch_s102 · PA 20 · inning 5, 0 out, bases 1, score 3-3 · #2 (R, same side) vs Starter (R), pitch 88**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 43%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 21 · inning 5, 1 out, bases 1, score 3-3 · #3 (L, opposite side) vs Starter (R), pitch 90**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 41%; Fastball up-away 30%; Fastball down-away 30% | before: first pitch
+  - `1-0` **Fastball up-away** → cstrike | top: Fastball middle 62%; Fastball up-away 38% | before: Fastball up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: Fastball up-away (ball), Fastball up-away (cstrike)
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball up-away (cstrike), Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 22 · inning 5, 2 out, bases 1, score 3-3 · #4 (L, opposite side) vs Starter (R), pitch 94**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 23%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+  - `1-0` **Fastball down-in** → cstrike | top: Fastball middle 27%; Fastball down-away 20%; Fastball up-away 20% | before: Fastball down-away (ball)
+  - `1-1` **Fastball up-away** → weak — weak contact: OUT | top: Fastball middle 27%; Fastball down-away 21%; Fastball up-away 21% | before: Fastball down-away (ball), Fastball down-in (cstrike)
+- **college_d3_two_pitch_s102 · PA 23 · inning 6, 0 out, bases empty, score 3-3 · #5 (R, same side) vs Reliever (R), pitch 1**
+  - `0-0` **Slider up-away** → ball | top: Fastball middle 24%; Slider middle 18%; Fastball up-away 16% | before: first pitch
+  - `1-0` **Slider middle** → ball | top: Fastball middle 34%; Slider middle 29%; Fastball down-away 18% | before: Slider up-away (ball)
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 90%; Slider middle 10% | before: Slider up-away (ball), Slider middle (ball)
+  - `3-0` **Fastball middle** → cstrike | top: Fastball middle 90%; Slider middle 10% | before: Slider up-away (ball), Slider middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Slider middle (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-2` **Slider middle** → hard — hard contact: OUT | top: Fastball middle 81%; Slider middle 19% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (foul)
+- **college_d3_two_pitch_s102 · PA 24 · inning 6, 1 out, bases empty, score 3-3 · #6 (R, same side) vs Reliever (R), pitch 7**
+  - `0-0` **Fastball down-away** → whiff — whiff (late) | top: Fastball middle 23%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+  - `0-1` **Slider middle** → ball | top: Slider down-away 15%; Fastball middle 15%; Slider middle 15% | before: Fastball down-away (whiff)
+  - `1-1` **Slider middle** → cstrike | top: Slider middle 35%; Fastball middle 27%; Fastball up-away 19% | before: Fastball down-away (whiff), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider up-away** → foul — foul pull | top: Slider down-away 22%; Fastball up-away 13%; Fastball middle 12% | before: Fastball down-away (whiff), Slider middle (ball), Slider middle (cstrike)
+  - `1-2` **Fastball chase** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 25%; Fastball up-away 15%; Slider middle 15% | before: Slider middle (ball), Slider middle (cstrike), Slider up-away (foul)
+- **college_d3_two_pitch_s102 · PA 25 · inning 6, 2 out, bases empty, score 3-3 · #7 (R, same side) vs Reliever (R), pitch 12**
+  - `0-0` **Slider middle** → ball | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `1-0` **Fastball down-away** → hard — hard contact: SINGLE | top: Fastball middle 15%; Slider middle 15%; Slider down-away 13% | before: Slider middle (ball)
+- **college_d3_two_pitch_s102 · PA 26 · inning 6, 2 out, bases 2, score 3-3 · #8 (L, opposite side) vs Reliever (R), pitch 14**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 11%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 12%; Slider down-away 12%; Slider middle 11% | before: Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 16%; Slider middle 13%; Slider down-away 12% | before: Fastball down-away (ball), Fastball down-away (ball)
+  - `2-1` **Slider middle** → ball | top: Slider middle 19%; Fastball middle 18%; Slider down-away 16% | before: Fastball down-away (ball), Fastball down-away (ball), Fastball middle (cstrike)
+  - `3-1` **Fastball down-away** → ball — WALK | top: Fastball middle 28%; Slider middle 20%; Fastball down-in 13% | before: Fastball down-away (ball), Fastball middle (cstrike), Slider middle (ball)
+- **college_d3_two_pitch_s102 · PA 27 · inning 6, 2 out, bases 12, score 3-3 · #9 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Slider middle** → ball | top: Slider middle 34%; Fastball middle 26%; Fastball up-away 20% | before: first pitch
+  - `1-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 32%; Slider middle 27%; Fastball down-away 21% | before: Slider middle (ball)
+- **college_d3_two_pitch_s102 · PA 28 · inning 7, 0 out, bases empty, score 5-3 · #1 (R, same side) vs Reliever (R), pitch 21**
+  - `0-0` **Slider middle** → weak — weak contact: OUT | top: Slider middle 34%; Fastball middle 28%; Fastball up-away 19% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 29 · inning 7, 1 out, bases empty, score 5-3 · #2 (R, same side) vs Reliever (R), pitch 22**
+  - `0-0` **Slider down-away** → cstrike | top: Fastball middle 24%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Fastball middle 17%; Slider down-away 16%; Slider middle 15% | before: Slider down-away (cstrike)
+  - `1-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 24%; Slider middle 17%; Fastball up-away 17% | before: Slider down-away (cstrike), Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 30 · inning 7, 2 out, bases empty, score 5-3 · #3 (L, opposite side) vs Reliever (R), pitch 25**
+  - `0-0` **Slider down-in** → ball | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+  - `1-0` **Slider middle** → ball | top: Fastball middle 15%; Slider middle 12%; Fastball down-away 12% | before: Slider down-in (ball)
+  - `2-0` **Fastball down-away** → ball | top: Slider middle 36%; Fastball middle 18%; Fastball down-away 12% | before: Slider down-in (ball), Slider middle (ball)
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 71%; Slider middle 29% | before: Slider down-in (ball), Slider middle (ball), Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 31 · inning 7, 2 out, bases 1, score 5-3 · #4 (L, opposite side) vs Reliever (R), pitch 29**
+  - `0-0` **Fastball up-in** → ball | top: Fastball middle 16%; Slider middle 15%; Slider down-away 14% | before: first pitch
+  - `1-0` **Slider down-away** → ball | top: Slider middle 22%; Slider down-away 18%; Fastball middle 17% | before: Fastball up-in (ball)
+  - `2-0` **Fastball middle** → ball | top: Slider middle 36%; Fastball middle 21%; Fastball down-away 11% | before: Fastball up-in (ball), Slider down-away (ball)
+  - `3-0` **Slider middle** → ball — WALK | top: Fastball middle 66%; Slider middle 34% | before: Fastball up-in (ball), Slider down-away (ball), Fastball middle (ball)
+- **college_d3_two_pitch_s102 · PA 32 · inning 7, 2 out, bases 12, score 5-3 · #5 (R, same side) vs Reliever (R), pitch 33**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 35%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+  - `0-1` **Slider down-away** → ball | top: Fastball middle 27%; Slider down-away 20%; Fastball up-away 19% | before: Fastball middle (cstrike)
+  - `1-1` **Fastball up-away** → foul — foul pull | top: Fastball middle 39%; Fastball up-away 17%; Fastball down-away 17% | before: Fastball middle (cstrike), Slider down-away (ball)
+  - `1-2` **Slider down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 61%; Slider chase 17%; Slider middle 8% | before: Fastball middle (cstrike), Slider down-away (ball), Fastball up-away (foul)
+- **college_d3_two_pitch_s102 · PA 33 · inning 8, 0 out, bases empty, score 9-3 · #6 (R, same side) vs Reliever (R), pitch 37**
+  - `0-0` **Slider middle** → hard — hard contact: TRIPLE | top: Slider middle 38%; Fastball middle 27%; Fastball up-away 17% | before: first pitch
+- **college_d3_two_pitch_s102 · PA 34 · inning 8, 0 out, bases 3, score 9-3 · #7 (R, same side) vs Reliever (R), pitch 38**
+  - `0-0` **Fastball middle** → whiff — whiff (fooled) | top: Slider middle 37%; Fastball middle 28%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 26%; Slider middle 19%; Fastball up-away 19% | before: Fastball middle (whiff)
+  - `1-1` **Fastball down-away** → ball | top: Slider middle 37%; Fastball middle 30%; Fastball up-away 17% | before: Fastball middle (whiff), Fastball middle (ball)
+  - `2-1` **Slider middle** → solid — solid contact: OUT | top: Fastball middle 75%; Slider middle 25% | before: Fastball middle (whiff), Fastball middle (ball), Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 35 · inning 8, 1 out, bases 3, score 9-3 · #8 (L, opposite side) vs Reliever (R), pitch 42**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 25%; Slider middle 23%; Slider down-away 18% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Slider middle 40%; Fastball middle 28%; Fastball down-away 16% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 62%; Slider middle 38% | before: Fastball middle (ball), Fastball down-away (ball)
+  - `2-1` **Slider middle** → hbp — HIT BY PITCH | top: Fastball middle 63%; Slider middle 37% | before: Fastball middle (ball), Fastball down-away (ball), Fastball middle (cstrike)
+- **college_d3_two_pitch_s102 · PA 36 · inning 8, 1 out, bases 13, score 9-3 · #9 (R, same side) vs Reliever (R), pitch 46**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 35%; Fastball middle 29%; Fastball up-away 18% | before: first pitch
+  - `1-0` **Slider middle** → weak — weak contact: OUT | top: Fastball middle 69%; Slider middle 31% | before: Fastball middle (ball)
+- **college_d3_two_pitch_s102 · PA 37 · inning 8, 2 out, bases 13, score 9-3 · #1 (R, same side) vs Reliever (R), pitch 48**
+  - `0-0` **Slider down-away** → cstrike | top: Fastball middle 26%; Slider middle 21%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 23%; Slider middle 21%; Slider down-away 21% | before: Slider down-away (cstrike)
+  - `1-1` **Fastball up-away** → ball | top: Slider middle 25%; Fastball middle 24%; Slider down-away 20% | before: Slider down-away (cstrike), Fastball middle (ball)
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 66%; Slider middle 34% | before: Slider down-away (cstrike), Fastball middle (ball), Fastball up-away (ball)
+  - `3-1` **Slider middle** → foul — foul straight back | top: Slider middle 100% | before: Fastball middle (ball), Fastball up-away (ball), Fastball middle (ball)
+  - `3-2` **Slider down-in** → ball — WALK | top: Slider down-away 34%; Slider middle 28%; Slider down-in 21% | before: Fastball up-away (ball), Fastball middle (ball), Slider middle (foul)
+- **college_d3_two_pitch_s102 · PA 38 · inning 8, 2 out, bases 123, score 9-3 · #2 (R, same side) vs Reliever (R), pitch 54**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 61%; Slider middle 39% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 64%; Slider middle 36% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-0` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 65%; Slider middle 35% | before: Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 39 · inning 9, 0 out, bases empty, score 9-3 · #3 (L, opposite side) vs Reliever (R), pitch 57**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 22%; Slider middle 20%; Slider down-away 15% | before: first pitch
+  - `1-0` **Slider down-away** → ball | top: Slider middle 64%; Slider down-away 36% | before: Fastball down-away (ball)
+  - `2-0` **Slider middle** → ball | top: Slider middle 100% | before: Fastball down-away (ball), Slider down-away (ball)
+  - `3-0` **Slider middle** → cstrike | top: Slider middle 100% | before: Fastball down-away (ball), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → weak — weak contact: OUT | top: Slider middle 100% | before: Slider down-away (ball), Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 40 · inning 9, 1 out, bases empty, score 9-3 · #4 (L, opposite side) vs Reliever (R), pitch 62**
+  - `0-0` **Slider up-away** → ball | top: Slider middle 40%; Slider down-away 32%; Slider up-away 28% | before: first pitch
+  - `1-0` **Slider up-away** → cstrike | top: Slider middle 43%; Slider down-away 30%; Slider up-away 26% | before: Slider up-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider middle** → ball | top: Slider middle 42%; Slider down-away 32%; Slider up-away 26% | before: Slider up-away (ball), Slider up-away (cstrike)
+  - `2-1` **Slider middle** → ball | top: Slider middle 68%; Slider down-away 32% | before: Slider up-away (ball), Slider up-away (cstrike), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider up-away (cstrike), Slider middle (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 41 · inning 9, 1 out, bases 1, score 9-3 · #5 (R, same side) vs Reliever (R), pitch 67**
+  - `0-0` **Slider up-away** → ball | top: Slider middle 42%; Slider down-away 32%; Slider up-away 26% | before: first pitch
+  - `1-0` **Slider down-away** → ball | top: Slider middle 46%; Slider down-away 31%; Slider up-away 24% | before: Slider up-away (ball)
+  - `2-0` **Slider middle** → ball | top: Slider middle 66%; Slider down-away 34% | before: Slider up-away (ball), Slider down-away (ball)
+  - `3-0` **Slider middle** → cstrike | top: Slider middle 100% | before: Slider up-away (ball), Slider down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Slider middle** → ball — WALK | top: Slider middle 100% | before: Slider down-away (ball), Slider middle (ball), Slider middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 42 · inning 9, 1 out, bases 12, score 9-3 · #6 (R, same side) vs Reliever (R), pitch 72**
+  - `0-0` **Fastball up-away** → cstrike | top: Slider middle 34%; Fastball middle 31%; Fastball up-away 18% | before: first pitch
+  - `0-1` **Slider down-away** → ball | top: Fastball middle 26%; Slider middle 19%; Slider down-away 18% | before: Fastball up-away (cstrike)
+  - `1-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 65%; Slider middle 35% | before: Fastball up-away (cstrike), Slider down-away (ball)
+  - `1-2` **Slider down-away** → ball | top: Slider down-away 86%; Fastball middle 14% | before: Fastball up-away (cstrike), Slider down-away (ball), Fastball middle (foul)
+  - `2-2` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 100% | before: Slider down-away (ball), Fastball middle (foul), Slider down-away (ball)
+- **college_d3_two_pitch_s102 · PA 43 · inning 9, 1 out, bases 12, score 9-4 · #7 (R, same side) vs Reliever (R), pitch 77**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Fastball middle 46%; Fastball up-away 27%; Fastball down-away 27% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Fastball down-away 50%; Fastball up-away 50% | before: Fastball middle (foul)
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 48%; Fastball down-away 26%; Fastball up-away 26% | before: Fastball middle (foul), Fastball down-away (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Slider middle** → ball | top: Slider middle 100% | before: Fastball middle (foul), Fastball down-away (ball), Fastball down-away (ball)
+  - `3-1` **Slider middle** → solid — solid contact: OUT | top: Slider middle 100% | before: Fastball down-away (ball), Fastball down-away (ball), Slider middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d3_two_pitch_s102 · PA 44 · inning 9, 2 out, bases 12, score 9-4 · #8 (L, opposite side) vs Reliever (R), pitch 82**
+  - `0-0` **Slider middle** → ball | top: Slider middle 31%; Slider down-away 29%; Slider down-in 20% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Fastball middle 43%; Fastball down-away 29%; Fastball up-away 28% | before: Slider middle (ball)
+  - `2-0` **Slider down-away** → weak — weak contact: ERROR | top: Slider middle 41%; Slider down-away 30%; Slider down-in 29% | before: Slider middle (ball), Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 45 · inning 9, 2 out, bases 12, score 9-5 · #9 (R, same side) vs Reliever (R), pitch 85**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 40%; Fastball up-away 30%; Fastball down-away 30% | before: first pitch
+  - `1-0` **Slider down-in** → hard — hard contact: SINGLE | top: Slider middle 32%; Slider down-away 28%; Slider down-in 22% | before: Fastball down-away (ball)
+- **college_d3_two_pitch_s102 · PA 46 · inning 9, 2 out, bases 12, score 9-6 · #1 (R, same side) vs Reliever (R), pitch 87**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 39%; Fastball up-away 30%; Fastball down-away 30% | before: first pitch
+  - `0-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 37%; Fastball up-away 31%; Fastball down-away 31% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+
+### college_d1_default_s101
+
+- **college_d1_default_s101 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (L, opposite side) vs Starter (R), pitch 1**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 20%; Changeup middle 20%; Slider middle 18% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 46%; Slider middle 37%; Changeup middle 17% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → cstrike | top: Slider middle 22%; Fastball middle 21%; Changeup middle 18% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball up-away** → ball | top: Slider down-away 28%; Fastball up-away 25%; Changeup down-away 20% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (cstrike)
+  - `2-2` **Changeup middle** → foul — foul pull | top: Slider middle 43%; Slider down-away 25%; Fastball middle 17% | before: Fastball middle (foul), Fastball middle (cstrike), Fastball up-away (ball)
+  - `2-2` **Slider middle** → cstrike — STRIKEOUT | top: Slider middle 48%; Fastball middle 24%; Slider down-away 24% | before: Fastball middle (cstrike), Fastball up-away (ball), Changeup middle (foul)
+- **college_d1_default_s101 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 7**
+  - `0-0` **Fastball up-in** → weak — weak contact: OUT | top: Slider middle 15%; Fastball middle 14%; Slider down-away 12% | before: first pitch
+- **college_d1_default_s101 · PA 3 · inning 1, 2 out, bases empty, score 0-0 · #3 (R, same side) vs Starter (R), pitch 8**
+  - `0-0` **Fastball down-in** → foul — foul straight back | top: Fastball middle 8%; Slider middle 8%; Changeup middle 7% | before: first pitch
+  - `0-1` **Fastball up-away** → foul — foul straight back | top: Slider down-away 7%; Fastball up-away 7%; Slider middle 7% | before: Fastball down-in (foul)
+  - `0-2` **Fastball chase** → weak — weak contact: OUT | top: Slider down-away 13%; Slider chase 11%; Changeup down-away 9% | before: Fastball down-in (foul), Fastball up-away (foul)
+- **college_d1_default_s101 · PA 4 · inning 2, 0 out, bases empty, score 3-0 · #4 (R, same side) vs Starter (R), pitch 11**
+  - `0-0` **Slider down-away** → ball | top: Changeup middle 19%; Fastball middle 18%; Slider middle 15% | before: first pitch
+  - `1-0` **Fastball up-away** → ball | top: Slider middle 29%; Fastball middle 25%; Fastball up-away 17% | before: Slider down-away (ball)
+  - `2-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 87%; Slider middle 13% | before: Slider down-away (ball), Fastball up-away (ball)
+- **college_d1_default_s101 · PA 5 · inning 2, 1 out, bases empty, score 3-0 · #5 (R, same side) vs Starter (R), pitch 14**
+  - `0-0` **Fastball down-in** → ball | top: Slider middle 13%; Changeup middle 12%; Changeup down-away 12% | before: first pitch
+  - `1-0` **Slider middle** → hard — hard contact: OUT | top: Slider middle 33%; Changeup middle 20%; Fastball middle 13% | before: Fastball down-in (ball)
+- **college_d1_default_s101 · PA 6 · inning 2, 2 out, bases empty, score 3-0 · #6 (L, opposite side) vs Starter (R), pitch 16**
+  - `0-0` **Changeup down-away** → foul — foul pull | top: Changeup middle 8%; Changeup down-away 8%; Fastball middle 7% | before: first pitch
+  - `0-1` **Changeup up-away** → ball | top: Slider middle 7%; Slider down-away 7%; Changeup down-away 7% | before: Changeup down-away (foul)
+  - `1-1` **Fastball down-away** → ball | top: Slider middle 9%; Slider down-away 8%; Fastball middle 8% | before: Changeup down-away (foul), Changeup up-away (ball)
+  - `2-1` **Fastball middle** → foul — foul pull | top: Changeup middle 21%; Fastball middle 13%; Slider middle 13% | before: Changeup down-away (foul), Changeup up-away (ball), Fastball down-away (ball)
+  - `2-2` **Changeup down-away** → ball | top: Slider down-away 15%; Slider middle 14%; Changeup down-away 12% | before: Changeup up-away (ball), Fastball down-away (ball), Fastball middle (foul)
+  - `3-2` **Fastball middle** → foul — foul pull | top: Slider middle 55%; Fastball middle 36%; Changeup middle 10% | before: Fastball down-away (ball), Fastball middle (foul), Changeup down-away (ball)
+  - `3-2` **Slider middle** → ball — WALK | top: Slider middle 67%; Fastball middle 20%; Changeup middle 13% | before: Fastball middle (foul), Changeup down-away (ball), Fastball middle (foul)
+- **college_d1_default_s101 · PA 7 · inning 2, 2 out, bases 1, score 3-0 · #7 (R, same side) vs Starter (R), pitch 23**
+  - `0-0` **Slider down-away** → cstrike | top: Changeup down-away 21%; Slider middle 13%; Slider down-away 12% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Changeup down-away 20%; Slider down-away 11%; Slider middle 11% | before: Slider down-away (cstrike)
+  - `1-1` **Slider up-away** → ball | top: Changeup middle 19%; Slider middle 13%; Slider down-away 11% | before: Slider down-away (cstrike), Fastball down-away (ball)
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Slider middle 31%; Fastball middle 25%; Fastball up-away 13% | before: Slider down-away (cstrike), Fastball down-away (ball), Slider up-away (ball)
+  - `2-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 42%; Fastball up-away 31%; Slider middle 24% | before: Fastball down-away (ball), Slider up-away (ball), Fastball middle (foul)
+- **college_d1_default_s101 · PA 8 · inning 3, 0 out, bases empty, score 3-0 · #8 (R, same side) vs Starter (R), pitch 28**
+  - `0-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 20%; Slider middle 20%; Changeup middle 18% | before: first pitch
+  - `0-1` **Fastball up-away** → foul — foul straight back | top: Changeup down-away 19%; Slider middle 15%; Slider down-away 15% | before: Fastball middle (foul)
+  - `0-2` **Changeup down-away** → hard — hard contact: HOME RUN | top: Slider down-away 41%; Slider chase 24%; Changeup down-away 20% | before: Fastball middle (foul), Fastball up-away (foul)
+- **college_d1_default_s101 · PA 9 · inning 3, 0 out, bases empty, score 3-1 · #9 (R, same side) vs Starter (R), pitch 31**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 20%; Slider middle 19%; Changeup middle 18% | before: first pitch
+  - `0-1` **Slider middle** → ball | top: Changeup down-away 20%; Slider middle 15%; Slider down-away 15% | before: Fastball middle (cstrike)
+  - `1-1` **Fastball up-away** → ball | top: Slider middle 30%; Fastball middle 22%; Changeup middle 17% | before: Fastball middle (cstrike), Slider middle (ball)
+  - `2-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 78%; Slider middle 17%; Changeup middle 5% | before: Fastball middle (cstrike), Slider middle (ball), Fastball up-away (ball)
+  - `2-2` **Fastball up-in** → cstrike — STRIKEOUT | top: Slider down-away 29%; Slider middle 23%; Fastball up-away 17% | before: Slider middle (ball), Fastball up-away (ball), Fastball middle (foul)
+- **college_d1_default_s101 · PA 10 · inning 3, 1 out, bases empty, score 3-1 · #1 (L, opposite side) vs Starter (R), pitch 36**
+  - `0-0` **Slider up-away** → whiff — whiff (late) | top: Slider middle 12%; Changeup middle 12%; Changeup down-away 12% | before: first pitch
+  - `0-1` **Changeup down-away** → ball | top: Slider middle 13%; Slider down-away 13%; Changeup down-away 13% | before: Slider up-away (whiff)
+  - `1-1` **Fastball down-away** → ball | top: Changeup middle 21%; Slider middle 19%; Slider down-away 15% | before: Slider up-away (whiff), Changeup down-away (ball)
+  - `2-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 34%; Slider middle 29%; Fastball up-away 15% | before: Slider up-away (whiff), Changeup down-away (ball), Fastball down-away (ball)
+- **college_d1_default_s101 · PA 11 · inning 3, 2 out, bases empty, score 3-1 · #2 (R, same side) vs Starter (R), pitch 40**
+  - `0-0` **Fastball up-in** → ball | top: Changeup down-away 9%; Changeup middle 9%; Fastball middle 8% | before: first pitch
+  - `1-0` **Changeup middle** → cstrike | top: Changeup middle 12%; Changeup down-away 11%; Fastball middle 10% | before: Fastball up-in (ball)
+  - `1-1` **Slider down-in** → cstrike | top: Changeup middle 9%; Changeup down-away 9%; Slider middle 9% | before: Fastball up-in (ball), Changeup middle (cstrike)
+  - `1-2` **Slider down-away** → solid — solid contact: OUT | top: Changeup down-away 21%; Slider down-away 15%; Slider chase 11% | before: Fastball up-in (ball), Changeup middle (cstrike), Slider down-in (cstrike)
+- **college_d1_default_s101 · PA 12 · inning 4, 0 out, bases empty, score 6-1 · #3 (R, same side) vs Starter (R), pitch 44**
+  - `0-0` **Fastball down-away** → ball | top: Slider middle 20%; Fastball middle 19%; Changeup middle 19% | before: first pitch
+  - `1-0` **Slider middle** → ball | top: Slider middle 32%; Fastball middle 26%; Fastball up-away 15% | before: Fastball down-away (ball)
+  - `2-0` **Fastball middle** → hbp — HIT BY PITCH | top: Fastball middle 75%; Slider middle 25% | before: Fastball down-away (ball), Slider middle (ball)
+- **college_d1_default_s101 · PA 13 · inning 4, 0 out, bases 1, score 6-1 · #4 (R, same side) vs Starter (R), pitch 47**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 25%; Fastball middle 21%; Slider down-away 15% | before: first pitch
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 60%; Slider middle 35%; Changeup middle 5% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s101 · PA 14 · inning 4, 1 out, bases 1, score 6-1 · #5 (R, same side) vs Starter (R), pitch 49**
+  - `0-0` **Changeup middle** → solid — solid contact: DOUBLE | top: Slider middle 21%; Fastball middle 20%; Changeup middle 16% | before: first pitch
+- **college_d1_default_s101 · PA 15 · inning 4, 1 out, bases 23, score 6-1 · #6 (L, opposite side) vs Starter (R), pitch 50**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 27%; Fastball middle 17%; Changeup middle 16% | before: first pitch
+  - `1-0` **Fastball down-away** → ball | top: Slider middle 41%; Fastball middle 21%; Changeup middle 14% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 48%; Slider middle 44%; Changeup middle 9% | before: Fastball middle (ball), Fastball down-away (ball)
+  - `2-1` **Fastball middle** → weak — weak contact: SAC FLY | top: Slider middle 65%; Fastball middle 28%; Changeup middle 7% | before: Fastball middle (ball), Fastball down-away (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_default_s101 · PA 16 · inning 4, 2 out, bases 2, score 6-2 · #7 (R, same side) vs Starter (R), pitch 54**
+  - `0-0` **Slider down-away** → ball | top: Slider middle 14%; Slider down-away 12%; Changeup down-away 11% | before: first pitch
+  - `1-0` **Fastball down-in** → whiff — whiff (fooled) | top: Changeup middle 21%; Slider middle 10%; Slider down-away 9% | before: Slider down-away (ball)
+  - `1-1` **Fastball middle** → cstrike | top: Slider middle 13%; Slider down-away 12%; Changeup middle 12% | before: Slider down-away (ball), Fastball down-in (whiff)
+  - `1-2` **Changeup down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 37%; Slider chase 32%; Changeup down-away 17% | before: Slider down-away (ball), Fastball down-in (whiff), Fastball middle (cstrike)
+- **college_d1_default_s101 · PA 17 · inning 5, 0 out, bases empty, score 8-2 · #8 (R, same side) vs Starter (R), pitch 58**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 21%; Changeup middle 19%; Slider middle 18% | before: first pitch
+  - `1-0` **Slider middle** → weak — weak contact: OUT | top: Fastball middle 37%; Slider middle 29%; Fastball up-away 19% | before: Fastball middle (ball)
+- **college_d1_default_s101 · PA 18 · inning 5, 1 out, bases empty, score 8-2 · #9 (R, same side) vs Starter (R), pitch 60**
+  - `0-0` **Fastball up-in** → ball | top: Slider middle 14%; Fastball middle 13%; Changeup middle 12% | before: first pitch
+  - `1-0` **Slider middle** → hard — hard contact: DOUBLE | top: Slider middle 20%; Fastball middle 20%; Changeup middle 20% | before: Fastball up-in (ball)
+- **college_d1_default_s101 · PA 19 · inning 5, 1 out, bases 2, score 8-2 · #1 (L, opposite side) vs Starter (R), pitch 62**
+  - `0-0` **Changeup middle** → foul — foul straight back | top: Changeup middle 21%; Slider middle 21%; Fastball middle 17% | before: first pitch
+  - `0-1` **Slider middle** → foul — foul opposite | top: Changeup down-away 19%; Slider middle 15%; Slider down-away 15% | before: Changeup middle (foul)
+  - `0-2` **Fastball up-away** → foul — foul opposite | top: Fastball up-away 30%; Slider down-away 28%; Slider chase 28% | before: Changeup middle (foul), Slider middle (foul)
+  - `0-2` **Slider chase** → ball | top: Slider down-away 33%; Slider chase 26%; Changeup down-away 16% | before: Changeup middle (foul), Slider middle (foul), Fastball up-away (foul)
+  - `1-2` **Slider middle** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 23%; Slider down-away 22%; Fastball down-away 14% | before: Slider middle (foul), Fastball up-away (foul), Slider chase (ball)
+- **college_d1_default_s101 · PA 20 · inning 5, 2 out, bases 3, score 8-2 · #2 (R, same side) vs Starter (R), pitch 67**
+  - `0-0` **Slider down-in** → cstrike | top: Changeup middle 17%; Slider middle 13%; Slider down-away 11% | before: first pitch
+  - `0-1` **Fastball middle** → hard — hard contact: OUT | top: Slider down-away 14%; Changeup down-away 13%; Slider middle 13% | before: Slider down-in (cstrike)
+- **college_d1_default_s101 · PA 21 · inning 6, 0 out, bases empty, score 8-2 · #3 (R, same side) vs Starter (R), pitch 69**
+  - `0-0` **Fastball middle** → ball | top: Slider middle 22%; Changeup middle 20%; Fastball middle 19% | before: first pitch
+  - `1-0` **Slider middle** → whiff — whiff (fooled) | top: Fastball middle 51%; Slider middle 34%; Changeup middle 15% | before: Fastball middle (ball)
+  - `1-1` **Fastball middle** → solid — solid contact: OUT | top: Slider middle 27%; Fastball middle 24%; Changeup middle 19% | before: Fastball middle (ball), Slider middle (whiff)
+- **college_d1_default_s101 · PA 22 · inning 6, 1 out, bases empty, score 8-2 · #4 (R, same side) vs Starter (R), pitch 72**
+  - `0-0` **Slider middle** → hard — hard contact: DOUBLE | top: Slider middle 16%; Fastball middle 14%; Slider down-away 13% | before: first pitch
+- **college_d1_default_s101 · PA 23 · inning 6, 1 out, bases 2, score 8-2 · #5 (R, same side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball middle** → foul — foul straight back | top: Slider middle 18%; Changeup middle 17%; Fastball middle 17% | before: first pitch
+  - `0-1` **Fastball up-in** → foul — foul opposite | top: Slider down-away 16%; Changeup down-away 16%; Slider middle 14% | before: Fastball middle (foul)
+  - `0-2` **Slider down-away** → foul — foul opposite | top: Slider down-away 38%; Slider chase 33%; Fastball up-away 19% | before: Fastball middle (foul), Fastball up-in (foul)
+  - `0-2` **Slider down-away** → foul — foul straight back | top: Slider chase 34%; Fastball up-away 22%; Slider down-away 20% | before: Fastball middle (foul), Fastball up-in (foul), Slider down-away (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `0-2` **Fastball down-away** → foul — foul pull | top: Slider chase 31%; Fastball up-away 18%; Slider down-away 17% | before: Fastball up-in (foul), Slider down-away (foul), Slider down-away (foul)
+  - `0-2` **Slider chase** → foul — foul pull | top: Slider chase 38%; Slider down-away 30%; Fastball up-away 17% | before: Slider down-away (foul), Slider down-away (foul), Fastball down-away (foul)
+  - `0-2` **Slider down-away** → ball | top: Slider down-away 31%; Fastball up-away 25%; Slider chase 24% | before: Slider down-away (foul), Fastball down-away (foul), Slider chase (foul)
+  - `1-2` **Fastball up-away** → whiff — whiff (fooled); STRIKEOUT | top: Fastball up-away 37%; Slider chase 19%; Slider down-away 16% | before: Fastball down-away (foul), Slider chase (foul), Slider down-away (ball)
+- **college_d1_default_s101 · PA 24 · inning 6, 2 out, bases 2, score 8-2 · #6 (L, opposite side) vs Starter (R), pitch 81**
+  - `0-0` **Fastball up-in** → ball | top: Changeup down-away 13%; Changeup middle 13%; Slider middle 9% | before: first pitch
+  - `1-0` **Fastball middle** → cstrike | top: Changeup middle 24%; Slider down-away 12%; Slider middle 11% | before: Fastball up-in (ball)
+  - `1-1` **Changeup down-away** → weak — weak contact: OUT | top: Changeup middle 13%; Changeup down-away 13%; Slider middle 12% | before: Fastball up-in (ball), Fastball middle (cstrike)
+- **college_d1_default_s101 · PA 25 · inning 7, 0 out, bases empty, score 9-2 · #7 (R, same side) vs Starter (R), pitch 84**
+  - `0-0` **Fastball down-away** → weak — weak contact: OUT | top: Slider middle 21%; Changeup middle 20%; Fastball middle 19% | before: first pitch
+- **college_d1_default_s101 · PA 26 · inning 7, 1 out, bases empty, score 9-2 · #8 (R, same side) vs Starter (R), pitch 85**
+  - `0-0` **Fastball up-away** → ball | top: Slider middle 13%; Fastball middle 12%; Slider down-away 12% | before: first pitch
+  - `1-0` **Fastball up-in** → ball | top: Slider middle 31%; Changeup middle 19%; Fastball middle 15% | before: Fastball up-away (ball)
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 59%; Slider middle 30%; Changeup middle 12% | before: Fastball up-away (ball), Fastball up-in (ball)
+  - `3-0` **Slider middle** → ball — WALK | top: Fastball middle 79%; Slider middle 21% | before: Fastball up-away (ball), Fastball up-in (ball), Fastball middle (ball)
+- **college_d1_default_s101 · PA 27 · inning 7, 1 out, bases 1, score 9-2 · #9 (R, same side) vs Starter (R), pitch 89**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 21%; Slider middle 19%; Changeup middle 16% | before: first pitch
+  - `0-1` **Slider up-away** → ball | top: Changeup down-away 16%; Slider down-away 16%; Slider middle 14% | before: Fastball middle (cstrike)
+  - `1-1` **Slider down-away** → ball | top: Fastball middle 22%; Slider middle 19%; Slider down-away 16% | before: Fastball middle (cstrike), Slider up-away (ball)
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 65%; Slider middle 31%; Changeup middle 4% | before: Fastball middle (cstrike), Slider up-away (ball), Slider down-away (ball)
+  - `2-2` **Slider down-away** → whiff — whiff (out in front); STRIKEOUT | top: Slider down-away 37%; Fastball up-away 24%; Fastball middle 14% | before: Slider up-away (ball), Slider down-away (ball), Fastball middle (foul)
+- **college_d1_default_s101 · PA 28 · inning 7, 2 out, bases 1, score 9-2 · #1 (L, opposite side) vs Starter (R), pitch 94**
+  - `0-0` **Fastball up-away** → ball | top: Changeup middle 13%; Changeup down-away 12%; Slider middle 11% | before: first pitch
+  - `1-0` **Fastball up-in** → weak — weak contact: OUT | top: Changeup middle 22%; Slider middle 17%; Slider down-away 14% | before: Fastball up-away (ball)
+- **college_d1_default_s101 · PA 29 · inning 8, 0 out, bases empty, score 9-2 · #2 (R, same side) vs Reliever (R), pitch 1**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Fastball middle 21%; Changeup middle 19%; Curveball middle 18% | before: first pitch
+  - `0-1` **Fastball down-away** → foul — foul opposite | top: Changeup down-away 20%; Fastball middle 18%; Curveball middle 17% | before: Fastball middle (foul)
+  - `0-2` **Fastball up-away** → ball | top: Fastball up-away 40%; Curveball down-away 28%; Curveball chase 22% | before: Fastball middle (foul), Fastball down-away (foul)
+  - `1-2` **Curveball middle** → foul — foul pull | top: Curveball down-away 43%; Curveball middle 21%; Fastball down-away 10% | before: Fastball middle (foul), Fastball down-away (foul), Fastball up-away (ball)
+  - `1-2` **Fastball down-away** → cstrike — STRIKEOUT | top: Curveball down-away 34%; Fastball up-away 29%; Fastball middle 16% | before: Fastball down-away (foul), Fastball up-away (ball), Curveball middle (foul)
+- **college_d1_default_s101 · PA 30 · inning 8, 1 out, bases empty, score 9-2 · #3 (R, same side) vs Reliever (R), pitch 6**
+  - `0-0` **Curveball middle** → ball | top: Changeup middle 23%; Fastball middle 15%; Curveball middle 13% | before: first pitch
+  - `1-0` **Changeup middle** → solid — solid contact: OUT | top: Curveball middle 28%; Fastball middle 24%; Changeup middle 20% | before: Curveball middle (ball)
+- **college_d1_default_s101 · PA 31 · inning 8, 2 out, bases empty, score 9-2 · #4 (R, same side) vs Reliever (R), pitch 8**
+  - `0-0` **Fastball up-in** → ball | top: Fastball middle 8%; Changeup down-away 7%; Fastball up-away 7% | before: first pitch
+  - `1-0` **Fastball down-in** → ball | top: Changeup middle 13%; Changeup down-away 12%; Fastball middle 11% | before: Fastball up-in (ball)
+  - `2-0` **Curveball middle** → hard — hard contact: OUT | top: Fastball middle 11%; Changeup middle 11%; Curveball middle 9% | before: Fastball up-in (ball), Fastball down-in (ball)
+- **college_d1_default_s101 · PA 32 · inning 9, 0 out, bases empty, score 12-2 · #5 (R, same side) vs Reliever (R), pitch 11**
+  - `0-0` **Fastball middle** → foul — foul opposite | top: Changeup middle 22%; Curveball middle 20%; Fastball middle 20% | before: first pitch
+  - `0-1` **Fastball down-away** → foul — foul pull | top: Fastball middle 20%; Changeup down-away 19%; Curveball middle 16% | before: Fastball middle (foul)
+  - `0-2` **Curveball down-away** → ball | top: Curveball down-away 24%; Curveball chase 20%; Fastball up-away 19% | before: Fastball middle (foul), Fastball down-away (foul)
+  - `1-2` **Fastball up-away** → foul — foul opposite | top: Fastball up-away 38%; Fastball middle 22%; Fastball down-away 18% | before: Fastball middle (foul), Fastball down-away (foul), Curveball down-away (ball)
+  - `1-2` **Fastball middle** → ball | top: Curveball down-away 27%; Fastball down-away 14%; Fastball middle 13% | before: Fastball down-away (foul), Curveball down-away (ball), Fastball up-away (foul)
+  - `2-2` **Fastball down-away** → cstrike — STRIKEOUT | top: Fastball middle 26%; Fastball up-away 24%; Curveball middle 20% | before: Curveball down-away (ball), Fastball up-away (foul), Fastball middle (ball)
+- **college_d1_default_s101 · PA 33 · inning 9, 1 out, bases empty, score 12-2 · #6 (L, opposite side) vs Reliever (R), pitch 17**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 18%; Curveball middle 16%; Curveball down-away 14% | before: first pitch
+  - `1-0` **Curveball middle** → weak — weak contact: OUT | top: Curveball middle 29%; Changeup middle 25%; Fastball middle 21% | before: Fastball down-away (ball)
+- **college_d1_default_s101 · PA 34 · inning 9, 2 out, bases empty, score 12-2 · #7 (R, same side) vs Reliever (R), pitch 19**
+  - `0-0` **Changeup up-away** → ball | top: Fastball middle 8%; Changeup middle 7%; Changeup down-away 7% | before: first pitch
+  - `1-0` **Changeup down-away** → cstrike | top: Changeup middle 13%; Changeup down-away 12%; Fastball middle 11% | before: Changeup up-away (ball)
+  - `1-1` **Fastball down-away** → ball | top: Fastball middle 10%; Curveball middle 8%; Fastball up-away 8% | before: Changeup up-away (ball), Changeup down-away (cstrike)
+  - `2-1` **Changeup down-away** → foul — foul pull | top: Fastball middle 12%; Curveball middle 11%; Changeup middle 10% | before: Changeup up-away (ball), Changeup down-away (cstrike), Fastball down-away (ball)
+  - `2-2` **Curveball down-in** → cstrike — STRIKEOUT | top: Curveball down-away 15%; Fastball middle 14%; Curveball middle 13% | before: Changeup down-away (cstrike), Fastball down-away (ball), Changeup down-away (foul)
+
+### college_d1_two_pitch_s102
+
+- **college_d1_two_pitch_s102 · PA 1 · inning 1, 0 out, bases empty, score 0-0 · #1 (R, same side) vs Starter (R), pitch 1**
+  - `0-0` **Curveball middle** → cstrike | top: Curveball middle 32%; Fastball middle 29%; Fastball up-away 19% | before: first pitch
+  - `0-1` **Fastball down-away** → ball | top: Curveball down-away 35%; Fastball middle 25%; Fastball up-away 20% | before: Curveball middle (cstrike)
+  - `1-1` **Fastball middle** → foul — foul opposite | top: Fastball middle 61%; Curveball middle 39% | before: Curveball middle (cstrike), Fastball down-away (ball)
+  - `1-2` **Fastball middle** → foul — foul pull | top: Curveball down-away 32%; Curveball middle 20%; Fastball up-away 18% | before: Curveball middle (cstrike), Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Curveball down-away** → whiff — whiff (late); STRIKEOUT | top: Curveball down-away 39%; Curveball middle 25%; Fastball up-away 13% | before: Fastball down-away (ball), Fastball middle (foul), Fastball middle (foul)
+- **college_d1_two_pitch_s102 · PA 2 · inning 1, 1 out, bases empty, score 0-0 · #2 (R, same side) vs Starter (R), pitch 6**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 26%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+  - `1-0` **Curveball middle** → ball | top: Curveball middle 36%; Fastball middle 30%; Fastball down-away 17% | before: Fastball middle (ball)
+  - `2-0` **Curveball middle** → foul — foul opposite | top: Fastball middle 72%; Curveball middle 28% | before: Fastball middle (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Curveball middle** → ball | top: Fastball middle 73%; Curveball middle 27% | before: Fastball middle (ball), Curveball middle (ball), Curveball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Curveball middle** → ball — WALK | top: Fastball middle 85%; Curveball middle 15% | before: Curveball middle (ball), Curveball middle (foul), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 3 · inning 1, 1 out, bases 2, score 0-0 · #3 (L, opposite side) vs Starter (R), pitch 11**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 31%; Curveball middle 29%; Fastball up-away 20% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Fastball middle 24%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Curveball middle** → ball | top: Curveball middle 34%; Fastball middle 30%; Fastball up-away 18% | before: Fastball middle (cstrike), Fastball middle (ball)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 90%; Curveball middle 10% | before: Fastball middle (cstrike), Fastball middle (ball), Curveball middle (ball)
+  - `2-2` **Fastball up-away** → foul — foul straight back | top: Curveball down-away 24%; Curveball middle 21%; Fastball middle 17% | before: Fastball middle (ball), Curveball middle (ball), Fastball middle (cstrike)
+  - `2-2` **Fastball middle** → weak — weak contact: OUT, RUNNER TO 3RD | top: Fastball middle 63%; Fastball down-away 37% | before: Curveball middle (ball), Fastball middle (cstrike), Fastball up-away (foul)
+- **college_d1_two_pitch_s102 · PA 4 · inning 1, 2 out, bases 3, score 0-0 · #4 (L, opposite side) vs Starter (R), pitch 17**
+  - `0-0` **Fastball middle** → solid — solid contact: SINGLE | top: Curveball middle 24%; Fastball middle 19%; Fastball up-away 15% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 5 · inning 1, 2 out, bases 1, score 0-1 · #5 (R, same side) vs Starter (R), pitch 18**
+  - `0-0` **Fastball down-in** → ball | top: Curveball down-away 32%; Fastball middle 18%; Fastball up-away 14% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Curveball middle 24%; Fastball middle 22%; Fastball down-away 15% | before: Fastball down-in (ball)
+  - `2-0` **Fastball middle** → ball | top: Fastball middle 85%; Curveball middle 15% | before: Fastball down-in (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Fastball middle** → ball — WALK | top: Fastball middle 91%; Curveball middle 9% | before: Fastball down-in (ball), Fastball middle (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 6 · inning 1, 2 out, bases 12, score 0-1 · #6 (R, same side) vs Starter (R), pitch 22**
+  - `0-0` **Curveball middle** → ball | top: Curveball middle 31%; Fastball middle 30%; Fastball up-away 19% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 79%; Curveball middle 21% | before: Curveball middle (ball)
+  - `1-1` **Fastball down-away** → foul — foul pull | top: Fastball middle 37%; Curveball middle 22%; Fastball up-away 21% | before: Curveball middle (ball), Fastball middle (foul)
+  - `1-2` **Fastball middle** → weak — weak contact: OUT | top: Curveball down-away 48%; Fastball up-away 19%; Fastball middle 16% | before: Curveball middle (ball), Fastball middle (foul), Fastball down-away (foul)
+- **college_d1_two_pitch_s102 · PA 7 · inning 2, 0 out, bases empty, score 0-1 · #7 (R, same side) vs Starter (R), pitch 26**
+  - `0-0` **Fastball up-away** → foul — foul straight back | top: Fastball middle 32%; Curveball middle 28%; Fastball up-away 20% | before: first pitch
+  - `0-1` **Fastball down-away** → weak — weak contact: OUT | top: Fastball middle 26%; Fastball down-away 20%; Fastball up-away 19% | before: Fastball up-away (foul)
+- **college_d1_two_pitch_s102 · PA 8 · inning 2, 1 out, bases empty, score 0-1 · #8 (L, opposite side) vs Starter (R), pitch 28**
+  - `0-0` **Fastball down-away** → ball | top: Curveball middle 34%; Fastball middle 27%; Fastball up-away 20% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 33%; Curveball middle 27%; Fastball down-away 20% | before: Fastball down-away (ball)
+  - `2-0` **Fastball middle** → cstrike | top: Fastball middle 85%; Curveball middle 15% | before: Fastball down-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 87%; Curveball middle 13% | before: Fastball down-away (ball), Fastball middle (ball), Fastball middle (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (cstrike), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 9 · inning 2, 2 out, bases empty, score 0-1 · #9 (R, same side) vs Starter (R), pitch 33**
+  - `0-0` **Curveball down-away** → foul — foul opposite | top: Fastball middle 13%; Curveball middle 11%; Curveball down-away 11% | before: first pitch
+  - `0-1` **Fastball up-away** → whiff — whiff (fooled) | top: Fastball middle 11%; Fastball up-away 10%; Fastball down-away 10% | before: Curveball down-away (foul)
+  - `0-2` **Curveball up-away** → solid — solid contact: OUT | top: Curveball down-away 13%; Curveball middle 10%; Fastball up-away 10% | before: Curveball down-away (foul), Fastball up-away (whiff)
+- **college_d1_two_pitch_s102 · PA 10 · inning 3, 0 out, bases empty, score 1-1 · #1 (R, same side) vs Starter (R), pitch 36**
+  - `0-0` **Fastball middle** → foul — foul pull | top: Curveball middle 32%; Fastball middle 30%; Fastball up-away 19% | before: first pitch
+  - `0-1` **Curveball down-away** → ball | top: Fastball middle 23%; Curveball down-away 20%; Curveball middle 20% | before: Fastball middle (foul)
+  - `1-1` **Fastball up-away** → ball | top: Fastball middle 35%; Curveball middle 26%; Fastball up-away 19% | before: Fastball middle (foul), Curveball down-away (ball)
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 92%; Curveball middle 8% | before: Fastball middle (foul), Curveball down-away (ball), Fastball up-away (ball)
+  - `2-2` **Curveball down-away** → cstrike — STRIKEOUT | top: Fastball middle 42%; Curveball down-away 29%; Curveball middle 29% | before: Curveball down-away (ball), Fastball up-away (ball), Fastball middle (foul)
+- **college_d1_two_pitch_s102 · PA 11 · inning 3, 1 out, bases empty, score 1-1 · #2 (R, same side) vs Starter (R), pitch 41**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 26%; Fastball up-away 19%; Fastball down-away 19% | before: first pitch
+  - `1-0` **Curveball middle** → ball | top: Curveball middle 31%; Fastball middle 31%; Fastball down-away 19% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 82%; Curveball middle 18% | before: Fastball middle (ball), Curveball middle (ball)
+- **college_d1_two_pitch_s102 · PA 12 · inning 3, 1 out, bases empty, score 1-2 · #3 (L, opposite side) vs Starter (R), pitch 44**
+  - `0-0` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 28%; Fastball up-away 21%; Fastball down-away 21% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 13 · inning 3, 1 out, bases empty, score 1-3 · #4 (L, opposite side) vs Starter (R), pitch 45**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 28%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 44%; Fastball down-away 28%; Fastball up-away 28% | before: Fastball down-away (ball)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 41%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball down-away (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball down-away (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-2` **Fastball down-away** → whiff — whiff (late); STRIKEOUT | top: Fastball middle 47%; Fastball up-away 27%; Fastball down-away 26% | before: Fastball middle (foul), Fastball middle (ball), Fastball middle (foul)
+- **college_d1_two_pitch_s102 · PA 14 · inning 3, 2 out, bases empty, score 1-3 · #5 (R, same side) vs Starter (R), pitch 50**
+  - `0-0` **Fastball middle** → cstrike | top: Fastball middle 12%; Curveball middle 12%; Curveball down-away 12% | before: first pitch
+  - `0-1` **Curveball middle** → ball | top: Fastball middle 11%; Curveball down-away 11%; Curveball middle 10% | before: Fastball middle (cstrike)
+  - `1-1` **Fastball middle** → foul — foul pull | top: Fastball middle 24%; Fastball up-away 20%; Fastball down-away 20% | before: Fastball middle (cstrike), Curveball middle (ball)
+  - `1-2` **Fastball chase** → foul — foul straight back | top: Fastball up-away 20%; Fastball down-away 19%; Fastball middle 18% | before: Fastball middle (cstrike), Curveball middle (ball), Fastball middle (foul)
+  - `1-2` **Fastball down-away** → weak — weak contact: OUT | top: Fastball up-away 20%; Fastball middle 19%; Fastball down-away 19% | before: Curveball middle (ball), Fastball middle (foul), Fastball chase (foul)
+- **college_d1_two_pitch_s102 · PA 15 · inning 4, 0 out, bases empty, score 3-3 · #6 (R, same side) vs Starter (R), pitch 55**
+  - `0-0` **Fastball middle** → ball | top: Curveball middle 30%; Fastball middle 30%; Fastball up-away 20% | before: first pitch
+  - `1-0` **Fastball middle** → solid — solid contact: TRIPLE | top: Fastball middle 81%; Curveball middle 19% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 16 · inning 4, 0 out, bases 3, score 3-3 · #7 (R, same side) vs Starter (R), pitch 57**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 31%; Curveball middle 28%; Fastball up-away 20% | before: first pitch
+  - `1-0` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball)
+  - `2-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball up-away (ball), Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-1` **Fastball middle** → solid — solid contact: SAC FLY | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 17 · inning 4, 1 out, bases empty, score 3-4 · #8 (L, opposite side) vs Starter (R), pitch 62**
+  - `0-0` **Fastball down-away** → whiff — whiff (fooled) | top: Fastball middle 28%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `0-1` **Fastball down-in** → ball | top: Fastball middle 26%; Fastball down-away 23%; Fastball up-away 23% | before: Fastball down-away (whiff)
+  - `1-1` **Fastball middle** → ball | top: Fastball middle 41%; Fastball up-away 30%; Fastball down-away 30% | before: Fastball down-away (whiff), Fastball down-in (ball)
+  - `2-1` **Fastball middle** → hard — hard contact: HOME RUN | top: Fastball middle 100% | before: Fastball down-away (whiff), Fastball down-in (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 18 · inning 4, 1 out, bases empty, score 3-5 · #9 (R, same side) vs Starter (R), pitch 66**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 28%; Fastball up-away 22%; Fastball down-away 22% | before: first pitch
+  - `1-0` **Fastball up-away** → ball | top: Fastball middle 44%; Fastball down-away 28%; Fastball up-away 28% | before: Fastball middle (ball)
+  - `2-0` **Fastball middle** → solid — solid contact: OUT | top: Fastball middle 100% | before: Fastball middle (ball), Fastball up-away (ball)
+- **college_d1_two_pitch_s102 · PA 19 · inning 4, 2 out, bases empty, score 3-5 · #1 (R, same side) vs Starter (R), pitch 69**
+  - `0-0` **Fastball up-in** → hard — hard contact: OUT | top: Fastball middle 21%; Fastball up-away 18%; Fastball down-away 18% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 20 · inning 5, 0 out, bases empty, score 3-5 · #2 (R, same side) vs Starter (R), pitch 70**
+  - `0-0` **Fastball down-away** → cstrike | top: Curveball middle 34%; Fastball middle 28%; Fastball up-away 19% | before: first pitch
+  - `0-1` **Curveball middle** → weak — weak contact: OUT | top: Fastball middle 25%; Fastball up-away 19%; Curveball down-away 19% | before: Fastball down-away (cstrike)
+- **college_d1_two_pitch_s102 · PA 21 · inning 5, 1 out, bases empty, score 3-5 · #3 (L, opposite side) vs Starter (R), pitch 72**
+  - `0-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 17%; Curveball middle 14%; Curveball down-away 14% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 22 · inning 5, 2 out, bases empty, score 3-5 · #4 (L, opposite side) vs Starter (R), pitch 73**
+  - `0-0` **Fastball middle** → hard — hard contact: ERROR | top: Fastball middle 12%; Fastball up-away 10%; Fastball down-away 10% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 23 · inning 5, 2 out, bases 1, score 3-5 · #5 (R, same side) vs Starter (R), pitch 74**
+  - `0-0` **Fastball down-in** → hard — hard contact: OUT | top: Curveball middle 20%; Curveball down-away 19%; Fastball middle 17% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 24 · inning 6, 0 out, bases empty, score 4-5 · #6 (R, same side) vs Starter (R), pitch 75**
+  - `0-0` **Fastball middle** → solid — solid contact: OUT | top: Curveball middle 35%; Fastball middle 28%; Fastball up-away 19% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 25 · inning 6, 1 out, bases empty, score 4-5 · #7 (R, same side) vs Starter (R), pitch 76**
+  - `0-0` **Fastball up-away** → ball | top: Fastball middle 17%; Curveball middle 14%; Curveball down-away 14% | before: first pitch
+  - `1-0` **Curveball down-in** → ball | top: Curveball middle 28%; Curveball down-away 21%; Curveball up-away 19% | before: Fastball up-away (ball)
+  - `2-0` **Curveball down-in** → ball | top: Curveball middle 30%; Curveball down-away 20%; Curveball down-in 19% | before: Fastball up-away (ball), Curveball down-in (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `3-0` **Curveball down-away** → cstrike | top: Curveball middle 33%; Curveball down-in 18%; Curveball down-away 18% | before: Fastball up-away (ball), Curveball down-in (ball), Curveball down-in (ball)
+  - `3-1` **Curveball middle** → ball — WALK | top: Curveball middle 52%; Curveball down-away 25%; Curveball down-in 23% | before: Curveball down-in (ball), Curveball down-in (ball), Curveball down-away (cstrike)
+- **college_d1_two_pitch_s102 · PA 26 · inning 6, 1 out, bases 1, score 4-5 · #8 (L, opposite side) vs Starter (R), pitch 81**
+  - `0-0` **Fastball down-away** → ball | top: Fastball middle 42%; Fastball up-away 29%; Fastball down-away 29% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul pull | top: Fastball middle 100% | before: Fastball down-away (ball)
+  - `1-1` **Fastball up-away** → whiff — whiff (out in front) | top: Fastball middle 45%; Fastball up-away 28%; Fastball down-away 28% | before: Fastball down-away (ball), Fastball middle (foul)
+  - `1-2` **Fastball up-away** → ball | top: Fastball middle 35%; Fastball up-away 33%; Fastball down-away 32% | before: Fastball down-away (ball), Fastball middle (foul), Fastball up-away (whiff)
+  - `2-2` **Fastball middle** → ball | top: Fastball middle 100% | before: Fastball middle (foul), Fastball up-away (whiff), Fastball up-away (ball)
+  - `3-2` **Fastball middle** → ball — WALK | top: Fastball middle 100% | before: Fastball up-away (whiff), Fastball up-away (ball), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 27 · inning 6, 1 out, bases 12, score 4-5 · #9 (R, same side) vs Starter (R), pitch 87**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 47%; Fastball up-away 26%; Fastball down-away 26% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul opposite | top: Fastball middle 100% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Fastball middle** → cstrike | top: Fastball middle 100% | before: Fastball middle (ball), Fastball middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Fastball up-away** → ball | top: Fastball up-away 36%; Fastball down-away 35%; Fastball middle 29% | before: Fastball middle (ball), Fastball middle (foul), Fastball middle (cstrike)
+  - `2-2` **Fastball middle** → foul — foul straight back | top: Fastball middle 100% | before: Fastball middle (foul), Fastball middle (cstrike), Fastball up-away (ball)
+  - `2-2` **Curveball middle** → weak — weak contact: OUT, RUNNER TO 3RD | top: Curveball down-away 52%; Curveball middle 48% | before: Fastball middle (cstrike), Fastball up-away (ball), Fastball middle (foul)
+- **college_d1_two_pitch_s102 · PA 28 · inning 6, 2 out, bases 13, score 4-5 · #1 (R, same side) vs Starter (R), pitch 93**
+  - `0-0` **Curveball up-away** → foul — foul straight back | top: Curveball middle 33%; Curveball down-away 27%; Curveball down-in 24% | before: first pitch
+  - `0-1` **Curveball down-away** → solid — solid contact: SINGLE | top: Curveball middle 39%; Curveball down-away 36%; Curveball down-in 26% | before: Curveball up-away (foul)
+- **college_d1_two_pitch_s102 · PA 29 · inning 6, 2 out, bases 12, score 4-6 · #2 (R, same side) vs Starter (R), pitch 95**
+  - `0-0` **Curveball up-away** → ball | top: Curveball middle 33%; Curveball down-away 30%; Curveball down-in 19% | before: first pitch
+  - `1-0` **Curveball down-away** → ball | top: Curveball middle 40%; Curveball down-away 34%; Curveball down-in 26% | before: Curveball up-away (ball)
+  - `2-0` **Curveball middle** → ball | top: Curveball middle 40%; Curveball down-away 33%; Curveball down-in 28% | before: Curveball up-away (ball), Curveball down-away (ball)
+  - `3-0` **Curveball middle** → ball — WALK | top: Curveball middle 48%; Curveball down-in 26%; Curveball down-away 26% | before: Curveball up-away (ball), Curveball down-away (ball), Curveball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+- **college_d1_two_pitch_s102 · PA 30 · inning 6, 2 out, bases 123, score 4-6 · #3 (L, opposite side) vs Reliever (R), pitch 1**
+  - `0-0` **Fastball middle** → weak — weak contact: SINGLE | top: Fastball middle 62%; Slider middle 38% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 31 · inning 6, 2 out, bases 12, score 4-8 · #4 (L, opposite side) vs Reliever (R), pitch 2**
+  - `0-0` **Slider down-away** → whiff — whiff (out in front) | top: Slider middle 25%; Fastball middle 23%; Slider down-away 21% | before: first pitch
+  - `0-1` **Fastball middle** → ball | top: Slider down-away 20%; Slider middle 20%; Fastball middle 18% | before: Slider down-away (whiff)
+  - `1-1` **Fastball middle** → cstrike | top: Fastball middle 40%; Slider middle 35%; Slider down-away 24% | before: Slider down-away (whiff), Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-2` **Slider chase** → foul — foul pull | top: Slider down-away 70%; Slider chase 30% | before: Slider down-away (whiff), Fastball middle (ball), Fastball middle (cstrike)
+  - `1-2` **Fastball down-away** → foul — foul straight back | top: Slider down-away 90%; Fastball down-away 10% | before: Fastball middle (ball), Fastball middle (cstrike), Slider chase (foul)
+  - `1-2` **Slider down-away** → cstrike — STRIKEOUT | top: Slider down-away 67%; Slider chase 33% | before: Fastball middle (cstrike), Slider chase (foul), Fastball down-away (foul)
+- **college_d1_two_pitch_s102 · PA 32 · inning 7, 0 out, bases empty, score 5-8 · #5 (R, same side) vs Reliever (R), pitch 8**
+  - `0-0` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 23%; Slider middle 19%; Fastball up-away 15% | before: first pitch
+  - `0-1` **Slider middle** → ball | top: Slider middle 20%; Fastball middle 18%; Slider down-away 18% | before: Slider middle (whiff)
+  - `1-1` **Slider down-away** → ball | top: Fastball middle 23%; Slider middle 22%; Slider down-away 15% | before: Slider middle (whiff), Slider middle (ball)
+  - `2-1` **Slider middle** → ball | top: Fastball middle 66%; Slider middle 34% | before: Slider middle (whiff), Slider middle (ball), Slider down-away (ball)
+  - `3-1` **Fastball middle** → ball — WALK | top: Fastball middle 90%; Slider middle 10% | before: Slider middle (ball), Slider down-away (ball), Slider middle (ball)
+- **college_d1_two_pitch_s102 · PA 33 · inning 7, 0 out, bases 1, score 5-8 · #6 (R, same side) vs Reliever (R), pitch 13**
+  - `0-0` **Fastball up-away** → ball | top: Slider middle 41%; Fastball middle 29%; Fastball up-away 15% | before: first pitch
+  - `1-0` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 56%; Slider middle 44% | before: Fastball up-away (ball)
+  - `1-1` **Slider middle** → weak — weak contact: OUT | top: Slider middle 59%; Fastball middle 41% | before: Fastball up-away (ball), Slider middle (whiff)
+- **college_d1_two_pitch_s102 · PA 34 · inning 7, 1 out, bases 1, score 5-8 · #7 (R, same side) vs Reliever (R), pitch 16**
+  - `0-0` **Fastball down-away** → foul — foul pull | top: Slider middle 23%; Fastball middle 22%; Slider down-away 16% | before: first pitch
+  - `0-1` **Fastball up-away** → ball | top: Fastball middle 21%; Slider down-away 18%; Slider middle 18% | before: Fastball down-away (foul)
+  - `1-1` **Fastball middle** → solid — solid contact: SINGLE | top: Fastball middle 46%; Slider middle 33%; Slider down-away 21% | before: Fastball down-away (foul), Fastball up-away (ball)
+- **college_d1_two_pitch_s102 · PA 35 · inning 7, 1 out, bases 12, score 5-8 · #8 (L, opposite side) vs Reliever (R), pitch 19**
+  - `0-0` **Fastball middle** → ball | top: Fastball middle 54%; Slider middle 46% | before: first pitch
+  - `1-0` **Fastball middle** → foul — foul straight back | top: Fastball middle 54%; Slider middle 46% | before: Fastball middle (ball)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider middle** → foul — foul pull | top: Slider middle 50%; Fastball middle 50% | before: Fastball middle (ball), Fastball middle (foul)
+  - `1-2` **Slider down-away** → weak — weak contact: OUT | top: Slider down-away 91%; Fastball up-away 9% | before: Fastball middle (ball), Fastball middle (foul), Slider middle (foul)
+- **college_d1_two_pitch_s102 · PA 36 · inning 7, 2 out, bases 12, score 5-8 · #9 (R, same side) vs Reliever (R), pitch 23**
+  - `0-0` **Slider down-away** → cstrike | top: Fastball middle 22%; Slider middle 21%; Slider down-away 17% | before: first pitch
+  - `0-1` **Slider down-away** → ball | top: Fastball middle 21%; Slider down-away 19%; Slider middle 17% | before: Slider down-away (cstrike)  **⚑ S1 same pitch, same spot, no whiff**
+  - `1-1` **Slider middle** → ball | top: Fastball middle 26%; Slider middle 24%; Slider down-away 20% | before: Slider down-away (cstrike), Slider down-away (ball)
+  - `2-1` **Fastball middle** → cstrike | top: Fastball middle 59%; Slider middle 41% | before: Slider down-away (cstrike), Slider down-away (ball), Slider middle (ball)
+  - `2-2` **Slider down-away** → whiff — whiff (fooled); STRIKEOUT | top: Slider down-away 100% | before: Slider down-away (ball), Slider middle (ball), Fastball middle (cstrike)
+- **college_d1_two_pitch_s102 · PA 37 · inning 8, 0 out, bases empty, score 6-8 · #1 (R, same side) vs Reliever (R), pitch 28**
+  - `0-0` **Slider middle** → ball | top: Slider middle 22%; Fastball middle 21%; Slider down-away 16% | before: first pitch
+  - `1-0` **Fastball middle** → hard — hard contact: OUT | top: Fastball middle 54%; Slider middle 46% | before: Slider middle (ball)
+- **college_d1_two_pitch_s102 · PA 38 · inning 8, 1 out, bases empty, score 6-8 · #2 (R, same side) vs Reliever (R), pitch 30**
+  - `0-0` **Slider down-away** → weak — weak contact: OUT | top: Slider middle 20%; Slider down-away 16%; Fastball middle 14% | before: first pitch
+- **college_d1_two_pitch_s102 · PA 39 · inning 8, 2 out, bases empty, score 6-8 · #3 (L, opposite side) vs Reliever (R), pitch 31**
+  - `0-0` **Slider up-away** → cstrike | top: Fastball middle 10%; Slider middle 10%; Slider down-away 10% | before: first pitch
+  - `0-1` **Slider up-in** → ball | top: Fastball middle 10%; Slider down-away 10%; Slider middle 10% | before: Slider up-away (cstrike)
+  - `1-1` **Slider middle** → foul — foul pull | top: Fastball middle 11%; Slider middle 10%; Slider down-away 10% | before: Slider up-away (cstrike), Slider up-in (ball)
+  - `1-2` **Fastball chase** → solid — solid contact: OUT | top: Slider down-away 16%; Slider chase 13%; Slider down-in 10% | before: Slider up-away (cstrike), Slider up-in (ball), Slider middle (foul)
+- **college_d1_two_pitch_s102 · PA 40 · inning 9, 0 out, bases empty, score 10-8 · #4 (L, opposite side) vs Reliever (R), pitch 35**
+  - `0-0` **Slider up-away** → ball | top: Fastball middle 23%; Slider middle 20%; Fastball up-away 15% | before: first pitch
+  - `1-0` **Slider middle** → foul — foul pull | top: Fastball middle 59%; Slider middle 41% | before: Slider up-away (ball)
+  - `1-1` **Slider middle** → ball | top: Fastball middle 26%; Slider middle 26%; Slider down-away 18% | before: Slider up-away (ball), Slider middle (foul)  **⚑ S1 same pitch, same spot, no whiff**
+  - `2-1` **Fastball middle** → ball | top: Fastball middle 65%; Slider middle 35% | before: Slider up-away (ball), Slider middle (foul), Slider middle (ball)
+  - `3-1` **Slider middle** → ball — WALK | top: Fastball middle 75%; Slider middle 25% | before: Slider middle (foul), Slider middle (ball), Fastball middle (ball)
+- **college_d1_two_pitch_s102 · PA 41 · inning 9, 0 out, bases 2, score 10-8 · #5 (R, same side) vs Reliever (R), pitch 40**
+  - `0-0` **Fastball up-away** → foul — foul pull | top: Fastball middle 34%; Slider middle 29%; Slider down-away 13% | before: first pitch
+  - `0-1` **Slider middle** → cstrike | top: Fastball middle 26%; Slider down-away 18%; Slider middle 18% | before: Fastball up-away (foul)
+  - `0-2` **Slider chase** → hard — hard contact: OUT | top: Slider down-away 45%; Slider chase 26%; Fastball up-away 12% | before: Fastball up-away (foul), Slider middle (cstrike)
+- **college_d1_two_pitch_s102 · PA 42 · inning 9, 1 out, bases 2, score 10-8 · #6 (R, same side) vs Reliever (R), pitch 43**
+  - `0-0` **Slider middle** → whiff — whiff (out in front) | top: Fastball middle 32%; Slider middle 22%; Fastball up-away 16% | before: first pitch
+  - `0-1` **Fastball middle** → weak — weak contact: OUT | top: Fastball middle 24%; Slider down-away 19%; Slider middle 17% | before: Slider middle (whiff)
+- **college_d1_two_pitch_s102 · PA 43 · inning 9, 2 out, bases 2, score 10-8 · #7 (R, same side) vs Reliever (R), pitch 45**
+  - `0-0` **Fastball down-away** → whiff — whiff (fooled) | top: Slider down-away 15%; Fastball middle 15%; Slider middle 13% | before: first pitch
+  - `0-1` **Fastball down-in** → ball | top: Slider down-away 16%; Fastball middle 13%; Fastball down-away 12% | before: Fastball down-away (whiff)
+  - `1-1` **Fastball up-away** → foul — foul pull | top: Fastball middle 20%; Slider down-away 17%; Fastball up-away 13% | before: Fastball down-away (whiff), Fastball down-in (ball)
+  - `1-2` **Slider down-away** → ball | top: Slider chase 49%; Slider down-away 46%; Fastball chase 5% | before: Fastball down-away (whiff), Fastball down-in (ball), Fastball up-away (foul)
+  - `2-2` **Slider chase** → whiff — whiff (late); STRIKEOUT | top: Slider down-away 42%; Slider chase 26%; Slider down-in 13% | before: Fastball down-in (ball), Fastball up-away (foul), Slider down-away (ball)  **⚑ R2 chase at 2-2**

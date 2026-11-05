@@ -1,0 +1,624 @@
+{
+ "balance": {
+  "v07|hs|two_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.761,
+    "mean_gap_runs": 0.0,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.239,
+    "mean_gap_runs": 0.0309,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|hs|default": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.532,
+    "mean_gap_runs": 0.0067,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.381,
+    "mean_gap_runs": 0.0202,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.087,
+    "mean_gap_runs": 0.0551,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|hs|four_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.475,
+    "mean_gap_runs": 0.0059,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.311,
+    "mean_gap_runs": 0.0207,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.115,
+    "mean_gap_runs": 0.0349,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.099,
+    "mean_gap_runs": 0.0388,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|college_d3|two_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.793,
+    "mean_gap_runs": 0.0,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.207,
+    "mean_gap_runs": 0.0323,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|college_d3|default": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.589,
+    "mean_gap_runs": 0.0032,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.327,
+    "mean_gap_runs": 0.0206,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.084,
+    "mean_gap_runs": 0.0533,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|college_d3|four_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.524,
+    "mean_gap_runs": 0.0031,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.265,
+    "mean_gap_runs": 0.0211,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.112,
+    "mean_gap_runs": 0.0332,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.098,
+    "mean_gap_runs": 0.0365,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|college_d1|two_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.779,
+    "mean_gap_runs": 0.0,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.221,
+    "mean_gap_runs": 0.0228,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|college_d1|default": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.591,
+    "mean_gap_runs": 0.002,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.31,
+    "mean_gap_runs": 0.015,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.099,
+    "mean_gap_runs": 0.036,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v07|college_d1|four_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.518,
+    "mean_gap_runs": 0.002,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.248,
+    "mean_gap_runs": 0.0154,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.125,
+    "mean_gap_runs": 0.0228,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.108,
+    "mean_gap_runs": 0.0252,
+    "allowed_in": "24/24",
+    "flag": ""
+   }
+  ],
+  "v08|hs|two_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.83,
+    "mean_gap_runs": 0.0002,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.17,
+    "mean_gap_runs": 0.0075,
+    "allowed_in": "10/24",
+    "flag": ""
+   }
+  ],
+  "v08|hs|default": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.658,
+    "mean_gap_runs": 0.0036,
+    "allowed_in": "23/24",
+    "flag": "over-called: more than 60% of calls"
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.342,
+    "mean_gap_runs": 0.0043,
+    "allowed_in": "14/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.0,
+    "mean_gap_runs": null,
+    "allowed_in": "0/24",
+    "flag": ""
+   }
+  ],
+  "v08|hs|four_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.657,
+    "mean_gap_runs": 0.0042,
+    "allowed_in": "24/24",
+    "flag": "over-called: more than 60% of calls"
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.297,
+    "mean_gap_runs": 0.0055,
+    "allowed_in": "14/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.038,
+    "mean_gap_runs": 0.0195,
+    "allowed_in": "5/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.008,
+    "mean_gap_runs": 0.021,
+    "allowed_in": "1/24",
+    "flag": ""
+   }
+  ],
+  "v08|college_d3|two_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.869,
+    "mean_gap_runs": 0.0,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.131,
+    "mean_gap_runs": 0.005,
+    "allowed_in": "8/24",
+    "flag": ""
+   }
+  ],
+  "v08|college_d3|default": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.72,
+    "mean_gap_runs": 0.0013,
+    "allowed_in": "24/24",
+    "flag": "over-called: more than 60% of calls"
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.265,
+    "mean_gap_runs": 0.0061,
+    "allowed_in": "14/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.015,
+    "mean_gap_runs": 0.0168,
+    "allowed_in": "2/24",
+    "flag": ""
+   }
+  ],
+  "v08|college_d3|four_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.691,
+    "mean_gap_runs": 0.0016,
+    "allowed_in": "24/24",
+    "flag": "over-called: more than 60% of calls"
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.229,
+    "mean_gap_runs": 0.0069,
+    "allowed_in": "14/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.069,
+    "mean_gap_runs": 0.0139,
+    "allowed_in": "8/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.011,
+    "mean_gap_runs": 0.0193,
+    "allowed_in": "2/24",
+    "flag": ""
+   }
+  ],
+  "v08|college_d1|two_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.819,
+    "mean_gap_runs": 0.0,
+    "allowed_in": "24/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.181,
+    "mean_gap_runs": 0.0038,
+    "allowed_in": "10/24",
+    "flag": ""
+   }
+  ],
+  "v08|college_d1|default": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.71,
+    "mean_gap_runs": 0.0007,
+    "allowed_in": "24/24",
+    "flag": "over-called: more than 60% of calls"
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.244,
+    "mean_gap_runs": 0.0043,
+    "allowed_in": "14/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.046,
+    "mean_gap_runs": 0.0112,
+    "allowed_in": "6/24",
+    "flag": ""
+   }
+  ],
+  "v08|college_d1|four_pitch": [
+   {
+    "pitch": "Fastball",
+    "usage": 0.662,
+    "mean_gap_runs": 0.0008,
+    "allowed_in": "24/24",
+    "flag": "over-called: more than 60% of calls"
+   },
+   {
+    "pitch": "Slider",
+    "usage": 0.201,
+    "mean_gap_runs": 0.0048,
+    "allowed_in": "14/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Curveball",
+    "usage": 0.107,
+    "mean_gap_runs": 0.0092,
+    "allowed_in": "12/24",
+    "flag": ""
+   },
+   {
+    "pitch": "Changeup",
+    "usage": 0.03,
+    "mean_gap_runs": 0.0117,
+    "allowed_in": "5/24",
+    "flag": ""
+   }
+  ]
+ },
+ "platoon": {
+  "v07|hs|two_pitch": {
+   "breaking_share": {
+    "same": 0.239,
+    "opposite": 0.239
+   },
+   "breaking_more_vs_same": false,
+   "breaking_away_share_same_side": 0.247
+  },
+  "v07|hs|default": {
+   "changeup_share": {
+    "opposite": 0.096,
+    "same": 0.079
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.387,
+    "opposite": 0.374
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.447
+  },
+  "v07|hs|four_pitch": {
+   "changeup_share": {
+    "opposite": 0.107,
+    "same": 0.092
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.432,
+    "opposite": 0.42
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.405
+  },
+  "v07|college_d3|two_pitch": {
+   "breaking_share": {
+    "same": 0.207,
+    "opposite": 0.207
+   },
+   "breaking_more_vs_same": false,
+   "breaking_away_share_same_side": 0.458
+  },
+  "v07|college_d3|default": {
+   "changeup_share": {
+    "opposite": 0.09,
+    "same": 0.077
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.332,
+    "opposite": 0.322
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.409
+  },
+  "v07|college_d3|four_pitch": {
+   "changeup_share": {
+    "opposite": 0.107,
+    "same": 0.09
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.384,
+    "opposite": 0.372
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.378
+  },
+  "v07|college_d1|two_pitch": {
+   "breaking_share": {
+    "same": 0.221,
+    "opposite": 0.221
+   },
+   "breaking_more_vs_same": false,
+   "breaking_away_share_same_side": 0.276
+  },
+  "v07|college_d1|default": {
+   "changeup_share": {
+    "opposite": 0.109,
+    "same": 0.089
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.316,
+    "opposite": 0.304
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.408
+  },
+  "v07|college_d1|four_pitch": {
+   "changeup_share": {
+    "opposite": 0.119,
+    "same": 0.097
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.381,
+    "opposite": 0.367
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.351
+  },
+  "v08|hs|two_pitch": {
+   "breaking_share": {
+    "same": 0.17,
+    "opposite": 0.17
+   },
+   "breaking_more_vs_same": false,
+   "breaking_away_share_same_side": 0.261
+  },
+  "v08|hs|default": {
+   "changeup_share": {
+    "opposite": 0.0,
+    "same": 0.0
+   },
+   "changeup_more_vs_opposite": false,
+   "breaking_share": {
+    "same": 0.354,
+    "opposite": 0.329
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.458
+  },
+  "v08|hs|four_pitch": {
+   "changeup_share": {
+    "opposite": 0.015,
+    "same": 0.0
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.339,
+    "opposite": 0.331
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.389
+  },
+  "v08|college_d3|two_pitch": {
+   "breaking_share": {
+    "same": 0.131,
+    "opposite": 0.131
+   },
+   "breaking_more_vs_same": false,
+   "breaking_away_share_same_side": 0.329
+  },
+  "v08|college_d3|default": {
+   "changeup_share": {
+    "opposite": 0.031,
+    "same": 0.0
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.275,
+    "opposite": 0.255
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.461
+  },
+  "v08|college_d3|four_pitch": {
+   "changeup_share": {
+    "opposite": 0.022,
+    "same": 0.0
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.307,
+    "opposite": 0.289
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.411
+  },
+  "v08|college_d1|two_pitch": {
+   "breaking_share": {
+    "same": 0.181,
+    "opposite": 0.181
+   },
+   "breaking_more_vs_same": false,
+   "breaking_away_share_same_side": 0.402
+  },
+  "v08|college_d1|default": {
+   "changeup_share": {
+    "opposite": 0.051,
+    "same": 0.041
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.247,
+    "opposite": 0.24
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.438
+  },
+  "v08|college_d1|four_pitch": {
+   "changeup_share": {
+    "opposite": 0.054,
+    "same": 0.007
+   },
+   "changeup_more_vs_opposite": true,
+   "breaking_share": {
+    "same": 0.325,
+    "opposite": 0.292
+   },
+   "breaking_more_vs_same": true,
+   "breaking_away_share_same_side": 0.361
+  }
+ }
+}
