@@ -461,6 +461,14 @@ def play_game(log_path):
                     cst = engine.root_costs(ars, s, tab)[(p.name, q)] if v08 else engine.cost(p, q, s, ars)[0]
                 best_cost = min(d[1] for d in dist)
                 top3 = "; ".join(f"{d[2].name} {d[3]} {d[0]:.0%}" for d in dist[:3])
+                # v0.9 read-through: log-only (no rng draw, no change to the call): the why line and the hitter's
+                # most likely sit. v0.7c has neither.
+                why_txt, guess_txt = "", ""
+                if v08 and not override:
+                    why_txt = engine.why_line(ars, s, tab, (p, q), _info)[0]
+                    sg = _info["sigma"]
+                    gk = max(sg, key=sg.get)
+                    guess_txt = f"{gk[0]} {gk[1]} {sg[gk]:.0%}"
                 pitch_mix = Counter()
                 for d in dist:
                     pitch_mix[d[2].name] += d[0]
@@ -586,7 +594,7 @@ def play_game(log_path):
                     "call": f"{p.name} {q}", "kind": p.kind, "quad": q, "pick_prob": round(prob, 3),
                     "runs_vs_best": round(cst - best_cost, 4), "conf": round(pre_conf, 2),
                     "mix": ", ".join(f"{k} {v:.0%}" for k, v in pitch_mix.most_common()),
-                    "top3": top3, "shakeoffs": " | ".join(shakes),
+                    "top3": top3, "shakeoffs": " | ".join(shakes), "guess": guess_txt, "why": why_txt,
                     "last": f"{last[0]} {last[1]} ({last[2]})" if last else "",
                     "result": result, "detail": detail, "runs": runs_scored,
                     "est_timing": round(pre_tau, 2),
