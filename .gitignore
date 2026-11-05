@@ -11,3 +11,6 @@ app/parity_cases.json
 app/*.png
 app/e2e_shots/
 node_modules
+data/statcast/
+runs/
+app/parity_cases.json

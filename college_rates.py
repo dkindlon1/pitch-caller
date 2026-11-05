@@ -123,6 +123,21 @@ def rates(teams):
     return r
 
 
+def rates_v08(teams):
+    """v0.8 (spec 7.0): rates() with steals fixed. rates() sums SB over all teams but attempts only over teams that report
+    them, which made D3's caught-stealing rate negative. Here SB and CS both come from the teams that report attempts."""
+    r = rates(teams)
+    rep = {n: row for n, row in teams.items() if dict(zip(COLS, row))["SBATT"] is not None}
+    if rep:
+        pa = sb = att = 0
+        for row in rep.values():
+            d = dict(zip(COLS, row))
+            pa += d["AB"] + d["BB"] + d["HBP"] + d["SF"] + d["SH"]
+            sb += d["SB"]; att += d["SBATT"]
+        r["SB"], r["CS"] = sb / pa, (att - sb) / pa
+    return r
+
+
 # MLB 2010-15 era per-PA rates (approximate public league averages) -- used only to validate the method
 # against the MLB RE24 table the engine already uses.
 MLB = {"K": 0.200, "BB": 0.079, "HBP": 0.009, "1B": 0.154, "2B": 0.045, "3B": 0.005, "HR": 0.026,
