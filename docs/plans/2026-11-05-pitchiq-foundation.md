@@ -21,10 +21,19 @@
 > **Status, Nov 5 (end of day).** Built per spec amendment A11 (a team is the `programs` row; doc tables stay scoped
 > by `program_id`; `members` holds presets and toggles; `player_links` holds a player's pitcher records), not the
 > `team_members` / `doc->>'teamId'` design in Tasks 2 to 6 below, because `teamId` on a hitter already names the
-> opponent team. Tasks 0 to 7 are done on the `pitchiq-platform` branch: migration `20261106000000_pitchiq_teams.sql`,
-> `rls_matrix_test.js` (96 checks), the ported sync, review and client tests, `app/sync.js` 2.0.0 (team transport,
-> shared-iPad hand-over, locked state), and the iPad's sync panel (start a team, invite codes, presets with toggles).
-> Task 8 (apply to the dev project) is replaced by the promote workflow to prod. Task 9 (the Next.js shell) is next.
+> opponent team. On the `pitchiq-platform` branch:
+> - Tasks 0-7: migration `20261106000000_pitchiq_teams.sql`; `rls_matrix_test.js` (149 checks); the ported sync,
+>   review and client tests; `app/sync.js` 2.1.0 (team transport, shared-iPad hand-over, locked state, purge); the
+>   iPad's sync panel (start a team, invite codes, presets with an Advanced toggle view, approving parent emails).
+> - An independent review found 3 high, 5 medium and 7 low issues (a spare player link could pose as a parent and
+>   delete the player's data; deleted data came back with the next sync; an unconsented child's data still went in).
+>   All are fixed and each has a check in `rls_matrix_test.js` sections 12-13. A second review of the fixes is
+>   running. Additions this caused: one open invite per pitcher; a parent's email typed by a player waits for a
+>   coach's approval (`pc_approve_invite`); the `purged` table and the iPad purge.
+> - Task 9: `web/` sign-in, `/app` and `/join/[token]`, asking the age question before any account
+>   (`pc_invite_to_parent`). Tested against a real local Supabase (`supabase start`, `web/tests/shell_e2e.js`, CI job
+>   `web-shell`) rather than the stand-in.
+> - Task 8 (apply to the dev project) is replaced by the promote workflow to prod, which needs Drew to type PROMOTE.
 
 ## Roadmap (build order per spec A9/A10)
 
@@ -615,7 +624,7 @@ From a fresh clone, run every SQL test, `app_sync_e2e.js`, `smoke.js`/`parity.js
 
 | Deliverable | Status |
 | --- | --- |
-| D1 Migration | not started |
-| D2 RLS matrix | not started |
-| D3 Team-scoped sync | not started |
-| D4 Web shell | not started |
+| D1 Migration | built; local PG17 and local Supabase; not on prod (needs PROMOTE) |
+| D2 RLS matrix | 149 checks pass; second review pending |
+| D3 Team-scoped sync | sync, review, client and browser sync tests pass |
+| D4 Web shell | 29 checks pass against local Supabase |
