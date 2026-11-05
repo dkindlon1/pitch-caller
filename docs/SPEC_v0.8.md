@@ -1,7 +1,8 @@
 # Pitch Caller v0.8: Math Spec (build version)
 
 Status: rewritten 2026-11-04; revised after a second fresh review (4 blockers, 6 majors, 7 minors fixed) a third (5 majors, 6 minors fixed) and a fourth (2 majors, 10 minors
-fixed). Every term below has
+fixed). A final go/no-go review found five one-line items; all applied. The spec is build-ready; nothing in it is
+implemented or tested yet. Every term below has
 a definition, a starting value, a switch, an input source and an acceptance test. Where a number is a guess it says so.
 
 ## 0. Ground rules
@@ -36,10 +37,10 @@ a definition, a starting value, a switch, an input source and an acceptance test
 | `hs_pitch_cost` | off | on (HS, travel) | Pitch-cap cost (section 7.6) |
 | `temp_unc` | off | on | Uncertainty floor on temperature (section 6.6) |
 
-**Look tracking.** The look (v̂, ŷ, 2.6) is updated after every pitch whenever `pairing_v07` is off, because the
-root's timing and eye-level terms use it. `look_state` only decides whether the look is also a state in the value
-solve (off: future counts are valued at the plate appearance's starting look h₀, which equals the myopic cost of
-6.4).
+**Look tracking.** The look (v̂, ŷ, 2.6) is updated after every pitch whenever `pairing_v07` is off, or `timing_B`
+or `look_state` is on, because the timing and eye-level terms use it. `look_state` only decides whether the look is also a state in the value
+solve (off: future counts are valued at the plate appearance's starting look h₀, so the cost equals the myopic cost
+c_my of 6.4).
 
 **Golden test (gates every step):** with all flags at v0.7c, `call_mixed` distributions on 500 fixed random situations
 (seeded) equal the committed v0.7c outputs to 1e-12, in Python and JavaScript; tests.py 19/19.
@@ -272,7 +273,7 @@ kept unchanged: familiarity counts only earlier at-bats and B is 0 for a same-sp
   2.69·φ_FB, set equal to 0.156 → φ_FB = 0.058, φ_OS = 2·φ_FB = 0.116 (the 2-to-1 off-speed ratio from the research).
   The fresh review measured v0.7c's term at about 5 to 6 wOBA points per trip; this keeps the same average, so the
   claim is "same average decline as v0.7c, redistributed by what each hitter saw," not "matches the 13-point study."
-- No whiff term (v0.7c had none). Statcast fit (section 9) can replace both values.
+- No whiff term (v0.7c had none). Statcast fit (section 10) can replace both values.
 - Acceptance: over simulated D3 starts, average hard-contact share with familiarity on is within ±0.5 points of v0.7c.
 
 ## 6. Planning ahead
@@ -366,6 +367,28 @@ Pros show ρ < 0 (over-alternating), which is itself a pattern; target |ρ| ≤ 
 
 ## 7. Situation
 
+### 7.0 Corrected, calibrated chain (built in step 3)
+
+- **Rates.** College levels from `college_rates.py`, high school and travel from `hs_rates.py`, MLB from the
+  `mlb_check` rates. The caught-stealing fix goes in a new function, `rates_v08()`, in `college_rates.py`: today SB is
+  summed over all teams but stolen-base attempts only over the teams that report them, which makes D3's CS negative
+  (−0.0094) and a negative transition probability. `rates_v08()` takes SB and CS from the reporting teams only. The
+  old `rates()` and the script's existing output path are unchanged; never rewrite `college_run_values.json` or
+  `run_tables.py` (the engine's walk/strikeout linear weights and RE tables come from them, and the golden test
+  depends on them). Corrected rates and the calibration factor go to a new file, `we_rates.json`.
+- **Calibration.** Multiply the chain's walk, hit-by-pitch and hit rates by one common factor per level until its
+  RE(0 outs, empty) equals RE_BY_LEVEL's within 0.5% (D1's table was scaled ×1.072; the raw chain gives 0.653 vs 0.700).
+  Within each factor iteration, rerun `calibrate_out_rates` and then `solve_re`; T_L, `_sf_rate` and `_gdp_rate` are
+  read from the final calibrated chain.
+- **Shared constants.** Ā (7.5), Ī (7.5) and I₀ (8.2), once computed from simulation, are stored in a new
+  `sim_constants.json` that both the Python and JavaScript engines read, so parity tests use identical numbers.
+- **Gate.** For D1 and D3 the calibrated chain's RE must match RE_BY_LEVEL in every base-out state within max(5%,
+  0.035 runs) (the fourth review measured D3 5.4% = 0.033 runs and D1 4.1%: both pass). HS's RE table is a uniform
+  ×1.111 rescale of the chain's shape and MLB's is an external table, so a hit-rate factor can't match their shape
+  everywhere (the fourth review found 5.4% gaps, up to 0.19 runs at HS bases loaded, 0 outs). For HS, travel and MLB
+  the gate is report-only: list every state over max(5%, 0.035 runs). These tables matter only through the win blend
+  late in close games.
+
 ### 7.1 Win and leverage tables (new: `we_tables.py`)
 
 Built offline per level from `college_rates.py`'s existing per-level base-out chain (which already includes walks,
@@ -383,24 +406,6 @@ hits, errors, wild pitches, steals, double plays and sac flies):
 
 The chain used here is the **corrected, calibrated chain** built in step 3 (section 7.0). The WE chain is the source of
 the runner-on-third and double-play totals; 7.3's typed table is calibrated to match it, not the other way round.
-
-### 7.0 Corrected, calibrated chain (built in step 3)
-
-- **Rates.** College levels from `college_rates.py`, high school and travel from `hs_rates.py`, MLB from the
-  `mlb_check` rates. The caught-stealing fix goes in a new function, `rates_v08()`, in `college_rates.py`: today SB is
-  summed over all teams but stolen-base attempts only over the teams that report them, which makes D3's CS negative
-  (−0.0094) and a negative transition probability. `rates_v08()` takes SB and CS from the reporting teams only. The
-  old `rates()` and the script's existing output path are unchanged; never rewrite `college_run_values.json` or
-  `run_tables.py` (the engine's walk/strikeout linear weights and RE tables come from them, and the golden test
-  depends on them). Corrected rates and the calibration factor go to a new file, `we_rates.json`.
-- **Calibration.** Multiply the chain's walk, hit-by-pitch and hit rates by one common factor per level until its
-  RE(0 outs, empty) equals RE_BY_LEVEL's within 0.5% (D1's table was scaled ×1.072; the raw chain gives 0.653 vs 0.700).
-- **Gate.** For D1 and D3 the calibrated chain's RE must match RE_BY_LEVEL in every base-out state within max(5%,
-  0.035 runs) (the fourth review measured D3 5.4% = 0.033 runs and D1 4.1%: both pass). HS's RE table is a uniform
-  ×1.111 rescale of the chain's shape and MLB's is an external table, so a hit-rate factor can't match their shape
-  everywhere (the fourth review found 5.4% gaps, up to 0.19 runs at HS bases loaded, 0 outs). For HS, travel and MLB
-  the gate is report-only: list every state over max(5%, 0.035 runs). These tables matter only through the win blend
-  late in close games.
 
 New game inputs: we're home or away; scheduled innings (default HS/travel 7, college 9, editable for doubleheaders);
 extra-innings runner flag. The half follows from home/away.
@@ -494,8 +499,8 @@ Calibration targets come from the corrected, calibrated chain (7.0), built earli
 p_s = \operatorname{clip}\!\big(0.64 + 0.20\,\operatorname{clip}((4-y)/3,0,1) + \delta_L + \delta_t,\ 0.30,\ 0.95\big)
 ```
 
-δ_L = level steal success minus MLB's 0.72: D1 +0.08, HS +0.10. D3 uses D1's +0.08 until step 7's caught-stealing fix,
-then its own corrected value from `we_rates.json` (the third review computed 0.840, so +0.12). δ_t = clip(0.10·(t − 1.4)/0.2,
+δ_L = level steal success minus MLB's 0.72: D1 +0.08, HS +0.10. D3 uses its corrected value from `we_rates.json`
+(built in step 3; about 0.840, so +0.12). δ_t = clip(0.10·(t − 1.4)/0.2,
 −0.15, 0.15) when t is entered, else 0. The research found no effect of pitch speed, so speed isn't used.
 - Cost added to each call: a·[p_s·V(b, k, o, B_steal) + (1 − p_s)·V(b, k, o + 1, B_caught) − V(b, k, o, B)], using
   the table's values at the current count (V_end-based at three outs).
@@ -670,7 +675,7 @@ weights (0.75, 0.5), swing sit weights (0.3, 0.15), crowding 0.3, steal threat r
 | 3 | Corrected, calibrated chain (7.0: `rates_v08()`, `we_rates.json`); typed batted balls (7.3), `inplay_fit.py` → `inplay_typed_params.py`, simulator switch (no `fit_all.py` rerun) | 7.0 gate; level rates within current tolerances with flag on; golden test exact with flag off |
 | 4 | Familiarity (5) with re-keying in the app **and** the simulator (which today counts `seen` per pitch name: it must pass per-class, earlier-at-bat counts), fatigue (8.1), umpire (7.5), app inputs (8.3) | Section acceptance tests; golden exact with flags off |
 | 5 | Sit game (2.1-2.5) at root and per count | Residual and linearization tests; X report |
-| 6 | Look, timing, eye level, pair terms, planning (2.6-2.7, 3, 4, 6); HS pitch cost (7.6, needs the solve's N) | Budget (6.5); scenario tests below |
+| 6 | Look, timing, eye level, pair terms, crowding, planning (2.6-2.8, 3, 4, 6 except 6.6); HS pitch cost (7.6, needs the solve's N) | Budget (6.5); scenario tests below |
 | 7 | `we_tables.py` on the step-3 chain, objective blend (7.1-7.2), running game (7.4), walk suggestion (7.7) | WE table checks below |
 | 8 | Hitter grades (8.2), why line (9), temperature floor (6.6) | Section tests; X not worse than v0.7c by > 0.002 runs |
 
