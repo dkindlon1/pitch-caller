@@ -26,7 +26,7 @@ export async function sendToParent(form: FormData) {
   const token = tokenOf(form);
   let status = "";
   try { status = await inviteToParent(token, str(form, "parent_email")); }
-  catch (e) { to(token, `error=${e instanceof Error && (e.message === "expired" || e.message === "coach_invite") ? e.message : "failed"}`); }
+  catch (e) { to(token, `error=${e instanceof Error && ["expired", "coach_invite", "email_invite"].includes(e.message) ? e.message : "failed"}`); }
   if (status === "parent_email_required") to(token, "error=parent_email");
   to(token, `done=${status === "for_parent" ? "for_parent" : "parent_invite_sent"}`);
 }

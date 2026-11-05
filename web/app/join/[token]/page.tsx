@@ -23,6 +23,7 @@ const ERRORS: Record<string, string> = {
   parent_email: "Enter a parent's or guardian's email.",
   expired: "This invite link has expired or was already used. Ask your coach for a new one.",
   coach_invite: "This is a coach's invite. Coaches sign in to accept it.",
+  email_invite: "This invite was sent to one email, so it can't be passed to a parent from here. Ask your coach to send a new invite to your parent's email.",
   other_email: "This invite was sent to a different email. Sign in with that email to accept it.",
   consent: "A parent or guardian has to agree before this player joins.",
   other_parent: "Another parent already agreed for this player. Only that parent's account can accept.",

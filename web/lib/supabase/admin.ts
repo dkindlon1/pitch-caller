@@ -12,6 +12,6 @@ export async function inviteToParent(token: string, parentEmail: string): Promis
     cache: "no-store",
   });
   const json = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(json && json.code === "P0002" ? "expired" : json && json.code === "22023" ? "coach_invite" : "failed");
+  if (!res.ok) throw new Error(json && json.code === "P0002" ? "expired" : json && json.code === "22023" ? "coach_invite" : json && json.code === "42501" ? "email_invite" : "failed");
   return (json && json.status) || "failed";
 }

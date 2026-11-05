@@ -232,6 +232,22 @@ const MIN = 60e3;
     check(+(await su.query("select count(*) n from public.pitchers where id = 'pk1'")).rows[0].n === 0, "and nothing of his came back to the server");
   }
 
+  console.log("14. Once a parent agrees, what the server let go comes back from the coach's iPad");
+  {
+    const A = await device();
+    await A.D.put("pitchers", { id: "pk2", name: "Young", number: "12", pitches: [] });
+    await A.D.put("checkins", { pitcherId: "pk2", date: "2026-11-05", arm: 4 });
+    await A.sync("coach", P, true).syncNow(); await sleep(25); await A.sync("coach", P, true).syncNow();
+    const onServer = async () => +(await su.query("select count(*) n from public.checkins where program_id = $1 and pitcher_id = 'pk2'", [P])).rows[0].n;
+    await su.query("select private.pc_flag_minor($1, 'pk2')", [P]);                    // a coach approved: he's under 13
+    check((await onServer()) === 0, "(the setup: held, his check-in left the server)");
+    await su.query("insert into public.guardian_consents (program_id, pitcher_id, guardian_user_id, method) values ($1, 'pk2', $2, 'test')", [P, U.pitcher2]);
+    const r = await A.sync("coach", P, true).syncNow();
+    check(r.pull.resend >= 1 && (await onServer()) === 1, `the parent agrees, and the coach's next sync sends the check-in again (${r.pull.resend} queued)`);
+    const again = await A.sync("coach", P, true).syncNow();
+    check(!again.pull.resend, "only once");
+  }
+
   await c.end(); await su.end();
   console.log(fails ? `\n${fails} client check(s) FAILED` : "\nall client checks passed");
   process.exit(fails ? 1 : 0);

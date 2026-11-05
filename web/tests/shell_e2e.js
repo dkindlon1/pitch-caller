@@ -141,12 +141,21 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     const moved = (await db.query("select token, under13 from public.invites where program_id = $1 and pitcher_id = 'p_kid' and email = 'mom@test.local' and used_at is null", [rit])).rows;
     const kidDoc = (await db.query("select doc from public.pitchers where program_id = $1 and id = 'p_kid'", [rit])).rows[0].doc;
     check(moved.length === 1 && moved[0].under13 && (await db.query("select used_at from public.invites where token = $1", [kidTok])).rows[0].used_at, "the invite moved to the parent's email, marked under 13, and his link is spent");
-    check(!("name" in kidDoc) && +(await db.query("select count(*) n from auth.users")).rows[0].n === before, `no account was made and his record holds only the placeholder (${Object.keys(kidDoc).sort().join(",")})`);
+    check(kidDoc.name === "Young arm" && +(await db.query("select count(*) n from auth.users")).rows[0].n === before, "no account was made, and his record is untouched until a coach approves the parent's email");
     await goto(kid, `${SITE}/login?mode=signup`);
     const su = kid.getByRole("form", { name: "Make an account" });
     check(await su.getByLabel("Month").count() === 0, "back on the sign-up form the same day, the age question isn't offered again");
     await su.getByLabel("Email").fill("kid@test.local"); await su.getByLabel("Password (8 characters or more)").fill(PASS); await submit(kid, "Make account", (u) => /error=/.test(u.search), su);
     check(/under 13 can't make their own account/.test(await mainText(kid)) && +(await db.query("select count(*) n from auth.users where email = 'kid@test.local'")).rows[0].n === 0, "and making an account anyway is refused, with nothing stored");
+
+    const tiedTok = await rpc("coach", "pc_invite", { p: rit, member_role: "player", pitcher: "p_teen", invite_email: "teen@test.local", under13: false });
+    const kid2 = await fresh();
+    await goto(kid2, `${SITE}/join/${tiedTok}`);
+    await born(kid2, now.getUTCMonth() + 1, now.getUTCFullYear() - 11); await submit(kid2, "Continue");
+    await kid2.getByLabel("Parent or guardian's email").fill("someone@test.local"); await submit(kid2, "Send to my parent");
+    check(/sent to one email/.test(await mainText(kid2, /sent to one email/)) && (await db.query("select used_at from public.invites where token = $1", [tiedTok])).rows[0].used_at === null,
+      "an invite sent to someone's email can't be passed to a 'parent' by whoever opens it");
+    await rpc("coach", "pc_cancel_invite", { tok: tiedTok });
 
     console.log("6. The coach approves the parent's email; the parent opens the invite, agrees, and joins for the child");
     const mom = await fresh();
@@ -156,6 +165,8 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     const wt = await mainText(mom, /hasn't approved this invite yet/);
     check(/hasn't approved this invite yet/.test(wt), `(${wt.slice(0, 90).replace(/\n/g, " / ")}) before the coach approves the email the child typed, the parent is told to wait`);
     await rpc("coach", "pc_approve_invite", { tok: moved[0].token });
+    const heldDoc = (await db.query("select doc from public.pitchers where program_id = $1 and id = 'p_kid'", [rit])).rows[0].doc;
+    check(!("name" in heldDoc), `the coach's approval holds the child's record to the placeholder until the parent agrees (${Object.keys(heldDoc).sort().join(",")})`);
     await mom.reload(); await settle(mom);
     const mt = await mainText(mom, /Join RIT Tigers as player/);
     check(/Join RIT Tigers as player/.test(mt) && await mom.getByRole("checkbox", { name: /parent or guardian and I agree/ }).count() === 1, "the parent sees the notice and a consent box");

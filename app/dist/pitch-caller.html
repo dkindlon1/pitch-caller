@@ -2813,10 +2813,27 @@ td.wrapcell .line { display: block; }
       return n;
     }
 
+    // under-13 players a parent has now agreed for: while they were held the server let go of their check-ins,
+    // bullpens, velo and models, so this iPad sends its copies once (they go in newest-wins like any other change)
+    async function resend(ids, s) {
+      const done = new Set(s.consented || []), fresh = ids.filter((id) => !done.has(id));
+      if (!fresh.length) return 0;
+      const want = new Set(fresh), extra = (await db.get("meta", "pushExtra")) || { id: "pushExtra", tables: {} };
+      extra.tables = extra.tables || {};
+      let n = 0;
+      for (const t of ["checkins", "sessions", "readings", "learned"]) {
+        const ids2 = (await db.all(t)).filter((x) => want.has(x.pitcherId) || ((/^p2?:(.+)$/.exec(x.id) || [])[1] && want.has(/^p2?:(.+)$/.exec(x.id)[1]))).map((x) => x.id);
+        if (ids2.length) { extra.tables[t] = [...new Set((extra.tables[t] || []).concat(ids2))]; n += ids2.length; }
+      }
+      if (n) await db.put("meta", extra);
+      s.consented = [...done, ...fresh];
+      return n;
+    }
+
     async function pull() {
       await bind();
       const s = await state();
-      const stats = { merged: 0, received: 0, held: false, locked: false, purged: 0 };
+      const stats = { merged: 0, received: 0, held: false, locked: false, purged: 0, resend: 0 };
       for (let pass = 0; pass < 2; pass++) {
         let restart = false;
         for (const t of TABLES) {
@@ -2831,6 +2848,7 @@ td.wrapcell .line { display: block; }
             stats.received += r.rows.length;
             if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
             if (t === "pitchers" && Array.isArray(r.purged) && r.purged.length) stats.purged += await purge(r.purged);
+            if (t === "pitchers" && Array.isArray(r.consented)) stats.resend += await resend(r.consented, s);
             if (r.held) stats.held = true;
             cur = r.next || cur;
             s.cursor[t] = cur;
@@ -2854,7 +2872,8 @@ td.wrapcell .line { display: block; }
       let up, upErr = null;
       try { up = await push(); }
       catch (e) { if (!e.status || e.status === 401 || e.status === 403 || e.code === "other-program" || e.code === "other-user") throw e; upErr = e; up = { applied: 0, skipped: 0, rejected: [], error: e.message }; }
-      const down = await pull();
+      let down = await pull();
+      if (down.resend) { try { const again = await push(); up = { applied: (up.applied || 0) + again.applied, skipped: (up.skipped || 0) + again.skipped, rejected: (up.rejected || []).concat(again.rejected), error: up.error }; } catch (e) {} }
       const locked = down.locked || (up.rejected || []).some((x) => x.reason === "team_locked");
       return { push: up, pull: down, locked, error: upErr ? upErr.message : null };
     }
