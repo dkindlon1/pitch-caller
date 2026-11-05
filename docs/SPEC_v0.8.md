@@ -391,8 +391,8 @@ Pros show ρ < 0 (over-alternating), which is itself a pattern; target |ρ| ≤ 
 
 ### 7.1 Win and leverage tables (new: `we_tables.py`)
 
-Built offline per level from `college_rates.py`'s existing per-level base-out chain (which already includes walks,
-hits, errors, wild pitches, steals, double plays and sac flies):
+Built offline per level from the corrected, calibrated chain (7.0), which already includes walks, hits, errors, wild
+pitches, steals, double plays and sac flies:
 
 1. Run distribution: P(r runs in the rest of the half-inning | o, B), r = 0…10+, by forward iteration on the chain to
    absorption at 3 outs.
@@ -404,7 +404,7 @@ hits, errors, wild pitches, steals, double plays and sac flies):
    of that quantity over all plate appearances (frequencies from forward propagation through an average game).
 4. Stored as `we_tables.json` per level and N ∈ {7, 9}.
 
-The chain used here is the **corrected, calibrated chain** built in step 3 (section 7.0). The WE chain is the source of
+The WE chain is the source of
 the runner-on-third and double-play totals; 7.3's typed table is calibrated to match it, not the other way round.
 
 New game inputs: we're home or away; scheduled innings (default HS/travel 7, college 9, editable for doubleheaders);
@@ -588,7 +588,7 @@ lower the contact grade):
 | --- | --- | --- | --- |
 | Contact | Whiff (swings) | P(whiff given swing) | −g_c·Σ_z w_z W_z(1−W_z), w_z = landing-and-swing weight of band z |
 | Power | Hard contact (balls in play only; fouls excluded) | P(hard given contact) | +g_w·Σ_z w_z H_z(1−H_z) |
-| Discipline | Swing (all pitches) | P(swing) | −g_d·Σ_{z off-zone} L_z S_z(1−S_z) |
+| Discipline | Swing (all pitches) | P(swing) | −g_d·Σ over off-zone z of L_z S_z(1−S_z) |
 
 Discipline uses every pitch and the engine's own band split, so it needs no logged location. I₀ is the information of
 50 average plate appearances at the level (computed once from simulation). Learner v2 rails apply: a cap
@@ -640,7 +640,7 @@ C_{−k} switches term k off; for look value it's c_my. Show the template of the
 | Situation | Tying run on third: need a strikeout or a ground ball |
 | Umpire | Today's umpire is calling {more/fewer} strikes than usual |
 
-Δ values are for ranking only (costs aren't additive across terms). Cost: one extra root evaluation per term.
+Δ values are for ranking only (costs aren't additive across terms). Cost: about 130 evaluations (6.5), run after the call is shown.
 
 ## 10. Fitting and validation
 
@@ -670,7 +670,7 @@ weights (0.75, 0.5), swing sit weights (0.3, 0.15), crowding 0.3, steal threat r
 | Step | Builds | Passes when |
 | --- | --- | --- |
 | 0 | Compatibility flags; golden file of v0.7c outputs (Python and JS) | Golden test exact; tests.py 19/19; parity |
-| 1 | Pure-sit cost evaluator C(a | k) (2.2; diagnostic only, it changes no call); metrics: X per count (2.3) on v0.7c's mix π, ρ, location shares; `perturb.py`; baseline report | Baseline report committed; golden exact |
+| 1 | Pure-sit cost evaluator C(a given k) (2.2; diagnostic only, it changes no call); metrics: X per count (2.3) on v0.7c's mix π, ρ, location shares; `perturb.py`; baseline report | Baseline report committed; golden exact |
 | 2 | `seq_fit.py` and fits (independent of the engine) | Fit report with ship / no-ship per term |
 | 3 | Corrected, calibrated chain (7.0: `rates_v08()`, `we_rates.json`); typed batted balls (7.3), `inplay_fit.py` → `inplay_typed_params.py`, simulator switch (no `fit_all.py` rerun) | 7.0 gate; level rates within current tolerances with flag on; golden test exact with flag off |
 | 4 | Familiarity (5) with re-keying in the app **and** the simulator (which today counts `seen` per pitch name: it must pass per-class, earlier-at-bat counts), fatigue (8.1), umpire (7.5), app inputs (8.3) | Section acceptance tests; golden exact with flags off |
