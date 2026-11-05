@@ -13,9 +13,10 @@ if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1
 fi
 echo "build: app/dist matches the source"
-for t in learn_test db_test import_test rails_test schema_test stage2_test worlds_test; do
+for t in learn_test db_test import_test rails_test schema_test stage2_test worlds_test pitch_rules_test; do
   [ -f "app/$t.js" ] || continue
   (cd app && ../$run "$t" node "$t.js")
 done
 node app/smoke.js
 echo "smoke: passed"
+(cd app && ../$run rules_e2e node rules_e2e.js)

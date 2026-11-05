@@ -18,7 +18,7 @@ const ourTeam = () => [...DB.teams.values()].find((t) => t.isOurs);
 const opponents = () => [...DB.teams.values()].filter((t) => !t.isOurs).sort((a, b) => a.name.localeCompare(b.name));
 const teamHitters = (tid) => [...DB.hitters.values()].filter((x) => x.teamId === tid).sort((a, b) => (+a.number || 99) - (+b.number || 99) || a.name.localeCompare(b.name));
 const rosterPitchers = () => [...DB.pitchers.values()].sort((a, b) => a.name.localeCompare(b.name));
-const todayCheckin = (pid) => { const c = DB.checkins.get(pid); return c && c.date === PCDB.today() ? c : null; };
+const todayCheckin = (pid) => { const c = DB.checkins.get(pid); return c && c.date === todayT() ? c : null; };
 // what's been learned (learner v2): per pitcher { profile, served }, per hitter the hitter model
 const pModel = (pid) => DB.models.get("v2:" + pid);
 const hModel = (hid) => DB.models.get("h2:" + hid);
@@ -31,7 +31,7 @@ async function boot() {
     const mig = await PCDB.migrateLegacy(D, S);
     for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) for (const x of await D.all(store)) map.set(x.id, x);
     for (const x of await D.all("learned")) DB.models.set(x.id, x);
-    for (const x of await D.byIndex("checkins", "date", PCDB.today())) DB.checkins.set(x.pitcherId, x);
+    for (const x of await D.byIndex("checkins", "date", todayT())) DB.checkins.set(x.pitcherId, x);
     if (!ourTeam()) { const t = await dbPut("teams", { name: "Our team", isOurs: true, level: S.setup.level }); DB.teams.set(t.id, t); }
     if (mig) { S.setup.staffIds = mig.staffIds; if (mig.opponentId) S.setup.opponentId = mig.opponentId; }
     if (!DB.pitchers.size) { const p = await dbPut("pitchers", PCDB.newPitcher(ourTeam().id, { name: "Pitcher 1" })); DB.pitchers.set(p.id, p); }
@@ -53,6 +53,7 @@ async function boot() {
       for (const job of (await D.all("meta")).filter((m) => m.id === "toLearn" || /^toLearn:/.test(m.id))) await learnAfterGame(job);
       if (await D.get("meta", "checkDups")) { await checkDuplicates().catch((e) => console.warn("duplicate check", e)); await D.del("meta", "checkDups"); }
       for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
+      await refreshOutings().catch((e) => console.warn("outings", e));
       for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
       await refreshLineupMemory();
       if (S.view === "roster") render();
@@ -155,7 +156,7 @@ function ensureGameRecord() {
   const g = G();
   if (g.dbId) return g.dbId;
   g.dbId = PCDB.uid("gam");
-  const rec = PCDB.moveGame({ id: g.dbId, date: PCDB.today(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
+  const rec = PCDB.moveGame({ id: g.dbId, date: todayT(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
     catcherId: S.setup.catcherId || null, staffIds: (S.setup.staffIds || []).slice(), lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
     status: "planned", startedAt: Date.now(), deviceId: DB.deviceId || null }, "live");
   if (DB.ready) dbPut("games", rec); else queue().games.push(rec);
@@ -296,6 +297,7 @@ async function learnAfterGame(job) {
   const names = (job.pids || []).filter((id) => DB.pitchers.has(id)).map((id) => DB.pitchers.get(id).name);
   if (names.length) toast(`Learned from the game: ${names.join(", ")}`);
   if (S.view === "roster") render();
+  await refreshOutings().catch(() => {}); logGames = null;   // rest and eligible-on take in the finished game
   if (SYNC.sync) setTimeout(() => syncNow(true), 0);   // the finished game goes up in the background
 }
 
@@ -334,7 +336,8 @@ function oursView() {
           return h("button", { class: `pcard${x.id === rosterSel ? " sel" : ""}`, "aria-pressed": String(x.id === rosterSel), on: { click: () => { rosterSel = x.id; importPreview = null; render(); } } },
             h("span", { class: "pc-top" }, h("b", {}, (x.number ? `#${x.number} ` : "") + (x.name || "Unnamed")), today ? h("span", { class: "pill ok" }, "Today") : null),
             h("span", { class: "pc-mid" }, (x.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind))),
-            h("span", { class: "pc-sub" }, `${x.hand === "L" ? "Lefty" : "Righty"} ${x.role === "RP" ? "reliever" : "starter"}, ${n ? `${n} pitches charted` : "nothing charted yet"}${ci ? ", checked in" : ""}`));
+            h("span", { class: "pc-sub" }, `${x.hand === "L" ? "Lefty" : "Righty"} ${x.role === "RP" ? "reliever" : "starter"}, ${n ? `${n} pitches charted` : "nothing charted yet"}${ci ? ", checked in" : ""}`),
+            (() => { const t = eligibleText(x.id); return t ? h("span", { class: `pc-sub${/today/.test(t) ? "" : " flag"}`, style: /today/.test(t) ? null : { color: "var(--warn)" } }, t[0].toUpperCase() + t.slice(1)) : null; })());
         })),
         h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => {
           const np = await dbPut("pitchers", PCDB.newPitcher(ourTeam().id, { name: `Pitcher ${DB.pitchers.size + 1}` })); DB.pitchers.set(np.id, np); rosterSel = np.id; render();
@@ -377,7 +380,11 @@ function confirmTwice(key) { if (armed === key) { armed = null; return true; } a
 function toggleStaff(pid) {
   const ids = S.setup.staffIds;
   if (ids.includes(pid)) { if (ids.length === 1) { toast("Today's staff needs at least one pitcher"); return; } S.setup.staffIds = ids.filter((x) => x !== pid); }
-  else S.setup.staffIds = ids.concat(pid);
+  else {
+    S.setup.staffIds = ids.concat(pid);
+    const e = eligibility(pid), p = DB.pitchers.get(pid) || {};
+    if (e && !e.today) toast(`${p.name || "He"} isn't ${eligibleText(pid).replace(/^eligible/, "eligible until")} under ${teamRule().name}`);
+  }
   const cur = pitcherDef(); attachStaff();
   const i = S.setup.staff.indexOf(cur); G().pitcher = i >= 0 ? i : 0;
   G().call = null; save(); render();
@@ -447,7 +454,7 @@ function arsenalEditor(p) {
 
 function checkinPanel(p) {
   const prev = todayCheckin(p.id);
-  const c = prev ? JSON.parse(JSON.stringify(prev)) : { pitcherId: p.id, date: PCDB.today(), arm: 4, sleep: "", conf: {} };
+  const c = prev ? JSON.parse(JSON.stringify(prev)) : { pitcherId: p.id, date: todayT(), arm: 4, sleep: "", conf: {} };
   const dirty = { v: false };
   const shift = PCLearn.todayLimitShift(prev);
   return h("section", { class: "panel glass", "aria-label": "Today's check-in" },
@@ -572,7 +579,7 @@ function importPanel(p) {
       if (t.releaseOffset) d.relOff = t.releaseOffset;
     }
     savePitcher(p, false);
-    const sess = await dbPut("sessions", { pitcherId: p.id, date: PCDB.today(), source: P.r.source, file: P.file, n: P.r.n, byType: P.r.byType, rows: P.r.rows });
+    const sess = await dbPut("sessions", { pitcherId: p.id, date: todayT(), source: P.r.source, file: P.file, n: P.r.n, byType: P.r.byType, rows: P.r.rows });
     DB.sessions.set(p.id, [sess].concat(DB.sessions.get(p.id) || []));
     importPreview = null; render(); toast(`Applied ${P.r.n} pitches to ${p.name}'s arsenal`);
   };
@@ -786,7 +793,7 @@ async function backup() {
   const data = await DB.D.exportAll();
   data.appState = { setup: Object.assign({}, S.setup, { staff: undefined }) };
   const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pitch-caller-backup-${PCDB.today()}.json`;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pitch-caller-backup-${todayT()}.json`;
   document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   toast(`Backup saved: ${data.stores.events.filter((e) => !e.deletedAt && PCDB.isPitch(e)).length} pitches, ${data.stores.pitchers.length} pitchers`);
 }
@@ -798,6 +805,142 @@ async function restore(e) {
     toast(`Restored: ${Object.entries(st).filter(([, n]) => n).map(([k, n]) => `${n} ${k}`).join(", ") || "nothing newer than what's here"}`);
     setTimeout(() => location.reload(), 900);
   } catch (err) { toast(err.message || "That file couldn't be read"); }
+}
+
+// ---------------------------------------------------------------- game day (Plan 5, A7): pitch-count rules, rest,
+// eligible-on, the pitching log and the sign card. Dates are the team's (its time zone); only game pitches count.
+const teamTz = () => (SYNC.cfg && SYNC.cfg.timezone) || null;
+const todayT = () => PCDB.today(teamTz());
+const teamRule = () => { const t = ourTeam(); return t && t.pitchRule ? PCRules.resolve(t.pitchRule) : null; };
+const fmtDay = (d) => new Date(d + "T12:00:00").toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+const restWords = (n, unit) => n === 0 ? "no rest" : `${n} ${unit === "nights" ? "night" : "day"}${n === 1 ? "'s" : "s'"} rest`;
+// every pitcher's game pitches, by game: [{ pid, gameId, date, n }] (games charted twice count once, D12)
+async function refreshOutings() {
+  if (!DB.ready) return;
+  const games = new Map((await DB.D.all("games")).filter((g) => !g.dupOf && g.date).map((g) => [g.id, g.date]));
+  const by = new Map();
+  for (const e of await DB.D.all("events")) {
+    if (!PCDB.isPitch(e) || e.legacy || !e.pitcherId || !games.has(e.gameId)) continue;
+    const k = e.pitcherId + "|" + e.gameId; by.set(k, (by.get(k) || 0) + 1);
+  }
+  DB.outings = [...by].map(([k, n]) => { const [pid, gameId] = k.split("|"); return { pid, gameId, date: games.get(gameId), n }; });
+}
+// his days: [{ date, pitches }], leaving out one game (the one being called, counted live instead)
+const outingsOf = (pid, exceptGame) => (DB.outings || []).filter((o) => o.pid === pid && o.gameId !== exceptGame).map((o) => ({ date: o.date, pitches: o.n }));
+function eligibility(pid) {
+  const r = teamRule(); if (!r || !pid) return null;
+  return PCRules.eligibleOn(r, outingsOf(pid), todayT());
+}
+function eligibleText(pid) {
+  const e = eligibility(pid); if (!e) return null;
+  if (e.today) return "eligible today";
+  const w = e.why || {};
+  const because = w.kind === "rest" ? ` (${w.pitches} pitches ${fmtDay(w.date).split(",")[0]})` : w.kind === "consecutive" ? " (pitched days in a row)" : w.kind === "window" ? ` (${w.max} in ${w.days} days)` : "";
+  return `eligible ${fmtDay(e.date)}${because}`;
+}
+// the live line under his count: what's left, the next rest tier, and the limit
+function countLine() {
+  const r = teamRule(), pd = pitcherDef(), g = G();
+  if (!r || !pd || !pd.id) return null;
+  const d = todayT(), prior = outingsOf(pd.id, g.dbId);
+  const earlier = prior.filter((o) => o.date === d).reduce((a, o) => a + o.pitches, 0);
+  const count = earlier + (g.pc[pKey()] || 0);
+  const st = PCRules.liveStatus(r, count, d, prior.filter((o) => o.date !== d));
+  if (st.level === "limit") return { warn: true, text: `At his limit of ${st.max}.${st.finishBatter ? " Finish this batter, then he's done." : ""}` };
+  const parts = [`${st.left} left of ${st.max}${earlier ? ` (${earlier} earlier today)` : ""}${st.capped ? ` (${st.capped.before} in the last ${st.capped.days - 1} day${st.capped.days === 2 ? "" : "s"})` : ""}`];
+  parts.push(st.nextAt ? `${st.nextAt - count} more: ${restWords(st.nextRest, r.unit)}` : `${restWords(st.rest, r.unit)} after today`);
+  return { warn: st.level === "near", text: parts.join(" · ") };
+}
+// Setup: the team's rule. A preset from the governing body's own page; any number can be changed.
+function pitchRulePanel() {
+  const t = ourTeam(); if (!t) return null;
+  const set = t.pitchRule || null, r = set ? PCRules.resolve(set) : null;
+  const keep = async (next) => { const tt = Object.assign({}, ourTeam(), { pitchRule: next }); const saved = await dbPut("teams", tt); DB.teams.set(saved.id, saved); G().call = null; render(); };
+  const groups = [...new Set(PCRules.PRESETS.map((x) => x.group))];
+  const pick = h("label", { class: "f", style: { flex: "1 1 260px" } }, "Pitch-count rule", h("select", { id: "rule-preset", on: { change: (e) => keep(e.target.value ? { preset: e.target.value } : null) } },
+    h("option", { value: "", selected: set ? null : true }, "Pick your league's rule"),
+    groups.map((gr) => h("optgroup", { label: gr }, PCRules.PRESETS.filter((x) => x.group === gr).map((x) => h("option", { value: x.id, selected: set && set.preset === x.id ? true : null }, x.name))))));
+  if (!r) return [h("div", { class: "fields" }, pick), h("p", { class: "note" }, "Each pitcher's rest and the day he can pitch again come from it, and the Game screen warns as he nears the limit. Pick a preset, then change any number your league does differently.")];
+  const lim = PCRules.limits(r, todayT()), unit = r.unit === "nights" ? "Nights of rest" : "Days of rest";
+  const tiers = lim.tiers;
+  const setTier = (i, k, v) => { const ts = tiers.map((x) => x.slice()); ts[i][k] = v; keep(Object.assign({}, set, { tiers: ts, max: Math.max(r.max || 0, ts[ts.length - 1][0]) })); };
+  const table = h("table", { class: "rule-tbl", "aria-label": "Rest by pitch count" },
+    h("thead", {}, h("tr", {}, h("th", {}, "Pitches"), h("th", {}, unit))),
+    h("tbody", {}, tiers.map(([upTo, rest], i) => h("tr", {},
+      h("td", {}, `${i ? tiers[i - 1][0] + 1 : 1} to `, r.byMonth ? String(upTo) : h("input", { type: "number", min: 1, max: 200, value: upTo, "aria-label": `Tier ${i + 1} up to`, on: { change: (e) => setTier(i, 0, +e.target.value) } })),
+      h("td", {}, r.byMonth ? String(rest) : h("input", { type: "number", min: 0, max: 10, value: rest, "aria-label": `Tier ${i + 1} rest`, on: { change: (e) => setTier(i, 1, +e.target.value) } }))))));
+  return [h("div", { class: "fields" }, pick,
+      r.byMonth ? null : h("label", { class: "f", style: { flex: "0 1 130px" } }, "Daily limit", h("input", { id: "rule-max", type: "number", min: 10, max: 200, value: r.max, on: { change: (e) => keep(Object.assign({}, set, { max: +e.target.value })) } }))),
+    r.byMonth ? h("p", { class: "note" }, `This month's limit: ${lim.max}. New York's varsity limits change in March, April and May.`) : null,
+    table,
+    h("p", { class: "note" }, [r.maxConsecutive ? `Not more than ${r.maxConsecutive} days in a row. ` : "", (r.windows || []).map((w) => `Not more than ${w.max} pitches in any ${w.days} days. `).join(""),
+      r.finishBatter ? "He may finish the batter he's facing at the limit. " : ""].join("")),
+    h("p", { class: "note" }, r.source ? ["From ", h("a", { href: r.source, target: "_blank", rel: "noopener" }, r.group), `, checked ${r.checked}. `, r.sourceNote || "", r.edited ? " You've changed some numbers." : ""] : (r.sourceNote || "")),
+    r.edited ? h("div", { class: "row-acts" }, h("button", { class: "btn text", on: { click: () => keep({ preset: set.preset }) } }, "Back to the preset's numbers")) : null];
+}
+// a printout: the page shows only this while printing (works with no signal)
+function printOut(title, nodes) {
+  let el = document.getElementById("print-area");
+  if (!el) { el = document.createElement("div"); el.id = "print-area"; document.body.append(el); }
+  el.replaceChildren(h("h1", {}, title), ...nodes);
+  window.print();
+}
+// the pitching log of one game: each pitcher's pitches, batters faced, rest and the day he can pitch again
+async function pitchingLog(gameId) {
+  const g = await DB.D.get("games", gameId); if (!g) return null;
+  const evs = (await DB.D.byIndex("events", "gameId", gameId)).filter((e) => PCDB.isPitch(e) && !e.legacy);
+  const r = teamRule(), rows = [];
+  for (const pid of [...new Set(evs.map((e) => e.pitcherId).filter(Boolean))]) {
+    const mine = evs.filter((e) => e.pitcherId === pid), p = DB.pitchers.get(pid) || {};
+    const day = outingsOf(pid).filter((o) => o.date === g.date).reduce((a, o) => a + o.pitches, 0) || mine.length;
+    const rest = r ? PCRules.restFor(r, day, g.date) : null;
+    const elig = r ? PCRules.eligibleOn(r, outingsOf(pid).filter((o) => o.date <= g.date), g.date) : null;
+    rows.push({ pid, name: (p.number ? `#${p.number} ` : "") + (p.name || "Pitcher"), pitches: mine.length, day, bf: mine.filter((e) => e.end).length,
+      first: Math.min(...mine.map((e) => e.inning || 1)), last: Math.max(...mine.map((e) => e.inning || 1)), rest, eligible: elig ? elig.date : null });
+  }
+  rows.sort((a, b) => a.first - b.first);
+  const opp = g.opponentId && DB.teams.get(g.opponentId);
+  return { game: g, opponent: opp ? opp.name : "", rule: r, rows };
+}
+function pitchingLogCsv(L) {
+  const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const head = ["Date", "Opponent", "Pitcher", "Pitches", "Pitches that day", "Batters faced", "Innings", L.rule ? (L.rule.unit === "nights" ? "Nights of rest" : "Days of rest") : "Rest", "Eligible on"];
+  return [head, ...L.rows.map((x) => [L.game.date, L.opponent, x.name, x.pitches, x.day, x.bf, x.first === x.last ? x.first : `${x.first}-${x.last}`, x.rest ?? "", x.eligible || ""])].map((r) => r.map(q).join(",")).join("\n");
+}
+async function printPitchingLog(gameId) {
+  const L = await pitchingLog(gameId); if (!L) return;
+  printOut(`Pitching log, ${fmtDay(L.game.date)}${L.opponent ? ` vs ${L.opponent}` : ""}`, [
+    h("p", {}, `${(ourTeam() || {}).name || "Our team"}. ${L.rule ? `Rule: ${L.rule.name}${L.rule.edited ? " (with our own numbers)" : ""}.` : "No pitch-count rule set."}`),
+    h("table", {}, h("thead", {}, h("tr", {}, ["Pitcher", "Pitches", "Batters faced", "Innings", L.rule && L.rule.unit === "nights" ? "Nights of rest" : "Days of rest", "Eligible on"].map((x) => h("th", {}, x)))),
+      h("tbody", {}, L.rows.map((x) => h("tr", {}, h("td", {}, x.name), h("td", {}, String(x.pitches) + (x.day !== x.pitches ? ` (${x.day} that day)` : "")), h("td", {}, String(x.bf)),
+        h("td", {}, x.first === x.last ? String(x.first) : `${x.first}-${x.last}`), h("td", {}, x.rest === null ? "" : String(x.rest)), h("td", {}, x.eligible ? fmtDay(x.eligible) : ""))))),
+    h("p", {}, "Signed: ____________________   Opposing coach: ____________________")]);
+}
+async function downloadPitchingLog(gameId) {
+  const L = await pitchingLog(gameId); if (!L) return;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([pitchingLogCsv(L)], { type: "text/csv" }));
+  a.download = `pitching-log-${L.game.date}.csv`; document.body.append(a); a.click(); a.remove();
+}
+// the catcher's sign card: today's staff, each pitch with its sign (the standard 1 fastball, 2 curve, 3 slider, 4 change)
+function printSignCard() {
+  const staff = S.setup.staff || [];
+  printOut("Signs", [
+    h("p", {}, Object.entries(SIGN).sort((a, b) => a[1] - b[1]).map(([k, n]) => `${n} ${KINDS[k]}`).join("   ")),
+    ...staff.map((p) => h("div", { class: "card" }, h("h2", {}, (p.number ? `#${p.number} ` : "") + (p.name || "Pitcher")),
+      h("table", {}, h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map((d) => h("tr", {}, h("td", { class: "sign" }, String(SIGN[d.kind])), h("td", {}, d.name), h("td", {}, KINDS[d.kind]))))))),
+  ]);
+}
+// a game's log, chosen on the Data screen: the last few games, newest first
+let logGames = null;
+function pitchingLogPanel() {
+  if (!DB.ready) return null;
+  if (!logGames) { logGames = []; DB.D.all("games").then((gs) => { logGames = gs.filter((g) => !g.dupOf && g.date).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12); render(); }); }
+  return h("section", { class: "panel glass", "aria-label": "Pitching log" },
+    h("div", { class: "panel-head" }, h("h2", {}, "Pitching log"), h("span", { class: "meta" }, teamRule() ? teamRule().name : "No pitch-count rule set (Setup)")),
+    logGames.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" }, h("tbody", {}, logGames.map((g) => h("tr", {},
+      h("td", {}, fmtDay(g.date)), h("td", {}, (DB.teams.get(g.opponentId) || {}).name || ""), h("td", {}, g.status || ""),
+      h("td", {}, h("button", { class: "btn text", on: { click: () => printPitchingLog(g.id) } }, "Print"), h("button", { class: "btn text", on: { click: () => downloadPitchingLog(g.id) } }, "CSV"))))))) : h("p", { class: "note" }, "Games appear here once they're charted."),
+    h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: printSignCard } }, "Print the sign card")));
 }
 
 // ---------------------------------------------------------------- sync with Supabase (build step 2)
@@ -899,7 +1042,7 @@ function otherProgram(name) {
   const b = SYNC.bound;
   return b && b.programId && name && b.programId !== name ? b : null;
 }
-const teamCfg = (t) => ({ programId: t.team_id, programName: t.team_name, role: t.role, perms: t.perms || {}, isOwner: !!t.is_owner });
+const teamCfg = (t) => ({ programId: t.team_id, programName: t.team_name, role: t.role, perms: t.perms || {}, isOwner: !!t.is_owner, timezone: t.timezone || null });
 // Joining a team that already exists: pull before anything goes up. Every new install makes a placeholder "Our team"
 // with default pitchers; once the team's own roster has come down, the placeholder goes, and any of its pitchers or
 // catchers that already have work on this iPad (pitches, bullpens, check-ins, velo) move to the team's roster instead
@@ -956,7 +1099,7 @@ async function startProgram() {
   if (!org) { org = await tr.createOrg(name, S.setup.level); await syncConfig({ pendingOrg: org }); }
   let tz = "America/New_York"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
   const id = await tr.createTeam(org, name, S.setup.level, tz, "head");
-  await syncConfig({ pendingOrg: null, programId: id, programName: name, role: "head", perms: effective("head", {}), isOwner: true });
+  await syncConfig({ pendingOrg: null, programId: id, programName: name, role: "head", perms: effective("head", {}), isOwner: true, timezone: tz });
   await syncNow(true);
   toast(`${name} is set up. It switches on once billing is done; until then everything stays on this iPad.`);
 }
@@ -1080,7 +1223,7 @@ async function reloadFromDb() {
   // read everything first, then swap it in at once: the screens never see a half-loaded (empty) list
   const fresh = {};
   for (const store of ["teams", "pitchers", "catchers", "hitters", "learned"]) fresh[store] = await DB.D.all(store);
-  const checkins = await DB.D.byIndex("checkins", "date", PCDB.today());
+  const checkins = await DB.D.byIndex("checkins", "date", todayT());
   for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) { map.clear(); for (const x of fresh[store]) map.set(x.id, x); }
   for (const x of fresh.learned) DB.models.set(x.id, x);
   for (const x of checkins) DB.checkins.set(x.pitcherId, x);
@@ -1090,6 +1233,7 @@ async function reloadFromDb() {
   attachStaff();
   if (on && on.id) { const i = S.setup.staff.findIndex((p) => p.id === on.id); if (i >= 0) G().pitcher = i; }
   pastFix.games = null;
+  await refreshOutings().catch(() => {}); logGames = null;
   const c = G().call;
   if (c && typeof arsenal === "function" && !arsenal().some((x) => x.name === c.pitch)) G().call = null;
   if (live && JSON.stringify(packContents()) !== before) packChanged("sync");
