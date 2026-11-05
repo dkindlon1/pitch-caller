@@ -11,6 +11,7 @@ Full-game simulation for the pitch-calling engine.
 
 Writes a pitch-by-pitch log (CSV) and prints a compact log for review.
 """
+import contextlib
 import csv
 import math
 import random
@@ -46,6 +47,10 @@ SHAKE = float(os.environ.get("SHAKE", "1"))       # shake-off rate multiplier
 OVERRIDE = float(os.environ.get("OVERRIDE", "0")) # share of pitches where the coach calls his own (random) pitch
 UMP_SD = float(os.environ.get("UMP_SD", "0"))     # v0.8: each game's umpire zone shift ~ N(0, UMP_SD) logits (0 = v0.7c)
 ENGINE = os.environ.get("ENGINE", "v07")         # v0.8: v07 or v08 flags for the whole game
+# v0.9 Step 7: WORLD=v09w plays the game in the v0.9 outcome model (v0.8 plus the fitted v0.9 world terms: inside,
+# matchup memory, power HR) whatever the calling engine is, so v0.8 and v0.9 calls can be compared in the same world.
+# Unset (default): the world uses the engine's own flags, as before. Landing and the guardrail are call rules, not world.
+WORLD = os.environ.get("WORLD", "")
 
 
 # ---------------------------------------------------------------------------
@@ -485,13 +490,14 @@ def play_game(log_path):
                 ars_true = [replace(x, ivb=true_move[(pitcher["name"], x.name)][0],
                                     hb=true_move[(pitcher["name"], x.name)][1]) for x in ars]
                 p_true = next(x for x in ars_true if x.name == p.name)
-                P = outcome_probs(p_true, q, ts, ars_true)
-                # decision quality: true run cost of the engine's mix vs a caller who knows the hidden truth
-                if v08:
-                    tc = engine.root_costs(ars_true, ts, tab)
-                else:
-                    tc = {(x.name, qq): engine.cost(x, qq, ts, ars_true)[0]
-                          for x in ars_true if x.name in {c.name for c in engine.candidates(ars, s)} for qq in QUADS}
+                with (engine.flags(**WORLD_FLAGS) if WORLD_FLAGS else contextlib.nullcontext()):   # v0.9 Step 7: the world's model
+                    P = outcome_probs(p_true, q, ts, ars_true)
+                    # decision quality: true run cost of the engine's mix vs a caller who knows the hidden truth
+                    if v08:
+                        tc = engine.root_costs(ars_true, ts, tab)
+                    else:
+                        tc = {(x.name, qq): engine.cost(x, qq, ts, ars_true)[0]
+                              for x in ars_true if x.name in {c.name for c in engine.candidates(ars, s)} for qq in QUADS}
                 t_best = min(tc.values())
                 regret_exp = sum(d[0] * (tc.get((d[2].name, d[3]), t_best) - t_best) for d in dist)
                 regret_pick = tc.get((p.name, q), t_best) - t_best
@@ -655,11 +661,16 @@ def pregame_plan(staff):
 SEED_FOR_MOVE = [SEED]
 
 
+WORLD_FLAGS = None
+
+
 def apply_engine_env():
     """ENGINE=v07 | v08 | v09 | v07+flag,flag | v08-flag,flag : the engine flags for this run (v0.8 build; v09 added in v0.9)."""
     spec = ENGINE
     base = {"v08": engine.FLAGS_V08, "v09": engine.FLAGS_V09}.get(spec[:3], engine.FLAGS_V07)
     engine.set_flags(**base)
+    global WORLD_FLAGS
+    WORLD_FLAGS = {"v09w": dict(engine.FLAGS_V08, inside_v09=True, matchup_memory=True, power_avoid=True)}[WORLD] if WORLD else None
     for sign, rest in (("+", spec[3:]) if spec[3:4] == "+" else ("-", spec[3:]) if spec[3:4] == "-" else ("", ""),):
         for f in [x for x in rest[1:].split(",") if x]:
             engine.set_flags(**{f: sign == "+"})

@@ -15,7 +15,10 @@ def arg(name, default):
 
 
 def one(engine, level, staff, seed):
-    out = os.path.join(ROOT, "runs", "readthrough", engine, f"{level}_{staff}_s{seed}.csv")
+    # v0.9 Step 7: "v08@v09w" = the v0.8 engine calling in the v0.9 world (simulate.py WORLD), in runs/readthrough/v08_in_v09w
+    engine, world = engine.split("@") if "@" in engine else (engine, "")
+    tag = f"{engine}_in_{world}" if world else engine
+    out = os.path.join(ROOT, "runs", "readthrough", tag, f"{level}_{staff}_s{seed}.csv")
     if os.path.exists(out) and os.path.getsize(out) > 0:
         return out, "kept", 0.0
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -23,7 +26,7 @@ def one(engine, level, staff, seed):
     code = ("import simulate, io, contextlib, os\n"
             "with contextlib.redirect_stdout(io.StringIO()): simulate.run(%d, %r)\n" % (seed, tmp))
     t0 = time.time()
-    env = dict(os.environ, ENGINE=engine, LEVEL=level, STAFF=staff)
+    env = dict(os.environ, ENGINE=engine, LEVEL=level, STAFF=staff, WORLD=world)
     r = subprocess.run([sys.executable, "-c", code], cwd=ROOT, env=env, capture_output=True, text=True)
     if r.returncode != 0:
         return out, "FAILED: " + r.stderr.strip().splitlines()[-1], time.time() - t0
