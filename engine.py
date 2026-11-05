@@ -37,15 +37,15 @@ except ImportError:
 FLAGS_V07 = dict(pairing_v07=True, bf_term_v07=True, ev_full=True, expect_v07=True, look_state=False, timing_B=False,
                  objective_win=False, inplay_typed=False, running_game=False, umpire_learn=False, fatigue_v08=False,
                  hitter_grades=False, hs_pitch_cost=False, temp_unc=False, zone_22=False,
-                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False)
+                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False, power_avoid=False)
 FLAGS_V08 = dict(pairing_v07=False, bf_term_v07=False, ev_full=False, expect_v07=False, look_state=True, timing_B=True,
                  objective_win=True, inplay_typed=True, running_game=True, umpire_learn=True, fatigue_v08=True,
                  hitter_grades=True, hs_pitch_cost=True, temp_unc=True, zone_22=True,
-                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False)
+                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False, power_avoid=False)
 # v0.9 (docs/STEP4b_v0.9_REPORT.md): v0.8 plus the v0.9 items. Every v0.9 flag is False in FLAGS_V07 and FLAGS_V08,
 # so both keep reproducing their golden files exactly.
-# inside_v09 is built and fitted but off: it failed its scenario gate (H4 and F6 did not improve; docs/STEP4b_v0.9_REPORT.md)
-FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=True, landing_v09=True, matchup_memory=True, inside_v09=False)
+# inside_v09 failed its scenario gate (H4 and F6 did not improve) and is on by Drew's call (docs/STEP4b_v0.9_REPORT.md)
+FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=True, landing_v09=True, matchup_memory=True, inside_v09=True, power_avoid=True)
 FLAGS = dict(FLAGS_V07)
 
 
@@ -102,6 +102,18 @@ MM = dict(succ=0.107, succ_cap=4, hard=-0.346, hard_cap=2)
 # inner half gets +half of it and one on the outer half -half, so the in/away average the outcome model was calibrated
 # on is unchanged. Scaled by RHO_L (HS and travel 0.6) like the other MLB-fitted terms.
 SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}}
+
+
+# v0.9 item 8 (power_avoid), fitted in Step 4b (readthrough/step4b_power_hr.py, results/step4b/power_hr.txt): a power
+# hitter's hard contact leaves the park more often, +0.112 logits on HR | hard ball in play per SD of power (P3; power x
+# zone and the HR effect x heart did not ship). One power-grade point = 0.03 of hard-contact share (spec 8.2) = 0.03 /
+# 0.053 SD (the spread of hitters' hard-hit rates) = 0.566 SD. The extra home runs come out of that type's outs.
+POWER_HR = 0.112 * 0.03 / 0.053
+
+
+def power_hr_shift(s, gr):
+    """Logit shift on HR given hard contact for the hitter's power grade (0 at grade 3)."""
+    return RHO_L.get(s.level, 1.0) * POWER_HR * (gr.get("w", 3) - 3)
 
 
 def side_shift(p, q, s, z, what):
@@ -1016,9 +1028,14 @@ def in_play_value_typed(c, p, q, s):
     tab, rf = OUT_TABLE[L][c], RUNNER_FIT[L]
     ev = lambda o_, b_, r_: v_end(s, o_, b_, r_)
     tm = type_mix(p, q, c)
+    gr = (s.grades or GRADES_OVERRIDE) if (FLAGS["power_avoid"] and FLAGS["hitter_grades"] and c == "hard") else None
+    dh = power_hr_shift(s, gr) if gr else 0.0
     total = 0.0
     for t in B_TYPES:
         po, p1, p2, p3, phr, pe = tab[t]
+        if dh and 0 < phr < 1:                 # item 8: more of a power hitter's hard contact leaves the park
+            nhr = sig(logit(phr) + dh)
+            po, phr = max(0.0, po - (nhr - phr)), nhr
         # out
         if o + 1 >= 3:
             v_out = ev(3, (False, False, False), 0)
@@ -1665,6 +1682,8 @@ def _ipv_cached(tab, p, q, s):
     w = s.win
     key = (p.name, q, s.outs, s.bases, s.infield_in, s.level, FLAGS["inplay_typed"],
            (w["omega"], w["WE0"], w["m0"], w["margin0"]) if (FLAGS["objective_win"] and w and w["omega"] > 0) else None)
+    if FLAGS["power_avoid"]:
+        key += (((s.grades or GRADES_OVERRIDE) or {}).get("w", 3),)
     cache = tab.__dict__.setdefault("ipv", {})
     v = cache.get(key)
     if v is None:

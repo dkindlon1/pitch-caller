@@ -173,7 +173,7 @@ ROWS = [
         ["FB:zone"], ["OS:zone"], pitch_edits={"Fastball": {"velo": 92, "grade": 5}}),
     # H. With scouting
     row("H1", False, "2-0, power hitter (power grade 5)", "Don't feed a power hitter his pitch",
-        dict(balls=2, grades={"d": 5}), ["FB:down", "OS:zone"], ["FB:up"], ["FB:middle"]),
+        dict(balls=2, grades={"w": 5}), ["FB:down", "OS:zone"], ["FB:up"], ["FB:middle"]),   # was {"d": 5}: see CHANGES
     row("H2", False, "0-2, contact hitter (contact grade 5)", "He'll put the middle in play",
         dict(strikes=2, grades={"c": 5}), ["ANY:chase", "ANY:corners"], ["ANY:middle"]),
     row("H3", False, "1-1, he hit FB up-in hard once earlier this game", "One hard-hit ball: avoid it, but it's not banned",
@@ -202,11 +202,17 @@ ROWS = [
 ]
 
 
+# Changes to the frozen list, each approved by Drew. The file is re-frozen with a new sha256 after each one.
+CHANGES = [dict(date="2026-11-05", row="H1", change='grades {"d": 5} -> {"w": 5}: the row is about a power hitter, and the '
+                'engine\'s power grade is w (spec 8.2: contact c, power w, discipline d); d is discipline',
+                approved="Drew, 2026-11-05 (Step 4b)")]
+
+
 def main():
     ids = [r["id"] for r in ROWS]
     assert len(ids) == len(set(ids)), "duplicate ids"
     doc = dict(version="v0.9-step1", approved="2026-11-05 by Drew", pass_rule=PASS, defaults=DEFAULTS,
-               defaults_text=DEFAULTS_TEXT, arsenals=ARSENALS, rows=ROWS)
+               defaults_text=DEFAULTS_TEXT, arsenals=ARSENALS, rows=ROWS, changes=CHANGES)
     if os.path.exists(OUT):
         raise SystemExit(f"{OUT} exists and is frozen. Delete it only with Drew's approval of a new list.")
     blob = json.dumps(doc, indent=1, sort_keys=True).encode()

@@ -109,6 +109,14 @@
    }
   ]
  },
+ "changes": [
+  {
+   "approved": "Drew, 2026-11-05 (Step 4b)",
+   "change": "grades {\"d\": 5} -> {\"w\": 5}: the row is about a power hitter, and the engine's power grade is w (spec 8.2: contact c, power w, discipline d); d is discipline",
+   "date": "2026-11-05",
+   "row": "H1"
+  }
+ ],
  "defaults": {
   "arsenal": "three",
   "balls": 0,
@@ -1691,7 +1699,7 @@
    "inputs": {
     "balls": 2,
     "grades": {
-     "d": 5
+     "w": 5
     }
    },
    "matchup": [],

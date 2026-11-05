@@ -1,0 +1,19 @@
+v08 hs         two_pitch  Fastball 24/24 cells 83.0%, Curveball 10/24 cells 17.0%
+v08 hs         default    Fastball 23/24 cells 65.8%, Slider 14/24 cells 34.2%, Changeup 0/24 cells 0.0%  GATE FAIL
+v08 hs         four_pitch Fastball 24/24 cells 65.7%, Slider 14/24 cells 29.7%, Curveball 5/24 cells 3.8%, Changeup 1/24 cells 0.8%
+v08 college_d3 two_pitch  Fastball 24/24 cells 86.9%, Curveball 8/24 cells 13.1%
+v08 college_d3 default    Fastball 24/24 cells 72.0%, Slider 14/24 cells 26.5%, Changeup 2/24 cells 1.5%  GATE FAIL
+v08 college_d3 four_pitch Fastball 24/24 cells 69.1%, Slider 14/24 cells 22.9%, Curveball 8/24 cells 6.9%, Changeup 2/24 cells 1.1%
+v08 college_d1 two_pitch  Fastball 24/24 cells 81.9%, Curveball 10/24 cells 18.1%
+v08 college_d1 default    Fastball 24/24 cells 71.0%, Slider 14/24 cells 24.3%, Changeup 6/24 cells 4.6%  GATE FAIL
+v08 college_d1 four_pitch Fastball 24/24 cells 66.2%, Slider 14/24 cells 20.1%, Curveball 12/24 cells 10.7%, Changeup 5/24 cells 3.0%
+v09 hs         two_pitch  Fastball 24/24 cells 74.8%, Curveball 20/24 cells 25.2%
+v09 hs         default    Fastball 24/24 cells 56.5%, Slider 20/24 cells 34.7%, Changeup 14/24 cells 8.8%  GATE pass
+v09 hs         four_pitch Fastball 24/24 cells 50.1%, Slider 20/24 cells 28.6%, Curveball 20/24 cells 12.1%, Changeup 18/24 cells 9.2%
+v09 college_d3 two_pitch  Fastball 24/24 cells 76.2%, Curveball 18/24 cells 23.8%
+v09 college_d3 default    Fastball 24/24 cells 62.3%, Slider 20/24 cells 28.5%, Changeup 14/24 cells 9.2%  GATE pass
+v09 college_d3 four_pitch Fastball 24/24 cells 55.1%, Slider 20/24 cells 23.4%, Curveball 20/24 cells 12.5%, Changeup 18/24 cells 8.9%
+v09 college_d1 two_pitch  Fastball 24/24 cells 73.7%, Curveball 20/24 cells 26.3%
+v09 college_d1 default    Fastball 24/24 cells 62.3%, Slider 20/24 cells 27.0%, Changeup 14/24 cells 10.7%  GATE pass
+v09 college_d1 four_pitch Fastball 24/24 cells 54.4%, Slider 20/24 cells 21.2%, Curveball 20/24 cells 14.4%, Changeup 18/24 cells 10.0%
+item 10 changeup gate (v09, every level): PASS

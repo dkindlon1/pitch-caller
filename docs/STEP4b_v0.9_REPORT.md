@@ -5,15 +5,15 @@ Date: 2026-11-05. Branch `v0.9-work`. Everything below was run in this session. 
 ## What was built
 
 Every new term is behind its own flag, and every flag is off in `FLAGS_V07` and `FLAGS_V08`, so v0.7c and v0.8 still
-reproduce their golden files exactly. `FLAGS_V09` = v0.8 plus the terms that passed their gates.
+reproduce their golden files exactly. `FLAGS_V09` = v0.8 plus all five terms (your decisions of Nov 5: item 8 = the HR effect only; inside on despite its gate; item 9 accepted with E8's remaining shortfall; H1 fixed in the frozen file).
 
 | Flag | Item | What it does | In `FLAGS_V09` |
 |---|---|---|---|
 | `guardrail_v09` | 10 | Removes v0.8's myopic guardrail. The never-pick windows on full cost stay. Three-ball counts still rank by myopic cost, so there are no setups there. | **on** |
 | `landing_v09` | 9 | A pitch with at least 4 thrown today and a shrunk strike rate at or below 0.40 gives way to the pitches that are landing. With two strikes and fewer than three balls it can still be called as a chase; otherwise it is left out. If nothing is landing, the filter does nothing. | **on** |
 | `matchup_memory` | 6 | Each earlier-trip whiff or called strike on a pitch class raises whiffs on that class by +0.107 logits (up to 4). Each earlier hard-hit ball on that class and spot lowers them by −0.346 (up to 2). The total is capped at ±0.5; HS and travel get ×0.6. These are Step 3's fitted values. | **on** |
-| `inside_v09` | 3 (widened) | Fitted inside-vs-away differences on and near the plate, by pitch class, height and platoon side. See Step 5. | **off**: failed its gate |
-| `power_avoid` | 8 | Not built. See item 8. | — |
+| `inside_v09` | 3 (widened) | Fitted inside-vs-away differences on and near the plate, by pitch class, height and platoon side. See Step 5. | **on**, by your call, although it failed its H4/F6 gate |
+| `power_avoid` | 8 | A power grade raises the home-run share of hard contact: +0.112 logits per SD of power (Statcast P3) = +0.063 per grade point; the extra home runs come out of that batted-ball type's outs. HS and travel ×0.6. | **on** (your call: the HR effect only) |
 
 The simulator now records each hitter's earlier-trip matchup record. The scenario grader passes each row's matchup list
 to the engine. Neither has any effect unless the flag is on.
@@ -24,11 +24,16 @@ to the engine. Neither has any effect unless the flag is on.
 |---|---|---|
 | 10 guardrail | 3-pitch starter's changeup in at least 11 of 24 cells and at least 5% of calls, every level; no hard-rule break | **Pass.** Changeup in 14 of 24 cells at every level (v0.8: 0, 2 and 6). Changeup share 8.8% HS, 8.9% D3, 10.5% D1 (v0.8: 0%, 1.5%, 4.6%). No hard-rule row gets any Not-acceptable share. |
 | 9 landing | E6, E8 and C7 pass; A4, E1 and E3 still pass | **E6 and C7 pass; A4, E1 and E3 still pass.** E8's wrong calls are gone (Not share 26% → 0%), but it still misses the 70% acceptable line (47%). The rest of the row is arguable calls: curveball chase 29% and fastball middle 24%. |
-| 3 widened, inside | H4 and F6 improve | **Fail.** H4 stays at 0% acceptable. F6 gets worse (16% → 0%). |
+| 3 widened, inside | H4 and F6 improve | **Fail.** H4 stays at 0% acceptable. F6 gets worse (16% → 0%). On anyway, by your call. |
 | 6 matchup memory | (plan: built from the Step 3 fits) | No row breaks. I2 moves 12% → 14% acceptable, still failing. I1 already passed; I4 unchanged. |
-| 8 power | H1 passes; rows with no scouting unchanged | Not built: no data-backed version moves H1. |
+| 8 power | H1 passes; rows with no scouting unchanged | **H1 still fails**: with the corrected row (power 5) it goes from 33% to 37% acceptable, and FB middle is still 63%. As expected, since you chose the data-backed HR effect only. No row without scouting changes: the term is 0 at grade 3. |
 
-## Scenario suite (64 frozen rows; `python3 readthrough/scenarios.py v08 v08g v08l v08m v08i v09 ...`)
+## Scenario suite (64 frozen rows; `python3 readthrough/scenarios.py ...`)
+
+H1 was corrected and the file re-frozen on your OK (sha256 `5b5b4b80…`; the file's `changes` list records it). Only
+H1's grade key changed (`d` 5 → `w` 5); every other row is byte-for-byte the same. The final numbers below
+(`results/step4b/scenarios_v09_decided.json`) use the corrected file. The per-item rows come from the earlier run on
+the original file, where only H1 differs.
 
 | Engine | Pass | Fixed vs v0.8 | Broken vs v0.8 | Rows with a Not-acceptable failure |
 |---|---|---|---|---|
@@ -37,12 +42,15 @@ to the engine. Neither has any effect unless the flag is on.
 | + landing only | 28 | C7 E6 | — | F5 H1 I4 |
 | + matchup only | 26 | — | — | C7 E6 E8 F5 H1 I4 |
 | + inside only | 28 | D1 H2 | — | C7 E6 E8 F5 H1 I4 |
-| **v0.9 (guardrail, landing, matchup)** | **28** | **A7 C7 D3 E6 H3** | **D5 F3 G4** | **F5 H1 I4** |
-| v0.9 + inside | 29 | A7 C7 D1 D3 E6 H2 | D5 F3 G4 | F5 H1 I4 |
+| v0.9 without inside or power | 28 | A7 C7 D3 E6 H3 | D5 F3 G4 | F5 H1 I4 |
+| **v0.9 final (all five)** | **29** | **A7 C7 D1 D3 E6 H2** | **D5 F3 G4** | **F5 H1 I4** |
 
 No hard-rule row gets a Not-acceptable share under any version. D5, F3 and G4 break because the changeup and slider
 return to the zone at 2-0 and 1-1. Your rows mark those calls arguable, not wrong. This is the trade you chose in Step
-2 ("Wider window or off"). Landing rescues B8, which the guardrail change alone breaks.
+2 ("Wider window or off"). Landing rescues B8, which the guardrail change alone breaks. Turning inside on costs H3
+(76% → 57%; it passes without inside) and F6.
+
+Changeup gate on the final v0.9 (`results/step4b/gate_mix_final.txt`): 14 of 24 cells at every level; 8.8% HS, 9.2% D3, 10.7% D1.
 
 ## Item 8, power hitters: what the data says
 
@@ -91,7 +99,8 @@ inside in the scenario rows, for two reasons:
    acceptable calls. F6 drops from 16% to 0%.
 
 So the inside term ships by the Statcast rule and fixes D1 and H2, but fails your H4/F6 gate and hurts H3 (76% → 57%
-with everything else on). Per the plan, it stays off in `FLAGS_V09`.
+with everything else on). You chose to turn it on anyway, so it is on in `FLAGS_V09`. The hit-by-pitch split is the
+open question if inside calls stay rare.
 
 Inside share of calls, 3-pitch starter, both sides, by count (`readthrough/inside_by_count.py`, `results/step5/inside_by_count.txt`):
 v0.8 1.8% / 0.2% / 1.0% (HS / D3 / D1); v0.9 without the term 1.2% / 0.2% / 0.7%; with it 3.0% / 6.7% / 6.5%, mostly
@@ -111,10 +120,15 @@ at 1-0, 2-0, 2-1 and 1-1. No target was set.
 | App rebuilt (`app/build.py`); browser suites `v09_labels_e2e`, `gameday_e2e`, `replay_e2e`, `smoke` | all pass, no page errors (the app is still on `FLAGS_V08`) |
 | Not rerun this step | the older v0.8 suites (`tests_v08*.py`). Every change here is behind a flag that is off in v0.8, and both v0.8 goldens are exact, but those suites were not run again |
 
-## Not done / waiting on you
+## Decisions (Nov 5, Drew)
 
-- **Item 8:** which version, if any, to build (question sent).
-- **H1's grade key:** fix the frozen row (`d` → `w`) or leave it (question sent).
-- **Inside term:** keep it off, or turn it on despite the gate (question sent).
-- **E8:** accept item 9 with E8's remaining shortfall made of arguable calls only, or keep working it.
-- The app is still on `FLAGS_V08`. It moves to v0.9 after the Step 7 read-through. The matchup record isn't wired into the app yet.
+- Item 8: the HR effect only (built as `power_avoid`, on).
+- H1: fixed to power 5 and re-frozen.
+- Inside term: on despite its gate.
+- Item 9: accepted; E8's remaining shortfall is arguable calls only.
+
+## Not done
+
+- Step 7, the full v0.9 vs v0.8 read-through on paired seeds (games running; separate report).
+- The app stays on `FLAGS_V08` until the read-through is done. The matchup record and the power grade's HR effect
+  reach the app once it switches; the matchup record still has to be wired into the app's game state.

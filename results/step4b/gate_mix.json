@@ -156,117 +156,66 @@
   "Fastball": {
    "cells": 24,
    "of": 24,
-   "share": 0.7441
+   "share": 0.7476
   },
   "Curveball": {
    "cells": 20,
    "of": 24,
-   "share": 0.2559
+   "share": 0.2524
   }
  },
  "v09|hs|default": {
   "Fastball": {
    "cells": 24,
    "of": 24,
-   "share": 0.5641
+   "share": 0.5651
   },
   "Slider": {
    "cells": 20,
    "of": 24,
-   "share": 0.3479
+   "share": 0.3466
   },
   "Changeup": {
    "cells": 14,
    "of": 24,
-   "share": 0.088
+   "share": 0.0883
   }
  },
  "v09|hs|four_pitch": {
   "Fastball": {
    "cells": 24,
    "of": 24,
-   "share": 0.5008
+   "share": 0.5012
   },
   "Slider": {
    "cells": 20,
    "of": 24,
-   "share": 0.2871
+   "share": 0.2858
   },
   "Curveball": {
    "cells": 20,
    "of": 24,
-   "share": 0.1207
+   "share": 0.1211
   },
   "Changeup": {
    "cells": 18,
    "of": 24,
-   "share": 0.0914
+   "share": 0.092
   }
  },
  "v09|college_d3|two_pitch": {
   "Fastball": {
    "cells": 24,
    "of": 24,
-   "share": 0.7655
+   "share": 0.7622
   },
   "Curveball": {
    "cells": 18,
    "of": 24,
-   "share": 0.2345
+   "share": 0.2378
   }
  },
  "v09|college_d3|default": {
-  "Fastball": {
-   "cells": 24,
-   "of": 24,
-   "share": 0.6236
-  },
-  "Slider": {
-   "cells": 20,
-   "of": 24,
-   "share": 0.2872
-  },
-  "Changeup": {
-   "cells": 14,
-   "of": 24,
-   "share": 0.0892
-  }
- },
- "v09|college_d3|four_pitch": {
-  "Fastball": {
-   "cells": 24,
-   "of": 24,
-   "share": 0.553
-  },
-  "Slider": {
-   "cells": 20,
-   "of": 24,
-   "share": 0.2351
-  },
-  "Curveball": {
-   "cells": 20,
-   "of": 24,
-   "share": 0.124
-  },
-  "Changeup": {
-   "cells": 18,
-   "of": 24,
-   "share": 0.0879
-  }
- },
- "v09|college_d1|two_pitch": {
-  "Fastball": {
-   "cells": 24,
-   "of": 24,
-   "share": 0.7378
-  },
-  "Curveball": {
-   "cells": 20,
-   "of": 24,
-   "share": 0.2622
-  }
- },
- "v09|college_d1|default": {
   "Fastball": {
    "cells": 24,
    "of": 24,
@@ -275,12 +224,63 @@
   "Slider": {
    "cells": 20,
    "of": 24,
-   "share": 0.2719
+   "share": 0.2849
   },
   "Changeup": {
    "cells": 14,
    "of": 24,
-   "share": 0.1051
+   "share": 0.0921
+  }
+ },
+ "v09|college_d3|four_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.5513
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2339
+  },
+  "Curveball": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.1254
+  },
+  "Changeup": {
+   "cells": 18,
+   "of": 24,
+   "share": 0.0895
+  }
+ },
+ "v09|college_d1|two_pitch": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.7367
+  },
+  "Curveball": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2633
+  }
+ },
+ "v09|college_d1|default": {
+  "Fastball": {
+   "cells": 24,
+   "of": 24,
+   "share": 0.6234
+  },
+  "Slider": {
+   "cells": 20,
+   "of": 24,
+   "share": 0.2695
+  },
+  "Changeup": {
+   "cells": 14,
+   "of": 24,
+   "share": 0.1071
   }
  },
  "v09|college_d1|four_pitch": {
@@ -292,17 +292,17 @@
   "Slider": {
    "cells": 20,
    "of": 24,
-   "share": 0.2144
+   "share": 0.2121
   },
   "Curveball": {
    "cells": 20,
    "of": 24,
-   "share": 0.143
+   "share": 0.1443
   },
   "Changeup": {
-   "cells": 19,
+   "cells": 18,
    "of": 24,
-   "share": 0.0987
+   "share": 0.0996
   }
  }
 }

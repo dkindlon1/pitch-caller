@@ -40,13 +40,13 @@
   const FLAGS_V07 = { pairing_v07: true, bf_term_v07: true, ev_full: true, expect_v07: true, look_state: false, timing_B: false,
     objective_win: false, inplay_typed: false, running_game: false, umpire_learn: false, fatigue_v08: false,
     hitter_grades: false, hs_pitch_cost: false, temp_unc: false, zone_22: false,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false };
+    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
   const FLAGS_V08 = { pairing_v07: false, bf_term_v07: false, ev_full: false, expect_v07: false, look_state: true, timing_B: true,
     objective_win: true, inplay_typed: true, running_game: true, umpire_learn: true, fatigue_v08: true,
     hitter_grades: true, hs_pitch_cost: true, temp_unc: true, zone_22: true,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false };
+    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
   // v0.9: v0.8 plus the v0.9 items; every v0.9 flag is false in FLAGS_V07 and FLAGS_V08
-  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: true, landing_v09: true, matchup_memory: true, inside_v09: false });   // inside_v09 off: failed its gate (STEP4b report)
+  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: true, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report)
   const FLAGS = Object.assign({}, FLAGS_V07);
   function setFlags(kw) {
     const prev = Object.assign({}, FLAGS);
@@ -308,6 +308,9 @@
   }
   // v0.9 item 3 widened (inside_v09): inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
   const SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}};
+  // v0.9 item 8 (power_avoid): more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
+  const POWER_HR = 0.112 * 0.03 / 0.053;
+  const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
     if ((z !== "heart" && z !== "edge") || q === "middle" || q === "chase") return 0.0;
     const [h, side] = q.split("-");
@@ -808,9 +811,12 @@
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
     const tm = typeMix(p, q, c);
+    const gr = (FLAGS.power_avoid && FLAGS.hitter_grades && c === "hard") ? (s.grades || GRADES_OVERRIDE) : null;
+    const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
     for (const t of B_TYPES) {
-      const [po, p1, p2, p3, phr, pe] = tab[t];
+      let [po, p1, p2, p3, phr, pe] = tab[t];
+      if (dh && phr > 0 && phr < 1) { const nhr = sig(logit(phr) + dh); po = Math.max(0.0, po - (nhr - phr)); phr = nhr; }   // item 8
       let vOut;
       if (o + 1 >= 3) vOut = ev(3, [false, false, false], 0);
       else {
@@ -1188,7 +1194,8 @@
     if (key === undefined) {
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
-        (FLAGS.objective_win && w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" + (FLAGS.inplay_typed ? 1 : 0);
+        (FLAGS.objective_win && w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" + (FLAGS.inplay_typed ? 1 : 0) +
+        (FLAGS.power_avoid ? "|" + (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) : "");
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
