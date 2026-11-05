@@ -3,7 +3,7 @@ const fs = require("fs");
 const E = require("./engine.js");
 E.init(JSON.parse(fs.readFileSync(__dirname + "/engine_data.json")));
 const MODE = process.env.PARITY_FLAGS || "v08";     // v09: FLAGS_V09 against app/parity_v09_cases.json
-E.setFlags({ v08: E.FLAGS_V08, v09: E.FLAGS_V09 }[MODE]);
+E.setFlags({ v08: E.FLAGS_V08, v09: Object.assign({}, E.FLAGS_V09, { inside_v09: true }) }[MODE]);   // every v0.9 term
 const V = E.v08;
 const cases = JSON.parse(fs.readFileSync(__dirname + `/parity_${MODE}_cases.json`));
 const worst = {}; let fails = 0; const notes = [];

@@ -17,7 +17,8 @@ GROUPS = {"zone": CORNERS + ["middle"], "corners": CORNERS, "down": ["down-in", 
 MODES = {"v07c": e.FLAGS_V07, "v08": e.FLAGS_V08, "v09": e.FLAGS_V09,
          # one v0.9 item at a time on top of v0.8, to see what each does
          "v08g": dict(e.FLAGS_V08, guardrail_v09=True), "v08l": dict(e.FLAGS_V08, landing_v09=True),
-         "v08m": dict(e.FLAGS_V08, matchup_memory=True), "v08i": dict(e.FLAGS_V08, inside_v09=True)}
+         "v08m": dict(e.FLAGS_V08, matchup_memory=True), "v08i": dict(e.FLAGS_V08, inside_v09=True),
+         "v09i": dict(e.FLAGS_V09, inside_v09=True)}
 
 
 class Half:

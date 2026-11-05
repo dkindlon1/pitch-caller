@@ -44,7 +44,8 @@ FLAGS_V08 = dict(pairing_v07=False, bf_term_v07=False, ev_full=False, expect_v07
                  guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False)
 # v0.9 (docs/STEP4b_v0.9_REPORT.md): v0.8 plus the v0.9 items. Every v0.9 flag is False in FLAGS_V07 and FLAGS_V08,
 # so both keep reproducing their golden files exactly.
-FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=True, landing_v09=True, matchup_memory=True, inside_v09=True)
+# inside_v09 is built and fitted but off: it failed its scenario gate (H4 and F6 did not improve; docs/STEP4b_v0.9_REPORT.md)
+FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=True, landing_v09=True, matchup_memory=True, inside_v09=False)
 FLAGS = dict(FLAGS_V07)
 
 
