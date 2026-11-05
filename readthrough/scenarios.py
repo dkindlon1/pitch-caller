@@ -109,8 +109,12 @@ def report(mode, res):
 
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    modes = args or ["v07c", "v08"]
+    argv = sys.argv[1:]
+    out_path = argv[argv.index("--out") + 1] if "--out" in argv else None
+    modes = [a for a in argv if not a.startswith("--") and a != out_path] or ["v07c", "v08"]
+    bad = [m for m in modes if m not in MODES]
+    if bad:
+        raise SystemExit(f"unknown engine mode(s) {bad}; expected {list(MODES)}")
     doc, h = load()
     print(f"scenario suite sha256 {h} ({len(doc['rows'])} rows)")
     out = {"sha256": h, "results": {}}
@@ -118,8 +122,9 @@ def main():
         res = run(m, doc)
         out["results"][m] = res
         print(report(m, res))
-    if "--out" in sys.argv:
-        json.dump(out, open(sys.argv[sys.argv.index("--out") + 1], "w"), indent=1)
+    if out_path:
+        json.dump(out, open(out_path, "w"), indent=1)
+        print("wrote", out_path)
 
 
 if __name__ == "__main__":
