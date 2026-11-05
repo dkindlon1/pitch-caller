@@ -72,7 +72,7 @@ P08 = dict(
     alpha=0.4, lam=0.6,                                                            # 2.6 look
     beta_T=0.5, gamma_T=0.3, dead=0.03, ramp=0.05, ch_hi=0.12, ch_decay=0.08, fast_mult=0.6,   # 3.1-3.2 timing
     capW=1.6, capH=1.2,                                                            # 3.4
-    beta_E=0.25, dstar_E=1.5, beta_tun=0.15, kappa_brk=1.5,                        # 4.1-4.2
+    beta_E=0.25, beta_E_S=0.25, dstar_E=1.5, beta_tun=0.15, kappa_brk=1.5,         # 4.1-4.2 (A3: W and S fit separately)
     rep_whiff_same=0.16, rep_whiff_other=0.12, rep_same_spot=-0.32,                # 4.3
     phi_FB=0.058, phi_OS=0.116, fam_cap=0.5,                                       # 5
     crowd=0.3,                                                                     # 2.8
@@ -698,7 +698,7 @@ def pair_terms(p, q, s, arsenal):
     y_hat = s.look[1] if s.look else 2.5
     ey = g_mod((1 if p.kind == "FB" else -1) * (y_target(q, p.kind) - y_hat), P08["dstar_E"])
     w = P08["beta_E"] * ey
-    sw = P08["beta_E"] * ey
+    sw = P08["beta_E_S"] * ey
     if s.last:
         last = next((x for x in arsenal if x.name == s.last[0]), None)
         lq = s.last[1]
@@ -743,7 +743,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     if FLAGS["timing_B"]:
         if not v08x:
             v_sit = sum(v * speed_today(next(x for x in arsenal if x.name == n), s) for (n, j), v in sit_prior(arsenal, s).items())
-        tB = RHO_L.get(s.level, 1.0) * timing_B(p, q, s, v_sit)
+        tB = RHO_L.get(s.level, 1.0) * timing_B(p, q, s, v_sit) * (0.5 if big else 1.0)   # 4: pair terms halved in a big spot
     capped = not FLAGS["expect_v07"]
     hL = L["hL"]
     gr = s.grades if (FLAGS["hitter_grades"] and s.grades) else None
@@ -1106,8 +1106,38 @@ except Exception:
     pass
 
 
+KAPPA_FIT = {}   # seq_fit.py: count-zone logit shifts (fitted, centered on the simulated take mix); empty = area rule
+
+
 def count_kappa(b, k, level):
+    if KAPPA_FIT:
+        return KAPPA_FIT[(b, k)]
     return log(zone_area(b, k) / A_BAR.get(level, 3.0))
+
+
+def _apply_fit():
+    """Statcast values that shipped (fit_v08.json, seq_fit.py decide()) replace the spec's starting guesses."""
+    try:
+        sh = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "fit_v08.json")))["ship"]
+    except Exception:
+        return
+    for k_ in ("beta_T", "gamma_T", "lam", "alpha", "beta_E", "beta_E_S", "dstar_E", "beta_tun", "phi_FB", "phi_OS"):
+        if sh.get(k_) is not None:
+            P08[k_] = float(sh[k_])
+    if sh.get("beta_y") is not None:
+        TYPED["beta_y"] = float(sh["beta_y"])
+    if sh.get("kappa"):
+        raw = {(0, 0): 0.0}
+        raw.update({tuple(int(x) for x in c.split("-")): v for c, v in sh["kappa"].items()})
+        w = SIM_CONST.get("TAKE_W")
+        if w:
+            mean = sum(w.get(f"{b}-{k}", 0.0) * v for (b, k), v in raw.items()) / sum(w.values())
+        else:
+            mean = sum(raw.values()) / len(raw)
+        KAPPA_FIT.update({c: v - mean for c, v in raw.items()})
+
+
+_apply_fit()
 
 
 def count_stakes(b, k, level):
@@ -1668,7 +1698,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     return tab
 
 
-def root_call(arsenal, s, tab, exclude=None):
+def root_call(arsenal, s, tab, exclude=None, look_value=True):
     """6.3/6.4 the pitch being called now: live look, last pitch and lean; guardrail on myopic cost; sit game re-solved."""
     by = {x.name: x for x in arsenal}
     ks = sit_options(arsenal)
@@ -1686,7 +1716,7 @@ def root_call(arsenal, s, tab, exclude=None):
         best = min(cmy.values())
         delta = 0.010 * run_scale(s.level)
         keep = [a for a in calls if cmy[a] - best <= delta]
-        if s.balls == 3:     # three-ball counts rank by myopic cost (no setups)
+        if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch
             M = {a: Mmy[a] for a in keep}
         else:
             M = {a: M[a] for a in keep}
@@ -1739,3 +1769,31 @@ def lean_b_h(arsenal, s, fooled=()):
         if v:
             out[(n, j)] = v
     return out
+
+
+def frozen_inputs(arsenal, s):
+    """6.2 the inputs a plate-appearance table is solved with, for the re-solve triggers."""
+    return dict(conf={x.name: x.conf for x in arsenal}, wild={x.name: wild_today(x, s) for x in arsenal}, ump=s.ump_u,
+                names=tuple(x.name for x in arsenal))
+
+
+def needs_resolve(frozen, arsenal, s):
+    """6.2 re-solve mid at-bat only when the pitcher changes, a confidence or wild-today value moves by > 0.10, or the
+    umpire shift moves by > 0.20 logits."""
+    if frozen is None or frozen["names"] != tuple(x.name for x in arsenal):
+        return True
+    if any(abs(x.conf - frozen["conf"][x.name]) > 0.10 for x in arsenal):
+        return True
+    if any(abs(wild_today(x, s) - frozen["wild"][x.name]) > 0.10 for x in arsenal):
+        return True
+    return abs(s.ump_u - frozen["ump"]) > 0.20
+
+
+def root_costs(arsenal, s, tab, sigma=None):
+    """Exact sum_k sigma(k) C(a | k) for every allowed call at the live state (sigma: the table's for this count)."""
+    by = {x.name: x for x in arsenal}
+    ks = sit_options(arsenal)
+    sg = sigma or tab.sigma[(s.balls, s.strikes)]
+    look = s.look or tab.h0
+    return {a: sum(sg[k] * cost08(by[a[0]], a[1], s, arsenal, tab, look, ("pure",) + k)[0] for k in ks if sg[k] > 1e-4)
+            for a in allowed_calls(arsenal, s)}

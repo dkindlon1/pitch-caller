@@ -472,36 +472,95 @@ def main():
     say("  fitted kappa vs spec log(A/A00): " + ", ".join(
         f"{b}-{k}: {res['kappa']['beta'][j]:+.2f} vs {math.log(A(b, k) / A(0, 0)):+.2f}" for j, (b, k) in enumerate(counts)))
 
-    # --- decisions
-    say("\nDecisions (ship rule: held-out gain > 2 boot SD and 95% interval excludes 0)")
-    ship = {}
-    ship["beta_T"] = res["B_whiff"]["beta"][0] if res["B_whiff"]["ship"] else None
-    ship["gamma_T"] = -res["B_hard"]["beta"][0] if res["B_hard"]["ship"] else None
-    if ship["beta_T"] is not None or ship["gamma_T"] is not None:
-        ship["lam"] = lam_b
-        c = res.get("corr_alpha_betaT", float("nan"))
-        ship["alpha"] = 0.4 if (c != c or abs(c) > 0.8) else alpha_b
-    ship["beta_E"] = res["E_whiff"]["beta"][0] if res["E_whiff"]["ship"] else None
-    if ship["beta_E"] is not None:
-        ship["dstar_E"] = ds_b
-    ship["beta_tun"] = res["tun_whiff"]["beta"][0] / 1.0 if res["tun_whiff"]["ship"] else None
-    fam = res["fam_all"]
-    ship["phi_FB"] = fam["beta"][0] if fam["ship"] and fam["beta"][0] > 0 else None
-    ship["phi_OS"] = fam["beta"][1] if fam["ship"] and fam["beta"][1] > 0 else None
-    ship["beta_y"] = res["gb_y"]["beta"][0] if res["gb_y"]["ship"] else None
-    ship["kappa"] = {f"{b}-{k}": res["kappa"]["beta"][j] for j, (b, k) in enumerate(counts)} if res["kappa"]["ship"] else None
-    for k_, v in ship.items():
-        say(f"  {k_}: {'keep spec value' if v is None else v}")
-    say("\nCorrelation of the fitted term coefficients (cluster-robust), whiff model with B: "
-        f"{np.round(res['B_whiff']['corr'], 2).tolist()}; familiarity (FB, OS): {np.round(fam['corr'], 2).tolist()}")
+    clean = {k: {kk: vv for kk, vv in v.items() if kk != "m1"} if isinstance(v, dict) and "m1" in v else v for k, v in res.items()}
+    clean["shape"] = dict(lam=lam_b, alpha=alpha_b, dstar_E=ds_b)
+    say(f"\nCorrelation of the fitted term coefficients (cluster-robust): familiarity (FB, OS) "
+        f"{np.round(fam_corr(res), 2).tolist()}")
     say("\nNotes: random intercepts are MAP-penalized (prior SD 0.25), not integrated out; coefficient intervals are\n"
         "cluster-robust with the intercepts held fixed. Data are every 4th day of each season (about 1/4 of games).\n"
         "MLB effects transfer to college unchanged and to HS/travel scaled by 0.6 (untestable assumption).")
-    clean = {k: {kk: vv for kk, vv in v.items() if kk != "m1"} if isinstance(v, dict) and "m1" in v else v for k, v in res.items()}
-    json.dump(dict(ship=ship, results=clean, grid={f"{a},{b}": v[:2] for (a, b), v in grid.items()}),
-              open(OUT_JSON, "w"), indent=1, default=float)
+    json.dump(dict(results=clean, grid={f"{a},{b}": v[:2] for (a, b), v in grid.items()}), open(OUT_JSON, "w"), indent=1, default=float)
+    decide()
     open(OUT_TXT, "w").write("\n".join(lines) + "\n")
 
 
+def fam_corr(res):
+    return np.array(res["fam_all"]["corr"])
+
+
+SPEC = dict(B_whiff=[0.5], B_hard=[-0.3], E_whiff=[0.25], E_chase=[0.25], tun_whiff=[0.15], fam_all=[0.058, 0.116],
+            gb_y=[-0.8])
+
+
+def decide():
+    """Ship rule (spec 10) plus amendment A3. A block of coefficients (count zone, familiarity) ships on the held-out
+    gain and a joint 95% Wald test. A term that does not ship keeps the spec's guess if its 95% interval includes it;
+    if the interval excludes the guess, the fitted value is used when its interval also excludes 0, else the term is 0."""
+    d = json.load(open(OUT_JSON))
+    res, shape = d["results"], d["results"]["shape"]
+    out, why = {}, {}
+
+    def joint_excludes_zero(r):
+        b = np.array(r["beta"]); se = np.array(r["se"]); C = np.array(r["corr"])
+        cov = np.outer(se, se) * C
+        w = float(b @ np.linalg.solve(cov, b))
+        from scipy.stats import chi2
+        return w > chi2.ppf(0.95, len(b)), w
+
+    def ships(r):
+        if len(r["beta"]) > 1:
+            return r["gain"] > 2 * r["sd"] and joint_excludes_zero(r)[0]
+        return r["ship"]
+
+    def one(key, j=0):
+        r = res[key]
+        b, se, g = r["beta"][j], r["se"][j], SPEC[key][j]
+        lo, hi = b - 1.96 * se, b + 1.96 * se
+        if ships(r):
+            return b, f"ships at {b:+.3f} (spec {g:+.3f})"
+        if lo <= g <= hi:
+            return g, f"no ship; interval {lo:+.3f}..{hi:+.3f} includes the spec {g:+.3f} -> keep spec"
+        if lo > 0 or hi < 0:
+            return b, f"no ship; interval {lo:+.3f}..{hi:+.3f} excludes the spec {g:+.3f} and 0 -> fitted {b:+.3f}"
+        return 0.0, f"no ship; interval {lo:+.3f}..{hi:+.3f} excludes the spec {g:+.3f}, includes 0 -> off (0)"
+
+    out["beta_T"], why["beta_T"] = one("B_whiff")
+    v, why["gamma_T"] = one("B_hard"); out["gamma_T"] = -v
+    if res["B_whiff"]["ship"] or res["B_hard"]["ship"]:
+        c = res.get("corr_alpha_betaT", float("nan"))
+        out["lam"] = shape["lam"]
+        out["alpha"] = 0.4 if (c == c and abs(c) > 0.8) else shape["alpha"]
+        why["lam/alpha"] = (f"best grid values (lambda {shape['lam']}, alpha {shape['alpha']}); corr(alpha, beta_T) "
+                            f"{'not computable: the train likelihood rises to the grid edge in alpha' if c != c else f'{c:+.2f}'}")
+    out["beta_E"], why["beta_E"] = one("E_whiff")
+    out["beta_E_S"], why["beta_E_S"] = one("E_chase")
+    if res["E_whiff"]["ship"]:
+        out["dstar_E"] = shape["dstar_E"]
+    out["beta_tun"], why["beta_tun"] = one("tun_whiff")
+    for j, nm in enumerate(("phi_FB", "phi_OS")):
+        out[nm], why[nm] = one("fam_all", j)
+        out[nm] = max(0.0, out[nm])
+    v, why["beta_y"] = one("gb_y")
+    out["beta_y"] = v
+    counts = [(b, k) for b in range(4) for k in range(3)][1:]
+    if ships(res["kappa"]):
+        out["kappa"] = {f"{b}-{k}": res["kappa"]["beta"][j] for j, (b, k) in enumerate(counts)}
+        why["kappa"] = (f"ships (held-out gain {res['kappa']['gain']:.2e}, {res['kappa']['gain'] / res['kappa']['sd']:.1f} boot SD; "
+                        f"joint Wald {joint_excludes_zero(res['kappa'])[1]:.0f} on 11 df): fitted count zone replaces the linear area rule")
+    else:
+        why["kappa"] = "no ship: keep the linear area rule"
+    say("\nDecisions (spec 10 ship rule; A3 for terms that do not ship)")
+    for k_ in why:
+        say(f"  {k_}: {why[k_]}")
+    d["ship"] = out
+    d["why"] = why
+    json.dump(d, open(OUT_JSON, "w"), indent=1, default=float)
+    return out
+
+
 if __name__ == "__main__":
-    main()
+    if "--decide" in sys.argv:
+        decide()
+        open(OUT_TXT, "a").write("\n".join(lines) + "\n")
+    else:
+        main()

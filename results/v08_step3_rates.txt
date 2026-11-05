@@ -1,3 +1,3 @@
-college_d3  off K 0.163 BB 0.113 HBP 0.042 H 0.241 | on K 0.162 BB 0.116 HBP 0.042 H 0.240 | real K 0.162 BB 0.114 HBP 0.042 H 0.241 | max change 0.0022
-college_d1  off K 0.194 BB 0.107 HBP 0.034 H 0.222 | on K 0.193 BB 0.110 HBP 0.033 H 0.221 | real K 0.193 BB 0.108 HBP 0.034 H 0.222 | max change 0.0027
-mlb         off K 0.199 BB 0.080 HBP 0.009 H 0.230 | on K 0.201 BB 0.083 HBP 0.009 H 0.228 | real K 0.200 BB 0.079 HBP 0.009 H 0.230 | max change 0.0036
+college_d3  off K 0.163 BB 0.113 HBP 0.042 H 0.241 | on K 0.163 BB 0.115 HBP 0.042 H 0.241 | real K 0.162 BB 0.114 HBP 0.042 H 0.241 | max change 0.0014
+college_d1  off K 0.194 BB 0.107 HBP 0.034 H 0.222 | on K 0.194 BB 0.109 HBP 0.034 H 0.221 | real K 0.193 BB 0.108 HBP 0.034 H 0.222 | max change 0.0015
+mlb         off K 0.199 BB 0.080 HBP 0.009 H 0.230 | on K 0.201 BB 0.081 HBP 0.009 H 0.229 | real K 0.200 BB 0.079 HBP 0.009 H 0.230 | max change 0.0018

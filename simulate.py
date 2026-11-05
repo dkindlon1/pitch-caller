@@ -120,6 +120,7 @@ class Knowledge:
         self.damage = defaultdict(dict)          # hitter -> key -> (score, n)
         self.seen = defaultdict(Counter)         # hitter -> pitch name -> count
         self.usage = defaultdict(Counter)        # (b,k) -> pitch name -> count (whole game)
+        self.usage_call = defaultdict(Counter)   # v0.8 (2.3): (pitcher, b, k) -> (pitch, target) -> count today
 
     def update_timing(self, h, cls, signal):
         t = self.timing[h][cls]
@@ -397,6 +398,8 @@ def play_game(log_path):
             last = None
             pa_done = False
             fam_prev = dict(fam[(pitcher["name"], h)])
+            v08 = engine.FLAGS["look_state"]
+            tab, frozen, look, fooled = None, None, None, []      # v0.8 (6): this PA's table, its inputs, the look
             o_add, r_pre, bases, pre_label = pre_pa(outs, bases, R)
             if pre_label:
                 outs += o_add
@@ -421,11 +424,22 @@ def play_game(log_path):
                               familiar=fam_prev,
                               ump_u=engine.ump_estimate(takes, LEVEL_NAME) if engine.FLAGS["umpire_learn"] else 0.0)
                 ars = pitcher["arsenal"]
+                if v08:
+                    if tab is None or engine.needs_resolve(frozen, ars, s):
+                        tab = engine.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
+                        frozen = engine.frozen_inputs(ars, s)
+                        if look is None:
+                            look = tab.h0
+                    s = replace(s, look=look, b_h=engine.lean_b_h(ars, s, fooled),
+                                usage_by_call=dict(K.usage_call[(pitcher["name"], balls, strikes)]))
                 # engine call, with possible shake-offs
                 shakes = []
                 shaken = set()
                 for attempt in range(3):
-                    (p, q, prob, cst), dist = (decide or call_mixed)(ars, s, rng=rng, exclude=shaken)
+                    if v08:
+                        (p, q, prob, cst), dist, tab, _info = engine.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
+                    else:
+                        (p, q, prob, cst), dist = (decide or call_mixed)(ars, s, rng=rng, exclude=shaken)
                     p_shake = min(0.9, SHAKE * max(0.0, 0.35 * (0.75 - p.conf))) if attempt < 2 else 0.0
                     if rng.random() < p_shake:
                         shakes.append(f"{p.name} {q}")
@@ -438,7 +452,7 @@ def play_game(log_path):
                     cands_ = engine.candidates(ars, s)
                     p = rng.choice(cands_); q = rng.choice(QUADS); override = 1
                     prob = next((d[0] for d in dist if d[2].name == p.name and d[3] == q), 0.0)
-                    cst = engine.cost(p, q, s, ars)[0]
+                    cst = engine.root_costs(ars, s, tab)[(p.name, q)] if v08 else engine.cost(p, q, s, ars)[0]
                 best_cost = min(d[1] for d in dist)
                 top3 = "; ".join(f"{d[2].name} {d[3]} {d[0]:.0%}" for d in dist[:3])
                 pitch_mix = Counter()
@@ -456,8 +470,11 @@ def play_game(log_path):
                 p_true = next(x for x in ars_true if x.name == p.name)
                 P = outcome_probs(p_true, q, ts, ars_true)
                 # decision quality: true run cost of the engine's mix vs a caller who knows the hidden truth
-                tc = {(x.name, qq): engine.cost(x, qq, ts, ars_true)[0]
-                      for x in ars_true if x.name in {c.name for c in engine.candidates(ars, s)} for qq in QUADS}
+                if v08:
+                    tc = engine.root_costs(ars_true, ts, tab)
+                else:
+                    tc = {(x.name, qq): engine.cost(x, qq, ts, ars_true)[0]
+                          for x in ars_true if x.name in {c.name for c in engine.candidates(ars, s)} for qq in QUADS}
                 t_best = min(tc.values())
                 regret_exp = sum(d[0] * (tc.get((d[2].name, d[3]), t_best) - t_best) for d in dist)
                 regret_pick = tc.get((p.name, q), t_best) - t_best
@@ -477,6 +494,9 @@ def play_game(log_path):
                 land[(pitcher["name"], p.name)][1] += 1
                 land[(pitcher["name"], p.name)][0] += ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard")
                 K.usage[(balls, strikes)][p.name] += 1
+                K.usage_call[(pitcher["name"], balls, strikes)][(p.name, q)] += 1
+                if v08:
+                    look = engine.look_update(look, p, q, s)
                 result = ev
 
                 if ev in ("ball", "wp_ball"):
@@ -509,6 +529,8 @@ def play_game(log_path):
                         if INPUTS >= 3:
                             wt_log = noisy(wt, ["out in front", "late", "fooled"])
                             K.update_timing(h, cls, {"out in front": -0.8, "late": 0.8, "fooled": 0.0}[wt_log])
+                            if wt_log == "fooled":
+                                fooled.append(cls)      # v0.8 (2.5) sit evidence for the rest of this at-bat
                         K.update_damage(h, cls, "whiff")
                         conf_event(p, "whiff")
                     else:

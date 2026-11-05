@@ -1,0 +1,81 @@
+Statcast rows (classified pitches, no bunts): 337195; games 1165
+usable pitches 337195 (train 2024 172167, test 2025 165028); controls 91 columns; pitchers 725, batters 622 in train
+
+1. Timing B(r) on whiff | swing (spec beta_T = 0.5), grid lambda x alpha, chosen on train
+    lambda 0.4 alpha 0.2: train ll -35200.3 beta_T +0.039 (se 0.031)
+    lambda 0.4 alpha 0.4: train ll -35199.1 beta_T +0.078 (se 0.033)
+    lambda 0.4 alpha 0.6: train ll -35195.6 beta_T +0.142 (se 0.036)
+    lambda 0.5 alpha 0.2: train ll -35199.1 beta_T +0.067 (se 0.033)
+    lambda 0.5 alpha 0.4: train ll -35197.4 beta_T +0.108 (se 0.035)
+    lambda 0.5 alpha 0.6: train ll -35192.9 beta_T +0.169 (se 0.037)
+    lambda 0.6 alpha 0.2: train ll -35198.4 beta_T +0.099 (se 0.034)
+    lambda 0.6 alpha 0.4: train ll -35195.6 beta_T +0.144 (se 0.036)
+    lambda 0.6 alpha 0.6: train ll -35191.2 beta_T +0.194 (se 0.038)
+    lambda 0.7 alpha 0.2: train ll -35195.8 beta_T +0.136 (se 0.037)
+    lambda 0.7 alpha 0.4: train ll -35192.1 beta_T +0.180 (se 0.038)
+    lambda 0.7 alpha 0.6: train ll -35188.7 beta_T +0.218 (se 0.039)
+    lambda 0.8 alpha 0.2: train ll -35192.4 beta_T +0.183 (se 0.039)
+    lambda 0.8 alpha 0.4: train ll -35189.8 beta_T +0.217 (se 0.039)
+    lambda 0.8 alpha 0.6: train ll -35187.0 beta_T +0.241 (se 0.040)
+  best on train: lambda 0.8, alpha 0.6
+  [B] beta_T at lambda 0.8, alpha 0.6: train n=82354, test n=78722; beta=[0.2409] se=[0.0396]; held-out gain 4.36e-04 (boot sd 8.11e-05) -> SHIP
+  [B] gamma_T on hard | ball in play (enters with a minus sign): train n=30115, test n=29008; beta=[-0.2433] se=[0.0561]; held-out gain -6.75e-05 (boot sd 1.45e-04) -> no ship
+  profile curvature in alpha -2.24; beta_T across alpha: 0.2: +0.183, 0.4: +0.217, 0.6: +0.241
+  approx corr(alpha, beta_T) = +nan (rule: |corr| > 0.8 -> alpha fixed at 0.4)
+
+2. Eye level E_y on whiff | swing (spec 0.25, d* 1.5), d* grid chosen on train; also on swing | off-zone
+    d* 1.0: train ll -35196.2 beta_E -0.107 (se 0.039)
+    d* 1.5: train ll -35195.5 beta_E -0.129 (se 0.044)
+    d* 2.0: train ll -35195.4 beta_E -0.142 (se 0.050)
+  [E_y] beta_E at d* 2.0: train n=82354, test n=78722; beta=[-0.1425] se=[0.0501]; held-out gain 1.01e-04 (boot sd 4.20e-05) -> SHIP
+  [E_y] beta_E on swing | pitch outside the zone: train n=86724, test n=81196; beta=[-0.2526] se=[0.0473]; held-out gain 2.84e-04 (boot sd 6.74e-05) -> SHIP
+
+3. Tunneling tau_tun on whiff | swing (spec 0.15 x kappa_p), trajectories from Statcast's fit
+  pitches with a different previous pitch and both trajectories: 161324
+  [tau_tun] beta_tun (kappa_p included in the feature): train n=82354, test n=78722; beta=[0.0063] se=[0.0382]; held-out gain -6.33e-07 (boot sd 2.99e-06) -> no ship
+  [tau_tun] beta_tun on swing | outside the zone: train n=86724, test n=81196; beta=[0.3103] se=[0.0339]; held-out gain 5.49e-04 (boot sd 1.07e-04) -> SHIP
+
+4. Familiarity: n of this class seen from this pitcher in earlier PAs today, on hard | ball in play
+   (spec phi_FB 0.058, phi_OS 0.116, cap 0.5; features clipped at the cap's n)
+  [familiarity] phi_FB, phi_OS, all starts (TTO control kept): train n=30115, test n=29008; beta=[0.0295, 0.0888] se=[0.0131, 0.0198]; held-out gain -9.36e-05 (boot sd 1.58e-04) -> no ship
+  [familiarity] phi_FB, phi_OS, starts reaching >= 18 batters: train n=17423, test n=16623; beta=[0.0351, 0.0719] se=[0.0138, 0.0212]; held-out gain -2.19e-04 (boot sd 2.18e-04) -> no ship
+  [familiarity] phi_FB, phi_OS, all starts, TTO control dropped: train n=30115, test n=29008; beta=[0.0362, 0.0977] se=[0.0115, 0.0184]; held-out gain -3.95e-05 (boot sd 1.87e-04) -> no ship
+
+5. Ground ball | ball in play: beta_y per ft of height (spec -0.8), gamma by contact; GB_p by type
+  [beta_y] beta_y (plate height - 2.5 ft): train n=30200, test n=29115; beta=[-0.3634] se=[0.0969]; held-out gain 2.13e-04 (boot sd 1.05e-04) -> SHIP
+  raw 2024 GB rate by type (data vs spec): 4-seam: 0.340 vs 0.379, CH: 0.494 vs 0.478, CB: 0.434 vs 0.487, SL: 0.397 vs 0.439, cut: 0.412 vs 0.43, sink: 0.556 vs 0.495
+
+6. Count zone kappa(b,k): called strike | take, edge pitches (base location model p in 0.1..0.9)
+  [kappa] count dummies (vs 0-0) on edge takes: train n=19680, test n=19181; beta=[-0.5009, -0.9943, 0.0433, -0.3881, -0.7119, 0.3772, -0.0939, -0.6295, 0.5879, 0.0923, -0.2073] se=[0.1388, 0.169, 0.1217, 0.1336, 0.1508, 0.1421, 0.1377, 0.1474, 0.1678, 0.1565, 0.1543]; held-out gain 2.46e-03 (boot sd 6.92e-04) -> no ship
+  fitted kappa vs spec log(A/A00): 0-1: -0.50 vs -0.10, 0-2: -0.99 vs -0.22, 1-0: +0.04 vs +0.07, 1-1: -0.39 vs -0.03, 1-2: -0.71 vs -0.13, 2-0: +0.38 vs +0.14, 2-1: -0.09 vs +0.05, 2-2: -0.63 vs -0.05, 3-0: +0.59 vs +0.20, 3-1: +0.09 vs +0.11, 3-2: -0.21 vs +0.02
+
+Decisions (ship rule: held-out gain > 2 boot SD and 95% interval excludes 0)
+  beta_T: 0.24091617298209325
+  gamma_T: keep spec value
+  lam: 0.8
+  alpha: 0.4
+  beta_E: -0.14245767543891769
+  dstar_E: 2.0
+  beta_tun: keep spec value
+  phi_FB: keep spec value
+  phi_OS: keep spec value
+  beta_y: -0.36343963314395306
+  kappa: keep spec value
+
+Correlation of the fitted term coefficients (cluster-robust), whiff model with B: [[1.0]]; familiarity (FB, OS): [[1.0, 0.55], [0.55, 1.0]]
+
+Notes: random intercepts are MAP-penalized (prior SD 0.25), not integrated out; coefficient intervals are
+cluster-robust with the intercepts held fixed. Data are every 4th day of each season (about 1/4 of games).
+MLB effects transfer to college unchanged and to HS/travel scaled by 0.6 (untestable assumption).
+
+Decisions (spec 10 ship rule; A3 for terms that do not ship)
+  beta_T: ships at +0.241 (spec +0.500)
+  gamma_T: no ship; interval -0.353..-0.133 includes the spec -0.300 -> keep spec
+  lam/alpha: best grid values (lambda 0.8, alpha 0.6); corr(alpha, beta_T) not computable: the train likelihood rises to the grid edge in alpha
+  beta_E: ships at -0.142 (spec +0.250)
+  beta_E_S: ships at -0.253 (spec +0.250)
+  beta_tun: no ship; interval -0.069..+0.081 excludes the spec +0.150, includes 0 -> off (0)
+  phi_FB: no ship; interval +0.004..+0.055 excludes the spec +0.058 and 0 -> fitted +0.030
+  phi_OS: no ship; interval +0.050..+0.128 includes the spec +0.116 -> keep spec
+  beta_y: ships at -0.363 (spec -0.800)
+  kappa: ships (held-out gain 2.46e-03, 3.6 boot SD; joint Wald 169 on 11 df): fitted count zone replaces the linear area rule

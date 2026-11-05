@@ -19,6 +19,7 @@ a_bar = exp(sum(n * log(e.zone_area(b, k)) for (b, k), n in takes.items()) / tot
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sim_constants.json")
 cons = json.load(open(path)) if os.path.exists(path) else {}
 cons["A_BAR"] = {}; cons["I_BAR_UMP"] = {}
+cons["TAKE_W"] = {f"{b}-{k}": n / tot for (b, k), n in sorted(takes.items())}   # count weights for centering kappa
 ars = ref_arsenals()["three"]
 for level in ("hs", "college_d3", "college_d1", "mlb"):
     cons["A_BAR"][level] = a_bar
