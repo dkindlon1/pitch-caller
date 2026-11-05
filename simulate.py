@@ -240,6 +240,52 @@ def run_ball_in_play_v6b(contact, outs, bases, R):
     return 0, b1 + b2 + b3 + 1, (False, False, False), "home run"
 
 
+def run_ball_in_play_typed(contact, outs, bases, p, q, infield_in=False):
+    """v0.8 (spec 7.3): batted-ball type, then the typed outcome table and runner rules the engine uses."""
+    L = LEVEL_NAME
+    t = sample(engine.type_mix(p, q, contact))
+    po, p1, p2, p3, phr, pe = engine.OUT_TABLE[L][contact][t]
+    rf = engine.RUNNER_FIT[L]
+    ev = sample({"out": po, "single": p1, "double": p2, "triple": p3, "homer": phr, "error": pe})
+    b1, b2, b3 = bases
+    if ev != "out":
+        return hit_advance(ev, bases) + (t,)
+    if outs + 1 >= 3:
+        return 1, 0, bases, f"{t} out", t
+    if t == "GB" and b1 and rng.random() < min(0.95, engine.TYPED["dp"][contact] * rf["S_DP"]):
+        if outs + 2 >= 3:
+            return 2, 0, (False, False, False), "double play", t
+        return 2, (1 if b3 else 0), (False, False, b2), "double play", t
+    psc = (engine.TYPED["gb_infield_in"] if infield_in else rf["p_GB"]) if t == "GB" else (rf["p_FB"] if t == "FB" else 0.01)
+    scored = b3 and rng.random() < psc
+    adv = engine.TYPED["r2_to_3rd"].get(t, 0.0)
+    nb3 = b3 and not scored
+    if b2 and not nb3 and rng.random() < adv:
+        return 1, (1 if scored else 0), (b1, False, True), (f"{t} out, run scores, runner to 3rd" if scored else f"{t} out, runner to 3rd"), t
+    return 1, (1 if scored else 0), (b1, b2, nb3), (f"{t} out, run scores" if scored else f"{t} out"), t
+
+
+def hit_advance(ev, bases):
+    """Runner moves on a hit or error (same rules as run_ball_in_play_v6b)."""
+    b1, b2, b3 = bases
+    if ev in ("single", "error"):
+        runs = 1 if b3 else 0
+        r2_scores = b2 and rng.random() < 0.60
+        runs += 1 if r2_scores else 0
+        third = (b2 and not r2_scores)
+        if b1 and not third and rng.random() < 0.25:
+            return 0, runs, (True, False, True), ev
+        return 0, runs, (True, b1, third), ev
+    if ev == "double":
+        runs = (1 if b2 else 0) + (1 if b3 else 0)
+        if b1 and rng.random() < 0.45:
+            return 0, runs + 1, (False, True, False), ev
+        return 0, runs, (False, True, b1), ev
+    if ev == "triple":
+        return 0, b1 + b2 + b3, (False, False, True), ev
+    return 0, b1 + b2 + b3 + 1, (False, False, False), "home run"
+
+
 def run_ball_in_play(contact, outs, bases):
     """Returns (outs_added, runs, new_bases, label)."""
     po, p1, p2, p3, phr, pe = engine.IN_PLAY_BY_LEVEL[LEVEL_NAME][contact] if hasattr(engine, "IN_PLAY_BY_LEVEL") else IN_PLAY[contact]
@@ -472,7 +518,10 @@ def play_game(log_path):
                     if strikes < 2:
                         strikes += 1
                 else:   # in play
-                    o_add, runs_scored, bases, label = run_ball_in_play_v6b(ev, outs, bases, R)
+                    if engine.FLAGS["inplay_typed"]:
+                        o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q)
+                    else:
+                        o_add, runs_scored, bases, label = run_ball_in_play_v6b(ev, outs, bases, R)
                     outs += o_add
                     detail = f"{ev} contact: {label.upper()}"
                     if INPUTS >= 2:

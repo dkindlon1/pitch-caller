@@ -1,0 +1,4 @@
+college_d1  factor 1.0288  RE00 0.700 (table 0.700)  worst 1|023 0.066 runs 4.1%  gate pass []  T_L 0.564  DP/opp 0.121  SB% 0.796
+college_d3  factor 1.0363  RE00 0.951 (table 0.952)  worst 2|120 0.033 runs 5.4%  gate pass []  T_L 0.564  DP/opp 0.079  SB% 0.840
+hs          factor 1.0418  RE00 1.070 (table 1.069)  worst 0|123 0.191 runs 5.4%  gate report-only ['0|023', '0|123', '1|023', '1|123']  T_L 0.454  DP/opp 0.130  SB% 0.818
+mlb         factor 0.9946  RE00 0.481 (table 0.481)  worst 0|103 0.097 runs 5.4%  gate report-only ['0|103']  T_L 0.532  DP/opp 0.193  SB% 0.722
