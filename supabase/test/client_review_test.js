@@ -232,20 +232,45 @@ const MIN = 60e3;
     check(+(await su.query("select count(*) n from public.pitchers where id = 'pk1'")).rows[0].n === 0, "and nothing of his came back to the server");
   }
 
-  console.log("14. Once a parent agrees, what the server let go comes back from the coach's iPad");
+  console.log("14. A held under-13 player: the coach's iPad keeps him, and sends him again at every release");
   {
     const A = await device();
-    await A.D.put("pitchers", { id: "pk2", name: "Young", number: "12", pitches: [] });
+    const onServer = async (pid) => +(await su.query("select count(*) n from public.checkins where program_id = $1 and pitcher_id = $2", [P, pid])).rows[0].n;
+    const srvName = async (pid) => ((await su.query("select doc->>'name' n from public.pitchers where program_id = $1 and id = $2", [P, pid])).rows[0] || {}).n;
+    const local = async (pid) => (await A.D.all("pitchers", true)).find((x) => x.id === pid) || {};
+    await A.D.put("pitchers", { id: "pk2", name: "Young", number: "12", pitches: [{ id: "f", name: "Fastball", grade: 4 }] });
     await A.D.put("checkins", { pitcherId: "pk2", date: "2026-11-05", arm: 4 });
     await A.sync("coach", P, true).syncNow(); await sleep(25); await A.sync("coach", P, true).syncNow();
-    const onServer = async () => +(await su.query("select count(*) n from public.checkins where program_id = $1 and pitcher_id = 'pk2'", [P])).rows[0].n;
-    await su.query("select private.pc_flag_minor($1, 'pk2')", [P]);                    // a coach approved: he's under 13
-    check((await onServer()) === 0, "(the setup: held, his check-in left the server)");
-    await su.query("insert into public.guardian_consents (program_id, pitcher_id, guardian_user_id, method) values ($1, 'pk2', $2, 'test')", [P, U.pitcher2]);
-    const r = await A.sync("coach", P, true).syncNow();
-    check(r.pull.resend >= 1 && (await onServer()) === 1, `the parent agrees, and the coach's next sync sends the check-in again (${r.pull.resend} queued)`);
-    const again = await A.sync("coach", P, true).syncNow();
-    check(!again.pull.resend, "only once");
+    // the real flow: an open link, someone says he's under 13 and gives a parent's email, the coach approves it
+    const t = (await as("coach", "select public.pc_invite($1, 'player', 'pk2') r", [P])).rows[0].r;
+    await as("charter", "select public.pc_accept_invite($1, true, 'pitcher2@x.org')", [t]);
+    const pinv = (await su.query("select token from public.invites where program_id = $1 and pitcher_id = 'pk2' and needs_approval", [P])).rows[0].token;
+    await as("coach", "select public.pc_approve_invite($1)", [pinv]);
+    await A.sync("coach", P, true).syncNow();
+    check(!(await srvName("pk2")) && (await onServer("pk2")) === 0 && (await local("pk2")).name === "Young" && (await local("pk2")).pitches.length === 1,
+      "held: the server keeps only the placeholder, and the coach's iPad keeps its full record of him");
+    await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [pinv]);
+    let r = await A.sync("coach", P, true).syncNow();
+    check(r.pull.resend >= 1 && (await srvName("pk2")) === "Young" && (await onServer("pk2")) === 1, `the parent agrees: the next sync sends his record and check-in again (${await srvName("pk2")}, ${await onServer("pk2")} check-in)`);
+    r = await A.sync("coach", P, true).syncNow();
+    check(!r.pull.resend, "once per release");
+    // the parent's consent goes (her account deleted), he is held again, and a parent agrees again
+    await su.query("delete from public.guardian_consents where program_id = $1 and pitcher_id = 'pk2'", [P]);
+    await A.sync("coach", P, true).syncNow();
+    check(!(await srvName("pk2")) && (await onServer("pk2")) === 0 && (await local("pk2")).name === "Young", "consent gone: held again on the server, kept whole on the iPad");
+    const t2 = (await as("coach", "select public.pc_invite($1, 'player', 'pk2', 'pitcher2@x.org', true) r", [P])).rows[0].r;
+    await as("pitcher2", "select public.pc_record_guardian_consent($1, 'checkbox')", [t2]);
+    r = await A.sync("coach", P, true).syncNow();
+    check(r.pull.resend >= 1 && (await srvName("pk2")) === "Young" && (await onServer("pk2")) === 1, "a second consent is a second release: everything goes up again");
+    // a coach marks someone by mistake and takes it off
+    await A.D.put("pitchers", { id: "pk3", name: "Not A Kid", number: "13", pitches: [] });
+    await A.D.put("checkins", { pitcherId: "pk3", date: "2026-11-05", arm: 5 });
+    await A.sync("coach", P, true).syncNow(); await sleep(25); await A.sync("coach", P, true).syncNow();
+    await as("coach", "select public.pc_mark_minor($1, 'pk3')", [P]);
+    await A.sync("coach", P, true).syncNow();
+    await as("coach", "select public.pc_unmark_minor($1, 'pk3')", [P]);
+    r = await A.sync("coach", P, true).syncNow();
+    check((await srvName("pk3")) === "Not A Kid" && (await onServer("pk3")) === 1 && (await local("pk3")).name === "Not A Kid", "a wrong mark taken off: his record and check-in go back up from the iPad");
   }
 
   await c.end(); await su.end();

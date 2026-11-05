@@ -462,14 +462,19 @@ const now = () => Date.now();
     const held = (await su.query("select held_id from public.minors where program_id = $1 and pitcher_id = 'p20'", [tA])).rows[0].held_id;
     check(!(await pdoc("p20")).name && (await evCount("p20")) === 0 && (await evCount(held)) === 2 && /^held_[0-9a-f]{32}$/.test(held),
       "a coach marking him under 13 holds his record to the placeholder and his game pitches under a random id");
+    const relBefore = (await pull("head", tA, "pitchers")).minors;
+    check(relBefore.held.includes("p20"), "a coach's pull lists him as held, so coaches' iPads keep their full record of him");
     check(!(await as("head", "select public.pc_unmark_minor($1, 'p20')", [tA])).error && (await evCount("p20")) === 2
       && +(await su.query("select count(*) n from public.minors where pitcher_id = 'p20'")).rows[0].n === 0 && !(await usable(pinv20)),
-      "N1: a coach can take a wrong mark off; the pitches come back and the parent invite is cancelled");
+      "N1: a coach can take a wrong mark off: the game pitches come back on the server and the parent invite is cancelled");
+    const relAfter = (await pull("head", tA, "pitchers")).minors;
+    check(!relAfter.held.includes("p20") && relAfter.released.filter((x) => x.id === "p20").length === 1, "and the pull lists the release, so coaches' iPads send what they kept of him (record, check-ins, bullpens)");
     check(!!(await as("caller", "select public.pc_unmark_minor($1, 'p20')", [tA])).error, "but not a coach without the roster");
     const pinv20b = await one("head", "select public.pc_invite($1, 'player', 'p20', 'mom3@x.org', true) r", [tA]);
     await as("mom3", "select public.pc_record_guardian_consent($1, 'checkbox')", [pinv20b]);
     const pl20 = await pull("head", tA, "pitchers");
-    check((await evCount("p20")) === 2 && pl20.consented.includes("p20"), "a parent agreeing brings the pitches back, and coaches' pulls list him so their iPads send what the server let go");
+    check((await evCount("p20")) === 2 && pl20.minors.released.filter((x) => x.id === "p20").length === 2 && !pl20.minors.held.includes("p20"),
+      "a parent agreeing brings the pitches back and is a release of its own (each release is listed once, so iPads send again)");
     check(!!(await as("head", "select public.pc_unmark_minor($1, 'p20')", [tA])).error, "once a parent has agreed, a coach can't take the mark off");
     // N3: approval only for a parent email waiting on it, never reviving an old invite
     await as("head", "select public.pc_set_member($1, $2, 'caller', '{\"manage_roster\":true}')", [tA, U.caller]);
@@ -485,6 +490,7 @@ const now = () => Date.now();
       && !!(await as("head", "select public.pc_invite($1, 'player', 'p20', 'mom4@x.org', true)", [tA])).error, "a consented player can be re-invited to the parent who agreed, and nobody else");
     // L2: a parent deleting their account takes the consent, and the child's data goes back to held
     await push("head", tA, "pitchers", [{ id: "p20", updatedAt: now() + 20000, name: "Senior Ace", number: "20" }]);
+    check((await pdoc("p20")).name === "Senior Ace", "(the setup: after consent the coach fills his record in again)");
     await su.query("delete from auth.users where id = $1", [U.mom3]);
     check(!(await pdoc("p20")).name && (await evCount("p20")) === 0 && +(await su.query("select count(*) n from public.guardian_consents where pitcher_id = 'p20'")).rows[0].n === 0,
       "L2: deleting a parent's account takes the consent with it, and the child's record goes back to held");
@@ -522,7 +528,23 @@ const now = () => Date.now();
     check(ev21.pitcherId === standIn && /^removed_[0-9a-f]{32}$/.test(standIn) && !standIn.includes(sha), "N8: his pitches carry a random stand-in that can't be worked out from his id");
     check(JSON.stringify(g21.staffIds) === JSON.stringify(["p1", standIn]), "N8: the game's staff list no longer has his id");
     r = await push("head", tA, "games", [{ id: "g21b", updatedAt: now(), staffIds: ["p21"] }]);
-    check(r.server.length === 1 && r.server[0].doc.staffIds[0] === standIn, "and an old game sent again from an iPad goes in with the stand-in");
+    check(r.server.length === 1 && r.server[0].doc.staffIds[0] === standIn && !("staff" in r.server[0].doc), "and an old game sent again from an iPad goes in with the stand-in, and nothing else added");
+    // A (third review): packs made offline before the deletion
+    r = await push("head", tA, "packs", [{ id: "pk21-late", updatedAt: now(), gameId: "g21", staff: [{ pitcherId: "p1", name: "Ace" }, { pitcherId: "p21", name: "Gone Kid" }] }, { id: "pk-ok3", updatedAt: now(), gameId: "g1", staff: [{ pitcherId: "p1" }] }]);
+    const late = (await su.query("select doc from public.packs where id = 'pk21-late'")).rows[0];
+    check(!r.error && r.applied === 2 && late && late.doc.staff.length === 2 && late.doc.staff[0].name === "Ace" && JSON.stringify(late.doc.staff[1]) === JSON.stringify({ pitcherId: standIn }) && !("staffIds" in late.doc),
+      `A: a pack naming him, made offline before the deletion, goes in with the stand-in, and the rest of the batch with it (${r.error || r.applied})`);
+    await push("head", tA, "packs", [{ id: "pk21", updatedAt: now(), gameId: "g21", staff: [{ pitcherId: "p21", name: "Gone Kid" }] }]);
+    r = await push("head", tA, "packs", [{ id: "pk21", updatedAt: now() + 1000, gameId: "g21", note: "newer", staff: [{ pitcherId: "p21", name: "Gone Kid" }] }]);
+    const pk21 = (await su.query("select doc from public.packs where id = 'pk21'")).rows[0].doc;
+    check(pk21.note === "newer" && pk21.staff[0].pitcherId === standIn, "A: a newer copy of such a pack replaces the older one");
+    // C (third review): a coach-made team id can't carry free text into a held child's placeholder
+    await push("caller", tA, "teams", [{ id: "Johnny_Smith_DOB_2015-03-02_ElmMiddle", updatedAt: now(), name: "x" }]);
+    r = await push("head", tA, "pitchers", [{ id: "r3", updatedAt: now() + 40000, number: "23", teamId: "Johnny_Smith_DOB_2015-03-02_ElmMiddle" }]);
+    check(r.rejected.length === 1 && /consent/.test(r.rejected[0].reason), "C: not even through a team record named that way");
+    await push("caller", tA, "teams", [{ id: "tea_mqz1abcd0123456789abcdef", updatedAt: now(), name: "Our team" }]);
+    r = await push("head", tA, "pitchers", [{ id: "r3", updatedAt: now() + 50000, number: "23", teamId: "tea_mqz1abcd0123456789abcdef" }]);
+    check(r.applied === 1, "a real team id is fine");
   }
 
   console.log("15. A missing pitcherId is a no, not a maybe");
@@ -530,8 +552,8 @@ const now = () => Date.now();
     r = await push("pl1", tA, "checkins", [{ id: "ck-nopit", updatedAt: now() }, { id: "ck-nullpit", updatedAt: now(), pitcherId: null }]);
     const got = +(await su.query("select count(*) n from public.checkins where id in ('ck-nopit', 'ck-nullpit')")).rows[0].n;
     check(r.rejected.length === 2 && r.rejected.every((x) => x.reason === "not allowed") && got === 0, `a player's check-in with no pitcher is refused (${JSON.stringify(r.rejected)}, ${got} stored)`);
-    r = await push("pl1", tA, "pitchers", [{ id: "p-nobody", updatedAt: now(), name: "x" }]);
-    check(r.rejected.length === 1 && +(await su.query("select count(*) n from public.pitchers where id = 'p-nobody'")).rows[0].n === 0, "and so is a pitcher record that isn't his");
+    r = await push("head", tA, "checkins", [{ id: "ck-coach-nopit", updatedAt: now() }]);
+    check(r.applied === 1, "(a coach's check-in with no pitcher is fine: coaches may write the team's check-ins)");
   }
 
   console.log("13. The migration refuses a database that already has programs");

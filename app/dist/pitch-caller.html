@@ -2813,21 +2813,25 @@ td.wrapcell .line { display: block; }
       return n;
     }
 
-    // under-13 players a parent has now agreed for: while they were held the server let go of their check-ins,
-    // bullpens, velo and models, so this iPad sends its copies once (they go in newest-wins like any other change)
-    async function resend(ids, s) {
-      const done = new Set(s.consented || []), fresh = ids.filter((id) => !done.has(id));
+    // under-13 players let go (a parent agreed, or a coach took a wrong mark off): while they were held the server kept
+    // only a placeholder record and let go of their check-ins, bullpens, velo and models, so this iPad sends what it
+    // kept, once per release. Its record is stamped now so it wins over the placeholder; the rest go up newest-wins.
+    async function resend(releases, s) {
+      const seen = new Set(s.releases || []);
+      const fresh = releases.filter((x) => x && x.id && x.key && !seen.has(x.id + "@" + x.key));
       if (!fresh.length) return 0;
-      const want = new Set(fresh), extra = (await db.get("meta", "pushExtra")) || { id: "pushExtra", tables: {} };
+      const want = new Set(fresh.map((x) => x.id)), extra = (await db.get("meta", "pushExtra")) || { id: "pushExtra", tables: {} };
       extra.tables = extra.tables || {};
+      const about = (x) => want.has(x.pitcherId) || want.has((/^p2?:(.+)$/.exec(x.id) || [])[1]);
       let n = 0;
+      for (const x of await db.all("pitchers")) if (want.has(x.id)) { await db.put("pitchers", Object.assign({}, x)); n++; }
       for (const t of ["checkins", "sessions", "readings", "learned"]) {
-        const ids2 = (await db.all(t)).filter((x) => want.has(x.pitcherId) || ((/^p2?:(.+)$/.exec(x.id) || [])[1] && want.has(/^p2?:(.+)$/.exec(x.id)[1]))).map((x) => x.id);
-        if (ids2.length) { extra.tables[t] = [...new Set((extra.tables[t] || []).concat(ids2))]; n += ids2.length; }
+        const ids = (await db.all(t)).filter(about).map((x) => x.id);
+        if (ids.length) { extra.tables[t] = [...new Set((extra.tables[t] || []).concat(ids))]; n += ids.length; }
       }
       if (n) await db.put("meta", extra);
-      s.consented = [...done, ...fresh];
-      return n;
+      s.releases = [...seen, ...fresh.map((x) => x.id + "@" + x.key)].slice(-2000);
+      return Math.max(n, 1);   // a release always earns one more push in this sync
     }
 
     async function pull() {
@@ -2846,9 +2850,16 @@ td.wrapcell .line { display: block; }
             if (r.reset) { cur = { xid: 0, id: "" }; s.cursor[t] = cur; continue; }   // the server was restored: from the start
             if (r.locked) { stats.locked = true; break; }                              // not paid up: nothing comes down
             stats.received += r.rows.length;
-            if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
+            let rows = r.rows;
+            // an under-13 player held until a parent agrees: the server keeps only a placeholder, but this iPad keeps its
+            // full record of him (it goes up again when he's let go), so the placeholder never replaces it here
+            // (also while a release this iPad hasn't acted on yet is waiting: the placeholder may still be the newest copy)
+            const seenRel = new Set(s.releases || []);
+            const held = new Set(t === "pitchers" && r.minors ? (r.minors.held || []).concat((r.minors.released || []).filter((x) => !seenRel.has(x.id + "@" + x.key)).map((x) => x.id)) : []);
+            if (held.size) { const have = new Set((await db.all("pitchers", true)).filter((x) => held.has(x.id)).map((x) => x.id)); rows = rows.filter((x) => !have.has(x.id)); }
+            if (rows.length) stats.merged += await db.mergeRows(t, rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
             if (t === "pitchers" && Array.isArray(r.purged) && r.purged.length) stats.purged += await purge(r.purged);
-            if (t === "pitchers" && Array.isArray(r.consented)) stats.resend += await resend(r.consented, s);
+            if (t === "pitchers" && r.minors && Array.isArray(r.minors.released)) stats.resend += await resend(r.minors.released, s);
             if (r.held) stats.held = true;
             cur = r.next || cur;
             s.cursor[t] = cur;

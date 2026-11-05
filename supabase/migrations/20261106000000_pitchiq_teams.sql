@@ -151,6 +151,14 @@ create table public.purged (
   stand_in text not null default ('removed_' || replace(gen_random_uuid()::text, '-', '')),
   primary key (program_id, pitcher_id)
 );
+-- each time a held under-13 player is let go (a parent agreed, or a coach took a wrong mark off): coaches' iPads send
+-- what they kept of him once per release
+create table public.minor_releases (
+  id bigint generated always as identity primary key,
+  program_id uuid not null references public.programs (id) on delete cascade,
+  pitcher_id text not null,
+  released_at timestamptz not null default now()
+);
 create table public.deletion_log (
   id bigint generated always as identity primary key,
   program_id uuid not null,
@@ -164,8 +172,9 @@ alter table public.minors enable row level security;
 alter table public.guardian_consents enable row level security;
 alter table public.deletion_log enable row level security;
 alter table public.purged enable row level security;
+alter table public.minor_releases enable row level security;
 revoke all on public.organizations, public.player_links, public.invites, public.minors, public.guardian_consents, public.deletion_log,
-  public.purged from public, anon, authenticated;
+  public.purged, public.minor_releases from public, anon, authenticated;
 
 -- ------------------------------------------------------------------ helpers (private: not callable over the API)
 create function private.pc_my_email() returns text
@@ -274,7 +283,8 @@ language sql stable security definer set search_path = '' as $$
      and jsonb_typeof(r -> 'updatedAt') = 'number'
      and (not r ? 'deletedAt' or jsonb_typeof(r -> 'deletedAt') in ('number', 'null'))
      and (not r ? 'teamId' or (jsonb_typeof(r -> 'teamId') = 'string'
-          and ((r ->> 'teamId') is not distinct from (cur ->> 'teamId') or exists (select 1 from public.teams t where t.program_id = p and t.id = r ->> 'teamId'))))
+          and ((r ->> 'teamId') is not distinct from (cur ->> 'teamId')
+               or ((r ->> 'teamId') ~ '^[a-z]{3,4}_[a-z0-9]{8,40}$' and exists (select 1 from public.teams t where t.program_id = p and t.id = r ->> 'teamId')))))
      and (not r ? 'number' or jsonb_typeof(r -> 'number') = 'null'
           or (jsonb_typeof(r -> 'number') in ('string', 'number') and (r ->> 'number') ~ '^[0-9A-Za-z]{0,4}$')), false)
 $$;
@@ -286,20 +296,20 @@ $$;
 -- a game's staff list with one pitcher's id swapped for another
 create function private.pc_swap_staff(doc jsonb, pitcher text, with_id text) returns jsonb
 language sql immutable set search_path = '' as $$
-  select case when jsonb_typeof(doc -> 'staffIds') <> 'array' or not (doc -> 'staffIds') ? pitcher then doc else
+  select case when coalesce(jsonb_typeof(doc -> 'staffIds'), '') <> 'array' or not coalesce((doc -> 'staffIds') ? pitcher, false) then doc else
     jsonb_set(doc, '{staffIds}', (select jsonb_agg(case when e = to_jsonb(pitcher) then to_jsonb(with_id) else e end) from jsonb_array_elements(doc -> 'staffIds') e)) end
 $$;
 -- a pack (the calls of one game) names each pitcher on the staff with his grades and check-in: one of them becomes
 -- just an id (with_id: the same id, or a stand-in once his data is deleted)
 create function private.pc_scrub_pack(doc jsonb, pitcher text, with_id text) returns jsonb
 language sql immutable set search_path = '' as $$
-  select case when jsonb_typeof(doc -> 'staff') <> 'array' then doc else
+  select case when coalesce(jsonb_typeof(doc -> 'staff'), '') <> 'array' then doc else
     jsonb_set(doc, '{staff}', coalesce((select jsonb_agg(case when e ->> 'pitcherId' = pitcher then jsonb_build_object('pitcherId', with_id) else e end)
                                        from jsonb_array_elements(doc -> 'staff') e), '[]'::jsonb)) end
 $$;
 create function private.pc_pack_names(doc jsonb, pitcher text) returns boolean
 language sql immutable set search_path = '' as $$
-  select jsonb_typeof(doc -> 'staff') = 'array' and exists (select 1 from jsonb_array_elements(doc -> 'staff') e where e ->> 'pitcherId' = pitcher)
+  select coalesce(jsonb_typeof(doc -> 'staff') = 'array' and exists (select 1 from jsonb_array_elements(doc -> 'staff') e where e ->> 'pitcherId' = pitcher), false)
 $$;
 create function private.pc_bump(doc jsonb) returns jsonb
 language sql stable set search_path = '' as $$
@@ -346,7 +356,8 @@ begin
   select doc into cur from public.pitchers where program_id = p and id = pitcher;
   if cur is null then return; end if;
   foreach k in array private.pc_placeholder_keys() loop
-    if cur ? k and (k <> 'teamId' or exists (select 1 from public.teams t where t.program_id = p and t.id = cur ->> 'teamId'))
+    if cur ? k and (k <> 'teamId' or ((cur ->> 'teamId') ~ '^[a-z]{3,4}_[a-z0-9]{8,40}$'
+                                       and exists (select 1 from public.teams t where t.program_id = p and t.id = cur ->> 'teamId')))
        and (k <> 'number' or coalesce(cur ->> 'number', '') ~ '^[0-9A-Za-z]{0,4}$') then
       keep := keep || jsonb_build_object(k, cur -> k);
     end if;
@@ -391,6 +402,7 @@ begin
   select m.held_id into held from public.minors m where m.program_id = p and m.pitcher_id = pitcher;
   if held is null then return; end if;
   update public.events set doc = private.pc_bump(jsonb_set(doc, '{pitcherId}', to_jsonb(pitcher))) where program_id = p and pitcher_id = held;
+  insert into public.minor_releases (program_id, pitcher_id) values (p, pitcher);
 end $$;
 
 -- a parent's account deleted (the consent goes with it): the child's data goes back to held
@@ -901,13 +913,16 @@ language sql stable security definer set search_path = '' as $$
     coalesce((select jsonb_agg(x.pitcher_id order by x.pitcher_id) from public.purged x where x.program_id = p), '[]'::jsonb)
   else '[]'::jsonb end
 $$;
--- the under-13 players a parent has agreed for, so coaches' iPads send what the server let go while they were held
-create function private.pc_consented(p uuid) returns jsonb
+-- for coaches' iPads: the under-13 players held now (keep the full local record, don't take the placeholder) and every
+-- release (send what this iPad kept of him, once per release)
+create function private.pc_minors(p uuid) returns jsonb
 language sql stable security definer set search_path = '' as $$
-  select case when private.pc_can(p, 'view_team') then
-    coalesce((select jsonb_agg(g.pitcher_id order by g.pitcher_id) from public.guardian_consents g
-              join public.minors m on m.program_id = g.program_id and m.pitcher_id = g.pitcher_id where g.program_id = p), '[]'::jsonb)
-  else '[]'::jsonb end
+  select case when private.pc_can(p, 'view_team') then jsonb_build_object(
+    'held', coalesce((select jsonb_agg(m.pitcher_id order by m.pitcher_id) from public.minors m
+                      where m.program_id = p and private.pc_minor_unconsented(p, m.pitcher_id)), '[]'::jsonb),
+    'released', coalesce((select jsonb_agg(jsonb_build_object('id', x.pitcher_id, 'key', x.id::text) order by x.id)
+                          from public.minor_releases x where x.program_id = p and x.released_at > now() - interval '400 days'), '[]'::jsonb))
+  else jsonb_build_object('held', '[]'::jsonb, 'released', '[]'::jsonb) end
 $$;
 -- a player's own pitcher records, without the coaches' notes (players can't select the pitchers table directly)
 create function private.pc_pull_mine(p uuid, after_xid bigint, after_id text, cap bigint, lim int) returns jsonb
@@ -925,8 +940,8 @@ language sql stable security definer set search_path = '' as $$
     'more', (select count(*) from page) > lim,
     'held', exists (select 1 from public.pitchers x where x.program_id = p and x.id in (select pitcher_id from mine) and x.sync_xid >= cap))
 $$;
-revoke all on function private.pc_purged(uuid), private.pc_consented(uuid), private.pc_pull_mine(uuid, bigint, text, bigint, int) from public, anon;
-grant execute on function private.pc_purged(uuid), private.pc_consented(uuid), private.pc_pull_mine(uuid, bigint, text, bigint, int)
+revoke all on function private.pc_purged(uuid), private.pc_minors(uuid), private.pc_pull_mine(uuid, bigint, text, bigint, int) from public, anon;
+grant execute on function private.pc_purged(uuid), private.pc_minors(uuid), private.pc_pull_mine(uuid, bigint, text, bigint, int)
   to authenticated, service_role;
 
 -- push: as before (shape, who may write the incoming record and the one it replaces, newest wins, no whole-batch
@@ -990,10 +1005,14 @@ begin
       end if;
       if tbl = 'events' then r := jsonb_set(r, '{pitcherId}', to_jsonb(private.pc_anon_id(p, r ->> 'pitcherId'))); fixed := true; end if;
     end if;
-    if tbl in ('packs', 'games') then
+    if tbl = 'packs' then
+      for x in select z.pitcher_id from public.purged z where z.program_id = p and private.pc_pack_names(r, z.pitcher_id) loop
+        r := private.pc_scrub_pack(r, x, private.pc_anon_id(p, x)); fixed := true;
+      end loop;
+    elsif tbl = 'games' then
       for x in select z.pitcher_id from public.purged z where z.program_id = p
-               and (private.pc_pack_names(r, z.pitcher_id) or (jsonb_typeof(r -> 'staffIds') = 'array' and (r -> 'staffIds') ? z.pitcher_id)) loop
-        r := private.pc_swap_staff(private.pc_scrub_pack(r, x, private.pc_anon_id(p, x)), x, private.pc_anon_id(p, x)); fixed := true;
+               and coalesce(jsonb_typeof(r -> 'staffIds') = 'array' and (r -> 'staffIds') ? z.pitcher_id, false) loop
+        r := private.pc_swap_staff(r, x, private.pc_anon_id(p, x)); fixed := true;
       end loop;
     end if;
     -- nothing about a child under 13 goes in before a parent agrees: not his check-ins, bullpens, velo, pitches,
@@ -1067,7 +1086,7 @@ begin
     end if;
     if tbl = 'pitchers' then
       return private.pc_pull_mine(p, coalesce(after_xid, 0), coalesce(after_id, ''), cap, lim)
-        || jsonb_build_object('access', access, 'reset', false, 'locked', false, 'purged', '[]'::jsonb, 'consented', '[]'::jsonb);
+        || jsonb_build_object('access', access, 'reset', false, 'locked', false, 'purged', '[]'::jsonb, 'minors', jsonb_build_object('held', '[]'::jsonb, 'released', '[]'::jsonb));
     end if;
     flt := ' and pitcher_id = any ($6)';
   end if;
@@ -1084,7 +1103,7 @@ begin
   into out using p, after_xid, after_id, cap, lim, mine;
   execute format('select exists (select 1 from public.%1$I where program_id = $1 and sync_xid >= $2%2$s)', tbl, flt) into held using p, cap, null, null, null, mine;
   return out || jsonb_build_object('access', access, 'held', held, 'reset', false, 'locked', false)
-    || case when tbl = 'pitchers' then jsonb_build_object('purged', private.pc_purged(p), 'consented', private.pc_consented(p)) else '{}'::jsonb end;
+    || case when tbl = 'pitchers' then jsonb_build_object('purged', private.pc_purged(p), 'minors', private.pc_minors(p)) else '{}'::jsonb end;
 end $$;
 
 -- ------------------------------------------------------------------ grants
