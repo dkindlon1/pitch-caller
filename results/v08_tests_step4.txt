@@ -1,0 +1,15 @@
+== step 4
+[PASS] umpire learner recovers u = -0.8 from 60 takes
+       mean estimate -0.479, sd 0.664
+[PASS] umpire learner recovers u = +0.0 from 60 takes
+       mean estimate -0.131, sd 0.749
+[PASS] umpire learner recovers u = +0.8 from 60 takes
+       mean estimate +0.743, sd 0.667
+[PASS] fatigue: no loss before 75 (D3), 1 mph at 95, capped at 4 mph
+       speeds [88.0, 88.0, 87.0, 84.0]
+[PASS] fatigue: logged radar replaces the formula
+       speed 86.5
+[PASS] familiarity raises hard contact with looks and caps at 0.5 logits (off-speed: ~4.3 looks)
+       hard share 0 looks 0.0387, 2 0.0451, 4 0.0520, 20 0.0531, 50 0.0531
+
+6/6 v0.8 checks passed (5 s)

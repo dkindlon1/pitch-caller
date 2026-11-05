@@ -1,0 +1,1 @@
+familiarity acceptance (D3, seeds 1-4): hard share of contact v0.7c 0.311 (n=151), familiarity 0.315 (n=130), +0.4 pts (limit 0.5; small sample)

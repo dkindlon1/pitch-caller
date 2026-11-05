@@ -20,6 +20,7 @@ All numbers are PLACEHOLDERS (MLB-based run values, hand-set odds). They exist t
 check that the structure produces sensible baseball calls, not to be trusted in a game.
 """
 from dataclasses import dataclass, field, replace
+import json as _json, os as _os
 from math import exp, log
 import random as _random
 from run_tables import RE_BY_LEVEL, CV_BY_LEVEL, IN_PLAY_BY_LEVEL   # v0.5: run values by level
@@ -1092,6 +1093,13 @@ def zone_area(b, k):
 
 
 A_BAR = {}   # 7.5 weighted geometric mean of zone_area per level (sim_constants.json); 3.0 until computed
+I_BAR_UMP = {}   # 7.5 average per-take information d^2/(p(1-p)) per level (sim_constants.json)
+SIM_CONST = {}
+try:
+    SIM_CONST = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "sim_constants.json")))
+    A_BAR.update(SIM_CONST.get("A_BAR", {})); I_BAR_UMP.update(SIM_CONST.get("I_BAR_UMP", {}))
+except Exception:
+    pass
 
 
 def count_kappa(b, k, level):
@@ -1321,3 +1329,26 @@ def call_costs(arsenal, s, cv=None):
     pol, costs, temp = mixed_policy(arsenal, s, cv=cv)
     tq = targets(s.balls, s.strikes)
     return {a: c for a, c in costs.items() if a[1] in tq}
+
+
+# ---------------------------------------------------------------------------
+# v0.8 umpire learner (7.5) and take statistics
+# ---------------------------------------------------------------------------
+
+def take_stats(p, q, s, arsenal, sit=None):
+    """7.5 at the current ump_u: p_i = P(called strike | take), d_i = dp_i/du (edge and off bands only)."""
+    zo = {}
+    P = outcome_probs(p, q, s, arsenal, sit=sit, zout=zo)
+    den = P["cstrike"] + P["ball"] + P["wp_ball"] + P["hbp"]
+    pi = P["cstrike"] / den if den > 0 else 0.0
+    tw = sum(v["L"] * (1 - v["S"]) for v in zo.values())
+    d = sum(v["L"] * (1 - v["S"]) * v["C"] * (1 - v["C"]) for v in zo.values() if v["cz"]) / tw if tw > 0 else 0.0
+    return pi, d
+
+
+def ump_estimate(takes, level, u0=0.0, a0=20.0):
+    """7.5 one-step Newton estimate of today's umpire from takes [(s_i, p_i, d_i)] stored at u = u0."""
+    ib = I_BAR_UMP.get(level, 0.05)
+    num = sum((si - pi) * di / (pi * (1 - pi)) for si, pi, di in takes if 0 < pi < 1)
+    den = a0 * ib + sum(di * di / (pi * (1 - pi)) for si, pi, di in takes if 0 < pi < 1)
+    return max(-1.5, min(1.5, u0 + (num / den if den > 0 else 0.0)))

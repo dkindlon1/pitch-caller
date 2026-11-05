@@ -44,6 +44,8 @@ STAFF = os.environ.get("STAFF", "default")        # default, power, finesse, two
 LINEUP = os.environ.get("LINEUP", "default")      # default, strong, weak, lefty_heavy, switch, fb_mashers, os_killers, late
 SHAKE = float(os.environ.get("SHAKE", "1"))       # shake-off rate multiplier
 OVERRIDE = float(os.environ.get("OVERRIDE", "0")) # share of pitches where the coach calls his own (random) pitch
+UMP_SD = float(os.environ.get("UMP_SD", "0"))     # v0.8: each game's umpire zone shift ~ N(0, UMP_SD) logits (0 = v0.7c)
+ENGINE = os.environ.get("ENGINE", "v07")         # v0.8: v07 or v08 flags for the whole game
 
 
 # ---------------------------------------------------------------------------
@@ -372,6 +374,9 @@ def play_game(log_path):
     batters_faced = 0
     batter_idx = 0
     pitch_no = 0
+    fam = defaultdict(lambda: {"FB": 0, "OS": 0})   # v0.8 (5): (pitcher, hitter) -> class -> pitches seen in earlier PAs
+    ump_true = rng.gauss(0, UMP_SD) if UMP_SD > 0 else 0.0
+    takes = []                                       # v0.8 (7.5): (called strike?, p_i, d_i) for the umpire learner
 
     for inning in range(1, 10):
         # We are the home team: they bat first (we pitch), then we bat.
@@ -391,6 +396,7 @@ def play_game(log_path):
             balls = strikes = 0
             last = None
             pa_done = False
+            fam_prev = dict(fam[(pitcher["name"], h)])
             o_add, r_pre, bases, pre_label = pre_pa(outs, bases, R)
             if pre_label:
                 outs += o_add
@@ -411,7 +417,9 @@ def play_game(log_path):
                               hitter_seen=dict(K.seen[h]), usage_this_count=dict(K.usage[(balls, strikes)]),
                               timing=dict(K.timing[h]), hitter_damage=dict(K.damage[h]),
                               landing_today={x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
-                                             if land[(pitcher["name"], x.name)][1]})
+                                             if land[(pitcher["name"], x.name)][1]},
+                              familiar=fam_prev,
+                              ump_u=engine.ump_estimate(takes, LEVEL_NAME) if engine.FLAGS["umpire_learn"] else 0.0)
                 ars = pitcher["arsenal"]
                 # engine call, with possible shake-offs
                 shakes = []
@@ -442,7 +450,7 @@ def play_game(log_path):
                 pre_dmg, pre_n = K.damage[h].get(cls0, (0.0, 0))
                 pre_tau = K.timing[h][cls0]
                 # what actually happens (truth)
-                ts = true_situation(s, hitter)
+                ts = replace(true_situation(s, hitter), ump_u=ump_true)
                 ars_true = [replace(x, ivb=true_move[(pitcher["name"], x.name)][0],
                                     hb=true_move[(pitcher["name"], x.name)][1]) for x in ars]
                 p_true = next(x for x in ars_true if x.name == p.name)
@@ -462,6 +470,10 @@ def play_game(log_path):
                 tau_cls = tau if cls == "FB" else -tau
                 detail, runs_scored = "", 0
                 K.seen[h][p.name] += 1
+                fam[(pitcher["name"], h)][cls] += 1
+                if engine.FLAGS["umpire_learn"] and ev in ("ball", "wp_ball", "cstrike", "hbp"):
+                    p0, d0 = engine.take_stats(p, q, replace(s, ump_u=0.0), ars)
+                    takes.append((1 if ev == "cstrike" else 0, p0, d0))
                 land[(pitcher["name"], p.name)][1] += 1
                 land[(pitcher["name"], p.name)][0] += ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard")
                 K.usage[(balls, strikes)][p.name] += 1
@@ -600,8 +612,19 @@ def pregame_plan(staff):
 SEED_FOR_MOVE = [SEED]
 
 
+def apply_engine_env():
+    """ENGINE=v07 | v08 | v07+flag,flag | v08-flag,flag : the engine flags for this run (v0.8 build)."""
+    spec = ENGINE
+    base = engine.FLAGS_V08 if spec.startswith("v08") else engine.FLAGS_V07
+    engine.set_flags(**base)
+    for sign, rest in (("+", spec[3:]) if spec[3:4] == "+" else ("-", spec[3:]) if spec[3:4] == "-" else ("", ""),):
+        for f in [x for x in rest[1:].split(",") if x]:
+            engine.set_flags(**{f: sign == "+"})
+
+
 def run(seed, path):
     global rng
+    apply_engine_env()
     rng = random.Random(seed)
     SEED_FOR_MOVE[0] = seed
     return play_game(path)
