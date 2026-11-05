@@ -77,7 +77,7 @@
 - [ ] **Step 1:** Create a private repo and push `main`. **Needs Drew's yes**, since he earlier said no GitHub push yet.
 - [ ] **Step 2:** Make the SQL test scripts fail on zero checks. Every `supabase/test/*_test.js` exits 1 when its check count is 0 (`ci_fails_on_empty`). Verify by running one with an empty filter. Expected: exit code 1.
 - [ ] **Step 3:** Write `ci.yml`, which runs on push and pull requests:
-  - a Postgres 16 service, then `scripts/test-sql.sh` (applies the auth stub plus every migration, then runs every SQL test)
+  - a Postgres 17 service (matches Supabase), then `scripts/test-sql.sh` (applies the auth stub plus every migration, then runs every SQL test)
   - Node: `app/smoke.js` and `app/parity.js`
   - Python: `tests.py`
   - `web/`: `npm ci`, `npm run typecheck`, `npm run build`
@@ -89,7 +89,10 @@
 - `.github/workflows/promote.yml`
 - `supabase/config.toml` (via `supabase init`)
 
-- [ ] **Step 1:** Create the Supabase project `pitchiq-prod` (us-east-1, free tier for now). **Drew confirms the org and the cost.**
+- [ ] **Step 1:** Create the Supabase project `pitchiq-prod` (us-east-1). **Blocked as of Nov 5:** the free tier allows 2 active projects per owner, and LAUGHAPP and pitch-caller are both active. Drew picks one:
+  - pause LAUGHAPP;
+  - upgrade to Pro (about $25/month);
+  - defer prod until the first paying customer, and use the dev project until then. Promotion (Steps 2–3) is then tested against a Supabase branch or local `supabase start`.
 - [ ] **Step 2:** `promote.yml`:
   - Manual trigger, guarded by GitHub's `production` environment protection rule, so Drew approves each run.
   - `supabase link` to prod, then `supabase db push --dry-run`, then `supabase db push`.

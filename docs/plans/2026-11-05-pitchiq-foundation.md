@@ -11,7 +11,7 @@
 - A new `web/` Next.js app reads data only through Supabase, using the publishable key.
 
 **Tech Stack:**
-- Postgres 16 (local, for tests) and the Supabase dev project `fpoiqnswdmyprbyhgukq`.
+- Postgres 17 (local, for tests; matches Supabase, which runs 17) and the Supabase dev project `fpoiqnswdmyprbyhgukq`.
 - Node with `pg` for SQL tests, the same pattern as `supabase/test/sync_test.js`.
 - Next.js App Router with TypeScript and `@supabase/ssr`.
 - Playwright.
@@ -112,7 +112,7 @@ Each item names the risk, the expected behavior, and the test that pins it.
 - Read: `supabase/migrations/20261103000000_pitch_caller.sql`, `app/sync.js`, `app/roster.js` (sync section), `supabase/test/*`
 - Modify: `supabase/test/auth_stub.sql`
 
-- [ ] **Step 1:** Start local Postgres 16. Run `sync_test.js`, `review_test.js` and `app_sync_e2e.js`.
+- [ ] **Step 1:** Start local Postgres 17 (Supabase runs 17; the existing tests were written against a local 16, so note any difference). Run `sync_test.js`, `review_test.js` and `app_sync_e2e.js`.
   - Expected: all pass.
   - Record the pass counts in `docs/plans/2026-11-05-pitchiq-foundation.status.md`.
   - If any test fails, stop and use systematic-debugging.
