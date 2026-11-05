@@ -1,13 +1,13 @@
 {
- "at": "2026-11-03T04:56:12.211Z",
- "reps": 12,
+ "at": "2026-11-05T03:22:44.829Z",
+ "reps": 5,
  "yardstick": 0.25488872371267474,
  "share": 0.25,
  "traits": {
   "side_cmd": {
    "size": 0.8,
-   "learned": 0.706,
-   "whenZero": 0.027,
+   "learned": 0.582,
+   "whenZero": 0.001,
    "runsPer100": 0.009,
    "learnable": true,
    "worth": false,
@@ -15,17 +15,17 @@
   },
   "side_grade": {
    "size": 0.8,
-   "learned": 0.569,
-   "whenZero": -0.098,
+   "learned": 0.559,
+   "whenZero": -0.195,
    "runsPer100": 0.045,
-   "learnable": true,
+   "learnable": false,
    "worth": false,
    "pass": false
   },
   "ahead_cmd": {
    "size": -0.6,
-   "learned": -0.357,
-   "whenZero": -0.024,
+   "learned": -0.374,
+   "whenZero": -0.021,
    "runsPer100": 0.004,
    "learnable": true,
    "worth": false,
@@ -33,8 +33,8 @@
   },
   "behind_cmd": {
    "size": -0.6,
-   "learned": -0.461,
-   "whenZero": 0.019,
+   "learned": -0.396,
+   "whenZero": 0.073,
    "runsPer100": 0.047,
    "learnable": true,
    "worth": false,
@@ -42,8 +42,8 @@
   },
   "stretch_cmd": {
    "size": -0.8,
-   "learned": -0.503,
-   "whenZero": 0.03,
+   "learned": -0.619,
+   "whenZero": 0.001,
    "runsPer100": 0.058,
    "learnable": true,
    "worth": false,
@@ -51,8 +51,8 @@
   },
   "miss_heart": {
    "size": 0.6,
-   "learned": 0.43,
-   "whenZero": 0.014,
+   "learned": 0.345,
+   "whenZero": 0.042,
    "runsPer100": 0,
    "learnable": true,
    "worth": false,
