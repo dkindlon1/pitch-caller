@@ -258,6 +258,10 @@ class Situation:
     radar: dict = field(default_factory=dict)             # pitch name -> today's measured speed (8.1)
     infield_in: bool = False        # coach input (7.3): runner on 3rd scores on a GB out only 10%
     win: dict = None                # 7.2 objective constants fixed at the PA start: omega, WE0, m0, margin0, and the WE lookup
+    usage_by_call: dict = field(default_factory=dict)     # 2.3 (pitch name, target) -> times called in this count today
+    b_h: dict = field(default_factory=dict)               # 2.5 hitter's lean per sit option (eta*s + in-at-bat evidence)
+    steal: dict = None              # 7.4 {'a': per-pitch attempt chance, 'runner': 1 or 2, 't': time to plate or None}
+    pitch_cap: int = 105            # 7.6
 
 
 # ---------------------------------------------------------------------------
@@ -1352,3 +1356,386 @@ def ump_estimate(takes, level, u0=0.0, a0=20.0):
     num = sum((si - pi) * di / (pi * (1 - pi)) for si, pi, di in takes if 0 < pi < 1)
     den = a0 * ib + sum(di * di / (pi * (1 - pi)) for si, pi, di in takes if 0 < pi < 1)
     return max(-1.5, min(1.5, u0 + (num / den if den > 0 else 0.0)))
+
+
+# ---------------------------------------------------------------------------
+# v0.8 planning solve (docs/SPEC_v0.8.md 2.3-2.7, 6): count x look table, sit game per count, root call
+# ---------------------------------------------------------------------------
+V_CENTERS = (1.00, 0.94, 0.88)        # 2.7 speed bins as a share of his main fastball
+Y_CENTERS = (3.0, 2.0)                # 2.7 height bins (ft)
+QRE_ITERS, QRE_TOL = 300, 1e-3
+
+
+def v_fb(arsenal, s):
+    fbs = [x for x in arsenal if x.kind == "FB"]
+    return max(speed_today(x, s) for x in (fbs or arsenal))
+
+
+def look_update(look, p, q, s):
+    """2.6 the hitter's look after pitch (p, q)."""
+    lam = P08["lam"]
+    vp = speed_today(p, s) + 0.5 * EV_ADJ[q]
+    return (lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * y_target(q, p.kind))
+
+
+def _interp_axis(x, centers):
+    """Linear weights on the two nearest centers (centers sorted descending), clamped outside."""
+    if x >= centers[0]:
+        return [(0, 1.0)]
+    if x <= centers[-1]:
+        return [(len(centers) - 1, 1.0)]
+    for i in range(len(centers) - 1):
+        hi, lo = centers[i], centers[i + 1]
+        if lo <= x <= hi:
+            w = (x - lo) / (hi - lo)
+            return [(i, w), (i + 1, 1 - w)]
+
+
+class Table:
+    """Count (x look) values for one plate appearance, solved with inputs frozen at its start (6.2)."""
+
+    def __init__(self, arsenal, s):
+        self.ars, self.s0 = arsenal, s
+        self.vfb = v_fb(arsenal, s)
+        self.looked = FLAGS["look_state"]
+        self.bins = [(iv, iy) for iv in range(len(V_CENTERS)) for iy in range(len(Y_CENTERS))] if self.looked else [None]
+        self.V = {}           # (b, k) -> {bin: value}
+        self.N = {}           # (b, k) -> {bin: expected pitches left in the PA} (7.6)
+        self.sigma = {}       # (b, k) -> sit mix
+        self.h0 = None
+        self.sweeps = 0
+        self.residuals = []
+
+    def bin_look(self, bn):
+        if bn is None:
+            return self.h0
+        return (V_CENTERS[bn[0]] * self.vfb, Y_CENTERS[bn[1]])
+
+    def value(self, b, k, look, which="V"):
+        tab = (self.V if which == "V" else self.N)[(b, k)]
+        if not self.looked:
+            return tab[None]
+        tot = 0.0
+        for iv, wv in _interp_axis(look[0] / self.vfb, V_CENTERS):
+            for iy, wy in _interp_axis(look[1], Y_CENTERS):
+                tot += wv * wy * tab[(iv, iy)]
+        return tot
+
+
+def temperature(arsenal, s):
+    """6.6 T(b, k): the v0.7c temperature, floored by the uncertainty table when temp_unc is on."""
+    k_ = run_scale(s.level)
+    f = stakes_factor(s.balls, s.strikes, s.level)
+    t = 0.010 * k_ * (0.5 if is_big_spot(s) else 1.0) * f
+    if FLAGS["temp_unc"]:
+        size = {2: "two", 3: "three"}.get(len(arsenal), "four")
+        tu = SIM_CONST.get("T_unc", {}).get(s.level, {}).get(size, {}).get(f"{s.balls}-{s.strikes}")
+        if tu is not None:
+            t = max(t, tu)
+    return t
+
+
+def windows(s):
+    k_ = run_scale(s.level)
+    f = min(1.0, stakes_factor(s.balls, s.strikes, s.level))
+    return 0.030 * k_ * f, LOC_WINDOW * k_ * f
+
+
+TAPER = 0.2     # A2: a window's last 20% tapers linearly to zero (continuous operator, so the sit game has a balance point)
+
+
+def _taper(g, w):
+    if g >= w:
+        return 0.0
+    edge = w * (1 - TAPER)
+    return 1.0 if g <= edge else (w - g) / (w - edge)
+
+
+def _soft(costs, temp, w, ref):
+    wt = {k: exp(-(c - ref) / temp) * _taper(c - ref, w) for k, c in costs.items()}
+    t = sum(wt.values())
+    return {k: v / t for k, v in wt.items() if v > 0} if t > 0 else {}
+
+
+def policy_from_costs(costs, s, temp):
+    """v0.8 two-stage operator Phi (A2: continuous form of v0.7c's). Pitch type: softmax over each pitch's best cost,
+    weight tapered to zero at the never-pick window. Location within a pitch: softmax from the pitch's own best, inside a
+    window that shrinks from LOC_WINDOW as the pitch's best falls behind the overall best (floor 20%), tapered the same
+    way. Nothing outside either window is ever picked. costs: {(name, q): cost} of allowed calls."""
+    win, lwin = windows(s)
+    names = []
+    for (n, q) in costs:
+        if n not in names:
+            names.append(n)
+    best_by = {n: min(c for (m, q), c in costs.items() if m == n) for n in names}
+    overall = min(best_by.values())
+    pp = _soft(best_by, temp, win, overall)
+    pi = {}
+    for n, pn in pp.items():
+        lw = max(TAPER * lwin, lwin - (best_by[n] - overall))
+        loc = _soft({q: c for (m, q), c in costs.items() if m == n}, temp, lw, best_by[n])
+        for q, pq in loc.items():
+            pi[(n, q)] = pn * pq
+    return pi
+
+
+def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
+    """2.3 (A2) the quantal-response balance point. pi = Phi(M sigma) exactly at every step, so the residual is
+    ||sigma - sigma*(pi~)||_inf; sigma moves by a damped step w (0.3, halved whenever the residual grows, floor 0.02)
+    until the residual < QRE_TOL or QRE_ITERS steps. Deterministic. Returns (pi, sigma, residual)."""
+    calls = list(M)
+    usage = {a: v for a, v in (usage or {}).items() if a in M}
+    n_u = sum(usage.values())
+
+    def tilde(p_):
+        return {a: (4 * p_.get(a, 0.0) + usage.get(a, 0)) / (4 + n_u) for a in calls} if n_u else p_
+
+    def phi(sg):
+        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp)
+
+    sg = {k: 1.0 / len(ks) for k in ks}
+    w, last = 0.3, None
+    for t in range(QRE_ITERS):
+        pi = phi(sg)
+        f = sit_response(M, ks, tilde(pi), temp, b_h)
+        res = max(abs(sg[k] - f[k]) for k in ks)
+        if res < QRE_TOL:
+            return pi, sg, res
+        if last is not None and res > last:
+            w = max(0.02, w / 2)
+        last = res
+        sg = {k: (1 - w) * sg[k] + w * f[k] for k in ks}
+    pi = phi(sg)
+    f = sit_response(M, ks, tilde(pi), temp, b_h)
+    return pi, sg, max(abs(sg[k] - f[k]) for k in ks)
+
+
+def allowed_calls(arsenal, s, exclude=None):
+    tq = targets(s.balls, s.strikes)
+    return [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
+
+
+def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
+    """Cost of call (p, q) in the v0.8 solve: outcome probabilities at this look and sit, next counts read from the
+    table at the look this pitch leaves (myopic: at the PA's starting look), every PA end through v_end."""
+    s_ = replace(s, look=look)
+    P = outcome_probs(p, q, s_, arsenal, sit=sit)
+    b, k, o, B = s.balls, s.strikes, s.outs, s.bases
+    nl = tab.h0 if myopic else look_update(look, p, q, s)
+    base_end = v_end(s, o, B, 0)
+
+    def tv(b_, k_):
+        return tab.value(b_, k_, nl)
+
+    def walk_end(bases, runs):
+        b1, b2, b3 = bases
+        r_ = 1 if (b1 and b2 and b3) else 0
+        return v_end(s, o, (True, b1 or b2, b3 or (b1 and b2)), runs + r_)
+
+    v = 0.0
+    v += P["ball"] * (walk_end(B, 0) if b + 1 == 4 else tv(b + 1, k))
+    nb, r = advance_all(B)
+    v += P["wp_ball"] * (walk_end(nb, r) if b + 1 == 4 else tv(b + 1, k) + v_end(s, o, nb, r) - base_end)
+    v += P["hbp"] * walk_end(B, 0)
+    v += (P["cstrike"] + P["whiff"]) * (v_end(s, o + 1, B, 0) if k + 1 == 3 else tv(b, k + 1))
+    v += P["foul"] * (tv(b, k + 1) if k < 2 else tv(b, k))
+    for c in ("weak", "solid", "hard"):
+        v += P[c] * (in_play_value_typed(c, p, q, s) if FLAGS["inplay_typed"] else in_play_value_ev(c, s))
+    if FLAGS["running_game"] and s.steal and s.steal.get("a", 0) > 0:
+        v += steal_cost(p, q, s, tab, nl)
+    if FLAGS["hs_pitch_cost"] and s.level in ("hs", "travel"):
+        w_ = min(1.0, max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20))
+        if w_ > 0:
+            nxt = P["ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N")) + \
+                  (P["cstrike"] + P["whiff"]) * (0 if k + 1 == 3 else tab.value(b, k + 1, nl, "N")) + \
+                  P["foul"] * tab.value(b, min(k + 1, 2), nl, "N") + P["wp_ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N"))
+            v += 0.002 * run_scale(s.level) * w_ * (1 + nxt)
+    return v, P
+
+
+def pitches_left(P, s, tab, nl):
+    b, k = s.balls, s.strikes
+    return 1 + P["ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N")) + \
+        P["wp_ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N")) + \
+        (P["cstrike"] + P["whiff"]) * (0 if k + 1 == 3 else tab.value(b, k + 1, nl, "N")) + \
+        P["foul"] * tab.value(b, min(k + 1, 2), nl, "N")
+
+
+def in_play_value_ev(contact, s):
+    """v0.7c in_play_value with every end of the PA through v_end (equal to it when the win blend is off)."""
+    if not (FLAGS["objective_win"] and s.win and s.win["omega"] > 0):
+        return in_play_value(contact, s.outs, s.bases, s.level)
+    outs, bases, level = s.outs, s.bases, s.level
+    b1, b2, b3 = bases
+    po, p1, p2, p3, phr, pe = IN_PLAY_BY_LEVEL[level][contact]
+    ev = lambda o_, b_, r_: v_end(s, o_, b_, r_)
+    total = 0.0
+    if outs + 1 >= 3:
+        v_out = ev(3, (False, False, False), 0)
+    else:
+        dp = 0.20 if (b1 and contact == "weak" and outs < 2) else 0.0
+        v_dp = ev(3, (False, False, False), 0) if outs + 2 >= 3 else ev(outs + 2, (False, b2, b3), 0)
+        if b3:
+            v_reg = 0.4 * ev(outs + 1, (b1, b2, False), 1) + 0.6 * ev(outs + 1, bases, 0)
+        else:
+            v_reg = ev(outs + 1, bases, 0)
+        v_out = dp * v_dp + (1 - dp) * v_reg
+    total += po * v_out
+    runs = 1 if b3 else 0
+    if b2:
+        v1 = 0.55 * ev(outs, (True, b1, False), runs + 1) + 0.45 * ev(outs, (True, b1, True), runs)
+    else:
+        v1 = ev(outs, (True, b1, False), runs)
+    total += (p1 + pe) * v1
+    runs = (1 if b2 else 0) + (1 if b3 else 0)
+    if b1:
+        v2 = 0.4 * ev(outs, (False, True, False), runs + 1) + 0.6 * ev(outs, (False, True, True), runs)
+    else:
+        v2 = ev(outs, (False, True, False), runs)
+    total += p2 * v2
+    total += p3 * ev(outs, (False, False, True), b1 + b2 + b3)
+    total += phr * ev(outs, (False, False, False), b1 + b2 + b3 + 1)
+    return total
+
+
+def steal_cost(p, q, s, tab, nl):
+    """7.4 a * [p_s V(steal) + (1 - p_s) V(caught) - V(no attempt)], values shifted to the new base-out state."""
+    st = s.steal
+    a = st["a"] * (0.5 if st.get("runner") == 2 else 1.0)
+    y = y_target(q, p.kind)
+    d_l = RUN_GAME.get(s.level, 0.08)
+    d_t = min(0.15, max(-0.15, 0.10 * (st["t"] - 1.4) / 0.2)) if st.get("t") else 0.0
+    ps = min(0.95, max(0.30, 0.64 + 0.20 * min(1.0, max(0.0, (4 - y) / 3)) + d_l + d_t))
+    b1, b2, b3 = s.bases
+    o = s.outs
+    if st.get("runner") == 2:
+        safe, out_b = (b1, False, True), (b1, False, b3)
+    else:
+        safe, out_b = (False, True, b3), (False, b2, b3)
+    here = tab.value(s.balls, s.strikes, nl)
+    base_end = v_end(s, o, s.bases, 0)
+    v_safe = here + v_end(s, o, safe, 0) - base_end
+    v_caught = v_end(s, 3, (False, False, False), 0) if o + 1 >= 3 else here + v_end(s, o + 1, out_b, 0) - base_end
+    return a * (ps * v_safe + (1 - ps) * v_caught - here)
+
+
+RUN_GAME = {}   # 7.4 delta_L by level (we_rates.json steal success minus 0.72), filled at load
+
+
+def solve_table(arsenal, s, sweeps=10, tol=0.001):
+    """6.1 sweeps over counts (deepest first), sit game per count, values per look bin."""
+    tab = Table(arsenal, s)
+    order = sorted(COUNTS, key=lambda c: -(c[0] + c[1]))
+    ks = sit_options(arsenal)
+    by = {x.name: x for x in arsenal}
+    # start: v0.7c count values on top of the base-out value, flat across looks; N from a rough 4 pitches
+    for (b, k) in COUNTS:
+        v0 = v_end(s, s.outs, s.bases, 0) + CV_BY_LEVEL[s.level][(b, k)]
+        tab.V[(b, k)] = {bn: v0 for bn in tab.bins}
+        tab.N[(b, k)] = {bn: 2.0 for bn in tab.bins}
+    prior = sit_prior(arsenal, replace(s, balls=0, strikes=0))
+    tab.h0 = (sum(v * speed_today(by[n], s) for (n, j), v in prior.items()), 2.5)
+    for sw in range(sweeps):
+        delta = 0.0
+        for (b, k) in order:
+            sc = replace(s, balls=b, strikes=k, last=None, usage_this_count={}, usage_by_call={},
+                         b_h=dict(s.b_h))
+            temp = temperature(arsenal, sc)
+            calls = allowed_calls(arsenal, sc)
+            # sit game at the PA's starting look
+            M = {a: {kk: cost08(by[a[0]], a[1], sc, arsenal, tab, tab.h0, ("pure",) + kk)[0] for kk in ks} for a in calls}
+            pi, sg, res = solve_sit_game(M, ks, sc, temp, sc.b_h)
+            tab.sigma[(b, k)] = sg
+            tab.residuals.append(res)
+            for bn in tab.bins:
+                look = tab.bin_look(bn)
+                cs, Ps = {}, {}
+                for a in calls:
+                    cs[a], Ps[a] = cost08(by[a[0]], a[1], sc, arsenal, tab, look, ("mix", sg))
+                pol = policy_from_costs(cs, sc, temp)
+                new = sum(pv * cs[a] for a, pv in pol.items())
+                delta = max(delta, abs(new - tab.V[(b, k)][bn]))
+                tab.V[(b, k)][bn] = new
+                if FLAGS["hs_pitch_cost"]:
+                    nl = lambda a: look_update(look, by[a[0]], a[1], sc)
+                    tab.N[(b, k)][bn] = sum(pv * pitches_left(Ps[a], sc, tab, nl(a)) for a, pv in pol.items())
+        if (0, 0) in tab.sigma:
+            s00 = tab.sigma[(0, 0)]
+            tab.h0 = (sum(v * speed_today(by[n], s) for (n, j), v in s00.items()), 2.5)
+        tab.sweeps = sw + 1
+        if delta < tol:
+            break
+    return tab
+
+
+def root_call(arsenal, s, tab, exclude=None):
+    """6.3/6.4 the pitch being called now: live look, last pitch and lean; guardrail on myopic cost; sit game re-solved."""
+    by = {x.name: x for x in arsenal}
+    ks = sit_options(arsenal)
+    look = s.look or tab.h0
+    temp = temperature(arsenal, s)
+    calls = allowed_calls(arsenal, s, exclude)
+    if not calls:
+        calls = allowed_calls(arsenal, s)
+    M = {a: {kk: cost08(by[a[0]], a[1], s, arsenal, tab, look, ("pure",) + kk)[0] for kk in ks} for a in calls}
+    sg_tab = tab.sigma.get((s.balls, s.strikes))
+    look_on = FLAGS["look_state"]
+    if look_on:
+        Mmy = {a: {kk: cost08(by[a[0]], a[1], s, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
+        cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
+        best = min(cmy.values())
+        delta = 0.010 * run_scale(s.level)
+        keep = [a for a in calls if cmy[a] - best <= delta]
+        if s.balls == 3:     # three-ball counts rank by myopic cost (no setups)
+            M = {a: Mmy[a] for a in keep}
+        else:
+            M = {a: M[a] for a in keep}
+    usage = s.usage_by_call
+    pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
+    full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
+    return pi, sg, full, res, M
+
+
+def call_v08(arsenal, s, rng=None, exclude=None, tab=None):
+    """v0.8 call: solve (or reuse) the PA table, then the root. Returns ((p, q, prob, cost), dist, tab, info)."""
+    rng = rng or _random
+    if tab is None:
+        tab = solve_table(arsenal, s)
+    pi, sg, full, res, M = root_call(arsenal, s, tab, exclude)
+    p_pitch = {}
+    for (n, q), v in pi.items():
+        p_pitch[n] = p_pitch.get(n, 0.0) + v
+    keep_n = {n for n, v in p_pitch.items() if v > 0.005}
+    dist = [(v, full[a], next(x for x in arsenal if x.name == a[0]), a[1]) for a, v in pi.items() if a[0] in keep_n and v > 0]
+    t = sum(d[0] for d in dist)
+    dist = [(d[0] / t,) + tuple(d[1:]) for d in dist]
+    dist.sort(key=lambda d: -d[0])
+    r, acc = rng.random(), 0.0
+    pick = dist[-1]
+    for d in dist:
+        acc += d[0]
+        if r <= acc:
+            pick = d
+            break
+    info = dict(sigma=sg, residual=res, M=M, table=tab)
+    return (pick[2], pick[3], pick[0], pick[1]), dist, tab, info
+
+
+ETA_LEAN = 0.0     # 2.5 eta (flag-able to 0.25)
+
+
+def lean_b_h(arsenal, s, fooled=()):
+    """2.5 b_h(k) = eta * s_{h,c(i)} + e_h(k). fooled: classes ('FB'/'OS') of this at-bat's whiffs marked fooled; each
+    adds log 1.3 to every sit whose pitch is not in that class."""
+    out = {}
+    for (n, j) in sit_options(arsenal):
+        p = next(x for x in arsenal if x.name == n)
+        c = "FB" if p.kind == "FB" else "OS"
+        v = 0.0
+        if ETA_LEAN and c in (s.hitter_damage or {}):
+            d, nn = s.hitter_damage[c]
+            v += ETA_LEAN * d * nn / (nn + 10)
+        v += sum(log(1.3) for fc in fooled if fc != c)
+        if v:
+            out[(n, j)] = v
+    return out

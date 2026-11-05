@@ -19,8 +19,13 @@ def ref_arsenals():
     }
 
 
+_TABS = {}
+
+
 def count_metrics(ars, s):
     """One count: the engine's call mix, then X against the hitter's response to it."""
+    if e.FLAGS.get("look_state"):
+        return count_metrics_v08(ars, s)
     pick, dist = e.call_mixed(ars, s)
     pi = defaultdict(float)
     for pr, _, p, q in dist:
@@ -34,6 +39,22 @@ def count_metrics(ars, s):
         loc[q] += v; pit[n] += v
     return dict(X=e.exploitability(M, ks, pi, sig), top=max(pi.values()), n_calls=len(pi),
                 middle=loc["middle"], inside=loc["up-in"] + loc["down-in"], loc=dict(loc), pitch=dict(pit))
+
+
+def count_metrics_v08(ars, s):
+    """v0.8: the planning table for this arsenal and base-out state (solved at 0-0), then the root's sit game."""
+    from dataclasses import replace
+    key = (id(ars), s.level, s.outs, s.bases)
+    if key not in _TABS:
+        _TABS[key] = e.solve_table(ars, replace(s, balls=0, strikes=0))
+    tab = _TABS[key]
+    pi, sg, full, res, M = e.root_call(ars, s, tab)
+    ks = e.sit_options(ars)
+    loc = defaultdict(float); pit = defaultdict(float)
+    for (n, q), v in pi.items():
+        loc[q] += v; pit[n] += v
+    return dict(X=e.exploitability(M, ks, pi, sg), top=max(pi.values()), n_calls=sum(1 for v in pi.values() if v > 0),
+                middle=loc["middle"], inside=loc["up-in"] + loc["down-in"], loc=dict(loc), pitch=dict(pit), residual=res)
 
 
 def rho_from_logs(paths):
