@@ -1,9 +1,9 @@
 # Pitch Caller v0.8: Math Spec (build version)
 
-Status: rewritten 2026-11-04; revised after a second fresh review (4 blockers, 6 majors, 7 minors fixed) a third (5 majors, 6 minors fixed) and a fourth (2 majors, 10 minors
-fixed). A final go/no-go review found five one-line items; all applied. The spec is build-ready; nothing in it is
-implemented or tested yet. Every term below has
-a definition, a starting value, a switch, an input source and an acceptance test. Where a number is a guess it says so.
+Status (2026-11-04): build-ready after five independent reviews against the code (the second through fourth fixed 4
+blockers, 13 majors and 23 minors; the final go/no-go found five one-line items, all applied). Nothing in it is
+implemented or tested yet. Every term has a definition, a starting value, a switch, an input source and an acceptance
+test. Where a number is a guess it says so.
 
 ## 0. Ground rules
 
@@ -170,8 +170,8 @@ r = \frac{\tilde v - v_p}{\tilde v}
 ```
 
 v_p is the perceived speed v_p(q) from 2.6 (after fatigue, 8.1). Positive r means slower than he's timed for. Because
-the count blend pulls ṽ below his fastball speed, fastballs normally earn a small "faster than expected" B (about 0.1
-to 0.15); that is intended. With a dead zone of 3%:
+the count blend pulls ṽ below his fastball speed, a fastball earns a small "faster than expected" B whenever ṽ sits
+more than 3% below it (for example, when he's leaning off-speed); that is intended. With a dead zone of 3%:
 
 ```latex
 s(r) = \operatorname{clip}\!\left(\frac{|r| - 0.03}{0.05},\,0,\,1\right)
