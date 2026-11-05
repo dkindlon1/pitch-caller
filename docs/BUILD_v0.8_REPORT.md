@@ -49,7 +49,10 @@ These are MLB effects, applied unchanged at college and scaled by 0.6 for HS/tra
 ## Other things to know
 
 - **Simulated D3 games** (8 seed-paired games each, sanity only):
-  SIMS_PLACEHOLDER
+  runs allowed per game 7.6 (v0.7c 12.1), strikeout rate 14.6% (11.3%), walk rate 15.2% (12.8%), regret against a
+  caller who knows the hidden truth 0.0100 runs per pitch (0.0140), no chase at 3-0/3-1, every 2-2 call in the zone.
+  The simulator plays by the engine's own model and 8 games are noisy (runs per game sd about 3), so read this as
+  "nothing broke", not as proof v0.8 is better. The higher walk rate is worth watching in real games.
 - **ρ (consecutive-fastball correlation)** is +0.24 in v0.8 against the spec's |ρ| ≤ 0.05 (v0.7c +0.08). Within an
   at-bat (each at-bat's own fastball rate removed) both engines alternate (v0.8 −0.16, v0.7c −0.26), so the high ρ
   comes from differences between at-bats, not streaks inside one.

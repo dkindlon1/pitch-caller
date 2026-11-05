@@ -8,7 +8,7 @@ simulator plays by the engine's own outcome model, and 8 games carry wide noise 
   walk rate                                                              v0.7c    0.128   v0.8    0.152
   pitches per plate appearance                                           v0.7c     3.60   v0.8     3.56
   mean regret vs a caller who knows the hidden truth (runs/pitch)        v0.7c   0.0140   v0.8   0.0100
-  fastball share                                                         v0.7c    0.582   v0.8    0.608
+  fastball share                                                         v0.7c    0.582   v0.8    0.609
   chase calls at 3-0/3-1 (must be 0)                                     v0.7c        0   v0.8        0
-  2-2 calls aimed at the zone                                            v0.7c    1.000   v0.8    0.989
-  rho, consecutive-fastball correlation (target |rho| <= 0.05)           v0.7c   +0.082   v0.8   +0.238
+  2-2 calls aimed at the zone                                            v0.7c    1.000   v0.8    1.000
+  rho, consecutive-fastball correlation (target |rho| <= 0.05)           v0.7c   +0.082   v0.8   +0.237
