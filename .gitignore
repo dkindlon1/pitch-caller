@@ -14,3 +14,4 @@ node_modules
 
 # Supabase CLI local state
 supabase/.temp/
+web/tests/screens/

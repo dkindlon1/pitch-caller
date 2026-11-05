@@ -556,6 +556,29 @@ const now = () => Date.now();
     check(r.applied === 1, "(a coach's check-in with no pitcher is fine: coaches may write the team's check-ins)");
   }
 
+  console.log("16. The coach portal (Plan 3a)");
+  {
+    const gm = (id, date) => ({ id, updatedAt: now(), date, status: "final" });
+    const ev = (id, game, pit) => ({ id, updatedAt: now(), gameId: game, pitcherId: pit, type: "pitch" });
+    const day = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+    await push("head", tA, "games", [gm("wg1", day(1)), gm("wg2", day(3)), gm("wg-old", day(40)), Object.assign(gm("wg-dup", day(1)), { dupOf: "wg1" })]);
+    await push("head", tA, "events", [ev("we1", "wg1", "p1"), ev("we2", "wg1", "p1"), ev("we3", "wg2", "p1"), ev("we4", "wg2", "p2"), ev("we5", "wg-old", "p1"), ev("we6", "wg-dup", "p1"),
+      Object.assign(ev("we7", "wg1", "p1"), { type: "play" })]);
+    const w = (await as("head", "select * from public.pc_team_workload($1) order by pitcher_id, day", [tA])).rows || [];
+    const p1 = w.filter((x) => x.pitcher_id === "p1");
+    check(p1.length === 2 && p1.find((x) => x.game_id === "wg1").pitches === 2 && p1.find((x) => x.game_id === "wg2").pitches === 1,
+      `workload: each pitcher's game pitches per day, the last 30 days, a game charted twice once, plays not counted (${JSON.stringify(p1)})`);
+    check(((await as("pl1", "select * from public.pc_team_workload($1)", [tA])).rows || []).length === 0, "a player gets none of it (he can't read events)");
+    check(((await as("xhead", "select * from public.pc_team_workload($1)", [tA])).rows || []).length === 0, "nor another team's coach");
+    check(!!(await as("caller", "select public.pc_set_team($1, 'New name', 'America/Chicago')", [tA])).error, "a pitch caller can't change the team's settings");
+    check(!!(await as("head", "select public.pc_set_team($1, 'New name', 'Mars/Olympus')", [tA])).error, "an unknown time zone is refused");
+    check(!(await as("head", "select public.pc_set_team($1, 'RIT Tigers', 'America/Chicago')", [tA])).error
+      && (await su.query("select name, timezone from public.programs where id = $1", [tA])).rows[0].timezone === "America/Chicago", "the head coach changes the name and time zone");
+    await su.query("update public.programs set timezone = 'Not/AZone' where id = $1", [tA]);
+    check(!(await as("head", "select * from public.pc_team_workload($1)", [tA])).error, "a time zone the database doesn't know doesn't break the workload");
+    await su.query("update public.programs set timezone = 'America/New_York' where id = $1", [tA]);
+  }
+
   console.log("13. The migration refuses a database that already has programs");
   {
     const G = DB + "_guard";
