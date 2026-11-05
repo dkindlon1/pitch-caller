@@ -17,6 +17,16 @@ data = {
     "LW": {l: list(e.LW_BY_LEVEL[l]) for l in LEVELS if l in e.LW_BY_LEVEL},
     "LEVEL": {l: dict(e.LEVEL[l]) for l in LEVELS},
 }
+# v0.8 tables (docs/SPEC_v0.8.md): fitted parameters, typed batted balls, shared simulation constants, win tables
+import inplay_typed_params as itp
+from hitter_spread_params import HITTER_SPREAD
+data["V08"] = {
+    "P08": dict(e.P08), "TYPED": e.TYPED, "RHO_L": e.RHO_L,
+    "KAPPA_FIT": {f"{b}-{k}": v for (b, k), v in e.KAPPA_FIT.items()},
+    "SIM": {k: v for k, v in e.SIM_CONST.items() if k in ("A_BAR", "I_BAR_UMP", "T_unc", "I0_GRADE", "TAKE_W", "PITCHES_PER_PA")},
+    "OUT_TABLE": itp.OUT_TABLE, "RUNNER_FIT": itp.RUNNER_FIT, "HITTER_SPREAD": HITTER_SPREAD, "RUN_GAME": dict(e.RUN_GAME),
+}
+data["WE"] = json.load(open(os.path.join(HERE, "..", "we_tables.json")))
 import hashlib
 # a fingerprint of the tables, logged with every pitch so a replay knows which numbers made the call
 data["version"] = hashlib.sha1(json.dumps({k: v for k, v in data.items() if k != "version"}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:10]

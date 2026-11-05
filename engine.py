@@ -1395,7 +1395,7 @@ def ump_estimate(takes, level, u0=0.0, a0=20.0):
 
 V_CENTERS = (1.00, 0.94, 0.88)        # 2.7 speed bins as a share of his main fastball
 Y_CENTERS = (3.0, 2.0)                # 2.7 height bins (ft)
-QRE_ITERS, QRE_TOL = 300, 1e-3
+QRE_ITERS, QRE_TOL, QRE_WMIN = 3000, 1e-3, 0.002
 
 
 def v_fb(arsenal, s):
@@ -1513,7 +1513,7 @@ def policy_from_costs(costs, s, temp):
 
 def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
     """2.3 (A2) the quantal-response balance point. pi = Phi(M sigma) exactly at every step, so the residual is
-    ||sigma - sigma*(pi~)||_inf; sigma moves by a damped step w (0.3, halved whenever the residual grows, floor 0.02)
+    ||sigma - sigma*(pi~)||_inf; sigma moves by a damped step w (0.3, halved whenever the residual grows, floor 0.002)
     until the residual < QRE_TOL or QRE_ITERS steps. Deterministic. Returns (pi, sigma, residual)."""
     calls = list(M)
     usage = {a: v for a, v in (usage or {}).items() if a in M}
@@ -1534,7 +1534,7 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
         if res < QRE_TOL:
             return pi, sg, res
         if last is not None and res > last:
-            w = max(0.02, w / 2)
+            w = max(QRE_WMIN, w / 2)
         last = res
         sg = {k: (1 - w) * sg[k] + w * f[k] for k in ks}
     pi = phi(sg)
