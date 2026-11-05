@@ -35,7 +35,32 @@ for level in ("hs", "college_d3", "college_d1", "mlb"):
                 w = n * pr * pt
                 num += w * d * d / (pi * (1 - pi)); den += w
     cons["I_BAR_UMP"][level] = num / den
-for t in ("A_BAR", "I_BAR_UMP"):
+# 8.2 I0: information of 50 average plate appearances, per grade and level (pitch mix over counts from the logs)
+allp = Counter()
+n_pa = 0
+for log_path in sys.argv[1:]:
+    rows = list(csv.DictReader(open(log_path)))
+    for r in rows:
+        allp[tuple(int(x) for x in r["count"].split("-"))] += 1
+    n_pa += sum(1 for a, b in zip(rows, rows[1:] + [None]) if b is None or a["batter"] != b["batter"] or a["inning"] != b["inning"])
+ppa = sum(allp.values()) / n_pa
+cons["I0_GRADE"] = {}
+for level in ("hs", "college_d3", "college_d1", "mlb"):
+    acc = {"c": 0.0, "w": 0.0, "d": 0.0}
+    wt = sum(allp.values())
+    for (b, k), n in allp.items():
+        s = e.Situation(b, k, 0, (False, False, False), level=level)
+        _, dist = e.call_mixed(ars, s)
+        for pr, _, p, q in dist:
+            P = e.outcome_probs(p, q, s, ars)
+            gs = e.grade_stats(p, q, s, ars)
+            share = {"c": P["whiff"] + P["foul"] + P["weak"] + P["solid"] + P["hard"], "w": P["weak"] + P["solid"] + P["hard"], "d": 1.0}
+            for g, (pi, d) in gs.items():
+                if 0 < pi < 1:
+                    acc[g] += n / wt * pr * share[g] * d * d / (pi * (1 - pi))
+    cons["I0_GRADE"][level] = {g: 50 * ppa * v for g, v in acc.items()}
+cons["PITCHES_PER_PA"] = ppa
+for t in ("A_BAR", "I_BAR_UMP", "I0_GRADE"):
     cons[t]["travel"] = cons[t]["hs"]; cons[t]["college"] = cons[t]["college_d1"]
 json.dump(cons, open(path, "w"), indent=1)
 print(f"takes {tot}, A_BAR {a_bar:.4f}, I_BAR_UMP", {k: round(v, 4) for k, v in cons["I_BAR_UMP"].items()})

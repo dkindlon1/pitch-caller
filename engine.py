@@ -749,7 +749,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         tB = RHO_L.get(s.level, 1.0) * timing_B(p, q, s, v_sit) * (0.5 if big else 1.0)   # 4: pair terms halved in a big spot
     capped = not FLAGS["expect_v07"]
     hL = L["hL"]
-    gr = s.grades if (FLAGS["hitter_grades"] and s.grades) else None
+    gr = (s.grades or GRADES_OVERRIDE) if FLAGS["hitter_grades"] else None    # 8.2 (override: fit hook)
     f = shape_fit(p, q, s)
     dmg = damage(p, q, s)
     tau = s.timing.get("OS" if is_offspeed(p.kind) else "FB", 0.0)
@@ -788,7 +788,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         if not FLAGS["pairing_v07"] and offz:
             sl += ps
         if gr and offz:
-            sl -= P08["g_d"] * (gr.get("d", 3) - 3)
+            sl -= gval("g_d", s.level) * (gr.get("d", 3) - 3)
         S = sig(sl) if S0[z] > 0 else 0
         if FLAGS["umpire_learn"] and z in ("edge", "off"):
             C = sig(logit(C0[z]) + A["cs"] + count_kappa(s.balls, s.strikes, s.level) + s.ump_u)
@@ -813,7 +813,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         if cw:
             wl -= cw
         if gr:
-            wl -= P08["g_c"] * (gr.get("c", 3) - 3)
+            wl -= gval("g_c", s.level) * (gr.get("c", 3) - 3)
         W = sig(wl)
         F = sig(logit(F0[z]) + (0.3 if s.strikes == 2 else 0))
         # contact quality: shift hard share
@@ -834,7 +834,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         if FLAGS["timing_B"] and not v08x:
             hl -= P08["gamma_T"] * tB
         if gr:
-            hl += P08["g_w"] * (gr.get("w", 3) - 3)
+            hl += gval("g_w", s.level) * (gr.get("w", 3) - 3)
         if s.crowding and q in ("up-in", "down-in"):
             hl -= P08["crowd"]
         if p.kind == "CH" and s.same_side:
@@ -1109,6 +1109,7 @@ except Exception:
     pass
 
 
+GRADES_OVERRIDE = None   # 8.2 fit_hitter_spread.py hook: grades for every hitter when s.grades is None
 KAPPA_FIT = {}   # seq_fit.py: count-zone logit shifts (fitted, centered on the simulated take mix); empty = area rule
 
 
@@ -1384,16 +1385,14 @@ def take_stats(p, q, s, arsenal, sit=None):
 
 
 def ump_estimate(takes, level, u0=0.0, a0=20.0):
-    """7.5 one-step Newton estimate of today's umpire from takes [(s_i, p_i, d_i)] stored at u = u0."""
+    """7.5 today's umpire from takes [(s_i, p_i, d_i)] stored at u = u0, prior a0 typical takes at u0 (A4: Newton
+    iterated to the posterior mode; the first step is the spec's one-step formula). Clamped to [-1.5, 1.5]."""
     ib = I_BAR_UMP.get(level, 0.05)
-    num = sum((si - pi) * di / (pi * (1 - pi)) for si, pi, di in takes if 0 < pi < 1)
-    den = a0 * ib + sum(di * di / (pi * (1 - pi)) for si, pi, di in takes if 0 < pi < 1)
-    return max(-1.5, min(1.5, u0 + (num / den if den > 0 else 0.0)))
+    if not takes:
+        return u0
+    return map_logit_shift(takes, u0, u0, a0 * ib, -1.5, 1.5)
 
 
-# ---------------------------------------------------------------------------
-# v0.8 planning solve (docs/SPEC_v0.8.md 2.3-2.7, 6): count x look table, sit game per count, root call
-# ---------------------------------------------------------------------------
 V_CENTERS = (1.00, 0.94, 0.88)        # 2.7 speed bins as a share of his main fastball
 Y_CENTERS = (3.0, 2.0)                # 2.7 height bins (ft)
 QRE_ITERS, QRE_TOL = 300, 1e-3
@@ -1876,3 +1875,176 @@ def _fill_run_game():
 
 
 _fill_run_game()
+
+
+# ---------------------------------------------------------------------------
+# v0.8 hitter grades (8.2): per-level effects and the cross-game learner
+# ---------------------------------------------------------------------------
+try:
+    from hitter_spread_params import HITTER_SPREAD
+except Exception:
+    HITTER_SPREAD = {}
+
+
+def gval(name, level):
+    return HITTER_SPREAD.get(level, {}).get(name, P08[name])
+
+
+def grade_stats(p, q, s, arsenal, sit=None, grades=None):
+    """8.2 for one pitch: {grade: (p_i, d_i)} for contact (whiff | swing), power (hard | ball in play) and discipline
+    (swing), each computed with THAT grade at 3 and the other two at their current values (grades; default 3).
+    The caller keeps the entry whose event was observed."""
+    out = {}
+    for g in ("c", "w", "d"):
+        gr = dict(grades or {})
+        gr[g] = 3
+        zo = {}
+        with flags(hitter_grades=True):
+            outcome_probs(p, q, replace(s, grades=gr), arsenal, sit=sit, zout=zo)
+        sw = sum(v["L"] * v["S"] for v in zo.values())
+        bipw = {z: v["L"] * v["S"] * (1 - v["W"]) * (1 - v["F"]) for z, v in zo.items()}
+        bip = sum(bipw.values())
+        if g == "c" and sw > 0:
+            pw = sum(v["L"] * v["S"] * v["W"] for v in zo.values()) / sw
+            out["c"] = (pw, -gval("g_c", s.level) * sum(v["L"] * v["S"] / sw * v["W"] * (1 - v["W"]) for v in zo.values()))
+        elif g == "w" and bip > 0:
+            ph = sum(bipw[z] * v["H"] for z, v in zo.items()) / bip
+            out["w"] = (ph, gval("g_w", s.level) * sum(bipw[z] / bip * v["H"] * (1 - v["H"]) for z, v in zo.items()))
+        elif g == "d":
+            out["d"] = (sw, -gval("g_d", s.level) * sum(v["L"] * v["S"] * (1 - v["S"]) for v in zo.values() if v["offz"]))
+    return out
+
+
+def map_logit_shift(obs, x0, prior_mean, prior_info, lo, hi, iters=20):
+    """A4: the posterior mode of a logit shift x from stored pairs (y_i, p_i, d_i) taken at x0, each pitch extrapolated as
+    p_i(x) = sig(logit p_i + a_i (x - x0)), a_i = d_i / (p_i (1 - p_i)), with a normal prior (mean, information).
+    Its first Newton step from x0 is exactly the spec's one-step formula; later steps remove the linearization bias."""
+    obs = [(y, p_, d / (p_ * (1 - p_))) for y, p_, d in obs if 0 < p_ < 1 and d != 0]
+    x = x0
+    for _ in range(iters):
+        sc = -prior_info * (x - prior_mean)
+        inf = prior_info
+        for y, p_, a in obs:
+            pp = sig(logit(p_) + a * (x - x0))
+            sc += (y - pp) * a
+            inf += pp * (1 - pp) * a * a
+        if inf <= 0:
+            break
+        step = sc / inf
+        x = max(lo, min(hi, x + step))
+        if abs(step) < 1e-6:
+            break
+    return x
+
+
+def grade_estimate(obs, g_coach, I0, g_prev=None, n_pitches=None):
+    """8.2 estimate of one grade from obs [(y_i, p_i, d_i)] stored with that grade at 3, shrunk to the coach's grade by
+    I0 (A4: Newton iterated to the posterior mode). Rails (learner v2): no effect until 30 pitches; at most 0.5 grade
+    points of change per game (from g_prev); a flag, not a change, when the estimate is more than 1 point from the
+    coach's grade. Returns (grade used, estimate, flag)."""
+    est = map_logit_shift(obs, 3.0, g_coach, I0, 1.0, 5.0)
+    if (n_pitches if n_pitches is not None else len(obs)) < 30:
+        return g_coach, est, False
+    if abs(est - g_coach) > 1.0:
+        return (g_prev if g_prev is not None else g_coach), est, True
+    base = g_prev if g_prev is not None else g_coach
+    return max(base - 0.5, min(base + 0.5, est)), est, False
+
+
+I0_GRADE = SIM_CONST.get("I0_GRADE", {})
+
+
+# ---------------------------------------------------------------------------
+# v0.8 "why" line (9)
+# ---------------------------------------------------------------------------
+_WHY_PARAMS = {
+    "sit": ("sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS"),
+    "timing": ("beta_T", "gamma_T"),
+    "eye level": ("beta_E", "beta_E_S"),
+    "tunneling": ("beta_tun",),
+    "repeat": ("rep_whiff_same", "rep_whiff_other", "rep_same_spot"),
+    "familiarity": ("phi_FB", "phi_OS"),
+}
+
+
+def _root_cost_pair(arsenal, s, tab, a, b, sigma, myopic=False):
+    by = {x.name: x for x in arsenal}
+    look = s.look or tab.h0
+    ks = sit_options(arsenal)
+
+    def c(x):
+        return sum(sigma[k] * cost08(by[x[0]], x[1], s, arsenal, tab, look, ("pure",) + k, myopic=myopic)[0]
+                   for k in ks if sigma[k] > 1e-4)
+    return c(a), c(b)
+
+
+def why_line(arsenal, s, tab, pick, info):
+    """9: Delta_k = [C(a) - C(b)] - [C_-k(a) - C_-k(b)] for the drawn call a and the best other allowed call b; the most
+    negative term's template. Delta values rank only. Returns (line, {term: Delta}, b)."""
+    M, sigma = info["M"], info["sigma"]
+    a = (pick[0].name, pick[1])
+    full = {x: sum(sigma[k] * M[x][k] for k in M[x]) for x in M}
+    others = [x for x in full if x != a]
+    if not others:
+        return "Only call allowed here", {}, None
+    b = min(others, key=lambda x: full[x])
+    base = full[a] - full[b]
+    deltas = {}
+    for term, names in _WHY_PARAMS.items():
+        saved = {n: P08[n] for n in names}
+        try:
+            for n in names:
+                P08[n] = 0.0
+            ca, cb = _root_cost_pair(arsenal, s, tab, a, b, sigma)
+        finally:
+            P08.update(saved)
+        deltas[term] = base - (ca - cb)
+    ca, cb = _root_cost_pair(arsenal, s, tab, a, b, sigma, myopic=True)
+    deltas["look value"] = base - (ca - cb)
+    for term, s_off in (("situation", replace(s, win=None)), ("umpire", replace(s, ump_u=0.0)),
+                        ("running game", replace(s, steal=None)), ("grades", replace(s, grades=None))):
+        ca, cb = _root_cost_pair(arsenal, s_off, tab, a, b, sigma)
+        deltas[term] = base - (ca - cb)
+    term = min(deltas, key=lambda t: deltas[t])
+    if deltas[term] >= -1e-6:
+        return "Best call on its own merits", deltas, b
+    p, q = pick[0], pick[1]
+    look = s.look or tab.h0
+    if term == "timing":
+        vs = sum(v * speed_today(next(x for x in arsenal if x.name == n), s) for (n, j), v in sigma.items())
+        vt = (1 - P08["alpha"]) * look[0] + P08["alpha"] * vs
+        vp = speed_today(p, s) + 0.5 * EV_ADJ[q]
+        line = f"He's timed for {vt:.0f} mph; this plays {abs(vt - vp):.0f} mph {'slower' if vt > vp else 'faster'}"
+    elif term == "look value":
+        nxt = min((x for x in full if x[0] != p.name), key=lambda x: full[x], default=b)
+        line = f"Sets up the {nxt[0].lower()} {nxt[1]}"
+    elif term == "eye level":
+        line = f"Changes his eye level after the {s.last[0].lower()}" if s.last else "Changes his eye level"
+    elif term == "familiarity":
+        c_ = "OS" if is_offspeed(next(x for x in arsenal if x.name == b[0]).kind) else "FB"
+        line = f"He's seen the {b[0].lower()} {s.familiar.get(c_, 0)} times today"
+    elif term == "sit":
+        by_t, by_h = {}, {}
+        for (n, j), v in sigma.items():
+            by_t[n] = by_t.get(n, 0.0) + v
+            by_h[j] = by_h.get(j, 0.0) + v
+        top_t = max(by_t, key=lambda n: by_t[n])
+        if top_t != p.name:
+            line = f"He's sitting {top_t.lower()} ({by_t[top_t]:.0%})"
+        else:
+            top_h = max((j for j in by_h if not (q.startswith(j) or (j == "middle" and q == "middle"))), key=lambda j: by_h[j])
+            line = f"He's looking {top_h} ({by_h[top_h]:.0%})"
+    elif term == "situation":
+        line = "Tying run on third: need a strikeout or a ground ball" if (s.bases[2] and s.win and abs(s.margin) <= 1) \
+            else "Game situation: protect the lead" if s.margin > 0 else "Game situation: keep it close"
+    elif term == "umpire":
+        line = f"Today's umpire is calling {'more' if s.ump_u > 0 else 'fewer'} strikes than usual"
+    elif term == "running game":
+        line = "Runner may go: a pitch he can throw on"
+    elif term == "grades":
+        line = "Matches this hitter's scouting grades"
+    elif term == "repeat":
+        line = "Back to what he just missed"
+    else:
+        line = "Tunnels off the last pitch"
+    return line, deltas, b

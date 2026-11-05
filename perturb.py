@@ -7,7 +7,7 @@ import json, os, random, sys, copy
 import engine as e
 from metrics import ref_arsenals, LEVELS
 
-BETAS = ["sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS", "beta_T", "gamma_T", "beta_E", "beta_tun",
+BETAS = ["sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS", "beta_T", "gamma_T", "beta_E", "beta_E_S", "beta_tun",
          "phi_FB", "phi_OS", "crowd", "g_c", "g_w", "g_d"]
 
 
@@ -31,6 +31,14 @@ def restore(base):
 
 def gaps_for(ars, lvl):
     s0 = e.Situation(0, 0, 0, (False, False, False), level=lvl)
+    if e.FLAGS["look_state"]:       # v0.8: the planning table, then each count's root costs (temperature floor off)
+        with e.flags(temp_unc=False):
+            tab = e.solve_table(ars, s0)
+            out = {}
+            for (b, k) in e.COUNTS:
+                c = sorted(e.root_costs(ars, e.Situation(b, k, 0, (False, False, False), level=lvl), tab).values())
+                out[f"{b}-{k}"] = c[1] - c[0] if len(c) > 1 else 0.0
+        return out
     cv = e.at_bat_values(ars, s0)[1] if not e.FLAGS["look_state"] else None
     out = {}
     for (b, k) in e.COUNTS:

@@ -1,0 +1,7 @@
+[PASS] grades 3 everywhere = no grades
+[PASS] contact 5 lowers whiffs, power 5 raises hard contact, discipline 5 raises balls: whiff 0.072->0.025, hard 0.032->0.041, ball 0.538->0.615
+[PASS] grade learner: each estimate within 2 SE of its shrunk target after five games of 300 pitches: c: est 4.19, shrunk target 4.39, se 0.16, information 35.9 (prior 2.8); w: est 2.10, shrunk target 3.00, se 0.79, information 1.4 (prior 0.2); d: est 2.00, shrunk target 2.06, se 0.15, information 44.1 (prior 2.8); by game [{'c': 3.21, 'w': 1.6, 'd': 2.38}, {'c': 3.69, 'w': 1.0, 'd': 2.1}, {'c': 4.06, 'w': 1.0, 'd': 1.92}, {'c': 4.11, 'w': 1.6, 'd': 2.07}, {'c': 4.19, 'w': 2.1, 'd': 2.0}]
+[PASS] rail: no effect before 30 pitches
+[PASS] rail: at most 0.5 per game, or a flag past 1 point: estimate 4.21 -> used 3.00, flag True
+[PASS] why line: a line for every call, deterministic: 40/40; line starts {"He's timed": 5, "He's sitting": 4, 'Best call': 2, 'Sets up': 7, "He's looking": 8, 'Changes his': 5, 'Only call': 9}
+6/6 step 8 checks passed
