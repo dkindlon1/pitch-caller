@@ -1,0 +1,253 @@
+{
+ "T1_in2away_whiff": {
+  "label": "inside-to-away, whiff | swing",
+  "beta": [
+   -0.07519746281375105
+  ],
+  "se": [
+   0.02902532242435423
+  ],
+  "gain": -4.3277967713903164e-05,
+  "sd": 2.708399813172536e-05,
+  "ship": false,
+  "ci_excludes_zero": true,
+  "report_only": false,
+  "n_train": 82354,
+  "n_feature_nonzero": 30831
+ },
+ "T1_away2in_whiff": {
+  "label": "away-to-inside, whiff | swing",
+  "beta": [
+   0.08354717507542118
+  ],
+  "se": [
+   0.030537388566150618
+  ],
+  "gain": -3.0219110611337052e-05,
+  "sd": 3.461298427797794e-05,
+  "ship": false,
+  "ci_excludes_zero": true,
+  "report_only": false,
+  "n_train": 82354,
+  "n_feature_nonzero": 37466
+ },
+ "T1_in2away_hard": {
+  "label": "inside-to-away, hard | ball in play (expected negative)",
+  "beta": [
+   0.07896760144328803
+  ],
+  "se": [
+   0.04286222670662125
+  ],
+  "gain": 6.789962299464526e-05,
+  "sd": 6.470204229473974e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": false,
+  "n_train": 30115,
+  "n_feature_nonzero": 11323
+ },
+ "T1_away2in_hard": {
+  "label": "away-to-inside, hard | ball in play (expected negative)",
+  "beta": [
+   -0.06117444917097136
+  ],
+  "se": [
+   0.040256540191187414
+  ],
+  "gain": 0.0001987825270103403,
+  "sd": 8.765277090662142e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": false,
+  "n_train": 30115,
+  "n_feature_nonzero": 13624
+ },
+ "T2_lam0.0": {
+  "label": "side memory lam 0.0 (last pitch only)",
+  "beta": [
+   -0.04246047532886061,
+   0.06118042007435393
+  ],
+  "se": [
+   0.035260059238461344,
+   0.03700586712079528
+  ],
+  "gain": -5.2851275817448985e-05,
+  "sd": 3.4984872147075055e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 82354,
+  "n_feature_nonzero": 68297
+ },
+ "T2_lam0.8": {
+  "label": "side memory lam 0.8 (decaying)",
+  "beta": [
+   0.012374535744883843,
+   0.0907126129974661
+  ],
+  "se": [
+   0.03968682413460284,
+   0.03889897956004714
+  ],
+  "gain": -1.3387784102245093e-06,
+  "sd": 3.184849311720107e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 82354,
+  "n_feature_nonzero": 68297
+ },
+ "T2_lam0.9": {
+  "label": "side memory lam 0.9 (decaying)",
+  "beta": [
+   0.02817117635326759,
+   0.07366396299783465
+  ],
+  "se": [
+   0.037792139936589184,
+   0.037772604100391086
+  ],
+  "gain": -7.462749266035944e-06,
+  "sd": 2.5353826977534123e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 82354,
+  "n_feature_nonzero": 68297
+ },
+ "T2_lam0.95": {
+  "label": "side memory lam 0.95 (decaying)",
+  "beta": [
+   0.027559205045242077,
+   0.055480995365305784
+  ],
+  "se": [
+   0.037093726686836685,
+   0.03723733703735261
+  ],
+  "gain": -6.556452143782644e-06,
+  "sd": 1.958988818182407e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 82354,
+  "n_feature_nonzero": 68297
+ },
+ "T2_best": "T2_lam0.8",
+ "T3_speed": {
+  "label": "[in2away x drop5, in2away x no drop, away2in x drop5, away2in x no drop], whiff | swing",
+  "beta": [
+   -0.10638605816984836,
+   -0.013538710965789387,
+   0.013196837469593848,
+   0.07600499421237839
+  ],
+  "se": [
+   0.051184138212876186,
+   0.03890576290118185,
+   0.05739771804846278,
+   0.03928356932016113
+  ],
+  "gain": 3.929387611151036e-06,
+  "sd": 4.3245285126973176e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 82354,
+  "n_feature_nonzero": 68297
+ },
+ "M1_whiff": {
+  "label": "whiff | swing",
+  "beta": [
+   0.10736315820348345
+  ],
+  "se": [
+   0.021572355277243306
+  ],
+  "gain": 0.0003545464605647267,
+  "sd": 6.833202031517571e-05,
+  "ship": true,
+  "ci_excludes_zero": true,
+  "report_only": false,
+  "n_train": 82354,
+  "n_feature_nonzero": 16187
+ },
+ "M1_hard": {
+  "label": "hard | ball in play",
+  "beta": [
+   -0.009813259311699163
+  ],
+  "se": [
+   0.02910080922528503
+  ],
+  "gain": -3.882869273616353e-05,
+  "sd": 3.28983472281683e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": false,
+  "n_train": 30115,
+  "n_feature_nonzero": 6147
+ },
+ "M2_hard": {
+  "label": "hard | ball in play",
+  "beta": [
+   0.16004377830789793
+  ],
+  "se": [
+   0.09695385368041096
+  ],
+  "gain": 0.00011646110783750216,
+  "sd": 5.9943535275565285e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": false,
+  "n_train": 30115,
+  "n_feature_nonzero": 466
+ },
+ "M2_whiff": {
+  "label": "whiff | swing",
+  "beta": [
+   -0.34575142376769086
+  ],
+  "se": [
+   0.09349584988753891
+  ],
+  "gain": 0.00015477234009497664,
+  "sd": 4.8192569526293966e-05,
+  "ship": true,
+  "ci_excludes_zero": true,
+  "report_only": false,
+  "n_train": 82354,
+  "n_feature_nonzero": 1063
+ },
+ "M3_tto3": {
+  "label": "[M1, M1 x third time through], whiff | swing",
+  "beta": [
+   0.1157746054912663,
+   -0.016319179960229798
+  ],
+  "se": [
+   0.028934725861957375,
+   0.03486435113513639
+  ],
+  "gain": 0.00035354210875920605,
+  "sd": 6.869754805079303e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 82354,
+  "n_feature_nonzero": 16187
+ },
+ "T4_depth": {
+  "n_after_inside": 7732,
+  "n_after_away": 12414,
+  "diff_in": -0.641153830459924,
+  "ci": [
+   -0.8983652090171603,
+   -0.38643079107662703
+  ],
+  "report_only": true
+ }
+}

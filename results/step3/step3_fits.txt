@@ -1,0 +1,30 @@
+Statcast rows 337195, usable 337195 (train 172167, test 165028)
+
+T1. Last-pitch side change (each direction judged on its own)
+  [T1_in2away_whiff] inside-to-away, whiff | swing: train n=82354 (feature non-zero 30831), test n=78722; beta=[-0.0752] se=[0.029]; held-out gain -4.33e-05 (boot sd 2.71e-05) -> no ship
+  [T1_away2in_whiff] away-to-inside, whiff | swing: train n=82354 (feature non-zero 37466), test n=78722; beta=[0.0835] se=[0.0305]; held-out gain -3.02e-05 (boot sd 3.46e-05) -> no ship
+  [T1_in2away_hard] inside-to-away, hard | ball in play (expected negative): train n=30115 (feature non-zero 11323), test n=29008; beta=[0.079] se=[0.0429]; held-out gain 6.79e-05 (boot sd 6.47e-05) -> no ship
+  [T1_away2in_hard] away-to-inside, hard | ball in play (expected negative): train n=30115 (feature non-zero 13624), test n=29008; beta=[-0.0612] se=[0.0403]; held-out gain 1.99e-04 (boot sd 8.77e-05) -> no ship
+
+T2. One pitch or decaying side memory (both directions, whiff | swing)
+  [T2_lam0.0] side memory lam 0.0 (last pitch only): train n=82354 (feature non-zero 68297), test n=78722; beta=[-0.0425, 0.0612] se=[0.0353, 0.037]; held-out gain -5.29e-05 (boot sd 3.50e-05) -> report only
+  [T2_lam0.8] side memory lam 0.8 (decaying): train n=82354 (feature non-zero 68297), test n=78722; beta=[0.0124, 0.0907] se=[0.0397, 0.0389]; held-out gain -1.34e-06 (boot sd 3.18e-05) -> report only
+  [T2_lam0.9] side memory lam 0.9 (decaying): train n=82354 (feature non-zero 68297), test n=78722; beta=[0.0282, 0.0737] se=[0.0378, 0.0378]; held-out gain -7.46e-06 (boot sd 2.54e-05) -> report only
+  [T2_lam0.95] side memory lam 0.95 (decaying): train n=82354 (feature non-zero 68297), test n=78722; beta=[0.0276, 0.0555] se=[0.0371, 0.0372]; held-out gain -6.56e-06 (boot sd 1.96e-05) -> report only
+  best held-out gain: T2_lam0.8
+
+T3. Report only: T1 by speed change (drop of 5+ mph vs not)
+  [T3_speed] [in2away x drop5, in2away x no drop, away2in x drop5, away2in x no drop], whiff | swing: train n=82354 (feature non-zero 68297), test n=78722; beta=[-0.1064, -0.0135, 0.0132, 0.076] se=[0.0512, 0.0389, 0.0574, 0.0393]; held-out gain 3.93e-06 (boot sd 4.32e-05) -> report only
+
+Matchup memory: pitches with an earlier-trip success on the class 64520; with an earlier-trip hard-hit ball on the class and spot 3950
+M1. Earlier-trip whiffs + called strikes on this class (beyond familiarity)
+  [M1_whiff] whiff | swing: train n=82354 (feature non-zero 16187), test n=78722; beta=[0.1074] se=[0.0216]; held-out gain 3.55e-04 (boot sd 6.83e-05) -> SHIP
+  [M1_hard] hard | ball in play: train n=30115 (feature non-zero 6147), test n=29008; beta=[-0.0098] se=[0.0291]; held-out gain -3.88e-05 (boot sd 3.29e-05) -> no ship
+M2. Earlier-trip hard-hit balls on this class and spot
+  [M2_hard] hard | ball in play: train n=30115 (feature non-zero 466), test n=29008; beta=[0.16] se=[0.097]; held-out gain 1.16e-04 (boot sd 5.99e-05) -> no ship
+  [M2_whiff] whiff | swing: train n=82354 (feature non-zero 1063), test n=78722; beta=[-0.3458] se=[0.0935]; held-out gain 1.55e-04 (boot sd 4.82e-05) -> SHIP
+M3. Report only: M1 the third time through
+  [M3_tto3] [M1, M1 x third time through], whiff | swing: train n=82354 (feature non-zero 16187), test n=78722; beta=[0.1158, -0.0163] se=[0.0289, 0.0349]; held-out gain 3.54e-04 (boot sd 6.87e-05) -> report only
+
+T4. Report only: contact depth on swings at away fastballs, after an inside vs an away fastball (same PA)
+  n after inside 7732, after away 12414; mean depth after inside minus after away -0.64 in (95% -0.90 to -0.39); positive = contact further out in front
