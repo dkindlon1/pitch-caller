@@ -1,0 +1,33 @@
+v08_in_v09w vs v09: 90 paired games; runs per game, B minus A, SE over games
+
+[all] 90 games
+                     v08_in_v09w           v09     diff      SE
+  runs                     6.933         7.644   +0.711   0.541
+  pitches                163.622       165.633   +2.011   3.432
+  regret_exp               1.729         2.176   +0.447   0.088
+  regret_pick              1.740         2.163   +0.423   0.095
+  regret_info              0.660         0.860   +0.200   0.073
+
+[hs] 30 games
+                     v08_in_v09w           v09     diff      SE
+  runs                     7.867         8.833   +0.967   1.009
+  pitches                170.867       174.667   +3.800   5.462
+  regret_exp               1.768         2.297   +0.529   0.108
+  regret_pick              1.739         2.230   +0.492   0.111
+  regret_info              0.428         0.576   +0.149   0.084
+
+[college_d3] 30 games
+                     v08_in_v09w           v09     diff      SE
+  runs                     8.200         7.433   -0.767   0.993
+  pitches                168.967       164.700   -4.267   5.683
+  regret_exp               1.929         2.138   +0.209   0.121
+  regret_pick              1.960         2.135   +0.175   0.140
+  regret_info              0.777         0.776   -0.001   0.069
+
+[college_d1] 30 games
+                     v08_in_v09w           v09     diff      SE
+  runs                     4.733         6.667   +1.933   0.747
+  pitches                151.033       157.533   +6.500   6.644
+  regret_exp               1.489         2.092   +0.603   0.205
+  regret_pick              1.521         2.124   +0.602   0.218
+  regret_info              0.774         1.226   +0.452   0.183
