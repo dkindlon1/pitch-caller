@@ -293,26 +293,25 @@
   }
 
   // ---------------------------------------------------------------- outcome model
-  function outcomeProbs(p, q, s, arsenal, policy, byZone, sit, zout) {   // byZone (optional): each landing zone's own outcome mix
+  // The outcome model in two parts (speed): opPrep computes everything that doesn't depend on the hitter's sit, opEval
+  // adds the sit terms. Every sum is formed in the original order, so the result is identical to the one-pass model.
+  function opPrep(p, q, s, arsenal, policy, sitGiven) {
     const L = D.LEVEL[s.level], A = D.OUTCOME_ADJ[s.level];
     const big = isBigSpot(s);
     const cL = L.cL * (big ? 1.5 : 1.0);
     const bT = 0.4 * (big ? 0.5 : 1.0);
-    const v08x = (sit !== undefined && sit !== null) || !FLAGS.expect_v07;   // v0.8 sit terms replace the v0.7c expectation E
-    let E = 0, neutral = 0, mT = 0, mH = 0, vSit = 0;
-    if (v08x) {
-      if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
-      [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);
-    } else [E, neutral] = expectation(p, arsenal, s, policy);
+    const v08x = sitGiven || !FLAGS.expect_v07;   // v0.8 sit terms replace the v0.7c expectation E
+    let E = 0, neutral = 0;
+    if (!v08x) [E, neutral] = expectation(p, arsenal, s, policy);
     let T = 0, pw = 0, ps = 0;
     if (FLAGS.pairing_v07) T = pairing(p, q, s, arsenal);
     else [pw, ps] = pairTerms(p, q, s, arsenal);
-    let tB = 0.0;
-    if (FLAGS.timing_B) {
-      if (!v08x) { const pr = sitPrior(arsenal, s); vSit = psum(Object.keys(pr).map((key) => pr[key] * speedToday(byName(arsenal, key.slice(0, key.lastIndexOf("|"))), s))); }
-      tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (big ? 0.5 : 1.0);   // 4: pair terms halved in a big spot
+    let tB0 = 0.0;
+    if (FLAGS.timing_B && !v08x) {
+      const pr = sitPrior(arsenal, s);
+      const vSit = psum(Object.keys(pr).map((key) => pr[key] * speedToday(byName(arsenal, key.slice(0, key.lastIndexOf("|"))), s)));
+      tB0 = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (big ? 0.5 : 1.0);
     }
-    const capped = !FLAGS.expect_v07;
     const hL = L.hL;
     const gr = FLAGS.hitter_grades ? (s.grades || GRADES_OVERRIDE) : null;
     const f = shapeFit(p, q, s);
@@ -325,9 +324,9 @@
     if (FLAGS.fatigue_v08) grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
     const gs = 0.25 * (L.stuff_scale ?? 1.0);
     const cw = (L.cmd_whiff ?? 0.0) * (command - 3);   // v0.7b: better command adds contact, not strikeouts (fit_spread.py)
-    const out = { ball: 0, cstrike: 0, whiff: 0, foul: 0, weak: 0, solid: 0, hard: 0, wp_ball: 0, hbp: 0 };
+    const zones = [];
     for (const z of ZONES) {
-      const pz = land[z];
+      const pz = land[z], Z = { z, pz };
       let sl = logit(S0[z]);
       if (s.strikes === 2) sl += 0.9;
       if (s.balls === 0 && s.strikes === 0) sl -= 0.4;
@@ -336,62 +335,82 @@
       if (z === "off" && isOffspeed(p.kind)) sl += 0.2;
       const wz = ZONE_IN[z];
       sl += wz * A.zsw + (1 - wz) * A.osw;
-      const offz = z === "off" || z === "noncomp";
-      if (v08x) sl += hL * (P08.sit_tS * mT + P08.sit_hS * mH);
-      if (!FLAGS.pairing_v07 && offz) sl += ps;
-      if (gr && offz) sl -= gval("g_d", s.level) * ((gr.d ?? 3) - 3);
-      const S = S0[z] > 0 ? sig(sl) : 0;
-      let C;
-      if (FLAGS.umpire_learn && (z === "edge" || z === "off")) C = sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u);
-      else C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs) : C0[z];
+      Z.slPre = sl; Z.s0pos = S0[z] > 0;
+      const offz = z === "off" || z === "noncomp"; Z.offz = offz;
+      Z.slPost = [];
+      if (!FLAGS.pairing_v07 && offz) Z.slPost.push(ps);
+      if (gr && offz) Z.slPost.push(-(gval("g_d", s.level) * ((gr.d ?? 3) - 3)));
+      if (FLAGS.umpire_learn && (z === "edge" || z === "off")) Z.C = sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u);
+      else Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs) : C0[z];
       let wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
       if (!v08x) wl += L.hL * (-1.5 * (E - neutral) + 0.6 * tauEff - 0.4 * DMG_SCALE * dmg);
-      else {
-        let ex = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * tauEff + P08.beta_T * tB;
-        if (capped) ex = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, ex));
-        wl += ex - hL * 0.4 * DMG_SCALE * dmg;
-      }
-      if (FLAGS.timing_B && !v08x) wl += P08.beta_T * tB;
-      if (FLAGS.pairing_v07) wl += bT * T + 0.25 * f;
-      else wl += pw + 0.25 * f;
-      wl += wz * A.wz + (1 - wz) * A.wo;
-      if (cw) wl -= cw;
-      if (gr) wl -= gval("g_c", s.level) * ((gr.c ?? 3) - 3);
+      Z.wlPre = wl; Z.wlD = hL * 0.4 * DMG_SCALE * dmg;
+      Z.wlPost = [];
+      if (FLAGS.timing_B && !v08x) Z.wlPost.push(P08.beta_T * tB0);
+      if (FLAGS.pairing_v07) Z.wlPost.push(bT * T + 0.25 * f); else Z.wlPost.push(pw + 0.25 * f);
+      Z.wlPost.push(wz * A.wz + (1 - wz) * A.wo);
+      if (cw) Z.wlPost.push(-cw);
+      if (gr) Z.wlPost.push(-(gval("g_c", s.level) * ((gr.c ?? 3) - 3)));
+      Z.F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
+      if (!v08x) Z.hlPre = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L.hL * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f;
+      Z.h1 = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6); Z.h2 = hL * 0.8 * DMG_SCALE * dmg; Z.h3 = 0.3 * f;
+      Z.hlPost = [];
+      if (FLAGS.bf_term_v07) Z.hlPost.push(0.012 * s.batters_faced);
+      else { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
+      if (!v08x) Z.hlPost.push(-(L.hL * 0.5 * tauEff));   // v0.6e: off-time swings make weaker contact too
+      if (FLAGS.timing_B && !v08x) Z.hlPost.push(-(P08.gamma_T * tB0));
+      if (gr) Z.hlPost.push(gval("g_w", s.level) * ((gr.w ?? 3) - 3));
+      if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
+      if (p.kind === "CH" && s.same_side) Z.hlPost.push(0.2);
+      if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
+      if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
+      Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
+      Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
+      zones.push(Z);
+    }
+    return { v08x, zones, hL, tauEff, big, capped: !FLAGS.expect_v07 };
+  }
+  function opEval(pr, p, q, s, arsenal, sit, byZone, zout) {
+    const v08x = pr.v08x, hL = pr.hL;
+    let mT = 0, mH = 0, tB = 0.0;
+    if (v08x) {
+      if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
+      let vSit;
+      [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);
+      if (FLAGS.timing_B) tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (pr.big ? 0.5 : 1.0);   // 4: halved in a big spot
+    }
+    const out = { ball: 0, cstrike: 0, whiff: 0, foul: 0, weak: 0, solid: 0, hard: 0, wp_ball: 0, hbp: 0 };
+    let exW = 0, hx = 0;
+    if (v08x) {
+      exW = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * pr.tauEff + P08.beta_T * tB;
+      if (pr.capped) exW = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, exW));
+      hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * pr.tauEff - P08.gamma_T * tB;
+      if (pr.capped) hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
+    }
+    const sSit = v08x ? hL * (P08.sit_tS * mT + P08.sit_hS * mH) : 0;
+    for (const Z of pr.zones) {
+      const z = Z.z, pz = Z.pz;
+      let sl = Z.slPre;
+      if (v08x) sl += sSit;
+      for (const x of Z.slPost) sl += x;
+      const S = Z.s0pos ? sig(sl) : 0;
+      const C = Z.C;
+      let wl = Z.wlPre;
+      if (v08x) wl += exW - Z.wlD;
+      for (const x of Z.wlPost) wl += x;
       const W = sig(wl);
-      const F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
-      let hl;
-      if (!v08x) hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L.hL * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f;
-      else {
-        let hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * tauEff - P08.gamma_T * tB;
-        if (capped) hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
-        hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + hx + hL * 0.8 * DMG_SCALE * dmg - 0.3 * f;
-      }
-      if (FLAGS.bf_term_v07) hl += 0.012 * s.batters_faced;
-      else { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; hl += Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0)); }
-      if (!v08x) hl -= L.hL * 0.5 * tauEff;   // v0.6e: off-time swings make weaker contact too
-      if (FLAGS.timing_B && !v08x) hl -= P08.gamma_T * tB;
-      if (gr) hl += gval("g_w", s.level) * ((gr.w ?? 3) - 3);
-      if (s.crowding && (q === "up-in" || q === "down-in")) hl -= P08.crowd;
-      if (p.kind === "CH" && s.same_side) hl += 0.2;
-      if (z === "heart" && isOffspeed(p.kind)) hl += 0.5;
-      if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) hl += 0.4;
+      const F = Z.F;
+      let hl = v08x ? Z.h1 + hx + Z.h2 - Z.h3 : Z.hlPre;
+      for (const x of Z.hlPost) hl += x;
       const [weak, solid, hard] = Q0[z];
       const hard2 = sig(logit(hard) + hl);
-      if (zout) zout[z] = { L: pz, S, C, W, F, H: hard2, offz, cz: z === "edge" || z === "off" };
+      if (zout) zout[z] = { L: pz, S, C, W, F, H: hard2, offz: Z.offz, cz: z === "edge" || z === "off" };
       const scale = (1 - hard2) / (weak + solid);
       const weak2 = weak * scale, solid2 = solid * scale;
       const take = 1 - S;
       let ballP = pz * take * (1 - C);
-      if ((z === "noncomp" || z === "off") && A.hbp > 0) {
-        const hb = Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1));
-        out.hbp += ballP * hb;
-        ballP *= (1 - hb);
-      }
-      if (z === "noncomp" && anyBase(s.bases)) {
-        const wp = (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3));
-        out.wp_ball += ballP * wp;
-        ballP *= (1 - wp);
-      }
+      if (Z.hb) { out.hbp += ballP * Z.hb; ballP *= (1 - Z.hb); }
+      if (Z.wp) { out.wp_ball += ballP * Z.wp; ballP *= (1 - Z.wp); }
       out.ball += ballP;
       out.cstrike += pz * take * C;
       out.whiff += pz * S * W;
@@ -401,13 +420,16 @@
       if (byZone) {   // v0.7: the outcome mix given the pitch landed in this zone (for learning from logged location)
         const take_ = 1 - S, bp = take_ * (1 - C);
         let hbpZ = 0, wpZ = 0, ballZ = bp;
-        if ((z === "noncomp" || z === "off") && A.hbp > 0) { const hb = Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)); hbpZ = ballZ * hb; ballZ *= (1 - hb); }
-        if (z === "noncomp" && anyBase(s.bases)) { const wp = (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)); wpZ = ballZ * wp; ballZ *= (1 - wp); }
+        if (Z.hb) { hbpZ = ballZ * Z.hb; ballZ *= (1 - Z.hb); }
+        if (Z.wp) { wpZ = ballZ * Z.wp; ballZ *= (1 - Z.wp); }
         const ct = S * (1 - W) * (1 - F);
         byZone[z] = { land: pz, ball: ballZ, wp_ball: wpZ, hbp: hbpZ, cstrike: take_ * C, whiff: S * W, foul: S * (1 - W) * F, weak: ct * weak2, solid: ct * solid2, hard: ct * hard2 };
       }
     }
     return out;
+  }
+  function outcomeProbs(p, q, s, arsenal, policy, byZone, sit, zout) {   // byZone (optional): each landing zone's own outcome mix
+    return opEval(opPrep(p, q, s, arsenal, policy, sit !== undefined && sit !== null), p, q, s, arsenal, sit, byZone, zout);
   }
 
   // ---------------------------------------------------------------- situation terms
@@ -659,6 +681,12 @@
     for (const t of [OUT_TABLE, RUNNER_FIT, HITTER_SPREAD, RUN_GAME, SIM.A_BAR || {}, SIM.I_BAR_UMP || {}, SIM.I0_GRADE || {}, SIM.T_unc || {}])
       if (t.hs && !t.travel) t.travel = t.hs;
   }
+  const SIGMA_PARSE = new WeakMap();   // speed only: a sit mix's [name, height, prob] list, parsed once
+  function parseSigma(sg) {
+    let r = SIGMA_PARSE.get(sg);
+    if (!r) { r = Object.keys(sg).map((key) => [skName(key), skH(key), sg[key]]); SIGMA_PARSE.set(sg, r); }
+    return r;
+  }
   const yTarget = (q, kind) => (q === "chase" ? (kind === "SL" || kind === "CB" || kind === "CH" ? 1.2 : 3.8) : Y_TARGET[q]);
   function heightMember(q, kind, j) {
     const h = q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && kind === "FB")) ? "up" : "down";
@@ -689,10 +717,10 @@
       const i = sit[1], j = sit[2];
       return [(p.name === i ? 1.0 : 0.0) - 1 / kt, heightMember(q, p.kind, j) - 1 / HEIGHTS.length, speedToday(byName(arsenal, i), s)];
     }
-    const sg = sit[1], keys = Object.keys(sg);
-    const mt = psum(keys.filter((key) => skName(key) === p.name).map((key) => sg[key])) - 1 / kt;
-    const mh = psum(keys.map((key) => sg[key] * heightMember(q, p.kind, skH(key)))) - 1 / HEIGHTS.length;
-    const vs = psum(keys.map((key) => sg[key] * speedToday(byName(arsenal, skName(key)), s)));
+    const sg = sit[1], parsed = parseSigma(sg);
+    const mt = psum(parsed.filter((e) => e[0] === p.name).map((e) => e[2])) - 1 / kt;
+    const mh = psum(parsed.map((e) => e[2] * heightMember(q, p.kind, e[1]))) - 1 / HEIGHTS.length;
+    const vs = psum(parsed.map((e) => e[2] * speedToday(byName(arsenal, e[0]), s)));
     return [mt, mh, vs];
   }
   function timingB(p, q, s, vSit) {
@@ -878,26 +906,121 @@
     }
     return pi;
   }
+  // The sit game on flat arrays (speed): the same operations in the same order as policy_from_costs / sit_response /
+  // solve_sit_game in engine.py, so results are identical (adding a zero never changes a compensated sum).
+  function callStruct(calls) {
+    const names = [], groups = [], qs = calls.map(skH);
+    for (let i = 0; i < calls.length; i++) {
+      const n = skName(calls[i]);
+      let g = names.indexOf(n);
+      if (g < 0) { g = names.length; names.push(n); groups.push([]); }
+      groups[g].push(i);
+    }
+    return { calls, names, groups, qs };
+  }
+  function softArr(vals, n, temp, w, ref, out) {   // weights for vals[0..n) into out; returns false if all zero
+    let f = 0, c = 0, first = true;
+    for (let i = 0; i < n; i++) {
+      const x = Math.exp(-(vals[i] - ref) / temp) * taper(vals[i] - ref, w);
+      out[i] = x;
+      if (first) { f = 0 + x; first = false; continue; }
+      const t = f + x;
+      if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f;
+      f = t;
+    }
+    if (c && Number.isFinite(c)) f += c;
+    if (!(f > 0)) return false;
+    for (let i = 0; i < n; i++) out[i] = out[i] / f;
+    return true;
+  }
+  function policyArr(cost, st, temp, win, lwin, piOut) {   // pi over calls (Float64Array); zero where not picked
+    const G = st.groups.length, best = new Float64Array(G), pn = new Float64Array(G);
+    for (let g = 0; g < G; g++) { let m = Infinity; for (const i of st.groups[g]) if (cost[i] < m) m = cost[i]; best[g] = m; }
+    let overall = Infinity; for (let g = 0; g < G; g++) if (best[g] < overall) overall = best[g];
+    piOut.fill(0);
+    if (!softArr(best, G, temp, win, overall, pn)) return piOut;
+    const tmpC = new Float64Array(st.calls.length), tmpW = new Float64Array(st.calls.length);
+    for (let g = 0; g < G; g++) {
+      if (!(pn[g] > 0)) continue;
+      const idx = st.groups[g], lw = Math.max(TAPER * lwin, lwin - (best[g] - overall));
+      for (let j = 0; j < idx.length; j++) tmpC[j] = cost[idx[j]];
+      if (!softArr(tmpC, idx.length, temp, lw, best[g], tmpW)) continue;
+      for (let j = 0; j < idx.length; j++) if (tmpW[j] > 0) piOut[idx[j]] = pn[g] * tmpW[j];
+    }
+    return piOut;
+  }
+  function piToObject(pi, st) {   // insertion order as Python's dict: by pitch (first appearance), then its targets
+    const o = {};
+    for (const idx of st.groups) for (const i of idx) if (pi[i] > 0) o[st.calls[i]] = pi[i];
+    return o;
+  }
+  function policyFromCosts(costs, s, temp) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
+    const calls = Object.keys(costs), st = callStruct(calls), [win, lwin] = windows(s);
+    const cost = Float64Array.from(calls.map((a) => costs[a]));
+    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length)), st);
+  }
+  function csum(f, c, x) { const t = f + x; if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f; return [t, c]; }
   function solveSitGame(M, ks, s, temp, bH, usage) {
-    const calls = Object.keys(M);
-    const us = {}; for (const a in (usage || {})) if (a in M) us[a] = usage[a];
-    const nU = psum(Object.values(us));
-    const tilde = (p_) => { if (!nU) return p_; const o = {}; for (const a of calls) o[a] = (4 * (p_[a] ?? 0.0) + (us[a] ?? 0)) / (4 + nU); return o; };
-    const phi = (sg) => { const c = {}; for (const a of calls) c[a] = psum(ks.map((k) => sg[k] * M[a][k])); return policyFromCosts(c, s, temp); };
-    let sg = {}; for (const k of ks) sg[k] = 1.0 / ks.length;
-    let w = 0.3, last = null;
+    const calls = Object.keys(M), nA = calls.length, nK = ks.length, st = callStruct(calls);
+    const Mat = new Float64Array(nA * nK);
+    for (let a = 0; a < nA; a++) for (let k = 0; k < nK; k++) Mat[a * nK + k] = M[calls[a]][ks[k]];
+    const us = new Float64Array(nA); let nU = 0; const uvals = [];
+    for (const key in (usage || {})) if (key in M) { us[calls.indexOf(key)] = usage[key]; uvals.push(usage[key]); }
+    nU = psum(uvals);
+    const b = new Float64Array(nK); if (bH) for (let k = 0; k < nK; k++) b[k] = bH[ks[k]] ?? 0.0;
+    const [win, lwin] = windows(s);
+    const cost = new Float64Array(nA), pi = new Float64Array(nA), pt = new Float64Array(nA), f = new Float64Array(nK), u = new Float64Array(nK);
+    const phi = (sg) => {
+      for (let a = 0; a < nA; a++) {
+        let s_ = 0 + sg[0] * Mat[a * nK], c = 0.0;
+        for (let k = 1; k < nK; k++) {
+          const x = sg[k] * Mat[a * nK + k], t = s_ + x;
+          if (Math.abs(s_) >= Math.abs(x)) c += (s_ - t) + x; else c += (x - t) + s_;
+          s_ = t;
+        }
+        if (c && Number.isFinite(c)) s_ += c;
+        cost[a] = s_;
+      }
+      return policyArr(cost, st, temp, win, lwin, pi);
+    };
+    const response = (p_) => {   // f = sigma*(p~)
+      for (let a = 0; a < nA; a++) pt[a] = nU ? (4 * p_[a] + us[a]) / (4 + nU) : p_[a];
+      let mx = -Infinity;
+      for (let k = 0; k < nK; k++) {
+        let s_ = 0, c = 0.0, first = true;
+        for (let a = 0; a < nA; a++) {
+          if (pt[a] === 0) continue;
+          const x = pt[a] * Mat[a * nK + k];
+          if (first) { s_ = 0 + x; first = false; continue; }
+          const t = s_ + x;
+          if (Math.abs(s_) >= Math.abs(x)) c += (s_ - t) + x; else c += (x - t) + s_;
+          s_ = t;
+        }
+        if (c && Number.isFinite(c)) s_ += c;
+        u[k] = s_ / temp + b[k];
+        if (u[k] > mx) mx = u[k];
+      }
+      let t = 0, c = 0.0;
+      for (let k = 0; k < nK; k++) { f[k] = Math.exp(u[k] - mx); if (k === 0) t = 0 + f[k]; else [t, c] = csum(t, c, f[k]); }
+      if (c && Number.isFinite(c)) t += c;
+      for (let k = 0; k < nK; k++) f[k] = f[k] / t;
+      return f;
+    };
+    let sg = new Float64Array(nK).fill(1.0 / nK);
+    let w = 0.3, last = null, res = 0;
+    const out = (sgv, r) => { const so = {}; for (let k = 0; k < nK; k++) so[ks[k]] = sgv[k]; return [piToObject(pi, st), so, r]; };
     for (let t = 0; t < QRE_ITERS; t++) {
-      const pi = phi(sg), f = sitResponse(M, ks, tilde(pi), temp, bH);
-      let res = -Infinity; for (const k of ks) res = Math.max(res, Math.abs(sg[k] - f[k]));
-      if (res < QRE_TOL) return [pi, sg, res];
+      phi(sg); response(pi);
+      res = -Infinity; for (let k = 0; k < nK; k++) res = Math.max(res, Math.abs(sg[k] - f[k]));
+      if (res < QRE_TOL) return out(sg, res);
       if (last !== null && res > last) w = Math.max(QRE_WMIN, w / 2);
       last = res;
-      const ns = {}; for (const k of ks) ns[k] = (1 - w) * sg[k] + w * f[k];
+      const ns = new Float64Array(nK); for (let k = 0; k < nK; k++) ns[k] = (1 - w) * sg[k] + w * f[k];
       sg = ns;
     }
-    const pi = phi(sg), f = sitResponse(M, ks, tilde(pi), temp, bH);
-    let res = -Infinity; for (const k of ks) res = Math.max(res, Math.abs(sg[k] - f[k]));
-    return [pi, sg, res];
+    phi(sg); response(pi);
+    res = -Infinity; for (let k = 0; k < nK; k++) res = Math.max(res, Math.abs(sg[k] - f[k]));
+    return out(sg, res);
   }
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes), out = [];
@@ -934,11 +1057,30 @@
     const [iv, iy] = bn.split(",").map(Number);
     return [V_CENTERS[iv] * tab.vfb, Y_CENTERS[iy]];
   }
+  const BINKEY = [["0,0", "0,1"], ["1,0", "1,1"], ["2,0", "2,1"]];
+  function axisW(x, c, out) {   // interpAxis without allocation: out = [i0, w0, i1, w1], i1 = -1 when one center
+    if (x >= c[0]) { out[0] = 0; out[1] = 1.0; out[2] = -1; return; }
+    if (x <= c[c.length - 1]) { out[0] = c.length - 1; out[1] = 1.0; out[2] = -1; return; }
+    for (let i = 0; i < c.length - 1; i++) {
+      const hi = c[i], lo = c[i + 1];
+      if (lo <= x && x <= hi) { const w = (x - lo) / (hi - lo); out[0] = i; out[1] = w; out[2] = i + 1; out[3] = 1 - w; return; }
+    }
+  }
+  const AXV = [0, 0, 0, 0], AXY = [0, 0, 0, 0];
   function tabValue(tab, b, k, look, which) {
     const t = (which === "N" ? tab.N : tab.V)[cntKey(b, k)];
     if (!tab.looked) return t.none;
+    axisW(look[0] / tab.vfb, V_CENTERS, AXV); axisW(look[1], Y_CENTERS, AXY);
     let tot = 0.0;
-    for (const [iv, wv] of interpAxis(look[0] / tab.vfb, V_CENTERS)) for (const [iy, wy] of interpAxis(look[1], Y_CENTERS)) tot += wv * wy * t[iv + "," + iy];
+    for (let a = 0; a < 2; a++) {
+      const iv = a === 0 ? AXV[0] : AXV[2]; if (iv < 0) break;
+      const wv = a === 0 ? AXV[1] : AXV[3];
+      for (let c = 0; c < 2; c++) {
+        const iy = c === 0 ? AXY[0] : AXY[2]; if (iy < 0) break;
+        const wy = c === 0 ? AXY[1] : AXY[3];
+        tot += wv * wy * t[BINKEY[iv][iy]];
+      }
+    }
     return tot;
   }
   function stealCost(p, q, s, tab, nl) {
@@ -958,21 +1100,35 @@
     return a * (pS * vSafe + (1 - pS) * vCaught - here);
   }
   function cost08(p, q, s, arsenal, tab, look, sit, myopic) {
-    const s_ = replace(s, { look });
+    const s_ = s.look === look ? s : replace(s, { look });
     const P = outcomeProbs(p, q, s_, arsenal, null, null, sit);
+    return [costFromP(p, q, s, tab, look, P, myopic), P];
+  }
+  function buildM(arsenal, sL, tab, look, calls, ks, withMyopic) {   // M[a][k] = C(a | pure sit k); one prep per call (speed)
+    const M = {}, Mmy = withMyopic ? {} : null;
+    for (const a of calls) {
+      const p = byName(arsenal, skName(a)), q = skH(a), pr = opPrep(p, q, sL, arsenal, null, true);
+      M[a] = {}; if (Mmy) Mmy[a] = {};
+      for (const kk of ks) {
+        const P = opEval(pr, p, q, sL, arsenal, pureSit(kk));
+        M[a][kk] = costFromP(p, q, sL, tab, look, P, false);
+        if (Mmy) Mmy[a][kk] = costFromP(p, q, sL, tab, look, P, true);
+      }
+    }
+    return [M, Mmy];
+  }
+  function costFromP(p, q, s, tab, look, P, myopic) {
     const b = s.balls, k = s.strikes, o = s.outs, B = s.bases;
     const nl = myopic ? tab.h0 : lookUpdate(look, p, q, s);
-    const baseEnd = vEnd(s, o, B, 0);
+    const en = endsCached(tab, s), baseEnd = en.baseEnd;
     const tv = (b_, k_) => tabValue(tab, b_, k_, nl);
-    const walkEnd = (bases, runs) => { const [b1, b2, b3] = bases, r_ = (b1 && b2 && b3) ? 1 : 0; return vEnd(s, o, [true, b1 || b2, b3 || (b1 && b2)], runs + r_); };
     let v = 0.0;
-    v += P.ball * (b + 1 === 4 ? walkEnd(B, 0) : tv(b + 1, k));
-    const nb = [false, B[0], B[1]], r = B[2] ? 1 : 0;
-    v += P.wp_ball * (b + 1 === 4 ? walkEnd(nb, r) : tv(b + 1, k) + vEnd(s, o, nb, r) - baseEnd);
-    v += P.hbp * walkEnd(B, 0);
-    v += (P.cstrike + P.whiff) * (k + 1 === 3 ? vEnd(s, o + 1, B, 0) : tv(b, k + 1));
+    v += P.ball * (b + 1 === 4 ? en.walkB : tv(b + 1, k));
+    v += P.wp_ball * (b + 1 === 4 ? en.walkNb : tv(b + 1, k) + en.vNb - baseEnd);
+    v += P.hbp * en.walkB;
+    v += (P.cstrike + P.whiff) * (k + 1 === 3 ? en.kOut : tv(b, k + 1));
     v += P.foul * (k < 2 ? tv(b, k + 1) : tv(b, k));
-    for (const c of ["weak", "solid", "hard"]) v += P[c] * (FLAGS.inplay_typed ? inPlayValueTyped(c, p, q, s) : inPlayValueEv(c, s));
+    for (const c of ["weak", "solid", "hard"]) v += P[c] * ipvCached(tab, c, p, q, s);
     if (FLAGS.running_game && s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
     if (FLAGS.hs_pitch_cost && (s.level === "hs" || s.level === "travel")) {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
@@ -983,7 +1139,43 @@
         v += 0.002 * runScale(s.level) * w_ * (1 + nxt);
       }
     }
-    return [v, P];
+    return v;
+  }
+  // Speed only: values that depend on the base-out state and objective but not on the count, look or sit are cached per
+  // context (cached numbers are the same numbers). The context key is built once per situation object.
+  const CTX_KEY = new WeakMap();
+  function ctxOf(tab, s) {
+    let key = CTX_KEY.get(s);
+    if (key === undefined) {
+      const w = s.win;
+      key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
+        (FLAGS.objective_win && w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" + (FLAGS.inplay_typed ? 1 : 0);
+      CTX_KEY.set(s, key);
+    }
+    if (!tab.ctx) tab.ctx = new Map();
+    let c = tab.ctx.get(key);
+    if (!c) { c = { ipv: new Map(), ends: null }; tab.ctx.set(key, c); }
+    return c;
+  }
+  function ipvCached(tab, c, p, q, s) {
+    const cx = ctxOf(tab, s);
+    let byP = cx.ipv.get(p);
+    if (!byP) { byP = new Map(); cx.ipv.set(p, byP); }
+    let arr = byP.get(q);
+    if (!arr) {
+      arr = ["weak", "solid", "hard"].map((cc) => (FLAGS.inplay_typed ? inPlayValueTyped(cc, p, q, s) : inPlayValueEv(cc, s)));
+      byP.set(q, arr);
+    }
+    return arr[c === "weak" ? 0 : c === "solid" ? 1 : 2];
+  }
+  function endsCached(tab, s) {
+    const cx = ctxOf(tab, s);
+    if (!cx.ends) {
+      const o = s.outs, B = s.bases, nb = [false, B[0], B[1]], r = B[2] ? 1 : 0;
+      const walkEnd = (bases, runs) => { const [b1, b2, b3] = bases, r_ = (b1 && b2 && b3) ? 1 : 0; return vEnd(s, o, [true, b1 || b2, b3 || (b1 && b2)], runs + r_); };
+      cx.ends = { baseEnd: vEnd(s, o, B, 0), walkB: walkEnd(B, 0), walkNb: walkEnd(nb, r), vNb: vEnd(s, o, nb, r), kOut: vEnd(s, o + 1, B, 0) };
+    }
+    return cx.ends;
   }
   function pitchesLeft(P, s, tab, nl) {
     const b = s.balls, k = s.strikes;
@@ -992,7 +1184,8 @@
       (P.cstrike + P.whiff) * (k + 1 === 3 ? 0 : tabValue(tab, b, k + 1, nl, "N")) +
       P.foul * tabValue(tab, b, Math.min(k + 1, 2), nl, "N");
   }
-  const pureSit = (key) => ["pure", skName(key), skH(key)];
+  const PURE = new Map();
+  const pureSit = (key) => { let r = PURE.get(key); if (!r) { r = ["pure", skName(key), skH(key)]; PURE.set(key, r); } return r; };
   function solveTable(arsenal, s, sweeps = 10, tol = 0.001) {
     const tab = Table(arsenal, s);
     const order = COUNTS.slice().sort((a, b) => -(a[0] + a[1]) + (b[0] + b[1]));
@@ -1010,14 +1203,14 @@
         const sc = replace(s, { balls: b, strikes: k, last: null, usage_this_count: {}, usage_by_call: {}, b_h: Object.assign({}, s.b_h) });
         const temp = temperature(arsenal, sc);
         const calls = allowedCalls(arsenal, sc);
-        const M = {};
-        for (const a of calls) { M[a] = {}; for (const kk of ks) M[a][kk] = cost08(byName(arsenal, skName(a)), skH(a), sc, arsenal, tab, tab.h0, pureSit(kk))[0]; }
+        const scH = replace(sc, { look: tab.h0 });
+        const [M] = buildM(arsenal, scH, tab, tab.h0, calls, ks, false);
         const [, sg, res] = solveSitGame(M, ks, sc, temp, sc.b_h);
         tab.sigma[cntKey(b, k)] = sg;
         tab.residuals.push(res);
         for (const bn of tab.bins) {
-          const look = binLook(tab, bn), cs = {}, Ps = {};
-          for (const a of calls) [cs[a], Ps[a]] = cost08(byName(arsenal, skName(a)), skH(a), sc, arsenal, tab, look, ["mix", sg]);
+          const look = binLook(tab, bn), cs = {}, Ps = {}, scL = replace(sc, { look }), mix = ["mix", sg];
+          for (const a of calls) [cs[a], Ps[a]] = cost08(byName(arsenal, skName(a)), skH(a), scL, arsenal, tab, look, mix);
           const pol = policyFromCosts(cs, sc, temp);
           const nv = psum(Object.keys(pol).map((a) => pol[a] * cs[a]));
           delta = Math.max(delta, Math.abs(nv - tab.V[cntKey(b, k)][bn]));
@@ -1039,12 +1232,10 @@
     const temp = temperature(arsenal, s);
     let calls = allowedCalls(arsenal, s, exclude);
     if (!calls.length) calls = allowedCalls(arsenal, s);
-    let M = {};
-    for (const a of calls) { M[a] = {}; for (const kk of ks) M[a][kk] = cost08(byName(arsenal, skName(a)), skH(a), s, arsenal, tab, look, pureSit(kk))[0]; }
+    const sL = replace(s, { look });
+    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, FLAGS.look_state);
     const sgTab = tab.sigma[cntKey(s.balls, s.strikes)];
     if (FLAGS.look_state) {
-      const Mmy = {};
-      for (const a of calls) { Mmy[a] = {}; for (const kk of ks) Mmy[a][kk] = cost08(byName(arsenal, skName(a)), skH(a), s, arsenal, tab, look, pureSit(kk), true)[0]; }
       const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
       let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
       const delta = 0.010 * runScale(s.level);
