@@ -51,6 +51,10 @@ ENGINE = os.environ.get("ENGINE", "v07")         # v0.8: v07 or v08 flags for th
 # matchup memory, power HR) whatever the calling engine is, so v0.8 and v0.9 calls can be compared in the same world.
 # Unset (default): the world uses the engine's own flags, as before. Landing and the guardrail are call rules, not world.
 WORLD = os.environ.get("WORLD", "")
+# v0.9 Step 7: TRUTH_TAB=world also scores every call against a table solved in the world's model (log only: no rng
+# draw, no change to calls or outcomes). The plain regret columns use the calling engine's own table (its own hitter
+# sit and later-count values), so they are not on one yardstick across engines; the regret_w_* columns are.
+TRUTH_TAB = os.environ.get("TRUTH_TAB", "")
 
 
 # ---------------------------------------------------------------------------
@@ -407,6 +411,7 @@ def play_game(log_path):
             mm_prev = dict(mm[(pitcher["name"], h)])     # earlier trips only: this PA's pitches count from his next PA
             v08 = engine.FLAGS["look_state"]
             tab, frozen, look, fooled = None, None, None, []      # v0.8 (6): this PA's table, its inputs, the look
+            _tw = [None, None, None]                                # TRUTH_TAB=world: the world's table for this PA
             win_pa = None                                         # v0.8 (7.2): objective constants, fixed at PA start
             o_add, r_pre, bases, pre_label = pre_pa(outs, bases, R)
             if pre_label:
@@ -498,12 +503,23 @@ def play_game(log_path):
                     else:
                         tc = {(x.name, qq): engine.cost(x, qq, ts, ars_true)[0]
                               for x in ars_true if x.name in {c.name for c in engine.candidates(ars, s)} for qq in QUADS}
+                    tcw = None
+                    if v08 and TRUTH_TAB == "world":
+                        if _tw[0] is not tab or _tw[1] != h:
+                            _tw[:] = [tab, h, engine.solve_table(ars_true, replace(ts, balls=0, strikes=0, last=None))]
+                        tcw = engine.root_costs(ars_true, ts, _tw[2])
                 t_best = min(tc.values())
                 regret_exp = sum(d[0] * (tc.get((d[2].name, d[3]), t_best) - t_best) for d in dist)
                 regret_pick = tc.get((p.name, q), t_best) - t_best
                 est_best = min(dist, key=lambda d: d[1])            # the engine's own best guess
                 regret_info = tc.get((est_best[2].name, est_best[3]), t_best) - t_best
                 regret_mix = regret_exp - regret_info
+                rw = {}
+                if tcw is not None:
+                    wb = min(tcw.values())
+                    rw = {"regret_w_exp": round(sum(d[0] * (tcw.get((d[2].name, d[3]), wb) - wb) for d in dist), 5),
+                          "regret_w_pick": round(tcw.get((p.name, q), wb) - wb, 5),
+                          "regret_w_info": round(tcw.get((est_best[2].name, est_best[3]), wb) - wb, 5)}
                 ev = sample(P)
                 tau = hitter["timing"]
                 cls = "OS" if is_offspeed(p.kind) else "FB"
@@ -618,6 +634,7 @@ def play_game(log_path):
                     "off_today": round(CURRENT_OFF.get(p.name, 0.0), 2), "inputs": INPUTS, "noise": NOISE,
                     "regret_exp": round(regret_exp, 5), "regret_pick": round(regret_pick, 5),
                     "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(s.inning >= 7 and abs(margin) <= 2 and (s.bases[1] or s.bases[2])),
+                    **rw,
                 })
                 last = (p.name, q, "whiff" if ev == "whiff" else result)
                 if outs >= 3:

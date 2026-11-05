@@ -17,7 +17,7 @@ def arg(name, default):
 def one(engine, level, staff, seed):
     # v0.9 Step 7: "v08@v09w" = the v0.8 engine calling in the v0.9 world (simulate.py WORLD), in runs/readthrough/v08_in_v09w
     engine, world = engine.split("@") if "@" in engine else (engine, "")
-    tag = f"{engine}_in_{world}" if world else engine
+    tag = (f"{engine}_in_{world}" if world else engine) + SUFFIX
     out = os.path.join(ROOT, "runs", "readthrough", tag, f"{level}_{staff}_s{seed}.csv")
     if os.path.exists(out) and os.path.getsize(out) > 0:
         return out, "kept", 0.0
@@ -34,7 +34,12 @@ def one(engine, level, staff, seed):
     return out, "ok", time.time() - t0
 
 
+SUFFIX = ""
+
+
 def main():
+    global SUFFIX
+    SUFFIX = arg("--suffix", "")      # v0.9 Step 7: e.g. "_tw" with TRUTH_TAB=world in the environment, so reruns get their own folder
     engines = arg("--engines", "v07,v08").split(",")
     a, b = (int(x) for x in arg("--seeds", "101-104").split("-"))
     jobs = int(arg("--jobs", "2"))

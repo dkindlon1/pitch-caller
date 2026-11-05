@@ -1,0 +1,53 @@
+v08_in_v09w vs v09: 90 paired games (same file name = same level, staff and seed)
+
+[all] 90 games
+                                 v08_in_v09w       v09      diff       SE
+  runs allowed per game               6.93      7.64      0.71     0.54
+  walks + HBP per PA                 18.1%     18.2%      0.1%     0.7%
+  strikeouts per PA                  16.4%     16.7%      0.3%     0.8%
+  pitches per PA                      3.57      3.60      0.03     0.04
+  hard contact per PA                19.5%     17.9%     -1.6%     0.8%
+  fastball share                     64.0%     59.2%     -4.8%     1.2%
+  changeup share                      3.8%      7.2%      3.4%     0.5%
+  inside share                        6.8%      8.2%      1.4%     0.5%
+  middle share                       56.1%     55.4%     -0.7%     0.9%
+  chase share with two strikes        4.3%      5.5%      1.2%     0.6%
+
+[hs] 30 games
+                                 v08_in_v09w       v09      diff       SE
+  runs allowed per game               7.87      8.83      0.97     1.01
+  walks + HBP per PA                 19.5%     21.1%      1.5%     0.8%
+  strikeouts per PA                  18.1%     16.4%     -1.6%     1.5%
+  pitches per PA                      3.60      3.63      0.03     0.07
+  hard contact per PA                19.1%     16.5%     -2.6%     1.3%
+  fastball share                     64.4%     61.2%     -3.2%     1.7%
+  changeup share                      3.5%      6.3%      2.8%     0.7%
+  inside share                        6.6%      6.6%     -0.0%     0.7%
+  middle share                       58.4%     57.4%     -1.0%     1.5%
+  chase share with two strikes        5.3%      6.3%      1.0%     1.2%
+
+[college_d3] 30 games
+                                 v08_in_v09w       v09      diff       SE
+  runs allowed per game               8.20      7.43     -0.77     0.99
+  walks + HBP per PA                 18.0%     18.1%      0.1%     1.3%
+  strikeouts per PA                  14.6%     14.5%     -0.1%     1.0%
+  pitches per PA                      3.54      3.56      0.02     0.06
+  hard contact per PA                18.2%     18.5%      0.3%     1.1%
+  fastball share                     64.2%     59.9%     -4.3%     2.0%
+  changeup share                      3.4%      6.1%      2.7%     0.6%
+  inside share                        6.0%      8.8%      2.8%     0.7%
+  middle share                       55.0%     54.2%     -0.8%     1.8%
+  chase share with two strikes        3.4%      3.6%      0.2%     0.7%
+
+[college_d1] 30 games
+                                 v08_in_v09w       v09      diff       SE
+  runs allowed per game               4.73      6.67      1.93     0.75
+  walks + HBP per PA                 16.7%     15.3%     -1.4%     1.3%
+  strikeouts per PA                  16.5%     19.2%      2.7%     1.5%
+  pitches per PA                      3.56      3.61      0.05     0.09
+  hard contact per PA                21.3%     18.7%     -2.6%     1.5%
+  fastball share                     63.3%     56.4%     -7.0%     2.4%
+  changeup share                      4.5%      9.3%      4.8%     1.2%
+  inside share                        7.9%      9.2%      1.3%     1.0%
+  middle share                       55.0%     54.7%     -0.3%     1.6%
+  chase share with two strikes        4.1%      6.6%      2.5%     0.9%
