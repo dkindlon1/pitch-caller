@@ -11,4 +11,5 @@
 | Task 3 migrations on prod | **Applied** by the first promote run (Drew started it). Prod: 14 public tables, 0 without RLS, migration 20261103000000 recorded, 19 pc_ functions. The run was marked failed only because its up-to-date check expected JSON; fixed in ddddc47 | Actions run 42083213921; SQL on prod; advisors: 16 WARN (security-definer helpers callable by signed-in users, fix planned in Plan 1), 1 INFO (invites has RLS and no policies, intended) |
 | Task 3 "Confirm email" on | Not verified (not visible through the tools); Drew to check in Auth settings | — |
 | Free-tier slot | LAUGHAPP paused (restorable from the dashboard) to free a slot | get_project: INACTIVE |
-| Tasks 4–6 | Not started | — |
+| Task 6 landing page | **Built and passing in CI** (637596c): Next.js 16 in web/, on the Pitch Caller design system; waitlist migration 20261105180000; waitlist_test 22, landing_e2e 20, 8 unit tests. Lighthouse mobile locally: perf 93-97, LCP median 2.3 s (one run 2.9 s), CLS 0, a11y/BP/SEO 100. Not deployed: needs a Vercel account, the three server settings, and a promote run for the waitlist migration | Actions run 42088221865 |
+| Tasks 4–5 (Sentry, Resend) | Not started: need Drew's accounts | — |
