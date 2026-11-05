@@ -775,12 +775,15 @@ function makeCall() {
   const r = E.callV08(ars, s, { exclude: shakenNow, tab });
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
   const c = G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
-    sigma: r.info.sigma, why: null,
+    sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
     dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
   // spec 9: the "why" line runs after the call is shown, off the critical path
   setTimeout(() => {
     if (G().call !== c) return;
     try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info)[0]; } catch (e) { c.why = null; }
+    // v0.9 item 4: the call's job in the at-bat (display only; computed after the call, changes nothing)
+    try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenNow); }
+    catch (e) { c.intent = c.mechanism = c.intentLine = null; }
     save(); render();
   }, 0);
 }
@@ -842,7 +845,7 @@ function record(res) {
     pred: PCLearn.predict(E, ars, sitNow, called.name, call.quad), sit: PCLearn.snapSituation(sitNow), ars: PCLearn.snapArsenal(ars) };
   if (isV08()) {   // spec 8.3: what the v0.8 expectations were built from, so a replay can recompute every one of them
     const s0 = Object.assign({}, sitNow, { look: g.pa ? g.pa.look : null, ump_u: umpSeed() });
-    evBase.v08 = { look: g.pa ? g.pa.look : null, sigma: call.sigma || null, why: call.why || null, walk: !!call.walk,
+    evBase.v08 = { look: g.pa ? g.pa.look : null, sigma: call.sigma || null, why: call.why || null, intent: call.intent || null, mechanism: call.mechanism || null, walk: !!call.walk,
       ump: E.v08.takeStats(p, call.quad, s0, ars), grades: E.v08.gradeStats(p, call.quad, Object.assign({}, sitNow, { look: s0.look }), ars, null, sitNow.grades),
       flags: Object.assign({}, E.FLAGS), radar: res.radar ? +res.radar : undefined };
   }

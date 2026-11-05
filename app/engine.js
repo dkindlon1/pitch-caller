@@ -1447,6 +1447,55 @@
     else line = "Tunnels off the last pitch";
     return [line, deltas, b];
   }
+  // v0.9 item 4: intent labels. DISPLAY ONLY (mirror of engine.py intent_label): nothing here feeds back into a call.
+  const INTENT_E = 0.0005;
+  const INTENT_TERMS = ["timing", "eye level", "repeat", "tunneling"];
+  const INTENT_MECH = { timing: "of his timing", "eye level": "it changes his eye level", repeat: "he just saw it",
+    tunneling: "it tunnels off the last pitch" };
+  function intentFromCosts(balls, strikes, quad, cMyA, cMyBest, cA, cBest, e) {
+    if (balls === 3 && strikes < 2) return "Get it over";
+    if (strikes === 2) return quad === "chase" ? "Expand" : "Finish";
+    if (cMyA > cMyBest + e && cA < cBest) return "Setup";
+    return quad === "chase" ? "Early off-zone" : "Get ahead";
+  }
+  function rootCostOne(arsenal, s, tab, x, sigma, myopic) {
+    const look = s.look || tab.h0;
+    return psum(sitOptions(arsenal).filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
+  }
+  function intentLabel(arsenal, s, tab, pick, info, exclude) {
+    const sigma = info.sigma, p = pick.pitch, q = pick.quad, a = ck(p.name, q);
+    let calls = allowedCalls(arsenal, s, exclude);
+    if (!calls.length) calls = allowedCalls(arsenal, s);
+    const cmy = {}; for (const x of calls) cmy[x] = rootCostOne(arsenal, s, tab, x, sigma, true);
+    let bstar = calls[0]; for (const x of calls) if (cmy[x] < cmy[bstar]) bstar = x;
+    if (!(a in cmy)) cmy[a] = rootCostOne(arsenal, s, tab, a, sigma, true);
+    const cA = rootCostOne(arsenal, s, tab, a, sigma, false), cB = rootCostOne(arsenal, s, tab, bstar, sigma, false);
+    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cA, cB, INTENT_E * runScale(s.level));
+    let mech = null;
+    if ((label === "Setup" || label === "Early off-zone") && bstar !== a) {
+      const base = cA - cB; let bestD = -1e-9;
+      for (const term of INTENT_TERMS) {
+        const names = WHY_PARAMS[term], saved = {}; for (const n of names) saved[n] = P08[n];
+        let d;
+        try { for (const n of names) P08[n] = 0.0; d = base - (rootCostOne(arsenal, s, tab, a, sigma, false) - rootCostOne(arsenal, s, tab, bstar, sigma, false)); }
+        finally { Object.assign(P08, saved); }
+        if (d < bestD) { bestD = d; mech = term; }
+      }
+    }
+    const pl = p.name.toLowerCase(), why = (m) => (m === null ? "of the counts it leads to" : INTENT_MECH[m]);
+    let line;
+    if (label === "Get ahead") line = `Best strike here: ${pl} ${q}`;
+    else if (label === "Get it over") line = `Need a strike: ${pl} ${q} is the safest one`;
+    else if (label === "Setup") {
+      const full = {}; for (const x in info.M) full[x] = psum(Object.keys(info.M[x]).map((k) => sigma[k] * info.M[x][k]));
+      let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;
+      if (nxt === null) nxt = bstar;
+      line = `Sets up the ${skName(nxt).toLowerCase()} ${skH(nxt)}, because ${why(mech)}`;
+    } else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
+    else if (label === "Finish") line = `Put-away: ${pl} ${q}`;
+    else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${why(mech)}` : "");
+    return [label, mech, line];
+  }
   function gradeCallV08(arsenal, s, pitchName, quad, tab, opts = {}) {
     // the coach's own call priced the way v0.8 prices its calls: against the hitter's sit mix at the root, with the table
     const r = callV08(arsenal, s, Object.assign({ tab }, opts));
@@ -1464,13 +1513,13 @@
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
-    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine,
+    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, FLAGS, FLAGS_V07, FLAGS_V08, setFlags, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
-    v08, callV08, solveTable, whyLine };
+    v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);

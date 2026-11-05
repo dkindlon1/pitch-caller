@@ -2068,3 +2068,83 @@ def why_line(arsenal, s, tab, pick, info):
     else:
         line = "Tunnels off the last pitch"
     return line, deltas, b
+
+
+# ---------------------------------------------------------------------------
+# v0.9 item 4: intent labels. DISPLAY ONLY: computed from costs the root call already has, after the call is drawn; nothing
+# here feeds back into a call, so every call and probability is identical whether or not it is used.
+# ---------------------------------------------------------------------------
+INTENT_E = 0.0005           # x run scale: numerical-noise margin for "costs more now" (plan item 4)
+INTENT_TERMS = ("timing", "eye level", "repeat", "tunneling")   # what can do a setup's work (side to side did not ship)
+INTENT_MECH = {"timing": "of his timing", "eye level": "it changes his eye level", "repeat": "he just saw it",
+               "tunneling": "it tunnels off the last pitch", None: "of the counts it leads to"}
+
+
+def intent_from_costs(balls, strikes, quad, c_my_a, c_my_best, c_a, c_best, e):
+    """The label rule (plan item 4), first match wins. c_my = myopic cost, c = full cost (with look value); *_best are for b*,
+    the allowed call with the lowest myopic cost."""
+    if balls == 3 and strikes < 2:
+        return "Get it over"
+    if strikes == 2:
+        return "Expand" if quad == "chase" else "Finish"
+    if c_my_a > c_my_best + e and c_a < c_best:
+        return "Setup"
+    return "Early off-zone" if quad == "chase" else "Get ahead"
+
+
+def _root_cost_one(arsenal, s, tab, x, sigma, myopic=False):
+    by = {p.name: p for p in arsenal}
+    look = s.look or tab.h0
+    return sum(sigma[k] * cost08(by[x[0]], x[1], s, arsenal, tab, look, ("pure",) + k, myopic=myopic)[0]
+               for k in sit_options(arsenal) if sigma[k] > 1e-4)
+
+
+def intent_label(arsenal, s, tab, pick, info, exclude=None):
+    """v0.9 item 4. Returns (label, mechanism, coach line). pick = (pitch, quad, ...) as returned by call_v08; info its info.
+    Mechanism (Setup and Early off-zone only): the term whose removal most weakens the call against b* (the why line's
+    term-off comparison), or None when no single term carries it."""
+    sigma = info["sigma"]
+    p, q = pick[0], pick[1]
+    a = (p.name, q)
+    calls = allowed_calls(arsenal, s, exclude) or allowed_calls(arsenal, s)
+    cmy = {x: _root_cost_one(arsenal, s, tab, x, sigma, True) for x in calls}
+    bstar = calls[0]
+    for x in calls:
+        if cmy[x] < cmy[bstar]:
+            bstar = x
+    if a not in cmy:
+        cmy[a] = _root_cost_one(arsenal, s, tab, a, sigma, True)
+    c_a = _root_cost_one(arsenal, s, tab, a, sigma)
+    c_b = _root_cost_one(arsenal, s, tab, bstar, sigma)
+    label = intent_from_costs(s.balls, s.strikes, q, cmy[a], cmy[bstar], c_a, c_b, INTENT_E * run_scale(s.level))
+    mech = None
+    if label in ("Setup", "Early off-zone") and bstar != a:
+        base = c_a - c_b
+        best_d = -1e-9
+        for term in INTENT_TERMS:
+            names = _WHY_PARAMS[term]
+            saved = {n: P08[n] for n in names}
+            try:
+                for n in names:
+                    P08[n] = 0.0
+                d = base - (_root_cost_one(arsenal, s, tab, a, sigma) - _root_cost_one(arsenal, s, tab, bstar, sigma))
+            finally:
+                P08.update(saved)
+            if d < best_d:
+                best_d, mech = d, term
+    spot = q
+    if label == "Get ahead":
+        line = f"Best strike here: {p.name.lower()} {spot}"
+    elif label == "Get it over":
+        line = f"Need a strike: {p.name.lower()} {spot} is the safest one"
+    elif label == "Setup":
+        full = {x: sum(sigma[k] * info["M"][x][k] for k in info["M"][x]) for x in info["M"]}
+        nxt = min((x for x in full if x[0] != p.name), key=lambda x: full[x], default=bstar)
+        line = f"Sets up the {nxt[0].lower()} {nxt[1]}, because {INTENT_MECH[mech]}"
+    elif label == "Expand":
+        line = f"Two strikes: {p.name.lower()} {spot}, off the zone"
+    elif label == "Finish":
+        line = f"Put-away: {p.name.lower()} {spot}"
+    else:
+        line = f"Off the zone early: {p.name.lower()} {spot}" + (f", because {INTENT_MECH[mech]}" if mech else "")
+    return label, mech, line
