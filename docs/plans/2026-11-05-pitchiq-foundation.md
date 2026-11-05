@@ -44,6 +44,7 @@ Under A2, each later plan adds its own tables in its own migration, and those ta
 
 **Functions and keys**
 - Every `security definer` function sets `search_path = ''` and schema-qualifies every name.
+- Internal helpers (`pc_can_read`, `pc_can_write`, `pc_check_row`, `pc_preset_perms`, `pc_team_active`, `pc_can`, `pc_my_pitchers`, `pc_owner_can_manage`) live in a `private` schema that the Supabase API doesn't expose, so they can't be called through `/rest/v1/rpc`. `authenticated` keeps `usage` on `private` and `execute` on the helpers, because RLS policies run as the signed-in user and need to call them. Only the intended RPC entry points stay in `public`. Found by the Supabase security advisor on prod (Nov 5): 16 security-definer functions in `public`, including the permission helpers, were callable by signed-in users. Test: `rls_on_every_table` also asserts that no function named in this list exists in `public`, and Task 8 re-runs the advisor and expects no `authenticated_security_definer_function_executable` finding for a helper.
 - The service-role key lives only in gitignored `.env` files and Edge Function secrets.
 - Only the service role sets `billing_status` and team activation; Plan 2 drives both from Stripe.
 

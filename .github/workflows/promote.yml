@@ -36,6 +36,9 @@ jobs:
       - name: Apply
         run: $SUPABASE_CLI db push --db-url "$DB_URL" --yes
       - name: Up to date afterwards
-        run: $SUPABASE_CLI db push --dry-run --db-url "$DB_URL" | grep -q '"upToDate":true'
+        # The CLI prints plain text on GitHub's runners and JSON elsewhere, so accept either form.
+        run: |
+          $SUPABASE_CLI db push --dry-run --db-url "$DB_URL" 2>&1 | tee after.txt
+          grep -q -E '"upToDate":true|Remote database is up to date' after.txt
       - name: Row-level security on every public table
         run: psql "$DB_URL" -f scripts/check-rls.sql
