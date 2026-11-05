@@ -210,6 +210,28 @@ const MIN = 60e3;
     check(games === 0 && hitters === 0 && events === 0 && mine.join() === "pit1", `then the player takes over: the coach's cached team data is cleared and he gets only his own (pitchers ${mine.join()}, games ${games}, hitters ${hitters}, events ${events})`);
   }
 
+  console.log("13. A child's data a parent had deleted leaves the coaches' iPads too");
+  {
+    const A = await device(), B = await device();
+    await A.D.put("pitchers", { id: "pk1", name: "Kid", number: "9", pitches: [] });
+    await A.D.put("checkins", { pitcherId: "pk1", date: "2026-11-05", arm: 3 });
+    await A.sync("coach", P, true).syncNow();
+    await sleep(25); await A.sync("coach", P, true).syncNow();                      // A has nothing left to send
+    await B.sync("coach", P, true).syncNow();
+    await B.D.put("sessions", { pitcherId: "pk1", kind: "bullpen" });               // B charts a bullpen offline...
+    await su.query("insert into public.minors (program_id, pitcher_id) values ($1, 'pk1')", [P]);
+    await su.query("insert into public.guardian_consents (program_id, pitcher_id, guardian_user_id, method) values ($1, 'pk1', $2, 'test')", [P, U.pitcher2]);
+    await su.query("begin"); await su.query("select set_config('request.jwt.claims', '{\"role\":\"service_role\"}', true)");
+    await su.query("select public.pc_delete_minor($1, 'pk1')", [P]); await su.query("commit");   // ...and the parent has it all deleted
+    const ra = await A.sync("coach", P, true).syncNow();
+    const leftA = (await A.D.all("pitchers", true)).filter((x) => x.id === "pk1").length + (await A.D.all("checkins", true)).filter((x) => x.pitcherId === "pk1").length;
+    check(ra.pull.purged === 2 && leftA === 0 && !ra.push.applied, `iPad A, with nothing to send, deletes his record and check-in when the pull lists him (${ra.pull.purged} deleted)`);
+    const rb = await B.sync("coach", P, true).syncNow();
+    const leftB = (await B.D.all("sessions", true)).filter((x) => x.pitcherId === "pk1").length + (await B.D.all("pitchers", true)).filter((x) => x.id === "pk1").length;
+    check(leftB === 0 && (await B.sync("coach", P, true).pending()).sessions === 0 && !rb.push.rejected.length, "iPad B's offline bullpen for him is refused for good and deleted, not left waiting");
+    check(+(await su.query("select count(*) n from public.pitchers where id = 'pk1'")).rows[0].n === 0, "and nothing of his came back to the server");
+  }
+
   await c.end(); await su.end();
   console.log(fails ? `\n${fails} client check(s) FAILED` : "\nall client checks passed");
   process.exit(fails ? 1 : 0);

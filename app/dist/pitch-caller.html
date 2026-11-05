@@ -2663,7 +2663,7 @@ td.wrapcell .line { display: block; }
  */
 (function (root) {
   "use strict";
-  const VERSION = "2.0.0";
+  const VERSION = "2.1.0";
   // the device stores that sync, in the order they go up (parents before what points at them); meta stays on the device
   const TABLES = ["teams", "pitchers", "catchers", "hitters", "checkins", "sessions", "readings", "games", "packs", "events", "learned"];
   const BATCH = 400;
@@ -2776,6 +2776,8 @@ td.wrapcell .line { display: block; }
           // the server's copy of what it didn't take because its own is as new or newer: this iPad takes it
           for (const x of r.server || []) if (x && x.doc) take.push(x.doc);
           for (const x of r.rejected || []) {
+            // a child's record a parent had deleted: refused for good, so this iPad deletes its copy too
+            if (x.reason === "purged") { if (db.forget) await db.forget(t, x.id); stats.purged = (stats.purged || 0) + 1; continue; }
             stats.rejected.push(Object.assign({ table: t }, x));
             (parked[t] = parked[t] || []).push(x.id);     // kept and tried again (never written off)
             if (/^clock/.test(x.reason || "")) restamp.push([t, x.id]);
@@ -2799,10 +2801,22 @@ td.wrapcell .line { display: block; }
       return stats;
     }
 
+    // pitchers whose data a parent had deleted (the server lists them for coaches): this iPad deletes its own copies
+    // of their records, check-ins, bullpens, velo and learned models. Their pitches in games come down from the
+    // server under a stand-in.
+    async function purge(ids) {
+      if (!db.forget) return 0;
+      const gone = new Set(ids); let n = 0;
+      for (const x of await db.all("pitchers", true)) if (gone.has(x.id)) { await db.forget("pitchers", x.id); n++; }
+      for (const t of ["checkins", "sessions", "readings"]) for (const x of await db.all(t, true)) if (gone.has(x.pitcherId)) { await db.forget(t, x.id); n++; }
+      for (const x of await db.all("learned", true)) { const m = /^p2?:(.+)$/.exec(x.id); if ((m && gone.has(m[1])) || gone.has(x.pitcherId)) { await db.forget("learned", x.id); n++; } }
+      return n;
+    }
+
     async function pull() {
       await bind();
       const s = await state();
-      const stats = { merged: 0, received: 0, held: false, locked: false };
+      const stats = { merged: 0, received: 0, held: false, locked: false, purged: 0 };
       for (let pass = 0; pass < 2; pass++) {
         let restart = false;
         for (const t of TABLES) {
@@ -2816,6 +2830,7 @@ td.wrapcell .line { display: block; }
             if (r.locked) { stats.locked = true; break; }                              // not paid up: nothing comes down
             stats.received += r.rows.length;
             if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
+            if (t === "pitchers" && Array.isArray(r.purged) && r.purged.length) stats.purged += await purge(r.purged);
             if (r.held) stats.held = true;
             cur = r.next || cur;
             s.cursor[t] = cur;
@@ -2884,6 +2899,7 @@ td.wrapcell .line { display: block; }
       giveConsent: (token, method) => rpc("pc_record_guardian_consent", { tok: token, method }),
       invite: (role, pitcherId, email, under13) => rpc("pc_invite", { p: programId, member_role: role, pitcher: pitcherId || null, invite_email: email || null, under13: !!under13 }),
       cancelInvite: (token) => rpc("pc_cancel_invite", { tok: token }),
+      approveInvite: (token) => rpc("pc_approve_invite", { tok: token }),
       staff: () => rpc("pc_staff", { p: programId }),
       setMember: (userId, role, perms) => rpc("pc_set_member", { p: programId, member: userId, member_role: role, member_perms: perms || {} }),
       removeMember: (userId) => rpc("pc_remove_member", { p: programId, member: userId }),
@@ -6206,7 +6222,7 @@ function staffAdder() {
         const eff = effective(m.role, m.perms);
         return h("tr", {},
           h("td", {}, who),
-          h("td", {}, m.pending ? `invited as ${roleName(m.role).toLowerCase()}` : !coach || !may("manage_staff") ? roleName(m.role)
+          h("td", {}, m.pending && m.needs_approval ? "a parent's email a player gave: is it right?" : m.pending ? `invited as ${roleName(m.role).toLowerCase()}` : !coach || !may("manage_staff") ? roleName(m.role)
             : h("div", {},
               h("select", { "aria-label": `Preset for ${who}`, on: { change: (e) => act(() => tr().setMember(m.user_id, e.target.value, {}), "Preset changed")() } },
                 PRESETS.filter(([v]) => v !== "player").map(([v, l]) => h("option", { value: v, selected: m.role === v ? true : null }, l))),
@@ -6218,7 +6234,8 @@ function staffAdder() {
                   act(() => tr().setMember(m.user_id, m.role, perms), `${l}: ${e.target.checked ? "on" : "off"} for ${who}`)();
                 } } }), l))))),
           h("td", {}, (m.pitcher_ids || []).map(pitcherName).join(", ")),
-          h("td", {}, h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.token), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${who}`) } }, m.pending ? "Cancel invite" : "Remove")));
+          h("td", {}, m.pending && m.needs_approval && may("manage_roster") ? h("button", { class: "btn pill", on: { click: act(() => tr().approveInvite(m.token), `Approved: ${who} can now accept for the player`) } }, "Approve") : null,
+            h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.token), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${who}`) } }, m.pending ? "Cancel invite" : "Remove")));
       })))) : null];
 }
 // D12: games charted twice (two iPads on one game). Checked whenever games arrive from elsewhere (a sync, a restore).

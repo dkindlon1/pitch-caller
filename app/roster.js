@@ -1021,7 +1021,7 @@ function staffAdder() {
         const eff = effective(m.role, m.perms);
         return h("tr", {},
           h("td", {}, who),
-          h("td", {}, m.pending ? `invited as ${roleName(m.role).toLowerCase()}` : !coach || !may("manage_staff") ? roleName(m.role)
+          h("td", {}, m.pending && m.needs_approval ? "a parent's email a player gave: is it right?" : m.pending ? `invited as ${roleName(m.role).toLowerCase()}` : !coach || !may("manage_staff") ? roleName(m.role)
             : h("div", {},
               h("select", { "aria-label": `Preset for ${who}`, on: { change: (e) => act(() => tr().setMember(m.user_id, e.target.value, {}), "Preset changed")() } },
                 PRESETS.filter(([v]) => v !== "player").map(([v, l]) => h("option", { value: v, selected: m.role === v ? true : null }, l))),
@@ -1033,7 +1033,8 @@ function staffAdder() {
                   act(() => tr().setMember(m.user_id, m.role, perms), `${l}: ${e.target.checked ? "on" : "off"} for ${who}`)();
                 } } }), l))))),
           h("td", {}, (m.pitcher_ids || []).map(pitcherName).join(", ")),
-          h("td", {}, h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.token), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${who}`) } }, m.pending ? "Cancel invite" : "Remove")));
+          h("td", {}, m.pending && m.needs_approval && may("manage_roster") ? h("button", { class: "btn pill", on: { click: act(() => tr().approveInvite(m.token), `Approved: ${who} can now accept for the player`) } }, "Approve") : null,
+            h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.token), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${who}`) } }, m.pending ? "Cancel invite" : "Remove")));
       })))) : null];
 }
 // D12: games charted twice (two iPads on one game). Checked whenever games arrive from elsewhere (a sync, a restore).

@@ -12,7 +12,15 @@
 -- A team works only while it is active and its organization is paid up (private.pc_team_active). Billing (Plan 2) sets
 -- those through the service role; nothing a client calls can.
 -- Helpers live in the private schema, which the Supabase API doesn't expose; row level security calls them as the
--- signed-in user, so that user keeps usage and execute on them.
+-- signed-in user, so that user keeps usage and execute on the ones the policies and pc_pull need (and no others).
+
+-- This replaces the program-scoped tables of the first migration, which have never held anything: it refuses to run on
+-- a database where they do, before changing anything (old memberships and invites would need a data migration).
+do $$ begin
+  if exists (select 1 from public.programs) or exists (select 1 from public.members) or exists (select 1 from public.invites) then
+    raise exception 'pitchiq_teams: programs, members or invites already hold rows; migrate them first';
+  end if;
+end $$;
 
 create schema if not exists private;
 -- the first migration's stamp helpers resolved names through public; pin them like everything else
@@ -105,6 +113,10 @@ create table public.invites (
   created_at timestamptz not null default now(),
   used_at timestamptz,
   cancelled_at timestamptz,
+  -- a parent's email typed by a player (not by a coach) waits for a coach to say it's right before it can be used,
+  -- and the account that typed it can never use it
+  needs_approval boolean not null default false,
+  declared_by uuid,
   check ((role = 'player') = (pitcher_id is not null)),
   check (not under13 or (email is not null and role = 'player'))
 );
@@ -125,6 +137,14 @@ create table public.guardian_consents (
   consented_at timestamptz not null default now(),
   primary key (program_id, pitcher_id)
 );
+-- a child's records deleted at a parent's request: the server refuses them if an iPad sends them again, and every
+-- coach's iPad deletes its own copies when it next syncs
+create table public.purged (
+  program_id uuid not null references public.programs (id) on delete cascade,
+  pitcher_id text not null,
+  purged_at timestamptz not null default now(),
+  primary key (program_id, pitcher_id)
+);
 create table public.deletion_log (
   id bigint generated always as identity primary key,
   program_id uuid not null,
@@ -137,8 +157,9 @@ alter table public.invites enable row level security;
 alter table public.minors enable row level security;
 alter table public.guardian_consents enable row level security;
 alter table public.deletion_log enable row level security;
-revoke all on public.organizations, public.player_links, public.invites, public.minors, public.guardian_consents, public.deletion_log
-  from public, anon, authenticated;
+alter table public.purged enable row level security;
+revoke all on public.organizations, public.player_links, public.invites, public.minors, public.guardian_consents, public.deletion_log,
+  public.purged from public, anon, authenticated;
 
 -- ------------------------------------------------------------------ helpers (private: not callable over the API)
 create function private.pc_my_email() returns text
@@ -206,6 +227,21 @@ language sql stable security definer set search_path = '' as $$
   select private.pc_can(p, perm) or private.pc_owner_can_manage(p)
 $$;
 
+-- the caller's own toggles on a team (nothing unless he's a coach on an active team)
+create function private.pc_my_perms(p uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce((select private.pc_preset_perms(m.role) || m.perms from public.members m
+                   where m.program_id = p and m.user_id = auth.uid() and m.role <> 'player' and private.pc_team_active(p)), '{}'::jsonb)
+$$;
+
+-- every toggle switched on in perms is one the caller has himself (the owner may give anything)
+create function private.pc_within(p uuid, perms jsonb) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select private.pc_owner_can_manage(p) or not exists (
+    select 1 from jsonb_each(coalesce(perms, '{}'::jsonb)) e
+    where e.value = 'true'::jsonb and coalesce((private.pc_my_perms(p) ->> e.key)::boolean, false) is not true)
+$$;
+
 create function private.pc_minor_unconsented(p uuid, pitcher text) returns boolean
 language sql stable security definer set search_path = '' as $$
   select exists (select 1 from public.minors m where m.program_id = p and m.pitcher_id = pitcher)
@@ -221,6 +257,44 @@ $$;
 create function private.pc_placeholder_keys() returns text[]
 language sql immutable set search_path = '' as $$
   select array['id', 'createdAt', 'updatedAt', 'deletedAt', 'teamId', 'number']
+$$;
+-- and what those may look like: numbers where there are numbers, an id-like team id, a jersey number of up to 4 letters
+create function private.pc_placeholder_ok(r jsonb) returns boolean
+language sql immutable set search_path = '' as $$
+  select not exists (select 1 from jsonb_object_keys(r) j where not j = any (private.pc_placeholder_keys()))
+     and jsonb_typeof(r -> 'id') = 'string'
+     and (not r ? 'createdAt' or jsonb_typeof(r -> 'createdAt') = 'number')
+     and jsonb_typeof(r -> 'updatedAt') = 'number'
+     and (not r ? 'deletedAt' or jsonb_typeof(r -> 'deletedAt') in ('number', 'null'))
+     and (not r ? 'teamId' or (jsonb_typeof(r -> 'teamId') = 'string' and (r ->> 'teamId') ~ '^[A-Za-z0-9_-]{1,64}$'))
+     and (not r ? 'number' or jsonb_typeof(r -> 'number') = 'null'
+          or (jsonb_typeof(r -> 'number') in ('string', 'number') and (r ->> 'number') ~ '^[0-9A-Za-z]{0,4}$'))
+$$;
+-- which pitcher a row is about: its pitcherId, or for a learned model its id ("p:<pitcher>", "p2:<pitcher>")
+create function private.pc_row_pitcher(tbl text, rid text, r jsonb) returns text
+language sql immutable set search_path = '' as $$
+  select coalesce(r ->> 'pitcherId', case when tbl = 'learned' and rid ~ '^p2?:' then substring(rid from position(':' in rid) + 1) end)
+$$;
+-- the stand-in a deleted child's pitches keep in the team's game records
+create function private.pc_anon_id(p uuid, pitcher text) returns text
+language sql immutable set search_path = '' as $$
+  select 'removed_' || left(encode(sha256(convert_to(p::text || ':' || pitcher, 'UTF8')), 'hex'), 12)
+$$;
+-- a pack (the calls of one game) names each pitcher on the staff with his grades and check-in: one of them becomes
+-- just an id (with_id: the same id, or a stand-in once his data is deleted)
+create function private.pc_scrub_pack(doc jsonb, pitcher text, with_id text) returns jsonb
+language sql immutable set search_path = '' as $$
+  select case when jsonb_typeof(doc -> 'staff') <> 'array' then doc else
+    jsonb_set(doc, '{staff}', coalesce((select jsonb_agg(case when e ->> 'pitcherId' = pitcher then jsonb_build_object('pitcherId', with_id) else e end)
+                                       from jsonb_array_elements(doc -> 'staff') e), '[]'::jsonb)) end
+$$;
+create function private.pc_pack_names(doc jsonb, pitcher text) returns boolean
+language sql immutable set search_path = '' as $$
+  select jsonb_typeof(doc -> 'staff') = 'array' and exists (select 1 from jsonb_array_elements(doc -> 'staff') e where e ->> 'pitcherId' = pitcher)
+$$;
+create function private.pc_bump(doc jsonb) returns jsonb
+language sql stable set search_path = '' as $$
+  select doc || jsonb_build_object('updatedAt', greatest(coalesce((doc ->> 'updatedAt')::bigint, 0) + 1, (extract(epoch from now()) * 1000)::bigint))
 $$;
 
 create function private.pc_can_read(tbl text, p uuid, row_id text, row_pitcher text) returns boolean
@@ -267,28 +341,80 @@ begin
   update public.pitchers set doc = keep where program_id = p and id = pitcher;
 end $$;
 
+-- a player found to be under 13 before a parent has agreed: his pitcher record goes back to the placeholder, and his
+-- check-ins, bullpens, velo, pitches and learned model leave the server (the iPads keep theirs and send them once a
+-- parent agrees); in game packs he becomes just his id
 create function private.pc_flag_minor(p uuid, pitcher text) returns void
 language plpgsql security definer set search_path = '' as $$
+declare t text;
 begin
   insert into public.minors (program_id, pitcher_id, flagged_by) values (p, pitcher, auth.uid()) on conflict do nothing;
-  if private.pc_minor_unconsented(p, pitcher) then perform private.pc_strip_minor(p, pitcher); end if;
+  if private.pc_minor_unconsented(p, pitcher) then
+    perform private.pc_strip_minor(p, pitcher);
+    foreach t in array array['checkins', 'sessions', 'readings', 'events', 'learned'] loop
+      execute format('delete from public.%I where program_id = $1 and pitcher_id = $2', t) using p, pitcher;
+    end loop;
+    delete from public.learned where program_id = p and id in ('p:' || pitcher, 'p2:' || pitcher);
+    update public.packs set doc = private.pc_bump(private.pc_scrub_pack(doc, pitcher, pitcher))
+    where program_id = p and private.pc_pack_names(doc, pitcher);
+  end if;
 end $$;
+
+-- every other open invite for a pitcher stops working once one is used for him (a forwarded or spare link can't
+-- later claim him, or claim to be his parent)
+create function private.pc_close_invites(p uuid, pitcher text, keep text) returns void
+language sql security definer set search_path = '' as $$
+  update public.invites set cancelled_at = now()
+  where program_id = p and pitcher_id = pitcher and token is distinct from keep and used_at is null and cancelled_at is null
+$$;
+
+-- a player's (or parent's) copy of his pitcher record leaves out the coaches' notes
+create function private.pc_redact(tbl text, role text, doc jsonb) returns jsonb
+language sql immutable set search_path = '' as $$
+  select case when tbl = 'pitchers' and role = 'player' and doc is not null then doc - 'notes' else doc end
+$$;
 
 revoke all on all functions in schema private from public, anon;
 grant execute on all functions in schema private to authenticated, service_role;
+-- the ones that change data, and the invite check, run only inside the public functions (as their owner)
+revoke execute on function private.pc_strip_minor(uuid, text), private.pc_flag_minor(uuid, text),
+  private.pc_close_invites(uuid, text, text) from authenticated;
 
 -- ------------------------------------------------------------------ policies
-create function private.pc_org_member(org uuid) returns boolean
+-- the caller's teams, organizations, and the teams whose people he manages: each looked up once per query
+create function private.pc_member_teams() returns setof uuid
 language sql stable security definer set search_path = '' as $$
-  select exists (select 1 from public.programs t join public.members m on m.program_id = t.id where t.org_id = org and m.user_id = auth.uid())
+  select m.program_id from public.members m where m.user_id = auth.uid()
 $$;
-revoke all on function private.pc_org_member(uuid) from public, anon;
-grant execute on function private.pc_org_member(uuid) to authenticated, service_role;
-create policy pc_read on public.organizations for select to authenticated using (owner_id = auth.uid() or private.pc_org_member(id));
-create policy pc_read on public.programs for select to authenticated using (private.pc_role(id) is not null or private.pc_is_owner(org_id));
-create policy pc_read on public.members for select to authenticated using (
-  user_id = auth.uid() or private.pc_can_manage(program_id, 'manage_staff') or private.pc_can_manage(program_id, 'manage_roster'));
-grant select on public.organizations to authenticated;
+create function private.pc_owned_orgs() returns setof uuid
+language sql stable security definer set search_path = '' as $$
+  select o.id from public.organizations o where o.owner_id = auth.uid()
+$$;
+create function private.pc_member_orgs() returns setof uuid
+language sql stable security definer set search_path = '' as $$
+  select t.org_id from public.programs t join public.members m on m.program_id = t.id where m.user_id = auth.uid()
+$$;
+create function private.pc_manage_teams() returns setof uuid
+language sql stable security definer set search_path = '' as $$
+  select m.program_id from public.members m
+  where m.user_id = auth.uid() and m.role <> 'player' and private.pc_team_active(m.program_id)
+    and (coalesce(((private.pc_preset_perms(m.role) || m.perms) ->> 'manage_staff')::boolean, false)
+         or coalesce(((private.pc_preset_perms(m.role) || m.perms) ->> 'manage_roster')::boolean, false))
+  union
+  select t.id from public.programs t join public.organizations o on o.id = t.org_id
+  where o.owner_id = auth.uid() and t.status <> 'removed' and o.billing_status <> 'locked'
+$$;
+revoke all on function private.pc_member_teams(), private.pc_owned_orgs(), private.pc_member_orgs(), private.pc_manage_teams() from public, anon;
+grant execute on function private.pc_member_teams(), private.pc_owned_orgs(), private.pc_member_orgs(), private.pc_manage_teams()
+  to authenticated, service_role;
+create policy pc_read on public.organizations for select to authenticated
+  using (id in (select private.pc_owned_orgs()) or id in (select private.pc_member_orgs()));
+create policy pc_read on public.programs for select to authenticated
+  using (id in (select private.pc_member_teams()) or org_id in (select private.pc_owned_orgs()));
+create policy pc_read on public.members for select to authenticated
+  using (user_id = (select auth.uid()) or program_id in (select private.pc_manage_teams()));
+-- the Stripe ids stay on the server: clients may read these columns only
+grant select (id, name, level, owner_id, billing_status, created_at) on public.organizations to authenticated;
 
 -- The read policies look up the caller's teams and linked pitchers once per query (a sub-select the planner runs once)
 -- instead of once per row; the rules are the same as private.pc_can_read, which pc_push still uses row by row.
@@ -363,12 +489,17 @@ begin
     if pitcher is null or not exists (select 1 from public.pitchers x where x.program_id = p and x.id = pitcher and x.deleted_at is null) then
       raise exception 'pick a pitcher on this team''s roster' using errcode = '22023';
     end if;
-    if exists (select 1 from public.player_links l where l.program_id = p and l.pitcher_id = pitcher) then
+    if exists (select 1 from public.player_links l where l.program_id = p and l.pitcher_id = pitcher)
+       or exists (select 1 from public.guardian_consents g where g.program_id = p and g.pitcher_id = pitcher) then
       raise exception 'that pitcher already has an account' using errcode = '23505';
     end if;
     if under13 and e is null then raise exception 'a player under 13 is invited through a parent''s email' using errcode = '22023'; end if;
+    perform private.pc_close_invites(p, pitcher, null);   -- one open invite per pitcher: a new one replaces the last
   elsif private.pc_preset_perms(member_role) is not null then
     if not private.pc_can_manage(p, 'manage_staff') then raise exception 'you can''t invite coaches to this team' using errcode = '42501'; end if;
+    if not private.pc_within(p, private.pc_preset_perms(member_role)) then
+      raise exception 'you can''t invite someone with more permissions than you have' using errcode = '42501';
+    end if;
     if under13 then raise exception 'only players can be under 13' using errcode = '22023'; end if;
     pitcher := null;
   else
@@ -391,10 +522,44 @@ begin
   if inv.email is not null and inv.email is distinct from private.pc_my_email() then
     raise exception 'this invite is for a different email; sign in with the email it was sent to' using errcode = '42501';
   end if;
+  if inv.needs_approval then raise exception 'this invite is waiting for a coach to approve it' using errcode = '42501'; end if;
+  if inv.declared_by is not null and inv.declared_by = auth.uid() then
+    raise exception 'a parent has to accept this invite from their own account' using errcode = '42501';
+  end if;
   return inv;
 end $$;
-revoke all on function private.pc_open_invite(text) from public, anon;
-grant execute on function private.pc_open_invite(text) to authenticated;
+revoke all on function private.pc_open_invite(text) from public, anon, authenticated;
+
+-- moves a player's invite to a parent's email typed by the player (signed in, or on the website before he has an
+-- account): never for a pitcher someone already speaks for, never to the player's own email, and only once a coach
+-- has approved that email
+create function private.pc_send_to_parent(inv public.invites, pe text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+begin
+  if pe is null or pe !~ '^[^\s@]+@[^\s@]+\.[^\s@]+$' or length(pe) > 320 then return jsonb_build_object('status', 'parent_email_required'); end if;
+  if pe = private.pc_my_email() or exists (select 1 from auth.users u where u.id = auth.uid() and lower(u.email) = pe) then
+    return jsonb_build_object('status', 'parent_email_required');
+  end if;
+  if exists (select 1 from public.player_links l where l.program_id = inv.program_id and l.pitcher_id = inv.pitcher_id)
+     or exists (select 1 from public.guardian_consents g where g.program_id = inv.program_id and g.pitcher_id = inv.pitcher_id) then
+    raise exception 'that pitcher already has an account' using errcode = '23505';
+  end if;
+  perform private.pc_flag_minor(inv.program_id, inv.pitcher_id);
+  perform private.pc_close_invites(inv.program_id, inv.pitcher_id, inv.token);
+  insert into public.invites (program_id, role, pitcher_id, email, under13, created_by, needs_approval, declared_by)
+  values (inv.program_id, 'player', inv.pitcher_id, pe, true, inv.created_by, true, auth.uid());
+  return jsonb_build_object('status', 'parent_invite_sent');   -- a coach approves it in the staff list; email in Plan 2
+end $$;
+revoke all on function private.pc_send_to_parent(public.invites, text) from public, anon, authenticated;
+
+-- an invite is used up inside the same transaction that acts on it, so two people can't both use one link
+create function private.pc_claim_invite(tok text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  update public.invites set used_at = now() where token = tok and used_at is null and cancelled_at is null;
+  if not found then raise exception 'this invite link has expired or was already used' using errcode = 'P0002'; end if;
+end $$;
+revoke all on function private.pc_claim_invite(text) from public, anon, authenticated;
 
 -- what the join page shows before accepting
 create function public.pc_invite_info(tok text) returns table (team_name text, role text, under13 boolean, needs_consent boolean)
@@ -427,28 +592,30 @@ begin
   if inv.pitcher_id is null or not exists (select 1 from public.minors m where m.program_id = inv.program_id and m.pitcher_id = inv.pitcher_id) then
     raise exception 'this invite doesn''t need a parent''s consent' using errcode = '22023';
   end if;
+  if exists (select 1 from public.guardian_consents g where g.program_id = inv.program_id and g.pitcher_id = inv.pitcher_id
+             and g.guardian_user_id <> auth.uid()) then
+    raise exception 'only the parent who gave consent can accept' using errcode = '42501';
+  end if;
   insert into public.guardian_consents (program_id, pitcher_id, guardian_user_id, method)
   values (inv.program_id, inv.pitcher_id, auth.uid(), method)
-  on conflict (program_id, pitcher_id) do update set guardian_user_id = excluded.guardian_user_id, method = excluded.method, consented_at = now();
+  on conflict (program_id, pitcher_id) do update set method = excluded.method, consented_at = now();
 end $$;
 
 -- accept an invite. A player who says he is under 13 on an invite with no parent email is never linked: he gives a
 -- parent's email instead, and a new invite goes to that parent.
 create function public.pc_accept_invite(tok text, declares_under13 boolean default false, parent_email text default null) returns jsonb
 language plpgsql security definer set search_path = '' as $$
-declare inv public.invites; cur_role text; pe text := nullif(lower(btrim(coalesce(parent_email, ''))), ''); newtok text;
+declare inv public.invites; cur_role text; pe text := nullif(lower(btrim(coalesce(parent_email, ''))), ''); r jsonb;
 begin
   if auth.uid() is null then raise exception 'sign in first' using errcode = '42501'; end if;
   inv := private.pc_open_invite(tok);
   perform 1 from public.programs where id = inv.program_id for update;   -- one membership change at a time per team
   if inv.role = 'player' and coalesce(declares_under13, false) and not inv.under13 then
-    if pe is null or pe !~ '^[^\s@]+@[^\s@]+\.[^\s@]+$' then return jsonb_build_object('status', 'parent_email_required'); end if;
-    perform private.pc_flag_minor(inv.program_id, inv.pitcher_id);
-    insert into public.invites (program_id, role, pitcher_id, email, under13, created_by)
-    values (inv.program_id, 'player', inv.pitcher_id, pe, true, inv.created_by) returning token into newtok;
-    update public.invites set used_at = now() where token = tok;
-    return jsonb_build_object('status', 'parent_invite_sent');   -- the new token is the parent's, sent by email (Plan 2)
+    r := private.pc_send_to_parent(inv, pe);
+    if r ->> 'status' = 'parent_invite_sent' then perform private.pc_claim_invite(tok); end if;
+    return r;
   end if;
+  perform private.pc_claim_invite(tok);
   if inv.pitcher_id is not null and private.pc_minor_unconsented(inv.program_id, inv.pitcher_id) then
     raise exception 'a parent has to give consent first' using errcode = '42501';
   end if;
@@ -464,12 +631,12 @@ begin
     end if;
     insert into public.members (program_id, user_id, role) values (inv.program_id, auth.uid(), 'player') on conflict do nothing;
     insert into public.player_links (program_id, user_id, pitcher_id) values (inv.program_id, auth.uid(), inv.pitcher_id);
+    perform private.pc_close_invites(inv.program_id, inv.pitcher_id, tok);
   else
     if cur_role = 'player' then raise exception 'you''re on this team as a player' using errcode = '22023'; end if;
     insert into public.members (program_id, user_id, role) values (inv.program_id, auth.uid(), inv.role)
     on conflict (program_id, user_id) do update set role = excluded.role, perms = '{}'::jsonb;
   end if;
-  update public.invites set used_at = now() where token = tok;
   return jsonb_build_object('status', 'joined', 'team_id', inv.program_id);
 end $$;
 
@@ -478,7 +645,36 @@ language plpgsql security definer set search_path = '' as $$
 declare inv public.invites;
 begin
   inv := private.pc_open_invite(tok);
-  update public.invites set cancelled_at = now() where token = tok;
+  update public.invites set cancelled_at = now() where token = tok and used_at is null and cancelled_at is null;
+end $$;
+
+-- a coach who manages the roster says a parent's email a player typed is right; it can then be used
+create function public.pc_approve_invite(tok text) returns void
+language plpgsql security definer set search_path = '' as $$
+declare inv public.invites;
+begin
+  select * into inv from public.invites where token = tok and used_at is null and cancelled_at is null;
+  if not found then raise exception 'no such invite' using errcode = 'P0002'; end if;
+  if not private.pc_can_manage(inv.program_id, 'manage_roster') then raise exception 'you can''t approve that invite' using errcode = '42501'; end if;
+  update public.invites set needs_approval = false, created_at = now() where token = tok;   -- 14 days from approval
+end $$;
+
+-- the website's server only (the server key): a player opening a link before he has an account says he's under 13
+create function public.pc_invite_to_parent(tok text, parent_email text) returns jsonb
+language plpgsql security definer set search_path = '' as $$
+declare inv public.invites; r jsonb;
+begin
+  if coalesce(auth.role(), '') <> 'service_role' then raise exception 'not allowed' using errcode = '42501'; end if;
+  select * into inv from public.invites where token = tok for update;
+  if not found or inv.used_at is not null or inv.cancelled_at is not null or inv.created_at < now() - interval '14 days' then
+    raise exception 'this invite link has expired or was already used' using errcode = 'P0002';
+  end if;
+  if inv.role <> 'player' then raise exception 'coach invites are for adults' using errcode = '22023'; end if;
+  if inv.under13 then return jsonb_build_object('status', 'for_parent'); end if;   -- the parent opens it from their email
+  perform 1 from public.programs where id = inv.program_id for update;
+  r := private.pc_send_to_parent(inv, nullif(lower(btrim(coalesce(parent_email, ''))), ''));
+  if r ->> 'status' = 'parent_invite_sent' then perform private.pc_claim_invite(tok); end if;
+  return r;
 end $$;
 
 create function public.pc_cancel_invite(tok text) returns void
@@ -496,7 +692,7 @@ end $$;
 -- change a coach's preset and toggles (never a player's, never into a player)
 create function public.pc_set_member(p uuid, member uuid, member_role text, member_perms jsonb default '{}'::jsonb) returns void
 language plpgsql security definer set search_path = '' as $$
-declare k text;
+declare k text; cur record;
 begin
   if not private.pc_can_manage(p, 'manage_staff') then raise exception 'you can''t change this team''s staff' using errcode = '42501'; end if;
   if private.pc_preset_perms(member_role) is null then raise exception 'unknown preset' using errcode = '22023'; end if;
@@ -506,23 +702,41 @@ begin
       raise exception 'unknown toggle %', k using errcode = '22023';
     end if;
   end loop;
-  update public.members set role = member_role, perms = coalesce(member_perms, '{}'::jsonb)
-  where program_id = p and user_id = member and role <> 'player';
+  select m.role, m.perms into cur from public.members m where m.program_id = p and m.user_id = member and m.role <> 'player';
   if not found then raise exception 'not a coach on this team' using errcode = 'P0002'; end if;
+  if not private.pc_owner_can_manage(p) then
+    if member = auth.uid() then raise exception 'you can''t change your own permissions' using errcode = '42501'; end if;
+    -- nobody gives, or takes away, more than he has himself
+    if not private.pc_within(p, private.pc_preset_perms(cur.role) || cur.perms)
+       or not private.pc_within(p, private.pc_preset_perms(member_role) || coalesce(member_perms, '{}'::jsonb)) then
+      raise exception 'you can''t give or change permissions you don''t have' using errcode = '42501';
+    end if;
+  end if;
+  perform 1 from public.programs where id = p for update;
+  update public.members set role = member_role, perms = coalesce(member_perms, '{}'::jsonb) where program_id = p and user_id = member;
+  if not private.pc_owner_can_manage(p) and not exists (select 1 from public.members m where m.program_id = p and m.role = 'head') then
+    raise exception 'a team keeps at least one head coach' using errcode = '22023';
+  end if;
 end $$;
 
 -- remove someone (or yourself). A coach needs manage_staff, a player manage_roster; the owner can do either.
 create function public.pc_remove_member(p uuid, member uuid) returns void
 language plpgsql security definer set search_path = '' as $$
-declare r text;
+declare r text; pr jsonb; owner boolean := private.pc_owner_can_manage(p);
 begin
-  select m.role into r from public.members m where m.program_id = p and m.user_id = member;
+  select m.role, m.perms into r, pr from public.members m where m.program_id = p and m.user_id = member;
   if r is null then raise exception 'not a member' using errcode = 'P0002'; end if;
-  if member is distinct from auth.uid()
-     and not private.pc_can_manage(p, case when r = 'player' then 'manage_roster' else 'manage_staff' end) then
-    raise exception 'you can''t remove that person' using errcode = '42501';
+  if member is distinct from auth.uid() and not owner then
+    if not private.pc_can_manage(p, case when r = 'player' then 'manage_roster' else 'manage_staff' end)
+       or (r <> 'player' and not private.pc_within(p, private.pc_preset_perms(r) || pr)) then
+      raise exception 'you can''t remove that person' using errcode = '42501';
+    end if;
   end if;
+  perform 1 from public.programs where id = p for update;
   delete from public.members where program_id = p and user_id = member;   -- player links go with it
+  if r = 'head' and not owner and not exists (select 1 from public.members m where m.program_id = p and m.role = 'head') then
+    raise exception 'a team keeps at least one head coach: make someone else head first' using errcode = '22023';
+  end if;
 end $$;
 
 create function public.pc_mark_minor(p uuid, pitcher text) returns void
@@ -535,17 +749,23 @@ end $$;
 -- a parent (the one who consented) has the child's data hard-deleted. Logged without any name.
 create function public.pc_delete_minor(p uuid, pitcher text) returns void
 language plpgsql security definer set search_path = '' as $$
-declare t text;
+declare t text; anon text := private.pc_anon_id(p, pitcher);
 begin
   if coalesce(auth.role(), '') <> 'service_role' and not exists (
       select 1 from public.guardian_consents g where g.program_id = p and g.pitcher_id = pitcher and g.guardian_user_id = auth.uid()) then
     raise exception 'only the consenting parent can delete this player''s data' using errcode = '42501';
   end if;
+  perform 1 from public.programs where id = p for update;
   delete from public.pitchers where program_id = p and id = pitcher;
-  foreach t in array array['checkins', 'sessions', 'readings', 'events', 'learned'] loop
+  foreach t in array array['checkins', 'sessions', 'readings', 'learned'] loop
     execute format('delete from public.%I where program_id = $1 and pitcher_id = $2', t) using p, pitcher;
   end loop;
   delete from public.learned where program_id = p and id in ('p:' || pitcher, 'p2:' || pitcher);
+  -- the team's games keep their pitches, under a stand-in that leads back to nobody; packs keep only the stand-in
+  update public.events set doc = private.pc_bump(jsonb_set(doc, '{pitcherId}', to_jsonb(anon))) where program_id = p and pitcher_id = pitcher;
+  update public.packs set doc = private.pc_bump(private.pc_scrub_pack(doc, pitcher, anon)) where program_id = p and private.pc_pack_names(doc, pitcher);
+  -- sent again from an iPad, these records are refused; each coach's iPad deletes its copies at its next sync
+  insert into public.purged (program_id, pitcher_id) values (p, pitcher) on conflict do nothing;
   delete from public.members m where m.program_id = p and m.role = 'player'
     and m.user_id in (select l.user_id from public.player_links l where l.program_id = p and l.pitcher_id = pitcher)
     and not exists (select 1 from public.player_links o where o.program_id = p and o.user_id = m.user_id and o.pitcher_id <> pitcher);
@@ -559,7 +779,7 @@ end $$;
 
 -- staff and players, with pending invites, for coaches who manage them (or the owner)
 create function public.pc_staff(p uuid) returns table (user_id uuid, email text, role text, perms jsonb, pitcher_ids text[],
-                                                         pending boolean, token text)
+                                                         pending boolean, token text, needs_approval boolean)
 language plpgsql stable security definer set search_path = '' as $$
 declare staff boolean := private.pc_can_manage(p, 'manage_staff'); roster boolean := private.pc_can_manage(p, 'manage_roster');
 begin
@@ -567,11 +787,12 @@ begin
   return query
     select m.user_id, lower(u.email)::text, m.role, m.perms,
            coalesce((select array_agg(l.pitcher_id order by l.pitcher_id) from public.player_links l where l.program_id = p and l.user_id = m.user_id), '{}'::text[]),
-           false, null::text
+           false, null::text, false
     from public.members m join auth.users u on u.id = m.user_id
     where m.program_id = p and ((m.role = 'player' and roster) or (m.role <> 'player' and staff))
     union all
-    select null::uuid, i.email, i.role, '{}'::jsonb, case when i.pitcher_id is null then '{}'::text[] else array[i.pitcher_id] end, true, i.token
+    select null::uuid, i.email, i.role, '{}'::jsonb, case when i.pitcher_id is null then '{}'::text[] else array[i.pitcher_id] end, true, i.token,
+           i.needs_approval
     from public.invites i
     where i.program_id = p and i.used_at is null and i.cancelled_at is null and i.created_at > now() - interval '14 days'
       and ((i.role = 'player' and roster) or (i.role <> 'player' and staff))
@@ -593,6 +814,16 @@ language sql stable security definer set search_path = '' as $$
 $$;
 
 -- ------------------------------------------------------------------ sync
+-- the pitchers whose data a parent had deleted, for a coach's iPad to delete too
+create function private.pc_purged(p uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select case when private.pc_can(p, 'view_team') then
+    coalesce((select jsonb_agg(x.pitcher_id order by x.pitcher_id) from public.purged x where x.program_id = p), '[]'::jsonb)
+  else '[]'::jsonb end
+$$;
+revoke all on function private.pc_purged(uuid) from public, anon;
+grant execute on function private.pc_purged(uuid) to authenticated, service_role;
+
 -- push: as before (shape, who may write the incoming record and the one it replaces, newest wins, no whole-batch
 -- failures), plus: a team that isn't active refuses every row as team_locked (the iPad keeps them and retries); a
 -- clock ahead of the server's by more than two minutes is pulled back to now, and the server's copy goes back so the
@@ -604,7 +835,7 @@ declare
   r jsonb; rid text; cur jsonb; n int; applied int := 0; rejected jsonb := '[]'::jsonb; server jsonb := '[]'::jsonb;
   now_ms bigint := (extract(epoch from now()) * 1000)::bigint; clamped boolean; is_ins boolean; touch_del boolean;
   role text := private.pc_role(p); active boolean := private.pc_team_active(p); k text; merged jsonb;
-  num text := '^[0-9]{1,15}$';
+  num text := '^[0-9]{1,15}$'; pit text; fixed boolean; x text;
 begin
   if tbl not in ('teams', 'pitchers', 'catchers', 'hitters', 'checkins', 'sessions', 'games', 'events', 'packs', 'readings', 'learned') then
     raise exception 'unknown table %', tbl using errcode = '22023';
@@ -630,15 +861,39 @@ begin
     end if;
     clamped := (r ->> 'updatedAt')::bigint > now_ms + 120000;
     if clamped then r := jsonb_set(r, '{updatedAt}', to_jsonb(now_ms)); end if;
+    -- a child whose data a parent had deleted: his own records are refused for good (the iPad deletes them); the
+    -- team's pitches and packs that name him go in under the stand-in
+    pit := case when tbl = 'pitchers' then rid else private.pc_row_pitcher(tbl, rid, r) end;
+    fixed := false;
+    if pit is not null and exists (select 1 from public.purged z where z.program_id = p and z.pitcher_id = pit) then
+      if tbl in ('pitchers', 'checkins', 'sessions', 'readings', 'learned') then
+        rejected := rejected || jsonb_build_object('id', rid, 'reason', 'purged'); continue;
+      end if;
+      if tbl = 'events' then r := jsonb_set(r, '{pitcherId}', to_jsonb(private.pc_anon_id(p, pit))); pit := r ->> 'pitcherId'; fixed := true; end if;
+    end if;
+    if tbl = 'packs' then
+      for x in select z.pitcher_id from public.purged z where z.program_id = p and private.pc_pack_names(r, z.pitcher_id) loop
+        r := private.pc_scrub_pack(r, x, private.pc_anon_id(p, x)); fixed := true;
+      end loop;
+    end if;
+    -- nothing about a child under 13 goes in before a parent agrees: not his check-ins, bullpens, velo, pitches,
+    -- learned model, nor a pack that names him (they stay on the iPad and go up once a parent has agreed)
+    if tbl in ('checkins', 'sessions', 'readings', 'events', 'learned') and pit is not null and private.pc_minor_unconsented(p, pit) then
+      rejected := rejected || jsonb_build_object('id', rid, 'reason', 'not allowed: a parent has to give consent first'); continue;
+    end if;
+    if tbl = 'packs' and exists (select 1 from public.minors mi where mi.program_id = p and private.pc_pack_names(r, mi.pitcher_id)
+                                 and private.pc_minor_unconsented(p, mi.pitcher_id)) then
+      rejected := rejected || jsonb_build_object('id', rid, 'reason', 'not allowed: a parent has to give consent first'); continue;
+    end if;
     execute format('select doc from public.%I where program_id = $1 and id = $2', tbl) into cur using p, rid;
     is_ins := cur is null;
-    touch_del := case when cur is null then coalesce(jsonb_typeof(r -> 'deletedAt'), 'null') <> 'null'
-                      else (r -> 'deletedAt') is distinct from (cur -> 'deletedAt') end;
+    touch_del := coalesce(nullif(r -> 'deletedAt', 'null'::jsonb), 'null'::jsonb)
+                 is distinct from coalesce(nullif(cur -> 'deletedAt', 'null'::jsonb), 'null'::jsonb);
     -- who may write it is checked before anything about the server's copy is compared
     if not private.pc_can_write(tbl, p, rid, r ->> 'pitcherId', is_ins, touch_del)
        or (cur is not null and not private.pc_can_write(tbl, p, rid, cur ->> 'pitcherId', false, touch_del)) then
       rejected := rejected || (jsonb_build_object('id', rid, 'reason', 'not allowed')
-        || case when cur is not null and private.pc_can_read(tbl, p, rid, cur ->> 'pitcherId') then jsonb_build_object('doc', cur) else '{}'::jsonb end);
+        || case when cur is not null and private.pc_can_read(tbl, p, rid, cur ->> 'pitcherId') then jsonb_build_object('doc', private.pc_redact(tbl, role, cur)) else '{}'::jsonb end);
       continue;
     end if;
     if tbl = 'pitchers' and role = 'player' then
@@ -647,9 +902,11 @@ begin
         if r ? k then merged := merged || jsonb_build_object(k, r -> k); end if;
       end loop;
       r := merged || jsonb_build_object('updatedAt', r -> 'updatedAt');
+      if octet_length(r::text) >= 1000000 then
+        rejected := rejected || jsonb_build_object('id', rid, 'reason', 'bad record: too big'); continue;
+      end if;
     end if;
-    if tbl = 'pitchers' and private.pc_minor_unconsented(p, rid)
-       and exists (select 1 from jsonb_object_keys(r) j where not j = any (private.pc_placeholder_keys())) then
+    if tbl = 'pitchers' and private.pc_minor_unconsented(p, rid) and not private.pc_placeholder_ok(r) then
       rejected := rejected || jsonb_build_object('id', rid, 'reason', 'not allowed: a parent has to give consent first'); continue;
     end if;
     n := 0;
@@ -661,11 +918,11 @@ begin
       using p, rid, r;
       get diagnostics n = row_count;
     end if;
-    if n = 1 and not clamped and not (tbl = 'pitchers' and role = 'player') then applied := applied + 1;
+    if n = 1 and not clamped and not fixed and not (tbl = 'pitchers' and role = 'player') then applied := applied + 1;
     else
       if n = 1 then applied := applied + 1; end if;
       execute format('select doc from public.%I where program_id = $1 and id = $2', tbl) into cur using p, rid;
-      server := server || jsonb_build_object('id', rid, 'doc', cur);   -- the iPad takes the server's copy
+      server := server || jsonb_build_object('id', rid, 'doc', private.pc_redact(tbl, role, cur));   -- the iPad takes the server's copy
     end if;
   end loop;
   return jsonb_build_object('applied', applied, 'skipped', jsonb_array_length(server), 'rejected', rejected, 'server', server);
@@ -706,13 +963,14 @@ begin
        where program_id = $1 and (sync_xid, id) > ($2, $3) and sync_xid < $4%2$s
        order by sync_xid, id limit $5 + 1)
      select jsonb_build_object(
-       ''rows'', coalesce((select jsonb_agg(doc order by sync_xid, id) from (select * from page order by sync_xid, id limit $5) x), ''[]''::jsonb),
+       ''rows'', coalesce((select jsonb_agg(%3$s order by sync_xid, id) from (select * from page order by sync_xid, id limit $5) x), ''[]''::jsonb),
        ''next'', coalesce((select jsonb_build_object(''xid'', sync_xid, ''id'', id) from (select * from page order by sync_xid, id limit $5) x order by sync_xid desc, id desc limit 1),
                          jsonb_build_object(''xid'', $2, ''id'', $3)),
-       ''more'', (select count(*) from page) > $5)', tbl, flt)
+       ''more'', (select count(*) from page) > $5)', tbl, flt, case when role = 'player' and tbl = 'pitchers' then 'doc - ''notes''' else 'doc' end)
   into out using p, after_xid, after_id, cap, lim, mine;
   execute format('select exists (select 1 from public.%1$I where program_id = $1 and sync_xid >= $2%2$s)', tbl, flt) into held using p, cap, null, null, null, mine;
-  return out || jsonb_build_object('access', access, 'held', held, 'reset', false, 'locked', false);
+  return out || jsonb_build_object('access', access, 'held', held, 'reset', false, 'locked', false)
+    || case when tbl = 'pitchers' then jsonb_build_object('purged', private.pc_purged(p)) else '{}'::jsonb end;
 end $$;
 
 -- ------------------------------------------------------------------ grants
@@ -721,13 +979,25 @@ revoke all on function public.pc_create_org(text, text), public.pc_create_team(u
   public.pc_my_invites(), public.pc_record_guardian_consent(text, text), public.pc_accept_invite(text, boolean, text),
   public.pc_decline_invite(text), public.pc_cancel_invite(text), public.pc_set_member(uuid, uuid, text, jsonb),
   public.pc_remove_member(uuid, uuid), public.pc_mark_minor(uuid, text), public.pc_delete_minor(uuid, text),
-  public.pc_staff(uuid), public.pc_my_teams(), public.pc_push(uuid, text, jsonb), public.pc_pull(uuid, text, bigint, text, int)
+  public.pc_staff(uuid), public.pc_my_teams(), public.pc_push(uuid, text, jsonb), public.pc_pull(uuid, text, bigint, text, int),
+  public.pc_approve_invite(text), public.pc_invite_to_parent(text, text)
   from public, anon;
 grant execute on function public.pc_create_org(text, text), public.pc_create_team(uuid, text, text, text, text),
   public.pc_transfer_owner(uuid, uuid), public.pc_invite(uuid, text, text, text, boolean), public.pc_invite_info(text),
   public.pc_my_invites(), public.pc_record_guardian_consent(text, text), public.pc_accept_invite(text, boolean, text),
   public.pc_decline_invite(text), public.pc_cancel_invite(text), public.pc_set_member(uuid, uuid, text, jsonb),
   public.pc_remove_member(uuid, uuid), public.pc_mark_minor(uuid, text), public.pc_delete_minor(uuid, text),
-  public.pc_staff(uuid), public.pc_my_teams(), public.pc_push(uuid, text, jsonb), public.pc_pull(uuid, text, bigint, text, int)
+  public.pc_staff(uuid), public.pc_my_teams(), public.pc_push(uuid, text, jsonb), public.pc_pull(uuid, text, bigint, text, int),
+  public.pc_approve_invite(text)
   to authenticated;
-grant execute on function public.pc_delete_minor(uuid, text) to service_role;
+revoke all on function public.pc_invite_to_parent(text, text) from authenticated;
+grant execute on function public.pc_delete_minor(uuid, text), public.pc_invite_to_parent(text, text) to service_role;
+
+-- Postgres 17's MAINTAIN (vacuum, lock, refresh) is no client's business
+do $$
+declare t text;
+begin
+  for t in select tablename from pg_tables where schemaname = 'public' loop
+    execute format('revoke maintain on public.%I from public, anon, authenticated', t);
+  end loop;
+end $$;

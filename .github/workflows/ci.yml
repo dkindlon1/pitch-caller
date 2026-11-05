@@ -77,3 +77,24 @@ jobs:
         run: npm run build
       - name: Landing page end to end (built site + real waitlist function)
         run: scripts/run-check.sh landing_e2e node web/tests/landing_e2e.js
+
+  web-shell:
+    name: Web shell on a real local Supabase (sign-in, teams, join)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: "package-lock.json\nweb/package-lock.json" }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start Supabase locally (Auth, REST gateway and Postgres; this repo's migrations)
+        run: npx -y supabase@2.122.1 start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api,postgres-meta,mailpit
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npm run build
+      - name: Shell end to end (the test resets the database first)
+        run: scripts/run-check.sh shell_e2e node web/tests/shell_e2e.js
+      - if: always()
+        run: npx -y supabase@2.122.1 stop --no-backup

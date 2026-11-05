@@ -282,6 +282,169 @@ const now = () => Date.now();
   check(!(await as("owner", "select public.pc_transfer_owner($1, $2)", [org1, U.head])).error, "he hands it to a coach on one of its teams");
   check((await teams("head")).every((t) => t.is_owner) && (await teams("owner")).length === 0, "the coach is now the owner, and the old owner has nothing");
 
+  console.log("11. The age question comes before an account");
+  {
+    const doc = { id: "p11", updatedAt: 1000, teamId: "ours", name: "Young arm", number: "11", hand: "R", notes: "coach note", pitches: [{ id: "pt1", name: "Fastball", grade: 3 }] };
+    await su.query("insert into public.pitchers (program_id, id, doc) values ($1, 'p11', $2)", [tA, doc]);
+    const kidTok = await one("head", "select public.pc_invite($1, 'player', 'p11') r", [tA]);
+    const toParent = (who, tok, pe) => one(who, "select public.pc_invite_to_parent($1, $2) r", [tok, pe]);
+    for (const who of ["anon", "nonmember", "head"]) check(!!(await toParent(who, kidTok, "mom@x.org")).error, `${who === "anon" ? "a visitor" : who === "head" ? "a coach" : "a signed-in account"} can't call the website-only function`);
+    check((await toParent("service", kidTok, "not an email")).status === "parent_email_required", "the website's server needs a real parent email");
+    check(!!(await toParent("service", await one("head", "select public.pc_invite($1, 'viewer') r", [tA]), "mom@x.org")).error, "a coach invite can't be moved to a parent");
+    r = await toParent("service", kidTok, "Mom@X.org");
+    const moved = (await su.query("select token, email, under13, pitcher_id from public.invites where program_id = $1 and pitcher_id = 'p11' and used_at is null", [tA])).rows;
+    const held = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'p11'", [tA])).rows[0].doc;
+    check(r.status === "parent_invite_sent" && moved.length === 1 && moved[0].under13 && moved[0].pitcher_id === "p11", "an under-13 answer moves the invite to the parent's email, marked under 13");
+    check(!("name" in held) && !("notes" in held) && held.number === "11", `and his record is held to the placeholder until the parent consents (${Object.keys(held).sort().join(",")})`);
+    check(!!(await as("nonmember", "select public.pc_accept_invite($1)", [kidTok])).error, "the link the child opened no longer works");
+    check((await toParent("service", moved[0].token, "dad@x.org")).status === "for_parent", "the parent's own link can't be moved again");
+  }
+
+  console.log("12. The independent review's findings stay fixed");
+  {
+    const user = async (n) => { U[n] = crypto.randomUUID(); await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, $2, now())", [U[n], n + "@x.org"]); };
+    for (const n of ["f1", "atk", "mom2", "kid2", "pc2", "h2"]) await user(n);
+    const pit = async (id, extra = {}) => push("head", tA, "pitchers", [Object.assign({ id, updatedAt: now(), name: "Name " + id, number: "2" + id.slice(-1), notes: "coach note", pitches: [] }, extra)]);
+    const inv = (who, pid, email = null, u13 = false) => one(who, "select public.pc_invite($1, 'player', $2, $3, $4) r", [tA, pid, email, u13]);
+    const usable = async (tok) => +(await su.query("select count(*) n from public.invites where token = $1 and used_at is null and cancelled_at is null", [tok])).rows[0].n === 1;
+
+    // H1: a spare link for a pitcher someone already speaks for can't be used to pose as his parent
+    await pit("r1");
+    const t1 = await inv("head", "r1"), t2 = await inv("head", "r1");
+    check(!(await usable(t1)) && (await usable(t2)), "H1: a new invite for a pitcher cancels the last one (one open link per pitcher)");
+    await one("f1", "select public.pc_accept_invite($1) r", [t2]);
+    check(!!(await as("atk", "select public.pc_accept_invite($1, true, 'atk@evil.org')", [t1])).error, "H1: the old link can't claim to be a child's and send an invite to an 'atk' parent");
+    const t3 = await su.query("insert into public.invites (program_id, role, pitcher_id) values ($1, 'player', 'r1') returning token", [tA]).then((x) => x.rows[0].token);
+    r = await as("atk", "select public.pc_accept_invite($1, true, 'atk@evil.org') r", [t3]);
+    const r1 = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'r1'", [tA])).rows[0].doc;
+    check(!!r.error && /already has an account/.test(r.error) && r1.name === "Name r1", "H1: even a link made some other way can't flag a linked pitcher as a minor or strip his record");
+    // H1 (minor case) and M1: consent is never replaced, a coach approves a player-typed parent email, the player can't be his own parent
+    await pit("r2");
+    const t4 = await inv("head", "r2");
+    r = await one("kid2", "select public.pc_accept_invite($1, true, 'kid2@x.org') r", [t4]);
+    check(r.status === "parent_email_required", "M1: a child can't give his own email as the parent's");
+    r = await one("kid2", "select public.pc_accept_invite($1, true, 'mom2@x.org') r", [t4]);
+    const pinv = (await su.query("select token, needs_approval, declared_by from public.invites where program_id = $1 and pitcher_id = 'r2' and used_at is null and cancelled_at is null", [tA])).rows;
+    check(r.status === "parent_invite_sent" && pinv.length === 1 && pinv[0].needs_approval && pinv[0].declared_by === U.kid2, "the parent invite a player asked for waits for a coach");
+    check(!!(await as("mom2", "select public.pc_record_guardian_consent($1, 'checkbox')", [pinv[0].token])).error, "M1: before a coach approves it, nobody can consent with it");
+    check(!!(await as("caller", "select public.pc_approve_invite($1)", [pinv[0].token])).error, "a coach without the roster can't approve it");
+    const staffRow = ((await as("head", "select * from public.pc_staff($1)", [tA])).rows || []).find((x) => x.token === pinv[0].token);
+    check(staffRow && staffRow.needs_approval === true, "the staff list shows it waiting for approval");
+    check(!(await as("head", "select public.pc_approve_invite($1)", [pinv[0].token])).error, "the head coach approves it");
+    check(!(await as("mom2", "select public.pc_record_guardian_consent($1, 'checkbox')", [pinv[0].token])).error && (await one("mom2", "select public.pc_accept_invite($1) r", [pinv[0].token])).status === "joined", "then the parent consents and joins");
+    await su.query("insert into public.invites (program_id, role, pitcher_id, email, under13) values ($1, 'player', 'r2', 'atk@x.org', true)", [tA]);
+    const t5 = (await su.query("select token from public.invites where email = 'atk@x.org'")).rows[0].token;
+    check(!!(await as("atk", "select public.pc_record_guardian_consent($1, 'checkbox')", [t5])).error && (await su.query("select guardian_user_id g from public.guardian_consents where program_id = $1 and pitcher_id = 'r2'", [tA])).rows[0].g === U.mom2, "H1: a second 'parent' can't replace the one who consented");
+    check(!!(await as("atk", "select public.pc_delete_minor($1, 'r2')", [tA])).error, "H1: and so can't delete the child's data");
+
+    // H3: before consent, nothing about the child goes in
+    await pit("r3", { name: "Johnny" });
+    await push("head", tA, "checkins", [sess("ck-r3-old", "r3", { arm: 3 })]);
+    await as("head", "select public.pc_mark_minor($1, 'r3')", [tA]);
+    check(+(await su.query("select count(*) n from public.checkins where id = 'ck-r3-old'")).rows[0].n === 0, "H3: flagging a child removes his check-ins from the server too");
+    for (const [label, doc] of [["a name in the number", { number: "Johnny Smith DOB 2015" }], ["an object in createdAt", { createdAt: { name: "Johnny" } }], ["a school in teamId", { teamId: { school: "Elm" } }]]) {
+      r = await push("head", tA, "pitchers", [Object.assign({ id: "r3", updatedAt: now() + 1000 }, doc)]);
+      check(r.rejected && r.rejected.length === 1 && /consent/.test(r.rejected[0].reason), `H3: the placeholder can't carry ${label}`);
+    }
+    for (const [t, row] of [["checkins", sess("ck-r3", "r3", { arm: 2 })], ["sessions", sess("ss-r3", "r3")], ["readings", sess("rd-r3", "r3")], ["events", sess("ev-r3", "r3", { type: "pitch" })], ["learned", { id: "p:r3", updatedAt: now() }]]) {
+      r = await push("head", tA, t, [row]);
+      check(r.rejected && r.rejected.length === 1 && /consent/.test(r.rejected[0].reason), `H3: his ${t} wait on the iPad until a parent agrees`);
+    }
+    r = await push("head", tA, "packs", [{ id: "pk-r3", updatedAt: now(), gameId: "g1", staff: [{ pitcherId: "p1", name: "Ace" }, { pitcherId: "r3", name: "Johnny" }] }]);
+    check(r.rejected && /consent/.test(r.rejected[0].reason), "H3: and so does a game pack that names him");
+
+    // H2: a deleted child's data can't come back
+    await pit("r4", { name: "Deleted Kid" });
+    const t6 = await inv("head", "r4", "mom2@x.org", true);
+    await as("mom2", "select public.pc_record_guardian_consent($1, 'checkbox')", [t6]); await one("mom2", "select public.pc_accept_invite($1) r", [t6]);
+    await push("head", tA, "events", [sess("ev-r4", "r4", { type: "pitch" })]);
+    await push("head", tA, "packs", [{ id: "pk-r4", updatedAt: now(), gameId: "g1", staff: [{ pitcherId: "p1", name: "Ace" }, { pitcherId: "r4", name: "Deleted Kid" }] }]);
+    check(!(await as("mom2", "select public.pc_delete_minor($1, 'r4')", [tA])).error, "(the parent deletes the child's data)");
+    const evDoc = (await su.query("select doc from public.events where id = 'ev-r4'")).rows[0].doc;
+    const pk = JSON.stringify((await su.query("select doc from public.packs where id = 'pk-r4'")).rows[0].doc);
+    check(/^removed_/.test(evDoc.pitcherId) && !pk.includes("Deleted Kid") && !pk.includes('"r4"'), "H2: the game keeps the pitch under a stand-in, and the pack no longer names him");
+    r = await push("head", tA, "pitchers", [{ id: "r4", updatedAt: now() + 5000, name: "Deleted Kid", number: "24" }]);
+    check(r.rejected && r.rejected[0].reason === "purged" && +(await su.query("select count(*) n from public.pitchers where id = 'r4'")).rows[0].n === 0, "H2: an iPad sending his record again is refused, for good");
+    r = await push("head", tA, "checkins", [sess("ck-r4", "r4", { arm: 4 })]);
+    check(r.rejected && r.rejected[0].reason === "purged", "H2: so are his check-ins");
+    r = await push("head", tA, "events", [sess("ev-r4-late", "r4", { type: "pitch" })]);
+    const late = (await su.query("select doc from public.events where id = 'ev-r4-late'")).rows[0];
+    check(r.applied === 1 && late && /^removed_/.test(late.doc.pitcherId) && r.server.length === 1, "H2: a pitch charted offline before the deletion goes in under the stand-in, and the iPad gets that copy back");
+    const pl = await pull("head", tA, "pitchers");
+    check(Array.isArray(pl.purged) && pl.purged.includes("r4"), "H2: a coach's pull lists him so his iPad deletes its copies");
+    check(!(await pull("pl1", tA, "pitchers")).purged.length, "and a player's pull lists nothing");
+
+    // M3: one link, one use, even at the same moment
+    const t7 = await one("head", "select public.pc_invite($1, 'viewer') r", [tA]);
+    const c2 = new Client({ connectionString: dbUrl(DB) }); await c2.connect();
+    const claims = (n) => JSON.stringify({ sub: U[n], role: "authenticated" });
+    await conn.query("begin"); await conn.query("set local role authenticated"); await conn.query("select set_config('request.jwt.claims', $1, true)", [claims("pc2")]);
+    await conn.query("select public.pc_accept_invite($1)", [t7]);
+    const second = (async () => {
+      try { await c2.query("begin"); await c2.query("set local role authenticated"); await c2.query("select set_config('request.jwt.claims', $1, true)", [claims("h2")]);
+        await c2.query("select public.pc_accept_invite($1)", [t7]); await c2.query("commit"); return "joined"; }
+      catch (e) { await c2.query("rollback"); return e.message; }
+    })();
+    await new Promise((res) => setTimeout(res, 300)); await conn.query("commit");
+    const out = await second; await c2.end();
+    const both = +(await su.query("select count(*) n from public.members where program_id = $1 and user_id in ($2, $3)", [tA, U.pc2, U.h2])).rows[0].n;
+    check(/expired or was already used/.test(out) && both === 1, `M3: two accepts of one link at once: one joins, the other is told it's used (${out})`);
+
+    // M5: nobody gives or takes more than he has; a team keeps a head coach
+    await as("head", "select public.pc_set_member($1, $2, 'pitching', '{\"manage_staff\":true}')", [tA, U.pitching]);
+    check(!!(await as("pitching", "select public.pc_set_member($1, $2, 'head')", [tA, U.pitching])).error, "M5: a coach with the staff toggle can't make himself head");
+    check(!!(await as("pitching", "select public.pc_set_member($1, $2, 'viewer')", [tA, U.head])).error, "M5: or demote the head coach");
+    check(!!(await as("pitching", "select public.pc_remove_member($1, $2)", [tA, U.head])).error, "M5: or remove him");
+    check(!!(await as("pitching", "select public.pc_invite($1, 'head')", [tA])).error, "M5: or invite a head coach");
+    check(!(await as("pitching", "select public.pc_invite($1, 'caller')", [tA])).error, "but can invite a pitch caller (within what he has)");
+    await as("head", "select public.pc_set_member($1, $2, 'pitching')", [tA, U.pitching]);
+    // "head" owns the organization since section 10; the owner may always manage. pc2 becomes the only other head.
+    await as("head", "select public.pc_set_member($1, $2, 'head')", [tA, U.pc2]);
+    await as("head", "select public.pc_set_member($1, $2, 'viewer')", [tA, U.head]);
+    const heads = (await su.query("select user_id from public.members where program_id = $1 and role = 'head'", [tA])).rows.map((x) => x.user_id);
+    check(heads.join() === U.pc2 && !!(await as("pc2", "select public.pc_remove_member($1, $2)", [tA, U.pc2])).error, "M5: the last head coach can't leave the team headless");
+    check(!!(await as("pc2", "select public.pc_set_member($1, $2, 'viewer')", [tA, U.pc2])).error, "nor demote himself");
+    await as("head", "select public.pc_set_member($1, $2, 'head')", [tA, U.head]);
+
+    // M4: the people tables look up the caller once per query
+    await su.query(`insert into public.organizations (id, name, owner_id) select gen_random_uuid(), 'bulk', $1 from generate_series(1, 1)`, [U.xhead]);
+    const bulkOrg = (await su.query("select id from public.organizations where name = 'bulk'")).rows[0].id;
+    await su.query("insert into public.programs (id, name, org_id) select gen_random_uuid(), 'bulk ' || i, $1 from generate_series(1, 1000) i", [bulkOrg]);
+    await su.query("insert into auth.users (id, email) select gen_random_uuid(), 'bulk' || i || '@x.org' from generate_series(1, 20000) i");
+    await su.query(`insert into public.members (program_id, user_id, role) select t.id, u.id, 'viewer' from (select id, row_number() over () rn from public.programs where name like 'bulk %') t
+                    join (select id, row_number() over () rn from auth.users where email like 'bulk%') u on (u.rn % 1000) + 1 = t.rn`);
+    const n = +(await su.query("select count(*) n from public.members")).rows[0].n;
+    let t0 = Date.now(); await as("nonmember", "select * from public.members"); const msM = Date.now() - t0;
+    t0 = Date.now(); await as("nonmember", "select * from public.programs"); const msP = Date.now() - t0;
+    check(msM < 150 && msP < 150, `M4: an account on no team reads ${n} member rows' table in ${msM} ms and programs in ${msP} ms`);
+
+    // L1, L3, L5, L6
+    check(!!(await as("pl1", "select stripe_customer_id from public.organizations")).error && !(await as("pl1", "select id, name from public.organizations")).error, "L1: nobody signed in can read the Stripe ids; the name is fine");
+    check(!!(await as("head", "select private.pc_strip_minor($1, 'p1')", [tA])).error && !!(await as("head", "select private.pc_flag_minor($1, 'p1')", [tA])).error, "L3: the helpers that change data can't be called directly");
+    check(!!(await as("head", "lock table public.pitchers in access exclusive mode")).error, "L3: nor can a signed-in user lock a table (Postgres 17's MAINTAIN)");
+    const mine = (await pull("pl1", tA, "pitchers")).rows.find((x) => x.id === "p1");
+    check(mine && !("notes" in mine) && mine.name, "L5: a player's copy of his record leaves out the coaches' notes");
+    r = await push("pl1", tA, "pitchers", [{ id: "p1", updatedAt: now() + 9000, name: "Ace (his edit)", deletedAt: null }]);
+    const p1 = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'p1'", [tA])).rows[0].doc;
+    check(r.applied === 1 && p1.name === "Ace (his edit)" && !!p1.notes && !("notes" in r.server[0].doc), "L6: deletedAt: null is no delete, and his edit keeps the notes on the server without sending them to him");
+  }
+
+  console.log("13. The migration refuses a database that already has programs");
+  {
+    const G = DB + "_guard";
+    const g0 = new Client({ connectionString: BASE }); await g0.connect(); await g0.query(`drop database if exists ${G}`); await g0.query(`create database ${G}`); await g0.end();
+    const g = new Client({ connectionString: dbUrl(G) }); await g.connect();
+    await g.query(fs.readFileSync(path.join(__dirname, "auth_stub.sql"), "utf8"));
+    const files = fs.readdirSync(dir).filter((x) => x.endsWith(".sql")).sort();
+    for (const f of files.filter((x) => x < "20261106")) await g.query(fs.readFileSync(path.join(dir, f), "utf8"));
+    await g.query("insert into public.programs (name) values ('An old program')");
+    let err = null; try { await g.query(fs.readFileSync(path.join(dir, "20261106000000_pitchiq_teams.sql"), "utf8")); } catch (e) { err = e.message; }
+    const untouched = (await g.query("select to_regclass('public.invites') is not null i, to_regclass('public.organizations') is null o, exists (select 1 from pg_proc where proname = 'pc_push') f")).rows[0];
+    check(/already hold rows/.test(err || "") && untouched.i && untouched.o && untouched.f, `M2: it stops before changing anything (${err})`);
+    await g.end();
+    const g1 = new Client({ connectionString: BASE }); await g1.connect(); await g1.query(`drop database if exists ${G}`); await g1.end();
+  }
+
   await conn.end(); await su.end();
   const z = new Client({ connectionString: BASE }); await z.connect(); await z.query(`drop database if exists ${DB}`); await z.end();
   console.log(fails ? `\n${fails} of ${checks} team check(s) FAILED` : `\nall ${checks} team checks passed`);
