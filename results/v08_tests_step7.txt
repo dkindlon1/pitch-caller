@@ -1,0 +1,16 @@
+[PASS] WE table hs|7|0: mean runs/half 1.0698 vs RE(0,empty) 1.0690 (+0.07%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] WE table hs|9|0: mean runs/half 1.0698 vs RE(0,empty) 1.0690 (+0.07%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] WE table college_d3|7|0: mean runs/half 0.9512 vs RE(0,empty) 0.9520 (-0.09%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] WE table college_d3|9|0: mean runs/half 0.9512 vs RE(0,empty) 0.9520 (-0.09%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] WE table college_d1|7|0: mean runs/half 0.7000 vs RE(0,empty) 0.7000 (-0.00%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] WE table college_d1|9|0: mean runs/half 0.7000 vs RE(0,empty) 0.7000 (-0.00%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] WE table mlb|7|0: mean runs/half 0.4808 vs RE(0,empty) 0.4810 (-0.04%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] WE table mlb|9|0: mean runs/half 0.4808 vs RE(0,empty) 0.4810 (-0.04%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE ma
+[PASS] m0 > 0 in every state (after the 0.005 floor): 24960 states; raw difference <= 0 in 1440 (floored)
+[PASS] objective blend: omega 0 gives v0.7c's end value exactly: LI 0.634
+[PASS] objective blend: tying run on 3rd, 1 out, 9th: omega 1: LI 3.24
+       0-2 call mix, chase+down-away share: runs objective 0.525, win objective 0.561
+[PASS] running game: a high threat makes a low changeup worse relative to a high fastball: added cost fastball up -0.0125, changeup down -0.0016 (both negative at D3: with RE(0,2nd) - RE(0,1st) = 0.093 an attempt pays only above 0.92 success)
+       walk suggestion (9th, up 1, 2 outs, 2nd and 3rd): suggested False; V_end(walk) 0.2106 vs V(0-0) -0.0155
+[PASS] walk suggestion: never with the bases empty, 0 outs, early
+13/13 step 7 checks passed

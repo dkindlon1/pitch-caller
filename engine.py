@@ -262,6 +262,9 @@ class Situation:
     b_h: dict = field(default_factory=dict)               # 2.5 hitter's lean per sit option (eta*s + in-at-bat evidence)
     steal: dict = None              # 7.4 {'a': per-pitch attempt chance, 'runner': 1 or 2, 't': time to plate or None}
     pitch_cap: int = 105            # 7.6
+    home: bool = None               # 7.1 we're the home team (None: unknown, win objective off)
+    sched_innings: int = None       # 7.1 scheduled innings (default 7 HS/travel, 9 otherwise)
+    extras_runner: bool = False     # 7.1 runner on 2nd to start extra innings
 
 
 # ---------------------------------------------------------------------------
@@ -1797,3 +1800,79 @@ def root_costs(arsenal, s, tab, sigma=None):
     look = s.look or tab.h0
     return {a: sum(sg[k] * cost08(by[a[0]], a[1], s, arsenal, tab, look, ("pure",) + k)[0] for k in ks if sg[k] > 1e-4)
             for a in allowed_calls(arsenal, s)}
+
+
+# ---------------------------------------------------------------------------
+# v0.8 win expectancy, leverage and the objective blend (7.1, 7.2), intentional walk suggestion (7.7)
+# ---------------------------------------------------------------------------
+_WE = {}
+WE_LEVEL = {"travel": "hs", "college": "college_d1"}
+MCAP_WE = 15
+
+
+def _we_tab(level, N, xr):
+    key = f"{WE_LEVEL.get(level, level)}|{N}|{int(bool(xr))}"
+    if not _WE:
+        try:
+            _WE.update(_json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "we_tables.json"))))
+        except Exception:
+            return None
+    return _WE.get(key)
+
+
+def _bits(bases):
+    return (1 if bases[0] else 0) | (2 if bases[1] else 0) | (4 if bases[2] else 0)
+
+
+def sched(s):
+    return s.sched_innings or (7 if s.level in ("hs", "travel") else 9)
+
+
+def we_pitch(s, o, bases, margin, field="W"):
+    """WE (or LI with field 'L') for the PITCHING team in the current half-inning, at (o, bases) with the pitching team
+    ahead by margin; o = 3 is the end of the half. We pitch the top when home, the bottom when away."""
+    N = sched(s)
+    t = _we_tab(s.level, N, s.extras_runner)
+    h = "t" if s.home else "b"
+    i = min(max(1, s.inning), N + 1)
+    half = t["tab"][f"{i}{h}"]
+    m_home = margin if s.home else -margin
+    j = max(-MCAP_WE, min(MCAP_WE, m_home)) + MCAP_WE
+    if field == "L":
+        return half["L"][f"{min(o, 2)}{_bits(bases)}"][j]
+    v = half["E"][j] if o >= 3 else half["W"][f"{o}{_bits(bases)}"][j]
+    return v if s.home else 1.0 - v
+
+
+def win_constants(s):
+    """7.2 fixed at the plate appearance's start: omega = clip(LI - 1, 0, 1), WE0, m0 (floored at 0.005), margin0."""
+    if s.home is None or _we_tab(s.level, sched(s), s.extras_runner) is None:
+        return None
+    li = we_pitch(s, s.outs, s.bases, s.margin, "L")
+    we0 = we_pitch(s, s.outs, s.bases, s.margin)
+    m0 = max(0.005, we0 - we_pitch(s, s.outs, s.bases, s.margin - 1))
+    s_ = replace(s, win=None)
+    return dict(omega=min(1.0, max(0.0, li - 1)), WE0=we0, m0=m0, margin0=s.margin, LI=li,
+                we=lambda o, bases, m: we_pitch(s_, o, bases, m))
+
+
+def walk_suggestion(arsenal, s, tab):
+    """7.7 suggest (never auto-call) a walk when V_end(walk state) < V(0-0, h0) - 0.010 x run scale."""
+    b1, b2, b3 = s.bases
+    r_ = 1 if (b1 and b2 and b3) else 0
+    v_walk = v_end(s, s.outs, (True, b1 or b2, b3 or (b1 and b2)), r_)
+    v_pa = tab.value(0, 0, tab.h0)
+    return v_walk < v_pa - 0.010 * run_scale(s.level), v_walk, v_pa
+
+
+def _fill_run_game():
+    """7.4 delta_L = level steal success minus MLB's 0.72 (D1 +0.08, HS +0.10, D3 from we_rates.json)."""
+    RUN_GAME.update({"college_d1": 0.08, "college": 0.08, "hs": 0.10, "travel": 0.10, "mlb": 0.0})
+    try:
+        d = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "we_rates.json")))
+        RUN_GAME["college_d3"] = d["college_d3"]["steal_success"] - 0.72
+    except Exception:
+        RUN_GAME["college_d3"] = 0.12
+
+
+_fill_run_game()

@@ -1,0 +1,8 @@
+hs|7|0: mean runs/half 1.0698 vs RE(0,empty) 1.0690 (+0.07%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 8.3e-12 PASS; LI mean 1.0000; PA/game 73.2; extras N+1 vs N+2 max diff 0.0000
+hs|9|0: mean runs/half 1.0698 vs RE(0,empty) 1.0690 (+0.07%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 1.1e-11 PASS; LI mean 1.0000; PA/game 94.3; extras N+1 vs N+2 max diff 0.0000
+college_d3|7|0: mean runs/half 0.9512 vs RE(0,empty) 0.9520 (-0.09%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 7.7e-12 PASS; LI mean 1.0000; PA/game 70.9; extras N+1 vs N+2 max diff 0.0000
+college_d3|9|0: mean runs/half 0.9512 vs RE(0,empty) 0.9520 (-0.09%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 9.9e-12 PASS; LI mean 1.0000; PA/game 91.3; extras N+1 vs N+2 max diff 0.0000
+college_d1|7|0: mean runs/half 0.7000 vs RE(0,empty) 0.7000 (-0.00%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 4.5e-12 PASS; LI mean 1.0000; PA/game 66.1; extras N+1 vs N+2 max diff 0.0000
+college_d1|9|0: mean runs/half 0.7000 vs RE(0,empty) 0.7000 (-0.00%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 5.8e-12 PASS; LI mean 1.0000; PA/game 84.9; extras N+1 vs N+2 max diff 0.0000
+mlb|7|0: mean runs/half 0.4808 vs RE(0,empty) 0.4810 (-0.04%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 5.3e-12 PASS; LI mean 1.0000; PA/game 60.7; extras N+1 vs N+2 max diff 0.0000
+mlb|9|0: mean runs/half 0.4808 vs RE(0,empty) 0.4810 (-0.04%, limit 2%) PASS; home WE at start, tied 0.5000 PASS; home+away WE max |sum-1| 6.7e-12 PASS; LI mean 1.0000; PA/game 77.5; extras N+1 vs N+2 max diff 0.0000

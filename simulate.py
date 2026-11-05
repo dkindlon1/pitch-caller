@@ -400,6 +400,7 @@ def play_game(log_path):
             fam_prev = dict(fam[(pitcher["name"], h)])
             v08 = engine.FLAGS["look_state"]
             tab, frozen, look, fooled = None, None, None, []      # v0.8 (6): this PA's table, its inputs, the look
+            win_pa = None                                         # v0.8 (7.2): objective constants, fixed at PA start
             o_add, r_pre, bases, pre_label = pre_pa(outs, bases, R)
             if pre_label:
                 outs += o_add
@@ -422,7 +423,12 @@ def play_game(log_path):
                               landing_today={x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
                                              if land[(pitcher["name"], x.name)][1]},
                               familiar=fam_prev,
-                              ump_u=engine.ump_estimate(takes, LEVEL_NAME) if engine.FLAGS["umpire_learn"] else 0.0)
+                              ump_u=engine.ump_estimate(takes, LEVEL_NAME) if engine.FLAGS["umpire_learn"] else 0.0,
+                              home=True, sched_innings=9)
+                if engine.FLAGS["objective_win"]:
+                    if win_pa is None:
+                        win_pa = engine.win_constants(s)
+                    s = replace(s, win=win_pa)
                 ars = pitcher["arsenal"]
                 if v08:
                     if tab is None or engine.needs_resolve(frozen, ars, s):
