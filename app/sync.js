@@ -188,6 +188,7 @@
     // copy never replaces a fuller one here, from a pull or from the server's answer to a push: a bare placeholder of a
     // held player is kept out, anything else thin is merged in field by field (its fields win, the rest stay) and the
     // merge goes up, so the server ends up with both.
+    // (So a field can only be removed by a copy that keeps its arsenal: the app always does, clearing a field sets it to "".)
     const thin = (x) => !Array.isArray(x.pitches);
     async function keepFuller(rows, held) {
       const ids = new Set(rows.filter(thin).map((x) => x.id));

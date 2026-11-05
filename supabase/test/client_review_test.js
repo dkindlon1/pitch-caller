@@ -343,14 +343,22 @@ const MIN = 60e3;
     const s7b = await srv("q7"), l7b = await loc(A, "q7");
     check(r7.push.skipped >= 1 && s7b.name === "Parent seven" && s7b.notes === "coach-only 7" && (s7b.pitches || []).length === 1 && l7b.notes === "coach-only 7",
       `P6b: answered with the thinner copy, the iPad merges it in and sends the merge (${JSON.stringify(s7b).slice(0, 120)})`);
-    // R4: an iPad that only ever had the placeholder changes his number after the full record is back
-    const t7 = (await su.query("select 1")).rows;   // (C is the placeholder-only iPad from above)
-    const c2 = await loc(C, "q2");
-    await C.D.put("pitchers", Object.assign({}, c2, { number: "21" }));
-    await C.sync("coach", P, true).syncNow(); await A.sync("coach", P, true).syncNow();
-    const s7 = await srv("q2");
-    check(s7.number === "21" && s7.name === "v2 corrected on A" && s7.notes === "coach note" && (await loc(A, "q2")).notes === "coach note",
-      `R4: his new number goes in and nothing else of the record is lost (${JSON.stringify(s7).slice(0, 140)})`);
+    // R4: an iPad that only ever had the placeholder changes his number offline, after the full record is back
+    await A.D.put("pitchers", { id: "q8", name: "Eight", number: "18", notes: "coach-only 8", pitches: [{ id: "f", name: "Fastball", grade: 5 }] });
+    await A.sync("coach", P, true).syncNow();
+    await hold("q8"); await A.sync("coach", P, true).syncNow();
+    const D8 = await device();
+    await D8.sync("coach", P, true).syncNow();                                  // a new iPad: it sees him only as the placeholder
+    check(!(await loc(D8, "q8")).name, "(the setup: the new iPad has only his placeholder)");
+    await agree("q8");
+    await A.sync("coach", P, true).syncNow();                                   // A sends the full record back
+    check((await srv("q8")).notes === "coach-only 8", "(the setup: the full record is back on the server)");
+    const d8 = await loc(D8, "q8"); await sleep(5);
+    await D8.D.put("pitchers", Object.assign({}, d8, { number: "21" }));        // offline, before its next pull
+    await D8.sync("coach", P, true).syncNow(); await A.sync("coach", P, true).syncNow(); await D8.sync("coach", P, true).syncNow();
+    const s8 = await srv("q8");
+    check(s8.number === "21" && s8.name === "Eight" && s8.notes === "coach-only 8" && (s8.pitches || []).length === 1 && (await loc(A, "q8")).notes === "coach-only 8" && (await loc(D8, "q8")).notes === "coach-only 8",
+      `R4: his new number goes in, nothing else of the record is lost, and both iPads end up with all of it (${JSON.stringify(s8).slice(0, 140)})`);
   }
 
   await c.end(); await su.end();
