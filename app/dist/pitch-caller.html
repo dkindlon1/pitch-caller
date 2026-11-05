@@ -2654,10 +2654,16 @@ td.wrapcell .line { display: block; }
  * Works in the browser (window.PCSync) and in Node (module.exports) for tests. A transport carries the calls:
  *   restTransport  Supabase's REST API (the pc_push / pc_pull functions in supabase/migrations)
  *   any object with push(table, rows) and pull(table, cursor) works the same (tests use one that talks to Postgres)
+ *
+ * PitchIQ (2.0): a "program" is a team (supabase/migrations/20261106000000_pitchiq_teams.sql). A team that isn't paid
+ * up refuses pushes as team_locked and pulls nothing (locked); refused rows stay on the iPad and are tried again at
+ * every sync. Given the signed-in user (opts.userId), an iPad another account last synced is handed over only when
+ * none of that account's changes are still waiting: its local copy is cleared first, so the new account sees only what
+ * the server gives it. With changes waiting, the sync refuses (code "other-user") until that account sends them.
  */
 (function (root) {
   "use strict";
-  const VERSION = "1.2.0";
+  const VERSION = "2.0.0";
   // the device stores that sync, in the order they go up (parents before what points at them); meta stays on the device
   const TABLES = ["teams", "pitchers", "catchers", "hitters", "checkins", "sessions", "readings", "games", "packs", "events", "learned"];
   const BATCH = 400;
@@ -2674,14 +2680,14 @@ td.wrapcell .line { display: block; }
   const DAY = 864e5;
 
   function createSync(opts) {
-    const db = opts.db, transport = opts.transport, programId = opts.programId;
+    const db = opts.db, transport = opts.transport, programId = opts.programId, userId = opts.userId || null;
     if (!db || !transport || !programId) throw new Error("sync needs a database, a transport and a program");
     const now = opts.now || (() => Date.now());
     const key = "sync:" + programId;
 
     async function state() {
       const s = await db.get("meta", key);
-      return Object.assign({ id: key, programId, lastPush: {}, cursor: {}, parked: {}, rejected: [], log: [], access: null }, s || {});
+      return Object.assign({ id: key, programId, lastPush: {}, cursor: {}, parked: {}, rejected: [], log: [], access: null, userId: null, userEmail: null }, s || {});
     }
     async function saveState(s) { s.log = (s.log || []).slice(-30); return db.put("meta", s); }
 
@@ -2694,6 +2700,24 @@ td.wrapcell .line { display: block; }
         e.code = "other-program"; e.boundTo = b; throw e;
       }
       if (!b) await db.put("meta", { id: "boundProgram", programId, programName: opts.programName || null, at: now() });
+      await handOver();
+    }
+
+    // A shared iPad: the account that synced it last owns what's waiting on it. Another account takes over only once
+    // nothing is waiting, and then starts from a clean local copy (a player never inherits a coach's cached data).
+    async function handOver() {
+      if (!userId) return;
+      const s = await state();
+      if (s.userId === userId) return;
+      if (s.userId) {
+        const waiting = Object.values(await pending()).reduce((a, n) => a + n, 0);
+        if (waiting) {
+          const e = new Error(`${waiting} change${waiting === 1 ? "" : "s"} from ${s.userEmail || "another account"} ${waiting === 1 ? "is" : "are"} still waiting to go up from this iPad. ${s.userEmail || "That account"} signs in here and syncs first.`);
+          e.code = "other-user"; e.owner = s.userEmail || null; e.waiting = waiting; throw e;
+        }
+        for (const t of TABLES) for (const x of await db.all(t, true)) await db.forget(t, x.id);
+      }
+      await saveState(Object.assign(s, { userId, userEmail: opts.userEmail || null, lastPush: {}, cursor: {}, parked: {}, rejected: [], access: null }));
     }
 
     // A record that came down from the server carries _pulled (the updatedAt it arrived with). Until it's changed here
@@ -2778,7 +2802,7 @@ td.wrapcell .line { display: block; }
     async function pull() {
       await bind();
       const s = await state();
-      const stats = { merged: 0, received: 0, held: false };
+      const stats = { merged: 0, received: 0, held: false, locked: false };
       for (let pass = 0; pass < 2; pass++) {
         let restart = false;
         for (const t of TABLES) {
@@ -2789,6 +2813,7 @@ td.wrapcell .line { display: block; }
             if (r.access && s.access && r.access !== s.access) { s.access = r.access; s.cursor = {}; await saveState(s); restart = true; break; }
             if (r.access) s.access = r.access;
             if (r.reset) { cur = { xid: 0, id: "" }; s.cursor[t] = cur; continue; }   // the server was restored: from the start
+            if (r.locked) { stats.locked = true; break; }                              // not paid up: nothing comes down
             stats.received += r.rows.length;
             if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
             if (r.held) stats.held = true;
@@ -2813,9 +2838,10 @@ td.wrapcell .line { display: block; }
     async function syncNow() {
       let up, upErr = null;
       try { up = await push(); }
-      catch (e) { if (!e.status || e.status === 401 || e.status === 403 || e.code === "other-program") throw e; upErr = e; up = { applied: 0, skipped: 0, rejected: [], error: e.message }; }
+      catch (e) { if (!e.status || e.status === 401 || e.status === 403 || e.code === "other-program" || e.code === "other-user") throw e; upErr = e; up = { applied: 0, skipped: 0, rejected: [], error: e.message }; }
       const down = await pull();
-      return { push: up, pull: down, error: upErr ? upErr.message : null };
+      const locked = down.locked || (up.rejected || []).some((x) => x.reason === "team_locked");
+      return { push: up, pull: down, locked, error: upErr ? upErr.message : null };
     }
 
     return { push, pull, syncNow, pending, state, TABLES };
@@ -2846,16 +2872,20 @@ td.wrapcell .line { display: block; }
     return {
       push: (table, rows) => rpc("pc_push", { p: programId, tbl: table, rows }),
       pull: (table, cur) => rpc("pc_pull", { p: programId, tbl: table, after_xid: cur.xid || 0, after_id: cur.id || "", lim: 500 }),
-      myPrograms: () => rpc("pc_my_programs", {}),
-      createProgram: (name, level) => rpc("pc_create_program", { name, level }),
-      // staff: the server checks who may do each of these (the head coach, or the invited person for their own invite)
+      // teams and organizations (programId is the team)
+      myTeams: () => rpc("pc_my_teams", {}),
+      createOrg: (name, level) => rpc("pc_create_org", { name, level }),
+      createTeam: (org, name, level, timezone, joinAs) => rpc("pc_create_team", { org, name, level, timezone: timezone || "America/New_York", join_as: joinAs || null }),
+      // invites are link tokens, optionally tied to one email; the server checks who may do each of these
       myInvites: () => rpc("pc_my_invites", {}),
-      acceptInvite: (p) => rpc("pc_accept_invite", { p }),
-      declineInvite: (p) => rpc("pc_decline_invite", { p }),
-      invite: (email, role, pitcherId) => rpc("pc_invite", { p: programId, invite_email: email, member_role: role, member_pitcher: pitcherId || null }),
-      cancelInvite: (email) => rpc("pc_cancel_invite", { p: programId, invite_email: email }),
+      inviteInfo: (token) => rpc("pc_invite_info", { tok: token }),
+      acceptInvite: (token, declaresUnder13, parentEmail) => rpc("pc_accept_invite", { tok: token, declares_under13: !!declaresUnder13, parent_email: parentEmail || null }),
+      declineInvite: (token) => rpc("pc_decline_invite", { tok: token }),
+      giveConsent: (token, method) => rpc("pc_record_guardian_consent", { tok: token, method }),
+      invite: (role, pitcherId, email, under13) => rpc("pc_invite", { p: programId, member_role: role, pitcher: pitcherId || null, invite_email: email || null, under13: !!under13 }),
+      cancelInvite: (token) => rpc("pc_cancel_invite", { tok: token }),
       staff: () => rpc("pc_staff", { p: programId }),
-      setRole: (userId, role, pitcherId) => rpc("pc_set_role", { p: programId, member: userId, member_role: role, member_pitcher: pitcherId || null }),
+      setMember: (userId, role, perms) => rpc("pc_set_member", { p: programId, member: userId, member_role: role, member_perms: perms || {} }),
       removeMember: (userId) => rpc("pc_remove_member", { p: programId, member: userId }),
     };
   }
@@ -5958,9 +5988,19 @@ async function restore(e) {
 // ---------------------------------------------------------------- sync with Supabase (build step 2)
 // The device stays the place every pitch is written first; sync copies changes up and down in the background, never
 // during a call. Settings and the session live in the device's meta store (not synced).
-const SYNC = { cfg: null, auth: null, sync: null, busy: false, last: null, error: null, pending: null, programs: null, invites: null, staff: null, bound: null };
+const SYNC = { cfg: null, auth: null, sync: null, busy: false, last: null, error: null, pending: null, teams: null, invites: null, staff: null, bound: null, locked: false, lastInvite: null, advOpen: new Set() };
 const restUrl = () => SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1";
 const transportFor = (programId) => PCSync.restTransport({ restUrl: restUrl(), apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId });
+// A team's staff: a preset each (the server's list), with toggles on top for the advanced view. A player is linked to
+// his own pitcher record and sees only that. The server decides every one of these; the iPad only shows them.
+const PRESETS = [["head", "Head coach"], ["pitching", "Pitching coach"], ["caller", "Pitch caller"], ["viewer", "Viewer"], ["player", "Player"]];
+const TOGGLES = [["call_games", "Call games"], ["edit_grades", "Edit grades"], ["review_uploads", "Review uploads"], ["manage_opponents", "Opponents"], ["manage_roster", "Roster"], ["manage_staff", "Staff"]];
+const PRESET_PERMS = { head: TOGGLES.map((t) => t[0]), pitching: ["call_games", "edit_grades", "review_uploads", "manage_opponents"], caller: ["call_games", "manage_opponents"], viewer: [], player: [] };
+const roleName = (r) => (PRESETS.find((x) => x[0] === r) || [r, r || "?"])[1];
+const effective = (role, perms) => { const o = {}; for (const [k] of TOGGLES) o[k] = (perms && k in perms) ? !!perms[k] : (PRESET_PERMS[role] || []).includes(k); return o; };
+const may = (perm) => !!(SYNC.cfg && SYNC.cfg.perms && SYNC.cfg.perms[perm]);
+// an invite code, or a link with one in it
+const inviteToken = (s) => { const m = String(s || "").match(/[0-9a-f]{64}/i); return m ? m[0].toLowerCase() : null; };
 async function syncSetup() {
   if (!DB.D || typeof PCSync === "undefined") return;
   SYNC.cfg = await DB.D.get("meta", "syncConfig");
@@ -5969,17 +6009,33 @@ async function syncSetup() {
   if (!SYNC.cfg || !SYNC.cfg.url || !SYNC.cfg.apiKey) return;
   SYNC.auth = PCSync.supabaseAuth({ url: SYNC.cfg.url, apiKey: SYNC.cfg.apiKey, db: DB.D });
   SYNC.authSession = await SYNC.auth.session();
+  const who = SYNC.authSession || {};
   if (SYNC.cfg.programId) {
-    SYNC.sync = PCSync.createSync({ db: DB.D, transport: transportFor(SYNC.cfg.programId), programId: SYNC.cfg.programId, programName: SYNC.cfg.programName });
+    // the signed-in account goes with every sync: an iPad another account last synced is handed over only when that
+    // account has nothing left waiting to go up (a shared iPad never sends one coach's work as another's)
+    SYNC.sync = PCSync.createSync({ db: DB.D, transport: transportFor(SYNC.cfg.programId), programId: SYNC.cfg.programId, programName: SYNC.cfg.programName,
+      userId: who.userId || null, userEmail: who.email || null });
     SYNC.pending = await SYNC.sync.pending();
   }
+  syncTriggers();
 }
 async function syncConfig(patch) {
   SYNC.cfg = await DB.D.put("meta", Object.assign({ id: "syncConfig" }, SYNC.cfg || {}, patch));
   await syncSetup();
 }
+// Sync goes when the iPad comes back online or the app comes back to the front, never in the middle of a game (the
+// finished game goes up when it ends). The browser is asked to keep the database even when space runs low.
+function syncTriggers() {
+  if (SYNC.triggers || typeof window === "undefined" || !window.addEventListener) return;
+  SYNC.triggers = true;
+  const quietSync = () => { if (SYNC.sync && SYNC.authSession && !G().dbId) syncNow(true); };
+  window.addEventListener("online", quietSync);
+  if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") quietSync(); });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then((ok) => { SYNC.persisted = ok; }).catch(() => {}); } catch (e) {}
+}
 const programTransport = () => transportFor(null);
 const syncMessage = (e) => /fetch|network|offline|Failed to fetch|Load failed/i.test(e.message) ? "Couldn't reach the server: everything stays on this iPad and goes up next time." : e.message.replace(/^pc_\w+: /, "");
+const LOCKED = "This team isn't switched on (billing). Everything stays on this iPad and goes up once it is.";
 // A sync asked for while one is running (a game just ended, the button tapped twice) waits for it and then runs once
 // more, and whoever asked gets that second run's result: nothing ends up quietly skipped.
 let syncRun = null, syncQueued = null;
@@ -5998,21 +6054,23 @@ async function syncOnce(quiet) {
   try {
     const r = await SYNC.sync.syncNow();
     SYNC.last = { at: Date.now(), r };
+    SYNC.locked = !!r.locked;
+    if (SYNC.staff) SYNC.staff = null;   // who accepted, who left: the staff list is fetched again with the sync
     SYNC.pending = await SYNC.sync.pending();
     if (r.error) SYNC.error = `Some changes couldn't go up: ${r.error}. Everything stays on this iPad and is tried again next time.`;
     if (r.pull.merged || (r.push.skipped && r.push.skipped > 0)) { await reloadFromDb(); if (await checkDuplicates().then((x) => x.length).catch(() => 0)) await SYNC.sync.push().catch(() => {}); }
-    if (!quiet) toast(`Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} kept on this iPad` : ""}`);
+    if (!quiet) toast(r.locked ? LOCKED : `Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} kept on this iPad` : ""}`);
     return r;
   } catch (e) {
     if (/refresh token|JWT expired|invalid jwt/i.test(e.message) || e.status === 401) {
-      // the sign-in ran out (or was revoked): nothing is lost, the program stays picked, he signs in again
+      // the sign-in ran out (or was revoked): nothing is lost, the team stays picked, he signs in again
       await SYNC.auth.signOut().catch(() => {}); SYNC.authSession = null;
       SYNC.error = "Your sign-in expired: sign in again. Everything stays on this iPad until then.";
     } else SYNC.error = syncMessage(e);
     return null;
   } finally { SYNC.busy = false; if (S.view === "setup") render(); }
 }
-// One iPad holds one program. Using it for another means starting it fresh: a backup file first (everything on it,
+// One iPad holds one team. Using it for another means starting it fresh: a backup file first (everything on it,
 // to keep or restore later), then the iPad's database and game state are cleared and the app starts over.
 async function startFresh() {
   if (!confirmTwice("startfresh")) { toast("Tap again to back up and start this iPad fresh"); return; }
@@ -6026,30 +6084,33 @@ function otherProgram(name) {
   const b = SYNC.bound;
   return b && b.programId && name && b.programId !== name ? b : null;
 }
-// Joining a program that already exists: pull before anything goes up. Every new install makes a placeholder "Our team"
-// with default pitchers; once the program's own team has come down, the placeholder goes, and any of its pitchers or
-// catchers that already have work on this iPad (pitches, bullpens, check-ins, velo) move to the program's team instead
-// of being lost. The program is saved as this iPad's only once that has worked, so a join cut off halfway (no signal)
+const teamCfg = (t) => ({ programId: t.team_id, programName: t.team_name, role: t.role, perms: t.perms || {}, isOwner: !!t.is_owner });
+// Joining a team that already exists: pull before anything goes up. Every new install makes a placeholder "Our team"
+// with default pitchers; once the team's own roster has come down, the placeholder goes, and any of its pitchers or
+// catchers that already have work on this iPad (pitches, bullpens, check-ins, velo) move to the team's roster instead
+// of being lost. The team is saved as this iPad's only once that has worked, so a join cut off halfway (no signal)
 // never leaves the placeholders to go up at the next sync.
-async function joinProgram(p) {
+async function joinProgram(t) {
   const D = DB.D;
-  const b = otherProgram(p.program_id);
-  if (b) throw new Error(`This iPad holds the data for ${b.programName || "another program"}. To use it for ${p.name}, back it up and start this iPad fresh.`);
-  if (navigator.onLine === false) throw new Error("No signal: join the program once this iPad is online.");
-  const before = { teams: new Set((await D.all("teams")).map((t) => t.id)) };
-  const sync = PCSync.createSync({ db: D, transport: transportFor(p.program_id), programId: p.program_id, programName: p.name });
+  const b = otherProgram(t.team_id);
+  if (b) throw new Error(`This iPad holds the data for ${b.programName || "another team"}. To use it for ${t.team_name}, back it up and start this iPad fresh.`);
+  if (navigator.onLine === false) throw new Error("No signal: join the team once this iPad is online.");
+  if (!t.role) throw new Error(`You own ${t.team_name} but aren't on its staff. Add yourself as a coach first.`);
+  const before = { teams: new Set((await D.all("teams")).map((x) => x.id)) };
+  const who = SYNC.authSession || {};
+  const sync = PCSync.createSync({ db: D, transport: transportFor(t.team_id), programId: t.team_id, programName: t.team_name, userId: who.userId || null, userEmail: who.email || null });
   SYNC.busy = true; render();
-  let moved = 0, dropped = 0;
+  let moved = 0, dropped = 0, locked = false;
   try {
-    await sync.pull();
-    const ours = (await D.all("teams")).filter((t) => t.isOurs);
-    const theirs = ours.find((t) => !before.teams.has(t.id));
+    locked = (await sync.pull()).locked;
+    const ours = (await D.all("teams")).filter((x) => x.isOurs);
+    const theirs = ours.find((x) => !before.teams.has(x.id));
     if (theirs) {
       const events = await D.all("events");
       const used = new Set();
       for (const e of events) { if (e.pitcherId) used.add(e.pitcherId); if (e.catcherId) used.add(e.catcherId); }
       for (const st of ["sessions", "checkins", "readings"]) for (const x of await D.all(st)) if (x.pitcherId) used.add(x.pitcherId);
-      for (const mine of ours.filter((t) => before.teams.has(t.id))) {
+      for (const mine of ours.filter((x) => before.teams.has(x.id))) {
         for (const st of ["pitchers", "catchers"]) for (const x of await D.byIndex(st, "teamId", mine.id)) {
           if (used.has(x.id)) { await D.put(st, Object.assign(x, { teamId: theirs.id })); moved++; }
           else { await D.forget(st, x.id); dropped++; }
@@ -6063,48 +6124,102 @@ async function joinProgram(p) {
     if (S.setup.catcherId && !DB.catchers.has(S.setup.catcherId)) S.setup.catcherId = null;
     attachStaff(); save();
   } finally { SYNC.busy = false; }
-  await syncConfig({ programId: p.program_id, programName: p.name, role: p.role });
-  await syncNow(true);
-  toast(`Joined ${p.name}${moved ? `: ${moved} pitcher${moved === 1 ? "" : "s"} with work on this iPad kept (check the roster for doubles)` : ""}.`);
-  return { moved, dropped };
+  await syncConfig(teamCfg(t));
+  if (!locked) await syncNow(true);
+  toast(locked ? `${t.team_name} isn't switched on yet: nothing syncs until it is.` : `Joined ${t.team_name}${moved ? `: ${moved} pitcher${moved === 1 ? "" : "s"} with work on this iPad kept (check the roster for doubles)` : ""}.`);
+  return { moved, dropped, locked };
 }
+// A new team: an organization (billed per team, per year), and the team in it with this account as head coach. It
+// stays switched off until billing is done; until then everything is kept on this iPad and goes up once it's on. An
+// organization made by a try that didn't finish (no signal) is used again, not made twice.
 async function startProgram() {
   const name = (ourTeam() || {}).name || "Our team";
-  if (SYNC.bound) throw new Error(`This iPad holds the data for ${SYNC.bound.programName || "another program"}. To start a new program, back it up and start this iPad fresh.`);
-  const id = await programTransport().createProgram(name, S.setup.level);
-  await syncConfig({ programId: id, programName: name, role: "head_coach" });
-  await syncNow();
+  if (SYNC.bound) throw new Error(`This iPad holds the data for ${SYNC.bound.programName || "another team"}. To start a new team, back it up and start this iPad fresh.`);
+  if (navigator.onLine === false) throw new Error("No signal: start the team once this iPad is online.");
+  const tr = programTransport();
+  let org = SYNC.cfg.pendingOrg;
+  if (!org) { org = await tr.createOrg(name, S.setup.level); await syncConfig({ pendingOrg: org }); }
+  let tz = "America/New_York"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
+  const id = await tr.createTeam(org, name, S.setup.level, tz, "head");
+  await syncConfig({ pendingOrg: null, programId: id, programName: name, role: "head", perms: effective("head", {}), isOwner: true });
+  await syncNow(true);
+  toast(`${name} is set up. It switches on once billing is done; until then everything stays on this iPad.`);
 }
-// Head coach: invite staff. They sign in with that email (confirmed in Supabase) and accept; nobody joins without
-// accepting. A charter charts and plans, a pitcher sees and logs only his own check-ins, bullpens and velo, a head coach
-// can do everything.
-let staffRole = "charter";
-const ROLE_NAMES = [["charter", "Charter"], ["pitcher", "Pitcher"], ["head_coach", "Head coach"]];
+// After signing in: the account's teams, and what it is on this iPad's team now (a role changed since, or not on it)
+async function refreshTeams() {
+  const [teams, invites] = await Promise.all([programTransport().myTeams(), programTransport().myInvites()]);
+  SYNC.teams = teams || []; SYNC.invites = invites || [];
+  const c = SYNC.cfg || {};
+  if (c.programId) {
+    const t = SYNC.teams.find((x) => x.team_id === c.programId && x.role);
+    if (!t) { await syncConfig({ programId: null, role: null, perms: {} }); SYNC.error = `This account isn't on ${c.programName || "this iPad's team"}'s staff. Pick a team, or sign in as someone who is.`; }
+    else if (t.role !== c.role || JSON.stringify(t.perms || {}) !== JSON.stringify(c.perms || {}) || t.team_name !== c.programName) await syncConfig(teamCfg(t));
+  }
+}
+// Players join from the link on their own (or a parent's) phone, where the under-13 question is asked: the iPad
+// takes staff invites only.
+async function acceptInvite(token, role) {
+  const tr = programTransport();
+  if (!role) { const info = (await tr.inviteInfo(token) || [])[0]; if (!info) throw new Error("That invite code isn't valid any more. Ask for a new one."); role = info.role; }
+  if (role === "player") throw new Error("A player invite is opened from its link on the player's own phone (or a parent's, for a player under 13), not on the team iPad.");
+  const r = await tr.acceptInvite(token, false, null);
+  if (!r || r.status !== "joined") throw new Error("That invite couldn't be accepted here.");
+  await refreshTeams();
+  const t = SYNC.teams.find((x) => x.team_id === r.team_id);
+  if (t) await joinProgram(t);
+}
+// Staff and roster: invite by link (a code the person opens; tied to an email if one is given), change a coach's
+// preset or its toggles, remove people. A player's invite names his pitcher record, and is marked when he's under 13
+// so a parent has to say yes before anything of his is kept.
+let staffRole = "caller";
 function staffAdder() {
   const tr = () => transportFor(SYNC.cfg.programId);
   const refresh = () => tr().staff().then((x) => { SYNC.staff = x || []; render(); }).catch((e) => { SYNC.error = syncMessage(e); render(); });
   if (!SYNC.staff) { SYNC.staff = []; refresh(); }
   const act = (fn, done) => async () => { try { await fn(); SYNC.error = null; if (done) toast(done); } catch (e) { SYNC.error = syncMessage(e); } refresh(); };
   const pitcherName = (id) => (DB.pitchers.get(id) || {}).name || "a pitcher";
+  const roles = PRESETS.filter(([v]) => v === "player" ? may("manage_roster") : may("manage_staff"));
+  if (!roles.some(([v]) => v === staffRole) && roles.length) staffRole = roles[0][0];
+  const link = SYNC.lastInvite;
   return [h("div", { class: "fields" },
-    h("label", { class: "f", style: { flex: "1 1 200px" } }, "Invite staff by email", h("input", { id: "sync-member", type: "email", autocomplete: "off" })),
-    h("label", { class: "f", style: { flex: "0 1 150px" } }, "Role", h("select", { id: "sync-member-role", on: { change: (e) => { staffRole = e.target.value; render(); } } },
-      ROLE_NAMES.map(([v, l]) => h("option", { value: v, selected: staffRole === v ? true : null }, l)))),
-    staffRole === "pitcher" ? h("label", { class: "f", style: { flex: "1 1 160px" } }, "Which pitcher", h("select", { id: "sync-member-pitcher" },
+    h("label", { class: "f", style: { flex: "0 1 170px" } }, "Invite as", h("select", { id: "sync-member-role", on: { change: (e) => { staffRole = e.target.value; render(); } } },
+      roles.map(([v, l]) => h("option", { value: v, selected: staffRole === v ? true : null }, l)))),
+    staffRole === "player" ? h("label", { class: "f", style: { flex: "1 1 160px" } }, "Which pitcher", h("select", { id: "sync-member-pitcher" },
       rosterPitchers().map((p) => h("option", { value: p.id }, p.name || "Pitcher")))) : null,
+    h("label", { class: "f", style: { flex: "1 1 200px" } }, staffRole === "player" ? "Email (optional; a parent's for a player under 13)" : "Email (optional)", h("input", { id: "sync-member", type: "email", autocomplete: "off" })),
+    staffRole === "player" ? h("label", { class: "f check" }, h("input", { id: "sync-member-u13", type: "checkbox" }), "Under 13") : null,
     h("button", { class: "btn", on: { click: async () => {
-      const email = document.getElementById("sync-member").value.trim(); if (!email) return;
-      const pid = staffRole === "pitcher" ? document.getElementById("sync-member-pitcher").value : null;
-      await act(() => tr().invite(email, staffRole, pid), `Invited ${email} as ${staffRole.replace("_", " ")}. They sign in with that email and accept.`)();
+      const email = document.getElementById("sync-member").value.trim() || null;
+      const pid = staffRole === "player" ? document.getElementById("sync-member-pitcher").value : null;
+      const u13 = staffRole === "player" && document.getElementById("sync-member-u13").checked;
+      await act(async () => { const token = await tr().invite(staffRole, pid, email, u13); SYNC.lastInvite = { token, role: staffRole, who: email || (pid ? pitcherName(pid) : roleName(staffRole)) }; },
+        "Invite made: send the code below")();
       const el = document.getElementById("sync-member"); if (el) el.value = "";
-    } } }, "Invite")),
+    } } }, "Make invite")),
+    link ? h("p", { class: "note", id: "sync-invite-code" }, `Invite for ${link.who} as ${roleName(link.role).toLowerCase()}: `,
+      h("code", { class: "invite-code" }, SYNC.cfg.siteUrl ? `${SYNC.cfg.siteUrl.replace(/\/$/, "")}/join/${link.token}` : link.token),
+      ". It works once and stops working if you cancel it.") : null,
     SYNC.staff.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl", "aria-label": "Staff" },
-      h("tbody", {}, SYNC.staff.map((m) => h("tr", {},
-        h("td", {}, m.email || "?"),
-        h("td", {}, m.pending ? `invited as ${m.role.replace("_", " ")}` : h("select", { "aria-label": `Role for ${m.email}`, on: { change: (e) => act(() => tr().setRole(m.user_id, e.target.value, e.target.value === "pitcher" ? m.pitcher_id || (rosterPitchers()[0] || {}).id : null), "Role changed")() } },
-          ROLE_NAMES.map(([v, l]) => h("option", { value: v, selected: m.role === v ? true : null }, l)))),
-        h("td", {}, m.role === "pitcher" && m.pitcher_id ? pitcherName(m.pitcher_id) : ""),
-        h("td", {}, h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.email), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${m.email}`) } }, m.pending ? "Cancel invite" : "Remove"))))))) : null];
+      h("tbody", {}, SYNC.staff.map((m) => {
+        const who = m.email || "(anyone with the code)";
+        const coach = !m.pending && m.role !== "player";
+        const eff = effective(m.role, m.perms);
+        return h("tr", {},
+          h("td", {}, who),
+          h("td", {}, m.pending ? `invited as ${roleName(m.role).toLowerCase()}` : !coach || !may("manage_staff") ? roleName(m.role)
+            : h("div", {},
+              h("select", { "aria-label": `Preset for ${who}`, on: { change: (e) => act(() => tr().setMember(m.user_id, e.target.value, {}), "Preset changed")() } },
+                PRESETS.filter(([v]) => v !== "player").map(([v, l]) => h("option", { value: v, selected: m.role === v ? true : null }, l))),
+              h("details", { class: "adv", open: SYNC.advOpen.has(m.user_id) ? true : null, on: { toggle: (e) => { if (e.target.open) SYNC.advOpen.add(m.user_id); else SYNC.advOpen.delete(m.user_id); } } },
+                h("summary", { "aria-label": `Advanced for ${who}` }, "Advanced"),
+                TOGGLES.map(([k, l]) => h("label", { class: "f check" }, h("input", { type: "checkbox", "aria-label": `${l} for ${who}`, checked: eff[k] ? true : null, on: { change: (e) => {
+                  const perms = Object.assign({}, m.perms || {});
+                  if (e.target.checked === (PRESET_PERMS[m.role] || []).includes(k)) delete perms[k]; else perms[k] = e.target.checked;
+                  act(() => tr().setMember(m.user_id, m.role, perms), `${l}: ${e.target.checked ? "on" : "off"} for ${who}`)();
+                } } }), l))))),
+          h("td", {}, (m.pitcher_ids || []).map(pitcherName).join(", ")),
+          h("td", {}, h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.token), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${who}`) } }, m.pending ? "Cancel invite" : "Remove")));
+      })))) : null];
 }
 // D12: games charted twice (two iPads on one game). Checked whenever games arrive from elsewhere (a sync, a restore).
 // The duplicate stays in the database (nothing is deleted) and is left out of learning; the coach can say they're
@@ -6177,39 +6292,44 @@ function syncPanel() {
     h("label", { class: "f", style: { flex: "1 1 160px" } }, "Password", h("input", { id: "sync-pass", type: "password", autocomplete: "current-password" })),
     h("button", { class: "btn primary", on: { click: async () => {
       const email = document.getElementById("sync-email").value.trim(), pw = document.getElementById("sync-pass").value;
-      try { SYNC.authSession = await SYNC.auth.signIn(email, pw); await syncConfig({ email }); SYNC.error = null; SYNC.programs = SYNC.invites = null; if (SYNC.cfg.programId) await syncNow(true); }
-      catch (e) { SYNC.error = syncMessage(e); }
+      try {
+        SYNC.authSession = await SYNC.auth.signIn(email, pw); await syncConfig({ email }); SYNC.error = null; SYNC.teams = SYNC.invites = SYNC.staff = null;
+        await refreshTeams();
+        if (SYNC.cfg.programId) await syncNow(true);
+      } catch (e) { SYNC.error = syncMessage(e); }
       render();
     } } }, "Sign in"));
   const signedIn = SYNC.authSession;
-  if (!signedIn) return [c.programId ? h("p", { class: "note" }, `${c.programName || "Program"}: sign in to sync.`) : null, signIn, err];
+  if (!signedIn) return [c.programId ? h("p", { class: "note" }, `${c.programName || "Team"}: sign in to sync.`) : null, signIn, err];
+  const signOut = h("button", { class: "btn text", on: { click: async () => { await SYNC.auth.signOut(); SYNC.authSession = null; SYNC.staff = SYNC.teams = SYNC.invites = SYNC.lastInvite = null; await syncConfig({ programId: null }); render(); } } }, "Sign out");
   if (!c.programId) {
-    if (!SYNC.programs) { SYNC.programs = []; SYNC.invites = [];
-      Promise.all([programTransport().myPrograms(), programTransport().myInvites()]).then(([x, y]) => { SYNC.programs = x || []; SYNC.invites = y || []; render(); }).catch((e) => { SYNC.error = syncMessage(e); render(); }); }
-    const go = (p) => joinProgram(p).catch((e) => { SYNC.error = syncMessage(e); }).then(render);
-    return [h("p", { class: "note" }, `Signed in as ${signedIn.email || "you"}. ${SYNC.bound ? `This iPad holds the data for ${SYNC.bound.programName || "a program"}.` : "Pick your program, accept an invitation, or start one (you become its head coach)."}`),
+    if (!SYNC.teams) { SYNC.teams = []; SYNC.invites = []; refreshTeams().then(render).catch((e) => { SYNC.error = syncMessage(e); render(); }); }
+    const go = (t) => joinProgram(t).catch((e) => { SYNC.error = syncMessage(e); }).then(render);
+    const take = (token, role) => acceptInvite(token, role).catch((e) => { SYNC.error = syncMessage(e); }).then(render);
+    return [h("p", { class: "note" }, `Signed in as ${signedIn.email || "you"}. ${SYNC.bound ? `This iPad holds the data for ${SYNC.bound.programName || "a team"}.` : "Pick your team, accept an invite, or start a team (you're its head coach)."}`),
       (SYNC.invites || []).length ? h("div", { class: "staffpick" }, SYNC.invites.map((i) => h("div", { class: "choice" },
-        h("b", {}, i.name), h("span", {}, `invited as ${i.role.replace("_", " ")}`),
-        h("button", { class: "btn pill primary", on: { click: async () => {
-          try { const role = await programTransport().acceptInvite(i.program_id); SYNC.programs = null; await go({ program_id: i.program_id, name: i.name, role }); } catch (e) { SYNC.error = syncMessage(e); render(); }
-        } } }, "Accept"),
-        h("button", { class: "btn text", on: { click: async () => { await programTransport().declineInvite(i.program_id).catch(() => {}); SYNC.programs = null; render(); } } }, "Decline")))) : null,
-      h("div", { class: "staffpick" }, (SYNC.programs || []).map((p) => h("button", { class: "choice", disabled: otherProgram(p.program_id) ? true : null, on: { click: () => go(p) } },
-        h("b", {}, p.name), h("span", {}, p.role.replace("_", " "))))),
-      h("div", { class: "row-acts" }, SYNC.bound ? null : h("button", { class: "btn", on: { click: () => startProgram().catch((e) => { SYNC.error = syncMessage(e); }).then(render) } }, "Start a program for this team"), fresh),
+        h("b", {}, i.team_name), h("span", {}, `invited as ${roleName(i.role).toLowerCase()}`),
+        h("button", { class: "btn pill primary", on: { click: () => take(i.token, i.role) } }, "Accept"),
+        h("button", { class: "btn text", on: { click: async () => { await programTransport().declineInvite(i.token).catch(() => {}); SYNC.teams = null; render(); } } }, "Decline")))) : null,
+      h("div", { class: "staffpick" }, (SYNC.teams || []).map((t) => h("button", { class: "choice", disabled: otherProgram(t.team_id) || !t.role ? true : null, on: { click: () => go(t) } },
+        h("b", {}, t.team_name), h("span", {}, `${t.role ? roleName(t.role) : "owner (not on the staff)"}${t.active ? "" : " · not switched on yet"}`)))),
+      h("div", { class: "fields" },
+        h("label", { class: "f", style: { flex: "1 1 260px" } }, "Have an invite code or link?", h("input", { id: "sync-code", autocomplete: "off", spellcheck: "false" })),
+        h("button", { class: "btn", on: { click: () => { const tok = inviteToken(document.getElementById("sync-code").value); if (!tok) { SYNC.error = "That doesn't look like an invite code."; render(); return; } take(tok); } } }, "Join")),
+      h("div", { class: "row-acts" }, SYNC.bound ? null : h("button", { class: "btn", on: { click: () => startProgram().catch((e) => { SYNC.error = syncMessage(e); }).then(render) } }, "Start a team"), signOut, fresh),
       err];
   }
   const pend = SYNC.pending ? Object.values(SYNC.pending).reduce((a, n) => a + n, 0) : 0;
   const last = SYNC.last ? new Date(SYNC.last.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null;
-  const rej = SYNC.last && SYNC.last.r.push.rejected.length;
+  const rej = SYNC.last && SYNC.last.r.push.rejected.filter((x) => x.reason !== "team_locked").length;
   const held = SYNC.last && SYNC.last.r.pull.held;
-  return [h("p", { class: "note" }, `${c.programName || "Program"} as ${(c.role || "").replace("_", " ")}, signed in as ${signedIn.email || "you"}. ${pend ? `${pend} change${pend === 1 ? "" : "s"} waiting to go up.` : "Nothing waiting to go up."}${last ? ` Last synced ${last}.` : ""}`),
-    rej ? h("p", { class: "pstat watch" }, `${rej} change${rej === 1 ? " wasn't" : "s weren't"} taken by the server (not allowed for your role, or a broken record). ${rej === 1 ? "It stays" : "They stay"} on this iPad and ${rej === 1 ? "is" : "are"} tried again at every sync, so a head coach signing in here can send ${rej === 1 ? "it" : "them"}.`) : null,
+  return [h("p", { class: "note" }, `${c.programName || "Team"} as ${roleName(c.role).toLowerCase()}, signed in as ${signedIn.email || "you"}. ${pend ? `${pend} change${pend === 1 ? "" : "s"} waiting to go up.` : "Nothing waiting to go up."}${last ? ` Last synced ${last}.` : ""}`),
+    SYNC.locked ? h("p", { class: "pstat watch", id: "sync-locked" }, LOCKED) : null,
+    rej ? h("p", { class: "pstat watch" }, `${rej} change${rej === 1 ? " wasn't" : "s weren't"} taken by the server (not allowed for your account, or a broken record). ${rej === 1 ? "It stays" : "They stay"} on this iPad and ${rej === 1 ? "is" : "are"} tried again at every sync, so a coach who may make ${rej === 1 ? "it" : "them"} can send ${rej === 1 ? "it" : "them"} from here.`) : null,
     held ? h("p", { class: "note" }, "Some changes are still being saved on the server; they come down at the next sync.") : null,
     err,
-    c.role === "head_coach" ? staffAdder() : null,
-    h("div", { class: "row-acts" }, h("button", { class: "btn primary", disabled: SYNC.busy ? true : null, on: { click: () => syncNow() } }, SYNC.busy ? "Syncing…" : "Sync now"),
-      h("button", { class: "btn text", on: { click: async () => { await SYNC.auth.signOut(); SYNC.authSession = null; SYNC.staff = null; await syncConfig({ programId: null }); render(); } } }, "Sign out"), fresh)];
+    may("manage_staff") || may("manage_roster") ? staffAdder() : null,
+    h("div", { class: "row-acts" }, h("button", { class: "btn primary", disabled: SYNC.busy ? true : null, on: { click: () => syncNow() } }, SYNC.busy ? "Syncing…" : "Sync now"), signOut, fresh)];
 }
 
 

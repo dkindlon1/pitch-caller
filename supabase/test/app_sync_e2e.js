@@ -5,8 +5,9 @@
  *   /auth/v1/token   email + password -> an access token for that user (stand-in for Supabase Auth; any password works)
  *   /rest/v1/rpc/*   the sync functions, called as the user in the token (stand-in for Supabase's REST server)
  * Neither is Supabase's own server: this checks the app's screens, requests and data flow, not Supabase itself.
- * Two iPads (separate browser profiles): the head coach signs in, starts a program and charts a game; the charter signs
- * in on the other, picks the program and gets the game; the charter's pitch goes back to the coach.
+ * Two iPads (separate browser profiles): the head coach signs in, starts a team (switched off until billing, switched on
+ * here as billing would) and charts a game; the pitch caller he invites signs in on the other, accepts and gets the
+ * game; the caller's pitch goes back to the coach. A third coach joins with an invite code.
  */
 const { chromium } = require("playwright");
 const { Client } = require("pg");
@@ -14,6 +15,7 @@ const http = require("http"), fs = require("fs"), path = require("path"), crypto
 const BASE = process.env.PGURL || "postgres://postgres@localhost:55432/postgres";
 const DBNAME = "pc_app_sync_e2e";
 const DIST = path.join(__dirname, "../../app/dist/pitch-caller.html");
+const FX = require("./teams_fixture.js");
 let fails = 0;
 const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if (!ok) fails++; };
 const connect = async () => { const c = new Client({ connectionString: BASE.replace(/\/[^/]*$/, "/" + DBNAME) }); await c.connect(); return c; };
@@ -22,28 +24,29 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
   const admin = new Client({ connectionString: BASE }); await admin.connect();
   await admin.query(`drop database if exists ${DBNAME}`); await admin.query(`create database ${DBNAME}`); await admin.end();
   const su = await connect();
-  await su.query(fs.readFileSync(path.join(__dirname, "auth_stub.sql"), "utf8"));
-  await su.query(fs.readFileSync(path.join(__dirname, "../migrations/20261103000000_pitch_caller.sql"), "utf8"));
-  const users = { "coach@test.local": crypto.randomUUID(), "charter@test.local": crypto.randomUUID() };
+  await FX.applyAll(su);
+  const users = { "coach@test.local": crypto.randomUUID(), "charter@test.local": crypto.randomUUID(), "pc@test.local": crypto.randomUUID() };
   for (const [email, id] of Object.entries(users)) await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, $2, now())", [id, email]);
   const db = await connect();
   const asUser = async (sub, text, params) => {
     await db.query("begin");
-    try { await db.query("set local role authenticated"); await db.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub })]);
+    try { await db.query("set local role authenticated"); await db.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ sub, role: "authenticated" })]);
       const r = await db.query(text, params); await db.query("commit"); return r; } catch (e) { await db.query("rollback"); throw e; }
   };
   const calls = {
     pc_push: (a) => ["select public.pc_push($1, $2, $3::jsonb) as r", [a.p, a.tbl, JSON.stringify(a.rows)]],
     pc_pull: (a) => ["select public.pc_pull($1, $2, $3, $4, $5) as r", [a.p, a.tbl, a.after_xid, a.after_id, a.lim]],
-    pc_my_programs: () => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_my_programs() x", []],
-    pc_create_program: (a) => ["select to_jsonb(public.pc_create_program($1, $2)) as r", [a.name, a.level]],
-    pc_invite: (a) => ["select to_jsonb(public.pc_invite($1, $2, $3, $4)) as r", [a.p, a.invite_email, a.member_role, a.member_pitcher]],
+    pc_my_teams: () => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_my_teams() x", []],
+    pc_create_org: (a) => ["select to_jsonb(public.pc_create_org($1, $2)) as r", [a.name, a.level]],
+    pc_create_team: (a) => ["select to_jsonb(public.pc_create_team($1, $2, $3, $4, $5)) as r", [a.org, a.name, a.level, a.timezone, a.join_as]],
+    pc_invite: (a) => ["select to_jsonb(public.pc_invite($1, $2, $3, $4, $5)) as r", [a.p, a.member_role, a.pitcher, a.invite_email, a.under13]],
+    pc_invite_info: (a) => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_invite_info($1) x", [a.tok]],
     pc_my_invites: () => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_my_invites() x", []],
-    pc_accept_invite: (a) => ["select to_jsonb(public.pc_accept_invite($1)) as r", [a.p]],
-    pc_decline_invite: (a) => ["select to_jsonb(public.pc_decline_invite($1)) as r", [a.p]],
-    pc_cancel_invite: (a) => ["select to_jsonb(public.pc_cancel_invite($1, $2)) as r", [a.p, a.invite_email]],
+    pc_accept_invite: (a) => ["select public.pc_accept_invite($1, $2, $3) as r", [a.tok, a.declares_under13, a.parent_email]],
+    pc_decline_invite: (a) => ["select to_jsonb(public.pc_decline_invite($1)) as r", [a.tok]],
+    pc_cancel_invite: (a) => ["select to_jsonb(public.pc_cancel_invite($1)) as r", [a.tok]],
     pc_staff: (a) => ["select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb) as r from public.pc_staff($1) x", [a.p]],
-    pc_set_role: (a) => ["select to_jsonb(public.pc_set_role($1, $2, $3, $4)) as r", [a.p, a.member, a.member_role, a.member_pitcher]],
+    pc_set_member: (a) => ["select to_jsonb(public.pc_set_member($1, $2, $3, $4::jsonb)) as r", [a.p, a.member, a.member_role, JSON.stringify(a.member_perms || {})]],
     pc_remove_member: (a) => ["select to_jsonb(public.pc_remove_member($1, $2)) as r", [a.p, a.member]],
   };
   let queue = Promise.resolve();   // one Postgres connection: requests take turns
@@ -87,16 +90,23 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
     await page.getByRole("button", { name: "Sign in" }).click(); await page.waitForTimeout(500);
   };
 
-  console.log("1. The head coach signs in and starts a program");
+  console.log("1. The head coach signs in and starts a team; it syncs once billing switches it on");
   const coach = await open();
   await coach.evaluate(async () => { const t = ourTeam(); t.name = "RIT Tigers"; await dbPut("teams", t); });
   await signIn(coach, "coach@test.local");
-  check(await coach.getByText("Signed in as coach@test.local").count() === 1, "signed in, asked to pick or start a program");
-  await coach.getByRole("button", { name: "Start a program for this team" }).click(); await coach.waitForTimeout(1200);
-  const status = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
-  check(/RIT Tigers as head coach/.test(status) && /Nothing waiting to go up/.test(status), `program started and the roster synced up ("${status.split("\n").find((l) => /head coach/.test(l))}")`);
+  check(await coach.getByText("Signed in as coach@test.local").count() === 1, "signed in, asked to pick or start a team");
+  await coach.getByRole("button", { name: "Start a team" }).click(); await coach.waitForTimeout(1200);
   const progId = (await su.query("select id from public.programs where name = 'RIT Tigers'")).rows[0].id;
-  check(!!progId && +(await su.query("select count(*) from public.pitchers where program_id = $1", [progId])).rows[0].count >= 1, "the program and its pitchers are on the server");
+  const srvPitchers = async () => +(await su.query("select count(*) from public.pitchers where program_id = $1", [progId])).rows[0].count;
+  const locked = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check(/RIT Tigers as head coach/.test(locked) && /isn't switched on \(billing\)/.test(locked) && /waiting to go up/.test(locked) && (await srvPitchers()) === 0,
+    "the team is made but not switched on: the screen says so and the roster waits on the iPad");
+  const orgId = (await su.query("select org_id from public.programs where id = $1", [progId])).rows[0].org_id;
+  await su.query("update public.organizations set billing_status = 'active' where id = $1", [orgId]);
+  await su.query("update public.programs set status = 'active' where id = $1", [progId]);
+  await coach.getByRole("button", { name: "Sync now" }).click(); await coach.waitForTimeout(1200);
+  const status = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check(/Nothing waiting to go up/.test(status) && !/isn't switched on/.test(status) && (await srvPitchers()) >= 1, `switched on (as billing would), the next sync sends the roster ("${status.split("\n").find((l) => /head coach/.test(l))}")`);
 
   console.log("2. The coach charts a game; End game syncs it in the background");
   await coach.locator(".tabs button", { hasText: "Game" }).click(); await coach.waitForTimeout(300);
@@ -111,10 +121,11 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
 
   console.log("3. The charter signs in on another iPad and gets everything");
   await toSetup(coach);
-  await coach.locator("#sync-member").fill("nobody@test.local"); await coach.getByRole("button", { name: "Invite", exact: true }).click(); await coach.waitForTimeout(600);
+  await coach.locator("#sync-member").fill("nobody@test.local"); await coach.getByRole("button", { name: "Make invite" }).click(); await coach.waitForTimeout(600);
   const staffText = await coach.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
-  check(/nobody@test\.local/.test(staffText) && /invited as charter/.test(staffText) && !/no account/.test(staffText), "inviting an email with no account looks like any invite (nothing says who has signed up)");
-  await coach.locator("#sync-member").fill("charter@test.local"); await coach.getByRole("button", { name: "Invite", exact: true }).click(); await coach.waitForTimeout(600);
+  check(/nobody@test\.local/.test(staffText) && /invited as pitch caller/.test(staffText) && !/no account/.test(staffText), "inviting an email with no account looks like any invite (nothing says who has signed up)");
+  check(/[0-9a-f]{64}/.test(await coach.locator("#sync-invite-code").innerText()), "the invite's code is shown to send");
+  await coach.locator("#sync-member").fill("charter@test.local"); await coach.getByRole("button", { name: "Make invite" }).click(); await coach.waitForTimeout(600);
   const notYet = (await su.query("select count(*)::int n from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0].n;
   check(notYet === 0, "the invited charter isn't a member until he accepts");
   const charter = await open();
@@ -122,7 +133,7 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
   await charter.waitForTimeout(500);
   await charter.locator(".srow", { hasText: "Sync with Supabase" }).getByRole("button", { name: "Accept" }).click(); await charter.waitForTimeout(1800);
   const role = (await su.query("select m.role from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0];
-  check(role && role.role === "charter", "he signs in on his iPad, accepts, and joins as charter");
+  check(role && role.role === "caller", "he signs in on his iPad, accepts, and joins as pitch caller");
   const got2 = await charter.evaluate(async () => ({ events: (await DB.D.all("events")).filter((e) => e.type === "pitch").length, games: (await DB.D.all("games")).length }));
   check(got2.events === 8 && got2.games >= 1, `the charter's iPad has the coach's game (${got2.events} pitches)`);
   const ours = await charter.evaluate(() => [...DB.teams.values()].filter((t) => t.isOurs).map((t) => t.name));
@@ -132,7 +143,36 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
   const srvOurs = (await su.query("select count(*)::int n from public.teams where program_id = $1 and (doc->>'isOurs')::boolean", [progId])).rows[0].n;
   check(srvOurs === 1, `the server still has one team of ours (${srvOurs})`);
   const cs = await charter.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
-  check(/as charter/.test(cs) && !/weren't allowed|wasn't allowed/.test(cs), "and shows his role, with nothing refused (the placeholders never went up)");
+  check(/as pitch caller/.test(cs) && !/weren't taken|wasn't taken/.test(cs), "and shows his role, with nothing refused (the placeholders never went up)");
+  check(!/Make invite/.test(cs), "a pitch caller isn't offered the staff list");
+
+  console.log("3b. Presets, toggles, and joining with a code");
+  await toSetup(coach); await coach.getByRole("button", { name: "Sync now" }).click(); await coach.waitForTimeout(1000);
+  await coach.locator("summary", { hasText: "Advanced" }).first().click(); await coach.waitForTimeout(200);
+  await coach.getByRole("checkbox", { name: "Edit grades for charter@test.local" }).check(); await coach.waitForTimeout(600);
+  const perms = (await su.query("select m.role, m.perms from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0];
+  check(perms.role === "caller" && perms.perms.edit_grades === true && Object.keys(perms.perms).length === 1, `the advanced toggle adds one permission on top of his preset (${JSON.stringify(perms.perms)})`);
+  await coach.getByRole("combobox", { name: "Preset for charter@test.local" }).selectOption("pitching"); await coach.waitForTimeout(600);
+  const perms2 = (await su.query("select m.role, m.perms from public.members m join auth.users u on u.id = m.user_id where u.email = 'charter@test.local'")).rows[0];
+  check(perms2.role === "pitching" && Object.keys(perms2.perms).length === 0, "a new preset starts with no toggles on top");
+  await coach.getByRole("combobox", { name: "Preset for charter@test.local" }).selectOption("caller"); await coach.waitForTimeout(600);
+  await coach.locator("#sync-member-role").selectOption("player"); await coach.waitForTimeout(200);
+  await coach.getByRole("button", { name: "Make invite" }).click(); await coach.waitForTimeout(600);
+  const playerCode = (await coach.locator("#sync-invite-code").innerText()).match(/[0-9a-f]{64}/)[0];
+  await coach.locator("#sync-member-role").selectOption("pitching"); await coach.waitForTimeout(200);
+  await coach.getByRole("button", { name: "Make invite" }).click(); await coach.waitForTimeout(600);
+  const pcCode = (await coach.locator("#sync-invite-code").innerText()).match(/[0-9a-f]{64}/)[0];
+  const third = await open();
+  await signIn(third, "pc@test.local");
+  await third.locator("#sync-code").fill(`https://example.test/join/${playerCode}`); await third.getByRole("button", { name: "Join", exact: true }).click(); await third.waitForTimeout(600);
+  const refused = await third.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  const pcRole = async () => ((await su.query("select m.role from public.members m join auth.users u on u.id = m.user_id where u.email = 'pc@test.local'")).rows[0] || {}).role;
+  check(/player's own phone/.test(refused) && !(await pcRole()), "a player's invite isn't taken on a team iPad (players join on their own phone, where the age question is asked)");
+  await third.locator("#sync-code").fill(pcCode); await third.getByRole("button", { name: "Join", exact: true }).click(); await third.waitForTimeout(1800);
+  const pcText = await third.locator(".srow", { hasText: "Sync with Supabase" }).innerText();
+  check((await pcRole()) === "pitching" && /RIT Tigers as pitching coach/.test(pcText), "a coach pastes the code he was sent and joins as pitching coach");
+  check((await third.evaluate(async () => (await DB.D.all("events")).filter((e) => e.type === "pitch").length)) === 8, "and gets the team's game");
+  await third.context().close();
 
   console.log("4. The charter charts a pitch; the coach's Sync now brings it back");
   await charter.locator(".tabs button", { hasText: "Game" }).click(); await charter.waitForTimeout(300);
@@ -213,16 +253,17 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
   await toSetup(coach); await coach.evaluate(async (g) => { S.view = "data"; await pastFixLoad(g); }, dropped.id); await coach.waitForTimeout(400);
   check(await coach.getByText(/same game as another iPad/).count() === 1, "Data, Fix a pitch says so, with a way to say they're different games");
 
-  console.log("9. One iPad holds one program; a join with no signal saves nothing");
+  console.log("9. One iPad holds one team; a join with no signal saves nothing");
   {
     const other = (await su.query("select id from public.programs where name = 'RIT Tigers'")).rows[0];
-    await asUser(users["coach@test.local"], "select public.pc_create_program('Summer ball')");
+    const org2 = (await asUser(users["coach@test.local"], "select public.pc_create_org('Summer ball') r")).rows[0].r;
+    await asUser(users["coach@test.local"], "select public.pc_create_team($1, 'Summer ball', null, 'America/New_York', 'head')", [org2]);
     await toSetup(coach);
     await coach.getByRole("button", { name: "Sign out" }).click(); await coach.waitForTimeout(300);
     await coach.locator("#sync-pass").fill("anything"); await coach.getByRole("button", { name: "Sign in" }).click(); await coach.waitForTimeout(900);
     const summer = coach.locator(".srow", { hasText: "Sync with Supabase" }).getByRole("button", { name: /Summer ball/ });
     const disabled = await summer.isDisabled();
-    const msg = await coach.evaluate(() => joinProgram({ program_id: SYNC.programs.find((p) => p.name === "Summer ball").program_id, name: "Summer ball", role: "head_coach" }).then(() => "joined", (e) => e.message));
+    const msg = await coach.evaluate(() => joinProgram(SYNC.teams.find((t) => t.team_name === "Summer ball")).then(() => "joined", (e) => e.message));
     const leaked = (await su.query("select count(*)::int n from public.events e join public.programs p on p.id = e.program_id where p.name = 'Summer ball'")).rows[0].n;
     check(disabled && /holds the data for RIT Tigers/.test(msg) && leaked === 0, `the coach's iPad can't take Summer ball: the choice is greyed out, joining says why, nothing of RIT's went there ("${msg.slice(0, 60)}...", ${leaked} pitches)`);
     check(await coach.getByRole("button", { name: /start this iPad fresh/ }).count() === 1, "and it offers to back up and start this iPad fresh");

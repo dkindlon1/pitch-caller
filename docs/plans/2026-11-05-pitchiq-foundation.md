@@ -18,6 +18,14 @@
 
 **Spec:** `docs/specs/2026-11-05-pitchiq-platform.md` (approved). This plan covers D1, D2, D3 and D4. It depends on amendments A1 and A2 in the spec, which are proposed and need Drew's approval.
 
+> **Status, Nov 5 (end of day).** Built per spec amendment A11 (a team is the `programs` row; doc tables stay scoped
+> by `program_id`; `members` holds presets and toggles; `player_links` holds a player's pitcher records), not the
+> `team_members` / `doc->>'teamId'` design in Tasks 2 to 6 below, because `teamId` on a hitter already names the
+> opponent team. Tasks 0 to 7 are done on the `pitchiq-platform` branch: migration `20261106000000_pitchiq_teams.sql`,
+> `rls_matrix_test.js` (96 checks), the ported sync, review and client tests, `app/sync.js` 2.0.0 (team transport,
+> shared-iPad hand-over, locked state), and the iPad's sync panel (start a team, invite codes, presets with toggles).
+> Task 8 (apply to the dev project) is replaced by the promote workflow to prod. Task 9 (the Next.js shell) is next.
+
 ## Roadmap (build order per spec A9/A10)
 
 | Order | Plan | Covers |

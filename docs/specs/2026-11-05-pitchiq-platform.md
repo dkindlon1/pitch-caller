@@ -285,7 +285,7 @@ type Proposal = { pitcher_id: string; pitch: string; field: 'velo'|'shape'|'slot
 
 Every acceptance check passes in a fresh run. The full test suite is green. `npm run build` passes. The final report lists **Verified** (with command output) vs **Not verified** (with the reason). Nothing is called done without output.
 
-## Amendments (A1–A10 accepted by Drew, Nov 5 11:44)
+## Amendments (A1–A10 accepted by Drew, Nov 5 11:44; A11 proposed)
 
 **A1. One parent account, several children.**
 - A parent can link one login to several player spots on a team, for example two under-13 siblings.
@@ -366,6 +366,15 @@ Every acceptance check passes in a fresh run. The full test suite is green. `npm
 - Privacy-light analytics with no tracking inside `/app`. Funnel: demo start → 5th demo call → pricing → checkout → paid → first game prepped → first game synced.
 - "PitchIQ Baseball" in titles and metadata.
 - Affects D14.
+
+**A11. A team is the existing `programs` row (proposed Nov 5, built on the branch; awaiting Drew's approval).**
+- Found while building Plan 1: the data model above scopes the doc tables by a `team_id` generated from `doc->>'teamId'`. That field already means something else: on a hitter it is the *opponent* team the hitter plays for. Scoping by it would file opponent hitters under the wrong team, or under none.
+- Instead: a team **is** today's `programs` row, now under `organizations`. Every doc table keeps its `program_id` column, which already scopes every row to one team, so no doc changes and no backfill. `pc_push` / `pc_pull` keep their `p` argument (it is the team).
+- `members` keeps its name and gains the presets (head, pitching, caller, viewer) with `perms` toggles on top, or `player`. A player's pitcher records move to `player_links (program_id, user_id, pitcher_id)`, so one account can hold more than one.
+- Invites become 64-character link tokens, optionally tied to an email; an invite for a player under 13 needs a guardian's consent first. The team iPad takes staff invites only; players join from the link on their own (or a parent's) phone, where the age question is asked.
+- `pc_team_active(team)` is the single lockout check, as specified.
+- Opponents remain `teams` docs with `isOurs: false` (Plan 3 may promote them to a table).
+- Affects D1, D2 and every later plan that names `team_members` or `team_id`.
 
 **Build order (replaces the roadmap):**
 1. Plan 0 Operate.

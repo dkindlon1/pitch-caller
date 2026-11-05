@@ -12,4 +12,5 @@ $run review_test        node supabase/test/review_test.js
 $run client_review_test node supabase/test/client_review_test.js
 $run sync_auth_test     node app/sync_auth_test.js
 $run app_sync_e2e       node supabase/test/app_sync_e2e.js
+$run rls_matrix_test    node supabase/test/rls_matrix_test.js
 $run waitlist_test      node supabase/test/waitlist_test.js

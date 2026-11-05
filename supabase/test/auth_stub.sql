@@ -16,8 +16,13 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
     (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')), '')::uuid
 $$;
-grant usage on schema auth to anon, authenticated;
-grant execute on function auth.uid() to anon, authenticated;
+-- like Supabase's: the role claim of the request's JWT (service_role for the server key)
+create or replace function auth.role() returns text language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'))
+$$;
+grant usage on schema auth to anon, authenticated, service_role;
+grant execute on function auth.uid(), auth.role() to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated;
 -- Supabase's default privileges: every new table in public is granted in full to anon and authenticated, so the
 -- migration's own revokes and row level security are what actually protect the data (as on a real project)
