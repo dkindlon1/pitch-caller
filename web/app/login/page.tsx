@@ -42,6 +42,7 @@ async function LoginForms({ searchParams }: { searchParams: Search }) {
     <>
       {error ? <p className="shell-alert" role="alert">{error}</p> : null}
       {one(sp.notice) === "check_email" ? <p className="shell-note" role="status">Check your email for a link to finish making your account.</p> : null}
+      {one(sp.notice) === "confirm_failed" ? <p className="shell-alert" role="alert">That link didn&apos;t work (it may have been used already). Sign in, or make the account again to get a new link.</p> : null}
       <form action={signIn} className="shell-form" aria-label="Sign in">
         <input type="hidden" name="next" value={next} />
         <label>Email<input name="email" type="email" autoComplete="username" required /></label>
