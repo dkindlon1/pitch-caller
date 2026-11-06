@@ -16,16 +16,16 @@ command and output file. Nothing was merged or pushed to main, and nothing was a
 - **C: a wider guardrail.** 0.020 is the narrowest window that passes your changeup gate; 0.030 is the same as off.
   A 0.020 window saves about 0.09 runs/game against guardrail-off (SE 0.05, 90 paired games) and keeps 6.3% changeups vs 7.1%. That's a modest hedge, not a clear win; it still costs about +0.31 vs v0.8. **Your call; nothing changed.**
 
-## The merge (Nov 5, evening)
+## The merge (Nov 5 evening, caught up Nov 6 morning)
 
 | Check on the merged tree | Result |
 |---|---|
 | Goldens v0.8 and v0.7c, Python and JS | exact |
 | Parity v0.8 and v0.9 (150 cases each) | pass |
 | `scripts/test-app.sh` (main's CI: tests.py, parity, reproducible build, Node suites, pitch_rules 41/41, smoke, rules_e2e 20/20) | exit 0 |
-| `scripts/test-sql.sh` on Postgres 17.11 (sync, review, client review, auth, app sync e2e, RLS matrix 266, waitlist) | 438 checks, 0 failures |
+| `scripts/test-sql.sh` on Postgres 17.11 (sync, review, client review, auth, app sync e2e, RLS matrix 329, waitlist), final tree | 501 checks, 0 failures |
 | d6, gate and 10 browser suites (v09_matchup, v09_labels, v08, gameday, replay, d0, db, stage2, travel, security) | all pass |
-| v0.8 / v0.9 migrations applied after main's five later ones, on a scratch Postgres 17 database, then re-run | apply cleanly; idempotent |
+| All 11 migrations in order (main's through `terms`, then v0.8 / v0.9), scratch Postgres 17 database, v0.9 re-run | apply cleanly; idempotent |
 
 - **Conflicts:** `.gitignore` (both kept), `app/dist` (rebuilt), and one hunk in `app/index.src.html`: main's pitch-count
   line and v0.9's infield-in / steal controls share the scoreboard cell. Both kept.
