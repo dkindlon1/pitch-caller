@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DocPage } from "../components/DocPage";
-import { LEGAL_VERSION } from "@/lib/legal";
+import { CONTACT_EMAIL, CONTACT_TEXT, LEGAL_VERSION } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Terms | PitchIQ Baseball" };
 
@@ -56,6 +56,8 @@ export default function Terms() {
         An owner can cancel any time in the billing portal. We may close an account that breaks these Terms. Either way, the data is kept for
         12 months unless you ask us to delete it sooner.
       </p>
+      <h2>Contact</h2>
+      <p>Questions, or a request to see or delete your data: {CONTACT_EMAIL ? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> : CONTACT_TEXT}.</p>
       <p><Link href="/">Back to PitchIQ</Link></p>
     </DocPage>
   );

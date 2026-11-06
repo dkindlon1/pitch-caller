@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DocPage } from "../components/DocPage";
-import { LEGAL_VERSION } from "@/lib/legal";
+import { CONTACT_EMAIL, CONTACT_TEXT, LEGAL_VERSION } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Privacy | PitchIQ Baseball" };
 
@@ -45,6 +45,8 @@ export default function Privacy() {
         network address to stop automated sign-ups (the address itself isn&apos;t stored). We send one email when teams can sign up, keep it 12
         months after that, then delete it. The waitlist isn&apos;t for children under 13.
       </p>
+      <h2>Contact</h2>
+      <p>Questions, or a request to see or delete your data: {CONTACT_EMAIL ? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> : CONTACT_TEXT}.</p>
       <p><Link href="/terms">Terms</Link> · <Link href="/">Back to PitchIQ</Link></p>
     </DocPage>
   );
