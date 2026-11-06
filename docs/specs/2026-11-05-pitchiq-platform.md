@@ -78,6 +78,7 @@ The **owner** can do these things across the whole organization: billing, create
 - For a player under 13, the invite goes to a parent's email. The parent creates the account and gives consent before anything about the child is stored, as COPPA requires: notice to the parent plus verifiable parental consent. The account records the consent method and timestamp.
 - Players 13 to 17 tick a box confirming a parent or guardian agrees to the Terms.
 - Consent flow and wording are a lawyer's call before launch.
+- Drew approved the age question and the consent flow and wording as built (Nov 5, 9:27 pm). That is the product sign-off; a lawyer's review of COPPA compliance is still advised before launch.
 
 A **player** can read and write their own profile, arsenal, grades, uploads and exclusions. They can read their own outings, stats and learned values. They can see nothing about teammates, opponents, hitters or the game plan.
 
