@@ -127,10 +127,16 @@ async function marketing() {
     await page.locator("#uploads").scrollIntoViewIfNeeded();
     await page.waitForSelector(".cloud.on", { timeout: 20000 }); await wait(900);   // the 0.6 s crossfade
     check((await opacity(page, ".cloud-flat")) < 0.05 && (await page.locator(".cloud-note").innerText()).startsWith("Sample data, not a real file."), "the 3D cloud replaces the flat plot, labelled as sample data");
-    await page.getByRole("button", { name: "Velocity" }).click(); await wait(1600);
-    const tz = await page.locator(".cloud-tick.t-z").first().evaluate((e) => Number(e.style.opacity)), tx = await page.locator(".cloud-tick.t-x").first().evaluate((e) => Number(e.style.opacity));
+    await page.getByRole("button", { name: "Velocity" }).click();
+    // the turn takes 1.1 s; software WebGL on a CI runner can draw slowly, so poll for its end
+    let tz = 0, tx = 1;
+    for (let i = 0; i < 40 && !(tz > 0.9 && tx < 0.05); i++) {
+      await wait(250);
+      tz = await page.locator(".cloud-tick.t-z").first().evaluate((e) => Number(e.style.opacity));
+      tx = await page.locator(".cloud-tick.t-x").first().evaluate((e) => Number(e.style.opacity));
+    }
     check((await page.getByRole("button", { name: "Velocity" }).getAttribute("aria-pressed")) === "true" && tz > 0.9 && tx < 0.05 &&
-      (await page.locator(".cloud-note").innerText()).includes("Velocity in mph"), "Velocity turns it side-on: mph ticks show, break ticks hide");
+      (await page.locator(".cloud-note").innerText()).includes("Velocity in mph"), `Velocity turns it side-on: mph ticks show, break ticks hide (${tz}, ${tx})`);
     check(errors.length === 0, `no page errors with WebGL (${errors.join(" | ") || "none"})`);
     await ctx.close();
 
