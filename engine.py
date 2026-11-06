@@ -200,6 +200,25 @@ try:
         OUTCOME_ADJ[_lvl].update(_d)
 except ImportError:
     pass
+# v1.0 Phase 4: pitcher-side terms refit at the v1.0 call mix (fit_pitcher_side.py -> pitcher_side_params.py, loaded after
+# outcome_params): the level hbp scale (HBP_LOC ratios kept), the level wildness, and the wild-pitch chance per non-competitive
+# ball with runners on, (off-speed, fastball). travel copies hs and college copies college_d1; MLB is unchanged.
+WP_DEFAULT = (0.12, 0.04)
+WP_RATE = {}
+try:
+    if _os.environ.get("PC_PITCHER_SIDE"):     # sensitivity runs (fit_pitcher_side.py --wp-ratio): another params file
+        _ns = {}
+        exec(open(_os.environ["PC_PITCHER_SIDE"]).read(), _ns)
+        PITCHER_SIDE = _ns["PITCHER_SIDE"]
+    else:
+        from pitcher_side_params import PITCHER_SIDE
+    for _lvl, _d in PITCHER_SIDE.items():
+        for _l in [_lvl] + {"hs": ["travel"], "college_d1": ["college"]}.get(_lvl, []):
+            if _l in OUTCOME_ADJ:
+                OUTCOME_ADJ[_l]["hbp"], OUTCOME_ADJ[_l]["wild"] = _d["hbp"], _d["wild"]
+            WP_RATE[_l] = (_d["wp_os"], _d["wp_fb"])
+except ImportError:
+    pass
 try:   # v0.7: one grade point = one SD of real pitchers at the level (fit_spread.py); absent = scale 1, the v0.6 engine
     from spread_params import SPREAD_FIT
     for _lvl, _d in SPREAD_FIT.items():
@@ -791,7 +810,8 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             out["hbp"] += ball_p * hb
             ball_p *= (1 - hb)
         if z == "noncomp" and any(s.bases):   # wild pitch risk with runners on
-            wp = (0.12 if is_offspeed(p.kind) else 0.04) * (1 - 0.15 * (s.catcher_block - 3))
+            wr = WP_RATE.get(s.level, WP_DEFAULT)
+            wp = (wr[0] if is_offspeed(p.kind) else wr[1]) * (1 - 0.15 * (s.catcher_block - 3))
             out["wp_ball"] += ball_p * wp
             ball_p *= (1 - wp)
         out["ball"] += ball_p
