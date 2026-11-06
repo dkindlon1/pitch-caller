@@ -1285,8 +1285,15 @@ async function endGame() {
   const pct = (x) => Math.round(100 * x) + "%";
   const used = comp.located >= 0.9 ? "locations will be used" : "under 90% located, so locations from it won't be used";
   toast(`Game saved: ${comp.pitches} pitches, ${pct(comp.located)} located (${used}). New game is up.`);
-  if (comp.learn) await learnAfterGame(comp.learn);
-  if (typeof window !== "undefined" && window.PC_UPDATE_WAITING && window.PC_APPLY_UPDATE) window.PC_APPLY_UPDATE();   // an update that waited for this game
+  // an update must not reload the page while the game's learning is being saved: the shell waits while PC_BUSY
+  if (typeof window !== "undefined") window.PC_BUSY = true;
+  try { if (comp.learn) await learnAfterGame(comp.learn); }
+  finally {
+    if (typeof window !== "undefined") {
+      window.PC_BUSY = false;
+      if (window.PC_UPDATE_WAITING && window.PC_APPLY_UPDATE) window.PC_APPLY_UPDATE();   // an update that waited for this game
+    }
+  }
 }
 function archiveGame() {
   const g = G(); if (!g.log.length) return;

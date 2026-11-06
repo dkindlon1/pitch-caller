@@ -41,4 +41,5 @@ test("nine hitters typed fast", () => {
 
 test("the portal's pitch-count rules are the iPad's", () => {
   assert.equal(readFileSync(new URL("./pitch_rules.js", import.meta.url), "utf8"), readFileSync(new URL("../../app/pitch_rules.js", import.meta.url), "utf8"));
+  assert.equal(readFileSync(new URL("./pc_import.js", import.meta.url), "utf8"), readFileSync(new URL("../../app/import.js", import.meta.url), "utf8"), "web/lib/pc_import.js is app/import.js");
 });

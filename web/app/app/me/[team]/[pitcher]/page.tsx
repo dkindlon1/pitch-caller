@@ -61,7 +61,7 @@ async function Body({ params }: { params: Params }) {
           </table></div>
         ) : <p className="shell-note">Your game pitches show up here once your coach&apos;s iPad syncs a game you pitched in.</p>}
       </section>
-      <p className="shell-note small">Your grades and arsenal: <Link href={`/app/me/${team}/${pitcher}/arsenal`}>Arsenal</Link>. Full stats and uploads come with the next update.</p>
+      <p className="shell-note small">Your grades and arsenal: <Link href={`/app/me/${team}/${pitcher}/arsenal`}>Arsenal</Link>. Your TrackMan and Rapsodo sessions: <Link href={`/app/me/${team}/${pitcher}/uploads`}>Uploads</Link>. Counts, rates and charts: <Link href={`/app/me/${team}/${pitcher}/stats`}>Stats</Link>.</p>
     </>
   );
 }

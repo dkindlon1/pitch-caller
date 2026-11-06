@@ -23,7 +23,7 @@ window.PC_CONFIG_URL = "/app/game/config.json";
     function apply() {
       var w = reg.waiting;
       if (!w || !navigator.serviceWorker.controller) return;
-      if (live()) { window.PC_UPDATE_WAITING = true; return; }        // after this game: checked again below
+      if (live() || window.PC_BUSY) { window.PC_UPDATE_WAITING = true; return; }   // after this game (or its learning): checked again below
       w.postMessage("skipWaiting");
     }
     window.PC_APPLY_UPDATE = apply;

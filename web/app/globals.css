@@ -333,3 +333,27 @@ h2 { font-size: clamp(2.4rem, 4vw, 3.6rem); }
 .hist .pill-warn { margin-left: 4px; }
 form.inline { display: inline; margin: 0; }
 .shell-h2 .pill-warn { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; }
+
+/* uploads and stats (Plan 4) */
+.sub-tabs { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 4px 0 18px; border-bottom: 1px solid var(--pc-line); }
+.sub-tabs a { text-decoration: none; color: var(--pc-text-2); font-weight: 600; padding: 10px 0; min-height: 44px; display: inline-flex; align-items: center; }
+.sub-tabs a[aria-current="page"] { color: var(--pc-text); box-shadow: inset 0 -2px 0 var(--pc-text); }
+.sub-tabs.small a { font-size: 0.9rem; min-height: 40px; }
+.upload-box .drop { border: 1.5px dashed var(--pc-line); border-radius: 12px; padding: 22px; text-align: center; display: grid; gap: 10px; justify-items: center; }
+.upload-box .drop.over { border-color: var(--pc-text); background: rgba(255, 255, 255, 0.04); }
+.upload-sum { margin: 6px 0 2px; }
+.warn li { color: var(--pc-text-2); font-size: 0.9rem; padding: 2px 0; }
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 14px; }
+.props li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid var(--pc-line); }
+.btn-row.inline { margin: 0; }
+.review tr.out td { opacity: 0.45; }
+.review tr.dev td:nth-child(2) { font-style: italic; }
+.data-tbl.small td, .data-tbl.small th { font-size: 0.8rem; padding: 4px 8px; }
+.chart { margin: 8px 0 22px; max-width: 680px; }
+.chart.square { max-width: 360px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--pc-line); stroke-width: 1; }
+.chart .tick { fill: var(--pc-text-2); font-size: 11px; font-family: var(--pc-mono, ui-monospace, monospace); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.85rem; color: var(--pc-text-2); margin-top: 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+details.danger { margin-top: 18px; }

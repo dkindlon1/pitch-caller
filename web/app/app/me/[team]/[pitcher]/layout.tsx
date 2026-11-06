@@ -49,7 +49,7 @@ async function Nav({ params }: { params: Params }) {
   const base = `/app/me/${team}/${pitcher}`;
   return (
     <nav className="portal-nav wrap" aria-label="Me">
-      {[["", "Home"], ["/arsenal", "Arsenal"], ["/profile", "Profile"], ["/learned", "What the engine learned"]].map(([h, l]) => <Link key={l} href={base + h}>{l}</Link>)}
+      {[["", "Home"], ["/arsenal", "Arsenal"], ["/uploads", "Uploads"], ["/stats", "Stats"], ["/profile", "Profile"], ["/learned", "What the engine learned"]].map(([h, l]) => <Link key={l} href={base + h}>{l}</Link>)}
       {t.active ? null : <span className="team-off">Team switched off: changes can&apos;t be saved right now</span>}
     </nav>
   );

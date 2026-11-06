@@ -709,12 +709,12 @@ const now = () => Date.now();
     check((await hist("p1")).length === 2, "a change that touches no grade writes nothing");
     const seen = async (who) => ((await as(who, "select pitcher_id, field from public.grade_history where program_id = $1", [tA])).rows || []);
     check((await seen("pl1")).length === 2 && (await seen("pl1")).every((x) => x.pitcher_id === "p1"), "he sees his own history");
-    check((await seen("pl2")).length === 0, "a teammate sees none of it");
+    check((await seen("parent")).length === 0, "a teammate sees none of it");
     check((await seen("viewer")).length === 2 && (await seen("xhead")).length === 0, "the team's coaches see it (even a viewer); another team's coach doesn't");
     check(!!(await as("pl1", "insert into public.grade_history (program_id, pitcher_id, pitch_id, field) values ($1, 'p1', 'pt1', 'grade')", [tA])).error,
       "nobody writes the history by hand");
     const playerEdit = h[0].id;
-    check(!!(await as("pl2", "select public.pc_revert_grade($1)", [playerEdit])).error && !!(await as("viewer", "select public.pc_revert_grade($1)", [playerEdit])).error
+    check(!!(await as("parent", "select public.pc_revert_grade($1)", [playerEdit])).error && !!(await as("viewer", "select public.pc_revert_grade($1)", [playerEdit])).error
       && !!(await as("caller", "select public.pc_revert_grade($1)", [playerEdit])).error, "a teammate, a viewer and a pitch caller can't revert");
     check(!(await as("pitching", "select public.pc_revert_grade($1)", [playerEdit])).error, "a pitching coach reverts it in one tap");
     let d = await pitcherDoc("p1");
@@ -805,6 +805,119 @@ const now = () => Date.now();
       `every admin call wrote to the audit log, and failed ones didn't (${acts.join(", ")})`);
     const tr = audit.find((a) => a.action === "transfer_owner");
     check(tr.admin_email === "admin@x.org" && tr.org_name === "Lakeside Baseball" && /Owner left/.test(tr.detail.reason) && tr.detail.to === U.pitching && tr.detail.from === lakeOwner.id, "the transfer's row says who, which organization, to whom and why");
+  }
+
+  console.log("20. Uploads, proposals and stats rows (Plan 4)");
+  {
+    const meta = (extra = {}) => JSON.stringify({ source: "trackman", session_type: "bullpen", session_date: new Date().toISOString().slice(0, 10), file_name: "pen.csv", warnings: ["one note"], ...extra });
+    const fb = (i, extra = {}) => ({ pitch_type: "Four-seam", kind: "FB", velo_mph: 88 + (i % 3), ivb_in: 17, hb_in: 9, spin_rpm: 2250, rel_height_ft: 5.8, rel_side_ft: 1.9, extension_ft: 6.1, ...extra });
+    const rows12 = JSON.stringify(Array.from({ length: 12 }, (_, i) => fb(i, i === 11 ? { velo_mph: 150, res: "nonsense", kind: "FB" } : {})));
+    const up = await one("pl1", "select public.pc_upload_add($1, 'p1', $2::jsonb, $3::jsonb) r", [tA, meta(), rows12]);
+    const stored = (await su.query("select * from public.upload_pitches where upload_id = $1 order by idx", [up])).rows;
+    check(typeof up === "string" && stored.length === 12 && +stored[0].velo_mph === 88 && stored[11].velo_mph === null && stored[11].res === null,
+      `a player uploads his bullpen: 12 pitches stored; an impossible velo or result is blank, not clamped (${typeof up === "string" ? "ok" : JSON.stringify(up)})`);
+    check(!!(await as("pl1", "select public.pc_upload_add($1, 'p2', $2::jsonb, $3::jsonb)", [tA, meta(), rows12])).error, "not for a teammate");
+    check(!!(await as("caller", "select public.pc_upload_add($1, 'p1', $2::jsonb, $3::jsonb)", [tA, meta(), rows12])).error, "a coach without review_uploads can't upload for him");
+    const byCoach = await one("pitching", "select public.pc_upload_add($1, 'p1', $2::jsonb, $3::jsonb) r", [tA, meta({ session_type: "live_bp" }), rows12]);
+    check(typeof byCoach === "string", "a pitching coach (review_uploads) can");
+    check(!!(await as("pl1", "select public.pc_upload_add($1, 'p1', $2::jsonb, '[]'::jsonb)", [tA, meta()])).error
+      && !!(await as("pl1", "select public.pc_upload_add($1, 'p1', $2::jsonb, $3::jsonb)", [tA, meta({ session_date: "soon" }), rows12])).error
+      && !!(await as("pl1", "select public.pc_upload_add($1, 'p1', $2::jsonb, $3::jsonb)", [tA, meta({ source: "excel" }), rows12])).error, "no empty file, no date, no unknown source");
+    const seenUp = async (who) => ((await as(who, "select id from public.uploads where program_id = $1", [tA])).rows || []).length;
+    const seenPitches = async (who) => ((await as(who, "select idx from public.upload_pitches where program_id = $1", [tA])).rows || []).length;
+    check(await seenUp("pl1") === 2 && await seenPitches("pl1") === 24, "he sees his uploads and their pitches");
+    check(await seenUp("parent") === 0 && await seenPitches("parent") === 0, "a teammate sees none");
+    check(await seenUp("viewer") === 2 && await seenUp("xhead") === 0, "his coaches see them (a viewer too); another team's don't");
+    check(!!(await as("pl1", "insert into public.uploads (program_id, pitcher_id, source, session_type, session_date, n_pitches) values ($1, 'p1', 'trackman', 'game', now(), 1)", [tA])).error
+      && !!(await as("pl1", "update public.upload_pitches set excluded = true where upload_id = $1", [up])).error, "nobody writes the tables directly");
+
+    // review
+    const rv = await one("pl1", "select public.pc_upload_review($1, $2::jsonb) r", [up, JSON.stringify([{ idx: 0, excluded: true, reason: "warmup" }, { idx: 1, developing: true }, { idx: 2, reason: "grip" }, { idx: 99, excluded: true }])]);
+    const after = (await su.query("select idx, excluded, reason, developing from public.upload_pitches where upload_id = $1 and idx < 3 order by idx", [up])).rows;
+    check(rv === 3 && after[0].excluded && after[0].reason === "warmup" && after[1].developing && !after[1].excluded && after[2].reason === null && !after[2].excluded,
+      `exclude with a reason, mark developing; a reason on an included pitch means nothing (${JSON.stringify(after)})`);
+    check(!!(await as("parent", "select public.pc_upload_review($1, $2::jsonb)", [up, JSON.stringify([{ idx: 3, excluded: true }])])).error
+      && !!(await as("caller", "select public.pc_upload_review($1, $2::jsonb)", [up, JSON.stringify([{ idx: 3, excluded: true }])])).error, "a teammate and a pitch caller can't review it");
+    check(!(await as("pitching", "select public.pc_upload_review($1, $2::jsonb)", [up, JSON.stringify([{ idx: 3, excluded: true, reason: "mistag" }])])).error, "a coach with review_uploads can");
+
+    // proposals
+    const props = JSON.stringify([
+      { field: "velo", pitch_id: "pt1", value: 89.24, basis: { n: 10 } }, { field: "shape", pitch_id: "pt1", value: { shape: "ride", ivb: 17.04, hb: 9.2 } },
+      { field: "slot", value: "sidearm" }, { field: "velo", pitch_id: "nope", value: 80 }, { field: "shape", pitch_id: "pt2", value: { shape: "zoom", ivb: 1, hb: 1 } },
+      { field: "velo", pitch_id: "pt2", value: 300 }, { field: "grade", pitch_id: "pt1", value: 5 }]);
+    check(await one("pl1", "select public.pc_proposals_set($1, 'p1', $2::jsonb) r", [tA, props]) === 3, "proposals: three valid ones kept (a pitch he doesn't throw, a made-up shape, 300 mph and a grade are dropped)");
+    let pend = (await su.query("select id, field, value, current, status from public.proposals where program_id = $1 and pitcher_id = 'p1' and status = 'pending' order by id", [tA])).rows;
+    check(pend.length === 3 && pend[0].value === 89.2 && pend[1].value.ivb === 17 && pend[2].value === "sidearm", `values rounded and stored, with what the record held (${JSON.stringify(pend.map((x) => x.value))})`);
+    await one("pl1", "select public.pc_proposals_set($1, 'p1', $2::jsonb) r", [tA, props]);
+    const all = (await su.query("select status from public.proposals where program_id = $1 and pitcher_id = 'p1'", [tA])).rows.map((x) => x.status);
+    check(all.filter((s) => s === "pending").length === 3 && all.filter((s) => s === "superseded").length === 3, "a fresh set supersedes the old pending ones");
+    pend = (await su.query("select id, field from public.proposals where program_id = $1 and pitcher_id = 'p1' and status = 'pending' order by id", [tA])).rows;
+    const [pv, ps, pslot] = pend.map((x) => x.id);
+    const before = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'p1'", [tA])).rows[0].doc;
+    check(!!(await as("parent", "select public.pc_proposal_decide($1, true)", [pv])).error && !!(await as("caller", "select public.pc_proposal_decide($1, true)", [pv])).error
+      && !!(await as("viewer", "select public.pc_proposal_decide($1, true)", [pv])).error, "a teammate, a pitch caller and a viewer can't accept one");
+    check((await su.query("select doc from public.pitchers where program_id = $1 and id = 'p1'", [tA])).rows[0].doc.updatedAt === before.updatedAt, "(nothing changed)");
+    const d1 = await as("pl1", "select public.pc_proposal_decide($1, true)", [pv]);
+    const d2 = await as("pitching", "select public.pc_proposal_decide($1, true)", [ps]);
+    check(!d1.error && !d2.error, `the pitcher accepts the velo, a pitching coach the shape (${d1.error || ""}${d2.error || ""})`);
+    await as("pl1", "select public.pc_proposal_decide($1, false)", [pslot]);
+    const doc = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'p1'", [tA])).rows[0].doc;
+    const pt1 = doc.pitches.find((x) => x.id === "pt1");
+    check(pt1.velo === 89.2 && pt1.shape === "ride" && pt1.ivb === 17 && pt1.hb === 9.2 && doc.slot === before.slot && doc.updatedAt > before.updatedAt,
+      `accepted: his fastball reads 89.2 mph, ride, 17/9.2; the slot he rejected is unchanged; the record is newer, so every iPad gets it (${JSON.stringify({ velo: pt1.velo, shape: pt1.shape, slot: doc.slot })})`);
+    const st = (await su.query("select status, decided_by from public.proposals where id = any($1) order by id", [[pv, ps, pslot]])).rows;
+    check(st[0].status === "accepted" && st[0].decided_by === U.pl1 && st[1].decided_by === U.pitching && st[2].status === "rejected", "each says who decided");
+    check(!!(await as("pl1", "select public.pc_proposal_decide($1, true)", [pv])).error, "and can't be decided twice");
+    check(((await as("parent", "select id from public.proposals where program_id = $1", [tA])).rows || []).length === 0, "a teammate sees none of his proposals");
+
+    // templates
+    check(!(await as("pl1", "select public.pc_template_save($1, 'Yakkertech', 'pitch|mph|vert|horz', $2::jsonb)", [tA, JSON.stringify({ type: "Pitch", velo: "MPH", ivb: "Vert", hb: "Horz" })])).error, "a player saves a column mapping for his team");
+    check(!!(await as("pl1", "select public.pc_template_save($1, 'x', 'a|b', $2::jsonb)", [tA, JSON.stringify({ velo: "MPH" })])).error
+      && !!(await as("pl1", "select public.pc_template_save($1, 'x', 'a|b', $2::jsonb)", [tA, JSON.stringify({ type: "Pitch", evil: "x" })])).error
+      && !!(await as("xhead", "select public.pc_template_save($1, 'x', 'a|b', $2::jsonb)", [tA, JSON.stringify({ type: "Pitch" })])).error, "not without a pitch type, not with unknown fields, not on another team");
+    const tq = await as("parent", "select name from public.upload_templates where program_id = $1", [tA]);
+    check((tq.rows || []).length === 1, "the team's players and coaches can use it");
+
+    // stats rows
+    await push("head", tA, "hitters", [{ id: "h-lefty", updatedAt: now(), teamId: "opp1", name: "Lefty Secret", bats: "L" }]);
+    await push("head", tA, "events", [{ id: "oe9", updatedAt: now(), gameId: "og1", pitcherId: "p1", type: "pitch", res: "play", contact: "hard", paEnd: "hard", out: "2B", count: "1-1", pitchName: "Fastball", kind: "FB", hitterId: "h-lefty", call: { why: "secret plan" }, n: 9 }]);
+    const pr = await one("pl1", "select public.pc_pitch_rows($1, 'p1') r", [tA]);
+    const hard = pr && pr.find((x) => x.out === "2B");
+    check(Array.isArray(pr) && pr.length >= 4 && hard && hard.side === "opp" && hard.count === "1-1" && hard.contact === "hard" && !/secret|h-lefty|hitterId|Lefty/.test(JSON.stringify(pr)),
+      `his game pitches for stats: count, result, contact, hitter as same/opposite side and nothing else (${JSON.stringify(hard)})`);
+    check(Array.isArray(await one("viewer", "select public.pc_pitch_rows($1, 'p1') r", [tA])) && await one("parent", "select public.pc_pitch_rows($1, 'p1') r", [tA]) === null
+      && await one("xhead", "select public.pc_pitch_rows($1, 'p1') r", [tA]) === null, "his coaches get them; a teammate and another team's coach get nothing");
+
+    // a locked team, deleting, and a child's data
+    await su.query("update public.organizations set billing_status = 'locked' where id = $1", [org1]);
+    check(!!(await as("pl1", "select public.pc_upload_add($1, 'p1', $2::jsonb, $3::jsonb)", [tA, meta(), rows12])).error && await seenUp("pl1") === 0, "a locked team: no uploads, and nothing readable");
+    await su.query("update public.organizations set billing_status = 'active' where id = $1", [org1]);
+    check(!!(await as("parent", "select public.pc_upload_delete($1)", [up])).error, "a teammate can't delete his upload");
+    await as("pl1", "select public.pc_upload_delete($1)", [up]);
+    check(+(await su.query("select count(*) n from public.upload_pitches where upload_id = $1", [up])).rows[0].n === 0, "he deletes it: its pitches go with it");
+    for (const [pid, how] of [["p31", "deleted by a parent"], ["p32", "held (under 13, no consent)"], ["p33", "held again when consent is withdrawn"]]) {
+      await su.query("insert into public.pitchers (program_id, id, doc) values ($1, $2, $3)", [tA, pid, { id: pid, updatedAt: 1000, teamId: "ours", name: "Kid", pitches: [{ id: "pt1", grade: 3 }] }]);
+      if (pid === "p33") {
+        await su.query("insert into public.minors (program_id, pitcher_id) values ($1, $2)", [tA, pid]);
+        await su.query("insert into public.guardian_consents (program_id, pitcher_id, guardian_user_id, method) values ($1, $2, $3, 'test')", [tA, pid, U.parent]);
+      }
+      const u2 = await one("pitching", "select public.pc_upload_add($1, $2, $3::jsonb, $4::jsonb) r", [tA, pid, meta(), rows12]);
+      await as("pitching", "select public.pc_proposals_set($1, $2, $3::jsonb)", [tA, pid, JSON.stringify([{ field: "slot", value: "sidearm" }])]);
+      const had = +(await su.query("select (select count(*) from public.uploads where pitcher_id = $1) + (select count(*) from public.proposals where pitcher_id = $1) n", [pid])).rows[0].n;
+      if (pid === "p31") await su.query("insert into public.purged (program_id, pitcher_id) values ($1, $2)", [tA, pid]);
+      if (pid === "p32") await su.query("insert into public.minors (program_id, pitcher_id) values ($1, $2)", [tA, pid]);
+      if (pid === "p33") await su.query("delete from public.guardian_consents where program_id = $1 and pitcher_id = $2", [tA, pid]);
+      const left = +(await su.query("select (select count(*) from public.uploads where pitcher_id = $1) + (select count(*) from public.proposals where pitcher_id = $1) n", [pid])).rows[0].n;
+      check(typeof u2 === "string" && had === 2 && left === 0, `a child's uploads and proposals go when he's ${how} (${had} -> ${left})`);
+    }
+    check(!!(await as("pitching", "select public.pc_upload_add($1, 'p32', $2::jsonb, $3::jsonb)", [tA, meta(), rows12])).error, "and nothing new is taken while he's held");
+    await su.query("insert into public.pitchers (program_id, id, doc) values ($1, 'p34', $2)", [tA, { id: "p34", updatedAt: 1000, teamId: "ours", name: "Gone", pitches: [{ id: "pt1", grade: 3 }] }]);
+    await as("pitching", "select public.pc_proposals_set($1, 'p34', $2::jsonb)", [tA, JSON.stringify([{ field: "slot", value: "sidearm" }])]);
+    const gone = (await su.query("select id from public.proposals where pitcher_id = 'p34' and status = 'pending'")).rows[0];
+    await su.query("update public.pitchers set doc = doc || '{\"deletedAt\": 2000, \"updatedAt\": 2000}' where program_id = $1 and id = 'p34'", [tA]);
+    const dec = await as("pitching", "select public.pc_proposal_decide($1, true)", [gone && gone.id]);
+    const kept = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'p34'", [tA])).rows[0].doc;
+    check(gone && !!dec.error && kept && kept.name === "Gone" && !kept.slot, "a pitcher taken off the roster: his proposal can't be accepted, and his record is left as it was");
   }
 
   console.log("13. The migration refuses a database that already has programs");
