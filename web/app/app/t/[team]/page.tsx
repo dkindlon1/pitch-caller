@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { availability, dayName, gamesOf, ourTeamOf, pitchersOf, teamFor, teamRule, teamToday, teamsOf, ROLE } from "@/lib/team";
+import { availability, dayName, gamesOf, ourTeamOf, pitchersOf, teamFor, teamRule, teamToday, teamsOf } from "@/lib/team";
 import { type Search } from "./ui";
 
 export const metadata: Metadata = { title: "Team · PitchIQ", robots: { index: false } };
@@ -14,7 +14,7 @@ export default function Home({ params }: { params: Params; searchParams: Search 
 async function HomeBody({ params }: { params: Params }) {
   const { team } = await params;
   const { team: t, isCoach } = await teamFor(team);
-  if (!isCoach) return <p className="shell-note">You&apos;re on {t.team_name} as {t.role ? ROLE[t.role].toLowerCase() : "its owner, not on the staff"}. The player portal comes next.</p>;
+  if (!isCoach) return <p className="shell-note">You own {t.team_name} but aren&apos;t on its staff, so its data isn&apos;t shown to you. Invite coaches from <Link href={`/app/t/${team}/staff`}>Staff</Link>; pay and add teams in <Link href={`/app/billing?org=${t.org_id}`}>Billing</Link>.</p>;
   const [pitchers, teams, games, ours] = await Promise.all([pitchersOf(team), teamsOf(team), gamesOf(team), ourTeamOf(team)]);
   const rule = teamRule(ours), today = teamToday(t.timezone);
   const avail = (await availability(t, pitchers.filter((p) => !p.deletedAt), rule)).sort((a, b) => (a.pitcher.name || "").localeCompare(b.pitcher.name || ""));

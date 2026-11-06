@@ -14,7 +14,10 @@ export const PITCH_TYPES: Record<string, { kind: Kind; shape: string }> = {
 export type Pitch = { id: string; type: string; name: string; kind: Kind; shape: string; grade: number | ""; command: number | ""; feel: number;
   velo: number | ""; ivb: number | ""; hb: number | ""; spin: number | ""; active: boolean };
 export type Doc = { id: string; createdAt: number; updatedAt: number; deletedAt?: number | null; [k: string]: unknown };
-export type Pitcher = Doc & { teamId: string; name: string; number: string; hand: "R" | "L"; role: string; pitches: Pitch[]; notes?: string };
+export type Pitcher = Doc & { teamId: string; name: string; number: string; hand: "R" | "L"; role: string; pitches: Pitch[]; notes?: string;
+  slot?: string; height_ft?: number; gradYear?: string };
+// the game app's arm slots (app/index.src.html, SLOT_OPTS)
+export const SLOTS = ["over the top", "high three-quarter", "three-quarter", "low three-quarter", "sidearm", "submarine"];
 export type Hitter = Doc & { teamId: string; name: string; number: string; bats: "R" | "L" | "S" };
 export type Team = Doc & { name: string; isOurs: boolean; level?: string; pitchRule?: Record<string, unknown> | null };
 

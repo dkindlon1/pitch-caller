@@ -11,7 +11,7 @@ end $$;
 create schema if not exists auth;
 -- like Supabase's auth.users: email is not unique on its own (SSO and password users can share one), and an email
 -- counts only once it's confirmed (email_confirmed_at)
-create table if not exists auth.users (id uuid primary key, email text, email_confirmed_at timestamptz);
+create table if not exists auth.users (id uuid primary key, email text, email_confirmed_at timestamptz, created_at timestamptz default now());
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(coalesce(nullif(current_setting('request.jwt.claim.sub', true), ''),
     (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')), '')::uuid

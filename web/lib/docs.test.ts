@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
-import { KINDS, PITCH_TYPES, SIGN, newHitter, newPitch, newPitcher, parseHitters, parseRoster, stamp, uid } from "./docs.ts";
+import { KINDS, PITCH_TYPES, SIGN, SLOTS, newHitter, newPitch, newPitcher, parseHitters, parseRoster, stamp, uid } from "./docs.ts";
 
 const require = createRequire(import.meta.url);
 const PCDB = require("../../app/db.js");
@@ -17,6 +17,7 @@ test("records have the iPad's shapes", () => {
   assert.match(uid("pit"), /^pit_[a-z0-9]{8,9}[a-z0-9]{20}$/);
   const src = readFileSync(new URL("../../app/index.src.html", import.meta.url), "utf8");
   assert.ok(src.includes(`const KINDS = ${JSON.stringify(KINDS).replace(/"(\w+)":/g, "$1: ").replace(/,/g, ", ").replace(/\{/, "{ ").replace(/\}$/, " }")}`), "same pitch kinds as the app");
+  assert.ok(src.includes(`const SLOT_OPTS = ${JSON.stringify(SLOTS).replace(/,/g, ", ")};`), "same arm slots as the app");
   assert.ok(src.includes(`const SIGN = { FB: ${SIGN.FB}, CB: ${SIGN.CB}, SL: ${SIGN.SL}, CH: ${SIGN.CH} }`), "same signs as the app");
 });
 

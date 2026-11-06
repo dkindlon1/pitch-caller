@@ -20,7 +20,8 @@ export async function proxy(request: NextRequest) {
     },
   });
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims && request.nextUrl.pathname.startsWith("/app")) {
+  const path = request.nextUrl.pathname;
+  if (!data?.claims && (path.startsWith("/app") || path === "/admin" || path.startsWith("/admin/"))) {
     const to = request.nextUrl.clone();
     to.pathname = "/login";
     to.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`;
@@ -32,4 +33,4 @@ export async function proxy(request: NextRequest) {
 }
 
 // The game app (/app/game/) signs in on its own and has to open with no signal: the proxy leaves it alone.
-export const config = { matcher: ["/app", "/app/((?!game).*)", "/join/:path*", "/login"] };
+export const config = { matcher: ["/app", "/app/((?!game).*)", "/admin", "/admin/:path*", "/join/:path*", "/login"] };

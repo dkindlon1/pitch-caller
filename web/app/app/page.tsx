@@ -41,7 +41,7 @@ async function Teams() {
         <ul className="team-cards" aria-label="Teams">
           {rows.map((t) => (
             <li key={t.team_id} className="team-card">
-              <h2>{t.role && t.role !== "player" ? <Link href={`/app/t/${t.team_id}`}>{t.team_name}</Link> : t.team_name}</h2>
+              <h2>{t.role === "player" ? <Link href={`/app/me/${t.team_id}`}>{t.team_name}</Link> : t.role ? <Link href={`/app/t/${t.team_id}`}>{t.team_name}</Link> : t.team_name}</h2>
               <p>{t.org_name}{t.level ? ` · ${t.level}` : ""}</p>
               <p className="lbl">{t.role ? ROLE[t.role] || t.role : "Owner, not on the staff"}</p>
               {t.active ? null : <p className="team-off">Not active</p>}

@@ -4,7 +4,7 @@ export const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0
 
 const OK: Record<string, string> = {
   added: "Added.", saved: "Saved.", removed: "Removed.", hitters: "Hitters saved.", member: "Saved.", cancelled: "Invite cancelled.",
-  approved: "Approved: the parent can now accept for the player.",
+  approved: "Approved: the parent can now accept for the player.", reverted: "Put back. The player sees that a coach changed it back.",
 };
 const ERROR: Record<string, string> = {
   not_allowed: "Your role on this team can't do that.", empty: "Nothing to add: type at least one name.", missing: "That's no longer on this team.",
@@ -13,6 +13,7 @@ const ERROR: Record<string, string> = {
   ceiling: "You can't give someone permissions you don't have.", self: "You can't change your own permissions.",
   last_head: "A team keeps at least one head coach: make someone else head first.", member: "That couldn't be changed.",
   approve: "That invite isn't waiting for approval any more.", tz: "Pick a time zone from the list.", name: "A team needs a name.", settings: "Those settings couldn't be saved.",
+  changed_again: "That grade has been changed again since, so it wasn't put back.", revert: "That change couldn't be put back.",
 };
 
 export function Notice({ sp }: { sp: Record<string, string | string[] | undefined> }) {

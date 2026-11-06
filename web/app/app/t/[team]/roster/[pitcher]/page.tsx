@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { pitchersOf, teamFor } from "@/lib/team";
+import { pitchersOf, teamFor, ROLE } from "@/lib/team";
+import { gradeHistory } from "@/lib/player";
 import { KINDS, PITCH_TYPES, SIGN, type Kind } from "@/lib/docs";
-import { savePitcher } from "../../actions";
+import { revertGrade, savePitcher } from "../../actions";
 import { Notice, type Search } from "../../ui";
 
 export const metadata: Metadata = { title: "Pitcher · PitchIQ", robots: { index: false } };
@@ -21,6 +22,10 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const p = (await pitchersOf(team)).find((x) => x.id === pitcher && !x.deletedAt);
   if (!p) notFound();
   const roster = manage("manage_roster"), grades = can("edit_grades") || roster;
+  const hist = await gradeHistory(team, p.id);
+  const byPlayer = hist.filter((h) => h.by_role === "player" && !h.reverted_at);
+  const FIELD = { grade: "stuff", command: "command" } as const;
+  const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const ro = !roster;
   return (
     <>
@@ -54,6 +59,24 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         </fieldset>
         {grades ? <button type="submit" className="shell-btn primary">Save</button> : <p className="shell-note">Your role on this team can see the arsenal but not change it.</p>}
       </form>
+
+      <section aria-labelledby="hist-h">
+        <h2 id="hist-h" className="shell-h2">Grade changes {byPlayer.length ? <span className="pill-warn">{byPlayer.length} changed by player</span> : null}</h2>
+        {hist.length ? (
+          <ul className="plain-list hist" aria-label="Grade changes">{hist.map((h) => (
+            <li key={h.id}>
+              <span className="mono">{day(h.changed_at)}</span> <span>{h.pitch_name || "A pitch"} {FIELD[h.field]} {h.old_value ?? "–"} → <b>{h.new_value ?? "–"}</b>
+              {" · "}{h.by_role ? (ROLE[h.by_role] || h.by_role) : "someone"}</span>
+              {h.by_role === "player" && !h.reverted_at ? <span className="pill-warn">Changed by player</span> : null}
+              {h.reverted_at ? <span className="lbl"> put back</span> : null}
+              {grades && h.by_role === "player" && !h.reverted_at ? (
+                <form action={revertGrade} className="inline" aria-label={`Put back ${h.pitch_name || "pitch"} ${FIELD[h.field]}`}>
+                  <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={p.id} /><input type="hidden" name="hist" value={h.id} />
+                  <button type="submit" className="shell-btn text">Put back to {h.old_value ?? "blank"}</button>
+                </form>) : null}
+            </li>))}</ul>
+        ) : <p className="shell-note">No grade changes yet. When the player changes a grade in his portal, it shows here and you can put it back.</p>}
+      </section>
     </>
   );
 }

@@ -31,6 +31,7 @@ export async function teamFor(teamId: string) {
   const teams = await myTeams();
   const t = teams.find((x) => x.team_id === teamId);
   if (!t) notFound();
+  if (t.role === "player") redirect(`/app/me/${teamId}`);   // players have their own portal
   const can = (perm: string) => !!(t.role && t.role !== "player" && t.active && (t.perms || {})[perm]);
   return { user, team: t, teams, can, isCoach: !!t.role && t.role !== "player", manage: (perm: string) => can(perm) || (t.is_owner && t.status !== "removed") };
 }

@@ -73,6 +73,16 @@ export async function invitePlayer(f: FormData) {
   back(c.team, "/roster", error ? `error=${/already has an account/.test(error.message) ? "taken" : /parent/.test(error.message) ? "parent_email" : "invite"}` : `invite=${data}&for=${encodeURIComponent(str(f, "pitcher"))}`);
 }
 
+// a player's grade change put back (pc_revert_grade: edit_grades or the roster, and only if nobody changed it since)
+export async function revertGrade(f: FormData) {
+  const c = await ctx(f);
+  const id = str(f, "pitcher"), hist = Number(str(f, "hist"));
+  if (!Number.isSafeInteger(hist)) back(c.team, `/roster/${id}`, "error=missing");
+  const sb = await getServerSupabase();
+  const { error } = await sb.rpc("pc_revert_grade", { hist });
+  back(c.team, `/roster/${id}`, error ? `error=${/changed again/.test(error.message) ? "changed_again" : /can't change/.test(error.message) ? "not_allowed" : "revert"}` : "ok=reverted");
+}
+
 // ---------------------------------------------------------------- opponents
 export async function addOpponent(f: FormData) {
   const c = await ctx(f);

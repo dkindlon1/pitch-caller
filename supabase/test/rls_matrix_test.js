@@ -686,6 +686,127 @@ const now = () => Date.now();
     check(ids && ids.customer === "cus_R3" && ids.subscription === "sub_NEW" && ids.seats === 2 && ids.owner_email === "owner3@x.org", `the website's server reads the ids it needs (${JSON.stringify(ids)})`);
   }
 
+  console.log("18. Player portal (Plan 3b): grade history, his own outings and what the engine learned");
+  {
+    const pitcherDoc = async (id) => (await su.query("select doc from public.pitchers where program_id = $1 and id = $2", [tA, id])).rows[0].doc;
+    let tick = now() + 100000;
+    const withGrade = async (id, pitchId, field, v, extra = {}) => {
+      const d = await pitcherDoc(id);
+      return { ...d, ...extra, updatedAt: Math.max(tick += 10, (d.updatedAt || 0) + 1), pitches: d.pitches.map((x) => (x.id === pitchId ? { ...x, [field]: v } : x)) };
+    };
+    const hist = async (id) => (await su.query("select * from public.grade_history where program_id = $1 and pitcher_id = $2 order by id", [tA, id])).rows;
+    await su.query("delete from public.grade_history where program_id = $1", [tA]);   // earlier sections' edits
+    await su.query("update public.pitchers set doc = jsonb_set(doc, '{pitches}', '[{\"id\":\"pt1\",\"name\":\"Fastball\",\"grade\":3,\"command\":3},{\"id\":\"pt2\",\"name\":\"Slider\",\"grade\":2,\"command\":2}]') where program_id = $1", [tA]);
+    check((await hist("p1")).length === 0, "(setting up as the database owner writes no history: only people's changes count)");
+    r = await push("pl1", tA, "pitchers", [await withGrade("p1", "pt1", "grade", 4)]);
+    let h = await hist("p1");
+    check(!r.error && h.length === 1 && h[0].field === "grade" && +h[0].old_value === 3 && +h[0].new_value === 4 && h[0].by_role === "player" && h[0].changed_by === U.pl1 && h[0].pitch_name === "Fastball",
+      `a player raises his fastball's stuff: it applies at once and the history says who, what, old and new (D9) (${JSON.stringify(h.map((x) => [x.field, x.old_value, x.new_value, x.by_role]))})`);
+    r = await push("head", tA, "pitchers", [await withGrade("p1", "pt2", "command", 3)]);
+    h = await hist("p1");
+    check(h.length === 2 && h[1].by_role === "head" && h[1].field === "command", "a coach's change is in the history too");
+    r = await push("head", tA, "pitchers", [{ ...(await pitcherDoc("p1")), notes: "new note", updatedAt: (tick += 10) }]);
+    check((await hist("p1")).length === 2, "a change that touches no grade writes nothing");
+    const seen = async (who) => ((await as(who, "select pitcher_id, field from public.grade_history where program_id = $1", [tA])).rows || []);
+    check((await seen("pl1")).length === 2 && (await seen("pl1")).every((x) => x.pitcher_id === "p1"), "he sees his own history");
+    check((await seen("pl2")).length === 0, "a teammate sees none of it");
+    check((await seen("viewer")).length === 2 && (await seen("xhead")).length === 0, "the team's coaches see it (even a viewer); another team's coach doesn't");
+    check(!!(await as("pl1", "insert into public.grade_history (program_id, pitcher_id, pitch_id, field) values ($1, 'p1', 'pt1', 'grade')", [tA])).error,
+      "nobody writes the history by hand");
+    const playerEdit = h[0].id;
+    check(!!(await as("pl2", "select public.pc_revert_grade($1)", [playerEdit])).error && !!(await as("viewer", "select public.pc_revert_grade($1)", [playerEdit])).error
+      && !!(await as("caller", "select public.pc_revert_grade($1)", [playerEdit])).error, "a teammate, a viewer and a pitch caller can't revert");
+    check(!(await as("pitching", "select public.pc_revert_grade($1)", [playerEdit])).error, "a pitching coach reverts it in one tap");
+    let d = await pitcherDoc("p1");
+    h = await hist("p1");
+    check(d.pitches.find((x) => x.id === "pt1").grade === 3 && h[0].reverted_by === U.pitching && h.at(-1).by_role === "pitching" && +h.at(-1).new_value === 3,
+      "his fastball is back to 3, the edit is marked reverted, and the revert is in the history");
+    check(!!(await as("pitching", "select public.pc_revert_grade($1)", [playerEdit])).error, "a change can't be reverted twice");
+    await push("pl1", tA, "pitchers", [await withGrade("p1", "pt1", "grade", 5)]);
+    await push("pl1", tA, "pitchers", [await withGrade("p1", "pt1", "grade", 4)]);
+    const mid = (await hist("p1")).at(-2);
+    const stale = await as("head", "select public.pc_revert_grade($1)", [mid.id]);
+    check(/changed again/.test(stale.error || "") && (await pitcherDoc("p1")).pitches.find((x) => x.id === "pt1").grade === 4,
+      "a change that's been changed again since isn't put back over the newer one");
+
+    // his outings
+    const gm = (id, date) => ({ id, updatedAt: now(), date, status: "final", opponentId: "opp-secret" });
+    const ev = (id, game, pit, res, pitchName, kind) => ({ id, updatedAt: now(), gameId: game, pitcherId: pit, type: "pitch", res, pitchName, kind, hitterId: "h-secret", call: { why: "secret plan" } });
+    const today = new Date().toISOString().slice(0, 10);
+    await push("head", tA, "games", [gm("og1", today)]);
+    await push("head", tA, "events", [ev("oe1", "og1", "p1", "cstrike", "Fastball", "FB"), ev("oe2", "og1", "p1", "ball", "Fastball", "FB"),
+      ev("oe3", "og1", "p1", "whiff", "Slider", "SL"), ev("oe4", "og1", "p2", "ball", "Fastball", "FB"), { ...ev("oe5", "og1", "p1", "play", "Slider", "SL"), type: "play" }]);
+    const ours = (await su.query("select doc from public.teams where program_id = $1 and (doc->>'isOurs')::boolean", [tA])).rows[0];
+    if (!ours) await push("head", tA, "teams", [{ id: "tea_ours000000000000000000", updatedAt: now(), name: "Varsity", isOurs: true, pitchRule: { preset: "nfhs_ny" } }]);
+    else await push("head", tA, "teams", [{ ...ours.doc, updatedAt: now() + 9000, pitchRule: { preset: "nfhs_ny" } }]);
+    const mine = await one("pl1", "select public.pc_my_outings($1) r", [tA]);
+    const o1 = mine && mine.outings && mine.outings.find((x) => x.game_id === "og1");
+    check(mine && mine.outings.every((x) => x.pitcher_id === "p1") && o1.pitcher_id === "p1" && o1.pitches === 3 && o1.strikes === 2 && o1.by_pitch.Fastball.n === 2 && o1.by_pitch.Slider.strikes === 1,
+      `his outing: 3 pitches, 2 strikes, by pitch; a teammate's pitches and a play aren't counted (${JSON.stringify(o1)})`);
+    check(!/secret|opp-|h-secret/.test(JSON.stringify(mine)) && mine.rule && mine.rule.preset === "nfhs_ny", "no opponent, hitter or game plan in it; the team's pitch-count rule is");
+    const two = await one("parent", "select public.pc_my_outings($1) r", [tA]);
+    check(two && two.outings.every((x) => ["p3", "p4"].includes(x.pitcher_id)), "a parent gets his children's only");
+    check(await one("head", "select public.pc_my_outings($1) r", [tA]) === null && await one("xhead", "select public.pc_my_outings($1) r", [tA]) === null,
+      "a coach (not a player here) and another team's coach get nothing from it");
+    // what the engine learned
+    await push("head", tA, "learned", [{ id: "p:p1", updatedAt: now(), pitcherId: "p1", at: 123, learner: "2.0", pitches: { pt1: { n: 40, talent: 3.4, evidence: { games: ["og1"], hitters: ["h-secret"] } } } },
+      { id: "p:p2", updatedAt: now(), pitcherId: "p2", pitches: { pt1: { n: 9 } } }]);
+    const lp = await one("pl1", "select public.pc_my_learned($1, 'p1') r", [tA]);
+    check(lp && lp.pitches.pt1.n === 40 && lp.pitches.pt1.talent === 3.4 && !("evidence" in lp.pitches.pt1), `what the engine learned about him, without the evidence (${JSON.stringify(lp)})`);
+    check(await one("pl1", "select public.pc_my_learned($1, 'p2') r", [tA]) === null, "not a teammate's");
+    // a child's history goes with his data
+    await su.query("insert into public.pitchers (program_id, id, doc) values ($1, 'p30', $2)", [tA, { id: "p30", updatedAt: 1000, teamId: "ours", name: "Kid", pitches: [{ id: "pt1", grade: 3 }] }]);
+    await push("head", tA, "pitchers", [await withGrade("p30", "pt1", "grade", 1)]);
+    check((await hist("p30")).length === 1, "(p30 has a history row)");
+    await su.query("insert into public.purged (program_id, pitcher_id) values ($1, 'p30')", [tA]);
+    check((await hist("p30")).length === 0, "when a parent deletes a child, his grade history goes too");
+  }
+
+  console.log("19. Super admin (D13)");
+  {
+    U.admin = crypto.randomUUID();
+    await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, 'admin@x.org', now())", [U.admin]);
+    await su.query("insert into public.platform_admins (user_id, note) values ($1, 'Drew')", [U.admin]);
+    for (const who of ["owner", "head", "nonmember", "anon"]) {
+      const x = await as(who, "select public.pc_admin_orgs(null)");
+      check(!!x.error, `${who}: pc_admin_orgs denied`);
+    }
+    check(await one("head", "select public.pc_is_admin() r") === false && await one("admin", "select public.pc_is_admin() r") === true, "pc_is_admin tells the website who is one");
+    const before = +(await su.query("select count(*) n from public.admin_audit")).rows[0].n;
+    const list = await one("admin", "select public.pc_admin_orgs(null) r");
+    if (list && list.error) console.log("    pc_admin_orgs:", list.error);
+    const lake = list && list.orgs.find((x) => x.name === "Lakeside Baseball");
+    const lakeOwner = (await su.query("select u.email, u.id from public.organizations o join auth.users u on u.id = o.owner_id where o.id = $1", [org1])).rows[0];
+    check(lake && lake.owner_email === lakeOwner.email && lake.status === "active" && lake.coaches >= 4 && lake.players >= 3 && list.signups.users_7d >= 10,
+      `the admin sees organizations, owners, billing state, counts and sign-ups (${JSON.stringify(lake)})`);
+    const found = await one("admin", "select public.pc_admin_orgs('ridge') r");
+    check(found.orgs.length === 1 && found.orgs[0].name === "Ridge Baseball" && (await one("admin", "select public.pc_admin_orgs('100%') r")).orgs.length === 0,
+      "search by name or owner email (a % is just a character)");
+    const org3 = (await su.query("select id from public.organizations where name = 'Ridge Baseball'")).rows[0].id;
+    const det = await one("admin", "select public.pc_admin_org($1) r", [org3]);
+    check(det && det.teams.length === 4 && det.events.length >= 10 && det.events.every((e) => e.type && e.result) && det.staff.some((s) => s.email === "owner3@x.org"),
+      "one organization: its teams, head counts, staff and billing events");
+    check(!/"doc"|pitchers|Pitcher p/.test(JSON.stringify(det)) && !/Pitcher p|coach note/.test(JSON.stringify(list)), "no pitch data, pitcher or player record in any of it");
+    for (const t of ["events", "pitchers", "games", "grade_history"]) {
+      const rows = (await as("admin", `select count(*) n from public.${t}`)).rows;
+      check(rows && +rows[0].n === 0, `the admin can't read ${t} (he's on no team)`);
+    }
+    check(!!(await as("admin", "select * from public.admin_audit")).error && !!(await as("owner", "select * from public.platform_admins")).error, "the audit log and admin list aren't readable directly");
+    check(!!(await as("admin", "insert into public.platform_admins (user_id) values ($1)", [U.owner])).error, "nor can anyone add an admin through the API");
+    check(!!(await as("admin", "select public.pc_admin_transfer_owner($1, 'pl1@x.org', 'owner left')", [org1])).error, "support transfer: not to a player");
+    check(!!(await as("admin", "select public.pc_admin_transfer_owner($1, 'head@x.org', ' ')", [org1])).error, "not without a reason");
+    check(!(await as("admin", "select public.pc_admin_transfer_owner($1, 'PITCHING@x.org', 'Owner left the school; head coach asked by email')", [org1])).error
+      && (await su.query("select owner_id from public.organizations where id = $1", [org1])).rows[0].owner_id === U.pitching, "to a coach on one of its teams, with a reason");
+    await su.query("update public.organizations set owner_id = $1 where id = $2", [lakeOwner.id, org1]);
+    const audit = await one("admin", "select public.pc_admin_audit(50) r");
+    const acts = audit.map((a) => a.action);
+    const after = +(await su.query("select count(*) n from public.admin_audit")).rows[0].n;
+    check(after - before === 6 && acts[0] === "view_audit" && acts.includes("transfer_owner") && acts.filter((a) => a === "list_orgs").length === 3 && acts.includes("view_org"),
+      `every admin call wrote to the audit log, and failed ones didn't (${acts.join(", ")})`);
+    const tr = audit.find((a) => a.action === "transfer_owner");
+    check(tr.admin_email === "admin@x.org" && tr.org_name === "Lakeside Baseball" && /Owner left/.test(tr.detail.reason) && tr.detail.to === U.pitching && tr.detail.from === lakeOwner.id, "the transfer's row says who, which organization, to whom and why");
+  }
+
   console.log("13. The migration refuses a database that already has programs");
   {
     const G = DB + "_guard";
