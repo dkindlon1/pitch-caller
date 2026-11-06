@@ -46,7 +46,11 @@ def build(doc, row):
 
 def grade(doc, row):
     ars, s, exclude = build(doc, row)
-    dist = S09.call_dist("v09", ars, s, exclude)
+    return grade_dist(doc, row, S09.call_dist("v09", ars, s, exclude))
+
+
+def grade_dist(doc, row, dist):
+    """Grade one row from its call spread [(share, pitch name, kind, target)]."""
     sh = {"acc": 0.0, "arg": 0.0, "not": 0.0}
     calls = []
     for pr, name, kind, q in dist:

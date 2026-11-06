@@ -1,6 +1,6 @@
 """Play the read-through games with the engine (one engine, v0.9). Seeds fix the opposing lineup and the world.
-usage (repo root): python3 readthrough/run_games.py [--seeds 101-104] [--jobs 2] [--suffix _tw]
-Writes runs/readthrough/v09<suffix>/<level>_<staff>_s<seed>.csv (runs/ is gitignored). Existing files are kept, so a
+usage (repo root): python3 readthrough/run_games.py [--seeds 101-104] [--jobs 2] [--suffix _tw] [--tag v09]
+Writes runs/readthrough/<tag><suffix>/<level>_<staff>_s<seed>.csv (runs/ is gitignored; tag defaults to v09). Existing files are kept, so a
 stopped run resumes. Every hitter starts with no scouting: the engine only learns what the game's log tells it."""
 import concurrent.futures as cf, os, subprocess, sys, time
 
@@ -14,7 +14,7 @@ def arg(name, default):
 
 
 def one(level, staff, seed):
-    tag = "v09" + SUFFIX
+    tag = TAG + SUFFIX
     out = os.path.join(ROOT, "runs", "readthrough", tag, f"{level}_{staff}_s{seed}.csv")
     if os.path.exists(out) and os.path.getsize(out) > 0:
         return out, "kept", 0.0
@@ -32,11 +32,13 @@ def one(level, staff, seed):
 
 
 SUFFIX = ""
+TAG = "v09"
 
 
 def main():
-    global SUFFIX
+    global SUFFIX, TAG
     SUFFIX = arg("--suffix", "")      # e.g. "_tw" with TRUTH_TAB=world in the environment, so those runs get their own folder
+    TAG = arg("--tag", "v09")         # v1.0: a folder per engine version / tuning candidate
     a, b = (int(x) for x in arg("--seeds", "101-104").split("-"))
     jobs = int(arg("--jobs", "2"))
     todo = [(lv, st, sd) for lv in LEVELS for st in STAFFS for sd in range(a, b + 1)]

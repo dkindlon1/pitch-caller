@@ -109,13 +109,16 @@ def history_cases(b, k, x):
     return out
 
 
-def run_context(job):
-    """One plate appearance: solve its table, then every count (and the count-level variants on that table)."""
-    t0 = time.time()
-    level, an, bo, same, state = job["level"], job["arsenal"], job["bo"], job["same"], job["state"]
-    ars = arsenal(an, job.get("edits"))
-    s0 = base_situation(level, bo, same, state, job.get("extra", {}))
+def solve_context(job):
+    """The plate appearance's arsenal, starting situation and table."""
+    ars = arsenal(job["arsenal"], job.get("edits"))
+    s0 = base_situation(job["level"], job["bo"], job["same"], job["state"], job.get("extra", {}))
     tab = e.solve_table(ars, replace(s0, balls=0, strikes=0, last=None))
+    return ars, s0, tab
+
+
+def count_records(job, ars, s0, tab, with_x=False):
+    """Every count (and the count-level variants) on one table. with_x: also exploitability X at the root (tune_v10)."""
     rec = dict(job, counts={}, secs=0.0)
     if hasattr(e, "at_bat_plan"):
         rec["visits"] = {f"{b}-{k}": v for (b, k), v in e.at_bat_plan(tab)["visits"].items()}
@@ -123,6 +126,10 @@ def run_context(job):
         sc = replace(s0, balls=b, strikes=k, look=tab.h0)
         sh, allowed = one_call(ars, sc, tab)
         row = dict(sh=sh, allowed=allowed)
+        if with_x:
+            sx = replace(sc, b_h=e.lean_b_h(ars, sc))
+            pi, sg, full, res, M = e.root_call(ars, sx, tab)
+            row["X"] = e.exploitability(M, e.sit_options(ars), pi, sg)
         if job.get("shake"):            # B11: a shaken-off call is never called again
             top = max(sh, key=sh.get)
             sh2, _ = one_call(ars, sc, tab, exclude={tuple(top.split("|"))})
@@ -135,6 +142,14 @@ def run_context(job):
                 shh, _ = one_call(ars, with_history(sc, hist), tab)
                 row["hist"][name] = dict(x=top, sh=shh)
         rec["counts"][f"{b}-{k}"] = row
+    return rec
+
+
+def run_context(job):
+    """One plate appearance: solve its table, then every count (and the count-level variants on that table)."""
+    t0 = time.time()
+    ars, s0, tab = solve_context(job)
+    rec = count_records(job, ars, s0, tab)
     rec["secs"] = round(time.time() - t0, 2)
     return rec
 
