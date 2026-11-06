@@ -11,7 +11,7 @@ v0.2 adds the eight research-backed philosophy changes (tagged [R1]..[R8] below)
   R3 no hard-coded count rules    -> pitcher-side choices come only from run values
   R4 expand, don't waste          -> chase target aims just off the zone
   R5 avoid strengths > hunt holes -> hitter_damage with asymmetric shrinkage
-  R6 repeat after a whiff         -> pairing bonus for same pitch/spot after a swing and miss
+  R6 repeat after a whiff         -> repeat bonus (pair_terms) for same pitch/spot after a swing and miss
   R7 perceived speed (EV)         -> sequencing uses location-adjusted speed
   R8 no third-time-through cliff  -> continuous decline by batters faced
   + learning mode                 -> grade_call(): how the engine rates the catcher's call
@@ -467,30 +467,6 @@ ZONE_IN = {"heart": 1.0, "edge": 0.5, "off": 0.0, "noncomp": 0.0}   # edge strad
 KIND_W = {"FB": -0.20, "SL": 0.25, "CB": 0.20, "CH": 0.25}
 
 
-def expectation(p: Pitch, arsenal, s: Situation, policy=None):
-    """E_p: chance the hitter is sitting on p. Count prior + our own mix + what we've shown."""
-    m = len(arsenal)
-    hitters_count = s.balls > s.strikes and s.strikes < 2
-    fb = [x for x in arsenal if x.kind == "FB"]
-    os_ = [x for x in arsenal if x.kind != "FB"]
-    prior = {}
-    if fb and os_:
-        fb_share = 0.65 if hitters_count else (0.35 if s.strikes == 2 else 0.5)
-        for x in fb:
-            prior[x.name] = fb_share / len(fb)
-        for x in os_:
-            prior[x.name] = (1 - fb_share) / len(os_)
-    else:
-        prior = {x.name: 1 / m for x in arsenal}
-    if policy:   # [R1] a smart hitter anticipates our own tendencies in this spot
-        lam = 0.6
-        prior = {x.name: (1 - lam) * prior[x.name] + lam * policy.get(x.name, 0.0) for x in arsenal}
-    n = sum(s.usage_this_count.values())   # what a dugout could pick up today, k = 4
-    k = 4.0
-    e = {x.name: (k * prior[x.name] + s.usage_this_count.get(x.name, 0)) / (k + n) for x in arsenal}
-    return e[p.name], 1 / m
-
-
 # ---------------------------------------------------------------------------
 # Tunneling (v0.4): pitch flight paths from movement + release
 # ---------------------------------------------------------------------------
@@ -576,41 +552,6 @@ def tunnel_score(p1: Pitch, q1: str, p2: Pitch, q2: str, same_side: bool):
 def perceived(p: Pitch, q: str):
     """[R7] Location-adjusted speed: how fast the pitch looks to the hitter."""
     return p.mph() + EV_ADJ[q]
-
-
-def pairing(p: Pitch, q: str, s: Situation, arsenal):
-    """T: one sequencing term from the last pitch, -1..+1.
-    Type and eye-level pattern, plus [R7] perceived-speed gap, plus [R6] repeat-after-whiff."""
-    if not s.last:
-        return 0.0
-    last_name, last_q = s.last[0], s.last[1]
-    last_result = s.last[2] if len(s.last) > 2 else None
-    last = next((x for x in arsenal if x.name == last_name), None)
-    if last is None:      # the last pitch came from someone else (a pitching change mid at-bat): no sequencing read
-        return 0.0
-    up_last, up_now = last_q.startswith("up"), q.startswith("up")
-
-    # [R6] if he can't hit it, make him prove it
-    if last.name == p.name:
-        if last_result == "whiff":
-            return 0.4 if last_q == q else 0.3
-        if last_q == q:
-            return -0.8                      # same pitch, same spot, and he didn't miss it
-
-    if last.kind == "FB":
-        base = (1.0 if (up_last and not up_now) else 0.6) if is_offspeed(p.kind) else (0.3 if up_last != up_now else -0.2)
-    elif p.kind == "FB":
-        base = 0.6 if up_now else 0.3
-    else:
-        base = -0.3 if last.name == p.name else 0.2
-
-    # [R7] perceived-speed gap: a big gap as the hitter sees it disrupts timing
-    gap = abs(perceived(p, q) - perceived(last, last_q))
-    speed = min(gap / 16.0, 1.0) * 0.6 - 0.2
-    # v0.4 tunnel: looks the same at the decision point, finishes somewhere else
-    # tunneling is about two different pitches; same pitch, new spot is an eye-level change (above)
-    tun = tunnel_score(last, last_q, p, q, s.same_side)[0] if last.name != p.name else 0.0
-    return max(-1.0, min(1.0, 0.30 * base + speed + 0.50 * tun))
 
 
 def shape_fit(p: Pitch, q: str, s: Situation):
@@ -1618,43 +1559,6 @@ def pitches_left(P, s, tab, nl):
         P["wp_ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N")) + \
         (P["cstrike"] + P["whiff"]) * (0 if k + 1 == 3 else tab.value(b, k + 1, nl, "N")) + \
         P["foul"] * tab.value(b, min(k + 1, 2), nl, "N")
-
-
-def in_play_value_ev(contact, s):
-    """v0.7c in_play_value with every end of the PA through v_end (equal to it when the win blend is off)."""
-    if not (s.win and s.win["omega"] > 0):
-        return in_play_value(contact, s.outs, s.bases, s.level)
-    outs, bases, level = s.outs, s.bases, s.level
-    b1, b2, b3 = bases
-    po, p1, p2, p3, phr, pe = IN_PLAY_BY_LEVEL[level][contact]
-    ev = lambda o_, b_, r_: v_end(s, o_, b_, r_)
-    total = 0.0
-    if outs + 1 >= 3:
-        v_out = ev(3, (False, False, False), 0)
-    else:
-        dp = 0.20 if (b1 and contact == "weak" and outs < 2) else 0.0
-        v_dp = ev(3, (False, False, False), 0) if outs + 2 >= 3 else ev(outs + 2, (False, b2, b3), 0)
-        if b3:
-            v_reg = 0.4 * ev(outs + 1, (b1, b2, False), 1) + 0.6 * ev(outs + 1, bases, 0)
-        else:
-            v_reg = ev(outs + 1, bases, 0)
-        v_out = dp * v_dp + (1 - dp) * v_reg
-    total += po * v_out
-    runs = 1 if b3 else 0
-    if b2:
-        v1 = 0.55 * ev(outs, (True, b1, False), runs + 1) + 0.45 * ev(outs, (True, b1, True), runs)
-    else:
-        v1 = ev(outs, (True, b1, False), runs)
-    total += (p1 + pe) * v1
-    runs = (1 if b2 else 0) + (1 if b3 else 0)
-    if b1:
-        v2 = 0.4 * ev(outs, (False, True, False), runs + 1) + 0.6 * ev(outs, (False, True, True), runs)
-    else:
-        v2 = ev(outs, (False, True, False), runs)
-    total += p2 * v2
-    total += p3 * ev(outs, (False, False, True), b1 + b2 + b3)
-    total += phr * ev(outs, (False, False, False), b1 + b2 + b3 + 1)
-    return total
 
 
 def steal_cost(p, q, s, tab, nl):
