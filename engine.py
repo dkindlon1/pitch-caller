@@ -1363,8 +1363,11 @@ def call_rules(arsenal, s, exclude=None):
         bad = {p.name for p in arsenal if p.name in names and not_landing(p, s)}
         if bad and bad != names:
             chase_ok = s.strikes == 2 and s.balls < 3
-            kept = [a for a in out if a[0] not in bad or (chase_ok and a[1] == "chase")]
+            # 3.3: with a runner on 3rd, no two-strike chase with a pitch that isn't landing (a dirt ball scores him)
+            kept = [a for a in out if a[0] not in bad or (chase_ok and a[1] == "chase" and not s.bases[2])]
             if kept:
+                if chase_ok and s.bases[2] and any(a[0] in bad and a[1] == "chase" for a in out):
+                    notes["LAND3"] = sorted(a for a in out if a[0] in bad and a[1] == "chase")
                 out = kept
     h = s.history
     if h:

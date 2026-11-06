@@ -155,6 +155,26 @@ check(by_pitch(sh).get("Slider", 0.0) == 1.0, "nothing trusted, no landing recor
 a_ok = ars("two_pitch")
 check("fallback" not in e.call_rules(a_ok, sit(1, 1, landing_today=lt))[1], "no fallback note when a pitch is trusted")
 
+# ---------------------------------------------------------------------------
+print("3.3 landing filter with a runner on 3rd")
+a = ars("slider_best")
+R3 = (False, False, True)
+sh3, info3, pick3, tab3, s3 = dist(a, sit(0, 2, bases=R3, landing_today={"Slider": (0, 4)}))
+sh0, *_ = dist(a, sit(0, 2, bases=E3, landing_today={"Slider": (0, 4)}))
+check(by_pitch(sh3).get("Slider", 0.0) == 0.0, "0-2, runner on 3rd, slider 0 for 4: slider 0%", f"{by_pitch(sh3)}")
+check(("Slider", "chase") in e.allowed_calls(a, sit(0, 2, bases=E3, landing_today={"Slider": (0, 4)})),
+      "the same with 3rd empty may still chase (slider chase stays allowed)", f"slider share with 3rd empty {by_pitch(sh0).get('Slider', 0):.1%}")
+check(e.why_line(a, s3, tab3, pick3, info3)[0] == "Runner on 3rd: no dirt ball with a pitch that isn't landing.",
+      "landing-filter why line", e.why_line(a, s3, tab3, pick3, info3)[0])
+worst = 0.0
+for lv in ("hs", "college_d3", "college_d1"):
+    for bo in (R3, (True, False, True), (True, True, True), (False, True, True)):
+        for (b, k) in ((0, 2), (1, 2)):
+            for lt in ((0, 4), (2, 12)):
+                sh, *_ = dist(a, sit(b, k, level=lv, bases=bo, landing_today={"Slider": lt}))
+                worst = max(worst, by_pitch(sh).get("Slider", 0.0))
+check(worst == 0.0, "every runner-on-3rd state, 0-2 and 1-2, three levels, 0/4 and 2/12: the slider gets 0%", f"largest {worst:.4f}")
+
 print()
 if FAILS:
     print(f"{len(FAILS)} v1.0 check(s) FAILED: " + "; ".join(FAILS))
