@@ -3,6 +3,9 @@ For 30 draws of the model's hand-set numbers (logit noise SD 0.25 on S0, C0, W0,
 KIND_W; x U(0.5, 1.5) on every v0.8 weight), measure the gap between the top two calls at each count, for three
 reference arsenals and three levels (bases empty, no outs). T_unc = 0.5 * SD of that gap.
 usage: python3 perturb.py v07|v08 [draws]   -> writes T_unc into sim_constants.json (v08) and prints a summary."""
+# Nov 6: the engine is now one flag-free v0.9 engine. This script ran under the v0.8 settings with the temperature floor off (T_unc was made that way) settings when its data was made;
+# those settings no longer exist, so a rerun computes v0.9-based values.
+
 import json, os, random, sys, copy
 import engine as e
 from metrics import ref_arsenals, LEVELS
@@ -31,25 +34,16 @@ def restore(base):
 
 def gaps_for(ars, lvl):
     s0 = e.Situation(0, 0, 0, (False, False, False), level=lvl)
-    if e.FLAGS["look_state"]:       # v0.8: the planning table, then each count's root costs (temperature floor off)
-        with e.flags(temp_unc=False):
-            tab = e.solve_table(ars, s0)
-            out = {}
-            for (b, k) in e.COUNTS:
-                c = sorted(e.root_costs(ars, e.Situation(b, k, 0, (False, False, False), level=lvl), tab).values())
-                out[f"{b}-{k}"] = c[1] - c[0] if len(c) > 1 else 0.0
-        return out
-    cv = e.at_bat_values(ars, s0)[1] if not e.FLAGS["look_state"] else None
+    tab = e.solve_table(ars, s0)        # the planning table, then each count's root costs (the floor is part of the engine now)
     out = {}
     for (b, k) in e.COUNTS:
-        c = sorted(e.call_costs(ars, e.Situation(b, k, 0, (False, False, False), level=lvl), cv=cv).values())
+        c = sorted(e.root_costs(ars, e.Situation(b, k, 0, (False, False, False), level=lvl), tab).values())
         out[f"{b}-{k}"] = c[1] - c[0] if len(c) > 1 else 0.0
     return out
 
 
 def main():
     mode = sys.argv[1]; n = int(sys.argv[2]) if len(sys.argv) > 2 else 30
-    e.set_flags(**(e.FLAGS_V08 if mode == "v08" else e.FLAGS_V07))
     base = {k: copy.deepcopy(getattr(e, k)) for k in ("S0", "C0", "W0", "F0", "Q0", "KIND_W", "P08")}
     rng = random.Random(606)
     samples = {}

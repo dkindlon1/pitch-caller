@@ -4,13 +4,14 @@ rate by the level's sd_k, one discipline point raises the walk rate (BB + HBP) b
 point raises the hard-contact share of balls in play by 0.03. MLB uses D1's values. Same machinery as fit_spread.py
 (calib.evaluate over the calibration staff and lineups), the call mix held fixed (policy cache) so the fit measures the
 grade's own effect. usage: python3 fit_hitter_spread.py"""
+# Nov 6: the engine is now one flag-free v0.9 engine. This script ran under the v0.7c (plus hitter grades) settings when its data was made;
+# those settings no longer exist, so a rerun computes v0.9-based values.
+
 import os, pprint
 import engine as e, calib
 from spread_params import SPREAD_FIT
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-e.set_flags(**e.FLAGS_V07)
-e.set_flags(hitter_grades=True)
 
 
 def rates(level, cache, c=3, w=3, d=3):

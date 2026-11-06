@@ -10,7 +10,7 @@ const fs = require("fs");
   const cdp = await page.context().newCDPSession(page);
   await page.setContent("<html><body></body></html>");
   await page.addScriptTag({ content: eng });
-  await page.evaluate((d) => { PitchEngine.init(JSON.parse(d)); PitchEngine.setFlags(PitchEngine.FLAGS_V08); }, data);
+  await page.evaluate((d) => { PitchEngine.init(JSON.parse(d)); }, data);
   const run = async (rate) => {
     await cdp.send("Emulation.setCPUThrottlingRate", { rate });
     return page.evaluate(() => {

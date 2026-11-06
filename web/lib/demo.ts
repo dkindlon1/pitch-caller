@@ -42,13 +42,13 @@ export function call(E: Engine, ars: EPitch[], g: Game, rng?: () => number): Cal
   const s = E.Situation({ balls: g.balls, strikes: g.strikes, outs: g.outs, bases: g.bases.slice(), inning: g.inning, margin: 0, pitch_count: g.pitches,
     batters_faced: g.batter, level: "college_d3", same_side: bats(g) === HAND, last: g.last, hitter_seen: { ...g.seen },
     usage_this_count: { ...(g.usage[`${g.balls}-${g.strikes}`] || {}) } });
-  const r = E.callMixed(ars, s, rng ? { rng } : {});
+  const r = E.callV08(ars, s, rng ? { rng } : {});     // the app's one engine: v0.9 plans the at-bat
   const top = (d: Pick) => ({ pitch: d.pitch.name, spot: SPOT[d.quad], prob: d.prob });
   return { pitch: r.pick.pitch.name, kind: r.pick.pitch.kind, quad: r.pick.quad, spot: SPOT[r.pick.quad], sign: SIGN[r.pick.pitch.kind], prob: r.pick.prob,
     mix: r.dist.slice(0, 4).map(top) };
 }
 
-// the app's own explanation of a v0.7c call (app/index.src.html, callPanel): how often the mix picks it here and where
+// a plain explanation of the call (app/index.src.html, callPanel): how often the mix picks it here and where
 // to aim, then what else is in the mix
 export function reason(c: Call, g: Game): string {
   const pct = (x: number) => `${Math.round(x * 100)}%`;

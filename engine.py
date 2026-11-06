@@ -31,48 +31,10 @@ except ImportError:
     pass
 
 # ---------------------------------------------------------------------------
-# v0.8 compatibility flags (docs/SPEC_v0.8.md section 1). FLAGS_V07 = every flag in its v0.7c position, which must
-# reproduce v0.7c exactly (golden/golden.py check). FLAGS_V08 = the v0.8 engine.
+# One engine, v0.9 (Drew, Nov 6): no flags. Every term that used to sit behind a flag is either in (its v0.9 setting) or
+# gone. The v0.9 golden (golden/golden_v09.py, made from the flagged engine running v0.9) proves the behavior is
+# unchanged. The guardrail is on (docs/FOLLOWUPS_v0.9_REPORT.md); inside is on by Drew's call (docs/STEP4b_v0.9_REPORT.md).
 # ---------------------------------------------------------------------------
-FLAGS_V07 = dict(pairing_v07=True, bf_term_v07=True, ev_full=True, expect_v07=True, look_state=False, timing_B=False,
-                 objective_win=False, inplay_typed=False, running_game=False, umpire_learn=False, fatigue_v08=False,
-                 hitter_grades=False, hs_pitch_cost=False, temp_unc=False, zone_22=False,
-                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False, power_avoid=False)
-FLAGS_V08 = dict(pairing_v07=False, bf_term_v07=False, ev_full=False, expect_v07=False, look_state=True, timing_B=True,
-                 objective_win=True, inplay_typed=True, running_game=True, umpire_learn=True, fatigue_v08=True,
-                 hitter_grades=True, hs_pitch_cost=True, temp_unc=True, zone_22=True,
-                 guardrail_v09=False, landing_v09=False, matchup_memory=False, inside_v09=False, power_avoid=False)
-# v0.9 (docs/STEP4b_v0.9_REPORT.md): v0.8 plus the v0.9 items. Every v0.9 flag is False in FLAGS_V07 and FLAGS_V08,
-# so both keep reproducing their golden files exactly.
-# inside_v09 failed its scenario gate (H4 and F6 did not improve) and is on by Drew's call (docs/STEP4b_v0.9_REPORT.md)
-# Drew, Nov 6: the myopic guardrail stays ON in v0.9 (guardrail_v09=False). With it on, v0.9 passes 30 of the 64 frozen
-# scenarios (29 off) and breaks none v0.8 passed, and its calls cost the same runs as v0.8's in the simulator (off: +0.4).
-# docs/FOLLOWUPS_v0.9_REPORT.md. The flag and its code stay, so the guardrail-off engine can still be tested.
-FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=False, landing_v09=True, matchup_memory=True, inside_v09=True, power_avoid=True)
-FLAGS = dict(FLAGS_V07)
-
-
-def set_flags(**kw):
-    """Set flags by name; unknown names are an error. Returns the previous flags so a caller can restore them."""
-    prev = dict(FLAGS)
-    for k, v in kw.items():
-        if k not in FLAGS:
-            raise KeyError(f"unknown flag {k!r}")
-        FLAGS[k] = bool(v)
-    return prev
-
-
-class flags:
-    """Context manager: `with flags(**FLAGS_V08): ...` runs with those flags and restores the old ones after."""
-    def __init__(self, **kw):
-        self.kw = kw
-
-    def __enter__(self):
-        self.prev = set_flags(**self.kw)
-        return FLAGS
-
-    def __exit__(self, *a):
-        FLAGS.clear(); FLAGS.update(self.prev)
 
 
 # v0.8 parameters (docs/SPEC_v0.8.md). Starting values; perturb.py samples them and seq_fit.py can replace some.
@@ -92,13 +54,13 @@ TYPED = dict(beta_y=-0.8, gamma={"weak": 0.3, "solid": 0.0, "hard": -0.3},      
              nongb={"weak": (0.10, 0.40, 0.50), "solid": (0.45, 0.45, 0.10), "hard": (0.45, 0.55, 0.0)},
              dp={"weak": 0.30, "solid": 0.20, "hard": 0.10}, gb_infield_in=0.10, r2_to_3rd={"GB": 0.50, "FB": 0.25})
 RHO_L = {"hs": 0.6, "travel": 0.6}            # 3.2 level scaling of MLB-fitted timing effects (others 1.0)
-# v0.9 item 6 (matchup_memory), fitted in Step 3 (readthrough/step3_fits.py, results/step3): whiff | swing on a pitch class
+# v0.9 item 6, fitted in Step 3 (readthrough/step3_fits.py, results/step3): whiff | swing on a pitch class
 # rises with the whiffs and called strikes that class got from this hitter in earlier trips today (M1, capped at 4), and
 # falls after he hit that class hard at that spot in an earlier trip (M2, capped at 2). The total sits under the
 # familiarity cap and is scaled by RHO_L (HS and travel 0.6). Their hard-contact effects did not ship.
 MM = dict(succ=0.107, succ_cap=4, hard=-0.346, hard_cap=2)
 
-# v0.9 item 3, widened (inside_v09), fitted in Step 5 (readthrough/step5_inside_fit.py, results/step5): on and near the
+# v0.9 item 3, widened, fitted in Step 5 (readthrough/step5_inside_fit.py, results/step5): on and near the
 # plate (heart and edge), MLB pitches on the inner half play differently from the outer half at the same height: an
 # elevated fastball inside gets far less hard contact, fewer whiffs and more swings, and so on by class, height and
 # platoon side. Each value is the fitted inside-minus-away logit difference (0 where it did not ship); a target on the
@@ -107,7 +69,7 @@ MM = dict(succ=0.107, succ_cap=4, hard=-0.346, hard_cap=2)
 SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}}
 
 
-# v0.9 item 8 (power_avoid), fitted in Step 4b (readthrough/step4b_power_hr.py, results/step4b/power_hr.txt): a power
+# v0.9 item 8, fitted in Step 4b (readthrough/step4b_power_hr.py, results/step4b/power_hr.txt): a power
 # hitter's hard contact leaves the park more often, +0.112 logits on HR | hard ball in play per SD of power (P3; power x
 # zone and the HR effect x heart did not ship). One power-grade point = 0.03 of hard-contact share (spec 8.2) = 0.03 /
 # 0.053 SD (the spread of hitters' hard-hit rates) = 0.566 SD. The extra home runs come out of that type's outs.
@@ -211,7 +173,7 @@ NO_CHASE = {(3, 0), (3, 1)}     # v0.7b coach rule W1 (Drew): never a chase targ
 
 def targets(balls, strikes):
     """The targets the engine may call in this count. v0.8 (zone_22, Drew's rule): attack the zone at 2-2 too."""
-    if (balls, strikes) in NO_CHASE or (FLAGS.get("zone_22") and (balls, strikes) == (2, 2)):
+    if (balls, strikes) in NO_CHASE or (balls, strikes) == (2, 2):
         return [q for q in QUADS if q != "chase"]
     return QUADS
 ZONES = ["heart", "edge", "off", "noncomp"]
@@ -715,8 +677,7 @@ def speed_today(p, s):
     if p.name in s.radar:
         return s.radar[p.name]
     v = p.mph()
-    if FLAGS["fatigue_v08"]:
-        v -= min(P08["kv_cap"], P08["kv"] * max(0, s.pitch_count - LEVEL[s.level]["fatigue"]) / 10)
+    v -= min(P08["kv_cap"], P08["kv"] * max(0, s.pitch_count - LEVEL[s.level]["fatigue"]) / 10)
     return v
 
 
@@ -788,26 +749,13 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     A = OUTCOME_ADJ[s.level]
     big = is_big_spot(s)
     cL = L["cL"] * (1.5 if big else 1.0)
-    bT = 0.4 * (0.5 if big else 1.0)
-    v08x = sit is not None or not FLAGS["expect_v07"]       # v0.8 sit terms replace the v0.7c expectation E
-    if v08x:
-        if sit is None:
-            sit = ("mix", s.sit_sigma if s.sit_sigma is not None else sit_prior(arsenal, s))
-        m_t, m_h, v_sit = sit_shift(p, q, arsenal, s, sit)
-    else:
-        E, neutral = expectation(p, arsenal, s, policy)
-    if FLAGS["pairing_v07"]:
-        T = pairing(p, q, s, arsenal)
-    else:
-        pw, ps = pair_terms(p, q, s, arsenal)
-    tB = 0.0
-    if FLAGS["timing_B"]:
-        if not v08x:
-            v_sit = sum(v * speed_today(next(x for x in arsenal if x.name == n), s) for (n, j), v in sit_prior(arsenal, s).items())
-        tB = RHO_L.get(s.level, 1.0) * timing_B(p, q, s, v_sit) * (0.5 if big else 1.0)   # 4: pair terms halved in a big spot
-    capped = not FLAGS["expect_v07"]
+    if sit is None:
+        sit = ("mix", s.sit_sigma if s.sit_sigma is not None else sit_prior(arsenal, s))
+    m_t, m_h, v_sit = sit_shift(p, q, arsenal, s, sit)          # 2.2 what he's sitting on
+    pw, ps = pair_terms(p, q, s, arsenal)
+    tB = RHO_L.get(s.level, 1.0) * timing_B(p, q, s, v_sit) * (0.5 if big else 1.0)   # 4: pair terms halved in a big spot
     hL = L["hL"]
-    gr = (s.grades or GRADES_OVERRIDE) if FLAGS["hitter_grades"] else None    # 8.2 (override: fit hook)
+    gr = s.grades or GRADES_OVERRIDE    # 8.2 (override: fit hook)
     f = shape_fit(p, q, s)
     dmg = damage(p, q, s)
     tau = s.timing.get("OS" if is_offspeed(p.kind) else "FB", 0.0)
@@ -816,8 +764,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     hitters_count = s.balls > s.strikes and s.strikes < 2
     land = landing(p, q, s)
     command, grade = effective(p, s)
-    if FLAGS["fatigue_v08"]:
-        grade = grade - min(P08["kg_cap"], P08["kg"] * max(0, s.pitch_count - LEVEL[s.level]["fatigue"]) / 20)
+    grade = grade - min(P08["kg_cap"], P08["kg"] * max(0, s.pitch_count - LEVEL[s.level]["fatigue"]) / 20)
     gs = 0.25 * L.get("stuff_scale", 1.0)        # v0.7: one grade point of stuff = one SD of real pitchers (fit_spread.py)
     # v0.7b command and swing-and-miss: real pitchers' walk and strikeout rates are nearly independent (correlation about
     # -0.1 in 2026 D3 and D1 lines), so better command must not also buy many more strikeouts. Precise pitchers work in
@@ -841,62 +788,39 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         wz_ = ZONE_IN[z]            # v0.6: share of this landing band inside the rulebook zone
         sl += wz_ * A["zsw"] + (1 - wz_) * A["osw"]
         offz = z in ("off", "noncomp")
-        if v08x:
-            sl += hL * (P08["sit_tS"] * m_t + P08["sit_hS"] * m_h)
-        if not FLAGS["pairing_v07"] and offz:
+        sl += hL * (P08["sit_tS"] * m_t + P08["sit_hS"] * m_h)
+        if offz:
             sl += ps
         if gr and offz:
             sl -= gval("g_d", s.level) * (gr.get("d", 3) - 3)
-        if FLAGS["inside_v09"]:
-            sl += side_shift(p, q, s, z, "swing")
+        sl += side_shift(p, q, s, z, "swing")
         S = sig(sl) if S0[z] > 0 else 0
-        if FLAGS["umpire_learn"] and z in ("edge", "off"):
+        if z in ("edge", "off"):
             C = sig(logit(C0[z]) + A["cs"] + count_kappa(s.balls, s.strikes, s.level) + s.ump_u)
         else:
-            C = sig(logit(C0[z]) + A["cs"]) if z in ("edge", "off") else C0[z]
+            C = C0[z]
         # whiff
         wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6)
-        if not v08x:
-            wl += L["hL"] * (-1.5 * (E - neutral) + 0.6 * tau_eff - 0.4 * DMG_SCALE * dmg)
-        else:
-            ex = -hL * (P08["sit_tW"] * m_t + P08["sit_hW"] * m_h) + hL * 0.6 * tau_eff + P08["beta_T"] * tB
-            if capped:
-                ex = max(-P08["capW"] * hL, min(P08["capW"] * hL, ex))
-            wl += ex - hL * 0.4 * DMG_SCALE * dmg
-        if FLAGS["timing_B"] and not v08x:
-            wl += P08["beta_T"] * tB
-        if FLAGS["pairing_v07"]:
-            wl += bT * T + 0.25 * f
-        else:
-            wl += pw + 0.25 * f
+        ex = -hL * (P08["sit_tW"] * m_t + P08["sit_hW"] * m_h) + hL * 0.6 * tau_eff + P08["beta_T"] * tB
+        ex = max(-P08["capW"] * hL, min(P08["capW"] * hL, ex))
+        wl += ex - hL * 0.4 * DMG_SCALE * dmg
+        wl += pw + 0.25 * f
         wl += wz_ * A["wz"] + (1 - wz_) * A["wo"]
         if cw:
             wl -= cw
         if gr:
             wl -= gval("g_c", s.level) * (gr.get("c", 3) - 3)
-        if FLAGS["matchup_memory"] and s.matchup:
+        if s.matchup:
             wl += matchup_whiff(p, q, s)
-        if FLAGS["inside_v09"]:
-            wl += side_shift(p, q, s, z, "whiff")
+        wl += side_shift(p, q, s, z, "whiff")
         W = sig(wl)
         F = sig(logit(F0[z]) + (0.3 if s.strikes == 2 else 0))
         # contact quality: shift hard share
-        if not v08x:
-            hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L["hL"] * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f
-        else:
-            hx = hL * (P08["sit_tH"] * m_t + P08["sit_hH"] * m_h) - hL * 0.5 * tau_eff - P08["gamma_T"] * tB
-            if capped:
-                hx = max(-P08["capH"] * hL, min(P08["capH"] * hL, hx))
-            hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + hx + hL * 0.8 * DMG_SCALE * dmg - 0.3 * f
-        if FLAGS["bf_term_v07"]:
-            hl += 0.012 * s.batters_faced                  # [R8] steady decline, no cliff
-        else:
-            c_ = "OS" if is_offspeed(p.kind) else "FB"
-            hl += min(P08["fam_cap"], P08["phi_" + c_] * s.familiar.get(c_, 0))
-        if not v08x:
-            hl -= L["hL"] * 0.5 * tau_eff                  # v0.6e: off-time swings make weaker contact too
-        if FLAGS["timing_B"] and not v08x:
-            hl -= P08["gamma_T"] * tB
+        hx = hL * (P08["sit_tH"] * m_t + P08["sit_hH"] * m_h) - hL * 0.5 * tau_eff - P08["gamma_T"] * tB
+        hx = max(-P08["capH"] * hL, min(P08["capH"] * hL, hx))
+        hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + hx + hL * 0.8 * DMG_SCALE * dmg - 0.3 * f
+        c_ = "OS" if is_offspeed(p.kind) else "FB"
+        hl += min(P08["fam_cap"], P08["phi_" + c_] * s.familiar.get(c_, 0))     # familiarity within the game
         if gr:
             hl += gval("g_w", s.level) * (gr.get("w", 3) - 3)
         if s.crowding and q in ("up-in", "down-in"):
@@ -907,8 +831,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             hl += 0.5          # hanger: off-speed over the middle gets hit hard
         if is_offspeed(p.kind) and (q.startswith("up") or q == "middle"):
             hl += 0.4          # v0.3: aiming off-speed up or at the middle leaves it up
-        if FLAGS["inside_v09"]:
-            hl += side_shift(p, q, s, z, "hard")
+        hl += side_shift(p, q, s, z, "hard")
         weak, solid, hard = Q0[z]
         hard2 = sig(logit(hard) + hl)
         if zout is not None:
@@ -1019,7 +942,7 @@ def v_end(s, o, bases, r):
     """7.2 end-of-plate-appearance value (runs, or run-equivalents with the win blend fixed at the PA start)."""
     base = r + re(o, bases, s.level)
     w = s.win
-    if not (FLAGS["objective_win"] and w and w["omega"] > 0):
+    if not (w and w["omega"] > 0):
         return base
     we = w["we"](o, bases, w["margin0"] - r)
     return (1 - w["omega"]) * base + w["omega"] * (w["WE0"] - we) / w["m0"]
@@ -1031,7 +954,7 @@ def in_play_value_typed(c, p, q, s):
     tab, rf = OUT_TABLE[L][c], RUNNER_FIT[L]
     ev = lambda o_, b_, r_: v_end(s, o_, b_, r_)
     tm = type_mix(p, q, c)
-    gr = (s.grades or GRADES_OVERRIDE) if (FLAGS["power_avoid"] and FLAGS["hitter_grades"] and c == "hard") else None
+    gr = (s.grades or GRADES_OVERRIDE) if c == "hard" else None
     dh = power_hr_shift(s, gr) if gr else 0.0
     total = 0.0
     for t in B_TYPES:
@@ -1115,12 +1038,8 @@ def cost(p: Pitch, q: str, s: Situation, arsenal, policy=None, cv=None, sit=None
     v += P["hbp"] * walk_value(o, B, L)
     v += (P["cstrike"] + P["whiff"]) * after_strike()
     v += P["foul"] * (V(b, k + 1, o, B, cv, L) if k < 2 else V(b, k, o, B, cv, L))
-    if FLAGS["inplay_typed"]:
-        for c in ("weak", "solid", "hard"):
-            v += P[c] * in_play_value_typed(c, p, q, s)
-    else:
-        for c in ("weak", "solid", "hard"):
-            v += P[c] * in_play_value(c, o, B, L)
+    for c in ("weak", "solid", "hard"):
+        v += P[c] * in_play_value_typed(c, p, q, s)
     return v, P
 
 
@@ -1500,8 +1419,8 @@ class Table:
     def __init__(self, arsenal, s):
         self.ars, self.s0 = arsenal, s
         self.vfb = v_fb(arsenal, s)
-        self.looked = FLAGS["look_state"]
-        self.bins = [(iv, iy) for iv in range(len(V_CENTERS)) for iy in range(len(Y_CENTERS))] if self.looked else [None]
+        self.looked = True    # 2.6: values carry the hitter's look
+        self.bins = [(iv, iy) for iv in range(len(V_CENTERS)) for iy in range(len(Y_CENTERS))]
         self.V = {}           # (b, k) -> {bin: value}
         self.N = {}           # (b, k) -> {bin: expected pitches left in the PA} (7.6)
         self.sigma = {}       # (b, k) -> sit mix
@@ -1526,15 +1445,14 @@ class Table:
 
 
 def temperature(arsenal, s):
-    """6.6 T(b, k): the v0.7c temperature, floored by the uncertainty table when temp_unc is on."""
+    """6.6 T(b, k): the v0.7c temperature, floored by the uncertainty table."""
     k_ = run_scale(s.level)
     f = stakes_factor(s.balls, s.strikes, s.level)
     t = 0.010 * k_ * (0.5 if is_big_spot(s) else 1.0) * f
-    if FLAGS["temp_unc"]:
-        size = {2: "two", 3: "three"}.get(len(arsenal), "four")
-        tu = SIM_CONST.get("T_unc", {}).get(s.level, {}).get(size, {}).get(f"{s.balls}-{s.strikes}")
-        if tu is not None:
-            t = max(t, tu)
+    size = {2: "two", 3: "three"}.get(len(arsenal), "four")
+    tu = SIM_CONST.get("T_unc", {}).get(s.level, {}).get(size, {}).get(f"{s.balls}-{s.strikes}")
+    if tu is not None:
+        t = max(t, tu)
     return t
 
 
@@ -1613,7 +1531,7 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
     return pi, sg, max(abs(sg[k] - f[k]) for k in ks)
 
 
-# v0.9 item 9 (landing_v09): a pitch that isn't landing today (at least LAND_BLOCK_N thrown and its shrunk strike rate
+# v0.9 item 9: a pitch that isn't landing today (at least LAND_BLOCK_N thrown and its shrunk strike rate
 # at or below LAND_BLOCK_EST) gives way to the pitches that are. With two strikes and fewer than three balls it may still
 # be called as a chase; otherwise it is left out. If nothing is landing, or the rule would leave nothing to call, the
 # filter stands down (there is no landing pitch to give way to).
@@ -1629,7 +1547,7 @@ def not_landing(p, s):
 def allowed_calls(arsenal, s, exclude=None):
     tq = targets(s.balls, s.strikes)
     out = [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
-    if FLAGS["landing_v09"] and s.landing_today and out:
+    if s.landing_today and out:
         names = {a[0] for a in out}
         bad = {p.name for p in arsenal if p.name in names and not_landing(p, s)}
         if bad and bad != names:
@@ -1667,9 +1585,9 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
     ipv = _ipv_cached(tab, p, q, s)
     for j, c in enumerate(("weak", "solid", "hard")):
         v += P[c] * ipv[j]
-    if FLAGS["running_game"] and s.steal and s.steal.get("a", 0) > 0:
+    if s.steal and s.steal.get("a", 0) > 0:
         v += steal_cost(p, q, s, tab, nl)
-    if FLAGS["hs_pitch_cost"] and s.level in ("hs", "travel"):
+    if s.level in ("hs", "travel"):
         w_ = min(1.0, max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20))
         if w_ > 0:
             nxt = P["ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N")) + \
@@ -1683,14 +1601,13 @@ def _ipv_cached(tab, p, q, s):
     """Speed only: the ball-in-play values of (p, q) don't depend on the count, look or sit; cached per base-out state and
     objective on the table (same numbers)."""
     w = s.win
-    key = (p.name, q, s.outs, s.bases, s.infield_in, s.level, FLAGS["inplay_typed"],
-           (w["omega"], w["WE0"], w["m0"], w["margin0"]) if (FLAGS["objective_win"] and w and w["omega"] > 0) else None)
-    if FLAGS["power_avoid"]:
-        key += (((s.grades or GRADES_OVERRIDE) or {}).get("w", 3),)
+    key = (p.name, q, s.outs, s.bases, s.infield_in, s.level,
+           (w["omega"], w["WE0"], w["m0"], w["margin0"]) if (w and w["omega"] > 0) else None,
+           ((s.grades or GRADES_OVERRIDE) or {}).get("w", 3))
     cache = tab.__dict__.setdefault("ipv", {})
     v = cache.get(key)
     if v is None:
-        v = tuple(in_play_value_typed(c, p, q, s) if FLAGS["inplay_typed"] else in_play_value_ev(c, s) for c in ("weak", "solid", "hard"))
+        v = tuple(in_play_value_typed(c, p, q, s) for c in ("weak", "solid", "hard"))
         cache[key] = v
     return v
 
@@ -1705,7 +1622,7 @@ def pitches_left(P, s, tab, nl):
 
 def in_play_value_ev(contact, s):
     """v0.7c in_play_value with every end of the PA through v_end (equal to it when the win blend is off)."""
-    if not (FLAGS["objective_win"] and s.win and s.win["omega"] > 0):
+    if not (s.win and s.win["omega"] > 0):
         return in_play_value(contact, s.outs, s.bases, s.level)
     outs, bases, level = s.outs, s.bases, s.level
     b1, b2, b3 = bases
@@ -1800,9 +1717,8 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
                 new = sum(pv * cs[a] for a, pv in pol.items())
                 delta = max(delta, abs(new - tab.V[(b, k)][bn]))
                 tab.V[(b, k)][bn] = new
-                if FLAGS["hs_pitch_cost"]:
-                    nl = lambda a: look_update(look, by[a[0]], a[1], sc)
-                    tab.N[(b, k)][bn] = sum(pv * pitches_left(Ps[a], sc, tab, nl(a)) for a, pv in pol.items())
+                nl = lambda a: look_update(look, by[a[0]], a[1], sc)
+                tab.N[(b, k)][bn] = sum(pv * pitches_left(Ps[a], sc, tab, nl(a)) for a, pv in pol.items())
         if (0, 0) in tab.sigma:
             s00 = tab.sigma[(0, 0)]
             tab.h0 = (sum(v * speed_today(by[n], s) for (n, j), v in s00.items()), 2.5)
@@ -1829,18 +1745,15 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     sL = replace(s, look=look)
     M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk)[0] for kk in ks} for a in calls}
     sg_tab = tab.sigma.get((s.balls, s.strikes))
-    look_on = FLAGS["look_state"]
-    if look_on:
-        Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
-        cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
-        best = min(cmy.values())
-        delta = GUARD_DELTA * run_scale(s.level)
-        # v0.9 item 10 (guardrail_v09): the myopic guardrail comes off; the never-pick windows still apply to full cost
-        keep = list(calls) if FLAGS["guardrail_v09"] else [a for a in calls if cmy[a] - best <= delta]
-        if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch
-            M = {a: Mmy[a] for a in keep}
-        else:
-            M = {a: M[a] for a in keep}
+    Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
+    cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
+    best = min(cmy.values())
+    delta = GUARD_DELTA * run_scale(s.level)
+    keep = [a for a in calls if cmy[a] - best <= delta]       # the guardrail: no call clearly worse on this pitch alone
+    if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch
+        M = {a: Mmy[a] for a in keep}
+    else:
+        M = {a: M[a] for a in keep}
     usage = s.usage_by_call
     pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
@@ -2018,8 +1931,7 @@ def grade_stats(p, q, s, arsenal, sit=None, grades=None):
         gr = dict(grades or {})
         gr[g] = 3
         zo = {}
-        with flags(hitter_grades=True):
-            outcome_probs(p, q, replace(s, grades=gr), arsenal, sit=sit, zout=zo)
+        outcome_probs(p, q, replace(s, grades=gr), arsenal, sit=sit, zout=zo)
         sw = sum(v["L"] * v["S"] for v in zo.values())
         bipw = {z: v["L"] * v["S"] * (1 - v["W"]) * (1 - v["F"]) for z, v in zo.items()}
         bip = sum(bipw.values())

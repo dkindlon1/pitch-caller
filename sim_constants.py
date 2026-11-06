@@ -2,13 +2,15 @@
 A_BAR (7.5): weighted geometric mean of the count zone area, weights = taken pitches per count in simulated games.
 I_BAR_UMP (7.5): average per-take information d^2/(p(1-p)) for a three-pitch reference arsenal.
 usage: python3 sim_constants.py runs/v07base/g*.csv"""
+# Nov 6: the engine is now one flag-free v0.9 engine. This script ran under the v0.7c settings when its data was made;
+# those settings no longer exist, so a rerun computes v0.9-based values.
+
 import csv, json, os, sys
 from math import exp, log
 from collections import Counter
 import engine as e
 from metrics import ref_arsenals
 
-e.set_flags(**e.FLAGS_V07)
 takes = Counter()
 for path in sys.argv[1:]:
     for r in csv.DictReader(open(path)):

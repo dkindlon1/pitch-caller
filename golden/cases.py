@@ -1,13 +1,5 @@
-"""v0.9 step 0: the v0.8 golden test.
-  python3 golden/golden_v08.py make   -> writes golden/golden_v08.json from the CURRENT engine in v0.8 mode (run once, on
-                                         v0.8-build 2caaa23)
-  python3 golden/golden_v08.py check  -> recomputes in v0.8 mode with every v0.9 flag off; must match to 1e-12
-  node golden/golden_v08.js           -> the JS engine against the same file, same tolerance
-500 seeded random situations with every v0.8 input (look, swing-read lean, usage by call, familiarity, crowding, hitter
-grades, umpire, radar, infield in, steal threat, pitch cap, win objective). Every case pins outcome probabilities under the
-hitter's mix and one pure sit; every other case also pins the solved at-bat table (V, N, sigma), the root call (full
-distribution, sit mix, residual), the why line, take and grade stats and the umpire and grade estimates.
-Inputs are stored, rebuilt from the stored copy, then computed, so make and check run the identical path."""
+"""The 500 golden input cases and the outputs computed for each (shared by golden_v09.py). Made for the v0.8 golden
+(Nov 5) and kept when the engine became one flag-free v0.9 engine (Nov 6); the inputs and outputs are unchanged."""
 import json, os, random, sys
 from dataclasses import replace
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +8,6 @@ import engine as e
 import fuzz_lib as F
 
 N, SEED = 500, 20261105
-PATH = os.path.join(HERE, "golden_v08.json")
 LEVELS = ["hs", "travel", "college_d3", "college_d1", "mlb"]
 K = lambda a: f"{a[0]}|{a[1]}"
 
@@ -127,45 +118,3 @@ def flat(r, pre=""):
             yield from flat(v, f"{pre}{i}.")
     else:
         yield pre.rstrip("."), r
-
-
-def main():
-    mode = sys.argv[1] if len(sys.argv) > 1 else "check"
-    e.set_flags(**e.FLAGS_V08)
-    if mode == "make":
-        if os.path.exists(PATH) and "--force" not in sys.argv:
-            sys.exit(f"{PATH} exists; it is the frozen v0.8 reference. Pass --force only to rebuild it on v0.8-build.")
-        cs = inputs()
-        for i, c in enumerate(cs):
-            c["out"] = compute(c)
-            if i % 50 == 0:
-                print(i, flush=True)
-        json.dump(cs, open(PATH, "w"))
-        print(f"wrote {len(cs)} v0.8 golden cases ({sum(c['full'] for c in cs)} with full solves)")
-        return
-    cs = json.load(open(PATH))
-    worst, bad = 0.0, 0
-    for i, c in enumerate(cs):
-        got, want = dict(flat(compute(c))), dict(flat(c["out"]))
-        if set(got) != set(want):
-            bad += 1
-            print("case", i, "keys differ:", sorted(set(got) ^ set(want))[:5])
-            continue
-        for k, v in want.items():
-            if isinstance(v, (int, float)) and not isinstance(v, bool):
-                d = abs(got[k] - v)
-                worst = max(worst, d)
-                ok = d <= 1e-12
-            else:
-                ok = got[k] == v
-            if not ok:
-                bad += 1
-                if bad < 6:
-                    print(f"case {i} {k}: golden {v!r} now {got[k]!r}")
-    print(f"{len(cs)} cases, largest difference {worst:.2e}")
-    print("PASS: v0.8 reproduced exactly" if not bad else f"FAIL: {bad} differences")
-    sys.exit(1 if bad else 0)
-
-
-if __name__ == "__main__":
-    main()

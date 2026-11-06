@@ -1,12 +1,11 @@
-// v0.9 step 0: the JS engine in v0.8 mode, every v0.9 flag off, against golden/golden_v08.json (python3 golden/golden_v08.py make).
-// node golden/golden_v08.js   (continuous values to 1e-12; picks, sweeps, why lines and flags exactly)
+// v0.9 golden (Nov 6): the JS engine as v0.9 against golden/golden_v09.json (python3 golden/golden_v09.py make).
+// node golden/golden_v09.js   (continuous values to 1e-12; picks, sweeps, why lines and flags exactly)
 const fs = require("fs"), path = require("path");
 const E = require(path.join(__dirname, "..", "app", "engine.js"));
 E.init(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "app", "engine_data.json"))));
-E.setFlags(E.FLAGS_V08);
 const V = E.v08;
 const TOL = 1e-12;
-const cases = JSON.parse(fs.readFileSync(path.join(__dirname, "golden_v08.json")));
+const cases = JSON.parse(fs.readFileSync(path.join(__dirname, "golden_v09.json")));
 const worst = {}; let bad = 0; const notes = [];
 const note = (m) => { bad++; if (notes.length < 10) notes.push(m); };
 const num = (i, grp, k, want, got) => {
@@ -18,7 +17,8 @@ const same = (i, k, want, got) => { if (JSON.stringify(want) !== JSON.stringify(
 
 cases.forEach((c, i) => {
   const ars = c.arsenal.map((d) => E.Pitch(Object.assign({}, d)));
-  let s = E.Situation(Object.assign({}, c.s));
+  const sd = Object.assign({}, c.s); if (!sd.matchup) delete sd.matchup;
+  let s = E.Situation(sd);
   if (s.home !== null && s.home !== undefined) s = Object.assign({}, s, { win: V.winConstants(s) });
   const o = c.out;
   if (o.win) for (const k in o.win) num(i, "win", k, o.win[k], s.win[k]);
@@ -47,6 +47,7 @@ cases.forEach((c, i) => {
   for (const k in o.call.sigma) num(i, "rootSigma", k, o.call.sigma[k], r.info.sigma[k]);
   num(i, "residual", "", o.call.residual, r.info.residual);
   const [line, deltas] = V.whyLine(ars, r.info.s, tab, r.pick, r.info);
+  same(i, "intent", o.intent, V.intentLabel(ars, r.info.s, tab, r.pick, r.info));
   same(i, "why", o.why.line, line);
   for (const k in o.why.deltas) num(i, "whyDelta", k, o.why.deltas[k], deltas[k]);
   const p0 = ars[0], q0 = E.targets(s.balls, s.strikes)[0];
@@ -57,8 +58,8 @@ cases.forEach((c, i) => {
   const ge = V.gradeEstimate(c.takes, 3, 2.5, 3.0, c.takes.length + 20);
   num(i, "gradeEst", 0, o.ump.g[0], ge[0]); num(i, "gradeEst", 1, o.ump.g[1], ge[1]); same(i, "gradeEst.flag", o.ump.g[2], ge[2]);
 });
-console.log(`${cases.length} v0.8 golden cases (${cases.filter((c) => c.full).length} with full solves). Largest JS-vs-golden differences:`);
+console.log(`${cases.length} v0.9 golden cases (${cases.filter((c) => c.full).length} with full solves). Largest JS-vs-golden differences:`);
 for (const k in worst) console.log(`  ${k.padEnd(11)} ${worst[k].toExponential(2)}`);
 for (const n of notes) console.log("  " + n);
-console.log(bad ? `FAIL: ${bad} differences` : "PASS: JS engine reproduces v0.8");
+console.log(bad ? `FAIL: ${bad} differences` : "PASS: JS engine reproduces v0.9");
 process.exit(bad ? 1 : 0);

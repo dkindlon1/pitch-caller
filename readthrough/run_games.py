@@ -1,7 +1,6 @@
-"""v0.9 Step 1: play the read-through games. Paired seeds: every engine plays the same seeds, so the opposing lineup
-(hidden traits) and the starting world match; games diverge once the calls differ.
-usage (repo root): python3 readthrough/run_games.py [--engines v07,v08] [--seeds 101-104] [--jobs 2]
-Writes runs/readthrough/<engine>/<level>_<staff>_s<seed>.csv (runs/ is gitignored). Existing files are kept, so a
+"""Play the read-through games with the engine (one engine, v0.9). Seeds fix the opposing lineup and the world.
+usage (repo root): python3 readthrough/run_games.py [--seeds 101-104] [--jobs 2] [--suffix _tw]
+Writes runs/readthrough/v09<suffix>/<level>_<staff>_s<seed>.csv (runs/ is gitignored). Existing files are kept, so a
 stopped run resumes. Every hitter starts with no scouting: the engine only learns what the game's log tells it."""
 import concurrent.futures as cf, os, subprocess, sys, time
 
@@ -14,10 +13,8 @@ def arg(name, default):
     return sys.argv[sys.argv.index(name) + 1] if name in sys.argv else default
 
 
-def one(engine, level, staff, seed):
-    # v0.9 Step 7: "v08@v09w" = the v0.8 engine calling in the v0.9 world (simulate.py WORLD), in runs/readthrough/v08_in_v09w
-    engine, world = engine.split("@") if "@" in engine else (engine, "")
-    tag = (f"{engine}_in_{world}" if world else engine) + SUFFIX
+def one(level, staff, seed):
+    tag = "v09" + SUFFIX
     out = os.path.join(ROOT, "runs", "readthrough", tag, f"{level}_{staff}_s{seed}.csv")
     if os.path.exists(out) and os.path.getsize(out) > 0:
         return out, "kept", 0.0
@@ -26,7 +23,7 @@ def one(engine, level, staff, seed):
     code = ("import simulate, io, contextlib, os\n"
             "with contextlib.redirect_stdout(io.StringIO()): simulate.run(%d, %r)\n" % (seed, tmp))
     t0 = time.time()
-    env = dict(os.environ, ENGINE=engine, LEVEL=level, STAFF=staff, WORLD=world)
+    env = dict(os.environ, LEVEL=level, STAFF=staff)
     r = subprocess.run([sys.executable, "-c", code], cwd=ROOT, env=env, capture_output=True, text=True)
     if r.returncode != 0:
         return out, "FAILED: " + r.stderr.strip().splitlines()[-1], time.time() - t0
@@ -39,12 +36,11 @@ SUFFIX = ""
 
 def main():
     global SUFFIX
-    SUFFIX = arg("--suffix", "")      # v0.9 Step 7: e.g. "_tw" with TRUTH_TAB=world in the environment, so reruns get their own folder
-    engines = arg("--engines", "v07,v08").split(",")
+    SUFFIX = arg("--suffix", "")      # e.g. "_tw" with TRUTH_TAB=world in the environment, so those runs get their own folder
     a, b = (int(x) for x in arg("--seeds", "101-104").split("-"))
     jobs = int(arg("--jobs", "2"))
-    todo = [(en, lv, st, sd) for en in engines for lv in LEVELS for st in STAFFS for sd in range(a, b + 1)]
-    print(f"{len(todo)} games ({len(engines)} engines x {len(LEVELS)} levels x {len(STAFFS)} staffs x {b - a + 1} seeds)", flush=True)
+    todo = [(lv, st, sd) for lv in LEVELS for st in STAFFS for sd in range(a, b + 1)]
+    print(f"{len(todo)} games ({len(LEVELS)} levels x {len(STAFFS)} staffs x {b - a + 1} seeds)", flush=True)
     bad = 0
     with cf.ThreadPoolExecutor(jobs) as ex:
         for out, status, secs in ex.map(lambda t: one(*t), todo):

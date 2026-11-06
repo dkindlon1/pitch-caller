@@ -577,8 +577,8 @@ td.wrapcell .line { display: block; }
 
   const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"];
   // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
-  // v0.8 (zone_22, Drew's rule): attack the zone at 2-2 too
-  const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (FLAGS.zone_22 && b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
+  // v0.8 (Drew's rule): attack the zone at 2-2 too
+  const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
@@ -603,23 +603,7 @@ td.wrapcell .line { display: block; }
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
-  // v0.8 compatibility flags (docs/SPEC_v0.8.md section 1); FLAGS_V07 reproduces v0.7c exactly (golden/golden.js)
-  const FLAGS_V07 = { pairing_v07: true, bf_term_v07: true, ev_full: true, expect_v07: true, look_state: false, timing_B: false,
-    objective_win: false, inplay_typed: false, running_game: false, umpire_learn: false, fatigue_v08: false,
-    hitter_grades: false, hs_pitch_cost: false, temp_unc: false, zone_22: false,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
-  const FLAGS_V08 = { pairing_v07: false, bf_term_v07: false, ev_full: false, expect_v07: false, look_state: true, timing_B: true,
-    objective_win: true, inplay_typed: true, running_game: true, umpire_learn: true, fatigue_v08: true,
-    hitter_grades: true, hs_pitch_cost: true, temp_unc: true, zone_22: true,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
-  // v0.9: v0.8 plus the v0.9 items; every v0.9 flag is false in FLAGS_V07 and FLAGS_V08
-  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: false, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report); guardrail stays on (Drew, Nov 6: FOLLOWUPS report)
-  const FLAGS = Object.assign({}, FLAGS_V07);
-  function setFlags(kw) {
-    const prev = Object.assign({}, FLAGS);
-    for (const k in kw) { if (!(k in FLAGS)) throw new Error("unknown flag " + k); FLAGS[k] = !!kw[k]; }
-    return prev;
-  }
+  // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
   const VERSION = "0.9";      // engine logic version; the tables carry their own fingerprint (data.version)
   function init(data) {
@@ -865,7 +849,7 @@ td.wrapcell .line { display: block; }
     return total;
   }
 
-  // v0.9 item 6 (matchup_memory): earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
+  // v0.9 item 6: earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
   const MM = { succ: 0.107, succ_cap: 4, hard: -0.346, hard_cap: 2 };
   function matchupWhiff(p, q, s) {
     const m = s.matchup || {};
@@ -873,9 +857,9 @@ td.wrapcell .line { display: block; }
     x = Math.max(-P08.fam_cap, Math.min(P08.fam_cap, x));
     return (RHO_L[s.level] ?? 1.0) * x;
   }
-  // v0.9 item 3 widened (inside_v09): inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
+  // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
   const SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}};
-  // v0.9 item 8 (power_avoid): more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
+  // v0.9 item 8: more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
   const POWER_HR = 0.112 * 0.03 / 0.053;
   const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
@@ -891,21 +875,9 @@ td.wrapcell .line { display: block; }
     const L = D.LEVEL[s.level], A = D.OUTCOME_ADJ[s.level];
     const big = isBigSpot(s);
     const cL = L.cL * (big ? 1.5 : 1.0);
-    const bT = 0.4 * (big ? 0.5 : 1.0);
-    const v08x = sitGiven || !FLAGS.expect_v07;   // v0.8 sit terms replace the v0.7c expectation E
-    let E = 0, neutral = 0;
-    if (!v08x) [E, neutral] = expectation(p, arsenal, s, policy);
-    let T = 0, pw = 0, ps = 0;
-    if (FLAGS.pairing_v07) T = pairing(p, q, s, arsenal);
-    else [pw, ps] = pairTerms(p, q, s, arsenal);
-    let tB0 = 0.0;
-    if (FLAGS.timing_B && !v08x) {
-      const pr = sitPrior(arsenal, s);
-      const vSit = psum(Object.keys(pr).map((key) => pr[key] * speedToday(byName(arsenal, key.slice(0, key.lastIndexOf("|"))), s)));
-      tB0 = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (big ? 0.5 : 1.0);
-    }
+    const [pw, ps] = pairTerms(p, q, s, arsenal);
     const hL = L.hL;
-    const gr = FLAGS.hitter_grades ? (s.grades || GRADES_OVERRIDE) : null;
+    const gr = s.grades || GRADES_OVERRIDE;
     const f = shapeFit(p, q, s);
     const dmg = damage(p, q, s);
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
@@ -913,7 +885,7 @@ td.wrapcell .line { display: block; }
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
     let [command, grade] = effective(p, s);
-    if (FLAGS.fatigue_v08) grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
+    grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
     const gs = 0.25 * (L.stuff_scale ?? 1.0);
     const cw = (L.cmd_whiff ?? 0.0) * (command - 3);   // v0.7b: better command adds contact, not strikeouts (fit_spread.py)
     const zones = [];
@@ -930,73 +902,59 @@ td.wrapcell .line { display: block; }
       Z.slPre = sl; Z.s0pos = S0[z] > 0;
       const offz = z === "off" || z === "noncomp"; Z.offz = offz;
       Z.slPost = [];
-      if (!FLAGS.pairing_v07 && offz) Z.slPost.push(ps);
+      if (offz) Z.slPost.push(ps);
       if (gr && offz) Z.slPost.push(-(gval("g_d", s.level) * ((gr.d ?? 3) - 3)));
-      if (FLAGS.inside_v09) Z.slPost.push(sideShift(p, q, s, z, "swing"));
-      if (FLAGS.umpire_learn && (z === "edge" || z === "off")) Z.C = sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u);
-      else Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs) : C0[z];
-      let wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
-      if (!v08x) wl += L.hL * (-1.5 * (E - neutral) + 0.6 * tauEff - 0.4 * DMG_SCALE * dmg);
+      Z.slPost.push(sideShift(p, q, s, z, "swing"));
+      Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u) : C0[z];
+      const wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
       Z.wlPre = wl; Z.wlD = hL * 0.4 * DMG_SCALE * dmg;
       Z.wlPost = [];
-      if (FLAGS.timing_B && !v08x) Z.wlPost.push(P08.beta_T * tB0);
-      if (FLAGS.pairing_v07) Z.wlPost.push(bT * T + 0.25 * f); else Z.wlPost.push(pw + 0.25 * f);
+      Z.wlPost.push(pw + 0.25 * f);
       Z.wlPost.push(wz * A.wz + (1 - wz) * A.wo);
       if (cw) Z.wlPost.push(-cw);
       if (gr) Z.wlPost.push(-(gval("g_c", s.level) * ((gr.c ?? 3) - 3)));
-      if (FLAGS.matchup_memory && s.matchup && Object.keys(s.matchup).length) Z.wlPost.push(matchupWhiff(p, q, s));
-      if (FLAGS.inside_v09) Z.wlPost.push(sideShift(p, q, s, z, "whiff"));
+      if (s.matchup && Object.keys(s.matchup).length) Z.wlPost.push(matchupWhiff(p, q, s));
+      Z.wlPost.push(sideShift(p, q, s, z, "whiff"));
       Z.F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
-      if (!v08x) Z.hlPre = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L.hL * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f;
       Z.h1 = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6); Z.h2 = hL * 0.8 * DMG_SCALE * dmg; Z.h3 = 0.3 * f;
       Z.hlPost = [];
-      if (FLAGS.bf_term_v07) Z.hlPost.push(0.012 * s.batters_faced);
-      else { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
-      if (!v08x) Z.hlPost.push(-(L.hL * 0.5 * tauEff));   // v0.6e: off-time swings make weaker contact too
-      if (FLAGS.timing_B && !v08x) Z.hlPost.push(-(P08.gamma_T * tB0));
+      { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
       if (gr) Z.hlPost.push(gval("g_w", s.level) * ((gr.w ?? 3) - 3));
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
       if (p.kind === "CH" && s.same_side) Z.hlPost.push(0.2);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
-      if (FLAGS.inside_v09) Z.hlPost.push(sideShift(p, q, s, z, "hard"));
+      Z.hlPost.push(sideShift(p, q, s, z, "hard"));
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
       zones.push(Z);
     }
-    return { v08x, zones, hL, tauEff, big, capped: !FLAGS.expect_v07 };
+    return { zones, hL, tauEff, big };
   }
   function opEval(pr, p, q, s, arsenal, sit, byZone, zout) {
-    const v08x = pr.v08x, hL = pr.hL;
-    let mT = 0, mH = 0, tB = 0.0;
-    if (v08x) {
-      if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
-      let vSit;
-      [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);
-      if (FLAGS.timing_B) tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (pr.big ? 0.5 : 1.0);   // 4: halved in a big spot
-    }
+    const hL = pr.hL;
+    if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
+    const [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);          // 2.2 what he's sitting on
+    const tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (pr.big ? 0.5 : 1.0);   // 4: halved in a big spot
     const out = { ball: 0, cstrike: 0, whiff: 0, foul: 0, weak: 0, solid: 0, hard: 0, wp_ball: 0, hbp: 0 };
-    let exW = 0, hx = 0;
-    if (v08x) {
-      exW = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * pr.tauEff + P08.beta_T * tB;
-      if (pr.capped) exW = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, exW));
-      hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * pr.tauEff - P08.gamma_T * tB;
-      if (pr.capped) hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
-    }
-    const sSit = v08x ? hL * (P08.sit_tS * mT + P08.sit_hS * mH) : 0;
+    let exW = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * pr.tauEff + P08.beta_T * tB;
+    exW = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, exW));
+    let hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * pr.tauEff - P08.gamma_T * tB;
+    hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
+    const sSit = hL * (P08.sit_tS * mT + P08.sit_hS * mH);
     for (const Z of pr.zones) {
       const z = Z.z, pz = Z.pz;
       let sl = Z.slPre;
-      if (v08x) sl += sSit;
+      sl += sSit;
       for (const x of Z.slPost) sl += x;
       const S = Z.s0pos ? sig(sl) : 0;
       const C = Z.C;
       let wl = Z.wlPre;
-      if (v08x) wl += exW - Z.wlD;
+      wl += exW - Z.wlD;
       for (const x of Z.wlPost) wl += x;
       const W = sig(wl);
       const F = Z.F;
-      let hl = v08x ? Z.h1 + hx + Z.h2 - Z.h3 : Z.hlPre;
+      let hl = Z.h1 + hx + Z.h2 - Z.h3;
       for (const x of Z.hlPost) hl += x;
       const [weak, solid, hard] = Q0[z];
       const hard2 = sig(logit(hard) + hl);
@@ -1072,8 +1030,7 @@ td.wrapcell .line { display: block; }
     v += P.hbp * walkValue(o, B, L);
     v += (P.cstrike + P.whiff) * afterStrike();
     v += P.foul * (k < 2 ? V(b, k + 1, o, B, cv, L) : V(b, k, o, B, cv, L));
-    if (FLAGS.inplay_typed) for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValueTyped(c, p, q, s);
-    else for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValue(c, o, B, L);
+    for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValueTyped(c, p, q, s);
     return [v, P];
   }
 
@@ -1304,7 +1261,7 @@ td.wrapcell .line { display: block; }
   function speedToday(p, s) {
     if (s.radar && p.name in s.radar) return s.radar[p.name];
     let v = mph(p);
-    if (FLAGS.fatigue_v08) v -= Math.min(P08.kv_cap, P08.kv * Math.max(0, s.pitch_count - D.LEVEL[s.level].fatigue) / 10);
+    v -= Math.min(P08.kv_cap, P08.kv * Math.max(0, s.pitch_count - D.LEVEL[s.level].fatigue) / 10);
     return v;
   }
   function sitShift(p, q, arsenal, s, sit) {
@@ -1360,7 +1317,7 @@ td.wrapcell .line { display: block; }
   // ---------------------------------------------------------------- 7.2 end values, 7.3 typed balls in play
   function vEnd(s, o, bases, r) {
     const base = r + re(o, bases, s.level), w = s.win;
-    if (!(FLAGS.objective_win && w && w.omega > 0)) return base;
+    if (!(w && w.omega > 0)) return base;
     const we = wePitch(w.ctx, o, bases, w.margin0 - r);
     return (1 - w.omega) * base + w.omega * (w.WE0 - we) / w.m0;
   }
@@ -1378,7 +1335,7 @@ td.wrapcell .line { display: block; }
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
     const tm = typeMix(p, q, c);
-    const gr = (FLAGS.power_avoid && FLAGS.hitter_grades && c === "hard") ? (s.grades || GRADES_OVERRIDE) : null;
+    const gr = c === "hard" ? (s.grades || GRADES_OVERRIDE) : null;
     const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
     for (const t of B_TYPES) {
@@ -1419,7 +1376,7 @@ td.wrapcell .line { display: block; }
     return total;
   }
   function inPlayValueEv(contact, s) {   // v0.7c in_play_value with every PA end through vEnd
-    if (!(FLAGS.objective_win && s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
+    if (!(s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
     const outs = s.outs, bases = s.bases, [b1, b2, b3] = bases;
     const [po, p1, p2, p3, phr, pe] = D.IN_PLAY[s.level][contact];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
@@ -1469,11 +1426,9 @@ td.wrapcell .line { display: block; }
   function temperature(arsenal, s) {
     const k_ = runScale(s.level), f = stakesFactor(s.balls, s.strikes, s.level);
     let t = 0.010 * k_ * (isBigSpot(s) ? 0.5 : 1.0) * f;
-    if (FLAGS.temp_unc) {
-      const size = ({ 2: "two", 3: "three" })[arsenal.length] || "four";
-      const tu = (((SIM.T_unc || {})[s.level] || {})[size] || {})[cntKey(s.balls, s.strikes)];
-      if (tu !== undefined && tu !== null) t = Math.max(t, tu);
-    }
+    const size = ({ 2: "two", 3: "three" })[arsenal.length] || "four";
+    const tu = (((SIM.T_unc || {})[s.level] || {})[size] || {})[cntKey(s.balls, s.strikes)];
+    if (tu !== undefined && tu !== null) t = Math.max(t, tu);
     return t;
   }
   function windows(s) {
@@ -1621,14 +1576,14 @@ td.wrapcell .line { display: block; }
     res = -Infinity; for (let k = 0; k < nK; k++) res = Math.max(res, Math.abs(sg[k] - f[k]));
     return out(sg, res);
   }
-  // v0.9 item 9 (landing_v09): a pitch that isn't landing today is not called in the zone (engine.py not_landing)
+  // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes);
     let out = [];
     for (const p of candidates(arsenal, s)) for (const q of tq) if (!(exclude && exclude.some(([n, qq]) => n === p.name && qq === q))) out.push(ck(p.name, q));
-    if (FLAGS.landing_v09 && s.landing_today && Object.keys(s.landing_today).length && out.length) {
+    if (s.landing_today && Object.keys(s.landing_today).length && out.length) {
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
       if (bad.size && bad.size !== names.size) {
@@ -1659,9 +1614,8 @@ td.wrapcell .line { display: block; }
     }
   }
   function Table(arsenal, s) {
-    const looked = FLAGS.look_state, bins = [];
-    if (looked) { for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy); }
-    else bins.push("none");
+    const looked = true, bins = [];      // 2.6: values carry the hitter's look
+    for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy);
     return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [] };
   }
   function binLook(tab, bn) {
@@ -1741,8 +1695,8 @@ td.wrapcell .line { display: block; }
     v += (P.cstrike + P.whiff) * (k + 1 === 3 ? en.kOut : tv(b, k + 1));
     v += P.foul * (k < 2 ? tv(b, k + 1) : tv(b, k));
     for (const c of ["weak", "solid", "hard"]) v += P[c] * ipvCached(tab, c, p, q, s);
-    if (FLAGS.running_game && s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
-    if (FLAGS.hs_pitch_cost && (s.level === "hs" || s.level === "travel")) {
+    if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
+    if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
         const nxt = P.ball * (b + 1 === 4 ? 0 : tabValue(tab, b + 1, k, nl, "N")) +
@@ -1761,8 +1715,8 @@ td.wrapcell .line { display: block; }
     if (key === undefined) {
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
-        (FLAGS.objective_win && w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" + (FLAGS.inplay_typed ? 1 : 0) +
-        (FLAGS.power_avoid ? "|" + (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) : "");
+        (w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" +
+        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3);
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
@@ -1776,7 +1730,7 @@ td.wrapcell .line { display: block; }
     if (!byP) { byP = new Map(); cx.ipv.set(p, byP); }
     let arr = byP.get(q);
     if (!arr) {
-      arr = ["weak", "solid", "hard"].map((cc) => (FLAGS.inplay_typed ? inPlayValueTyped(cc, p, q, s) : inPlayValueEv(cc, s)));
+      arr = ["weak", "solid", "hard"].map((cc) => inPlayValueTyped(cc, p, q, s));
       byP.set(q, arr);
     }
     return arr[c === "weak" ? 0 : c === "solid" ? 1 : 2];
@@ -1828,8 +1782,7 @@ td.wrapcell .line { display: block; }
           const nv = psum(Object.keys(pol).map((a) => pol[a] * cs[a]));
           delta = Math.max(delta, Math.abs(nv - tab.V[cntKey(b, k)][bn]));
           tab.V[cntKey(b, k)][bn] = nv;
-          if (FLAGS.hs_pitch_cost)
-            tab.N[cntKey(b, k)][bn] = psum(Object.keys(pol).map((a) => pol[a] * pitchesLeft(Ps[a], sc, tab, lookUpdate(look, byName(arsenal, skName(a)), skH(a), sc))));
+          tab.N[cntKey(b, k)][bn] = psum(Object.keys(pol).map((a) => pol[a] * pitchesLeft(Ps[a], sc, tab, lookUpdate(look, byName(arsenal, skName(a)), skH(a), sc))));
         }
       }
       const s00 = tab.sigma["0-0"];
@@ -1848,14 +1801,13 @@ td.wrapcell .line { display: block; }
     let calls = allowedCalls(arsenal, s, exclude);
     if (!calls.length) calls = allowedCalls(arsenal, s);
     const sL = replace(s, { look });
-    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, FLAGS.look_state);
+    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
     const sgTab = tab.sigma[cntKey(s.balls, s.strikes)];
-    if (FLAGS.look_state) {
+    {
       const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
       let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
       const delta = GUARD_DELTA * runScale(s.level);
-      // v0.9 item 10 (guardrail_v09): the myopic guardrail comes off
-      const keep = FLAGS.guardrail_v09 ? calls.slice() : calls.filter((a) => cmy[a] - best <= delta);
+      const keep = calls.filter((a) => cmy[a] - best <= delta);     // the guardrail: no call clearly worse on this pitch alone
       const M2 = {};
       for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
       M = M2;
@@ -1868,7 +1820,7 @@ td.wrapcell .line { display: block; }
     checkInputs(arsenal, s);
     const rng = opts.rng || Math.random;
     let s_ = s;
-    if (FLAGS.objective_win && !s_.win && s_.home !== null && s_.home !== undefined) s_ = replace(s_, { win: winConstants(s_) });
+    if (!s_.win && s_.home !== null && s_.home !== undefined) s_ = replace(s_, { win: winConstants(s_) });
     const tab = opts.tab || solveTable(arsenal, replace(s_, { balls: 0, strikes: 0, last: null }));
     const [pi, sg, full, res, M] = rootCall(arsenal, s_, tab, opts.exclude);
     const pPitch = {};
@@ -1975,9 +1927,8 @@ td.wrapcell .line { display: block; }
     const out = {};
     for (const g of ["c", "w", "d"]) {
       const gr = Object.assign({}, grades || {}); gr[g] = 3;
-      const zo = {}, prev = FLAGS.hitter_grades;
-      FLAGS.hitter_grades = true;
-      try { outcomeProbs(p, q, replace(s, { grades: gr }), arsenal, null, null, sit, zo); } finally { FLAGS.hitter_grades = prev; }
+      const zo = {};
+      outcomeProbs(p, q, replace(s, { grades: gr }), arsenal, null, null, sit, zo);
       const zs = ZONES.filter((z) => z in zo), vals = zs.map((z) => zo[z]);
       const sw = psum(vals.map((v) => v.L * v.S));
       const bipw = vals.map((v) => v.L * v.S * (1 - v.W) * (1 - v.F)), bip = psum(bipw);
@@ -2131,7 +2082,7 @@ td.wrapcell .line { display: block; }
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
-  const api = { VERSION, dataVersion, init, FLAGS, FLAGS_V07, FLAGS_V08, FLAGS_V09, setFlags, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
+  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     v08, callV08, solveTable, whyLine, intentLabel };
@@ -4295,8 +4246,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"];
   // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
-  // v0.8 (zone_22, Drew's rule): attack the zone at 2-2 too
-  const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (FLAGS.zone_22 && b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
+  // v0.8 (Drew's rule): attack the zone at 2-2 too
+  const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
@@ -4321,23 +4272,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
-  // v0.8 compatibility flags (docs/SPEC_v0.8.md section 1); FLAGS_V07 reproduces v0.7c exactly (golden/golden.js)
-  const FLAGS_V07 = { pairing_v07: true, bf_term_v07: true, ev_full: true, expect_v07: true, look_state: false, timing_B: false,
-    objective_win: false, inplay_typed: false, running_game: false, umpire_learn: false, fatigue_v08: false,
-    hitter_grades: false, hs_pitch_cost: false, temp_unc: false, zone_22: false,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
-  const FLAGS_V08 = { pairing_v07: false, bf_term_v07: false, ev_full: false, expect_v07: false, look_state: true, timing_B: true,
-    objective_win: true, inplay_typed: true, running_game: true, umpire_learn: true, fatigue_v08: true,
-    hitter_grades: true, hs_pitch_cost: true, temp_unc: true, zone_22: true,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
-  // v0.9: v0.8 plus the v0.9 items; every v0.9 flag is false in FLAGS_V07 and FLAGS_V08
-  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: false, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report); guardrail stays on (Drew, Nov 6: FOLLOWUPS report)
-  const FLAGS = Object.assign({}, FLAGS_V07);
-  function setFlags(kw) {
-    const prev = Object.assign({}, FLAGS);
-    for (const k in kw) { if (!(k in FLAGS)) throw new Error("unknown flag " + k); FLAGS[k] = !!kw[k]; }
-    return prev;
-  }
+  // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
   const VERSION = "0.9";      // engine logic version; the tables carry their own fingerprint (data.version)
   function init(data) {
@@ -4583,7 +4518,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return total;
   }
 
-  // v0.9 item 6 (matchup_memory): earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
+  // v0.9 item 6: earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
   const MM = { succ: 0.107, succ_cap: 4, hard: -0.346, hard_cap: 2 };
   function matchupWhiff(p, q, s) {
     const m = s.matchup || {};
@@ -4591,9 +4526,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     x = Math.max(-P08.fam_cap, Math.min(P08.fam_cap, x));
     return (RHO_L[s.level] ?? 1.0) * x;
   }
-  // v0.9 item 3 widened (inside_v09): inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
+  // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
   const SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}};
-  // v0.9 item 8 (power_avoid): more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
+  // v0.9 item 8: more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
   const POWER_HR = 0.112 * 0.03 / 0.053;
   const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
@@ -4609,21 +4544,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const L = D.LEVEL[s.level], A = D.OUTCOME_ADJ[s.level];
     const big = isBigSpot(s);
     const cL = L.cL * (big ? 1.5 : 1.0);
-    const bT = 0.4 * (big ? 0.5 : 1.0);
-    const v08x = sitGiven || !FLAGS.expect_v07;   // v0.8 sit terms replace the v0.7c expectation E
-    let E = 0, neutral = 0;
-    if (!v08x) [E, neutral] = expectation(p, arsenal, s, policy);
-    let T = 0, pw = 0, ps = 0;
-    if (FLAGS.pairing_v07) T = pairing(p, q, s, arsenal);
-    else [pw, ps] = pairTerms(p, q, s, arsenal);
-    let tB0 = 0.0;
-    if (FLAGS.timing_B && !v08x) {
-      const pr = sitPrior(arsenal, s);
-      const vSit = psum(Object.keys(pr).map((key) => pr[key] * speedToday(byName(arsenal, key.slice(0, key.lastIndexOf("|"))), s)));
-      tB0 = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (big ? 0.5 : 1.0);
-    }
+    const [pw, ps] = pairTerms(p, q, s, arsenal);
     const hL = L.hL;
-    const gr = FLAGS.hitter_grades ? (s.grades || GRADES_OVERRIDE) : null;
+    const gr = s.grades || GRADES_OVERRIDE;
     const f = shapeFit(p, q, s);
     const dmg = damage(p, q, s);
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
@@ -4631,7 +4554,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
     let [command, grade] = effective(p, s);
-    if (FLAGS.fatigue_v08) grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
+    grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
     const gs = 0.25 * (L.stuff_scale ?? 1.0);
     const cw = (L.cmd_whiff ?? 0.0) * (command - 3);   // v0.7b: better command adds contact, not strikeouts (fit_spread.py)
     const zones = [];
@@ -4648,73 +4571,59 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       Z.slPre = sl; Z.s0pos = S0[z] > 0;
       const offz = z === "off" || z === "noncomp"; Z.offz = offz;
       Z.slPost = [];
-      if (!FLAGS.pairing_v07 && offz) Z.slPost.push(ps);
+      if (offz) Z.slPost.push(ps);
       if (gr && offz) Z.slPost.push(-(gval("g_d", s.level) * ((gr.d ?? 3) - 3)));
-      if (FLAGS.inside_v09) Z.slPost.push(sideShift(p, q, s, z, "swing"));
-      if (FLAGS.umpire_learn && (z === "edge" || z === "off")) Z.C = sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u);
-      else Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs) : C0[z];
-      let wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
-      if (!v08x) wl += L.hL * (-1.5 * (E - neutral) + 0.6 * tauEff - 0.4 * DMG_SCALE * dmg);
+      Z.slPost.push(sideShift(p, q, s, z, "swing"));
+      Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u) : C0[z];
+      const wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
       Z.wlPre = wl; Z.wlD = hL * 0.4 * DMG_SCALE * dmg;
       Z.wlPost = [];
-      if (FLAGS.timing_B && !v08x) Z.wlPost.push(P08.beta_T * tB0);
-      if (FLAGS.pairing_v07) Z.wlPost.push(bT * T + 0.25 * f); else Z.wlPost.push(pw + 0.25 * f);
+      Z.wlPost.push(pw + 0.25 * f);
       Z.wlPost.push(wz * A.wz + (1 - wz) * A.wo);
       if (cw) Z.wlPost.push(-cw);
       if (gr) Z.wlPost.push(-(gval("g_c", s.level) * ((gr.c ?? 3) - 3)));
-      if (FLAGS.matchup_memory && s.matchup && Object.keys(s.matchup).length) Z.wlPost.push(matchupWhiff(p, q, s));
-      if (FLAGS.inside_v09) Z.wlPost.push(sideShift(p, q, s, z, "whiff"));
+      if (s.matchup && Object.keys(s.matchup).length) Z.wlPost.push(matchupWhiff(p, q, s));
+      Z.wlPost.push(sideShift(p, q, s, z, "whiff"));
       Z.F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
-      if (!v08x) Z.hlPre = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L.hL * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f;
       Z.h1 = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6); Z.h2 = hL * 0.8 * DMG_SCALE * dmg; Z.h3 = 0.3 * f;
       Z.hlPost = [];
-      if (FLAGS.bf_term_v07) Z.hlPost.push(0.012 * s.batters_faced);
-      else { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
-      if (!v08x) Z.hlPost.push(-(L.hL * 0.5 * tauEff));   // v0.6e: off-time swings make weaker contact too
-      if (FLAGS.timing_B && !v08x) Z.hlPost.push(-(P08.gamma_T * tB0));
+      { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
       if (gr) Z.hlPost.push(gval("g_w", s.level) * ((gr.w ?? 3) - 3));
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
       if (p.kind === "CH" && s.same_side) Z.hlPost.push(0.2);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
-      if (FLAGS.inside_v09) Z.hlPost.push(sideShift(p, q, s, z, "hard"));
+      Z.hlPost.push(sideShift(p, q, s, z, "hard"));
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
       zones.push(Z);
     }
-    return { v08x, zones, hL, tauEff, big, capped: !FLAGS.expect_v07 };
+    return { zones, hL, tauEff, big };
   }
   function opEval(pr, p, q, s, arsenal, sit, byZone, zout) {
-    const v08x = pr.v08x, hL = pr.hL;
-    let mT = 0, mH = 0, tB = 0.0;
-    if (v08x) {
-      if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
-      let vSit;
-      [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);
-      if (FLAGS.timing_B) tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (pr.big ? 0.5 : 1.0);   // 4: halved in a big spot
-    }
+    const hL = pr.hL;
+    if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
+    const [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);          // 2.2 what he's sitting on
+    const tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (pr.big ? 0.5 : 1.0);   // 4: halved in a big spot
     const out = { ball: 0, cstrike: 0, whiff: 0, foul: 0, weak: 0, solid: 0, hard: 0, wp_ball: 0, hbp: 0 };
-    let exW = 0, hx = 0;
-    if (v08x) {
-      exW = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * pr.tauEff + P08.beta_T * tB;
-      if (pr.capped) exW = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, exW));
-      hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * pr.tauEff - P08.gamma_T * tB;
-      if (pr.capped) hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
-    }
-    const sSit = v08x ? hL * (P08.sit_tS * mT + P08.sit_hS * mH) : 0;
+    let exW = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * pr.tauEff + P08.beta_T * tB;
+    exW = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, exW));
+    let hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * pr.tauEff - P08.gamma_T * tB;
+    hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
+    const sSit = hL * (P08.sit_tS * mT + P08.sit_hS * mH);
     for (const Z of pr.zones) {
       const z = Z.z, pz = Z.pz;
       let sl = Z.slPre;
-      if (v08x) sl += sSit;
+      sl += sSit;
       for (const x of Z.slPost) sl += x;
       const S = Z.s0pos ? sig(sl) : 0;
       const C = Z.C;
       let wl = Z.wlPre;
-      if (v08x) wl += exW - Z.wlD;
+      wl += exW - Z.wlD;
       for (const x of Z.wlPost) wl += x;
       const W = sig(wl);
       const F = Z.F;
-      let hl = v08x ? Z.h1 + hx + Z.h2 - Z.h3 : Z.hlPre;
+      let hl = Z.h1 + hx + Z.h2 - Z.h3;
       for (const x of Z.hlPost) hl += x;
       const [weak, solid, hard] = Q0[z];
       const hard2 = sig(logit(hard) + hl);
@@ -4790,8 +4699,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     v += P.hbp * walkValue(o, B, L);
     v += (P.cstrike + P.whiff) * afterStrike();
     v += P.foul * (k < 2 ? V(b, k + 1, o, B, cv, L) : V(b, k, o, B, cv, L));
-    if (FLAGS.inplay_typed) for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValueTyped(c, p, q, s);
-    else for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValue(c, o, B, L);
+    for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValueTyped(c, p, q, s);
     return [v, P];
   }
 
@@ -5022,7 +4930,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function speedToday(p, s) {
     if (s.radar && p.name in s.radar) return s.radar[p.name];
     let v = mph(p);
-    if (FLAGS.fatigue_v08) v -= Math.min(P08.kv_cap, P08.kv * Math.max(0, s.pitch_count - D.LEVEL[s.level].fatigue) / 10);
+    v -= Math.min(P08.kv_cap, P08.kv * Math.max(0, s.pitch_count - D.LEVEL[s.level].fatigue) / 10);
     return v;
   }
   function sitShift(p, q, arsenal, s, sit) {
@@ -5078,7 +4986,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // ---------------------------------------------------------------- 7.2 end values, 7.3 typed balls in play
   function vEnd(s, o, bases, r) {
     const base = r + re(o, bases, s.level), w = s.win;
-    if (!(FLAGS.objective_win && w && w.omega > 0)) return base;
+    if (!(w && w.omega > 0)) return base;
     const we = wePitch(w.ctx, o, bases, w.margin0 - r);
     return (1 - w.omega) * base + w.omega * (w.WE0 - we) / w.m0;
   }
@@ -5096,7 +5004,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
     const tm = typeMix(p, q, c);
-    const gr = (FLAGS.power_avoid && FLAGS.hitter_grades && c === "hard") ? (s.grades || GRADES_OVERRIDE) : null;
+    const gr = c === "hard" ? (s.grades || GRADES_OVERRIDE) : null;
     const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
     for (const t of B_TYPES) {
@@ -5137,7 +5045,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return total;
   }
   function inPlayValueEv(contact, s) {   // v0.7c in_play_value with every PA end through vEnd
-    if (!(FLAGS.objective_win && s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
+    if (!(s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
     const outs = s.outs, bases = s.bases, [b1, b2, b3] = bases;
     const [po, p1, p2, p3, phr, pe] = D.IN_PLAY[s.level][contact];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
@@ -5187,11 +5095,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function temperature(arsenal, s) {
     const k_ = runScale(s.level), f = stakesFactor(s.balls, s.strikes, s.level);
     let t = 0.010 * k_ * (isBigSpot(s) ? 0.5 : 1.0) * f;
-    if (FLAGS.temp_unc) {
-      const size = ({ 2: "two", 3: "three" })[arsenal.length] || "four";
-      const tu = (((SIM.T_unc || {})[s.level] || {})[size] || {})[cntKey(s.balls, s.strikes)];
-      if (tu !== undefined && tu !== null) t = Math.max(t, tu);
-    }
+    const size = ({ 2: "two", 3: "three" })[arsenal.length] || "four";
+    const tu = (((SIM.T_unc || {})[s.level] || {})[size] || {})[cntKey(s.balls, s.strikes)];
+    if (tu !== undefined && tu !== null) t = Math.max(t, tu);
     return t;
   }
   function windows(s) {
@@ -5339,14 +5245,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     res = -Infinity; for (let k = 0; k < nK; k++) res = Math.max(res, Math.abs(sg[k] - f[k]));
     return out(sg, res);
   }
-  // v0.9 item 9 (landing_v09): a pitch that isn't landing today is not called in the zone (engine.py not_landing)
+  // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes);
     let out = [];
     for (const p of candidates(arsenal, s)) for (const q of tq) if (!(exclude && exclude.some(([n, qq]) => n === p.name && qq === q))) out.push(ck(p.name, q));
-    if (FLAGS.landing_v09 && s.landing_today && Object.keys(s.landing_today).length && out.length) {
+    if (s.landing_today && Object.keys(s.landing_today).length && out.length) {
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
       if (bad.size && bad.size !== names.size) {
@@ -5377,9 +5283,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     }
   }
   function Table(arsenal, s) {
-    const looked = FLAGS.look_state, bins = [];
-    if (looked) { for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy); }
-    else bins.push("none");
+    const looked = true, bins = [];      // 2.6: values carry the hitter's look
+    for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy);
     return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [] };
   }
   function binLook(tab, bn) {
@@ -5459,8 +5364,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     v += (P.cstrike + P.whiff) * (k + 1 === 3 ? en.kOut : tv(b, k + 1));
     v += P.foul * (k < 2 ? tv(b, k + 1) : tv(b, k));
     for (const c of ["weak", "solid", "hard"]) v += P[c] * ipvCached(tab, c, p, q, s);
-    if (FLAGS.running_game && s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
-    if (FLAGS.hs_pitch_cost && (s.level === "hs" || s.level === "travel")) {
+    if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
+    if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
         const nxt = P.ball * (b + 1 === 4 ? 0 : tabValue(tab, b + 1, k, nl, "N")) +
@@ -5479,8 +5384,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (key === undefined) {
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
-        (FLAGS.objective_win && w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" + (FLAGS.inplay_typed ? 1 : 0) +
-        (FLAGS.power_avoid ? "|" + (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) : "");
+        (w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" +
+        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3);
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
@@ -5494,7 +5399,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (!byP) { byP = new Map(); cx.ipv.set(p, byP); }
     let arr = byP.get(q);
     if (!arr) {
-      arr = ["weak", "solid", "hard"].map((cc) => (FLAGS.inplay_typed ? inPlayValueTyped(cc, p, q, s) : inPlayValueEv(cc, s)));
+      arr = ["weak", "solid", "hard"].map((cc) => inPlayValueTyped(cc, p, q, s));
       byP.set(q, arr);
     }
     return arr[c === "weak" ? 0 : c === "solid" ? 1 : 2];
@@ -5546,8 +5451,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
           const nv = psum(Object.keys(pol).map((a) => pol[a] * cs[a]));
           delta = Math.max(delta, Math.abs(nv - tab.V[cntKey(b, k)][bn]));
           tab.V[cntKey(b, k)][bn] = nv;
-          if (FLAGS.hs_pitch_cost)
-            tab.N[cntKey(b, k)][bn] = psum(Object.keys(pol).map((a) => pol[a] * pitchesLeft(Ps[a], sc, tab, lookUpdate(look, byName(arsenal, skName(a)), skH(a), sc))));
+          tab.N[cntKey(b, k)][bn] = psum(Object.keys(pol).map((a) => pol[a] * pitchesLeft(Ps[a], sc, tab, lookUpdate(look, byName(arsenal, skName(a)), skH(a), sc))));
         }
       }
       const s00 = tab.sigma["0-0"];
@@ -5566,14 +5470,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     let calls = allowedCalls(arsenal, s, exclude);
     if (!calls.length) calls = allowedCalls(arsenal, s);
     const sL = replace(s, { look });
-    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, FLAGS.look_state);
+    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
     const sgTab = tab.sigma[cntKey(s.balls, s.strikes)];
-    if (FLAGS.look_state) {
+    {
       const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
       let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
       const delta = GUARD_DELTA * runScale(s.level);
-      // v0.9 item 10 (guardrail_v09): the myopic guardrail comes off
-      const keep = FLAGS.guardrail_v09 ? calls.slice() : calls.filter((a) => cmy[a] - best <= delta);
+      const keep = calls.filter((a) => cmy[a] - best <= delta);     // the guardrail: no call clearly worse on this pitch alone
       const M2 = {};
       for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
       M = M2;
@@ -5586,7 +5489,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     checkInputs(arsenal, s);
     const rng = opts.rng || Math.random;
     let s_ = s;
-    if (FLAGS.objective_win && !s_.win && s_.home !== null && s_.home !== undefined) s_ = replace(s_, { win: winConstants(s_) });
+    if (!s_.win && s_.home !== null && s_.home !== undefined) s_ = replace(s_, { win: winConstants(s_) });
     const tab = opts.tab || solveTable(arsenal, replace(s_, { balls: 0, strikes: 0, last: null }));
     const [pi, sg, full, res, M] = rootCall(arsenal, s_, tab, opts.exclude);
     const pPitch = {};
@@ -5693,9 +5596,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const out = {};
     for (const g of ["c", "w", "d"]) {
       const gr = Object.assign({}, grades || {}); gr[g] = 3;
-      const zo = {}, prev = FLAGS.hitter_grades;
-      FLAGS.hitter_grades = true;
-      try { outcomeProbs(p, q, replace(s, { grades: gr }), arsenal, null, null, sit, zo); } finally { FLAGS.hitter_grades = prev; }
+      const zo = {};
+      outcomeProbs(p, q, replace(s, { grades: gr }), arsenal, null, null, sit, zo);
       const zs = ZONES.filter((z) => z in zo), vals = zs.map((z) => zo[z]);
       const sw = psum(vals.map((v) => v.L * v.S));
       const bipw = vals.map((v) => v.L * v.S * (1 - v.W) * (1 - v.F)), bip = psum(bipw);
@@ -5849,7 +5751,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
-  const api = { VERSION, dataVersion, init, FLAGS, FLAGS_V07, FLAGS_V08, FLAGS_V09, setFlags, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
+  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     v08, callV08, solveTable, whyLine, intentLabel };
@@ -6683,21 +6585,14 @@ function newGame() {
     pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {},
     mm: {} };   // v0.9 item 6: each hitter's record against each pitcher in his earlier trips today
 }
-// engine mode: "v09" (default; docs/STEP7_v0.9_REPORT.md) = v0.8 plus the v0.9 terms; "v08" = v0.8 exactly (docs/SPEC_v0.8.md);
-// "v07" = the v0.7c engine exactly
-function applyEngineMode() { E.setFlags(S.setup.engine === "v07" ? E.FLAGS_V07 : S.setup.engine === "v08" ? E.FLAGS_V08 : E.FLAGS_V09); }
-const isV08 = () => S.setup.engine !== "v07";
+// One engine: v0.9, with no flags or modes (Drew, Nov 6; docs/FOLLOWUPS_v0.9_REPORT.md).
 const defaultInnings = () => (S.setup.level === "hs" || S.setup.level === "travel" ? 7 : 9);
 
 // ------------------------------------------------------------------ state
 let S = load() || { setup: sampleSetup(), game: null, view: "live", sample: true };
 if (!S.game || S.game.v !== 2) S.game = newGame();
 for (const [k, v] of Object.entries({ pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {}, mm: {} })) if (S.game[k] === undefined) S.game[k] = v;
-if (S.setup.engine === undefined) S.setup.engine = "v09";
-// v0.9: "v08" was the default before v0.9 existed, so a saved setup on it moves to v0.9 once; choosing v0.8 again sticks
-if (!S.setup.v09 && S.setup.engine === "v08") S.setup.engine = "v09";
-S.setup.v09 = true;
-applyEngineMode();
+S.setup.engine = "v09";      // a setup saved on v0.8 or v0.7c opens on v0.9: there is no other engine now
 let undo = [];
 let pending = null;
 let pickMode = false;
@@ -6765,7 +6660,7 @@ function know() {
   const k = G().know, i = String(slotIdx());
   if (!k[i]) {   // a hitter we've seen before starts with what we learned about him (capped, so tonight still matters most)
     const b = batterDef(), m = DB.ready && b && b.hitterId ? hModel(b.hitterId) : null;
-    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m, 8, isV08()) : {}, seen: {} };
+    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m, 8, true) : {}, seen: {} };
   }
   return k[i];
 }
@@ -6779,7 +6674,7 @@ function situation() {
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
     landing_today: Object.assign({}, (g.land || {})[pKey()] || {}),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
-    ...(isV08() ? v08Inputs() : {}) });
+    ...v08Inputs() });
 }
 // ---- v0.8 inputs (spec 8.3): each optional, each inert at its default
 const hitterKey = () => { const b = batterDef() || {}; return b.hitterId || `g:${G().dbId || "local"}|${slotIdx()}|${b.name || ""}`; };
@@ -6849,12 +6744,6 @@ function paTable(ars, s) {
 }
 function makeCall() {
   const ars = arsenal();
-  if (!isV08()) {
-    const r = E.callMixed(ars, situation(), { exclude: shakenNow });
-    G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false,
-      dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
-    return;
-  }
   let s = situation();
   const tab = paTable(ars, s);
   s = Object.assign({}, situation(), { look: G().pa.look });
@@ -6930,11 +6819,11 @@ function record(res) {
     pcRaw: g.pc[pKey()] || 0, fatigueShift: fatigueShift(pd0), checkinId: ci ? ci.id : null, regs: (g.regs || {})[pKey()] || 0,
     v: { app: APP_VERSION, engine: E.VERSION, data: E.dataVersion(), learn: PCLearn.VERSION }, deviceId: DB.deviceId || null,
     pred: PCLearn.predict(E, ars, sitNow, called.name, call.quad), sit: PCLearn.snapSituation(sitNow), ars: PCLearn.snapArsenal(ars) };
-  if (isV08()) {   // spec 8.3: what the v0.8 expectations were built from, so a replay can recompute every one of them
+  {   // spec 8.3: what the expectations were built from, so a replay can recompute every one of them
     const s0 = Object.assign({}, sitNow, { look: g.pa ? g.pa.look : null, ump_u: umpSeed() });
     evBase.v08 = { look: g.pa ? g.pa.look : null, sigma: call.sigma || null, why: call.why || null, intent: call.intent || null, mechanism: call.mechanism || null, walk: !!call.walk,
       ump: E.v08.takeStats(p, call.quad, s0, ars), grades: E.v08.gradeStats(p, call.quad, Object.assign({}, sitNow, { look: s0.look }), ars, null, sitNow.grades),
-      flags: Object.assign({}, E.FLAGS), radar: res.radar ? +res.radar : undefined };
+      radar: res.radar ? +res.radar : undefined };
   }
   snapshot();
   g.pitchNo++;
@@ -6945,7 +6834,7 @@ function record(res) {
   const lt = g.land[pKey()][p.name] || [0, 0];
   g.land[pKey()][p.name] = [lt[0] + (res.result === "ball" || res.result === "hbp" ? 0 : 1), lt[1] + 1];
   const uk = g.balls + "-" + g.strikes; g.usage[uk] = g.usage[uk] || {}; g.usage[uk][p.name] = (g.usage[uk][p.name] || 0) + 1;
-  if (isV08()) {   // v0.8 state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
+  {   // planning state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
     const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
     uc[uk] = uc[uk] || {}; uc[uk][ck_] = (uc[uk][ck_] || 0) + 1;
     if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow); g.pa.cls[cls]++; }
@@ -7063,7 +6952,7 @@ function startNextInning() {
 }
 
 // ------------------------------------------------------------------ actions
-function needsDetail(result) { return result === "play" || (S.setup.inputs >= 3 && (result === "whiff" || result === "foul")) || (isV08() && !!S.setup.radar); }
+function needsDetail(result) { return result === "play" || (S.setup.inputs >= 3 && (result === "whiff" || result === "foul")) || !!S.setup.radar; }
 function tapResult(result) {
   if (G().inningOver || !G().call) return;
   if (needsDetail(result)) { pending = { result }; render(); return; }
@@ -7200,7 +7089,7 @@ function strip() {
     h("div", { class: "cell" }, h("span", { class: "k" }, `${pitcherDef().name}`), h("span", { class: "v" }, String(g.pc[pKey()] || 0), h("small", {}, "pitches"),
       (() => { const c = typeof countLine === "function" ? countLine() : null; return c ? h("small", { class: `rule${c.warn ? " warn" : ""}`, id: "count-line", role: "status" }, c.text) : null; })())),
     h("div", { class: "cell edit" }, h("button", { class: "btn text", "aria-expanded": String(fixing), on: { click: () => { fixing = !fixing; render(); } } }, fixing ? "Done" : "Correct")),
-    isV08() ? sitControls() : null);
+    sitControls());
 }
 // v0.8 game inputs (spec 8.3): infield in with a runner on 3rd; steal threat for a runner on 1st (2nd open) or 2nd (3rd open)
 function sitControls() {
@@ -7341,11 +7230,11 @@ function pickBox() {
   const ars = arsenal();
   const go = () => {
     let gr; const g = G();
-    if (isV08()) {
+    {
       const tab = paTable(ars, situation());
       const s = Object.assign({}, situation(), { look: g.pa.look }); s.b_h = E.v08.leanBh(ars, s, g.pa.fooled);
       gr = E.v08.gradeCall(ars, s, pickSel.pitch, pickSel.quad, tab);
-    } else gr = E.gradeCall(ars, situation(), pickSel.pitch, pickSel.quad);
+    }
     g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
       verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
@@ -7380,7 +7269,7 @@ function entryPanel() {
     if (g.bases.some(Boolean) && ["ball", "whiff", "cstrike"].includes(P.result)) extra.push(seg("Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]));
     if (extra.length) rows.push(h("details", { class: "more", open: P.thrown || P.wp ? true : null }, h("summary", { class: "t" }, "Cross-up or wild pitch"), extra,
       P.wp ? h("p", { class: "note" }, "Move the runners with Correct after you log it.") : null));
-    if (isV08()) rows.push(h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: P.radar ?? "",
+    rows.push(h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: P.radar ?? "",
       "aria-label": "Radar reading, mph", style: { width: "90px" }, on: { change: (e) => { P.radar = e.target.value === "" ? undefined : +e.target.value; } } })));
     detail = h("div", { class: "detail" }, rows, h("div", { class: "go" },
       h("button", { class: "btn primary", disabled: !(P.result !== "play" || P.out), on: { click: () => record(P) } }, "Log pitch"),
@@ -7779,7 +7668,7 @@ async function refreshLineupMemory() {
   const k = G().know; let redo = false;
   S.setup.lineup.forEach((b, i) => {
     const e = k[String(i)], m = b.hitterId && hModel(b.hitterId);
-    if (e && m && !Object.keys(e.seen).length) { e.damage = PCLearner.seedDamage(m, 8, S.setup.engine !== "v07"); if (i === slotIdx()) redo = true; }
+    if (e && m && !Object.keys(e.seen).length) { e.damage = PCLearner.seedDamage(m, 8, true); if (i === slotIdx()) redo = true; }
   });
   if (redo && G().call && !G().call.coach && !G().inningOver) makeCall();
 }
@@ -9106,17 +8995,12 @@ function setupView() {
     h("input", { id: `ln${i}`, name: `ln${i}`, autocomplete: "off", list: DB.ready ? "hitter-names" : null, placeholder: `${ord(i + 1)} hitter…`, value: b.name, "aria-label": `Hitter ${i + 1} name`, on: { change: (e) => { b.name = e.target.value.trim(); DB.ready ? linkHitter(b, i) : changed(); } } }),
     h("div", { class: "hands", role: "group", "aria-label": `Hitter ${i + 1} bats` }, ["R", "L", "S"].map((x) => h("button", { "aria-pressed": String(b.hand === x), "aria-label": { R: "Bats right", L: "Bats left", S: "Switch hitter" }[x], on: { click: () => {
       b.hand = x; const hx = DB.ready && b.hitterId && DB.hitters.get(b.hitterId); if (hx) { hx.bats = x; dbPut("hitters", hx); } changed(true); } } }, x))),
-    (st.engine || "v09") !== "v07" ? hitterGradeInputs(b, i, changed) : null)));
+    hitterGradeInputs(b, i, changed))));
 
   return h("main", {},
     h("div", { class: "head" }, h("div", {}, h("h1", {}, "Setup"), h("p", { class: "sub" }, "Your level, what you'll log, your staff and their lineup. Changes apply to the game right away."))),
     row("Level", "Sets what a walk, a strikeout and a runner on third are worth, and how wild the average pitcher is.", levelChoices),
-    row("Engine", "v0.9 plans each at-bat ahead (setups, timing, what he's sitting on, the game situation) and adds what each hitter did in his earlier at-bats today. v0.8 and v0.7c are the previous engines, exactly as they were.",
-      h("div", { class: "choices" }, [["v09", "v0.9: plans the at-bat", "Default. Mixes in more changeups, drops a pitch that isn't landing, and remembers each hitter's earlier at-bats."],
-        ["v08", "v0.8: the previous engine", "For comparison. Plans the at-bat, without the v0.9 changes."],
-        ["v07", "v0.7c: the engine before that", "For comparison, or if anything looks off."]].map(([k, t, d]) =>
-        h("button", { class: "choice", "aria-pressed": String((st.engine || "v09") === k), on: { click: () => { st.engine = k; applyEngineMode(); G().pa = null; changed(true); } } }, h("b", {}, t), h("span", {}, d))))),
-    (st.engine || "v09") !== "v07" ? row("Game situation", "Home or away and the scheduled innings let the engine weigh the score late in close games. Leave home/away unset and it plays for runs only.",
+    row("Game situation", "Home or away and the scheduled innings let the engine weigh the score late in close games. Leave home/away unset and it plays for runs only.",
       h("div", { class: "fields" },
         h("div", { class: "f" }, "We're", h("div", { class: "hands wide", role: "group", "aria-label": "Home or away" }, [[true, "Home"], [false, "Away"], [null, "Not set"]].map(([v, l]) =>
           h("button", { "aria-pressed": String((st.home === undefined ? null : st.home) === v), on: { click: () => { st.home = v; G().pa = null; changed(true); } } }, l)))),
@@ -9125,7 +9009,7 @@ function setupView() {
         h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.extrasRunner ? true : null, on: { change: (e) => { st.extrasRunner = e.target.checked; G().pa = null; changed(); } } }), "Extra innings start with a runner on 2nd"),
         h("div", { class: "f" }, "Umpire", h("div", { class: "hands wide", role: "group", "aria-label": "Umpire's zone" }, [["tight", "Tight"], ["normal", "Normal"], ["wide", "Wide"]].map(([v, l]) =>
           h("button", { "aria-pressed": String((st.umpSeed || "normal") === v), on: { click: () => { st.umpSeed = v; changed(true); } } }, l)))),
-        h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.radar ? true : null, on: { change: (e) => { st.radar = e.target.checked; changed(); } } }), "Log radar readings (optional, per pitch)"))) : null,
+        h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.radar ? true : null, on: { change: (e) => { st.radar = e.target.checked; changed(); } } }), "Log radar readings (optional, per pitch)"))),
     row("What you'll log", "Pick what your charter can keep up with. Every option calls the game; more detail mostly helps it learn each hitter.", tierChoices,
       h("button", { class: "choice", "aria-pressed": String(!!st.logLoc), on: { click: () => { st.logLoc = !st.logLoc; changed(true); } } },
         h("b", {}, "Also log where each pitch ended up"), h("span", {}, "One more tap on a small zone grid. It's what lets the app learn each pitcher's real command; results alone barely show it."))),

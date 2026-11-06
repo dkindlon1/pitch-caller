@@ -1,6 +1,9 @@
 """v0.8 step 1 metrics (docs/SPEC_v0.8.md 2.3, 6.7): exploitability X per count, location and pitch shares, inside and
 middle shares, top-call share, and (from simulated game logs) the count-conditional fastball autocorrelation rho.
 Runs with whatever engine flags are set: `python3 metrics.py v07 out.json [game.csv ...]` or `... v08 ...`."""
+# Nov 6: the engine is now one flag-free v0.9 engine. This script ran under the v0.7c or v0.8 (by argument) settings when its data was made;
+# those settings no longer exist, so a rerun computes v0.9-based values.
+
 import json, sys, csv
 from collections import defaultdict
 import engine as e
@@ -24,21 +27,7 @@ _TABS = {}
 
 def count_metrics(ars, s):
     """One count: the engine's call mix, then X against the hitter's response to it."""
-    if e.FLAGS.get("look_state"):
-        return count_metrics_v08(ars, s)
-    pick, dist = e.call_mixed(ars, s)
-    pi = defaultdict(float)
-    for pr, _, p, q in dist:
-        pi[(p.name, q)] += pr
-    cv = e.at_bat_values(ars, s)[1] if not e.FLAGS.get("look_state") else None
-    M, ks = e.sit_matrix(ars, s, list(pi), cv)
-    _, _, T = e.mixed_policy(ars, s, cv=cv)
-    sig = e.sit_response(M, ks, pi, T)
-    loc = defaultdict(float); pit = defaultdict(float)
-    for (n, q), v in pi.items():
-        loc[q] += v; pit[n] += v
-    return dict(X=e.exploitability(M, ks, pi, sig), top=max(pi.values()), n_calls=len(pi),
-                middle=loc["middle"], inside=loc["up-in"] + loc["down-in"], loc=dict(loc), pitch=dict(pit))
+    return count_metrics_v08(ars, s)
 
 
 def count_metrics_v08(ars, s):
@@ -81,8 +70,7 @@ def rho_from_logs(paths):
 
 def main():
     mode, out = sys.argv[1], sys.argv[2]
-    e.set_flags(**(e.FLAGS_V08 if mode == "v08" else e.FLAGS_V07))
-    res = {"flags": mode, "counts": {}}
+    res = {"engine": "v0.9", "counts": {}}
     for lvl in LEVELS:
         for an, ars in ref_arsenals().items():
             for (b, k) in sorted(e.COUNTS):

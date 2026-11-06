@@ -21,7 +21,14 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 - **Coach rules built in**: get it over with off-speed only when that pitch is landing today; attack the zone at
   2-2; never re-call what he just shook off; nothing below the pitcher's trust line while he trusts something.
 
-## v0.8: planning the at-bat (default engine)
+## The engine: v0.9, one version
+
+There is one engine, v0.9, with no flags or modes (Nov 6). It is v0.8's at-bat planning (below) plus the v0.9 terms:
+the landing filter, each hitter's earlier at-bats today, the inside/away term and the power home-run effect, with the
+guardrail on. `golden/golden_v09.py` and `golden/golden_v09.js` check Python and JavaScript against one frozen reference
+(500 cases). Report: `docs/FOLLOWUPS_v0.9_REPORT.md`.
+
+## Planning the at-bat (from v0.8)
 
 v0.8 (spec: `docs/SPEC_v0.8.md`, amendments in its section 12) keeps the cost equation and adds what a pitching coach
 thinks about between pitches:
@@ -39,9 +46,9 @@ thinks about between pitches:
 - **Today's umpire**, fatigue (speed and stuff, or radar), hitter grades (contact, power, eye) learned across games.
 - **A why line** on every call.
 
-Switches: `engine.FLAGS_V07` reproduces v0.7c exactly (golden test, 500 cases, Python and JavaScript); the app has an
-Engine choice in Setup. Checks: `tests_v08*.py`, `golden/`, `app/parity_v08.js`, `app/budget_v08.js`, `app/v08_e2e.js`.
-Build report: `docs/BUILD_v0.8_REPORT.md`.
+Checks: `golden/golden_v09.*`, `tests.py`, `tests_v09_followups.py`, `readthrough/scenarios.py`, `app/budget_v08.js`,
+`app/v08_e2e.js`. The v0.7c and v0.8 engines are gone; their golden data files stay in `golden/` untouched.
+Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
 
 ## Files
 
@@ -123,6 +130,9 @@ first real file). Break and release side are normalised to arm side positive usi
     python3 build.py && node db_e2e.js
 
 ## Status
+
+**Nov 6:** one engine, v0.9, no flags. See the top of this file and `docs/FOLLOWUPS_v0.9_REPORT.md`. The history below
+is kept as it was.
 
 Engine v0.7c (2026-11-03): 3-0 gets the tightest mix (an average arsenal throws about two fastballs in three there),
 learning mode is scored the way calls are made, travel ball is a level (high school tables), impossible input gets a clear

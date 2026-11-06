@@ -2,7 +2,7 @@
 import time
 import random
 from collections import Counter
-from engine import (Pitch, Situation, call_mixed, mixed_policy, at_bat_values, grade_call,
+from engine import (Pitch, Situation, call_v08, outcome_probs, call_mixed, mixed_policy, at_bat_values, grade_call,
                     pairing, landing, CV)
 
 random.seed(11)
@@ -104,16 +104,13 @@ check("Tunnel: the same curve from a different slot loses the tunnel",
 check("Tunnel: sinker + sweeper separate early and rank below the classic pair",
       split_early[0] < classic[0], f"score {split_early[0]:+.2f}: {split_early[1]:.1f} in apart at the decision point")
 
-# R8 no cliff: hard-contact risk rises smoothly with batters faced
-hard = []
-for bf in (0, 9, 18, 19, 27):
-    _, dist = call_mixed(A, Situation(1, 1, 0, E, batters_faced=bf))
-    from engine import cost
-    hard.append((bf, cost(A[0], "up-in", Situation(1, 1, 0, E, batters_faced=bf), A)[1]["hard"]))
+# R8 no cliff (v0.9: familiarity): hard contact rises smoothly with how often he has seen the pitch type today, then
+# levels off at its cap; no jump at the third time through
+hard = [(n, outcome_probs(A[0], "up-in", Situation(1, 1, 0, E, familiar={"FB": n}), A)["hard"]) for n in (0, 6, 12, 18, 19, 27)]
 jumps = [hard[i + 1][1] - hard[i][1] for i in range(len(hard) - 1)]
-check("R8 no third-time cliff: batter 19 is barely worse than batter 18",
-      jumps[2] < jumps[1] / 5, "fastball up-in hard contact by batters faced: " +
-      ", ".join(f"{bf}: {h:.2%}" for bf, h in hard))
+check("R8 no third-time cliff: the 19th fastball he sees is barely worse than the 18th",
+      all(j >= -1e-12 for j in jumps) and jumps[3] < jumps[0] / 5, "fastball up-in hard contact by fastballs seen: " +
+      ", ".join(f"{n}: {h:.2%}" for n, h in hard))
 
 # Learning mode
 g = grade_call(A, Situation(0, 2, 1, E, last=("Fastball", "up-in")), "Fastball", "middle")
@@ -167,17 +164,15 @@ check("v0.7c 3-0: an average arsenal throws mostly fastballs (60%+ at every leve
       all(v >= 0.60 for v in f30.values()) and 0.6 < f31 < 0.95,
       ", ".join(f"{l} 3-0 fastball {v:.0%}" for l, v in f30.items()) + f", college_d3 3-1 fastball {f31:.0%}")
 
-# v0.7c learning mode is scored the way calls are made: the engine's own top call always grades as in the mix,
-# and a chase call at 3-0 or 3-1 is marked against the rule
-gc_ok, gc_rule = True, None
-for (b, k) in ((0, 0), (1, 2), (3, 0), (2, 2)):
-    s_ = Situation(b, k, 1, E, level="college_d3")
-    _, d_ = call_mixed(AVG3, s_, rng=random.Random(0))
-    g_ = grade_call(AVG3, s_, d_[0][2].name, d_[0][3])
-    gc_ok &= g_["verdict"] == "in the engine's mix" and g_["runs_vs_best"] < 0.011
-gc_rule = grade_call(AVG3, Situation(3, 1, 1, E, level="college_d3"), "Slider", "chase")
-check("v0.7c learning mode: the engine's own top call grades 'in the mix'; chase at 3-1 is against the rule",
-      gc_ok and gc_rule["allowed"] is False and gc_rule["verdict"] == "costly",
-      f"top calls in the mix: {gc_ok}; Slider chase at 3-1: {gc_rule['verdict']}, {gc_rule['runs_vs_best']:+.3f} runs")
+# v0.9 hitter's-count rule and a real mix: the engine's own calls never include a chase at 3-0, 3-1 or 2-2, and its
+# top call there is a pitch in the zone
+rule_ok, tops = True, []
+for (b, k) in ((3, 0), (3, 1), (2, 2), (0, 0)):
+    _, d_, _, _ = call_v08(AVG3, Situation(b, k, 1, E, level="college_d3"), rng=random.Random(0))
+    if (b, k) != (0, 0):
+        rule_ok &= not any(q == "chase" and pr > 0 for pr, _, _, q in d_)
+    tops.append(f"{b}-{k} {d_[0][2].name} {d_[0][3]} {d_[0][0]:.0%}")
+check("v0.9 calls: no chase at 3-0, 3-1 or 2-2; every count has a top call",
+      rule_ok and len(tops) == 4, "; ".join(tops))
 
 print(f"\n{sum(results)}/{len(results)} checks passed")

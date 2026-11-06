@@ -24,8 +24,8 @@ const server = http.createServer((req, res) => {
   await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 10000 });
 
   console.log("1. v0.9 is the default engine");
-  const f = await page.evaluate(() => ({ eng: S.setup.engine, same: Object.keys(E.FLAGS_V09).every((k) => E.FLAGS[k] === E.FLAGS_V09[k]), v: E.VERSION }));
-  check(f.eng === "v09" && f.same && f.v === "0.9", `engine ${f.eng}, flags = FLAGS_V09 ${f.same}, engine version ${f.v}`);
+  const f = await page.evaluate(() => ({ eng: S.setup.engine, same: !("FLAGS" in E), v: E.VERSION }));
+  check(f.eng === "v09" && f.same && f.v === "0.9", `engine ${f.eng}, single flag-free engine ${f.same}, engine version ${f.v}`);
 
   console.log("2. A strikeout on three swinging strikes is kept for that hitter's next trip, not this one");
   const r2 = await page.evaluate(() => {

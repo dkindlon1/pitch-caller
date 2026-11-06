@@ -1,5 +1,5 @@
 """v0.9 Step 1: grade an engine version against the frozen scenario suite (readthrough/scenarios_v09.json).
-usage (repo root): python3 readthrough/scenarios.py [v07c|v08|v09|v08g|v08l ...] [--out results/scenarios_<tag>.json]
+usage (repo root): python3 readthrough/scenarios.py [v09] [--out results/scenarios_<tag>.json]
 Every row's full call spread is sorted into Acceptable / Arguable / Not acceptable (see make_scenarios_v09.py) and
 graded by the frozen pass rule. Refuses to run if the scenario file no longer matches its recorded sha256."""
 import hashlib, json, os, sys
@@ -14,11 +14,7 @@ SHA = os.path.join(HERE, "scenarios_v09.sha256")
 CORNERS = ["up-in", "up-away", "down-in", "down-away"]
 GROUPS = {"zone": CORNERS + ["middle"], "corners": CORNERS, "down": ["down-in", "down-away"], "up": ["up-in", "up-away"],
           "away": ["up-away", "down-away"], "in": ["up-in", "down-in"], "any": CORNERS + ["middle", "chase"]}
-MODES = {"v07c": e.FLAGS_V07, "v08": e.FLAGS_V08, "v09": e.FLAGS_V09,
-         # one v0.9 item at a time on top of v0.8, to see what each does
-         "v08g": dict(e.FLAGS_V08, guardrail_v09=True), "v08l": dict(e.FLAGS_V08, landing_v09=True),
-         "v08m": dict(e.FLAGS_V08, matchup_memory=True), "v08i": dict(e.FLAGS_V08, inside_v09=True),
-         "v09i": dict(e.FLAGS_V09, inside_v09=True)}
+MODES = ("v09",)        # one engine (Nov 6); the name is kept so saved results read the same
 
 
 class Half:
@@ -62,7 +58,7 @@ def build(doc, row):
     for k in ("hitter_damage", "landing_today"):
         if k in sd:
             sd[k] = {a: tuple(v) for a, v in sd[k].items()}
-    # v0.9 item 6: the row's earlier-trip events as the engine's matchup input (inert unless matchup_memory is on)
+    # v0.9 item 6: the row's earlier-trip events as the engine's matchup input
     kind = {x.name: x.kind for x in ars}
     mm = {}
     for ev in row.get("matchup", []):
@@ -80,12 +76,8 @@ def build(doc, row):
 
 
 def call_dist(mode, ars, s, exclude):
-    e.set_flags(**MODES[mode])
-    if mode == "v07c":
-        _, dist = e.call_mixed(ars, s, rng=Half(), exclude=exclude or None)
-    else:
-        s_w = replace(s, win=e.win_constants(s)) if s.home is not None else s
-        _, dist, _, _ = e.call_v08(ars, s_w, rng=Half(), exclude=exclude or None)
+    s_w = replace(s, win=e.win_constants(s)) if s.home is not None else s
+    _, dist, _, _ = e.call_v08(ars, s_w, rng=Half(), exclude=exclude or None)
     return [(pr, p.name, p.kind, q) for pr, _, p, q in dist]
 
 
@@ -128,7 +120,7 @@ def report(mode, res):
 def main():
     argv = sys.argv[1:]
     out_path = argv[argv.index("--out") + 1] if "--out" in argv else None
-    modes = [a for a in argv if not a.startswith("--") and a != out_path] or ["v07c", "v08"]
+    modes = [a for a in argv if not a.startswith("--") and a != out_path] or ["v09"]
     bad = [m for m in modes if m not in MODES]
     if bad:
         raise SystemExit(f"unknown engine mode(s) {bad}; expected {list(MODES)}")

@@ -10,8 +10,8 @@
 
   const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"];
   // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
-  // v0.8 (zone_22, Drew's rule): attack the zone at 2-2 too
-  const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (FLAGS.zone_22 && b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
+  // v0.8 (Drew's rule): attack the zone at 2-2 too
+  const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
@@ -36,23 +36,7 @@
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
 
-  // v0.8 compatibility flags (docs/SPEC_v0.8.md section 1); FLAGS_V07 reproduces v0.7c exactly (golden/golden.js)
-  const FLAGS_V07 = { pairing_v07: true, bf_term_v07: true, ev_full: true, expect_v07: true, look_state: false, timing_B: false,
-    objective_win: false, inplay_typed: false, running_game: false, umpire_learn: false, fatigue_v08: false,
-    hitter_grades: false, hs_pitch_cost: false, temp_unc: false, zone_22: false,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
-  const FLAGS_V08 = { pairing_v07: false, bf_term_v07: false, ev_full: false, expect_v07: false, look_state: true, timing_B: true,
-    objective_win: true, inplay_typed: true, running_game: true, umpire_learn: true, fatigue_v08: true,
-    hitter_grades: true, hs_pitch_cost: true, temp_unc: true, zone_22: true,
-    guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
-  // v0.9: v0.8 plus the v0.9 items; every v0.9 flag is false in FLAGS_V07 and FLAGS_V08
-  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: false, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report); guardrail stays on (Drew, Nov 6: FOLLOWUPS report)
-  const FLAGS = Object.assign({}, FLAGS_V07);
-  function setFlags(kw) {
-    const prev = Object.assign({}, FLAGS);
-    for (const k in kw) { if (!(k in FLAGS)) throw new Error("unknown flag " + k); FLAGS[k] = !!kw[k]; }
-    return prev;
-  }
+  // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
   const VERSION = "0.9";      // engine logic version; the tables carry their own fingerprint (data.version)
   function init(data) {
@@ -298,7 +282,7 @@
     return total;
   }
 
-  // v0.9 item 6 (matchup_memory): earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
+  // v0.9 item 6: earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
   const MM = { succ: 0.107, succ_cap: 4, hard: -0.346, hard_cap: 2 };
   function matchupWhiff(p, q, s) {
     const m = s.matchup || {};
@@ -306,9 +290,9 @@
     x = Math.max(-P08.fam_cap, Math.min(P08.fam_cap, x));
     return (RHO_L[s.level] ?? 1.0) * x;
   }
-  // v0.9 item 3 widened (inside_v09): inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
+  // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
   const SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}};
-  // v0.9 item 8 (power_avoid): more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
+  // v0.9 item 8: more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
   const POWER_HR = 0.112 * 0.03 / 0.053;
   const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
@@ -324,21 +308,9 @@
     const L = D.LEVEL[s.level], A = D.OUTCOME_ADJ[s.level];
     const big = isBigSpot(s);
     const cL = L.cL * (big ? 1.5 : 1.0);
-    const bT = 0.4 * (big ? 0.5 : 1.0);
-    const v08x = sitGiven || !FLAGS.expect_v07;   // v0.8 sit terms replace the v0.7c expectation E
-    let E = 0, neutral = 0;
-    if (!v08x) [E, neutral] = expectation(p, arsenal, s, policy);
-    let T = 0, pw = 0, ps = 0;
-    if (FLAGS.pairing_v07) T = pairing(p, q, s, arsenal);
-    else [pw, ps] = pairTerms(p, q, s, arsenal);
-    let tB0 = 0.0;
-    if (FLAGS.timing_B && !v08x) {
-      const pr = sitPrior(arsenal, s);
-      const vSit = psum(Object.keys(pr).map((key) => pr[key] * speedToday(byName(arsenal, key.slice(0, key.lastIndexOf("|"))), s)));
-      tB0 = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (big ? 0.5 : 1.0);
-    }
+    const [pw, ps] = pairTerms(p, q, s, arsenal);
     const hL = L.hL;
-    const gr = FLAGS.hitter_grades ? (s.grades || GRADES_OVERRIDE) : null;
+    const gr = s.grades || GRADES_OVERRIDE;
     const f = shapeFit(p, q, s);
     const dmg = damage(p, q, s);
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
@@ -346,7 +318,7 @@
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
     let [command, grade] = effective(p, s);
-    if (FLAGS.fatigue_v08) grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
+    grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
     const gs = 0.25 * (L.stuff_scale ?? 1.0);
     const cw = (L.cmd_whiff ?? 0.0) * (command - 3);   // v0.7b: better command adds contact, not strikeouts (fit_spread.py)
     const zones = [];
@@ -363,73 +335,59 @@
       Z.slPre = sl; Z.s0pos = S0[z] > 0;
       const offz = z === "off" || z === "noncomp"; Z.offz = offz;
       Z.slPost = [];
-      if (!FLAGS.pairing_v07 && offz) Z.slPost.push(ps);
+      if (offz) Z.slPost.push(ps);
       if (gr && offz) Z.slPost.push(-(gval("g_d", s.level) * ((gr.d ?? 3) - 3)));
-      if (FLAGS.inside_v09) Z.slPost.push(sideShift(p, q, s, z, "swing"));
-      if (FLAGS.umpire_learn && (z === "edge" || z === "off")) Z.C = sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u);
-      else Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs) : C0[z];
-      let wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
-      if (!v08x) wl += L.hL * (-1.5 * (E - neutral) + 0.6 * tauEff - 0.4 * DMG_SCALE * dmg);
+      Z.slPost.push(sideShift(p, q, s, z, "swing"));
+      Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u) : C0[z];
+      const wl = logit(W0[z]) + KIND_W[p.kind] + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
       Z.wlPre = wl; Z.wlD = hL * 0.4 * DMG_SCALE * dmg;
       Z.wlPost = [];
-      if (FLAGS.timing_B && !v08x) Z.wlPost.push(P08.beta_T * tB0);
-      if (FLAGS.pairing_v07) Z.wlPost.push(bT * T + 0.25 * f); else Z.wlPost.push(pw + 0.25 * f);
+      Z.wlPost.push(pw + 0.25 * f);
       Z.wlPost.push(wz * A.wz + (1 - wz) * A.wo);
       if (cw) Z.wlPost.push(-cw);
       if (gr) Z.wlPost.push(-(gval("g_c", s.level) * ((gr.c ?? 3) - 3)));
-      if (FLAGS.matchup_memory && s.matchup && Object.keys(s.matchup).length) Z.wlPost.push(matchupWhiff(p, q, s));
-      if (FLAGS.inside_v09) Z.wlPost.push(sideShift(p, q, s, z, "whiff"));
+      if (s.matchup && Object.keys(s.matchup).length) Z.wlPost.push(matchupWhiff(p, q, s));
+      Z.wlPost.push(sideShift(p, q, s, z, "whiff"));
       Z.F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
-      if (!v08x) Z.hlPre = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + L.hL * (1.0 * (E - neutral) + 0.8 * DMG_SCALE * dmg) - 0.3 * f;
       Z.h1 = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6); Z.h2 = hL * 0.8 * DMG_SCALE * dmg; Z.h3 = 0.3 * f;
       Z.hlPost = [];
-      if (FLAGS.bf_term_v07) Z.hlPost.push(0.012 * s.batters_faced);
-      else { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
-      if (!v08x) Z.hlPost.push(-(L.hL * 0.5 * tauEff));   // v0.6e: off-time swings make weaker contact too
-      if (FLAGS.timing_B && !v08x) Z.hlPost.push(-(P08.gamma_T * tB0));
+      { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
       if (gr) Z.hlPost.push(gval("g_w", s.level) * ((gr.w ?? 3) - 3));
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
       if (p.kind === "CH" && s.same_side) Z.hlPost.push(0.2);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
-      if (FLAGS.inside_v09) Z.hlPost.push(sideShift(p, q, s, z, "hard"));
+      Z.hlPost.push(sideShift(p, q, s, z, "hard"));
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
       zones.push(Z);
     }
-    return { v08x, zones, hL, tauEff, big, capped: !FLAGS.expect_v07 };
+    return { zones, hL, tauEff, big };
   }
   function opEval(pr, p, q, s, arsenal, sit, byZone, zout) {
-    const v08x = pr.v08x, hL = pr.hL;
-    let mT = 0, mH = 0, tB = 0.0;
-    if (v08x) {
-      if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
-      let vSit;
-      [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);
-      if (FLAGS.timing_B) tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (pr.big ? 0.5 : 1.0);   // 4: halved in a big spot
-    }
+    const hL = pr.hL;
+    if (sit === undefined || sit === null) sit = ["mix", s.sit_sigma !== null && s.sit_sigma !== undefined ? s.sit_sigma : sitPrior(arsenal, s)];
+    const [mT, mH, vSit] = sitShift(p, q, arsenal, s, sit);          // 2.2 what he's sitting on
+    const tB = (RHO_L[s.level] ?? 1.0) * timingB(p, q, s, vSit) * (pr.big ? 0.5 : 1.0);   // 4: halved in a big spot
     const out = { ball: 0, cstrike: 0, whiff: 0, foul: 0, weak: 0, solid: 0, hard: 0, wp_ball: 0, hbp: 0 };
-    let exW = 0, hx = 0;
-    if (v08x) {
-      exW = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * pr.tauEff + P08.beta_T * tB;
-      if (pr.capped) exW = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, exW));
-      hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * pr.tauEff - P08.gamma_T * tB;
-      if (pr.capped) hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
-    }
-    const sSit = v08x ? hL * (P08.sit_tS * mT + P08.sit_hS * mH) : 0;
+    let exW = -hL * (P08.sit_tW * mT + P08.sit_hW * mH) + hL * 0.6 * pr.tauEff + P08.beta_T * tB;
+    exW = Math.max(-P08.capW * hL, Math.min(P08.capW * hL, exW));
+    let hx = hL * (P08.sit_tH * mT + P08.sit_hH * mH) - hL * 0.5 * pr.tauEff - P08.gamma_T * tB;
+    hx = Math.max(-P08.capH * hL, Math.min(P08.capH * hL, hx));
+    const sSit = hL * (P08.sit_tS * mT + P08.sit_hS * mH);
     for (const Z of pr.zones) {
       const z = Z.z, pz = Z.pz;
       let sl = Z.slPre;
-      if (v08x) sl += sSit;
+      sl += sSit;
       for (const x of Z.slPost) sl += x;
       const S = Z.s0pos ? sig(sl) : 0;
       const C = Z.C;
       let wl = Z.wlPre;
-      if (v08x) wl += exW - Z.wlD;
+      wl += exW - Z.wlD;
       for (const x of Z.wlPost) wl += x;
       const W = sig(wl);
       const F = Z.F;
-      let hl = v08x ? Z.h1 + hx + Z.h2 - Z.h3 : Z.hlPre;
+      let hl = Z.h1 + hx + Z.h2 - Z.h3;
       for (const x of Z.hlPost) hl += x;
       const [weak, solid, hard] = Q0[z];
       const hard2 = sig(logit(hard) + hl);
@@ -505,8 +463,7 @@
     v += P.hbp * walkValue(o, B, L);
     v += (P.cstrike + P.whiff) * afterStrike();
     v += P.foul * (k < 2 ? V(b, k + 1, o, B, cv, L) : V(b, k, o, B, cv, L));
-    if (FLAGS.inplay_typed) for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValueTyped(c, p, q, s);
-    else for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValue(c, o, B, L);
+    for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValueTyped(c, p, q, s);
     return [v, P];
   }
 
@@ -737,7 +694,7 @@
   function speedToday(p, s) {
     if (s.radar && p.name in s.radar) return s.radar[p.name];
     let v = mph(p);
-    if (FLAGS.fatigue_v08) v -= Math.min(P08.kv_cap, P08.kv * Math.max(0, s.pitch_count - D.LEVEL[s.level].fatigue) / 10);
+    v -= Math.min(P08.kv_cap, P08.kv * Math.max(0, s.pitch_count - D.LEVEL[s.level].fatigue) / 10);
     return v;
   }
   function sitShift(p, q, arsenal, s, sit) {
@@ -793,7 +750,7 @@
   // ---------------------------------------------------------------- 7.2 end values, 7.3 typed balls in play
   function vEnd(s, o, bases, r) {
     const base = r + re(o, bases, s.level), w = s.win;
-    if (!(FLAGS.objective_win && w && w.omega > 0)) return base;
+    if (!(w && w.omega > 0)) return base;
     const we = wePitch(w.ctx, o, bases, w.margin0 - r);
     return (1 - w.omega) * base + w.omega * (w.WE0 - we) / w.m0;
   }
@@ -811,7 +768,7 @@
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
     const tm = typeMix(p, q, c);
-    const gr = (FLAGS.power_avoid && FLAGS.hitter_grades && c === "hard") ? (s.grades || GRADES_OVERRIDE) : null;
+    const gr = c === "hard" ? (s.grades || GRADES_OVERRIDE) : null;
     const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
     for (const t of B_TYPES) {
@@ -852,7 +809,7 @@
     return total;
   }
   function inPlayValueEv(contact, s) {   // v0.7c in_play_value with every PA end through vEnd
-    if (!(FLAGS.objective_win && s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
+    if (!(s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
     const outs = s.outs, bases = s.bases, [b1, b2, b3] = bases;
     const [po, p1, p2, p3, phr, pe] = D.IN_PLAY[s.level][contact];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
@@ -902,11 +859,9 @@
   function temperature(arsenal, s) {
     const k_ = runScale(s.level), f = stakesFactor(s.balls, s.strikes, s.level);
     let t = 0.010 * k_ * (isBigSpot(s) ? 0.5 : 1.0) * f;
-    if (FLAGS.temp_unc) {
-      const size = ({ 2: "two", 3: "three" })[arsenal.length] || "four";
-      const tu = (((SIM.T_unc || {})[s.level] || {})[size] || {})[cntKey(s.balls, s.strikes)];
-      if (tu !== undefined && tu !== null) t = Math.max(t, tu);
-    }
+    const size = ({ 2: "two", 3: "three" })[arsenal.length] || "four";
+    const tu = (((SIM.T_unc || {})[s.level] || {})[size] || {})[cntKey(s.balls, s.strikes)];
+    if (tu !== undefined && tu !== null) t = Math.max(t, tu);
     return t;
   }
   function windows(s) {
@@ -1054,14 +1009,14 @@
     res = -Infinity; for (let k = 0; k < nK; k++) res = Math.max(res, Math.abs(sg[k] - f[k]));
     return out(sg, res);
   }
-  // v0.9 item 9 (landing_v09): a pitch that isn't landing today is not called in the zone (engine.py not_landing)
+  // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes);
     let out = [];
     for (const p of candidates(arsenal, s)) for (const q of tq) if (!(exclude && exclude.some(([n, qq]) => n === p.name && qq === q))) out.push(ck(p.name, q));
-    if (FLAGS.landing_v09 && s.landing_today && Object.keys(s.landing_today).length && out.length) {
+    if (s.landing_today && Object.keys(s.landing_today).length && out.length) {
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
       if (bad.size && bad.size !== names.size) {
@@ -1092,9 +1047,8 @@
     }
   }
   function Table(arsenal, s) {
-    const looked = FLAGS.look_state, bins = [];
-    if (looked) { for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy); }
-    else bins.push("none");
+    const looked = true, bins = [];      // 2.6: values carry the hitter's look
+    for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy);
     return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [] };
   }
   function binLook(tab, bn) {
@@ -1174,8 +1128,8 @@
     v += (P.cstrike + P.whiff) * (k + 1 === 3 ? en.kOut : tv(b, k + 1));
     v += P.foul * (k < 2 ? tv(b, k + 1) : tv(b, k));
     for (const c of ["weak", "solid", "hard"]) v += P[c] * ipvCached(tab, c, p, q, s);
-    if (FLAGS.running_game && s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
-    if (FLAGS.hs_pitch_cost && (s.level === "hs" || s.level === "travel")) {
+    if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
+    if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
         const nxt = P.ball * (b + 1 === 4 ? 0 : tabValue(tab, b + 1, k, nl, "N")) +
@@ -1194,8 +1148,8 @@
     if (key === undefined) {
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
-        (FLAGS.objective_win && w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" + (FLAGS.inplay_typed ? 1 : 0) +
-        (FLAGS.power_avoid ? "|" + (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) : "");
+        (w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" +
+        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3);
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
@@ -1209,7 +1163,7 @@
     if (!byP) { byP = new Map(); cx.ipv.set(p, byP); }
     let arr = byP.get(q);
     if (!arr) {
-      arr = ["weak", "solid", "hard"].map((cc) => (FLAGS.inplay_typed ? inPlayValueTyped(cc, p, q, s) : inPlayValueEv(cc, s)));
+      arr = ["weak", "solid", "hard"].map((cc) => inPlayValueTyped(cc, p, q, s));
       byP.set(q, arr);
     }
     return arr[c === "weak" ? 0 : c === "solid" ? 1 : 2];
@@ -1261,8 +1215,7 @@
           const nv = psum(Object.keys(pol).map((a) => pol[a] * cs[a]));
           delta = Math.max(delta, Math.abs(nv - tab.V[cntKey(b, k)][bn]));
           tab.V[cntKey(b, k)][bn] = nv;
-          if (FLAGS.hs_pitch_cost)
-            tab.N[cntKey(b, k)][bn] = psum(Object.keys(pol).map((a) => pol[a] * pitchesLeft(Ps[a], sc, tab, lookUpdate(look, byName(arsenal, skName(a)), skH(a), sc))));
+          tab.N[cntKey(b, k)][bn] = psum(Object.keys(pol).map((a) => pol[a] * pitchesLeft(Ps[a], sc, tab, lookUpdate(look, byName(arsenal, skName(a)), skH(a), sc))));
         }
       }
       const s00 = tab.sigma["0-0"];
@@ -1281,14 +1234,13 @@
     let calls = allowedCalls(arsenal, s, exclude);
     if (!calls.length) calls = allowedCalls(arsenal, s);
     const sL = replace(s, { look });
-    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, FLAGS.look_state);
+    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
     const sgTab = tab.sigma[cntKey(s.balls, s.strikes)];
-    if (FLAGS.look_state) {
+    {
       const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
       let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
       const delta = GUARD_DELTA * runScale(s.level);
-      // v0.9 item 10 (guardrail_v09): the myopic guardrail comes off
-      const keep = FLAGS.guardrail_v09 ? calls.slice() : calls.filter((a) => cmy[a] - best <= delta);
+      const keep = calls.filter((a) => cmy[a] - best <= delta);     // the guardrail: no call clearly worse on this pitch alone
       const M2 = {};
       for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
       M = M2;
@@ -1301,7 +1253,7 @@
     checkInputs(arsenal, s);
     const rng = opts.rng || Math.random;
     let s_ = s;
-    if (FLAGS.objective_win && !s_.win && s_.home !== null && s_.home !== undefined) s_ = replace(s_, { win: winConstants(s_) });
+    if (!s_.win && s_.home !== null && s_.home !== undefined) s_ = replace(s_, { win: winConstants(s_) });
     const tab = opts.tab || solveTable(arsenal, replace(s_, { balls: 0, strikes: 0, last: null }));
     const [pi, sg, full, res, M] = rootCall(arsenal, s_, tab, opts.exclude);
     const pPitch = {};
@@ -1408,9 +1360,8 @@
     const out = {};
     for (const g of ["c", "w", "d"]) {
       const gr = Object.assign({}, grades || {}); gr[g] = 3;
-      const zo = {}, prev = FLAGS.hitter_grades;
-      FLAGS.hitter_grades = true;
-      try { outcomeProbs(p, q, replace(s, { grades: gr }), arsenal, null, null, sit, zo); } finally { FLAGS.hitter_grades = prev; }
+      const zo = {};
+      outcomeProbs(p, q, replace(s, { grades: gr }), arsenal, null, null, sit, zo);
       const zs = ZONES.filter((z) => z in zo), vals = zs.map((z) => zo[z]);
       const sw = psum(vals.map((v) => v.L * v.S));
       const bipw = vals.map((v) => v.L * v.S * (1 - v.W) * (1 - v.F)), bip = psum(bipw);
@@ -1564,7 +1515,7 @@
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
-  const api = { VERSION, dataVersion, init, FLAGS, FLAGS_V07, FLAGS_V08, FLAGS_V09, setFlags, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
+  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     v08, callV08, solveTable, whyLine, intentLabel };

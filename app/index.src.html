@@ -618,21 +618,14 @@ function newGame() {
     pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {},
     mm: {} };   // v0.9 item 6: each hitter's record against each pitcher in his earlier trips today
 }
-// engine mode: "v09" (default; docs/STEP7_v0.9_REPORT.md) = v0.8 plus the v0.9 terms; "v08" = v0.8 exactly (docs/SPEC_v0.8.md);
-// "v07" = the v0.7c engine exactly
-function applyEngineMode() { E.setFlags(S.setup.engine === "v07" ? E.FLAGS_V07 : S.setup.engine === "v08" ? E.FLAGS_V08 : E.FLAGS_V09); }
-const isV08 = () => S.setup.engine !== "v07";
+// One engine: v0.9, with no flags or modes (Drew, Nov 6; docs/FOLLOWUPS_v0.9_REPORT.md).
 const defaultInnings = () => (S.setup.level === "hs" || S.setup.level === "travel" ? 7 : 9);
 
 // ------------------------------------------------------------------ state
 let S = load() || { setup: sampleSetup(), game: null, view: "live", sample: true };
 if (!S.game || S.game.v !== 2) S.game = newGame();
 for (const [k, v] of Object.entries({ pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {}, mm: {} })) if (S.game[k] === undefined) S.game[k] = v;
-if (S.setup.engine === undefined) S.setup.engine = "v09";
-// v0.9: "v08" was the default before v0.9 existed, so a saved setup on it moves to v0.9 once; choosing v0.8 again sticks
-if (!S.setup.v09 && S.setup.engine === "v08") S.setup.engine = "v09";
-S.setup.v09 = true;
-applyEngineMode();
+S.setup.engine = "v09";      // a setup saved on v0.8 or v0.7c opens on v0.9: there is no other engine now
 let undo = [];
 let pending = null;
 let pickMode = false;
@@ -700,7 +693,7 @@ function know() {
   const k = G().know, i = String(slotIdx());
   if (!k[i]) {   // a hitter we've seen before starts with what we learned about him (capped, so tonight still matters most)
     const b = batterDef(), m = DB.ready && b && b.hitterId ? hModel(b.hitterId) : null;
-    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m, 8, isV08()) : {}, seen: {} };
+    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m, 8, true) : {}, seen: {} };
   }
   return k[i];
 }
@@ -714,7 +707,7 @@ function situation() {
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
     landing_today: Object.assign({}, (g.land || {})[pKey()] || {}),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
-    ...(isV08() ? v08Inputs() : {}) });
+    ...v08Inputs() });
 }
 // ---- v0.8 inputs (spec 8.3): each optional, each inert at its default
 const hitterKey = () => { const b = batterDef() || {}; return b.hitterId || `g:${G().dbId || "local"}|${slotIdx()}|${b.name || ""}`; };
@@ -784,12 +777,6 @@ function paTable(ars, s) {
 }
 function makeCall() {
   const ars = arsenal();
-  if (!isV08()) {
-    const r = E.callMixed(ars, situation(), { exclude: shakenNow });
-    G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false,
-      dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
-    return;
-  }
   let s = situation();
   const tab = paTable(ars, s);
   s = Object.assign({}, situation(), { look: G().pa.look });
@@ -865,11 +852,11 @@ function record(res) {
     pcRaw: g.pc[pKey()] || 0, fatigueShift: fatigueShift(pd0), checkinId: ci ? ci.id : null, regs: (g.regs || {})[pKey()] || 0,
     v: { app: APP_VERSION, engine: E.VERSION, data: E.dataVersion(), learn: PCLearn.VERSION }, deviceId: DB.deviceId || null,
     pred: PCLearn.predict(E, ars, sitNow, called.name, call.quad), sit: PCLearn.snapSituation(sitNow), ars: PCLearn.snapArsenal(ars) };
-  if (isV08()) {   // spec 8.3: what the v0.8 expectations were built from, so a replay can recompute every one of them
+  {   // spec 8.3: what the expectations were built from, so a replay can recompute every one of them
     const s0 = Object.assign({}, sitNow, { look: g.pa ? g.pa.look : null, ump_u: umpSeed() });
     evBase.v08 = { look: g.pa ? g.pa.look : null, sigma: call.sigma || null, why: call.why || null, intent: call.intent || null, mechanism: call.mechanism || null, walk: !!call.walk,
       ump: E.v08.takeStats(p, call.quad, s0, ars), grades: E.v08.gradeStats(p, call.quad, Object.assign({}, sitNow, { look: s0.look }), ars, null, sitNow.grades),
-      flags: Object.assign({}, E.FLAGS), radar: res.radar ? +res.radar : undefined };
+      radar: res.radar ? +res.radar : undefined };
   }
   snapshot();
   g.pitchNo++;
@@ -880,7 +867,7 @@ function record(res) {
   const lt = g.land[pKey()][p.name] || [0, 0];
   g.land[pKey()][p.name] = [lt[0] + (res.result === "ball" || res.result === "hbp" ? 0 : 1), lt[1] + 1];
   const uk = g.balls + "-" + g.strikes; g.usage[uk] = g.usage[uk] || {}; g.usage[uk][p.name] = (g.usage[uk][p.name] || 0) + 1;
-  if (isV08()) {   // v0.8 state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
+  {   // planning state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
     const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
     uc[uk] = uc[uk] || {}; uc[uk][ck_] = (uc[uk][ck_] || 0) + 1;
     if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow); g.pa.cls[cls]++; }
@@ -998,7 +985,7 @@ function startNextInning() {
 }
 
 // ------------------------------------------------------------------ actions
-function needsDetail(result) { return result === "play" || (S.setup.inputs >= 3 && (result === "whiff" || result === "foul")) || (isV08() && !!S.setup.radar); }
+function needsDetail(result) { return result === "play" || (S.setup.inputs >= 3 && (result === "whiff" || result === "foul")) || !!S.setup.radar; }
 function tapResult(result) {
   if (G().inningOver || !G().call) return;
   if (needsDetail(result)) { pending = { result }; render(); return; }
@@ -1135,7 +1122,7 @@ function strip() {
     h("div", { class: "cell" }, h("span", { class: "k" }, `${pitcherDef().name}`), h("span", { class: "v" }, String(g.pc[pKey()] || 0), h("small", {}, "pitches"),
       (() => { const c = typeof countLine === "function" ? countLine() : null; return c ? h("small", { class: `rule${c.warn ? " warn" : ""}`, id: "count-line", role: "status" }, c.text) : null; })())),
     h("div", { class: "cell edit" }, h("button", { class: "btn text", "aria-expanded": String(fixing), on: { click: () => { fixing = !fixing; render(); } } }, fixing ? "Done" : "Correct")),
-    isV08() ? sitControls() : null);
+    sitControls());
 }
 // v0.8 game inputs (spec 8.3): infield in with a runner on 3rd; steal threat for a runner on 1st (2nd open) or 2nd (3rd open)
 function sitControls() {
@@ -1276,11 +1263,11 @@ function pickBox() {
   const ars = arsenal();
   const go = () => {
     let gr; const g = G();
-    if (isV08()) {
+    {
       const tab = paTable(ars, situation());
       const s = Object.assign({}, situation(), { look: g.pa.look }); s.b_h = E.v08.leanBh(ars, s, g.pa.fooled);
       gr = E.v08.gradeCall(ars, s, pickSel.pitch, pickSel.quad, tab);
-    } else gr = E.gradeCall(ars, situation(), pickSel.pitch, pickSel.quad);
+    }
     g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
       verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
@@ -1315,7 +1302,7 @@ function entryPanel() {
     if (g.bases.some(Boolean) && ["ball", "whiff", "cstrike"].includes(P.result)) extra.push(seg("Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]));
     if (extra.length) rows.push(h("details", { class: "more", open: P.thrown || P.wp ? true : null }, h("summary", { class: "t" }, "Cross-up or wild pitch"), extra,
       P.wp ? h("p", { class: "note" }, "Move the runners with Correct after you log it.") : null));
-    if (isV08()) rows.push(h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: P.radar ?? "",
+    rows.push(h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: P.radar ?? "",
       "aria-label": "Radar reading, mph", style: { width: "90px" }, on: { change: (e) => { P.radar = e.target.value === "" ? undefined : +e.target.value; } } })));
     detail = h("div", { class: "detail" }, rows, h("div", { class: "go" },
       h("button", { class: "btn primary", disabled: !(P.result !== "play" || P.out), on: { click: () => record(P) } }, "Log pitch"),
@@ -1689,17 +1676,12 @@ function setupView() {
     h("input", { id: `ln${i}`, name: `ln${i}`, autocomplete: "off", list: DB.ready ? "hitter-names" : null, placeholder: `${ord(i + 1)} hitter…`, value: b.name, "aria-label": `Hitter ${i + 1} name`, on: { change: (e) => { b.name = e.target.value.trim(); DB.ready ? linkHitter(b, i) : changed(); } } }),
     h("div", { class: "hands", role: "group", "aria-label": `Hitter ${i + 1} bats` }, ["R", "L", "S"].map((x) => h("button", { "aria-pressed": String(b.hand === x), "aria-label": { R: "Bats right", L: "Bats left", S: "Switch hitter" }[x], on: { click: () => {
       b.hand = x; const hx = DB.ready && b.hitterId && DB.hitters.get(b.hitterId); if (hx) { hx.bats = x; dbPut("hitters", hx); } changed(true); } } }, x))),
-    (st.engine || "v09") !== "v07" ? hitterGradeInputs(b, i, changed) : null)));
+    hitterGradeInputs(b, i, changed))));
 
   return h("main", {},
     h("div", { class: "head" }, h("div", {}, h("h1", {}, "Setup"), h("p", { class: "sub" }, "Your level, what you'll log, your staff and their lineup. Changes apply to the game right away."))),
     row("Level", "Sets what a walk, a strikeout and a runner on third are worth, and how wild the average pitcher is.", levelChoices),
-    row("Engine", "v0.9 plans each at-bat ahead (setups, timing, what he's sitting on, the game situation) and adds what each hitter did in his earlier at-bats today. v0.8 and v0.7c are the previous engines, exactly as they were.",
-      h("div", { class: "choices" }, [["v09", "v0.9: plans the at-bat", "Default. Mixes in more changeups, drops a pitch that isn't landing, and remembers each hitter's earlier at-bats."],
-        ["v08", "v0.8: the previous engine", "For comparison. Plans the at-bat, without the v0.9 changes."],
-        ["v07", "v0.7c: the engine before that", "For comparison, or if anything looks off."]].map(([k, t, d]) =>
-        h("button", { class: "choice", "aria-pressed": String((st.engine || "v09") === k), on: { click: () => { st.engine = k; applyEngineMode(); G().pa = null; changed(true); } } }, h("b", {}, t), h("span", {}, d))))),
-    (st.engine || "v09") !== "v07" ? row("Game situation", "Home or away and the scheduled innings let the engine weigh the score late in close games. Leave home/away unset and it plays for runs only.",
+    row("Game situation", "Home or away and the scheduled innings let the engine weigh the score late in close games. Leave home/away unset and it plays for runs only.",
       h("div", { class: "fields" },
         h("div", { class: "f" }, "We're", h("div", { class: "hands wide", role: "group", "aria-label": "Home or away" }, [[true, "Home"], [false, "Away"], [null, "Not set"]].map(([v, l]) =>
           h("button", { "aria-pressed": String((st.home === undefined ? null : st.home) === v), on: { click: () => { st.home = v; G().pa = null; changed(true); } } }, l)))),
@@ -1708,7 +1690,7 @@ function setupView() {
         h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.extrasRunner ? true : null, on: { change: (e) => { st.extrasRunner = e.target.checked; G().pa = null; changed(); } } }), "Extra innings start with a runner on 2nd"),
         h("div", { class: "f" }, "Umpire", h("div", { class: "hands wide", role: "group", "aria-label": "Umpire's zone" }, [["tight", "Tight"], ["normal", "Normal"], ["wide", "Wide"]].map(([v, l]) =>
           h("button", { "aria-pressed": String((st.umpSeed || "normal") === v), on: { click: () => { st.umpSeed = v; changed(true); } } }, l)))),
-        h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.radar ? true : null, on: { change: (e) => { st.radar = e.target.checked; changed(); } } }), "Log radar readings (optional, per pitch)"))) : null,
+        h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.radar ? true : null, on: { change: (e) => { st.radar = e.target.checked; changed(); } } }), "Log radar readings (optional, per pitch)"))),
     row("What you'll log", "Pick what your charter can keep up with. Every option calls the game; more detail mostly helps it learn each hitter.", tierChoices,
       h("button", { class: "choice", "aria-pressed": String(!!st.logLoc), on: { click: () => { st.logLoc = !st.logLoc; changed(true); } } },
         h("b", {}, "Also log where each pitch ended up"), h("span", {}, "One more tap on a small zone grid. It's what lets the app learn each pitcher's real command; results alone barely show it."))),

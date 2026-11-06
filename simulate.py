@@ -21,14 +21,10 @@ from dataclasses import replace
 
 import os
 import engine
-from engine import (Pitch, Situation, call_mixed, outcome_probs, landing, IN_PLAY,
+from engine import (Pitch, Situation, outcome_probs, landing, IN_PLAY,
                     LEVEL, is_offspeed, mixed_policy, QUADS)
 
-# Which engine makes the CALLS. The simulated world (true outcomes) always uses the current engine.
-if os.environ.get("DECIDER") == "v03":
-    from engine_v03 import call_mixed as decide
-else:
-    decide = None
+# One engine (v0.9) makes the calls, and the simulated world is the same model plus the hidden truth.
 SEED = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 2026
 rng = random.Random(SEED)
 LEVEL_NAME = os.environ.get("LEVEL", "college")
@@ -46,26 +42,16 @@ LINEUP = os.environ.get("LINEUP", "default")      # default, strong, weak, lefty
 SHAKE = float(os.environ.get("SHAKE", "1"))       # shake-off rate multiplier
 OVERRIDE = float(os.environ.get("OVERRIDE", "0")) # share of pitches where the coach calls his own (random) pitch
 UMP_SD = float(os.environ.get("UMP_SD", "0"))     # v0.8: each game's umpire zone shift ~ N(0, UMP_SD) logits (0 = v0.7c)
-ENGINE = os.environ.get("ENGINE", "v07")         # v0.8: v07 or v08 flags for the whole game
-# v0.9 Step 7: WORLD=v09w plays the game in the v0.9 outcome model (v0.8 plus the fitted v0.9 world terms: inside,
-# matchup memory, power HR) whatever the calling engine is, so v0.8 and v0.9 calls can be compared in the same world.
-# Unset (default): the world uses the engine's own flags, as before. Landing and the guardrail are call rules, not world.
-WORLD = os.environ.get("WORLD", "")
-# v0.9 Step 7: TRUTH_TAB=world also scores every call against a table solved in the world's model (log only: no rng
-# draw, no change to calls or outcomes). The plain regret columns use the calling engine's own table (its own hitter
-# sit and later-count values), so they are not on one yardstick across engines; the regret_w_* columns are.
+# TRUTH_TAB=world also scores every call against a table solved with the hidden truth (log only: no rng draw, no
+# change to calls or outcomes): the regret_w_* columns. The plain regret columns use the engine's own table.
 TRUTH_TAB = os.environ.get("TRUTH_TAB", "")
-# v0.9 follow-ups (Nov 5 night), all off by default so existing runs reproduce exactly:
-#   GUARD_DELTA=0.02  the myopic guardrail window (engine.GUARD_DELTA, normally 0.010) for engines with the guardrail on
+# World settings (off by default; they describe the opposing hitters, not the engine):
 #   TRUE_POWER=1      each opposing hitter gets a hidden true power grade w ~ N(3, 1) clipped to 1..5 (8.2 assumes hitters
 #                     spread like pitchers: one grade point = one SD), drawn from its own random stream so lineups and every
 #                     other draw match the runs without it. The world's model uses it the way the engine's model would:
-#                     the 8.2 hard-contact term (hitter_grades) and, if the world has power_avoid, item 8's home-run effect,
-#                     in the truth values and in the batted-ball draw (run_ball_in_play_typed).
+#                     the 8.2 hard-contact term and item 8's home-run effect, in the truth values and in the batted-ball
+#                     draw (run_ball_in_play_typed).
 #   SEE_POWER=1       (with TRUE_POWER) the engine is told a coach's power grade: the true grade rounded to a whole number.
-#   LAND_BLOCK_EST=x  the landing filter's threshold on the shrunk strike rate (engine.LAND_BLOCK_EST, normally 0.40)
-GUARD_DELTA_ENV = os.environ.get("GUARD_DELTA", "")
-LAND_BLOCK_EST_ENV = os.environ.get("LAND_BLOCK_EST", "")
 TRUE_POWER = os.environ.get("TRUE_POWER", "") == "1"
 SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
 
@@ -431,7 +417,6 @@ def play_game(log_path):
             pa_done = False
             fam_prev = dict(fam[(pitcher["name"], h)])
             mm_prev = dict(mm[(pitcher["name"], h)])     # earlier trips only: this PA's pitches count from his next PA
-            v08 = engine.FLAGS["look_state"]
             tab, frozen, look, fooled = None, None, None, []      # v0.8 (6): this PA's table, its inputs, the look
             _tw = [None, None, None]                                # TRUTH_TAB=world: the world's table for this PA
             win_pa = None                                         # v0.8 (7.2): objective constants, fixed at PA start
@@ -457,30 +442,25 @@ def play_game(log_path):
                               landing_today={x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
                                              if land[(pitcher["name"], x.name)][1]},
                               familiar=fam_prev, matchup=mm_prev,
-                              ump_u=engine.ump_estimate(takes, LEVEL_NAME) if engine.FLAGS["umpire_learn"] else 0.0,
+                              ump_u=engine.ump_estimate(takes, LEVEL_NAME),
                               home=True, sched_innings=9,
                               grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None))
-                if engine.FLAGS["objective_win"]:
-                    if win_pa is None:
-                        win_pa = engine.win_constants(s)
-                    s = replace(s, win=win_pa)
+                if win_pa is None:
+                    win_pa = engine.win_constants(s)
+                s = replace(s, win=win_pa)
                 ars = pitcher["arsenal"]
-                if v08:
-                    if tab is None or engine.needs_resolve(frozen, ars, s):
-                        tab = engine.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
-                        frozen = engine.frozen_inputs(ars, s)
-                        if look is None:
-                            look = tab.h0
-                    s = replace(s, look=look, b_h=engine.lean_b_h(ars, s, fooled),
-                                usage_by_call=dict(K.usage_call[(pitcher["name"], balls, strikes)]))
+                if tab is None or engine.needs_resolve(frozen, ars, s):
+                    tab = engine.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
+                    frozen = engine.frozen_inputs(ars, s)
+                    if look is None:
+                        look = tab.h0
+                s = replace(s, look=look, b_h=engine.lean_b_h(ars, s, fooled),
+                            usage_by_call=dict(K.usage_call[(pitcher["name"], balls, strikes)]))
                 # engine call, with possible shake-offs
                 shakes = []
                 shaken = set()
                 for attempt in range(3):
-                    if v08:
-                        (p, q, prob, cst), dist, tab, _info = engine.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
-                    else:
-                        (p, q, prob, cst), dist = (decide or call_mixed)(ars, s, rng=rng, exclude=shaken)
+                    (p, q, prob, cst), dist, tab, _info = engine.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
                     p_shake = min(0.9, SHAKE * max(0.0, 0.35 * (0.75 - p.conf))) if attempt < 2 else 0.0
                     if rng.random() < p_shake:
                         shakes.append(f"{p.name} {q}")
@@ -493,13 +473,13 @@ def play_game(log_path):
                     cands_ = engine.candidates(ars, s)
                     p = rng.choice(cands_); q = rng.choice(QUADS); override = 1
                     prob = next((d[0] for d in dist if d[2].name == p.name and d[3] == q), 0.0)
-                    cst = engine.root_costs(ars, s, tab)[(p.name, q)] if v08 else engine.cost(p, q, s, ars)[0]
+                    cst = engine.root_costs(ars, s, tab)[(p.name, q)]
                 best_cost = min(d[1] for d in dist)
                 top3 = "; ".join(f"{d[2].name} {d[3]} {d[0]:.0%}" for d in dist[:3])
-                # v0.9 read-through: log-only (no rng draw, no change to the call): the why line and the hitter's
-                # most likely sit. v0.7c has neither.
+                # read-through, log-only (no rng draw, no change to the call): the why line, the intent and the hitter's
+                # most likely sit
                 why_txt, guess_txt, intent_txt = "", "", ""
-                if v08 and not override:
+                if not override:
                     why_txt = engine.why_line(ars, s, tab, (p, q), _info)[0]
                     intent_txt = engine.intent_label(ars, s, tab, (p, q), _info, exclude=shaken)[0]     # v0.9 item 4
                     sg = _info["sigma"]
@@ -518,19 +498,14 @@ def play_game(log_path):
                 ars_true = [replace(x, ivb=true_move[(pitcher["name"], x.name)][0],
                                     hb=true_move[(pitcher["name"], x.name)][1]) for x in ars]
                 p_true = next(x for x in ars_true if x.name == p.name)
-                with (engine.flags(**WORLD_FLAGS) if WORLD_FLAGS else contextlib.nullcontext()):   # v0.9 Step 7: the world's model
-                    P = outcome_probs(p_true, q, ts, ars_true)
-                    # decision quality: true run cost of the engine's mix vs a caller who knows the hidden truth
-                    if v08:
-                        tc = engine.root_costs(ars_true, ts, tab)
-                    else:
-                        tc = {(x.name, qq): engine.cost(x, qq, ts, ars_true)[0]
-                              for x in ars_true if x.name in {c.name for c in engine.candidates(ars, s)} for qq in QUADS}
-                    tcw = None
-                    if v08 and TRUTH_TAB == "world":
-                        if _tw[0] is not tab or _tw[1] != h:
-                            _tw[:] = [tab, h, engine.solve_table(ars_true, replace(ts, balls=0, strikes=0, last=None))]
-                        tcw = engine.root_costs(ars_true, ts, _tw[2])
+                P = outcome_probs(p_true, q, ts, ars_true)
+                # decision quality: true run cost of the engine's mix vs a caller who knows the hidden truth
+                tc = engine.root_costs(ars_true, ts, tab)
+                tcw = None
+                if TRUTH_TAB == "world":
+                    if _tw[0] is not tab or _tw[1] != h:
+                        _tw[:] = [tab, h, engine.solve_table(ars_true, replace(ts, balls=0, strikes=0, last=None))]
+                    tcw = engine.root_costs(ars_true, ts, _tw[2])
                 t_best = min(tc.values())
                 regret_exp = sum(d[0] * (tc.get((d[2].name, d[3]), t_best) - t_best) for d in dist)
                 regret_pick = tc.get((p.name, q), t_best) - t_best
@@ -554,15 +529,14 @@ def play_game(log_path):
                     mm[(pitcher["name"], h)]["succ|" + p.kind] += 1
                 elif ev == "hard":
                     mm[(pitcher["name"], h)]["hard|" + p.kind + "|" + q] += 1
-                if engine.FLAGS["umpire_learn"] and ev in ("ball", "wp_ball", "cstrike", "hbp"):
+                if ev in ("ball", "wp_ball", "cstrike", "hbp"):
                     p0, d0 = engine.take_stats(p, q, replace(s, ump_u=0.0), ars)
                     takes.append((1 if ev == "cstrike" else 0, p0, d0))
                 land[(pitcher["name"], p.name)][1] += 1
                 land[(pitcher["name"], p.name)][0] += ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard")
                 K.usage[(balls, strikes)][p.name] += 1
                 K.usage_call[(pitcher["name"], balls, strikes)][(p.name, q)] += 1
-                if v08:
-                    look = engine.look_update(look, p, q, s)
+                look = engine.look_update(look, p, q, s)
                 result = ev
 
                 if ev in ("ball", "wp_ball"):
@@ -618,13 +592,8 @@ def play_game(log_path):
                     if strikes < 2:
                         strikes += 1
                 else:   # in play
-                    if engine.FLAGS["inplay_typed"]:
-                        wf = WORLD_FLAGS or engine.FLAGS
-                        dh = (engine.power_hr_shift(ts, ts.grades) if (TRUE_POWER and ev == "hard" and ts.grades
-                              and wf["power_avoid"] and wf["hitter_grades"]) else 0.0)
-                        o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q, dh=dh)
-                    else:
-                        o_add, runs_scored, bases, label = run_ball_in_play_v6b(ev, outs, bases, R)
+                    dh = engine.power_hr_shift(ts, ts.grades) if (TRUE_POWER and ev == "hard" and ts.grades) else 0.0
+                    o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q, dh=dh)
                     outs += o_add
                     detail = f"{ev} contact: {label.upper()}"
                     if INPUTS >= 2:
@@ -704,28 +673,8 @@ def pregame_plan(staff):
 SEED_FOR_MOVE = [SEED]
 
 
-WORLD_FLAGS = None
-
-
-def apply_engine_env():
-    """ENGINE=v07 | v08 | v09 | v07+flag,flag | v08-flag,flag : the engine flags for this run (v0.8 build; v09 added in v0.9)."""
-    spec = ENGINE
-    base = {"v08": engine.FLAGS_V08, "v09": engine.FLAGS_V09}.get(spec[:3], engine.FLAGS_V07)
-    engine.set_flags(**base)
-    global WORLD_FLAGS
-    if GUARD_DELTA_ENV:
-        engine.GUARD_DELTA = float(GUARD_DELTA_ENV)
-    if LAND_BLOCK_EST_ENV:
-        engine.LAND_BLOCK_EST = float(LAND_BLOCK_EST_ENV)
-    WORLD_FLAGS = {"v09w": dict(engine.FLAGS_V08, inside_v09=True, matchup_memory=True, power_avoid=True)}[WORLD] if WORLD else None
-    for sign, rest in (("+", spec[3:]) if spec[3:4] == "+" else ("-", spec[3:]) if spec[3:4] == "-" else ("", ""),):
-        for f in [x for x in rest[1:].split(",") if x]:
-            engine.set_flags(**{f: sign == "+"})
-
-
 def run(seed, path):
     global rng
-    apply_engine_env()
     rng = random.Random(seed)
     SEED_FOR_MOVE[0] = seed
     return play_game(path)

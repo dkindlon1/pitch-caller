@@ -4,7 +4,7 @@
 For each engine's games it counts, with runner on 3rd and < 2 outs:
   - every low breaking-ball call (SL/CB to down-in, down-away or chase): the denominator
   - the ones the read-through flags (read.py wild_low_breaker_r3: 4+ thrown today, raw strike rate under 50%)
-  - for each flagged call, what the engine's landing filter (landing_v09, engine.not_landing) saw: thrown, strikes, the
+  - for each flagged call, what the engine's landing filter (engine.not_landing) saw: thrown, strikes, the
     shrunk estimate, and whether the filter would block it. The simulator's pitches carry no strike_rate, so the shrink
     centre is engine.LAND_CENTER (0.58 for off-speed), exactly what the engine used.
   - the same calls under alternative filter thresholds (counting only; a threshold change needs new games to measure).

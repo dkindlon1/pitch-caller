@@ -1,6 +1,6 @@
 /*
  * v0.8 in the real page (docs/SPEC_v0.8.md 8.3, 9, 6.2). Run from app/: node v08_e2e.js
- * The engine default, the why line, the game inputs, the frozen plate-appearance solve (a reload rebuilds the same one),
+ * The single engine (v0.9), the why line, the game inputs, the frozen plate-appearance solve (a reload rebuilds the same one),
  * familiarity, the umpire learner, the running game, radar, the per-pitch v0.8 log, the v0.7c switch, and phone width.
  */
 const { chromium } = require("playwright");
@@ -29,8 +29,8 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => { S.view = "live"; G().call = null; makeCall(); save(); render(); });
 
   console.log("1. v0.9 is the default engine (v0.8 planning plus the v0.9 terms), and the call carries a why line");
-  const r1 = await page.evaluate(() => ({ eng: S.setup.engine, look: E.FLAGS.look_state, v09: E.FLAGS.landing_v09 && E.FLAGS.matchup_memory && !E.FLAGS.guardrail_v09, v08: !!G().call.v08 }));
-  check(r1.eng === "v09" && r1.look && r1.v09 && r1.v08, `engine ${r1.eng}, look_state ${r1.look}, v0.9 flags ${r1.v09}, planned call ${r1.v08}`);
+  const r1 = await page.evaluate(() => ({ eng: S.setup.engine, ver: E.VERSION, noFlags: !("FLAGS" in E) && !("setFlags" in E), v08: !!G().call.v08 }));
+  check(r1.eng === "v09" && r1.ver === "0.9" && r1.noFlags && r1.v08, `engine ${r1.eng} ${r1.ver}, no flags in the engine ${r1.noFlags}, planned call ${r1.v08}`);
   await page.waitForFunction(() => G().call && G().call.why, null, { timeout: 5000 }).catch(() => {});
   const why = await page.evaluate(() => G().call.why);
   const shown = await page.locator(".whyline").count();
@@ -55,9 +55,9 @@ const server = http.createServer((req, res) => {
   const r4 = await page.evaluate(async () => {
     const evs = (await DB.D.all("events")).filter((e) => e.gameId === G().dbId && e.v08);
     const e = evs[evs.length - 1];
-    return e ? { n: evs.length, ump: e.v08.ump, grades: Object.keys(e.v08.grades || {}), flags: e.v08.flags && e.v08.flags.look_state, look: e.v08.look, sitLook: e.sit && e.sit.look, home: e.sit && e.sit.home } : null;
+    return e ? { n: evs.length, ump: e.v08.ump, grades: Object.keys(e.v08.grades || {}), look: e.v08.look, sitLook: e.sit && e.sit.look, home: e.sit && e.sit.home } : null;
   });
-  check(r4 && r4.ump && r4.ump.length === 2 && r4.grades.join() === "c,w,d" && r4.flags === true && Array.isArray(r4.look),
+  check(r4 && r4.ump && r4.ump.length === 2 && r4.grades.join() === "c,w,d" && Array.isArray(r4.look),
     `events with v0.8 block: ${r4 && r4.n}; umpire pair ${r4 && JSON.stringify(r4.ump)}; grade pairs ${r4 && r4.grades}; look ${r4 && JSON.stringify(r4.look)}`);
 
   console.log("5. Umpire learner: takes accumulate and move the estimate");
@@ -101,16 +101,18 @@ const server = http.createServer((req, res) => {
   const g1 = await page.evaluate(() => { const b = S.setup.lineup[0], x = b.hitterId && DB.hitters.get(b.hitterId); return (x || b).grades; });
   check(g1 && g1.c === 5, `grade saved: ${JSON.stringify(g1)}`);
 
-  console.log("10. The v0.7c engine is one switch away and is exactly v0.7c");
-  await page.getByRole("button", { name: /v0\.7c: the engine before that/ }).click(); await page.waitForTimeout(150);
-  const r10 = await page.evaluate(() => {
-    S.view = "live"; G().call = null; makeCall();
-    const a = JSON.stringify(G().call.dist), ref = E.callMixed(arsenal(), situation(), {}).dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob }));
-    return { flags: E.FLAGS.look_state, same: a === JSON.stringify(ref), v08: !!G().call.v08 };
-  });
-  check(!r10.flags && r10.same && !r10.v08, `v0.7c mode: look_state ${r10.flags}, call is callMixed's ${r10.same}`);
-  await page.getByRole("button", { name: /v0\.7c: the engine before that/ }).count();
-  await page.evaluate(() => { S.setup.engine = "v08"; applyEngineMode(); G().pa = null; save(); });
+  console.log("10. One engine: Setup has no engine choice, and a setup saved on v0.8 or v0.7c opens on v0.9");
+  const r10 = await page.evaluate(() => { S.view = "setup"; render();
+    return { choices: [...document.querySelectorAll("button")].filter((b) => /v0\.[78]c?:/.test(b.textContent)).length,
+             engineRow: [...document.querySelectorAll("main h2, main h3, main .k, main label, main b")].some((x) => x.textContent.trim() === "Engine") }; });
+  check(r10.choices === 0 && !r10.engineRow, `old-engine buttons ${r10.choices}, Engine row ${r10.engineRow}`);
+  for (const old of ["v08", "v07"]) {
+    await page.evaluate((o) => { S.setup.engine = o; save(); }, old);
+    await page.reload(); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 10000 });
+    const r = await page.evaluate(() => ({ eng: S.setup.engine, planned: (G().call = null, makeCall(), !!G().call.v08) }));
+    check(r.eng === "v09" && r.planned, `setup saved on ${old} opens on ${r.eng}, planned v0.9 call ${r.planned}`);
+  }
+  await page.evaluate(() => { S.view = "live"; render(); });
 
   console.log("11. Phone width: no sideways scroll with the v0.8 controls showing");
   const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });

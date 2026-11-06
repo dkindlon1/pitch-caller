@@ -37,9 +37,8 @@ def model_table():
     """The world's own model, grade by grade: hard contact per ball in play (8.2) and HR per hard contact (item 8), for a
     fastball middle at 1-1, an average hitter otherwise. This is the mechanism check; the game samples below are not
     (3 seeds = about 27 distinct hitters, whose skill spread swamps the grade effect)."""
-    os.environ.update(ENGINE="v09", STAFF="default", WORLD="v09w", TRUE_POWER="1")
+    os.environ.update(STAFF="default", TRUE_POWER="1")
     import engine as e, simulate
-    simulate.apply_engine_env()
     ars = simulate.our_staff()[0]["arsenal"]
     fb = ars[0]
     L = ["World model by true power grade (fastball middle, 1-1; hard/BIP | HR per hard contact | HR per BIP):"]
@@ -48,9 +47,8 @@ def model_table():
         for w in (1, 2, 3, 4, 5):
             ts = simulate.true_situation(e.Situation(1, 1, 1, (False,) * 3, inning=4, level=lv, same_side=True),
                                          {"name": "x", "hand": "R", "fb": 0.0, "os": 0.0, "timing": 0.0, "w": w})
-            with e.flags(**simulate.WORLD_FLAGS):
-                P = e.outcome_probs(fb, "middle", ts, ars)
-                dh = e.power_hr_shift(ts, ts.grades)
+            P = e.outcome_probs(fb, "middle", ts, ars)
+            dh = e.power_hr_shift(ts, ts.grades)
             bip = P["weak"] + P["solid"] + P["hard"]
             hr = 0.0
             for t, pt in e.type_mix(fb, "middle", "hard").items():

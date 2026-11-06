@@ -4,6 +4,9 @@
 - S_G, S_F (runner on 3rd scores on GB / FB outs) solved so the typed rate equals the chain's T_L (we_rates.json);
 - S_DP so the typed double-play rate per opportunity equals the chain's DP rate.
 Reads the current engine tables; never reruns fit_all.py. usage: python3 inplay_fit.py"""
+# Nov 6: the engine is now one flag-free v0.9 engine. This script ran under the v0.7c settings when its data was made;
+# those settings no longer exist, so a rerun computes v0.9-based values.
+
 import json, os
 from math import exp, log
 import engine as e
@@ -61,7 +64,6 @@ def ref_contact_mix(level):
 
 
 def main():
-    e.set_flags(**e.FLAGS_V07)
     we = json.load(open("we_rates.json"))
     table, fit = {}, {}
     for level in ("college_d1", "college_d3", "hs", "mlb"):
