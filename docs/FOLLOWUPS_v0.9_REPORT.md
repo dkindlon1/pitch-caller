@@ -175,7 +175,16 @@ By level (90 games), guardrail off minus 0.020: HS +0.074 (SE 0.055), D3 +0.041 
 - Shipping 0.020 would need a new flag (off in FLAGS_V07 and FLAGS_V08), Python and JS matching, and parity, goldens and
   the app suites rerun. Not built; waiting on your decision.
 
-## Open questions for you
+## Decisions (Drew, Nov 6 morning)
+
+- **Fast-forward main** to v0.9-work after a final catch-up merge and migration check: yes.
+- **Guardrail:** stays off. The 0.020 window isn't built.
+- **"Trusts nothing" fallback:** left as is (v0.4 rule).
+- **Item 8:** stays on in FLAGS_V09.
+- Still open: TRUE_POWER as the default world for future comparisons (it stays behind its setting for now), the HBP
+  inside/away refit (left as is), and the 15 ms recording gap (not done).
+
+## Open questions as they were asked
 
 1. **Fast-forward main to v0.9-work?** It contains all of main up to 6edb8dc, and everything passes on it. Another session is
    still committing to main, so I'll do a final catch-up merge (and migration check) right before the fast-forward.
