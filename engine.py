@@ -1524,13 +1524,37 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     return tab
 
 
-# 6.3 the myopic guardrail window (runs, times the level's run scale). A named constant only so the simulator can test a
-# wider window (v0.9 follow-up; simulate.py GUARD_DELTA). Unchanged in every engine version.
+# 6.3 the myopic guardrail windows (runs, times the level's run scale). GUARD_DELTA (location) is unchanged since v0.8 (a
+# named constant so the simulator can test a wider one: simulate.py GUARD_DELTA). v1.0 3.6 adds GUARD_TYPE (pitch type),
+# tuned in Phase 5 within [0.020, 0.060].
 GUARD_DELTA = 0.010
+GUARD_TYPE = 0.030
+
+
+def guard_keep(calls, cmy, s):
+    """v1.0 3.6 the guardrail on myopic cost (this pitch alone), split in two. Location: within each pitch type, a spot is
+    kept only within GUARD_DELTA of that type's best spot (no clearly worse spot for a setup). Pitch type: a type is kept
+    only if its best spot is within GUARD_TYPE of the overall best."""
+    best_by = {}
+    for a in calls:
+        if a[0] not in best_by or cmy[a] < best_by[a[0]]:
+            best_by[a[0]] = cmy[a]
+    overall = min(best_by.values())
+    d_loc, d_type = GUARD_DELTA * run_scale(s.level), GUARD_TYPE * run_scale(s.level)
+    return [a for a in calls if cmy[a] - best_by[a[0]] <= d_loc and best_by[a[0]] - overall <= d_type]
+
+
+def root_myopic(arsenal, s, tab, calls, look, ks):
+    """Myopic pure-sit costs (next counts at the PA's starting look) and their mix under the table's sit mix."""
+    by = {x.name: x for x in arsenal}
+    sL = replace(s, look=look)
+    sg_tab = tab.sigma.get((s.balls, s.strikes))
+    Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
+    return Mmy, {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
 
 
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
-    """6.3/6.4 the pitch being called now: live look, last pitch and lean; guardrail on myopic cost; sit game re-solved."""
+    """6.3/6.4 the pitch being called now: live look, last pitch and lean; guardrails on myopic cost; sit game re-solved."""
     by = {x.name: x for x in arsenal}
     ks = sit_options(arsenal)
     look = s.look or tab.h0
@@ -1540,12 +1564,8 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
         calls = allowed_calls(arsenal, s)
     sL = replace(s, look=look)
     M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk)[0] for kk in ks} for a in calls}
-    sg_tab = tab.sigma.get((s.balls, s.strikes))
-    Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
-    cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
-    best = min(cmy.values())
-    delta = GUARD_DELTA * run_scale(s.level)
-    keep = [a for a in calls if cmy[a] - best <= delta]       # the guardrail: no call clearly worse on this pitch alone
+    Mmy, cmy = root_myopic(arsenal, s, tab, calls, look, ks)
+    keep = guard_keep(calls, cmy, s)
     if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch
         M = {a: Mmy[a] for a in keep}
     else:

@@ -234,6 +234,51 @@ check(calls and all(q == "middle" for _, q in calls) and notes.get("CR2_stood_do
 check(e.rule_line(notes) == "Power hitter: stay off the middle. Standing down: nothing else left to call.", "stand-down why line",
       e.rule_line(notes))
 
+# ---------------------------------------------------------------------------
+print("3.6 location guard and pitch-type guard")
+n_ctx, n_sup, n_more = 0, 0, 0
+saved = e.GUARD_TYPE
+try:
+    for lv in ("hs", "college_d3", "college_d1"):
+        for an in ("slider_best", "avg_changeup", "plus_changeup", "four_pitch"):
+            a = ars(an)
+            for bo, outs in ((E3, 1), ((True, False, False), 0)):
+                for same in (True, False):
+                    s0 = sit(0, 0, level=lv, bases=bo, outs=outs, same_side=same)
+                    tab = table(a, s0)
+                    for (b, k) in e.COUNTS:
+                        s_ = replace(s0, balls=b, strikes=k, look=tab.h0)
+                        calls = e.allowed_calls(a, s_)
+                        _, cmy = e.root_myopic(a, s_, tab, calls, tab.h0, e.sit_options(a))
+                        best = min(cmy.values())
+                        old = {x for x in calls if cmy[x] - best <= e.GUARD_DELTA * e.run_scale(lv)}
+                        e.GUARD_TYPE = e.GUARD_DELTA
+                        new = set(e.guard_keep(calls, cmy, s_))
+                        e.GUARD_TYPE = saved
+                        n_ctx += 1
+                        n_sup += old <= new
+                        n_more += len(new - old) > 0
+finally:
+    e.GUARD_TYPE = saved
+check(n_sup == n_ctx, "at GUARD_TYPE = GUARD_DELTA every call v0.9's guard keeps is still kept (Drew: the plan's subset flipped)",
+      f"{n_sup}/{n_ctx} situations; the split keeps more in {n_more}")
+ok_all, notes_ = True, []
+for lv in ("hs", "college_d3", "college_d1"):
+    a = ars("avg_changeup")
+    pi, sg, full, res, M = e.root_call(a, replace(sit(2, 0, level=lv, same_side=False), look=table(a, sit(0, 0, level=lv, same_side=False)).h0),
+                                       table(a, sit(0, 0, level=lv, same_side=False)))
+    kept = any(x[0] == "Changeup" for x in M)
+    ok_all &= kept
+    notes_.append(f"{lv} {'kept' if kept else 'dropped'}")
+check(ok_all, f"default GUARD_TYPE {e.GUARD_TYPE}: an average changeup to an opposite-side hitter at 2-0 survives the guard",
+      ", ".join(notes_))
+a = ars("slider_best")
+tab = table(a, sit(0, 0))
+s31 = replace(sit(3, 1), look=tab.h0)
+pi, sg, full, res, M = e.root_call(a, s31, tab)
+Mmy, _ = e.root_myopic(a, s31, tab, e.allowed_calls(a, s31), tab.h0, e.sit_options(a))
+check(all(M[x] == Mmy[x] for x in M), "three-ball counts still rank by myopic cost")
+
 print()
 if FAILS:
     print(f"{len(FAILS)} v1.0 check(s) FAILED: " + "; ".join(FAILS))
