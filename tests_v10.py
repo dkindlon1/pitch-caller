@@ -279,6 +279,96 @@ pi, sg, full, res, M = e.root_call(a, s31, tab)
 Mmy, _ = e.root_myopic(a, s31, tab, e.allowed_calls(a, s31), tab.h0, e.sit_options(a))
 check(all(M[x] == Mmy[x] for x in M), "three-ball counts still rank by myopic cost")
 
+# ---------------------------------------------------------------------------
+print("3.7 mixing operator weighted by real usage")
+
+
+def pfc_v09(costs, s, temp):
+    """v0.9's policy_from_costs (reference for the flat-usage test)."""
+    win, lwin = e.windows(s)
+    names = []
+    for (n, q) in costs:
+        if n not in names:
+            names.append(n)
+    best_by = {n: min(c for (m, q), c in costs.items() if m == n) for n in names}
+    overall = min(best_by.values())
+    pp = e._soft(best_by, temp, win, overall)
+    pi = {}
+    for n, pn in pp.items():
+        lw = max(e.TAPER * lwin, lwin - (best_by[n] - overall))
+        loc = e._soft({q: c for (m, q), c in costs.items() if m == n}, temp, lw, best_by[n])
+        for q, pq in loc.items():
+            pi[(n, q)] = pn * pq
+    return pi
+
+
+sys.path.insert(0, HERE)
+import callsheet as CS
+ci_main = [j for j in CS.jobs_for("ci") if j["group"] == "main"]
+kt, kl = e.KAPPA_T, e.KAPPA_L
+loc_err, order_bad, order_n, sum_err, outside, beyond, n_sit = 0.0, 0, 0, 0.0, 0, 0, 0
+res_max = 0.0
+for j in ci_main:
+    a = CS.arsenal(j["arsenal"])
+    s0 = CS.base_situation(j["level"], j["bo"], j["same"], j["state"], {})
+    tab = e.solve_table(a, replace(s0, balls=0, strikes=0, last=None))
+    res_max = max(res_max, max(tab.residuals))
+    for (b, k) in e.COUNTS:
+        s_ = replace(s0, balls=b, strikes=k, look=tab.h0)
+        temp = e.temperature(a, s_)
+        cs = e.root_costs(a, s_, tab)
+        # flat usage, kappa 1: within-pitch target mix = v0.9's; pitch order = v0.9's best-cost order past T
+        e.KAPPA_T, e.KAPPA_L = 1.0, 1.0
+        new = e.policy_from_costs(cs, s_, temp, None)
+        e.KAPPA_T, e.KAPPA_L = kt, kl
+        old = pfc_v09(cs, s_, temp)
+        for n in {x[0] for x in old} & {x[0] for x in new}:
+            tn, to = sum(v for x, v in new.items() if x[0] == n), sum(v for x, v in old.items() if x[0] == n)
+            for x in set(k_ for k_ in list(new) + list(old) if k_[0] == n):
+                loc_err = max(loc_err, abs(new.get(x, 0.0) / tn - old.get(x, 0.0) / to))
+        best = {}
+        for (n, q), c in cs.items():
+            best[n] = min(best.get(n, c), c)
+        pn = {}
+        for (n, q), v in new.items():
+            pn[n] = pn.get(n, 0.0) + v
+        for x in best:
+            for y in best:
+                if best[x] < best[y] - temp:
+                    order_n += 1
+                    order_bad += not (pn.get(x, 0.0) > pn.get(y, 0.0))
+        # real operator at the root: sums to 1, only kept calls, nothing past a location window
+        sx = replace(s_, b_h=e.lean_b_h(a, s_))
+        pi, sg, full, res, M = e.root_call(a, sx, tab)
+        res_max = max(res_max, res)
+        n_sit += 1
+        sum_err = max(sum_err, abs(sum(pi.values()) - 1.0))
+        outside += any(x not in M for x in pi)
+        win, lwin = e.windows(sx)
+        cfull = {x: sum(sg[kk] * M[x][kk] for kk in M[x]) for x in M}
+        bb = {}
+        for (n, q), c in cfull.items():
+            bb[n] = min(bb.get(n, c), c)
+        ov = min(bb.values())
+        for (n, q), v in pi.items():
+            lw = max(e.TAPER * lwin, lwin - (bb[n] - ov))
+            beyond += v > 0 and cfull[(n, q)] - bb[n] >= lw
+check(loc_err < 1e-12, f"flat usage, kappa 1: the target mix within each pitch equals v0.9's ({n_sit} situations)", f"largest gap {loc_err:.1e}")
+check(order_bad == 0, "flat usage, kappa 1: pitch-type order follows v0.9's best costs wherever they differ by more than T",
+      f"{order_bad} of {order_n} pairs out of order")
+check(sum_err < 1e-12 and outside == 0 and beyond == 0, "shares sum to 1; nothing outside the guards or past a location window is picked",
+      f"sum error {sum_err:.1e}, outside {outside}, past window {beyond}")
+check(res_max < e.QRE_TOL, f"the sit game converges on the whole CI grid (tables and root, {len(ci_main)} plate appearances)",
+      f"largest residual {res_max:.2e} (QRE_TOL {e.QRE_TOL})")
+mw = e.mix_weights(ars("slider_best"), sit(1, 1, same_side=False))
+check(mw is not None and 0.95 < sum(mw[0].values()) <= 1.0 + 1e-9 and min(mw[0].values()) > 0,
+      "mix_prior.json loads; u_T for a three-pitch arsenal is positive and sums to just under 1 (kinds under 5% take the rest)",
+      f"{ {k: round(v, 3) for k, v in mw[0].items()} } sum {sum(mw[0].values()):.3f}")
+two_sl = [e.Pitch("FB", "FB", 3, 3, 0.8), e.Pitch("SL1", "SL", 3, 3, 0.8), e.Pitch("SL2", "SL", 3, 3, 0.8), e.Pitch("CH", "CH", 3, 3, 0.8)]
+mw2 = e.mix_weights(two_sl, sit(1, 1))
+check(abs(mw2[0]["SL1"] - mw2[0]["SL2"]) < 1e-15 and abs(mw2[0]["SL1"] * 2 - e.MIX_PRIOR["u_T"]["FB+SL+CH"]["1-1"]["same"]["SL"]) < 1e-12,
+      "two pitches of one kind split that kind's usage evenly")
+
 print()
 if FAILS:
     print(f"{len(FAILS)} v1.0 check(s) FAILED: " + "; ".join(FAILS))

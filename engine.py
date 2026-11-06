@@ -1263,11 +1263,40 @@ def _soft(costs, temp, w, ref):
     return {k: v / t for k, v in wt.items() if v > 0} if t > 0 else {}
 
 
-def policy_from_costs(costs, s, temp):
-    """v0.8 two-stage operator Phi (A2: continuous form of v0.7c's). Pitch type: softmax over each pitch's best cost,
-    weight tapered to zero at the never-pick window. Location within a pitch: softmax from the pitch's own best, inside a
-    window that shrinks from LOC_WINDOW as the pitch's best falls behind the overall best (floor 20%), tapered the same
-    way. Nothing outside either window is ever picked. costs: {(name, q): cost} of allowed calls."""
+# v1.0 3.7 the mixing operator weighted by real usage (mix_prior.json, fit_mix_prior.py). KAPPA_T and KAPPA_L scale the
+# temperature for the pitch-type and target stages; Phase 5 tunes them (KAPPA_T in [1, 6], KAPPA_L in [1, 3]).
+KAPPA_T = 3.0
+KAPPA_L = 1.0
+try:
+    MIX_PRIOR = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "mix_prior.json")))
+except Exception:
+    MIX_PRIOR = None
+
+
+def mix_weights(arsenal, s):
+    """3.7 real usage in this count and platoon: (u_T {pitch name: weight}, u_L {pitch name: {target: weight}}). u_T is
+    the arsenal's composition table when one was fitted (40+ pitcher-seasons), else the all-pitcher table; two pitches of
+    one kind split that kind's usage evenly. The operator renormalizes both over what survives. None without the file."""
+    if not MIX_PRIOR:
+        return None
+    kinds = [x.kind for x in arsenal]
+    comp = "+".join(k for k in KINDS if k in kinds)
+    c, pl = f"{s.balls}-{s.strikes}", ("same" if s.same_side else "opp")
+    tab = (MIX_PRIOR["u_T"].get(comp) or MIX_PRIOR["u_T"]["all"])[c][pl]
+    uT = {x.name: tab[x.kind] / kinds.count(x.kind) for x in arsenal}
+    uL = {x.name: MIX_PRIOR["u_L"][x.kind][c][pl] for x in arsenal}
+    return uT, uL
+
+
+def policy_from_costs(costs, s, temp, u=None):
+    """v1.0 3.7 two-stage quantal response weighted by real usage. For pitch n with best cost best_n among its calls,
+    location window lw (v0.8's formula, unchanged) and u_L renormalized over its calls:
+      w(n,q) = u_L(q) exp(-(c(n,q) - best_n)/lam_L) taper(c(n,q) - best_n, lw),   lam_L = KAPPA_L T
+      c_n = best_n - lam_L log sum_q w(n,q)                                          (soft minimum over its targets)
+      pi_n ∝ u_T(n) exp(-(c_n - min_m c_m)/lam_T),                                   lam_T = KAPPA_T T, u_T renormalized
+      pi(q|n) = w(n,q) / sum_q w(n,q)
+    No cutoff window on pitch type (the pitch-type guard in root_call does that job). A spot past its location window is
+    never picked. u None: flat usage. costs: {(name, q): cost} of allowed calls, in call order."""
     win, lwin = windows(s)
     names = []
     for (n, q) in costs:
@@ -1275,17 +1304,42 @@ def policy_from_costs(costs, s, temp):
             names.append(n)
     best_by = {n: min(c for (m, q), c in costs.items() if m == n) for n in names}
     overall = min(best_by.values())
-    pp = _soft(best_by, temp, win, overall)
-    pi = {}
-    for n, pn in pp.items():
+    lam_l, lam_t = KAPPA_L * temp, KAPPA_T * temp
+    uT, uL = u if u else ({}, {})
+    wts, c_n = {}, {}
+    for n in names:
+        qs = [q for (m, q) in costs if m == n]
+        ul = uL.get(n)
+        tot_l = sum([ul.get(q, 0.0) for q in qs]) if ul else 0.0
         lw = max(TAPER * lwin, lwin - (best_by[n] - overall))
-        loc = _soft({q: c for (m, q), c in costs.items() if m == n}, temp, lw, best_by[n])
-        for q, pq in loc.items():
-            pi[(n, q)] = pn * pq
+        w = {}
+        for q in qs:
+            g = costs[(n, q)] - best_by[n]
+            uq = ul.get(q, 0.0) / tot_l if tot_l > 0 else 1.0 / len(qs)
+            w[q] = uq * exp(-g / lam_l) * _taper(g, lw)
+        wts[n] = w
+        sw = sum(list(w.values()))
+        c_n[n] = best_by[n] - lam_l * log(sw) if sw > 0 else float("inf")
+    cmin = min(c_n.values())
+    tot_t = sum([uT.get(n, 0.0) for n in names]) if uT else 0.0
+    pt = {}
+    for n in names:
+        ut = uT.get(n, 0.0) / tot_t if tot_t > 0 else 1.0 / len(names)
+        pt[n] = ut * exp(-(c_n[n] - cmin) / lam_t) if c_n[n] < float("inf") else 0.0
+    zt = sum(list(pt.values()))
+    pi = {}
+    for n in names:
+        if pt[n] <= 0:
+            continue
+        pn = pt[n] / zt
+        sw = sum(list(wts[n].values()))
+        for q, wq in wts[n].items():
+            if wq > 0:
+                pi[(n, q)] = pn * (wq / sw)
     return pi
 
 
-def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
+def solve_sit_game(M, ks, s, temp, b_h=None, usage=None, u=None):
     """2.3 (A2) the quantal-response balance point. pi = Phi(M sigma) exactly at every step, so the residual is
     ||sigma - sigma*(pi~)||_inf; sigma moves by a damped step w (0.3, halved whenever the residual grows, floor 0.002)
     until the residual < QRE_TOL or QRE_ITERS steps. Deterministic. Returns (pi, sigma, residual)."""
@@ -1297,7 +1351,7 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
         return {a: (4 * p_.get(a, 0.0) + usage.get(a, 0)) / (4 + n_u) for a in calls} if n_u else p_
 
     def phi(sg):
-        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp)
+        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp, u)
 
     sg = {k: 1.0 / len(ks) for k in ks}
     w, last = 0.3, None
@@ -1497,10 +1551,11 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
                          b_h=dict(s.b_h))
             temp = temperature(arsenal, sc)
             calls = allowed_calls(arsenal, sc)
+            u = mix_weights(arsenal, sc)
             # sit game at the PA's starting look
             scH = replace(sc, look=tab.h0)
             M = {a: {kk: cost08(by[a[0]], a[1], scH, arsenal, tab, tab.h0, ("pure",) + kk)[0] for kk in ks} for a in calls}
-            pi, sg, res = solve_sit_game(M, ks, sc, temp, sc.b_h)
+            pi, sg, res = solve_sit_game(M, ks, sc, temp, sc.b_h, None, u)
             tab.sigma[(b, k)] = sg
             tab.residuals.append(res)
             for bn in tab.bins:
@@ -1509,7 +1564,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
                 scL = replace(sc, look=look)
                 for a in calls:
                     cs[a], Ps[a] = cost08(by[a[0]], a[1], scL, arsenal, tab, look, ("mix", sg))
-                pol = policy_from_costs(cs, sc, temp)
+                pol = policy_from_costs(cs, sc, temp, u)
                 new = sum(pv * cs[a] for a, pv in pol.items())
                 delta = max(delta, abs(new - tab.V[(b, k)][bn]))
                 tab.V[(b, k)][bn] = new
@@ -1571,7 +1626,7 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     else:
         M = {a: M[a] for a in keep}
     usage = s.usage_by_call
-    pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
+    pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage, mix_weights(arsenal, s))
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
     return pi, sg, full, res, M
 
