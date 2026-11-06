@@ -1345,7 +1345,7 @@ def _drop(out, notes, key, gone):
     if len(kept) == len(out):
         return out
     if not kept:
-        notes[key + "_stood_down"] = True
+        notes[key + "_stood_down"] = "nothing"
         return out
     notes[key] = sorted(set(out) - set(kept))
     return kept
@@ -1369,6 +1369,17 @@ def call_rules(arsenal, s, exclude=None):
                 if chase_ok and s.bases[2] and any(a[0] in bad and a[1] == "chase" for a in out):
                     notes["LAND3"] = sorted(a for a in out if a[0] in bad and a[1] == "chase")
                 out = kept
+    # 3.5 coach rules, standing down in fallback mode (3.2) or when they would leave nothing
+    cr1 = {(p.name, key.split("|")[2]) for key, n in (s.matchup or {}).items() if key.startswith("hard|") and n >= 2
+           for p in arsenal if p.kind == key.split("|")[1]}          # CR1 mashed it twice: that pitch type at that spot
+    cr2 = {(p.name, "middle") for p in arsenal} if (s.grades or {}).get("w", 3) >= 4 else set()   # CR2 don't feed power
+    for key, gone in (("CR1", cr1), ("CR2", cr2)):
+        if not gone or not any(a in gone for a in out):
+            continue
+        if notes.get("fallback"):
+            notes[key + "_stood_down"] = "fallback"
+        else:
+            out = _drop(out, notes, key, gone)
     h = s.history
     if h:
         # 3.1 RP1, no third time: the last two pitches were both this exact call
@@ -1812,18 +1823,22 @@ RULE_LINES = {"fallback": "Nothing's working. Going with what's landing. Think a
               "RP1": "Not the same pitch and spot a third time."}
 RULE_ORDER = ("fallback", "LAND3", "CR1", "CR2", "RP2", "RP1")
 STOOD_DOWN = {"nothing": " Standing down: nothing else left to call.", "fallback": " Standing down: nothing's trusted."}
+CR_NAME = {"CR1": "Hit-hard-twice", "CR2": "Power-hitter"}
 
 
 def rule_line(notes):
+    """The rule part of the why line, or None. The first rule in RULE_ORDER that removed calls gives the line; a coach rule
+    that stood down (3.5) says so, as its own line when no rule removed anything, else as a short suffix."""
     if not notes:
         return None
-    for key in RULE_ORDER:
-        if key in notes:
-            return RULE_LINES[key]
-        if key + "_stood_down" in notes:
-            return RULE_LINES[key] + STOOD_DOWN[notes[key + "_stood_down"] if isinstance(notes[key + "_stood_down"], str)
-                                                else "nothing"]
-    return None
+    primary = next((RULE_LINES[k] for k in RULE_ORDER if k in notes), None)
+    stood = [k for k in ("CR1", "CR2") if k + "_stood_down" in notes]
+    if primary is None:
+        if stood:
+            return RULE_LINES[stood[0]] + STOOD_DOWN[notes[stood[0] + "_stood_down"]]
+        rp = next((k for k in ("RP2", "RP1") if k + "_stood_down" in notes), None)
+        return RULE_LINES[rp] + STOOD_DOWN["nothing"] if rp else None
+    return primary + "".join(f" {CR_NAME[k]} rule standing down." for k in stood)
 
 
 def why_line(arsenal, s, tab, pick, info):

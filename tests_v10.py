@@ -185,6 +185,55 @@ check(e.needs_resolve(fz, a, replace(s0, balls=1, strikes=1, bases=(False, True,
 check(e.needs_resolve(fz, a, replace(s0, balls=1, strikes=1, bases=(False, False, False), outs=2)), "caught stealing (runner gone, out added): re-solve")
 check(e.needs_resolve(fz, a, replace(s0, outs=2)), "outs change alone: re-solve")
 
+# ---------------------------------------------------------------------------
+print("3.5 coach rules")
+sys.path.insert(0, os.path.join(HERE, "readthrough"))
+import scenarios_v10 as S10
+doc10, _ = S10.load()
+rows = {r["id"]: r for r in doc10["rows"]}
+for rid, what in (("I4", "FB middle"), ("H1", "middle (every pitch)")):
+    a_, s_, ex_ = S10.build(doc10, rows[rid])
+    s_ = replace(s_, win=e.win_constants(s_)) if s_.home is not None else s_
+    tab_ = e.solve_table(a_, replace(s_, balls=0, strikes=0, last=None, history=()))
+    sh, info, pick, tab_, sx = dist(a_, s_, tab=tab_)
+    v = sh.get(("Fastball", "middle"), 0.0) if rid == "I4" else sum(x for (n, q), x in sh.items() if q == "middle")
+    check(v == 0.0, f"{rid}: {what} 0%", f"{v:.4f}; why: {e.why_line(a_, sx, tab_, pick, info)[0]}")
+a = ars("slider_best")
+mm = {"hard|FB|middle": 2}
+worst = 0.0
+for (b, k) in e.COUNTS:
+    sh, *_ = dist(a, sit(b, k, matchup=mm))
+    worst = max(worst, sh.get(("Fastball", "middle"), 0.0))
+check(worst == 0.0, "CR1: hit hard twice at FB middle -> FB middle 0% in all 12 counts", f"largest {worst:.4f}")
+check(("Fastball", "middle") in e.allowed_calls(a, sit(1, 1, matchup={"hard|FB|middle": 1})), "CR1: once is not enough")
+worst = 0.0
+for g in (4, 5):
+    for (b, k) in e.COUNTS:
+        sh, *_ = dist(a, sit(b, k, grades={"w": g}))
+        worst = max(worst, sum(x for (n, q), x in sh.items() if q == "middle"))
+check(worst == 0.0, "CR2: power 4 and 5 -> no middle for any pitch in any count", f"largest {worst:.4f}")
+check(any(q == "middle" for _, q in e.allowed_calls(a, sit(3, 0, grades={"w": 3}))), "CR2: power 3 keeps the middle")
+sh, info, pick, tab, s_ = dist(a, sit(1, 1, grades={"w": 5}))
+check(e.why_line(a, s_, tab, pick, info)[0] == "Power hitter: stay off the middle.", "CR2 why line", e.why_line(a, s_, tab, pick, info)[0])
+sh, info, pick, tab, s_ = dist(a, sit(1, 1, matchup=mm))
+check(e.why_line(a, s_, tab, pick, info)[0] == "He's hit this hard twice today.", "CR1 why line", e.why_line(a, s_, tab, pick, info)[0])
+# stand-downs: fallback mode, and nothing left
+low = ars("slider_best", {n: {"conf": 0.30} for n in ("Fastball", "Slider", "Changeup")})
+calls, notes = e.call_rules(low, sit(1, 1, grades={"w": 5}))
+sh, info, pick, tab, s_ = dist(low, sit(1, 1, grades={"w": 5}))
+check(any(q == "middle" for _, q in calls) and notes.get("CR2_stood_down") == "fallback" and
+      e.why_line(low, s_, tab, pick, info)[0].endswith("Power-hitter rule standing down."),
+      "CR2 stands down in fallback mode and the why line says so", e.why_line(low, s_, tab, pick, info)[0])
+calls, notes = e.call_rules(low, sit(1, 1, matchup=mm))
+check(notes.get("CR1_stood_down") == "fallback" and e.rule_line(notes).endswith("Hit-hard-twice rule standing down."),
+      "CR1 stands down in fallback mode and says so", e.rule_line(notes))
+ex = {(n, q) for n in ("Fastball", "Slider", "Changeup") for q in e.QUADS if q != "middle"}
+calls, notes = e.call_rules(a, sit(1, 1, grades={"w": 5}), exclude=ex)
+check(calls and all(q == "middle" for _, q in calls) and notes.get("CR2_stood_down") == "nothing",
+      "CR2 stands down when it would leave nothing", f"{calls} {notes}")
+check(e.rule_line(notes) == "Power hitter: stay off the middle. Standing down: nothing else left to call.", "stand-down why line",
+      e.rule_line(notes))
+
 print()
 if FAILS:
     print(f"{len(FAILS)} v1.0 check(s) FAILED: " + "; ".join(FAILS))
