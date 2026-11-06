@@ -286,7 +286,7 @@ type Proposal = { pitcher_id: string; pitch: string; field: 'velo'|'shape'|'slot
 
 Every acceptance check passes in a fresh run. The full test suite is green. `npm run build` passes. The final report lists **Verified** (with command output) vs **Not verified** (with the reason). Nothing is called done without output.
 
-## Amendments (A1–A10 accepted by Drew, Nov 5 11:44; A11 and A12 proposed)
+## Amendments (A1–A10 accepted by Drew, Nov 5 11:44; A11 to A13 proposed)
 
 **A1. One parent account, several children.**
 - A parent can link one login to several player spots on a team, for example two under-13 siblings.
@@ -398,6 +398,13 @@ The landing page and email capture ship with Plan 0.
 - The last active team can't be removed: to stop altogether, the owner cancels in Stripe's billing portal. A removed team can be kept again before its year ends, with no charge.
 - A second subscription paid while the first is live (two Checkouts in two tabs) is logged and refunded by hand.
 - Affects D5, D6 and D7.
+
+**A13. Marketing site 3D (proposed Nov 6, built on the branch; awaiting Drew's approval).**
+- three.js directly instead of React Three Fiber, drei, GSAP ScrollTrigger and Lenis. The site has two small scenes (the hero pitch and the movement cloud); each is one module that loads only after the page is up and only near the screen, so React and a scroll library would add bytes and work for no gain. Scroll motion is native: CSS scroll timelines where supported, and nothing where not.
+- Colors stay on the Pitch Caller design system (Drew's Nov 5 call), not the blue and orange in "Marketing site direction".
+- The live demo runs engine v0.7c, the engine the iPad app ships. The at-bat shown above it (hero and "One at-bat, four calls") still comes from the unmerged v0.8 branch, so its reasons read differently from the demo's until the v0.8 decision.
+- The movement cloud uses labelled sample data, not a real player's file.
+- Affects D14.
 
 ## Change control
 

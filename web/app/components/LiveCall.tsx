@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { AT_BAT } from "@/content/at-bat";
 import { CallBand } from "./CallBand";
-import { Zone } from "./Zone";
+import { Lights } from "./Lights";
+import { PitchStage } from "./PitchStage";
 
 // Plays the real at-bat in content/at-bat.ts the way the app shows it: the call with its reason, then what happened.
 const CALL_MS = 2600;
@@ -16,15 +17,6 @@ function next({ i, phase }: Step): Step {
   if (phase === "call") return { i, phase: "result" };
   if (phase === "result") return i < AT_BAT.length - 1 ? { i: i + 1, phase: "call" } : { i, phase: "end" };
   return { i: 0, phase: "call" };
-}
-
-function Lights({ n, of, label }: { n: number; of: number; label: string }) {
-  return (
-    <span className="lights" role="img" aria-label={`${n} ${n === 1 ? label.replace(/s$/, "") : label}`}>
-      <span aria-hidden="true">{label[0].toUpperCase()}</span>
-      {Array.from({ length: of }, (_, k) => <i key={k} className={k < n ? "on" : ""} />)}
-    </span>
-  );
 }
 
 export function LiveCall() {
@@ -72,7 +64,7 @@ export function LiveCall() {
             {out ? "Strikeout swinging" : after ? p.result : `Pitch ${step.i + 1} of the at-bat`}
           </p>
         </div>
-        <Zone pitches={AT_BAT} current={step.i} />
+        <PitchStage pitches={AT_BAT} current={step.i} />
       </div>
 
       <button type="button" className="call-pause" onClick={() => setPlaying((v) => !v)}
