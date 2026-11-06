@@ -63,7 +63,9 @@ TRUTH_TAB = os.environ.get("TRUTH_TAB", "")
 #                     the 8.2 hard-contact term (hitter_grades) and, if the world has power_avoid, item 8's home-run effect,
 #                     in the truth values and in the batted-ball draw (run_ball_in_play_typed).
 #   SEE_POWER=1       (with TRUE_POWER) the engine is told a coach's power grade: the true grade rounded to a whole number.
+#   LAND_BLOCK_EST=x  the landing filter's threshold on the shrunk strike rate (engine.LAND_BLOCK_EST, normally 0.40)
 GUARD_DELTA_ENV = os.environ.get("GUARD_DELTA", "")
+LAND_BLOCK_EST_ENV = os.environ.get("LAND_BLOCK_EST", "")
 TRUE_POWER = os.environ.get("TRUE_POWER", "") == "1"
 SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
 
@@ -713,6 +715,8 @@ def apply_engine_env():
     global WORLD_FLAGS
     if GUARD_DELTA_ENV:
         engine.GUARD_DELTA = float(GUARD_DELTA_ENV)
+    if LAND_BLOCK_EST_ENV:
+        engine.LAND_BLOCK_EST = float(LAND_BLOCK_EST_ENV)
     WORLD_FLAGS = {"v09w": dict(engine.FLAGS_V08, inside_v09=True, matchup_memory=True, power_avoid=True)}[WORLD] if WORLD else None
     for sign, rest in (("+", spec[3:]) if spec[3:4] == "+" else ("-", spec[3:]) if spec[3:4] == "-" else ("", ""),):
         for f in [x for x in rest[1:].split(",") if x]:

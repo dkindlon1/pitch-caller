@@ -13,7 +13,7 @@ seed = int(sys.argv[2]) if len(sys.argv) > 2 else 808
 F.rng.seed(seed)
 rng = random.Random(seed + 1)
 MODE = os.environ.get("PARITY_FLAGS", "v08")
-# v09 parity also turns on inside_v09 (built but off in FLAGS_V09) so every v0.9 term is checked against JS
+# v09 parity sets inside_v09 explicitly (it has been on in FLAGS_V09 since Drew's STEP4b call; kept so the check holds either way)
 e.set_flags(**{"v08": e.FLAGS_V08, "v09": dict(e.FLAGS_V09, inside_v09=True)}[MODE])
 OUT = f"app/parity_{MODE}_cases.json"
 

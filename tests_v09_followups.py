@@ -79,7 +79,8 @@ check(all(abs(hi[k] - base[k]) < 1e-15 for k in ("single", "double", "triple", "
 check(abs(sum(hi.values()) - sum(base.values())) < 1e-12, "the distribution still sums to the same total")
 
 # --- TRUE_POWER defaults: off, and the true grade reaches only the world's situation
-check(not simulate.TRUE_POWER and not simulate.SEE_POWER and simulate.GUARD_DELTA_ENV == "", "all follow-up settings off by default")
+check(not simulate.TRUE_POWER and not simulate.SEE_POWER and simulate.GUARD_DELTA_ENV == "" and simulate.LAND_BLOCK_EST_ENV == "",
+      "all follow-up settings off by default")
 h = {"name": "#1", "hand": "R", "fb": 0.1, "os": -0.1, "timing": 0.0}
 s0 = e.Situation(0, 0, 0, (False,) * 3, level="college_d3")
 check(simulate.true_situation(s0, h).grades is None, "no true grade: world situation unchanged")

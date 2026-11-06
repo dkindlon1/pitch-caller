@@ -37,6 +37,8 @@ _GAMES = {}
 def standdown(p):
     """The filter stands down when every pitch he has is not landing. Lists his other pitches' landing at that moment
     (pitches he has thrown today in this game; one he hasn't thrown counts as landing)."""
+    if p.get("trusted") == "0":
+        return "he trusted no pitch, so candidates() fell back to his one most-trusted pitch; nothing to give way to"
     rows = _GAMES[p["game"]]
     land = defaultdict(lambda: [0, 0])
     for r in rows:
@@ -66,7 +68,8 @@ def analyse(d):
     return dict(dir=d, games=games, pitches=len(pitches), r3_pitches=len(r3), low_brk_r3=len(low), flagged=flag,
                 brk_share=len(brk) / len(pitches), brk_low_share=sum(p["quad"] in LOW for p in brk) / max(1, len(brk)),
                 r3_low_share=len(low) / max(1, len(r3)),
-                land_dist=Counter((p["land_thrown"] >= 4, p["land_thrown"] and p["land_strikes"] / p["land_thrown"] < 0.5) for p in low))
+                land_dist=Counter("under4" if p["land_thrown"] < 4 else "low" if p["land_strikes"] / p["land_thrown"] < 0.5 else "ok"
+                                  for p in low))
 
 
 def main():
@@ -88,8 +91,8 @@ def main():
     L.append("Landing record behind the low R3 breaking-ball calls (4+ thrown today, raw strike rate under 50%):")
     for r in R:
         dd = r["land_dist"]
-        L.append(f"  {os.path.basename(r['dir'].rstrip('/')):16s} under 4 thrown {dd[(False, True)] + dd[(False, False)] + dd.get((False, 0), 0):4d}"
-                 f" | 4+ and >= 50% {dd[(True, False)]:4d} | 4+ and < 50% (flagged) {dd[(True, True)]:4d}")
+        L.append(f"  {os.path.basename(r['dir'].rstrip('/')):16s} under 4 thrown {dd['under4']:4d}"
+                 f" | 4+ and >= 50% {dd['ok']:4d} | 4+ and < 50% (flagged) {dd['low']:4d}")
     L.append("")
     alts = [("as built: 4+ thrown, shrunk est <= 0.40", 4, 0.40), ("shrunk est <= 0.45", 4, 0.45),
             ("shrunk est <= 0.48", 4, 0.48), ("shrunk est <= 0.50", 4, 0.50)]

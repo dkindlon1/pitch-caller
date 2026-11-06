@@ -1,0 +1,78 @@
+v0.9 follow-up A: low breaking balls not landing, runner on 3rd, < 2 outs
+
+                                       v08_in_v09w             v09
+games                                           90              90
+pitches                                      14726           14907
+R3 < 2 outs pitches                            860            1176
+  low SL/CB calls there                         70             117
+  share of R3 pitches                         8.1%            9.9%
+breaking-ball share, all pitches             31.9%           33.7%
+  share of them low                          33.1%           35.1%
+flagged (read.py rule)                          14              35
+  share of low R3 breakers                   20.0%           29.9%
+
+Landing record behind the low R3 breaking-ball calls (4+ thrown today, raw strike rate under 50%):
+  v08_in_v09w      under 4 thrown    8 | 4+ and >= 50%   48 | 4+ and < 50% (flagged)   14
+  v09              under 4 thrown   15 | 4+ and >= 50%   67 | 4+ and < 50% (flagged)   35
+
+How many flagged calls each filter threshold would have left out (counting only, games not replayed):
+  as built: 4+ thrown, shrunk est <= 0.40          1 of 14         1 of 35  
+  shrunk est <= 0.45                               5 of 14         7 of 35  
+  shrunk est <= 0.48                               9 of 14        20 of 35  
+  shrunk est <= 0.50                              13 of 14        29 of 35  
+
+Flagged calls, v08_in_v09w (14):
+  game                          pa count call                      landing   raw   est filter
+  college_d1_four_pitch_s110    30   1-2 Slider down-away           6/14     43%  0.47 allows (est > 0.40)
+  college_d1_two_pitch_s106     14   0-1 Curveball down-away        8/17     47%  0.50 allows (est > 0.40)
+  college_d1_two_pitch_s106     14   1-1 Curveball down-away        8/18     44%  0.47 allows (est > 0.40)
+  college_d3_default_s102       38   0-0 Curveball down-away        3/9      33%  0.42 allows (est > 0.40)
+  college_d3_default_s102       38   0-1 Curveball down-away        4/10     40%  0.46 allows (est > 0.40)
+  college_d3_default_s103       23   2-2 Slider down-away          11/24     46%  0.48 allows (est > 0.40)
+  college_d3_default_s103       23   2-2 Slider down-away          12/25     48%  0.50 allows (est > 0.40)
+  college_d3_default_s107       50   0-2 Curveball down-away       14/29     48%  0.50 allows (est > 0.40)
+  college_d3_four_pitch_s110    23   0-2 Slider chase               9/21     43%  0.46 allows (est > 0.40)
+  college_d3_four_pitch_s110    49   1-2 Curveball down-away        2/7      29%  0.41 allows (est > 0.40)
+  hs_two_pitch_s106             34   1-0 Slider down-away           1/4      25%  0.43 allows (est > 0.40)
+  hs_two_pitch_s106             34   1-1 Slider down-away           2/5      40%  0.49 allows (est > 0.40)
+  hs_two_pitch_s106             35   0-0 Slider down-away           2/8      25%  0.38 blocks, unless: NOT explained (Fastball 39/70 est 0.56)
+  hs_two_pitch_s106             35   0-1 Slider down-away           3/9      33%  0.42 allows (est > 0.40)
+
+Flagged calls, v09 (35):
+  game                          pa count call                      landing   raw   est filter
+  college_d1_default_s101        7   1-2 Slider down-away           6/14     43%  0.47 allows (est > 0.40)
+  college_d1_default_s105       39   2-1 Curveball down-away        1/4      25%  0.43 allows (est > 0.40)
+  college_d1_four_pitch_s101    14   0-0 Curveball down-away        4/10     40%  0.46 allows (est > 0.40)
+  college_d1_four_pitch_s101    14   0-2 Curveball down-away        5/11     45%  0.49 allows (est > 0.40)
+  college_d1_four_pitch_s102    24   1-2 Slider down-away           6/13     46%  0.49 allows (est > 0.40)
+  college_d1_two_pitch_s107     38   0-0 Slider down-away          10/21     48%  0.50 allows (est > 0.40)
+  college_d1_two_pitch_s107     40   0-1 Slider down-away          10/23     43%  0.46 allows (est > 0.40)
+  college_d3_four_pitch_s102     9   1-2 Slider down-away           4/10     40%  0.46 allows (est > 0.40)
+  college_d3_four_pitch_s103    27   1-2 Curveball down-away        8/18     44%  0.47 allows (est > 0.40)
+  college_d3_four_pitch_s103    54   1-2 Curveball down-away       10/22     45%  0.48 allows (est > 0.40)
+  college_d3_four_pitch_s103    54   2-2 Curveball down-away       11/24     46%  0.48 allows (est > 0.40)
+  college_d3_two_pitch_s101     12   1-2 Curveball chase            1/5      20%  0.39 allows (2-strike chase)
+  college_d3_two_pitch_s102     21   0-0 Curveball down-away       14/30     47%  0.48 allows (est > 0.40)
+  college_d3_two_pitch_s102     21   0-1 Curveball down-away       15/31     48%  0.50 allows (est > 0.40)
+  college_d3_two_pitch_s104     11   0-0 Curveball down-away        2/5      40%  0.49 allows (est > 0.40)
+  college_d3_two_pitch_s106     18   1-1 Curveball down-away        8/19     42%  0.45 allows (est > 0.40)
+  college_d3_two_pitch_s106     19   0-0 Curveball down-away        8/22     36%  0.40 allows (est > 0.40)
+  college_d3_two_pitch_s106     21   2-2 Curveball down-away       10/25     40%  0.43 allows (est > 0.40)
+  college_d3_two_pitch_s110     16   1-0 Curveball down-away        8/22     36%  0.40 allows (est > 0.40)
+  college_d3_two_pitch_s110     16   1-1 Curveball down-away        9/23     39%  0.42 allows (est > 0.40)
+  hs_default_s103               11   1-2 Slider down-away           7/15     47%  0.49 allows (est > 0.40)
+  hs_default_s105               50   0-2 Curveball chase            1/5      20%  0.39 allows (2-strike chase)
+  hs_default_s107               48   0-2 Curveball down-away       11/25     44%  0.46 allows (est > 0.40)
+  hs_default_s110               25   0-2 Slider chase               5/15     33%  0.40 allows (2-strike chase)
+  hs_four_pitch_s102            24   0-0 Curveball down-away        5/11     45%  0.49 allows (est > 0.40)
+  hs_four_pitch_s103            39   0-2 Curveball chase            5/15     33%  0.40 allows (2-strike chase)
+  hs_two_pitch_s105             32   0-0 Slider down-away           4/10     40%  0.46 allows (est > 0.40)
+  hs_two_pitch_s106             13   3-0 Curveball down-in          8/17     47%  0.50 allows (est > 0.40)
+  hs_two_pitch_s106             14   0-0 Curveball down-away        8/18     44%  0.47 allows (est > 0.40)
+  hs_two_pitch_s106             14   2-0 Curveball down-away        8/19     42%  0.45 allows (est > 0.40)
+  hs_two_pitch_s106             21   3-0 Curveball down-in         11/36     31%  0.34 blocks, unless: he trusted no pitch, so candidates() fell back to his one most-trusted pitch; nothing to give way to
+  hs_two_pitch_s106             49   0-0 Slider down-away           8/21     38%  0.42 allows (est > 0.40)
+  hs_two_pitch_s107             42   1-2 Slider chase               1/7      14%  0.33 allows (2-strike chase)
+  hs_two_pitch_s108             42   1-0 Slider down-away          14/31     45%  0.47 allows (est > 0.40)
+  hs_two_pitch_s109              6   0-2 Curveball chase            1/5      20%  0.39 allows (2-strike chase)
+
