@@ -1,0 +1,8 @@
+Low breaking balls not landing, runner on 3rd, < 2 outs, in the 27 fixed-yardstick games (seeds 101-103 only)
+  v0.8                                   games 27 | flagged   4 | R3 < 2 out pitches  227 | per 100 such pitches  1.8
+  v0.9, guardrail on 0.010               games 27 | flagged   8 | R3 < 2 out pitches  329 | per 100 such pitches  2.4
+  v0.9, guardrail on 0.020               games 27 | flagged   6 | R3 < 2 out pitches  308 | per 100 such pitches  1.9
+  v0.9, guardrail on 0.030               games 27 | flagged  14 | R3 < 2 out pitches  376 | per 100 such pitches  3.7
+  v0.9 as built (landing est <= 0.40)    games 27 | flagged  14 | R3 < 2 out pitches  377 | per 100 such pitches  3.7
+  v0.9, landing est <= 0.45              games 27 | flagged  11 | R3 < 2 out pitches  338 | per 100 such pitches  3.3
+  v0.9, landing est <= 0.48              games 27 | flagged  13 | R3 < 2 out pitches  330 | per 100 such pitches  3.9

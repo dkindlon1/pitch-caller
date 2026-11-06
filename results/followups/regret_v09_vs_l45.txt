@@ -1,0 +1,77 @@
+v09_in_v09w_tw vs v09_in_v09w_tw_l45: 27 paired games; runs per game, B minus A, SE over games
+
+[all] 27 games
+                      v09_in_v09w_tw v09_in_v09w_tw_l4     diff      SE
+  runs                         7.741             6.630   -1.111   0.665
+  pitches                    164.407           160.926   -3.481   4.444
+  regret_exp                   2.190             2.248   +0.058   0.089
+  regret_pick                  2.183             2.244   +0.061   0.087
+  regret_info                  0.898             1.022   +0.124   0.084
+  regret_w_exp                 1.694             1.664   -0.031   0.069
+  regret_w_pick                1.696             1.656   -0.040   0.074
+  regret_w_info                0.442             0.484   +0.043   0.046
+
+[hs] 9 games
+                      v09_in_v09w_tw v09_in_v09w_tw_l4     diff      SE
+  runs                         8.889             6.667   -2.222   1.256
+  pitches                    171.667           159.667  -12.000   8.372
+  regret_exp                   2.361             2.179   -0.183   0.108
+  regret_pick                  2.283             2.181   -0.103   0.109
+  regret_info                  0.671             0.708   +0.037   0.130
+  regret_w_exp                 2.014             1.782   -0.231   0.091
+  regret_w_pick                1.940             1.785   -0.155   0.105
+  regret_w_info                0.404             0.380   -0.024   0.078
+
+[college_d3] 9 games
+                      v09_in_v09w_tw v09_in_v09w_tw_l4     diff      SE
+  runs                         8.778             7.667   -1.111   1.296
+  pitches                    161.778           168.333   +6.556   9.469
+  regret_exp                   2.170             2.233   +0.062   0.192
+  regret_pick                  2.183             2.248   +0.065   0.206
+  regret_info                  0.839             0.855   +0.016   0.162
+  regret_w_exp                 1.689             1.709   +0.020   0.152
+  regret_w_pick                1.748             1.719   -0.029   0.183
+  regret_w_info                0.380             0.362   -0.017   0.058
+
+[college_d1] 9 games
+                      v09_in_v09w_tw v09_in_v09w_tw_l4     diff      SE
+  runs                         5.556             5.556   +0.000   0.866
+  pitches                    159.778           154.778   -5.000   3.300
+  regret_exp                   2.039             2.333   +0.294   0.121
+  regret_pick                  2.082             2.303   +0.220   0.110
+  regret_info                  1.182             1.503   +0.321   0.137
+  regret_w_exp                 1.380             1.500   +0.120   0.087
+  regret_w_pick                1.402             1.464   +0.063   0.078
+  regret_w_info                0.540             0.711   +0.170   0.092
+
+regret_w_pick by call, totals over all games (pitches, runs): v09_in_v09w_tw | v09_in_v09w_tw_l45 | B minus A
+  FB inside          351    4.39 |   373    4.75 |   +0.36
+  FB edge-away       884    9.03 |   911    9.24 |   +0.21
+  FB middle         1412    2.19 |  1369    2.36 |   +0.18
+  SL chase            28    0.40 |    38    0.56 |   +0.15
+  CB chase            13    0.29 |    18    0.42 |   +0.13
+  SL inside           28    0.47 |    38    0.60 |   +0.13
+  CH chase             4    0.10 |     7    0.16 |   +0.05
+  CB inside           15    0.36 |    21    0.41 |   +0.04
+  CH inside            7    0.15 |     7    0.19 |   +0.04
+  FB chase            30    0.47 |    28    0.44 |   -0.03
+  SL edge-away       292    2.99 |   268    2.94 |   -0.05
+  CH edge-away       152    3.59 |   134    3.46 |   -0.12
+  CB edge-away       242    3.69 |   257    3.55 |   -0.14
+  CB middle          386    7.55 |   378    7.36 |   -0.20
+  CH middle          163    4.42 |   135    3.52 |   -0.90
+  SL middle          432    5.70 |   363    4.76 |   -0.94
+
+regret_w_pick by count, totals over all games (pitches, runs): v09_in_v09w_tw | v09_in_v09w_tw_l45 | B minus A
+  1-2                318    2.75 |   319    3.05 |   +0.30
+  3-1                135    1.07 |   134    1.23 |   +0.16
+  1-1                406    4.91 |   408    4.93 |   +0.02
+  3-0                 93    0.45 |    85    0.47 |   +0.02
+  2-1                275    2.43 |   275    2.42 |   -0.01
+  2-2                300    2.33 |   299    2.27 |   -0.05
+  1-0                575    6.49 |   564    6.36 |   -0.13
+  0-2                197    1.92 |   183    1.79 |   -0.13
+  0-1                459    4.60 |   426    4.38 |   -0.22
+  2-0                242    3.44 |   238    3.22 |   -0.22
+  0-0               1234   13.74 |  1200   13.35 |   -0.40
+  3-2                205    1.67 |   214    1.25 |   -0.42
