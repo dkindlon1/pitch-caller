@@ -79,7 +79,7 @@
     // until that tab closes: say so instead of waiting forever
     let blocked = null;
     const opened = new Promise((res, rej) => { blocked = rej; });
-    r.onblocked = () => blocked(Object.assign(new Error("Pitch Caller is open in another tab or window (an older version). Close it there, then reload this page."), { code: "blocked" }));
+    r.onblocked = () => blocked(Object.assign(new Error("PitchIQ is open in another tab or window (an older version). Close it there, then reload this page."), { code: "blocked" }));
     r.onupgradeneeded = (e) => {
       const db = r.result, tx = r.transaction, from = e.oldVersion || 0;
       for (const [store, idx] of Object.entries(STORES)) {
@@ -148,7 +148,7 @@
     // Merge a backup into this device: newer updatedAt wins, so restoring an old backup never overwrites newer work.
     // The backup's schema is checked first: a newer one than this app reads is refused, never half-read (D0).
     async function importAll(data, { replace = false } = {}) {
-      if (!data || data.app !== "pitch-caller" || !data.stores) throw new Error("That file isn't a Pitch Caller backup");
+      if (!data || data.app !== "pitch-caller" || !data.stores) throw new Error("That file isn't a PitchIQ backup");
       const schema = +data.schema || 1;
       if (schema > VERSION) throw new Error(`That backup is from a newer version of the app (database version ${schema}; this app reads up to ${VERSION}). Update the app, then restore it.`);
       const unknown = Object.keys(data.stores).filter((s) => !(s in STORES));

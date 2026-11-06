@@ -52,6 +52,8 @@ export function UploadForm({ team, pitcher, hand, pitcherName, templates, today 
       if (code === "no_header" || code === "no_type") { setMapping(head); setMap(forced || {}); setError("This file isn't TrackMan or Rapsodo. Match its columns once and it'll be read the same way next time."); return; }
       setError((e as Error).message); return;
     }
+    // a file with several pitchers' pitches would mix their arsenals: it can't be saved as his
+    if (p.pitchers > 1) { setError(`This file has pitches from ${p.pitchers} different pitchers. Upload a file with only ${pitcherName}'s pitches.`); return; }
     const r = normalize(p);
     if (p.hand && p.hand !== hand) extra.push(`The file says he throws ${p.hand === "L" ? "left" : "right"}-handed; his profile says ${hand === "L" ? "left" : "right"}.`);
     setParsed(p); setRows(r); setWarn(p.warnings.concat(extra)); setUsed(saved && !forced ? saved : null);

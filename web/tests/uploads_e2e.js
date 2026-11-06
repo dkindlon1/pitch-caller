@@ -19,7 +19,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "json"], { cwd: ROOT, stdio: ["ignore", "pipe", "ignore"] }).toString());
 const ago = (n) => new Date(Date.now() - n * 86400000).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
 
-// TrackMan V3 columns; a right-hander's arm side is negative HorzBreak / RelSide in these files
+// TrackMan V3 columns. These files write a right-hander's arm side as negative HorzBreak / RelSide, the opposite of
+// the real TrackMan V3 data in tests/data/Track_Combo.csv, so the parser's flip is exercised here too
 const HEAD = "PitchNo,Date,Time,Pitcher,PitcherThrows,Batter,BatterSide,Inning,Balls,Strikes,TaggedPitchType,AutoPitchType,PitchCall,KorBB,PlayResult,RelSpeed,SpinRate,RelHeight,RelSide,Extension,InducedVertBreak,HorzBreak,PlateLocHeight,PlateLocSide,ExitSpeed";
 const tm = (n, date, o) => [n, date, "18:00:00", `"${o.name || "Brooks, Avery"}"`, "Right", '"Hitter, A"', o.side || "Right", 1, o.balls ?? 0, o.strikes ?? 0, o.type, o.type,
   o.call || "Undefined", "Undefined", "Undefined", o.velo, 2250, 5.8, -1.9, 6.1, o.ivb, o.hb, 2.5, 0.1, o.exit ?? ""].join(",");
@@ -38,6 +39,9 @@ function gameFile(date) {
   for (let i = 0; i < 3; i++) L.push(tm(++n, date, { name: "Other, Guy", type: "Fastball", velo: 85, ivb: 15, hb: -8, call: "BallCalled" }));
   return L.join("\n");
 }
+// a TrackMan file with two pitchers known only by ID (as in Track_Combo.csv): it isn't his alone
+const TWO = "PitcherId,PitcherThrows,TaggedPitchType,RelSpeed,InducedVertBreak,HorzBreak\n" +
+  Array.from({ length: 12 }, (_, i) => `${i % 2 ? 1000023 : 1000077},Right,Fastball,${89 + (i % 3)},17,9`).join("\n") + "\n";
 const ODD = "Throw,MPH,Up,Over,When\n" + Array.from({ length: 10 }, (_, i) => `Fastball,${88 + (i % 2)},16,8,${ago(10)}`).join("\n") + "\n";
 
 (async () => {
@@ -80,8 +84,8 @@ const ODD = "Throw,MPH,Up,Over,When\n" + Array.from({ length: 10 }, (_, i) => `F
   for (const [who, role] of [["asst", "pitching"], ["caller", "caller"]]) await rpc(who, "pc_accept_invite", { tok: await rpc("coach", "pc_invite", { p: team, member_role: role, pitcher: null, invite_email: null, under13: false }) });
 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "pq-uploads-"));
-  const files = { pen: path.join(tmp, "avery_bullpen.csv"), game: path.join(tmp, "game_trackman.csv"), odd: path.join(tmp, "yakker.csv") };
-  fs.writeFileSync(files.pen, bullpen(ago(1))); fs.writeFileSync(files.game, gameFile(ago(3))); fs.writeFileSync(files.odd, ODD);
+  const files = { pen: path.join(tmp, "avery_bullpen.csv"), game: path.join(tmp, "game_trackman.csv"), odd: path.join(tmp, "yakker.csv"), two: path.join(tmp, "two_pitchers.csv") };
+  fs.writeFileSync(files.pen, bullpen(ago(1))); fs.writeFileSync(files.game, gameFile(ago(3))); fs.writeFileSync(files.odd, ODD); fs.writeFileSync(files.two, TWO);
 
   const web = spawn(process.execPath, [path.join(WEB, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT), "-H", "localhost"], {
     cwd: WEB, env: { ...process.env, SUPABASE_URL: API, SUPABASE_PUBLISHABLE_KEY: PUB, SUPABASE_SERVICE_ROLE_KEY: SECRET, NODE_ENV: "production" }, stdio: ["ignore", "pipe", "pipe"] });
@@ -206,6 +210,13 @@ const ODD = "Throw,MPH,Up,Over,When\n" + Array.from({ length: 10 }, (_, i) => `F
     await goto(kid, `${me}/uploads`);
     await kid.getByLabel("Pitch file").setInputFiles(files.odd);
     check(/read with "Yakkertech"/.test(await text(kid, /Yakkertech/)), "the next file like it is read with it straight away");
+
+    console.log("6b. A file with two pitchers' pitches is refused");
+    await goto(kid, `${me}/uploads`);
+    await kid.getByLabel("Pitch file").setInputFiles(files.two);
+    const two = await text(kid, /different pitchers/);
+    check(/This file has pitches from 2 different pitchers\. Upload a file with only Avery Brooks's pitches\./.test(two) &&
+      (await kid.getByRole("button", { name: /^Upload \d+ pitches$/ }).count()) === 0, `it says so and offers no upload (${two.match(/This file[^.]*\.[^.]*\./)?.[0]})`);
 
     console.log("7. Only his");
     const kid2 = await fresh();

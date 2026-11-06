@@ -1,4 +1,4 @@
-<title>Pitch Caller</title>
+<title>PitchIQ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#04070c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -939,7 +939,7 @@ function topBar() {
   const go = (v) => { S.view = v; if (v === "live") { S.sample = false; if (!G().call && !G().inningOver) makeCall(); } save(); render(); };
   const day = S.theme === "day";
   return h("header", { class: "bar glass" },
-    h("div", { class: "brand" }, h("span", { html: MARK }), h("span", { class: "wordmark", translate: "no" }, "Pitch Caller")),
+    h("div", { class: "brand" }, h("span", { html: MARK }), h("span", { class: "wordmark", translate: "no" }, "PitchIQ")),
     h("nav", { class: "tabs", "aria-label": "Screens" },
       h("button", { "aria-current": S.view === "live" ? "page" : null, on: { click: () => go("live") } }, "Game"),
       h("button", { "aria-current": S.view === "data" ? "page" : null, on: { click: () => go("data") } }, "Data"),

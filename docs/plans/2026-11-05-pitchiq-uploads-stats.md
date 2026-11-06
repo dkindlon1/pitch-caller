@@ -59,14 +59,35 @@ games called in PitchIQ and TrackMan game files, labeled by source, with every r
    coach's pitcher page (Profile and arsenal · Uploads · Stats), and "Uploads waiting for review" on his home.
 5. **Tests**: rls_matrix section 20; `uploads.test.ts`, `stats.test.ts`; `web/tests/uploads_e2e.js` in CI.
 
+## D10 on the public dataset (Nov 6)
+
+Drew OK'd the download. `Track_Combo.csv` (Mendeley xfnz6mkdzm v1, CC BY 4.0, 2,209,410 bytes, SHA-256 checked) is in
+`web/tests/data/` with its attribution. `web/lib/trackcombo.test.ts` runs in `npm test` and CI. It checks:
+
+- Every row parses: 3,343 of 3,344, with the one knuckleball skipped and reported.
+- All 32 pitchers' files come out arm side positive: 21 right-handers, 10 left-handers, and one with no hand.
+- Each pitcher's per-type count, velocity, break and spin match a calculation from the raw CSV, over 100 pitcher and
+  type summaries.
+- Left-out and developing pitches change the stored summary as specified.
+
+Two findings, both fixed:
+- **TrackMan V3 writes a right-hander's arm side as positive** (HorzBreak and RelSide). The fastball rule already got
+  this right, and so did the no-fastball fallback (flip only for a lefty). This settles spike S3. The synthetic test
+  files use the opposite sign on purpose, so the flip is still exercised.
+- **The file has pitcher IDs, not names.** The parser's loose match took `PitcherId` as the pitcher's name column, so
+  the name check failed. The upload form then fell back to reading every row, and a 32-pitcher file could have been
+  saved as one player's. Now:
+  - `PitcherId` is its own column.
+  - The pitcher's name is never matched loosely (so `PitcherThrows` or `PitcherTeam` can't stand in for it).
+  - The parser reports how many pitchers a file holds.
+  - The upload form refuses a file with more than one ("This file has pitches from 2 different pitchers…").
+    `uploads_e2e` section 6b checks this.
+
 ## Not verified yet
 
-- **D10 on the public dataset.** The spec's check runs the parser on Mendeley's `Track_Combo.csv` (a TrackMan V3 college
-  file). The unit tests use files with TrackMan V3's exact column names for a right- and a left-hander, but not that
-  file: downloading it needs Drew's OK. With it: every row parses, signs come out right for both hands, and the
-  per-type summary matches a hand calculation.
 - **Real Rapsodo exports** (spike S2): headers are matched loosely, and anything else goes to the column match.
 
 ## Done when
 
-Every task's test passes locally and in CI, the migration is promoted, and D10 has run on `Track_Combo.csv`.
+Every task's test passes locally and in CI, the migration is promoted (it is on the branch only, so it needs the
+merge to `main` first), and D10 has run on `Track_Combo.csv` (done Nov 6).

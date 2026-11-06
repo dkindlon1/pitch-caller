@@ -51,6 +51,7 @@
     px: ["platelocside", "strikezoneside", "plateside", "locside", "platex"],
     pz: ["platelocheight", "strikezoneheight", "plateheight", "locheight", "platez"],
     call: ["pitchcall", "isstrike", "strike", "result"],
+    pitcherId: ["pitcherid", "playerid"],
     pitcher: ["pitcher", "pitchername", "player", "playername"],
     date: ["date", "sessiondate"],
     // game files (TrackMan): the count before the pitch, the hitter's side, exit velocity, the pitcher's hand
@@ -81,7 +82,8 @@
     for (const [f, aliases] of Object.entries(FIELDS)) {
       let idx = -1;
       for (const a of aliases) { idx = cells.findIndex((c, i) => !used.has(i) && c === a); if (idx >= 0) break; }
-      if (idx < 0) for (const a of aliases) { if (a.length <= 3) continue; idx = cells.findIndex((c, i) => !used.has(i) && c.startsWith(a)); if (idx >= 0) break; }
+      // no loose match for who threw it: "pitcher" would otherwise catch PitcherId, PitcherThrows or PitcherTeam
+      if (idx < 0 && f !== "pitcher" && f !== "pitcherId") for (const a of aliases) { if (a.length <= 3) continue; idx = cells.findIndex((c, i) => !used.has(i) && c.startsWith(a)); if (idx >= 0) break; }
       if (idx >= 0) { map[f] = idx; used.add(idx); }
     }
     return { map, unused: header.filter((_, i) => !used.has(i) && header[i].trim() !== "") };
@@ -108,7 +110,7 @@
 
   /*
    * parse(text, { hand, pitcherName }) -> { source, n, rows, byType: [{ type, kind, n, velo, veloMax, ivb, hb, spin, ext, relH, relS,
-   *   zonePct, nLoc, commandHint }], warnings, columns, skipped }
+   *   zonePct, nLoc, commandHint }], warnings, columns, skipped, pitchers }
    */
   function parse(text, opts = {}) {
     const all = parseCSV(text);
@@ -128,9 +130,15 @@
       if (!type) { skipped++; continue; }
       rows.push({ type, kind: KIND[type], velo: num(get("velo")), ivb: num(get("ivb")), hb: num(get("hb")), spin: num(get("spin")), ext: num(get("ext")),
         relH: num(get("relH")), relS: num(get("relS")), px: num(get("px")), pz: num(get("pz")), call: get("call"),
-        balls: num(get("balls")), strikes: num(get("strikes")), side: get("side"), exit: num(get("exit")), throws: get("throws"), date: get("date") });
+        balls: num(get("balls")), strikes: num(get("strikes")), side: get("side"), exit: num(get("exit")), throws: get("throws"), date: get("date"),
+        who: map.pitcherId !== undefined ? get("pitcherId") : get("pitcher") });
     }
     if (otherPitchers) warnings.push(`${otherPitchers} pitches by other pitchers in the file were left out.`);
+    // how many pitchers the kept rows belong to (by the file's pitcher ID, else its pitcher name): more than one means
+    // it isn't one man's file, and its numbers would mix their arsenals
+    const whoCol = map.pitcherId !== undefined ? map.pitcherId : map.pitcher;
+    const pitchers = whoCol === undefined ? 1 : Math.max(1, new Set(rows.map((r) => norm(r.who)).filter(Boolean)).size);
+    if (pitchers > 1) warnings.push(`This file has pitches from ${pitchers} different pitchers. Use a file with only his pitches.`);
     if (skipped) warnings.push(`${skipped} rows had no pitch type the app knows (e.g. "Other" or blank) and were skipped.`);
     if (!rows.length) throw new Error("No usable pitches in that file.");
 
@@ -170,7 +178,7 @@
       t.relH = t.relH === null ? null : Math.round(t.relH * 100) / 100; t.relS = t.relS === null ? null : Math.round(t.relS * 100) / 100;
     }
     return { source, n: rows.length, byType, warnings, columns: Object.fromEntries(Object.entries(map).map(([k, i]) => [k, header[i]])), unused, rows,
-      hand: hand || null, flipped: !!flip, header };
+      hand: hand || null, flipped: !!flip, header, pitchers };
   }
 
   // with a saved mapping: the first row (of the first 25) that has every mapped column name

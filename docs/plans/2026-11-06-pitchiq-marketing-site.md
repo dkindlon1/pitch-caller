@@ -91,7 +91,7 @@ visitor calls a game with the app's own engine, the iPad's live screen, and a mo
   The real check is PageSpeed Insights on the deployed site, once this is merged.
 - **Real devices** (spike S5): frame rate on an iPad and a mid-range phone.
 - **Visual sign-off is Drew's** (D14). Open items:
-  - The iPad screenshot's header says "Pitch Caller", pending the app-name decision.
+  - Done Nov 6: the app is PitchIQ, and the iPad screenshot was retaken with the new header.
   - The hero's at-bat reasons come from v0.8, while the demo's come from v0.7c (A13).
 
 ## Done when

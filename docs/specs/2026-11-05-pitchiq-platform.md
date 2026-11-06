@@ -405,6 +405,9 @@ The landing page and email capture ship with Plan 0.
 - The live demo runs engine v0.7c, the engine the iPad app ships. The at-bat shown above it (hero and "One at-bat, four calls") still comes from the unmerged v0.8 branch, so its reasons read differently from the demo's until the v0.8 decision.
 - The movement cloud uses labelled sample data, not a real player's file.
 - Affects D14.
+- Drew, Nov 6: keep the Pitch Caller colors. The product is called PitchIQ everywhere a user sees it, including the
+  iPad game app's title, header and messages. "Pitch Caller" stays as the design system's name and in code
+  comments; the backup file format id `pitch-caller` is unchanged so old backups still restore.
 
 ## Change control
 

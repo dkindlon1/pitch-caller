@@ -26,7 +26,7 @@ const hModel = (hid) => DB.models.get("h2:" + hid);
 async function boot() {
   if (typeof PCDB === "undefined") return;
   try {
-    const D = await PCDB.open({ onVersionChange: () => { DB.ready = false; DB.failed = new Error("A newer version of Pitch Caller opened in another tab. Reload this page."); toast(DB.failed.message); render(); } });
+    const D = await PCDB.open({ onVersionChange: () => { DB.ready = false; DB.failed = new Error("A newer version of PitchIQ opened in another tab. Reload this page."); toast(DB.failed.message); render(); } });
     DB.D = D;
     const mig = await PCDB.migrateLegacy(D, S);
     for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) for (const x of await D.all(store)) map.set(x.id, x);

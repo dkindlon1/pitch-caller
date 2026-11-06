@@ -14,7 +14,7 @@ const row = (n: number, o: { name?: string; throws?: string; type: string; velo:
     o.call || "BallCalled", "Undefined", "Undefined", o.velo, 2250, 5.8, o.relS ?? -1.9, 6.1, o.ivb, o.hb, 2.5, 0.1, o.exit ?? ""].join(",");
 const FB_VELO = [90, 91, 92, 90, 91, 92, 90, 91, 92, 90, 91, 92];
 function file(throws: "Right" | "Left") {
-  const s = throws === "Right" ? -1 : 1;   // a right-hander's fastball runs to the left in this file, a lefty's to the right
+  const s = throws === "Right" ? -1 : 1;   // here a right-hander's fastball runs negative and a lefty's positive (real TrackMan V3 is the other way round: trackcombo.test.ts)
   const lines = [HEAD];
   let n = 0;
   for (const v of FB_VELO) lines.push(row(++n, { throws, type: "Fastball", velo: v, ivb: 17, hb: s * 9, relS: s * 1.9 }));
