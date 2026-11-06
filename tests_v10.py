@@ -130,6 +130,31 @@ t1 = e.solve_table(a, sit(0, 0))
 t2 = e.solve_table(a, replace(sit(0, 0), history=(("Slider", "chase", "foul", "back"),) * 2))
 check(t1.V == t2.V and t1.sigma == t2.sigma, "solve_table is the same with or without an at-bat history")
 
+# ---------------------------------------------------------------------------
+print("3.2 fallback when nothing is trusted")
+low = {"Fastball": {"conf": 0.40}, "Curveball": {"conf": 0.42}}           # D3 cutoff 0.45: nothing trusted, CB the higher
+a2 = ars("two_pitch", low)
+lt = {"Curveball": (2, 12), "Fastball": (7, 12)}
+fb_share, lines = [], set()
+for (b, k) in e.COUNTS:
+    sh, info, pick, tab, s_ = dist(a2, sit(b, k, landing_today=lt))
+    fb_share.append(by_pitch(sh).get("Fastball", 0.0))
+    lines.add(e.why_line(a2, s_, tab, pick, info)[0])
+check(min(fb_share) == 1.0, "curveball 2 for 12, fastball 7 for 12, nothing trusted, curveball more trusted: fastball 100% (all 12 counts)",
+      f"smallest fastball share {min(fb_share):.3f}")
+check(lines == {"Nothing's working. Going with what's landing. Think about a change."}, "the why line says nothing is trusted",
+      "; ".join(sorted(lines)))
+a3 = ars("slider_best", {"Fastball": {"conf": 0.40}, "Slider": {"conf": 0.42}, "Changeup": {"conf": 0.35}})
+lt3 = {"Fastball": (1, 12), "Slider": (2, 12), "Changeup": (3, 10)}       # none landing; changeup has the best estimate
+est = {p.name: e.landing_estimate(p, sit(1, 1, landing_today=lt3))[0] for p in a3}
+sh, *_ = dist(a3, sit(1, 1, landing_today=lt3))
+check(by_pitch(sh).get("Changeup", 0.0) == 1.0, "every pitch not landing: the best shrunk strike estimate (changeup) 100%",
+      f"estimates { {k: round(v, 3) for k, v in est.items()} }")
+sh, *_ = dist(a3, sit(1, 1))
+check(by_pitch(sh).get("Slider", 0.0) == 1.0, "nothing trusted, no landing record: the most trusted pitch (slider) 100%")
+a_ok = ars("two_pitch")
+check("fallback" not in e.call_rules(a_ok, sit(1, 1, landing_today=lt))[1], "no fallback note when a pitch is trusted")
+
 print()
 if FAILS:
     print(f"{len(FAILS)} v1.0 check(s) FAILED: " + "; ".join(FAILS))

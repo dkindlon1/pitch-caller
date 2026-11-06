@@ -996,9 +996,11 @@ def candidates(arsenal, s, forced=None):
     cutoff = LEVEL[s.level]["cutoff"]
     c = [x for x in arsenal if x.conf >= cutoff or (forced and x.name == forced)]
     if not c:
-        # v0.4: he trusts nothing right now. Fall back to his most-trusted pitch;
-        # the app should flag this to the coach as a sign it may be time for a change.
-        c = [max(arsenal, key=lambda x: x.conf)]
+        # v1.0 3.2: he trusts nothing right now. Go with what's landing: among the pitches not failing the landing check
+        # (fewer than LAND_BLOCK_N thrown counts as not failing), the most trusted; if none is landing, the best shrunk
+        # strike estimate. The app flags this to the coach as a sign it may be time for a change.
+        ok = [x for x in arsenal if not not_landing(x, s)]
+        c = [max(ok, key=lambda x: x.conf)] if ok else [max(arsenal, key=lambda x: landing_estimate(x, s)[0])]
     return c
 
 
@@ -1331,6 +1333,12 @@ def allowed_calls(arsenal, s, exclude=None):
     return call_rules(arsenal, s, exclude)[0]
 
 
+def fallback_mode(arsenal, s):
+    """3.2: no pitch clears the confidence cutoff."""
+    cutoff = LEVEL[s.level]["cutoff"]
+    return not any(x.conf >= cutoff for x in arsenal)
+
+
 def _drop(out, notes, key, gone):
     """Drop calls for a rule; the rule stands down (and says so in notes) if that would leave nothing."""
     kept = [a for a in out if a not in gone]
@@ -1347,6 +1355,8 @@ def call_rules(arsenal, s, exclude=None):
     """The calls the engine may make now, and notes on which v1.0 rules removed calls (for the why line)."""
     notes = {}
     tq = targets(s.balls, s.strikes)
+    if fallback_mode(arsenal, s):
+        notes["fallback"] = True
     out = [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
     if s.landing_today and out:
         names = {a[0] for a in out}
