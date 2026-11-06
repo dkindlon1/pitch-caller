@@ -316,3 +316,14 @@ h2 { font-size: clamp(2.4rem, 4vw, 3.6rem); }
 .shell-form textarea { font: 500 1rem/1.5 var(--f-mono); color: var(--pc-text); background: var(--pc-surface-2); border: 1px solid var(--pc-btn-line); border-radius: 8px; padding: 10px 12px; }
 .ok-note { color: var(--pc-text); }
 .team-card h2 a { text-decoration: none; }
+
+/* billing (Plan 2) */
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
+.btn-row form { margin: 0; }
+.row-actions { text-align: right; }
+.row-actions details { display: inline-block; text-align: left; }
+.row-actions summary { list-style: none; cursor: pointer; }
+.row-actions summary::-webkit-details-marker { display: none; }
+.org-switch { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 12px; border-bottom: 1px solid var(--pc-line); }
+.org-switch a { text-decoration: none; color: var(--pc-text-2); font-weight: 600; padding: 10px 0; min-height: 44px; display: inline-flex; align-items: center; }
+.org-switch a[aria-current="page"] { color: var(--pc-text); box-shadow: inset 0 -2px 0 var(--pc-text); }

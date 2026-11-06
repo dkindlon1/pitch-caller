@@ -55,10 +55,11 @@ async function Teams() {
         <section aria-labelledby="owned">
           <h2 id="owned" className="shell-h2">Organizations you own</h2>
           <ul className="org-list">
-            {orgs.map((o) => <li key={o.id}>{o.name} <span className="lbl">{o.billing_status === "active" ? "Paid up" : o.billing_status === "locked" ? "Locked" : "Waiting for billing"}</span></li>)}
+            {orgs.map((o) => <li key={o.id}>{o.name} <span className="lbl">{o.billing_status === "active" ? "Paid up" : o.billing_status === "locked" ? "Locked: update the card" : "Not paid yet"}</span> <Link href={`/app/billing?org=${o.id}`}>Billing</Link></li>)}
           </ul>
         </section>
       ) : null}
+      <p className="shell-note"><Link href="/app/new">Start an organization</Link>: name it, add your teams, pay by card.</p>
     </>
   );
 }

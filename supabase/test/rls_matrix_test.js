@@ -579,6 +579,113 @@ const now = () => Date.now();
     await su.query("update public.programs set timezone = 'America/New_York' where id = $1", [tA]);
   }
 
+  console.log("17. Billing (Plan 2): Stripe events, lockout, adding and removing teams");
+  {
+    const ev = (n) => "evt_test" + n + "_" + crypto.randomBytes(4).toString("hex");
+    const at = (s) => new Date(Date.UTC(2026, 10, 5, 12, 0, s)).toISOString();
+    const bill = (id, type, t, a) => one("service", "select public.pc_billing_event($1, $2, $3, $4::jsonb) r", [id, type, t, JSON.stringify(a)]);
+    const orgRow = async (o) => (await su.query("select * from public.organizations where id = $1", [o])).rows[0];
+    const statuses = async (o) => (await su.query("select name, status from public.programs where org_id = $1 order by created_at, id", [o])).rows.map((x) => `${x.name}:${x.status}`).join(" ");
+    const activeTeam = async (t) => (await su.query("select private.pc_team_active($1) a", [t])).rows[0].a;
+    const U3 = crypto.randomUUID(); U.owner3 = U3;
+    await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, 'owner3@x.org', now())", [U3]);
+    const org3 = await one("owner3", "select public.pc_create_org('Ridge Baseball', 'hs') r");
+    const t31 = await one("owner3", "select public.pc_create_team($1, 'Varsity', 'hs', 'America/New_York', 'head') r", [org3]);
+    await su.query("update public.programs set created_at = now() - interval '3 minutes' where id = $1", [t31]);
+    const t32 = await one("owner3", "select public.pc_create_team($1, 'JV', 'hs') r", [org3]);
+    await su.query("update public.programs set created_at = now() - interval '2 minutes' where id = $1", [t32]);
+    const t33 = await one("owner3", "select public.pc_create_team($1, 'Freshman', 'hs') r", [org3]);
+
+    for (const who of ["owner3", "head", "anon"]) {
+      const viaUser = await as(who, "select public.pc_billing_event('evt_forged', 'invoice.paid', now(), $1::jsonb)", [JSON.stringify({ org: org3, status: "active" })]);
+      check(!!viaUser.error && (await orgRow(org3)).billing_status === "pending", `${who} can't send a billing event himself`);
+    }
+    check(!!(await as("owner3", "select public.pc_billing_ids($1)", [org3])).error, "nor read the organization's Stripe ids");
+    check(!!(await as("owner3", "select * from private.stripe_events")).error, "nor the event log");
+
+    // Checkout for two of the three teams
+    const e1 = ev(1);
+    let r = await bill(e1, "checkout.session.completed", at(10), { org: org3, customer: "cus_R3", subscription: "sub_R3", status: "active", quantity: 2, adopt: true });
+    let o = await orgRow(org3);
+    check(r === "applied" && o.billing_status === "active" && o.stripe_customer_id === "cus_R3" && o.stripe_subscription_id === "sub_R3",
+      `checkout paid: the organization is active and keeps its Stripe ids (${r})`);
+    check(await statuses(org3) === "Varsity:active JV:active Freshman:pending", `two teams paid for: the two oldest switch on, the third waits (${await statuses(org3)})`);
+    check(await activeTeam(t31) && !(await activeTeam(t33)), "the paid team syncs, the unpaid one doesn't");
+    r = await bill(e1, "checkout.session.completed", at(10), { org: org3, customer: "cus_R3", subscription: "sub_R3", status: "active", quantity: 3, adopt: true });
+    check(r === "duplicate" && await statuses(org3) === "Varsity:active JV:active Freshman:pending", "the same event sent again changes nothing (D5)");
+    r = await bill(ev(2), "customer.subscription.created", at(8), { org: org3, customer: "cus_R3", subscription: "sub_R3", sub_status: "active", quantity: 2, period_end: Date.UTC(2027, 10, 5) / 1000, adopt: true });
+    o = await orgRow(org3);
+    check(r === "stale" && o.period_ends_at === null, `an older subscription snapshot arriving late is ignored (${r})`);
+    r = await bill(ev(3), "customer.subscription.updated", at(11), { org: org3, subscription: "sub_R3", sub_status: "active", quantity: 2, period_end: Date.UTC(2027, 10, 5) / 1000 });
+    o = await orgRow(org3);
+    check(r === "applied" && +o.period_ends_at === Date.UTC(2027, 10, 5) && o.subscription_status === "active", "a newer one sets the paid year's end");
+    check(!!(await as("xhead", "select public.pc_billing_info($1)", [org3])).error && !!(await as("head", "select public.pc_billing_info($1)", [org3])).error,
+      "only the owner sees the billing page's data (not another org, not his own head coach)");
+    const info = await one("owner3", "select public.pc_billing_info($1) r", [org3]);
+    check(info && info.status === "active" && info.live === true && info.teams.length === 3 && !/cus_R3|sub_R3/.test(JSON.stringify(info)),
+      "the owner sees the state and teams, never the Stripe ids");
+
+    // a team added: pending until the higher quantity is paid
+    r = await bill(ev(4), "customer.subscription.updated", at(20), { org: org3, subscription: "sub_R3", sub_status: "active", quantity: 3 });
+    check(r === "applied" && await statuses(org3) === "Varsity:active JV:active Freshman:active", "the quantity goes up: the waiting team switches on");
+
+    // removing a team
+    check(!!(await as("head", "select public.pc_end_team($1)", [t32])).error, "a head coach can't remove a team (only the owner)");
+    check(await one("owner3", "select public.pc_end_team($1) r", [t32]) === "ending", "the owner removes JV");
+    let t = (await su.query("select status, ends_at from public.programs where id = $1", [t32])).rows[0];
+    check(t.status === "ending" && +t.ends_at === Date.UTC(2027, 10, 5) && await activeTeam(t32), "it stays usable until the paid year ends (D6)");
+    r = await bill(ev(5), "customer.subscription.updated", at(21), { org: org3, subscription: "sub_R3", sub_status: "active", quantity: 2 });
+    check(await statuses(org3) === "Varsity:active JV:ending Freshman:active", "the lower quantity in Stripe doesn't take anything else away");
+    await as("owner3", "select public.pc_keep_team($1)", [t32]);
+    check((await su.query("select status from public.programs where id = $1", [t32])).rows[0].status === "active", "the owner can keep it again before the year ends");
+    r = await bill(ev(6), "customer.subscription.updated", at(22), { org: org3, subscription: "sub_R3", sub_status: "active", quantity: 3 });
+    await as("owner3", "select public.pc_end_team($1)", [t32]);
+    await su.query("update public.programs set ends_at = now() - interval '1 second' where id = $1", [t32]);
+    check(!(await activeTeam(t32)), "once its year is over, it locks");
+    const t34 = await one("owner3", "select public.pc_create_team($1, 'Summer', 'hs') r", [org3]);
+    check(await one("owner3", "select public.pc_end_team($1) r", [t34]) === "removed", "a team never paid for is removed at once");
+    await su.query("update public.organizations set period_ends_at = now() + interval '1 year' where id = $1", [org2]);
+    const lone = await one("xhead", "select public.pc_end_team($1) r", [tC]);
+    check(!!(lone && /last team/.test(lone.error || "")), `the last active team can't be removed (cancel the subscription instead) (${lone && lone.error})`);
+
+    // lapse and unlock
+    r = await bill(ev(7), "invoice.payment_failed", at(5), { org: org3, subscription: "sub_R3", status: "locked" });
+    check(r === "stale" && (await orgRow(org3)).billing_status === "active", "a payment failure older than the last change is ignored (A5)");
+    r = await bill(ev(8), "invoice.payment_failed", at(30), { subscription: "sub_R3", customer: "cus_R3", status: "locked" });
+    check(r === "applied" && (await orgRow(org3)).billing_status === "locked" && !(await activeTeam(t31)), "a failed payment locks every team (found by its subscription)");
+    const lockedPush = await push("owner3", t31, "pitchers", [{ id: "lk1", updatedAt: now(), name: "x" }]);
+    check(lockedPush.rejected && lockedPush.rejected.length === 1, "and the iPad's writes are refused");
+    check((await one("owner3", "select public.pc_billing_info($1) r", [org3])).status === "locked", "the owner still sees the billing page");
+    check(!!(await as("owner3", "select public.pc_end_team($1)", [t33])).error, "but can't remove teams while locked");
+    r = await bill(ev(9), "invoice.paid", at(25), { subscription: "sub_R3", status: "active" });
+    check(r === "stale" && (await orgRow(org3)).billing_status === "locked", "an older payment arriving after the failure doesn't unlock");
+    r = await bill(ev(10), "invoice.paid", at(40), { subscription: "sub_R3", status: "active" });
+    check(r === "applied" && (await orgRow(org3)).billing_status === "active" && await activeTeam(t31), "a newer payment unlocks");
+    check(await statuses(org3) === "Varsity:active JV:removed Freshman:active Summer:removed" && !(await activeTeam(t32)),
+      `and the team removed last year stays removed (A5) (${await statuses(org3)})`);
+
+    // other subscriptions
+    r = await bill(ev(11), "customer.subscription.deleted", at(50), { org: org3, subscription: "sub_OLD", status: "locked", sub_status: "canceled" });
+    check(r === "other_subscription" && (await orgRow(org3)).billing_status === "active", "an event from some other subscription is ignored");
+    r = await bill(ev(12), "checkout.session.completed", at(51), { org: org3, subscription: "sub_SECOND", status: "active", quantity: 5, adopt: true });
+    check(r === "second_subscription" && (await orgRow(org3)).stripe_subscription_id === "sub_R3", "a second Checkout while the first is live doesn't take over (logged for a refund)");
+    r = await bill(ev(13), "customer.subscription.deleted", at(60), { org: org3, subscription: "sub_R3", status: "locked", sub_status: "canceled" });
+    check(r === "applied" && (await orgRow(org3)).billing_status === "locked", "the subscription cancelled: locked");
+    r = await bill(ev(14), "checkout.session.completed", at(70), { org: org3, customer: "cus_R3", subscription: "sub_NEW", status: "active", quantity: 2, adopt: true });
+    o = await orgRow(org3);
+    check(r === "applied" && o.stripe_subscription_id === "sub_NEW" && o.billing_status === "active" && o.subscription_quantity === 2, "coming back: a new subscription after the old one ended takes over");
+    r = await bill(ev(15), "invoice.payment_failed", at(80), { org: org3, subscription: "sub_R3", status: "locked" });
+    check(r === "other_subscription" && (await orgRow(org3)).billing_status === "active", "and the old one's late events no longer count");
+
+    r = await bill(ev(16), "invoice.paid", at(90), { subscription: "sub_NOBODY", customer: "cus_NOBODY", status: "active" });
+    const logged = (await su.query("select result, org_id from private.stripe_events where type = 'invoice.paid' and result = 'unknown_org'")).rows;
+    check(r === "unknown_org" && logged.length === 1 && logged[0].org_id === null, "an event for no organization we know is logged and otherwise ignored");
+    const bad = await as("service", "select public.pc_billing_event('not-an-event', 'x', now(), '{}'::jsonb)");
+    check(!!bad.error, "an event id that isn't Stripe's is refused");
+    const ids = await one("service", "select public.pc_billing_ids($1) r", [org3]);
+    check(ids && ids.customer === "cus_R3" && ids.subscription === "sub_NEW" && ids.seats === 2 && ids.owner_email === "owner3@x.org", `the website's server reads the ids it needs (${JSON.stringify(ids)})`);
+  }
+
   console.log("13. The migration refuses a database that already has programs");
   {
     const G = DB + "_guard";

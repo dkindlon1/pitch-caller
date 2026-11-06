@@ -100,5 +100,7 @@ jobs:
         run: scripts/run-check.sh offline_game_e2e node web/tests/offline_game_e2e.js
       - name: Coach portal end to end (Plan 3a)
         run: scripts/run-check.sh portal_e2e node web/tests/portal_e2e.js
+      - name: Billing end to end (Plan 2, against a fake Stripe)
+        run: scripts/run-check.sh billing_e2e node web/tests/billing_e2e.js
       - if: always()
         run: npx -y supabase@2.122.1 stop --no-backup

@@ -285,7 +285,7 @@ type Proposal = { pitcher_id: string; pitch: string; field: 'velo'|'shape'|'slot
 
 Every acceptance check passes in a fresh run. The full test suite is green. `npm run build` passes. The final report lists **Verified** (with command output) vs **Not verified** (with the reason). Nothing is called done without output.
 
-## Amendments (A1–A10 accepted by Drew, Nov 5 11:44; A11 proposed)
+## Amendments (A1–A10 accepted by Drew, Nov 5 11:44; A11 and A12 proposed)
 
 **A1. One parent account, several children.**
 - A parent can link one login to several player spots on a team, for example two under-13 siblings.
@@ -390,6 +390,13 @@ Every acceptance check passes in a fresh run. The full test suite is green. `npm
 8. Plan 6 Full 3D site.
 
 The landing page and email capture ship with Plan 0.
+
+**A12. Billing details (proposed Nov 5, built on the branch; awaiting Drew's approval).**
+- Stripe's webhook is a route in the website (`/api/stripe/webhook`), not a Supabase Edge Function. It verifies the signature and applies each event through one service-role function that records the event id and its effect in one transaction.
+- Adding a team is charged at once for the rest of the paid year and goes through only if the card pays. A declined charge for an added team leaves that team waiting and doesn't lock the organization. "Lock on the first failed payment" applies to every other charge, including the yearly renewal.
+- The last active team can't be removed: to stop altogether, the owner cancels in Stripe's billing portal. A removed team can be kept again before its year ends, with no charge.
+- A second subscription paid while the first is live (two Checkouts in two tabs) is logged and refunded by hand.
+- Affects D5, D6 and D7.
 
 ## Change control
 
