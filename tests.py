@@ -2,7 +2,7 @@
 import time
 import random
 from collections import Counter
-from engine import (Pitch, Situation, call_v08, outcome_probs, call_mixed, mixed_policy, at_bat_values, grade_call,
+from engine import (Pitch, Situation, call_v08, outcome_probs, call_mixed, mixed_policy, at_bat_values,
                     landing, CV)
 
 random.seed(11)
@@ -112,13 +112,30 @@ check("R8 no third-time cliff: the 19th fastball he sees is barely worse than th
       all(j >= -1e-12 for j in jumps) and jumps[3] < jumps[0] / 5, "fastball up-in hard contact by fastballs seen: " +
       ", ".join(f"{n}: {h:.2%}" for n, h in hard))
 
-# Learning mode
-g = grade_call(A, Situation(0, 2, 1, E, last=("Fastball", "up-in")), "Fastball", "middle")
-g2 = grade_call(A, Situation(0, 2, 1, E, last=("Fastball", "up-in")), "Slider", "chase")
+# Learning mode (v1.0: on the shipped call path, priced the way the app's gradeCall prices a coach's call: root costs
+# against the hitter's sit mix, best over the calls the root kept)
+def grade_v08(ars, s, call_):
+    from dataclasses import replace
+    tab = e_mod.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
+    _, dist, tab, info = call_v08(ars, s, rng=_Half(), tab=tab)
+    sg, ks = info["sigma"], e_mod.sit_options(ars)
+    best = min(sum(sg[k] * info["M"][a][k] for k in ks) for a in info["M"])
+    prob = sum(d[0] for d in dist if (d[2].name, d[3]) == call_)
+    return prob, e_mod.root_costs(ars, s, tab, sg)[call_] - best
+
+
+class _Half:
+    def random(self):
+        return 0.5
+
+
+import engine as e_mod
+s_lm = Situation(0, 2, 1, E, last=("Fastball", "up-in"))
+g_pr, g_rv = grade_v08(A, s_lm, ("Fastball", "middle"))
+g2_pr, _ = grade_v08(A, s_lm, ("Slider", "chase"))
 check("Learning mode: a grooved 0-2 fastball is outside the engine's mix and clearly worse; slider chase is in the mix",
-      g["engine_prob"] < 0.02 and g["runs_vs_best"] > 0.015 and g2["verdict"] == "in the engine's mix",
-      f"{g['call']}: {g['verdict']} ({g['runs_vs_best']:+.3f} runs); "
-      f"{g2['call']}: {g2['verdict']} (picked {g2['engine_prob']:.0%} of the time)")
+      g_pr < 0.02 and g_rv > 0.015 and g2_pr >= 0.02,
+      f"Fastball middle: picked {g_pr:.0%}, {g_rv:+.3f} runs vs best; Slider chase: picked {g2_pr:.0%} of the time")
 
 # v0.6 hit by pitch: a way-inside miss can hit the batter; aiming in raises it vs aiming away
 from engine import outcome_probs, OUTCOME_ADJ

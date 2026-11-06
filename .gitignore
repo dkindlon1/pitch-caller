@@ -7,7 +7,6 @@ runs/
 matrix/*/
 matrix/*.txt
 !matrix/configs.txt
-app/parity_cases.json
 app/*.png
 app/e2e_shots/
 node_modules
@@ -17,7 +16,6 @@ supabase/.temp/
 web/tests/screens/
 data/statcast/
 runs/
-app/parity_cases.json
 app/parity_v09_cases.json
 app/parity_v10_cases.json
 results/step4b/scenarios_all.log

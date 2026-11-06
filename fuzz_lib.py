@@ -1,8 +1,6 @@
 """
-Logic checks on thousands of random situations (v0.6d).
-Part A: rules that must hold everywhere (probabilities, windows, cutoffs, count logic, run values, monotonic effects).
-Part B: learning checks over game-like sequences (mashers, holes, timing, a pitch not landing, shake-offs, the change flag).
-usage: python3 fuzz.py [n_cheap] [n_full]
+Random arsenals and situations (from the v0.6d logic fuzz), used by golden/cases.py to build the golden cases.
+fuzz.py's checks were replaced by callsheet.py in v1.0 (PLAN_v1.0.md 2.3); this generator stays because the goldens use it.
 """
 import random, sys, math
 from dataclasses import replace

@@ -64,7 +64,7 @@ Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
 | `calib.py`, `fit_all.py`, `refit_mlb.py` | Fit the outcome model to real rates |
 | `tests.py` | 19 regression checks |
 | `statcast_check.py` | The hitter-vs-pitch model against MLB Statcast pitches, by attack zone and count (`results/statcast_check.txt`) |
-| `fuzz.py` | 29 logic and learning checks on thousands of random situations |
+| `callsheet.py` | v1.0 call-sheet test: the engine swept over levels, arsenals, base-out states and counts, checked against the call bands (`results/callsheet_<tag>.md`) |
 | `matrix/` | 21-setup test matrix: levels, pitcher types, lineups, input levels, shake-offs, coach overrides |
 | `results/` | Latest logic-check and matrix reports |
 | `app/` | Tablet prototype: `engine.js` (JavaScript port, verified against Python), `index.src.html`, built page in `dist/` |
@@ -75,12 +75,12 @@ Python 3.11+ with `numpy` and `scipy`. Node 18+ for the app checks (Playwright f
 
     python3 tests.py                                     # 19 regression checks
     python3 spread_test.py                               # calibrated spread between pitchers (about 2 minutes)
-    python3 fuzz.py 3000 300                             # logic and learning checks
+    python3 callsheet.py --tier ci --jobs 4               # call-sheet bands (CI tier; --tier full for the whole grid)
     LEVEL=college_d3 python3 batch.py runs/d3 1 10        # 10 simulated D3 games, graded
     STAFF=power LINEUP=fb_mashers LEVEL=hs python3 batch.py runs/x 1 10
     ./matrix/run.sh && python3 matrix/report.py           # the full matrix (about an hour)
 
-    python3 app/make_parity.py 150 && node app/parity.js   # JS engine must match Python exactly
+    python3 app/make_parity_v10.py && node app/parity_v10.js   # JS engine must match Python (1e-9)
     cd app && python3 build.py                             # builds dist/pitch-caller.html
     node app/smoke.js                                      # drives the page in a browser (from the repo root)
 

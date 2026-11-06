@@ -990,16 +990,7 @@ td.wrapcell .line { display: block; }
     return [v, P];
   }
 
-  // ---------------------------------------------------------------- decision rule
-  function softmax(costs, temp, window, best) {   // costs: array of [key, cost] in insertion order
-    if (best === undefined || best === null) best = Math.min(...costs.map((c) => c[1]));
-    const keep = costs.filter((c) => c[1] - best <= window);
-    if (!keep.length) return [];
-    const mk = Math.min(...keep.map((c) => c[1]));
-    const w = keep.map((c) => [c[0], Math.exp(-(c[1] - mk) / temp)]);
-    let t = 0; for (const x of w) t += x[1];
-    return w.map((x) => [x[0], x[1] / t]);
-  }
+  // ---------------------------------------------------------------- candidate pitches (the confidence cutoff)
   function candidates(arsenal, s, forced) {
     const cutoff = D.LEVEL[s.level].cutoff;
     let c = arsenal.filter((x) => x.conf >= cutoff || (forced && x.name === forced));
@@ -1021,62 +1012,6 @@ td.wrapcell .line { display: block; }
   }
   const ck = (name, q) => name + "|" + q;
 
-  function mixedPolicy(arsenal, s, T = 0.010, window = 0.030, forced = null, iters = 8, cv = null) {
-    const cands = candidates(arsenal, s, forced);
-    const k = runScale(s.level);
-    const f = stakesFactor(s.balls, s.strikes, s.level);
-    T = T * k; window = window * k * Math.min(1.0, f);
-    const temp = T * (isBigSpot(s) ? 0.5 : 1.0) * f;
-    let policy = null, costs = null;
-    for (let it = 0; it < iters; it++) {
-      costs = new Map();
-      for (const p of cands) for (const q of QUADS) costs.set(ck(p.name, q), cost(p, q, s, arsenal, policy, cv)[0]);
-      const tq = targets(s.balls, s.strikes);
-      const bestBy = cands.map((p) => [p.name, Math.min(...tq.map((q) => costs.get(ck(p.name, q))))]);
-      const pp = new Map(softmax(bestBy, temp, window));
-      const nw = {}; for (const x of arsenal) nw[x.name] = pp.get(x.name) || 0.0;
-      if (policy === null) policy = nw;
-      else { const m = {}; for (const kk in nw) m[kk] = 0.5 * policy[kk] + 0.5 * nw[kk]; policy = m; }
-    }
-    return [policy, costs, temp];
-  }
-  const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
-
-  function atBatValues(arsenal, s, T = 0.010, window = 0.030, sweeps = 10, iters = 4) {
-    const cv = Object.assign({}, D.CV[s.level]);
-    const base = re(s.outs, s.bases, s.level);
-    const order = COUNTS.slice().sort((a, b) => -(a[0] + a[1]) + (b[0] + b[1]));   // stable: same as Python
-    for (let sw = 0; sw < sweeps; sw++) {
-      let delta = 0.0;
-      for (const [b, k] of order) {
-        const same = b === s.balls && k === s.strikes;
-        const sc = replace(s, { balls: b, strikes: k, last: same ? s.last : null, usage_this_count: same ? s.usage_this_count : {} });
-        const [policy, costs, temp] = mixedPolicy(arsenal, sc, T, window, null, iters, cv);
-        let ev = 0.0;
-        const tq = targets(b, k), bestOk = minAllowed(costs, tq);
-        for (const name in policy) {
-          const pp = policy[name];
-          if (pp <= 0) continue;
-          let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
-            LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(b, k, s.level)), bestOk);
-          if (!loc.length) {
-            let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
-            loc = [[bq, 1.0]];
-          }
-          let sub = 0; for (const [q, pq] of loc) sub += pq * costs.get(ck(name, q));
-          ev += pp * sub;
-        }
-        const nv = ev - base;
-        delta = Math.max(delta, Math.abs(nv - cv[cvKey(b, k)]));
-        cv[cvKey(b, k)] = nv;
-      }
-      if (delta < 0.001) break;
-    }
-    const zero = cv["0-0"], rel = {};
-    for (const key in cv) rel[key] = cv[key] - zero;
-    return [rel, cv];
-  }
-
   const KINDS = ["FB", "SL", "CB", "CH"];
   function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
     if (!arsenal || !arsenal.length) throw new Error("no pitches: the arsenal is empty");
@@ -1087,52 +1022,6 @@ td.wrapcell .line { display: block; }
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
     if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
-  }
-
-  function callMixed(arsenal, s, opts = {}) {
-    checkInputs(arsenal, s);
-    const T = opts.T ?? 0.010, window = opts.window ?? 0.030, forced = opts.forced ?? null, iters = opts.iters ?? 8;
-    const rng = opts.rng || Math.random, atBat = opts.atBat ?? true;
-    const cv = atBat ? atBatValues(arsenal, s, T, window)[1] : null;
-    const [policy, costs, temp] = mixedPolicy(arsenal, s, T, window, forced, iters, cv);
-    let pPitch = Object.entries(policy).filter(([, v]) => v > 0.005);
-    let t = 0; for (const [, v] of pPitch) t += v;
-    pPitch = pPitch.map(([kk, v]) => [kk, v / t]);
-    const dist = [];
-    const tq = targets(s.balls, s.strikes), overall = minAllowed(costs, tq);
-    for (const [name, pp] of pPitch) {
-      let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
-        LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(s.balls, s.strikes, s.level)), overall);
-      if (!loc.length) {
-        let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
-        loc = [[bq, 1.0]];
-      }
-      const p = arsenal.find((x) => x.name === name);
-      for (const [q, pq] of loc) dist.push({ prob: pp * pq, cost: costs.get(ck(name, q)), pitch: p, quad: q });
-    }
-    if (opts.exclude && opts.exclude.length) {   // never re-call what he just shook off (unless nothing else is left)
-      const kept = dist.filter((d) => !opts.exclude.some(([n, q]) => d.pitch.name === n && d.quad === q));
-      if (kept.length) { const t_ = kept.reduce((a, d) => a + d.prob, 0); dist.length = 0; for (const d of kept) dist.push(Object.assign(d, { prob: d.prob / t_ })); }
-    }
-    dist.sort((a, b) => b.prob - a.prob);
-    const r = rng();
-    let acc = 0.0;
-    for (const d of dist) { acc += d.prob; if (r <= acc) return { pick: d, dist, best: overall, policy }; }
-    return { pick: dist[dist.length - 1], dist, best: overall, policy };
-  }
-
-  function gradeCall(arsenal, s, pitchName, quad, opts = {}) {
-    const { dist } = callMixed(arsenal, s, opts);
-    // v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
-    const cv = (opts.atBat ?? true) ? atBatValues(arsenal, s)[1] : null;
-    const [policy, costs] = mixedPolicy(arsenal, s, 0.010, 0.030, null, 8, cv);
-    const p = arsenal.find((x) => x.name === pitchName);
-    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy, cv)[0];
-    const tq = targets(s.balls, s.strikes), best = minAllowed(costs, tq), allowed = tq.includes(quad);
-    let prob = 0; for (const d of dist) if (d.pitch.name === pitchName && d.quad === quad) prob += d.prob;
-    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best, allowed,
-      verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
-      engine_top: dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
 
   // ---------------------------------------------------------------- "time for a change" (flags.py)
@@ -2012,7 +1901,7 @@ td.wrapcell .line { display: block; }
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,
-    outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
+    outcomeProbs, cost, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -4592,16 +4481,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return [v, P];
   }
 
-  // ---------------------------------------------------------------- decision rule
-  function softmax(costs, temp, window, best) {   // costs: array of [key, cost] in insertion order
-    if (best === undefined || best === null) best = Math.min(...costs.map((c) => c[1]));
-    const keep = costs.filter((c) => c[1] - best <= window);
-    if (!keep.length) return [];
-    const mk = Math.min(...keep.map((c) => c[1]));
-    const w = keep.map((c) => [c[0], Math.exp(-(c[1] - mk) / temp)]);
-    let t = 0; for (const x of w) t += x[1];
-    return w.map((x) => [x[0], x[1] / t]);
-  }
+  // ---------------------------------------------------------------- candidate pitches (the confidence cutoff)
   function candidates(arsenal, s, forced) {
     const cutoff = D.LEVEL[s.level].cutoff;
     let c = arsenal.filter((x) => x.conf >= cutoff || (forced && x.name === forced));
@@ -4623,62 +4503,6 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   }
   const ck = (name, q) => name + "|" + q;
 
-  function mixedPolicy(arsenal, s, T = 0.010, window = 0.030, forced = null, iters = 8, cv = null) {
-    const cands = candidates(arsenal, s, forced);
-    const k = runScale(s.level);
-    const f = stakesFactor(s.balls, s.strikes, s.level);
-    T = T * k; window = window * k * Math.min(1.0, f);
-    const temp = T * (isBigSpot(s) ? 0.5 : 1.0) * f;
-    let policy = null, costs = null;
-    for (let it = 0; it < iters; it++) {
-      costs = new Map();
-      for (const p of cands) for (const q of QUADS) costs.set(ck(p.name, q), cost(p, q, s, arsenal, policy, cv)[0]);
-      const tq = targets(s.balls, s.strikes);
-      const bestBy = cands.map((p) => [p.name, Math.min(...tq.map((q) => costs.get(ck(p.name, q))))]);
-      const pp = new Map(softmax(bestBy, temp, window));
-      const nw = {}; for (const x of arsenal) nw[x.name] = pp.get(x.name) || 0.0;
-      if (policy === null) policy = nw;
-      else { const m = {}; for (const kk in nw) m[kk] = 0.5 * policy[kk] + 0.5 * nw[kk]; policy = m; }
-    }
-    return [policy, costs, temp];
-  }
-  const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
-
-  function atBatValues(arsenal, s, T = 0.010, window = 0.030, sweeps = 10, iters = 4) {
-    const cv = Object.assign({}, D.CV[s.level]);
-    const base = re(s.outs, s.bases, s.level);
-    const order = COUNTS.slice().sort((a, b) => -(a[0] + a[1]) + (b[0] + b[1]));   // stable: same as Python
-    for (let sw = 0; sw < sweeps; sw++) {
-      let delta = 0.0;
-      for (const [b, k] of order) {
-        const same = b === s.balls && k === s.strikes;
-        const sc = replace(s, { balls: b, strikes: k, last: same ? s.last : null, usage_this_count: same ? s.usage_this_count : {} });
-        const [policy, costs, temp] = mixedPolicy(arsenal, sc, T, window, null, iters, cv);
-        let ev = 0.0;
-        const tq = targets(b, k), bestOk = minAllowed(costs, tq);
-        for (const name in policy) {
-          const pp = policy[name];
-          if (pp <= 0) continue;
-          let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
-            LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(b, k, s.level)), bestOk);
-          if (!loc.length) {
-            let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
-            loc = [[bq, 1.0]];
-          }
-          let sub = 0; for (const [q, pq] of loc) sub += pq * costs.get(ck(name, q));
-          ev += pp * sub;
-        }
-        const nv = ev - base;
-        delta = Math.max(delta, Math.abs(nv - cv[cvKey(b, k)]));
-        cv[cvKey(b, k)] = nv;
-      }
-      if (delta < 0.001) break;
-    }
-    const zero = cv["0-0"], rel = {};
-    for (const key in cv) rel[key] = cv[key] - zero;
-    return [rel, cv];
-  }
-
   const KINDS = ["FB", "SL", "CB", "CH"];
   function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
     if (!arsenal || !arsenal.length) throw new Error("no pitches: the arsenal is empty");
@@ -4689,52 +4513,6 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
     if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
-  }
-
-  function callMixed(arsenal, s, opts = {}) {
-    checkInputs(arsenal, s);
-    const T = opts.T ?? 0.010, window = opts.window ?? 0.030, forced = opts.forced ?? null, iters = opts.iters ?? 8;
-    const rng = opts.rng || Math.random, atBat = opts.atBat ?? true;
-    const cv = atBat ? atBatValues(arsenal, s, T, window)[1] : null;
-    const [policy, costs, temp] = mixedPolicy(arsenal, s, T, window, forced, iters, cv);
-    let pPitch = Object.entries(policy).filter(([, v]) => v > 0.005);
-    let t = 0; for (const [, v] of pPitch) t += v;
-    pPitch = pPitch.map(([kk, v]) => [kk, v / t]);
-    const dist = [];
-    const tq = targets(s.balls, s.strikes), overall = minAllowed(costs, tq);
-    for (const [name, pp] of pPitch) {
-      let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
-        LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(s.balls, s.strikes, s.level)), overall);
-      if (!loc.length) {
-        let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
-        loc = [[bq, 1.0]];
-      }
-      const p = arsenal.find((x) => x.name === name);
-      for (const [q, pq] of loc) dist.push({ prob: pp * pq, cost: costs.get(ck(name, q)), pitch: p, quad: q });
-    }
-    if (opts.exclude && opts.exclude.length) {   // never re-call what he just shook off (unless nothing else is left)
-      const kept = dist.filter((d) => !opts.exclude.some(([n, q]) => d.pitch.name === n && d.quad === q));
-      if (kept.length) { const t_ = kept.reduce((a, d) => a + d.prob, 0); dist.length = 0; for (const d of kept) dist.push(Object.assign(d, { prob: d.prob / t_ })); }
-    }
-    dist.sort((a, b) => b.prob - a.prob);
-    const r = rng();
-    let acc = 0.0;
-    for (const d of dist) { acc += d.prob; if (r <= acc) return { pick: d, dist, best: overall, policy }; }
-    return { pick: dist[dist.length - 1], dist, best: overall, policy };
-  }
-
-  function gradeCall(arsenal, s, pitchName, quad, opts = {}) {
-    const { dist } = callMixed(arsenal, s, opts);
-    // v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
-    const cv = (opts.atBat ?? true) ? atBatValues(arsenal, s)[1] : null;
-    const [policy, costs] = mixedPolicy(arsenal, s, 0.010, 0.030, null, 8, cv);
-    const p = arsenal.find((x) => x.name === pitchName);
-    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy, cv)[0];
-    const tq = targets(s.balls, s.strikes), best = minAllowed(costs, tq), allowed = tq.includes(quad);
-    let prob = 0; for (const d of dist) if (d.pitch.name === pitchName && d.quad === quad) prob += d.prob;
-    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best, allowed,
-      verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
-      engine_top: dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
 
   // ---------------------------------------------------------------- "time for a change" (flags.py)
@@ -5614,7 +5392,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,
-    outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
+    outcomeProbs, cost, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

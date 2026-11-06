@@ -1,5 +1,5 @@
 """Export the Python engine's tables to app/engine_data.json for the JavaScript engine.
-The Python engine is the reference; run this after any change to its tables, then app/make_parity.py + parity.js.
+The Python engine is the reference; run this after any change to its tables, then app/make_parity_v10.py + parity_v10.js.
 Usage (from the repo root): python3 app/export_data.py [--check]   (--check: compare to the current file, write nothing)"""
 import json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
