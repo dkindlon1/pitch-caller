@@ -9,6 +9,8 @@ $run tests.py      python3 tests.py
 python3 app/make_parity.py 150 > /dev/null
 $run parity        node app/parity.js
 $run golden_v09    node golden/golden_v09.js     # the one engine against its frozen v0.9 reference (JS)
+python3 app/make_parity_v10.py 200 > /dev/null 2>&1
+$run parity_v10    node app/parity_v10.js        # v1.0: the shipped call path, Python vs JS within 1e-9
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1
