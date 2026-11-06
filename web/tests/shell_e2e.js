@@ -6,6 +6,7 @@
  * Needs Docker and the local stack running (npx supabase@2.122.1 start). Never points at a hosted project.
  */
 const { chromium } = require("playwright");
+const fakeMail = require("./fake_resend");
 const { Client } = require("pg");
 const path = require("path"), { spawn, execFileSync } = require("child_process");
 
@@ -49,8 +50,10 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     { id: "p_kid", updatedAt: 1000, teamId: "ours", name: "Young arm", number: "7", hand: "R", pitches: [] },
     { id: "p_teen", updatedAt: 1000, teamId: "ours", name: "Teen arm", number: "8", hand: "L", pitches: [] }]);
 
+  const M = await fakeMail.start({ port: 12114 });
   const web = spawn(process.execPath, [path.join(WEB, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT), "-H", "localhost"], {
-    cwd: WEB, env: { ...process.env, SUPABASE_URL: API, SUPABASE_PUBLISHABLE_KEY: PUB, SUPABASE_SERVICE_ROLE_KEY: SECRET, NODE_ENV: "production" }, stdio: ["ignore", "pipe", "pipe"] });
+    cwd: WEB, env: { ...process.env, SUPABASE_URL: API, SUPABASE_PUBLISHABLE_KEY: PUB, SUPABASE_SERVICE_ROLE_KEY: SECRET, NODE_ENV: "production",
+      RESEND_API_KEY: "re_test_fake_shell", RESEND_FAKE_API: "http://127.0.0.1:12114" }, stdio: ["ignore", "pipe", "pipe"] });
   let webLog = ""; web.stdout.on("data", (d) => (webLog += d)); web.stderr.on("data", (d) => (webLog += d));
   for (let i = 0; i < 60; i++) { try { if ((await fetch(SITE + "/login")).ok) break; } catch {} await wait(500); }
 
@@ -165,7 +168,15 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await signInForm(mom, "mom");
     const wt = await mainText(mom, /hasn't approved this invite yet/);
     check(/hasn't approved this invite yet/.test(wt), `(${wt.slice(0, 90).replace(/\n/g, " / ")}) before the coach approves the email the child typed, the parent is told to wait`);
-    await rpc("coach", "pc_approve_invite", { tok: moved[0].token });
+    // the coach approves on the staff page, and the parent gets the link by email
+    const cp = await fresh();
+    await cp.goto(`${SITE}/login?next=${encodeURIComponent(`/app/t/${rit}/staff`)}`); await signInForm(cp, "coach");
+    await cp.goto(`${SITE}/app/t/${rit}/staff`); await settle(cp);
+    await cp.locator("li", { hasText: "A parent's email" }).getByRole("button", { name: "Approve" }).click();
+    await cp.waitForURL(/ok=approved/, { timeout: 10000 }).catch(() => {}); await settle(cp);
+    const mm = M.inbox.find((m) => m.to[0] === "mom@test.local");
+    check(/ok=approved/.test(cp.url()) && mm && /Your child's invite to RIT Tigers/.test(mm.subject) && mm.text.includes(`/join/${moved[0].token}`),
+      `approved on the staff page: the parent is emailed the link (${mm && mm.subject})`);
     const heldDoc = (await db.query("select doc from public.pitchers where program_id = $1 and id = 'p_kid'", [rit])).rows[0].doc;
     check(!("name" in heldDoc), `the coach's approval holds the child's record to the placeholder until the parent agrees (${Object.keys(heldDoc).sort().join(",")})`);
     await mom.reload(); await settle(mom);
@@ -267,7 +278,7 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
     check(!/Error:|⨯/.test(webLog), "no server errors" + (/Error:|⨯/.test(webLog) ? ":\n" + webLog.split("\n").filter((l) => /Error|⨯/.test(l)).slice(0, 5).join("\n") : ""));
   } finally {
-    await browser.close(); web.kill(); await db.end();
+    await browser.close(); web.kill(); await M.close(); await db.end();
   }
   console.log(fails ? `\n${fails} shell check(s) FAILED` : "\nall shell checks passed");
   process.exit(fails ? 1 : 0);

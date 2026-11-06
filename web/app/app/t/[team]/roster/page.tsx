@@ -32,7 +32,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
     <>
       <h1 className="shell-h1">Roster</h1>
       <Notice sp={sp} />
-      {invite ? <div className="shell-note invite-box" role="status">Invite link for {(pitchers.find((p) => p.id === forPid) || { name: "the player" }).name}: <code>{`${origin}/join/${invite}`}</code>. Send it to him (or his parent). It works once, for 14 days.</div> : null}
+      {invite ? <div className="shell-note invite-box" role="status">Invite link for {(pitchers.find((p) => p.id === forPid) || { name: "the player" }).name}: <code>{`${origin}/join/${invite}`}</code>. Send it to him (or his parent). It works once, for 14 days. <MailNote v={one(sp.mailed)} /></div> : null}
       {pitchers.length ? (
         <div className="tbl-scroll"><table className="data-tbl" aria-label="Pitchers">
           <thead><tr><th>Pitcher</th><th>Throws</th><th>Arsenal</th>{roster ? <th>Account</th> : null}<th></th></tr></thead>
@@ -72,4 +72,12 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       {t.active ? null : <p className="shell-note">This team isn&apos;t switched on yet, so changes can&apos;t be saved until billing is done.</p>}
     </>
   );
+}
+
+// whether the invite link was emailed too (a fixed message per code)
+function MailNote({ v }: { v: string }) {
+  if (v === "sent") return <span>We emailed it too.</span>;
+  if (v === "no_provider") return <span>Email isn&apos;t set up yet, so send this link yourself.</span>;
+  if (v === "failed") return <span>The email didn&apos;t go through, so send this link yourself.</span>;
+  return null;
 }

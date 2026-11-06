@@ -52,3 +52,21 @@ export function lapseMail(o: { to: string; kind: "player" | "coach"; team: strin
 <p>PitchIQ</p></div>`;
   return { to: o.to, subject, text: lines.join("\n"), html };
 }
+
+const ROLE_WORD: Record<string, string> = { head: "head coach", pitching: "pitching coach", caller: "pitch caller", viewer: "viewer", player: "player" };
+
+// an invite to join a team: as staff, as a player, or (for a player under 13) to the parent who joins for him
+export function inviteMail(o: { to: string; team: string; role: string; pitcher?: string | null; forParent?: boolean; link: string; by?: string | null }): Mail {
+  const who = o.forParent ? `${o.pitcher || "your child"} to ${o.team}` : o.role === "player" ? `${o.team} as ${o.pitcher || "a player"}` : `${o.team} as ${ROLE_WORD[o.role] ? (/^[aeiou]/.test(ROLE_WORD[o.role]) ? "an " : "a ") + ROLE_WORD[o.role] : "a coach"}`;
+  const subject = o.forParent ? `Your child's invite to ${o.team} on PitchIQ` : `You're invited to ${o.team} on PitchIQ`;
+  const intro = o.forParent
+    ? `${o.by ? o.by + " invited" : "You're invited to add"} ${o.pitcher || "your child"} to ${o.team} on PitchIQ, the pitch-calling app the team uses. Players under 13 join through a parent or guardian: you make the account and agree first, and you can see or delete his data at any time.`
+    : `${o.by ? o.by + " invited you" : "You're invited"} to join ${who} on PitchIQ.`;
+  const lines = [intro, "", `Join here: ${o.link}`, "The link works once, for 14 days.", "", "PitchIQ"];
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#14181d;max-width:560px">
+<p>${esc(intro)}</p>
+<p><a href="${esc(o.link)}" style="display:inline-block;background:#14181d;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${o.forParent ? "Join for your child" : "Join " + esc(o.team)}</a></p>
+<p style="color:#4a5561;font-size:13px">The link works once, for 14 days. If you weren't expecting this, you can ignore it.</p>
+<p>PitchIQ</p></div>`;
+  return { to: o.to, subject, text: lines.join("\n"), html };
+}

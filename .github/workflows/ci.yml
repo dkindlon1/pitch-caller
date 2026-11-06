@@ -106,5 +106,7 @@ jobs:
         run: scripts/run-check.sh player_admin_e2e node web/tests/player_admin_e2e.js
       - name: Uploads, proposals and stats end to end (Plan 4)
         run: scripts/run-check.sh uploads_e2e node web/tests/uploads_e2e.js
+      - name: Retention sweep end to end (12 months after a lapse; deletes only when turned on)
+        run: scripts/run-check.sh retention_e2e node web/tests/retention_e2e.js
       - if: always()
         run: npx -y supabase@2.122.1 stop --no-backup

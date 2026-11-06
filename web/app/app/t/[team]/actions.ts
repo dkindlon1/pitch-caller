@@ -1,5 +1,7 @@
 "use server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { inviteMail, sendMail } from "@/lib/email";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ensureOurTeam, hittersOf, pitchersOf, push, teamFor, teamsOf, TOGGLES, PRESET_PERMS } from "@/lib/team";
 import { PITCH_TYPES, newHitter, newPitch, newPitcher, parseHitters, parseRoster, type Pitch } from "@/lib/docs";
@@ -10,6 +12,17 @@ import PCRules from "@/lib/pitch_rules";
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const back = (team: string, path: string, q: string) => redirect(`/app/t/${team}${path}${q ? (path.includes("?") ? "&" : "?") + q : ""}`);
 const ok = (r: { applied: number; rejected: unknown[]; error?: string }) => !r.error && r.applied > 0 && !r.rejected.length;
+
+// email an invite link when the coach gave an address; the page shows the link either way, so a coach can still send
+// it himself when there's no email service yet
+async function mailInvite(c: Awaited<ReturnType<typeof ctx>>, token: string, email: string | null, o: { role: string; pitcher?: string | null; forParent?: boolean }) {
+  if (!email || !/^[0-9a-f]{64}$/.test(token)) return "";
+  const h = await headers();
+  const site = process.env.SITE_URL?.replace(/\/$/, "") || `${h.get("x-forwarded-proto") || "http"}://${h.get("host")}`;
+  const r = await sendMail(inviteMail({ to: email, team: c.row.team_name, role: o.role, pitcher: o.pitcher, forParent: o.forParent, link: `${site}/join/${token}`, by: c.user.email }));
+  if (r.status === "failed") console.error("invite email failed", r.error);
+  return `&mailed=${r.status}`;
+}
 
 async function ctx(f: FormData) {
   const team = str(f, "team");
@@ -70,7 +83,10 @@ export async function invitePlayer(f: FormData) {
   const sb = await getServerSupabase();
   const email = str(f, "email") || null, u13 = f.get("under13") === "on";
   const { data, error } = await sb.rpc("pc_invite", { p: c.team, member_role: "player", pitcher: str(f, "pitcher"), invite_email: email, under13: u13 });
-  back(c.team, "/roster", error ? `error=${/already has an account/.test(error.message) ? "taken" : /parent/.test(error.message) ? "parent_email" : "invite"}` : `invite=${data}&for=${encodeURIComponent(str(f, "pitcher"))}`);
+  if (error) back(c.team, "/roster", `error=${/already has an account/.test(error.message) ? "taken" : /parent/.test(error.message) ? "parent_email" : "invite"}`);
+  const pname = ((await pitchersOf(c.team)).find((x) => x.id === str(f, "pitcher")) || { name: null }).name;
+  const mailed = await mailInvite(c, String(data), email, { role: "player", pitcher: pname, forParent: u13 });
+  back(c.team, "/roster", `invite=${data}&for=${encodeURIComponent(str(f, "pitcher"))}${mailed}`);
 }
 
 // a player's grade change put back (pc_revert_grade: edit_grades or the roster, and only if nobody changed it since)
@@ -115,7 +131,9 @@ export async function inviteStaff(f: FormData) {
   const sb = await getServerSupabase();
   const role = str(f, "role");
   const { data, error } = await sb.rpc("pc_invite", { p: c.team, member_role: role, pitcher: null, invite_email: str(f, "email") || null, under13: false });
-  back(c.team, "/staff", error ? `error=${/more permissions/.test(error.message) ? "ceiling" : "invite"}` : `invite=${data}&role=${encodeURIComponent(role)}`);
+  if (error) back(c.team, "/staff", `error=${/more permissions/.test(error.message) ? "ceiling" : "invite"}`);
+  const mailed = await mailInvite(c, String(data), str(f, "email") || null, { role });
+  back(c.team, "/staff", `invite=${data}&role=${encodeURIComponent(role)}${mailed}`);
 }
 
 export async function setMember(f: FormData) {
@@ -146,8 +164,14 @@ export async function cancelInvite(f: FormData) {
 export async function approveInvite(f: FormData) {
   const c = await ctx(f);
   const sb = await getServerSupabase();
-  const { error } = await sb.rpc("pc_approve_invite", { tok: str(f, "token") });
-  back(c.team, "/staff", error ? "error=approve" : "ok=approved");
+  const tok = str(f, "token");
+  // what the invite is (for the parent's email), read before it changes
+  const inv = (((await sb.rpc("pc_staff", { p: c.team })).data || []) as { token: string | null; email: string | null; pitcher_ids: string[] }[]).find((x) => x.token === tok);
+  const { error } = await sb.rpc("pc_approve_invite", { tok });
+  if (error) back(c.team, "/staff", "error=approve");
+  const pname = inv ? ((await pitchersOf(c.team)).find((x) => x.id === inv.pitcher_ids[0]) || { name: null }).name : null;
+  const mailed = inv ? await mailInvite(c, tok, inv.email, { role: "player", pitcher: pname, forParent: true }) : "";
+  back(c.team, "/staff", `ok=approved&invite=${tok}&role=player${mailed}`);
 }
 
 // ---------------------------------------------------------------- settings

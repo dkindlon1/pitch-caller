@@ -39,6 +39,17 @@ export async function signedUrl(path: string, seconds: number): Promise<string> 
   return `${s.base}${json.signedURL.startsWith("/") ? "" : "/"}${json.signedURL}`;
 }
 
+// remove export files (the 12-month retention sweep); a file that's already gone isn't an error
+export async function removeExports(paths: string[]): Promise<void> {
+  const s = storage();
+  for (let i = 0; i < paths.length; i += 100) {
+    const res = await fetch(`${s.base}/object/${BUCKET}`, {
+      method: "DELETE", headers: { ...s.headers, "content-type": "application/json" }, body: JSON.stringify({ prefixes: paths.slice(i, i + 100) }), cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`export removal failed (${res.status}) ${await res.text().catch(() => "")}`.trim());
+  }
+}
+
 const stampOf = (iso: string) => new Date(iso).toISOString().replace(/[-:T]/g, "").slice(0, 14);
 const safe = (s: string) => s.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 100) || "x";
 const day = (d: Date) => d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });
