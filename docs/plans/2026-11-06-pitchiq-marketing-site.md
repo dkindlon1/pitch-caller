@@ -83,7 +83,9 @@ visitor calls a game with the app's own engine, the iPad's live screen, and a mo
 - **LCP ≤ 2.5 s under simulated throttling.** Neither this branch nor main meets it reliably. Locally the
   JavaScript arrives before the first paint, so Lighthouse counts all of it (about 150 KB, mostly React and Next)
   and all six web fonts (about 100 KB) toward the h1. Options for Drew:
-  - Drop one or two font weights (Barlow 600, Barlow Condensed 700). That saves roughly 15 KB each.
+  - Drop one or two font weights (Barlow 600, Barlow Condensed 700). That saves roughly 15 KB each. Measured with
+    both dropped, 5 runs: LCP 2.1 to 2.8 s, median 2.6 s. That helps but doesn't settle it, and it changes the type,
+    so it's left as it is.
   - Accept the applied-throttling and field numbers.
 
   The real check is PageSpeed Insights on the deployed site, once this is merged.
