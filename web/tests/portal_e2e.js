@@ -5,6 +5,7 @@
  *   node web/tests/portal_e2e.js
  */
 const { chromium } = require("playwright");
+const fakeMail = require("./fake_resend");
 const { Client } = require("pg");
 const path = require("path"), { spawn, execFileSync } = require("child_process");
 
@@ -47,8 +48,10 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
   await join("coach", tA, "viewer", "viewer");
   await join("other", tB, "coach", "caller");                   // the coach is also a pitch caller on another org's team
 
+  const M = await fakeMail.start({ port: 12113 });
   const web = spawn(process.execPath, [path.join(WEB, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT), "-H", "localhost"], {
-    cwd: WEB, env: { ...process.env, SUPABASE_URL: API, SUPABASE_PUBLISHABLE_KEY: PUB, SUPABASE_SERVICE_ROLE_KEY: SECRET, NODE_ENV: "production" }, stdio: ["ignore", "pipe", "pipe"] });
+    cwd: WEB, env: { ...process.env, SUPABASE_URL: API, SUPABASE_PUBLISHABLE_KEY: PUB, SUPABASE_SERVICE_ROLE_KEY: SECRET, NODE_ENV: "production",
+      RESEND_API_KEY: "re_test_fake_portal", RESEND_FAKE_API: "http://127.0.0.1:12113", EMAIL_FROM: "PitchIQ <team@test.local>" }, stdio: ["ignore", "pipe", "pipe"] });
   let webLog = ""; web.stdout.on("data", (d) => (webLog += d)); web.stderr.on("data", (d) => (webLog += d));
   for (let i = 0; i < 60; i++) { try { if ((await fetch(SITE + "/login")).ok) break; } catch {} await wait(500); }
 
@@ -110,6 +113,21 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     check(/\/join\/[0-9a-f]{64}/.test(await text(coach, /join\//)), "the link to send is on the page");
     check(/Invited/.test(await coach.getByRole("row", { name: /Brooks/ }).innerText()), "and the pitcher's row says he's been invited");
 
+    console.log("4b. An invite with an email is emailed too; one for a child goes to the parent");
+    // a pitcher of his own: an under-13 invite holds the pitcher's records off the server, which section 7 needs for Smith
+    await http("POST", "/rest/v1/rpc/pc_push", { token: await tokenOf("coach"), body: { p: tA, tbl: "pitchers", rows: [{ id: "kid1", updatedAt: Date.now(), name: "Carter", pitches: [] }] } });
+    await goto(coach, `/app/t/${tA}/roster`);
+    await coach.getByRole("row", { name: /Carter/ }).locator("summary", { hasText: "Invite" }).click();
+    const inv = coach.getByRole("form", { name: "Invite Carter" });
+    await inv.getByLabel(/Email \(optional/).fill("smith.mom@test.local"); await inv.getByRole("checkbox", { name: /Under 13/ }).check();
+    await submit(coach, "Invite Carter", "Make invite link", (u) => /invite=/.test(u.search));
+    const pageTok = ((await text(coach, /join\//)).match(/join\/([0-9a-f]{64})/) || [])[1];
+    const pm = M.inbox.find((m) => m.to[0] === "smith.mom@test.local");
+    check(pm && /Your child's invite to RIT Tigers/.test(pm.subject) && pm.text.includes(`/join/${pageTok}`) && /through a parent or guardian/.test(pm.text) && /coach@test\.local invited/.test(pm.text),
+      `the parent gets the link by email, told he joins for his child (${pm ? pm.subject : JSON.stringify(M.inbox.map((m) => [m.to, m.subject]))})`);
+    check(/We emailed it too/.test(await text(coach, /emailed/)), "and the page says it was emailed as well as showing the link");
+    check(!M.inbox.some((m) => /Brooks/.test(m.text)), "an invite made without an email sends nothing");
+
     console.log("5. Opponents: nine hitters in under a minute");
     await goto(coach, `/app/t/${tA}/opponents`);
     await coach.getByRole("form", { name: "Add an opponent" }).getByLabel("Opponent").fill("Ithaca College");
@@ -132,6 +150,12 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await submit(coach, "Invite a coach", "Make invite link", (u) => /invite=/.test(u.search));
     const tok = (await text(coach, /join\//)).match(/join\/([0-9a-f]{64})/)[1];
     await rpc("asst", "pc_accept_invite", { tok });
+    await coach.getByRole("form", { name: "Invite a coach" }).getByLabel("Invite as").selectOption("caller");
+    await coach.getByRole("form", { name: "Invite a coach" }).getByLabel(/^Email/).fill("newcaller@test.local");
+    await submit(coach, "Invite a coach", "Make invite link", (u) => /mailed=/.test(u.search));
+    const cm = M.inbox.find((m) => m.to[0] === "newcaller@test.local");
+    check(cm && /You're invited to RIT Tigers/.test(cm.subject) && /as a pitch caller/.test(cm.text) && /\/join\/[0-9a-f]{64}/.test(cm.text) && cm.from === "PitchIQ <team@test.local>",
+      `a coach invite with an email is emailed: the team, the role and the link (${cm && cm.subject})`);
     await goto(coach, `/app/t/${tA}/staff`);
     const row = coach.getByRole("form", { name: "Preset for asst@test.local" });
     await row.getByText("Advanced").click(); await row.getByLabel("Staff").check(); await row.getByLabel("Edit grades").uncheck();
@@ -192,9 +216,9 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await ipad.locator("#sync-email").fill("coach@test.local"); await ipad.locator("#sync-pass").fill(PASS);
     await ipad.getByRole("button", { name: "Sign in" }).click(); await ipad.waitForTimeout(1200);
     await ipad.getByRole("button", { name: /RIT Tigers/ }).click(); await ipad.waitForTimeout(2500);
-    const onIpad = await ipad.evaluate(() => ({ names: [...DB.pitchers.values()].map((p) => p.name).sort(), rule: (ourTeam() || {}).pitchRule, slider: ([...DB.pitchers.values()].find((p) => p.name === "Smith") || { pitches: [] }).pitches.map((d) => d.kind).join() }));
+    const onIpad = await ipad.evaluate(() => ({ names: [...DB.pitchers.values()].map((p) => p.name).filter(Boolean).sort(), stubs: [...DB.pitchers.values()].filter((p) => !p.name).length, rule: (ourTeam() || {}).pitchRule, slider: ([...DB.pitchers.values()].find((p) => p.name === "Smith") || { pitches: [] }).pitches.map((d) => d.kind).join() }));
     check(JSON.stringify(onIpad.names) === JSON.stringify(["Avery Brooks", "Jones", "Smith"]) && onIpad.slider === "FB,CH,SL" && onIpad.rule && onIpad.rule.preset === "ps-19-22",
-      `the iPad has the website's roster, Smith's new slider and the team's rule (${onIpad.names.join(", ")})`);
+      `the iPad has the website's roster, Smith's new slider and the team's rule (${onIpad.names.join(", ")}; Carter, held as under 13 without consent, comes as a nameless stub: ${onIpad.stubs})`);
     await ipad.evaluate(async () => { const p = [...DB.pitchers.values()].find((x) => x.name === "Jones"); p.name = "Jones (from the iPad)"; await dbPut("pitchers", p); await syncNow(true); });
     await goto(coach, `/app/t/${tA}/roster`);
     check(/Jones \(from the iPad\)/.test(await text(coach, /from the iPad/)), "and a change on the iPad shows on the website");
@@ -202,7 +226,7 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
     check(!/Error:|⨯/.test(webLog), "no server errors" + (/Error:|⨯/.test(webLog) ? ":\n" + webLog.split("\n").filter((l) => /Error|⨯/.test(l)).slice(0, 6).join("\n") : ""));
   } finally {
-    await browser.close(); web.kill(); await db.end();
+    await browser.close(); web.kill(); await M.close(); await db.end();
   }
   console.log(fails ? `\n${fails} portal check(s) FAILED` : "\nall portal checks passed");
   process.exit(fails ? 1 : 0);

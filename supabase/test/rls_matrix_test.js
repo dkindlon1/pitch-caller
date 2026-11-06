@@ -1005,6 +1005,32 @@ const now = () => Date.now();
       && !!(await as("pl1", "delete from public.legal_acceptances where user_id = $1", [U.pl1])).error, "nobody writes or deletes them directly");
   }
 
+  console.log("23. Retention: 12 months after a lapse, the organization's data goes");
+  {
+    check(!!(await as("head", "select public.pc_retention_sweep(true)")).error && !!(await as("admin", "select public.pc_retention_sweep(true)")).error, "only the server runs it");
+    // an organization of its own, locked 13 months ago, with a team, a pitcher, an upload and an export
+    const oldOrg = await one("nonmember", "select public.pc_create_org('Gone Baseball') r");
+    const oldTeam = await one("nonmember", "select public.pc_create_team($1, 'Old Varsity', 'hs') r", [oldOrg]);
+    await su.query("update public.organizations set billing_status = 'locked', billing_changed_at = now() - interval '13 months' where id = $1", [oldOrg]);
+    await su.query("insert into public.pitchers (program_id, id, doc) values ($1, 'old1', $2)", [oldTeam, { id: "old1", updatedAt: 1, name: "Old" }]);
+    await su.query("insert into public.exports (org_id, program_id, lapse_at, kind, user_id, path, rows, bytes, link_expires_at) values ($1, $2, now() - interval '13 months', 'coach', $3, $4, 1, 1, now())",
+      [oldOrg, oldTeam, U.nonmember, `${oldOrg}/20251006120000/${oldTeam}/team.zip`]);
+    // org1 locked only a month ago: kept
+    await su.query("update public.organizations set billing_status = 'locked', billing_changed_at = now() - interval '1 month' where id = $1", [org1]);
+    const dry = await one("service", "select public.pc_retention_sweep(true) r");
+    const still = +(await su.query("select count(*) n from public.programs where id = $1", [oldTeam])).rows[0].n;
+    check(dry && dry.orgs.length === 1 && dry.orgs[0] === oldOrg && dry.teams === 1 && dry.paths.some((x) => x.startsWith(oldOrg)) && still === 1,
+      `a dry run reports only the organization locked over 12 months ago, and deletes nothing (${dry && dry.orgs.length} org, ${dry && dry.teams} team)`);
+    const wet = await one("service", "select public.pc_retention_sweep(false) r");
+    const left = (await su.query("select (select count(*) from public.organizations where id = $1) o, (select count(*) from public.programs where id = $2) t, (select count(*) from public.pitchers where program_id = $2) p, (select count(*) from public.exports where org_id = $1) e", [oldOrg, oldTeam])).rows[0];
+    const kept = (await su.query("select (select count(*) from public.programs where org_id = $1) t, (select count(*) from public.pitchers where program_id = $2) p", [org1, tA])).rows[0];
+    check(wet && !wet.error && +left.o === 0 && +left.t === 0 && +left.p === 0 && +left.e === 0, `then for real: the organization, its team, its records and its exports are gone (${JSON.stringify(wet && wet.error ? wet : left)})`);
+    check(+kept.t > 0 && +kept.p > 0, "an organization locked only a month is untouched");
+    const logged = +(await su.query("select count(*) n from private.retention_log")).rows[0].n;
+    check(logged === 2, "each run is logged");
+    await su.query("update public.organizations set billing_status = 'active' where id = $1", [org1]);
+  }
+
   console.log("13. The migration refuses a database that already has programs");
   {
     const G = DB + "_guard";

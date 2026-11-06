@@ -30,7 +30,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
     <>
       <h1 className="shell-h1">Staff</h1>
       <Notice sp={sp} />
-      {invite ? <div className="shell-note invite-box" role="status">Invite link for a {(ROLE[one(sp.role)] || "coach").toLowerCase()}: <code>{`${origin}/join/${invite}`}</code>. It works once, for 14 days.</div> : null}
+      {invite ? <div className="shell-note invite-box" role="status">Invite link for a {(ROLE[one(sp.role)] || "coach").toLowerCase()}: <code>{`${origin}/join/${invite}`}</code>. It works once, for 14 days. <MailNote v={one(sp.mailed)} /></div> : null}
       {staffOk ? <>
         <h2 className="shell-h2">Coaches</h2>
         <ul className="staff-list">{coaches.map((m) => {
@@ -78,4 +78,12 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       </> : null}
     </>
   );
+}
+
+// whether the invite link was emailed too (a fixed message per code)
+function MailNote({ v }: { v: string }) {
+  if (v === "sent") return <span>We emailed it too.</span>;
+  if (v === "no_provider") return <span>Email isn&apos;t set up yet, so send this link yourself.</span>;
+  if (v === "failed") return <span>The email didn&apos;t go through, so send this link yourself.</span>;
+  return null;
 }
