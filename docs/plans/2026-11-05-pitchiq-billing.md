@@ -101,7 +101,7 @@ applied once, in order.
 
 - Two Checkouts opened in two tabs and both paid make two subscriptions; the second is logged (`second_subscription`)
   and needs a refund by hand. Checkout sessions expire after 24 hours.
-- After a lapse, exports and emails (D7) are Plan 2b. Until then a lapse only locks.
+- After a lapse, exports and emails (D7) are built in Plan 2b (`docs/plans/2026-11-06-pitchiq-lapse-exports-terms.md`); real emails wait on a Resend account.
 
 ## Done when
 

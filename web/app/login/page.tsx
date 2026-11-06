@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
@@ -22,6 +23,7 @@ const ERRORS: Record<string, string> = {
   unconfirmed: "Your email isn't confirmed yet. Open the link in the email we sent you (check spam too), or get a new one below.",
   missing_email: "Enter the email you signed up with.",
   resend_wait: "Too many emails sent for now. Wait a few minutes, then try again.",
+  agree: "To make an account, agree to the Terms and the Privacy Policy.",
 };
 
 export default function LoginPage({ searchParams }: { searchParams: Search }) {
@@ -79,6 +81,7 @@ async function LoginForms({ searchParams }: { searchParams: Search }) {
           )}
           <label>Email<input name="email" type="email" autoComplete="email" required /></label>
           <label>Password (8 characters or more)<input name="password" type="password" autoComplete="new-password" minLength={8} required /></label>
+          <label className="check"><input name="agree" type="checkbox" required /> I agree to the <Link href="/terms" target="_blank">Terms</Link> and the <Link href="/privacy" target="_blank">Privacy Policy</Link></label>
           <button type="submit" className="shell-btn">Make account</button>
         </form>
       </details>

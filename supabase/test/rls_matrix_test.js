@@ -920,6 +920,91 @@ const now = () => Date.now();
     check(gone && !!dec.error && kept && kept.name === "Gone" && !kept.slot, "a pitcher taken off the roster: his proposal can't be accepted, and his record is left as it was");
   }
 
+  console.log("21. Lapse exports (Plan 2b, D7): who gets what, only his rows, and only the server");
+  {
+    const plan = (a) => one("service", "select public.pc_lapse_plan($1::jsonb) r", [JSON.stringify(a)]);
+    check(await plan({ org: org1 }) === null, "an organization that isn't locked has nothing to export");
+    await su.query("update public.organizations set billing_status = 'locked' where id = $1", [org1]);
+    const pl = await plan({ org: org1 });
+    const ta = pl && pl.teams.find((t) => t.id === tA);
+    const coachEmails = ta ? ta.coaches.map((c) => c.email) : [];
+    const ownerEmail = (await su.query("select u.email from public.organizations o join auth.users u on u.id = o.owner_id where o.id = $1", [org1])).rows[0].email;
+    check(!!ta && [ownerEmail, "head@x.org", "pitching@x.org", "caller@x.org", "viewer@x.org"].every((e) => coachEmails.includes(e)) && !coachEmails.includes("pl1@x.org"),
+      `locked: each team's staff and the owner get the team export (${coachEmails.join(", ")})`);
+    const p1 = ta && ta.players.find((x) => x.pitcher_id === "p1");
+    check(!!p1 && p1.email === "pl1@x.org" && p1.user_id === U.pl1, "each linked player gets his own");
+    const org1Row = (await su.query("select stripe_subscription_id s from public.organizations where id = $1", [org1])).rows[0];
+    if (org1Row.s) check(!!(await plan({ subscription: org1Row.s })), "found by its subscription too, as the webhook names it");
+
+    const mine = await one("service", "select public.pc_export_rows($1, 'p1') r", [tA]);
+    const T = ["pitchers", "catchers", "hitters", "teams", "games", "events", "checkins", "sessions", "packs", "readings", "learned", "uploads", "upload_pitches", "grade_history"];
+    const flat = T.flatMap((t) => (mine[t] || []).map((r) => [t, r]));
+    const others = flat.filter(([t, r]) => t !== "games" && (t === "pitchers" ? r.id !== "p1" : (r.pitcherId ?? r.pitcher_id) !== "p1"));
+    check(mine && others.length === 0 && mine.pitchers.length === 1, `a player's export has only his rows (${others.length} others; ${T.map((t) => t + " " + (mine[t] || []).length).join(", ")})`);
+    let dbn = 0;
+    for (const t of TABLES) {
+      const q = t === "pitchers" ? "select count(*) n from public.pitchers where program_id = $1 and id = 'p1' and deleted_at is null"
+        : t === "games" ? "select count(*) n from public.games g where g.program_id = $1 and g.deleted_at is null and g.id in (select e.game_id from public.events e where e.program_id = $1 and e.pitcher_id = 'p1' and e.deleted_at is null)"
+        : `select count(*) n from public.${t} where program_id = $1 and pitcher_id = 'p1' and deleted_at is null`;
+      dbn += +(await su.query(q, [tA])).rows[0].n;
+    }
+    for (const t of ["uploads", "upload_pitches", "grade_history"]) dbn += +(await su.query(`select count(*) n from public.${t} where program_id = $1 and pitcher_id = 'p1'`, [tA])).rows[0].n;
+    check(flat.length === dbn && dbn > 0, `its row count equals his rows in the database (${flat.length} = ${dbn})`);
+    const team = await one("service", "select public.pc_export_rows($1, null) r", [tA]);
+    const ids = team.pitchers.map((x) => x.id);
+    const minors = (await su.query("select pitcher_id, held_id from public.minors where program_id = $1", [tA])).rows;
+    const hid = new Set(minors.flatMap((m) => [m.pitcher_id, m.held_id]));
+    const leaked = T.flatMap((t) => team[t] || []).filter((r) => hid.has(r.id) && "updatedAt" in r && "pitches" in r || hid.has(r.pitcherId) || hid.has(r.pitcher_id));
+    check(ids.includes("p1") && ids.includes("p2") && minors.length > 0 && leaked.length === 0 && team.hitters.length > 0,
+      `the coach export has the whole team, less every under-13 player's rows (${minors.length} held back, ${leaked.length} leaked)`);
+    for (const who of ["head", "pl1", "owner", "anon"]) {
+      check(!!(await as(who, "select public.pc_lapse_plan($1::jsonb)", [JSON.stringify({ org: org1 })])).error && !!(await as(who, "select public.pc_export_rows($1, null)", [tA])).error,
+        `${who} can't ask for the plan or the rows (server only)`);
+    }
+    const rec = (user, kind, pitcher) => JSON.stringify({ org_id: org1, program_id: tA, lapse_at: "2026-11-06T12:00:00Z", kind, pitcher_id: pitcher, user_id: user,
+      path: `${org1}/20261106120000/${tA}/${kind === "player" ? "player-" + pitcher : "team"}.zip`, rows: 5, bytes: 100, link_expires_at: "2026-12-06T12:00:00Z" });
+    const e1 = await one("service", "select public.pc_export_save($1::jsonb) r", [rec(U.pl1, "player", "p1")]);
+    const e2 = await one("service", "select public.pc_export_save($1::jsonb) r", [rec(U.head, "coach", null)]);
+    check(typeof e1 === "string" && typeof e2 === "string" && await one("service", "select public.pc_export_save($1::jsonb) r", [rec(U.pl1, "player", "p1")]) === null
+      && await one("service", "select public.pc_export_save($1::jsonb) r", [rec(U.head, "coach", null)]) === null, "recorded once per person per lapse (a second run adds nothing)");
+    check(!!(await as("head", "select public.pc_export_save($1::jsonb)", [rec(U.head, "coach", null)])).error, "only the server records them");
+    const seen = async (who) => ((await as(who, "select id from public.exports")).rows || []).map((x) => x.id);
+    check(JSON.stringify(await seen("pl1")) === JSON.stringify([e1]) && JSON.stringify(await seen("head")) === JSON.stringify([e2]) && (await seen("parent")).length === 0,
+      "while locked, each person still sees his own export and nobody else's");
+    check(!!(await as("anon", "select id from public.exports")).error || (await seen("anon")).length === 0, "anon sees none");
+    check(!!(await as("pl1", "update public.exports set path = 'x' where id = $1", [e1])).error && !!(await as("pl1", "delete from public.exports where id = $1", [e1])).error, "nobody changes them");
+    // super admin: the lapses and their emails, and sending again (only while locked); both audited
+    const a0 = +(await su.query("select count(*) n from public.admin_audit")).rows[0].n;
+    const ax = await one("admin", "select public.pc_admin_exports($1, false) r", [org1]);
+    const ar = await one("admin", "select public.pc_admin_exports($1, true) r", [org1]);
+    const acts = (await su.query("select action from public.admin_audit order by id desc limit 2")).rows.map((r) => r.action).reverse().join(",");
+    check(ax && ax.locked === true && ax.lapses.length === 1 && ax.lapses[0].people === 2 && ax.lapses[0].files === 2 && ar && !ar.error
+      && +(await su.query("select count(*) n from public.admin_audit")).rows[0].n === a0 + 2 && acts === "view_exports,resend_exports",
+      `the admin sees each lapse's files and emails, and can ask to send again; both are in the audit log (${acts})`);
+    for (const who of ["owner", "head", "pl1", "anon"]) check(!!(await as(who, "select public.pc_admin_exports($1, true)", [org1])).error, `${who} can't`);
+    await one("service", "select public.pc_export_emailed($1, 'sent') r", [e1]);
+    check((await su.query("select email_status, emailed_at from public.exports where id = $1", [e1])).rows[0].emailed_at !== null, "the email is recorded as sent");
+    await su.query("update public.organizations set billing_status = 'active' where id = $1", [org1]);
+    check(!!(await as("admin", "select public.pc_admin_exports($1, true)", [org1])).error, "not once it's paid up again");
+  }
+
+  console.log("22. Terms and Privacy acceptance (D15)");
+  {
+    check(!!(await as("pl1", "select public.pc_legal_signup($1, '2026-11-06-draft')", [U.pl1])).error && !!(await as("anon", "select public.pc_legal_signup($1, '2026-11-06-draft')", [U.pl1])).error,
+      "only the server records a sign-up's agreement");
+    await one("service", "select public.pc_legal_signup($1, '2026-11-06-draft') r", [U.pl1]);
+    await one("service", "select public.pc_legal_signup($1, '2026-11-06-draft') r", [U.pl1]);
+    await one("service", "select public.pc_legal_signup($1, '2026-11-06-draft') r", ["00000000-0000-4000-8000-000000000000"]);
+    const rows = (await su.query("select doc, via from public.legal_acceptances where user_id = $1 order by doc", [U.pl1])).rows;
+    check(rows.map((r) => r.doc + ":" + r.via).join() === "privacy:signup,terms:signup", "both documents, once each, marked as sign-up (an unknown account is skipped)");
+    check(!(await as("head", "select public.pc_legal_accept('2026-11-06-draft')")).error && !!(await as("anon", "select public.pc_legal_accept('2026-11-06-draft')")).error, "a signed-in account agrees for itself; anon can't");
+    check(!!(await as("head", "select public.pc_legal_accept('soon')")).error, "the version has to look like one");
+    const seenL = async (who) => ((await as(who, "select user_id from public.legal_acceptances")).rows || []).map((r) => r.user_id);
+    check((await seenL("pl1")).every((u) => u === U.pl1) && (await seenL("pl1")).length === 2 && (await seenL("head")).every((u) => u === U.head), "each account reads only its own");
+    check(!!(await as("pl1", "insert into public.legal_acceptances (user_id, doc, version, via) values ($1, 'terms', '2027-01-01', 'portal')", [U.head])).error
+      && !!(await as("pl1", "delete from public.legal_acceptances where user_id = $1", [U.pl1])).error, "nobody writes or deletes them directly");
+  }
+
   console.log("13. The migration refuses a database that already has programs");
   {
     const G = DB + "_guard";

@@ -145,7 +145,8 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await goto(kid, `${SITE}/login?mode=signup`);
     const su = kid.getByRole("form", { name: "Make an account" });
     check(await su.getByLabel("Month").count() === 0, "back on the sign-up form the same day, the age question isn't offered again");
-    await su.getByLabel("Email").fill("kid@test.local"); await su.getByLabel("Password (8 characters or more)").fill(PASS); await submit(kid, "Make account", (u) => /error=/.test(u.search), su);
+    await su.getByLabel("Email").fill("kid@test.local"); await su.getByLabel("Password (8 characters or more)").fill(PASS); await su.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+    await submit(kid, "Make account", (u) => /error=/.test(u.search), su);
     check(/under 13 can't make their own account/.test(await mainText(kid)) && +(await db.query("select count(*) n from auth.users where email = 'kid@test.local'")).rows[0].n === 0, "and making an account anyway is refused, with nothing stored");
 
     const tiedTok = await rpc("coach", "pc_invite", { p: rit, member_role: "player", pitcher: "p_teen", invite_email: "teen@test.local", under13: false });
@@ -229,6 +230,39 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await uc.getByRole("form", { name: "Sign in" }).getByRole("button", { name: "Sign in" }).click();
     await uc.waitForURL(/error=bad_login/);
     check(/don't match an account/.test(await mainText(uc, /don't match/)), "a wrong password still just says it doesn't match");
+
+    console.log("11. Making an account means agreeing to the Terms, stored with the version and time (D15)");
+    const nu = await fresh();
+    await goto(nu, `${SITE}/login?mode=signup&next=/app`);
+    const sf = nu.getByRole("form", { name: "Make an account" });
+    if (await sf.getByLabel("Month").count()) { await sf.getByLabel("Month").selectOption("5"); await sf.getByLabel("Year").selectOption(String(new Date().getUTCFullYear() - 30)); }
+    await sf.getByLabel("Email").fill("agree@test.local"); await sf.getByLabel("Password (8 characters or more)").fill(PASS);
+    // past the browser's own check (the box is required): the server refuses too
+    await nu.evaluate(() => document.querySelector('form[aria-label="Make an account"] input[name=agree]').removeAttribute("required"));
+    await sf.getByRole("button", { name: "Make account" }).click(); await nu.waitForURL(/error=agree/, { timeout: 10000 }).catch(() => {});
+    check(/agree to the Terms and the Privacy Policy/.test(await mainText(nu, /agree to the Terms/)) && +(await db.query("select count(*) n from auth.users where email = 'agree@test.local'")).rows[0].n === 0,
+      "without ticking the box, no account is made");
+    const sf2 = nu.getByRole("form", { name: "Make an account" });
+    if (await sf2.getByLabel("Month").count()) { await sf2.getByLabel("Month").selectOption("5"); await sf2.getByLabel("Year").selectOption(String(new Date().getUTCFullYear() - 30)); }
+    await sf2.getByLabel("Email").fill("agree@test.local"); await sf2.getByLabel("Password (8 characters or more)").fill(PASS);
+    await sf2.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+    await sf2.getByRole("button", { name: "Make account" }).click(); await nu.waitForURL((u) => u.pathname === "/app" || /notice=check_email/.test(u.search), { timeout: 10000 }).catch(() => {});
+    const legal = (await db.query("select l.doc, l.version, l.via, l.accepted_at from public.legal_acceptances l join auth.users u on u.id = l.user_id where u.email = 'agree@test.local' order by l.doc")).rows;
+    check(legal.length === 2 && legal.every((r) => r.via === "signup" && r.accepted_at && /^\d{4}-\d{2}-\d{2}/.test(r.version)), `ticked: the account and its agreement to both, with the version and time (${legal.map((r) => r.doc + "@" + r.version).join(", ")})`);
+    if (new URL(nu.url()).pathname === "/app") check((await nu.getByRole("form", { name: "Agree to the Terms" }).count()) === 0, "and the portal doesn't ask him again");
+    const old = await fresh();
+    await goto(old, `${SITE}/login?next=/app`);
+    const of = old.getByRole("form", { name: "Sign in" });
+    await of.getByLabel("Email").fill("other@test.local"); await of.getByLabel("Password").fill(PASS); await of.getByRole("button", { name: "Sign in" }).click();
+    await old.waitForURL((u) => u.pathname === "/app", { timeout: 10000 }).catch(() => {});
+    const agreeForm = old.getByRole("form", { name: "Agree to the Terms" });
+    await agreeForm.waitFor({ timeout: 10000 }).catch(() => {});   // the teams list streams in
+    check(await agreeForm.count() === 1, `an account made before the Terms is asked to agree in the portal (${old.url().replace(SITE, "")})`);
+    await agreeForm.getByRole("checkbox").check(); await agreeForm.getByRole("button", { name: "Agree" }).click();
+    const stored = async () => +(await db.query("select count(*) n from public.legal_acceptances l join auth.users u on u.id = l.user_id where u.email = 'other@test.local' and l.via = 'portal'")).rows[0].n === 2;
+    for (let i = 0; i < 40 && !(await stored()); i++) await wait(250);
+    await old.getByRole("form", { name: "Agree to the Terms" }).waitFor({ state: "detached", timeout: 10000 }).catch(() => {});
+    check(await stored() && (await old.getByRole("form", { name: "Agree to the Terms" }).count()) === 0, "agreeing there stores it, and the prompt goes away");
 
     check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
     check(!/Error:|⨯/.test(webLog), "no server errors" + (/Error:|⨯/.test(webLog) ? ":\n" + webLog.split("\n").filter((l) => /Error|⨯/.test(l)).slice(0, 5).join("\n") : ""));

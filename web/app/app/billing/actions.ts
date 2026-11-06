@@ -1,4 +1,5 @@
 "use server";
+import { hasAccepted } from "@/lib/legal";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSupabase, getUser } from "@/lib/supabase/server";
@@ -33,6 +34,7 @@ async function owned(f: FormData): Promise<{ org: string; info: Info }> {
 // ---------------------------------------------------------------- signing up
 export async function createOrganization(f: FormData) {
   if (!(await getUser())) redirect("/login?next=/app/new");
+  if (!(await hasAccepted(await getServerSupabase()))) redirect("/app/new?error=agree");
   const name = str(f, "name").slice(0, 120), level = LEVELS.has(str(f, "level")) ? str(f, "level") : null;
   const role = PRESETS.has(str(f, "role")) ? str(f, "role") : null;
   if (!name) redirect("/app/new?error=name");

@@ -293,7 +293,7 @@ export default function Home() {
         <div className="wrap foot-row">
           <span className="brand brand-foot"><Mark size={22} /><span>PitchIQ</span></span>
           <span>© 2026 PitchIQ</span>
-          <Link href="/privacy">Privacy</Link>
+          <span className="foot-links"><Link href="/terms">Terms</Link> <Link href="/privacy">Privacy</Link></span>
         </div>
       </footer>
     </>

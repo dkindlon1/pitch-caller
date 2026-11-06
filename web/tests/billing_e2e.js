@@ -1,8 +1,8 @@
 /*
  * Billing (Plan 2) against a real local Supabase, the built site and a fake Stripe (fake_stripe.js) that signs its
  * webhooks with the real library: sign up and pay, a replayed event, adding a team (paid and declined), removing and
- * keeping one, a failed renewal locking everything, an event arriving out of order, the card fixed, cancelling and
- * coming back. Covers D5 and D6 without Stripe; the same flows against Stripe's test mode need Drew's test keys.
+ * keeping one, a failed renewal locking everything and emailing everyone's data (a fake Resend keeps the emails), an
+ * event arriving out of order, the card fixed, cancelling and coming back. Covers D5 and D6 without Stripe; the same flows against Stripe's test mode need Drew's test keys.
  * Run from the repo root after `npm run build` in web/, with `npx supabase@2.122.1 start` running:
  *   node web/tests/billing_e2e.js
  */
@@ -10,9 +10,11 @@ const { chromium } = require("playwright");
 const { Client } = require("pg");
 const path = require("path"), fs = require("fs"), { spawn, execFileSync } = require("child_process");
 const fake = require("./fake_stripe");
+const fakeMail = require("./fake_resend");
+const { unzipSync, strFromU8 } = require("fflate");
 
 const ROOT = path.join(__dirname, "../.."), WEB = path.join(__dirname, ".."), PORT = 3197, SITE = `http://localhost:${PORT}`;
-const FAKE_PORT = 12111, FAKE = `http://localhost:${FAKE_PORT}`, WHSEC = "whsec_test_" + "e2e";
+const FAKE_PORT = 12111, FAKE = `http://localhost:${FAKE_PORT}`, WHSEC = "whsec_test_" + "e2e", MAIL_PORT = 12112;
 const CLI = ["-y", "supabase@2.122.1"];
 let fails = 0;
 const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if (!ok) fails++; };
@@ -37,12 +39,15 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     }
   };
   const PASS = "test-pass-1234";
-  for (const n of ["drew", "coach"]) await http("POST", "/auth/v1/admin/users", { key: SECRET, body: { email: `${n}@test.local`, password: PASS, email_confirm: true } });
+  const UID = {};
+  for (const n of ["drew", "coach", "player"]) UID[n] = (await http("POST", "/auth/v1/admin/users", { key: SECRET, body: { email: `${n}@test.local`, password: PASS, email_confirm: true } })).id;
 
   const F = await fake.start({ port: FAKE_PORT, webhookUrl: `${SITE}/api/stripe/webhook`, secret: WHSEC });
+  const M = await fakeMail.start({ port: MAIL_PORT });
   const web = spawn(process.execPath, [path.join(WEB, "node_modules/next/dist/bin/next"), "start", "-p", String(PORT), "-H", "localhost"], {
     cwd: WEB, env: { ...process.env, SUPABASE_URL: API, SUPABASE_PUBLISHABLE_KEY: PUB, SUPABASE_SERVICE_ROLE_KEY: SECRET, NODE_ENV: "production",
-      STRIPE_SECRET_KEY: "sk_test_fake_e2e", STRIPE_WEBHOOK_SECRET: WHSEC, STRIPE_PRICE_ID: "price_team_year", STRIPE_COUPON_ID: "first_year", STRIPE_FAKE_API: FAKE },
+      STRIPE_SECRET_KEY: "sk_test_fake_e2e", STRIPE_WEBHOOK_SECRET: WHSEC, STRIPE_PRICE_ID: "price_team_year", STRIPE_COUPON_ID: "first_year", STRIPE_FAKE_API: FAKE,
+      RESEND_API_KEY: "re_test_fake_e2e", RESEND_FAKE_API: `http://127.0.0.1:${MAIL_PORT}`, EMAIL_FROM: "PitchIQ <data@test.local>" },
     stdio: ["ignore", "pipe", "pipe"] });
   let webLog = ""; web.stdout.on("data", (d) => (webLog += d)); web.stderr.on("data", (d) => (webLog += d));
   for (let i = 0; i < 60; i++) { try { if ((await fetch(SITE + "/login")).ok) break; } catch {} await wait(500); }
@@ -78,6 +83,13 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     const drew = await fresh();
     await signIn(drew, "drew");
     await drew.getByRole("link", { name: "Start an organization" }).click(); await drew.waitForURL(/\/app\/new/).catch(() => {}); await settle(drew);
+    // his account was made without the sign-up form, so he agrees to the Terms here first (D15)
+    check((await drew.getByRole("form", { name: "New organization" }).count()) === 0, "paying needs the Terms agreed first");
+    const ag = drew.getByRole("form", { name: "Agree to the Terms" });
+    await ag.getByRole("checkbox").check(); await ag.getByRole("button", { name: "Agree" }).click();
+    await drew.getByRole("form", { name: "New organization" }).waitFor({ timeout: 10000 }).catch(() => {});
+    const acc = (await db.query("select doc, version, via from public.legal_acceptances where user_id = $1 order by doc", [UID.drew])).rows;
+    check(acc.length === 2 && acc.every((r) => r.via === "portal" && /^\d{4}-\d{2}-\d{2}/.test(r.version)) && acc.map((r) => r.doc).join() === "privacy,terms", "his agreement is stored with the version and time");
     const nf = drew.getByRole("form", { name: "New organization" });
     await nf.getByLabel("Organization name").fill("Lakeside Baseball");
     await nf.getByLabel("Level").selectOption("hs");
@@ -162,10 +174,87 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     check(renew.result === "applied" && !(await active("JV")) && await teamsOf(org.id) === "Varsity:active JV:removed Freshman:active Summer:active",
       `the year renews: JV is gone, the others carry on (${await teamsOf(org.id)})`);
 
-    console.log("5. A failed renewal locks every team; an older event can't undo that; the card fixed unlocks (D7, without the exports)");
+    // a roster with data on Varsity: the coach on the staff, two pitchers with games, one of them linked to a player
+    const V = (await db.query("select id from public.programs where name = 'Varsity'")).rows[0].id;
+    await db.query("insert into public.members (program_id, user_id, role) values ($1, $2, 'pitching'), ($1, $3, 'player')", [V, UID.coach, UID.player]);
+    await db.query("insert into public.player_links (program_id, user_id, pitcher_id) values ($1, $2, 'p1')", [V, UID.player]);
+    const doc = (o) => JSON.stringify({ updatedAt: 1000, ...o });
+    for (const [id, name] of [["p1", "Avery Brooks"], ["p2", "Sam Reyes"]]) await db.query("insert into public.pitchers (program_id, id, doc) values ($1, $2, $3)", [V, id, doc({ id, name, hand: "R", pitches: [{ id: "pt1", name: "Fastball", grade: 3, command: 3, velo: 86 }] })]);
+    await db.query("insert into public.games (program_id, id, doc) values ($1, 'g1', $2), ($1, 'g2', $3)", [V, doc({ id: "g1", date: "2026-10-01" }), doc({ id: "g2", date: "2026-10-08" })]);
+    let n = 0;
+    for (const [pid, game, k] of [["p1", "g1", 7], ["p1", "g2", 5], ["p2", "g2", 9]]) for (let i = 0; i < k; i++) {
+      n++; await db.query("insert into public.events (program_id, id, doc) values ($1, $2, $3)", [V, `e${n}`, doc({ id: `e${n}`, type: "pitch", gameId: game, pitcherId: pid, res: i % 2 ? "ball" : "cstrike", n: i })]);
+    }
+    await db.query("insert into public.hitters (program_id, id, doc) values ($1, 'h1', $2)", [V, doc({ id: "h1", name: "Opp Hitter", bats: "L", teamId: "opp" })]);
+
+    console.log("5. A failed renewal locks every team and emails everyone their data; an older event can't undo the lock; the card fixed unlocks (D7)");
     const failed = await tclock(`/test/renew?sub=${org.stripe_subscription_id}&fail=1`);
     org = await orgRow();
     check(failed.result === "applied" && org.billing_status === "locked" && !(await active("Varsity")) && !(await active("Freshman")), "locked: no team syncs");
+    // Varsity: Drew (owner, head) and the coach get the team file, the player his own; Freshman and Summer: Drew. JV was removed.
+    const exps = async () => (await db.query("select e.*, u.email from public.exports e join auth.users u on u.id = e.user_id where e.org_id = $1 order by e.created_at", [org.id])).rows;
+    check(await until(async () => (await exps()).filter((e) => e.email_status !== "pending").length === 5), "the exports are built and recorded for everyone");
+    let ex = await exps();
+    const byWho = ex.map((e) => `${e.email.split("@")[0]}:${e.team_name}:${e.kind}`).sort().join(" ");
+    check(byWho === "coach:Varsity:coach drew:Freshman:coach drew:Summer:coach drew:Varsity:coach player:Varsity:player", `one per coach per team and one per linked player (${byWho})`);
+    check(ex.every((e) => e.email_status === "sent") && M.inbox.length === 5 && M.inbox.every((m) => m.from === "PitchIQ <data@test.local>"), `each one emailed (${M.inbox.length} in the test inbox)`);
+    const pmail = M.inbox.find((m) => m.to[0] === "player@test.local");
+    const plink = pmail && (pmail.text.match(/Download it: (\S+)/) || [])[1];
+    check(pmail && /Your PitchIQ data: Varsity/.test(pmail.subject) && /until /.test(pmail.text) && /12 months/.test(pmail.text) && plink && /\/storage\/v1\/object\/sign\/exports\//.test(plink),
+      `the player's email: a signed download link, when it expires, and that nothing is deleted (${pmail && pmail.subject})`);
+    const pexp = ex.find((e) => e.kind === "player");
+    check(pexp && Math.abs(new Date(pexp.link_expires_at) - Date.now() - 30 * 86400000) < 600000, "the link lasts 30 days");
+    const zipOf = async (url) => { const r = await fetch(url); return r.ok ? unzipSync(new Uint8Array(await r.arrayBuffer())) : null; };
+    const csvRows = (z, t) => (z[`${t}.csv`] ? strFromU8(z[`${t}.csv`]).split("\r\n").filter((l) => l !== "").length - 1 : 0);
+    const pz = plink && await zipOf(plink);
+    const pRows = pz ? ["pitchers", "games", "events", "hitters", "uploads", "upload_pitches", "grade_history"].reduce((a, t) => a + csvRows(pz, t), 0) : -1;
+    const dbP = +(await db.query(`select (select count(*) from public.pitchers where program_id = $1 and id = 'p1')
+      + (select count(*) from public.events where program_id = $1 and pitcher_id = 'p1')
+      + (select count(*) from public.games g where g.program_id = $1 and g.id in (select game_id from public.events where program_id = $1 and pitcher_id = 'p1')) n`, [V])).rows[0].n;
+    check(pz && pRows === dbP && pRows === pexp.rows && csvRows(pz, "events") === 12 && !strFromU8(pz["pitchers.csv"]).includes("Sam Reyes") && !pz["hitters.csv"]
+      && strFromU8(pz["summary.pdf"].slice(0, 5)) === "%PDF-" && /events\.csv  12 rows/.test(strFromU8(pz["README.txt"])),
+      `his zip has exactly his rows, ${pRows} = ${dbP} in the database (his 12 pitches, his 2 games, his record), a summary PDF and nothing of a teammate's`);
+    const cmail = M.inbox.find((m) => m.to[0] === "coach@test.local");
+    const cz = cmail && await zipOf((cmail.text.match(/Download it: (\S+)/) || [])[1]);
+    check(cz && csvRows(cz, "pitchers") === 2 && csvRows(cz, "events") === 21 && csvRows(cz, "games") === 2 && csvRows(cz, "hitters") === 1 && !cz["summary.pdf"],
+      "the coach's zip covers the whole team: both pitchers, all 21 pitches, both games, the scouted hitter");
+    // locked: the player's sign-in reads nothing of the team, but still reads his own export
+    const tok = (await http("POST", "/auth/v1/token?grant_type=password", { body: { email: "player@test.local", password: PASS } })).access_token;
+    const mine = await http("GET", "/rest/v1/exports?select=id,kind", { token: tok });
+    const teamRows = await http("GET", `/rest/v1/pitchers?select=id&program_id=eq.${V}`, { token: tok });
+    const coachTok = (await http("POST", "/auth/v1/token?grant_type=password", { body: { email: "coach@test.local", password: PASS } })).access_token;
+    const coachRows = await http("GET", `/rest/v1/events?select=id&program_id=eq.${V}`, { token: coachTok });
+    check(teamRows.length === 0 && coachRows.length === 0 && mine.length === 1 && mine[0].kind === "player", "RLS: while locked, neither the player nor the coach reads the team; the player still sees his own export");
+    const pl = await fresh();
+    await signIn(pl, "player");
+    await pl.getByRole("link", { name: "Your data downloads" }).click(); await pl.waitForURL(/\/app\/exports/).catch(() => {}); await settle(pl);
+    const tx = await text(pl, /Download/);
+    check(/Avery Brooks, Varsity/.test(tx) && new RegExp(`${pexp.rows} rows`, "i").test(tx), `his downloads page lists it, even though the team is locked (${tx.split("\n").find((l) => /Varsity/.test(l))})`);
+    const [dl] = await Promise.all([pl.waitForEvent("download", { timeout: 15000 }).catch(() => null), pl.getByRole("button", { name: "Download" }).click()]);
+    const dlPath = dl && await dl.path();
+    const dz = dlPath && unzipSync(new Uint8Array(fs.readFileSync(dlPath)));
+    check(dz && csvRows(dz, "events") === 12, "Download gives him a fresh link to the same zip");
+    await pl.screenshot({ path: path.join(shots, "exports.png"), fullPage: true });
+    const forgedId = ex.find((e) => e.kind === "coach").id;
+    await goto(pl, "/app/exports");
+    await pl.evaluate((id) => { document.querySelector("input[name=id]").value = id; }, forgedId);
+    await pl.getByRole("button", { name: "Download" }).click(); await pl.waitForURL(/error=missing/, { timeout: 10000 }).catch(() => {});
+    check(/isn't yours/.test(await text(pl, /isn't yours/)), "another person's export id gets nothing");
+    const replay = await tclock(`/test/replay?event=${failed.id}`);
+    await wait(1500);
+    check(replay.result === "duplicate" && (await exps()).length === 5 && M.inbox.length === 5, "the same failure again sends nothing twice");
+    // an email that failed: the super admin sends again, and only that one goes out
+    await db.query("update public.exports set email_status = 'failed' where kind = 'player' and org_id = $1", [org.id]);
+    await db.query("insert into public.platform_admins (user_id, note) values ($1, 'test')", [UID.drew]);
+    await goto(drew, `/admin/org/${org.id}`);
+    check(/Lapse exports/.test(await text(drew, /Lapse exports/)) && (await drew.getByRole("table", { name: "Lapse exports" }).locator("tbody tr").count()) === 1, "the admin page shows the lapse and its emails");
+    await submit(drew, "Send the exports again", "Send the exports again", (u) => /ok=resent/.test(u.search));
+    const resent = M.inbox.slice(5);
+    check(/ok=resent/.test(drew.url()) && resent.length === 1 && resent[0].to[0] === "player@test.local" && (await exps()).every((e) => e.email_status === "sent") && (await exps()).length === 5,
+      `"Send the exports again" retries just the failed email, with a fresh link (${resent.map((m) => m.to[0]).join(", ")})`);
+    const audit = (await db.query("select action from public.admin_audit where org_id = $1 order by id", [org.id])).rows.map((r) => r.action);
+    check(audit.includes("resend_exports"), "and it's in the audit log");
+    await db.query("delete from public.platform_admins where user_id = $1", [UID.drew]);
     const before = Math.floor(new Date(org.billing_changed_at).getTime() / 1000) - 60;
     const late = await fetch(FAKE + "/test/send", { method: "POST", body: JSON.stringify({ type: "invoice.paid", created: before,
       object: { id: "in_late", object: "invoice", customer: org.stripe_customer_id, billing_reason: "subscription_cycle", parent: { type: "subscription_details", subscription_details: { subscription: org.stripe_subscription_id, metadata: { org_id: org.id } } } } }) }).then((r) => r.json());
@@ -186,6 +275,7 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     const cancel = await tclock(`/test/cancel?sub=${org.stripe_subscription_id}`);
     org = await orgRow();
     check(cancel.result === "applied" && org.billing_status === "locked" && org.subscription_status === "canceled", "cancelled: locked");
+    check(await until(async () => (await exps()).length === 10 && M.inbox.length === 11), `a new lapse sends everyone their data again (${(await exps()).length} exports, ${M.inbox.length} emails)`);
     await goto(drew, `/app/billing?org=${org.id}`);
     check(/the subscription ended/.test(await text(drew, /ended/)), "the page says the subscription ended and the data is kept");
     const nCalls = F.S.calls.length;
@@ -212,7 +302,7 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
   } catch (e) {
     fails++; console.error(e); console.error(webLog.slice(-3000));
   } finally {
-    await browser.close(); web.kill(); await F.close(); await db.end();
+    await browser.close(); web.kill(); await F.close(); await M.close(); await db.end();
   }
   console.log(fails ? `\n${fails} billing check(s) FAILED` : "\nall billing checks passed");
   process.exit(fails ? 1 : 0);

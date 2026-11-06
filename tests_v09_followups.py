@@ -86,5 +86,15 @@ s0 = e.Situation(0, 0, 0, (False,) * 3, level="college_d3")
 check(simulate.true_situation(s0, h).grades is None, "no true grade: world situation unchanged")
 check(simulate.true_situation(s0, dict(h, w=4.3)).grades == {"w": 4.3}, "with a true grade: the world sees it")
 
+# --- Supabase migrations: every version (the timestamp prefix) unique. A duplicate is recorded as already applied
+# and silently never runs on prod (happened twice on Nov 6 while main and v0.9-work both added migrations).
+mig = sorted(f for f in os.listdir(os.path.join(HERE, "supabase", "migrations")) if f.endswith(".sql"))
+vers = [f.split("_", 1)[0] for f in mig]
+dups = sorted({v for v in vers if vers.count(v) > 1})
+check(not dups and all(len(v) == 14 and v.isdigit() for v in vers), f"{len(mig)} migrations, versions unique" + (f" (DUPLICATES {dups})" if dups else ""))
+v08 = [f for f in mig if f.endswith("_v08_inputs.sql")]
+v09 = [f for f in mig if f.endswith("_v09_intent.sql")]
+check(len(v08) == len(v09) == 1 and mig.index(v08[0]) < mig.index(v09[0]), "v0.8 inputs migration sorts before v0.9 intent")
+
 print(f"\n{'all follow-up checks passed' if not fails else f'{fails} FAILED'}")
 raise SystemExit(1 if fails else 0)

@@ -29,12 +29,15 @@ command and output file. Nothing was merged or pushed to main, and nothing was a
 
 - **Conflicts:** `.gitignore` (both kept), `app/dist` (rebuilt), and one hunk in `app/index.src.html`: main's pitch-count
   line and v0.9's infield-in / steal controls share the scoreboard cell. Both kept.
-- **Migrations renamed** (prod `pitchiq-prod` is at `20261110000000_uploads` as of Nov 6, 9 a.m.; `supabase db push` refuses older unapplied ones):
-  `20261104000000_v08_inputs` → `20261111000000_v08_inputs`, `20261105000000_v09_intent` → `20261111000100_v09_intent`.
-  (First renamed to 20261110…; then main added `20261110000000_uploads`, already applied to prod, so they moved again.)
+- **Migrations renamed** (prod `pitchiq-prod` is at `20261110000000_uploads` as of Nov 6, 10 a.m.; `supabase db push` refuses older unapplied ones):
+  `20261104000000_v08_inputs` → `20261112120000_v08_inputs`, `20261105000000_v09_intent` → `20261112120100_v09_intent`.
+  They had to move three times, because another session kept adding migrations to main overnight (`uploads`, applied to
+  prod; `lapse` and `terms`, not yet). It numbers them a day apart at midnight, so these use 12:00 to stay clear.
+  **Re-check at fast-forward time:** if main has a migration dated after 20261112120100 that prod applies first, these
+  must move again. `tests_v09_followups.py` now fails on any duplicate version (a duplicate silently never runs on prod).
   SQL unchanged. They reach prod only through your promote workflow.
 - main kept moving during the night (another session: sign-up fixes, Plans 4 and 6, billing test mode, uploads); all of it
-  is merged in, up to a9a4a15, with no conflicts in the second merge. `web/` matches main's exactly.
+  is merged in, up to 6edb8dc (Nov 6, 9:43 a.m.), with no conflicts after the first merge. `web/` matches main's exactly.
 - **Not run:** the `web/` browser suites (they need a local Supabase stack). v0.9 doesn't touch `web/`.
 
 **Step 7 reproduces exactly after the merge.** The 180 regenerated read-through games give byte-identical summaries and
@@ -174,7 +177,8 @@ By level (90 games), guardrail off minus 0.020: HS +0.074 (SE 0.055), D3 +0.041 
 
 ## Open questions for you
 
-1. **Fast-forward main to v0.9-work?** It contains all of main, everything passes on it, and main hasn't moved since 91bb706.
+1. **Fast-forward main to v0.9-work?** It contains all of main up to 6edb8dc, and everything passes on it. Another session is
+   still committing to main, so I'll do a final catch-up merge (and migration check) right before the fast-forward.
 2. **Guardrail: keep it off, or ship a 0.020 window behind a new flag?** 0.020 passes the gate and saves an estimated 0.09
    runs/game (SE 0.05) for slightly fewer changeups (6.3% vs 7.1%).
 3. **"Trusts nothing" fallback:** fall back to the pitch landing best instead of the most-trusted one?

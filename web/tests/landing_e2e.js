@@ -207,7 +207,9 @@ async function signUp(browser, email, opts = {}) {
     const pp = await phone.newPage(); await pp.goto(`http://127.0.0.1:${WEB_PORT}/`, { waitUntil: "networkidle" });
     check(await pp.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "no sideways scroll at 390");
     await pp.goto(`http://127.0.0.1:${WEB_PORT}/privacy`);
-    check((await pp.locator("h1").innerText()) === "Privacy on the waitlist", "the privacy page loads");
+    check((await pp.locator("h1").innerText()) === "Privacy" && /spring waitlist/i.test(await pp.locator("main").innerText()), "the privacy page loads, and still covers the waitlist");
+    await pp.goto(`http://127.0.0.1:${WEB_PORT}/terms`);
+    check((await pp.locator("h1").innerText()) === "Terms" && /Working draft, version \d{4}-\d{2}-\d{2}/.test(await pp.locator("main").innerText()), "the Terms page loads, marked as a draft with its version (D15)");
     await phone.close();
 
     console.log("2. 3D, the demo and the movement cloud");

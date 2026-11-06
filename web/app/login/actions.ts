@@ -3,6 +3,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { AGE_COOKIE, ageAnswer, safeNext } from "@/lib/age";
+import { LEGAL_VERSION } from "@/lib/legal";
+import { serviceRpc } from "@/lib/supabase/admin";
 
 const back = (next: string, q: string) => redirect(`/login?next=${encodeURIComponent(next)}&${q}`);
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
@@ -52,9 +54,12 @@ export async function signUp(form: FormData) {
   if (age === "under13") back(next, "mode=signup&error=under13");
   const email = str(form, "email"), password = String(form.get("password") ?? "");
   if (!email || password.length < 8) back(next, "mode=signup&error=short");
+  if (form.get("agree") !== "on") back(next, "mode=signup&error=agree");
   const sb = await getServerSupabase();
   const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: await confirmUrl(next) } });
   if (error) back(next, "mode=signup&error=signup_failed");
+  // the agreement, with its time (D15); if it can't be recorded now, the portal asks again
+  if (data.user?.id) await serviceRpc("pc_legal_signup", { uid: data.user.id, ver: LEGAL_VERSION }).catch((e) => console.error("legal acceptance", (e as Error).message));
   if (!data.session) back(next, "notice=check_email");   // email confirmation is on: the link in it signs him in
   redirect(next);
 }
@@ -63,4 +68,14 @@ export async function signOut() {
   const sb = await getServerSupabase();
   await sb.auth.signOut();
   redirect("/login");
+}
+
+// an account made before this version of the Terms: agree from the portal
+export async function acceptTerms(form: FormData) {
+  const next = safeNext(str(form, "next") || "/app");
+  if (form.get("agree") !== "on") redirect(`${next}${next.includes("?") ? "&" : "?"}error=agree`);
+  const sb = await getServerSupabase();
+  const { error } = await sb.rpc("pc_legal_accept", { ver: LEGAL_VERSION });
+  if (error) redirect("/login?next=" + encodeURIComponent(next));
+  redirect(next);
 }
