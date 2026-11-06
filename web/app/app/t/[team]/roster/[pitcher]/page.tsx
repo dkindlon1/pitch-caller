@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { pitchersOf, teamFor, ROLE } from "@/lib/team";
 import { gradeHistory } from "@/lib/player";
+import { Tabs } from "../../../../_uploads/panels";
 import { KINDS, PITCH_TYPES, SIGN, type Kind } from "@/lib/docs";
 import { revertGrade, savePitcher } from "../../actions";
 import { Notice, type Search } from "../../ui";
@@ -31,6 +32,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
     <>
       <p><Link href={`/app/t/${team}/roster`}>Roster</Link></p>
       <h1 className="shell-h1">{p.number ? `#${p.number} ` : ""}{p.name || "Unnamed"}</h1>
+      <Tabs base={`/app/t/${team}/roster/${p.id}`} at="profile" label="Profile and arsenal" />
       <Notice sp={sp} />
       <form action={savePitcher} className="shell-form" aria-label="Pitcher">
         <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={p.id} />

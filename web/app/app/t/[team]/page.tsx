@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { availability, dayName, gamesOf, ourTeamOf, pitchersOf, teamFor, teamRule, teamToday, teamsOf } from "@/lib/team";
 import { type Search } from "./ui";
+import { waitingOn } from "@/lib/upload_data";
 
 export const metadata: Metadata = { title: "Team · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string }>;
@@ -23,6 +24,7 @@ async function HomeBody({ params }: { params: Params }) {
   const recent = live.filter((g) => g.status === "final").sort((a, b) => ((a.date || "") < (b.date || "") ? 1 : -1)).slice(0, 5);
   const opp = (id?: string) => (teams.find((x) => x.id === id) || { name: "" }).name;
   const ready = avail.filter((a) => !a.eligible || a.eligible.today).length;
+  const waitList = [...(await waitingOn(team))].filter(([pid]) => pitchers.some((x) => x.id === pid && !x.deletedAt)).slice(0, 8);
   return (
     <>
       <h1 className="shell-h1">{t.team_name}</h1>
@@ -38,6 +40,14 @@ async function HomeBody({ params }: { params: Params }) {
           <h2 id="avail-sum" className="lbl">Available today</h2>
           <p className="big-num mono">{rule ? ready : pitchers.length}<small> of {pitchers.length}</small></p>
           <p className="shell-note small">{rule ? `Under ${rule.name}${rule.edited ? " (your numbers)" : ""}.` : <>No pitch-count rule set. <Link href={`/app/t/${team}/settings`}>Pick one</Link> to see rest days and eligible dates.</>}</p>
+        </section>
+        <section className="dash-card" aria-labelledby="wait-h">
+          <h2 id="wait-h" className="lbl">Uploads waiting for review</h2>
+          {waitList.length ? (
+            <ul className="plain-list" aria-label="Waiting for review">{waitList.map(([pid, w]) => (
+              <li key={pid}><Link href={`/app/t/${team}/roster/${pid}/uploads`}>{(pitchers.find((x) => x.id === pid) || { name: "A pitcher" }).name}</Link>
+                <span className="lbl"> {w.proposals ? `${w.proposals} proposed value${w.proposals === 1 ? "" : "s"}` : ""}{w.proposals && w.uploads ? " · " : ""}{w.uploads ? `${w.uploads} new upload${w.uploads === 1 ? "" : "s"}` : ""}</span></li>))}</ul>
+          ) : <p className="shell-note small">Nothing new this week. Players upload their TrackMan and Rapsodo sessions in their own portal; values they propose wait here.</p>}
         </section>
       </div>
 

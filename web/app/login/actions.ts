@@ -13,8 +13,28 @@ export async function signIn(form: FormData) {
   if (!email || !password) back(next, "error=missing");
   const sb = await getServerSupabase();
   const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) back(next, "error=bad_login");
+  // a right password on an account whose email isn't confirmed yet: say so, and offer the link again
+  if (error) back(next, error.code === "email_not_confirmed" ? "error=unconfirmed" : "error=bad_login");
   redirect(next);
+}
+
+// where the confirmation email's link comes back to: /auth/confirm on this site (SITE_URL, else the address in use)
+async function confirmUrl(next: string) {
+  const h = await headers();
+  const origin = process.env.SITE_URL?.replace(/\/$/, "") || `${h.get("x-forwarded-proto") || "http"}://${h.get("host")}`;
+  return `${origin}/auth/confirm?next=${encodeURIComponent(next)}`;
+}
+
+// Send the sign-up email again. The answer is the same whether or not the address has an account; only the email
+// service's own rate limit is reported.
+export async function resendConfirm(form: FormData) {
+  const next = safeNext(str(form, "next"));
+  const email = str(form, "email");
+  if (!email) back(next, "error=missing_email");
+  const sb = await getServerSupabase();
+  const { error } = await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: await confirmUrl(next) } });
+  if (error && (error.status === 429 || error.code === "over_email_send_rate_limit")) back(next, "error=resend_wait");
+  back(next, "notice=check_email");
 }
 
 // A new account: the age question first (unless the join page already asked it today). Under 13, no account is made
@@ -33,10 +53,7 @@ export async function signUp(form: FormData) {
   const email = str(form, "email"), password = String(form.get("password") ?? "");
   if (!email || password.length < 8) back(next, "mode=signup&error=short");
   const sb = await getServerSupabase();
-  // the confirmation email's link comes back to /auth/confirm on this site (SITE_URL, else the address in use)
-  const h = await headers();
-  const origin = process.env.SITE_URL?.replace(/\/$/, "") || `${h.get("x-forwarded-proto") || "http"}://${h.get("host")}`;
-  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(next)}` } });
+  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: await confirmUrl(next) } });
   if (error) back(next, "mode=signup&error=signup_failed");
   if (!data.session) back(next, "notice=check_email");   // email confirmation is on: the link in it signs him in
   redirect(next);

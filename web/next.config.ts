@@ -4,7 +4,8 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   // The stylesheet is small and most visitors are new, so it ships inside the HTML instead of blocking on a request.
-  experimental: { inlineCss: true },
+  // uploads send up to 5000 normalized pitches in one Server Action (Vercel allows 4.5 MB per request)
+  experimental: { inlineCss: true, serverActions: { bodySizeLimit: "4mb" } },
   // The game app lives at /app/game/ with the trailing slash: its service worker's scope is /app/game/, and a path
   // without the slash would fall outside it (and outside offline use).
   skipTrailingSlashRedirect: true,

@@ -164,4 +164,6 @@ On Drew's go-ahead, main (22 commits: Plans 0–5) was merged into v0.9-work so 
   `20261104000000_v08_inputs.sql` → `20261110000000_v08_inputs.sql`,
   `20261105000000_v09_intent.sql` → `20261110000100_v09_intent.sql`. SQL unchanged. Neither is applied anywhere; they
   reach prod only through the promote workflow.
+- *Renamed again (Nov 6, morning):* main added `20261110000000_uploads` (already applied to prod), the same version as
+  the first rename. Now `20261111000000_v08_inputs.sql` and `20261111000100_v09_intent.sql`.
 - main itself is not changed yet.

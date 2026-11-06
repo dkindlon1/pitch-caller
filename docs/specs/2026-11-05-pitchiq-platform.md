@@ -286,7 +286,7 @@ type Proposal = { pitcher_id: string; pitch: string; field: 'velo'|'shape'|'slot
 
 Every acceptance check passes in a fresh run. The full test suite is green. `npm run build` passes. The final report lists **Verified** (with command output) vs **Not verified** (with the reason). Nothing is called done without output.
 
-## Amendments (A1–A10 accepted by Drew, Nov 5 11:44; A11 and A12 proposed)
+## Amendments (A1–A10 accepted by Drew, Nov 5 11:44; A11–A13 accepted Nov 6)
 
 **A1. One parent account, several children.**
 - A parent can link one login to several player spots on a team, for example two under-13 siblings.
@@ -368,7 +368,7 @@ Every acceptance check passes in a fresh run. The full test suite is green. `npm
 - "PitchIQ Baseball" in titles and metadata.
 - Affects D14.
 
-**A11. A team is the existing `programs` row (proposed Nov 5, built on the branch; awaiting Drew's approval).**
+**A11. A team is the existing `programs` row (proposed Nov 5; accepted by Drew Nov 6).**
 - Found while building Plan 1: the data model above scopes the doc tables by a `team_id` generated from `doc->>'teamId'`. That field already means something else: on a hitter it is the *opponent* team the hitter plays for. Scoping by it would file opponent hitters under the wrong team, or under none.
 - Instead: a team **is** today's `programs` row, now under `organizations`. Every doc table keeps its `program_id` column, which already scopes every row to one team, so no doc changes and no backfill. `pc_push` / `pc_pull` keep their `p` argument (it is the team).
 - `members` keeps its name and gains the presets (head, pitching, caller, viewer) with `perms` toggles on top, or `player`. A player's pitcher records move to `player_links (program_id, user_id, pitcher_id)`, so one account can hold more than one.
@@ -392,12 +392,22 @@ Every acceptance check passes in a fresh run. The full test suite is green. `npm
 
 The landing page and email capture ship with Plan 0.
 
-**A12. Billing details (proposed Nov 5, built on the branch; awaiting Drew's approval).**
+**A12. Billing details (proposed Nov 5; accepted by Drew Nov 6). Test-mode price: $299 a team a year, 25% off the first year.**
 - Stripe's webhook is a route in the website (`/api/stripe/webhook`), not a Supabase Edge Function. It verifies the signature and applies each event through one service-role function that records the event id and its effect in one transaction.
 - Adding a team is charged at once for the rest of the paid year and goes through only if the card pays. A declined charge for an added team leaves that team waiting and doesn't lock the organization. "Lock on the first failed payment" applies to every other charge, including the yearly renewal.
 - The last active team can't be removed: to stop altogether, the owner cancels in Stripe's billing portal. A removed team can be kept again before its year ends, with no charge.
 - A second subscription paid while the first is live (two Checkouts in two tabs) is logged and refunded by hand.
 - Affects D5, D6 and D7.
+
+**A13. Marketing site 3D (proposed Nov 6; accepted by Drew Nov 6).**
+- three.js directly instead of React Three Fiber, drei, GSAP ScrollTrigger and Lenis. The site has two small scenes (the hero pitch and the movement cloud); each is one module that loads only after the page is up and only near the screen, so React and a scroll library would add bytes and work for no gain. Scroll motion is native: CSS scroll timelines where supported, and nothing where not.
+- Colors stay on the Pitch Caller design system (Drew's Nov 5 call), not the blue and orange in "Marketing site direction".
+- The live demo runs engine v0.7c, the engine the iPad app ships. The at-bat shown above it (hero and "One at-bat, four calls") still comes from the unmerged v0.8 branch, so its reasons read differently from the demo's until the v0.8 decision.
+- The movement cloud uses labelled sample data, not a real player's file.
+- Affects D14.
+- Drew, Nov 6: keep the Pitch Caller colors. The product is called PitchIQ everywhere a user sees it, including the
+  iPad game app's title, header and messages. "Pitch Caller" stays as the design system's name and in code
+  comments; the backup file format id `pitch-caller` is unchanged so old backups still restore.
 
 ## Change control
 

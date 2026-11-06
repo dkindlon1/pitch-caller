@@ -23,7 +23,7 @@ export const AT_BAT: Pitch[] = [
   { balls: 1, strikes: 2, sign: 3, pitch: "Slider", spot: "Down and away", why: "He's looking middle (35%).", result: "Swing and miss" },
 ];
 
-// Zone cells from the pitcher's side for a right-handed hitter, who stands on the left: [column, row], 0..2.
+// Zone cells in the catcher's view for a right-handed hitter, who stands on the left: [column, row], 0..2.
 export const CELL: Record<Exclude<Spot, "Chase">, [number, number]> = {
   "Up and in": [0, 0],
   "Up and away": [2, 0],

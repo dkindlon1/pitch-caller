@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "../portal.css";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Mark } from "../components/Mark";

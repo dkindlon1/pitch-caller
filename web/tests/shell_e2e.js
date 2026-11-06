@@ -208,6 +208,28 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await goto(nc2, `${SITE}/auth/confirm?code=bogus&next=//evil.example`);
     check(new URL(nc2.url()).host === new URL(SITE).host, "and never off this site");
 
+    console.log("10. Signing in before confirming the email says so, and the link can be sent again");
+    await http("POST", "/auth/v1/admin/users", { key: SECRET, body: { email: "unconfirmed@test.local", password: PASS, email_confirm: false } });
+    const uc = await fresh();
+    await goto(uc, `${SITE}/login?next=/app`);
+    await uc.getByRole("form", { name: "Sign in" }).getByLabel("Email").fill("unconfirmed@test.local");
+    await uc.getByRole("form", { name: "Sign in" }).getByLabel("Password").fill(PASS);
+    await uc.getByRole("form", { name: "Sign in" }).getByRole("button", { name: "Sign in" }).click();
+    await uc.waitForURL(/error=unconfirmed/);
+    const ucText = await mainText(uc, /isn't confirmed/);
+    check(/Your email isn't confirmed yet/.test(ucText) && !/don't match an account/.test(ucText), "the right password on an unconfirmed account says to confirm, not that the password is wrong");
+    const rf = uc.getByRole("form", { name: "Send the confirmation email again" });
+    await rf.getByLabel("Email you signed up with").fill("unconfirmed@test.local");
+    await rf.getByRole("button", { name: "Send the link again" }).click();
+    await uc.waitForURL(/notice=check_email|error=resend_wait/);
+    check(/Check your email for a link/.test(await mainText(uc, /Check your email|Too many emails/)), `the link is sent again (${uc.url().replace(SITE, "")})`);
+    await goto(uc, `${SITE}/login?next=/app`);
+    await uc.getByRole("form", { name: "Sign in" }).getByLabel("Email").fill("unconfirmed@test.local");
+    await uc.getByRole("form", { name: "Sign in" }).getByLabel("Password").fill("wrong-password-1");
+    await uc.getByRole("form", { name: "Sign in" }).getByRole("button", { name: "Sign in" }).click();
+    await uc.waitForURL(/error=bad_login/);
+    check(/don't match an account/.test(await mainText(uc, /don't match/)), "a wrong password still just says it doesn't match");
+
     check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
     check(!/Error:|⨯/.test(webLog), "no server errors" + (/Error:|⨯/.test(webLog) ? ":\n" + webLog.split("\n").filter((l) => /Error|⨯/.test(l)).slice(0, 5).join("\n") : ""));
   } finally {

@@ -104,5 +104,7 @@ jobs:
         run: scripts/run-check.sh billing_e2e node web/tests/billing_e2e.js
       - name: Player portal and super admin end to end (Plan 3b)
         run: scripts/run-check.sh player_admin_e2e node web/tests/player_admin_e2e.js
+      - name: Uploads, proposals and stats end to end (Plan 4)
+        run: scripts/run-check.sh uploads_e2e node web/tests/uploads_e2e.js
       - if: always()
         run: npx -y supabase@2.122.1 stop --no-backup

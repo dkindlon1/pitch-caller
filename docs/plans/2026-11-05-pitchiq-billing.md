@@ -76,6 +76,24 @@ applied once, in order.
 5. Retries: Smart Retries on; after the last retry fails, cancel the subscription.
 6. In Vercel: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `STRIPE_COUPON_ID`, `STRIPE_PORTAL_CONFIG`,
    `SITE_URL`. Drew types the keys in; they never go in the repo or a chat.
+   **Status, Nov 6 (test mode, Stripe sandbox "Frigate Cooling Company"):** steps 1–5 are done and read back from
+   Stripe:
+   - Price `price_1UYmKhIRKWnkcO8trXJP5FAx` ($299 a year).
+   - Coupon `db0PGJUw` (25% off, once).
+   - Portal `bpc_1UYmLjIRKWnkcO8tvUgBFDs8`.
+   - Webhook "PitchIQ billing" to `https://pitchiq-rouge.vercel.app/api/stripe/webhook`: 7 events, `2026-09-30.endive`.
+   - Smart Retries on (8 tries within 2 weeks), and the subscription is cancelled after the last failed retry. These
+     were the account's defaults. Drew will revisit retries before real customers.
+
+   Step 6 (the Vercel settings) is Drew's. Before taking real payments, the account's public business name should
+   say PitchIQ.
+   **First real test-mode checkout, Nov 6 8:32 (Drew, card 4242):**
+   - The webhook got `customer.subscription.created`, `invoice.paid` and `checkout.session.completed`. All three
+     passed the signature check and were applied.
+   - The organization is active, its team is active, and it's paid through Nov 6, 2027.
+   - The first invoice was $224.25 ($299 with 25% off), and the renewal preview is $299.
+   - Not ours: Stripe shows the sandbox subscription "Auto-cancels Feb 4, 2027" (90 days). Our code sets no
+     cancellation date.
 7. Then run D5 and D6 for real: sign up and pay with 4242, replay the event from the dashboard, add and remove a team,
    and a test clock past the year's end.
 

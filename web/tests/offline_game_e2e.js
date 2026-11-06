@@ -123,11 +123,15 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     check(mid.live && mid.waiting && mid.same && mid.flag, `mid-game the new version waits and the page isn't reloaded (${JSON.stringify(mid)})`);
     await page.evaluate(() => render()); await page.waitForTimeout(100);
     check(/installs after this game/.test(await page.locator("main").innerText()), "and the Game screen says it installs after this game");
-    const reloaded = page.waitForEvent("framenavigated", { timeout: 30000 }).then(() => true, () => false);
+    // the update installs once the game (and its learning) is done: wait for that outcome itself, up to a minute
+    // (a framenavigated event alone can be some other navigation)
     await page.evaluate(async () => { await endGame(); }).catch(() => {});   // the reload can cut this short
-    const nav = await reloaded;
+    const state = () => page.evaluate(async () => { const reg = await navigator.serviceWorker.getRegistration("/app/game/"); return { waiting: !!(reg && reg.waiting), reloaded: !window.__sameLoad,
+      flag: !!window.PC_UPDATE_WAITING, busy: !!window.PC_BUSY, live: !!(typeof G === "function" && G().dbId), ctrl: !!navigator.serviceWorker.controller }; }).catch(() => null);
+    let after = null;
+    for (let i = 0; i < 120; i++) { after = await state(); if (after && after.reloaded && !after.waiting) break; await page.waitForTimeout(500); }
     await ready();
-    const after = await page.evaluate(async () => { const reg = await navigator.serviceWorker.getRegistration("/app/game/"); return { waiting: !!reg.waiting, reloaded: !window.__sameLoad }; });
+    const nav = !!(after && after.reloaded);
     check(nav && after.reloaded && !after.waiting, `once the game is over the update takes over (${JSON.stringify(after)})`);
     const kept = +(await page.evaluate(async (gid) => (await DB.D.byIndex("events", "gameId", gid)).length, game.id));
     check(kept >= local, "and the iPad still has the game");

@@ -29,11 +29,12 @@ command and output file. Nothing was merged or pushed to main, and nothing was a
 
 - **Conflicts:** `.gitignore` (both kept), `app/dist` (rebuilt), and one hunk in `app/index.src.html`: main's pitch-count
   line and v0.9's infield-in / steal controls share the scoreboard cell. Both kept.
-- **Migrations renamed** (prod `pitchiq-prod` is at `20261109000000`; `supabase db push` refuses older unapplied ones):
-  `20261104000000_v08_inputs` → `20261110000000_v08_inputs`, `20261105000000_v09_intent` → `20261110000100_v09_intent`.
+- **Migrations renamed** (prod `pitchiq-prod` is at `20261110000000_uploads` as of Nov 6, 9 a.m.; `supabase db push` refuses older unapplied ones):
+  `20261104000000_v08_inputs` → `20261111000000_v08_inputs`, `20261105000000_v09_intent` → `20261111000100_v09_intent`.
+  (First renamed to 20261110…; then main added `20261110000000_uploads`, already applied to prod, so they moved again.)
   SQL unchanged. They reach prod only through your promote workflow.
-- main gained two commits from another session during the night (sign-up email link, spec sign-off); both are merged in.
-  `web/` and the spec are byte-identical to main's.
+- main kept moving during the night (another session: sign-up fixes, Plans 4 and 6, billing test mode, uploads); all of it
+  is merged in, up to a9a4a15, with no conflicts in the second merge. `web/` matches main's exactly.
 - **Not run:** the `web/` browser suites (they need a local Supabase stack). v0.9 doesn't touch `web/`.
 
 **Step 7 reproduces exactly after the merge.** The 180 regenerated read-through games give byte-identical summaries and
