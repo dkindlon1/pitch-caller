@@ -42,7 +42,7 @@ with e.flags(**dict(e.FLAGS_V09, guardrail_v09=False)):
     s = e.Situation(1, 0, 0, (False, False, False), inning=3, level="college_d3", same_side=False)
     k1, k2, k3 = kept(0.010, s), kept(0.020, s), kept(0.030, s)
 check(k1 <= k2 <= k3, f"a wider window keeps a superset of calls (1-0: {len(k1)}, {len(k2)}, {len(k3)} at 0.010/0.020/0.030)")
-with e.flags(**e.FLAGS_V09):
+with e.flags(**dict(e.FLAGS_V09, guardrail_v09=True)):     # the guardrail-off engine
     tab = e.solve_table(ARS, s)
     allc = set(e.root_call(ARS, s, tab)[4])
 check(k3 <= allc, f"and never more than the guardrail-off set ({len(allc)})")

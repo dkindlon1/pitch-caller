@@ -613,7 +613,7 @@ td.wrapcell .line { display: block; }
     hitter_grades: true, hs_pitch_cost: true, temp_unc: true, zone_22: true,
     guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
   // v0.9: v0.8 plus the v0.9 items; every v0.9 flag is false in FLAGS_V07 and FLAGS_V08
-  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: true, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report)
+  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: false, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report); guardrail stays on (Drew, Nov 6: FOLLOWUPS report)
   const FLAGS = Object.assign({}, FLAGS_V07);
   function setFlags(kw) {
     const prev = Object.assign({}, FLAGS);
@@ -4331,7 +4331,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     hitter_grades: true, hs_pitch_cost: true, temp_unc: true, zone_22: true,
     guardrail_v09: false, landing_v09: false, matchup_memory: false, inside_v09: false, power_avoid: false };
   // v0.9: v0.8 plus the v0.9 items; every v0.9 flag is false in FLAGS_V07 and FLAGS_V08
-  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: true, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report)
+  const FLAGS_V09 = Object.assign({}, FLAGS_V08, { guardrail_v09: false, landing_v09: true, matchup_memory: true, inside_v09: true, power_avoid: true });   // inside_v09 on by Drew's call (STEP4b report); guardrail stays on (Drew, Nov 6: FOLLOWUPS report)
   const FLAGS = Object.assign({}, FLAGS_V07);
   function setFlags(kw) {
     const prev = Object.assign({}, FLAGS);

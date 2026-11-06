@@ -14,7 +14,7 @@ command and output file. Nothing was merged or pushed to main, and nothing was a
   simulated situation ever carried hitter grades. The new off-by-default `TRUE_POWER` world fixes that.
   With power real in the world, v0.9 still costs about +0.32 runs/game more than v0.8, the same conclusion as Step 7. With grades known, item 8 on vs off is +0.08 runs/game (SE 0.06): no sign it helps. The world change is kept behind settings; your call whether it becomes the default for future comparisons.
 - **C: a wider guardrail.** 0.020 is the narrowest window that passes your changeup gate; 0.030 is the same as off.
-  A 0.020 window saves about 0.09 runs/game against guardrail-off (SE 0.05, 90 paired games) and keeps 6.3% changeups vs 7.1%. That's a modest hedge, not a clear win; it still costs about +0.31 vs v0.8. **Your call; nothing changed.**
+  A 0.020 window saves about 0.09 runs/game against guardrail-off (SE 0.05, 90 paired games) and keeps 6.3% changeups vs 7.1%. That's a modest hedge, not a clear win; it still costs about +0.31 vs v0.8. **Decided Nov 6: guardrail back on at 0.010 instead (see Decisions).**
 
 ## The merge (Nov 5 evening, caught up Nov 6 morning)
 
@@ -178,11 +178,32 @@ By level (90 games), guardrail off minus 0.020: HS +0.074 (SE 0.055), D3 +0.041 
 ## Decisions (Drew, Nov 6 morning)
 
 - **Fast-forward main** to v0.9-work after a final catch-up merge and migration check: yes.
-- **Guardrail:** stays off. The 0.020 window isn't built.
+- **Guardrail: back ON in v0.9** (decided first "keep it off", then changed the same morning after the scenario check
+  below). FLAGS_V09 now has `guardrail_v09=False`. The flag and its code stay, so the guardrail-off engine can still be tested.
 - **"Trusts nothing" fallback:** left as is (v0.4 rule).
 - **Item 8:** stays on in FLAGS_V09.
 - Still open: TRUE_POWER as the default world for future comparisons (it stays behind its setting for now), the HBP
   inside/away refit (left as is), and the 15 ms recording gap (not done).
+
+### Why the guardrail went back on: your 64 frozen scenarios (no hitting simulation involved)
+
+`results/followups/scenarios_guardrail.json` (same frozen file, sha256 5b5b4b80…, same pass rule):
+
+| Engine | Scenarios passed | Fixed vs v0.8 | Broken vs v0.8 |
+|---|---|---|---|
+| v0.8 | 26 | — | — |
+| v0.9, guardrail off (Nov 5) | 29 | A7 C7 D1 D3 E6 H2 | D5 F3 G4 |
+| **v0.9, guardrail on (shipped Nov 6)** | **30** | C7 D1 E6 H2 | **none** |
+| v0.9, 0.020 window | 29 | same as off | same as off |
+
+The guardrail swings five rows. Off wins A7 and D3, where it mixes in a middle changeup. On wins D5, F3 and G4 (2-0 up 6 late;
+2-0 after two fastballs away for balls; 1-1 with a grade-5 HS fastball), where off spends about 37% on middle sliders and
+changeups. Neither has a Not-acceptable call in those rows. With the simulator's +0.4 runs/game for guardrail-off, both
+measures point the same way. The trade: changeups fall to about 3%, so the item 10 changeup gate now fails.
+
+**Verified after the switch:** goldens v0.8 and v0.7c; parity v0.8 and v0.9; tests.py 19/19; tests_v09_step4, 4b, 5, 6,
+power and followups; `readthrough/scenarios.py v08 v09` → 26 and 30 of 64; `scripts/test-app.sh` exit 0; 10 browser suites;
+web typecheck and 47/47 unit tests.
 
 ## Open questions as they were asked
 

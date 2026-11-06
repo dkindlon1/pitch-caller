@@ -1,6 +1,6 @@
 """v0.9 follow-up C (Nov 5 night): the item 10 changeup gate (gate_step4b.py: the 3-pitch starter's changeup in the mix
 in at least 11 of 24 count-and-side cells and at least 5% of calls, every level) for the guardrail at several windows.
-Rows: v0.9 with the guardrail on at GUARD_DELTA = 0.010 (v0.8's window) up to 0.030, and v0.9 as built (guardrail off).
+Rows: v0.9 with the guardrail on at GUARD_DELTA = 0.010 (v0.8's window, v0.9 as shipped from Nov 6) up to 0.030, and guardrail off.
 usage (repo root): python3 readthrough/followup_gate_window.py [--out results/followups/gate_window.txt]"""
 import os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +19,7 @@ def main():
             ("guardrail on, window 0.0175", dict(built, guardrail_v09=False), 0.0175),
             ("guardrail on, window 0.020", dict(built, guardrail_v09=False), 0.020),
             ("guardrail on, window 0.030", dict(built, guardrail_v09=False), 0.030),
-            ("guardrail off (v0.9 as built)", built, 0.010)]
+            ("guardrail off (v0.9 Nov 5)", dict(built, guardrail_v09=True), 0.010)]
     L = ["v0.9 follow-up C: item 10 changeup gate by guardrail window (3-pitch starter; pass = 11+ of 24 cells and 5%+)", ""]
     try:
         for lab, flags, d in rows:

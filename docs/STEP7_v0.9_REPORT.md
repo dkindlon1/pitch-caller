@@ -121,6 +121,8 @@ These were the options:
 - **Guardrail back on**: costs about the same as v0.8. The changeup falls back to 3.4%, so the gate fails.
 - **A wider window, in between**: untested.
 
+**Drew, Nov 6 (supersedes Nov 5): guardrail back ON in v0.9.** It scored best on the 64 frozen scenarios (30 vs 29, breaking none v0.8 passed). See docs/FOLLOWUPS_v0.9_REPORT.md.
+
 **Drew, Nov 5: keep it off as built, and switch the app to v0.9.** v0.9 keeps the extra changeups and accepts the simulator's cost
 of about 0.36 runs per game. `FLAGS_V09` is unchanged.
 

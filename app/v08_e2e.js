@@ -29,7 +29,7 @@ const server = http.createServer((req, res) => {
   await page.evaluate(() => { S.view = "live"; G().call = null; makeCall(); save(); render(); });
 
   console.log("1. v0.9 is the default engine (v0.8 planning plus the v0.9 terms), and the call carries a why line");
-  const r1 = await page.evaluate(() => ({ eng: S.setup.engine, look: E.FLAGS.look_state, v09: E.FLAGS.guardrail_v09 && E.FLAGS.matchup_memory, v08: !!G().call.v08 }));
+  const r1 = await page.evaluate(() => ({ eng: S.setup.engine, look: E.FLAGS.look_state, v09: E.FLAGS.landing_v09 && E.FLAGS.matchup_memory && !E.FLAGS.guardrail_v09, v08: !!G().call.v08 }));
   check(r1.eng === "v09" && r1.look && r1.v09 && r1.v08, `engine ${r1.eng}, look_state ${r1.look}, v0.9 flags ${r1.v09}, planned call ${r1.v08}`);
   await page.waitForFunction(() => G().call && G().call.why, null, { timeout: 5000 }).catch(() => {});
   const why = await page.evaluate(() => G().call.why);

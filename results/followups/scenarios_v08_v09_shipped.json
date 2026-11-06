@@ -1,0 +1,5487 @@
+{
+ "sha256": "5b5b4b8031767c233928fc5dfc83b9ce4bf7994798775f19fd9c1a88f5ffb5b3",
+ "results": {
+  "v08": [
+   {
+    "id": "A1",
+    "hard": true,
+    "shares": {
+     "acc": 0.8708,
+     "arg": 0.1292,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.8708,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1292,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "A2",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A3",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2507,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.2004,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1637,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1532,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1245,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0645,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.0431,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A4",
+    "hard": true,
+    "shares": {
+     "acc": 0.7967,
+     "arg": 0.2033,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.3566,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.2033,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1915,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1277,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1022,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0186,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A5",
+    "hard": true,
+    "shares": {
+     "acc": 0.8721,
+     "arg": 0.1279,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.8721,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1279,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "A6",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A7",
+    "hard": true,
+    "shares": {
+     "acc": 0.6351,
+     "arg": 0.3649,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 63.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3649,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.3048,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1725,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1578,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B1",
+    "hard": false,
+    "shares": {
+     "acc": 0.2925,
+     "arg": 0.7075,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 29.2% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.2604,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.252,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1951,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1357,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1331,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.0236,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B2",
+    "hard": false,
+    "shares": {
+     "acc": 0.4441,
+     "arg": 0.5559,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 44.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.1627,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1456,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1368,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1247,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1229,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.1126,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0984,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0963,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B3",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.7079,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1818,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1103,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B4",
+    "hard": false,
+    "shares": {
+     "acc": 0.817,
+     "arg": 0.183,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.183,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1471,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1424,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1411,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1389,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.125,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1224,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B5",
+    "hard": false,
+    "shares": {
+     "acc": 0.3304,
+     "arg": 0.6696,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 33.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3649,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.3048,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1725,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1578,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B6",
+    "hard": false,
+    "shares": {
+     "acc": 0.5937,
+     "arg": 0.4063,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 59.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2819,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1901,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1629,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1245,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1207,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0896,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0303,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B7",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B8",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.4154,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.3011,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.2835,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B9",
+    "hard": false,
+    "shares": {
+     "acc": 0.3138,
+     "arg": 0.6862,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 31.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3138,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.24,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2118,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1246,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1098,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C1",
+    "hard": false,
+    "shares": {
+     "acc": 0.7369,
+     "arg": 0.2631,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1336,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1167,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1064,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.104,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.0988,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0891,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0761,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0752,
+      "arg"
+     ],
+     [
+      "Slider",
+      "chase",
+      0.0723,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "chase",
+      0.0569,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "up-away",
+      0.0323,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "chase",
+      0.0281,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0106,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C2",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 1.0,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.17,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1555,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1543,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1262,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1203,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1019,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0872,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0846,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C3",
+    "hard": false,
+    "shares": {
+     "acc": 0.5974,
+     "arg": 0.4026,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 59.7% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1698,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1568,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1453,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1366,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1186,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1181,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1092,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0456,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C4",
+    "hard": false,
+    "shares": {
+     "acc": 0.442,
+     "arg": 0.558,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 44.2% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "up-away",
+      0.2,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1663,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1546,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1283,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.128,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1136,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1061,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0031,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C5",
+    "hard": false,
+    "shares": {
+     "acc": 0.3648,
+     "arg": 0.6352,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 36.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "up-away",
+      0.1654,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1553,
+      "arg"
+     ],
+     [
+      "Curveball",
+      "down-away",
+      0.1218,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "middle",
+      0.1159,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1058,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.0958,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0892,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.0777,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0662,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.007,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C6",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.216,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1324,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.123,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1168,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1097,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0964,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0817,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0719,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0522,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C7",
+    "hard": false,
+    "shares": {
+     "acc": 0.9046,
+     "arg": 0.0,
+     "not": 0.0954
+    },
+    "passed": false,
+    "fails": [
+     "not 9.5% > 5%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.551,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3536,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0954,
+      "not"
+     ]
+    ]
+   },
+   {
+    "id": "C8",
+    "hard": false,
+    "shares": {
+     "acc": 0.8076,
+     "arg": 0.1924,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5082,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.2994,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1924,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C9",
+    "hard": false,
+    "shares": {
+     "acc": 0.353,
+     "arg": 0.647,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 35.3% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1722,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.159,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1239,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1199,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1108,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1038,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1017,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.087,
+      "arg"
+     ],
+     [
+      "Slider",
+      "chase",
+      0.0217,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C10",
+    "hard": false,
+    "shares": {
+     "acc": 0.4016,
+     "arg": 0.5984,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 40.2% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1595,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.151,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.15,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1447,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1416,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1378,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1153,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D1",
+    "hard": false,
+    "shares": {
+     "acc": 0.6168,
+     "arg": 0.3832,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 61.7% < 70%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.1796,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.15,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1439,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1186,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0996,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.095,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-in",
+      0.0751,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0733,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0649,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "D2",
+    "hard": false,
+    "shares": {
+     "acc": 0.1811,
+     "arg": 0.8189,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 18.1% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3604,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2682,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1903,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1811,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D3",
+    "hard": false,
+    "shares": {
+     "acc": 0.5766,
+     "arg": 0.4234,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 57.7% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.4234,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.3008,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.2758,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D4",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D5",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D6",
+    "hard": false,
+    "shares": {
+     "acc": 0.7377,
+     "arg": 0.2623,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.1554,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.138,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1378,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1299,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1245,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1051,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0948,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0788,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0358,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D7",
+    "hard": false,
+    "shares": {
+     "acc": 0.7387,
+     "arg": 0.2613,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2613,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.2527,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1989,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.1608,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.1262,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D8",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D9",
+    "hard": false,
+    "shares": {
+     "acc": 0.2578,
+     "arg": 0.7422,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 25.8% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.6746,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.2578,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0677,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "D10",
+    "hard": false,
+    "shares": {
+     "acc": 0.493,
+     "arg": 0.507,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 49.3% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3488,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1582,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1364,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1259,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.1199,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.1108,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E1",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E2",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E3",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E4",
+    "hard": false,
+    "shares": {
+     "acc": 0.5379,
+     "arg": 0.4621,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 53.8% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3298,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.3038,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.208,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1583,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "E5",
+    "hard": false,
+    "shares": {
+     "acc": 0.5542,
+     "arg": 0.4458,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 55.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "middle",
+      0.2604,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1862,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1606,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1332,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1305,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1291,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "E6",
+    "hard": false,
+    "shares": {
+     "acc": 0.5936,
+     "arg": 0.147,
+     "not": 0.2594
+    },
+    "passed": false,
+    "fails": [
+     "not 25.9% > 5%",
+     "acceptable 59.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.3779,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "middle",
+      0.2594,
+      "not"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.2157,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.147,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "E7",
+    "hard": false,
+    "shares": {
+     "acc": 0.3563,
+     "arg": 0.6437,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 35.6% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1873,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1689,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1524,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1199,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.118,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1056,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0779,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.07,
+      "arg"
+     ],
+     [
+      "Slider",
+      "chase",
+      0.0001,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E8",
+    "hard": false,
+    "shares": {
+     "acc": 0.3484,
+     "arg": 0.3962,
+     "not": 0.2553
+    },
+    "passed": false,
+    "fails": [
+     "not 25.5% > 5%",
+     "acceptable 34.8% < 70%"
+    ],
+    "calls": [
+     [
+      "Curveball",
+      "middle",
+      0.2223,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1941,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1739,
+      "arg"
+     ],
+     [
+      "Curveball",
+      "down-away",
+      0.1689,
+      "not"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1544,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "up-away",
+      0.0864,
+      "not"
+     ]
+    ]
+   },
+   {
+    "id": "F1",
+    "hard": false,
+    "shares": {
+     "acc": 0.8274,
+     "arg": 0.1726,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.1726,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1529,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1467,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1359,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1345,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.13,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1275,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "F2",
+    "hard": false,
+    "shares": {
+     "acc": 0.1859,
+     "arg": 0.8141,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 18.6% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1859,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1531,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1401,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1391,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1135,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1096,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1024,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0564,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F3",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "F4",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3649,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.304,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1736,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1575,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "F5",
+    "hard": false,
+    "shares": {
+     "acc": 0.7526,
+     "arg": 0.1259,
+     "not": 0.1216
+    },
+    "passed": false,
+    "fails": [
+     "not 12.2% > 5%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.183,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1471,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1424,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1411,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1389,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1259,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1216,
+      "not"
+     ]
+    ]
+   },
+   {
+    "id": "F6",
+    "hard": false,
+    "shares": {
+     "acc": 0.1622,
+     "arg": 0.8378,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 16.2% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.3579,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3422,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1622,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1377,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F7",
+    "hard": false,
+    "shares": {
+     "acc": 0.2518,
+     "arg": 0.7482,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 25.2% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.2921,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.2518,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2301,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1179,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1081,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F8",
+    "hard": false,
+    "shares": {
+     "acc": 0.627,
+     "arg": 0.373,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 62.7% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.373,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2874,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.17,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1696,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "G1",
+    "hard": false,
+    "shares": {
+     "acc": 0.1698,
+     "arg": 0.8302,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 17.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1698,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1568,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1453,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1366,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1186,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1181,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1092,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0456,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "G2",
+    "hard": false,
+    "shares": {
+     "acc": 0.6108,
+     "arg": 0.3892,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 61.1% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.2065,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1827,
+      "arg"
+     ],
+     [
+      "Curveball",
+      "middle",
+      0.1541,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1463,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "down-away",
+      0.1111,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0997,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0996,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "G3",
+    "hard": false,
+    "shares": {
+     "acc": 0.3951,
+     "arg": 0.6049,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 39.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2355,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.2203,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.2076,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1747,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1619,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "G4",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.7518,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.2482,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "H1",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 0.0,
+     "not": 1.0
+    },
+    "passed": false,
+    "fails": [
+     "not 100.0% > 5%",
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "not"
+     ]
+    ]
+   },
+   {
+    "id": "H2",
+    "hard": false,
+    "shares": {
+     "acc": 0.6543,
+     "arg": 0.3457,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 65.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1566,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1464,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1444,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1412,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1232,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1046,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0999,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0836,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "H3",
+    "hard": false,
+    "shares": {
+     "acc": 0.6952,
+     "arg": 0.3048,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 69.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3649,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.3048,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1725,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1578,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "H4",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 1.0,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3649,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.3048,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1725,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1578,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "I1",
+    "hard": false,
+    "shares": {
+     "acc": 0.7542,
+     "arg": 0.2458,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2458,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1947,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1923,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1861,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.181,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "I2",
+    "hard": false,
+    "shares": {
+     "acc": 0.1152,
+     "arg": 0.8848,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 11.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1942,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1662,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1576,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.143,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1243,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1152,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0994,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "I3",
+    "hard": false,
+    "shares": {
+     "acc": 0.379,
+     "arg": 0.621,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 37.9% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3526,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2684,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1919,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1871,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "I4",
+    "hard": false,
+    "shares": {
+     "acc": 0.838,
+     "arg": 0.0,
+     "not": 0.162
+    },
+    "passed": false,
+    "fails": [
+     "not 16.2% > 5%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.2571,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.162,
+      "not"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1507,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.148,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1472,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.135,
+      "acc"
+     ]
+    ]
+   }
+  ],
+  "v09": [
+   {
+    "id": "A1",
+    "hard": true,
+    "shares": {
+     "acc": 0.8707,
+     "arg": 0.1293,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.8707,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1293,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "A2",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A3",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2031,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2004,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1526,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1307,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1257,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1162,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.0712,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A4",
+    "hard": true,
+    "shares": {
+     "acc": 0.7973,
+     "arg": 0.2027,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2667,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.2027,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1792,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1536,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1426,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0552,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A5",
+    "hard": true,
+    "shares": {
+     "acc": 0.8721,
+     "arg": 0.1279,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.8721,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1279,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "A6",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "A7",
+    "hard": true,
+    "shares": {
+     "acc": 0.6339,
+     "arg": 0.3661,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 63.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5501,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3661,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0838,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B1",
+    "hard": false,
+    "shares": {
+     "acc": 0.3739,
+     "arg": 0.6261,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 37.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "middle",
+      0.252,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2221,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.152,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.143,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1329,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.098,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B2",
+    "hard": false,
+    "shares": {
+     "acc": 0.4008,
+     "arg": 0.5992,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 40.1% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.1674,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1632,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1431,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.135,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1287,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1255,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.1159,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0212,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B3",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B4",
+    "hard": false,
+    "shares": {
+     "acc": 0.8118,
+     "arg": 0.1882,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.1882,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1467,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.143,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1411,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1323,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1246,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1242,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B5",
+    "hard": false,
+    "shares": {
+     "acc": 0.0838,
+     "arg": 0.9162,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 8.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5501,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3661,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0838,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B6",
+    "hard": false,
+    "shares": {
+     "acc": 0.5951,
+     "arg": 0.4049,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 59.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2793,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1578,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.1457,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.141,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1281,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1256,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0225,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B7",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B8",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.4197,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.2915,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.2888,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "B9",
+    "hard": false,
+    "shares": {
+     "acc": 0.3149,
+     "arg": 0.6851,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 31.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.354,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3149,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.2398,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0913,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C1",
+    "hard": false,
+    "shares": {
+     "acc": 0.7325,
+     "arg": 0.2675,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.1772,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1472,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1339,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1311,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0954,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.092,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0801,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0764,
+      "acc"
+     ],
+     [
+      "Slider",
+      "chase",
+      0.0667,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C2",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 1.0,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.2484,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.2075,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1539,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1483,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0964,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.0951,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0503,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C3",
+    "hard": false,
+    "shares": {
+     "acc": 0.6526,
+     "arg": 0.3474,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 65.3% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2048,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1444,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1389,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1376,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1276,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1224,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0975,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0269,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C4",
+    "hard": false,
+    "shares": {
+     "acc": 0.6496,
+     "arg": 0.3504,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 65.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "up-away",
+      0.2985,
+      "acc"
+     ],
+     [
+      "Slider",
+      "chase",
+      0.189,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1832,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1678,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1318,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.0296,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C5",
+    "hard": false,
+    "shares": {
+     "acc": 0.5004,
+     "arg": 0.4996,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 50.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "up-away",
+      0.2493,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1614,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.141,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1366,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "down-away",
+      0.1145,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "middle",
+      0.1035,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0937,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C6",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2449,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.231,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1583,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.142,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.116,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1078,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C7",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.6017,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3983,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "C8",
+    "hard": false,
+    "shares": {
+     "acc": 0.8084,
+     "arg": 0.1916,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5098,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.2987,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1916,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C9",
+    "hard": false,
+    "shares": {
+     "acc": 0.4532,
+     "arg": 0.5468,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 45.3% < 70%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.2593,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1939,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1553,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1191,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1017,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0935,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0773,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "C10",
+    "hard": false,
+    "shares": {
+     "acc": 0.4074,
+     "arg": 0.5926,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 40.7% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.1561,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1525,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1378,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1373,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1354,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1308,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1241,
+      "acc"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0259,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "D1",
+    "hard": false,
+    "shares": {
+     "acc": 0.7151,
+     "arg": 0.2849,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2891,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1936,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1807,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1386,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0966,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0517,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0497,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "D2",
+    "hard": false,
+    "shares": {
+     "acc": 0.1866,
+     "arg": 0.8134,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 18.7% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3615,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2877,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1866,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1643,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "D3",
+    "hard": false,
+    "shares": {
+     "acc": 0.6442,
+     "arg": 0.3558,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 64.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.3558,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.2337,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.218,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.1925,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D4",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D5",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D6",
+    "hard": false,
+    "shares": {
+     "acc": 0.7382,
+     "arg": 0.2618,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.1525,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1408,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1342,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1275,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1257,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0929,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0878,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0842,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0543,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D7",
+    "hard": false,
+    "shares": {
+     "acc": 0.8055,
+     "arg": 0.1945,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2702,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1945,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.181,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1525,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.126,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0758,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D8",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "D9",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 1.0,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "D10",
+    "hard": false,
+    "shares": {
+     "acc": 0.6628,
+     "arg": 0.3372,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 66.3% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.1787,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1709,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1585,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.1281,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1277,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1269,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.1092,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E1",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E2",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E3",
+    "hard": true,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "E4",
+    "hard": false,
+    "shares": {
+     "acc": 0.5381,
+     "arg": 0.4619,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 53.8% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "middle",
+      0.3278,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.2766,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.2103,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1852,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "E5",
+    "hard": false,
+    "shares": {
+     "acc": 0.5552,
+     "arg": 0.4448,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 55.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2083,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1583,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1581,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1364,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1359,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1029,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1001,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "E6",
+    "hard": false,
+    "shares": {
+     "acc": 0.7947,
+     "arg": 0.2053,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5009,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.2938,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.2053,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "E7",
+    "hard": false,
+    "shares": {
+     "acc": 0.5302,
+     "arg": 0.4698,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 53.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2861,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.2441,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1658,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1378,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.0956,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0707,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "E8",
+    "hard": false,
+    "shares": {
+     "acc": 0.5228,
+     "arg": 0.4772,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 52.3% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "up-away",
+      0.2778,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "chase",
+      0.2638,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.245,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.2135,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F1",
+    "hard": false,
+    "shares": {
+     "acc": 0.8206,
+     "arg": 0.1794,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.1794,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1504,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1487,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1368,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.136,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1297,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1189,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "F2",
+    "hard": false,
+    "shares": {
+     "acc": 0.2167,
+     "arg": 0.7833,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 21.7% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2167,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1389,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1319,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1288,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1255,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1192,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.092,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0471,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F3",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "F4",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5501,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3661,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0838,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "F5",
+    "hard": false,
+    "shares": {
+     "acc": 0.746,
+     "arg": 0.1242,
+     "not": 0.1298
+    },
+    "passed": false,
+    "fails": [
+     "not 13.0% > 5%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.1889,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1473,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1436,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1417,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1298,
+      "not"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1246,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1242,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F6",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 1.0,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.6336,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3437,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0228,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F7",
+    "hard": false,
+    "shares": {
+     "acc": 0.252,
+     "arg": 0.748,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 25.2% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.3957,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.2927,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.252,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0596,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "F8",
+    "hard": false,
+    "shares": {
+     "acc": 0.6244,
+     "arg": 0.3756,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 62.4% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.4995,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3756,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1249,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "G1",
+    "hard": false,
+    "shares": {
+     "acc": 0.2048,
+     "arg": 0.7952,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 20.5% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2048,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1444,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1389,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1376,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1276,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1224,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0975,
+      "arg"
+     ],
+     [
+      "Slider",
+      "up-away",
+      0.0269,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "G2",
+    "hard": false,
+    "shares": {
+     "acc": 0.611,
+     "arg": 0.389,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 61.1% < 70%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "middle",
+      0.1824,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1722,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "middle",
+      0.1537,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1445,
+      "arg"
+     ],
+     [
+      "Curveball",
+      "down-away",
+      0.1124,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1104,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0623,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.0621,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "G3",
+    "hard": false,
+    "shares": {
+     "acc": 0.4176,
+     "arg": 0.5824,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 41.8% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2831,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.209,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.2086,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1897,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1097,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "G4",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "H1",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 0.0,
+     "not": 1.0
+    },
+    "passed": false,
+    "fails": [
+     "not 100.0% > 5%",
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "not"
+     ]
+    ]
+   },
+   {
+    "id": "H2",
+    "hard": false,
+    "shares": {
+     "acc": 0.7609,
+     "arg": 0.2391,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.2472,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.2205,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1569,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1362,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1203,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1188,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "H3",
+    "hard": false,
+    "shares": {
+     "acc": 0.4499,
+     "arg": 0.5501,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 45.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5501,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3661,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0838,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "H4",
+    "hard": false,
+    "shares": {
+     "acc": 0.0,
+     "arg": 1.0,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 0.0% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.5501,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.3661,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.0838,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "I1",
+    "hard": false,
+    "shares": {
+     "acc": 0.8175,
+     "arg": 0.1825,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.252,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1825,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1378,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1371,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1308,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1127,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.047,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "I2",
+    "hard": false,
+    "shares": {
+     "acc": 0.1586,
+     "arg": 0.8414,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 15.9% < 70%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.2089,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1586,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1455,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1418,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1243,
+      "arg"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1175,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.1033,
+      "arg"
+     ]
+    ]
+   },
+   {
+    "id": "I3",
+    "hard": false,
+    "shares": {
+     "acc": 0.5312,
+     "arg": 0.4688,
+     "not": 0.0
+    },
+    "passed": false,
+    "fails": [
+     "acceptable 53.1% < 70%"
+    ],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.2882,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1919,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1805,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1742,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.1652,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "I4",
+    "hard": false,
+    "shares": {
+     "acc": 0.8644,
+     "arg": 0.0,
+     "not": 0.1356
+    },
+    "passed": false,
+    "fails": [
+     "not 13.6% > 5%"
+    ],
+    "calls": [
+     [
+      "Changeup",
+      "down-away",
+      0.2618,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1548,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1356,
+      "not"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1338,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1126,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0957,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-in",
+      0.0895,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-in",
+      0.0162,
+      "acc"
+     ]
+    ]
+   }
+  ]
+ }
+}

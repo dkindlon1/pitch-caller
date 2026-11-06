@@ -45,7 +45,10 @@ FLAGS_V08 = dict(pairing_v07=False, bf_term_v07=False, ev_full=False, expect_v07
 # v0.9 (docs/STEP4b_v0.9_REPORT.md): v0.8 plus the v0.9 items. Every v0.9 flag is False in FLAGS_V07 and FLAGS_V08,
 # so both keep reproducing their golden files exactly.
 # inside_v09 failed its scenario gate (H4 and F6 did not improve) and is on by Drew's call (docs/STEP4b_v0.9_REPORT.md)
-FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=True, landing_v09=True, matchup_memory=True, inside_v09=True, power_avoid=True)
+# Drew, Nov 6: the myopic guardrail stays ON in v0.9 (guardrail_v09=False). With it on, v0.9 passes 30 of the 64 frozen
+# scenarios (29 off) and breaks none v0.8 passed, and its calls cost the same runs as v0.8's in the simulator (off: +0.4).
+# docs/FOLLOWUPS_v0.9_REPORT.md. The flag and its code stay, so the guardrail-off engine can still be tested.
+FLAGS_V09 = dict(FLAGS_V08, guardrail_v09=False, landing_v09=True, matchup_memory=True, inside_v09=True, power_avoid=True)
 FLAGS = dict(FLAGS_V07)
 
 
