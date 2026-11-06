@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getServerSupabase, getUser } from "@/lib/supabase/server";
 import { signOut } from "../login/actions";
+import { AgreeForm } from "./agree-form";
+import { hasAccepted } from "@/lib/legal";
 import { Shell } from "../shell";
 
 export const metadata: Metadata = { title: "Your teams · PitchIQ", robots: { index: false } };
@@ -28,15 +30,18 @@ async function Teams() {
   const user = await getUser();
   if (!user) redirect("/login?next=/app");
   const sb = await getServerSupabase();
-  const [{ data: teams, error }, { data: orgs }] = await Promise.all([
+  const [{ data: teams, error }, { data: orgs }, { data: exps }, agreed] = await Promise.all([
     sb.rpc("pc_my_teams"),
     sb.from("organizations").select("id, name, billing_status").eq("owner_id", user.id).order("name"),
+    sb.from("exports").select("id").limit(1),
+    hasAccepted(sb),
   ]);
   if (error) return <p className="shell-alert" role="alert">Your teams couldn&apos;t be loaded. Try again in a moment.</p>;
   const rows = (teams || []) as TeamRow[];
   return (
     <>
       <p className="shell-note">Signed in as {user.email}</p>
+      {agreed ? null : <AgreeForm next="/app" />}
       {rows.length ? (
         <ul className="team-cards" aria-label="Teams">
           {rows.map((t) => (
@@ -59,7 +64,9 @@ async function Teams() {
           </ul>
         </section>
       ) : null}
+      {exps && exps.length ? <p className="shell-note"><Link href="/app/exports">Your data downloads</Link>: what was sent when a team&apos;s subscription lapsed.</p> : null}
       <p className="shell-note"><Link href="/app/new">Start an organization</Link>: name it, add your teams, pay by card.</p>
     </>
   );
 }
+

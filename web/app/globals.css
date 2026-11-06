@@ -365,3 +365,5 @@ h3 { margin: 0; font: 800 1.9rem/1 var(--f-cond); letter-spacing: 0; }
 /* the sections below the first screen skip layout and paint until they come near it, which keeps the first render
    (and so the h1, the largest paint) quick on a phone */
 main > .band { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+.doc-note { font-size: 0.95rem; padding: 10px 14px; border-left: 3px solid var(--day-line); color: var(--day-text-2); }
+.foot-links { display: inline-flex; gap: 18px; }

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getUser } from "@/lib/supabase/server";
+import { getServerSupabase, getUser } from "@/lib/supabase/server";
+import { hasAccepted } from "@/lib/legal";
+import { AgreeForm } from "../agree-form";
 import { Shell } from "../../shell";
 import { createOrganization } from "../billing/actions";
 
@@ -10,7 +12,7 @@ export const metadata: Metadata = { title: "Start your organization · PitchIQ",
 type Search = Promise<Record<string, string | string[] | undefined>>;
 const ERROR: Record<string, string> = {
   name: "Your organization needs a name.", too_many: "Up to 20 teams at sign-up: add more later on the billing page.",
-  org: "That couldn't be saved. Try again in a moment.",
+  org: "That couldn't be saved. Try again in a moment.", agree: "Agree to the Terms and the Privacy Policy first.",
 };
 
 export default function NewOrg({ searchParams }: { searchParams: Search }) {
@@ -25,6 +27,8 @@ async function Body({ searchParams }: { searchParams: Search }) {
   const sp = await searchParams;
   if (!(await getUser())) redirect("/login?next=/app/new");
   const e = ERROR[String(sp.error || "")];
+  // paying for a team means agreeing to the Terms (D15): an account made before them agrees here first
+  if (!(await hasAccepted(await getServerSupabase()))) return <>{e ? <p className="shell-alert" role="alert">{e}</p> : null}<AgreeForm next="/app/new" /></>;
   return (
     <>
       {e ? <p className="shell-alert" role="alert">{e}</p> : null}

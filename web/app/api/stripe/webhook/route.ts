@@ -1,5 +1,7 @@
+import { after } from "next/server";
 import type Stripe from "stripe";
 import { applyEvent, stripe } from "@/lib/billing";
+import { runLapse } from "@/lib/exports";
 import { normalize } from "@/lib/stripe_events";
 
 // Stripe's webhook (spec: "Billing and lockout", A5). The signature is checked on the raw body; each event is applied
@@ -21,9 +23,20 @@ export async function POST(request: Request) {
   const action = normalize(event);
   if (!action) return reply({ result: "ignored" });
   try {
-    return reply({ result: await applyEvent(event, action) });
+    const result = await applyEvent(event, action);
+    // a lapse: build and email everyone's exports once Stripe has its answer (spec: "Billing and lockout"). Running it
+    // again for the same lapse only fills gaps, so a failure here is retried from the admin page.
+    if (result === "applied" && action.status === "locked") {
+      const site = process.env.SITE_URL?.replace(/\/$/, "") || new URL(request.url).origin;
+      after(async () => {
+        try { console.log("lapse exports", event.id, JSON.stringify(await runLapse(action, site))); }
+        catch (e) { console.error("lapse exports failed", event.id, (e as Error).message); }
+      });
+    }
+    return reply({ result });
   } catch (e) {
     console.error("stripe webhook", event.id, event.type, (e as Error).message);
     return reply({ error: "not_applied" }, 500);
   }
 }
+export const maxDuration = 300;   // the lapse exports run after the reply (after())

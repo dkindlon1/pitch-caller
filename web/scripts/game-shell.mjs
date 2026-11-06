@@ -24,7 +24,10 @@ window.PC_CONFIG_URL = "/app/game/config.json";
       var w = reg.waiting;
       if (!w || !navigator.serviceWorker.controller) return;
       if (live() || window.PC_BUSY) { window.PC_UPDATE_WAITING = true; return; }   // after this game (or its learning): checked again below
+      window.PC_UPDATE_WAITING = false;
       w.postMessage("skipWaiting");
+      // if the new version hasn't taken over a few seconds later (the message can be missed), ask again
+      setTimeout(function () { if (!reloading && reg.waiting === w) apply(); }, 3000);
     }
     window.PC_APPLY_UPDATE = apply;
     reg.addEventListener("updatefound", function () {
