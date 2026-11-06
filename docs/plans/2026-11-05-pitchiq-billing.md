@@ -87,6 +87,13 @@ applied once, in order.
 
    Step 6 (the Vercel settings) is Drew's. Before taking real payments, the account's public business name should
    say PitchIQ.
+   **First real test-mode checkout, Nov 6 8:32 (Drew, card 4242):**
+   - The webhook got `customer.subscription.created`, `invoice.paid` and `checkout.session.completed`. All three
+     passed the signature check and were applied.
+   - The organization is active, its team is active, and it's paid through Nov 6, 2027.
+   - The first invoice was $224.25 ($299 with 25% off), and the renewal preview is $299.
+   - Not ours: Stripe shows the sandbox subscription "Auto-cancels Feb 4, 2027" (90 days). Our code sets no
+     cancellation date.
 7. Then run D5 and D6 for real: sign up and pay with 4242, replay the event from the dashboard, add and remove a team,
    and a test clock past the year's end.
 
