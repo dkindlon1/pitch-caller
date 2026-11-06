@@ -1,5 +1,5 @@
 "use server";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { AGE_COOKIE, ageAnswer, safeNext } from "@/lib/age";
@@ -33,7 +33,10 @@ export async function signUp(form: FormData) {
   const email = str(form, "email"), password = String(form.get("password") ?? "");
   if (!email || password.length < 8) back(next, "mode=signup&error=short");
   const sb = await getServerSupabase();
-  const { data, error } = await sb.auth.signUp({ email, password });
+  // the confirmation email's link comes back to /auth/confirm on this site (SITE_URL, else the address in use)
+  const h = await headers();
+  const origin = process.env.SITE_URL?.replace(/\/$/, "") || `${h.get("x-forwarded-proto") || "http"}://${h.get("host")}`;
+  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: `${origin}/auth/confirm?next=${encodeURIComponent(next)}` } });
   if (error) back(next, "mode=signup&error=signup_failed");
   if (!data.session) back(next, "notice=check_email");   // email confirmation is on: the link in it signs him in
   redirect(next);

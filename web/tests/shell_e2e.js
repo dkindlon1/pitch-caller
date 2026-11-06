@@ -195,6 +195,19 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await goto(asst, `${SITE}/join/not-a-token`);
     check(/isn't a PitchIQ invite/.test(await mainText(asst)), "a broken link says so");
 
+    console.log("9. The sign-up email's link signs you in (production has confirmations on)");
+    const signupLink = await http("POST", "/auth/v1/admin/generate_link", { key: SECRET, body: { type: "signup", email: "newcoach@test.local", password: PASS } });
+    const hashed = signupLink.hashed_token || (signupLink.properties && signupLink.properties.hashed_token);
+    const nc = await fresh();
+    await goto(nc, `${SITE}/auth/confirm?token_hash=${hashed}&type=signup&next=/app`);
+    check(new URL(nc.url()).pathname === "/app" && /Signed in as newcoach@test\.local/.test(await mainText(nc)), `the link confirms the email and signs in (${nc.url()})`);
+    await goto(nc, `${SITE}/auth/confirm?token_hash=${hashed}&type=signup&next=/app`);
+    const nc2 = await fresh();
+    await goto(nc2, `${SITE}/auth/confirm?token_hash=${hashed}&type=signup&next=https://evil.example`);
+    check(/\/login/.test(nc2.url()) && /didn't work/.test(await mainText(nc2)), "a used link goes to sign-in and says so");
+    await goto(nc2, `${SITE}/auth/confirm?code=bogus&next=//evil.example`);
+    check(new URL(nc2.url()).host === new URL(SITE).host, "and never off this site");
+
     check(!errs.length, "no page errors" + (errs.length ? ": " + errs.slice(0, 3).join(" | ") : ""));
     check(!/Error:|⨯/.test(webLog), "no server errors" + (/Error:|⨯/.test(webLog) ? ":\n" + webLog.split("\n").filter((l) => /Error|⨯/.test(l)).slice(0, 5).join("\n") : ""));
   } finally {
