@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
-import { signIn, signUp } from "./actions";
+import { resendConfirm, signIn, signUp } from "./actions";
 import { AGE_COOKIE, MONTHS, birthYears, safeNext } from "@/lib/age";
 import { Shell } from "../shell";
 
@@ -19,6 +19,9 @@ const ERRORS: Record<string, string> = {
   under13: "Players under 13 can't make their own account. A parent or guardian sets it up from the team's invite: ask your coach to send it to your parent's email.",
   short: "Use an email and a password of at least 8 characters.",
   signup_failed: "That account couldn't be made. If you already have one, sign in instead.",
+  unconfirmed: "Your email isn't confirmed yet. Open the link in the email we sent you (check spam too), or get a new one below.",
+  missing_email: "Enter the email you signed up with.",
+  resend_wait: "Too many emails sent for now. Wait a few minutes, then try again.",
 };
 
 export default function LoginPage({ searchParams }: { searchParams: Search }) {
@@ -37,11 +40,12 @@ async function LoginForms({ searchParams }: { searchParams: Search }) {
   const next = safeNext(one(sp.next));
   const error = ERRORS[one(sp.error)];
   const signup = one(sp.mode) === "signup";
+  const resend = ["unconfirmed", "missing_email", "resend_wait"].includes(one(sp.error)) || one(sp.notice) === "check_email";
   const asked = (await cookies()).get(AGE_COOKIE)?.value;
   return (
     <>
       {error ? <p className="shell-alert" role="alert">{error}</p> : null}
-      {one(sp.notice) === "check_email" ? <p className="shell-note" role="status">Check your email for a link to finish making your account.</p> : null}
+      {one(sp.notice) === "check_email" ? <p className="shell-note" role="status">Check your email for a link to finish making your account. It can take a minute, and it may land in spam.</p> : null}
       {one(sp.notice) === "confirm_failed" ? <p className="shell-alert" role="alert">That link didn&apos;t work (it may have been used already). Sign in, or make the account again to get a new link.</p> : null}
       <form action={signIn} className="shell-form" aria-label="Sign in">
         <input type="hidden" name="next" value={next} />
@@ -49,6 +53,13 @@ async function LoginForms({ searchParams }: { searchParams: Search }) {
         <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
         <button type="submit" className="shell-btn primary">Sign in</button>
       </form>
+      {resend ? (
+        <form action={resendConfirm} className="shell-form" aria-label="Send the confirmation email again">
+          <input type="hidden" name="next" value={next} />
+          <label>Email you signed up with<input name="email" type="email" autoComplete="email" required /></label>
+          <button type="submit" className="shell-btn">Send the link again</button>
+        </form>
+      ) : null}
       <details className="shell-more" open={signup}>
         <summary>New to PitchIQ? Make an account</summary>
         <form action={signUp} className="shell-form" aria-label="Make an account">
