@@ -599,18 +599,23 @@ function newGame() {
     pitcher: 0, pc: {}, bf: {}, recent: {}, conf: {}, batter: 0, last: null, v: 2,
     know: {}, usage: {}, log: [], call: null, inningOver: false, pitchNo: 0,
     // v0.8: this plate appearance (frozen solve, look, sit evidence), familiarity, umpire takes, usage by call, radar
-    pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {} };
+    pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {},
+    mm: {} };   // v0.9 item 6: each hitter's record against each pitcher in his earlier trips today
 }
-// v0.8 engine mode (docs/SPEC_v0.8.md): "v08" plans the at-bat ahead; "v07" is the v0.7c engine exactly
-function applyEngineMode() { E.setFlags(S.setup.engine === "v07" ? E.FLAGS_V07 : E.FLAGS_V08); }
+// engine mode: "v09" (default; docs/STEP7_v0.9_REPORT.md) = v0.8 plus the v0.9 terms; "v08" = v0.8 exactly (docs/SPEC_v0.8.md);
+// "v07" = the v0.7c engine exactly
+function applyEngineMode() { E.setFlags(S.setup.engine === "v07" ? E.FLAGS_V07 : S.setup.engine === "v08" ? E.FLAGS_V08 : E.FLAGS_V09); }
 const isV08 = () => S.setup.engine !== "v07";
 const defaultInnings = () => (S.setup.level === "hs" || S.setup.level === "travel" ? 7 : 9);
 
 // ------------------------------------------------------------------ state
 let S = load() || { setup: sampleSetup(), game: null, view: "live", sample: true };
 if (!S.game || S.game.v !== 2) S.game = newGame();
-for (const [k, v] of Object.entries({ pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {} })) if (S.game[k] === undefined) S.game[k] = v;
-if (S.setup.engine === undefined) S.setup.engine = "v08";
+for (const [k, v] of Object.entries({ pa: null, fam: {}, takes: [], usageCall: {}, radar: {}, infieldIn: false, steal: {}, mm: {} })) if (S.game[k] === undefined) S.game[k] = v;
+if (S.setup.engine === undefined) S.setup.engine = "v09";
+// v0.9: "v08" was the default before v0.9 existed, so a saved setup on it moves to v0.9 once; choosing v0.8 again sticks
+if (!S.setup.v09 && S.setup.engine === "v08") S.setup.engine = "v09";
+S.setup.v09 = true;
 applyEngineMode();
 let undo = [];
 let pending = null;
@@ -622,7 +627,7 @@ function load() { try { const s = localStorage.getItem("pitchcaller.v2"); return
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400); }
 
 const G = () => S.game;
-const APP_VERSION = "2026.11.03";   // logged with every pitch
+const APP_VERSION = "2026.11.05";   // logged with every pitch
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -697,6 +702,7 @@ function situation() {
 }
 // ---- v0.8 inputs (spec 8.3): each optional, each inert at its default
 const hitterKey = () => { const b = batterDef() || {}; return b.hitterId || `g:${G().dbId || "local"}|${slotIdx()}|${b.name || ""}`; };
+function mmFor() { const m = ((G().mm || {})[pKey()] || {})[hitterKey()]; return m ? Object.assign({}, m) : {}; }
 function famFor() { const f = ((G().fam || {})[pKey()] || {})[hitterKey()]; return f ? { FB: f.FB || 0, OS: f.OS || 0 } : {}; }
 function hitterGrades() {   // coach's grades, then what's been learned (served) when there's enough of it
   const b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
@@ -725,7 +731,7 @@ function stealFor() {   // 7.4: the lead runner who can go (1st with 2nd open, o
 }
 function v08Inputs() {
   const g = G(), pd = pitcherDef(), b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
-  return { familiar: famFor(), crowding: !!((x && x.crowd) || b.crowd), grades: hitterGrades(),
+  return { familiar: famFor(), matchup: mmFor(), crowding: !!((x && x.crowd) || b.crowd), grades: hitterGrades(),
     ump_u: E.v08.umpEstimate(g.takes || [], S.setup.level, umpSeed()), radar: radarFor(pKey()), infield_in: !!g.infieldIn,
     usage_by_call: Object.assign({}, ((g.usageCall || {})[pKey()] || {})[g.balls + "-" + g.strikes] || {}), steal: stealFor(),
     pitch_cap: +pd.pitchCap || 105, home: S.setup.home === undefined ? null : S.setup.home, sched_innings: +S.setup.innings || null,
@@ -864,6 +870,11 @@ function record(res) {
     if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow); g.pa.cls[cls]++; }
     if (["ball", "cstrike", "hbp"].includes(res.result) && evBase.v08) g.takes.push([res.result === "cstrike" ? 1 : 0, evBase.v08.ump[0], evBase.v08.ump[1]]);
     if (res.result === "whiff" && res.read === "fooled" && g.pa) g.pa.fooled.push(cls);
+    if (g.pa) {   // v0.9 item 6: whiffs and called strikes by pitch class, hard contact by class and spot (simulate.py's mm)
+      const hardHit = res.result === "play" && ((S.setup.inputs >= 2 && res.contact) ? res.contact === "hard" : ["2B", "3B", "HR"].includes(res.out));
+      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + call.quad : null;
+      if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1; }
+    }
     if (res.radar && +res.radar > 40) { const rr = (g.radar[pk] = g.radar[pk] || {}); (rr[p.name] = rr[p.name] || []).push(+res.radar); }
   }
   const countTxt = g.balls + "-" + g.strikes;
@@ -931,7 +942,12 @@ function record(res) {
     g.steal = {}; if (!g.bases[2]) g.infieldIn = false;
     if (g.pa) {   // familiarity (spec 5): what this hitter saw from this pitcher, counted for his later at-bats today
       const fm = (g.fam[rk] = g.fam[rk] || {}), hk = hitterKey(), f = (fm[hk] = fm[hk] || { FB: 0, OS: 0 });
-      f.FB += g.pa.cls.FB; f.OS += g.pa.cls.OS; g.pa = null;
+      f.FB += g.pa.cls.FB; f.OS += g.pa.cls.OS;
+      if (g.pa.mm) {   // v0.9: this trip's record counts from his next trip against this pitcher
+        g.mm = g.mm || {}; const mp = (g.mm[rk] = g.mm[rk] || {}), mr = (mp[hk] = mp[hk] || {});
+        for (const [k, n] of Object.entries(g.pa.mm)) mr[k] = (mr[k] || 0) + n;
+      }
+      g.pa = null;
     }
     g.balls = 0; g.strikes = 0; g.last = null;
     if (g.outs >= 3) { g.inningOver = true; g.batter++; }
@@ -1647,16 +1663,17 @@ function setupView() {
     h("input", { id: `ln${i}`, name: `ln${i}`, autocomplete: "off", list: DB.ready ? "hitter-names" : null, placeholder: `${ord(i + 1)} hitter…`, value: b.name, "aria-label": `Hitter ${i + 1} name`, on: { change: (e) => { b.name = e.target.value.trim(); DB.ready ? linkHitter(b, i) : changed(); } } }),
     h("div", { class: "hands", role: "group", "aria-label": `Hitter ${i + 1} bats` }, ["R", "L", "S"].map((x) => h("button", { "aria-pressed": String(b.hand === x), "aria-label": { R: "Bats right", L: "Bats left", S: "Switch hitter" }[x], on: { click: () => {
       b.hand = x; const hx = DB.ready && b.hitterId && DB.hitters.get(b.hitterId); if (hx) { hx.bats = x; dbPut("hitters", hx); } changed(true); } } }, x))),
-    (st.engine || "v08") === "v08" ? hitterGradeInputs(b, i, changed) : null)));
+    (st.engine || "v09") !== "v07" ? hitterGradeInputs(b, i, changed) : null)));
 
   return h("main", {},
     h("div", { class: "head" }, h("div", {}, h("h1", {}, "Setup"), h("p", { class: "sub" }, "Your level, what you'll log, your staff and their lineup. Changes apply to the game right away."))),
     row("Level", "Sets what a walk, a strikeout and a runner on third are worth, and how wild the average pitcher is.", levelChoices),
-    row("Engine", "v0.8 plans each at-bat ahead (setups, timing, what he's sitting on, the game situation). v0.7c is the previous engine, exactly as it was.",
-      h("div", { class: "choices" }, [["v08", "v0.8: plans the at-bat", "Default. Learns the umpire, tracks what each hitter has seen, and weighs the game score late."],
-        ["v07", "v0.7c: the previous engine", "For comparison, or if anything looks off."]].map(([k, t, d]) =>
-        h("button", { class: "choice", "aria-pressed": String((st.engine || "v08") === k), on: { click: () => { st.engine = k; applyEngineMode(); G().pa = null; changed(true); } } }, h("b", {}, t), h("span", {}, d))))),
-    (st.engine || "v08") === "v08" ? row("Game situation", "Home or away and the scheduled innings let the engine weigh the score late in close games. Leave home/away unset and it plays for runs only.",
+    row("Engine", "v0.9 plans each at-bat ahead (setups, timing, what he's sitting on, the game situation) and adds what each hitter did in his earlier at-bats today. v0.8 and v0.7c are the previous engines, exactly as they were.",
+      h("div", { class: "choices" }, [["v09", "v0.9: plans the at-bat", "Default. Mixes in more changeups, drops a pitch that isn't landing, and remembers each hitter's earlier at-bats."],
+        ["v08", "v0.8: the previous engine", "For comparison. Plans the at-bat, without the v0.9 changes."],
+        ["v07", "v0.7c: the engine before that", "For comparison, or if anything looks off."]].map(([k, t, d]) =>
+        h("button", { class: "choice", "aria-pressed": String((st.engine || "v09") === k), on: { click: () => { st.engine = k; applyEngineMode(); G().pa = null; changed(true); } } }, h("b", {}, t), h("span", {}, d))))),
+    (st.engine || "v09") !== "v07" ? row("Game situation", "Home or away and the scheduled innings let the engine weigh the score late in close games. Leave home/away unset and it plays for runs only.",
       h("div", { class: "fields" },
         h("div", { class: "f" }, "We're", h("div", { class: "hands wide", role: "group", "aria-label": "Home or away" }, [[true, "Home"], [false, "Away"], [null, "Not set"]].map(([v, l]) =>
           h("button", { "aria-pressed": String((st.home === undefined ? null : st.home) === v), on: { click: () => { st.home = v; G().pa = null; changed(true); } } }, l)))),

@@ -159,7 +159,7 @@ function ensureGameRecord() {
     catcherId: S.setup.catcherId || null, staffIds: (S.setup.staffIds || []).slice(), lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
     status: "planned", startedAt: Date.now(), deviceId: DB.deviceId || null,
     // v0.8 game inputs (spec 8.3)
-    setup: { engine: S.setup.engine || "v08", home: S.setup.home === undefined ? null : S.setup.home, innings: S.setup.innings || null,
+    setup: { engine: S.setup.engine || "v09", home: S.setup.home === undefined ? null : S.setup.home, innings: S.setup.innings || null,
       extrasRunner: !!S.setup.extrasRunner, umpSeed: S.setup.umpSeed || "normal" } }, "live");
   if (DB.ready) dbPut("games", rec); else queue().games.push(rec);
   makePack("start");

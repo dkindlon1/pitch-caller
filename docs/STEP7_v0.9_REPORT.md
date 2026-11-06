@@ -113,12 +113,42 @@ v0.9 is a little less predictable at the first pitch and less likely to throw th
 - **The world's power home-run effect only changes values, not outcomes.** It changes the truth costs (values), but the simulator's batted-ball draw (`run_ball_in_play_typed`) uses the plain out tables. In the simulated world, power hitters don't actually hit more home runs. This affects both engines the same way.
 - **The own-world runs result** (v0.9 −0.07 vs v0.8, SE 0.58; `compare_v08_vs_v09_own_worlds.txt`) compares two different worlds, so it isn't a test of the engine.
 
-## Decision needed: item 10 (the guardrail)
+## Decision: item 10 (the guardrail)
 
-The changeup gate and the decision-quality result pull in opposite directions:
+These were the options:
 
 - **Guardrail off** (as built): changeup gate passes (8.8–10.7%). Costs +0.36 runs per game in the simulator.
-- **Guardrail back on**: costs about the same as v0.8. The changeup falls back to 3.4%, so the gate fails. The scenario rows the guardrail alone moved (A7 and H3 fixed; D5, F3 and G4 broken) would probably go back; that wasn't run.
-- **A wider window, in between.** v0.8's window is 0.010 runs × the level's run scale. A wider one, say 0.02–0.03, might keep most of the changeups while keeping out the costliest calls. That would need a new parameter (off in v0.8, so the goldens are untouched), the changeup gate, the scenario suite and the 27-game yardstick check again.
+- **Guardrail back on**: costs about the same as v0.8. The changeup falls back to 3.4%, so the gate fails.
+- **A wider window, in between**: untested.
 
-Until this is decided the app stays on `FLAGS_V08`, and the Supabase migration stays unapplied.
+**Drew, Nov 5: keep it off as built, and switch the app to v0.9.** v0.9 keeps the extra changeups and accepts the simulator's cost
+of about 0.36 runs per game. `FLAGS_V09` is unchanged.
+
+## The app on v0.9
+
+- **Engines and default.** The engine choices are v0.9 (default), v0.8 and v0.7c. Each runs exactly its own flags
+  (`FLAGS_V09`, `FLAGS_V08`, `FLAGS_V07`). A setup saved on v0.8 moves to v0.9 once, because v0.8 was the default before
+  v0.9 existed. Picking v0.8 again after that sticks. The engine logs version `0.9` (`app/engine.js`) and app version
+  `2026.11.05`. Game records default to `v09`.
+- **Matchup memory in the game state.** `g.mm[pitcher][hitter]` is kept the same way `simulate.py` keeps it:
+  - each whiff or called strike counts under `succ|<pitch class>`;
+  - each hard-hit ball counts under `hard|<pitch class>|<target>`; when no contact grade is logged, an extra-base hit
+    counts as hard, the same rule the app uses for confidence;
+  - the pitch class is the pitch thrown, so a cross-up counts for the pitch that was actually thrown.
+
+  This trip's pitches are collected on the plate appearance and added to his record only when it ends. The engine
+  sees earlier trips only, through `situation().matchup`. The record is saved with the game and logged with each pitch's
+  situation, so a replay sees it.
+- **One gap.** Like the familiarity count, a pitch recorded before the next call has been made (in the 15 ms after a plate
+  appearance ends) isn't counted.
+
+**Checks (all run after the switch):**
+
+| Check | Result |
+|---|---|
+| New `app/v09_matchup_e2e.js` (default engine, record kept for the next trip only, hard contact, reaches the engine and moves whiff odds, logged with the pitch) | 11/11 pass |
+| `smoke`, `v09_labels_e2e`, `v08_e2e` (default-engine check updated to v0.9), `gameday_e2e`, `replay_e2e`, `d0_e2e`, `db_e2e`, `stage2_e2e`, `travel_e2e`, `security_e2e` | all pass, no page errors |
+| `d6_test`, `db_test`, `gate_test`, `import_test`, `learn_test`, `rails_test`, `schema_test`, `stage2_test` | all pass. `db_test` and `schema_test` needed `fake-indexeddb` reinstalled after the container restart |
+| JS goldens, v0.8 and v0.7c; Python/JS parity, v0.8 and v0.9 (150 cases each) | exact / pass |
+
+The Supabase migration (`20261105000000_v09_intent.sql`) is still not applied, and nothing is merged to main.

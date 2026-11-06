@@ -54,7 +54,7 @@
     return prev;
   }
 
-  const VERSION = "0.8";      // engine logic version; the tables carry their own fingerprint (data.version)
+  const VERSION = "0.9";      // engine logic version; the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own

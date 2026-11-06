@@ -28,9 +28,9 @@ const server = http.createServer((req, res) => {
   let page = await open();
   await page.evaluate(() => { S.view = "live"; G().call = null; makeCall(); save(); render(); });
 
-  console.log("1. v0.8 is the default engine, and the call carries a why line");
-  const r1 = await page.evaluate(() => ({ eng: S.setup.engine, look: E.FLAGS.look_state, v08: !!G().call.v08 }));
-  check(r1.eng === "v08" && r1.look && r1.v08, `engine ${r1.eng}, look_state ${r1.look}, call made by v0.8 ${r1.v08}`);
+  console.log("1. v0.9 is the default engine (v0.8 planning plus the v0.9 terms), and the call carries a why line");
+  const r1 = await page.evaluate(() => ({ eng: S.setup.engine, look: E.FLAGS.look_state, v09: E.FLAGS.guardrail_v09 && E.FLAGS.matchup_memory, v08: !!G().call.v08 }));
+  check(r1.eng === "v09" && r1.look && r1.v09 && r1.v08, `engine ${r1.eng}, look_state ${r1.look}, v0.9 flags ${r1.v09}, planned call ${r1.v08}`);
   await page.waitForFunction(() => G().call && G().call.why, null, { timeout: 5000 }).catch(() => {});
   const why = await page.evaluate(() => G().call.why);
   const shown = await page.locator(".whyline").count();
@@ -102,14 +102,14 @@ const server = http.createServer((req, res) => {
   check(g1 && g1.c === 5, `grade saved: ${JSON.stringify(g1)}`);
 
   console.log("10. The v0.7c engine is one switch away and is exactly v0.7c");
-  await page.getByRole("button", { name: /v0\.7c: the previous engine/ }).click(); await page.waitForTimeout(150);
+  await page.getByRole("button", { name: /v0\.7c: the engine before that/ }).click(); await page.waitForTimeout(150);
   const r10 = await page.evaluate(() => {
     S.view = "live"; G().call = null; makeCall();
     const a = JSON.stringify(G().call.dist), ref = E.callMixed(arsenal(), situation(), {}).dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob }));
     return { flags: E.FLAGS.look_state, same: a === JSON.stringify(ref), v08: !!G().call.v08 };
   });
   check(!r10.flags && r10.same && !r10.v08, `v0.7c mode: look_state ${r10.flags}, call is callMixed's ${r10.same}`);
-  await page.getByRole("button", { name: /v0\.7c: the previous engine/ }).count();
+  await page.getByRole("button", { name: /v0\.7c: the engine before that/ }).count();
   await page.evaluate(() => { S.setup.engine = "v08"; applyEngineMode(); G().pa = null; save(); });
 
   console.log("11. Phone width: no sideways scroll with the v0.8 controls showing");
