@@ -285,6 +285,10 @@ class Situation:
     extras_runner: bool = False     # 7.1 runner on 2nd to start extra innings
     # v0.9 inputs (inert at their defaults)
     matchup: dict = field(default_factory=dict)           # item 6: earlier trips today, 'succ|KIND' / 'hard|KIND|target' -> n
+    # v1.0 inputs (inert at their defaults)
+    history: tuple = ()             # 3.1 this at-bat's pitches, oldest first: (pitch name, target, result, read); result is
+                                    # ball / cstrike / whiff / foul, read None or back / pull / opposite / front / late /
+                                    # fooled. Callers keep `last` equal to history[-1][:3].
 
 
 # ---------------------------------------------------------------------------
@@ -1324,6 +1328,24 @@ def not_landing(p, s):
 
 
 def allowed_calls(arsenal, s, exclude=None):
+    return call_rules(arsenal, s, exclude)[0]
+
+
+def _drop(out, notes, key, gone):
+    """Drop calls for a rule; the rule stands down (and says so in notes) if that would leave nothing."""
+    kept = [a for a in out if a not in gone]
+    if len(kept) == len(out):
+        return out
+    if not kept:
+        notes[key + "_stood_down"] = True
+        return out
+    notes[key] = sorted(set(out) - set(kept))
+    return kept
+
+
+def call_rules(arsenal, s, exclude=None):
+    """The calls the engine may make now, and notes on which v1.0 rules removed calls (for the why line)."""
+    notes = {}
     tq = targets(s.balls, s.strikes)
     out = [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
     if s.landing_today and out:
@@ -1334,7 +1356,15 @@ def allowed_calls(arsenal, s, exclude=None):
             kept = [a for a in out if a[0] not in bad or (chase_ok and a[1] == "chase")]
             if kept:
                 out = kept
-    return out
+    h = s.history
+    if h:
+        # 3.1 RP1, no third time: the last two pitches were both this exact call
+        if len(h) >= 2 and tuple(h[-1][:2]) == tuple(h[-2][:2]):
+            out = _drop(out, notes, "RP1", {tuple(h[-1][:2])})
+        # 3.1 RP2, fouled straight back: not that exact call on the next pitch
+        if h[-1][2] == "foul" and len(h[-1]) > 3 and h[-1][3] == "back":
+            out = _drop(out, notes, "RP2", {tuple(h[-1][:2])})
+    return out, notes
 
 
 def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
@@ -1439,7 +1469,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     for sw in range(sweeps):
         delta = 0.0
         for (b, k) in order:
-            sc = replace(s, balls=b, strikes=k, last=None, usage_this_count={}, usage_by_call={},
+            sc = replace(s, balls=b, strikes=k, last=None, history=(), usage_this_count={}, usage_by_call={},
                          b_h=dict(s.b_h))
             temp = temperature(arsenal, sc)
             calls = allowed_calls(arsenal, sc)
@@ -1523,7 +1553,10 @@ def call_v08(arsenal, s, rng=None, exclude=None, tab=None):
         if r <= acc:
             pick = d
             break
-    info = dict(sigma=sg, residual=res, M=M, table=tab)
+    calls, rules = call_rules(arsenal, s, exclude)
+    if not calls:                      # root_call's own fallback when the shake-offs leave nothing
+        rules = call_rules(arsenal, s)[1]
+    info = dict(sigma=sg, residual=res, M=M, table=tab, rules=rules)
     return (pick[2], pick[3], pick[0], pick[1]), dist, tab, info
 
 
@@ -1532,8 +1565,10 @@ ETA_LEAN = 0.0     # 2.5 eta (flag-able to 0.25)
 
 def lean_b_h(arsenal, s, fooled=()):
     """2.5 b_h(k) = eta * s_{h,c(i)} + e_h(k). fooled: classes ('FB'/'OS') of this at-bat's whiffs marked fooled; each
-    adds log 1.3 to every sit whose pitch is not in that class."""
+    adds log 1.3 to every sit whose pitch is not in that class. v1.0 3.1 RP3, he's seen it: each of this at-bat's last two
+    fouls on pitch P adds log 1.3 to the sit on P at that target's height."""
     out = {}
+    fouls = [x for x in s.history if x[2] == "foul"][-2:]
     for (n, j) in sit_options(arsenal):
         p = next(x for x in arsenal if x.name == n)
         c = "FB" if p.kind == "FB" else "OS"
@@ -1542,6 +1577,7 @@ def lean_b_h(arsenal, s, fooled=()):
             d, nn = s.hitter_damage[c]
             v += ETA_LEAN * d * nn / (nn + 10)
         v += sum(log(1.3) for fc in fooled if fc != c)
+        v += sum(log(1.3) for x in fouls if x[0] == n and height_member(x[1], p.kind, j))
         if v:
             out[(n, j)] = v
     return out
@@ -1751,7 +1787,39 @@ def _root_cost_pair(arsenal, s, tab, a, b, sigma, myopic=False):
     return c(a), c(b)
 
 
+# v1.0 rule lines (PLAN_v1.0.md section 5). When a rule removed calls on this pitch, its line replaces the cost-based line;
+# the first in RULE_ORDER wins. A coach rule that stood down says so.
+RULE_LINES = {"fallback": "Nothing's working. Going with what's landing. Think about a change.",
+              "LAND3": "Runner on 3rd: no dirt ball with a pitch that isn't landing.",
+              "CR1": "He's hit this hard twice today.",
+              "CR2": "Power hitter: stay off the middle.",
+              "RP2": "He fouled it straight back. Don't go back there yet.",
+              "RP1": "Not the same pitch and spot a third time."}
+RULE_ORDER = ("fallback", "LAND3", "CR1", "CR2", "RP2", "RP1")
+STOOD_DOWN = {"nothing": " Standing down: nothing else left to call.", "fallback": " Standing down: nothing's trusted."}
+
+
+def rule_line(notes):
+    if not notes:
+        return None
+    for key in RULE_ORDER:
+        if key in notes:
+            return RULE_LINES[key]
+        if key + "_stood_down" in notes:
+            return RULE_LINES[key] + STOOD_DOWN[notes[key + "_stood_down"] if isinstance(notes[key + "_stood_down"], str)
+                                                else "nothing"]
+    return None
+
+
 def why_line(arsenal, s, tab, pick, info):
+    """The why line: a v1.0 rule's line when one shaped this call, else the cost-based line (why_cost_line). Returns
+    (line, {term: Delta}, b)."""
+    line, deltas, b = why_cost_line(arsenal, s, tab, pick, info)
+    rl = rule_line(info.get("rules"))
+    return (rl if rl else line), deltas, b
+
+
+def why_cost_line(arsenal, s, tab, pick, info):
     """9: Delta_k = [C(a) - C(b)] - [C_-k(a) - C_-k(b)] for the drawn call a and the best other allowed call b; the most
     negative term's template. Delta values rank only. Returns (line, {term: Delta}, b)."""
     M, sigma = info["M"], info["sigma"]
