@@ -369,6 +369,74 @@ mw2 = e.mix_weights(two_sl, sit(1, 1))
 check(abs(mw2[0]["SL1"] - mw2[0]["SL2"]) < 1e-15 and abs(mw2[0]["SL1"] * 2 - e.MIX_PRIOR["u_T"]["FB+SL+CH"]["1-1"]["same"]["SL"]) < 1e-12,
       "two pitches of one kind split that kind's usage evenly")
 
+# ---------------------------------------------------------------------------
+print("3.8 the at-bat plan")
+import random
+flow_err, end_err, mc_err, lines = 0.0, 0.0, 0.0, []
+EV = ("ball", "wp_ball", "hbp", "cstrike", "whiff", "foul", "weak", "solid", "hard")
+for lv, an, bo, same in (("college_d3", "plus_changeup", E3, False), ("hs", "two_pitch", (True, False, False), True),
+                         ("college_d1", "four_pitch", (False, False, True), True)):
+    a = ars(an)
+    tab = e.solve_table(a, sit(0, 0, level=lv, bases=bo, outs=1, same_side=same))
+    plan = e.at_bat_plan(tab)
+    lines.append(plan["line"])
+    end_err = max(end_err, abs(sum(plan["ends"].values()) - 1.0))
+    # in = out: each count's reach equals what flows into it; visits x (1 - stay) = reach
+    inflow = {c: 0.0 for c in e.COUNTS}
+    inflow[(0, 0)] = 1.0
+    for (b, k) in e.COUNTS:
+        P = {x: sum(pv * tab.plan_P[(b, k)][c_][x] for c_, pv in tab.plan_pol[(b, k)].items()) for x in EV}
+        v = plan["visits"][(b, k)]
+        if b < 3:
+            inflow[(b + 1, k)] += v * (P["ball"] + P["wp_ball"])
+        if k < 2:
+            inflow[(b, k + 1)] += v * (P["cstrike"] + P["whiff"] + P["foul"])
+        stay = P["foul"] if k == 2 else 0.0
+        flow_err = max(flow_err, abs(v * (1 - stay) - plan["reach"][(b, k)]))
+    flow_err = max(flow_err, max(abs(inflow[c] - plan["reach"][c]) for c in e.COUNTS))
+    # Monte Carlo: 20,000 plate appearances drawn from the same policies
+    rng = random.Random(38)
+    hit = {c: 0 for c in e.COUNTS}
+    N = 20000
+    for _ in range(N):
+        b, k, seen = 0, 0, set()
+        while True:
+            if (b, k) not in seen:
+                hit[(b, k)] += 1
+                seen.add((b, k))
+            pol = tab.plan_pol[(b, k)]
+            r, acc, call = rng.random(), 0.0, None
+            for c_, pv in pol.items():
+                acc += pv
+                if r <= acc:
+                    call = c_
+                    break
+            call = call or list(pol)[-1]
+            P = tab.plan_P[(b, k)][call]
+            r, acc, ev = rng.random() * sum(P[x] for x in EV), 0.0, EV[-1]
+            for x in EV:
+                acc += P[x]
+                if r <= acc:
+                    ev = x
+                    break
+            if ev in ("ball", "wp_ball"):
+                if b == 3:
+                    break
+                b += 1
+            elif ev in ("cstrike", "whiff"):
+                if k == 2:
+                    break
+                k += 1
+            elif ev == "foul":
+                k = min(k + 1, 2)
+            else:
+                break
+    mc_err = max(mc_err, max(abs(hit[c] / N - plan["reach"][c]) for c in e.COUNTS))
+check(end_err < 1e-12, "the plate-appearance end chances sum to 1", f"largest error {end_err:.1e}")
+check(flow_err < 1e-12, "the reach chances are consistent (each count's in = out)", f"largest error {flow_err:.1e}")
+check(mc_err < 0.01, "they match a 20,000 plate-appearance Monte Carlo within 0.01", f"largest gap {mc_err:.4f}")
+check(all(l.startswith("Plan: ") and ", put away with the " in l for l in lines), "the plan line", " | ".join(lines))
+
 print()
 if FAILS:
     print(f"{len(FAILS)} v1.0 check(s) FAILED: " + "; ".join(FAILS))

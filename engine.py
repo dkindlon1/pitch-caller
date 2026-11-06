@@ -1212,6 +1212,8 @@ class Table:
         self.h0 = None
         self.sweeps = 0
         self.residuals = []
+        self.plan_pol = {}    # v1.0 3.8: (b, k) -> policy at the PA's starting look
+        self.plan_P = {}      # (b, k) -> {call: outcome probabilities} for the calls in that policy
 
     def bin_look(self, bn):
         if bn is None:
@@ -1576,7 +1578,88 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
         tab.sweeps = sw + 1
         if delta < tol:
             break
+    # v1.0 3.8: the plan data, each count's policy at the starting look h0 and its calls' outcome probabilities (same
+    # costs and operator as the sweeps, on the converged values)
+    for (b, k) in COUNTS:
+        sc = replace(s, balls=b, strikes=k, last=None, history=(), usage_this_count={}, usage_by_call={},
+                     b_h=dict(s.b_h))
+        temp = temperature(arsenal, sc)
+        calls = allowed_calls(arsenal, sc)
+        scL = replace(sc, look=tab.h0)
+        cs, Ps = {}, {}
+        for a in calls:
+            cs[a], Ps[a] = cost08(by[a[0]], a[1], scL, arsenal, tab, tab.h0, ("mix", tab.sigma[(b, k)]))
+        pol = policy_from_costs(cs, sc, temp, mix_weights(arsenal, sc))
+        tab.plan_pol[(b, k)] = pol
+        tab.plan_P[(b, k)] = {a: Ps[a] for a in pol}
     return tab
+
+
+PLAN_ENDS = ("walk", "strikeout", "hbp", "in_play")
+
+
+def at_bat_plan(tab):
+    """v1.0 3.8 the at-bat plan from the table's stored policies. The chain: from 0-0, a ball (or wild pitch) adds a ball
+    (4 = walk), a called or swinging strike adds a strike (3 = strikeout), a foul adds a strike below two and keeps the
+    count at two, a hit batter or a ball in play ends the PA. Returns reach (chance of reaching each count), visits
+    (expected pitches thrown in each count), ends (chance of each PA end, summing to 1), opener (the top two calls at
+    0-0 with shares), putaway (the pitch with the biggest reach-weighted share over 0-2, 1-2, 2-2) and its top spot there,
+    behind (the top two calls at 2-0, 2-1, 3-1), and line (the plan line for the coach)."""
+    trans = {}
+    for (b, k) in COUNTS:
+        pol, P = tab.plan_pol[(b, k)], tab.plan_P[(b, k)]
+        ev = {e_: sum([pv * P[a][e_] for a, pv in pol.items()]) for e_ in
+              ("ball", "wp_ball", "hbp", "cstrike", "whiff", "foul", "weak", "solid", "hard")}
+        trans[(b, k)] = ev
+    order = sorted(COUNTS, key=lambda c: c[0] + c[1])
+    reach = {c: 0.0 for c in COUNTS}
+    visits = {c: 0.0 for c in COUNTS}
+    ends = {x: 0.0 for x in PLAN_ENDS}
+    reach[(0, 0)] = 1.0
+    for (b, k) in order:
+        ev = trans[(b, k)]
+        stay = ev["foul"] if k == 2 else 0.0
+        v = reach[(b, k)] / (1.0 - stay)
+        visits[(b, k)] = v
+        pb = ev["ball"] + ev["wp_ball"]
+        ps = ev["cstrike"] + ev["whiff"] + (ev["foul"] if k < 2 else 0.0)
+        if b + 1 == 4:
+            ends["walk"] += v * pb
+        else:
+            reach[(b + 1, k)] += v * pb
+        if k + 1 == 3:
+            ends["strikeout"] += v * (ev["cstrike"] + ev["whiff"])
+        else:
+            reach[(b, k + 1)] += v * ps
+        ends["hbp"] += v * ev["hbp"]
+        ends["in_play"] += v * (ev["weak"] + ev["solid"] + ev["hard"])
+
+    def top2(c):
+        pol = tab.plan_pol[c]
+        return sorted(pol.items(), key=lambda kv: -kv[1])[:2]
+
+    two = [(0, 2), (1, 2), (2, 2)]
+    by_pitch, by_spot = {}, {}
+    for c in two:
+        for (n, q), pv in tab.plan_pol[c].items():
+            by_pitch[n] = by_pitch.get(n, 0.0) + reach[c] * pv
+            by_spot[(n, q)] = by_spot.get((n, q), 0.0) + reach[c] * pv
+    putaway = max(by_pitch, key=lambda n: by_pitch[n]) if by_pitch else None
+    spots = {q: v for (n, q), v in by_spot.items() if n == putaway}
+    putaway_spot = max(spots, key=lambda q: spots[q]) if spots else None
+    opener = top2((0, 0))
+    plan = dict(reach=reach, visits=visits, ends=ends, opener=opener, putaway=putaway, putaway_spot=putaway_spot,
+                behind={c: top2(c) for c in ((2, 0), (2, 1), (3, 1))})
+    plan["line"] = plan_line(plan)
+    return plan
+
+
+def plan_line(plan):
+    """Section 5: "Plan: {opener}, put away with {put-away}." """
+    (n, q), _ = plan["opener"][0]
+    if plan["putaway"] is None:
+        return f"Plan: {n.lower()} {q} to start."
+    return f"Plan: {n.lower()} {q} to start, put away with the {plan['putaway'].lower()} {plan['putaway_spot']}."
 
 
 # 6.3 the myopic guardrail windows (runs, times the level's run scale). GUARD_DELTA (location) is unchanged since v0.8 (a
