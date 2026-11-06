@@ -225,7 +225,7 @@ def main():
     print(f"wrote {len(doc['rows'])} scenarios; sha256 {h}")
 
 
-APPROVED = None   # set to "<date> by Drew (...)" when he approves; main() refuses to freeze without it
+APPROVED = ("2026-11-06 by Drew (AskUserQuestion): F5 input fix and all 6 label changes, all 39 new rows, all 6 tracked rows")
 
 if __name__ == "__main__":
     if "--draft" not in sys.argv and not APPROVED:
