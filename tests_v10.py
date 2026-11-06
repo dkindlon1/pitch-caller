@@ -175,6 +175,16 @@ for lv in ("hs", "college_d3", "college_d1"):
                 worst = max(worst, by_pitch(sh).get("Slider", 0.0))
 check(worst == 0.0, "every runner-on-3rd state, 0-2 and 1-2, three levels, 0/4 and 2/12: the slider gets 0%", f"largest {worst:.4f}")
 
+# ---------------------------------------------------------------------------
+print("3.4 rebuild the plan when runners or outs change")
+a = ars("slider_best")
+s0 = sit(0, 0, bases=(True, False, False), outs=1)
+fz = e.frozen_inputs(a, s0)
+check(not e.needs_resolve(fz, a, replace(s0, balls=1, strikes=1)), "same runners and outs, new count: no re-solve")
+check(e.needs_resolve(fz, a, replace(s0, balls=1, strikes=1, bases=(False, True, False))), "stolen base mid at-bat: re-solve")
+check(e.needs_resolve(fz, a, replace(s0, balls=1, strikes=1, bases=(False, False, False), outs=2)), "caught stealing (runner gone, out added): re-solve")
+check(e.needs_resolve(fz, a, replace(s0, outs=2)), "outs change alone: re-solve")
+
 print()
 if FAILS:
     print(f"{len(FAILS)} v1.0 check(s) FAILED: " + "; ".join(FAILS))

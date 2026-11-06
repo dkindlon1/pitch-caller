@@ -1597,15 +1597,17 @@ def lean_b_h(arsenal, s, fooled=()):
 
 
 def frozen_inputs(arsenal, s):
-    """6.2 the inputs a plate-appearance table is solved with, for the re-solve triggers."""
+    """6.2 the inputs a plate-appearance table is solved with, for the re-solve triggers (v1.0 3.4: and the base-out state)."""
     return dict(conf={x.name: x.conf for x in arsenal}, wild={x.name: wild_today(x, s) for x in arsenal}, ump=s.ump_u,
-                names=tuple(x.name for x in arsenal))
+                names=tuple(x.name for x in arsenal), bases=tuple(s.bases), outs=s.outs)
 
 
 def needs_resolve(frozen, arsenal, s):
     """6.2 re-solve mid at-bat only when the pitcher changes, a confidence or wild-today value moves by > 0.10, or the
-    umpire shift moves by > 0.20 logits."""
+    umpire shift moves by > 0.20 logits; v1.0 3.4: or the runners or outs change (a steal, a pickoff, a wild pitch)."""
     if frozen is None or frozen["names"] != tuple(x.name for x in arsenal):
+        return True
+    if tuple(s.bases) != frozen["bases"] or s.outs != frozen["outs"]:
         return True
     if any(abs(x.conf - frozen["conf"][x.name]) > 0.10 for x in arsenal):
         return True
