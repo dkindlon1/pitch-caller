@@ -1,0 +1,35 @@
+{
+ "_note": "v1.0 call-sheet arsenals (PLAN_v1.0.md 1.1). The first five are the Nov 6 sweep's (/tmp/sweep.py, copied in the plan appendix). sinker_gb, low_command and changeup_first are new in v1.0 and reuse the sweep's speeds and confidences: the sinker is slider_best's fastball with shape sink and grade 3; low_command is avg_changeup's speeds and confidences with every command 2 and the changeup's confidence 0.70; changeup_first is FB grade 2, CH grade 5 (command 3, confidence 0.85, 79 mph), SL grade 3.",
+ "two_pitch": [
+  {"name": "Fastball", "kind": "FB", "grade": 4, "command": 3, "conf": 0.80, "shape": "ride", "velo": 90},
+  {"name": "Curveball", "kind": "CB", "grade": 3, "command": 3, "conf": 0.70, "shape": "loopy", "velo": 74}],
+ "slider_best": [
+  {"name": "Fastball", "kind": "FB", "grade": 3, "command": 3, "conf": 0.80, "shape": "ride", "velo": 88},
+  {"name": "Slider", "kind": "SL", "grade": 4, "command": 3, "conf": 0.80, "shape": "tight", "velo": 80},
+  {"name": "Changeup", "kind": "CH", "grade": 3, "command": 3, "conf": 0.70, "shape": "fade", "velo": 80}],
+ "avg_changeup": [
+  {"name": "Fastball", "kind": "FB", "grade": 3, "command": 3, "conf": 0.80, "shape": "ride", "velo": 88},
+  {"name": "Slider", "kind": "SL", "grade": 3, "command": 3, "conf": 0.75, "shape": "tight", "velo": 79},
+  {"name": "Changeup", "kind": "CH", "grade": 3, "command": 2, "conf": 0.60, "shape": "fade", "velo": 80}],
+ "plus_changeup": [
+  {"name": "Fastball", "kind": "FB", "grade": 3, "command": 3, "conf": 0.80, "shape": "ride", "velo": 88},
+  {"name": "Slider", "kind": "SL", "grade": 3, "command": 3, "conf": 0.75, "shape": "tight", "velo": 79},
+  {"name": "Changeup", "kind": "CH", "grade": 5, "command": 4, "conf": 0.90, "shape": "fade", "velo": 79}],
+ "four_pitch": [
+  {"name": "Fastball", "kind": "FB", "grade": 3, "command": 3, "conf": 0.80, "shape": "ride", "velo": 88},
+  {"name": "Slider", "kind": "SL", "grade": 3, "command": 3, "conf": 0.75, "shape": "tight", "velo": 79},
+  {"name": "Curveball", "kind": "CB", "grade": 3, "command": 3, "conf": 0.70, "shape": "loopy", "velo": 74},
+  {"name": "Changeup", "kind": "CH", "grade": 3, "command": 3, "conf": 0.65, "shape": "fade", "velo": 80}],
+ "sinker_gb": [
+  {"name": "Fastball", "kind": "FB", "grade": 3, "command": 3, "conf": 0.80, "shape": "sink", "velo": 88},
+  {"name": "Slider", "kind": "SL", "grade": 3, "command": 3, "conf": 0.75, "shape": "tight", "velo": 79},
+  {"name": "Changeup", "kind": "CH", "grade": 3, "command": 3, "conf": 0.70, "shape": "fade", "velo": 80}],
+ "low_command": [
+  {"name": "Fastball", "kind": "FB", "grade": 3, "command": 2, "conf": 0.80, "shape": "ride", "velo": 88},
+  {"name": "Slider", "kind": "SL", "grade": 3, "command": 2, "conf": 0.75, "shape": "tight", "velo": 79},
+  {"name": "Changeup", "kind": "CH", "grade": 3, "command": 2, "conf": 0.70, "shape": "fade", "velo": 80}],
+ "changeup_first": [
+  {"name": "Fastball", "kind": "FB", "grade": 2, "command": 3, "conf": 0.80, "shape": "ride", "velo": 88},
+  {"name": "Changeup", "kind": "CH", "grade": 5, "command": 3, "conf": 0.85, "shape": "fade", "velo": 79},
+  {"name": "Slider", "kind": "SL", "grade": 3, "command": 3, "conf": 0.75, "shape": "tight", "velo": 79}]
+}
