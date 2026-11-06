@@ -1809,6 +1809,11 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     return tab
 
 
+# 6.3 the myopic guardrail window (runs, times the level's run scale). A named constant only so the simulator can test a
+# wider window (v0.9 follow-up; simulate.py GUARD_DELTA). Unchanged in every engine version.
+GUARD_DELTA = 0.010
+
+
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
     """6.3/6.4 the pitch being called now: live look, last pitch and lean; guardrail on myopic cost; sit game re-solved."""
     by = {x.name: x for x in arsenal}
@@ -1826,7 +1831,7 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
         Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
         cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
         best = min(cmy.values())
-        delta = 0.010 * run_scale(s.level)
+        delta = GUARD_DELTA * run_scale(s.level)
         # v0.9 item 10 (guardrail_v09): the myopic guardrail comes off; the never-pick windows still apply to full cost
         keep = list(calls) if FLAGS["guardrail_v09"] else [a for a in calls if cmy[a] - best <= delta]
         if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch

@@ -1272,6 +1272,8 @@
     }
     return tab;
   }
+  // 6.3 the myopic guardrail window (runs x run scale); named only so the simulator can test a wider one (engine.py GUARD_DELTA)
+  const GUARD_DELTA = 0.010;
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {
     const ks = sitOptions(arsenal);
     const look = s.look || tab.h0;
@@ -1284,7 +1286,7 @@
     if (FLAGS.look_state) {
       const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
       let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
-      const delta = 0.010 * runScale(s.level);
+      const delta = GUARD_DELTA * runScale(s.level);
       // v0.9 item 10 (guardrail_v09): the myopic guardrail comes off
       const keep = FLAGS.guardrail_v09 ? calls.slice() : calls.filter((a) => cmy[a] - best <= delta);
       const M2 = {};

@@ -55,6 +55,17 @@ WORLD = os.environ.get("WORLD", "")
 # draw, no change to calls or outcomes). The plain regret columns use the calling engine's own table (its own hitter
 # sit and later-count values), so they are not on one yardstick across engines; the regret_w_* columns are.
 TRUTH_TAB = os.environ.get("TRUTH_TAB", "")
+# v0.9 follow-ups (Nov 5 night), all off by default so existing runs reproduce exactly:
+#   GUARD_DELTA=0.02  the myopic guardrail window (engine.GUARD_DELTA, normally 0.010) for engines with the guardrail on
+#   TRUE_POWER=1      each opposing hitter gets a hidden true power grade w ~ N(3, 1) clipped to 1..5 (8.2 assumes hitters
+#                     spread like pitchers: one grade point = one SD), drawn from its own random stream so lineups and every
+#                     other draw match the runs without it. The world's model uses it the way the engine's model would:
+#                     the 8.2 hard-contact term (hitter_grades) and, if the world has power_avoid, item 8's home-run effect,
+#                     in the truth values and in the batted-ball draw (run_ball_in_play_typed).
+#   SEE_POWER=1       (with TRUE_POWER) the engine is told a coach's power grade: the true grade rounded to a whole number.
+GUARD_DELTA_ENV = os.environ.get("GUARD_DELTA", "")
+TRUE_POWER = os.environ.get("TRUE_POWER", "") == "1"
+SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
 
 
 # ---------------------------------------------------------------------------
@@ -161,8 +172,9 @@ def draw_off(r, arsenal):
 
 
 def true_situation(s, hitter):
-    return replace(s, landing_today={}, wild_true=dict(CURRENT_OFF) or {"__none__": 0.0}, hitter_damage={"FB": (hitter["fb"], 10_000), "OS": (hitter["os"], 10_000)},
-                   timing={"FB": hitter["timing"], "OS": hitter["timing"]})
+    ts = replace(s, landing_today={}, wild_true=dict(CURRENT_OFF) or {"__none__": 0.0}, hitter_damage={"FB": (hitter["fb"], 10_000), "OS": (hitter["os"], 10_000)},
+                 timing={"FB": hitter["timing"], "OS": hitter["timing"]})
+    return replace(ts, grades={"w": hitter["w"]}) if "w" in hitter else ts      # TRUE_POWER: the hidden true power grade
 
 
 def sample(dist):
@@ -252,11 +264,15 @@ def run_ball_in_play_v6b(contact, outs, bases, R):
     return 0, b1 + b2 + b3 + 1, (False, False, False), "home run"
 
 
-def run_ball_in_play_typed(contact, outs, bases, p, q, infield_in=False):
-    """v0.8 (spec 7.3): batted-ball type, then the typed outcome table and runner rules the engine uses."""
+def run_ball_in_play_typed(contact, outs, bases, p, q, infield_in=False, dh=0.0):
+    """v0.8 (spec 7.3): batted-ball type, then the typed outcome table and runner rules the engine uses.
+    dh (TRUE_POWER): item 8's logit shift on HR, applied exactly as engine.in_play_value_typed does (out of that type's outs)."""
     L = LEVEL_NAME
     t = sample(engine.type_mix(p, q, contact))
     po, p1, p2, p3, phr, pe = engine.OUT_TABLE[L][contact][t]
+    if dh and 0 < phr < 1:
+        nhr = engine.sig(engine.logit(phr) + dh)
+        po, phr = max(0.0, po - (nhr - phr)), nhr
     rf = engine.RUNNER_FIT[L]
     ev = sample({"out": po, "single": p1, "double": p2, "triple": p3, "homer": phr, "error": pe})
     b1, b2, b3 = bases
@@ -371,6 +387,10 @@ def play_game(log_path):
                 x.ivb, x.hb = true_move[(who["name"], x.name)]
     pitcher = starter
     lineup = their_lineup()
+    if TRUE_POWER:                                   # own stream: the main rng sequence is untouched
+        prng = random.Random(SEED_FOR_MOVE[0] * 1_000_003 + 17)
+        for hh in lineup:
+            hh["w"] = max(1.0, min(5.0, 3.0 + prng.gauss(0, 1)))
     K = Knowledge()
     land = defaultdict(lambda: [0, 0])          # (pitcher, pitch name) -> [strikes, thrown] today
     orng = random.Random(SEED_FOR_MOVE[0] * 31 + 7)
@@ -436,7 +456,8 @@ def play_game(log_path):
                                              if land[(pitcher["name"], x.name)][1]},
                               familiar=fam_prev, matchup=mm_prev,
                               ump_u=engine.ump_estimate(takes, LEVEL_NAME) if engine.FLAGS["umpire_learn"] else 0.0,
-                              home=True, sched_innings=9)
+                              home=True, sched_innings=9,
+                              grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None))
                 if engine.FLAGS["objective_win"]:
                     if win_pa is None:
                         win_pa = engine.win_constants(s)
@@ -596,7 +617,10 @@ def play_game(log_path):
                         strikes += 1
                 else:   # in play
                     if engine.FLAGS["inplay_typed"]:
-                        o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q)
+                        wf = WORLD_FLAGS or engine.FLAGS
+                        dh = (engine.power_hr_shift(ts, ts.grades) if (TRUE_POWER and ev == "hard" and ts.grades
+                              and wf["power_avoid"] and wf["hitter_grades"]) else 0.0)
+                        o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q, dh=dh)
                     else:
                         o_add, runs_scored, bases, label = run_ball_in_play_v6b(ev, outs, bases, R)
                     outs += o_add
@@ -634,7 +658,7 @@ def play_game(log_path):
                     "off_today": round(CURRENT_OFF.get(p.name, 0.0), 2), "inputs": INPUTS, "noise": NOISE,
                     "regret_exp": round(regret_exp, 5), "regret_pick": round(regret_pick, 5),
                     "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(s.inning >= 7 and abs(margin) <= 2 and (s.bases[1] or s.bases[2])),
-                    **rw,
+                    **rw, **({"true_w": round(hitter["w"], 2)} if TRUE_POWER else {}),
                 })
                 last = (p.name, q, "whiff" if ev == "whiff" else result)
                 if outs >= 3:
@@ -687,6 +711,8 @@ def apply_engine_env():
     base = {"v08": engine.FLAGS_V08, "v09": engine.FLAGS_V09}.get(spec[:3], engine.FLAGS_V07)
     engine.set_flags(**base)
     global WORLD_FLAGS
+    if GUARD_DELTA_ENV:
+        engine.GUARD_DELTA = float(GUARD_DELTA_ENV)
     WORLD_FLAGS = {"v09w": dict(engine.FLAGS_V08, inside_v09=True, matchup_memory=True, power_avoid=True)}[WORLD] if WORLD else None
     for sign, rest in (("+", spec[3:]) if spec[3:4] == "+" else ("-", spec[3:]) if spec[3:4] == "-" else ("", ""),):
         for f in [x for x in rest[1:].split(",") if x]:
