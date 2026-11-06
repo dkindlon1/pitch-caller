@@ -35,7 +35,7 @@
       // bug and is gone (+0.0028). The flat step stays.
       evidence: false, evidenceRef: 0.15 },
     flags: { gradeGap: 1.0, gradeZ: 2.5, stuffMinN: 400, cmdMinLoc: 150, changeWindow: 8, changeZ2: 9.21,
-      starvedShare: 0.05, starvedGames: 5, scoreMinRows: 150, scoreMargin: 0.02, scoreWindow: 300 },
+      starvedShare: 0.05, starvedGames: 5, scoreMinRows: 150, scoreMargin: 0.015, scoreWindow: 300, scoreZ: 1.645 },
   };
   // Traits the learner fits. Set by the trait gate (gate_test.js, gate_result.json, 12 seasons per trait). All six are
   // learnable on the calibrated engine, but with the real walk/strikeout link (v0.7b) command no longer buys strikeouts,
@@ -487,15 +487,19 @@
     rows = nAcc;
     // Margin 0.02 per pitch (was 0.01): after the calibration a wrong grade costs 0.14 per pitch and right grades cost
     // the learner about 0.007 of noise on average; at 0.01, 14 right-grade seasons switched off twice, at 0.02 none did.
-    // Switch off only when his grades are clearly better: by the margin AND by more than 2 standard errors of the
-    // game-by-game difference. Any fitted estimate pays a small price for its own noise when the grades are already
+    // Switch off only when his grades are clearly better: by the margin AND by more than scoreZ standard errors of the
+    // game-by-game difference (one-sided: the only question is whether learning is worse).
+    // Retuned Nov 6 for the single v0.9 engine (margin 0.02 -> 0.015, 2 SE -> 1.645 SE). With v0.9 driving the replay a
+    // season gives each pitch ~300 scored pitches, so 2 SE was what kept a noise-chasing learner on. Noise-chaser switched
+    // off: tuning seeds 300-309 9/10 (was 5/10), held-out 500-509 7/10 (was 5/10), fresh 600-619 13/20 (was 12/20); the real learner
+    // was never switched off on right or wrong grades in any of those 40 seasons. Any fitted estimate pays a small price for its own noise when the grades are already
     // right (about 1/(2n) per pitch per learned number), and that price must not read as "learning is broken".
     const gap = rows ? (coachLL - learnedLL) / rows : 0;       // + = learned predicted worse (more surprise per pitch)
     const se = rows ? Math.sqrt(win.reduce((a, g) => a + ((g.c - g.l) - gap * g.n) ** 2, 0)) / rows : 0;
     const allN = scored.reduce((a, g) => a + g.n, 0);
     return { rows, learned: rows ? -learnedLL / rows : null, coach: rows ? -coachLL / rows : null, gap, se,
       all: { n: allN, learned: allN ? -scored.reduce((a, g) => a + g.l, 0) / allN : null, coach: allN ? -scored.reduce((a, g) => a + g.c, 0) / allN : null },
-      worse: rows >= CFG.flags.scoreMinRows && gap > CFG.flags.scoreMargin && gap > 2 * se };
+      worse: rows >= CFG.flags.scoreMinRows && gap > CFG.flags.scoreMargin && gap > CFG.flags.scoreZ * se };
   }
 
   // ---------------------------------------------------------------- the whole pitcher

@@ -20,6 +20,8 @@ console.log("D5. The safety switch trips on a learner that chases noise");
   // window 600) was tried on seeds 300+ and checked on held-out seeds 500-509: it caught 9/10 seasons against 8/10 for
   // the current setting, but also switched off one right-graded slider on a wrong-grades season (the current setting:
   // none), so the current setting stays.
+  // Nov 6, single v0.9 engine: the old setting caught 2 of these 5; the switch was retuned (margin 0.015, 1.645 SE; see
+  // learner.js) on seeds 300-309 and checked on held-out 500-509 and fresh 600-619, with no false switch-off in 40 seasons.
   const keep = clone({ drift: L.CFG.driftPerGame, caps: L.CFG.caps });
   const chase = (on) => { if (on) { L.CFG.driftPerGame = 1.2; Object.assign(L.CFG.caps, { step: 2, total: 3 }); } else { L.CFG.driftPerGame = keep.drift; Object.assign(L.CFG.caps, keep.caps); } };
   const off = (prof) => ["fb", "sl", "ch"].filter((k) => prof.pitches[k].score && prof.pitches[k].score.worse);
