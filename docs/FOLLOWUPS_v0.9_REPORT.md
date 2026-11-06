@@ -9,12 +9,12 @@ command and output file. Nothing was merged or pushed to main, and nothing was a
   are renamed so they sort after prod's latest. Everything passes on the merged tree. main can fast-forward on your word.
 - **A: landing calls with a runner on 3rd.** The filter does what it was built to do. v0.9's extra flagged calls are
   pitches landing 31–49% (shrunk estimate above 0.40), two-strike chases, and one "trusts nothing" fallback.
-  __A_RESULT__
+  The driver is the guardrail being off, not the filter: with the guardrail back these calls drop toward v0.8's level. A stricter filter doesn't help and costs good calls. **No change recommended to the filter.**
 - **B: the power home-run effect.** It was **inert in every simulated game**, not just in the batted-ball draw: no
   simulated situation ever carried hitter grades. The new off-by-default `TRUE_POWER` world fixes that.
-  __B_RESULT__
+  With power real in the world, v0.9 still costs about +0.32 runs/game more than v0.8, the same conclusion as Step 7. With grades known, item 8 on vs off is +0.08 runs/game (SE 0.06): no sign it helps. The world change is kept behind settings; your call whether it becomes the default for future comparisons.
 - **C: a wider guardrail.** 0.020 is the narrowest window that passes your changeup gate; 0.030 is the same as off.
-  __C_RESULT__
+  A 0.020 window saves about 0.09 runs/game against guardrail-off (SE 0.05, 90 paired games) and keeps 6.3% changeups vs 7.1%. That's a modest hedge, not a clear win; it still costs about +0.31 vs v0.8. **Your call; nothing changed.**
 
 ## The merge (Nov 5, evening)
 
@@ -62,7 +62,25 @@ packs (`results/step7/*_summary.json`, `*_pack.md`), and the 54 fixed-yardstick 
   the one not landing (curveball 31% vs fastball 46%), and the filter had nothing to give way to.
 - v0.8 has no landing filter at all, yet a lower flagged share. So the filter isn't the binding constraint; the call mix is.
 
-__A_TABLE__
+**What changes the count, in the 27 fixed-yardstick games** (`results/followups/landing_threshold_games.txt`; costs from
+`results/followups/regret_v09_vs_l45.txt`, `regret_v09_vs_l48.txt`, vs v0.9 as built, runs per game):
+
+| Engine (seeds 101–103, v0.9 world) | Flagged | Per 100 R3, < 2-out pitches | Cost of the mix vs v0.9 | Cost of its own best call vs v0.9 |
+|---|---|---|---|---|
+| v0.8 | 4 | 1.8 | | |
+| v0.9, guardrail on at 0.010 | 8 | 2.4 | | |
+| v0.9, guardrail on at 0.020 | 6 | 1.9 | | |
+| v0.9 as built (guardrail off, landing ≤ 0.40) | 14 | 3.7 | — | — |
+| v0.9, landing ≤ 0.45 | 11 | 3.3 | −0.031 (SE 0.069) | +0.043 (SE 0.046) |
+| v0.9, landing ≤ 0.48 | 13 | 3.9 | +0.105 (SE 0.092) | **+0.202 (SE 0.071)** |
+
+- The counts are small (27 games), but they all point the same way: the guardrail decides how many of these calls happen.
+  Turning it off lets close-to-best low breaking balls back in, the same mechanism behind item 10's run cost.
+- A stricter landing threshold barely moves the count, and at 0.48 it makes the engine's own best call clearly worse
+  (+0.20 runs/game, 2.8 SE): it starts removing good pitches.
+- **Design question, not changed:** when a pitcher trusts none of his pitches, `candidates()` falls back to his single
+  most-trusted pitch even if it's the one not landing. Falling back to the pitch landing best instead is a one-line
+  change, but it's a v0.4 rule, so it's your call.
 
 ## B: the power home-run effect in the world
 
@@ -99,7 +117,22 @@ can't check this: 3 seeds give only about 27 distinct hitters, and their skill s
 | v0.8: power world minus no power | +0.044 | 0.025 |
 | v0.9: power world minus no power | −0.036 | 0.025 |
 
-__B_SEEN__
+**With the engines told a coach's grade** (`SEE_POWER=1`, the true grade rounded; `regret_tps_v08_vs_v09.txt`,
+`regret_v09_blind_vs_seen.txt`, `regret_v08_blind_vs_seen.txt`):
+
+| Comparison, power world | Cost of the mix | SE | Cost of its own best call | SE |
+|---|---|---|---|---|
+| v0.9 minus v0.8, both told the grade | +0.334 | 0.078 | −0.058 | 0.062 |
+| v0.9: told minus blind | +0.090 | 0.084 | −0.015 | 0.059 |
+| v0.8: told minus blind | +0.075 | 0.051 | +0.061 | 0.050 |
+
+**Item 8 by itself** (v0.9 told the grade, `power_avoid` on minus off, power world, 27 games;
+`regret_item8_off_vs_on_seen.txt`): cost of the mix **+0.077 (SE 0.063)**, its own best call +0.014 (SE 0.045). By level:
+HS −0.046 (0.103), D3 +0.221 (0.129), D1 +0.057 (0.081). Not significant, and no sign that item 8 helps.
+
+- **Reading.** Making the world honest about power doesn't change Step 7's conclusion: v0.9's calls still cost about
+  0.3–0.4 runs/game more than v0.8's on the fixed yardstick, blind or told. Knowing a hitter's power grade doesn't
+  measurably help either engine in 27 games. Item 8 is a small term (about 5% relative on HR per hard contact per grade).
 
 ## C: a wider guardrail window
 
@@ -115,8 +148,36 @@ __B_SEEN__
 | on, 0.030 | 14/24, 8.8% | 14/24, 9.2% | 14/24, 10.7% | pass |
 | off (v0.9 as built) | 14/24, 8.8% | 14/24, 9.2% | 14/24, 10.7% | pass |
 
-__C_TABLE__
+**Paired games on the fixed yardstick** (cost of the engine's mix, runs per game; `results/followups/regret_*`):
+
+| Comparison | Games | Difference | SE | Changeups |
+|---|---|---|---|---|
+| guardrail on 0.010 minus v0.8 (Step 7) | 27 | +0.040 | 0.055 | 3.4% |
+| 0.020 minus v0.8 | 27 | +0.314 | 0.060 | 6.2% |
+| 0.030 minus v0.8 | 27 | +0.387 | 0.075 | |
+| guardrail off minus v0.8 (Step 7) | 27 | +0.398 | 0.078 | 7.3% |
+| 0.020 minus 0.010 | 27 | +0.273 | 0.073 | |
+| **guardrail off minus 0.020** | **90** | **+0.090** | **0.047** | 7.1% vs 6.3% |
+| guardrail off minus 0.030 | 27 | +0.012 | 0.014 | |
+
+By level (90 games), guardrail off minus 0.020: HS +0.074 (SE 0.055), D3 +0.041 (0.071), D1 +0.155 (0.108).
+
+- **The cost and the changeups come together.** Almost all of item 10's cost arrives between 0.010 and 0.020, the same step
+  where the gate goes from fail to pass. By this yardstick the changeups the gate asks for are the costly calls.
+- **0.030 is the same as off**, on the gate and in games. Don't bother with it.
+- **0.020 is the one real middle option.** It's the narrowest window that passes the gate (0.0175 fails at D3), keeps most
+  of the extra changeups, and saves an estimated 0.09 runs/game against off.
+- Realized runs show nothing either way (0.020 vs off: −0.06 runs/game, SE 0.42), as in Step 7.
+- Shipping 0.020 would need a new flag (off in FLAGS_V07 and FLAGS_V08), Python and JS matching, and parity, goldens and
+  the app suites rerun. Not built; waiting on your decision.
 
 ## Open questions for you
 
-__QUESTIONS__
+1. **Fast-forward main to v0.9-work?** It contains all of main, everything passes on it, and main hasn't moved since 91bb706.
+2. **Guardrail: keep it off, or ship a 0.020 window behind a new flag?** 0.020 passes the gate and saves an estimated 0.09
+   runs/game (SE 0.05) for slightly fewer changeups (6.3% vs 7.1%).
+3. **"Trusts nothing" fallback:** fall back to the pitch landing best instead of the most-trusted one?
+4. **TRUE_POWER world:** make it the default world for future comparisons (it changes every future run's numbers), or
+   keep it behind the setting?
+5. **Item 8:** keep it on? The simulator shows no benefit, though 27 games can't rule out a small one.
+6. Still open from before: the HBP inside/away refit (left as is, per your call), and the 15 ms recording gap (not done).
