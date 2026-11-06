@@ -6,6 +6,8 @@ usage (repo root): python3 readthrough/followup_power.py runs/readthrough/v09_in
 import csv, glob, os, sys
 from collections import defaultdict
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 BIP = ("weak", "solid", "hard")
 
 
@@ -31,12 +33,41 @@ def tally(d, by_w=True):
     return t
 
 
+def model_table():
+    """The world's own model, grade by grade: hard contact per ball in play (8.2) and HR per hard contact (item 8), for a
+    fastball middle at 1-1, an average hitter otherwise. This is the mechanism check; the game samples below are not
+    (3 seeds = about 27 distinct hitters, whose skill spread swamps the grade effect)."""
+    os.environ.update(ENGINE="v09", STAFF="default", WORLD="v09w", TRUE_POWER="1")
+    import engine as e, simulate
+    simulate.apply_engine_env()
+    ars = simulate.our_staff()[0]["arsenal"]
+    fb = ars[0]
+    L = ["World model by true power grade (fastball middle, 1-1; hard/BIP | HR per hard contact | HR per BIP):"]
+    for lv in ("hs", "college_d3", "college_d1"):
+        cells = []
+        for w in (1, 2, 3, 4, 5):
+            ts = simulate.true_situation(e.Situation(1, 1, 1, (False,) * 3, inning=4, level=lv, same_side=True),
+                                         {"name": "x", "hand": "R", "fb": 0.0, "os": 0.0, "timing": 0.0, "w": w})
+            with e.flags(**simulate.WORLD_FLAGS):
+                P = e.outcome_probs(fb, "middle", ts, ars)
+                dh = e.power_hr_shift(ts, ts.grades)
+            bip = P["weak"] + P["solid"] + P["hard"]
+            hr = 0.0
+            for t, pt in e.type_mix(fb, "middle", "hard").items():
+                phr = e.OUT_TABLE[lv]["hard"][t][4]
+                hr += pt * (e.sig(e.logit(phr) + dh) if 0 < phr < 1 else phr)
+            cells.append(f"w{w} {P['hard'] / bip:5.1%} {hr:5.2%} {P['hard'] / bip * hr:5.2%}")
+        L.append(f"  {lv:11s} " + " | ".join(cells))
+    return L
+
+
 def main():
     args = [a for a in sys.argv[1:]]
     out = args[args.index("--out") + 1] if "--out" in args else None
     base = args[args.index("--base") + 1] if "--base" in args else None
     dirs = [a for a in args if not a.startswith("--") and a not in (out, base)]
-    L = ["v0.9 follow-up B: the TRUE_POWER world (hidden power grade w ~ N(3,1))", ""]
+    L = ["v0.9 follow-up B: the TRUE_POWER world (hidden power grade w ~ N(3,1))", ""] + model_table() + [
+        "", "Game samples (descriptive only: confounded by hitter skill, see model_table's note):"]
     L.append(f"{'dir':34s} {'bucket':14s} {'BIP':>6s} {'hard/BIP':>9s} {'HR/hard':>8s} {'HR/BIP':>7s}")
     for d in dirs + ([base] if base else []):
         t = tally(d, by_w=d != base)

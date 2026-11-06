@@ -1,0 +1,21 @@
+v0.9 follow-up B: the TRUE_POWER world (hidden power grade w ~ N(3,1))
+
+World model by true power grade (fastball middle, 1-1; hard/BIP | HR per hard contact | HR per BIP):
+  hs          w1 20.9% 3.06% 0.64% | w2 23.8% 3.17% 0.75% | w3 26.9% 3.29% 0.88% | w4 30.2% 3.40% 1.03% | w5 33.7% 3.52% 1.19%
+  college_d3  w1 21.4% 5.53% 1.19% | w2 24.4% 5.84% 1.43% | w3 27.7% 6.17% 1.71% | w4 31.1% 6.52% 2.03% | w5 34.8% 6.88% 2.40%
+  college_d1  w1 22.4% 7.27% 1.63% | w2 25.5% 7.67% 1.95% | w3 28.8% 8.08% 2.32% | w4 32.3% 8.51% 2.75% | w5 36.0% 8.96% 3.23%
+
+Game samples (descriptive only: confounded by hitter skill, see model_table's note):
+dir                                bucket            BIP  hard/BIP  HR/hard  HR/BIP
+v08_in_v09w_tw_tp                  w <= 2.5          247     16.6%     2.4%   0.40%
+v08_in_v09w_tw_tp                  2.5 < w < 3.5     216     36.1%     6.4%   2.31%
+v08_in_v09w_tw_tp                  w >= 3.5          271     27.7%     5.3%   1.85%
+v08_in_v09w_tw_tp                  all               734     26.4%     5.2%   1.50%
+
+v09_in_v09w_tw_tp                  w <= 2.5          254     15.4%     0.0%   0.00%
+v09_in_v09w_tw_tp                  2.5 < w < 3.5     239     35.6%    10.6%   3.77%
+v09_in_v09w_tw_tp                  w >= 3.5          306     22.5%     4.3%   0.98%
+v09_in_v09w_tw_tp                  all               799     24.2%     6.2%   1.50%
+
+v09_in_v09w_tw                     all               794     23.9%     7.4%   2.02%
+
