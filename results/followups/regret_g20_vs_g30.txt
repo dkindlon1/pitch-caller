@@ -1,0 +1,77 @@
+v09-guardrail_v09_in_v09w_tw_g20 vs v09-guardrail_v09_in_v09w_tw_g30: 27 paired games; runs per game, B minus A, SE over games
+
+[all] 27 games
+                   v09-guardrail_v09 v09-guardrail_v09     diff      SE
+  runs                         7.370             7.444   +0.074   0.681
+  pitches                    163.667           162.926   -0.741   4.743
+  regret_exp                   2.070             2.154   +0.084   0.105
+  regret_pick                  2.077             2.140   +0.062   0.104
+  regret_info                  0.822             0.854   +0.032   0.104
+  regret_w_exp                 1.610             1.683   +0.073   0.049
+  regret_w_pick                1.621             1.679   +0.058   0.049
+  regret_w_info                0.408             0.418   +0.010   0.039
+
+[hs] 9 games
+                   v09-guardrail_v09 v09-guardrail_v09     diff      SE
+  runs                         8.000             8.000   +0.000   1.472
+  pitches                    171.778           168.889   -2.889   7.829
+  regret_exp                   2.240             2.333   +0.093   0.169
+  regret_pick                  2.166             2.284   +0.118   0.157
+  regret_info                  0.602             0.627   +0.025   0.166
+  regret_w_exp                 1.900             2.002   +0.102   0.107
+  regret_w_pick                1.843             1.951   +0.108   0.100
+  regret_w_info                0.367             0.372   +0.006   0.077
+
+[college_d3] 9 games
+                   v09-guardrail_v09 v09-guardrail_v09     diff      SE
+  runs                         8.556             8.778   +0.222   1.064
+  pitches                    168.667           161.778   -6.889   8.533
+  regret_exp                   2.247             2.170   -0.077   0.209
+  regret_pick                  2.271             2.183   -0.088   0.209
+  regret_info                  0.971             0.839   -0.131   0.181
+  regret_w_exp                 1.669             1.689   +0.020   0.074
+  regret_w_pick                1.694             1.748   +0.054   0.077
+  regret_w_info                0.415             0.380   -0.035   0.041
+
+[college_d1] 9 games
+                   v09-guardrail_v09 v09-guardrail_v09     diff      SE
+  runs                         5.556             5.556   +0.000   1.106
+  pitches                    150.556           158.111   +7.556   8.446
+  regret_exp                   1.724             1.959   +0.235   0.173
+  regret_pick                  1.795             1.952   +0.157   0.182
+  regret_info                  0.893             1.096   +0.202   0.194
+  regret_w_exp                 1.261             1.357   +0.096   0.079
+  regret_w_pick                1.327             1.337   +0.010   0.085
+  regret_w_info                0.443             0.503   +0.061   0.083
+
+regret_w_pick by call, totals over all games (pitches, runs): v09-guardrail_v09_in_v09w_tw_g20 | v09-guardrail_v09_in_v09w_tw_g30 | B minus A
+  CB middle          386    6.80 |   380    7.66 |   +0.86
+  CH middle          133    3.55 |   153    4.39 |   +0.83
+  SL middle          427    5.02 |   435    5.65 |   +0.62
+  FB chase            18    0.24 |    30    0.49 |   +0.24
+  CH chase             1    0.01 |     4    0.10 |   +0.10
+  CB inside           15    0.26 |    13    0.34 |   +0.08
+  SL edge-away       296    3.01 |   287    3.09 |   +0.08
+  SL chase            25    0.33 |    26    0.38 |   +0.05
+  CH edge-away       135    3.35 |   139    3.37 |   +0.02
+  CH inside            4    0.07 |     5    0.08 |   +0.00
+  SL inside           29    0.47 |    27    0.45 |   -0.01
+  CB chase            12    0.35 |    12    0.30 |   -0.05
+  FB middle         1414    2.40 |  1424    2.18 |   -0.22
+  CB edge-away       266    3.95 |   242    3.70 |   -0.25
+  FB inside          370    4.67 |   354    4.42 |   -0.25
+  FB edge-away       888    9.28 |   868    8.73 |   -0.55
+
+regret_w_pick by count, totals over all games (pitches, runs): v09-guardrail_v09_in_v09w_tw_g20 | v09-guardrail_v09_in_v09w_tw_g30 | B minus A
+  2-0                247    2.59 |   249    3.48 |   +0.88
+  1-0                576    5.82 |   567    6.53 |   +0.71
+  1-1                414    4.52 |   399    4.82 |   +0.30
+  3-2                216    1.37 |   196    1.57 |   +0.20
+  1-2                301    2.56 |   315    2.69 |   +0.13
+  3-0                 90    0.33 |    95    0.46 |   +0.12
+  0-0               1222   13.64 |  1222   13.62 |   -0.03
+  3-1                128    1.26 |   141    1.16 |   -0.10
+  2-1                274    2.51 |   270    2.37 |   -0.14
+  2-2                293    2.31 |   292    2.14 |   -0.17
+  0-1                452    4.63 |   453    4.47 |   -0.17
+  0-2                206    2.22 |   200    2.03 |   -0.19
