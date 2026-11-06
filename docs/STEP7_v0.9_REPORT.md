@@ -152,3 +152,16 @@ of about 0.36 runs per game. `FLAGS_V09` is unchanged.
 | JS goldens, v0.8 and v0.7c; Python/JS parity, v0.8 and v0.9 (150 cases each) | exact / pass |
 
 The Supabase migration (`20261105000000_v09_intent.sql`) is still not applied, and nothing is merged to main.
+
+## Update (Nov 5, later): main merged into v0.9-work
+
+On Drew's go-ahead, main (22 commits: Plans 0–5) was merged into v0.9-work so v0.9 can fast-forward main after review.
+
+- Conflicts: `.gitignore` (both sides kept), `app/dist` (rebuilt), and one hunk in `app/index.src.html` where main's
+  pitch-count line and v0.9's infield-in / steal controls share the scoreboard cell (both kept).
+- The two Pitch Caller migrations were renamed so they sort after prod's latest (`20261109000000_players_admin`); the
+  Supabase CLI's `db push` would otherwise refuse them as older than the last applied migration:
+  `20261104000000_v08_inputs.sql` → `20261110000000_v08_inputs.sql`,
+  `20261105000000_v09_intent.sql` → `20261110000100_v09_intent.sql`. SQL unchanged. Neither is applied anywhere; they
+  reach prod only through the promote workflow.
+- main itself is not changed yet.

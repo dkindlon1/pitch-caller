@@ -1,0 +1,11 @@
+{
+  "name": "pitch-caller",
+  "private": true,
+  "description": "Test dependencies for the pitch caller (engine, app and Supabase sync checks).",
+  "engines": { "node": ">=20" },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.7",
+    "pg": "8.23.1",
+    "playwright": "1.63.0"
+  }
+}

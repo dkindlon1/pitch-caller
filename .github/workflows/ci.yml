@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sql:
+    name: Supabase sync and security (Postgres 17)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGURL: postgresql://postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: scripts/test-sql.sh
+
+  engine-and-app:
+    name: Engine, parity, build and app checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13", cache: pip, cache-dependency-path: requirements-dev.txt }
+      - run: pip install -r requirements-dev.txt
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: scripts/test-app.sh
+
+  web:
+    name: Web app (landing page and waitlist)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGURL: postgresql://postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: "package-lock.json\nweb/package-lock.json" }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npm run typecheck
+      - name: Unit tests
+        working-directory: web
+        run: npm test
+      - working-directory: web
+        run: npm run build
+      - name: Landing page end to end (built site + real waitlist function)
+        run: scripts/run-check.sh landing_e2e node web/tests/landing_e2e.js
+
+  web-shell:
+    name: Web shell, offline game and coach portal on a real local Supabase
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: "package-lock.json\nweb/package-lock.json" }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start Supabase locally (Auth, REST gateway and Postgres; this repo's migrations)
+        run: npx -y supabase@2.122.1 start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,realtime,storage-api,postgres-meta,mailpit
+      - working-directory: web
+        run: npm ci
+      - working-directory: web
+        run: npm run build
+      - name: Shell end to end (the test resets the database first)
+        run: scripts/run-check.sh shell_e2e node web/tests/shell_e2e.js
+      - name: Offline game end to end (D12, the installed game app)
+        run: scripts/run-check.sh offline_game_e2e node web/tests/offline_game_e2e.js
+      - name: Coach portal end to end (Plan 3a)
+        run: scripts/run-check.sh portal_e2e node web/tests/portal_e2e.js
+      - name: Billing end to end (Plan 2, against a fake Stripe)
+        run: scripts/run-check.sh billing_e2e node web/tests/billing_e2e.js
+      - name: Player portal and super admin end to end (Plan 3b)
+        run: scripts/run-check.sh player_admin_e2e node web/tests/player_admin_e2e.js
+      - if: always()
+        run: npx -y supabase@2.122.1 stop --no-backup

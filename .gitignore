@@ -11,6 +11,10 @@ app/parity_cases.json
 app/*.png
 app/e2e_shots/
 node_modules
+
+# Supabase CLI local state
+supabase/.temp/
+web/tests/screens/
 data/statcast/
 runs/
 app/parity_cases.json

@@ -2,8 +2,8 @@
  * Supabase checks against a real local Postgres (not a hosted project). Run from the repo root:
  *   PGURL=postgres://postgres@localhost:55432/postgres node supabase/test/sync_test.js
  * (needs: npm i pg fake-indexeddb). Each run makes a fresh database, applies test/auth_stub.sql (Supabase's auth
- * schema, test only) and the migration, then checks:
- *   1. who sees and writes what, per role and across programs; nothing can be deleted; anon gets nothing
+ * schema, test only) and every migration, then checks:
+ *   1. who sees and writes what, per role and across teams; nothing can be deleted; anon gets nothing
  *   2. push keeps the newer record and reports refused ones without losing the rest
  *   3. pull never skips a row that commits late (two connections, one transaction held open)
  *   4. two iPads (fake IndexedDB, app/db.js and app/sync.js unchanged) sync a charted game both ways; an edit on each
@@ -17,6 +17,7 @@ const { Client } = require("pg");
 const fs = require("fs"), path = require("path"), http = require("http"), crypto = require("crypto");
 const PCDB = require("../../app/db.js");
 const PCSync = require("../../app/sync.js");
+const FX = require("./teams_fixture.js");
 const BASE = process.env.PGURL || "postgres://postgres@localhost:55432/postgres";
 const DBNAME = "pc_sync_test";
 let fails = 0;
@@ -44,8 +45,7 @@ const doc = (id, extra = {}) => Object.assign({ id, createdAt: 1, updatedAt: 100
   const admin = new Client({ connectionString: BASE }); await admin.connect();
   await admin.query(`drop database if exists ${DBNAME}`); await admin.query(`create database ${DBNAME}`); await admin.end();
   const su = await connect();
-  await su.query(sql("auth_stub.sql"));
-  await su.query(sql("../migrations/20261103000000_pitch_caller.sql"));
+  await FX.applyAll(su);
   const users = { coach: crypto.randomUUID(), charter: crypto.randomUUID(), pitcher: crypto.randomUUID(), other: crypto.randomUUID(), stranger: crypto.randomUUID() };
   for (const [name, id] of Object.entries(users)) await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, $2, now())", [id, name + "@test.local"]);
   const conns = {}, q = {};
@@ -53,15 +53,16 @@ const doc = (id, extra = {}) => Object.assign({ id, createdAt: 1, updatedAt: 100
   const qAnon = as(await connect(), null);
 
   console.log("1. Who sees and writes what");
-  const prog = (await q.coach("select public.pc_create_program('RIT', 'college_d3') as id")).rows[0].id;
-  const prog2 = (await q.other("select public.pc_create_program('Other U', 'college_d3') as id")).rows[0].id;
-  // staff join by invitation (the head coach invites, they accept); review_test.js checks the invite rules in detail
-  await q.coach("select public.pc_invite($1, 'charter@test.local', 'charter')", [prog]); await q.charter("select public.pc_accept_invite($1)", [prog]);
-  await q.coach("select public.pc_invite($1, 'pitcher@test.local', 'pitcher', 'pit_me')", [prog]); await q.pitcher("select public.pc_accept_invite($1)", [prog]);
+  // a team each (an organization, a team, billing switched on); the charter is a caller, the pitcher a player linked
+  // to his pitcher record. rls_matrix_test.js and review_test.js check invites and the role rules in detail.
+  const prog = await FX.newTeam(su, users.coach, "RIT");
+  const prog2 = await FX.newTeam(su, users.other, "Other U");
+  await FX.addMember(su, prog, users.charter, "caller");
+  await FX.addMember(su, prog, users.pitcher, "player", ["pit_me"]);
   const push = (who, p, t, rows) => q[who]("select public.pc_push($1, $2, $3::jsonb) as r", [p, t, JSON.stringify(rows)]).then((r) => r.rows[0].r);
   const pull = (who, p, t, cur = { xid: 0, id: "" }) => q[who]("select public.pc_pull($1, $2, $3, $4, 500) as r", [p, t, cur.xid, cur.id]).then((r) => r.rows[0].r);
-  const mine = await q.coach("select * from public.pc_my_programs()");
-  check(mine.rows.length === 1 && mine.rows[0].role === "head_coach", "the creator is head coach of their program");
+  const mine = await q.coach("select * from public.pc_my_teams()");
+  check(mine.rows.length === 1 && mine.rows[0].role === "head" && mine.rows[0].is_owner, "the creator owns the organization and is head coach of its team");
   let r = await push("coach", prog, "pitchers", [doc("pit_me", { name: "Me" }), doc("pit_other", { name: "Ace" })]);
   check(r.applied === 2, "head coach writes pitchers");
   r = await push("charter", prog, "pitchers", [doc("pit_x", { name: "Sneak" })]);
@@ -86,16 +87,16 @@ const doc = (id, extra = {}) => Object.assign({ id, createdAt: 1, updatedAt: 100
   check(r.applied === 1 && (await pull("coach", prog, "events")).rows.find((x) => x.id === "e1").gameId === "g1", "the same record id in two programs stays two separate records");
   const del = await fails_with(() => q.coach("delete from public.events where id = 'e1'"));
   check(del && /permission denied/.test(del.message), "nothing can be deleted from the server, even by the head coach (soft deletes sync as edits)");
-  const memberEdit = await fails_with(() => q.charter("update public.members set role = 'head_coach' where user_id = $1", [users.charter]));
-  check(memberEdit && /permission denied/.test(memberEdit.message), "a charter can't promote himself by editing members");
+  const memberEdit = await fails_with(() => q.charter("update public.members set role = 'head' where user_id = $1", [users.charter]));
+  check(memberEdit && /permission denied/.test(memberEdit.message), "a charter can't promote himself by editing members directly");
   const anon = await fails_with(() => qAnon("select count(*) from public.events"));
   check(anon && /permission denied/.test(anon.message), "anon (the public key alone) can't read the tables");
   const anonRpc = await fails_with(() => qAnon("select public.pc_pull($1, 'events')", [prog]));
   check(anonRpc && /permission denied/.test(anonRpc.message), "or call the sync functions");
-  const stranger = await fails_with(() => q.stranger("select public.pc_invite($1, 'stranger@test.local', 'head_coach')", [prog]));
-  check(stranger && /only the head coach/.test(stranger.message), "only the head coach invites");
-  const last = await fails_with(() => q.coach("select public.pc_set_role($1, $2, 'charter')", [prog, users.coach]));
-  check(last && /at least one head coach/.test(last.message), "the last head coach can't demote himself");
+  const stranger = await fails_with(() => q.stranger("select public.pc_invite($1, 'head', null, 'stranger@test.local')", [prog]));
+  check(stranger && /can't invite coaches/.test(stranger.message), "a stranger can't invite anyone");
+  const self = await fails_with(() => q.charter("select public.pc_set_member($1, $2, 'head')", [prog, users.charter]));
+  check(self && /can't change this team's staff/.test(self.message), "a charter can't promote himself through pc_set_member");
 
   console.log("2. Push keeps the newer record");
   await push("coach", prog, "teams", [doc("t1", { name: "v1", updatedAt: 2000 })]);

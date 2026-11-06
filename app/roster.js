@@ -18,7 +18,7 @@ const ourTeam = () => [...DB.teams.values()].find((t) => t.isOurs);
 const opponents = () => [...DB.teams.values()].filter((t) => !t.isOurs).sort((a, b) => a.name.localeCompare(b.name));
 const teamHitters = (tid) => [...DB.hitters.values()].filter((x) => x.teamId === tid).sort((a, b) => (+a.number || 99) - (+b.number || 99) || a.name.localeCompare(b.name));
 const rosterPitchers = () => [...DB.pitchers.values()].sort((a, b) => a.name.localeCompare(b.name));
-const todayCheckin = (pid) => { const c = DB.checkins.get(pid); return c && c.date === PCDB.today() ? c : null; };
+const todayCheckin = (pid) => { const c = DB.checkins.get(pid); return c && c.date === todayT() ? c : null; };
 // what's been learned (learner v2): per pitcher { profile, served }, per hitter the hitter model
 const pModel = (pid) => DB.models.get("v2:" + pid);
 const hModel = (hid) => DB.models.get("h2:" + hid);
@@ -31,7 +31,7 @@ async function boot() {
     const mig = await PCDB.migrateLegacy(D, S);
     for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) for (const x of await D.all(store)) map.set(x.id, x);
     for (const x of await D.all("learned")) DB.models.set(x.id, x);
-    for (const x of await D.byIndex("checkins", "date", PCDB.today())) DB.checkins.set(x.pitcherId, x);
+    for (const x of await D.byIndex("checkins", "date", todayT())) DB.checkins.set(x.pitcherId, x);
     if (!ourTeam()) { const t = await dbPut("teams", { name: "Our team", isOurs: true, level: S.setup.level }); DB.teams.set(t.id, t); }
     if (mig) { S.setup.staffIds = mig.staffIds; if (mig.opponentId) S.setup.opponentId = mig.opponentId; }
     if (!DB.pitchers.size) { const p = await dbPut("pitchers", PCDB.newPitcher(ourTeam().id, { name: "Pitcher 1" })); DB.pitchers.set(p.id, p); }
@@ -46,6 +46,7 @@ async function boot() {
     DB.ready = true;
     await flushQueued();
     await syncSetup().catch((e) => console.warn("sync setup", e));
+    await loadPrep().catch(() => {});
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
@@ -53,6 +54,7 @@ async function boot() {
       for (const job of (await D.all("meta")).filter((m) => m.id === "toLearn" || /^toLearn:/.test(m.id))) await learnAfterGame(job);
       if (await D.get("meta", "checkDups")) { await checkDuplicates().catch((e) => console.warn("duplicate check", e)); await D.del("meta", "checkDups"); }
       for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
+      await refreshOutings().catch((e) => console.warn("outings", e));
       for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
       await refreshLineupMemory();
       if (S.view === "roster") render();
@@ -155,7 +157,7 @@ function ensureGameRecord() {
   const g = G();
   if (g.dbId) return g.dbId;
   g.dbId = PCDB.uid("gam");
-  const rec = PCDB.moveGame({ id: g.dbId, date: PCDB.today(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
+  const rec = PCDB.moveGame({ id: g.dbId, date: todayT(), level: S.setup.level, inputs: S.setup.inputs, logLoc: !!S.setup.logLoc, opponentId: S.setup.opponentId || null,
     catcherId: S.setup.catcherId || null, staffIds: (S.setup.staffIds || []).slice(), lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
     status: "planned", startedAt: Date.now(), deviceId: DB.deviceId || null,
     // v0.8 game inputs (spec 8.3)
@@ -301,6 +303,7 @@ async function learnAfterGame(job) {
   const names = (job.pids || []).filter((id) => DB.pitchers.has(id)).map((id) => DB.pitchers.get(id).name);
   if (names.length) toast(`Learned from the game: ${names.join(", ")}`);
   if (S.view === "roster") render();
+  await refreshOutings().catch(() => {}); logGames = null;   // rest and eligible-on take in the finished game
   if (SYNC.sync) setTimeout(() => syncNow(true), 0);   // the finished game goes up in the background
 }
 
@@ -339,7 +342,8 @@ function oursView() {
           return h("button", { class: `pcard${x.id === rosterSel ? " sel" : ""}`, "aria-pressed": String(x.id === rosterSel), on: { click: () => { rosterSel = x.id; importPreview = null; render(); } } },
             h("span", { class: "pc-top" }, h("b", {}, (x.number ? `#${x.number} ` : "") + (x.name || "Unnamed")), today ? h("span", { class: "pill ok" }, "Today") : null),
             h("span", { class: "pc-mid" }, (x.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind))),
-            h("span", { class: "pc-sub" }, `${x.hand === "L" ? "Lefty" : "Righty"} ${x.role === "RP" ? "reliever" : "starter"}, ${n ? `${n} pitches charted` : "nothing charted yet"}${ci ? ", checked in" : ""}`));
+            h("span", { class: "pc-sub" }, `${x.hand === "L" ? "Lefty" : "Righty"} ${x.role === "RP" ? "reliever" : "starter"}, ${n ? `${n} pitches charted` : "nothing charted yet"}${ci ? ", checked in" : ""}`),
+            (() => { const t = eligibleText(x.id); return t ? h("span", { class: `pc-sub${/today/.test(t) ? "" : " flag"}`, style: /today/.test(t) ? null : { color: "var(--warn)" } }, t[0].toUpperCase() + t.slice(1)) : null; })());
         })),
         h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => {
           const np = await dbPut("pitchers", PCDB.newPitcher(ourTeam().id, { name: `Pitcher ${DB.pitchers.size + 1}` })); DB.pitchers.set(np.id, np); rosterSel = np.id; render();
@@ -384,7 +388,11 @@ function confirmTwice(key) { if (armed === key) { armed = null; return true; } a
 function toggleStaff(pid) {
   const ids = S.setup.staffIds;
   if (ids.includes(pid)) { if (ids.length === 1) { toast("Today's staff needs at least one pitcher"); return; } S.setup.staffIds = ids.filter((x) => x !== pid); }
-  else S.setup.staffIds = ids.concat(pid);
+  else {
+    S.setup.staffIds = ids.concat(pid);
+    const e = eligibility(pid), p = DB.pitchers.get(pid) || {};
+    if (e && !e.today) toast(`${p.name || "He"} isn't ${eligibleText(pid).replace(/^eligible/, "eligible until")} under ${teamRule().name}`);
+  }
   const cur = pitcherDef(); attachStaff();
   const i = S.setup.staff.indexOf(cur); G().pitcher = i >= 0 ? i : 0;
   G().call = null; save(); render();
@@ -454,7 +462,7 @@ function arsenalEditor(p) {
 
 function checkinPanel(p) {
   const prev = todayCheckin(p.id);
-  const c = prev ? JSON.parse(JSON.stringify(prev)) : { pitcherId: p.id, date: PCDB.today(), arm: 4, sleep: "", conf: {} };
+  const c = prev ? JSON.parse(JSON.stringify(prev)) : { pitcherId: p.id, date: todayT(), arm: 4, sleep: "", conf: {} };
   const dirty = { v: false };
   const shift = PCLearn.todayLimitShift(prev);
   return h("section", { class: "panel glass", "aria-label": "Today's check-in" },
@@ -579,7 +587,7 @@ function importPanel(p) {
       if (t.releaseOffset) d.relOff = t.releaseOffset;
     }
     savePitcher(p, false);
-    const sess = await dbPut("sessions", { pitcherId: p.id, date: PCDB.today(), source: P.r.source, file: P.file, n: P.r.n, byType: P.r.byType, rows: P.r.rows });
+    const sess = await dbPut("sessions", { pitcherId: p.id, date: todayT(), source: P.r.source, file: P.file, n: P.r.n, byType: P.r.byType, rows: P.r.rows });
     DB.sessions.set(p.id, [sess].concat(DB.sessions.get(p.id) || []));
     importPreview = null; render(); toast(`Applied ${P.r.n} pitches to ${p.name}'s arsenal`);
   };
@@ -793,7 +801,7 @@ async function backup() {
   const data = await DB.D.exportAll();
   data.appState = { setup: Object.assign({}, S.setup, { staff: undefined }) };
   const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pitch-caller-backup-${PCDB.today()}.json`;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `pitch-caller-backup-${todayT()}.json`;
   document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   toast(`Backup saved: ${data.stores.events.filter((e) => !e.deletedAt && PCDB.isPitch(e)).length} pitches, ${data.stores.pitchers.length} pitchers`);
 }
@@ -807,31 +815,244 @@ async function restore(e) {
   } catch (err) { toast(err.message || "That file couldn't be read"); }
 }
 
+// ---------------------------------------------------------------- game day (Plan 5, A7): pitch-count rules, rest,
+// eligible-on, the pitching log and the sign card. Dates are the team's (its time zone); only game pitches count.
+const teamTz = () => (SYNC.cfg && SYNC.cfg.timezone) || null;
+const todayT = () => PCDB.today(teamTz());
+const teamRule = () => { const t = ourTeam(); return t && t.pitchRule ? PCRules.resolve(t.pitchRule) : null; };
+const fmtDay = (d) => new Date(d + "T12:00:00").toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+const restWords = (n, unit) => n === 0 ? "no rest" : `${n} ${unit === "nights" ? "night" : "day"}${n === 1 ? "'s" : "s'"} rest`;
+// every pitcher's game pitches, by game: [{ pid, gameId, date, n }] (games charted twice count once, D12)
+async function refreshOutings() {
+  if (!DB.ready) return;
+  const games = new Map((await DB.D.all("games")).filter((g) => !g.dupOf && g.date).map((g) => [g.id, g.date]));
+  const by = new Map();
+  for (const e of await DB.D.all("events")) {
+    if (!PCDB.isPitch(e) || e.legacy || !e.pitcherId || !games.has(e.gameId)) continue;
+    const k = e.pitcherId + "|" + e.gameId; by.set(k, (by.get(k) || 0) + 1);
+  }
+  DB.outings = [...by].map(([k, n]) => { const [pid, gameId] = k.split("|"); return { pid, gameId, date: games.get(gameId), n }; });
+}
+// his days: [{ date, pitches }], leaving out one game (the one being called, counted live instead)
+const outingsOf = (pid, exceptGame) => (DB.outings || []).filter((o) => o.pid === pid && o.gameId !== exceptGame).map((o) => ({ date: o.date, pitches: o.n }));
+function eligibility(pid) {
+  const r = teamRule(); if (!r || !pid) return null;
+  return PCRules.eligibleOn(r, outingsOf(pid), todayT());
+}
+function eligibleText(pid) {
+  const e = eligibility(pid); if (!e) return null;
+  if (e.today) return "eligible today";
+  const w = e.why || {};
+  const because = w.kind === "rest" ? ` (${w.pitches} pitches ${fmtDay(w.date).split(",")[0]})` : w.kind === "consecutive" ? " (pitched days in a row)" : w.kind === "window" ? ` (${w.max} in ${w.days} days)` : "";
+  return `eligible ${fmtDay(e.date)}${because}`;
+}
+// the live line under his count: what's left, the next rest tier, and the limit
+function countLine() {
+  const r = teamRule(), pd = pitcherDef(), g = G();
+  if (!r || !pd || !pd.id) return null;
+  const d = todayT(), prior = outingsOf(pd.id, g.dbId);
+  const earlier = prior.filter((o) => o.date === d).reduce((a, o) => a + o.pitches, 0);
+  const count = earlier + (g.pc[pKey()] || 0);
+  const st = PCRules.liveStatus(r, count, d, prior.filter((o) => o.date !== d));
+  if (st.level === "limit") return { warn: true, text: `At his limit of ${st.max}.${st.finishBatter ? " Finish this batter, then he's done." : ""}` };
+  const parts = [`${st.left} left of ${st.max}${earlier ? ` (${earlier} earlier today)` : ""}${st.capped ? ` (${st.capped.before} in the last ${st.capped.days - 1} day${st.capped.days === 2 ? "" : "s"})` : ""}`];
+  parts.push(st.nextAt ? `${st.nextAt - count} more: ${restWords(st.nextRest, r.unit)}` : `${restWords(st.rest, r.unit)} after today`);
+  return { warn: st.level === "near", text: parts.join(" · ") };
+}
+// Setup: the team's rule. A preset from the governing body's own page; any number can be changed.
+function pitchRulePanel() {
+  const t = ourTeam(); if (!t) return null;
+  const set = t.pitchRule || null, r = set ? PCRules.resolve(set) : null;
+  const keep = async (next) => { const tt = Object.assign({}, ourTeam(), { pitchRule: next }); const saved = await dbPut("teams", tt); DB.teams.set(saved.id, saved); G().call = null; render(); };
+  const groups = [...new Set(PCRules.PRESETS.map((x) => x.group))];
+  const pick = h("label", { class: "f", style: { flex: "1 1 260px" } }, "Pitch-count rule", h("select", { id: "rule-preset", on: { change: (e) => keep(e.target.value ? { preset: e.target.value } : null) } },
+    h("option", { value: "", selected: set ? null : true }, "Pick your league's rule"),
+    groups.map((gr) => h("optgroup", { label: gr }, PCRules.PRESETS.filter((x) => x.group === gr).map((x) => h("option", { value: x.id, selected: set && set.preset === x.id ? true : null }, x.name))))));
+  if (!r) return [h("div", { class: "fields" }, pick), h("p", { class: "note" }, "Each pitcher's rest and the day he can pitch again come from it, and the Game screen warns as he nears the limit. Pick a preset, then change any number your league does differently.")];
+  const lim = PCRules.limits(r, todayT()), unit = r.unit === "nights" ? "Nights of rest" : "Days of rest";
+  const tiers = lim.tiers;
+  const setTier = (i, k, v) => { const ts = tiers.map((x) => x.slice()); ts[i][k] = v; keep(Object.assign({}, set, { tiers: ts, max: Math.max(r.max || 0, ts[ts.length - 1][0]) })); };
+  const table = h("table", { class: "rule-tbl", "aria-label": "Rest by pitch count" },
+    h("thead", {}, h("tr", {}, h("th", {}, "Pitches"), h("th", {}, unit))),
+    h("tbody", {}, tiers.map(([upTo, rest], i) => h("tr", {},
+      h("td", {}, `${i ? tiers[i - 1][0] + 1 : 1} to `, r.byMonth ? String(upTo) : h("input", { type: "number", min: 1, max: 200, value: upTo, "aria-label": `Tier ${i + 1} up to`, on: { change: (e) => setTier(i, 0, +e.target.value) } })),
+      h("td", {}, r.byMonth ? String(rest) : h("input", { type: "number", min: 0, max: 10, value: rest, "aria-label": `Tier ${i + 1} rest`, on: { change: (e) => setTier(i, 1, +e.target.value) } }))))));
+  return [h("div", { class: "fields" }, pick,
+      r.byMonth ? null : h("label", { class: "f", style: { flex: "0 1 130px" } }, "Daily limit", h("input", { id: "rule-max", type: "number", min: 10, max: 200, value: r.max, on: { change: (e) => keep(Object.assign({}, set, { max: +e.target.value })) } }))),
+    r.byMonth ? h("p", { class: "note" }, `This month's limit: ${lim.max}. New York's varsity limits change in March, April and May.`) : null,
+    table,
+    h("p", { class: "note" }, [r.maxConsecutive ? `Not more than ${r.maxConsecutive} days in a row. ` : "", (r.windows || []).map((w) => `Not more than ${w.max} pitches in any ${w.days} days. `).join(""),
+      r.finishBatter ? "He may finish the batter he's facing at the limit. " : ""].join("")),
+    h("p", { class: "note" }, r.source ? ["From ", h("a", { href: r.source, target: "_blank", rel: "noopener" }, r.group), `, checked ${r.checked}. `, r.sourceNote || "", r.edited ? " You've changed some numbers." : ""] : (r.sourceNote || "")),
+    r.edited ? h("div", { class: "row-acts" }, h("button", { class: "btn text", on: { click: () => keep({ preset: set.preset }) } }, "Back to the preset's numbers")) : null];
+}
+// a printout: the page shows only this while printing (works with no signal)
+function printOut(title, nodes) {
+  let el = document.getElementById("print-area");
+  if (!el) { el = document.createElement("div"); el.id = "print-area"; document.body.append(el); }
+  el.replaceChildren(h("h1", {}, title), ...nodes);
+  window.print();
+}
+// the pitching log of one game: each pitcher's pitches, batters faced, rest and the day he can pitch again
+async function pitchingLog(gameId) {
+  const g = await DB.D.get("games", gameId); if (!g) return null;
+  const evs = (await DB.D.byIndex("events", "gameId", gameId)).filter((e) => PCDB.isPitch(e) && !e.legacy);
+  const r = teamRule(), rows = [];
+  for (const pid of [...new Set(evs.map((e) => e.pitcherId).filter(Boolean))]) {
+    const mine = evs.filter((e) => e.pitcherId === pid), p = DB.pitchers.get(pid) || {};
+    const day = outingsOf(pid).filter((o) => o.date === g.date).reduce((a, o) => a + o.pitches, 0) || mine.length;
+    const rest = r ? PCRules.restFor(r, day, g.date) : null;
+    const elig = r ? PCRules.eligibleOn(r, outingsOf(pid).filter((o) => o.date <= g.date), g.date) : null;
+    rows.push({ pid, name: (p.number ? `#${p.number} ` : "") + (p.name || "Pitcher"), pitches: mine.length, day, bf: mine.filter((e) => e.end).length,
+      first: Math.min(...mine.map((e) => e.inning || 1)), last: Math.max(...mine.map((e) => e.inning || 1)), rest, eligible: elig ? elig.date : null });
+  }
+  rows.sort((a, b) => a.first - b.first);
+  const opp = g.opponentId && DB.teams.get(g.opponentId);
+  return { game: g, opponent: opp ? opp.name : "", rule: r, rows };
+}
+function pitchingLogCsv(L) {
+  const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const head = ["Date", "Opponent", "Pitcher", "Pitches", "Pitches that day", "Batters faced", "Innings", L.rule ? (L.rule.unit === "nights" ? "Nights of rest" : "Days of rest") : "Rest", "Eligible on"];
+  return [head, ...L.rows.map((x) => [L.game.date, L.opponent, x.name, x.pitches, x.day, x.bf, x.first === x.last ? x.first : `${x.first}-${x.last}`, x.rest ?? "", x.eligible || ""])].map((r) => r.map(q).join(",")).join("\n");
+}
+async function printPitchingLog(gameId) {
+  const L = await pitchingLog(gameId); if (!L) return;
+  printOut(`Pitching log, ${fmtDay(L.game.date)}${L.opponent ? ` vs ${L.opponent}` : ""}`, [
+    h("p", {}, `${(ourTeam() || {}).name || "Our team"}. ${L.rule ? `Rule: ${L.rule.name}${L.rule.edited ? " (with our own numbers)" : ""}.` : "No pitch-count rule set."}`),
+    h("table", {}, h("thead", {}, h("tr", {}, ["Pitcher", "Pitches", "Batters faced", "Innings", L.rule && L.rule.unit === "nights" ? "Nights of rest" : "Days of rest", "Eligible on"].map((x) => h("th", {}, x)))),
+      h("tbody", {}, L.rows.map((x) => h("tr", {}, h("td", {}, x.name), h("td", {}, String(x.pitches) + (x.day !== x.pitches ? ` (${x.day} that day)` : "")), h("td", {}, String(x.bf)),
+        h("td", {}, x.first === x.last ? String(x.first) : `${x.first}-${x.last}`), h("td", {}, x.rest === null ? "" : String(x.rest)), h("td", {}, x.eligible ? fmtDay(x.eligible) : ""))))),
+    h("p", {}, "Signed: ____________________   Opposing coach: ____________________")]);
+}
+async function downloadPitchingLog(gameId) {
+  const L = await pitchingLog(gameId); if (!L) return;
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([pitchingLogCsv(L)], { type: "text/csv" }));
+  a.download = `pitching-log-${L.game.date}.csv`; document.body.append(a); a.click(); a.remove();
+}
+// the catcher's sign card: today's staff, each pitch with its sign (the standard 1 fastball, 2 curve, 3 slider, 4 change)
+function printSignCard() {
+  const staff = S.setup.staff || [];
+  printOut("Signs", [
+    h("p", {}, Object.entries(SIGN).sort((a, b) => a[1] - b[1]).map(([k, n]) => `${n} ${KINDS[k]}`).join("   ")),
+    ...staff.map((p) => h("div", { class: "card" }, h("h2", {}, (p.number ? `#${p.number} ` : "") + (p.name || "Pitcher")),
+      h("table", {}, h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map((d) => h("tr", {}, h("td", { class: "sign" }, String(SIGN[d.kind])), h("td", {}, d.name), h("td", {}, KINDS[d.kind]))))))),
+  ]);
+}
+// a game's log, chosen on the Data screen: the last few games, newest first
+let logGames = null;
+function pitchingLogPanel() {
+  if (!DB.ready) return null;
+  if (!logGames) { logGames = []; DB.D.all("games").then((gs) => { logGames = gs.filter((g) => !g.dupOf && g.date).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12); render(); }); }
+  return h("section", { class: "panel glass", "aria-label": "Pitching log" },
+    h("div", { class: "panel-head" }, h("h2", {}, "Pitching log"), h("span", { class: "meta" }, teamRule() ? teamRule().name : "No pitch-count rule set (Setup)")),
+    logGames.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" }, h("tbody", {}, logGames.map((g) => h("tr", {},
+      h("td", {}, fmtDay(g.date)), h("td", {}, (DB.teams.get(g.opponentId) || {}).name || ""), h("td", {}, g.status || ""),
+      h("td", {}, h("button", { class: "btn text", on: { click: () => printPitchingLog(g.id) } }, "Print"), h("button", { class: "btn text", on: { click: () => downloadPitchingLog(g.id) } }, "CSV"))))))) : h("p", { class: "note" }, "Games appear here once they're charted."),
+    h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: printSignCard } }, "Print the sign card")));
+}
+
+// ---------------------------------------------------------------- game day prep (Plan 5): one step on Wi-Fi, so the
+// game can be called with no signal. Syncs, checks what the calls need is on this iPad, and records when it was done.
+let PREP = null;
+async function loadPrep() { if (DB.ready) PREP = await DB.D.get("meta", "prep"); }
+const prepToday = () => !!(PREP && PREP.date === todayT());
+async function prepGame() {
+  const checks = [], add = (ok, text, must) => checks.push({ ok: !!ok, text, must: !!must });
+  PREP_BUSY = true; render();
+  try {
+    if (SYNC.sync && SYNC.authSession) {
+      const r = navigator.onLine === false ? null : await syncNow(true);
+      add(r && !r.locked && !r.error, !r ? "Couldn't reach the server: connect to Wi-Fi and try again" : r.locked ? "The team isn't switched on (billing): nothing synced" : r.error ? "Some changes didn't go up; they'll go next time" : "Synced with the team", true);
+    } else add(true, "Not signed in to a team: this iPad calls with its own data");
+    const offline = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+    add(offline, offline ? "The app opens with no signal" : "Open the app once more with a signal (or add it to the home screen) so it opens offline", true);
+    let kept = null; try { kept = navigator.storage && navigator.storage.persist ? await navigator.storage.persist() : null; } catch (e) {}
+    add(kept !== false, kept ? "The iPad keeps this app's data" : "The iPad may clear this app's data when space runs low: add it to the home screen");
+    const rule = teamRule();
+    add(rule, rule ? `Pitch counts: ${rule.name}` : "No pitch-count rule (Setup, Pitch counts)");
+    const staff = (S.setup.staffIds || []).map((id) => DB.pitchers.get(id)).filter(Boolean);
+    const notYet = staff.filter((p) => { const e = eligibility(p.id); return e && !e.today; });
+    add(staff.length, `${staff.length} pitcher${staff.length === 1 ? "" : "s"} on today's staff${notYet.length ? `; not eligible: ${notYet.map((p) => p.name).join(", ")}` : ""}`, true);
+    const opp = S.setup.opponentId && DB.teams.get(S.setup.opponentId);
+    add(opp, opp ? `Opponent: ${opp.name}, ${teamHitters(opp.id).length} hitters` : "No opponent picked: every hitter starts as average");
+    PREP = { id: "prep", at: Date.now(), date: todayT(), checks, ready: checks.every((c) => c.ok || !c.must) };
+    await DB.D.put("meta", PREP);
+    toast(PREP.ready ? "Ready to call this game offline." : "Not ready yet: see what's missing in Setup.");
+  } finally { PREP_BUSY = false; render(); }
+}
+let PREP_BUSY = false;
+function prepPanel() {
+  const when = PREP && PREP.at ? new Date(PREP.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null;
+  return [h("div", { class: "row-acts" }, h("button", { class: "btn primary", id: "prep-game", disabled: PREP_BUSY ? true : null, on: { click: () => prepGame() } }, PREP_BUSY ? "Getting ready…" : "Get ready for offline")),
+    PREP ? h("p", { class: prepToday() && PREP.ready ? "note" : "pstat watch" }, prepToday() ? `${PREP.ready ? "Ready" : "Not ready"} as of ${when} today.` : `Last ready ${new Date(PREP.at).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}: get ready again for today's game.`) : null,
+    PREP ? h("ul", { class: "warns", "aria-label": "Offline checks", style: { color: "inherit" } }, PREP.checks.map((c) => h("li", { style: c.ok ? null : { color: "var(--warn)" } }, `${c.ok ? "✓" : "!"} ${c.text}`))) : null];
+}
+// the Game screen's one line about it: not ready today (when the iPad is on a team), or an update waiting for the game to end
+function prepNotice() {
+  if (typeof window !== "undefined" && window.PC_UPDATE_WAITING && G().dbId) return h("p", { class: "pstat note", role: "status" }, "An update is ready. It installs after this game.");
+  if (SYNC.cfg && SYNC.cfg.programId && !(prepToday() && PREP.ready)) return h("p", { class: "pstat watch", role: "status", id: "prep-notice" }, "This iPad isn't ready for offline today: Setup, Get ready for offline (on Wi-Fi).");
+  return null;
+}
+
 // ---------------------------------------------------------------- sync with Supabase (build step 2)
 // The device stays the place every pitch is written first; sync copies changes up and down in the background, never
 // during a call. Settings and the session live in the device's meta store (not synced).
-const SYNC = { cfg: null, auth: null, sync: null, busy: false, last: null, error: null, pending: null, programs: null, invites: null, staff: null, bound: null };
+const SYNC = { cfg: null, auth: null, sync: null, busy: false, last: null, error: null, pending: null, teams: null, invites: null, staff: null, bound: null, locked: false, lastInvite: null, advOpen: new Set() };
 const restUrl = () => SYNC.cfg.url.replace(/\/$/, "") + "/rest/v1";
 const transportFor = (programId) => PCSync.restTransport({ restUrl: restUrl(), apiKey: SYNC.cfg.apiKey, token: SYNC.auth.token, programId });
+// A team's staff: a preset each (the server's list), with toggles on top for the advanced view. A player is linked to
+// his own pitcher record and sees only that. The server decides every one of these; the iPad only shows them.
+const PRESETS = [["head", "Head coach"], ["pitching", "Pitching coach"], ["caller", "Pitch caller"], ["viewer", "Viewer"], ["player", "Player"]];
+const TOGGLES = [["call_games", "Call games"], ["edit_grades", "Edit grades"], ["review_uploads", "Review uploads"], ["manage_opponents", "Opponents"], ["manage_roster", "Roster"], ["manage_staff", "Staff"]];
+const PRESET_PERMS = { head: TOGGLES.map((t) => t[0]), pitching: ["call_games", "edit_grades", "review_uploads", "manage_opponents"], caller: ["call_games", "manage_opponents"], viewer: [], player: [] };
+const roleName = (r) => (PRESETS.find((x) => x[0] === r) || [r, r || "?"])[1];
+const effective = (role, perms) => { const o = {}; for (const [k] of TOGGLES) o[k] = (perms && k in perms) ? !!perms[k] : (PRESET_PERMS[role] || []).includes(k); return o; };
+const may = (perm) => !!(SYNC.cfg && SYNC.cfg.perms && SYNC.cfg.perms[perm]);
+// an invite code, or a link with one in it
+const inviteToken = (s) => { const m = String(s || "").match(/[0-9a-f]{64}/i); return m ? m[0].toLowerCase() : null; };
 async function syncSetup() {
   if (!DB.D || typeof PCSync === "undefined") return;
   SYNC.cfg = await DB.D.get("meta", "syncConfig");
+  // served by PitchIQ (/app/game/): the project's URL and publishable key come from the site, nobody types them
+  if ((!SYNC.cfg || !SYNC.cfg.url) && typeof window !== "undefined" && window.PC_CONFIG_URL && navigator.onLine !== false) {
+    try {
+      const r = await fetch(window.PC_CONFIG_URL, { cache: "no-cache" });
+      const c = r.ok ? await r.json() : null;
+      if (c && c.url && c.apiKey) SYNC.cfg = await DB.D.put("meta", Object.assign({ id: "syncConfig" }, SYNC.cfg || {}, { url: c.url, apiKey: c.apiKey, managed: true }));
+    } catch (e) {}
+  }
   SYNC.bound = await DB.D.get("meta", "boundProgram");
   SYNC.auth = SYNC.sync = null;
   if (!SYNC.cfg || !SYNC.cfg.url || !SYNC.cfg.apiKey) return;
   SYNC.auth = PCSync.supabaseAuth({ url: SYNC.cfg.url, apiKey: SYNC.cfg.apiKey, db: DB.D });
   SYNC.authSession = await SYNC.auth.session();
+  const who = SYNC.authSession || {};
   if (SYNC.cfg.programId) {
-    SYNC.sync = PCSync.createSync({ db: DB.D, transport: transportFor(SYNC.cfg.programId), programId: SYNC.cfg.programId, programName: SYNC.cfg.programName });
+    // the signed-in account goes with every sync: an iPad another account last synced is handed over only when that
+    // account has nothing left waiting to go up (a shared iPad never sends one coach's work as another's)
+    SYNC.sync = PCSync.createSync({ db: DB.D, transport: transportFor(SYNC.cfg.programId), programId: SYNC.cfg.programId, programName: SYNC.cfg.programName,
+      userId: who.userId || null, userEmail: who.email || null });
     SYNC.pending = await SYNC.sync.pending();
   }
+  syncTriggers();
 }
 async function syncConfig(patch) {
   SYNC.cfg = await DB.D.put("meta", Object.assign({ id: "syncConfig" }, SYNC.cfg || {}, patch));
   await syncSetup();
 }
+// Sync goes when the iPad comes back online or the app comes back to the front, never in the middle of a game (the
+// finished game goes up when it ends). The browser is asked to keep the database even when space runs low.
+function syncTriggers() {
+  if (SYNC.triggers || typeof window === "undefined" || !window.addEventListener) return;
+  SYNC.triggers = true;
+  const quietSync = () => { if (SYNC.sync && SYNC.authSession && !G().dbId) syncNow(true); };
+  window.addEventListener("online", quietSync);
+  if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") quietSync(); });
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then((ok) => { SYNC.persisted = ok; }).catch(() => {}); } catch (e) {}
+}
 const programTransport = () => transportFor(null);
 const syncMessage = (e) => /fetch|network|offline|Failed to fetch|Load failed/i.test(e.message) ? "Couldn't reach the server: everything stays on this iPad and goes up next time." : e.message.replace(/^pc_\w+: /, "");
+const LOCKED = "This team isn't switched on (billing). Everything stays on this iPad and goes up once it is.";
 // A sync asked for while one is running (a game just ended, the button tapped twice) waits for it and then runs once
 // more, and whoever asked gets that second run's result: nothing ends up quietly skipped.
 let syncRun = null, syncQueued = null;
@@ -850,21 +1071,23 @@ async function syncOnce(quiet) {
   try {
     const r = await SYNC.sync.syncNow();
     SYNC.last = { at: Date.now(), r };
+    SYNC.locked = !!r.locked;
+    if (SYNC.staff) SYNC.staff = null;   // who accepted, who left: the staff list is fetched again with the sync
     SYNC.pending = await SYNC.sync.pending();
     if (r.error) SYNC.error = `Some changes couldn't go up: ${r.error}. Everything stays on this iPad and is tried again next time.`;
     if (r.pull.merged || (r.push.skipped && r.push.skipped > 0)) { await reloadFromDb(); if (await checkDuplicates().then((x) => x.length).catch(() => 0)) await SYNC.sync.push().catch(() => {}); }
-    if (!quiet) toast(`Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} kept on this iPad` : ""}`);
+    if (!quiet) toast(r.locked ? LOCKED : `Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} kept on this iPad` : ""}`);
     return r;
   } catch (e) {
     if (/refresh token|JWT expired|invalid jwt/i.test(e.message) || e.status === 401) {
-      // the sign-in ran out (or was revoked): nothing is lost, the program stays picked, he signs in again
+      // the sign-in ran out (or was revoked): nothing is lost, the team stays picked, he signs in again
       await SYNC.auth.signOut().catch(() => {}); SYNC.authSession = null;
       SYNC.error = "Your sign-in expired: sign in again. Everything stays on this iPad until then.";
     } else SYNC.error = syncMessage(e);
     return null;
   } finally { SYNC.busy = false; if (S.view === "setup") render(); }
 }
-// One iPad holds one program. Using it for another means starting it fresh: a backup file first (everything on it,
+// One iPad holds one team. Using it for another means starting it fresh: a backup file first (everything on it,
 // to keep or restore later), then the iPad's database and game state are cleared and the app starts over.
 async function startFresh() {
   if (!confirmTwice("startfresh")) { toast("Tap again to back up and start this iPad fresh"); return; }
@@ -878,30 +1101,33 @@ function otherProgram(name) {
   const b = SYNC.bound;
   return b && b.programId && name && b.programId !== name ? b : null;
 }
-// Joining a program that already exists: pull before anything goes up. Every new install makes a placeholder "Our team"
-// with default pitchers; once the program's own team has come down, the placeholder goes, and any of its pitchers or
-// catchers that already have work on this iPad (pitches, bullpens, check-ins, velo) move to the program's team instead
-// of being lost. The program is saved as this iPad's only once that has worked, so a join cut off halfway (no signal)
+const teamCfg = (t) => ({ programId: t.team_id, programName: t.team_name, role: t.role, perms: t.perms || {}, isOwner: !!t.is_owner, timezone: t.timezone || null });
+// Joining a team that already exists: pull before anything goes up. Every new install makes a placeholder "Our team"
+// with default pitchers; once the team's own roster has come down, the placeholder goes, and any of its pitchers or
+// catchers that already have work on this iPad (pitches, bullpens, check-ins, velo) move to the team's roster instead
+// of being lost. The team is saved as this iPad's only once that has worked, so a join cut off halfway (no signal)
 // never leaves the placeholders to go up at the next sync.
-async function joinProgram(p) {
+async function joinProgram(t) {
   const D = DB.D;
-  const b = otherProgram(p.program_id);
-  if (b) throw new Error(`This iPad holds the data for ${b.programName || "another program"}. To use it for ${p.name}, back it up and start this iPad fresh.`);
-  if (navigator.onLine === false) throw new Error("No signal: join the program once this iPad is online.");
-  const before = { teams: new Set((await D.all("teams")).map((t) => t.id)) };
-  const sync = PCSync.createSync({ db: D, transport: transportFor(p.program_id), programId: p.program_id, programName: p.name });
+  const b = otherProgram(t.team_id);
+  if (b) throw new Error(`This iPad holds the data for ${b.programName || "another team"}. To use it for ${t.team_name}, back it up and start this iPad fresh.`);
+  if (navigator.onLine === false) throw new Error("No signal: join the team once this iPad is online.");
+  if (!t.role) throw new Error(`You own ${t.team_name} but aren't on its staff. Add yourself as a coach first.`);
+  const before = { teams: new Set((await D.all("teams")).map((x) => x.id)) };
+  const who = SYNC.authSession || {};
+  const sync = PCSync.createSync({ db: D, transport: transportFor(t.team_id), programId: t.team_id, programName: t.team_name, userId: who.userId || null, userEmail: who.email || null });
   SYNC.busy = true; render();
-  let moved = 0, dropped = 0;
+  let moved = 0, dropped = 0, locked = false;
   try {
-    await sync.pull();
-    const ours = (await D.all("teams")).filter((t) => t.isOurs);
-    const theirs = ours.find((t) => !before.teams.has(t.id));
+    locked = (await sync.pull()).locked;
+    const ours = (await D.all("teams")).filter((x) => x.isOurs);
+    const theirs = ours.find((x) => !before.teams.has(x.id));
     if (theirs) {
       const events = await D.all("events");
       const used = new Set();
       for (const e of events) { if (e.pitcherId) used.add(e.pitcherId); if (e.catcherId) used.add(e.catcherId); }
       for (const st of ["sessions", "checkins", "readings"]) for (const x of await D.all(st)) if (x.pitcherId) used.add(x.pitcherId);
-      for (const mine of ours.filter((t) => before.teams.has(t.id))) {
+      for (const mine of ours.filter((x) => before.teams.has(x.id))) {
         for (const st of ["pitchers", "catchers"]) for (const x of await D.byIndex(st, "teamId", mine.id)) {
           if (used.has(x.id)) { await D.put(st, Object.assign(x, { teamId: theirs.id })); moved++; }
           else { await D.forget(st, x.id); dropped++; }
@@ -915,48 +1141,103 @@ async function joinProgram(p) {
     if (S.setup.catcherId && !DB.catchers.has(S.setup.catcherId)) S.setup.catcherId = null;
     attachStaff(); save();
   } finally { SYNC.busy = false; }
-  await syncConfig({ programId: p.program_id, programName: p.name, role: p.role });
-  await syncNow(true);
-  toast(`Joined ${p.name}${moved ? `: ${moved} pitcher${moved === 1 ? "" : "s"} with work on this iPad kept (check the roster for doubles)` : ""}.`);
-  return { moved, dropped };
+  await syncConfig(teamCfg(t));
+  if (!locked) await syncNow(true);
+  toast(locked ? `${t.team_name} isn't switched on yet: nothing syncs until it is.` : `Joined ${t.team_name}${moved ? `: ${moved} pitcher${moved === 1 ? "" : "s"} with work on this iPad kept (check the roster for doubles)` : ""}.`);
+  return { moved, dropped, locked };
 }
+// A new team: an organization (billed per team, per year), and the team in it with this account as head coach. It
+// stays switched off until billing is done; until then everything is kept on this iPad and goes up once it's on. An
+// organization made by a try that didn't finish (no signal) is used again, not made twice.
 async function startProgram() {
   const name = (ourTeam() || {}).name || "Our team";
-  if (SYNC.bound) throw new Error(`This iPad holds the data for ${SYNC.bound.programName || "another program"}. To start a new program, back it up and start this iPad fresh.`);
-  const id = await programTransport().createProgram(name, S.setup.level);
-  await syncConfig({ programId: id, programName: name, role: "head_coach" });
-  await syncNow();
+  if (SYNC.bound) throw new Error(`This iPad holds the data for ${SYNC.bound.programName || "another team"}. To start a new team, back it up and start this iPad fresh.`);
+  if (navigator.onLine === false) throw new Error("No signal: start the team once this iPad is online.");
+  const tr = programTransport();
+  let org = SYNC.cfg.pendingOrg;
+  if (!org) { org = await tr.createOrg(name, S.setup.level); await syncConfig({ pendingOrg: org }); }
+  let tz = "America/New_York"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
+  const id = await tr.createTeam(org, name, S.setup.level, tz, "head");
+  await syncConfig({ pendingOrg: null, programId: id, programName: name, role: "head", perms: effective("head", {}), isOwner: true, timezone: tz });
+  await syncNow(true);
+  toast(`${name} is set up. It switches on once billing is done; until then everything stays on this iPad.`);
 }
-// Head coach: invite staff. They sign in with that email (confirmed in Supabase) and accept; nobody joins without
-// accepting. A charter charts and plans, a pitcher sees and logs only his own check-ins, bullpens and velo, a head coach
-// can do everything.
-let staffRole = "charter";
-const ROLE_NAMES = [["charter", "Charter"], ["pitcher", "Pitcher"], ["head_coach", "Head coach"]];
+// After signing in: the account's teams, and what it is on this iPad's team now (a role changed since, or not on it)
+async function refreshTeams() {
+  const [teams, invites] = await Promise.all([programTransport().myTeams(), programTransport().myInvites()]);
+  SYNC.teams = teams || []; SYNC.invites = invites || [];
+  const c = SYNC.cfg || {};
+  if (c.programId) {
+    const t = SYNC.teams.find((x) => x.team_id === c.programId && x.role);
+    if (!t) { await syncConfig({ programId: null, role: null, perms: {} }); SYNC.error = `This account isn't on ${c.programName || "this iPad's team"}'s staff. Pick a team, or sign in as someone who is.`; }
+    else if (t.role !== c.role || JSON.stringify(t.perms || {}) !== JSON.stringify(c.perms || {}) || t.team_name !== c.programName) await syncConfig(teamCfg(t));
+  }
+}
+// Players join from the link on their own (or a parent's) phone, where the under-13 question is asked: the iPad
+// takes staff invites only.
+async function acceptInvite(token, role) {
+  const tr = programTransport();
+  if (!role) { const info = (await tr.inviteInfo(token) || [])[0]; if (!info) throw new Error("That invite code isn't valid any more. Ask for a new one."); role = info.role; }
+  if (role === "player") throw new Error("A player invite is opened from its link on the player's own phone (or a parent's, for a player under 13), not on the team iPad.");
+  const r = await tr.acceptInvite(token, false, null);
+  if (!r || r.status !== "joined") throw new Error("That invite couldn't be accepted here.");
+  await refreshTeams();
+  const t = SYNC.teams.find((x) => x.team_id === r.team_id);
+  if (t) await joinProgram(t);
+}
+// Staff and roster: invite by link (a code the person opens; tied to an email if one is given), change a coach's
+// preset or its toggles, remove people. A player's invite names his pitcher record, and is marked when he's under 13
+// so a parent has to say yes before anything of his is kept.
+let staffRole = "caller";
 function staffAdder() {
   const tr = () => transportFor(SYNC.cfg.programId);
   const refresh = () => tr().staff().then((x) => { SYNC.staff = x || []; render(); }).catch((e) => { SYNC.error = syncMessage(e); render(); });
   if (!SYNC.staff) { SYNC.staff = []; refresh(); }
   const act = (fn, done) => async () => { try { await fn(); SYNC.error = null; if (done) toast(done); } catch (e) { SYNC.error = syncMessage(e); } refresh(); };
   const pitcherName = (id) => (DB.pitchers.get(id) || {}).name || "a pitcher";
+  const roles = PRESETS.filter(([v]) => v === "player" ? may("manage_roster") : may("manage_staff"));
+  if (!roles.some(([v]) => v === staffRole) && roles.length) staffRole = roles[0][0];
+  const link = SYNC.lastInvite;
   return [h("div", { class: "fields" },
-    h("label", { class: "f", style: { flex: "1 1 200px" } }, "Invite staff by email", h("input", { id: "sync-member", type: "email", autocomplete: "off" })),
-    h("label", { class: "f", style: { flex: "0 1 150px" } }, "Role", h("select", { id: "sync-member-role", on: { change: (e) => { staffRole = e.target.value; render(); } } },
-      ROLE_NAMES.map(([v, l]) => h("option", { value: v, selected: staffRole === v ? true : null }, l)))),
-    staffRole === "pitcher" ? h("label", { class: "f", style: { flex: "1 1 160px" } }, "Which pitcher", h("select", { id: "sync-member-pitcher" },
+    h("label", { class: "f", style: { flex: "0 1 170px" } }, "Invite as", h("select", { id: "sync-member-role", on: { change: (e) => { staffRole = e.target.value; render(); } } },
+      roles.map(([v, l]) => h("option", { value: v, selected: staffRole === v ? true : null }, l)))),
+    staffRole === "player" ? h("label", { class: "f", style: { flex: "1 1 160px" } }, "Which pitcher", h("select", { id: "sync-member-pitcher" },
       rosterPitchers().map((p) => h("option", { value: p.id }, p.name || "Pitcher")))) : null,
+    h("label", { class: "f", style: { flex: "1 1 200px" } }, staffRole === "player" ? "Email (optional; a parent's for a player under 13)" : "Email (optional)", h("input", { id: "sync-member", type: "email", autocomplete: "off" })),
+    staffRole === "player" ? h("label", { class: "f check" }, h("input", { id: "sync-member-u13", type: "checkbox" }), "Under 13") : null,
     h("button", { class: "btn", on: { click: async () => {
-      const email = document.getElementById("sync-member").value.trim(); if (!email) return;
-      const pid = staffRole === "pitcher" ? document.getElementById("sync-member-pitcher").value : null;
-      await act(() => tr().invite(email, staffRole, pid), `Invited ${email} as ${staffRole.replace("_", " ")}. They sign in with that email and accept.`)();
+      const email = document.getElementById("sync-member").value.trim() || null;
+      const pid = staffRole === "player" ? document.getElementById("sync-member-pitcher").value : null;
+      const u13 = staffRole === "player" && document.getElementById("sync-member-u13").checked;
+      await act(async () => { const token = await tr().invite(staffRole, pid, email, u13); SYNC.lastInvite = { token, role: staffRole, who: email || (pid ? pitcherName(pid) : roleName(staffRole)) }; },
+        "Invite made: send the code below")();
       const el = document.getElementById("sync-member"); if (el) el.value = "";
-    } } }, "Invite")),
+    } } }, "Make invite")),
+    link ? h("p", { class: "note", id: "sync-invite-code" }, `Invite for ${link.who} as ${roleName(link.role).toLowerCase()}: `,
+      h("code", { class: "invite-code" }, SYNC.cfg.siteUrl ? `${SYNC.cfg.siteUrl.replace(/\/$/, "")}/join/${link.token}` : link.token),
+      ". It works once and stops working if you cancel it.") : null,
     SYNC.staff.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl", "aria-label": "Staff" },
-      h("tbody", {}, SYNC.staff.map((m) => h("tr", {},
-        h("td", {}, m.email || "?"),
-        h("td", {}, m.pending ? `invited as ${m.role.replace("_", " ")}` : h("select", { "aria-label": `Role for ${m.email}`, on: { change: (e) => act(() => tr().setRole(m.user_id, e.target.value, e.target.value === "pitcher" ? m.pitcher_id || (rosterPitchers()[0] || {}).id : null), "Role changed")() } },
-          ROLE_NAMES.map(([v, l]) => h("option", { value: v, selected: m.role === v ? true : null }, l)))),
-        h("td", {}, m.role === "pitcher" && m.pitcher_id ? pitcherName(m.pitcher_id) : ""),
-        h("td", {}, h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.email), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${m.email}`) } }, m.pending ? "Cancel invite" : "Remove"))))))) : null];
+      h("tbody", {}, SYNC.staff.map((m) => {
+        const who = m.email || "(anyone with the code)";
+        const coach = !m.pending && m.role !== "player";
+        const eff = effective(m.role, m.perms);
+        return h("tr", {},
+          h("td", {}, who),
+          h("td", {}, m.pending && m.needs_approval ? "a parent's email a player gave: is it right?" : m.pending ? `invited as ${roleName(m.role).toLowerCase()}` : !coach || !may("manage_staff") ? roleName(m.role)
+            : h("div", {},
+              h("select", { "aria-label": `Preset for ${who}`, on: { change: (e) => act(() => tr().setMember(m.user_id, e.target.value, {}), "Preset changed")() } },
+                PRESETS.filter(([v]) => v !== "player").map(([v, l]) => h("option", { value: v, selected: m.role === v ? true : null }, l))),
+              h("details", { class: "adv", open: SYNC.advOpen.has(m.user_id) ? true : null, on: { toggle: (e) => { if (e.target.open) SYNC.advOpen.add(m.user_id); else SYNC.advOpen.delete(m.user_id); } } },
+                h("summary", { "aria-label": `Advanced for ${who}` }, "Advanced"),
+                TOGGLES.map(([k, l]) => h("label", { class: "f check" }, h("input", { type: "checkbox", "aria-label": `${l} for ${who}`, checked: eff[k] ? true : null, on: { change: (e) => {
+                  const perms = Object.assign({}, m.perms || {});
+                  if (e.target.checked === (PRESET_PERMS[m.role] || []).includes(k)) delete perms[k]; else perms[k] = e.target.checked;
+                  act(() => tr().setMember(m.user_id, m.role, perms), `${l}: ${e.target.checked ? "on" : "off"} for ${who}`)();
+                } } }), l))))),
+          h("td", {}, (m.pitcher_ids || []).map(pitcherName).join(", ")),
+          h("td", {}, m.pending && m.needs_approval && may("manage_roster") ? h("button", { class: "btn pill", on: { click: act(() => tr().approveInvite(m.token), `Approved: ${who} can now accept for the player`) } }, "Approve") : null,
+            h("button", { class: "btn text", on: { click: m.pending ? act(() => tr().cancelInvite(m.token), "Invite cancelled") : act(() => tr().removeMember(m.user_id), `Removed ${who}`) } }, m.pending ? "Cancel invite" : "Remove")));
+      })))) : null];
 }
 // D12: games charted twice (two iPads on one game). Checked whenever games arrive from elsewhere (a sync, a restore).
 // The duplicate stays in the database (nothing is deleted) and is left out of learning; the coach can say they're
@@ -1001,7 +1282,7 @@ async function reloadFromDb() {
   // read everything first, then swap it in at once: the screens never see a half-loaded (empty) list
   const fresh = {};
   for (const store of ["teams", "pitchers", "catchers", "hitters", "learned"]) fresh[store] = await DB.D.all(store);
-  const checkins = await DB.D.byIndex("checkins", "date", PCDB.today());
+  const checkins = await DB.D.byIndex("checkins", "date", todayT());
   for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) { map.clear(); for (const x of fresh[store]) map.set(x.id, x); }
   for (const x of fresh.learned) DB.models.set(x.id, x);
   for (const x of checkins) DB.checkins.set(x.pitcherId, x);
@@ -1011,6 +1292,7 @@ async function reloadFromDb() {
   attachStaff();
   if (on && on.id) { const i = S.setup.staff.findIndex((p) => p.id === on.id); if (i >= 0) G().pitcher = i; }
   pastFix.games = null;
+  await refreshOutings().catch(() => {}); logGames = null;
   const c = G().call;
   if (c && typeof arsenal === "function" && !arsenal().some((x) => x.name === c.pitch)) G().call = null;
   if (live && JSON.stringify(packContents()) !== before) packChanged("sync");
@@ -1029,37 +1311,42 @@ function syncPanel() {
     h("label", { class: "f", style: { flex: "1 1 160px" } }, "Password", h("input", { id: "sync-pass", type: "password", autocomplete: "current-password" })),
     h("button", { class: "btn primary", on: { click: async () => {
       const email = document.getElementById("sync-email").value.trim(), pw = document.getElementById("sync-pass").value;
-      try { SYNC.authSession = await SYNC.auth.signIn(email, pw); await syncConfig({ email }); SYNC.error = null; SYNC.programs = SYNC.invites = null; if (SYNC.cfg.programId) await syncNow(true); }
-      catch (e) { SYNC.error = syncMessage(e); }
+      try {
+        SYNC.authSession = await SYNC.auth.signIn(email, pw); await syncConfig({ email }); SYNC.error = null; SYNC.teams = SYNC.invites = SYNC.staff = null;
+        await refreshTeams();
+        if (SYNC.cfg.programId) await syncNow(true);
+      } catch (e) { SYNC.error = syncMessage(e); }
       render();
     } } }, "Sign in"));
   const signedIn = SYNC.authSession;
-  if (!signedIn) return [c.programId ? h("p", { class: "note" }, `${c.programName || "Program"}: sign in to sync.`) : null, signIn, err];
+  if (!signedIn) return [c.programId ? h("p", { class: "note" }, `${c.programName || "Team"}: sign in to sync.`) : null, signIn, err];
+  const signOut = h("button", { class: "btn text", on: { click: async () => { await SYNC.auth.signOut(); SYNC.authSession = null; SYNC.staff = SYNC.teams = SYNC.invites = SYNC.lastInvite = null; await syncConfig({ programId: null }); render(); } } }, "Sign out");
   if (!c.programId) {
-    if (!SYNC.programs) { SYNC.programs = []; SYNC.invites = [];
-      Promise.all([programTransport().myPrograms(), programTransport().myInvites()]).then(([x, y]) => { SYNC.programs = x || []; SYNC.invites = y || []; render(); }).catch((e) => { SYNC.error = syncMessage(e); render(); }); }
-    const go = (p) => joinProgram(p).catch((e) => { SYNC.error = syncMessage(e); }).then(render);
-    return [h("p", { class: "note" }, `Signed in as ${signedIn.email || "you"}. ${SYNC.bound ? `This iPad holds the data for ${SYNC.bound.programName || "a program"}.` : "Pick your program, accept an invitation, or start one (you become its head coach)."}`),
+    if (!SYNC.teams) { SYNC.teams = []; SYNC.invites = []; refreshTeams().then(render).catch((e) => { SYNC.error = syncMessage(e); render(); }); }
+    const go = (t) => joinProgram(t).catch((e) => { SYNC.error = syncMessage(e); }).then(render);
+    const take = (token, role) => acceptInvite(token, role).catch((e) => { SYNC.error = syncMessage(e); }).then(render);
+    return [h("p", { class: "note" }, `Signed in as ${signedIn.email || "you"}. ${SYNC.bound ? `This iPad holds the data for ${SYNC.bound.programName || "a team"}.` : "Pick your team, accept an invite, or start a team (you're its head coach)."}`),
       (SYNC.invites || []).length ? h("div", { class: "staffpick" }, SYNC.invites.map((i) => h("div", { class: "choice" },
-        h("b", {}, i.name), h("span", {}, `invited as ${i.role.replace("_", " ")}`),
-        h("button", { class: "btn pill primary", on: { click: async () => {
-          try { const role = await programTransport().acceptInvite(i.program_id); SYNC.programs = null; await go({ program_id: i.program_id, name: i.name, role }); } catch (e) { SYNC.error = syncMessage(e); render(); }
-        } } }, "Accept"),
-        h("button", { class: "btn text", on: { click: async () => { await programTransport().declineInvite(i.program_id).catch(() => {}); SYNC.programs = null; render(); } } }, "Decline")))) : null,
-      h("div", { class: "staffpick" }, (SYNC.programs || []).map((p) => h("button", { class: "choice", disabled: otherProgram(p.program_id) ? true : null, on: { click: () => go(p) } },
-        h("b", {}, p.name), h("span", {}, p.role.replace("_", " "))))),
-      h("div", { class: "row-acts" }, SYNC.bound ? null : h("button", { class: "btn", on: { click: () => startProgram().catch((e) => { SYNC.error = syncMessage(e); }).then(render) } }, "Start a program for this team"), fresh),
+        h("b", {}, i.team_name), h("span", {}, `invited as ${roleName(i.role).toLowerCase()}`),
+        h("button", { class: "btn pill primary", on: { click: () => take(i.token, i.role) } }, "Accept"),
+        h("button", { class: "btn text", on: { click: async () => { await programTransport().declineInvite(i.token).catch(() => {}); SYNC.teams = null; render(); } } }, "Decline")))) : null,
+      h("div", { class: "staffpick" }, (SYNC.teams || []).map((t) => h("button", { class: "choice", disabled: otherProgram(t.team_id) || !t.role ? true : null, on: { click: () => go(t) } },
+        h("b", {}, t.team_name), h("span", {}, `${t.role ? roleName(t.role) : "owner (not on the staff)"}${t.active ? "" : " · not switched on yet"}`)))),
+      h("div", { class: "fields" },
+        h("label", { class: "f", style: { flex: "1 1 260px" } }, "Have an invite code or link?", h("input", { id: "sync-code", autocomplete: "off", spellcheck: "false" })),
+        h("button", { class: "btn", on: { click: () => { const tok = inviteToken(document.getElementById("sync-code").value); if (!tok) { SYNC.error = "That doesn't look like an invite code."; render(); return; } take(tok); } } }, "Join")),
+      h("div", { class: "row-acts" }, SYNC.bound ? null : h("button", { class: "btn", on: { click: () => startProgram().catch((e) => { SYNC.error = syncMessage(e); }).then(render) } }, "Start a team"), signOut, fresh),
       err];
   }
   const pend = SYNC.pending ? Object.values(SYNC.pending).reduce((a, n) => a + n, 0) : 0;
   const last = SYNC.last ? new Date(SYNC.last.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : null;
-  const rej = SYNC.last && SYNC.last.r.push.rejected.length;
+  const rej = SYNC.last && SYNC.last.r.push.rejected.filter((x) => x.reason !== "team_locked").length;
   const held = SYNC.last && SYNC.last.r.pull.held;
-  return [h("p", { class: "note" }, `${c.programName || "Program"} as ${(c.role || "").replace("_", " ")}, signed in as ${signedIn.email || "you"}. ${pend ? `${pend} change${pend === 1 ? "" : "s"} waiting to go up.` : "Nothing waiting to go up."}${last ? ` Last synced ${last}.` : ""}`),
-    rej ? h("p", { class: "pstat watch" }, `${rej} change${rej === 1 ? " wasn't" : "s weren't"} taken by the server (not allowed for your role, or a broken record). ${rej === 1 ? "It stays" : "They stay"} on this iPad and ${rej === 1 ? "is" : "are"} tried again at every sync, so a head coach signing in here can send ${rej === 1 ? "it" : "them"}.`) : null,
+  return [h("p", { class: "note" }, `${c.programName || "Team"} as ${roleName(c.role).toLowerCase()}, signed in as ${signedIn.email || "you"}. ${pend ? `${pend} change${pend === 1 ? "" : "s"} waiting to go up.` : "Nothing waiting to go up."}${last ? ` Last synced ${last}.` : ""}`),
+    SYNC.locked ? h("p", { class: "pstat watch", id: "sync-locked" }, LOCKED) : null,
+    rej ? h("p", { class: "pstat watch" }, `${rej} change${rej === 1 ? " wasn't" : "s weren't"} taken by the server (not allowed for your account, or a broken record). ${rej === 1 ? "It stays" : "They stay"} on this iPad and ${rej === 1 ? "is" : "are"} tried again at every sync, so a coach who may make ${rej === 1 ? "it" : "them"} can send ${rej === 1 ? "it" : "them"} from here.`) : null,
     held ? h("p", { class: "note" }, "Some changes are still being saved on the server; they come down at the next sync.") : null,
     err,
-    c.role === "head_coach" ? staffAdder() : null,
-    h("div", { class: "row-acts" }, h("button", { class: "btn primary", disabled: SYNC.busy ? true : null, on: { click: () => syncNow() } }, SYNC.busy ? "Syncing…" : "Sync now"),
-      h("button", { class: "btn text", on: { click: async () => { await SYNC.auth.signOut(); SYNC.authSession = null; SYNC.staff = null; await syncConfig({ programId: null }); render(); } } }, "Sign out"), fresh)];
+    may("manage_staff") || may("manage_roster") ? staffAdder() : null,
+    h("div", { class: "row-acts" }, h("button", { class: "btn primary", disabled: SYNC.busy ? true : null, on: { click: () => syncNow() } }, SYNC.busy ? "Syncing…" : "Sync now"), signOut, fresh)];
 }

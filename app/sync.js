@@ -12,10 +12,16 @@
  * Works in the browser (window.PCSync) and in Node (module.exports) for tests. A transport carries the calls:
  *   restTransport  Supabase's REST API (the pc_push / pc_pull functions in supabase/migrations)
  *   any object with push(table, rows) and pull(table, cursor) works the same (tests use one that talks to Postgres)
+ *
+ * PitchIQ (2.0): a "program" is a team (supabase/migrations/20261106000000_pitchiq_teams.sql). A team that isn't paid
+ * up refuses pushes as team_locked and pulls nothing (locked); refused rows stay on the iPad and are tried again at
+ * every sync. Given the signed-in user (opts.userId), an iPad another account last synced is handed over only when
+ * none of that account's changes are still waiting: its local copy is cleared first, so the new account sees only what
+ * the server gives it. With changes waiting, the sync refuses (code "other-user") until that account sends them.
  */
 (function (root) {
   "use strict";
-  const VERSION = "1.2.0";
+  const VERSION = "2.1.0";
   // the device stores that sync, in the order they go up (parents before what points at them); meta stays on the device
   const TABLES = ["teams", "pitchers", "catchers", "hitters", "checkins", "sessions", "readings", "games", "packs", "events", "learned"];
   const BATCH = 400;
@@ -32,14 +38,14 @@
   const DAY = 864e5;
 
   function createSync(opts) {
-    const db = opts.db, transport = opts.transport, programId = opts.programId;
+    const db = opts.db, transport = opts.transport, programId = opts.programId, userId = opts.userId || null;
     if (!db || !transport || !programId) throw new Error("sync needs a database, a transport and a program");
     const now = opts.now || (() => Date.now());
     const key = "sync:" + programId;
 
     async function state() {
       const s = await db.get("meta", key);
-      return Object.assign({ id: key, programId, lastPush: {}, cursor: {}, parked: {}, rejected: [], log: [], access: null }, s || {});
+      return Object.assign({ id: key, programId, lastPush: {}, cursor: {}, parked: {}, rejected: [], log: [], access: null, userId: null, userEmail: null }, s || {});
     }
     async function saveState(s) { s.log = (s.log || []).slice(-30); return db.put("meta", s); }
 
@@ -52,6 +58,24 @@
         e.code = "other-program"; e.boundTo = b; throw e;
       }
       if (!b) await db.put("meta", { id: "boundProgram", programId, programName: opts.programName || null, at: now() });
+      await handOver();
+    }
+
+    // A shared iPad: the account that synced it last owns what's waiting on it. Another account takes over only once
+    // nothing is waiting, and then starts from a clean local copy (a player never inherits a coach's cached data).
+    async function handOver() {
+      if (!userId) return;
+      const s = await state();
+      if (s.userId === userId) return;
+      if (s.userId) {
+        const waiting = Object.values(await pending()).reduce((a, n) => a + n, 0);
+        if (waiting) {
+          const e = new Error(`${waiting} change${waiting === 1 ? "" : "s"} from ${s.userEmail || "another account"} ${waiting === 1 ? "is" : "are"} still waiting to go up from this iPad. ${s.userEmail || "That account"} signs in here and syncs first.`);
+          e.code = "other-user"; e.owner = s.userEmail || null; e.waiting = waiting; throw e;
+        }
+        for (const t of TABLES) for (const x of await db.all(t, true)) await db.forget(t, x.id);
+      }
+      await saveState(Object.assign(s, { userId, userEmail: opts.userEmail || null, lastPush: {}, cursor: {}, parked: {}, rejected: [], access: null }));
     }
 
     // A record that came down from the server carries _pulled (the updatedAt it arrived with). Until it's changed here
@@ -110,12 +134,16 @@
           // the server's copy of what it didn't take because its own is as new or newer: this iPad takes it
           for (const x of r.server || []) if (x && x.doc) take.push(x.doc);
           for (const x of r.rejected || []) {
+            // a child's record a parent had deleted: refused for good, so this iPad deletes its copy too
+            if (x.reason === "purged") { if (db.forget) await db.forget(t, x.id); stats.purged = (stats.purged || 0) + 1; continue; }
             stats.rejected.push(Object.assign({ table: t }, x));
             (parked[t] = parked[t] || []).push(x.id);     // kept and tried again (never written off)
             if (/^clock/.test(x.reason || "")) restamp.push([t, x.id]);
           }
         }
-        if (take.length) await db.mergeRows(t, take.map((d) => Object.assign({}, d, { _pulled: d.updatedAt })), { force: true });
+        let keep = take;
+        if (t === "pitchers" && take.length) { const k = await keepFuller(take, new Set()); keep = k.rows; stats.remerge = (stats.remerge || 0) + k.merged; }
+        if (keep.length) await db.mergeRows(t, keep.map((d) => Object.assign({}, d, { _pulled: d.updatedAt })), { force: true });
         s.lastPush[t] = started - 1;
       }
       // a record stamped by a clock more than a day fast: once this iPad's clock is right again it gets a fresh stamp
@@ -129,14 +157,83 @@
       s.lastPushAt = started;
       s.log = (s.log || []).concat({ at: started, push: { applied: stats.applied, skipped: stats.skipped, rejected: stats.rejected.length } });
       await saveState(s);
+      const again = ((await db.get("meta", "pushExtra")) || { tables: {} }).tables.pitchers || [];
       if (await db.get("meta", "pushExtra")) { if (db.forget) await db.forget("meta", "pushExtra"); else await db.del("meta", "pushExtra"); }
+      // records merged from a thin server answer during this push go up on the next one
+      if (stats.remerge && again.length) await db.put("meta", { id: "pushExtra", tables: { pitchers: again } });
       return stats;
+    }
+
+    // pitchers whose data a parent had deleted (the server lists them for coaches): this iPad deletes its own copies
+    // of their records, check-ins, bullpens, velo and learned models. Their pitches in games come down from the
+    // server under a stand-in.
+    async function purge(ids) {
+      if (!db.forget) return 0;
+      const gone = new Set(ids); let n = 0;
+      for (const x of await db.all("pitchers", true)) if (gone.has(x.id)) { await db.forget("pitchers", x.id); n++; }
+      for (const t of ["checkins", "sessions", "readings"]) for (const x of await db.all(t, true)) if (gone.has(x.pitcherId)) { await db.forget(t, x.id); n++; }
+      for (const x of await db.all("learned", true)) { const m = /^p2?:(.+)$/.exec(x.id); if ((m && gone.has(m[1])) || gone.has(x.pitcherId)) { await db.forget("learned", x.id); n++; } }
+      return n;
+    }
+
+    // under-13 players let go (a parent agreed, or a coach took a wrong mark off): while they were held the server kept
+    // only a placeholder record and let go of their check-ins, bullpens, velo and models, so this iPad sends what it
+    // kept, once per release (releases are numbered; this iPad remembers the last one it acted on). Each record goes
+    // with its own stamp: the server lets the first full record replace its placeholder, then newest wins, so a later
+    // edit or delete made on another iPad isn't undone. A copy that is itself only a placeholder isn't sent.
+    const PLACEHOLDER = new Set(["id", "createdAt", "updatedAt", "deletedAt", "teamId", "number", "_pulled"]);
+    const onlyPlaceholder = (x) => Object.keys(x).every((k) => PLACEHOLDER.has(k));
+    // A pitcher record always has its arsenal (pitches); a copy without one is thin: the placeholder the server keeps
+    // for a held under-13 player, or what a parent or player typed in before anyone sent the full record back. A thin
+    // copy never replaces a fuller one here, from a pull or from the server's answer to a push: a bare placeholder of a
+    // held player is kept out, anything else thin is merged in field by field (its fields win, the rest stay) and the
+    // merge goes up, so the server ends up with both.
+    // (So a field can only be removed by a copy that keeps its arsenal: the app always does, clearing a field sets it to "".)
+    const thin = (x) => !Array.isArray(x.pitches);
+    async function keepFuller(rows, held) {
+      const ids = new Set(rows.filter(thin).map((x) => x.id));
+      if (!ids.size) return { rows, merged: 0 };
+      const local = new Map((await db.all("pitchers", true)).filter((x) => ids.has(x.id) && !thin(x)).map((x) => [x.id, x]));
+      const out = [], merged = [];
+      for (const x of rows) {
+        const mine = local.get(x.id);
+        if (!mine || !thin(x)) { out.push(x); continue; }
+        if (onlyPlaceholder(x) && held.has(x.id)) continue;
+        const m = Object.assign({}, mine, x, { updatedAt: Math.max(+x.updatedAt || 0, +mine.updatedAt || 0) + 1 });
+        delete m._pulled; merged.push(m);
+      }
+      if (merged.length) {
+        await db.mergeRows("pitchers", merged, { force: true });
+        const extra = (await db.get("meta", "pushExtra")) || { id: "pushExtra", tables: {} };
+        extra.tables = extra.tables || {}; extra.tables.pitchers = [...new Set((extra.tables.pitchers || []).concat(merged.map((x) => x.id)))];
+        await db.put("meta", extra);
+      }
+      return { rows: out, merged: merged.length };
+    }
+
+    async function resend(releases, s) {
+      const cursor = +s.releaseCursor || 0;
+      const fresh = releases.filter((x) => x && x.id && +x.key > cursor);
+      if (!fresh.length) return 0;
+      const want = new Set(fresh.map((x) => x.id)), extra = (await db.get("meta", "pushExtra")) || { id: "pushExtra", tables: {} };
+      extra.tables = extra.tables || {};
+      const about = (x) => want.has(x.pitcherId) || want.has((/^p2?:(.+)$/.exec(x.id) || [])[1]);
+      let n = 0;
+      const pit = (await db.all("pitchers", true)).filter((x) => want.has(x.id) && !onlyPlaceholder(x)).map((x) => x.id);
+      if (pit.length) { extra.tables.pitchers = [...new Set((extra.tables.pitchers || []).concat(pit))]; n += pit.length; }
+      for (const t of ["checkins", "sessions", "readings", "learned"]) {
+        const ids = (await db.all(t)).filter(about).map((x) => x.id);
+        if (ids.length) { extra.tables[t] = [...new Set((extra.tables[t] || []).concat(ids))]; n += ids.length; }
+      }
+      if (n) await db.put("meta", extra);
+      s.releaseCursor = Math.max(cursor, ...fresh.map((x) => +x.key));
+      return Math.max(n, 1);   // a release always earns one more push in this sync
     }
 
     async function pull() {
       await bind();
       const s = await state();
-      const stats = { merged: 0, received: 0, held: false };
+      const stats = { merged: 0, received: 0, held: false, locked: false, purged: 0, resend: 0 };
       for (let pass = 0; pass < 2; pass++) {
         let restart = false;
         for (const t of TABLES) {
@@ -147,8 +244,18 @@
             if (r.access && s.access && r.access !== s.access) { s.access = r.access; s.cursor = {}; await saveState(s); restart = true; break; }
             if (r.access) s.access = r.access;
             if (r.reset) { cur = { xid: 0, id: "" }; s.cursor[t] = cur; continue; }   // the server was restored: from the start
+            if (r.locked) { stats.locked = true; break; }                              // not paid up: nothing comes down
             stats.received += r.rows.length;
-            if (r.rows.length) stats.merged += await db.mergeRows(t, r.rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
+            let rows = r.rows;
+            // an under-13 player held until a parent agrees: the server keeps only a placeholder, but this iPad keeps its
+            // full record of him (it goes up again when he's let go), so the placeholder never replaces it here
+            // (also while a release this iPad hasn't acted on yet is waiting: the placeholder may still be the newest copy)
+            const relCursor = +s.releaseCursor || 0;
+            const held = new Set(t === "pitchers" && r.minors ? (r.minors.held || []).concat((r.minors.released || []).filter((x) => +x.key > relCursor).map((x) => x.id)) : []);
+            if (t === "pitchers") { const k = await keepFuller(rows, held); rows = k.rows; stats.resend += k.merged; }
+            if (rows.length) stats.merged += await db.mergeRows(t, rows.map((x) => Object.assign({}, x, { _pulled: x.updatedAt })));
+            if (t === "pitchers" && Array.isArray(r.purged) && r.purged.length) stats.purged += await purge(r.purged);
+            if (t === "pitchers" && r.minors && Array.isArray(r.minors.released)) stats.resend += await resend(r.minors.released, s);
             if (r.held) stats.held = true;
             cur = r.next || cur;
             s.cursor[t] = cur;
@@ -171,9 +278,11 @@
     async function syncNow() {
       let up, upErr = null;
       try { up = await push(); }
-      catch (e) { if (!e.status || e.status === 401 || e.status === 403 || e.code === "other-program") throw e; upErr = e; up = { applied: 0, skipped: 0, rejected: [], error: e.message }; }
-      const down = await pull();
-      return { push: up, pull: down, error: upErr ? upErr.message : null };
+      catch (e) { if (!e.status || e.status === 401 || e.status === 403 || e.code === "other-program" || e.code === "other-user") throw e; upErr = e; up = { applied: 0, skipped: 0, rejected: [], error: e.message }; }
+      let down = await pull();
+      if (down.resend || up.remerge) { try { const again = await push(); up = { applied: (up.applied || 0) + again.applied, skipped: (up.skipped || 0) + again.skipped, rejected: (up.rejected || []).concat(again.rejected), error: up.error }; } catch (e) {} }
+      const locked = down.locked || (up.rejected || []).some((x) => x.reason === "team_locked");
+      return { push: up, pull: down, locked, error: upErr ? upErr.message : null };
     }
 
     return { push, pull, syncNow, pending, state, TABLES };
@@ -204,16 +313,21 @@
     return {
       push: (table, rows) => rpc("pc_push", { p: programId, tbl: table, rows }),
       pull: (table, cur) => rpc("pc_pull", { p: programId, tbl: table, after_xid: cur.xid || 0, after_id: cur.id || "", lim: 500 }),
-      myPrograms: () => rpc("pc_my_programs", {}),
-      createProgram: (name, level) => rpc("pc_create_program", { name, level }),
-      // staff: the server checks who may do each of these (the head coach, or the invited person for their own invite)
+      // teams and organizations (programId is the team)
+      myTeams: () => rpc("pc_my_teams", {}),
+      createOrg: (name, level) => rpc("pc_create_org", { name, level }),
+      createTeam: (org, name, level, timezone, joinAs) => rpc("pc_create_team", { org, name, level, timezone: timezone || "America/New_York", join_as: joinAs || null }),
+      // invites are link tokens, optionally tied to one email; the server checks who may do each of these
       myInvites: () => rpc("pc_my_invites", {}),
-      acceptInvite: (p) => rpc("pc_accept_invite", { p }),
-      declineInvite: (p) => rpc("pc_decline_invite", { p }),
-      invite: (email, role, pitcherId) => rpc("pc_invite", { p: programId, invite_email: email, member_role: role, member_pitcher: pitcherId || null }),
-      cancelInvite: (email) => rpc("pc_cancel_invite", { p: programId, invite_email: email }),
+      inviteInfo: (token) => rpc("pc_invite_info", { tok: token }),
+      acceptInvite: (token, declaresUnder13, parentEmail) => rpc("pc_accept_invite", { tok: token, declares_under13: !!declaresUnder13, parent_email: parentEmail || null }),
+      declineInvite: (token) => rpc("pc_decline_invite", { tok: token }),
+      giveConsent: (token, method) => rpc("pc_record_guardian_consent", { tok: token, method }),
+      invite: (role, pitcherId, email, under13) => rpc("pc_invite", { p: programId, member_role: role, pitcher: pitcherId || null, invite_email: email || null, under13: !!under13 }),
+      cancelInvite: (token) => rpc("pc_cancel_invite", { tok: token }),
+      approveInvite: (token) => rpc("pc_approve_invite", { tok: token }),
       staff: () => rpc("pc_staff", { p: programId }),
-      setRole: (userId, role, pitcherId) => rpc("pc_set_role", { p: programId, member: userId, member_role: role, member_pitcher: pitcherId || null }),
+      setMember: (userId, role, perms) => rpc("pc_set_member", { p: programId, member: userId, member_role: role, member_perms: perms || {} }),
       removeMember: (userId) => rpc("pc_remove_member", { p: programId, member: userId }),
     };
   }

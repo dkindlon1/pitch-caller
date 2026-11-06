@@ -1,0 +1,44 @@
+name: Promote migrations to prod
+
+# Prod changes only through this workflow. It runs when Drew starts it by hand, and it waits for approval
+# on the "production" environment (Settings -> Environments -> production -> Required reviewers).
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type PROMOTE to apply pending migrations to the prod database
+        required: true
+
+concurrency:
+  group: promote-prod
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'PROMOTE'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+    env:
+      # Session-pooler connection string for pitchiq-prod, stored as an environment secret. Never committed.
+      DB_URL: ${{ secrets.SUPABASE_PROD_DB_URL }}
+      SUPABASE_CLI: npx -y supabase@2.122.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Check the secret is set
+        run: test -n "$DB_URL" || { echo "::error::SUPABASE_PROD_DB_URL is not set on the production environment"; exit 1; }
+      - name: Dry run (what would be applied)
+        run: |
+          $SUPABASE_CLI db push --dry-run --db-url "$DB_URL" | tee dry-run.txt
+          { echo "### Pending migrations"; echo '```'; cat dry-run.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Apply
+        run: $SUPABASE_CLI db push --db-url "$DB_URL" --yes
+      - name: Up to date afterwards
+        # The CLI prints plain text on GitHub's runners and JSON elsewhere, so accept either form.
+        run: |
+          $SUPABASE_CLI db push --dry-run --db-url "$DB_URL" 2>&1 | tee after.txt
+          grep -q -E '"upToDate":true|Remote database is up to date' after.txt
+      - name: Row-level security on every public table
+        run: psql "$DB_URL" -f scripts/check-rls.sql
