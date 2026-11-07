@@ -1,0 +1,47 @@
+sim floor: C:/Users/kindl/OneDrive/Desktop/pc-v09/runs/readthrough/v09_tw (A) vs runs/readthrough/v10_tw (B): 90 paired games; B minus A, SE over games
+
+[all] 90 games
+                                     A         B      diff       SE
+  regret_w_exp                   1.414     1.709     0.295    0.049
+  runs                           7.022     6.800    -0.222    0.552
+  pitches                      163.756   164.800     1.044    3.276
+  batters                       45.378    44.811    -0.567    0.739
+  walks_per_batter (%)           13.38     14.64      1.26     0.72
+  strikeouts_per_batter (%)      17.66     16.21     -1.45     0.79
+  hbp_per_batter (%)              4.63      2.74     -1.89     0.40
+  wild_pitches_per_batter (%)      2.30      2.12     -0.18     0.33
+
+[hs] 30 games
+                                     A         B      diff       SE
+  regret_w_exp                   1.632     1.972     0.340    0.089
+  runs                           9.500     8.033    -1.467    1.108
+  pitches                      177.467   176.333    -1.133    6.553
+  batters                       48.733    47.100    -1.633    1.468
+  walks_per_batter (%)           15.04     17.21      2.17     1.28
+  strikeouts_per_batter (%)      17.39     17.88      0.49     1.45
+  hbp_per_batter (%)              5.54      2.12     -3.41     0.62
+  wild_pitches_per_batter (%)      3.01      2.39     -0.62     0.57
+
+[college_d3] 30 games
+                                     A         B      diff       SE
+  regret_w_exp                   1.516     1.767     0.252    0.088
+  runs                           6.800     7.467     0.667    0.897
+  pitches                      164.767   167.333     2.567    5.152
+  batters                       45.733    45.900     0.167    1.275
+  walks_per_batter (%)           13.22     13.78      0.55     1.05
+  strikeouts_per_batter (%)      15.95     14.32     -1.63     1.16
+  hbp_per_batter (%)              5.35      3.64     -1.70     0.69
+  wild_pitches_per_batter (%)      2.32      1.91     -0.42     0.59
+
+[college_d1] 30 games
+                                     A         B      diff       SE
+  regret_w_exp                   1.095     1.389     0.293    0.077
+  runs                           4.767     4.900     0.133    0.829
+  pitches                      149.033   150.733     1.700    5.392
+  batters                       41.667    41.433    -0.233    1.087
+  walks_per_batter (%)           11.86     12.93      1.06     1.39
+  strikeouts_per_batter (%)      19.65     16.44     -3.20     1.47
+  hbp_per_batter (%)              3.01      2.46     -0.56     0.66
+  wild_pitches_per_batter (%)      1.56      2.06      0.50     0.54
+
+regret_w_exp per game: paired increase +0.295 (SE 0.049), one-sided 95% upper bound +0.375; budget +0.25: FAIL

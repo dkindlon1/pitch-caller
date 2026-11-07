@@ -69,6 +69,10 @@ gate tests_v09_followups   "$PY" tests_v09_followups.py
 # ---- the frozen reference engine --------------------------------------------
 # Phase 9.1 freezes golden_v10 from golden/cases.py once the engine is final. While Phase 5 is paused the
 # kappas and GUARD_TYPE are still the starting values, so freezing now would freeze the wrong engine.
+# When it is frozen: generate AND check it inside the pc-py313 Linux container, not on Windows or macOS.
+# Measured Nov 7: Windows and Linux disagree on 36661 of 226133 golden values, all by 1-2 ULP, because a
+# 1-ULP libm difference in 0.39% of raw probability evaluations amplifies through the iterated value table
+# to 52% of table values and 50% of calls. A golden frozen off-Linux can never pass on Linux or in CI.
 if [ -f golden/golden_v10.json ] && [ -f golden/golden_v10.py ]; then
   gate golden_v10_py "$PY" golden/golden_v10.py check
 else
@@ -104,7 +108,7 @@ fi
 
 # ---- the simulator floor: +0.25 runs/game against the v0.9 baseline ----------
 if [ ! -d "$V09_RUNS" ]; then
-  skip sim_floor "the v0.9 baseline games are not here: $V09_RUNS (copy pc-baseline-v09_tw)"
+  skip sim_floor "the v0.9 baseline games are not here: $V09_RUNS - regenerate them, no copy needed: git worktree add ../pc-v09 v0.9 && (cd ../pc-v09 && TRUTH_TAB=world python3 readthrough/run_games.py --seeds 101-110 --jobs 4 --suffix _tw)"
 elif [ ! -d "$V10_RUNS" ]; then
   skip sim_floor "the v1.0 games are not here: $V10_RUNS (run readthrough/run_games.py --suffix _tw)"
 else
