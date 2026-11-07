@@ -21,3 +21,4 @@ done
 node app/smoke.js
 echo "smoke: passed"
 (cd app && ../$run rules_e2e node rules_e2e.js)
+(cd app && ../$run v10_e2e node v10_e2e.js)        # v1.0: history, RP2, plan line, re-solve on a steal, fallback flag

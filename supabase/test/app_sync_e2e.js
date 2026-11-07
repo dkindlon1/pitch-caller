@@ -233,7 +233,7 @@ const connect = async () => { const c = new Client({ connectionString: BASE.repl
     await pg.evaluate((pid) => { S.setup.staffIds = [pid].concat(S.setup.staffIds.filter((x) => x !== pid)); attachStaff(); G().pitcher = 0; S.view = "live"; save(); render(); }, pidSame);
     for (let i = 0; i < 12; i++) {
       // the coach's own call, the way the "Your call" box sets it, so both iPads record the same pitch
-      await pg.evaluate(() => { if (!G().call) makeCall(); const d = pitcherDef().pitches[0], gr = E.gradeCall(arsenal(), situation(), d.name, "middle");
+      await pg.evaluate(() => { if (!G().call) makeCall(); const d = pitcherDef().pitches[0], gr = E.v08.gradeCall(arsenal(), situation(), d.name, "middle", paTable(arsenal(), situation()));   // v1.0: the app's v0.8 grade (v0.7c gradeCall removed)
         G().call = Object.assign({}, G().call, { pitch: d.name, quad: "middle", coach: true, runs: gr.runs_vs_best, verdict: "In the engine's mix" }); render(); });
       await pg.keyboard.press(i % 3 === 2 ? "c" : "b"); await pg.waitForTimeout(110);
       if (await pg.evaluate(() => !!G().inningOver)) { await pg.getByRole("button", { name: /^Take the field/ }).click(); await pg.waitForTimeout(120); }

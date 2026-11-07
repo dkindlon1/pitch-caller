@@ -289,6 +289,8 @@ input[type="range"] { height: 24px; padding: 0; border: 0; background: none; acc
 .strip .sitctl { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; border-top: 1px solid var(--line, rgba(127,127,127,.25)); padding-top: 8px; }
 .sitctl .seg .t { margin-right: 6px; font-size: 12px; }
 .whyline { display: block; margin-bottom: 2px; }
+.planline { display: block; margin-bottom: 2px; }
+.fallback-note { display: block; margin-bottom: 2px; color: var(--warn, #b45309); }
 .walk-note { display: block; margin-top: 4px; font-weight: 600; }
 .detail .radar { display: inline-flex; gap: 8px; align-items: center; margin-top: 6px; }
 .slot .i { color: var(--muted); font-size: 14px; text-align: right; }
@@ -702,12 +704,19 @@ function situation() {
   const g = G(), kn = know();
   return E.Situation({ balls: g.balls, strikes: g.strikes, outs: g.outs, bases: g.bases.slice(), inning: g.inning,
     margin: g.us - g.them, pitch_count: (g.pc[pKey()] || 0) + fatigueShift(pitcherDef()), batters_faced: g.bf[pKey()] || 0, level: S.setup.level,
-    same_side: sameSide(), last: g.last, hitter_seen: Object.assign({}, kn.seen),
+    same_side: sameSide(), last: g.last, history: abHistory(), hitter_seen: Object.assign({}, kn.seen),
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
     landing_today: Object.assign({}, (g.land || {})[pKey()] || {}),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
     ...v08Inputs() });
+}
+// v1.0 3.1: this at-bat's pitches so far, oldest first, as the engine's history: [pitch, target, result, read]. The
+// result is ball / cstrike / whiff / foul; the read is a foul's pull / opposite / back or a whiff's front / late / fooled.
+function abHistory() {
+  const g = G(), i = slotIdx(), cur = [];
+  for (const l of g.log) { if (l.slot !== i || l.inning !== g.inning || l.end) break; cur.unshift([l.thrown || l.pitch, l.quad, l.res, l.read || null]); }
+  return cur;
 }
 // ---- v0.8 inputs (spec 8.3): each optional, each inert at its default
 const hitterKey = () => { const b = batterDef() || {}; return b.hitterId || `g:${G().dbId || "local"}|${slotIdx()}|${b.name || ""}`; };
@@ -763,7 +772,7 @@ function paTable(ars, s) {
   const pa = g.pa;
   const live = Object.assign({}, s, { win: pa.win });
   if (!pa.solve || E.v08.needsResolve(pa.solve.frozen, ars, live)) {
-    pa.solve = { sit: PCLearn.snapSituation(Object.assign({}, live, { balls: 0, strikes: 0, last: null, look: null })), ars: PCLearn.snapArsenal(ars),
+    pa.solve = { sit: PCLearn.snapSituation(Object.assign({}, live, { balls: 0, strikes: 0, last: null, history: [], look: null })), ars: PCLearn.snapArsenal(ars),
       frozen: E.v08.frozenInputs(ars, live), n: (pa.solve ? pa.solve.n : 0) + 1 };
     paTab = null;
   }
@@ -783,8 +792,10 @@ function makeCall() {
   s.b_h = E.v08.leanBh(ars, s, G().pa.fooled);
   const r = E.callV08(ars, s, { exclude: shakenNow, tab });
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
+  let plan = null; try { plan = E.v08.atBatPlan(tab).line; } catch (e) { plan = null; }   // v1.0 3.8: rebuilt with the table
   const c = G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
-    sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
+    sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null, plan,
+    fallback: !!(r.info.rules && r.info.rules.fallback),   // v1.0 3.2: nothing trusted
     dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
   // spec 9: the "why" line runs after the call is shown, off the critical path
   setTimeout(() => {
@@ -1167,7 +1178,10 @@ function callPanel() {
   const ck = `${g.pitchNo}|${g.balls}${g.strikes}|${c.pitch}|${c.quad}|${!!c.coach}`, fresh = ck !== lastZoneKey; lastZoneKey = ck;
   const why = c.coach
     ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs more than the engine's best call here.` : "."]
-    : [c.v08 && c.why ? h("b", { class: "whyline" }, c.why + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
+    : [c.fallback ? h("b", { class: "fallback-note" }, "Nothing's working \u2014 think about a change. ") : null,
+       c.v08 && c.why ? h("b", { class: "whyline" }, c.why + (c.why.endsWith(".") ? " " : ". ")) : null,
+       c.plan ? h("span", { class: "planline" }, c.plan + " ") : null,
+       `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
        c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
   const call = h("div", { class: "call" },
