@@ -2287,3 +2287,9 @@ def call_mixed(arsenal, s: Situation, T=0.010, window=0.030, forced=None, rng=No
             return (p, q, prob, c), dist
     prob, c, p, q = dist[-1]
     return (p, q, prob, c), dist
+
+
+# v1.0 Phase 5 tuning hook (tune_v10.py): PC_TUNE="KAPPA_T,KAPPA_L,GUARD_TYPE" sets a candidate in subprocesses (call
+# sheet workers, simulated games). Unset in normal use.
+if _os.environ.get("PC_TUNE"):
+    KAPPA_T, KAPPA_L, GUARD_TYPE = (float(_x) for _x in _os.environ["PC_TUNE"].split(","))
