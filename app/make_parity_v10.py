@@ -1,8 +1,13 @@
 """v1.0 parity cases (PLAN_v1.0.md 1.3): random situations through the shipped Python call path, for app/parity_v10.js.
-  python3 app/make_parity_v10.py [N=200]  -> app/parity_v10_cases.json (gitignored)
-Covers levels, arsenals, counts, bases, at-bat history, landing, hitter grades and coach-rule inputs (matchup, power).
+  python3 app/make_parity_v10.py [N=200] [SEED=1010]  -> app/parity_v10_cases.json (gitignored)
+Covers levels, arsenals, counts, bases, at-bat history, landing, hitter grades and coach-rule inputs (matchup, power),
+plus (Nov 7) the umpire shift ump_u and the 2.3 usage_by_call term - both of which enter every cost and neither of which
+was exercised before, so a passing run said less than it looked.
 Per case: the full call distribution (share and cost per call), the root costs, the root sigma, the table's values and
-sigma at 0-0 and 1-1, and the at-bat plan once the engine has one."""
+sigma at 0-0 and 1-1, the at-bat plan once the engine has one, and the rule notes and why line, which are strings and
+call lists the numeric comparison never looked at.
+Cases are drawn in sequence, so a larger N only extends the same draw: pass a different SEED to re-roll it, and read the
+1e-9 margin over several seeds rather than one."""
 import json, os, random, sys
 from dataclasses import fields, replace
 
@@ -75,6 +80,14 @@ def rand_case(rng):
         s["steal"] = {"a": round(rng.uniform(0.02, 0.12), 3), "runner": 1, "t": rng.choice([None, 1.3, 1.5])}
     if rng.random() < 0.2:
         s["infield_in"] = True
+    if rng.random() < 0.5:
+        s["ump_u"] = round(rng.uniform(-0.6, 0.6), 3)    # enters the called-strike line of every cost
+    if rng.random() < 0.35:
+        # 2.3 usage: (pitch, target) -> times already called in this count today. Stored here in the JS
+        # spelling "name|target"; situation() converts it to Python's tuple keys. The two engines really do
+        # key this differently, and solve_sit_game filters with `if a in M`, so a mismatch is silent.
+        s["usage_by_call"] = {f"{n}|{q}": rng.randint(1, 4) for n in names
+                              for q in [rng.choice(e.QUADS)] if rng.random() < 0.5}
     exclude = [[rng.choice(names), rng.choice(e.QUADS)]] if rng.random() < 0.15 else []
     return dict(arsenal=ars_d, s=s, history=hist, exclude=exclude)
 
@@ -85,6 +98,8 @@ def situation(c):
     for key in ("landing_today", "hitter_damage"):
         if key in sd:
             sd[key] = {a: tuple(v) for a, v in sd[key].items()}
+    if "usage_by_call" in sd:      # JS keys a call "name|target"; Python keys it (name, target)
+        sd["usage_by_call"] = {tuple(a.rsplit("|", 1)): v for a, v in sd["usage_by_call"].items()}
     if c["history"]:
         sd["last"] = tuple(c["history"][-1][:3])
         if HAS_HISTORY:
@@ -115,7 +130,15 @@ def compute(c):
                            visits={f"{b}-{k}": v for (b, k), v in plan["visits"].items()},
                            ends={k_: v for k_, v in plan["ends"].items()},
                            opener=[[n, q_, v] for (n, q_), v in plan["opener"]], putaway=plan["putaway"],
+                           putaway_spot=plan["putaway_spot"], line=plan["line"],
                            behind={f"{b}-{k}": [[n, q_, v] for (n, q_), v in calls] for (b, k), calls in plan["behind"].items()})
+    # The rule notes and the why line: strings and call lists the numeric comparison never looked at, which is
+    # where an ordering or a stand-down difference between the engines would hide.
+    # Kept in the engine's own order, NOT re-sorted here: the order is part of what is being compared
+    # (engine.py sorts (name, target) tuples, app/engine.js sorts the joined strings).
+    out["rules"] = {k: ([f"{n}|{q_}" for (n, q_) in v] if isinstance(v, list) else v)
+                    for k, v in (info.get("rules") or {}).items()}
+    out["why"] = e.why_line(ars, s, tab, (p, q, prob, cst), info)[0]
     return out
 
 
@@ -125,8 +148,12 @@ class _Half:
 
 
 def main():
+    # python3 app/make_parity_v10.py [N=200] [SEED=1010]. The seed is settable because cases are drawn in
+    # sequence, so raising N only extends the same draw: a different seed is the only way to re-roll it, and
+    # the plan's 1e-9 margin should be known over several draws, not one.
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 200
-    rng = random.Random(1010)
+    seed = int(sys.argv[2]) if len(sys.argv) > 2 else 1010
+    rng = random.Random(seed)
     cases = []
     for i in range(n):
         c = rand_case(rng)

@@ -50,6 +50,14 @@ doc.cases.forEach((c, i) => {
   const rc = V.rootCosts(ars, s, tab);
   keysEq(i, "rootCosts", o.root_costs, rc);
   for (const k in o.root_costs) num(i, "rootCosts", k, o.root_costs[k], rc[k]);
+  // The rule notes and the why line, which the numeric comparison above never looks at. Compared in the
+  // engine's own order, because engine.py sorts (name, target) tuples and this engine sorts the joined strings.
+  if (o.rules) same(i, "rules", o.rules, r.info.rules || {});
+  if (o.why !== undefined) {
+    let w = null;
+    try { w = V.whyLine(ars, r.info.s, tab, r.pick, r.info)[0]; } catch (err) { w = "ERROR: " + err.message; }
+    same(i, "why", o.why, w);
+  }
   if (o.plan) {
     if (!V.atBatPlan) { note(`case ${i}: python has an at-bat plan, JS has no atBatPlan`); return; }
     const p = V.atBatPlan(tab);
@@ -59,6 +67,8 @@ doc.cases.forEach((c, i) => {
     same(i, "planOpener", o.plan.opener.map((x) => x.slice(0, 2)), p.opener.map((x) => x.slice(0, 2)));
     o.plan.opener.forEach((x, j) => num(i, "planOpener", j, x[2], (p.opener[j] || [])[2]));
     same(i, "planPutaway", o.plan.putaway, p.putaway);
+    same(i, "planPutawaySpot", o.plan.putaway_spot, p.putaway_spot);
+    same(i, "planLine", o.plan.line, p.line);
     for (const cnt in o.plan.behind) {
       same(i, "planBehind." + cnt, o.plan.behind[cnt].map((x) => x.slice(0, 2)), (p.behind[cnt] || []).map((x) => x.slice(0, 2)));
       o.plan.behind[cnt].forEach((x, j) => num(i, "planBehind", cnt + "." + j, x[2], ((p.behind[cnt] || [])[j] || [])[2]));
