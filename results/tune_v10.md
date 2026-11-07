@@ -143,8 +143,8 @@ points (D10 joins it at 16 of them), and rows failing on acceptable share alone 
 **Where the remaining failures point.** The first run's diagnostics (kept below) showed that widening the location
 window, or removing the location guard, lifts B3 to 89.6%, B6 to 66.5%, B7 to 100% and B13 to 100% - so for those four
 the binding constraint is the location window, which plan 3.7 deliberately leaves unchanged, not the hitter model. B8a
-and the rest of B6 remain cost-shaped. Those diagnostics have **not** been re-run on the corrected prior; doing so is
-the obvious next question, and it needs Drew, because adopting any of it would change a limit the plan fixes.
+and the rest of B6 remain cost-shaped. Those diagnostics have now been re-run on the corrected prior; see
+"Diagnostics, run 2" below. Nothing there is adopted: the window and the guard are limits the plan fixes.
 
 ---
 
@@ -193,3 +193,37 @@ Diagnostics only (not adopted), CI tier at (6, 1, 0.04):
 | guard off and window 0.040 | 77.8% | 89.6% | 33.3% | 66.5% | 100% | 58.3% | 97.0% | 100% |
 Even with both structural limits removed, B1, B2, B3, B5, B6, B8a and B9 fail: the remaining gaps come from the engine's
 cost differences (hitter-model lines: swing, called strike, contact) and the tiny temperature in high-stakes counts.
+
+---
+
+## Diagnostics, run 2 (Nov 7, on the corrected prior). Measured only, nothing adopted
+
+Through the `PC_TUNE` diagnostic hook (`KAPPA_T,KAPPA_L,GUARD_TYPE,GUARD_DELTA,LOC_WINDOW`), CI tier, at the grid's
+fewest-failing point (4, 1, 0.04) and at (6, 1, 0.04) for comparison with run 1. "guard off" is GUARD_DELTA 999 with the
+window at 0.040. Enforced-band pass rates (98% needed):
+
+| variant | B1 | B3 | B5 | B6 | B7 | B8a | B9 | B13 |
+|---|---|---|---|---|---|---|---|---|
+| kT 6, as planned (GUARD_DELTA 0.010, LOC_WINDOW 0.010) | 96.5% | 67.0% | 68.8% | 24.1% | 33.3% | 80.2% | 95.8% | 87.5% |
+| kT 6, window 0.020 | 96.7% | 70.3% | 68.8% | 34.1% | 50.0% | 72.9% | 96.6% | **100%** |
+| kT 6, window 0.040 | 97.3% | 68.8% | 66.7% | 36.6% | 50.0% | 85.4% | 97.0% | **100%** |
+| kT 6, guard off + window 0.040 | 96.7% | **91.8%** | 66.7% | **66.5%** | **100%** | **58.3%** | 97.0% | **100%** |
+| kT 4, as planned | 94.8% | 67.9% | 66.7% | 23.9% | 33.3% | 82.3% | 95.8% | 91.7% |
+| kT 4, window 0.020 | 94.6% | 71.0% | 66.7% | 34.1% | 50.0% | 74.0% | 96.6% | **100%** |
+| kT 4, window 0.040 | 94.8% | 69.8% | 66.7% | 36.6% | 50.0% | 83.3% | 97.0% | **100%** |
+| kT 4, guard off + window 0.040 | 93.2% | **92.0%** | 64.6% | **65.9%** | **100%** | **58.3%** | 97.0% | **100%** |
+
+What this says, now that the usage prior no longer confounds it:
+
+- **B13 is purely the location window.** Widening it to 0.020 takes B13 from 87.5% to 100% at both kappas. B13 is the
+  band the plan added to catch a regression against v0.9 (which passed it 24/24), so that regression is a window effect
+  and needs no hitter math.
+- **B7 is blocked by both the window and the location guard**: 33.3% -> 50.0% on the window alone, 100% only with the
+  guard off.
+- **B8a moves the other way and collapses**: 80.2% -> 72.9% (window 0.020) -> 58.3% (guard off). The changes that fix
+  B3, B6, B7 and B13 break ground balls, so the two sets cannot be satisfied together by widening.
+- **No window or guard setting passes everything.** Even with the guard off and the window at 0.040, B6 reaches only
+  66.5% against the 98% rule, B5 about 66% and B3 91.8%. B6's middle share and B8a's down share stay cost-shaped, which
+  is the hitter-model side.
+- B1 and B5 barely respond to either knob any more, consistent with them being prior-driven and largely fixed in
+  `cd4297e`.
