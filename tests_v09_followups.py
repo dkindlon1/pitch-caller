@@ -16,16 +16,22 @@ def check(ok, msg):
 
 
 # --- one engine: no flags anywhere in the engine, Python or JS
-js = open(os.path.join(HERE, "app", "engine.js")).read()
-check(not any(hasattr(e, n) for n in ("FLAGS", "set_flags", "flags", "FLAGS_V07", "FLAGS_V08", "FLAGS_V09")) and "FLAGS" not in open(e.__file__).read(),
+js = open(os.path.join(HERE, "app", "engine.js"), encoding="utf-8").read()
+check(not any(hasattr(e, n) for n in ("FLAGS", "set_flags", "flags", "FLAGS_V07", "FLAGS_V08", "FLAGS_V09")) and "FLAGS" not in open(e.__file__, encoding="utf-8").read(),
       "engine.py has no flags")
 check("FLAGS" not in js and "setFlags" not in js, "engine.js has no flags")
 
 # --- guardrail window: a named constant, same value in Python and JS
-m = re.search(r"const GUARD_DELTA = ([0-9.]+);", js)
+# v1.0 3.6 split the guardrail, and engine.js now declares both constants on one line
+# ("const GUARD_DELTA = 0.010, GUARD_TYPE = 0.030;"), so the terminator is a comma or a semicolon.
+m = re.search(r"GUARD_DELTA = ([0-9.]+)\s*[,;]", js)
+mt = re.search(r"GUARD_TYPE = ([0-9.]+)\s*[,;]", js)
 check(e.GUARD_DELTA == 0.010, f"engine.py GUARD_DELTA = {e.GUARD_DELTA}")
 check(m is not None and float(m.group(1)) == e.GUARD_DELTA, "engine.js GUARD_DELTA matches")
-check("0.010 * run_scale(s.level)" not in open(os.path.join(HERE, "engine.py")).read().split("def root_call")[1].split("def call_v08")[0],
+# GUARD_TYPE's value is tuned in Phase 5 (plan range [0.020, 0.060]), so only assert that the two
+# engines agree on it, never a particular number. GUARD_DELTA stays 0.010 by the plan, so it is pinned above.
+check(mt is not None and float(mt.group(1)) == e.GUARD_TYPE, f"engine.js GUARD_TYPE matches ({e.GUARD_TYPE})")
+check("0.010 * run_scale(s.level)" not in open(os.path.join(HERE, "engine.py"), encoding="utf-8").read().split("def root_call")[1].split("def call_v08")[0],
       "root_call reads the constant (no literal left)")
 
 simulate.STAFF = "default"
