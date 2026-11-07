@@ -499,7 +499,8 @@
     const allN = scored.reduce((a, g) => a + g.n, 0);
     return { rows, learned: rows ? -learnedLL / rows : null, coach: rows ? -coachLL / rows : null, gap, se,
       all: { n: allN, learned: allN ? -scored.reduce((a, g) => a + g.l, 0) / allN : null, coach: allN ? -scored.reduce((a, g) => a + g.c, 0) / allN : null },
-      worse: rows >= CFG.flags.scoreMinRows && gap > CFG.flags.scoreMargin && gap > CFG.flags.scoreZ * se };
+      worse: rows >= CFG.flags.scoreMinRows && gap > CFG.flags.scoreMargin && gap > CFG.flags.scoreZ * se,
+      scored: opts.keepScored ? scored : undefined };   // v1.0 Phase 7 (learner_tune.js): the per-game scores, on request only
   }
 
   // ---------------------------------------------------------------- the whole pitcher

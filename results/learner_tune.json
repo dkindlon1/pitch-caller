@@ -1,0 +1,238 @@
+{
+ "seconds": 300,
+ "current": {
+  "margin": 0.015,
+  "z": 1.645,
+  "window": 300,
+  "tuneCatch": 46,
+  "tuneFalse": 2,
+  "heldCatch": 26,
+  "freshFalse": 1
+ },
+ "currentFromLearner": {
+  "tuneCatch": 46,
+  "tuneFalse": 2,
+  "heldCatch": 26,
+  "freshFalse": 1
+ },
+ "chosen": null,
+ "chosenPasses": null,
+ "grid": [
+  {
+   "margin": 0.008,
+   "z": 1.282,
+   "window": 300,
+   "tuneCatch": 56,
+   "tuneFalse": 15,
+   "heldCatch": 28,
+   "freshFalse": 11
+  },
+  {
+   "margin": 0.008,
+   "z": 1.282,
+   "window": 450,
+   "tuneCatch": 56,
+   "tuneFalse": 15,
+   "heldCatch": 29,
+   "freshFalse": 10
+  },
+  {
+   "margin": 0.008,
+   "z": 1.282,
+   "window": 600,
+   "tuneCatch": 56,
+   "tuneFalse": 15,
+   "heldCatch": 29,
+   "freshFalse": 9
+  },
+  {
+   "margin": 0.008,
+   "z": 1.645,
+   "window": 300,
+   "tuneCatch": 49,
+   "tuneFalse": 12,
+   "heldCatch": 26,
+   "freshFalse": 6
+  },
+  {
+   "margin": 0.008,
+   "z": 1.645,
+   "window": 450,
+   "tuneCatch": 53,
+   "tuneFalse": 12,
+   "heldCatch": 25,
+   "freshFalse": 6
+  },
+  {
+   "margin": 0.008,
+   "z": 1.645,
+   "window": 600,
+   "tuneCatch": 54,
+   "tuneFalse": 11,
+   "heldCatch": 29,
+   "freshFalse": 5
+  },
+  {
+   "margin": 0.01,
+   "z": 1.282,
+   "window": 300,
+   "tuneCatch": 55,
+   "tuneFalse": 8,
+   "heldCatch": 28,
+   "freshFalse": 8
+  },
+  {
+   "margin": 0.01,
+   "z": 1.282,
+   "window": 450,
+   "tuneCatch": 55,
+   "tuneFalse": 7,
+   "heldCatch": 29,
+   "freshFalse": 8
+  },
+  {
+   "margin": 0.01,
+   "z": 1.282,
+   "window": 600,
+   "tuneCatch": 56,
+   "tuneFalse": 7,
+   "heldCatch": 29,
+   "freshFalse": 8
+  },
+  {
+   "margin": 0.01,
+   "z": 1.645,
+   "window": 300,
+   "tuneCatch": 48,
+   "tuneFalse": 6,
+   "heldCatch": 26,
+   "freshFalse": 5
+  },
+  {
+   "margin": 0.01,
+   "z": 1.645,
+   "window": 450,
+   "tuneCatch": 52,
+   "tuneFalse": 5,
+   "heldCatch": 25,
+   "freshFalse": 5
+  },
+  {
+   "margin": 0.01,
+   "z": 1.645,
+   "window": 600,
+   "tuneCatch": 52,
+   "tuneFalse": 5,
+   "heldCatch": 29,
+   "freshFalse": 5
+  },
+  {
+   "margin": 0.012,
+   "z": 1.282,
+   "window": 300,
+   "tuneCatch": 55,
+   "tuneFalse": 4,
+   "heldCatch": 28,
+   "freshFalse": 4
+  },
+  {
+   "margin": 0.012,
+   "z": 1.282,
+   "window": 450,
+   "tuneCatch": 55,
+   "tuneFalse": 3,
+   "heldCatch": 29,
+   "freshFalse": 3
+  },
+  {
+   "margin": 0.012,
+   "z": 1.282,
+   "window": 600,
+   "tuneCatch": 55,
+   "tuneFalse": 3,
+   "heldCatch": 29,
+   "freshFalse": 3
+  },
+  {
+   "margin": 0.012,
+   "z": 1.645,
+   "window": 300,
+   "tuneCatch": 47,
+   "tuneFalse": 2,
+   "heldCatch": 26,
+   "freshFalse": 4
+  },
+  {
+   "margin": 0.012,
+   "z": 1.645,
+   "window": 450,
+   "tuneCatch": 51,
+   "tuneFalse": 2,
+   "heldCatch": 25,
+   "freshFalse": 3
+  },
+  {
+   "margin": 0.012,
+   "z": 1.645,
+   "window": 600,
+   "tuneCatch": 49,
+   "tuneFalse": 2,
+   "heldCatch": 28,
+   "freshFalse": 3
+  },
+  {
+   "margin": 0.015,
+   "z": 1.282,
+   "window": 300,
+   "tuneCatch": 54,
+   "tuneFalse": 3,
+   "heldCatch": 28,
+   "freshFalse": 1
+  },
+  {
+   "margin": 0.015,
+   "z": 1.282,
+   "window": 450,
+   "tuneCatch": 54,
+   "tuneFalse": 3,
+   "heldCatch": 28,
+   "freshFalse": 1
+  },
+  {
+   "margin": 0.015,
+   "z": 1.282,
+   "window": 600,
+   "tuneCatch": 55,
+   "tuneFalse": 3,
+   "heldCatch": 29,
+   "freshFalse": 1
+  },
+  {
+   "margin": 0.015,
+   "z": 1.645,
+   "window": 300,
+   "tuneCatch": 46,
+   "tuneFalse": 2,
+   "heldCatch": 26,
+   "freshFalse": 1
+  },
+  {
+   "margin": 0.015,
+   "z": 1.645,
+   "window": 450,
+   "tuneCatch": 47,
+   "tuneFalse": 2,
+   "heldCatch": 25,
+   "freshFalse": 1
+  },
+  {
+   "margin": 0.015,
+   "z": 1.645,
+   "window": 600,
+   "tuneCatch": 49,
+   "tuneFalse": 2,
+   "heldCatch": 28,
+   "freshFalse": 1
+  }
+ ]
+}
