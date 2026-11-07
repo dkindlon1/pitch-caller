@@ -1446,8 +1446,10 @@ def call_rules(arsenal, s, exclude=None):
                     notes["LAND3"] = sorted(a for a in out if a[0] in bad and a[1] == "chase")
                 out = kept
     # 3.5 coach rules, standing down in fallback mode (3.2) or when they would leave nothing
-    cr1 = {(p.name, key.split("|")[2]) for key, n in (s.matchup or {}).items() if key.startswith("hard|") and n >= 2
-           for p in arsenal if p.kind == key.split("|")[1]}          # CR1 mashed it twice: that pitch type at that spot
+    # CR1 mashed it twice: that pitch type at that spot. A key with no spot ("hard|FB") names no call, so
+    # it is skipped rather than raising IndexError; app/engine.js skips it the same way.
+    _hard = [key.split("|") for key, n in (s.matchup or {}).items() if key.startswith("hard|") and n >= 2]
+    cr1 = {(p.name, f[2]) for f in _hard if len(f) >= 3 for p in arsenal if p.kind == f[1]}
     cr2 = {(p.name, "middle") for p in arsenal} if (s.grades or {}).get("w", 3) >= 4 else set()   # CR2 don't feed power
     for key, gone in (("CR1", cr1), ("CR2", cr2)):
         if not gone or not any(a in gone for a in out):

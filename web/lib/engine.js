@@ -847,7 +847,14 @@
     const kept = out.filter((a) => !gone.has(a));
     if (kept.length === out.length) return out;
     if (!kept.length) { notes[key + "_stood_down"] = "nothing"; return out; }
-    notes[key] = out.filter((a) => gone.has(a)).sort();
+    // Sort on (name, target), not on the joined "name|target" string, so the order matches engine.py's
+    // sorted() over tuples. On the string, '|' (0x7C) sorts after ' ' (0x20), which flips the order
+    // whenever one pitch name is a prefix of another ("Fastball" vs "Fastball 2").
+    const nq = (a) => { const i = a.lastIndexOf("|"); return [a.slice(0, i), a.slice(i + 1)]; };
+    notes[key] = out.filter((a) => gone.has(a)).sort((x, y) => {
+      const [xn, xq] = nq(x), [yn, yq] = nq(y);
+      return xn < yn ? -1 : xn > yn ? 1 : xq < yq ? -1 : xq > yq ? 1 : 0;
+    });
     return kept;
   }
   function callRules(arsenal, s, exclude) {   // engine.py call_rules: the calls allowed now, and which v1.0 rules removed calls
@@ -873,8 +880,9 @@
     const cr1 = new Set(), cr2 = new Set();
     for (const key in (s.matchup || {})) {
       if (!key.startsWith("hard|") || s.matchup[key] < 2) continue;
-      const [, kind, q] = key.split("|");
-      for (const p of arsenal) if (p.kind === kind) cr1.add(ck(p.name, q));
+      const f = key.split("|");
+      if (f.length < 3) continue;   // a key with no spot ("hard|FB") names no call; engine.py skips it too
+      for (const p of arsenal) if (p.kind === f[1]) cr1.add(ck(p.name, f[2]));
     }
     if (((s.grades || {}).w ?? 3) >= 4) for (const p of arsenal) cr2.add(ck(p.name, "middle"));
     for (const [key, gone] of [["CR1", cr1], ["CR2", cr2]]) {
