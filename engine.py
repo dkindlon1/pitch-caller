@@ -1289,6 +1289,12 @@ def _soft(costs, temp, w, ref):
 # temperature for the pitch-type and target stages; Phase 5 tunes them (KAPPA_T in [1, 6], KAPPA_L in [1, 3]).
 KAPPA_T = 3.0
 KAPPA_L = 1.0
+# v1.0 3.1 RP4, he just fouled it off: the exact call that was fouled is damped on the next pitch, not dropped. RP2
+# drops a foul straight back (hard evidence he is on it); a plain foul is weaker evidence, so this is the graduated
+# form of the same rule. The damp multiplies that call's location weight in the operator, which lowers both its share
+# within its pitch type and (through the soft minimum) its pitch type's share, so the within-type renormalization can
+# no longer concentrate onto the pitch that was just fouled. RP3's sit lean alone did the opposite: see docs/V1.0_LOG.
+FOUL_DAMP = 0.75
 try:
     MIX_PRIOR = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "mix_prior.json")))
 except Exception:
@@ -1310,6 +1316,16 @@ def mix_weights(arsenal, s):
     return uT, uL
 
 
+def foul_damp_call(s):
+    """v1.0 3.1 RP4: the exact call just fouled off, or None. A foul straight back is RP2's (dropped, not damped)."""
+    h = s.history
+    if not h or h[-1][2] != "foul":
+        return None
+    if len(h[-1]) > 3 and h[-1][3] == "back":
+        return None
+    return (h[-1][0], h[-1][1])
+
+
 def policy_from_costs(costs, s, temp, u=None):
     """v1.0 3.7 two-stage quantal response weighted by real usage. For pitch n with best cost best_n among its calls,
     location window lw (v0.8's formula, unchanged) and u_L renormalized over its calls:
@@ -1328,6 +1344,7 @@ def policy_from_costs(costs, s, temp, u=None):
     overall = min(best_by.values())
     lam_l, lam_t = KAPPA_L * temp, KAPPA_T * temp
     uT, uL = u if u else ({}, {})
+    dampen = foul_damp_call(s)                       # 3.1 RP4
     wts, c_n = {}, {}
     for n in names:
         qs = [q for (m, q) in costs if m == n]
@@ -1339,6 +1356,8 @@ def policy_from_costs(costs, s, temp, u=None):
             g = costs[(n, q)] - best_by[n]
             uq = ul.get(q, 0.0) / tot_l if tot_l > 0 else 1.0 / len(qs)
             w[q] = uq * exp(-g / lam_l) * _taper(g, lw)
+            if dampen is not None and n == dampen[0] and q == dampen[1]:
+                w[q] *= FOUL_DAMP
         wts[n] = w
         sw = sum(list(w.values()))
         c_n[n] = best_by[n] - lam_l * log(sw) if sw > 0 else float("inf")

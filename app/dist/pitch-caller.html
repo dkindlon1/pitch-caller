@@ -1269,6 +1269,17 @@ td.wrapcell .line { display: block; }
   // v1.0 3.7 the mixing operator weighted by real usage (engine.py policy_from_costs), on flat arrays (speed). The same
   // operations in the same order as engine.py, compensated sums as Python's sum().
   const KAPPA_T = 3.0, KAPPA_L = 1.0, WP_DEFAULT = [0.12, 0.04];
+  // v1.0 3.1 RP4, he just fouled it off: the exact call that was fouled is damped on the next pitch, not dropped.
+  // RP2 drops a foul straight back; a plain foul is weaker evidence, so this is the graduated form of that rule.
+  const FOUL_DAMP = 0.75;
+  function foulDampCall(s) {   // 3.1 RP4: the call just fouled off, or null (a foul straight back is RP2's to drop)
+    const h = s.history;
+    if (!h || !h.length) return null;
+    const last = h[h.length - 1];
+    if (last[2] !== "foul") return null;
+    if (last.length > 3 && last[3] === "back") return null;
+    return sk(last[0], last[1]);
+  }
   function callStruct(calls) {
     const names = [], groups = [], qs = calls.map(skH);
     for (let i = 0; i < calls.length; i++) {
@@ -1301,7 +1312,7 @@ td.wrapcell .line { display: block; }
     }
     return { ul, gHas, ut, hasT: Object.keys(uT).length > 0 };
   }
-  function policyArr(cost, st, temp, win, lwin, piOut, ua) {   // pi over calls (Float64Array); zero where not picked
+  function policyArr(cost, st, temp, win, lwin, piOut, ua, dampI = -1) {   // pi over calls (Float64Array); zero where not picked
     const G = st.groups.length, best = new Float64Array(G), cn = new Float64Array(G), sw = new Float64Array(G), pt = new Float64Array(G);
     const w = new Float64Array(st.calls.length);
     for (let g = 0; g < G; g++) { let m = Infinity; for (const i of st.groups[g]) if (cost[i] < m) m = cost[i]; best[g] = m; }
@@ -1316,6 +1327,7 @@ td.wrapcell .line { display: block; }
         const gg = cost[i] - best[g];
         const uq = totL > 0 ? ua.ul[i] / totL : 1.0 / idx.length;
         w[i] = uq * Math.exp(-gg / lamL) * taper(gg, lw);
+        if (i === dampI) w[i] *= FOUL_DAMP;                // 3.1 RP4
       }
       sw[g] = psum(idx.map((i) => w[i]));
       cn[g] = sw[g] > 0 ? best[g] - lamL * Math.log(sw[g]) : Infinity;
@@ -1342,7 +1354,8 @@ td.wrapcell .line { display: block; }
   function policyFromCosts(costs, s, temp, u) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
     const calls = Object.keys(costs), st = callStruct(calls), [win, lwin] = windows(s);
     const cost = Float64Array.from(calls.map((a) => costs[a]));
-    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length), usageArrays(st, u)), st);
+    const dk = foulDampCall(s), dampI = dk === null ? -1 : calls.indexOf(dk);   // 3.1 RP4
+    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length), usageArrays(st, u), dampI), st);
   }
   function csum(f, c, x) { const t = f + x; if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f; return [t, c]; }
   function solveSitGame(M, ks, s, temp, bH, usage, mixU) {
@@ -1354,6 +1367,7 @@ td.wrapcell .line { display: block; }
     nU = psum(uvals);
     const b = new Float64Array(nK); if (bH) for (let k = 0; k < nK; k++) b[k] = bH[ks[k]] ?? 0.0;
     const [win, lwin] = windows(s);
+    const dk = foulDampCall(s), dampI = dk === null ? -1 : calls.indexOf(dk);   // 3.1 RP4
     const cost = new Float64Array(nA), pi = new Float64Array(nA), pt = new Float64Array(nA), f = new Float64Array(nK), u = new Float64Array(nK);
     const phi = (sg) => {
       for (let a = 0; a < nA; a++) {
@@ -1366,7 +1380,7 @@ td.wrapcell .line { display: block; }
         if (c && Number.isFinite(c)) s_ += c;
         cost[a] = s_;
       }
-      return policyArr(cost, st, temp, win, lwin, pi, ua);
+      return policyArr(cost, st, temp, win, lwin, pi, ua, dampI);
     };
     const response = (p_) => {   // f = sigma*(p~)
       for (let a = 0; a < nA; a++) pt[a] = nU ? (4 * p_[a] + us[a]) / (4 + nU) : p_[a];
@@ -4903,6 +4917,17 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // v1.0 3.7 the mixing operator weighted by real usage (engine.py policy_from_costs), on flat arrays (speed). The same
   // operations in the same order as engine.py, compensated sums as Python's sum().
   const KAPPA_T = 3.0, KAPPA_L = 1.0, WP_DEFAULT = [0.12, 0.04];
+  // v1.0 3.1 RP4, he just fouled it off: the exact call that was fouled is damped on the next pitch, not dropped.
+  // RP2 drops a foul straight back; a plain foul is weaker evidence, so this is the graduated form of that rule.
+  const FOUL_DAMP = 0.75;
+  function foulDampCall(s) {   // 3.1 RP4: the call just fouled off, or null (a foul straight back is RP2's to drop)
+    const h = s.history;
+    if (!h || !h.length) return null;
+    const last = h[h.length - 1];
+    if (last[2] !== "foul") return null;
+    if (last.length > 3 && last[3] === "back") return null;
+    return sk(last[0], last[1]);
+  }
   function callStruct(calls) {
     const names = [], groups = [], qs = calls.map(skH);
     for (let i = 0; i < calls.length; i++) {
@@ -4935,7 +4960,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     }
     return { ul, gHas, ut, hasT: Object.keys(uT).length > 0 };
   }
-  function policyArr(cost, st, temp, win, lwin, piOut, ua) {   // pi over calls (Float64Array); zero where not picked
+  function policyArr(cost, st, temp, win, lwin, piOut, ua, dampI = -1) {   // pi over calls (Float64Array); zero where not picked
     const G = st.groups.length, best = new Float64Array(G), cn = new Float64Array(G), sw = new Float64Array(G), pt = new Float64Array(G);
     const w = new Float64Array(st.calls.length);
     for (let g = 0; g < G; g++) { let m = Infinity; for (const i of st.groups[g]) if (cost[i] < m) m = cost[i]; best[g] = m; }
@@ -4950,6 +4975,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
         const gg = cost[i] - best[g];
         const uq = totL > 0 ? ua.ul[i] / totL : 1.0 / idx.length;
         w[i] = uq * Math.exp(-gg / lamL) * taper(gg, lw);
+        if (i === dampI) w[i] *= FOUL_DAMP;                // 3.1 RP4
       }
       sw[g] = psum(idx.map((i) => w[i]));
       cn[g] = sw[g] > 0 ? best[g] - lamL * Math.log(sw[g]) : Infinity;
@@ -4976,7 +5002,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function policyFromCosts(costs, s, temp, u) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
     const calls = Object.keys(costs), st = callStruct(calls), [win, lwin] = windows(s);
     const cost = Float64Array.from(calls.map((a) => costs[a]));
-    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length), usageArrays(st, u)), st);
+    const dk = foulDampCall(s), dampI = dk === null ? -1 : calls.indexOf(dk);   // 3.1 RP4
+    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length), usageArrays(st, u), dampI), st);
   }
   function csum(f, c, x) { const t = f + x; if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f; return [t, c]; }
   function solveSitGame(M, ks, s, temp, bH, usage, mixU) {
@@ -4988,6 +5015,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     nU = psum(uvals);
     const b = new Float64Array(nK); if (bH) for (let k = 0; k < nK; k++) b[k] = bH[ks[k]] ?? 0.0;
     const [win, lwin] = windows(s);
+    const dk = foulDampCall(s), dampI = dk === null ? -1 : calls.indexOf(dk);   // 3.1 RP4
     const cost = new Float64Array(nA), pi = new Float64Array(nA), pt = new Float64Array(nA), f = new Float64Array(nK), u = new Float64Array(nK);
     const phi = (sg) => {
       for (let a = 0; a < nA; a++) {
@@ -5000,7 +5028,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
         if (c && Number.isFinite(c)) s_ += c;
         cost[a] = s_;
       }
-      return policyArr(cost, st, temp, win, lwin, pi, ua);
+      return policyArr(cost, st, temp, win, lwin, pi, ua, dampI);
     };
     const response = (p_) => {   // f = sigma*(p~)
       for (let a = 0; a < nA; a++) pt[a] = nU ? (4 * p_[a] + us[a]) / (4 + nU) : p_[a];

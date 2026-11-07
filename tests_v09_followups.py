@@ -31,6 +31,10 @@ check(m is not None and float(m.group(1)) == e.GUARD_DELTA, "engine.js GUARD_DEL
 # GUARD_TYPE's value is tuned in Phase 5 (plan range [0.020, 0.060]), so only assert that the two
 # engines agree on it, never a particular number. GUARD_DELTA stays 0.010 by the plan, so it is pinned above.
 check(mt is not None and float(mt.group(1)) == e.GUARD_TYPE, f"engine.js GUARD_TYPE matches ({e.GUARD_TYPE})")
+# v1.0 3.1 RP4's plain-foul damp. Same rule as GUARD_TYPE above: assert only that the two engines agree, so that
+# choosing a different damp never has to be made in two places at once.
+md = re.search(r"FOUL_DAMP = ([0-9.]+)\s*[,;]", js)
+check(md is not None and float(md.group(1)) == e.FOUL_DAMP, f"engine.js FOUL_DAMP matches ({e.FOUL_DAMP})")
 check("0.010 * run_scale(s.level)" not in open(os.path.join(HERE, "engine.py"), encoding="utf-8").read().split("def root_call")[1].split("def call_v08")[0],
       "root_call reads the constant (no literal left)")
 
