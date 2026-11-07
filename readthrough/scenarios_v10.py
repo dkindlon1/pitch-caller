@@ -33,7 +33,7 @@ def build(doc, row):
     inp = r["inputs"]
     hist = inp.pop("history", None)
     last = inp.get("last")
-    if last and len(last) == 4:          # a four-field last is a one-pitch history
+    if last:                             # a last pitch IS a one-pitch history (3 fields, or 4 with the read)
         hist = hist or [last]
         inp["last"] = last[:3]
     if hist:
@@ -46,7 +46,7 @@ def build(doc, row):
 
 def grade(doc, row):
     ars, s, exclude = build(doc, row)
-    return grade_dist(doc, row, S09.call_dist("v09", ars, s, exclude))
+    return grade_dist(doc, row, S09.call_dist("v09", ars, s, exclude, lean=True))
 
 
 def grade_dist(doc, row, dist):

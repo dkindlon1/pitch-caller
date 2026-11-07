@@ -75,8 +75,13 @@ def build(doc, row):
     return ars, s, {tuple(x) for x in row["exclude"]}
 
 
-def call_dist(mode, ars, s, exclude):
+def call_dist(mode, ars, s, exclude, lean=False):
     s_w = replace(s, win=e.win_constants(s)) if s.home is not None else s
+    # v1.0: the hitter's in-at-bat lean (2.5, and 3.1 RP3 "he's seen it"). callsheet.py, tests_v10.py, simulate.py,
+    # fit_pitcher_side.py, golden/cases.py and the app all apply it before calling; this grader did not, which left
+    # RP3 inert for every scenario row. Off by default so the v0.9 grading is byte-for-byte unchanged.
+    if lean:
+        s_w = replace(s_w, b_h=e.lean_b_h(ars, s_w))
     _, dist, _, _ = e.call_v08(ars, s_w, rng=Half(), exclude=exclude or None)
     return [(pr, p.name, p.kind, q) for pr, _, p, q in dist]
 
