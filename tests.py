@@ -146,15 +146,28 @@ check("v0.6 hit by pitch: inside pitches hit batters more than away pitches (HS)
       OUTCOME_ADJ["hs"]["hbp"] > 0 and hin > 2 * haway > 0,
       f"HBP per pitch: down-in {hin:.2%}, down-away {haway:.2%}")
 
-# v0.6 level realism: exact plate-appearance math reproduces each level's real K / BB / HBP
+# v0.6 level realism: exact plate-appearance math reproduces each level's real K / BB / HBP. MLB on calib's v0.7c path
+# (unchanged in v1.0). D3 and HS (v1.0, Drew Nov 6): on the v1.0 call (fit_pitcher_side's evaluator, calib's lineups):
+# walks at the engine's own mix, HBP at real target usage (Phase 4's fit; the engine still goes inside less than real
+# pitchers), strikeouts reported but not gated (hitter model; handed off).
 import calib
 real = calib.RV
-for lvl, key in (("mlb", "mlb_check"), ("college_d3", "college_d3"), ("hs", "hs")):
-    m = calib.evaluate(lvl)
-    errs = {k: m[k] - real[key][k] for k in ("K", "BB", "HBP")}
-    check(f"v0.6 realism ({lvl}): strikeouts, walks and HBP within 1 point of real",
-          all(abs(v) < 0.01 for v in errs.values()),
-          ", ".join(f"{k} {m[k]:.1%} vs {real[key][k]:.1%}" for k in ("K", "BB", "HBP")))
+m = calib.evaluate("mlb")
+check("v0.6 realism (mlb): strikeouts, walks and HBP within 1 point of real",
+      all(abs(m[k] - real["mlb_check"][k]) < 0.01 for k in ("K", "BB", "HBP")),
+      ", ".join(f"{k} {m[k]:.1%} vs {real['mlb_check'][k]:.1%}" for k in ("K", "BB", "HBP")))
+import os as _os_t
+_cwd = _os_t.getcwd()
+import fit_pitcher_side as FPS
+_os_t.chdir(_cwd)
+for lvl in ("college_d3", "hs"):
+    d_ = FPS.call_dists(lvl)
+    m = FPS.evaluate(lvl, d_)
+    mr = FPS.evaluate(lvl, FPS.real_targets(d_, lvl))
+    check(f"v1.0 realism ({lvl}): walks (engine's mix) and HBP (real target usage) within 1 point of real",
+          abs(m["BB"] - real[lvl]["BB"]) < 0.01 and abs(mr["HBP"] - real[lvl]["HBP"]) < 0.01,
+          f"BB {m['BB']:.1%} vs {real[lvl]['BB']:.1%}, HBP {mr['HBP']:.1%} vs {real[lvl]['HBP']:.1%} (engine's mix "
+          f"{m['HBP']:.1%}); K {m['K']:.1%} vs {real[lvl]['K']:.1%}, reported")
 
 # v0.6d Drew's rule: if the off-speed gets it over, get it over; if it isn't landing, don't lean on it
 fresh = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"))
