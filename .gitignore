@@ -25,3 +25,10 @@ results/step4b/verify2.log
 results/step4b/games_v08_in_v09w.log
 results/step7/games_tw.log
 results/step7/games_tw_guard.log
+
+# Going public (Nov 7): never let real secrets become committable in a public repo.
+# web/.env.example is the tracked template; any real .env stays local.
+.env
+.env.*
+!.env.example
+*.bundle
