@@ -1,0 +1,4512 @@
+{
+ "tag": "diag_gd_1_0",
+ "tier": "ci",
+ "tables": 188,
+ "seconds": 38.8,
+ "has_history": true,
+ "weights": "engine at-bat chain",
+ "bands": {
+  "B1": {
+   "band": "B1",
+   "text": "No pitch type above 85%",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 510,
+   "passes": 387,
+   "exempt": 66,
+   "rate": 0.7588235294117647,
+   "max_miss": 0.14118565726821575,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 two_pitch loaded1 same i4 3-1",
+     "miss": 0.1412
+    },
+    {
+     "label": "hs two_pitch loaded1 same i4 3-1",
+     "miss": 0.1404
+    },
+    {
+     "label": "college_d3 two_pitch on1_0 same i4 3-1",
+     "miss": 0.1388
+    },
+    {
+     "label": "hs two_pitch on1_0 same i4 3-1",
+     "miss": 0.1385
+    },
+    {
+     "label": "college_d3 two_pitch on3_1 same i4 3-1",
+     "miss": 0.1381
+    }
+   ],
+   "pitch_share": {
+    "CB": 0.0416,
+    "CH": 0.1225,
+    "FB": 0.6743,
+    "SL": 0.1616
+   },
+   "target_share": {
+    "chase": 0.0261,
+    "down-away": 0.1883,
+    "down-in": 0.0193,
+    "middle": 0.6172,
+    "up-away": 0.1109,
+    "up-in": 0.0384
+   }
+  },
+  "B2": {
+   "band": "B2",
+   "text": "Every allowed secondary (every allowed pitch but the top one) at least 5% (changeup to a same-side hitter 2%)",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 510,
+   "passes": 467,
+   "exempt": 66,
+   "rate": 0.9156862745098039,
+   "max_miss": 0.041185657268215756,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 two_pitch loaded1 same i4 3-1",
+     "miss": 0.0412
+    },
+    {
+     "label": "hs two_pitch loaded1 same i4 3-1",
+     "miss": 0.0404
+    },
+    {
+     "label": "college_d3 two_pitch on1_0 same i4 3-1",
+     "miss": 0.0388
+    },
+    {
+     "label": "hs two_pitch on1_0 same i4 3-1",
+     "miss": 0.0385
+    },
+    {
+     "label": "college_d3 two_pitch on3_1 same i4 3-1",
+     "miss": 0.0381
+    }
+   ],
+   "pitch_share": {
+    "CB": 0.0416,
+    "CH": 0.1225,
+    "FB": 0.6743,
+    "SL": 0.1616
+   },
+   "target_share": {
+    "chase": 0.0261,
+    "down-away": 0.1883,
+    "down-in": 0.0193,
+    "middle": 0.6172,
+    "up-away": 0.1109,
+    "up-in": 0.0384
+   }
+  },
+  "B3": {
+   "band": "B3",
+   "text": "No single exact call above 60%, except 3-0 fastball",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 576,
+   "passes": 384,
+   "exempt": 0,
+   "rate": 0.6666666666666666,
+   "max_miss": 0.4,
+   "passed": false,
+   "worst": [
+    {
+     "label": "hs plus_changeup on1_0 same i4 3-2",
+     "miss": 0.4
+    },
+    {
+     "label": "hs plus_changeup on1_0 opp i4 3-2",
+     "miss": 0.4
+    },
+    {
+     "label": "college_d3 two_pitch loaded1 same i4 3-1",
+     "miss": 0.3912
+    },
+    {
+     "label": "hs two_pitch loaded1 same i4 3-1",
+     "miss": 0.3904
+    },
+    {
+     "label": "college_d3 two_pitch on1_0 same i4 3-1",
+     "miss": 0.3888
+    }
+   ],
+   "pitch_share": {
+    "CB": 0.0368,
+    "CH": 0.1405,
+    "FB": 0.678,
+    "SL": 0.1446
+   },
+   "target_share": {
+    "chase": 0.0272,
+    "down-away": 0.1761,
+    "down-in": 0.0186,
+    "middle": 0.6419,
+    "up-away": 0.1022,
+    "up-in": 0.034
+   }
+  },
+  "B5": {
+   "band": "B5",
+   "text": "Overall usage, chance-weighted over counts (FB, grade-3 and grade-5 secondaries in range)",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 48,
+   "passes": 17,
+   "exempt": 0,
+   "rate": 0.3541666666666667,
+   "max_miss": 0.14885608550007362,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 plus_changeup empty1 same i4 Changeup 10% not in 25%-50%",
+     "miss": 0.1489
+    },
+    {
+     "label": "hs plus_changeup empty1 same i4 Changeup 11% not in 25%-50%",
+     "miss": 0.1435
+    },
+    {
+     "label": "hs two_pitch on3_1 same i4 Fastball 92% not in 50%-78%; Curveball 8% not in 10%-35%",
+     "miss": 0.1393
+    },
+    {
+     "label": "hs two_pitch empty1 same i4 Fastball 92% not in 50%-78%; Curveball 8% not in 10%-35%",
+     "miss": 0.1377
+    },
+    {
+     "label": "hs two_pitch on1_0 same i4 Fastball 91% not in 50%-78%; Curveball 9% not in 10%-35%",
+     "miss": 0.1312
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B6": {
+   "band": "B6",
+   "text": "Middle share by count group (command 3+ arsenals; low_command +15 points)",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 528,
+   "passes": 141,
+   "exempt": 0,
+   "rate": 0.26704545454545453,
+   "max_miss": 0.6500000000000002,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 slider_best loaded1 same i4 3-2",
+     "miss": 0.65
+    },
+    {
+     "label": "hs slider_best on1_0 opp i4 3-2",
+     "miss": 0.65
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 3-2",
+     "miss": 0.65
+    },
+    {
+     "label": "college_d3 slider_best empty1 opp i4 3-2",
+     "miss": 0.65
+    },
+    {
+     "label": "college_d3 slider_best on1_0 same i4 1-1",
+     "miss": 0.65
+    }
+   ],
+   "pitch_share": {
+    "CB": 0.0402,
+    "CH": 0.1524,
+    "FB": 0.6513,
+    "SL": 0.1561
+   },
+   "target_share": {
+    "chase": 0.0297,
+    "down-away": 0.1921,
+    "down-in": 0.0203,
+    "middle": 0.6094,
+    "up-away": 0.1114,
+    "up-in": 0.0371
+   }
+  },
+  "B7": {
+   "band": "B7",
+   "text": "Inside: >= 12% of fastball calls (chance-weighted) and >= 3% inside in at least half the non-three-ball counts",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 48,
+   "passes": 16,
+   "exempt": 0,
+   "rate": 0.3333333333333333,
+   "max_miss": 0.12,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 slider_best loaded1 same i4 FB inside 0.0%, median-count inside 0.0%",
+     "miss": 0.12
+    },
+    {
+     "label": "college_d3 slider_best loaded1 opp i4 FB inside 0.0%, median-count inside 0.0%",
+     "miss": 0.12
+    },
+    {
+     "label": "college_d3 plus_changeup on1_0 same i4 FB inside 0.0%, median-count inside 0.0%",
+     "miss": 0.12
+    },
+    {
+     "label": "college_d3 plus_changeup on1_0 opp i4 FB inside 0.0%, median-count inside 0.0%",
+     "miss": 0.12
+    },
+    {
+     "label": "college_d3 plus_changeup on3_1 opp i4 FB inside 0.0%, median-count inside 4.1%",
+     "miss": 0.12
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B8a": {
+   "band": "B8a",
+   "text": "Runner on 1st, < 2 outs, < 2 strikes: down share no more than 2 points below bases empty, same outs",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 96,
+   "passes": 78,
+   "exempt": 0,
+   "rate": 0.8125,
+   "max_miss": 0.43093122698267905,
+   "passed": false,
+   "worst": [
+    {
+     "label": "hs slider_best on1_0 same i4 1-1 down 0.0% vs empty 45.1%",
+     "miss": 0.4309
+    },
+    {
+     "label": "hs two_pitch on1_0 same i4 1-1 down 0.0% vs empty 27.8%",
+     "miss": 0.2576
+    },
+    {
+     "label": "college_d3 two_pitch on1_0 opp i4 1-1 down 4.3% vs empty 31.1%",
+     "miss": 0.248
+    },
+    {
+     "label": "hs two_pitch on1_0 opp i4 1-1 down 0.0% vs empty 24.7%",
+     "miss": 0.2272
+    },
+    {
+     "label": "hs slider_best on1_0 opp i4 1-1 down 0.0% vs empty 22.7%",
+     "miss": 0.2065
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B8b": {
+   "band": "B8b",
+   "text": "Runner on 3rd: off-speed share at least 60% of bases empty (per level, arsenal, count)",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 72,
+   "passes": 72,
+   "exempt": 0,
+   "rate": 1.0,
+   "max_miss": 0.0,
+   "passed": true,
+   "worst": [],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B8c": {
+   "band": "B8c",
+   "text": "A pitch that isn't landing gets 0% with a runner on 3rd",
+   "enforced": true,
+   "rule": "100%",
+   "eligible": 96,
+   "passes": 96,
+   "exempt": 0,
+   "rate": 1.0,
+   "max_miss": 0.0,
+   "passed": true,
+   "worst": [],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B9": {
+   "band": "B9",
+   "text": "Repeats (3.1): no third straight exact call; not back after a foul straight back; a plain foul doesn't raise the repeat; a whiff keeps 90% of the pitch type",
+   "enforced": true,
+   "rule": "100%",
+   "eligible": 264,
+   "passes": 253,
+   "exempt": 0,
+   "rate": 0.9583333333333334,
+   "max_miss": 0.004229225978804374,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 slider_best empty1 opp i4 0-1 plain foul Changeup|down-away 28.8% vs 28.3%",
+     "miss": 0.0042
+    },
+    {
+     "label": "college_d3 slider_best on1_0 same i4 0-1 plain foul Slider|down-away 29.8% vs 29.5%",
+     "miss": 0.0023
+    },
+    {
+     "label": "college_d3 slider_best on1_0 opp i4 3-1 plain foul Fastball|middle 82.6% vs 82.4%",
+     "miss": 0.0022
+    },
+    {
+     "label": "college_d3 plus_changeup on1_0 opp i4 3-1 plain foul Fastball|middle 77.7% vs 77.5%",
+     "miss": 0.002
+    },
+    {
+     "label": "college_d3 slider_best on1_0 same i4 3-1 plain foul Fastball|middle 85.0% vs 84.8%",
+     "miss": 0.002
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B10": {
+   "band": "B10",
+   "text": "Fallback (3.2): nothing trusted -> the landing pitch with the highest confidence, 100%",
+   "enforced": true,
+   "rule": "100%",
+   "eligible": 288,
+   "passes": 288,
+   "exempt": 0,
+   "rate": 1.0,
+   "max_miss": 0.0,
+   "passed": true,
+   "worst": [],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B11": {
+   "band": "B11",
+   "text": "Hard rules: no chase at 3-0, 3-1 or 2-2; a shaken-off call is never called again",
+   "enforced": true,
+   "rule": "100%",
+   "eligible": 1104,
+   "passes": 1104,
+   "exempt": 0,
+   "rate": 1.0,
+   "max_miss": 0.0,
+   "passed": true,
+   "worst": [],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B12": {
+   "band": "B12",
+   "text": "Coach rules: CR1 (hit hard twice: that pitch at that spot 0%), CR2 (power 4+: no middle)",
+   "enforced": true,
+   "rule": "100%",
+   "eligible": 192,
+   "passes": 192,
+   "exempt": 0,
+   "rate": 1.0,
+   "max_miss": 0.0,
+   "passed": true,
+   "worst": [],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "B13": {
+   "band": "B13",
+   "text": "Eye grade 1 (chaser) raises two-strike chase share by >= 5 points over eye 3",
+   "enforced": true,
+   "rule": "98% / 3 pts",
+   "eligible": 24,
+   "passes": 21,
+   "exempt": 0,
+   "rate": 0.875,
+   "max_miss": 0.05,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 slider_best empty1 opp i4 3-2 chase eye1 0.0% vs eye3 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 3-2 chase eye1 2.7% vs eye3 0.0%",
+     "miss": 0.0228
+    },
+    {
+     "label": "college_d3 slider_best on1_0 opp i4 3-2 chase eye1 4.6% vs eye3 0.0%",
+     "miss": 0.0043
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "T1": {
+   "band": "T1",
+   "text": "Contact grade 5 vs 1 moves two-strike chase share by >= 5 points",
+   "enforced": false,
+   "rule": "98% / 3 pts",
+   "eligible": 24,
+   "passes": 5,
+   "exempt": 0,
+   "rate": 0.20833333333333334,
+   "max_miss": 0.05,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 slider_best empty1 same i4 1-2 chase c5 0.0% vs c1 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 3-2 chase c5 0.0% vs c1 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best on1_0 same i4 1-2 chase c5 0.0% vs c1 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best on1_0 same i4 3-2 chase c5 0.0% vs c1 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best empty1 opp i4 1-2 chase c5 0.0% vs c1 0.0%",
+     "miss": 0.05
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "T2": {
+   "band": "T2",
+   "text": "Crowding raises the inside share of fastballs by >= 5 points",
+   "enforced": false,
+   "rule": "98% / 3 pts",
+   "eligible": 96,
+   "passes": 18,
+   "exempt": 0,
+   "rate": 0.1875,
+   "max_miss": 0.05,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 slider_best empty1 same i4 3-0 FB inside crowd 0.0% vs 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 3-1 FB inside crowd 0.0% vs 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 0-2 FB inside crowd 0.0% vs 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 1-2 FB inside crowd 0.0% vs 0.0%",
+     "miss": 0.05
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 2-2 FB inside crowd 0.0% vs 0.0%",
+     "miss": 0.05
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "T3": {
+   "band": "T3",
+   "text": "Power grade 5 vs 3 moves calls beyond CR2's middle rule (TV distance on non-middle calls >= 5 points)",
+   "enforced": false,
+   "rule": "98% / 3 pts",
+   "eligible": 96,
+   "passes": 80,
+   "exempt": 0,
+   "rate": 0.8333333333333334,
+   "max_miss": 0.04249381588318774,
+   "passed": false,
+   "worst": [
+    {
+     "label": "college_d3 plus_changeup empty1 same i4 0-2 TV 0.8%",
+     "miss": 0.0425
+    },
+    {
+     "label": "college_d3 plus_changeup empty1 opp i4 0-2 TV 1.1%",
+     "miss": 0.0391
+    },
+    {
+     "label": "college_d3 slider_best empty1 opp i4 0-2 TV 1.2%",
+     "miss": 0.0377
+    },
+    {
+     "label": "college_d3 slider_best empty1 same i4 0-2 TV 1.3%",
+     "miss": 0.0366
+    },
+    {
+     "label": "college_d3 plus_changeup on1_0 opp i4 0-2 TV 1.4%",
+     "miss": 0.0358
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  },
+  "T4": {
+   "band": "T4",
+   "text": "Engine whiff per swing on heart / edge fastballs within 3 points of Statcast (13.6-15.8% / 21-24%)",
+   "enforced": false,
+   "rule": "98% / 3 pts",
+   "eligible": 2,
+   "passes": 0,
+   "exempt": 0,
+   "rate": 0.0,
+   "max_miss": 0.04619480695438158,
+   "passed": false,
+   "worst": [
+    {
+     "label": "edge: engine 13.4% vs Statcast 21.0%-24.0%",
+     "miss": 0.0462
+    },
+    {
+     "label": "heart: engine 6.4% vs Statcast 13.6%-15.8%",
+     "miss": 0.0424
+    }
+   ],
+   "pitch_share": {},
+   "target_share": {}
+  }
+ },
+ "main_grid": {
+  "college_d3 slider_best empty1 same i4": {
+   "0-0": {
+    "Slider|down-away": 0.1876,
+    "Fastball|down-away": 0.1708,
+    "Fastball|up-in": 0.1459,
+    "Fastball|up-away": 0.1288,
+    "Fastball|middle": 0.1117,
+    "Fastball|down-in": 0.0946,
+    "Slider|up-away": 0.0663,
+    "Slider|middle": 0.0645,
+    "Changeup|down-away": 0.0225,
+    "Changeup|middle": 0.0074
+   },
+   "1-0": {
+    "Slider|middle": 0.2588,
+    "Fastball|down-away": 0.1986,
+    "Fastball|up-in": 0.1942,
+    "Fastball|middle": 0.1608,
+    "Fastball|down-in": 0.1439,
+    "Changeup|middle": 0.0437
+   },
+   "2-0": {
+    "Fastball|middle": 0.4271,
+    "Fastball|up-in": 0.3523,
+    "Slider|middle": 0.1896,
+    "Changeup|middle": 0.031
+   },
+   "3-0": {
+    "Fastball|middle": 0.9476,
+    "Slider|middle": 0.0374,
+    "Changeup|middle": 0.0151
+   },
+   "0-1": {
+    "Slider|down-away": 0.2519,
+    "Fastball|down-away": 0.1288,
+    "Fastball|up-in": 0.1154,
+    "Fastball|up-away": 0.1151,
+    "Fastball|down-in": 0.0839,
+    "Fastball|middle": 0.0714,
+    "Changeup|down-away": 0.0708,
+    "Slider|up-away": 0.0635,
+    "Slider|middle": 0.0546,
+    "Slider|down-in": 0.0297,
+    "Changeup|middle": 0.0149
+   },
+   "1-1": {
+    "Slider|down-away": 0.2431,
+    "Fastball|down-away": 0.1486,
+    "Fastball|up-in": 0.1461,
+    "Fastball|middle": 0.1103,
+    "Slider|middle": 0.0829,
+    "Fastball|down-in": 0.0772,
+    "Changeup|middle": 0.068,
+    "Fastball|up-away": 0.0631,
+    "Slider|up-away": 0.0606
+   },
+   "2-1": {
+    "Fastball|middle": 0.3904,
+    "Fastball|up-in": 0.2753,
+    "Slider|middle": 0.272,
+    "Changeup|middle": 0.0623
+   },
+   "3-1": {
+    "Fastball|middle": 0.8234,
+    "Slider|middle": 0.153,
+    "Changeup|middle": 0.0236
+   },
+   "0-2": {
+    "Slider|down-away": 0.2845,
+    "Fastball|up-away": 0.2324,
+    "Slider|chase": 0.2014,
+    "Fastball|down-away": 0.1146,
+    "Changeup|down-away": 0.0978,
+    "Slider|up-away": 0.0451,
+    "Slider|middle": 0.0242
+   },
+   "1-2": {
+    "Slider|down-away": 0.3549,
+    "Fastball|up-away": 0.2147,
+    "Fastball|down-away": 0.1365,
+    "Changeup|down-away": 0.1274,
+    "Slider|up-away": 0.0643,
+    "Fastball|middle": 0.0543,
+    "Slider|middle": 0.0479
+   },
+   "2-2": {
+    "Fastball|middle": 0.4123,
+    "Slider|down-away": 0.3076,
+    "Changeup|middle": 0.1208,
+    "Slider|middle": 0.0973,
+    "Slider|up-away": 0.0621
+   },
+   "3-2": {
+    "Fastball|middle": 0.6294,
+    "Slider|middle": 0.322,
+    "Changeup|middle": 0.0486
+   }
+  },
+  "college_d3 slider_best empty1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.1607,
+    "Fastball|down-away": 0.1352,
+    "Changeup|down-away": 0.1262,
+    "Fastball|up-in": 0.117,
+    "Slider|down-away": 0.1016,
+    "Fastball|middle": 0.1011,
+    "Fastball|down-in": 0.1003,
+    "Slider|up-away": 0.0613,
+    "Slider|middle": 0.0516,
+    "Changeup|middle": 0.0288,
+    "Slider|down-in": 0.0104,
+    "Changeup|up-away": 0.006
+   },
+   "1-0": {
+    "Changeup|middle": 0.1898,
+    "Fastball|up-in": 0.1763,
+    "Fastball|down-away": 0.1761,
+    "Fastball|middle": 0.1648,
+    "Slider|middle": 0.1615,
+    "Fastball|down-in": 0.0722,
+    "Fastball|up-away": 0.0592
+   },
+   "2-0": {
+    "Fastball|middle": 0.6918,
+    "Changeup|middle": 0.144,
+    "Slider|middle": 0.1367,
+    "Fastball|up-in": 0.0275
+   },
+   "3-0": {
+    "Fastball|middle": 0.965,
+    "Slider|middle": 0.0268,
+    "Changeup|middle": 0.0082
+   },
+   "0-1": {
+    "Changeup|down-away": 0.2834,
+    "Fastball|up-away": 0.1447,
+    "Fastball|up-in": 0.1387,
+    "Fastball|down-away": 0.0778,
+    "Fastball|down-in": 0.0693,
+    "Fastball|middle": 0.0654,
+    "Slider|down-away": 0.0559,
+    "Slider|down-in": 0.0542,
+    "Changeup|up-away": 0.0352,
+    "Changeup|middle": 0.0283,
+    "Slider|middle": 0.0226,
+    "Slider|up-away": 0.0216,
+    "Slider|up-in": 0.0029
+   },
+   "1-1": {
+    "Changeup|down-away": 0.2522,
+    "Fastball|up-in": 0.1567,
+    "Fastball|up-away": 0.1228,
+    "Fastball|middle": 0.1056,
+    "Fastball|down-away": 0.0967,
+    "Slider|down-away": 0.0871,
+    "Changeup|middle": 0.0573,
+    "Slider|middle": 0.0536,
+    "Fastball|down-in": 0.0414,
+    "Slider|up-away": 0.0267
+   },
+   "2-1": {
+    "Fastball|middle": 0.5476,
+    "Slider|middle": 0.1861,
+    "Changeup|middle": 0.1852,
+    "Fastball|up-in": 0.0811
+   },
+   "3-1": {
+    "Fastball|middle": 0.7956,
+    "Changeup|middle": 0.1022,
+    "Slider|middle": 0.1022
+   },
+   "0-2": {
+    "Changeup|down-away": 0.3472,
+    "Fastball|up-away": 0.3139,
+    "Slider|chase": 0.0868,
+    "Fastball|down-away": 0.0773,
+    "Slider|down-away": 0.0639,
+    "Slider|down-in": 0.0606,
+    "Fastball|middle": 0.0197,
+    "Slider|middle": 0.0158,
+    "Slider|up-away": 0.0148
+   },
+   "1-2": {
+    "Changeup|down-away": 0.2872,
+    "Fastball|up-away": 0.263,
+    "Slider|down-away": 0.1067,
+    "Fastball|down-away": 0.0954,
+    "Fastball|middle": 0.0765,
+    "Slider|down-in": 0.0725,
+    "Slider|middle": 0.044,
+    "Slider|up-away": 0.0331,
+    "Changeup|middle": 0.0215
+   },
+   "2-2": {
+    "Fastball|middle": 0.4466,
+    "Changeup|middle": 0.2284,
+    "Slider|down-away": 0.1364,
+    "Slider|middle": 0.1307,
+    "Slider|up-away": 0.058
+   },
+   "3-2": {
+    "Fastball|middle": 0.5828,
+    "Slider|middle": 0.2771,
+    "Changeup|middle": 0.1402
+   }
+  },
+  "college_d3 slider_best on1_0 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2955,
+    "Fastball|middle": 0.2311,
+    "Slider|down-away": 0.1643,
+    "Slider|middle": 0.1441,
+    "Fastball|up-in": 0.1329,
+    "Changeup|down-away": 0.0242,
+    "Changeup|middle": 0.0078
+   },
+   "1-0": {
+    "Fastball|middle": 0.5045,
+    "Slider|middle": 0.2879,
+    "Fastball|up-in": 0.1611,
+    "Changeup|middle": 0.0464
+   },
+   "2-0": {
+    "Fastball|middle": 0.7806,
+    "Slider|middle": 0.1897,
+    "Changeup|middle": 0.0297
+   },
+   "3-0": {
+    "Fastball|middle": 0.9562,
+    "Slider|middle": 0.0315,
+    "Changeup|middle": 0.0123
+   },
+   "0-1": {
+    "Slider|down-away": 0.2953,
+    "Fastball|down-away": 0.1709,
+    "Fastball|up-away": 0.1323,
+    "Fastball|up-in": 0.1059,
+    "Fastball|middle": 0.101,
+    "Changeup|down-away": 0.084,
+    "Slider|middle": 0.0651,
+    "Slider|up-away": 0.0456
+   },
+   "1-1": {
+    "Fastball|middle": 0.5402,
+    "Slider|middle": 0.378,
+    "Changeup|middle": 0.0818
+   },
+   "2-1": {
+    "Fastball|middle": 0.6667,
+    "Slider|middle": 0.2744,
+    "Changeup|middle": 0.0589
+   },
+   "3-1": {
+    "Fastball|middle": 0.8481,
+    "Slider|middle": 0.1325,
+    "Changeup|middle": 0.0194
+   },
+   "0-2": {
+    "Slider|down-away": 0.3406,
+    "Fastball|up-away": 0.2277,
+    "Slider|chase": 0.1725,
+    "Fastball|down-away": 0.1163,
+    "Changeup|down-away": 0.095,
+    "Slider|up-away": 0.0264,
+    "Slider|middle": 0.0215
+   },
+   "1-2": {
+    "Slider|down-away": 0.3864,
+    "Fastball|up-away": 0.197,
+    "Fastball|down-away": 0.1414,
+    "Changeup|down-away": 0.1216,
+    "Fastball|middle": 0.0593,
+    "Slider|middle": 0.049,
+    "Slider|up-away": 0.0451
+   },
+   "2-2": {
+    "Fastball|middle": 0.4156,
+    "Slider|down-away": 0.3648,
+    "Changeup|middle": 0.1101,
+    "Slider|middle": 0.0971,
+    "Slider|up-away": 0.0124
+   },
+   "3-2": {
+    "Fastball|middle": 0.598,
+    "Slider|middle": 0.3592,
+    "Changeup|middle": 0.0428
+   }
+  },
+  "college_d3 slider_best on1_0 opp i4": {
+   "0-0": {
+    "Fastball|down-away": 0.3051,
+    "Fastball|middle": 0.2638,
+    "Slider|middle": 0.2105,
+    "Changeup|middle": 0.1409,
+    "Fastball|up-in": 0.0798
+   },
+   "1-0": {
+    "Fastball|middle": 0.6102,
+    "Changeup|middle": 0.2078,
+    "Slider|middle": 0.182
+   },
+   "2-0": {
+    "Fastball|middle": 0.7405,
+    "Changeup|middle": 0.1317,
+    "Slider|middle": 0.1278
+   },
+   "3-0": {
+    "Fastball|middle": 0.9707,
+    "Slider|middle": 0.0225,
+    "Changeup|middle": 0.0068
+   },
+   "0-1": {
+    "Changeup|down-away": 0.3219,
+    "Fastball|up-away": 0.1524,
+    "Fastball|up-in": 0.1423,
+    "Fastball|down-away": 0.1082,
+    "Slider|down-away": 0.1032,
+    "Fastball|middle": 0.0972,
+    "Slider|middle": 0.0447,
+    "Changeup|middle": 0.0303
+   },
+   "1-1": {
+    "Fastball|middle": 0.4285,
+    "Changeup|middle": 0.2847,
+    "Slider|middle": 0.1752,
+    "Fastball|down-away": 0.1115
+   },
+   "2-1": {
+    "Fastball|middle": 0.6477,
+    "Slider|middle": 0.1804,
+    "Changeup|middle": 0.172
+   },
+   "3-1": {
+    "Fastball|middle": 0.8241,
+    "Slider|middle": 0.089,
+    "Changeup|middle": 0.0868
+   },
+   "0-2": {
+    "Changeup|down-away": 0.3466,
+    "Fastball|up-away": 0.3127,
+    "Slider|down-away": 0.1054,
+    "Slider|chase": 0.1023,
+    "Fastball|down-away": 0.0871,
+    "Slider|middle": 0.0278,
+    "Slider|up-away": 0.0181
+   },
+   "1-2": {
+    "Changeup|down-away": 0.294,
+    "Fastball|down-away": 0.176,
+    "Slider|down-away": 0.1652,
+    "Fastball|middle": 0.1461,
+    "Slider|middle": 0.0862,
+    "Fastball|up-away": 0.083,
+    "Slider|up-away": 0.0289,
+    "Changeup|middle": 0.0207
+   },
+   "2-2": {
+    "Slider|middle": 0.2755,
+    "Fastball|middle": 0.2392,
+    "Fastball|down-away": 0.2354,
+    "Changeup|middle": 0.213,
+    "Slider|down-away": 0.0369
+   },
+   "3-2": {
+    "Fastball|middle": 0.5545,
+    "Slider|middle": 0.3138,
+    "Changeup|middle": 0.1317
+   }
+  },
+  "college_d3 slider_best on3_1 same i4": {
+   "0-0": {
+    "Slider|down-away": 0.2181,
+    "Fastball|down-away": 0.1838,
+    "Fastball|up-in": 0.1562,
+    "Fastball|up-away": 0.1461,
+    "Fastball|middle": 0.1212,
+    "Slider|middle": 0.0777,
+    "Fastball|down-in": 0.0532,
+    "Changeup|down-away": 0.0221,
+    "Slider|up-away": 0.0146,
+    "Changeup|middle": 0.007
+   },
+   "1-0": {
+    "Slider|middle": 0.2505,
+    "Fastball|up-in": 0.1906,
+    "Fastball|down-away": 0.1842,
+    "Fastball|middle": 0.1402,
+    "Fastball|down-in": 0.1043,
+    "Fastball|up-away": 0.0799,
+    "Changeup|down-away": 0.0367,
+    "Changeup|middle": 0.0135
+   },
+   "2-0": {
+    "Fastball|up-in": 0.3986,
+    "Fastball|middle": 0.3873,
+    "Slider|middle": 0.1853,
+    "Changeup|middle": 0.0288
+   },
+   "3-0": {
+    "Fastball|middle": 0.9513,
+    "Slider|middle": 0.035,
+    "Changeup|middle": 0.0136
+   },
+   "0-1": {
+    "Slider|down-away": 0.2774,
+    "Fastball|down-away": 0.1487,
+    "Fastball|up-away": 0.1424,
+    "Fastball|up-in": 0.1211,
+    "Fastball|middle": 0.0782,
+    "Changeup|down-away": 0.0698,
+    "Slider|up-away": 0.0643,
+    "Slider|middle": 0.06,
+    "Fastball|down-in": 0.0244,
+    "Changeup|middle": 0.0137
+   },
+   "1-1": {
+    "Slider|down-away": 0.2816,
+    "Fastball|down-away": 0.16,
+    "Fastball|up-in": 0.1485,
+    "Fastball|up-away": 0.1247,
+    "Fastball|middle": 0.1187,
+    "Slider|middle": 0.1007,
+    "Changeup|middle": 0.0657
+   },
+   "2-1": {
+    "Fastball|middle": 0.3649,
+    "Fastball|up-in": 0.3081,
+    "Slider|middle": 0.2696,
+    "Changeup|middle": 0.0573
+   },
+   "3-1": {
+    "Fastball|middle": 0.8258,
+    "Slider|middle": 0.1525,
+    "Changeup|middle": 0.0217
+   },
+   "0-2": {
+    "Fastball|up-away": 0.2765,
+    "Slider|down-away": 0.2552,
+    "Slider|chase": 0.2298,
+    "Fastball|down-away": 0.0804,
+    "Changeup|chase": 0.062,
+    "Changeup|down-away": 0.0421,
+    "Slider|up-away": 0.0355,
+    "Slider|middle": 0.0185
+   },
+   "1-2": {
+    "Slider|down-away": 0.3324,
+    "Fastball|up-away": 0.3297,
+    "Changeup|down-away": 0.0998,
+    "Fastball|down-away": 0.0777,
+    "Slider|chase": 0.0502,
+    "Slider|up-away": 0.0467,
+    "Slider|middle": 0.0401,
+    "Changeup|middle": 0.0235
+   },
+   "2-2": {
+    "Slider|down-away": 0.3232,
+    "Fastball|up-away": 0.2885,
+    "Changeup|middle": 0.1113,
+    "Fastball|down-away": 0.0976,
+    "Slider|middle": 0.093,
+    "Fastball|middle": 0.0735,
+    "Slider|up-away": 0.0129
+   },
+   "3-2": {
+    "Fastball|middle": 0.5567,
+    "Slider|down-away": 0.2169,
+    "Slider|middle": 0.1182,
+    "Slider|up-away": 0.0612,
+    "Changeup|middle": 0.047
+   }
+  },
+  "college_d3 slider_best on3_1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.1803,
+    "Slider|down-away": 0.143,
+    "Fastball|down-away": 0.142,
+    "Fastball|up-in": 0.1357,
+    "Changeup|middle": 0.1239,
+    "Fastball|middle": 0.1141,
+    "Fastball|down-in": 0.0827,
+    "Slider|middle": 0.0784
+   },
+   "1-0": {
+    "Changeup|middle": 0.1793,
+    "Fastball|up-in": 0.1781,
+    "Slider|middle": 0.1584,
+    "Fastball|down-away": 0.1538,
+    "Fastball|middle": 0.1451,
+    "Fastball|up-away": 0.1314,
+    "Fastball|down-in": 0.0538
+   },
+   "2-0": {
+    "Fastball|middle": 0.426,
+    "Fastball|up-in": 0.317,
+    "Changeup|middle": 0.1294,
+    "Slider|middle": 0.1276
+   },
+   "3-0": {
+    "Fastball|middle": 0.9674,
+    "Slider|middle": 0.0251,
+    "Changeup|middle": 0.0075
+   },
+   "0-1": {
+    "Changeup|down-away": 0.3065,
+    "Fastball|up-away": 0.1589,
+    "Fastball|up-in": 0.1471,
+    "Fastball|down-away": 0.0779,
+    "Slider|down-away": 0.0714,
+    "Fastball|middle": 0.0681,
+    "Fastball|down-in": 0.0576,
+    "Slider|middle": 0.0311,
+    "Changeup|middle": 0.0299,
+    "Slider|up-away": 0.0263,
+    "Slider|down-in": 0.0251
+   },
+   "1-1": {
+    "Changeup|middle": 0.2506,
+    "Fastball|up-in": 0.1958,
+    "Fastball|up-away": 0.1349,
+    "Fastball|middle": 0.1338,
+    "Fastball|down-away": 0.1135,
+    "Slider|middle": 0.0994,
+    "Slider|down-away": 0.0721
+   },
+   "2-1": {
+    "Fastball|middle": 0.4385,
+    "Fastball|up-in": 0.209,
+    "Slider|middle": 0.1824,
+    "Changeup|middle": 0.1701
+   },
+   "3-1": {
+    "Fastball|middle": 0.8018,
+    "Slider|middle": 0.1022,
+    "Changeup|middle": 0.096
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3797,
+    "Changeup|chase": 0.2084,
+    "Changeup|down-away": 0.1474,
+    "Slider|chase": 0.1354,
+    "Slider|down-away": 0.0766,
+    "Slider|middle": 0.0266,
+    "Slider|up-away": 0.0181,
+    "Slider|down-in": 0.0078
+   },
+   "1-2": {
+    "Fastball|up-away": 0.4144,
+    "Changeup|down-away": 0.277,
+    "Slider|down-away": 0.1786,
+    "Slider|middle": 0.1001,
+    "Changeup|middle": 0.022,
+    "Slider|up-away": 0.0078
+   },
+   "2-2": {
+    "Fastball|up-away": 0.2605,
+    "Changeup|middle": 0.2012,
+    "Slider|down-away": 0.1767,
+    "Slider|middle": 0.1406,
+    "Fastball|down-away": 0.1174,
+    "Fastball|middle": 0.0833,
+    "Slider|up-away": 0.0202
+   },
+   "3-2": {
+    "Fastball|middle": 0.5267,
+    "Slider|middle": 0.1838,
+    "Changeup|middle": 0.1445,
+    "Slider|down-in": 0.0782,
+    "Slider|up-away": 0.0668
+   }
+  },
+  "college_d3 slider_best loaded1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.5359,
+    "Slider|middle": 0.3027,
+    "Fastball|down-away": 0.1277,
+    "Changeup|down-away": 0.0254,
+    "Changeup|middle": 0.0083
+   },
+   "1-0": {
+    "Fastball|middle": 0.6679,
+    "Slider|middle": 0.2887,
+    "Changeup|middle": 0.0434
+   },
+   "2-0": {
+    "Fastball|middle": 0.798,
+    "Slider|middle": 0.1762,
+    "Changeup|middle": 0.0258
+   },
+   "3-0": {
+    "Fastball|middle": 0.9628,
+    "Slider|middle": 0.0272,
+    "Changeup|middle": 0.01
+   },
+   "0-1": {
+    "Slider|down-away": 0.333,
+    "Fastball|down-away": 0.2498,
+    "Fastball|middle": 0.1564,
+    "Fastball|up-away": 0.0975,
+    "Changeup|down-away": 0.0824,
+    "Slider|middle": 0.0809
+   },
+   "1-1": {
+    "Fastball|middle": 0.5499,
+    "Slider|middle": 0.3751,
+    "Changeup|middle": 0.075
+   },
+   "2-1": {
+    "Fastball|middle": 0.6837,
+    "Slider|middle": 0.2653,
+    "Changeup|middle": 0.051
+   },
+   "3-1": {
+    "Fastball|middle": 0.8636,
+    "Slider|middle": 0.1205,
+    "Changeup|middle": 0.0159
+   },
+   "0-2": {
+    "Slider|down-away": 0.3399,
+    "Fastball|up-away": 0.302,
+    "Slider|chase": 0.1732,
+    "Changeup|down-away": 0.0903,
+    "Fastball|down-away": 0.0754,
+    "Slider|middle": 0.0193
+   },
+   "1-2": {
+    "Slider|down-away": 0.4076,
+    "Fastball|up-away": 0.3189,
+    "Changeup|down-away": 0.0925,
+    "Fastball|down-away": 0.0753,
+    "Slider|middle": 0.0524,
+    "Changeup|middle": 0.0274,
+    "Fastball|middle": 0.0259
+   },
+   "2-2": {
+    "Slider|down-away": 0.3447,
+    "Fastball|middle": 0.2722,
+    "Fastball|down-away": 0.1526,
+    "Changeup|middle": 0.1054,
+    "Slider|middle": 0.0747,
+    "Fastball|up-away": 0.0302,
+    "Slider|up-away": 0.0202
+   },
+   "3-2": {
+    "Fastball|middle": 0.5828,
+    "Slider|middle": 0.3775,
+    "Changeup|middle": 0.0398
+   }
+  },
+  "college_d3 slider_best loaded1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.3967,
+    "Fastball|down-away": 0.2497,
+    "Slider|middle": 0.2156,
+    "Changeup|middle": 0.138
+   },
+   "1-0": {
+    "Fastball|middle": 0.6289,
+    "Changeup|middle": 0.1929,
+    "Slider|middle": 0.1782
+   },
+   "2-0": {
+    "Fastball|middle": 0.7632,
+    "Slider|middle": 0.1194,
+    "Changeup|middle": 0.1173
+   },
+   "3-0": {
+    "Fastball|middle": 0.9749,
+    "Slider|middle": 0.0194,
+    "Changeup|middle": 0.0057
+   },
+   "0-1": {
+    "Changeup|down-away": 0.3323,
+    "Fastball|down-away": 0.24,
+    "Fastball|middle": 0.2364,
+    "Slider|down-away": 0.1059,
+    "Slider|middle": 0.0549,
+    "Changeup|middle": 0.0305
+   },
+   "1-1": {
+    "Fastball|middle": 0.5463,
+    "Changeup|middle": 0.2729,
+    "Slider|middle": 0.1808
+   },
+   "2-1": {
+    "Fastball|middle": 0.6706,
+    "Slider|middle": 0.1757,
+    "Changeup|middle": 0.1537
+   },
+   "3-1": {
+    "Fastball|middle": 0.8447,
+    "Slider|middle": 0.0813,
+    "Changeup|middle": 0.074
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3697,
+    "Changeup|down-away": 0.3281,
+    "Slider|down-away": 0.198,
+    "Slider|middle": 0.0796,
+    "Fastball|down-away": 0.0246
+   },
+   "1-2": {
+    "Fastball|up-away": 0.2744,
+    "Changeup|down-away": 0.266,
+    "Slider|middle": 0.1557,
+    "Slider|down-away": 0.1417,
+    "Fastball|down-away": 0.0832,
+    "Fastball|middle": 0.0577,
+    "Changeup|middle": 0.0214
+   },
+   "2-2": {
+    "Fastball|down-away": 0.2812,
+    "Changeup|middle": 0.202,
+    "Fastball|middle": 0.1698,
+    "Slider|middle": 0.1588,
+    "Slider|down-away": 0.1565,
+    "Slider|up-away": 0.0317
+   },
+   "3-2": {
+    "Fastball|middle": 0.5313,
+    "Slider|middle": 0.3297,
+    "Changeup|middle": 0.1389
+   }
+  },
+  "college_d3 plus_changeup empty1 same i4": {
+   "0-0": {
+    "Slider|down-away": 0.2388,
+    "Fastball|down-away": 0.2042,
+    "Fastball|up-in": 0.1689,
+    "Fastball|up-away": 0.1445,
+    "Fastball|middle": 0.1289,
+    "Slider|middle": 0.0713,
+    "Changeup|down-away": 0.0134,
+    "Changeup|down-in": 0.0127,
+    "Fastball|down-in": 0.007,
+    "Changeup|middle": 0.0058,
+    "Changeup|up-away": 0.0027,
+    "Changeup|up-in": 0.0019
+   },
+   "1-0": {
+    "Fastball|up-in": 0.3605,
+    "Fastball|middle": 0.3024,
+    "Slider|middle": 0.2667,
+    "Changeup|down-in": 0.0292,
+    "Changeup|down-away": 0.0241,
+    "Changeup|middle": 0.0128,
+    "Changeup|up-away": 0.0033,
+    "Changeup|up-in": 0.0011
+   },
+   "2-0": {
+    "Fastball|middle": 0.7611,
+    "Slider|middle": 0.1991,
+    "Changeup|middle": 0.0398
+   },
+   "3-0": {
+    "Fastball|middle": 0.9414,
+    "Slider|middle": 0.0364,
+    "Changeup|middle": 0.0222
+   },
+   "0-1": {
+    "Slider|down-away": 0.3286,
+    "Fastball|down-away": 0.187,
+    "Fastball|up-away": 0.1705,
+    "Fastball|middle": 0.0974,
+    "Slider|middle": 0.0589,
+    "Fastball|up-in": 0.0477,
+    "Changeup|down-in": 0.0427,
+    "Changeup|down-away": 0.0421,
+    "Changeup|middle": 0.0115,
+    "Changeup|up-in": 0.0082,
+    "Changeup|up-away": 0.0054
+   },
+   "1-1": {
+    "Fastball|middle": 0.5197,
+    "Slider|middle": 0.3567,
+    "Changeup|down-away": 0.0773,
+    "Changeup|middle": 0.0304,
+    "Changeup|up-away": 0.0129,
+    "Changeup|down-in": 0.003
+   },
+   "2-1": {
+    "Fastball|middle": 0.6434,
+    "Slider|middle": 0.2726,
+    "Changeup|middle": 0.084
+   },
+   "3-1": {
+    "Fastball|middle": 0.8203,
+    "Slider|middle": 0.1474,
+    "Changeup|middle": 0.0323
+   },
+   "0-2": {
+    "Slider|down-away": 0.4602,
+    "Fastball|up-away": 0.2476,
+    "Fastball|down-away": 0.1201,
+    "Changeup|down-away": 0.0606,
+    "Changeup|chase": 0.0583,
+    "Changeup|down-in": 0.0414,
+    "Changeup|middle": 0.0062,
+    "Changeup|up-away": 0.0055
+   },
+   "1-2": {
+    "Slider|down-away": 0.3816,
+    "Fastball|up-away": 0.2449,
+    "Fastball|down-away": 0.153,
+    "Changeup|down-away": 0.1073,
+    "Changeup|down-in": 0.0644,
+    "Changeup|middle": 0.0276,
+    "Changeup|up-away": 0.0211
+   },
+   "2-2": {
+    "Fastball|middle": 0.3954,
+    "Changeup|down-away": 0.1809,
+    "Slider|down-away": 0.1698,
+    "Slider|middle": 0.1344,
+    "Changeup|middle": 0.0762,
+    "Changeup|up-away": 0.0433
+   },
+   "3-2": {
+    "Fastball|middle": 0.6156,
+    "Slider|middle": 0.2087,
+    "Changeup|middle": 0.1757
+   }
+  },
+  "college_d3 plus_changeup empty1 opp i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2715,
+    "Fastball|middle": 0.1971,
+    "Slider|down-away": 0.1475,
+    "Changeup|down-away": 0.0895,
+    "Fastball|up-away": 0.0752,
+    "Slider|middle": 0.0721,
+    "Changeup|down-in": 0.0427,
+    "Changeup|up-away": 0.039,
+    "Fastball|up-in": 0.0375,
+    "Changeup|middle": 0.027,
+    "Changeup|up-in": 0.001
+   },
+   "1-0": {
+    "Fastball|middle": 0.5301,
+    "Slider|middle": 0.1608,
+    "Changeup|down-away": 0.1411,
+    "Changeup|down-in": 0.0707,
+    "Changeup|up-away": 0.0552,
+    "Changeup|middle": 0.042,
+    "Changeup|up-in": 0.0
+   },
+   "2-0": {
+    "Fastball|middle": 0.7017,
+    "Changeup|middle": 0.1679,
+    "Slider|middle": 0.1305
+   },
+   "3-0": {
+    "Fastball|middle": 0.9618,
+    "Slider|middle": 0.026,
+    "Changeup|middle": 0.0122
+   },
+   "0-1": {
+    "Changeup|down-away": 0.2468,
+    "Fastball|down-away": 0.2406,
+    "Fastball|middle": 0.1889,
+    "Slider|down-away": 0.1095,
+    "Changeup|down-in": 0.0771,
+    "Changeup|up-away": 0.0656,
+    "Slider|middle": 0.0363,
+    "Changeup|middle": 0.0317,
+    "Changeup|up-in": 0.0035
+   },
+   "1-1": {
+    "Fastball|middle": 0.4574,
+    "Slider|middle": 0.1521,
+    "Changeup|down-away": 0.1377,
+    "Changeup|up-away": 0.1247,
+    "Changeup|middle": 0.0936,
+    "Changeup|down-in": 0.0345
+   },
+   "2-1": {
+    "Fastball|middle": 0.5981,
+    "Changeup|middle": 0.2297,
+    "Slider|middle": 0.1723
+   },
+   "3-1": {
+    "Fastball|middle": 0.7692,
+    "Changeup|middle": 0.1356,
+    "Slider|middle": 0.0952
+   },
+   "0-2": {
+    "Fastball|up-away": 0.287,
+    "Changeup|chase": 0.1969,
+    "Changeup|down-away": 0.1853,
+    "Slider|chase": 0.1112,
+    "Fastball|down-away": 0.0706,
+    "Slider|down-away": 0.0634,
+    "Changeup|down-in": 0.0391,
+    "Changeup|up-away": 0.0356,
+    "Changeup|middle": 0.0109
+   },
+   "1-2": {
+    "Changeup|down-away": 0.2528,
+    "Fastball|up-away": 0.243,
+    "Slider|down-away": 0.1399,
+    "Fastball|down-away": 0.0893,
+    "Changeup|up-away": 0.0781,
+    "Changeup|down-in": 0.0747,
+    "Fastball|middle": 0.0625,
+    "Slider|middle": 0.0361,
+    "Changeup|middle": 0.0235
+   },
+   "2-2": {
+    "Fastball|middle": 0.3747,
+    "Slider|middle": 0.1673,
+    "Changeup|down-in": 0.1572,
+    "Changeup|up-away": 0.1527,
+    "Changeup|middle": 0.0796,
+    "Changeup|down-away": 0.0685
+   },
+   "3-2": {
+    "Fastball|middle": 0.515,
+    "Changeup|middle": 0.3393,
+    "Slider|middle": 0.1457
+   }
+  },
+  "college_d3 plus_changeup on1_0 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.6256,
+    "Slider|down-away": 0.199,
+    "Slider|middle": 0.1382,
+    "Changeup|middle": 0.0257,
+    "Changeup|down-away": 0.0097,
+    "Changeup|up-away": 0.0018
+   },
+   "1-0": {
+    "Fastball|middle": 0.6582,
+    "Slider|middle": 0.2799,
+    "Changeup|middle": 0.0619
+   },
+   "2-0": {
+    "Fastball|middle": 0.779,
+    "Slider|middle": 0.1794,
+    "Changeup|middle": 0.0416
+   },
+   "3-0": {
+    "Fastball|middle": 0.9446,
+    "Slider|middle": 0.0298,
+    "Changeup|middle": 0.0255
+   },
+   "0-1": {
+    "Fastball|middle": 0.4483,
+    "Slider|down-away": 0.4312,
+    "Changeup|down-away": 0.084,
+    "Changeup|middle": 0.0264,
+    "Changeup|up-away": 0.0102
+   },
+   "1-1": {
+    "Fastball|middle": 0.5423,
+    "Slider|middle": 0.3498,
+    "Changeup|middle": 0.1079
+   },
+   "2-1": {
+    "Fastball|middle": 0.6614,
+    "Slider|middle": 0.246,
+    "Changeup|middle": 0.0926
+   },
+   "3-1": {
+    "Fastball|middle": 0.8416,
+    "Slider|middle": 0.1232,
+    "Changeup|middle": 0.0352
+   },
+   "0-2": {
+    "Slider|down-away": 0.446,
+    "Fastball|up-away": 0.2445,
+    "Changeup|down-away": 0.1496,
+    "Fastball|down-away": 0.1199,
+    "Changeup|chase": 0.0147,
+    "Changeup|up-away": 0.0132,
+    "Changeup|middle": 0.0122
+   },
+   "1-2": {
+    "Slider|down-away": 0.3587,
+    "Fastball|up-away": 0.2266,
+    "Changeup|down-away": 0.1809,
+    "Fastball|down-away": 0.1536,
+    "Changeup|middle": 0.0443,
+    "Changeup|up-away": 0.0359
+   },
+   "2-2": {
+    "Fastball|middle": 0.3669,
+    "Changeup|down-away": 0.218,
+    "Slider|down-away": 0.1958,
+    "Changeup|middle": 0.0846,
+    "Slider|middle": 0.0774,
+    "Changeup|up-away": 0.0573
+   },
+   "3-2": {
+    "Changeup|middle": 0.8095,
+    "Changeup|up-away": 0.1905
+   }
+  },
+  "college_d3 plus_changeup on1_0 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.6002,
+    "Slider|middle": 0.215,
+    "Changeup|middle": 0.1847
+   },
+   "1-0": {
+    "Fastball|middle": 0.5822,
+    "Changeup|middle": 0.2543,
+    "Slider|middle": 0.1636
+   },
+   "2-0": {
+    "Fastball|middle": 0.7089,
+    "Changeup|middle": 0.175,
+    "Slider|middle": 0.1162
+   },
+   "3-0": {
+    "Fastball|middle": 0.9646,
+    "Slider|middle": 0.0212,
+    "Changeup|middle": 0.0141
+   },
+   "0-1": {
+    "Fastball|middle": 0.3905,
+    "Changeup|down-away": 0.319,
+    "Slider|down-away": 0.1253,
+    "Changeup|up-away": 0.0821,
+    "Changeup|middle": 0.0481,
+    "Slider|middle": 0.0224,
+    "Fastball|down-away": 0.0075,
+    "Changeup|down-in": 0.005
+   },
+   "1-1": {
+    "Fastball|middle": 0.4922,
+    "Changeup|middle": 0.3532,
+    "Slider|middle": 0.1546
+   },
+   "2-1": {
+    "Fastball|middle": 0.598,
+    "Changeup|middle": 0.2502,
+    "Slider|middle": 0.1519
+   },
+   "3-1": {
+    "Fastball|middle": 0.775,
+    "Changeup|middle": 0.1469,
+    "Slider|middle": 0.0781
+   },
+   "0-2": {
+    "Fastball|up-away": 0.2635,
+    "Changeup|down-away": 0.2249,
+    "Changeup|chase": 0.2065,
+    "Slider|down-away": 0.1417,
+    "Fastball|down-away": 0.0715,
+    "Changeup|up-away": 0.0414,
+    "Changeup|down-in": 0.0397,
+    "Changeup|middle": 0.0108
+   },
+   "1-2": {
+    "Changeup|down-away": 0.2879,
+    "Slider|down-away": 0.1391,
+    "Fastball|down-away": 0.1302,
+    "Fastball|up-away": 0.1253,
+    "Changeup|up-away": 0.0983,
+    "Fastball|middle": 0.0939,
+    "Changeup|down-in": 0.075,
+    "Changeup|middle": 0.026,
+    "Slider|middle": 0.0242
+   },
+   "2-2": {
+    "Fastball|middle": 0.3556,
+    "Changeup|down-in": 0.1798,
+    "Changeup|up-away": 0.1613,
+    "Slider|middle": 0.1426,
+    "Changeup|down-away": 0.0898,
+    "Changeup|middle": 0.0707
+   },
+   "3-2": {
+    "Fastball|middle": 0.5543,
+    "Changeup|middle": 0.4457
+   }
+  },
+  "college_d3 plus_changeup on3_1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.4759,
+    "Slider|down-away": 0.2697,
+    "Fastball|down-away": 0.1323,
+    "Slider|middle": 0.0799,
+    "Changeup|down-away": 0.0189,
+    "Changeup|down-in": 0.0109,
+    "Changeup|middle": 0.0085,
+    "Changeup|up-away": 0.0039
+   },
+   "1-0": {
+    "Fastball|up-in": 0.3788,
+    "Fastball|middle": 0.2865,
+    "Slider|middle": 0.217,
+    "Slider|down-away": 0.0445,
+    "Changeup|down-in": 0.0284,
+    "Changeup|down-away": 0.0245,
+    "Changeup|middle": 0.0115,
+    "Changeup|up-in": 0.0054,
+    "Changeup|up-away": 0.0035
+   },
+   "2-0": {
+    "Fastball|middle": 0.3939,
+    "Fastball|up-in": 0.3901,
+    "Slider|middle": 0.1744,
+    "Changeup|middle": 0.0204,
+    "Changeup|down-in": 0.0148,
+    "Changeup|up-away": 0.0063
+   },
+   "3-0": {
+    "Fastball|middle": 0.9452,
+    "Slider|middle": 0.0332,
+    "Changeup|middle": 0.0216
+   },
+   "0-1": {
+    "Slider|down-away": 0.3454,
+    "Fastball|down-away": 0.2048,
+    "Fastball|up-away": 0.2023,
+    "Fastball|middle": 0.0998,
+    "Changeup|down-away": 0.05,
+    "Changeup|down-in": 0.0458,
+    "Slider|middle": 0.0317,
+    "Changeup|middle": 0.0136,
+    "Changeup|up-away": 0.0066
+   },
+   "1-1": {
+    "Fastball|middle": 0.5266,
+    "Slider|middle": 0.3463,
+    "Changeup|down-away": 0.0676,
+    "Changeup|middle": 0.0417,
+    "Changeup|up-away": 0.0178
+   },
+   "2-1": {
+    "Fastball|middle": 0.6464,
+    "Slider|middle": 0.2587,
+    "Changeup|middle": 0.0765,
+    "Changeup|up-away": 0.0184
+   },
+   "3-1": {
+    "Fastball|middle": 0.8259,
+    "Slider|middle": 0.1394,
+    "Changeup|middle": 0.0347
+   },
+   "0-2": {
+    "Fastball|up-away": 0.5326,
+    "Changeup|chase": 0.2082,
+    "Changeup|down-away": 0.1888,
+    "Fastball|down-away": 0.0514,
+    "Changeup|up-away": 0.0135,
+    "Changeup|middle": 0.0054
+   },
+   "1-2": {
+    "Fastball|up-away": 0.379,
+    "Slider|down-away": 0.3441,
+    "Changeup|down-away": 0.2004,
+    "Changeup|up-away": 0.0424,
+    "Changeup|middle": 0.0342
+   },
+   "2-2": {
+    "Fastball|up-away": 0.2409,
+    "Changeup|down-away": 0.2269,
+    "Slider|middle": 0.2049,
+    "Fastball|down-away": 0.1874,
+    "Changeup|up-away": 0.0613,
+    "Changeup|middle": 0.0522,
+    "Slider|down-away": 0.0264
+   },
+   "3-2": {
+    "Changeup|middle": 0.3768,
+    "Changeup|down-away": 0.3622,
+    "Changeup|up-away": 0.2611
+   }
+  },
+  "college_d3 plus_changeup on3_1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.5517,
+    "Slider|middle": 0.1266,
+    "Changeup|down-away": 0.1056,
+    "Slider|down-away": 0.0919,
+    "Changeup|up-away": 0.0488,
+    "Changeup|down-in": 0.0408,
+    "Changeup|middle": 0.0347
+   },
+   "1-0": {
+    "Fastball|middle": 0.526,
+    "Slider|middle": 0.153,
+    "Changeup|down-away": 0.143,
+    "Changeup|down-in": 0.0755,
+    "Changeup|up-away": 0.0598,
+    "Changeup|middle": 0.0397,
+    "Changeup|up-in": 0.003
+   },
+   "2-0": {
+    "Fastball|middle": 0.691,
+    "Slider|middle": 0.1234,
+    "Changeup|middle": 0.1058,
+    "Changeup|up-away": 0.0707,
+    "Changeup|down-in": 0.0091
+   },
+   "3-0": {
+    "Fastball|middle": 0.9644,
+    "Slider|middle": 0.0237,
+    "Changeup|middle": 0.0119
+   },
+   "0-1": {
+    "Fastball|middle": 0.3509,
+    "Changeup|down-away": 0.2633,
+    "Slider|down-away": 0.1097,
+    "Changeup|down-in": 0.0865,
+    "Changeup|up-away": 0.0773,
+    "Fastball|up-away": 0.0411,
+    "Slider|middle": 0.0356,
+    "Changeup|middle": 0.0356
+   },
+   "1-1": {
+    "Fastball|middle": 0.465,
+    "Changeup|up-away": 0.2115,
+    "Changeup|middle": 0.1573,
+    "Slider|middle": 0.149,
+    "Changeup|down-in": 0.0173
+   },
+   "2-1": {
+    "Fastball|middle": 0.5819,
+    "Changeup|middle": 0.1783,
+    "Slider|middle": 0.1592,
+    "Changeup|up-away": 0.0805
+   },
+   "3-1": {
+    "Fastball|middle": 0.7652,
+    "Changeup|middle": 0.1457,
+    "Slider|middle": 0.089
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3284,
+    "Changeup|chase": 0.3002,
+    "Slider|chase": 0.1538,
+    "Changeup|down-away": 0.1391,
+    "Changeup|up-away": 0.0397,
+    "Changeup|down-in": 0.0331,
+    "Changeup|middle": 0.0056
+   },
+   "1-2": {
+    "Fastball|up-away": 0.3514,
+    "Changeup|chase": 0.1792,
+    "Changeup|down-away": 0.1701,
+    "Slider|down-away": 0.1192,
+    "Changeup|up-away": 0.0694,
+    "Changeup|down-in": 0.058,
+    "Slider|middle": 0.0394,
+    "Changeup|middle": 0.0135
+   },
+   "2-2": {
+    "Changeup|down-in": 0.1989,
+    "Changeup|up-away": 0.1907,
+    "Slider|middle": 0.1567,
+    "Fastball|down-away": 0.1461,
+    "Fastball|middle": 0.1351,
+    "Fastball|up-away": 0.1235,
+    "Changeup|middle": 0.0455,
+    "Changeup|down-away": 0.0036
+   },
+   "3-2": {
+    "Fastball|middle": 0.4659,
+    "Changeup|down-in": 0.2045,
+    "Changeup|up-away": 0.1799,
+    "Slider|middle": 0.1293,
+    "Changeup|middle": 0.0203
+   }
+  },
+  "college_d3 plus_changeup loaded1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.6711,
+    "Slider|middle": 0.2764,
+    "Changeup|middle": 0.0394,
+    "Slider|down-away": 0.0131
+   },
+   "1-0": {
+    "Fastball|middle": 0.674,
+    "Slider|middle": 0.2597,
+    "Changeup|middle": 0.0664
+   },
+   "2-0": {
+    "Fastball|middle": 0.7969,
+    "Slider|middle": 0.1595,
+    "Changeup|middle": 0.0436
+   },
+   "3-0": {
+    "Fastball|middle": 0.9465,
+    "Changeup|middle": 0.029,
+    "Slider|middle": 0.0245
+   },
+   "0-1": {
+    "Fastball|middle": 0.4528,
+    "Slider|down-away": 0.4145,
+    "Changeup|down-away": 0.0906,
+    "Changeup|middle": 0.0333,
+    "Changeup|up-away": 0.0088
+   },
+   "1-1": {
+    "Fastball|middle": 0.553,
+    "Slider|middle": 0.3255,
+    "Changeup|middle": 0.1215
+   },
+   "2-1": {
+    "Fastball|middle": 0.8558,
+    "Changeup|middle": 0.1442
+   },
+   "3-1": {
+    "Fastball|middle": 0.954,
+    "Changeup|middle": 0.046
+   },
+   "0-2": {
+    "Changeup|chase": 0.6742,
+    "Changeup|down-away": 0.2894,
+    "Changeup|up-away": 0.0365
+   },
+   "1-2": {
+    "Changeup|down-away": 0.7969,
+    "Changeup|up-away": 0.2031
+   },
+   "2-2": {
+    "Fastball|middle": 0.4598,
+    "Changeup|down-away": 0.4101,
+    "Changeup|up-away": 0.1038,
+    "Fastball|down-away": 0.0264
+   },
+   "3-2": {
+    "Changeup|middle": 0.472,
+    "Changeup|up-away": 0.2659,
+    "Changeup|down-away": 0.2622
+   }
+  },
+  "college_d3 plus_changeup loaded1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.6033,
+    "Slider|middle": 0.1999,
+    "Changeup|middle": 0.1969
+   },
+   "1-0": {
+    "Fastball|middle": 0.5821,
+    "Changeup|middle": 0.2695,
+    "Slider|middle": 0.1484
+   },
+   "2-0": {
+    "Fastball|middle": 0.7941,
+    "Changeup|middle": 0.2059
+   },
+   "3-0": {
+    "Fastball|middle": 0.9663,
+    "Slider|middle": 0.0174,
+    "Changeup|middle": 0.0163
+   },
+   "0-1": {
+    "Fastball|middle": 0.3984,
+    "Changeup|down-away": 0.2584,
+    "Slider|down-away": 0.1372,
+    "Changeup|up-away": 0.125,
+    "Changeup|middle": 0.081
+   },
+   "1-1": {
+    "Fastball|middle": 0.4823,
+    "Changeup|middle": 0.3783,
+    "Slider|middle": 0.1394
+   },
+   "2-1": {
+    "Fastball|middle": 0.6695,
+    "Changeup|middle": 0.3305
+   },
+   "3-1": {
+    "Fastball|middle": 0.8169,
+    "Changeup|middle": 0.1831
+   },
+   "0-2": {
+    "Changeup|chase": 0.3144,
+    "Fastball|up-away": 0.3046,
+    "Changeup|down-away": 0.1718,
+    "Slider|chase": 0.0929,
+    "Slider|down-away": 0.0512,
+    "Changeup|up-away": 0.0375,
+    "Changeup|down-in": 0.0259,
+    "Changeup|middle": 0.0016
+   },
+   "1-2": {
+    "Changeup|down-away": 0.3105,
+    "Fastball|up-away": 0.2412,
+    "Changeup|up-away": 0.0975,
+    "Fastball|down-away": 0.0736,
+    "Slider|middle": 0.0689,
+    "Changeup|down-in": 0.0684,
+    "Slider|down-away": 0.0664,
+    "Fastball|middle": 0.0569,
+    "Changeup|middle": 0.0167
+   },
+   "2-2": {
+    "Fastball|middle": 0.3107,
+    "Changeup|down-in": 0.2403,
+    "Changeup|up-away": 0.2121,
+    "Slider|middle": 0.129,
+    "Fastball|down-away": 0.0627,
+    "Changeup|down-away": 0.0451
+   },
+   "3-2": {
+    "Fastball|middle": 0.4836,
+    "Changeup|down-in": 0.2375,
+    "Changeup|up-away": 0.1652,
+    "Changeup|middle": 0.1137
+   }
+  },
+  "college_d3 two_pitch empty1 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2389,
+    "Fastball|up-in": 0.1998,
+    "Fastball|up-away": 0.1841,
+    "Fastball|middle": 0.1589,
+    "Fastball|down-in": 0.1322,
+    "Curveball|down-away": 0.0658,
+    "Curveball|middle": 0.0204
+   },
+   "1-0": {
+    "Fastball|up-in": 0.2729,
+    "Fastball|middle": 0.2412,
+    "Fastball|down-away": 0.2407,
+    "Fastball|down-in": 0.1994,
+    "Curveball|middle": 0.0458
+   },
+   "2-0": {
+    "Fastball|middle": 0.8332,
+    "Fastball|up-in": 0.1417,
+    "Curveball|middle": 0.0251
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|down-away": 0.2222,
+    "Fastball|up-away": 0.2036,
+    "Fastball|up-in": 0.197,
+    "Fastball|down-in": 0.1443,
+    "Fastball|middle": 0.1251,
+    "Curveball|down-away": 0.0882,
+    "Curveball|middle": 0.0193,
+    "Curveball|up-away": 0.0002
+   },
+   "1-1": {
+    "Fastball|down-away": 0.2497,
+    "Fastball|up-in": 0.2412,
+    "Fastball|middle": 0.1884,
+    "Fastball|up-away": 0.1254,
+    "Fastball|down-in": 0.103,
+    "Curveball|middle": 0.0923
+   },
+   "2-1": {
+    "Fastball|middle": 0.7121,
+    "Fastball|up-in": 0.226,
+    "Curveball|middle": 0.062
+   },
+   "3-1": {
+    "Fastball|middle": 0.9866,
+    "Curveball|middle": 0.0134
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3114,
+    "Fastball|chase": 0.185,
+    "Fastball|down-away": 0.1687,
+    "Curveball|down-away": 0.0996,
+    "Fastball|up-in": 0.0846,
+    "Curveball|chase": 0.0788,
+    "Fastball|middle": 0.0542,
+    "Curveball|middle": 0.0107,
+    "Curveball|up-away": 0.0069
+   },
+   "1-2": {
+    "Fastball|up-away": 0.3563,
+    "Fastball|down-away": 0.2456,
+    "Curveball|down-away": 0.1561,
+    "Fastball|up-in": 0.1142,
+    "Fastball|middle": 0.0935,
+    "Curveball|middle": 0.0216,
+    "Curveball|up-away": 0.0128
+   },
+   "2-2": {
+    "Fastball|middle": 0.5503,
+    "Fastball|down-away": 0.2644,
+    "Curveball|down-away": 0.1232,
+    "Curveball|middle": 0.0622
+   },
+   "3-2": {
+    "Fastball|middle": 0.9428,
+    "Curveball|middle": 0.0572
+   }
+  },
+  "college_d3 two_pitch empty1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.2251,
+    "Fastball|down-away": 0.1829,
+    "Fastball|up-in": 0.1535,
+    "Fastball|middle": 0.1393,
+    "Fastball|down-in": 0.1339,
+    "Curveball|down-away": 0.1187,
+    "Curveball|middle": 0.0465
+   },
+   "1-0": {
+    "Fastball|down-away": 0.2488,
+    "Fastball|middle": 0.2412,
+    "Fastball|up-in": 0.2409,
+    "Fastball|up-away": 0.1293,
+    "Curveball|middle": 0.1,
+    "Fastball|down-in": 0.0397
+   },
+   "2-0": {
+    "Fastball|middle": 0.9477,
+    "Curveball|middle": 0.0523
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.2566,
+    "Fastball|up-in": 0.2292,
+    "Fastball|down-away": 0.1327,
+    "Curveball|down-away": 0.1197,
+    "Fastball|down-in": 0.1152,
+    "Fastball|middle": 0.1122,
+    "Curveball|middle": 0.0345
+   },
+   "1-1": {
+    "Fastball|up-away": 0.2521,
+    "Fastball|up-in": 0.2503,
+    "Fastball|middle": 0.1758,
+    "Fastball|down-away": 0.1597,
+    "Curveball|middle": 0.1278,
+    "Fastball|down-in": 0.0342
+   },
+   "2-1": {
+    "Fastball|middle": 0.8901,
+    "Curveball|middle": 0.1099
+   },
+   "3-1": {
+    "Fastball|middle": 0.9727,
+    "Curveball|middle": 0.0273
+   },
+   "0-2": {
+    "Fastball|up-away": 0.2601,
+    "Fastball|chase": 0.1916,
+    "Fastball|up-in": 0.1375,
+    "Curveball|chase": 0.0978,
+    "Curveball|down-away": 0.0905,
+    "Fastball|down-away": 0.0695,
+    "Fastball|middle": 0.0502,
+    "Curveball|down-in": 0.04,
+    "Fastball|down-in": 0.0396,
+    "Curveball|middle": 0.0129,
+    "Curveball|up-away": 0.0103
+   },
+   "1-2": {
+    "Fastball|up-away": 0.3143,
+    "Fastball|up-in": 0.1772,
+    "Fastball|down-away": 0.1259,
+    "Curveball|down-away": 0.1126,
+    "Fastball|middle": 0.094,
+    "Curveball|down-in": 0.0524,
+    "Fastball|down-in": 0.0512,
+    "Curveball|chase": 0.032,
+    "Curveball|up-away": 0.0214,
+    "Curveball|middle": 0.0191
+   },
+   "2-2": {
+    "Fastball|middle": 0.448,
+    "Fastball|down-away": 0.3572,
+    "Curveball|middle": 0.1948
+   },
+   "3-2": {
+    "Fastball|middle": 0.8977,
+    "Curveball|middle": 0.1023
+   }
+  },
+  "college_d3 two_pitch on1_0 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.4739,
+    "Fastball|middle": 0.3735,
+    "Curveball|down-away": 0.0714,
+    "Fastball|up-in": 0.0596,
+    "Curveball|middle": 0.0216
+   },
+   "1-0": {
+    "Fastball|middle": 0.9479,
+    "Curveball|middle": 0.0521
+   },
+   "2-0": {
+    "Fastball|middle": 0.9776,
+    "Curveball|middle": 0.0224
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|down-away": 0.3237,
+    "Fastball|up-away": 0.2642,
+    "Fastball|middle": 0.1967,
+    "Fastball|up-in": 0.1057,
+    "Curveball|down-away": 0.0971,
+    "Curveball|middle": 0.0126
+   },
+   "1-1": {
+    "Fastball|middle": 0.8903,
+    "Curveball|middle": 0.1097
+   },
+   "2-1": {
+    "Fastball|middle": 0.9439,
+    "Curveball|middle": 0.0561
+   },
+   "3-1": {
+    "Fastball|middle": 0.9888,
+    "Curveball|middle": 0.0112
+   },
+   "0-2": {
+    "Fastball|up-away": 0.4831,
+    "Fastball|down-away": 0.3037,
+    "Curveball|down-away": 0.1813,
+    "Curveball|middle": 0.0187,
+    "Curveball|chase": 0.0131
+   },
+   "1-2": {
+    "Fastball|down-away": 0.4205,
+    "Fastball|up-away": 0.2781,
+    "Curveball|down-away": 0.186,
+    "Fastball|middle": 0.0799,
+    "Curveball|middle": 0.0355
+   },
+   "2-2": {
+    "Fastball|middle": 0.4821,
+    "Fastball|down-away": 0.3346,
+    "Curveball|middle": 0.1833
+   },
+   "3-2": {
+    "Fastball|middle": 0.938,
+    "Curveball|middle": 0.062
+   }
+  },
+  "college_d3 two_pitch on1_0 opp i4": {
+   "0-0": {
+    "Fastball|down-away": 0.415,
+    "Fastball|middle": 0.3676,
+    "Curveball|down-away": 0.1231,
+    "Curveball|middle": 0.0542,
+    "Fastball|up-away": 0.0401
+   },
+   "1-0": {
+    "Fastball|middle": 0.8885,
+    "Curveball|middle": 0.1115
+   },
+   "2-0": {
+    "Fastball|middle": 0.9542,
+    "Curveball|middle": 0.0458
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.3571,
+    "Fastball|down-away": 0.2156,
+    "Fastball|middle": 0.1947,
+    "Curveball|down-away": 0.1255,
+    "Fastball|up-in": 0.0734,
+    "Curveball|middle": 0.0337
+   },
+   "1-1": {
+    "Fastball|middle": 0.8074,
+    "Curveball|middle": 0.1495,
+    "Fastball|down-away": 0.0431
+   },
+   "2-1": {
+    "Fastball|middle": 0.9045,
+    "Curveball|middle": 0.0955
+   },
+   "3-1": {
+    "Fastball|middle": 0.9772,
+    "Curveball|middle": 0.0228
+   },
+   "0-2": {
+    "Fastball|up-away": 0.4711,
+    "Fastball|down-away": 0.1603,
+    "Curveball|down-away": 0.1506,
+    "Curveball|chase": 0.1112,
+    "Fastball|middle": 0.0849,
+    "Curveball|middle": 0.0207,
+    "Curveball|up-away": 0.0011
+   },
+   "1-2": {
+    "Fastball|down-away": 0.3389,
+    "Fastball|middle": 0.2466,
+    "Curveball|down-away": 0.2111,
+    "Fastball|up-away": 0.1438,
+    "Curveball|middle": 0.0482,
+    "Curveball|up-away": 0.0114
+   },
+   "2-2": {
+    "Fastball|middle": 0.492,
+    "Fastball|down-away": 0.2818,
+    "Curveball|middle": 0.2262
+   },
+   "3-2": {
+    "Fastball|middle": 0.8886,
+    "Curveball|middle": 0.1114
+   }
+  },
+  "college_d3 two_pitch on3_1 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2645,
+    "Fastball|up-in": 0.2214,
+    "Fastball|up-away": 0.2185,
+    "Fastball|middle": 0.1795,
+    "Curveball|down-away": 0.0638,
+    "Fastball|down-in": 0.0325,
+    "Curveball|middle": 0.0197
+   },
+   "1-0": {
+    "Fastball|up-in": 0.2862,
+    "Fastball|down-away": 0.286,
+    "Fastball|middle": 0.2332,
+    "Fastball|up-away": 0.0968,
+    "Fastball|down-in": 0.055,
+    "Curveball|middle": 0.0428
+   },
+   "2-0": {
+    "Fastball|middle": 0.5228,
+    "Fastball|up-in": 0.4555,
+    "Curveball|middle": 0.0216
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.2642,
+    "Fastball|down-away": 0.2642,
+    "Fastball|up-in": 0.2168,
+    "Fastball|middle": 0.1411,
+    "Curveball|down-away": 0.0871,
+    "Curveball|middle": 0.0187,
+    "Fastball|down-in": 0.0078
+   },
+   "1-1": {
+    "Fastball|down-away": 0.2586,
+    "Fastball|up-in": 0.2393,
+    "Fastball|up-away": 0.2181,
+    "Fastball|middle": 0.1956,
+    "Curveball|middle": 0.0883
+   },
+   "2-1": {
+    "Fastball|middle": 0.6522,
+    "Fastball|up-in": 0.2915,
+    "Curveball|middle": 0.0563
+   },
+   "3-1": {
+    "Fastball|middle": 0.9881,
+    "Curveball|middle": 0.0119
+   },
+   "0-2": {
+    "Fastball|up-away": 0.5343,
+    "Fastball|down-away": 0.2244,
+    "Curveball|down-away": 0.1274,
+    "Curveball|chase": 0.0912,
+    "Curveball|middle": 0.0169,
+    "Curveball|up-away": 0.0058
+   },
+   "1-2": {
+    "Fastball|up-away": 0.5112,
+    "Fastball|down-away": 0.2546,
+    "Curveball|down-away": 0.193,
+    "Curveball|middle": 0.0412
+   },
+   "2-2": {
+    "Fastball|up-away": 0.409,
+    "Fastball|down-away": 0.3808,
+    "Curveball|middle": 0.2076,
+    "Fastball|middle": 0.0027
+   },
+   "3-2": {
+    "Fastball|middle": 0.6523,
+    "Fastball|down-away": 0.261,
+    "Curveball|middle": 0.0867
+   }
+  },
+  "college_d3 two_pitch on3_1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.2544,
+    "Fastball|down-away": 0.1947,
+    "Fastball|up-in": 0.1734,
+    "Fastball|middle": 0.1569,
+    "Curveball|down-away": 0.1155,
+    "Fastball|down-in": 0.0603,
+    "Curveball|middle": 0.0448
+   },
+   "1-0": {
+    "Fastball|up-in": 0.236,
+    "Fastball|up-away": 0.232,
+    "Fastball|down-away": 0.2233,
+    "Fastball|middle": 0.2146,
+    "Curveball|middle": 0.0926,
+    "Fastball|down-in": 0.0016
+   },
+   "2-0": {
+    "Fastball|middle": 0.7977,
+    "Fastball|up-in": 0.1547,
+    "Curveball|middle": 0.0475
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.2865,
+    "Fastball|up-in": 0.2424,
+    "Fastball|down-away": 0.1378,
+    "Fastball|middle": 0.1182,
+    "Curveball|down-away": 0.1161,
+    "Fastball|down-in": 0.0661,
+    "Curveball|middle": 0.0331
+   },
+   "1-1": {
+    "Fastball|up-away": 0.2682,
+    "Fastball|up-in": 0.2602,
+    "Fastball|middle": 0.1872,
+    "Fastball|down-away": 0.1618,
+    "Curveball|middle": 0.1226
+   },
+   "2-1": {
+    "Fastball|middle": 0.8966,
+    "Curveball|middle": 0.102,
+    "Fastball|up-in": 0.0014
+   },
+   "3-1": {
+    "Fastball|middle": 0.9758,
+    "Curveball|middle": 0.0242
+   },
+   "0-2": {
+    "Fastball|up-away": 0.5587,
+    "Curveball|chase": 0.1404,
+    "Fastball|down-away": 0.1278,
+    "Curveball|down-away": 0.1128,
+    "Curveball|down-in": 0.0288,
+    "Curveball|middle": 0.0232,
+    "Curveball|up-away": 0.0082
+   },
+   "1-2": {
+    "Fastball|up-away": 0.5387,
+    "Curveball|down-away": 0.2166,
+    "Fastball|down-away": 0.1779,
+    "Curveball|middle": 0.0668
+   },
+   "2-2": {
+    "Fastball|up-away": 0.3619,
+    "Fastball|down-away": 0.2807,
+    "Curveball|middle": 0.2599,
+    "Fastball|middle": 0.0975
+   },
+   "3-2": {
+    "Fastball|middle": 0.7002,
+    "Curveball|middle": 0.1533,
+    "Fastball|down-away": 0.1466
+   }
+  },
+  "college_d3 two_pitch loaded1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.8164,
+    "Fastball|down-away": 0.1064,
+    "Curveball|middle": 0.0772
+   },
+   "1-0": {
+    "Fastball|middle": 0.9536,
+    "Curveball|middle": 0.0464
+   },
+   "2-0": {
+    "Fastball|middle": 0.9813,
+    "Curveball|middle": 0.0187
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|down-away": 0.4047,
+    "Fastball|middle": 0.2518,
+    "Fastball|up-away": 0.2361,
+    "Curveball|down-away": 0.0909,
+    "Curveball|middle": 0.0164
+   },
+   "1-1": {
+    "Fastball|middle": 0.8988,
+    "Curveball|middle": 0.1012
+   },
+   "2-1": {
+    "Fastball|middle": 0.9531,
+    "Curveball|middle": 0.0469
+   },
+   "3-1": {
+    "Fastball|middle": 0.9912,
+    "Curveball|middle": 0.0088
+   },
+   "0-2": {
+    "Fastball|up-away": 0.4739,
+    "Fastball|down-away": 0.2674,
+    "Curveball|down-away": 0.2236,
+    "Curveball|middle": 0.0351
+   },
+   "1-2": {
+    "Fastball|up-away": 0.4083,
+    "Fastball|down-away": 0.3378,
+    "Curveball|down-away": 0.1318,
+    "Curveball|middle": 0.1221
+   },
+   "2-2": {
+    "Fastball|down-away": 0.4525,
+    "Curveball|middle": 0.2486,
+    "Fastball|middle": 0.172,
+    "Fastball|up-away": 0.1268
+   },
+   "3-2": {
+    "Fastball|middle": 0.9025,
+    "Curveball|middle": 0.0975
+   }
+  },
+  "college_d3 two_pitch loaded1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.5754,
+    "Fastball|down-away": 0.2787,
+    "Curveball|middle": 0.1459
+   },
+   "1-0": {
+    "Fastball|middle": 0.9006,
+    "Curveball|middle": 0.0994
+   },
+   "2-0": {
+    "Fastball|middle": 0.9618,
+    "Curveball|middle": 0.0382
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|down-away": 0.3552,
+    "Fastball|middle": 0.3346,
+    "Fastball|up-away": 0.1489,
+    "Curveball|down-away": 0.127,
+    "Curveball|middle": 0.0343
+   },
+   "1-1": {
+    "Fastball|middle": 0.8613,
+    "Curveball|middle": 0.1387
+   },
+   "2-1": {
+    "Fastball|middle": 0.92,
+    "Curveball|middle": 0.08
+   },
+   "3-1": {
+    "Fastball|middle": 0.9821,
+    "Curveball|middle": 0.0179
+   },
+   "0-2": {
+    "Fastball|up-away": 0.4447,
+    "Curveball|down-away": 0.2632,
+    "Fastball|down-away": 0.2219,
+    "Curveball|middle": 0.0702
+   },
+   "1-2": {
+    "Fastball|down-away": 0.3666,
+    "Fastball|up-away": 0.3363,
+    "Curveball|middle": 0.2387,
+    "Curveball|down-away": 0.0584
+   },
+   "2-2": {
+    "Fastball|down-away": 0.4808,
+    "Curveball|middle": 0.3133,
+    "Fastball|middle": 0.2059
+   },
+   "3-2": {
+    "Fastball|middle": 0.8308,
+    "Curveball|middle": 0.1692
+   }
+  },
+  "hs slider_best empty1 same i4": {
+   "0-0": {
+    "Slider|down-away": 0.1819,
+    "Fastball|down-away": 0.1714,
+    "Fastball|up-away": 0.137,
+    "Fastball|up-in": 0.1367,
+    "Fastball|middle": 0.1131,
+    "Fastball|down-in": 0.0934,
+    "Slider|up-away": 0.0682,
+    "Slider|middle": 0.0668,
+    "Changeup|down-away": 0.0219,
+    "Changeup|middle": 0.0079,
+    "Slider|down-in": 0.0019
+   },
+   "1-0": {
+    "Slider|middle": 0.2175,
+    "Fastball|down-away": 0.1785,
+    "Fastball|up-in": 0.1503,
+    "Fastball|middle": 0.1357,
+    "Fastball|down-in": 0.1201,
+    "Fastball|up-away": 0.1116,
+    "Slider|down-away": 0.0434,
+    "Changeup|middle": 0.0429
+   },
+   "2-0": {
+    "Fastball|middle": 0.5578,
+    "Fastball|up-in": 0.211,
+    "Slider|middle": 0.1985,
+    "Changeup|middle": 0.0327
+   },
+   "3-0": {
+    "Fastball|middle": 0.9459,
+    "Slider|middle": 0.0384,
+    "Changeup|middle": 0.0157
+   },
+   "0-1": {
+    "Slider|down-away": 0.242,
+    "Fastball|down-away": 0.1283,
+    "Fastball|up-away": 0.1221,
+    "Fastball|up-in": 0.1085,
+    "Fastball|down-in": 0.0825,
+    "Fastball|middle": 0.0708,
+    "Changeup|down-away": 0.0691,
+    "Slider|up-away": 0.0654,
+    "Slider|middle": 0.0563,
+    "Slider|down-in": 0.0346,
+    "Changeup|middle": 0.016,
+    "Slider|up-in": 0.0044
+   },
+   "1-1": {
+    "Slider|down-away": 0.2354,
+    "Fastball|down-away": 0.142,
+    "Fastball|up-in": 0.1239,
+    "Fastball|up-away": 0.1166,
+    "Fastball|middle": 0.1014,
+    "Slider|middle": 0.0838,
+    "Changeup|middle": 0.0679,
+    "Slider|up-away": 0.0675,
+    "Fastball|down-in": 0.0616
+   },
+   "2-1": {
+    "Fastball|middle": 0.5776,
+    "Slider|middle": 0.289,
+    "Fastball|up-in": 0.0672,
+    "Changeup|middle": 0.0662
+   },
+   "3-1": {
+    "Fastball|middle": 0.8187,
+    "Slider|middle": 0.1569,
+    "Changeup|middle": 0.0243
+   },
+   "0-2": {
+    "Slider|down-away": 0.2623,
+    "Fastball|up-away": 0.2248,
+    "Slider|chase": 0.2153,
+    "Fastball|down-away": 0.105,
+    "Changeup|chase": 0.0671,
+    "Slider|up-away": 0.0468,
+    "Changeup|down-away": 0.0417,
+    "Slider|middle": 0.0245,
+    "Slider|down-in": 0.0125
+   },
+   "1-2": {
+    "Slider|down-away": 0.2671,
+    "Fastball|up-away": 0.2371,
+    "Fastball|down-away": 0.1408,
+    "Slider|chase": 0.1338,
+    "Changeup|down-away": 0.1212,
+    "Slider|up-away": 0.0541,
+    "Slider|middle": 0.0397,
+    "Slider|down-in": 0.0061
+   },
+   "2-2": {
+    "Fastball|middle": 0.3869,
+    "Slider|down-away": 0.3105,
+    "Slider|middle": 0.127,
+    "Changeup|middle": 0.1186,
+    "Slider|up-away": 0.057
+   },
+   "3-2": {
+    "Fastball|middle": 0.5989,
+    "Slider|middle": 0.3534,
+    "Changeup|middle": 0.0476
+   }
+  },
+  "hs slider_best empty1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.1687,
+    "Fastball|down-away": 0.1302,
+    "Fastball|up-in": 0.1104,
+    "Changeup|down-away": 0.1051,
+    "Fastball|middle": 0.1004,
+    "Fastball|down-in": 0.1,
+    "Slider|down-away": 0.0909,
+    "Slider|up-away": 0.0592,
+    "Slider|middle": 0.0491,
+    "Changeup|up-away": 0.033,
+    "Slider|down-in": 0.0272,
+    "Changeup|middle": 0.0258
+   },
+   "1-0": {
+    "Changeup|middle": 0.1847,
+    "Fastball|up-away": 0.17,
+    "Slider|middle": 0.1406,
+    "Fastball|down-away": 0.1364,
+    "Fastball|up-in": 0.13,
+    "Fastball|middle": 0.1275,
+    "Fastball|down-in": 0.0909,
+    "Slider|down-away": 0.0198
+   },
+   "2-0": {
+    "Fastball|middle": 0.6954,
+    "Changeup|middle": 0.1461,
+    "Slider|middle": 0.138,
+    "Fastball|up-in": 0.0205
+   },
+   "3-0": {
+    "Fastball|middle": 0.9639,
+    "Slider|middle": 0.0275,
+    "Changeup|middle": 0.0086
+   },
+   "0-1": {
+    "Changeup|down-away": 0.2625,
+    "Fastball|up-away": 0.1541,
+    "Fastball|up-in": 0.1312,
+    "Fastball|down-away": 0.0755,
+    "Fastball|down-in": 0.0687,
+    "Fastball|middle": 0.0644,
+    "Changeup|up-away": 0.0567,
+    "Slider|down-in": 0.0542,
+    "Slider|down-away": 0.0528,
+    "Changeup|middle": 0.0285,
+    "Slider|middle": 0.0229,
+    "Slider|up-away": 0.0223,
+    "Slider|up-in": 0.0064
+   },
+   "1-1": {
+    "Changeup|down-away": 0.2144,
+    "Fastball|up-away": 0.152,
+    "Fastball|up-in": 0.1397,
+    "Fastball|middle": 0.0992,
+    "Fastball|down-away": 0.0901,
+    "Changeup|middle": 0.08,
+    "Slider|down-away": 0.0796,
+    "Fastball|down-in": 0.052,
+    "Slider|middle": 0.0517,
+    "Slider|up-away": 0.0409,
+    "Slider|down-in": 0.0003
+   },
+   "2-1": {
+    "Fastball|middle": 0.6142,
+    "Slider|middle": 0.1912,
+    "Changeup|middle": 0.1895,
+    "Fastball|down-away": 0.0051
+   },
+   "3-1": {
+    "Fastball|middle": 0.7904,
+    "Changeup|middle": 0.105,
+    "Slider|middle": 0.1047
+   },
+   "0-2": {
+    "Fastball|up-away": 0.317,
+    "Changeup|chase": 0.2117,
+    "Changeup|down-away": 0.163,
+    "Slider|chase": 0.0904,
+    "Fastball|down-away": 0.0717,
+    "Slider|down-in": 0.0599,
+    "Slider|down-away": 0.0576,
+    "Slider|middle": 0.0144,
+    "Slider|up-away": 0.0143
+   },
+   "1-2": {
+    "Changeup|down-away": 0.2804,
+    "Fastball|up-away": 0.276,
+    "Slider|down-away": 0.0943,
+    "Slider|down-in": 0.0942,
+    "Fastball|down-away": 0.0906,
+    "Fastball|middle": 0.0637,
+    "Slider|middle": 0.0394,
+    "Slider|up-away": 0.0309,
+    "Changeup|middle": 0.0217,
+    "Slider|chase": 0.0088
+   },
+   "2-2": {
+    "Fastball|middle": 0.4215,
+    "Slider|middle": 0.2847,
+    "Changeup|middle": 0.2367,
+    "Fastball|down-away": 0.0257,
+    "Slider|down-away": 0.0193,
+    "Slider|up-away": 0.012
+   },
+   "3-2": {
+    "Fastball|middle": 0.5552,
+    "Slider|middle": 0.3058,
+    "Changeup|middle": 0.139
+   }
+  },
+  "hs slider_best on1_0 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.3616,
+    "Fastball|middle": 0.3176,
+    "Slider|middle": 0.2935,
+    "Changeup|middle": 0.0274
+   },
+   "1-0": {
+    "Fastball|middle": 0.6558,
+    "Slider|middle": 0.2962,
+    "Changeup|middle": 0.048
+   },
+   "2-0": {
+    "Fastball|middle": 0.7799,
+    "Slider|middle": 0.1898,
+    "Changeup|middle": 0.0303
+   },
+   "3-0": {
+    "Fastball|middle": 0.9547,
+    "Slider|middle": 0.0323,
+    "Changeup|middle": 0.013
+   },
+   "0-1": {
+    "Slider|down-away": 0.2807,
+    "Fastball|down-away": 0.2035,
+    "Fastball|up-away": 0.1728,
+    "Fastball|middle": 0.123,
+    "Slider|middle": 0.0719,
+    "Changeup|down-away": 0.0707,
+    "Slider|up-away": 0.062,
+    "Changeup|middle": 0.0156
+   },
+   "1-1": {
+    "Fastball|middle": 0.5367,
+    "Slider|middle": 0.3815,
+    "Changeup|middle": 0.0818
+   },
+   "2-1": {
+    "Fastball|middle": 0.6641,
+    "Slider|middle": 0.2767,
+    "Changeup|middle": 0.0593
+   },
+   "3-1": {
+    "Fastball|middle": 0.8441,
+    "Slider|middle": 0.1357,
+    "Changeup|middle": 0.0202
+   },
+   "0-2": {
+    "Slider|down-away": 0.3204,
+    "Fastball|up-away": 0.2089,
+    "Slider|chase": 0.2003,
+    "Fastball|down-away": 0.1075,
+    "Changeup|chase": 0.0603,
+    "Changeup|down-away": 0.0408,
+    "Slider|up-away": 0.0389,
+    "Slider|middle": 0.0228
+   },
+   "1-2": {
+    "Slider|down-away": 0.4002,
+    "Fastball|up-away": 0.2152,
+    "Fastball|down-away": 0.1547,
+    "Changeup|down-away": 0.1142,
+    "Slider|middle": 0.0597,
+    "Slider|up-away": 0.0561
+   },
+   "2-2": {
+    "Fastball|middle": 0.3823,
+    "Slider|down-away": 0.3055,
+    "Slider|middle": 0.2069,
+    "Changeup|middle": 0.1053
+   },
+   "3-2": {
+    "Fastball|middle": 0.5478,
+    "Slider|middle": 0.4131,
+    "Changeup|middle": 0.0392
+   }
+  },
+  "hs slider_best on1_0 opp i4": {
+   "0-0": {
+    "Fastball|down-away": 0.306,
+    "Fastball|middle": 0.2885,
+    "Slider|middle": 0.2126,
+    "Changeup|middle": 0.1422,
+    "Fastball|up-away": 0.0507
+   },
+   "1-0": {
+    "Fastball|middle": 0.6109,
+    "Changeup|middle": 0.2077,
+    "Slider|middle": 0.1814
+   },
+   "2-0": {
+    "Fastball|middle": 0.739,
+    "Changeup|middle": 0.1332,
+    "Slider|middle": 0.1278
+   },
+   "3-0": {
+    "Fastball|middle": 0.9698,
+    "Slider|middle": 0.0231,
+    "Changeup|middle": 0.0071
+   },
+   "0-1": {
+    "Fastball|up-away": 0.25,
+    "Changeup|down-away": 0.2373,
+    "Fastball|down-away": 0.1382,
+    "Fastball|middle": 0.1294,
+    "Slider|down-away": 0.0958,
+    "Changeup|middle": 0.0818,
+    "Slider|middle": 0.0476,
+    "Slider|up-away": 0.02
+   },
+   "1-1": {
+    "Fastball|middle": 0.528,
+    "Changeup|middle": 0.2913,
+    "Slider|middle": 0.1807
+   },
+   "2-1": {
+    "Fastball|middle": 0.6456,
+    "Slider|middle": 0.182,
+    "Changeup|middle": 0.1725
+   },
+   "3-1": {
+    "Fastball|middle": 0.8195,
+    "Slider|middle": 0.091,
+    "Changeup|middle": 0.0895
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3038,
+    "Changeup|chase": 0.2019,
+    "Changeup|down-away": 0.1648,
+    "Slider|chase": 0.1076,
+    "Slider|down-away": 0.0881,
+    "Fastball|down-away": 0.0773,
+    "Slider|middle": 0.0221,
+    "Slider|down-in": 0.0182,
+    "Slider|up-away": 0.0162
+   },
+   "1-2": {
+    "Fastball|up-away": 0.2809,
+    "Changeup|down-away": 0.2794,
+    "Slider|down-away": 0.1816,
+    "Fastball|down-away": 0.1268,
+    "Slider|middle": 0.1015,
+    "Changeup|middle": 0.021,
+    "Fastball|middle": 0.0089
+   },
+   "2-2": {
+    "Slider|middle": 0.3497,
+    "Fastball|middle": 0.2851,
+    "Changeup|middle": 0.21,
+    "Fastball|down-away": 0.1552
+   },
+   "3-2": {
+    "Fastball|middle": 0.5106,
+    "Slider|middle": 0.3662,
+    "Changeup|middle": 0.1232
+   }
+  },
+  "hs slider_best on3_1 same i4": {
+   "0-0": {
+    "Slider|down-away": 0.1854,
+    "Fastball|down-away": 0.1812,
+    "Fastball|up-away": 0.1454,
+    "Fastball|up-in": 0.1382,
+    "Fastball|middle": 0.1197,
+    "Fastball|down-in": 0.0713,
+    "Slider|middle": 0.071,
+    "Slider|up-away": 0.0645,
+    "Changeup|middle": 0.0233
+   },
+   "1-0": {
+    "Slider|down-away": 0.1764,
+    "Fastball|down-away": 0.1749,
+    "Fastball|up-in": 0.1476,
+    "Fastball|middle": 0.1253,
+    "Fastball|up-away": 0.1154,
+    "Fastball|down-in": 0.1108,
+    "Slider|middle": 0.11,
+    "Changeup|middle": 0.0396
+   },
+   "2-0": {
+    "Fastball|middle": 0.3886,
+    "Fastball|up-in": 0.3512,
+    "Slider|middle": 0.19,
+    "Fastball|down-in": 0.0403,
+    "Changeup|middle": 0.03
+   },
+   "3-0": {
+    "Fastball|middle": 0.9488,
+    "Slider|middle": 0.0367,
+    "Changeup|middle": 0.0145
+   },
+   "0-1": {
+    "Slider|down-away": 0.2827,
+    "Fastball|down-away": 0.1969,
+    "Fastball|up-away": 0.1889,
+    "Fastball|middle": 0.1022,
+    "Changeup|down-away": 0.0706,
+    "Slider|up-away": 0.0693,
+    "Slider|middle": 0.0665,
+    "Changeup|middle": 0.0154,
+    "Fastball|up-in": 0.0075
+   },
+   "1-1": {
+    "Slider|down-away": 0.263,
+    "Fastball|down-away": 0.2225,
+    "Fastball|middle": 0.157,
+    "Fastball|up-away": 0.1474,
+    "Slider|middle": 0.0991,
+    "Changeup|middle": 0.0685,
+    "Slider|up-away": 0.0424
+   },
+   "2-1": {
+    "Fastball|middle": 0.5978,
+    "Slider|middle": 0.2955,
+    "Changeup|middle": 0.0628,
+    "Fastball|up-in": 0.0439
+   },
+   "3-1": {
+    "Fastball|middle": 0.8186,
+    "Slider|middle": 0.1586,
+    "Changeup|middle": 0.0228
+   },
+   "0-2": {
+    "Slider|chase": 0.2792,
+    "Fastball|up-away": 0.277,
+    "Slider|down-away": 0.2673,
+    "Changeup|chase": 0.0978,
+    "Slider|up-away": 0.0368,
+    "Fastball|down-away": 0.0234,
+    "Slider|middle": 0.0184
+   },
+   "1-2": {
+    "Slider|down-away": 0.288,
+    "Fastball|up-away": 0.2559,
+    "Slider|chase": 0.1677,
+    "Fastball|down-away": 0.0929,
+    "Changeup|down-away": 0.0806,
+    "Slider|up-away": 0.0454,
+    "Changeup|chase": 0.0351,
+    "Slider|middle": 0.0345
+   },
+   "2-2": {
+    "Slider|down-away": 0.3554,
+    "Fastball|up-away": 0.1837,
+    "Fastball|down-away": 0.1581,
+    "Slider|middle": 0.134,
+    "Changeup|middle": 0.0977,
+    "Fastball|middle": 0.0698,
+    "Slider|up-away": 0.0013
+   },
+   "3-2": {
+    "Fastball|middle": 0.5348,
+    "Slider|middle": 0.4197,
+    "Changeup|middle": 0.0455
+   }
+  },
+  "hs slider_best on3_1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.1795,
+    "Fastball|down-away": 0.1359,
+    "Changeup|middle": 0.124,
+    "Fastball|up-in": 0.1178,
+    "Slider|down-away": 0.1111,
+    "Fastball|middle": 0.1081,
+    "Fastball|down-in": 0.1042,
+    "Slider|middle": 0.064,
+    "Slider|up-away": 0.0554
+   },
+   "1-0": {
+    "Changeup|middle": 0.1787,
+    "Fastball|up-away": 0.1691,
+    "Slider|middle": 0.1453,
+    "Fastball|up-in": 0.1331,
+    "Fastball|down-away": 0.1331,
+    "Fastball|middle": 0.1212,
+    "Fastball|down-in": 0.1051,
+    "Slider|down-away": 0.0144
+   },
+   "2-0": {
+    "Fastball|middle": 0.3697,
+    "Fastball|up-in": 0.2571,
+    "Changeup|middle": 0.1311,
+    "Slider|middle": 0.1282,
+    "Fastball|down-away": 0.1138
+   },
+   "3-0": {
+    "Fastball|middle": 0.9657,
+    "Slider|middle": 0.0263,
+    "Changeup|middle": 0.008
+   },
+   "0-1": {
+    "Changeup|down-away": 0.3089,
+    "Fastball|up-away": 0.1866,
+    "Fastball|up-in": 0.1467,
+    "Fastball|down-away": 0.0896,
+    "Fastball|middle": 0.0751,
+    "Slider|down-away": 0.0658,
+    "Slider|down-in": 0.0387,
+    "Changeup|middle": 0.0325,
+    "Slider|middle": 0.0304,
+    "Slider|up-away": 0.0257
+   },
+   "1-1": {
+    "Changeup|middle": 0.2549,
+    "Fastball|up-away": 0.2057,
+    "Fastball|middle": 0.1456,
+    "Fastball|down-away": 0.1299,
+    "Slider|down-away": 0.1003,
+    "Fastball|up-in": 0.0765,
+    "Slider|middle": 0.0719,
+    "Slider|up-away": 0.0151
+   },
+   "2-1": {
+    "Fastball|middle": 0.5938,
+    "Slider|middle": 0.1951,
+    "Changeup|middle": 0.1815,
+    "Fastball|down-away": 0.0296
+   },
+   "3-1": {
+    "Fastball|middle": 0.7937,
+    "Slider|middle": 0.1061,
+    "Changeup|middle": 0.1001
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3683,
+    "Changeup|chase": 0.3528,
+    "Slider|chase": 0.1262,
+    "Slider|down-away": 0.0617,
+    "Slider|down-in": 0.0617,
+    "Slider|middle": 0.016,
+    "Slider|up-away": 0.0133
+   },
+   "1-2": {
+    "Fastball|up-away": 0.3252,
+    "Changeup|chase": 0.1625,
+    "Changeup|down-away": 0.1406,
+    "Slider|down-away": 0.1066,
+    "Slider|chase": 0.0747,
+    "Fastball|down-away": 0.0603,
+    "Slider|middle": 0.0507,
+    "Slider|down-in": 0.0398,
+    "Slider|up-away": 0.03,
+    "Changeup|middle": 0.0097
+   },
+   "2-2": {
+    "Slider|middle": 0.3131,
+    "Fastball|up-away": 0.2805,
+    "Changeup|middle": 0.2033,
+    "Fastball|down-away": 0.1703,
+    "Slider|down-away": 0.0327
+   },
+   "3-2": {
+    "Fastball|middle": 0.4925,
+    "Slider|middle": 0.3706,
+    "Changeup|middle": 0.137
+   }
+  },
+  "hs slider_best loaded1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.6434,
+    "Slider|middle": 0.3148,
+    "Changeup|middle": 0.0278,
+    "Fastball|down-away": 0.0139
+   },
+   "1-0": {
+    "Fastball|middle": 0.6651,
+    "Slider|middle": 0.2905,
+    "Changeup|middle": 0.0443
+   },
+   "2-0": {
+    "Fastball|middle": 0.7928,
+    "Slider|middle": 0.1801,
+    "Changeup|middle": 0.0271
+   },
+   "3-0": {
+    "Fastball|middle": 0.9594,
+    "Slider|middle": 0.0293,
+    "Changeup|middle": 0.0113
+   },
+   "0-1": {
+    "Slider|down-away": 0.3325,
+    "Fastball|down-away": 0.3028,
+    "Fastball|middle": 0.186,
+    "Slider|middle": 0.0931,
+    "Changeup|down-away": 0.0711,
+    "Changeup|middle": 0.0145
+   },
+   "1-1": {
+    "Fastball|middle": 0.5403,
+    "Slider|middle": 0.3836,
+    "Changeup|middle": 0.0761
+   },
+   "2-1": {
+    "Fastball|middle": 0.6764,
+    "Slider|middle": 0.2712,
+    "Changeup|middle": 0.0525
+   },
+   "3-1": {
+    "Fastball|middle": 0.8548,
+    "Slider|middle": 0.1278,
+    "Changeup|middle": 0.0174
+   },
+   "0-2": {
+    "Slider|down-away": 0.353,
+    "Slider|chase": 0.241,
+    "Fastball|up-away": 0.2107,
+    "Fastball|down-away": 0.0908,
+    "Changeup|chase": 0.06,
+    "Changeup|down-away": 0.033,
+    "Slider|middle": 0.0115
+   },
+   "1-2": {
+    "Slider|down-away": 0.4728,
+    "Fastball|up-away": 0.2305,
+    "Fastball|down-away": 0.1308,
+    "Changeup|down-away": 0.1029,
+    "Slider|middle": 0.0631
+   },
+   "2-2": {
+    "Slider|down-away": 0.3734,
+    "Fastball|middle": 0.2545,
+    "Slider|middle": 0.1579,
+    "Fastball|down-away": 0.124,
+    "Changeup|middle": 0.0902
+   },
+   "3-2": {
+    "Fastball|middle": 0.5186,
+    "Slider|middle": 0.4473,
+    "Changeup|middle": 0.0342
+   }
+  },
+  "hs slider_best loaded1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.4914,
+    "Slider|middle": 0.2235,
+    "Changeup|middle": 0.1437,
+    "Fastball|down-away": 0.1414
+   },
+   "1-0": {
+    "Fastball|middle": 0.6246,
+    "Changeup|middle": 0.1963,
+    "Slider|middle": 0.1791
+   },
+   "2-0": {
+    "Fastball|middle": 0.7557,
+    "Changeup|middle": 0.1224,
+    "Slider|middle": 0.1219
+   },
+   "3-0": {
+    "Fastball|middle": 0.9728,
+    "Slider|middle": 0.0209,
+    "Changeup|middle": 0.0063
+   },
+   "0-1": {
+    "Changeup|down-away": 0.3285,
+    "Fastball|down-away": 0.2402,
+    "Fastball|middle": 0.2328,
+    "Slider|down-away": 0.1037,
+    "Slider|middle": 0.0597,
+    "Changeup|middle": 0.0351
+   },
+   "1-1": {
+    "Fastball|middle": 0.5375,
+    "Changeup|middle": 0.2782,
+    "Slider|middle": 0.1842
+   },
+   "2-1": {
+    "Fastball|middle": 0.6626,
+    "Slider|middle": 0.1798,
+    "Changeup|middle": 0.1576
+   },
+   "3-1": {
+    "Fastball|middle": 0.8342,
+    "Slider|middle": 0.0861,
+    "Changeup|middle": 0.0797
+   },
+   "0-2": {
+    "Changeup|chase": 0.3382,
+    "Fastball|up-away": 0.2907,
+    "Slider|chase": 0.1483,
+    "Slider|down-away": 0.1136,
+    "Fastball|down-away": 0.0722,
+    "Slider|middle": 0.0306,
+    "Slider|up-away": 0.0063
+   },
+   "1-2": {
+    "Fastball|up-away": 0.2812,
+    "Changeup|down-away": 0.261,
+    "Slider|down-away": 0.1819,
+    "Slider|middle": 0.144,
+    "Fastball|down-away": 0.1141,
+    "Changeup|middle": 0.0177
+   },
+   "2-2": {
+    "Fastball|down-away": 0.4107,
+    "Slider|middle": 0.3814,
+    "Changeup|middle": 0.1978,
+    "Fastball|middle": 0.0102
+   },
+   "3-2": {
+    "Fastball|middle": 0.4786,
+    "Slider|middle": 0.4022,
+    "Changeup|middle": 0.1193
+   }
+  },
+  "hs plus_changeup empty1 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2826,
+    "Slider|middle": 0.27,
+    "Fastball|up-away": 0.2033,
+    "Fastball|middle": 0.178,
+    "Fastball|up-in": 0.0257,
+    "Changeup|down-away": 0.0147,
+    "Changeup|down-in": 0.0141,
+    "Changeup|middle": 0.0066,
+    "Changeup|up-away": 0.003,
+    "Changeup|up-in": 0.0022
+   },
+   "1-0": {
+    "Fastball|middle": 0.4575,
+    "Slider|middle": 0.2819,
+    "Fastball|up-in": 0.1853,
+    "Changeup|down-in": 0.0282,
+    "Changeup|down-away": 0.0237,
+    "Changeup|middle": 0.0124,
+    "Changeup|up-in": 0.0076,
+    "Changeup|up-away": 0.0033
+   },
+   "2-0": {
+    "Fastball|middle": 0.7575,
+    "Slider|middle": 0.2022,
+    "Changeup|middle": 0.0365,
+    "Changeup|up-away": 0.0038
+   },
+   "3-0": {
+    "Fastball|middle": 0.9405,
+    "Slider|middle": 0.0379,
+    "Changeup|middle": 0.0216
+   },
+   "0-1": {
+    "Slider|down-away": 0.3312,
+    "Fastball|down-away": 0.2358,
+    "Fastball|up-away": 0.1326,
+    "Fastball|middle": 0.1226,
+    "Slider|middle": 0.0644,
+    "Changeup|down-in": 0.0441,
+    "Changeup|down-away": 0.0428,
+    "Changeup|middle": 0.0122,
+    "Changeup|up-in": 0.0089,
+    "Changeup|up-away": 0.0055
+   },
+   "1-1": {
+    "Fastball|middle": 0.5181,
+    "Slider|middle": 0.3604,
+    "Changeup|down-away": 0.0704,
+    "Changeup|middle": 0.0363,
+    "Changeup|up-away": 0.0148
+   },
+   "2-1": {
+    "Fastball|middle": 0.6384,
+    "Slider|middle": 0.2765,
+    "Changeup|middle": 0.0851
+   },
+   "3-1": {
+    "Fastball|middle": 0.8155,
+    "Slider|middle": 0.152,
+    "Changeup|middle": 0.0325
+   },
+   "0-2": {
+    "Slider|chase": 0.2539,
+    "Slider|down-away": 0.2391,
+    "Fastball|up-away": 0.2325,
+    "Fastball|down-away": 0.1079,
+    "Changeup|chase": 0.0594,
+    "Changeup|down-away": 0.0543,
+    "Changeup|down-in": 0.0433,
+    "Changeup|middle": 0.0052,
+    "Changeup|up-away": 0.0045
+   },
+   "1-2": {
+    "Slider|down-away": 0.3827,
+    "Fastball|up-away": 0.2439,
+    "Fastball|down-away": 0.1448,
+    "Changeup|down-away": 0.1032,
+    "Changeup|down-in": 0.0837,
+    "Changeup|middle": 0.0243,
+    "Changeup|up-away": 0.0175
+   },
+   "2-2": {
+    "Fastball|middle": 0.3511,
+    "Slider|middle": 0.2805,
+    "Changeup|down-away": 0.207,
+    "Changeup|middle": 0.0844,
+    "Fastball|down-away": 0.0404,
+    "Changeup|up-away": 0.0366
+   },
+   "3-2": {
+    "Fastball|middle": 0.5936,
+    "Slider|middle": 0.2169,
+    "Changeup|middle": 0.1894
+   }
+  },
+  "hs plus_changeup empty1 opp i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2688,
+    "Fastball|middle": 0.2354,
+    "Slider|middle": 0.1936,
+    "Changeup|down-away": 0.0957,
+    "Fastball|up-away": 0.0923,
+    "Changeup|up-away": 0.0423,
+    "Changeup|down-in": 0.0403,
+    "Changeup|middle": 0.0299,
+    "Changeup|up-in": 0.0015
+   },
+   "1-0": {
+    "Fastball|middle": 0.5276,
+    "Slider|middle": 0.1617,
+    "Changeup|down-away": 0.1414,
+    "Changeup|down-in": 0.0696,
+    "Changeup|up-away": 0.0548,
+    "Changeup|middle": 0.0409,
+    "Changeup|up-in": 0.004
+   },
+   "2-0": {
+    "Fastball|middle": 0.6971,
+    "Changeup|middle": 0.1473,
+    "Slider|middle": 0.1323,
+    "Changeup|up-away": 0.0233
+   },
+   "3-0": {
+    "Fastball|middle": 0.9611,
+    "Slider|middle": 0.027,
+    "Changeup|middle": 0.0119
+   },
+   "0-1": {
+    "Fastball|middle": 0.3292,
+    "Changeup|down-away": 0.2589,
+    "Slider|down-away": 0.1114,
+    "Changeup|down-in": 0.0808,
+    "Fastball|down-away": 0.0725,
+    "Changeup|up-away": 0.069,
+    "Slider|middle": 0.0402,
+    "Changeup|middle": 0.0344,
+    "Changeup|up-in": 0.0036
+   },
+   "1-1": {
+    "Fastball|middle": 0.4601,
+    "Slider|middle": 0.155,
+    "Changeup|up-away": 0.1489,
+    "Changeup|down-away": 0.1193,
+    "Changeup|middle": 0.1168
+   },
+   "2-1": {
+    "Fastball|middle": 0.5927,
+    "Changeup|middle": 0.2328,
+    "Slider|middle": 0.1745
+   },
+   "3-1": {
+    "Fastball|middle": 0.765,
+    "Changeup|middle": 0.1368,
+    "Slider|middle": 0.0983
+   },
+   "0-2": {
+    "Changeup|chase": 0.1999,
+    "Changeup|down-away": 0.1811,
+    "Fastball|chase": 0.1722,
+    "Fastball|up-away": 0.1645,
+    "Slider|chase": 0.1153,
+    "Slider|down-away": 0.0525,
+    "Fastball|down-away": 0.0372,
+    "Changeup|down-in": 0.0365,
+    "Changeup|up-away": 0.0309,
+    "Changeup|middle": 0.0094,
+    "Changeup|up-in": 0.0005
+   },
+   "1-2": {
+    "Fastball|up-away": 0.2799,
+    "Changeup|down-away": 0.2289,
+    "Slider|down-away": 0.136,
+    "Fastball|down-away": 0.0931,
+    "Changeup|chase": 0.0873,
+    "Changeup|down-in": 0.0622,
+    "Changeup|up-away": 0.059,
+    "Slider|middle": 0.0354,
+    "Changeup|middle": 0.0183
+   },
+   "2-2": {
+    "Fastball|middle": 0.3396,
+    "Slider|middle": 0.1642,
+    "Changeup|down-away": 0.1423,
+    "Changeup|down-in": 0.1416,
+    "Changeup|up-away": 0.1264,
+    "Changeup|middle": 0.0858
+   },
+   "3-2": {
+    "Fastball|middle": 0.4664,
+    "Changeup|middle": 0.3863,
+    "Slider|middle": 0.1473
+   }
+  },
+  "hs plus_changeup on1_0 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.6576,
+    "Slider|middle": 0.3055,
+    "Changeup|middle": 0.0369
+   },
+   "1-0": {
+    "Fastball|middle": 0.6574,
+    "Slider|middle": 0.2807,
+    "Changeup|middle": 0.0619
+   },
+   "2-0": {
+    "Fastball|middle": 0.7769,
+    "Slider|middle": 0.182,
+    "Changeup|middle": 0.0411
+   },
+   "3-0": {
+    "Fastball|middle": 0.9439,
+    "Slider|middle": 0.0313,
+    "Changeup|middle": 0.0248
+   },
+   "0-1": {
+    "Fastball|middle": 0.4456,
+    "Slider|down-away": 0.3643,
+    "Changeup|down-away": 0.0825,
+    "Slider|middle": 0.0691,
+    "Changeup|middle": 0.0284,
+    "Changeup|up-away": 0.0101
+   },
+   "1-1": {
+    "Fastball|middle": 0.5377,
+    "Slider|middle": 0.3522,
+    "Changeup|middle": 0.1102
+   },
+   "2-1": {
+    "Fastball|middle": 0.6566,
+    "Slider|middle": 0.2484,
+    "Changeup|middle": 0.095
+   },
+   "3-1": {
+    "Fastball|middle": 0.8365,
+    "Slider|middle": 0.1277,
+    "Changeup|middle": 0.0358
+   },
+   "0-2": {
+    "Slider|chase": 0.2428,
+    "Slider|down-away": 0.2339,
+    "Fastball|up-away": 0.2201,
+    "Fastball|down-away": 0.1085,
+    "Changeup|down-away": 0.0996,
+    "Changeup|chase": 0.0783,
+    "Changeup|up-away": 0.007,
+    "Changeup|middle": 0.0066,
+    "Changeup|down-in": 0.0033
+   },
+   "1-2": {
+    "Slider|down-away": 0.3606,
+    "Fastball|up-away": 0.2192,
+    "Changeup|down-away": 0.203,
+    "Fastball|down-away": 0.1471,
+    "Changeup|middle": 0.0399,
+    "Changeup|up-away": 0.0303
+   },
+   "2-2": {
+    "Changeup|down-away": 0.6496,
+    "Changeup|middle": 0.2576,
+    "Changeup|up-away": 0.0928
+   },
+   "3-2": {
+    "Changeup|middle": 1.0
+   }
+  },
+  "hs plus_changeup on1_0 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.5988,
+    "Slider|middle": 0.2151,
+    "Changeup|middle": 0.1861
+   },
+   "1-0": {
+    "Fastball|middle": 0.5811,
+    "Changeup|middle": 0.255,
+    "Slider|middle": 0.1639
+   },
+   "2-0": {
+    "Fastball|middle": 0.7083,
+    "Changeup|middle": 0.1736,
+    "Slider|middle": 0.118
+   },
+   "3-0": {
+    "Fastball|middle": 0.964,
+    "Slider|middle": 0.0223,
+    "Changeup|middle": 0.0137
+   },
+   "0-1": {
+    "Fastball|middle": 0.3944,
+    "Changeup|down-away": 0.3213,
+    "Slider|down-away": 0.1091,
+    "Changeup|up-away": 0.0837,
+    "Changeup|middle": 0.0527,
+    "Slider|middle": 0.0388
+   },
+   "1-1": {
+    "Fastball|middle": 0.4851,
+    "Changeup|middle": 0.3603,
+    "Slider|middle": 0.1545
+   },
+   "2-1": {
+    "Fastball|middle": 0.5908,
+    "Changeup|middle": 0.2567,
+    "Slider|middle": 0.1525
+   },
+   "3-1": {
+    "Fastball|middle": 0.769,
+    "Changeup|middle": 0.1502,
+    "Slider|middle": 0.0808
+   },
+   "0-2": {
+    "Fastball|up-away": 0.25,
+    "Changeup|down-away": 0.2287,
+    "Changeup|chase": 0.2207,
+    "Slider|chase": 0.1174,
+    "Fastball|down-away": 0.0612,
+    "Slider|down-away": 0.0402,
+    "Changeup|down-in": 0.0372,
+    "Changeup|up-away": 0.0359,
+    "Changeup|middle": 0.0086
+   },
+   "1-2": {
+    "Changeup|down-away": 0.3317,
+    "Fastball|up-away": 0.2421,
+    "Slider|down-away": 0.1483,
+    "Fastball|down-away": 0.0925,
+    "Changeup|up-away": 0.0838,
+    "Changeup|down-in": 0.0773,
+    "Changeup|middle": 0.0244
+   },
+   "2-2": {
+    "Fastball|middle": 0.2982,
+    "Changeup|down-in": 0.2288,
+    "Changeup|up-away": 0.1877,
+    "Changeup|middle": 0.1503,
+    "Slider|middle": 0.135
+   },
+   "3-2": {
+    "Changeup|middle": 1.0
+   }
+  },
+  "hs plus_changeup on3_1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.6443,
+    "Slider|middle": 0.3084,
+    "Changeup|down-away": 0.0207,
+    "Changeup|down-in": 0.0127,
+    "Changeup|middle": 0.0096,
+    "Changeup|up-away": 0.0042
+   },
+   "1-0": {
+    "Fastball|middle": 0.6317,
+    "Slider|middle": 0.2856,
+    "Changeup|down-in": 0.0307,
+    "Changeup|down-away": 0.0262,
+    "Changeup|middle": 0.0122,
+    "Changeup|up-in": 0.01,
+    "Changeup|up-away": 0.0036
+   },
+   "2-0": {
+    "Fastball|middle": 0.7516,
+    "Slider|middle": 0.1953,
+    "Changeup|down-in": 0.0229,
+    "Changeup|down-away": 0.0152,
+    "Changeup|middle": 0.0104,
+    "Changeup|up-away": 0.0034,
+    "Changeup|up-in": 0.0011
+   },
+   "3-0": {
+    "Fastball|middle": 0.9434,
+    "Slider|middle": 0.0352,
+    "Changeup|middle": 0.0213
+   },
+   "0-1": {
+    "Slider|down-away": 0.3239,
+    "Fastball|down-away": 0.202,
+    "Fastball|up-away": 0.1994,
+    "Fastball|middle": 0.0979,
+    "Slider|middle": 0.0592,
+    "Changeup|down-away": 0.0492,
+    "Changeup|down-in": 0.0481,
+    "Changeup|middle": 0.0141,
+    "Changeup|up-away": 0.0062
+   },
+   "1-1": {
+    "Fastball|middle": 0.5215,
+    "Slider|middle": 0.3553,
+    "Changeup|middle": 0.0558,
+    "Changeup|down-away": 0.0539,
+    "Changeup|up-away": 0.0134
+   },
+   "2-1": {
+    "Fastball|middle": 0.6382,
+    "Slider|middle": 0.267,
+    "Changeup|middle": 0.0896,
+    "Changeup|up-away": 0.0053
+   },
+   "3-1": {
+    "Fastball|middle": 0.8189,
+    "Slider|middle": 0.1458,
+    "Changeup|middle": 0.0352
+   },
+   "0-2": {
+    "Slider|chase": 0.4635,
+    "Fastball|up-away": 0.2967,
+    "Changeup|chase": 0.096,
+    "Changeup|down-away": 0.0774,
+    "Changeup|down-in": 0.0383,
+    "Fastball|down-away": 0.0205,
+    "Changeup|up-away": 0.0057,
+    "Changeup|middle": 0.002
+   },
+   "1-2": {
+    "Fastball|up-away": 0.2801,
+    "Slider|chase": 0.194,
+    "Slider|down-away": 0.1913,
+    "Changeup|down-away": 0.1701,
+    "Fastball|down-away": 0.0585,
+    "Changeup|down-in": 0.0521,
+    "Changeup|up-away": 0.0266,
+    "Changeup|middle": 0.0235,
+    "Changeup|chase": 0.0039
+   },
+   "2-2": {
+    "Changeup|down-away": 0.4102,
+    "Slider|down-away": 0.2356,
+    "Slider|middle": 0.1812,
+    "Changeup|middle": 0.0926,
+    "Changeup|up-away": 0.0803
+   },
+   "3-2": {
+    "Changeup|middle": 0.4604,
+    "Changeup|down-away": 0.3114,
+    "Changeup|up-away": 0.2282
+   }
+  },
+  "hs plus_changeup on3_1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.5585,
+    "Slider|middle": 0.2067,
+    "Changeup|down-away": 0.1148,
+    "Changeup|up-away": 0.051,
+    "Changeup|middle": 0.0387,
+    "Changeup|down-in": 0.0303
+   },
+   "1-0": {
+    "Fastball|middle": 0.5198,
+    "Slider|middle": 0.1553,
+    "Changeup|down-away": 0.1479,
+    "Changeup|down-in": 0.0758,
+    "Changeup|up-away": 0.0576,
+    "Changeup|middle": 0.0402,
+    "Changeup|up-in": 0.0034
+   },
+   "2-0": {
+    "Fastball|middle": 0.6732,
+    "Slider|middle": 0.1245,
+    "Changeup|up-away": 0.0652,
+    "Changeup|middle": 0.0649,
+    "Changeup|down-in": 0.0543,
+    "Changeup|down-away": 0.018
+   },
+   "3-0": {
+    "Fastball|middle": 0.9631,
+    "Slider|middle": 0.0251,
+    "Changeup|middle": 0.0118
+   },
+   "0-1": {
+    "Changeup|down-away": 0.2451,
+    "Fastball|up-away": 0.2431,
+    "Fastball|down-away": 0.115,
+    "Slider|down-away": 0.0974,
+    "Fastball|middle": 0.0873,
+    "Changeup|down-in": 0.0788,
+    "Changeup|up-away": 0.0657,
+    "Slider|middle": 0.0339,
+    "Changeup|middle": 0.0338
+   },
+   "1-1": {
+    "Fastball|middle": 0.4666,
+    "Changeup|middle": 0.229,
+    "Slider|middle": 0.1545,
+    "Changeup|up-away": 0.1499
+   },
+   "2-1": {
+    "Fastball|middle": 0.5799,
+    "Changeup|middle": 0.2545,
+    "Slider|middle": 0.1655
+   },
+   "3-1": {
+    "Fastball|middle": 0.7576,
+    "Changeup|middle": 0.1495,
+    "Slider|middle": 0.0929
+   },
+   "0-2": {
+    "Changeup|chase": 0.2859,
+    "Fastball|chase": 0.1834,
+    "Changeup|down-away": 0.1708,
+    "Slider|chase": 0.1499,
+    "Fastball|up-away": 0.14,
+    "Changeup|down-in": 0.037,
+    "Changeup|up-away": 0.0306,
+    "Changeup|middle": 0.0024
+   },
+   "1-2": {
+    "Fastball|up-away": 0.2819,
+    "Changeup|down-away": 0.2152,
+    "Changeup|chase": 0.1817,
+    "Slider|chase": 0.1618,
+    "Changeup|down-in": 0.065,
+    "Changeup|up-away": 0.0594,
+    "Fastball|down-away": 0.0237,
+    "Changeup|middle": 0.0115
+   },
+   "2-2": {
+    "Changeup|down-away": 0.2303,
+    "Fastball|up-away": 0.1768,
+    "Changeup|down-in": 0.1492,
+    "Slider|middle": 0.1281,
+    "Changeup|up-away": 0.1208,
+    "Fastball|down-away": 0.0818,
+    "Fastball|middle": 0.0635,
+    "Changeup|middle": 0.0495
+   },
+   "3-2": {
+    "Changeup|middle": 0.4502,
+    "Changeup|down-in": 0.3398,
+    "Changeup|up-away": 0.21
+   }
+  },
+  "hs plus_changeup loaded1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.668,
+    "Slider|middle": 0.2924,
+    "Changeup|middle": 0.0397
+   },
+   "1-0": {
+    "Fastball|middle": 0.6689,
+    "Slider|middle": 0.2646,
+    "Changeup|middle": 0.0665
+   },
+   "2-0": {
+    "Fastball|middle": 0.7904,
+    "Slider|middle": 0.1663,
+    "Changeup|middle": 0.0433
+   },
+   "3-0": {
+    "Fastball|middle": 0.945,
+    "Changeup|middle": 0.0277,
+    "Slider|middle": 0.0273
+   },
+   "0-1": {
+    "Fastball|middle": 0.4493,
+    "Slider|down-away": 0.3698,
+    "Changeup|down-away": 0.083,
+    "Slider|middle": 0.0532,
+    "Changeup|middle": 0.0448
+   },
+   "1-1": {
+    "Fastball|middle": 0.5416,
+    "Slider|middle": 0.3344,
+    "Changeup|middle": 0.124
+   },
+   "2-1": {
+    "Fastball|middle": 0.8551,
+    "Changeup|middle": 0.1449
+   },
+   "3-1": {
+    "Fastball|middle": 0.953,
+    "Changeup|middle": 0.047
+   },
+   "0-2": {
+    "Changeup|chase": 0.6354,
+    "Changeup|down-away": 0.3457,
+    "Changeup|up-away": 0.0189
+   },
+   "1-2": {
+    "Changeup|down-away": 0.8148,
+    "Changeup|up-away": 0.1022,
+    "Changeup|chase": 0.0831
+   },
+   "2-2": {
+    "Changeup|down-away": 0.6848,
+    "Changeup|middle": 0.2089,
+    "Changeup|up-away": 0.1063
+   },
+   "3-2": {
+    "Changeup|middle": 0.8416,
+    "Changeup|up-away": 0.1584
+   }
+  },
+  "hs plus_changeup loaded1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.5979,
+    "Slider|middle": 0.2027,
+    "Changeup|middle": 0.1995
+   },
+   "1-0": {
+    "Fastball|middle": 0.5771,
+    "Changeup|middle": 0.2718,
+    "Slider|middle": 0.1511
+   },
+   "2-0": {
+    "Fastball|middle": 0.7098,
+    "Changeup|middle": 0.1839,
+    "Slider|middle": 0.1063
+   },
+   "3-0": {
+    "Fastball|middle": 0.9651,
+    "Slider|middle": 0.0193,
+    "Changeup|middle": 0.0156
+   },
+   "0-1": {
+    "Fastball|middle": 0.2853,
+    "Changeup|middle": 0.2108,
+    "Changeup|down-away": 0.2046,
+    "Fastball|down-away": 0.1513,
+    "Slider|down-away": 0.1115,
+    "Slider|middle": 0.0365
+   },
+   "1-1": {
+    "Fastball|middle": 0.5446,
+    "Changeup|middle": 0.4554
+   },
+   "2-1": {
+    "Fastball|middle": 0.6607,
+    "Changeup|middle": 0.3393
+   },
+   "3-1": {
+    "Fastball|middle": 0.8101,
+    "Changeup|middle": 0.1899
+   },
+   "0-2": {
+    "Changeup|chase": 0.6547,
+    "Changeup|down-away": 0.2989,
+    "Changeup|up-away": 0.0464
+   },
+   "1-2": {
+    "Changeup|down-away": 0.4424,
+    "Changeup|chase": 0.3517,
+    "Changeup|up-away": 0.1168,
+    "Changeup|down-in": 0.0891
+   },
+   "2-2": {
+    "Changeup|down-in": 0.373,
+    "Changeup|up-away": 0.2619,
+    "Changeup|middle": 0.2039,
+    "Changeup|down-away": 0.1612
+   },
+   "3-2": {
+    "Changeup|middle": 0.894,
+    "Changeup|down-in": 0.106
+   }
+  },
+  "hs two_pitch empty1 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2394,
+    "Fastball|up-away": 0.1954,
+    "Fastball|up-in": 0.1899,
+    "Fastball|middle": 0.1601,
+    "Fastball|down-in": 0.1294,
+    "Curveball|down-away": 0.064,
+    "Curveball|middle": 0.0217,
+    "Curveball|up-away": 0.0
+   },
+   "1-0": {
+    "Fastball|down-away": 0.2494,
+    "Fastball|up-in": 0.2073,
+    "Fastball|middle": 0.1934,
+    "Fastball|up-away": 0.1664,
+    "Fastball|down-in": 0.1388,
+    "Curveball|middle": 0.0447
+   },
+   "2-0": {
+    "Fastball|middle": 0.9737,
+    "Curveball|middle": 0.0263
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|down-away": 0.2198,
+    "Fastball|up-away": 0.2179,
+    "Fastball|up-in": 0.1897,
+    "Fastball|down-in": 0.14,
+    "Fastball|middle": 0.124,
+    "Curveball|down-away": 0.0779,
+    "Curveball|middle": 0.0186,
+    "Curveball|up-away": 0.0121
+   },
+   "1-1": {
+    "Fastball|down-away": 0.242,
+    "Fastball|up-in": 0.2153,
+    "Fastball|up-away": 0.2084,
+    "Fastball|middle": 0.1766,
+    "Curveball|middle": 0.0919,
+    "Fastball|down-in": 0.0658
+   },
+   "2-1": {
+    "Fastball|middle": 0.9344,
+    "Curveball|middle": 0.0656
+   },
+   "3-1": {
+    "Fastball|middle": 0.9862,
+    "Curveball|middle": 0.0138
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3024,
+    "Fastball|chase": 0.2144,
+    "Fastball|down-away": 0.1445,
+    "Fastball|up-in": 0.0968,
+    "Curveball|chase": 0.0866,
+    "Curveball|down-away": 0.0827,
+    "Fastball|middle": 0.0475,
+    "Fastball|down-in": 0.0093,
+    "Curveball|middle": 0.0091,
+    "Curveball|up-away": 0.0067
+   },
+   "1-2": {
+    "Fastball|up-away": 0.3567,
+    "Fastball|down-away": 0.2138,
+    "Curveball|down-away": 0.1444,
+    "Fastball|up-in": 0.1352,
+    "Fastball|middle": 0.08,
+    "Fastball|chase": 0.0359,
+    "Curveball|middle": 0.0195,
+    "Curveball|up-away": 0.0094,
+    "Fastball|down-in": 0.0051
+   },
+   "2-2": {
+    "Fastball|down-away": 0.328,
+    "Fastball|up-away": 0.3136,
+    "Fastball|middle": 0.2356,
+    "Curveball|middle": 0.1229
+   },
+   "3-2": {
+    "Fastball|middle": 0.9502,
+    "Curveball|middle": 0.0498
+   }
+  },
+  "hs two_pitch empty1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.2365,
+    "Fastball|down-away": 0.1772,
+    "Fastball|up-in": 0.149,
+    "Fastball|middle": 0.1404,
+    "Fastball|down-in": 0.1325,
+    "Curveball|down-away": 0.1151,
+    "Curveball|middle": 0.0494
+   },
+   "1-0": {
+    "Fastball|up-away": 0.2559,
+    "Fastball|down-away": 0.1975,
+    "Fastball|middle": 0.1913,
+    "Fastball|up-in": 0.1866,
+    "Curveball|middle": 0.0974,
+    "Fastball|down-in": 0.0714
+   },
+   "2-0": {
+    "Fastball|middle": 0.9465,
+    "Curveball|middle": 0.0535
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.2705,
+    "Fastball|up-in": 0.221,
+    "Fastball|down-away": 0.127,
+    "Fastball|down-in": 0.1125,
+    "Fastball|middle": 0.1105,
+    "Curveball|down-away": 0.0927,
+    "Curveball|up-away": 0.0365,
+    "Curveball|middle": 0.0293
+   },
+   "1-1": {
+    "Fastball|up-away": 0.273,
+    "Fastball|up-in": 0.2408,
+    "Fastball|middle": 0.1739,
+    "Fastball|down-away": 0.1535,
+    "Curveball|middle": 0.1282,
+    "Fastball|down-in": 0.0306
+   },
+   "2-1": {
+    "Fastball|middle": 0.8886,
+    "Curveball|middle": 0.1114
+   },
+   "3-1": {
+    "Fastball|middle": 0.9719,
+    "Curveball|middle": 0.0281
+   },
+   "0-2": {
+    "Fastball|up-away": 0.2674,
+    "Fastball|chase": 0.2222,
+    "Fastball|up-in": 0.135,
+    "Curveball|chase": 0.1222,
+    "Curveball|down-away": 0.0885,
+    "Fastball|down-away": 0.0612,
+    "Fastball|middle": 0.0425,
+    "Fastball|down-in": 0.0369,
+    "Curveball|middle": 0.0125,
+    "Curveball|up-away": 0.0117
+   },
+   "1-2": {
+    "Fastball|up-away": 0.3101,
+    "Fastball|up-in": 0.1608,
+    "Curveball|down-away": 0.1537,
+    "Fastball|down-away": 0.1024,
+    "Fastball|chase": 0.0941,
+    "Fastball|middle": 0.0725,
+    "Fastball|down-in": 0.0569,
+    "Curveball|middle": 0.0249,
+    "Curveball|up-away": 0.0247
+   },
+   "2-2": {
+    "Fastball|up-away": 0.3871,
+    "Fastball|middle": 0.2529,
+    "Fastball|down-away": 0.2007,
+    "Curveball|middle": 0.1592
+   },
+   "3-2": {
+    "Fastball|middle": 0.91,
+    "Curveball|middle": 0.09
+   }
+  },
+  "hs two_pitch on1_0 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.4867,
+    "Fastball|down-away": 0.3586,
+    "Fastball|up-away": 0.0775,
+    "Curveball|middle": 0.0773
+   },
+   "1-0": {
+    "Fastball|middle": 0.9477,
+    "Curveball|middle": 0.0523
+   },
+   "2-0": {
+    "Fastball|middle": 0.977,
+    "Curveball|middle": 0.023
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|down-away": 0.3456,
+    "Fastball|up-away": 0.3221,
+    "Fastball|middle": 0.2224,
+    "Curveball|down-away": 0.0888,
+    "Curveball|middle": 0.0211
+   },
+   "1-1": {
+    "Fastball|middle": 0.8905,
+    "Curveball|middle": 0.1095
+   },
+   "2-1": {
+    "Fastball|middle": 0.9434,
+    "Curveball|middle": 0.0566
+   },
+   "3-1": {
+    "Fastball|middle": 0.9885,
+    "Curveball|middle": 0.0115
+   },
+   "0-2": {
+    "Fastball|up-away": 0.4321,
+    "Fastball|down-away": 0.2303,
+    "Curveball|down-away": 0.1067,
+    "Fastball|chase": 0.0904,
+    "Curveball|chase": 0.0818,
+    "Fastball|middle": 0.0557,
+    "Curveball|middle": 0.003
+   },
+   "1-2": {
+    "Fastball|up-away": 0.4261,
+    "Fastball|down-away": 0.2959,
+    "Curveball|down-away": 0.1562,
+    "Fastball|middle": 0.0986,
+    "Curveball|middle": 0.0232
+   },
+   "2-2": {
+    "Fastball|down-away": 0.4463,
+    "Fastball|middle": 0.4118,
+    "Curveball|middle": 0.1419
+   },
+   "3-2": {
+    "Fastball|middle": 0.9507,
+    "Curveball|middle": 0.0493
+   }
+  },
+  "hs two_pitch on1_0 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.3747,
+    "Fastball|down-away": 0.3572,
+    "Curveball|middle": 0.15,
+    "Fastball|up-away": 0.1182
+   },
+   "1-0": {
+    "Fastball|middle": 0.8879,
+    "Curveball|middle": 0.1121
+   },
+   "2-0": {
+    "Fastball|middle": 0.953,
+    "Curveball|middle": 0.047
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.4168,
+    "Fastball|down-away": 0.2157,
+    "Fastball|middle": 0.2094,
+    "Curveball|down-away": 0.1201,
+    "Curveball|middle": 0.0379
+   },
+   "1-1": {
+    "Fastball|middle": 0.8491,
+    "Curveball|middle": 0.1509
+   },
+   "2-1": {
+    "Fastball|middle": 0.9034,
+    "Curveball|middle": 0.0966
+   },
+   "3-1": {
+    "Fastball|middle": 0.9767,
+    "Curveball|middle": 0.0233
+   },
+   "0-2": {
+    "Fastball|up-away": 0.4057,
+    "Fastball|chase": 0.1818,
+    "Curveball|chase": 0.1284,
+    "Curveball|down-away": 0.1124,
+    "Fastball|down-away": 0.1105,
+    "Fastball|middle": 0.0579,
+    "Curveball|middle": 0.0033
+   },
+   "1-2": {
+    "Fastball|up-away": 0.4698,
+    "Fastball|down-away": 0.1931,
+    "Curveball|down-away": 0.1814,
+    "Fastball|middle": 0.1218,
+    "Curveball|middle": 0.0339
+   },
+   "2-2": {
+    "Fastball|middle": 0.4454,
+    "Fastball|down-away": 0.3073,
+    "Curveball|middle": 0.1805,
+    "Fastball|up-away": 0.0668
+   },
+   "3-2": {
+    "Fastball|middle": 0.9105,
+    "Curveball|middle": 0.0895
+   }
+  },
+  "hs two_pitch on3_1 same i4": {
+   "0-0": {
+    "Fastball|down-away": 0.2634,
+    "Fastball|up-away": 0.2198,
+    "Fastball|up-in": 0.2031,
+    "Fastball|middle": 0.1775,
+    "Fastball|down-in": 0.0686,
+    "Curveball|middle": 0.0677
+   },
+   "1-0": {
+    "Fastball|down-away": 0.2636,
+    "Fastball|up-in": 0.2179,
+    "Fastball|middle": 0.1971,
+    "Fastball|up-away": 0.1782,
+    "Fastball|down-in": 0.1004,
+    "Curveball|middle": 0.0427
+   },
+   "2-0": {
+    "Fastball|middle": 0.6635,
+    "Fastball|up-in": 0.313,
+    "Curveball|middle": 0.0235
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.2476,
+    "Fastball|down-away": 0.2453,
+    "Fastball|up-in": 0.193,
+    "Fastball|middle": 0.1307,
+    "Curveball|down-away": 0.0851,
+    "Fastball|down-in": 0.0789,
+    "Curveball|middle": 0.0194
+   },
+   "1-1": {
+    "Fastball|down-away": 0.2833,
+    "Fastball|up-away": 0.2437,
+    "Fastball|middle": 0.2036,
+    "Fastball|up-in": 0.1792,
+    "Curveball|middle": 0.0902
+   },
+   "2-1": {
+    "Fastball|middle": 0.9382,
+    "Curveball|middle": 0.0618
+   },
+   "3-1": {
+    "Fastball|middle": 0.9874,
+    "Curveball|middle": 0.0126
+   },
+   "0-2": {
+    "Fastball|up-away": 0.3707,
+    "Fastball|chase": 0.2566,
+    "Fastball|down-away": 0.1749,
+    "Curveball|chase": 0.1055,
+    "Curveball|down-away": 0.0828,
+    "Curveball|middle": 0.0077,
+    "Fastball|middle": 0.0018
+   },
+   "1-2": {
+    "Fastball|up-away": 0.4717,
+    "Fastball|down-away": 0.2714,
+    "Curveball|down-away": 0.1152,
+    "Curveball|chase": 0.0655,
+    "Fastball|middle": 0.0591,
+    "Curveball|middle": 0.015,
+    "Curveball|up-away": 0.0021
+   },
+   "2-2": {
+    "Fastball|down-away": 0.4024,
+    "Fastball|up-away": 0.3836,
+    "Curveball|middle": 0.1431,
+    "Fastball|middle": 0.0709
+   },
+   "3-2": {
+    "Fastball|middle": 0.9379,
+    "Curveball|middle": 0.0621
+   }
+  },
+  "hs two_pitch on3_1 opp i4": {
+   "0-0": {
+    "Fastball|up-away": 0.2627,
+    "Fastball|down-away": 0.1926,
+    "Fastball|up-in": 0.1633,
+    "Fastball|middle": 0.1566,
+    "Curveball|middle": 0.1351,
+    "Fastball|down-in": 0.0897
+   },
+   "1-0": {
+    "Fastball|up-away": 0.2598,
+    "Fastball|down-away": 0.1977,
+    "Fastball|up-in": 0.1909,
+    "Fastball|middle": 0.1862,
+    "Curveball|middle": 0.0927,
+    "Fastball|down-in": 0.0728
+   },
+   "2-0": {
+    "Fastball|middle": 0.8186,
+    "Fastball|up-in": 0.1317,
+    "Curveball|middle": 0.0497
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.2867,
+    "Fastball|up-in": 0.2218,
+    "Fastball|down-away": 0.1325,
+    "Curveball|down-away": 0.1134,
+    "Fastball|middle": 0.1129,
+    "Fastball|down-in": 0.0978,
+    "Curveball|middle": 0.0348
+   },
+   "1-1": {
+    "Fastball|up-away": 0.3012,
+    "Fastball|up-in": 0.2101,
+    "Fastball|middle": 0.1941,
+    "Fastball|down-away": 0.1696,
+    "Curveball|middle": 0.125
+   },
+   "2-1": {
+    "Fastball|middle": 0.8951,
+    "Curveball|middle": 0.1049
+   },
+   "3-1": {
+    "Fastball|middle": 0.9743,
+    "Curveball|middle": 0.0257
+   },
+   "0-2": {
+    "Fastball|up-away": 0.2927,
+    "Fastball|chase": 0.2499,
+    "Curveball|chase": 0.1537,
+    "Fastball|up-in": 0.112,
+    "Curveball|down-away": 0.0813,
+    "Fastball|down-away": 0.069,
+    "Fastball|middle": 0.0309,
+    "Curveball|middle": 0.0104
+   },
+   "1-2": {
+    "Fastball|up-away": 0.4045,
+    "Fastball|up-in": 0.1381,
+    "Fastball|down-away": 0.1376,
+    "Curveball|chase": 0.1093,
+    "Curveball|down-away": 0.0935,
+    "Fastball|middle": 0.0631,
+    "Curveball|down-in": 0.0212,
+    "Fastball|chase": 0.0169,
+    "Curveball|middle": 0.0158,
+    "Curveball|up-away": 0.0001
+   },
+   "2-2": {
+    "Fastball|up-away": 0.3646,
+    "Fastball|down-away": 0.2784,
+    "Curveball|middle": 0.1857,
+    "Fastball|middle": 0.1713
+   },
+   "3-2": {
+    "Fastball|middle": 0.8884,
+    "Curveball|middle": 0.1116
+   }
+  },
+  "hs two_pitch loaded1 same i4": {
+   "0-0": {
+    "Fastball|middle": 0.9205,
+    "Curveball|middle": 0.0795
+   },
+   "1-0": {
+    "Fastball|middle": 0.9524,
+    "Curveball|middle": 0.0476
+   },
+   "2-0": {
+    "Fastball|middle": 0.9798,
+    "Curveball|middle": 0.0202
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|down-away": 0.3566,
+    "Fastball|up-away": 0.3065,
+    "Fastball|middle": 0.2327,
+    "Curveball|down-away": 0.0849,
+    "Curveball|middle": 0.0194
+   },
+   "1-1": {
+    "Fastball|middle": 0.8982,
+    "Curveball|middle": 0.1018
+   },
+   "2-1": {
+    "Fastball|middle": 0.9509,
+    "Curveball|middle": 0.0491
+   },
+   "3-1": {
+    "Fastball|middle": 0.9904,
+    "Curveball|middle": 0.0096
+   },
+   "0-2": {
+    "Fastball|up-away": 0.491,
+    "Fastball|down-away": 0.2977,
+    "Curveball|down-away": 0.1183,
+    "Curveball|chase": 0.0834,
+    "Curveball|middle": 0.0097
+   },
+   "1-2": {
+    "Fastball|up-away": 0.449,
+    "Fastball|down-away": 0.347,
+    "Curveball|down-away": 0.1657,
+    "Curveball|middle": 0.0319,
+    "Fastball|middle": 0.0063
+   },
+   "2-2": {
+    "Fastball|down-away": 0.5041,
+    "Fastball|middle": 0.3285,
+    "Curveball|middle": 0.1674
+   },
+   "3-2": {
+    "Fastball|middle": 0.9408,
+    "Curveball|middle": 0.0592
+   }
+  },
+  "hs two_pitch loaded1 opp i4": {
+   "0-0": {
+    "Fastball|middle": 0.8426,
+    "Curveball|middle": 0.1574
+   },
+   "1-0": {
+    "Fastball|middle": 0.8977,
+    "Curveball|middle": 0.1023
+   },
+   "2-0": {
+    "Fastball|middle": 0.9586,
+    "Curveball|middle": 0.0414
+   },
+   "3-0": {
+    "Fastball|middle": 1.0
+   },
+   "0-1": {
+    "Fastball|up-away": 0.3834,
+    "Fastball|middle": 0.2341,
+    "Fastball|down-away": 0.2317,
+    "Curveball|down-away": 0.115,
+    "Curveball|middle": 0.0358
+   },
+   "1-1": {
+    "Fastball|middle": 0.8598,
+    "Curveball|middle": 0.1402
+   },
+   "2-1": {
+    "Fastball|middle": 0.916,
+    "Curveball|middle": 0.084
+   },
+   "3-1": {
+    "Fastball|middle": 0.9803,
+    "Curveball|middle": 0.0197
+   },
+   "0-2": {
+    "Fastball|up-away": 0.5442,
+    "Fastball|down-away": 0.1811,
+    "Curveball|chase": 0.1424,
+    "Curveball|down-away": 0.1182,
+    "Curveball|middle": 0.0141
+   },
+   "1-2": {
+    "Fastball|up-away": 0.4508,
+    "Fastball|down-away": 0.2228,
+    "Curveball|down-away": 0.188,
+    "Fastball|middle": 0.0927,
+    "Curveball|middle": 0.0457
+   },
+   "2-2": {
+    "Fastball|down-away": 0.4312,
+    "Fastball|middle": 0.3578,
+    "Curveball|middle": 0.2111
+   },
+   "3-2": {
+    "Fastball|middle": 0.893,
+    "Curveball|middle": 0.107
+   }
+  }
+ }
+}
