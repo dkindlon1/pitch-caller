@@ -1,0 +1,199 @@
+{
+ "totals": {
+  "all": {
+   "n": 1763,
+   "p_ball": 890.5637709121859,
+   "p_cstrike": 206.80986031512072,
+   "p_whiff": 78.9609573435263,
+   "p_foul": 261.59019444098914,
+   "p_contact": 307.7768399365549,
+   "p_hbp": 17.298377051623753,
+   "a_ball": 935,
+   "a_cstrike": 188,
+   "a_whiff": 83,
+   "a_foul": 242,
+   "a_contact": 302,
+   "a_hbp": 13
+  },
+  "FB middle": {
+   "n": 397,
+   "p_ball": 180.96806605757027,
+   "p_cstrike": 55.254979598955146,
+   "p_whiff": 9.392587794819537,
+   "p_foul": 66.75371907483604,
+   "p_contact": 81.87451800356497,
+   "p_hbp": 2.7561294702541606,
+   "a_ball": 185,
+   "a_cstrike": 51,
+   "a_whiff": 9,
+   "a_foul": 64,
+   "a_contact": 84,
+   "a_hbp": 4
+  },
+  "FB corner": {
+   "n": 381,
+   "p_ball": 204.32396681352347,
+   "p_cstrike": 41.36813643903956,
+   "p_whiff": 10.793303084459426,
+   "p_foul": 55.00408436654299,
+   "p_contact": 63.567651921626585,
+   "p_hbp": 5.942857374808036,
+   "a_ball": 211,
+   "a_cstrike": 33,
+   "a_whiff": 3,
+   "a_foul": 59,
+   "a_contact": 68,
+   "a_hbp": 7
+  },
+  "OS corner": {
+   "n": 473,
+   "p_ball": 259.74059954676716,
+   "p_cstrike": 47.52920753220301,
+   "p_whiff": 27.893427970622813,
+   "p_foul": 62.98008742015308,
+   "p_contact": 70.69165203706599,
+   "p_hbp": 4.165025493188074,
+   "a_ball": 266,
+   "a_cstrike": 39,
+   "a_whiff": 38,
+   "a_foul": 58,
+   "a_contact": 71,
+   "a_hbp": 1
+  },
+  "OS chase": {
+   "n": 21,
+   "p_ball": 12.625993910412651,
+   "p_cstrike": 0.3936693865432909,
+   "p_whiff": 2.1636936054351312,
+   "p_foul": 3.0143475147772274,
+   "p_contact": 2.4525854079931073,
+   "p_hbp": 0.3497101748385922,
+   "a_ball": 17,
+   "a_cstrike": 0,
+   "a_whiff": 2,
+   "a_foul": 0,
+   "a_contact": 2,
+   "a_hbp": 0
+  },
+  "OS middle": {
+   "n": 480,
+   "p_ball": 225.7778973078588,
+   "p_cstrike": 61.96574406338296,
+   "p_whiff": 28.232052153865247,
+   "p_foul": 72.26383748557,
+   "p_contact": 87.82441515344061,
+   "p_hbp": 3.9360538358822432,
+   "a_ball": 248,
+   "a_cstrike": 64,
+   "a_whiff": 31,
+   "a_foul": 60,
+   "a_contact": 76,
+   "a_hbp": 1
+  },
+  "FB chase": {
+   "n": 11,
+   "p_ball": 7.127247276052391,
+   "p_cstrike": 0.29812329499700957,
+   "p_whiff": 0.4858927343241325,
+   "p_foul": 1.574118579110072,
+   "p_contact": 1.3660174128637326,
+   "p_hbp": 0.14860070265266107,
+   "a_ball": 8,
+   "a_cstrike": 1,
+   "a_whiff": 0,
+   "a_foul": 1,
+   "a_contact": 1,
+   "a_hbp": 0
+  }
+ },
+ "per_batter": {
+  "batters": 477,
+  "bb": 121,
+  "k": 41,
+  "hbp": 13,
+  "e_bb": 122.60483390422901,
+  "e_k": 35.46011151319714,
+  "e_hbp": 17.298377051623753
+ },
+ "flags": [],
+ "learner": [
+  {
+   "pitcher": "Sim Pitcher",
+   "id": "pit_mw5qy22p3e2e5f652j276r33281c",
+   "pitches": [
+    {
+     "name": "Fastball",
+     "kind": "FB",
+     "coach": {
+      "command": 4,
+      "grade": 3
+     },
+     "n": 763,
+     "nLoc": 763,
+     "learned": {
+      "command": 2.49,
+      "grade": 2.58
+     },
+     "sd": {
+      "command": 0.22,
+      "grade": 0.28
+     },
+     "served": {
+      "command": 3.85,
+      "grade": 2.85,
+      "learned": true
+     },
+     "switchedOff": false
+    },
+    {
+     "name": "Slider",
+     "kind": "SL",
+     "coach": {
+      "command": 3,
+      "grade": 3
+     },
+     "n": 585,
+     "nLoc": 585,
+     "learned": {
+      "command": 2.95,
+      "grade": 3.95
+     },
+     "sd": {
+      "command": 0.18,
+      "grade": 0.29
+     },
+     "served": {
+      "command": 2.95,
+      "grade": 3.15,
+      "learned": true
+     },
+     "switchedOff": false
+    },
+    {
+     "name": "Changeup",
+     "kind": "CH",
+     "coach": {
+      "command": 3,
+      "grade": 3
+     },
+     "n": 309,
+     "nLoc": 309,
+     "learned": {
+      "command": 3.03,
+      "grade": 2.57
+     },
+     "sd": {
+      "command": 0.23,
+      "grade": 0.37
+     },
+     "served": {
+      "command": 3.03,
+      "grade": 2.85,
+      "learned": true
+     },
+     "switchedOff": false
+    }
+   ]
+  }
+ ]
+}

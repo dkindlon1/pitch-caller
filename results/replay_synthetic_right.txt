@@ -1,0 +1,20 @@
+Replay of bk_right.json: 1690 pitches (0 skipped: no usable result or snapshot), 461 batters
+
+Outcome rates per pitch, engine prediction vs what happened (actual - predicted, in SEs of a binomial at the prediction):
+  call             n                  ball               cstrike                 whiff                  foul               contact                   hbp
+  all           1690     47.3%  48.4%  +0.9     13.3%  13.0%  -0.3      3.6%   3.1%  -1.2     16.2%  16.1%  -0.1     18.6%  18.8%  +0.1      0.9%   0.7%  -1.1
+  FB chase        11     62.6%  63.6%  +0.1      6.5%   0.0%  -0.9      3.8%   0.0%  -0.7     13.9%  27.3%  +1.3     12.3%   9.1%  -0.3      1.0%   0.0%  -0.3
+  FB corner      455     47.3%  48.6%  +0.6     14.3%  15.4%  +0.7      3.2%   1.8%  -1.8     16.3%  15.2%  -0.6     17.7%  18.0%  +0.2      1.2%   1.1%  -0.3
+  FB middle      384     41.2%  40.1%  -0.4     16.1%  13.3%  -1.5      2.3%   2.3%  +0.1     17.7%  20.1%  +1.2     22.1%  23.4%  +0.7      0.6%   0.8%  +0.4
+  OS chase        34     62.1%  64.7%  +0.3      3.3%   0.0%  -1.1      6.6%   8.8%  +0.5     14.3%   8.8%  -0.9     12.1%  17.6%  +1.0      1.7%   0.0%  -0.8
+  OS corner      471     52.5%  53.3%  +0.3     11.1%  10.8%  -0.2      4.6%   4.2%  -0.3     14.7%  13.2%  -1.0     16.3%  17.8%  +0.9      0.8%   0.6%  -0.5
+  OS middle      335     45.2%  48.7%  +1.3     13.0%  14.3%  +0.7      4.2%   3.6%  -0.5     16.8%  17.3%  +0.3     20.1%  16.1%  -1.8      0.8%   0.0%  -1.6
+
+Per batter (461 batters): walks 21.0% actual vs 21.3% expected, strikeouts 7.8% vs 8.8%, HBP 2.4% vs 3.3%
+
+Gaps of 3+ SE (n >= 50): none
+
+What the app's learner would do with these games (coach's grade -> learned +- SD; what it would serve):
+  Sim Pitcher Fastball: command 4 -> 3.69 +- 0.24 (served 3.85), stuff 3 -> 2.97 +- 0.28 (served 2.97); 822 pitches, 822 located
+  Sim Pitcher Slider: command 3 -> 2.82 +- 0.19 (served 2.85), stuff 3 -> 2.55 +- 0.33 (served 2.85); 428 pitches, 428 located
+  Sim Pitcher Changeup: command 3 -> 2.98 +- 0.22 (served 2.98), stuff 3 -> 2.40 +- 0.34 (served 2.85); 333 pitches, 333 located
