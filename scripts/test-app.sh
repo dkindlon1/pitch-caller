@@ -13,7 +13,7 @@ if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1
 fi
 echo "build: app/dist matches the source"
-for t in learn_test db_test import_test rails_test schema_test stage2_test worlds_test pitch_rules_test; do
+for t in db_test import_test rails_test schema_test stage2_test worlds_test pitch_rules_test; do
   [ -f "app/$t.js" ] || continue
   (cd app && ../$run "$t" node "$t.js")
 done
@@ -21,6 +21,11 @@ node app/smoke.js
 echo "smoke: passed"
 (cd app && ../$run rules_e2e node rules_e2e.js)
 (cd app && ../$run v10_e2e node v10_e2e.js)        # v1.0: history, RP2, plan line, re-solve on a steal, fallback flag
+
+# learn_test is run here, after the other suites, for the same reason as golden_v09 below: its check 8
+# ("fewer fastballs to the masher", 38% unknown vs 41% masher) fails by Drew's recorded decision until Phase 5
+# resumes, and with `set -e` a known failure early in the list hides every check after it.
+(cd app && ../$run learn_test node learn_test.js)
 
 # The frozen reference engine, run LAST on purpose. v1.0 changes the calls, so golden_v09 fails by design
 # until Phase 9.1 freezes golden_v10 and replaces it here. It used to run second, and with `set -e` that
