@@ -42,7 +42,7 @@
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
-    for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.hs && !t.travel) t.travel = t.hs;
+    for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL, D.WP_RATE]) if (t && t.hs && !t.travel) t.travel = t.hs;
     if (D.V08) initV08(D.V08);
   }
   const dataVersion = () => (D && D.version) || null;
@@ -61,7 +61,8 @@
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {} }, o);   // v0.9 item 6
+      matchup: {},   // v0.9 item 6
+      history: [] }, o);   // v1.0 3.1: this at-bat's pitches, oldest first: [pitch name, target, result, read]
   }
   const replace = (s, o) => Object.assign({}, s, o);
   const mph = (p) => p.velo || DEFAULT_VELO[p.kind];
@@ -315,7 +316,8 @@
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
-      Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
+      const wr = (D.WP_RATE && D.WP_RATE[s.level]) || WP_DEFAULT;      // v1.0 Phase 4: per-level wild-pitch chances
+      Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? wr[0] : wr[1]) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
       zones.push(Z);
     }
     return { zones, hL, tauEff, big };
@@ -427,7 +429,11 @@
   function candidates(arsenal, s, forced) {
     const cutoff = D.LEVEL[s.level].cutoff;
     let c = arsenal.filter((x) => x.conf >= cutoff || (forced && x.name === forced));
-    if (!c.length) c = [arsenal.reduce((a, x) => (x.conf > a.conf ? x : a), arsenal[0])];
+    if (!c.length) {   // v1.0 3.2: nothing trusted: the most trusted pitch still landing, else the best strike estimate
+      const ok = arsenal.filter((x) => !notLanding(x, s));
+      c = ok.length ? [ok.reduce((a, x) => (x.conf > a.conf ? x : a), ok[0])]
+        : [arsenal.reduce((a, x) => (landingEstimate(x, s)[0] > landingEstimate(a, s)[0] ? x : a), arsenal[0])];
+    }
     return c;
   }
   function countStakes(b, k, level) {
@@ -691,28 +697,9 @@
     const edge = w * (1 - TAPER);
     return g <= edge ? 1.0 : (w - g) / (w - edge);
   }
-  function soft(costs, temp, w, ref) {   // costs: [[key, cost]] in order
-    const wt = costs.map(([k, c]) => [k, Math.exp(-(c - ref) / temp) * taper(c - ref, w)]);
-    const t = psum(wt.map((x) => x[1]));
-    return t > 0 ? wt.filter((x) => x[1] > 0).map(([k, v]) => [k, v / t]) : [];
-  }
-  function policyFromCosts(costs, s, temp) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
-    const [win, lwin] = windows(s);
-    const names = [], keys = Object.keys(costs);
-    for (const a of keys) { const n = skName(a); if (!names.includes(n)) names.push(n); }
-    const bestBy = names.map((n) => { let m = Infinity; for (const a of keys) if (skName(a) === n && costs[a] < m) m = costs[a]; return [n, m]; });
-    let overall = Infinity; for (const [, v] of bestBy) if (v < overall) overall = v;
-    const pp = soft(bestBy, temp, win, overall);
-    const bb = Object.fromEntries(bestBy), pi = {};
-    for (const [n, pn] of pp) {
-      const lw = Math.max(TAPER * lwin, lwin - (bb[n] - overall));
-      const loc = soft(keys.filter((a) => skName(a) === n).map((a) => [skH(a), costs[a]]), temp, lw, bb[n]);
-      for (const [q, pq] of loc) pi[ck(n, q)] = pn * pq;
-    }
-    return pi;
-  }
-  // The sit game on flat arrays (speed): the same operations in the same order as policy_from_costs / sit_response /
-  // solve_sit_game in engine.py, so results are identical (adding a zero never changes a compensated sum).
+  // v1.0 3.7 the mixing operator weighted by real usage (engine.py policy_from_costs), on flat arrays (speed). The same
+  // operations in the same order as engine.py, compensated sums as Python's sum().
+  const KAPPA_T = 3.0, KAPPA_L = 1.0, WP_DEFAULT = [0.12, 0.04];
   function callStruct(calls) {
     const names = [], groups = [], qs = calls.map(skH);
     for (let i = 0; i < calls.length; i++) {
@@ -723,34 +710,58 @@
     }
     return { calls, names, groups, qs };
   }
-  function softArr(vals, n, temp, w, ref, out) {   // weights for vals[0..n) into out; returns false if all zero
-    let f = 0, c = 0, first = true;
-    for (let i = 0; i < n; i++) {
-      const x = Math.exp(-(vals[i] - ref) / temp) * taper(vals[i] - ref, w);
-      out[i] = x;
-      if (first) { f = 0 + x; first = false; continue; }
-      const t = f + x;
-      if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f;
-      f = t;
-    }
-    if (c && Number.isFinite(c)) f += c;
-    if (!(f > 0)) return false;
-    for (let i = 0; i < n; i++) out[i] = out[i] / f;
-    return true;
+  function mixWeights(arsenal, s) {   // 3.7: [u_T {name: w}, u_L {name: {target: w}}] in this count and platoon, or null
+    const MP = D.MIX_PRIOR;
+    if (!MP) return null;
+    const kinds = arsenal.map((x) => x.kind);
+    const comp = KINDS.filter((k) => kinds.includes(k)).join("+");
+    const c = cntKey(s.balls, s.strikes), pl = s.same_side ? "same" : "opp";
+    const tab = (MP.u_T[comp] || MP.u_T.all)[c][pl];
+    const uT = {}, uL = {};
+    for (const x of arsenal) { uT[x.name] = tab[x.kind] / kinds.filter((k) => k === x.kind).length; uL[x.name] = MP.u_L[x.kind][c][pl]; }
+    return [uT, uL];
   }
-  function policyArr(cost, st, temp, win, lwin, piOut) {   // pi over calls (Float64Array); zero where not picked
-    const G = st.groups.length, best = new Float64Array(G), pn = new Float64Array(G);
+  function usageArrays(st, u) {
+    if (!u) return null;
+    const [uT, uL] = u, ul = new Float64Array(st.calls.length), gHas = [], ut = new Float64Array(st.names.length);
+    for (let g = 0; g < st.names.length; g++) {
+      const m = uL[st.names[g]];
+      gHas.push(!!m);
+      ut[g] = uT[st.names[g]] ?? 0.0;
+      for (const i of st.groups[g]) ul[i] = m ? (m[st.qs[i]] ?? 0.0) : 0.0;
+    }
+    return { ul, gHas, ut, hasT: Object.keys(uT).length > 0 };
+  }
+  function policyArr(cost, st, temp, win, lwin, piOut, ua) {   // pi over calls (Float64Array); zero where not picked
+    const G = st.groups.length, best = new Float64Array(G), cn = new Float64Array(G), sw = new Float64Array(G), pt = new Float64Array(G);
+    const w = new Float64Array(st.calls.length);
     for (let g = 0; g < G; g++) { let m = Infinity; for (const i of st.groups[g]) if (cost[i] < m) m = cost[i]; best[g] = m; }
     let overall = Infinity; for (let g = 0; g < G; g++) if (best[g] < overall) overall = best[g];
+    const lamL = KAPPA_L * temp, lamT = KAPPA_T * temp;
     piOut.fill(0);
-    if (!softArr(best, G, temp, win, overall, pn)) return piOut;
-    const tmpC = new Float64Array(st.calls.length), tmpW = new Float64Array(st.calls.length);
     for (let g = 0; g < G; g++) {
-      if (!(pn[g] > 0)) continue;
-      const idx = st.groups[g], lw = Math.max(TAPER * lwin, lwin - (best[g] - overall));
-      for (let j = 0; j < idx.length; j++) tmpC[j] = cost[idx[j]];
-      if (!softArr(tmpC, idx.length, temp, lw, best[g], tmpW)) continue;
-      for (let j = 0; j < idx.length; j++) if (tmpW[j] > 0) piOut[idx[j]] = pn[g] * tmpW[j];
+      const idx = st.groups[g];
+      const totL = (ua && ua.gHas[g]) ? psum(idx.map((i) => ua.ul[i])) : 0.0;
+      const lw = Math.max(TAPER * lwin, lwin - (best[g] - overall));
+      for (const i of idx) {
+        const gg = cost[i] - best[g];
+        const uq = totL > 0 ? ua.ul[i] / totL : 1.0 / idx.length;
+        w[i] = uq * Math.exp(-gg / lamL) * taper(gg, lw);
+      }
+      sw[g] = psum(idx.map((i) => w[i]));
+      cn[g] = sw[g] > 0 ? best[g] - lamL * Math.log(sw[g]) : Infinity;
+    }
+    let cmin = Infinity; for (let g = 0; g < G; g++) if (cn[g] < cmin) cmin = cn[g];
+    const totT = (ua && ua.hasT) ? psum(Array.from(ua.ut)) : 0.0;
+    for (let g = 0; g < G; g++) {
+      const utg = totT > 0 ? ua.ut[g] / totT : 1.0 / G;
+      pt[g] = cn[g] < Infinity ? utg * Math.exp(-(cn[g] - cmin) / lamT) : 0.0;
+    }
+    const zt = psum(Array.from(pt));
+    for (let g = 0; g < G; g++) {
+      if (!(pt[g] > 0)) continue;
+      const pn = pt[g] / zt;
+      for (const i of st.groups[g]) if (w[i] > 0) piOut[i] = pn * (w[i] / sw[g]);
     }
     return piOut;
   }
@@ -759,14 +770,14 @@
     for (const idx of st.groups) for (const i of idx) if (pi[i] > 0) o[st.calls[i]] = pi[i];
     return o;
   }
-  function policyFromCosts(costs, s, temp) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
+  function policyFromCosts(costs, s, temp, u) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
     const calls = Object.keys(costs), st = callStruct(calls), [win, lwin] = windows(s);
     const cost = Float64Array.from(calls.map((a) => costs[a]));
-    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length)), st);
+    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length), usageArrays(st, u)), st);
   }
   function csum(f, c, x) { const t = f + x; if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f; return [t, c]; }
-  function solveSitGame(M, ks, s, temp, bH, usage) {
-    const calls = Object.keys(M), nA = calls.length, nK = ks.length, st = callStruct(calls);
+  function solveSitGame(M, ks, s, temp, bH, usage, mixU) {
+    const calls = Object.keys(M), nA = calls.length, nK = ks.length, st = callStruct(calls), ua = usageArrays(st, mixU);
     const Mat = new Float64Array(nA * nK);
     for (let a = 0; a < nA; a++) for (let k = 0; k < nK; k++) Mat[a * nK + k] = M[calls[a]][ks[k]];
     const us = new Float64Array(nA); let nU = 0; const uvals = [];
@@ -786,7 +797,7 @@
         if (c && Number.isFinite(c)) s_ += c;
         cost[a] = s_;
       }
-      return policyArr(cost, st, temp, win, lwin, pi);
+      return policyArr(cost, st, temp, win, lwin, pi, ua);
     };
     const response = (p_) => {   // f = sigma*(p~)
       for (let a = 0; a < nA; a++) pt[a] = nU ? (4 * p_[a] + us[a]) / (4 + nU) : p_[a];
@@ -830,8 +841,18 @@
   // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
-  function allowedCalls(arsenal, s, exclude) {
-    const tq = targets(s.balls, s.strikes);
+  function allowedCalls(arsenal, s, exclude) { return callRules(arsenal, s, exclude)[0]; }
+  function fallbackMode(arsenal, s) { const cutoff = D.LEVEL[s.level].cutoff; return !arsenal.some((x) => x.conf >= cutoff); }
+  function dropCalls(out, notes, key, gone) {   // a rule stands down (and says so) if it would leave nothing
+    const kept = out.filter((a) => !gone.has(a));
+    if (kept.length === out.length) return out;
+    if (!kept.length) { notes[key + "_stood_down"] = "nothing"; return out; }
+    notes[key] = out.filter((a) => gone.has(a)).sort();
+    return kept;
+  }
+  function callRules(arsenal, s, exclude) {   // engine.py call_rules: the calls allowed now, and which v1.0 rules removed calls
+    const notes = {}, tq = targets(s.balls, s.strikes);
+    if (fallbackMode(arsenal, s)) notes.fallback = true;
     let out = [];
     for (const p of candidates(arsenal, s)) for (const q of tq) if (!(exclude && exclude.some(([n, qq]) => n === p.name && qq === q))) out.push(ck(p.name, q));
     if (s.landing_today && Object.keys(s.landing_today).length && out.length) {
@@ -839,11 +860,35 @@
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
       if (bad.size && bad.size !== names.size) {
         const chaseOk = s.strikes === 2 && s.balls < 3;
-        const kept = out.filter((a) => !bad.has(skName(a)) || (chaseOk && skH(a) === "chase"));
-        if (kept.length) out = kept;
+        // 3.3: with a runner on 3rd, no two-strike chase with a pitch that isn't landing
+        const kept = out.filter((a) => !bad.has(skName(a)) || (chaseOk && skH(a) === "chase" && !s.bases[2]));
+        if (kept.length) {
+          const badChase = out.filter((a) => bad.has(skName(a)) && skH(a) === "chase");
+          if (chaseOk && s.bases[2] && badChase.length) notes.LAND3 = badChase.sort();
+          out = kept;
+        }
       }
     }
-    return out;
+    // 3.5 coach rules, standing down in fallback mode or when they would leave nothing
+    const cr1 = new Set(), cr2 = new Set();
+    for (const key in (s.matchup || {})) {
+      if (!key.startsWith("hard|") || s.matchup[key] < 2) continue;
+      const [, kind, q] = key.split("|");
+      for (const p of arsenal) if (p.kind === kind) cr1.add(ck(p.name, q));
+    }
+    if (((s.grades || {}).w ?? 3) >= 4) for (const p of arsenal) cr2.add(ck(p.name, "middle"));
+    for (const [key, gone] of [["CR1", cr1], ["CR2", cr2]]) {
+      if (!gone.size || !out.some((a) => gone.has(a))) continue;
+      if (notes.fallback) notes[key + "_stood_down"] = "fallback";
+      else out = dropCalls(out, notes, key, gone);
+    }
+    const h = s.history || [];
+    if (h.length) {
+      const last = h[h.length - 1];
+      if (h.length >= 2 && last[0] === h[h.length - 2][0] && last[1] === h[h.length - 2][1]) out = dropCalls(out, notes, "RP1", new Set([ck(last[0], last[1])]));
+      if (last[2] === "foul" && last.length > 3 && last[3] === "back") out = dropCalls(out, notes, "RP2", new Set([ck(last[0], last[1])]));
+    }
+    return [out, notes];
   }
 
   // ---------------------------------------------------------------- 2.6-2.7 look, 6 planning table
@@ -867,7 +912,8 @@
   function Table(arsenal, s) {
     const looked = true, bins = [];      // 2.6: values carry the hitter's look
     for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy);
-    return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [] };
+    return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [],
+      planPol: {}, planP: {} };   // v1.0 3.8: per count, the policy at the starting look and its calls' outcome probabilities
   }
   function binLook(tab, bn) {
     if (bn === "none") return tab.h0;
@@ -1018,18 +1064,19 @@
     for (let sw = 0; sw < sweeps; sw++) {
       let delta = 0.0;
       for (const [b, k] of order) {
-        const sc = replace(s, { balls: b, strikes: k, last: null, usage_this_count: {}, usage_by_call: {}, b_h: Object.assign({}, s.b_h) });
+        const sc = replace(s, { balls: b, strikes: k, last: null, history: [], usage_this_count: {}, usage_by_call: {}, b_h: Object.assign({}, s.b_h) });
         const temp = temperature(arsenal, sc);
         const calls = allowedCalls(arsenal, sc);
+        const mu = mixWeights(arsenal, sc);
         const scH = replace(sc, { look: tab.h0 });
         const [M] = buildM(arsenal, scH, tab, tab.h0, calls, ks, false);
-        const [, sg, res] = solveSitGame(M, ks, sc, temp, sc.b_h);
+        const [, sg, res] = solveSitGame(M, ks, sc, temp, sc.b_h, null, mu);
         tab.sigma[cntKey(b, k)] = sg;
         tab.residuals.push(res);
         for (const bn of tab.bins) {
           const look = binLook(tab, bn), cs = {}, Ps = {}, scL = replace(sc, { look }), mix = ["mix", sg];
           for (const a of calls) [cs[a], Ps[a]] = cost08(byName(arsenal, skName(a)), skH(a), scL, arsenal, tab, look, mix);
-          const pol = policyFromCosts(cs, sc, temp);
+          const pol = policyFromCosts(cs, sc, temp, mu);
           const nv = psum(Object.keys(pol).map((a) => pol[a] * cs[a]));
           delta = Math.max(delta, Math.abs(nv - tab.V[cntKey(b, k)][bn]));
           tab.V[cntKey(b, k)][bn] = nv;
@@ -1041,10 +1088,69 @@
       tab.sweeps = sw + 1;
       if (delta < tol) break;
     }
+    // v1.0 3.8: the plan data (engine.py solve_table)
+    for (const [b, k] of COUNTS) {
+      const sc = replace(s, { balls: b, strikes: k, last: null, history: [], usage_this_count: {}, usage_by_call: {}, b_h: Object.assign({}, s.b_h) });
+      const temp = temperature(arsenal, sc), calls = allowedCalls(arsenal, sc), scL = replace(sc, { look: tab.h0 });
+      const cs = {}, Ps = {}, mix = ["mix", tab.sigma[cntKey(b, k)]];
+      for (const a of calls) [cs[a], Ps[a]] = cost08(byName(arsenal, skName(a)), skH(a), scL, arsenal, tab, tab.h0, mix);
+      const pol = policyFromCosts(cs, sc, temp, mixWeights(arsenal, sc));
+      tab.planPol[cntKey(b, k)] = pol;
+      const pp = {}; for (const a in pol) pp[a] = Ps[a];
+      tab.planP[cntKey(b, k)] = pp;
+    }
     return tab;
   }
+  const PLAN_EV = ["ball", "wp_ball", "hbp", "cstrike", "whiff", "foul", "weak", "solid", "hard"];
+  function atBatPlan(tab) {   // engine.py at_bat_plan
+    const trans = {};
+    for (const [b, k] of COUNTS) {
+      const pol = tab.planPol[cntKey(b, k)], P = tab.planP[cntKey(b, k)], ev = {};
+      for (const e of PLAN_EV) ev[e] = psum(Object.keys(pol).map((a) => pol[a] * P[a][e]));
+      trans[cntKey(b, k)] = ev;
+    }
+    const order = COUNTS.slice().sort((x, y) => (x[0] + x[1]) - (y[0] + y[1]));
+    const reach = {}, visits = {}, ends = { walk: 0.0, strikeout: 0.0, hbp: 0.0, in_play: 0.0 };
+    for (const [b, k] of COUNTS) { reach[cntKey(b, k)] = 0.0; visits[cntKey(b, k)] = 0.0; }
+    reach["0-0"] = 1.0;
+    for (const [b, k] of order) {
+      const ev = trans[cntKey(b, k)], stay = k === 2 ? ev.foul : 0.0, v = reach[cntKey(b, k)] / (1.0 - stay);
+      visits[cntKey(b, k)] = v;
+      const pb = ev.ball + ev.wp_ball, ps = ev.cstrike + ev.whiff + (k < 2 ? ev.foul : 0.0);
+      if (b + 1 === 4) ends.walk += v * pb; else reach[cntKey(b + 1, k)] += v * pb;
+      if (k + 1 === 3) ends.strikeout += v * (ev.cstrike + ev.whiff); else reach[cntKey(b, k + 1)] += v * ps;
+      ends.hbp += v * ev.hbp;
+      ends.in_play += v * (ev.weak + ev.solid + ev.hard);
+    }
+    const top2 = (c) => { const pol = tab.planPol[c]; return Object.keys(pol).map((a) => [skName(a), skH(a), pol[a]]).sort((x, y) => y[2] - x[2]).slice(0, 2); };
+    const byPitch = {}, bySpot = {};
+    for (const c of ["0-2", "1-2", "2-2"]) for (const a in tab.planPol[c]) {
+      const n = skName(a);
+      byPitch[n] = (byPitch[n] ?? 0.0) + reach[c] * tab.planPol[c][a];
+      bySpot[a] = (bySpot[a] ?? 0.0) + reach[c] * tab.planPol[c][a];
+    }
+    let putaway = null; for (const n in byPitch) if (putaway === null || byPitch[n] > byPitch[putaway]) putaway = n;
+    let putawaySpot = null, best = -Infinity;
+    for (const a in bySpot) if (skName(a) === putaway && bySpot[a] > best) { best = bySpot[a]; putawaySpot = skH(a); }
+    const plan = { reach, visits, ends, opener: top2("0-0"), putaway, putaway_spot: putawaySpot,
+      behind: { "2-0": top2("2-0"), "2-1": top2("2-1"), "3-1": top2("3-1") } };
+    plan.line = planLine(plan);
+    return plan;
+  }
+  function planLine(plan) {   // section 5: "Plan: {opener}, put away with {put-away}."
+    const [n, q] = plan.opener[0];
+    if (plan.putaway === null) return `Plan: ${n.toLowerCase()} ${q} to start.`;
+    return `Plan: ${n.toLowerCase()} ${q} to start, put away with the ${plan.putaway.toLowerCase()} ${plan.putaway_spot}.`;
+  }
   // 6.3 the myopic guardrail window (runs x run scale); named only so the simulator can test a wider one (engine.py GUARD_DELTA)
-  const GUARD_DELTA = 0.010;
+  const GUARD_DELTA = 0.010, GUARD_TYPE = 0.030;   // v1.0 3.6 location guard / pitch-type guard (engine.py guard_keep)
+  function guardKeep(calls, cmy, s) {
+    const bestBy = {};
+    for (const a of calls) { const n = skName(a); if (!(n in bestBy) || cmy[a] < bestBy[n]) bestBy[n] = cmy[a]; }
+    let overall = Infinity; for (const n in bestBy) if (bestBy[n] < overall) overall = bestBy[n];
+    const dLoc = GUARD_DELTA * runScale(s.level), dType = GUARD_TYPE * runScale(s.level);
+    return calls.filter((a) => cmy[a] - bestBy[skName(a)] <= dLoc && bestBy[skName(a)] - overall <= dType);
+  }
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {
     const ks = sitOptions(arsenal);
     const look = s.look || tab.h0;
@@ -1056,14 +1162,12 @@
     const sgTab = tab.sigma[cntKey(s.balls, s.strikes)];
     {
       const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
-      let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
-      const delta = GUARD_DELTA * runScale(s.level);
-      const keep = calls.filter((a) => cmy[a] - best <= delta);     // the guardrail: no call clearly worse on this pitch alone
+      const keep = guardKeep(calls, cmy, s);     // the guardrails on myopic cost (location, pitch type)
       const M2 = {};
       for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
       M = M2;
     }
-    const [pi, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
+    const [pi, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call, mixWeights(arsenal, s));
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
     return [pi, sg, full, res, M];
   }
@@ -1086,7 +1190,9 @@
     let acc = 0.0, pick = dist[dist.length - 1];
     for (const d of dist) { acc += d.prob; if (r <= acc) { pick = d; break; } }
     let best = Infinity; for (const a in full) if (full[a] < best) best = full[a];
-    return { pick, dist, best, tab, info: { sigma: sg, residual: res, M, s: s_ } };
+    let [callsNow, rules] = callRules(arsenal, s_, opts.exclude);
+    if (!callsNow.length) rules = callRules(arsenal, s_)[1];
+    return { pick, dist, best, tab, info: { sigma: sg, residual: res, M, s: s_, rules } };
   }
   function rootCosts(arsenal, s, tab, sigma) {
     const ks = sitOptions(arsenal), sg = sigma || tab.sigma[cntKey(s.balls, s.strikes)], look = s.look || tab.h0, out = {};
@@ -1096,21 +1202,23 @@
   function frozenInputs(arsenal, s) {
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
-    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|") };
+    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), bases: s.bases.map((b) => (b ? 1 : 0)).join(""), outs: s.outs };
   }
   function needsResolve(frozen, arsenal, s) {
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
+    if (s.bases.map((b) => (b ? 1 : 0)).join("") !== frozen.bases || s.outs !== frozen.outs) return true;   // v1.0 3.4
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
     return Math.abs(s.ump_u - frozen.ump) > 0.20;
   }
-  function leanBh(arsenal, s, fooled = [], eta = 0.0) {   // 2.5
-    const out = {};
+  function leanBh(arsenal, s, fooled = [], eta = 0.0) {   // 2.5; v1.0 3.1 RP3: the last two fouls on P lean to (P, height)
+    const out = {}, fouls = (s.history || []).filter((x) => x[2] === "foul").slice(-2);
     for (const key of sitOptions(arsenal)) {
       const p = byName(arsenal, skName(key)), c = p.kind === "FB" ? "FB" : "OS";
       let v = 0.0;
       if (eta && s.hitter_damage && c in s.hitter_damage) { const [d, nn] = s.hitter_damage[c]; v += eta * d * nn / (nn + 10); }
       v += psum(fooled.filter((fc) => fc !== c).map(() => Math.log(1.3)));
+      v += psum(fouls.filter((x) => x[0] === p.name && heightMember(x[1], p.kind, skH(key))).map(() => Math.log(1.3)));
       if (v) out[key] = v;
     }
     return out;
@@ -1210,7 +1318,31 @@
     const c = (x) => psum(ks.filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
     return [c(a), c(b)];
   }
+  // v1.0 rule lines (engine.py RULE_LINES / rule_line)
+  const RULE_LINES = { fallback: "Nothing's working. Going with what's landing. Think about a change.",
+    LAND3: "Runner on 3rd: no dirt ball with a pitch that isn't landing.", CR1: "He's hit this hard twice today.",
+    CR2: "Power hitter: stay off the middle.", RP2: "He fouled it straight back. Don't go back there yet.",
+    RP1: "Not the same pitch and spot a third time." };
+  const RULE_ORDER = ["fallback", "LAND3", "CR1", "CR2", "RP2", "RP1"];
+  const STOOD_DOWN = { nothing: " Standing down: nothing else left to call.", fallback: " Standing down: nothing's trusted." };
+  const CR_NAME = { CR1: "Hit-hard-twice", CR2: "Power-hitter" };
+  function ruleLine(notes) {
+    if (!notes) return null;
+    const pk = RULE_ORDER.find((k) => k in notes);
+    const stood = ["CR1", "CR2"].filter((k) => (k + "_stood_down") in notes);
+    if (pk === undefined) {
+      if (stood.length) return RULE_LINES[stood[0]] + STOOD_DOWN[notes[stood[0] + "_stood_down"]];
+      const rp = ["RP2", "RP1"].find((k) => (k + "_stood_down") in notes);
+      return rp ? RULE_LINES[rp] + STOOD_DOWN.nothing : null;
+    }
+    return RULE_LINES[pk] + stood.map((k) => ` ${CR_NAME[k]} rule standing down.`).join("");
+  }
   function whyLine(arsenal, s, tab, pick, info) {
+    const [line, deltas, b] = whyCostLine(arsenal, s, tab, pick, info);
+    const rl = ruleLine(info.rules);
+    return [rl || line, deltas, b];
+  }
+  function whyCostLine(arsenal, s, tab, pick, info) {
     const M = info.M, sigma = info.sigma, a = ck(pick.pitch.name, pick.quad);
     const full = {}; for (const x in M) full[x] = psum(Object.keys(M[x]).map((k) => sigma[k] * M[x][k]));
     const others = Object.keys(full).filter((x) => x !== a);
@@ -1330,7 +1462,9 @@
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
-    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
+    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, whyCostLine, intentLabel, intentFromCosts,
+    callRules, fallbackMode, guardKeep, mixWeights, atBatPlan, planLine, ruleLine,
+    KAPPA_T, KAPPA_L, GUARD_TYPE,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,

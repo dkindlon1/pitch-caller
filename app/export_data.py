@@ -29,6 +29,8 @@ data["V08"] = {
 data["WE"] = json.load(open(os.path.join(HERE, "..", "we_tables.json")))
 # v1.0 3.7: real usage by count and platoon (fit_mix_prior.py), the operator's baseline; both engines read these numbers
 data["MIX_PRIOR"] = {"u_T": e.MIX_PRIOR["u_T"], "u_L": e.MIX_PRIOR["u_L"]}
+# v1.0 Phase 4: wild-pitch chance per non-competitive ball with runners on, (off-speed, fastball), by level
+data["WP_RATE"] = {l: list(e.WP_RATE.get(l, e.WP_DEFAULT)) for l in LEVELS}
 import hashlib
 # a fingerprint of the tables, logged with every pitch so a replay knows which numbers made the call
 data["version"] = hashlib.sha1(json.dumps({k: v for k, v in data.items() if k != "version"}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:10]
