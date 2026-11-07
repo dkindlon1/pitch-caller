@@ -13,7 +13,6 @@
 #   PGURL=...             Postgres superuser URL; unset means the SQL gate is skipped
 #   V09_RUNS=../pc-v09/runs/readthrough/v09_tw   the v0.9 baseline games for the simulator floor
 #   V10_RUNS=runs/readthrough/v10_tw             the matching v1.0 games
-#   CALLSHEET_REUSE=1     reuse results/callsheet_$TAG.md if it is newer than the engine inputs
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -89,25 +88,9 @@ else
 fi
 
 # ---- the call sheet's bands --------------------------------------------------
-cs_md="results/callsheet_${TAG}.md"
-cs_reuse=0
-if [ "${CALLSHEET_REUSE-}" = "1" ] && [ -f "$cs_md" ]; then
-  cs_reuse=1
-  for dep in engine.py app/engine_data.json mix_prior.json pitcher_side_params.py; do
-    [ -f "$dep" ] || continue
-    [ "$dep" -nt "$cs_md" ] && cs_reuse=0
-  done
-fi
-if [ "$cs_reuse" = "1" ]; then
-  line=$(grep -m1 '^enforced bands failing:' "$cs_md" | tr -d '\r')
-  if [ "$line" = "enforced bands failing: none" ]; then
-    pass callsheet_full "reused $cs_md"
-  else
-    fail callsheet_full "reused $cs_md - $line"
-  fi
-else
-  gate callsheet_full "$PY" callsheet.py --tier full --jobs "$JOBS" --tag "$TAG"
-fi
+# Always measured, never reused: the full tier is about 5 minutes and callsheet.py's own exit code is the gate
+# (non-zero if any enforced band fails). Its per-band table lands in results/callsheet_$TAG.{json,md}.
+gate callsheet_full "$PY" callsheet.py --tier full --jobs "$JOBS" --tag "$TAG"
 
 # ---- the v1.0 scenarios ------------------------------------------------------
 gate scenarios_v10 "$PY" readthrough/scenarios_v10.py
