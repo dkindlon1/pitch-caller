@@ -1,0 +1,9 @@
+Phase 4 round 2 (KAPPA_T 3.0, KAPPA_L 1.0, GUARD_TYPE 0.03)
+hs: hbp 0.0727 -> 0.0719 (rounds [0.07194]; inside x0.7: 0.0788) | wild 0.2206 -> 0.2192 (rounds [0.21934, 0.21916])
+   engine's own v1.0 mix: BB 14.06% (target 14.06%), HBP 2.45% (target 4.11%), K 19.78% (target 21.01%, drift -1.23 pts) | before: BB 14.12% HBP 2.48% K 19.75%
+college_d3: hbp 0.0802 -> 0.0805 (rounds [0.08049]; inside x0.7: 0.0879) | wild 0.1724 -> 0.1694 (rounds [0.16992, 0.16935])
+   engine's own v1.0 mix: BB 11.39% (target 11.38%), HBP 2.53% (target 4.22%), K 15.86% (target 16.21%, drift -0.35 pts) | before: BB 11.49% HBP 2.54% K 15.82%
+college_d1: hbp 0.0651 -> 0.0645 (rounds [0.06452]; inside x0.7: 0.0704) | wild 0.1493 -> 0.1455 (rounds [0.14593, 0.14551])
+   engine's own v1.0 mix: BB 10.80% (target 10.79%), HBP 2.07% (target 3.36%), K 18.60% (target 19.30%, drift -0.70 pts) | before: BB 10.93% HBP 2.10% K 18.55%
+college_d1: wild pitches 0.0209 per batter (target 0.0209, within +-0.3 pts) at wp_os 0.1056, wp_fb 0.0352
+college_d3: wild pitches 0.0305 per batter (target 0.0274, OUTSIDE +-0.3 pts) at wp_os 0.1375, wp_fb 0.0458
