@@ -22,14 +22,25 @@ echo "smoke: passed"
 (cd app && ../$run rules_e2e node rules_e2e.js)
 (cd app && ../$run v10_e2e node v10_e2e.js)        # v1.0: history, RP2, plan line, re-solve on a steal, fallback flag
 
-# learn_test is run here, after the other suites, for the same reason as golden_v09 below: its check 8
-# ("fewer fastballs to the masher", 38% unknown vs 41% masher) fails by Drew's recorded decision until Phase 5
-# resumes, and with `set -e` a known failure early in the list hides every check after it.
-(cd app && ../$run learn_test node learn_test.js)
+# ---------------------------------------------------------------------------
+# The checks that are known to fail while v1.0 is paused, run LAST on purpose and each allowed to report
+# before the next one starts. With bare `set -e` the first failure here aborts the script, which is how a
+# stale app/dist once reached the branch unnoticed; collecting the failures instead keeps every check
+# visible AND keeps the suite's exit code honest (still non-zero at the end).
+#   callsheet_ci   plan 9.2. Ten of the enforced bands fail: see docs/V1.0_REPORT.md.
+#   scenarios_v10  plan 9.2. F1 is over its Not-acceptable cap (a hitter-model timing effect).
+#   learn_test     check 8 ("fewer fastballs to the masher", 38% unknown vs 41% masher) is a damage() effect.
+#   golden_v09     fails by design: v1.0 changes the calls. Phase 9.1 freezes golden_v10 and replaces it here,
+#                  and that freeze must be generated and checked in the pc-py313 Linux container - Windows and
+#                  macOS libm differ from Linux by 1-2 ULP, which the iterated value table amplifies.
+known_fail=""
+$run callsheet_ci  python3 callsheet.py --tier ci --jobs 4 --tag ci   || known_fail="$known_fail callsheet_ci"
+$run scenarios_v10 python3 readthrough/scenarios_v10.py              || known_fail="$known_fail scenarios_v10"
+(cd app && ../$run learn_test node learn_test.js)                    || known_fail="$known_fail learn_test"
+$run golden_v09    node golden/golden_v09.js                         || known_fail="$known_fail golden_v09"
 
-# The frozen reference engine, run LAST on purpose. v1.0 changes the calls, so golden_v09 fails by design
-# until Phase 9.1 freezes golden_v10 and replaces it here. It used to run second, and with `set -e` that
-# meant everything below it - parity_v10, the app/dist build gate and every app suite - never executed,
-# which is how a stale app/dist reached the branch unnoticed. Running it last keeps the suite's exit code
-# honest (still non-zero) while the rest of the checks actually report.
-$run golden_v09    node golden/golden_v09.js
+if [ -n "$known_fail" ]; then
+  echo "::error::failing checks:$known_fail"
+  exit 1
+fi
+echo "test-app.sh: every check passed"
