@@ -5,10 +5,11 @@ From the v1.0 calling-logic run (`docs/PLAN_v1.0.md`, log in `docs/V1.0_LOG.md`,
 **Status: v1.0 is paused, by Drew's call.** Phases 0-4 and 6-8 are built and tested. Phase 5's tuning found no setting that
 passes the call-sheet bands and the v1.0 scenario gate (`results/tune_v10.md`). Nothing is on `main` yet.
 
-> **Read "Correction (Nov 7)" at the bottom before you act on this document.** This section used to say the remaining
-> gaps come from the engine's cost differences, i.e. the hitter model. An independent review on Nov 7 found two
-> *calling-side* defects in the usage prior that account for a large share of the B1/B2/B5 failures. Part of what was
-> handed to you is ours, not yours, and the Phase 5 grid should be re-run after those are settled.
+> **Read "Final state, Nov 7 2026" at the bottom before you act on this document.** This section used to say the
+> remaining Phase 5 gaps come from the engine's cost differences, i.e. your work. That was only partly right. The
+> stall is three separate problems: the usage prior (B1/B2/B5, ours, now fixed), the location window (B13 and part
+> of B7, ours, deliberately left alone by Drew), and genuinely cost-shaped bands (B6, B8a, B3, rest of B7 - the
+> only part that is yours). Phase 5 has since been re-tuned and still passes 0 of 96 points.
 
 ## What v1.0 changed that the hitter work must keep
 
@@ -213,3 +214,118 @@ large move.
 
 **`scripts/v10_gates.sh`** now exists (Phase 9.2) and prints PASS/FAIL/SKIP per line, with `--strict` to turn SKIPs into
 failures. `golden_v10` SKIPs until the engine is final, and `sim_floor` SKIPs without the v0.9 baseline games.
+
+---
+
+# Final state, Nov 7 2026 — read this section first
+
+This supersedes the earlier "Correction" section below, which was written mid-investigation. Branch `v1.0-work`, HEAD
+`84e7d9c`. Phase 5 has now been tuned **twice** and still passes 0 of 96 points, but the reason is no longer what the
+first run concluded.
+
+## The stall is three separate problems, and only the third is yours
+
+| group | bands | whose | state |
+|---|---|---|---|
+| The usage prior was mis-derived | **B1, B2, B5** | ours (calling side) | **fixed** in `cd4297e`. Nothing for you to do |
+| The location window is the binding constraint | **B13**, part of **B7** | ours, but a limit the plan fixes | **measured; Drew's call is to leave the window alone.** Not yours |
+| Genuinely cost-shaped | **B6, B8a, B3**, rest of **B7** | the hitting model | open — **this is the part that is yours** |
+
+**Please do not spend time on B1, B2 or B5.** They were an artifact of how `u_T` was built, not of hitter costs. After
+the fix, B2 passes outright at 25 of 96 grid points, B1's best rate went 77.5% -> 96.8% with its worst miss more than
+halved (13.7 -> 6.6 points), and B5's best went 37.5% -> 70.8%. The first run's claim that "the remaining gaps come from
+the engine's cost differences" was wrong for these three.
+
+**Please do not spend time on B13 either.** It is purely the location window: widening `LOC_WINDOW` from 0.010 to 0.020
+takes B13 from 87.5% to **100%** at both kappas, with no hitter change at all. B13 is the band the plan added expressly
+to catch a regression against v0.9 (which passed it 24/24), so the regression is real but it is ours, and Drew has
+decided to leave the window at the value plan 3.7 fixes. It therefore stays failing on purpose.
+
+**What is actually yours: B6 (middle share), B8a (ground balls), B3, and the rest of B7.** The diagnostics below show
+these cannot be reached from the calling side.
+
+## Why the calling side cannot fix the rest (diagnostics, Nov 7, on the corrected prior)
+
+Through the `PC_TUNE` hook, CI tier, at (6, 1, 0.04); (4, 1, 0.04) behaves the same. "guard off" is `GUARD_DELTA` 999
+with the window at 0.040. Nothing here is adopted.
+
+| variant | B1 | B3 | B5 | B6 | B7 | B8a | B9 | B13 |
+|---|---|---|---|---|---|---|---|---|
+| as planned (window 0.010) | 96.5% | 67.0% | 68.8% | 24.1% | 33.3% | 80.2% | 95.8% | 87.5% |
+| window 0.020 | 96.7% | 70.3% | 68.8% | 34.1% | 50.0% | 72.9% | 96.6% | **100%** |
+| window 0.040 | 97.3% | 68.8% | 66.7% | 36.6% | 50.0% | 85.4% | 97.0% | **100%** |
+| guard off + window 0.040 | 96.7% | **91.8%** | 66.7% | **66.5%** | **100%** | **58.3%** | 97.0% | **100%** |
+
+- **B6 never gets near its 98% rule**: 66.5% even with the location guard fully off and the window quadrupled. Its worst
+  miss at the shipped setting is 76.4 points. This is the middle-share problem and it is cost-shaped.
+- **B8a moves the opposite way and collapses**: 80.2% -> 72.9% -> 58.3%. Whatever helps B3/B6/B7/B13 hurts ground balls,
+  so there is no window or guard setting that satisfies both. Plan section 7 says to report this rather than invent a
+  ground-ball bonus, and that still stands.
+- **B7 is blocked by both knobs** — the window alone gets it to 50%, the guard off to 100% — so part of it is ours and
+  part is the cost of going inside.
+
+The specific cost facts behind these are unchanged from the first run and still the best description of what to fix:
+runner on 1st at 1-1 where every corner is 0.0127+ runs behind fastball middle; three-ball counts collapsing to one call
+because the temperature there is about 0.005 x run scale; the engine's edge called-strike rate 30.8% against Statcast's
+49.2%; and the sit game moving costs by only 0.006 runs (R2).
+
+## Where v1.0 stands now, full tier
+
+`results/callsheet_v10.{json,md}`. Rates carry eligible and exempt counts: v0.9's single guardrail left one pitch type
+standing in a third of situations, so **v0.9's B1/B2 are measured over 6754 eligible with 4766 exempt against v1.0's
+10208 with 1312** and the two are not comparable.
+
+| band | v0.9 | v1.0 pre-fix | v1.0 final | final max miss |
+|---|---|---|---|---|
+| B1 | 99.3% | 84.5% | **90.7%** | 15.0 |
+| B2 | 99.6% | 89.3% | **92.7%** | 5.0 |
+| B3 | 72.9% | 76.0% | **76.5%** | 40.0 |
+| B5 | 27.9% | 42.6% | **53.5%** | 15.9 |
+| B6 | 18.5% | 39.0% | **38.6%** | 76.4 |
+| B7 | 27.4% | 45.6% | **45.8%** | 12.0 |
+| B8a | 73.2% | 70.3% | **70.4%** | 52.8 |
+| B8b | 56.6% | 92.0% | **91.3%** | 1.7 |
+| B8c | 83.3% | 100% | **100%** | 0.0 |
+| B9 | 47.7% | 95.8% | **95.8%** | 0.3 |
+| B10 | 33.3% | 100% | **100%** | 0.0 |
+| B11 | 100% | 100% | **100%** | 0.0 |
+| B12 | 16.7% | 100% | **100%** | 0.0 |
+| B13 | **100%** | 91.7% | **91.7%** | 5.0 |
+| T1 / T2 / T3 / T4 | 12.5 / 10.4 / 35.4 / 0-of-2 | 33.3 / 18.8 / 87.5 / 0-of-2 | **33.3 / 18.8 / 88.5 / 0-of-2** | 5.0 / 5.0 / 4.3 / 4.6 |
+
+**Two gates now pass** that did not before: exploitability, mean X **0.00584** against v0.9's 0.00639; and the scenarios
+improved from 7 rows over the Not-acceptable cap on v0.9 (F5, H1, I4, Q1, T2, W1, W2) to **1** (F1), with
+acceptable-only failures 48 -> 30 against a cap of 6. F1 (0-1 after a pulled foul on a fastball up-in) is over its cap
+at all 96 grid points.
+
+## What changed in the engine since this document was first written
+
+Re-run `fit_pitcher_side.py`, `tune_v10.py` and `scripts/v10_gates.sh` after any hitter change, as before. Note:
+
+- **`fit_mix_prior.py` changed** (`cd4297e`). A composition with fewer than 40 pitcher-seasons no longer falls back to
+  all-pitcher kind shares; it gets a table pooled by **arsenal size** and mapped by role (fastball, then that pitcher's
+  own secondaries ranked by usage), stored under its own composition name. The engines are untouched - their
+  `u_T[composition]` lookup finds it unchanged. Pools: 2-kind 45 seasons, 3-kind 190, 4-kind 139.
+- **A `u_T` kind share can no longer be exactly 0.** A zero deleted a pitch type in the operator with no why line; zeros
+  are now pooled to the count group and then `behind`, as `u_L` already did. Smallest stored `u_T` is 0.0012, was 0.0000.
+  Two substitutions fired, both at 3-0.
+- **Phase 4 ran three rounds** (the plan's limit). 11 of 12 fitted values are inside the 0.01 fixed-point criterion;
+  hbp and wild moved at most 0.0004 and walks are exactly on target. The twelfth, the **wild-pitch multiplier, cannot
+  converge at the 30 games the plan fixes**: its sampling SE is about 0.4 points, larger than both the +-0.3 point
+  tolerance and the 0.01 criterion. The over-threshold level even swapped between rounds (D1 in round 2, D3 in round 3)
+  and the band verdict flipped with it. **Drew froze the round-3 values and made the wild-pitch band reported, not
+  gated, like strikeouts.** Current: D1 hbp 0.0649 wild 0.1453, D3 hbp 0.0809 wild 0.1692, hs hbp 0.0721 wild 0.2192.
+- **Strikeout drift is unchanged and inside Drew's rule**: hs **-1.23** points (his limit about 2), D3 -0.35, D1 -0.70.
+- **`scripts/v10_gates.sh` exists** and prints PASS/FAIL/SKIP per line. On the frozen engine: 9 PASS, 5 FAIL, 3 SKIP.
+  `golden_v10` SKIPs until the engine is final; `sim_floor` SKIPs without the v0.9 baseline games.
+- **Parity is now genuinely exercised**: `ump_u` varies and `usage_by_call` is passed, and the comparison covers
+  `info.rules`, the why line and the plan line. Beware - the engines key `usage_by_call` differently (Python
+  `(name, target)` tuples, JS `"name|target"` strings) and `solve_sit_game` filters with `if a in M`, so Python code
+  passing the app's JSON straight through loses the term **silently**. 4 seeds x 200 cases pass, worst margin 2.83e-11.
+- **`pitcher_side_params.py` overwrites `OUTCOME_ADJ[level]["hbp"|"wild"]` at import.** If you refit
+  `outcome_params.py`, those two keys are silently overridden by the Phase 4 file.
+
+## Still open, and not yours
+
+GitHub Actions is not running jobs on this account (billing), so no CI run can be shown green. The v0.9 baseline games
+are not on this machine, so the 90-game simulator floor has never been measured for v1.0.
