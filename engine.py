@@ -997,9 +997,16 @@ def candidates(arsenal, s, forced=None):
     cutoff = LEVEL[s.level]["cutoff"]
     c = [x for x in arsenal if x.conf >= cutoff or (forced and x.name == forced)]
     if not c:
-        # v0.4: he trusts nothing right now. Fall back to his most-trusted pitch;
-        # the app should flag this to the coach as a sign it may be time for a change.
-        c = [max(arsenal, key=lambda x: x.conf)]
+        # v1.0 3.2 (issue 9): he trusts nothing right now. Bullpen feel is the wrong tiebreak here -- what decides it
+        # is what is landing TODAY. Take the pitches still landing (or with too few thrown to judge) and pick the most
+        # confident of those; if nothing is landing, pick the best shrunk strike estimate. Before v1.0 this picked the
+        # highest confidence outright and ignored today's strike rate entirely.
+        # The app flags this to the coach as a sign it may be time for a change (see rule_notes / RULE_WHY).
+        ok = [x for x in arsenal if not not_landing(x, s)]
+        if ok:
+            c = [max(ok, key=lambda x: x.conf)]
+        else:
+            c = [max(arsenal, key=lambda x: landing_estimate(x, s)[0])]
     return c
 
 
@@ -1335,7 +1342,13 @@ def not_landing(p, s):
 RULE_WHY = {       # v1.0 section 5: plain notes for the calling rules. Display only.
     "RP1": "Not the same pitch and spot a third time.",
     "RP2": "He fouled it straight back. Don't go back there yet.",
+    "FALLBACK": "Nothing's working. Going with what's landing. Think about a change.",
 }
+
+
+def nothing_trusted(arsenal, s):
+    """3.2: no pitch clears the level's confidence cutoff, so candidates() is in fallback."""
+    return not any(x.conf >= LEVEL[s.level]["cutoff"] for x in arsenal)
 
 
 def repeat_blocks(s):
@@ -1361,8 +1374,10 @@ def repeat_blocks(s):
 
 
 def rule_notes(arsenal, s):
-    """The why-line notes for the rules that removed calls here, in the order they fired (display only)."""
+    """The why-line notes for the rules that shaped this call, in the order they fired (display only)."""
     out = []
+    if nothing_trusted(arsenal, s):
+        out.append(RULE_WHY["FALLBACK"])
     if s.history or s.last:
         blocked, codes = repeat_blocks(s)
         if blocked and [a for a in allowed_calls(arsenal, s) if a not in blocked]:

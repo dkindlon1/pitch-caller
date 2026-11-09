@@ -7,7 +7,7 @@ import sys
 from dataclasses import replace
 
 from engine import (Pitch, Situation, call_v08, solve_table, allowed_calls, repeat_blocks, rule_notes,
-                    lean_b_h, why_line)
+                    lean_b_h, why_line, candidates, nothing_trusted, landing_estimate, RULE_WHY)
 
 results = []
 
@@ -118,6 +118,51 @@ tab_hist = solve_table(A, replace(twice, balls=0, strikes=0, last=None))
 check("history does not change the plate-appearance table",
       tab_plain.V == tab_hist.V and tab_plain.sigma == tab_hist.sigma,
       "solve_table clears history, as it already cleared last and usage, so the 0-0 plan is unchanged")
+
+# ---------------------------------------------------------------------------------------------------------------
+# 3.2 the fallback when nothing is trusted
+# ---------------------------------------------------------------------------------------------------------------
+print("\n== 3.2 fallback when nothing is trusted ==")
+
+# the plan's own test: curveball 2 of 12, fastball 7 of 12, everything below the cutoff, and the CURVEBALL the more
+# confident pitch. The fastball must still get 100%.
+TWO = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.30, shape="ride", velo=82),
+       Pitch("Curveball", "CB", grade=3, command=3, conf=0.40, shape="loopy", velo=70)]
+
+
+def two_dist(s):
+    tab = solve_table(TWO, replace(s, balls=0, strikes=0, last=None, history=()))
+    _, d, _, _ = call_v08(TWO, s, rng=random.Random(0), tab=tab)
+    return d
+
+
+s_fb = Situation(1, 1, 0, E, level="hs", landing_today={"Fastball": (7, 12), "Curveball": (2, 12)})
+fb_only = sum(pr for pr, _, p, q in two_dist(s_fb) if p.name == "Fastball")
+check("3.2 nothing trusted: the pitch that is LANDING gets 100%, not the more confident one",
+      nothing_trusted(TWO, s_fb) and fb_only == 1.0 and [p.name for p in candidates(TWO, s_fb)] == ["Fastball"],
+      f"fastball (7 of 12, conf 0.30) {fb_only:.0%} vs curveball (2 of 12, conf 0.40, the higher feel); "
+      f"candidates {[p.name for p in candidates(TWO, s_fb)]}")
+
+check("3.2 the why line says nothing is working",
+      RULE_WHY["FALLBACK"] in rule_notes(TWO, s_fb),
+      f"{rule_notes(TWO, s_fb)}")
+
+# if NOTHING is landing, fall back to the best shrunk strike estimate
+s_none = Situation(1, 1, 0, E, level="hs", landing_today={"Fastball": (1, 12), "Curveball": (2, 12)})
+best = max(TWO, key=lambda x: landing_estimate(x, s_none)[0])
+check("3.2 when nothing is landing either, go with the best strike estimate",
+      [p.name for p in candidates(TWO, s_none)] == [best.name],
+      f"fastball estimate {landing_estimate(TWO[0], s_none)[0]:.3f}, curveball "
+      f"{landing_estimate(TWO[1], s_none)[0]:.3f} -> {best.name}")
+
+# a trusted arsenal must be untouched by any of this
+TRUSTED = arsenal()
+s_ok = Situation(1, 1, 0, E, level="college_d3", landing_today={"Changeup": (1, 12)})
+check("3.2 does not touch a pitcher who trusts his stuff",
+      not nothing_trusted(TRUSTED, s_ok) and len(candidates(TRUSTED, s_ok)) == 3
+      and RULE_WHY["FALLBACK"] not in rule_notes(TRUSTED, s_ok),
+      f"all {len(candidates(TRUSTED, s_ok))} pitches are candidates and no fallback note, "
+      f"even with the changeup 1 of 12")
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)

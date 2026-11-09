@@ -442,7 +442,15 @@
   function candidates(arsenal, s, forced) {
     const cutoff = D.LEVEL[s.level].cutoff;
     let c = arsenal.filter((x) => x.conf >= cutoff || (forced && x.name === forced));
-    if (!c.length) c = [arsenal.reduce((a, x) => (x.conf > a.conf ? x : a), arsenal[0])];
+    if (!c.length) {
+      // v1.0 3.2 (issue 9): he trusts nothing. What decides it is what is LANDING today, not bullpen feel. Take the
+      // pitches still landing (or with too few thrown to judge) and pick the most confident of those; if nothing is
+      // landing, pick the best shrunk strike estimate. Before v1.0 this picked the highest confidence outright.
+      const ok = arsenal.filter((x) => !notLanding(x, s));
+      c = ok.length
+        ? [ok.reduce((a, x) => (x.conf > a.conf ? x : a), ok[0])]
+        : [arsenal.reduce((a, x) => (landingEstimate(x, s)[0] > landingEstimate(a, s)[0] ? x : a), arsenal[0])];
+    }
     return c;
   }
   function countStakes(b, k, level) {
@@ -950,7 +958,11 @@
   const RULE_WHY = {
     RP1: "Not the same pitch and spot a third time.",
     RP2: "He fouled it straight back. Don't go back there yet.",
+    FALLBACK: "Nothing's working. Going with what's landing. Think about a change.",
   };
+
+  // 3.2: no pitch clears the level's confidence cutoff, so candidates() is in fallback.
+  const nothingTrusted = (arsenal, s) => !arsenal.some((x) => x.conf >= D.LEVEL[s.level].cutoff);
 
   // 3.1 RP1/RP2: the exact calls this at-bat's history rules out, and the codes that did it.
   function repeatBlocks(s) {
@@ -965,11 +977,15 @@
   }
 
   function ruleNotes(arsenal, s) {
-    if (!((s.history && s.history.length) || s.last)) return [];
-    const [blocked, codes] = repeatBlocks(s);
-    if (!blocked.size) return [];
-    if (!allowedCalls(arsenal, s).some((a) => !blocked.has(a))) return [];
-    return codes.map((c) => RULE_WHY[c]);
+    const out = [];
+    if (nothingTrusted(arsenal, s)) out.push(RULE_WHY.FALLBACK);
+    if ((s.history && s.history.length) || s.last) {
+      const [blocked, codes] = repeatBlocks(s);
+      if (blocked.size && allowedCalls(arsenal, s).some((a) => !blocked.has(a))) {
+        for (const c of codes) out.push(RULE_WHY[c]);
+      }
+    }
+    return out;
   }
 
   function allowedCalls(arsenal, s, exclude) {
@@ -1485,7 +1501,7 @@
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
-    repeatBlocks, ruleNotes, RULE_WHY,
+    repeatBlocks, ruleNotes, RULE_WHY, nothingTrusted,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,
