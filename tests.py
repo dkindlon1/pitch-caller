@@ -1,4 +1,5 @@
 """Tests for the eight philosophy changes in engine v0.2. Each prints what it checks and PASS/FAIL."""
+import sys
 import time
 import random
 from collections import Counter
@@ -176,3 +177,7 @@ check("v0.9 calls: no chase at 3-0, 3-1 or 2-2; every count has a top call",
       rule_ok and len(tops) == 4, "; ".join(tops))
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
+# exit non-zero when anything failed, so a direct run (a hook, a pre-commit, another agent) cannot read a pass
+# from $? while checks are failing. scripts/run-check.sh also parses the line above, so CI is unaffected.
+sys.exit(0 if all(results) else 1)
+

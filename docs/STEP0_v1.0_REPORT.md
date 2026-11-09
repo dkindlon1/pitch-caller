@@ -15,13 +15,14 @@ Two environment notes, because they explain two failures that were **not** code 
 
 | Check | Before Step 0 | After Step 0 |
 |---|---|---|
-| `python3 tests.py` | **FAIL** - `ModuleNotFoundError: scipy`; 19/19 once installed | **19/19** |
-| `python3 golden/golden_v09.py` | **FAIL** - 33,834 diffs, largest 7.86e-14 | **PASS** within 1e-9 (see 1.1) |
-| `(cd app && node ../golden/golden_v09.js)` | **PASS**, largest diff 1.71e-13 | **PASS**, then stale by design (see 3.4) |
-| `scripts/test-app.sh` | **FAIL** - `app/dist` out of date | **PASS** through the `app/dist` gate (see 1.2) |
+| `python3 tests.py` | **FAIL** - `ModuleNotFoundError: scipy`; 19/19 once installed | **19/19**, and now exits non-zero on failure |
+| `python3 golden/golden_v09.py` | **FAIL** - 33,834 diffs, largest 7.86e-14 | **PASS** within 1e-9 (see 1.1); superseded as the gate by v1.0 (3.5) |
+| `(cd app && node ../golden/golden_v09.js)` | **PASS**, largest diff 1.71e-13 | stale by design; replaced by `golden_v10.js` (3.5) |
+| `golden/golden_v10.py` / `golden_v10.js` | did not exist | **PASS** — Python 0.00e+00, JS reproduces v1.0 (3.5) |
+| `scripts/test-app.sh` | **FAIL** - `app/dist` out of date | **PASS end to end, exit 0** — 224 checks + smoke (3.5) |
 | `golden/fast.py 40` / `golden/fast.js 40` | did not exist | **PASS, 0 mismatches** (see 2) |
 | Realism: `hs` / `college_d3` / `college_d1` | fitted to the v0.7c mix | **within 0.08 pt of real** (see 3) |
-| Yardstick baseline + `step7_regret.py` self-check | did not exist | **108 games, 0 regret** (see 4) |
+| Yardstick baseline + `step7_regret.py` self-check | did not exist | **108 games, 0 regret**, post-refit world (see 4) |
 | `data/statcast/` 2024 + 2025 | present | **88 files, 340,378 pitches** (see 5) |
 
 ## 1. Two pre-existing failures that were environmental, not regressions
@@ -169,8 +170,24 @@ Drew's decision:
 | `readthrough/scenarios_v09.json` + `.sha256` | **file untouched**, sha still `5b5b4b80...`. The grade moved **30/64 to 29/64**, measured against the frozen engine in the `../pitch-caller-v09` worktree for a true before/after |
 | `golden/labels_parity.json` | referenced by no script; dead file |
 
-So `scripts/test-app.sh` now fails at `golden_v09`, and nothing downstream of that step runs. That is the expected
-cost of changing the engine while its v0.9 reference is still frozen. Re-freezing is Drew's call (section 6).
+### 3.5 A new v1.0 golden, replacing v0.9 as the gate
+
+Per Drew's decision the v0.9 golden stays frozen as history and a **v1.0 golden was frozen alongside it**:
+
+- `golden/golden_v10.py` (make / check) imports `inputs()` and `compute()` from `golden_v09.py` instead of copying
+  them, so the two goldens are provably the **same 500 cases** and the only difference is which engine produced the
+  stored numbers. Verified: inputs compare equal, outputs do not.
+- `golden/golden_v10.js` is `golden_v09.js` with the path and two messages changed; the diff is 5 lines.
+- `scripts/test-app.sh` now gates on `golden_v10`. `golden_v09.*` stays in the tree, simply no longer run by CI.
+
+Both checks pass: JS `PASS: JS engine reproduces v1.0`; Python `500 cases, largest difference 0.00e+00`. That zero is
+itself a confirmation of 1.1 — generated and checked on the same machine it is bit-exact, where the cross-platform
+v0.9 file drifts 7.86e-14.
+
+**`scripts/test-app.sh` now passes end to end (exit 0)**, which matters more than the golden itself: the eight checks
+sequenced after it had not been running at all. They all pass — `learn_test` 27, `db_test` 18, `import_test` 11,
+`rails_test` 31, `schema_test` 24, `stage2_test` 21, `worlds_test` 31, `pitch_rules_test` 41, the browser smoke test,
+and `rules_e2e` 20, plus `tests.py` 19/19 and parity. 224 checks and the smoke test.
 
 ## 4. Step 0d: the yardstick
 
@@ -219,20 +236,36 @@ Drew chose 108 (seeds 101-112).
 ```
 v09 vs v09: 108 paired games; runs per game, B minus A, SE over games
 [all] 108 games             v09       v09      diff      SE
-  runs                    7.037     7.037   +0.000   0.000
-  pitches               164.352   164.352   +0.000   0.000
-  regret_w_exp            1.403     1.403   +0.000   0.000
-  regret_w_pick           1.414     1.414   +0.000   0.000
-  regret_w_info           0.483     0.483   +0.000   0.000
+  runs                    7.259     7.259   +0.000   0.000
+  pitches               166.130   166.130   +0.000   0.000
+  regret_w_exp            1.369     1.369   +0.000   0.000
+  regret_w_pick           1.379     1.379   +0.000   0.000
+  regret_w_info           0.463     0.463   +0.000   0.000
 ```
 
-Per level, `regret_w_pick` runs per game: hs 1.584, college_d3 1.526, college_d1 1.131.
+Per level: hs 9.083 runs per game and `regret_w_pick` 1.602, college_d3 7.278 / 1.432, college_d1 5.417 / 1.103.
 
-**This baseline needs regenerating.** The 108 games were played before the recalibration, so they sit in the *old*
-world. That was deliberate: generating part of the grid pre-fit and part post-fit would have produced a silently mixed
-baseline, which is worse than an openly stale one. Now that `outcome_params.py` has changed, the v0.9 baseline must be
-regenerated in the new world before it can be compared against v1.0, about 25 minutes at `--jobs 10`. The 0-regret
-result above proves the plumbing, which does not depend on the world.
+### 4.2 The baseline was regenerated after the recalibration
+
+The grid was first run *before* the refit and then re-run after it, which incidentally measures how far the
+recalibration moved the world. The pre-refit games are kept in `runs/yardstick/v09_prefit_world/` rather than deleted:
+
+| | pre-refit world | post-refit world (current baseline) |
+|---|---|---|
+| runs per game | 7.037 | **7.259** |
+| pitches per game | 164.352 | **166.130** |
+| `regret_w_pick` | 1.414 | **1.379** |
+| `regret_w_exp` | 1.403 | **1.369** |
+| pitch rows | 17,750 | **17,942** |
+
+Higher fitted wildness shows up as about a fifth of a run more per game and two more pitches per game, while decision
+quality improves slightly (regret is a cost, so 1.379 is better than 1.414).
+
+Note the grid was run in one consistent world both times. Generating part of it pre-refit and part post-refit would
+have produced a silently mixed baseline, which is worse than an openly stale one, so the first run was finished before
+`fit_all.py` was started. **This baseline will go stale again** whenever Phases 3-5 change the engine; regenerate it
+immediately before each v1.0-vs-v0.9 comparison (about 25 minutes at `--jobs 10`). The 0-regret self-check proves the
+plumbing, which does not depend on the world.
 
 ## 5. Step 0e: Statcast data
 
@@ -244,18 +277,29 @@ Two files are 1,825 bytes, header only, and the script re-fetches them on every 
 rows. The script's "is it larger than 100 KB" test cannot tell "no games" from "download failed", so it retries three
 times and prints the size. Harmless; not worth a code change unless the noise is annoying.
 
-## 6. Open items for Drew
+## 6. Decisions Drew made during Step 0, and what is left
 
-1. **Re-freeze or not.** `golden/golden_v09.json` and the v0.9 scenario grade are stale (3.4). Options: re-freeze at
-   v1.0 now; keep v0.9 frozen and accept a red `test-app.sh` until Phase 9; or fold the new reference into Phase 1.2's
-   `scenarios_v10` work. Until this is settled `scripts/test-app.sh` fails at `golden_v09` and the checks after it
-   (app `dist` gate, the app Node tests, the browser smoke test, `rules_e2e`) do not run at all.
-2. **Regenerate the yardstick baseline** in the post-recalibration world (4.1).
-3. **mlb was not refit** and now sits near its tolerance (3.3).
-4. **`tests.py` always exits 0**, even at 17/19. It reports `N/M checks passed` in its output and the pass/fail signal
-   comes from `scripts/run-check.sh` parsing that text. Anything that calls `tests.py` directly and trusts `$?` will
-   read success while checks are failing.
-5. **`docs/PLAN_v1.0_2026-11-09.md` does not exist.** The plan is `docs/PLAN_v1.0.md`, which lived in commit `d0c7d62`
+Settled in this session:
+
+1. **A new v1.0 golden was frozen** (3.5), leaving `golden_v09.*` as history. `scripts/test-app.sh` gates on it and
+   now passes end to end, which restored eight checks that had silently stopped running.
+2. **The yardstick baseline was regenerated** in the post-recalibration world (4.2); the pre-refit games are kept in
+   `runs/yardstick/v09_prefit_world/`.
+3. **`tests.py` now exits non-zero when a check fails.** It previously returned 0 even at 17/19, so the pass/fail
+   signal existed only in text that `scripts/run-check.sh` parses, and any direct caller read success while checks
+   failed. CI is unaffected because `run-check.sh` still parses the same line.
+4. **mlb was deliberately left unrefit** (3.3). Two consequences to keep in mind: mlb sits at K 19.12 vs 20.00 instead
+   of near-exact, and because `fit_all.py` copies mlb's `cmd`, `zsw`, `osw` and `cs` into every amateur level,
+   hs/college_d3/college_d1 still inherit four shifts fitted to the old v0.7c mix. The three amateur levels reproduce
+   their real K/BB/HBP regardless, since the four refitted keys absorb it. Revisit with the Phase 4 pitcher-side fits
+   if those inherited shifts start to bind.
+
+Still open:
+
+5. **The v0.9 scenario grade moved 30/64 to 29/64** (3.4). The scenario file itself is untouched and its sha still
+   matches, so nothing is broken; Phase 1.2 builds `scenarios_v10` anyway. Worth a look only if that one row matters.
+6. **Regenerate the yardstick baseline again** whenever Phases 3-5 change the engine (4.2).
+7. **`docs/PLAN_v1.0_2026-11-09.md` does not exist.** The plan is `docs/PLAN_v1.0.md`, which lived in commit `d0c7d62`
    on **no branch**, reachable only through the reflog and one `git gc` from being lost. It has been restored onto
    `v1.0-work`. Its rules 4 and 5 forbid running `fit_all.py` and overwriting `outcome_params.py`; Drew overrode both
    for Step 0c, with the backup in 3.2 as the safety net.

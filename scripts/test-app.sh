@@ -8,7 +8,7 @@ run=scripts/run-check.sh
 $run tests.py      python3 tests.py
 python3 app/make_parity.py 150 > /dev/null
 $run parity        node app/parity.js
-$run golden_v09    node golden/golden_v09.js     # the one engine against its frozen v0.9 reference (JS)
+$run golden_v10    node golden/golden_v10.js     # the one engine against its frozen v1.0 reference (JS)
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1
