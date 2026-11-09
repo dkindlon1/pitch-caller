@@ -1268,12 +1268,17 @@
   function frozenInputs(arsenal, s) {
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
-    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|") };
+    // 3.4: bases and outs join the frozen inputs -- a steal or an out changes the whole plan
+    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"),
+             bases: s.bases.map((b) => !!b).join(","), outs: s.outs };
   }
   function needsResolve(frozen, arsenal, s) {
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
+    // 3.4 (issue 11): the table values every count against this base-out state, so a runner moving or an out being
+    // made mid at-bat invalidates it.
+    if (s.bases.map((b) => !!b).join(",") !== frozen.bases || s.outs !== frozen.outs) return true;
     return Math.abs(s.ump_u - frozen.ump) > 0.20;
   }
   function leanBh(arsenal, s, fooled = [], eta = 0.0) {   // 2.5

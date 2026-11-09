@@ -1630,7 +1630,8 @@ def lean_b_h(arsenal, s, fooled=()):
 def frozen_inputs(arsenal, s):
     """6.2 the inputs a plate-appearance table is solved with, for the re-solve triggers."""
     return dict(conf={x.name: x.conf for x in arsenal}, wild={x.name: wild_today(x, s) for x in arsenal}, ump=s.ump_u,
-                names=tuple(x.name for x in arsenal))
+                names=tuple(x.name for x in arsenal),
+                bases=tuple(bool(b) for b in s.bases), outs=s.outs)   # 3.4: a steal or an out changes the whole plan
 
 
 def needs_resolve(frozen, arsenal, s):
@@ -1641,6 +1642,10 @@ def needs_resolve(frozen, arsenal, s):
     if any(abs(x.conf - frozen["conf"][x.name]) > 0.10 for x in arsenal):
         return True
     if any(abs(wild_today(x, s) - frozen["wild"][x.name]) > 0.10 for x in arsenal):
+        return True
+    # 3.4 (issue 11): the table values every count against this base-out state, so a runner moving or an out being
+    # made mid at-bat invalidates it. Keys are read with .get so a table frozen before v1.0 still re-solves once.
+    if tuple(bool(b) for b in s.bases) != frozen.get("bases") or s.outs != frozen.get("outs"):
         return True
     return abs(s.ump_u - frozen["ump"]) > 0.20
 

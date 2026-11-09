@@ -59,6 +59,20 @@ cases.forEach((c, i) => {
   for (const k of keys(o.root_costs, rc)) num(i, "rootCosts", k, o.root_costs[k], rc[k]);
 
   same(i, "allowed", o.allowed, V.allowedCalls(ars, s).slice().sort());
+
+  // 3.4: both engines must agree on every re-solve trigger
+  const fz = V.frozenInputs(ars, s);
+  const b = s.bases.map((x) => !!x);
+  const js = {
+    same: V.needsResolve(fz, ars, s),
+    steal_2nd: V.needsResolve(fz, ars, Object.assign({}, s, { bases: [false, true, b[2]] })),
+    runner_out: V.needsResolve(fz, ars, Object.assign({}, s, { bases: [false, b[1], b[2]], outs: Math.min(2, s.outs + 1) })),
+    extra_out: V.needsResolve(fz, ars, Object.assign({}, s, { outs: Math.min(2, s.outs + 1) })),
+    bases_loaded: V.needsResolve(fz, ars, Object.assign({}, s, { bases: [true, true, true] })),
+    ump_drift: V.needsResolve(fz, ars, Object.assign({}, s, { ump_u: s.ump_u + 0.5 })),
+    conf_drift: V.needsResolve(fz, ars.map((x) => Object.assign({}, x, { conf: Math.min(1.0, x.conf + 0.2) })), s),
+  };
+  for (const k in o.resolve) same(i, "resolve." + k, o.resolve[k], js[k]);
 });
 
 console.log(`${cases.length} v1.0 parity cases. Largest Python-vs-JS differences:`);

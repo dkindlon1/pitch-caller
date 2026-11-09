@@ -7,7 +7,8 @@ import sys
 from dataclasses import replace
 
 from engine import (Pitch, Situation, call_v08, solve_table, allowed_calls, repeat_blocks, rule_notes,
-                    lean_b_h, why_line, candidates, nothing_trusted, landing_estimate, RULE_WHY)
+                    lean_b_h, why_line, candidates, nothing_trusted, landing_estimate, RULE_WHY,
+                    frozen_inputs, needs_resolve)
 
 results = []
 
@@ -186,6 +187,34 @@ check("3.3 with 3rd empty the two-strike chase exemption still applies",
 check("3.3 says why",
       RULE_WHY["LAND3"] in note_on3 and RULE_WHY["LAND3"] not in note_empty,
       f"on 3rd: {note_on3}; empty: {note_empty}")
+
+# ---------------------------------------------------------------------------------------------------------------
+# 3.4 rebuild the plan when runners or outs change
+# ---------------------------------------------------------------------------------------------------------------
+print("\n== 3.4 re-solve when runners or outs change ==")
+
+s_on1 = Situation(1, 1, 0, (True, False, False), level="college_d3")
+fz = frozen_inputs(A, s_on1)
+check("3.4 nothing changed: no re-solve",
+      not needs_resolve(fz, A, s_on1) and not needs_resolve(fz, A, replace(s_on1, pitch_count=99)),
+      "the same base-out state, and an unrelated field moving, both keep the frozen plan")
+check("3.4 a stolen base mid at-bat triggers a re-solve",
+      needs_resolve(fz, A, replace(s_on1, bases=(False, True, False))),
+      "runner on 1st steals 2nd -> the plate-appearance table is rebuilt")
+check("3.4 an out mid at-bat triggers a re-solve",
+      needs_resolve(fz, A, replace(s_on1, outs=1))
+      and needs_resolve(fz, A, replace(s_on1, bases=(False, False, False), outs=1)),
+      "a foul-out elsewhere, and a runner thrown out, both rebuild the table")
+check("3.4 a table frozen before v1.0 re-solves once rather than crashing",
+      needs_resolve({k: v for k, v in fz.items() if k not in ("bases", "outs")}, A, s_on1),
+      "the new keys are read with .get, so an older frozen dict is treated as stale")
+
+# the re-solve has to actually change the plan, or the trigger is pointless
+tab_on1 = solve_table(A, replace(s_on1, balls=0, strikes=0, last=None, history=()))
+tab_on2 = solve_table(A, replace(s_on1, balls=0, strikes=0, last=None, history=(), bases=(False, True, False)))
+check("3.4 the rebuilt plan really differs",
+      tab_on1.V != tab_on2.V,
+      "a runner on 2nd instead of 1st gives a different table, which is why the trigger matters")
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)

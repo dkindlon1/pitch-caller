@@ -96,6 +96,24 @@ def from_dicts(c):
     return ars, (replace(sit, matchup=mm) if mm else sit)
 
 
+def resolve_flags(ars, s):
+    """needs_resolve against the situation frozen at the PA start, for each kind of mid at-bat change (3.4)."""
+    fz = e.frozen_inputs(ars, s)
+    b1, b2, b3 = (bool(x) for x in s.bases)
+    cases = {
+        "same": s,
+        "steal_2nd": replace(s, bases=(False, True, b3)),
+        "runner_out": replace(s, bases=(False, b2, b3), outs=min(2, s.outs + 1)),
+        "extra_out": replace(s, outs=min(2, s.outs + 1)),
+        "bases_loaded": replace(s, bases=(True, True, True)),
+        "ump_drift": replace(s, ump_u=s.ump_u + 0.5),
+        "conf_drift": s,
+    }
+    out = {k: bool(e.needs_resolve(fz, ars, v)) for k, v in cases.items()}
+    out["conf_drift"] = bool(e.needs_resolve(fz, [replace(x, conf=min(1.0, x.conf + 0.2)) for x in ars], s))
+    return out
+
+
 def bk(bn):
     return "none" if bn is None else f"{bn[0]},{bn[1]}"
 
@@ -115,6 +133,8 @@ def compute(c):
         "sigma": {K(a): v for a, v in sg.items()},
         "residual": res,
         "allowed": sorted(K(a) for a in e.allowed_calls(ars, s)),
+        # 3.4: the frozen inputs and every re-solve trigger, so both engines must agree on when the plan is rebuilt
+        "resolve": resolve_flags(ars, s),
         # the plan asks for the table at 0-0 and 1-1
         "tableV": {f"{b}-{k}": {bk(bn): v for bn, v in tab.V[(b, k)].items()} for (b, k) in ((0, 0), (1, 1))},
         "tableN": {f"{b}-{k}": {bk(bn): v for bn, v in tab.N[(b, k)].items()} for (b, k) in ((0, 0), (1, 1))},
