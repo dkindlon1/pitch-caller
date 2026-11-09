@@ -1343,6 +1343,7 @@ RULE_WHY = {       # v1.0 section 5: plain notes for the calling rules. Display 
     "RP1": "Not the same pitch and spot a third time.",
     "RP2": "He fouled it straight back. Don't go back there yet.",
     "FALLBACK": "Nothing's working. Going with what's landing. Think about a change.",
+    "LAND3": "Runner on 3rd: no dirt ball with a pitch that isn't landing.",
 }
 
 
@@ -1378,6 +1379,10 @@ def rule_notes(arsenal, s):
     out = []
     if nothing_trusted(arsenal, s):
         out.append(RULE_WHY["FALLBACK"])
+    # 3.3: a two-strike chase with a pitch that isn't landing would have been allowed but for the runner on 3rd
+    if s.strikes == 2 and s.balls < 3 and s.bases[2] and s.landing_today:
+        if any(not_landing(p, s) for p in arsenal) and not all(not_landing(p, s) for p in arsenal):
+            out.append(RULE_WHY["LAND3"])
     if s.history or s.last:
         blocked, codes = repeat_blocks(s)
         if blocked and [a for a in allowed_calls(arsenal, s) if a not in blocked]:
@@ -1392,7 +1397,9 @@ def allowed_calls(arsenal, s, exclude=None):
         names = {a[0] for a in out}
         bad = {p.name for p in arsenal if p.name in names and not_landing(p, s)}
         if bad and bad != names:
-            chase_ok = s.strikes == 2 and s.balls < 3
+            # 3.3 (issue 7): the two-strike exemption lets a pitch that isn't landing go in the dirt for a chase.
+            # With a runner on 3rd that ball in the dirt scores him, so the exemption is off and the pitch is left out.
+            chase_ok = s.strikes == 2 and s.balls < 3 and not s.bases[2]
             kept = [a for a in out if a[0] not in bad or (chase_ok and a[1] == "chase")]
             if kept:
                 out = kept

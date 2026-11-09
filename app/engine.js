@@ -959,6 +959,7 @@
     RP1: "Not the same pitch and spot a third time.",
     RP2: "He fouled it straight back. Don't go back there yet.",
     FALLBACK: "Nothing's working. Going with what's landing. Think about a change.",
+    LAND3: "Runner on 3rd: no dirt ball with a pitch that isn't landing.",
   };
 
   // 3.2: no pitch clears the level's confidence cutoff, so candidates() is in fallback.
@@ -979,6 +980,10 @@
   function ruleNotes(arsenal, s) {
     const out = [];
     if (nothingTrusted(arsenal, s)) out.push(RULE_WHY.FALLBACK);
+    // 3.3: a two-strike chase with a pitch that is not landing would have been allowed but for the runner on 3rd
+    if (s.strikes === 2 && s.balls < 3 && s.bases[2] && s.landing_today && Object.keys(s.landing_today).length) {
+      if (arsenal.some((p) => notLanding(p, s)) && !arsenal.every((p) => notLanding(p, s))) out.push(RULE_WHY.LAND3);
+    }
     if ((s.history && s.history.length) || s.last) {
       const [blocked, codes] = repeatBlocks(s);
       if (blocked.size && allowedCalls(arsenal, s).some((a) => !blocked.has(a))) {
@@ -996,7 +1001,9 @@
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
       if (bad.size && bad.size !== names.size) {
-        const chaseOk = s.strikes === 2 && s.balls < 3;
+        // 3.3 (issue 7): with a runner on 3rd a ball in the dirt scores him, so the two-strike chase
+        // exemption is off and a pitch that is not landing is left out.
+        const chaseOk = s.strikes === 2 && s.balls < 3 && !s.bases[2];
         const kept = out.filter((a) => !bad.has(skName(a)) || (chaseOk && skH(a) === "chase"));
         if (kept.length) out = kept;
       }

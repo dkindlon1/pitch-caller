@@ -164,5 +164,28 @@ check("3.2 does not touch a pitcher who trusts his stuff",
       f"all {len(candidates(TRUSTED, s_ok))} pitches are candidates and no fallback note, "
       f"even with the changeup 1 of 12")
 
+# ---------------------------------------------------------------------------------------------------------------
+# 3.3 the landing filter with a runner on 3rd
+# ---------------------------------------------------------------------------------------------------------------
+print("\n== 3.3 landing filter with a runner on 3rd ==")
+
+
+def slider_share(bases):
+    s = Situation(0, 2, 0, bases, level="college_d3", landing_today={"Slider": (0, 4)})
+    return sum(pr for pr, _, p, q in dist(s) if p.name == "Slider"), rule_notes(A, s)
+
+
+on3, note_on3 = slider_share((False, False, True))
+empty, note_empty = slider_share(E)
+check("3.3 a pitch that isn't landing gets 0% with a runner on 3rd, two strikes or not",
+      on3 == 0.0,
+      f"0-2, runner on 3rd, slider 0 for 4: slider {on3:.1%}")
+check("3.3 with 3rd empty the two-strike chase exemption still applies",
+      empty > 0.0,
+      f"same count and slider, bases empty: slider {empty:.1%}")
+check("3.3 says why",
+      RULE_WHY["LAND3"] in note_on3 and RULE_WHY["LAND3"] not in note_empty,
+      f"on 3rd: {note_on3}; empty: {note_empty}")
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)
