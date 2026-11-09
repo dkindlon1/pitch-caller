@@ -19,6 +19,7 @@ data/statcast/
 runs/
 app/parity_cases.json
 app/parity_v09_cases.json
+app/parity_v10_cases.json
 results/step4b/scenarios_all.log
 results/step4b/verify.log
 results/step4b/games_v09.log
