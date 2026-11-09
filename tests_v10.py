@@ -8,7 +8,7 @@ from dataclasses import replace
 
 from engine import (Pitch, Situation, call_v08, solve_table, allowed_calls, repeat_blocks, rule_notes,
                     lean_b_h, why_line, candidates, nothing_trusted, landing_estimate, RULE_WHY,
-                    frozen_inputs, needs_resolve)
+                    frozen_inputs, needs_resolve, coach_blocks)
 
 results = []
 
@@ -215,6 +215,57 @@ tab_on2 = solve_table(A, replace(s_on1, balls=0, strikes=0, last=None, history=(
 check("3.4 the rebuilt plan really differs",
       tab_on1.V != tab_on2.V,
       "a runner on 2nd instead of 1st gives a different table, which is why the trigger matters")
+
+# ---------------------------------------------------------------------------------------------------------------
+# 3.5 the two coach rules
+# ---------------------------------------------------------------------------------------------------------------
+print("\n== 3.5 coach rules CR1 and CR2 ==")
+
+# CR1, mashed it twice: the I4 situation
+fb_mid_fresh = call_share(BASE, "Fastball", "middle")
+cr1 = replace(BASE, matchup={"hard|FB|middle": 2})
+check("3.5 CR1: a pitch type he has hit hard twice at that spot gets 0% there",
+      call_share(cr1, "Fastball", "middle") == 0.0 and fb_mid_fresh > 0.0,
+      f"fastball middle {fb_mid_fresh:.1%} -> {call_share(cr1, 'Fastball', 'middle'):.1%} "
+      f"after two hard-hit balls; codes {coach_blocks(A, cr1)[1]}")
+check("3.5 CR1 only bans that pitch type at that spot",
+      call_share(cr1, "Fastball", "down-away") > 0.0 and call_share(cr1, "Slider", "middle") > 0.0,
+      f"fastball down-away {call_share(cr1, 'Fastball', 'down-away'):.1%}, "
+      f"slider middle {call_share(cr1, 'Slider', 'middle'):.1%} still allowed")
+
+# CR2, don't feed power: the H1 situation
+mid_fresh = sum(pr for pr, _, p, q in dist(BASE) if q == "middle")
+cr2 = replace(BASE, grades={"w": 5})
+mid_cr2 = sum(pr for pr, _, p, q in dist(cr2) if q == "middle")
+check("3.5 CR2: against a power hitter the middle gets 0% for every pitch",
+      mid_cr2 == 0.0 and mid_fresh > 0.0,
+      f"middle share {mid_fresh:.1%} -> {mid_cr2:.1%} at power grade 5; codes {coach_blocks(A, cr2)[1]}")
+check("3.5 CR2 fires at grade 4 but not at grade 3",
+      coach_blocks(A, replace(BASE, grades={"w": 4}))[1] == ["CR2"]
+      and coach_blocks(A, replace(BASE, grades={"w": 3}))[1] == [],
+      "grade 4 and 5 trigger it, grade 3 does not")
+
+check("3.5 both rules say why",
+      rule_notes(A, cr1) == [RULE_WHY["CR1"]] and rule_notes(A, cr2) == [RULE_WHY["CR2"]],
+      f"{rule_notes(A, cr1)} / {rule_notes(A, cr2)}")
+
+# both stand down in fallback, where he has nothing to spare
+fb_pitches = [replace(p, conf=0.30, base_conf=0.30) for p in A]
+s_fb2 = replace(BASE, grades={"w": 5}, matchup={"hard|FB|middle": 3})
+check("3.5 both rules stand down when nothing is trusted",
+      coach_blocks(fb_pitches, s_fb2) == (set(), []),
+      "in fallback (3.2) the coach rules are off: he has no pitch to spare")
+
+# and they stand down rather than leave nothing
+one = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", velo=88)]
+s_one2 = replace(Situation(1, 1, 0, E, level="college_d3"), grades={"w": 5},
+                 matchup={"hard|FB|up-in": 2, "hard|FB|down-in": 2})
+left = allowed_calls(one, s_one2, exclude={("Fastball", "up-away"), ("Fastball", "down-away"),
+                                           ("Fastball", "chase")})
+check("3.5 the coach rules stand down rather than leave nothing",
+      left != [],
+      f"one pitch with its other spots shaken off, the middle banned by CR2 and both inside spots by CR1: "
+      f"allowed_calls still returns {left}")
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)

@@ -1527,10 +1527,29 @@ td.wrapcell .line { display: block; }
     RP2: "He fouled it straight back. Don't go back there yet.",
     FALLBACK: "Nothing's working. Going with what's landing. Think about a change.",
     LAND3: "Runner on 3rd: no dirt ball with a pitch that isn't landing.",
+    CR1: "He's hit this hard twice today.",
+    CR2: "Power hitter: stay off the middle.",
   };
 
   // 3.2: no pitch clears the level's confidence cutoff, so candidates() is in fallback.
   const nothingTrusted = (arsenal, s) => !arsenal.some((x) => x.conf >= D.LEVEL[s.level].cutoff);
+
+  // 3.5 CR1/CR2: the calls the coach rules remove, and the codes that did it. Both stand down in fallback (3.2),
+  // and allowedCalls stands them down whenever they would leave nothing.
+  function coachBlocks(arsenal, s) {
+    const blocked = new Set(), codes = [];
+    if (nothingTrusted(arsenal, s)) return [blocked, codes];
+    const cr1 = new Set();
+    for (const key in (s.matchup || {})) {
+      const parts = key.split("|");
+      if (parts.length === 3 && parts[0] === "hard" && s.matchup[key] >= 2) {
+        for (const p of arsenal) if (p.kind === parts[1]) cr1.add(ck(p.name, parts[2]));
+      }
+    }
+    if (cr1.size) { for (const a of cr1) blocked.add(a); codes.push("CR1"); }
+    if (((s.grades || {}).w || 0) >= 4) { for (const p of arsenal) blocked.add(ck(p.name, "middle")); codes.push("CR2"); }
+    return [blocked, codes];
+  }
 
   // 3.1 RP1/RP2: the exact calls this at-bat's history rules out, and the codes that did it.
   function repeatBlocks(s) {
@@ -1557,6 +1576,8 @@ td.wrapcell .line { display: block; }
         for (const c of codes) out.push(RULE_WHY[c]);
       }
     }
+    const [cb, cc] = coachBlocks(arsenal, s);
+    if (cb.size && allowedCalls(arsenal, s).some((a) => !cb.has(a))) for (const c of cc) out.push(RULE_WHY[c]);
     return out;
   }
 
@@ -1577,6 +1598,13 @@ td.wrapcell .line { display: block; }
     }
     if (((s.history && s.history.length) || s.last) && out.length) {   // 3.1 RP1/RP2, standing down rather than leaving nothing
       const [blocked] = repeatBlocks(s);
+      if (blocked.size) {
+        const kept = out.filter((a) => !blocked.has(a));
+        if (kept.length) out = kept;
+      }
+    }
+    if (out.length) {                                    // 3.5 CR1/CR2, same stand-down
+      const [blocked] = coachBlocks(arsenal, s);
       if (blocked.size) {
         const kept = out.filter((a) => !blocked.has(a));
         if (kept.length) out = kept;
@@ -2080,7 +2108,7 @@ td.wrapcell .line { display: block; }
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
-    repeatBlocks, ruleNotes, RULE_WHY, nothingTrusted,
+    repeatBlocks, coachBlocks, ruleNotes, RULE_WHY, nothingTrusted,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,
@@ -5202,10 +5230,29 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     RP2: "He fouled it straight back. Don't go back there yet.",
     FALLBACK: "Nothing's working. Going with what's landing. Think about a change.",
     LAND3: "Runner on 3rd: no dirt ball with a pitch that isn't landing.",
+    CR1: "He's hit this hard twice today.",
+    CR2: "Power hitter: stay off the middle.",
   };
 
   // 3.2: no pitch clears the level's confidence cutoff, so candidates() is in fallback.
   const nothingTrusted = (arsenal, s) => !arsenal.some((x) => x.conf >= D.LEVEL[s.level].cutoff);
+
+  // 3.5 CR1/CR2: the calls the coach rules remove, and the codes that did it. Both stand down in fallback (3.2),
+  // and allowedCalls stands them down whenever they would leave nothing.
+  function coachBlocks(arsenal, s) {
+    const blocked = new Set(), codes = [];
+    if (nothingTrusted(arsenal, s)) return [blocked, codes];
+    const cr1 = new Set();
+    for (const key in (s.matchup || {})) {
+      const parts = key.split("|");
+      if (parts.length === 3 && parts[0] === "hard" && s.matchup[key] >= 2) {
+        for (const p of arsenal) if (p.kind === parts[1]) cr1.add(ck(p.name, parts[2]));
+      }
+    }
+    if (cr1.size) { for (const a of cr1) blocked.add(a); codes.push("CR1"); }
+    if (((s.grades || {}).w || 0) >= 4) { for (const p of arsenal) blocked.add(ck(p.name, "middle")); codes.push("CR2"); }
+    return [blocked, codes];
+  }
 
   // 3.1 RP1/RP2: the exact calls this at-bat's history rules out, and the codes that did it.
   function repeatBlocks(s) {
@@ -5232,6 +5279,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
         for (const c of codes) out.push(RULE_WHY[c]);
       }
     }
+    const [cb, cc] = coachBlocks(arsenal, s);
+    if (cb.size && allowedCalls(arsenal, s).some((a) => !cb.has(a))) for (const c of cc) out.push(RULE_WHY[c]);
     return out;
   }
 
@@ -5252,6 +5301,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     }
     if (((s.history && s.history.length) || s.last) && out.length) {   // 3.1 RP1/RP2, standing down rather than leaving nothing
       const [blocked] = repeatBlocks(s);
+      if (blocked.size) {
+        const kept = out.filter((a) => !blocked.has(a));
+        if (kept.length) out = kept;
+      }
+    }
+    if (out.length) {                                    // 3.5 CR1/CR2, same stand-down
+      const [blocked] = coachBlocks(arsenal, s);
       if (blocked.size) {
         const kept = out.filter((a) => !blocked.has(a));
         if (kept.length) out = kept;
@@ -5755,7 +5811,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
-    repeatBlocks, ruleNotes, RULE_WHY, nothingTrusted,
+    repeatBlocks, coachBlocks, ruleNotes, RULE_WHY, nothingTrusted,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,

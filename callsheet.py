@@ -247,13 +247,12 @@ def evaluate(cells, weights):
         "B9": Band("B9", "RP2: after a foul straight back that exact call gets 0%", hard=True),
         "B10": Band("B10", "Fallback picks a pitch that is landing, not the most confident", hard=True),
         "B11": Band("B11", "Hard rules: no chase at 3-0/3-1", hard=True),
-        "B12": Band("B12", "Coach rules CR1 and CR2 (Phase 3.5)", mode="pending"),
+        "B12": Band("B12", "CR1 bans the mashed spot; CR2 keeps a power hitter off the middle", hard=True),
         "B13": Band("B13", "Low eye grade raises two-strike chase by 5 pt over eye 3"),
         "T1": Band("T1", "Contact grade 5 vs 1 moves two-strike chase by 5 pt", mode="tracked"),
         "T2": Band("T2", "Crowding raises fastball inside share by 5 pt", mode="tracked"),
         "T3": Band("T3", "Power grade 5 vs 3 moves calls off the middle", mode="tracked"),
     }
-    B["B12"].note = "needs CR1/CR2; not in this engine"
 
     idx = {}
     for cr in cells:
@@ -313,6 +312,26 @@ def evaluate(cells, weights):
             if b == 3 and k in (0, 1):
                 ch = by_target(pol).get("chase", 0.0)
                 B["B11"].add(ch == 0.0, lab, ch, f"chase {ch:.1%}")
+            # B12: CR1 in the matchup variant (he has hit the fastball middle hard twice), CR2 in the power-grade
+            # variants (grade 4 and 5 ban the middle for every pitch; grade 1 and 3 must not).
+            # The rules act on the ALLOWED set (d["pre_guard"] is allowed_calls, i.e. after the coach rules and
+            # before the guards). Asserting on the policy instead would be wrong in the other direction: the engine
+            # is free to put 0% on the middle for ordinary reasons, such as two strikes with a runner on 3rd.
+            pre = d["pre_guard"]
+            if v == "matchup_hard_fb_middle":
+                fb = list(cr["kinds"])[0]
+                banned = f"{fb}|middle" not in pre and pol.get(f"{fb}|middle", 0.0) == 0.0
+                B["B12"].add(banned, f"{lab}/CR1", 0.0 if banned else 1.0,
+                             f"{fb} middle still allowed after two hard-hit balls")
+            if v in ("grade_w4", "grade_w5"):
+                mids = [x for x in pre if x.endswith("|middle")]
+                B["B12"].add(not mids, f"{lab}/CR2", 0.0 if not mids else 1.0,
+                             f"middle still allowed to a power hitter: {mids}")
+            if v in ("grade_w1", "grade_w3"):
+                mids = [x for x in pre if x.endswith("|middle")]
+                B["B12"].add(bool(mids), f"{lab}/CR2-off", 0.0 if mids else 1.0,
+                             f"middle is not in the allowed set at power grade {v[-1]} (CR2 must not fire below 4)")
+
             # B10: in the no_trust variant every pitch is below the cutoff, so exactly one pitch may be called,
             # and it must be the one still landing rather than the most confident.
             if v == "no_trust":

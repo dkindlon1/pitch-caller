@@ -1344,12 +1344,40 @@ RULE_WHY = {       # v1.0 section 5: plain notes for the calling rules. Display 
     "RP2": "He fouled it straight back. Don't go back there yet.",
     "FALLBACK": "Nothing's working. Going with what's landing. Think about a change.",
     "LAND3": "Runner on 3rd: no dirt ball with a pitch that isn't landing.",
+    "CR1": "He's hit this hard twice today.",
+    "CR2": "Power hitter: stay off the middle.",
 }
 
 
 def nothing_trusted(arsenal, s):
     """3.2: no pitch clears the level's confidence cutoff, so candidates() is in fallback."""
     return not any(x.conf >= LEVEL[s.level]["cutoff"] for x in arsenal)
+
+
+def coach_blocks(arsenal, s):
+    """3.5 CR1/CR2: the calls the coach rules remove, and the codes that did it.
+    CR1, mashed it twice: matchup["hard|KIND|target"] >= 2 today -> that pitch type at that target is out for the
+                          rest of the game (the matchup record persists, so the ban does too).
+    CR2, don't feed power: a power grade of 4 or 5 -> the middle target is out for every pitch, every count.
+    Both stand down in fallback (3.2), where he has nothing to spare, and allowed_calls stands them down whenever
+    they would leave nothing."""
+    blocked, codes = set(), []
+    if nothing_trusted(arsenal, s):
+        return blocked, codes
+    cr1 = set()
+    for key, hits in (s.matchup or {}).items():
+        parts = key.split("|")
+        if len(parts) == 3 and parts[0] == "hard" and hits >= 2:
+            for p in arsenal:
+                if p.kind == parts[1]:
+                    cr1.add((p.name, parts[2]))
+    if cr1:
+        blocked |= cr1
+        codes.append("CR1")
+    if (s.grades or {}).get("w", 0) >= 4:
+        blocked |= {(p.name, "middle") for p in arsenal}
+        codes.append("CR2")
+    return blocked, codes
 
 
 def repeat_blocks(s):
@@ -1387,6 +1415,9 @@ def rule_notes(arsenal, s):
         blocked, codes = repeat_blocks(s)
         if blocked and [a for a in allowed_calls(arsenal, s) if a not in blocked]:
             out += [RULE_WHY[c] for c in codes]
+    cb, cc = coach_blocks(arsenal, s)
+    if cb and [a for a in allowed_calls(arsenal, s) if a not in cb]:
+        out += [RULE_WHY[c] for c in cc]
     return out
 
 
@@ -1405,6 +1436,12 @@ def allowed_calls(arsenal, s, exclude=None):
                 out = kept
     if (s.history or s.last) and out:          # 3.1 RP1/RP2, each standing down rather than leaving nothing
         blocked, _ = repeat_blocks(s)
+        if blocked:
+            kept = [a for a in out if a not in blocked]
+            if kept:
+                out = kept
+    if out:                                    # 3.5 CR1/CR2, same stand-down
+        blocked, _ = coach_blocks(arsenal, s)
         if blocked:
             kept = [a for a in out if a not in blocked]
             if kept:
