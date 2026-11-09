@@ -285,6 +285,11 @@ class Situation:
     extras_runner: bool = False     # 7.1 runner on 2nd to start extra innings
     # v0.9 inputs (inert at their defaults)
     matchup: dict = field(default_factory=dict)           # item 6: earlier trips today, 'succ|KIND' / 'hard|KIND|target' -> n
+    # v1.0 3.1: this at-bat's pitches, oldest first, one (pitch name, target, result, read) each.
+    #   result: ball, cstrike, whiff, foul        read: None, back, pull, opposite, front, late, fooled
+    # `last` stays and callers keep it equal to history[-1][:3], so every older term still works. The PA
+    # table clears both: history describes what has happened, and the table is the plan from 0-0.
+    history: tuple = ()
 
 
 # ---------------------------------------------------------------------------
@@ -1327,6 +1332,44 @@ def not_landing(p, s):
     return n >= LAND_BLOCK_N and est <= LAND_BLOCK_EST
 
 
+RULE_WHY = {       # v1.0 section 5: plain notes for the calling rules. Display only.
+    "RP1": "Not the same pitch and spot a third time.",
+    "RP2": "He fouled it straight back. Don't go back there yet.",
+}
+
+
+def repeat_blocks(s):
+    """3.1 RP1/RP2: the exact (pitch, target) calls this at-bat's history rules out, and the codes that did it.
+    RP1, no third time:      the last two pitches were both that exact call.
+    RP2, fouled straight back: the last pitch was a foul read "back", so that exact call waits one pitch. The same
+                               pitch to a different target is still allowed.
+    Both only ever remove calls; allowed_calls stands them down if they would leave nothing."""
+    h = s.history or ()
+    blocked, codes = set(), []
+    if len(h) >= 2 and tuple(h[-1][:2]) == tuple(h[-2][:2]):
+        blocked.add(tuple(h[-1][:2]))
+        codes.append("RP1")
+    # RP2 reads the last pitch, which may arrive either as history or as a 4-long `last` carrying the read. The
+    # scenario suite and any caller that tracks only the previous pitch use the latter; RP1 needs two pitches, so it
+    # is history-only.
+    prev = h[-1] if h else (s.last or ())
+    if len(prev) > 3 and prev[2] == "foul" and prev[3] == "back":
+        blocked.add(tuple(prev[:2]))
+        if "RP2" not in codes:
+            codes.append("RP2")
+    return blocked, codes
+
+
+def rule_notes(arsenal, s):
+    """The why-line notes for the rules that removed calls here, in the order they fired (display only)."""
+    out = []
+    if s.history or s.last:
+        blocked, codes = repeat_blocks(s)
+        if blocked and [a for a in allowed_calls(arsenal, s) if a not in blocked]:
+            out += [RULE_WHY[c] for c in codes]
+    return out
+
+
 def allowed_calls(arsenal, s, exclude=None):
     tq = targets(s.balls, s.strikes)
     out = [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
@@ -1336,6 +1379,12 @@ def allowed_calls(arsenal, s, exclude=None):
         if bad and bad != names:
             chase_ok = s.strikes == 2 and s.balls < 3
             kept = [a for a in out if a[0] not in bad or (chase_ok and a[1] == "chase")]
+            if kept:
+                out = kept
+    if (s.history or s.last) and out:          # 3.1 RP1/RP2, each standing down rather than leaving nothing
+        blocked, _ = repeat_blocks(s)
+        if blocked:
+            kept = [a for a in out if a not in blocked]
             if kept:
                 out = kept
     return out
@@ -1444,7 +1493,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
         delta = 0.0
         for (b, k) in order:
             sc = replace(s, balls=b, strikes=k, last=None, usage_this_count={}, usage_by_call={},
-                         b_h=dict(s.b_h))
+                         history=(), b_h=dict(s.b_h))
             temp = temperature(arsenal, sc)
             calls = allowed_calls(arsenal, sc)
             # sit game at the PA's starting look
@@ -1546,6 +1595,11 @@ def lean_b_h(arsenal, s, fooled=()):
             d, nn = s.hitter_damage[c]
             v += ETA_LEAN * d * nn / (nn + 10)
         v += sum(log(1.3) for fc in fooled if fc != c)
+        # 3.1 RP3, he's seen it: each of the two most recent fouls on this pitch leans him toward every sit on that
+        # pitch at the height he fouled it, the same log 1.3 the fooled term uses.
+        for fr in [r for r in (s.history or ()) if len(r) > 2 and r[2] == "foul"][-2:]:
+            if fr[0] == n and height_member(fr[1], p.kind, j):
+                v += log(1.3)
         if v:
             out[(n, j)] = v
     return out
@@ -1782,9 +1836,11 @@ def why_line(arsenal, s, tab, pick, info):
                         ("running game", replace(s, steal=None)), ("grades", replace(s, grades=None))):
         ca, cb = _root_cost_pair(arsenal, s_off, tab, a, b, sigma)
         deltas[term] = base - (ca - cb)
+    notes = " ".join(rule_notes(arsenal, s))
     term = min(deltas, key=lambda t: deltas[t])
     if deltas[term] >= -1e-6:
-        return "Best call on its own merits", deltas, b
+        return ((notes + " Best call on its own merits").strip() if notes
+                else "Best call on its own merits"), deltas, b
     p, q = pick[0], pick[1]
     look = s.look or tab.h0
     if term == "timing":
@@ -1824,7 +1880,7 @@ def why_line(arsenal, s, tab, pick, info):
         line = "Back to what he just missed"
     else:
         line = "Tunnels off the last pitch"
-    return line, deltas, b
+    return ((notes + " " + line).strip() if notes else line), deltas, b
 
 
 # ---------------------------------------------------------------------------

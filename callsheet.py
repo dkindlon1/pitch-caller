@@ -120,7 +120,7 @@ def situation(level, bases, outs, same, state, count, variant, ars):
     elif variant == "no_trust":
         pass                                    # handled on the arsenal, not the situation
     elif variant == "last_foul_back":
-        s = replace(s, last=(ars[0].name, "middle", "foul"))
+        s = replace(s, last=(ars[0].name, "middle", "foul", "back"))   # 4-long: the read is what RP2 reads
     elif variant == "last_whiff":
         s = replace(s, last=(ars[0].name, "middle", "whiff"))
     if s.home is not None:
@@ -244,7 +244,7 @@ def evaluate(cells, weights):
         "B8a": Band("B8a", "Down share with a runner on 1st within 2 pt of bases empty"),
         "B8b": Band("B8b", "Off-speed share with a runner on 3rd at least 60% of bases empty"),
         "B8c": Band("B8c", "A pitch that isn't landing gets 0% with a runner on 3rd", hard=True),
-        "B9": Band("B9", "Repeat rules (Phase 3.1)", mode="pending"),
+        "B9": Band("B9", "RP2: after a foul straight back that exact call gets 0%", hard=True),
         "B10": Band("B10", "Fallback when nothing is trusted (Phase 3.2)", mode="pending"),
         "B11": Band("B11", "Hard rules: no chase at 3-0/3-1", hard=True),
         "B12": Band("B12", "Coach rules CR1 and CR2 (Phase 3.5)", mode="pending"),
@@ -253,7 +253,6 @@ def evaluate(cells, weights):
         "T2": Band("T2", "Crowding raises fastball inside share by 5 pt", mode="tracked"),
         "T3": Band("T3", "Power grade 5 vs 3 moves calls off the middle", mode="tracked"),
     }
-    B["B9"].note = "needs Situation.history and the RP1/RP2 rules; not in this engine"
     B["B10"].note = "needs the candidates() fallback change; not in this engine"
     B["B12"].note = "needs CR1/CR2; not in this engine"
 
@@ -315,6 +314,13 @@ def evaluate(cells, weights):
             if b == 3 and k in (0, 1):
                 ch = by_target(pol).get("chase", 0.0)
                 B["B11"].add(ch == 0.0, lab, ch, f"chase {ch:.1%}")
+            # B9: RP2, the exact call he just fouled straight back must be gone for one pitch
+            if v == "last_foul_back":
+                fb = list(cr["kinds"])[0]
+                got = pol.get(f"{fb}|middle", 0.0)
+                B["B9"].add(got == 0.0, f"{lab}/{fb}|middle", got,
+                            f"{fb} middle {got:.1%} right after he fouled it straight back")
+
             # B8c: a pitch that isn't landing gets 0% with a runner on 3rd
             if cr.get("not_landing") and bases_of(bo)[2]:
                 for nl in cr["not_landing"]:

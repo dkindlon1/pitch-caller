@@ -61,7 +61,11 @@
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {} }, o);   // v0.9 item 6
+      matchup: {},   // v0.9 item 6
+      // v1.0 3.1: this at-bat's pitches, oldest first, each [pitch name, target, result, read].
+      //   result: ball, cstrike, whiff, foul        read: null, back, pull, opposite, front, late, fooled
+      // `last` stays and callers keep it equal to history[history.length-1].slice(0,3).
+      history: [] }, o);
   }
   const replace = (s, o) => Object.assign({}, s, o);
   const mph = (p) => p.velo || DEFAULT_VELO[p.kind];
@@ -942,6 +946,32 @@
   // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
+  // v1.0 section 5: plain notes for the calling rules. Display only.
+  const RULE_WHY = {
+    RP1: "Not the same pitch and spot a third time.",
+    RP2: "He fouled it straight back. Don't go back there yet.",
+  };
+
+  // 3.1 RP1/RP2: the exact calls this at-bat's history rules out, and the codes that did it.
+  function repeatBlocks(s) {
+    const h = s.history || [], blocked = new Set(), codes = [];
+    const key = (r) => ck(r[0], r[1]);
+    if (h.length >= 2 && key(h[h.length - 1]) === key(h[h.length - 2])) { blocked.add(key(h[h.length - 1])); codes.push("RP1"); }
+    // RP2 reads the last pitch, which may arrive either as history or as a 4-long `last` carrying the read. RP1
+    // needs two pitches, so it is history-only.
+    const prev = h.length ? h[h.length - 1] : (s.last || []);
+    if (prev.length > 3 && prev[2] === "foul" && prev[3] === "back") { blocked.add(key(prev)); if (!codes.includes("RP2")) codes.push("RP2"); }
+    return [blocked, codes];
+  }
+
+  function ruleNotes(arsenal, s) {
+    if (!((s.history && s.history.length) || s.last)) return [];
+    const [blocked, codes] = repeatBlocks(s);
+    if (!blocked.size) return [];
+    if (!allowedCalls(arsenal, s).some((a) => !blocked.has(a))) return [];
+    return codes.map((c) => RULE_WHY[c]);
+  }
+
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes);
     let out = [];
@@ -952,6 +982,13 @@
       if (bad.size && bad.size !== names.size) {
         const chaseOk = s.strikes === 2 && s.balls < 3;
         const kept = out.filter((a) => !bad.has(skName(a)) || (chaseOk && skH(a) === "chase"));
+        if (kept.length) out = kept;
+      }
+    }
+    if (((s.history && s.history.length) || s.last) && out.length) {   // 3.1 RP1/RP2, standing down rather than leaving nothing
+      const [blocked] = repeatBlocks(s);
+      if (blocked.size) {
+        const kept = out.filter((a) => !blocked.has(a));
         if (kept.length) out = kept;
       }
     }
@@ -1130,7 +1167,7 @@
     for (let sw = 0; sw < sweeps; sw++) {
       let delta = 0.0;
       for (const [b, k] of order) {
-        const sc = replace(s, { balls: b, strikes: k, last: null, usage_this_count: {}, usage_by_call: {}, b_h: Object.assign({}, s.b_h) });
+        const sc = replace(s, { balls: b, strikes: k, last: null, usage_this_count: {}, usage_by_call: {}, history: [], b_h: Object.assign({}, s.b_h) });
         const temp = temperature(arsenal, sc);
         const calls = allowedCalls(arsenal, sc);
         const scH = replace(sc, { look: tab.h0 });
@@ -1223,6 +1260,10 @@
       let v = 0.0;
       if (eta && s.hitter_damage && c in s.hitter_damage) { const [d, nn] = s.hitter_damage[c]; v += eta * d * nn / (nn + 10); }
       v += psum(fooled.filter((fc) => fc !== c).map(() => Math.log(1.3)));
+      // 3.1 RP3, he's seen it: each of the two most recent fouls on this pitch leans him toward every sit on that
+      // pitch at the height he fouled it, the same log 1.3 the fooled term uses.
+      const fouls = (s.history || []).filter((r) => r.length > 2 && r[2] === "foul").slice(-2);
+      for (const fr of fouls) if (fr[0] === skName(key) && heightMember(fr[1], p.kind, skH(key))) v += Math.log(1.3);
       if (v) out[key] = v;
     }
     return out;
@@ -1343,7 +1384,8 @@
       deltas[term] = base - (ca - cb);
     }
     let term = null; for (const t in deltas) if (term === null || deltas[t] < deltas[term]) term = t;
-    if (deltas[term] >= -1e-6) return ["Best call on its own merits", deltas, b];
+    const notes = ruleNotes(arsenal, s).join(" ");
+    if (deltas[term] >= -1e-6) return [(notes ? notes + " Best call on its own merits" : "Best call on its own merits"), deltas, b];
     const p = pick.pitch, q = pick.quad, look = s.look || tab.h0;
     let line;
     if (term === "timing") {
@@ -1374,7 +1416,7 @@
     else if (term === "grades") line = "Matches this hitter's scouting grades";
     else if (term === "repeat") line = "Back to what he just missed";
     else line = "Tunnels off the last pitch";
-    return [line, deltas, b];
+    return [(notes ? notes + " " + line : line), deltas, b];
   }
   // v0.9 item 4: intent labels. DISPLAY ONLY (mirror of engine.py intent_label): nothing here feeds back into a call.
   const INTENT_E = 0.0005;
@@ -1443,6 +1485,7 @@
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
+    repeatBlocks, ruleNotes, RULE_WHY,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,

@@ -6,6 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 run=scripts/run-check.sh
 $run tests.py      python3 tests.py
+$run tests_v10     python3 tests_v10.py      # v1.0 Phase 3 unit tests, one group per sub-step
 python3 app/make_parity_v10.py 200 > /dev/null
 $run parity_v10    node app/parity_v10.js        # the shipped call path: table, policy, root costs, sit mix (1e-9)
 $run golden_v10    node golden/golden_v10.js     # the one engine against its frozen v1.0 reference (JS)

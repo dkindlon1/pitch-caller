@@ -55,7 +55,22 @@ def inputs(n):
             b_h=e.lean_b_h(ars, s, tuple(rng.choice(["FB", "OS"]) for _ in range(rng.randint(0, 2)))),
             steal={"a": rng.choice([0.04, 0.10]), "runner": 1 if s.bases[0] else 2,
                    "t": rng.choice([None, 1.3, 1.6])} if (s.bases[0] or s.bases[1]) and rng.random() < 0.5 else None)
+        # v1.0 3.1: this at-bat's history, with `last` kept equal to history[-1][:3] as the plan requires.
+        # Exercises RP1 (the same exact call twice already), RP2 (a foul read "back") and RP3 (fouls leaning the
+        # hitter), including the stand-down paths.
+        hist = ()
+        if rng.random() < 0.55:
+            rows = []
+            for _ in range(rng.randint(1, 3)):
+                hp = rng.choice(ars)
+                rows.append([hp.name, rng.choice(e.QUADS), rng.choice(["ball", "cstrike", "whiff", "foul"]),
+                             rng.choice([None, "back", "pull", "opposite", "front", "late", "fooled"])])
+            if rng.random() < 0.35 and rows:                 # make an exact repeat likely enough to hit RP1
+                rows.append(list(rows[-1]))
+            hist = tuple(tuple(r) for r in rows)
+            s = replace(s, history=hist, last=tuple(hist[-1][:3]))
         d = dict(arsenal=[G.pdict(p) for p in ars], s=G.sdict(s))
+        d["s"]["history"] = [list(r) for r in hist]
         # v0.9 item 6, the coach-rule input CR1 reads in Phase 3.5
         mm = {}
         if rng.random() < 0.6:
@@ -76,6 +91,8 @@ def from_dicts(c):
     mm = s.pop("matchup", None)
     d["s"] = s
     ars, sit = G.from_dicts(d)
+    if sit.history:
+        sit = replace(sit, history=tuple(tuple(r) for r in sit.history))
     return ars, (replace(sit, matchup=mm) if mm else sit)
 
 
