@@ -731,27 +731,6 @@ td.wrapcell .line { display: block; }
     return out;
   }
 
-  // ---------------------------------------------------------------- hitter expectation
-  function expectation(p, arsenal, s, policy) {
-    const m = arsenal.length;
-    const hittersCount = s.balls > s.strikes && s.strikes < 2;
-    const fb = arsenal.filter((x) => x.kind === "FB"), os = arsenal.filter((x) => x.kind !== "FB");
-    let prior = {};
-    if (fb.length && os.length) {
-      const fbShare = hittersCount ? 0.65 : (s.strikes === 2 ? 0.35 : 0.5);
-      for (const x of fb) prior[x.name] = fbShare / fb.length;
-      for (const x of os) prior[x.name] = (1 - fbShare) / os.length;
-    } else for (const x of arsenal) prior[x.name] = 1 / m;
-    if (policy) {
-      const lam = 0.6, np = {};
-      for (const x of arsenal) np[x.name] = (1 - lam) * prior[x.name] + lam * (policy[x.name] || 0.0);
-      prior = np;
-    }
-    let n = 0; for (const k in s.usage_this_count) n += s.usage_this_count[k];
-    const k = 4.0;
-    return [(k * prior[p.name] + (s.usage_this_count[p.name] || 0)) / (k + n), 1 / m];
-  }
-
   // ---------------------------------------------------------------- tunneling
   function movement(p) {
     const base = SHAPES[p.kind + "|" + p.shape] || SHAPES[p.kind + "|"];
@@ -800,27 +779,6 @@ td.wrapcell .line { display: block; }
     return [Math.max(-1.0, Math.min(1.0, score)), dT, dB, dP];
   }
   const perceived = (p, q) => mph(p) + EV_ADJ[q];
-
-  function pairing(p, q, s, arsenal) {
-    if (!s.last) return 0.0;
-    const lastName = s.last[0], lastQ = s.last[1];
-    const lastResult = s.last.length > 2 ? s.last[2] : null;
-    const last = arsenal.find((x) => x.name === lastName);
-    if (!last) return 0.0;
-    const upLast = lastQ.startsWith("up"), upNow = q.startsWith("up");
-    if (last.name === p.name) {
-      if (lastResult === "whiff") return lastQ === q ? 0.4 : 0.3;
-      if (lastQ === q) return -0.8;
-    }
-    let base;
-    if (last.kind === "FB") base = isOffspeed(p.kind) ? ((upLast && !upNow) ? 1.0 : 0.6) : (upLast !== upNow ? 0.3 : -0.2);
-    else if (p.kind === "FB") base = upNow ? 0.6 : 0.3;
-    else base = last.name === p.name ? -0.3 : 0.2;
-    const gap = Math.abs(perceived(p, q) - perceived(last, lastQ));
-    const speed = Math.min(gap / 16.0, 1.0) * 0.6 - 0.2;
-    const tun = last.name !== p.name ? tunnelScore(last, lastQ, p, q, s.same_side)[0] : 0.0;
-    return Math.max(-1.0, Math.min(1.0, 0.30 * base + speed + 0.50 * tun));
-  }
 
   function shapeFit(p, q, s) {
     let f = 0.0;
@@ -1375,34 +1333,6 @@ td.wrapcell .line { display: block; }
     }
     return total;
   }
-  function inPlayValueEv(contact, s) {   // v0.7c in_play_value with every PA end through vEnd
-    if (!(s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
-    const outs = s.outs, bases = s.bases, [b1, b2, b3] = bases;
-    const [po, p1, p2, p3, phr, pe] = D.IN_PLAY[s.level][contact];
-    const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
-    let total = 0.0, vOut;
-    if (outs + 1 >= 3) vOut = ev(3, [false, false, false], 0);
-    else {
-      const dp = (b1 && contact === "weak" && outs < 2) ? 0.20 : 0.0;
-      const vDp = outs + 2 >= 3 ? ev(3, [false, false, false], 0) : ev(outs + 2, [false, b2, b3], 0);
-      const vReg = b3 ? 0.4 * ev(outs + 1, [b1, b2, false], 1) + 0.6 * ev(outs + 1, bases, 0) : ev(outs + 1, bases, 0);
-      vOut = dp * vDp + (1 - dp) * vReg;
-    }
-    total += po * vOut;
-    let runs = b3 ? 1 : 0, v1;
-    if (b2) v1 = 0.55 * ev(outs, [true, b1, false], runs + 1) + 0.45 * ev(outs, [true, b1, true], runs);
-    else v1 = ev(outs, [true, b1, false], runs);
-    total += (p1 + pe) * v1;
-    runs = (b2 ? 1 : 0) + (b3 ? 1 : 0);
-    let v2;
-    if (b1) v2 = 0.4 * ev(outs, [false, true, false], runs + 1) + 0.6 * ev(outs, [false, true, true], runs);
-    else v2 = ev(outs, [false, true, false], runs);
-    total += p2 * v2;
-    total += p3 * ev(outs, [false, false, true], +b1 + +b2 + +b3);
-    total += phr * ev(outs, [false, false, false], +b1 + +b2 + +b3 + 1);
-    return total;
-  }
-
   // ---------------------------------------------------------------- 2.3 sit game
   function sitPayoff(M, ks, pi) {
     const out = {}, calls = Object.keys(M);
@@ -2077,13 +2007,14 @@ td.wrapcell .line { display: block; }
       engine_top: r.dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
-    inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
+    sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
-  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
-    outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
+  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,
+    outcomeProbs, cost, callMixed, candidates, stakesFactor, countStakes,   // callMixed: app/learn_test.js. mixedPolicy/atBatValues/gradeCall were v0.7c-only and had no caller
+    // (the app's grade line uses E.v08.gradeCall); the functions stay, since callMixed calls them.
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -4404,27 +4335,6 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return out;
   }
 
-  // ---------------------------------------------------------------- hitter expectation
-  function expectation(p, arsenal, s, policy) {
-    const m = arsenal.length;
-    const hittersCount = s.balls > s.strikes && s.strikes < 2;
-    const fb = arsenal.filter((x) => x.kind === "FB"), os = arsenal.filter((x) => x.kind !== "FB");
-    let prior = {};
-    if (fb.length && os.length) {
-      const fbShare = hittersCount ? 0.65 : (s.strikes === 2 ? 0.35 : 0.5);
-      for (const x of fb) prior[x.name] = fbShare / fb.length;
-      for (const x of os) prior[x.name] = (1 - fbShare) / os.length;
-    } else for (const x of arsenal) prior[x.name] = 1 / m;
-    if (policy) {
-      const lam = 0.6, np = {};
-      for (const x of arsenal) np[x.name] = (1 - lam) * prior[x.name] + lam * (policy[x.name] || 0.0);
-      prior = np;
-    }
-    let n = 0; for (const k in s.usage_this_count) n += s.usage_this_count[k];
-    const k = 4.0;
-    return [(k * prior[p.name] + (s.usage_this_count[p.name] || 0)) / (k + n), 1 / m];
-  }
-
   // ---------------------------------------------------------------- tunneling
   function movement(p) {
     const base = SHAPES[p.kind + "|" + p.shape] || SHAPES[p.kind + "|"];
@@ -4473,27 +4383,6 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return [Math.max(-1.0, Math.min(1.0, score)), dT, dB, dP];
   }
   const perceived = (p, q) => mph(p) + EV_ADJ[q];
-
-  function pairing(p, q, s, arsenal) {
-    if (!s.last) return 0.0;
-    const lastName = s.last[0], lastQ = s.last[1];
-    const lastResult = s.last.length > 2 ? s.last[2] : null;
-    const last = arsenal.find((x) => x.name === lastName);
-    if (!last) return 0.0;
-    const upLast = lastQ.startsWith("up"), upNow = q.startsWith("up");
-    if (last.name === p.name) {
-      if (lastResult === "whiff") return lastQ === q ? 0.4 : 0.3;
-      if (lastQ === q) return -0.8;
-    }
-    let base;
-    if (last.kind === "FB") base = isOffspeed(p.kind) ? ((upLast && !upNow) ? 1.0 : 0.6) : (upLast !== upNow ? 0.3 : -0.2);
-    else if (p.kind === "FB") base = upNow ? 0.6 : 0.3;
-    else base = last.name === p.name ? -0.3 : 0.2;
-    const gap = Math.abs(perceived(p, q) - perceived(last, lastQ));
-    const speed = Math.min(gap / 16.0, 1.0) * 0.6 - 0.2;
-    const tun = last.name !== p.name ? tunnelScore(last, lastQ, p, q, s.same_side)[0] : 0.0;
-    return Math.max(-1.0, Math.min(1.0, 0.30 * base + speed + 0.50 * tun));
-  }
 
   function shapeFit(p, q, s) {
     let f = 0.0;
@@ -5048,34 +4937,6 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     }
     return total;
   }
-  function inPlayValueEv(contact, s) {   // v0.7c in_play_value with every PA end through vEnd
-    if (!(s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
-    const outs = s.outs, bases = s.bases, [b1, b2, b3] = bases;
-    const [po, p1, p2, p3, phr, pe] = D.IN_PLAY[s.level][contact];
-    const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
-    let total = 0.0, vOut;
-    if (outs + 1 >= 3) vOut = ev(3, [false, false, false], 0);
-    else {
-      const dp = (b1 && contact === "weak" && outs < 2) ? 0.20 : 0.0;
-      const vDp = outs + 2 >= 3 ? ev(3, [false, false, false], 0) : ev(outs + 2, [false, b2, b3], 0);
-      const vReg = b3 ? 0.4 * ev(outs + 1, [b1, b2, false], 1) + 0.6 * ev(outs + 1, bases, 0) : ev(outs + 1, bases, 0);
-      vOut = dp * vDp + (1 - dp) * vReg;
-    }
-    total += po * vOut;
-    let runs = b3 ? 1 : 0, v1;
-    if (b2) v1 = 0.55 * ev(outs, [true, b1, false], runs + 1) + 0.45 * ev(outs, [true, b1, true], runs);
-    else v1 = ev(outs, [true, b1, false], runs);
-    total += (p1 + pe) * v1;
-    runs = (b2 ? 1 : 0) + (b3 ? 1 : 0);
-    let v2;
-    if (b1) v2 = 0.4 * ev(outs, [false, true, false], runs + 1) + 0.6 * ev(outs, [false, true, true], runs);
-    else v2 = ev(outs, [false, true, false], runs);
-    total += p2 * v2;
-    total += p3 * ev(outs, [false, false, true], +b1 + +b2 + +b3);
-    total += phr * ev(outs, [false, false, false], +b1 + +b2 + +b3 + 1);
-    return total;
-  }
-
   // ---------------------------------------------------------------- 2.3 sit game
   function sitPayoff(M, ks, pi) {
     const out = {}, calls = Object.keys(M);
@@ -5750,13 +5611,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       engine_top: r.dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
-    inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
+    sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
-  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
-    outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
+  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,
+    outcomeProbs, cost, callMixed, candidates, stakesFactor, countStakes,   // callMixed: app/learn_test.js. mixedPolicy/atBatValues/gradeCall were v0.7c-only and had no caller
+    // (the app's grade line uses E.v08.gradeCall); the functions stay, since callMixed calls them.
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

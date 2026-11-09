@@ -4,7 +4,7 @@ import time
 import random
 from collections import Counter
 from engine import (Pitch, Situation, call_v08, outcome_probs, call_mixed, mixed_policy, at_bat_values, grade_call,
-                    pairing, landing, CV)
+                    landing, CV)
 
 random.seed(11)
 results = []
