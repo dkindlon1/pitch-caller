@@ -273,7 +273,7 @@ def build():
     rows = rows + [dict(r) for r in NEW]
 
     out = {
-        "approved": "PENDING Drew's approval (built 2026-11-09)",
+        "approved": "2026-11-09 by Drew: all 39 new rows, the 4 tracked rows (F6, F7, H4, S1) and zero label changes, as drafted",
         "from": {"file": "scenarios_v09.json", "sha256": hashlib.sha256(open(SRC, "rb").read()).hexdigest(),
                  "rows": len(src["rows"])},
         "pass_rule": dict(src["pass_rule"]),
