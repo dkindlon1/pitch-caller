@@ -55,6 +55,55 @@ TRUTH_TAB = os.environ.get("TRUTH_TAB", "")
 TRUE_POWER = os.environ.get("TRUE_POWER", "") == "1"
 SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
 
+# ---------------------------------------------------------------------------
+# Yardstick hook (v1.0 Step 0d): CALL_ENGINE=<path to an engine.py> makes THAT engine call the pitches inside THIS
+# tree's world. The caller supplies the table, the policy, the call and its explanation; the world (outcome_probs, the
+# hitters, the in-play draw) and the truth judge (the regret columns, which score every call against a table solved on
+# the hidden truth) always stay this tree's, so two callers are measured by the same ruler.
+#   CALL_ENGINE=../pitch-caller-v09/engine.py python3 readthrough/run_games.py ...
+# The frozen engine is loaded with its OWN sibling data modules (run_tables, outcome_params, spread_params,
+# inplay_typed_params, hitter_spread_params), so it calls with the parameters it shipped with, not today's.
+# It is handed this tree's Situation/Pitch objects, so a frozen caller must still read the fields it knows about.
+# ---------------------------------------------------------------------------
+CALL_ENGINE = os.environ.get("CALL_ENGINE", "")
+_CALL_DEPS = ("run_tables", "outcome_params", "spread_params", "inplay_typed_params", "hitter_spread_params")
+
+
+def _load_call_engine(path):
+    """Import an engine.py from another tree, resolving its sibling data modules against that tree."""
+    import importlib.util
+    path = os.path.abspath(path)
+    if not os.path.isfile(path):
+        raise SystemExit(f"CALL_ENGINE: no such file: {path}")
+    home = os.path.dirname(path)
+    saved_path = list(sys.path)
+    saved_mods = {k: sys.modules.pop(k, None) for k in _CALL_DEPS}
+    sys.path.insert(0, home)
+    try:
+        spec = importlib.util.spec_from_file_location("_call_engine_frozen", path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["_call_engine_frozen"] = mod
+        spec.loader.exec_module(mod)
+        took = {k: sys.modules.get(k) for k in _CALL_DEPS}
+    finally:
+        sys.path[:] = saved_path
+        for k, m in saved_mods.items():
+            if m is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = m
+    wrong = sorted(k for k, m in took.items()
+                   if m is not None and getattr(m, "__file__", None)
+                   and os.path.dirname(os.path.abspath(m.__file__)) != home)
+    if wrong:
+        raise SystemExit(f"CALL_ENGINE: {path} picked up this tree's {', '.join(wrong)}; its own copies must be loadable")
+    return mod
+
+
+CALLER = _load_call_engine(CALL_ENGINE) if CALL_ENGINE else engine
+CALLER_NAME = (os.path.abspath(CALL_ENGINE) if CALL_ENGINE else "this tree")
+
+
 
 # ---------------------------------------------------------------------------
 # Teams
@@ -442,25 +491,25 @@ def play_game(log_path):
                               landing_today={x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
                                              if land[(pitcher["name"], x.name)][1]},
                               familiar=fam_prev, matchup=mm_prev,
-                              ump_u=engine.ump_estimate(takes, LEVEL_NAME),
+                              ump_u=CALLER.ump_estimate(takes, LEVEL_NAME),
                               home=True, sched_innings=9,
                               grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None))
                 if win_pa is None:
-                    win_pa = engine.win_constants(s)
+                    win_pa = CALLER.win_constants(s)
                 s = replace(s, win=win_pa)
                 ars = pitcher["arsenal"]
-                if tab is None or engine.needs_resolve(frozen, ars, s):
-                    tab = engine.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
-                    frozen = engine.frozen_inputs(ars, s)
+                if tab is None or CALLER.needs_resolve(frozen, ars, s):
+                    tab = CALLER.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
+                    frozen = CALLER.frozen_inputs(ars, s)
                     if look is None:
                         look = tab.h0
-                s = replace(s, look=look, b_h=engine.lean_b_h(ars, s, fooled),
+                s = replace(s, look=look, b_h=CALLER.lean_b_h(ars, s, fooled),
                             usage_by_call=dict(K.usage_call[(pitcher["name"], balls, strikes)]))
                 # engine call, with possible shake-offs
                 shakes = []
                 shaken = set()
                 for attempt in range(3):
-                    (p, q, prob, cst), dist, tab, _info = engine.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
+                    (p, q, prob, cst), dist, tab, _info = CALLER.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
                     p_shake = min(0.9, SHAKE * max(0.0, 0.35 * (0.75 - p.conf))) if attempt < 2 else 0.0
                     if rng.random() < p_shake:
                         shakes.append(f"{p.name} {q}")
@@ -470,18 +519,18 @@ def play_game(log_path):
                     break
                 override = 0
                 if OVERRIDE and rng.random() < OVERRIDE:   # the coach calls his own pitch instead
-                    cands_ = engine.candidates(ars, s)
+                    cands_ = CALLER.candidates(ars, s)
                     p = rng.choice(cands_); q = rng.choice(QUADS); override = 1
                     prob = next((d[0] for d in dist if d[2].name == p.name and d[3] == q), 0.0)
-                    cst = engine.root_costs(ars, s, tab)[(p.name, q)]
+                    cst = CALLER.root_costs(ars, s, tab)[(p.name, q)]
                 best_cost = min(d[1] for d in dist)
                 top3 = "; ".join(f"{d[2].name} {d[3]} {d[0]:.0%}" for d in dist[:3])
                 # read-through, log-only (no rng draw, no change to the call): the why line, the intent and the hitter's
                 # most likely sit
                 why_txt, guess_txt, intent_txt = "", "", ""
                 if not override:
-                    why_txt = engine.why_line(ars, s, tab, (p, q), _info)[0]
-                    intent_txt = engine.intent_label(ars, s, tab, (p, q), _info, exclude=shaken)[0]     # v0.9 item 4
+                    why_txt = CALLER.why_line(ars, s, tab, (p, q), _info)[0]
+                    intent_txt = CALLER.intent_label(ars, s, tab, (p, q), _info, exclude=shaken)[0]     # v0.9 item 4
                     sg = _info["sigma"]
                     gk = max(sg, key=sg.get)
                     guess_txt = f"{gk[0]} {gk[1]} {sg[gk]:.0%}"
@@ -530,13 +579,13 @@ def play_game(log_path):
                 elif ev == "hard":
                     mm[(pitcher["name"], h)]["hard|" + p.kind + "|" + q] += 1
                 if ev in ("ball", "wp_ball", "cstrike", "hbp"):
-                    p0, d0 = engine.take_stats(p, q, replace(s, ump_u=0.0), ars)
+                    p0, d0 = CALLER.take_stats(p, q, replace(s, ump_u=0.0), ars)
                     takes.append((1 if ev == "cstrike" else 0, p0, d0))
                 land[(pitcher["name"], p.name)][1] += 1
                 land[(pitcher["name"], p.name)][0] += ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard")
                 K.usage[(balls, strikes)][p.name] += 1
                 K.usage_call[(pitcher["name"], balls, strikes)][(p.name, q)] += 1
-                look = engine.look_update(look, p, q, s)
+                look = CALLER.look_update(look, p, q, s)
                 result = ev
 
                 if ev in ("ball", "wp_ball"):

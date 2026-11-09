@@ -1,7 +1,7 @@
 """v0.9 golden (Nov 6): the reference for the single, flag-free v0.9 engine.
   python3 golden/golden_v09.py make   -> writes golden/golden_v09.json from the current engine (made once on Nov 6, from the
                                          engine still carrying flags, run as v0.9, just before the flags were removed)
-  python3 golden/golden_v09.py check  -> recomputes every case and requires exact equality
+  python3 golden/golden_v09.py check  -> recomputes every case and requires agreement to TOL (1e-9)
 The 500 cases and outputs of golden/cases.py, plus v0.9's own inputs and outputs: each case gets an earlier-trip matchup
 record (item 6) and the call's intent label (item 4). Landing records (item 9), hitter power grades (item 8) and inside
 targets (item 3) are already in those inputs."""
@@ -15,6 +15,12 @@ import cases as G8
 
 PATH = os.path.join(HERE, "golden_v09.json")
 KINDS = ("FB", "SL", "CB", "CH")
+# The engine is pure Python math.exp/log, so exp/log come from the platform's C library. golden_v09.json was made on
+# Linux (CI is ubuntu-24.04/glibc); another libm differs by about 1 ULP per call, which the table solve accumulates to
+# ~1e-13. That is float noise, not a behaviour change, so the check allows it -- the same reason golden_v09.js has a
+# tolerance (it absorbs up to 1.7e-13 of the same drift). A real change to the engine moves these numbers by far more.
+# For a platform-independent check of the two live engines against each other, use golden/fast.py.
+TOL = 1e-9
 
 
 def inputs():
@@ -85,14 +91,14 @@ def main():
             if isinstance(w, (int, float)) and not isinstance(w, bool) and isinstance(g, (int, float)):
                 d = abs(w - g)
                 worst = max(worst, d)
-                if d != 0:
-                    bad.append(f"case {i} {k}: golden {w} now {g}")
+                if not (d <= TOL):
+                    bad.append(f"case {i} {k}: golden {w} now {g} (diff {d:.3e})")
             elif w != g:
                 bad.append(f"case {i} {k}: golden {w!r} now {g!r}")
     print(f"{len(cs)} cases, largest difference {worst:.2e}")
     for b in bad[:10]:
         print("  " + b)
-    print("PASS: v0.9 reproduced exactly" if not bad else f"FAIL: {len(bad)} differences")
+    print(f"PASS: v0.9 reproduced within {TOL:g}" if not bad else f"FAIL: {len(bad)} differences")
     sys.exit(1 if bad else 0)
 
 
