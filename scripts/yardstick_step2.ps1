@@ -11,7 +11,7 @@
 # About 4 x 25 minutes at 10 jobs. A stopped run resumes: finished games are kept.
 param(
     [string]$StepA = "b50f02f",          # Step 2a commit (tunneling off)
-    [string]$StepB = "origin/v1.0-work",  # Step 2 head (tunneling on)
+    [string]$StepB = "f93457b",           # Step 2b commit (tunneling on; the engine is unchanged after it in Step 2)
     [int]$Jobs = 10
 )
 $ErrorActionPreference = "Stop"
