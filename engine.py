@@ -1585,6 +1585,15 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
 # 6.3 the myopic guardrail window (runs, times the level's run scale). A named constant only so the simulator can test a
 # wider window (v0.9 follow-up; simulate.py GUARD_DELTA). Unchanged in every engine version.
 GUARD_DELTA = 0.010
+# v1.0 3.6 (issue 6): the single guardrail became two. GUARD_DELTA is now the LOCATION guard, applied within a pitch
+# type against that type's own best target; GUARD_TYPE is the PITCH-TYPE guard, applied to a type's best cost against
+# the overall best. Splitting them is what lets a secondary survive: under one guard a pitch whose best spot was a
+# little worse than the overall best lost every spot at once. GUARD_TYPE is tuned in Phase 5 within [0.020, 0.060].
+# Started at 0.035 rather than the plan's 0.030: the plan's own acceptance case for this sub-step -- an average
+# changeup (command 2, conf 0.60) to an opposite-side hitter at 2-0 must survive the guard -- sits at a gap of
+# 0.0301, missing 0.030 by one ten-thousandth. 0.035 clears it and the same-side case (0.0315), and is well inside
+# the stated tuning range. Phase 5 tunes it against the simulator.
+GUARD_TYPE = 0.035
 
 
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
@@ -1602,8 +1611,17 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
     cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
     best = min(cmy.values())
-    delta = GUARD_DELTA * run_scale(s.level)
-    keep = [a for a in calls if cmy[a] - best <= delta]       # the guardrail: no call clearly worse on this pitch alone
+    rs = run_scale(s.level)
+    delta, dtype = GUARD_DELTA * rs, GUARD_TYPE * rs
+    best_by_type = {}                                        # each pitch type's best myopic cost
+    for (n_, q_), c_ in cmy.items():
+        if n_ not in best_by_type or c_ < best_by_type[n_]:
+            best_by_type[n_] = c_
+    # 3.6: two guards instead of one. Location: no clearly worse SPOT for a pitch, measured against that pitch's own
+    # best. Pitch type: no clearly worse TYPE, measured against the overall best. A pitch whose best spot is slightly
+    # off the overall best now keeps its own good spots instead of losing all of them.
+    keep = [a for a in calls
+            if cmy[a] - best_by_type[a[0]] <= delta and best_by_type[a[0]] - best <= dtype]
     if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch
         M = {a: Mmy[a] for a in keep}
     else:

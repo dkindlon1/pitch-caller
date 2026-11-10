@@ -1245,6 +1245,11 @@
   }
   // 6.3 the myopic guardrail window (runs x run scale); named only so the simulator can test a wider one (engine.py GUARD_DELTA)
   const GUARD_DELTA = 0.010;
+  // v1.0 3.6 (issue 6): the single guardrail became two. GUARD_DELTA is the LOCATION guard, within a pitch type
+  // against that type's own best target; GUARD_TYPE is the PITCH-TYPE guard, a type's best against the overall best.
+  // Started at 0.035, not the plan's 0.030: its own acceptance case (an average changeup to an opposite-side hitter
+  // at 2-0) sits at a gap of 0.0301. Tuned in Phase 5 within [0.020, 0.060].
+  const GUARD_TYPE = 0.035;
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {
     const ks = sitOptions(arsenal);
     const look = s.look || tab.h0;
@@ -1257,8 +1262,13 @@
     {
       const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
       let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
-      const delta = GUARD_DELTA * runScale(s.level);
-      const keep = calls.filter((a) => cmy[a] - best <= delta);     // the guardrail: no call clearly worse on this pitch alone
+      const rs = runScale(s.level), delta = GUARD_DELTA * rs, dtype = GUARD_TYPE * rs;
+      const bestByType = {};                                        // each pitch type's best myopic cost
+      for (const a of calls) { const n = skName(a); if (!(n in bestByType) || cmy[a] < bestByType[n]) bestByType[n] = cmy[a]; }
+      // 3.6: two guards. Location: no clearly worse SPOT for a pitch, against that pitch's own best. Pitch type: no
+      // clearly worse TYPE, against the overall best. A pitch whose best spot is slightly off the overall best now
+      // keeps its own good spots instead of losing all of them.
+      const keep = calls.filter((a) => cmy[a] - bestByType[skName(a)] <= delta && bestByType[skName(a)] - best <= dtype);
       const M2 = {};
       for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
       M = M2;

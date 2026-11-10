@@ -8,7 +8,8 @@ from dataclasses import replace
 
 from engine import (Pitch, Situation, call_v08, solve_table, allowed_calls, repeat_blocks, rule_notes,
                     lean_b_h, why_line, candidates, nothing_trusted, landing_estimate, RULE_WHY,
-                    frozen_inputs, needs_resolve, coach_blocks)
+                    frozen_inputs, needs_resolve, coach_blocks, root_call, sit_options, cost08,
+                    run_scale, GUARD_DELTA, GUARD_TYPE)
 
 results = []
 
@@ -266,6 +267,76 @@ check("3.5 the coach rules stand down rather than leave nothing",
       left != [],
       f"one pitch with its other spots shaken off, the middle banned by CR2 and both inside spots by CR1: "
       f"allowed_calls still returns {left}")
+
+# ---------------------------------------------------------------------------------------------------------------
+# 3.6 the guardrail split into a location guard and a pitch-type guard
+# ---------------------------------------------------------------------------------------------------------------
+print("\n== 3.6 location guard and pitch-type guard ==")
+
+AVG_CH = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", velo=88),
+          Pitch("Slider", "SL", grade=3, command=3, conf=0.75, shape="tight", velo=79),
+          Pitch("Changeup", "CH", grade=3, command=2, conf=0.60, shape="fade", velo=80)]
+
+
+def kept_types(ars, s):
+    tab = solve_table(ars, replace(s, balls=0, strikes=0, last=None, history=()))
+    pi, sg, full, res, M = root_call(ars, s, tab)
+    return sorted({n for n, q in M})
+
+
+# the plan's acceptance case for this sub-step
+s20_opp = Situation(2, 0, 0, E, level="college_d3", same_side=False)
+check("3.6 an average changeup to an opposite-side hitter at 2-0 survives the guard",
+      "Changeup" in kept_types(AVG_CH, s20_opp),
+      f"kept types at 2-0 opposite-side: {kept_types(AVG_CH, s20_opp)} (GUARD_TYPE {GUARD_TYPE})")
+check("3.6 it survives to a same-side hitter too",
+      "Changeup" in kept_types(AVG_CH, replace(s20_opp, same_side=True)),
+      f"kept types same-side: {kept_types(AVG_CH, replace(s20_opp, same_side=True))}")
+
+
+def guard_sets(ars, s, gtype):
+    """v0.9's single-guard kept set, and the 3.6 two-guard kept set, from the same myopic costs."""
+    tab = solve_table(ars, replace(s, balls=0, strikes=0, last=None, history=()))
+    by = {x.name: x for x in ars}
+    ks = sit_options(ars)
+    look = s.look or tab.h0
+    sg = tab.sigma[(s.balls, s.strikes)]
+    sL = replace(s, look=look)
+    cmy = {a: sum(sg[kk] * cost08(by[a[0]], a[1], sL, ars, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks)
+           for a in allowed_calls(ars, s)}
+    best = min(cmy.values())
+    rs = run_scale(s.level)
+    d = GUARD_DELTA * rs
+    bt = {}
+    for (n, q), c in cmy.items():
+        bt[n] = min(bt.get(n, 9e9), c)
+    old = {a for a in cmy if cmy[a] - best <= d}
+    new = {a for a in cmy if cmy[a] - bt[a[0]] <= d and bt[a[0]] - best <= gtype * rs}
+    return old, new
+
+
+# The plan's sanity check says "at GUARD_TYPE = GUARD_DELTA the kept set is a subset of v0.9's". That direction
+# cannot hold, and the proof is one line: for any call v0.9 keeps, cmy[a] - best <= d, so its type's best is also
+# within d of best (type guard passes) and the call is within d of its own type's best (location guard passes). So
+# v0.9's set is a SUBSET of the new one, never the other way. Equal thresholds can only ever admit more, which is the
+# whole point of splitting the guard. Checked below in the direction that is actually true.
+sub_ok, n_chk = 0, 0
+for b_ in range(4):
+    for k_ in range(3):
+        for side_ in (True, False):
+            o_, n_ = guard_sets(AVG_CH, Situation(b_, k_, 1, E, level="college_d3", same_side=side_), GUARD_DELTA)
+            n_chk += 1
+            sub_ok += o_ <= n_
+check("3.6 at equal thresholds the v0.9 kept set is a subset of the new one",
+      sub_ok == n_chk,
+      f"{sub_ok}/{n_chk} count-and-side combinations: splitting the guard only ever admits more, never fewer")
+
+# the location guard still bites: a clearly worse spot for a pitch is dropped
+o_, n_ = guard_sets(AVG_CH, Situation(1, 1, 1, E, level="college_d3"), GUARD_TYPE)
+check("3.6 the location guard still drops clearly worse spots",
+      len(n_) < len(allowed_calls(AVG_CH, Situation(1, 1, 1, E, level="college_d3"))),
+      f"{len(n_)} of {len(allowed_calls(AVG_CH, Situation(1, 1, 1, E, level='college_d3')))} allowed calls "
+      f"survive both guards at 1-1")
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)
