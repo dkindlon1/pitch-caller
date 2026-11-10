@@ -10,7 +10,7 @@ import json, os, random, sys, copy
 import engine as e
 from metrics import ref_arsenals, LEVELS
 
-BETAS = ["sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS", "beta_T", "gamma_T", "beta_E", "beta_E_S", "beta_tun",
+BETAS = ["sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS", "beta_T", "gamma_T", "beta_E", "beta_E_S", "beta_tun_whiff", "beta_tun_chase",
          "phi_FB", "phi_OS", "crowd", "g_c", "g_w", "g_d"]
 
 

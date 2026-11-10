@@ -43,7 +43,7 @@ P08 = dict(
     alpha=0.4, lam=0.6,                                                            # 2.6 look
     beta_T=0.5, gamma_T=0.3, dead=0.03, ramp=0.05, ch_hi=0.12, ch_decay=0.08, fast_mult=0.6,   # 3.1-3.2 timing
     capW=1.6, capH=1.2,                                                            # 3.4
-    beta_E=0.25, beta_E_S=0.25, dstar_E=1.5, beta_tun=0.15, kappa_brk=1.5,         # 4.1-4.2 (A3: W and S fit separately)
+    beta_E=0.25, beta_E_S=0.25, dstar_E=1.5, beta_tun_whiff=0.15, beta_tun_chase=0.15, kappa_brk=1.5,         # 4.1-4.2 (A3: W and S fit separately)
     rep_whiff_same=0.16, rep_whiff_other=0.12, rep_same_spot=-0.32,                # 4.3
     phi_FB=0.058, phi_OS=0.116, fam_cap=0.5,                                       # 5
     crowd=0.3,                                                                     # 2.8
@@ -759,8 +759,8 @@ def pair_terms(p, q, s, arsenal):
                          (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5
                 tun = max(-1.0, min(1.0, exp(-d_tun / 6) * g_mod(d_plate, 18) - d_rel / 8))
                 kap = P08["kappa_brk"] if p.kind in ("SL", "CB") else 1.0
-                w += kap * P08["beta_tun"] * tun
-                sw += kap * P08["beta_tun"] * tun
+                w += kap * P08["beta_tun_whiff"] * tun     # v1.0 D5: whiff and chase-swing tunneling, each from its fit
+                sw += kap * P08["beta_tun_chase"] * tun
     if is_big_spot(s):
         w, sw = 0.5 * w, 0.5 * sw
     return w, sw
@@ -1138,7 +1138,8 @@ def _apply_fit():
         sh = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "fit_v08.json")))["ship"]
     except Exception:
         return
-    for k_ in ("beta_T", "gamma_T", "lam", "alpha", "beta_E", "beta_E_S", "dstar_E", "beta_tun", "phi_FB", "phi_OS"):
+    for k_ in ("beta_T", "gamma_T", "lam", "alpha", "beta_E", "beta_E_S", "dstar_E", "beta_tun_whiff", "beta_tun_chase",
+               "phi_FB", "phi_OS"):
         if sh.get(k_) is not None:
             P08[k_] = float(sh[k_])
     if sh.get("beta_y") is not None:
@@ -2030,7 +2031,7 @@ _WHY_PARAMS = {
     "sit": ("sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS"),
     "timing": ("beta_T", "gamma_T"),
     "eye level": ("beta_E", "beta_E_S"),
-    "tunneling": ("beta_tun",),
+    "tunneling": ("beta_tun_whiff", "beta_tun_chase"),
     "repeat": ("rep_whiff_same", "rep_whiff_other", "rep_same_spot"),
     "familiarity": ("phi_FB", "phi_OS"),
 }

@@ -37,11 +37,19 @@ E, R1, R3 = (False, False, False), (True, False, False), (False, False, True)
 A = arsenal()
 
 # R1 mix, don't script: no situation is 100% one pitch unless it's clearly right
-# level pinned to "college", the Situation default this check always ran at (v1.0 #27 changed the default to college_d3;
-# this check exercises the retired v0.7c mixed_policy, which Step 6 deletes along with it)
-p = share(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in"), level="college"))
-check("R1 mixing: 1-2 with a runner on 3rd is mostly slider, not all slider",
-      0.5 < p["Slider"] < 0.95, f"slider {p['Slider']:.0%}, fastball {p['Fastball']:.0%}, changeup {p['Changeup']:.0%}")
+# v1.0 Step 2 (Drew, Nov 10): measured on the live call (call_v08). "Mostly slider" (50%+) only ever held on the retired
+# v0.7c path; the live engine calls slider 42-48% here (at Step 1 too), so the check keeps its intent: slider on top,
+# nothing scripted (no pitch at 95%+). Level pinned to "college", the level this check always ran at (v1.0 #27).
+def type_shares(ars, s_):
+    _, d_, _, _ = call_v08(ars, s_, rng=random.Random(0))
+    out = {}
+    for pr, _, p_, q_ in d_:
+        out[p_.name] = out.get(p_.name, 0.0) + pr
+    return out
+p = type_shares(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in"), level="college"))
+check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider is the top pitch, nothing scripted (< 95%)",
+      max(p, key=p.get) == "Slider" and max(p.values()) < 0.95,
+      ", ".join(f"{n} {v:.0%}" for n, v in sorted(p.items(), key=lambda x: -x[1])))
 
 # R2 think in at-bats: count values come from this matchup
 t0 = time.time()
@@ -147,12 +155,14 @@ fresh = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"))
 missing = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"), landing_today={"Slider": (3, 9)})
 landing_ok = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"), landing_today={"Slider": (7, 9)})
 def sl_mid(s_):
-    _, d_ = call_mixed(A, s_, rng=random.Random(0))
+    _, d_, _, _ = call_v08(A, s_, rng=random.Random(0))
     return sum(pr for pr, _, p, q in d_ if p.name == "Slider" and q == "middle")
 a_, b_, c_ = sl_mid(fresh), sl_mid(missing), sl_mid(landing_ok)
-# bar set by Drew (2026-11-02): losing about half is right ("it's good"); v0.6f lost 50.4%, the calibrated engine 47%
+# bar set by Drew (2026-11-02): losing about half is right ("it's good"); v0.6f lost 50.4%, the calibrated engine 47%.
+# v1.0 Step 2 (Drew, Nov 10): measured on the live call (call_v08); "about half" = 40% or more. On the live engine at
+# Step 1 the guardrail cut this call to 0% even when the slider was landing, so the rule had never acted there.
 check("v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more",
-      b_ < 0.55 * a_ and abs(c_ - a_) < 0.02, f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9")
+      a_ > 0.05 and b_ < 0.60 * a_ and abs(c_ - a_) < 0.02, f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9")
 
 AVG3 = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", velo=86),
         Pitch("Slider", "SL", grade=3, command=3, conf=0.75, shape="tight", velo=78),

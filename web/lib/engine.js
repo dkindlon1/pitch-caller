@@ -741,7 +741,7 @@
           const dRel = ((last.release_offset_in[0] - p.release_offset_in[0]) ** 2 + (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5;
           const tun = Math.max(-1.0, Math.min(1.0, Math.exp(-dTun / 6) * gMod(dPlate, 18) - dRel / 8));
           const kap = (p.kind === "SL" || p.kind === "CB") ? P08.kappa_brk : 1.0;
-          w += kap * P08.beta_tun * tun; sw += kap * P08.beta_tun * tun;
+          w += kap * P08.beta_tun_whiff * tun; sw += kap * P08.beta_tun_chase * tun;   // v1.0 D5
         }
       }
     }
@@ -1386,7 +1386,7 @@
 
   // ---------------------------------------------------------------- 9 "why" line
   const WHY_PARAMS = { sit: ["sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS"], timing: ["beta_T", "gamma_T"],
-    "eye level": ["beta_E", "beta_E_S"], tunneling: ["beta_tun"], repeat: ["rep_whiff_same", "rep_whiff_other", "rep_same_spot"],
+    "eye level": ["beta_E", "beta_E_S"], tunneling: ["beta_tun_whiff", "beta_tun_chase"], repeat: ["rep_whiff_same", "rep_whiff_other", "rep_same_spot"],
     familiarity: ["phi_FB", "phi_OS"] };
   function rootCostPair(arsenal, s, tab, a, b, sigma, myopic) {
     const look = s.look || tab.h0, ks = sitOptions(arsenal);

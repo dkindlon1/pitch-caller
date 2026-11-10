@@ -488,8 +488,8 @@ def fam_corr(res):
     return np.array(res["fam_all"]["corr"])
 
 
-SPEC = dict(B_whiff=[0.5], B_hard=[-0.3], E_whiff=[0.25], E_chase=[0.25], tun_whiff=[0.15], fam_all=[0.058, 0.116],
-            gb_y=[-0.8])
+SPEC = dict(B_whiff=[0.5], B_hard=[-0.3], E_whiff=[0.25], E_chase=[0.25], tun_whiff=[0.15], tun_chase=[0.15],
+            fam_all=[0.058, 0.116], gb_y=[-0.8])
 
 
 def decide():
@@ -536,7 +536,10 @@ def decide():
     out["beta_E_S"], why["beta_E_S"] = one("E_chase")
     if res["E_whiff"]["ship"]:
         out["dstar_E"] = shape["dstar_E"]
-    out["beta_tun"], why["beta_tun"] = one("tun_whiff")
+    # v1.0 D5: tunneling on whiffs and on chase swings ship from their own fits (previously one beta_tun from tun_whiff
+    # only, so the chase fit's +0.310 never reached the engine)
+    out["beta_tun_whiff"], why["beta_tun_whiff"] = one("tun_whiff")
+    out["beta_tun_chase"], why["beta_tun_chase"] = one("tun_chase")
     for j, nm in enumerate(("phi_FB", "phi_OS")):
         out[nm], why[nm] = one("fam_all", j)
         out[nm] = max(0.0, out[nm])

@@ -508,12 +508,16 @@ def play_game(log_path):
                             usage_by_call=dict(K.usage_call[(pitcher["name"], balls, strikes)]))
                 # engine call, with possible shake-offs
                 shakes = []
+                shaken_pairs = set()          # a frozen pre-v1.0 caller (CALL_ENGINE) gets shake-offs the way it took them:
+                legacy = not hasattr(CALLER, "shaken_names")   # (pitch, spot) pairs for this pitch only
                 for attempt in range(3):
-                    (p, q, prob, cst), dist, tab, _info = CALLER.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
+                    ex_ = shaken_pairs if legacy else shaken
+                    (p, q, prob, cst), dist, tab, _info = CALLER.call_v08(ars, s, rng=rng, exclude=ex_, tab=tab)
                     p_shake = min(0.9, SHAKE * max(0.0, 0.35 * (0.75 - p.conf))) if attempt < 2 else 0.0
                     if rng.random() < p_shake:
                         shakes.append(f"{p.name} {q}")
                         shaken.add(p.name)
+                        shaken_pairs.add((p.name, q))
                         conf_event(p, "shakeoff")
                         continue
                     break
@@ -530,7 +534,7 @@ def play_game(log_path):
                 why_txt, guess_txt, intent_txt = "", "", ""
                 if not override:
                     why_txt = CALLER.why_line(ars, s, tab, (p, q), _info)[0]
-                    intent_txt = CALLER.intent_label(ars, s, tab, (p, q), _info, exclude=shaken)[0]     # v0.9 item 4
+                    intent_txt = CALLER.intent_label(ars, s, tab, (p, q), _info, exclude=shaken_pairs if legacy else shaken)[0]     # v0.9 item 4
                     sg = _info["sigma"]
                     gk = max(sg, key=sg.get)
                     guess_txt = f"{gk[0]} {gk[1]} {sg[gk]:.0%}"

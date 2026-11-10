@@ -154,3 +154,37 @@ not gated; the plan leaves 3-0 untouched.
 Full grid (all five arsenals, top-call share per count): `results/v10/step2_grid_tunneling_off.txt`.
 Parity: `golden/fast.py 40` and `fast.js 40`, 0 mismatches. `golden_v10` is re-frozen once, at the end of Step 2.
 
+
+### 2b. Tunneling on chase swings wired (D5)
+
+- `seq_fit.py --decide` ships `beta_tun_whiff` and `beta_tun_chase` from their own fits (previously one `beta_tun`
+  from `tun_whiff` only): whiff **0** (interval includes 0, excludes the spec 0.15), chase **+0.310** (SE 0.034, ships).
+  `fit_v08.json ship`: those two keys replace `beta_tun`; nothing else in `ship` changed. `pair_terms` / JS twin use
+  whiff on the whiff shift and chase on the off-zone swing shift; the why-line "tunneling" term zeroes both.
+- What it does to calls (AVG3, 54 situations after a previous pitch, hs/D3/D1 x 0-1/0-2/1-2/2-2/3-2/1-1 x three last
+  pitches): calls shift by **4.4%** on average (total variation), at most 15.9% (HS 2-2 after a fastball up-in);
+  the chase share is unchanged (3.9% -> 3.8%): the shift is toward pitches that tunnel off the last one. The
+  predictability grid is identical with it on (its cells have no previous pitch). HS is not yet scaled by `RHO_L`
+  (Step 5 #19).
+- Two v0.6 checks in `tests.py` still measured the retired `call_mixed`, which shares `pair_terms`, so wiring tunneling
+  moved them. **Drew, Nov 10:** both now measure the live `call_v08`:
+  - "Get it over": on the live engine at Step 1 the guardrail cut slider-middle at 2-1 to **0%** even when landing,
+    so the rule had never acted there; Step 2 revives it. A 3-for-9 slider loses 47% of those calls with tunneling
+    off, 44% on. "About half" = 40% or more (bar `b < 0.60 a`).
+  - "R1 mixing": "mostly slider" (50%+) only ever held on the retired path; the live engine calls slider 42-48% there
+    (Step 1 too). New bar: slider is the top pitch, nothing at 95%+. Now slider 42%, fastball 41%, changeup 17%:
+    on top by one point, so a later step can flip it.
+- Realism unchanged by tunneling (D3 K 16.3 / BB 11.4 / HBP 4.2 vs real 16.2 / 11.4 / 4.2; HS 21.0 / 14.0 / 4.1 vs
+  21.0 / 14.1 / 4.1; mlb 19.5 / 7.9 / 0.8 vs 20.0 / 7.9 / 0.9). `tests.py` **29/29**.
+- Simulator, for the yardstick: a frozen pre-v1.0 caller (`CALL_ENGINE`) gets shake-offs as it took them, a
+  (pitch, spot) pair for that pitch only; v1.0 gets pitch names for the whole at-bat (Step 1, D2). Without this the
+  v0.9 baseline would have ignored every shake-off. Smoke test: one v0.9-caller game in this tree, then
+  `step7_regret.py` on it: 132 pitches, regret read, 0 difference against itself.
+
+### Yardstick (D5 order, D7 budget): runs on Drew's PC
+
+One simulated game takes ~2.5 min on this workspace's 2 cores, so the four 108-game runs (~7 h here) run on Drew's PC at
+10 jobs (~25 min each, as in Step 0): `scripts/yardstick_step2.ps1`. It builds a worktree per commit and, in each
+tree's own world, plays the frozen v0.9 engine and that tree's v1.0 engine on seeds 101-112:
+2a = `b50f02f` (tunneling off), 2b = the Step 2 head (tunneling on). Output: `results/v10/yardstick_step2a.txt` and
+`yardstick_step2b.txt`. **Not yet run.** D7: under 0.25 runs/game the step ships; over it, stop and show Drew.
