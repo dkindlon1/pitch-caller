@@ -194,10 +194,36 @@ LEVEL = {  # c_L confidence weight, h_L hitter-read weight, confidence cutoff, f
 OUTCOME_ADJ = {lvl: dict(cmd=0.0, zsw=0.0, osw=0.0, wz=0.0, wo=0.0, cs=0.0, hbp=0.0, wild=0.0)
                for lvl in ("hs", "college", "college_d1", "college_d3", "mlb")}
 HBP_LOC = {"up-in": 1.6, "down-in": 1.6, "chase": 0.8, "middle": 0.5, "up-away": 0.3, "down-away": 0.3}
+# v1.0 4c: the chance a way-off pitch gets past the catcher with runners on. The ratio between the two is the shape;
+# WP_MULT is one number per level, fitted in Phase 4c against real wild pitches per batter.
+WP_BASE = {"OS": 0.12, "FB": 0.04}
+WP_MULT = {lvl: 1.0 for lvl in ("hs", "travel", "college", "college_d1", "college_d3", "mlb")}
 try:
     from outcome_params import OUTCOME_FIT
     for _lvl, _d in OUTCOME_FIT.items():
         OUTCOME_ADJ[_lvl].update(_d)
+except ImportError:
+    pass
+# v1.0 Phase 4: the pitcher-side fits, loaded AFTER outcome_params so they win. fit_all.py still fits hbp and wild
+# against each level's K/BB/HBP at the engine's own mix; Phase 4 refits hbp at the REAL target mix (which is what
+# breaks root cause R3's loop: it asks how risky inside is if pitchers go inside as often as real pitchers do), then
+# wild for walks, then the wild-pitch multiplier from simulated games. MLB is not in this file.
+try:
+    from pitcher_side_params import PITCHER_SIDE
+    # Only the three fitted levels. travel needs no entry of its own for OUTCOME_ADJ, because the alias loop below
+    # makes it the same dict as hs; WP_MULT holds plain numbers, so travel gets hs's explicitly. The bare "college"
+    # level is left alone on purpose: OUTCOME_ADJ has never aliased it to college_d1 the way the other tables do, so
+    # its shifts are all zero, and giving it a fitted hbp and wild while cmd, zsw, osw, wz, wo and cs stayed zero
+    # would be a worse state than either. It is Situation's default level, so changing it is not Phase 4's call --
+    # recorded in docs/V1.0_LOG.md instead.
+    for _lvl, _d in PITCHER_SIDE.items():
+        if "hbp" in _d:
+            OUTCOME_ADJ[_lvl]["hbp"] = _d["hbp"]
+        if "wild" in _d:
+            OUTCOME_ADJ[_lvl]["wild"] = _d["wild"]
+        if "wp" in _d:
+            for _l in ([_lvl, "travel"] if _lvl == "hs" else [_lvl]):
+                WP_MULT[_l] = _d["wp"]
 except ImportError:
     pass
 try:   # v0.7: one grade point = one SD of real pitchers at the level (fit_spread.py); absent = scale 1, the v0.6 engine
@@ -256,7 +282,7 @@ class Situation:
     margin: int = 0    # our runs minus theirs
     pitch_count: int = 0
     batters_faced: int = 0          # [R8] continuous decline, no third-time cliff
-    level: str = "college"
+    level: str = "college_d1"   # app/engine.js Situation defaults to the same level; they disagreed before v1.0
     same_side: bool = True          # pitcher and hitter same handedness
     last: tuple = None              # (pitch name, quad[, result]) of previous pitch this AB
     hitter_seen: dict = field(default_factory=dict)       # pitch name -> times seen
@@ -792,7 +818,8 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             out["hbp"] += ball_p * hb
             ball_p *= (1 - hb)
         if z == "noncomp" and any(s.bases):   # wild pitch risk with runners on
-            wp = (0.12 if is_offspeed(p.kind) else 0.04) * (1 - 0.15 * (s.catcher_block - 3))
+            wp = (WP_BASE["OS"] if is_offspeed(p.kind) else WP_BASE["FB"]) * WP_MULT.get(s.level, 1.0) \
+                * (1 - 0.15 * (s.catcher_block - 3))
             out["wp_ball"] += ball_p * wp
             ball_p *= (1 - wp)
         out["ball"] += ball_p
@@ -1025,6 +1052,15 @@ except Exception:
 for _t in (LEVEL, OUTCOME_ADJ, RE_BY_LEVEL, CV_BY_LEVEL, IN_PLAY_BY_LEVEL, LW_BY_LEVEL):
     if "hs" in _t:
         _t["travel"] = _t["hs"]
+# v1.0: "college" means Division 1. LEVEL says so ("run tables: D1") and RE_BY_LEVEL, CV_BY_LEVEL and LW_BY_LEVEL
+# already alias it there, but OUTCOME_ADJ never did, so that one level ran with every environment shift at zero: no
+# hit by pitch at all, no wildness, no command penalty, no called-strike shift. It was Situation's default level, so
+# the hole was reachable from any caller that did not name a level, and app/engine.js threw on it outright because it
+# was never exported. Aliased here, after outcome_params and pitcher_side_params have both been applied, so college
+# carries exactly what Division 1 carries.
+for _t in (OUTCOME_ADJ, WP_MULT):
+    if "college_d1" in _t:
+        _t["college"] = _t["college_d1"]
 
 
 def zone_area(b, k):
@@ -1843,7 +1879,12 @@ def lean_b_h(arsenal, s, fooled=()):
         v += sum(log(1.3) for fc in fooled if fc != c)
         # 3.1 RP3, he's seen it: each of the two most recent fouls on this pitch leans him toward every sit on that
         # pitch at the height he fouled it, the same log 1.3 the fooled term uses.
-        for fr in [r for r in (s.history or ()) if len(r) > 2 and r[2] == "foul"][-2:]:
+        # Like RP2 in repeat_blocks, the fouls arrive either as history or as a `last` carrying the result, because a
+        # caller that tracks only the previous pitch has nowhere else to put it. Reading history alone left the lean
+        # off entirely for those callers, which is what scenario row F1 caught once Phase 4a stopped the hit-by-pitch
+        # cost from suppressing the inside fastball for a reason that had nothing to do with the hitter's timing.
+        rows_h = (s.history or ()) or ((s.last,) if (s.last and len(s.last) > 2) else ())
+        for fr in [r for r in rows_h if len(r) > 2 and r[2] == "foul"][-2:]:
             if fr[0] == n and height_member(fr[1], p.kind, j):
                 v += log(1.3)
         if v:

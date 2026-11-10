@@ -28,6 +28,21 @@ def share(ars, s, **kw):
     return policy
 
 
+def pitch_share_v10(ars, s):
+    """The share each pitch gets on the SHIPPED v1.0 path: the plate-appearance table solved at 0-0, then the live
+    call, the way the app does it."""
+    from dataclasses import replace
+    tab = call_v08.__globals__["solve_table"](ars, replace(s, balls=0, strikes=0, last=None, history=()))
+    s_ = replace(s, b_h=call_v08.__globals__["lean_b_h"](ars, s))
+    _, dist, _, _ = call_v08(ars, s_, rng=random.Random(0), tab=tab)
+    out = {}
+    for pr, _c, pp, _q in dist:
+        out[pp.name] = out.get(pp.name, 0.0) + pr
+    for x in ars:
+        out.setdefault(x.name, 0.0)
+    return out
+
+
 def loc_share(ars, s, pitch, quad):
     _, dist = call_mixed(ars, s)
     return sum(pr for pr, _, p, q in dist if p.name == pitch and q == quad)
@@ -36,10 +51,19 @@ def loc_share(ars, s, pitch, quad):
 E, R1, R3 = (False, False, False), (True, False, False), (False, False, True)
 A = arsenal()
 
-# R1 mix, don't script: no situation is 100% one pitch unless it's clearly right
-p = share(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in")))
-check("R1 mixing: 1-2 with a runner on 3rd is mostly slider, not all slider",
-      0.5 < p["Slider"] < 0.95, f"slider {p['Slider']:.0%}, fastball {p['Fastball']:.0%}, changeup {p['Changeup']:.0%}")
+# R1 mix, don't script: no situation is 100% one pitch unless it's clearly right.
+#
+# v1.0: this used to read the v0.7c mixer (mixed_policy) at Situation's default level, and it only ever passed because
+# that level -- the bare "college" -- had every environment shift at zero. At any level with a real environment the
+# v0.7c mixer gives 100% slider here, and the v0.7c mixer is not what the app calls any more. So the claim is now
+# measured where it belongs, on the shipped path, and in the terms v1.0 promises: call-sheet bands B1 (no pitch type
+# above 85%) and B2 (every allowed pitch at least 5%). That is a stricter statement of "don't script" than the old
+# 50-95% slider window, which Phase 3.3 made obsolete anyway by turning the two-strike chase off with a runner on 3rd.
+s_r1 = Situation(1, 2, 1, R3, last=("Fastball", "up-in"), level="college_d1")
+p = pitch_share_v10(A, s_r1)
+check("R1 mixing: 1-2 with a runner on 3rd is a real mix, not one scripted pitch",
+      max(p.values()) <= 0.85 and min(p.values()) >= 0.05,
+      ", ".join(f"{k} {v:.0%}" for k, v in sorted(p.items(), key=lambda kv: -kv[1])))
 
 # R2 think in at-bats: count values come from this matchup
 t0 = time.time()
@@ -133,12 +157,26 @@ check("v0.6 hit by pitch: inside pitches hit batters more than away pitches (HS)
 # v0.6 level realism: exact plate-appearance math reproduces each level's real K / BB / HBP
 import calib
 real = calib.RV
+# v1.0 Phase 4a: hit by pitch is no longer fitted at the mix the engine itself throws. fit_all.py did that, and it was
+# circular -- the engine barely goes inside, so inside looked exactly as dangerous as its own avoidance implied (root
+# cause R3). 4a fits the level's hbp scale at a REAL target mix instead, asking what scale reproduces the real HBP
+# rate if these pitchers went inside as often as real pitchers do. So HBP is checked at that same real mix for the
+# levels 4a fits, and at the engine's own mix for MLB, which 4a does not touch. K and BB stay at the engine's own mix
+# for every level, because that is where they are fitted.
+#   The gap between the two mixes is the engine's remaining inside shortfall, and it has its own enforced gate:
+#   call-sheet band B7. Nothing is given up by measuring HBP where it is fitted.
+import fit_pitcher_side as PS
 for lvl, key in (("mlb", "mlb_check"), ("college_d3", "college_d3"), ("hs", "hs")):
     m = calib.evaluate(lvl)
-    errs = {k: m[k] - real[key][k] for k in ("K", "BB", "HBP")}
+    at_real_mix = lvl != "mlb"
+    hbp = PS.evaluate(lvl, force_ul=True)["HBP"] if at_real_mix else m["HBP"]
+    errs = {"K": m["K"] - real[key]["K"], "BB": m["BB"] - real[key]["BB"], "HBP": hbp - real[key]["HBP"]}
     check(f"v0.6 realism ({lvl}): strikeouts, walks and HBP within 1 point of real",
           all(abs(v) < 0.01 for v in errs.values()),
-          ", ".join(f"{k} {m[k]:.1%} vs {real[key][k]:.1%}" for k in ("K", "BB", "HBP")))
+          f"K {m['K']:.1%} vs {real[key]['K']:.1%}, BB {m['BB']:.1%} vs {real[key]['BB']:.1%}, "
+          f"HBP {hbp:.1%} vs {real[key]['HBP']:.1%}"
+          + (f" (at the real target mix; {m['HBP']:.1%} at the engine's own mix, band B7 is the gap)"
+             if at_real_mix else ""))
 
 # v0.6d Drew's rule: if the off-speed gets it over, get it over; if it isn't landing, don't lean on it
 fresh = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"))

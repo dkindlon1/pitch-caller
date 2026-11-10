@@ -17,6 +17,9 @@
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
   const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0 };
   const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3 };
+  // v1.0 4c: the chance a way-off pitch gets past the catcher with runners on. The ratio is the shape; MULT is one
+  // number per level, fitted in Phase 4c (engine.py WP_BASE / WP_MULT, bundled by app/export_data.py).
+  let WP_BASE = { OS: 0.12, FB: 0.04 }, WP_MULT = {};
   const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.20 };
   const CONF_CAP_ABOVE = 0.10, CONF_REGRESS = 0.15, LOC_WINDOW = 0.010;
   const S0 = { heart: 0.72, edge: 0.50, off: 0.28, noncomp: 0.05 };
@@ -43,6 +46,11 @@
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
     for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.hs && !t.travel) t.travel = t.hs;
+    // v1.0: "college" has always meant Division 1 (engine.py LEVEL: "run tables: D1", and RE/CV/LW alias it there),
+    // but it was never in the exported tables, so this engine threw on a level the Python engine accepted. Alias it
+    // the same way travel follows hs, so a stored or env-supplied "college" works in both engines.
+    for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.college_d1 && !t.college) t.college = t.college_d1;
+    if (D.WP) { WP_BASE = D.WP.BASE; WP_MULT = Object.assign({}, D.WP.MULT); if (WP_MULT.hs !== undefined && WP_MULT.travel === undefined) WP_MULT.travel = WP_MULT.hs; }
     if (D.V08) initV08(D.V08);
   }
   const dataVersion = () => (D && D.version) || null;
@@ -55,7 +63,9 @@
     return p;
   }
   function Situation(o) {
-    return Object.assign({ inning: 1, margin: 0, pitch_count: 0, batters_faced: 0, level: "college_d3",
+    // level: engine.py's Situation defaults to the same level. They disagreed before v1.0 -- "college" there,
+    // "college_d3" here -- which made any default-level call differ between the engines.
+    return Object.assign({ inning: 1, margin: 0, pitch_count: 0, batters_faced: 0, level: "college_d1",
       same_side: true, last: null, hitter_seen: {}, usage_this_count: {}, timing: {}, hitter_damage: {},
       catcher_block: 3, landing_today: {}, wild_true: {},
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
@@ -321,7 +331,8 @@
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
-      Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
+      Z.wp = (z === "noncomp" && anyBase(s.bases))
+        ? (isOffspeed(p.kind) ? WP_BASE.OS : WP_BASE.FB) * (WP_MULT[s.level] ?? 1.0) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
       zones.push(Z);
     }
     return { zones, hL, tauEff, big };
@@ -1442,8 +1453,10 @@
       if (eta && s.hitter_damage && c in s.hitter_damage) { const [d, nn] = s.hitter_damage[c]; v += eta * d * nn / (nn + 10); }
       v += psum(fooled.filter((fc) => fc !== c).map(() => Math.log(1.3)));
       // 3.1 RP3, he's seen it: each of the two most recent fouls on this pitch leans him toward every sit on that
-      // pitch at the height he fouled it, the same log 1.3 the fooled term uses.
-      const fouls = (s.history || []).filter((r) => r.length > 2 && r[2] === "foul").slice(-2);
+      // pitch at the height he fouled it, the same log 1.3 the fooled term uses. Like RP2 in repeatBlocks, the fouls
+      // arrive either as history or as a `last` carrying the result (engine.py lean_b_h has the same split).
+      const rowsH = ((s.history || []).length ? s.history : (s.last && s.last.length > 2 ? [s.last] : []));
+      const fouls = rowsH.filter((r) => r.length > 2 && r[2] === "foul").slice(-2);
       for (const fr of fouls) if (fr[0] === skName(key) && heightMember(fr[1], p.kind, skH(key))) v += Math.log(1.3);
       if (v) out[key] = v;
     }

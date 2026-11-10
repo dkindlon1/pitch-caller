@@ -618,5 +618,69 @@ check("3.8 the put-away pitch has the biggest chance-weighted two-strike share",
       + ", ".join("%d-%d %.1f%%" % (c[0], c[1], 100 * _pl["reach"][c]) for c in _pw) + ")")
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Phase 4 the pitcher-side fits
+# ---------------------------------------------------------------------------------------------------------------
+try:
+    from pitcher_side_params import PITCHER_SIDE
+except ImportError:
+    PITCHER_SIDE = None
+
+if PITCHER_SIDE:
+    bad4 = []
+    for lvl4, d4 in PITCHER_SIDE.items():
+        for k4 in ("hbp", "wild"):
+            if k4 in d4 and abs(e37.OUTCOME_ADJ[lvl4][k4] - d4[k4]) > 1e-12:
+                bad4.append(f"{lvl4}.{k4}")
+        if "wp" in d4 and abs(e37.WP_MULT[lvl4] - d4["wp"]) > 1e-12:
+            bad4.append(f"{lvl4}.wp")
+    check("4 pitcher_side_params wins over outcome_params for hbp, wild and wp",
+          not bad4,
+          "; ".join(f"{lvl4} hbp {d4.get('hbp', 0):+.4f} wild {d4.get('wild', 0):+.4f} wp {d4.get('wp', 1):.3f}"
+                    for lvl4, d4 in sorted(PITCHER_SIDE.items())) or "no values")
+
+    check("4 travel still shares high school's numbers",
+          e37.OUTCOME_ADJ["travel"] is e37.OUTCOME_ADJ["hs"] and e37.WP_MULT["travel"] == e37.WP_MULT["hs"],
+          f"travel hbp {e37.OUTCOME_ADJ['travel']['hbp']:+.4f}, wp {e37.WP_MULT['travel']:.3f}")
+
+    # "college" means Division 1 -- LEVEL says so and RE/CV/LW already aliased it there, but OUTCOME_ADJ never did, so
+    # that level ran with every environment shift at zero. It is Situation's default level in both engines, so the hole
+    # was reachable from any caller that did not name a level, and app/engine.js threw on it outright. v1.0 aliases it.
+    check("college is Division 1 in every table, not just most of them",
+          e37.OUTCOME_ADJ["college"] is e37.OUTCOME_ADJ["college_d1"]
+          and e37.WP_MULT["college"] == e37.WP_MULT["college_d1"]
+          and e37.RE_BY_LEVEL["college"] is e37.RE_BY_LEVEL["college_d1"]
+          and e37.CV_BY_LEVEL["college"] is e37.CV_BY_LEVEL["college_d1"],
+          f"college hbp {e37.OUTCOME_ADJ['college']['hbp']:+.4f} = college_d1's "
+          f"{e37.OUTCOME_ADJ['college_d1']['hbp']:+.4f}; run, count and wild-pitch tables aliased too")
+
+    check("both engines default to the same level",
+          Situation(0, 0, 0, E).level == "college_d1",
+          f"engine.py Situation defaults to {Situation(0, 0, 0, E).level!r}; app/engine.js Situation() does too "
+          f"(they were 'college' and 'college_d3' before v1.0, so a default-level call differed between them)")
+
+    # 4c: the multiplier really does scale the wild-pitch chance, and the off-speed:fastball ratio is kept
+    def wp_of(kind4, lvl4, mult4):
+        old = e37.WP_MULT[lvl4]
+        try:
+            e37.WP_MULT[lvl4] = mult4
+            p4 = Pitch("P", kind4, grade=3, command=1, conf=0.60)
+            s4 = Situation(3, 0, 1, (True, False, False), level=lvl4)
+            return e37.outcome_probs(p4, "chase", s4, [p4, Pitch("Q", "FB", grade=3, command=3, conf=0.7)])["wp_ball"]
+        finally:
+            e37.WP_MULT[lvl4] = old
+
+    a4, b4 = wp_of("SL", "college_d3", 1.0), wp_of("SL", "college_d3", 2.0)
+    f4 = wp_of("FB", "college_d3", 1.0)
+    # The multiplier is exactly linear for a given pitch. The off-speed:fastball RATIO cannot be read back off two
+    # pitches' outcome probabilities -- the constant multiplies each pitch's own chance of a taken ball way off the
+    # plate, and that differs by kind -- so the ratio is checked where it lives, in the constants.
+    check("4c the wild-pitch multiplier scales the chance, and the off-speed to fastball shape is 3 to 1",
+          a4 > 0 and abs(b4 / a4 - 2.0) < 1e-9 and a4 > f4
+          and abs(e37.WP_BASE["OS"] / e37.WP_BASE["FB"] - 3.0) < 1e-9,
+          f"slider wild-pitch chance {a4:.4f} at multiplier 1 and {b4:.4f} at 2 (exactly 2x); fastball {f4:.4f}; "
+          f"constants {e37.WP_BASE['OS']:.2f} off-speed to {e37.WP_BASE['FB']:.2f} fastball")
+
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)

@@ -30,6 +30,10 @@ data["WE"] = json.load(open(os.path.join(HERE, "..", "we_tables.json")))
 # v1.0 3.7: the real-usage mixing prior (fit_mix_prior.py). `meta` is provenance for people, not numbers the
 # engine reads, so it stays out of the bundle and out of the fingerprint.
 data["MIX"] = {k: v for k, v in e.MIX_PRIOR.items() if k != "meta"}
+# v1.0 4c: the wild-pitch shape and the per-level multiplier Phase 4 fits
+data["WP"] = {"BASE": dict(e.WP_BASE), "MULT": {l: e.WP_MULT[l] for l in LEVELS if l in e.WP_MULT}}
+# "college" is Division 1 (engine.py aliases it); app/engine.js aliases the rest of the tables the same way
+data["WP"]["MULT"]["college"] = e.WP_MULT["college"]
 import hashlib
 # a fingerprint of the tables, logged with every pitch so a replay knows which numbers made the call
 data["version"] = hashlib.sha1(json.dumps({k: v for k, v in data.items() if k != "version"}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:10]

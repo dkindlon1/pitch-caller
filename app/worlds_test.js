@@ -92,15 +92,22 @@ console.log("5. Charter mistakes (10% of results and locations wrong), right gra
 
 console.log("6. Selective logging (hard contact always logged, the rest 40%): the 90% rule keeps stuff honest");
 {
+  // v1.0 Nov 10: this ran REPS (5) seasons and asked for the mean within 0.25 of the truth. The per-season spread is
+  // 0.38 of a grade point, so the standard error on 5 seasons is +/- 0.17 and the check is a one-in-seven flake --
+  // which is how it came up 3.33 after Phase 4 moved the engine's mix. Measured on 24 seasons: with the rule 3.010
+  // +/- 0.077, without it 2.400 +/- 0.067. The rule is unbiased and removes a 0.6-point bias; it was the measurement
+  // that was too coarse to say so. So this one check takes at least 20 seasons, which puts the 0.25 tolerance at
+  // about three standard errors, and the tolerance itself is left alone.
+  const REPS6 = Math.max(REPS, 20);
   const entered = grades(C3, C3, C3), withRule = [], without = [];
-  for (let r = 0; r < REPS; r++) {
+  for (let r = 0; r < REPS6; r++) {
     const evs = season({ pitches: P3, entered, truth: flat(grades(C3, C3, C3)), games: 20, pas: 22, seed: 60 + r, loc: true, contact: "selective" });
     withRule.push(L.learnPitcher(E, pitcherOf(entered), evs, { scoreboard: false }).pitches.fb.talent.grade);
     const keep = L.CFG.completeness; L.CFG.completeness = 0;
     without.push(L.learnPitcher(E, pitcherOf(entered), evs, { scoreboard: false }).pitches.fb.talent.grade);
     L.CFG.completeness = keep;
   }
-  console.log(`     fastball stuff, truth 3: with the rule ${mean(withRule).toFixed(2)}, without it ${mean(without).toFixed(2)}`);
+  console.log(`     fastball stuff, truth 3 over ${REPS6} seasons: with the rule ${mean(withRule).toFixed(2)}, without it ${mean(without).toFixed(2)}`);
   check(Math.abs(mean(withRule) - 3) < 0.25, "with the rule, within 0.25");
   check(Math.abs(mean(withRule) - 3) < Math.abs(mean(without) - 3), "the rule removes the bias");
 }

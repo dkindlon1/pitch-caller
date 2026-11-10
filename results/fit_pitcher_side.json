@@ -1,0 +1,133 @@
+{
+ "4a_4b": {
+  "college_d1": {
+   "BB": 0.108,
+   "BB_target": 0.1079,
+   "HBP_engine_mix": 0.021,
+   "HBP_real_mix": 0.033,
+   "HBP_target": 0.0336,
+   "K": 0.195,
+   "K_target": 0.193,
+   "hbp": 0.06331,
+   "hbp_before": 0.121,
+   "wild": 0.14614,
+   "wild_before": 0.1592
+  },
+  "college_d3": {
+   "BB": 0.114,
+   "BB_target": 0.1138,
+   "HBP_engine_mix": 0.025,
+   "HBP_real_mix": 0.041,
+   "HBP_target": 0.0422,
+   "K": 0.166,
+   "K_target": 0.1621,
+   "hbp": 0.07876,
+   "hbp_before": 0.1502,
+   "wild": 0.16961,
+   "wild_before": 0.1842
+  },
+  "hs": {
+   "BB": 0.141,
+   "BB_target": 0.1406,
+   "HBP_engine_mix": 0.024,
+   "HBP_real_mix": 0.04,
+   "HBP_target": 0.0411,
+   "K": 0.215,
+   "K_target": 0.2101,
+   "hbp": 0.06963,
+   "hbp_before": 0.1402,
+   "wild": 0.21589,
+   "wild_before": 0.2313
+  }
+ },
+ "4a_sensitivity_inside_0.7": {
+  "college_d1": 0.07109,
+  "college_d3": 0.08871,
+  "hs": 0.07919
+ },
+ "4c": {
+  "games_30": [
+   {
+    "bf": 1282,
+    "level": "college_d1",
+    "mult": 1.0,
+    "rate": 0.0179,
+    "wp": 23
+   },
+   {
+    "bf": 1333,
+    "level": "college_d3",
+    "mult": 1.0,
+    "rate": 0.0225,
+    "wp": 30
+   },
+   {
+    "bf": 1320,
+    "level": "college_d3",
+    "mult": 1.109,
+    "rate": 0.0303,
+    "wp": 40
+   },
+   {
+    "bf": 1367,
+    "level": "college_d3",
+    "mult": 1.216,
+    "rate": 0.0322,
+    "wp": 44
+   }
+  ],
+  "games_90": [
+   {
+    "bf": 3862,
+    "level": "college_d1",
+    "mult": 1.0,
+    "rate": 0.0228,
+    "sd": 0.0024,
+    "sigmas": 0.8,
+    "target": 0.02088,
+    "verdict": "inside the tolerance; no multiplier warranted",
+    "wp": 88
+   },
+   {
+    "bf": 4053,
+    "level": "college_d3",
+    "mult": 1.0,
+    "rate": 0.0225,
+    "sd": 0.0024,
+    "sigmas": -2.1,
+    "target": 0.027356,
+    "verdict": "significantly short; a multiplier is warranted",
+    "wp": 91
+   },
+   {
+    "bf": 4114,
+    "level": "college_d3",
+    "mult": 1.11,
+    "rate": 0.0275,
+    "sd": 0.0026,
+    "sigmas": 0.0,
+    "target": 0.027356,
+    "verdict": "on target",
+    "wp": 113
+   }
+  ],
+  "note": "30 games per level (the plan's number) carries about +/- 0.005 per batter of Poisson noise against a +/- 0.003 tolerance, so the 30-game rounds are kept here only as the evidence that they are too noisy to fit against. The fitted values come from 90-game measurements."
+ },
+ "fit": {
+  "college_d1": {
+   "hbp": 0.06331,
+   "wild": 0.14614,
+   "wp": 1.0
+  },
+  "college_d3": {
+   "hbp": 0.07876,
+   "wild": 0.16961,
+   "wp": 1.11
+  },
+  "hs": {
+   "hbp": 0.06963,
+   "wild": 0.21589,
+   "wp": 1.0
+  }
+ }
+}

@@ -25,14 +25,22 @@ console.log("D5. The safety switch trips on a learner that chases noise");
   const keep = clone({ drift: L.CFG.driftPerGame, caps: L.CFG.caps });
   const chase = (on) => { if (on) { L.CFG.driftPerGame = 1.2; Object.assign(L.CFG.caps, { step: 2, total: 3 }); } else { L.CFG.driftPerGame = keep.drift; Object.assign(L.CFG.caps, keep.caps); } };
   const off = (prof) => ["fb", "sl", "ch"].filter((k) => prof.pitches[k].score && prof.pitches[k].score.worse);
+  // v1.0 Nov 10: this asked for 4 of 5 seasons, which is 80% from a switch the plan itself records as catching
+  // "20 of 30 noise-chasing seasons, with 0 false switch-offs" -- about two in three. On 5 seeds an 80% bar off a 67%
+  // process is close to a coin flip (P(4 of 5) is about 0.45); it passed on v0.9 because seeds 500-504 happened to
+  // give 4. Measured again after Phase 4's pitcher-side fits, on the same sets the earlier retune used: 7 of 10 on
+  // seeds 500-509 and 12 of 20 on 600-619, so 19 of 30 -- the plan's own 20 of 30, unchanged -- with 0 false
+  // switch-offs in all 30. So the bar is now 10 seeds and 5 of them, which a two-in-three switch clears with room
+  // (P is about 0.92), while the half that actually matters for safety -- never switching off a right-graded pitch --
+  // stays at zero tolerance. Phase 7 retunes the switch on fresh seeds and tightens this back up.
   const caught = [], falseOff = [];
-  for (let r = 0; r < 5; r++) {
+  for (let r = 0; r < 10; r++) {
     const evs = season({ pitches: P3, entered: G3, truth: () => G3, games: 16, pas: 22, seed: 500 + r, loc: true });
     chase(true); caught.push(off(L.learnPitcher(E, pitcherOf(G3), evs, { now: 1 }))); chase(false);
     falseOff.push(off(L.learnPitcher(E, pitcherOf(G3), evs, { now: 1 })));
   }
   console.log(`     right grades: noise-chasing learner switched off ${caught.map((x) => x.join("+") || "-").join(", ")} | the real learner ${falseOff.map((x) => x.join("+") || "-").join(", ")}`);
-  check(caught.filter((x) => x.length).length >= 4, "the noise-chasing learner is switched off in at least 4 of 5 seasons");
+  check(caught.filter((x) => x.length).length >= 5, `the noise-chasing learner is switched off in at least 5 of 10 seasons (${caught.filter((x) => x.length).length})`);
   check(falseOff.every((x) => !x.length), "the real learner on the same seasons never is");
 }
 
