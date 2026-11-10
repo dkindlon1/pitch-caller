@@ -54,3 +54,35 @@ All within 0.2 points of the Step 0 baseline (gate: 1 point).
 
 New browser test `app/v10_step1_e2e.js` (added to `scripts/test-app.sh`). Run against the Step 0 build it fails three
 checks (fastball re-called after its shake-off, no at-bat memory, no re-solve), so it tests the fix, not the harness.
+
+Full checks after the re-freeze:
+
+```
+$ python3 golden/golden_v10.py check
+500 cases, largest difference 0.00e+00
+PASS: v1.0 reproduced within 1e-09
+$ (cd app && node ../golden/golden_v10.js) | tail -1
+PASS: JS engine reproduces v1.0
+$ python3 golden/fast.py 40 | tail -1 ; (cd app && node ../golden/fast.js 40) | tail -1
+PASS: 0 mismatches
+PASS: 0 mismatches
+$ python3 tests.py | tail -1
+25/25 checks passed
+$ cmp app/engine.js web/lib/engine.js && echo "ports identical"
+ports identical
+```
+
+`scripts/test-app.sh`: **exit 1, one check red.** tests.py 25, parity, golden_v10, dist build, learn_test 27, db_test 18,
+import_test 11, rails_test 31, schema_test 24, stage2_test 21 all pass; `worlds_test` 30/31. The red check is
+`worlds_test` 8 ("population honesty: truth within ±1 sd between 60% and 90%"), which read 35 of 60 (58%).
+It is a 10-season statistic (6 correlated readings per season) and any engine change re-rolls those seasons:
+
+| | `worlds_test` 8 in the suite, seasons 0–9 | same code standalone, seasons 0–9 | standalone, 60 fresh seasons (100–159) |
+|---|---|---|---|
+| Step 0 engine | 44/60 (73%) | 46/60 (76.7% ± 5.5) | 287/360 (**79.7% ± 2.1**) |
+| Step 1 engine | 35/60 (58%) | 40/60 (66.7% ± 6.1) | 290/360 (**80.6% ± 2.1**) |
+
+Step 1 does not move the learner's coverage (79.7% vs 80.6%). The suite and standalone counts differ on the same seeds
+because earlier checks in `worlds_test.js` leave shared state behind. Not changed: the check, its seasons or its band
+are Drew's call (raised with him). Steps 3 and 5 change `outcome_probs` and Step 7 re-runs `worlds_test` anyway.
+`v10_step1_e2e`, smoke and `rules_e2e` run after `worlds_test` in the script, so they were also run directly: all pass.
