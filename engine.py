@@ -1267,35 +1267,98 @@ def _taper(g, w):
     return 1.0 if g <= edge else (w - g) / (w - edge)
 
 
-def _soft(costs, temp, w, ref):
-    wt = {k: exp(-(c - ref) / temp) * _taper(c - ref, w) for k, c in costs.items()}
-    t = sum(wt.values())
-    return {k: v / t for k, v in wt.items() if v > 0} if t > 0 else {}
+# v1.0 3.7 (issues 1, 2, 5, 6 and inside pitches): the mixing operator is weighted by what real pitchers actually do.
+# mix_prior.json (fit_mix_prior.py over Statcast 2024-25) holds pitch-type usage u_T by composition/count/platoon and
+# target usage u_L by kind/count/platoon. The engine's own costs then move the mix away from that baseline, as far as
+# KAPPA_T and KAPPA_L allow. The point is a hedge: the engine's cost differences are often smaller than its own model
+# error, so a 0.01-run gap is not worth collapsing a mix over. A plus pitch is still used more, because its cost really
+# is lower, and an average pitch can only reach 0% if a guard removes it -- and a guard gives a reason.
+# Phase 5 tunes KAPPA_T within [1, 6] and KAPPA_L within [1, 3].
+KAPPA_T, KAPPA_L = 3.0, 1.0
+MIX_PRIOR = {}
+try:
+    MIX_PRIOR = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "mix_prior.json")))
+except FileNotFoundError:
+    pass
 
 
-def policy_from_costs(costs, s, temp):
-    """v0.8 two-stage operator Phi (A2: continuous form of v0.7c's). Pitch type: softmax over each pitch's best cost,
-    weight tapered to zero at the never-pick window. Location within a pitch: softmax from the pitch's own best, inside a
-    window that shrinks from LOC_WINDOW as the pitch's best falls behind the overall best (floor 20%), tapered the same
-    way. Nothing outside either window is ever picked. costs: {(name, q): cost} of allowed calls."""
-    win, lwin = windows(s)
+def mix_prior_tables(arsenal, s):
+    """3.7 the real-usage prior for this arsenal in this count: (u_T by pitch name, u_L by (name, target)).
+    Unnormalized -- policy_from_costs renormalizes over the calls that survive the guards. Two pitches of the same kind
+    split that kind's usage evenly. A composition with its own table uses it; anything rarer falls back to the
+    all-pitcher shares, renormalized over the arsenal's kinds by that same renormalization. With no table at all this
+    returns ({}, {}), which is a flat prior -- and at KAPPA_L = 1 a flat prior gives exactly the v0.9 location mix."""
+    if not (arsenal and MIX_PRIOR):
+        return {}, {}
+    cnt, plat = f"{s.balls}-{s.strikes}", ("same" if s.same_side else "opp")
+    nk = {}
+    for x in arsenal:
+        nk[x.kind] = nk.get(x.kind, 0) + 1
+    comp = "+".join(k for k in KINDS if k in nk)
+    tt = (MIX_PRIOR["u_T"].get(comp) or MIX_PRIOR["u_T_all"]).get(plat, {}).get(cnt, {})
+    uT = {x.name: tt.get(x.kind, 0.0) / nk[x.kind] for x in arsenal}
+    uL = {}
+    for x in arsenal:
+        ll = MIX_PRIOR["u_L"].get(x.kind, {}).get(plat, {}).get(cnt, {})
+        for q in targets(s.balls, s.strikes):
+            uL[(x.name, q)] = ll.get(q, 0.0)
+    return uT, uL
+
+
+def _prior_norm(u, keys):
+    """u over `keys`, renormalized; flat if the prior has nothing to say about them."""
+    w = {k: u.get(k, 1.0) for k in keys}
+    t = sum(w.values())
+    return {k: v / t for k, v in w.items()} if t > 0 else {k: 1.0 / len(keys) for k in keys}
+
+
+def policy_from_costs(costs, s, temp, arsenal=None):
+    """v1.0 3.7 two-stage quantal response weighted by real usage (replaces the v0.8 operator). With T = temp:
+
+      per-pitch cost   c_n = best_n - lam_L * log SUM_q u_L(q) exp(-(c(n,q) - best_n)/lam_L) taper(., lw)
+      pitch-type mix   pi_n       ~ u_T(n) exp(-(c_n - min_m c_m)/lam_T)
+      target mix       pi_{q|n}   ~ u_L(q) exp(-(c(n,q) - best_n)/lam_L) taper(., lw)
+
+    with lam_L = KAPPA_L*T, lam_T = KAPPA_T*T. The same weights appear in c_n and in the target mix, so the two stages
+    are one consistent operator: a pitch looks good when its cheap spots are also spots real pitchers use. The location
+    window lw and its taper are unchanged from v0.9, so a clearly worse spot is still never picked. The pitch-type stage
+    has no window any more -- the 3.6 pitch-type guard does that job, and it gives a reason when it fires.
+    costs: {(name, q): cost} of the calls that survive the guards."""
+    _, lwin = windows(s)
     names = []
     for (n, q) in costs:
         if n not in names:
             names.append(n)
     best_by = {n: min(c for (m, q), c in costs.items() if m == n) for n in names}
     overall = min(best_by.values())
-    pp = _soft(best_by, temp, win, overall)
+    uT, uL = mix_prior_tables(arsenal, s)
+    lam_t, lam_l = KAPPA_T * temp, KAPPA_L * temp
+    cn, loc = {}, {}
+    for n in names:
+        lw = max(TAPER * lwin, lwin - (best_by[n] - overall))
+        cs = {q: c for (m, q), c in costs.items() if m == n}
+        u = _prior_norm({q: uL[(n, q)] for q in cs if (n, q) in uL}, list(cs))
+        wt = {q: u[q] * exp(-(c - best_by[n]) / lam_l) * _taper(c - best_by[n], lw) for q, c in cs.items()}
+        t = sum(wt.values())
+        if not (t > 0):
+            continue
+        loc[n] = {q: v / t for q, v in wt.items() if v > 0}
+        cn[n] = best_by[n] - lam_l * log(t)
+    if not cn:
+        return {}
+    m = min(cn.values())
+    ut = _prior_norm({n: uT[n] for n in cn if n in uT}, list(cn))
+    wt = {n: ut[n] * exp(-(cn[n] - m) / lam_t) for n in cn}
+    tt = sum(wt.values())
+    pp = {n: v / tt for n, v in wt.items() if v > 0} if tt > 0 else {}
     pi = {}
     for n, pn in pp.items():
-        lw = max(TAPER * lwin, lwin - (best_by[n] - overall))
-        loc = _soft({q: c for (m, q), c in costs.items() if m == n}, temp, lw, best_by[n])
-        for q, pq in loc.items():
+        for q, pq in loc[n].items():
             pi[(n, q)] = pn * pq
     return pi
 
 
-def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
+def solve_sit_game(M, ks, s, temp, b_h=None, usage=None, arsenal=None):
     """2.3 (A2) the quantal-response balance point. pi = Phi(M sigma) exactly at every step, so the residual is
     ||sigma - sigma*(pi~)||_inf; sigma moves by a damped step w (0.3, halved whenever the residual grows, floor 0.002)
     until the residual < QRE_TOL or QRE_ITERS steps. Deterministic. Returns (pi, sigma, residual)."""
@@ -1307,7 +1370,7 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
         return {a: (4 * p_.get(a, 0.0) + usage.get(a, 0)) / (4 + n_u) for a in calls} if n_u else p_
 
     def phi(sg):
-        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp)
+        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp, arsenal)
 
     sg = {k: 1.0 / len(ks) for k in ks}
     w, last = 0.3, None
@@ -1558,7 +1621,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
             # sit game at the PA's starting look
             scH = replace(sc, look=tab.h0)
             M = {a: {kk: cost08(by[a[0]], a[1], scH, arsenal, tab, tab.h0, ("pure",) + kk)[0] for kk in ks} for a in calls}
-            pi, sg, res = solve_sit_game(M, ks, sc, temp, sc.b_h)
+            pi, sg, res = solve_sit_game(M, ks, sc, temp, sc.b_h, arsenal=arsenal)
             tab.sigma[(b, k)] = sg
             tab.residuals.append(res)
             for bn in tab.bins:
@@ -1567,7 +1630,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
                 scL = replace(sc, look=look)
                 for a in calls:
                     cs[a], Ps[a] = cost08(by[a[0]], a[1], scL, arsenal, tab, look, ("mix", sg))
-                pol = policy_from_costs(cs, sc, temp)
+                pol = policy_from_costs(cs, sc, temp, arsenal)
                 new = sum(pv * cs[a] for a, pv in pol.items())
                 delta = max(delta, abs(new - tab.V[(b, k)][bn]))
                 tab.V[(b, k)][bn] = new
@@ -1627,7 +1690,7 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     else:
         M = {a: M[a] for a in keep}
     usage = s.usage_by_call
-    pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
+    pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage, arsenal)
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
     return pi, sg, full, res, M
 

@@ -622,7 +622,7 @@
   const cntKey = (b, k) => b + "-" + k;
 
   let P08 = {}, TYPED = {}, RHO_L = {}, KAPPA_FIT = null, SIM = {}, OUT_TABLE = {}, RUNNER_FIT = {}, HITTER_SPREAD = {},
-    RUN_GAME = {}, WE = null;
+    RUN_GAME = {}, WE = null, MIX = null;
   let GRADES_OVERRIDE = null;
   const HEIGHTS = ["up", "middle", "down"];            // amendment A1
   const Y_TARGET = { "up-in": 3.2, "up-away": 3.2, middle: 2.5, "down-in": 1.8, "down-away": 1.8 };
@@ -633,7 +633,7 @@
     P08 = Object.assign({}, v.P08); TYPED = v.TYPED; RHO_L = v.RHO_L;
     KAPPA_FIT = v.KAPPA_FIT && Object.keys(v.KAPPA_FIT).length ? v.KAPPA_FIT : null;
     SIM = v.SIM; OUT_TABLE = v.OUT_TABLE; RUNNER_FIT = v.RUNNER_FIT; HITTER_SPREAD = v.HITTER_SPREAD || {}; RUN_GAME = v.RUN_GAME;
-    WE = D.WE || null;
+    WE = D.WE || null; MIX = D.MIX || null;        // v1.0 3.7 the real-usage mixing prior (mix_prior.json)
     for (const t of [OUT_TABLE, RUNNER_FIT, HITTER_SPREAD, RUN_GAME, SIM.A_BAR || {}, SIM.I_BAR_UMP || {}, SIM.I0_GRADE || {}, SIM.T_unc || {}])
       if (t.hs && !t.travel) t.travel = t.hs;
   }
@@ -815,25 +815,27 @@
     const edge = w * (1 - TAPER);
     return g <= edge ? 1.0 : (w - g) / (w - edge);
   }
-  function soft(costs, temp, w, ref) {   // costs: [[key, cost]] in order
-    const wt = costs.map(([k, c]) => [k, Math.exp(-(c - ref) / temp) * taper(c - ref, w)]);
-    const t = psum(wt.map((x) => x[1]));
-    return t > 0 ? wt.filter((x) => x[1] > 0).map(([k, v]) => [k, v / t]) : [];
-  }
-  function policyFromCosts(costs, s, temp) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
-    const [win, lwin] = windows(s);
-    const names = [], keys = Object.keys(costs);
-    for (const a of keys) { const n = skName(a); if (!names.includes(n)) names.push(n); }
-    const bestBy = names.map((n) => { let m = Infinity; for (const a of keys) if (skName(a) === n && costs[a] < m) m = costs[a]; return [n, m]; });
-    let overall = Infinity; for (const [, v] of bestBy) if (v < overall) overall = v;
-    const pp = soft(bestBy, temp, win, overall);
-    const bb = Object.fromEntries(bestBy), pi = {};
-    for (const [n, pn] of pp) {
-      const lw = Math.max(TAPER * lwin, lwin - (bb[n] - overall));
-      const loc = soft(keys.filter((a) => skName(a) === n).map((a) => [skH(a), costs[a]]), temp, lw, bb[n]);
-      for (const [q, pq] of loc) pi[ck(n, q)] = pn * pq;
+  // v1.0 3.7: the real-usage mixing prior. engine.py mix_prior_tables / KAPPA_T / KAPPA_L; the table is mix_prior.json,
+  // bundled into engine_data.json by app/export_data.py so both engines read the same numbers.
+  const KAPPA_T = 3.0, KAPPA_L = 1.0;
+  function mixPriorTables(arsenal, s) {
+    if (!(arsenal && arsenal.length && MIX)) return null;
+    const cnt = cntKey(s.balls, s.strikes), plat = s.same_side ? "same" : "opp";
+    const nk = {};
+    for (const x of arsenal) nk[x.kind] = (nk[x.kind] || 0) + 1;
+    const comp = KINDS.filter((k) => nk[k]).join("+");
+    const tt = ((MIX.u_T[comp] || MIX.u_T_all)[plat] || {})[cnt] || {};
+    const uT = {}, uL = {};
+    for (const x of arsenal) uT[x.name] = (tt[x.kind] || 0.0) / nk[x.kind];
+    for (const x of arsenal) {
+      const ll = (((MIX.u_L[x.kind] || {})[plat]) || {})[cnt] || {};
+      for (const q of targets(s.balls, s.strikes)) uL[ck(x.name, q)] = ll[q] || 0.0;
     }
-    return pi;
+    return { uT, uL };
+  }
+  function priorNorm(w, n) {   // w[0..n) renormalized in place; flat when the prior has nothing to say (engine._prior_norm)
+    let t = 0; for (let i = 0; i < n; i++) t += w[i];
+    if (t > 0) { for (let i = 0; i < n; i++) w[i] = w[i] / t; } else { for (let i = 0; i < n; i++) w[i] = 1.0 / n; }
   }
   // The sit game on flat arrays (speed): the same operations in the same order as policy_from_costs / sit_response /
   // solve_sit_game in engine.py, so results are identical (adding a zero never changes a compensated sum).
@@ -847,10 +849,10 @@
     }
     return { calls, names, groups, qs };
   }
-  function softArr(vals, n, temp, w, ref, out) {   // weights for vals[0..n) into out; returns false if all zero
+  function softArr(vals, w, n, temp, win, ref, out) {   // prior-weighted softmax of vals[0..n) into out; returns the raw sum
     let f = 0, c = 0, first = true;
     for (let i = 0; i < n; i++) {
-      const x = Math.exp(-(vals[i] - ref) / temp) * taper(vals[i] - ref, w);
+      const x = w[i] * Math.exp(-(vals[i] - ref) / temp) * taper(vals[i] - ref, win);
       out[i] = x;
       if (first) { f = 0 + x; first = false; continue; }
       const t = f + x;
@@ -858,23 +860,50 @@
       f = t;
     }
     if (c && Number.isFinite(c)) f += c;
-    if (!(f > 0)) return false;
+    if (!(f > 0)) return 0;
     for (let i = 0; i < n; i++) out[i] = out[i] / f;
-    return true;
+    return f;
   }
-  function policyArr(cost, st, temp, win, lwin, piOut) {   // pi over calls (Float64Array); zero where not picked
-    const G = st.groups.length, best = new Float64Array(G), pn = new Float64Array(G);
+  // v1.0 3.7 the operator itself (engine.py policy_from_costs): a soft minimum over each pitch's surviving targets
+  // gives its cost c_n, the pitch-type mix is u_T weighted at lambda_T, the target mix u_L weighted at lambda_L. The
+  // location window and taper are unchanged; the pitch-type stage has no window (the 3.6 pitch-type guard does that).
+  function policyArr(cost, st, temp, lwin, piOut, prior) {   // pi over calls (Float64Array); zero where not picked
+    const G = st.groups.length, nA = st.calls.length;
+    const best = new Float64Array(G), cn = new Float64Array(G);
     for (let g = 0; g < G; g++) { let m = Infinity; for (const i of st.groups[g]) if (cost[i] < m) m = cost[i]; best[g] = m; }
     let overall = Infinity; for (let g = 0; g < G; g++) if (best[g] < overall) overall = best[g];
     piOut.fill(0);
-    if (!softArr(best, G, temp, win, overall, pn)) return piOut;
-    const tmpC = new Float64Array(st.calls.length), tmpW = new Float64Array(st.calls.length);
+    const lamT = KAPPA_T * temp, lamL = KAPPA_L * temp;
+    const tmpC = new Float64Array(nA), tmpW = new Float64Array(nA), tmpU = new Float64Array(nA);
+    const live = [], locW = [];
     for (let g = 0; g < G; g++) {
-      if (!(pn[g] > 0)) continue;
       const idx = st.groups[g], lw = Math.max(TAPER * lwin, lwin - (best[g] - overall));
-      for (let j = 0; j < idx.length; j++) tmpC[j] = cost[idx[j]];
-      if (!softArr(tmpC, idx.length, temp, lw, best[g], tmpW)) continue;
-      for (let j = 0; j < idx.length; j++) if (tmpW[j] > 0) piOut[idx[j]] = pn[g] * tmpW[j];
+      for (let j = 0; j < idx.length; j++) {
+        tmpC[j] = cost[idx[j]];
+        const u = prior ? prior.uL[st.calls[idx[j]]] : undefined;
+        tmpU[j] = u === undefined ? 1.0 : u;
+      }
+      priorNorm(tmpU, idx.length);
+      const t = softArr(tmpC, tmpU, idx.length, lamL, lw, best[g], tmpW);
+      if (!(t > 0)) continue;
+      cn[g] = best[g] - lamL * Math.log(t);
+      live.push(g);
+      locW.push(Float64Array.from(tmpW.subarray(0, idx.length)));
+    }
+    if (!live.length) return piOut;
+    let m = Infinity; for (const g of live) if (cn[g] < m) m = cn[g];
+    const uw = new Float64Array(live.length), cw = new Float64Array(live.length), pw = new Float64Array(live.length);
+    for (let j = 0; j < live.length; j++) {
+      const u = prior ? prior.uT[st.names[live[j]]] : undefined;
+      uw[j] = u === undefined ? 1.0 : u;
+      cw[j] = cn[live[j]];
+    }
+    priorNorm(uw, live.length);
+    if (!(softArr(cw, uw, live.length, lamT, Infinity, m, pw) > 0)) return piOut;
+    for (let j = 0; j < live.length; j++) {
+      if (!(pw[j] > 0)) continue;
+      const idx = st.groups[live[j]];
+      for (let i = 0; i < idx.length; i++) if (locW[j][i] > 0) piOut[idx[i]] = pw[j] * locW[j][i];
     }
     return piOut;
   }
@@ -883,13 +912,13 @@
     for (const idx of st.groups) for (const i of idx) if (pi[i] > 0) o[st.calls[i]] = pi[i];
     return o;
   }
-  function policyFromCosts(costs, s, temp) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
-    const calls = Object.keys(costs), st = callStruct(calls), [win, lwin] = windows(s);
+  function policyFromCosts(costs, s, temp, arsenal) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
+    const calls = Object.keys(costs), st = callStruct(calls), [, lwin] = windows(s);
     const cost = Float64Array.from(calls.map((a) => costs[a]));
-    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length)), st);
+    return piToObject(policyArr(cost, st, temp, lwin, new Float64Array(calls.length), mixPriorTables(arsenal, s)), st);
   }
   function csum(f, c, x) { const t = f + x; if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f; return [t, c]; }
-  function solveSitGame(M, ks, s, temp, bH, usage) {
+  function solveSitGame(M, ks, s, temp, bH, usage, arsenal) {
     const calls = Object.keys(M), nA = calls.length, nK = ks.length, st = callStruct(calls);
     const Mat = new Float64Array(nA * nK);
     for (let a = 0; a < nA; a++) for (let k = 0; k < nK; k++) Mat[a * nK + k] = M[calls[a]][ks[k]];
@@ -897,7 +926,7 @@
     for (const key in (usage || {})) if (key in M) { us[calls.indexOf(key)] = usage[key]; uvals.push(usage[key]); }
     nU = psum(uvals);
     const b = new Float64Array(nK); if (bH) for (let k = 0; k < nK; k++) b[k] = bH[ks[k]] ?? 0.0;
-    const [win, lwin] = windows(s);
+    const [, lwin] = windows(s), prior = mixPriorTables(arsenal, s);
     const cost = new Float64Array(nA), pi = new Float64Array(nA), pt = new Float64Array(nA), f = new Float64Array(nK), u = new Float64Array(nK);
     const phi = (sg) => {
       for (let a = 0; a < nA; a++) {
@@ -910,7 +939,7 @@
         if (c && Number.isFinite(c)) s_ += c;
         cost[a] = s_;
       }
-      return policyArr(cost, st, temp, win, lwin, pi);
+      return policyArr(cost, st, temp, lwin, pi, prior);
     };
     const response = (p_) => {   // f = sigma*(p~)
       for (let a = 0; a < nA; a++) pt[a] = nU ? (4 * p_[a] + us[a]) / (4 + nU) : p_[a];
@@ -1223,13 +1252,13 @@
         const calls = allowedCalls(arsenal, sc);
         const scH = replace(sc, { look: tab.h0 });
         const [M] = buildM(arsenal, scH, tab, tab.h0, calls, ks, false);
-        const [, sg, res] = solveSitGame(M, ks, sc, temp, sc.b_h);
+        const [, sg, res] = solveSitGame(M, ks, sc, temp, sc.b_h, null, arsenal);
         tab.sigma[cntKey(b, k)] = sg;
         tab.residuals.push(res);
         for (const bn of tab.bins) {
           const look = binLook(tab, bn), cs = {}, Ps = {}, scL = replace(sc, { look }), mix = ["mix", sg];
           for (const a of calls) [cs[a], Ps[a]] = cost08(byName(arsenal, skName(a)), skH(a), scL, arsenal, tab, look, mix);
-          const pol = policyFromCosts(cs, sc, temp);
+          const pol = policyFromCosts(cs, sc, temp, arsenal);
           const nv = psum(Object.keys(pol).map((a) => pol[a] * cs[a]));
           delta = Math.max(delta, Math.abs(nv - tab.V[cntKey(b, k)][bn]));
           tab.V[cntKey(b, k)][bn] = nv;
@@ -1273,7 +1302,7 @@
       for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
       M = M2;
     }
-    const [pi, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
+    const [pi, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call, arsenal);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
     return [pi, sg, full, res, M];
   }

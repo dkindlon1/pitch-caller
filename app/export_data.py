@@ -27,6 +27,9 @@ data["V08"] = {
     "OUT_TABLE": itp.OUT_TABLE, "RUNNER_FIT": itp.RUNNER_FIT, "HITTER_SPREAD": HITTER_SPREAD, "RUN_GAME": dict(e.RUN_GAME),
 }
 data["WE"] = json.load(open(os.path.join(HERE, "..", "we_tables.json")))
+# v1.0 3.7: the real-usage mixing prior (fit_mix_prior.py). `meta` is provenance for people, not numbers the
+# engine reads, so it stays out of the bundle and out of the fingerprint.
+data["MIX"] = {k: v for k, v in e.MIX_PRIOR.items() if k != "meta"}
 import hashlib
 # a fingerprint of the tables, logged with every pitch so a replay knows which numbers made the call
 data["version"] = hashlib.sha1(json.dumps({k: v for k, v in data.items() if k != "version"}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:10]

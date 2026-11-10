@@ -338,5 +338,157 @@ check("3.6 the location guard still drops clearly worse spots",
       f"{len(n_)} of {len(allowed_calls(AVG_CH, Situation(1, 1, 1, E, level='college_d3')))} allowed calls "
       f"survive both guards at 1-1")
 
+# ---------------------------------------------------------------------------------------------------------------
+# 3.7 the mixing operator weighted by real usage
+# ---------------------------------------------------------------------------------------------------------------
+# The grid below is the CI call-sheet grid in miniature: three levels, three arsenals, both platoons, all 12 counts.
+# root_call returns (pi, sg, full, res, M) where pi is policy_from_costs(full, s, temp, arsenal) exactly -- the sit
+# game returns the policy of the sigma it stopped on -- so `full` is the real cost dict the operator was handed.
+AR37 = {
+    "FB+SL": [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", velo=88),
+              Pitch("Slider", "SL", grade=3, command=3, conf=0.75, shape="tight", velo=79)],
+    "FB+SL+CH": arsenal(),
+    "FB+SL+CB+CH": arsenal() + [Pitch("Curve", "CB", grade=3, command=3, conf=0.70, shape="sharp", velo=74)],
+}
+
+
+def grid37():
+    """(arsenal, situation, pi, full, M, temp, res) over the grid."""
+    out = []
+    for lvl in ("hs", "college_d3", "college_d1"):
+        for ars in AR37.values():
+            for side in (True, False):
+                base = Situation(0, 0, 1, E, level=lvl, same_side=side)
+                tab = solve_table(ars, base)
+                for b_ in range(4):
+                    for k_ in range(3):
+                        s_ = replace(base, balls=b_, strikes=k_, look=tab.h0)
+                        pi, sg, full, res, M = root_call(ars, s_, tab)
+                        out.append((ars, s_, pi, full, M, e37.temperature(ars, s_), res))
+    return out
+
+
+import engine as e37                                                          # noqa: E402
+from math import exp, log                                                     # noqa: E402
+
+G37 = grid37()
+
+
+def v09_policy(costs, s, temp):
+    """The v0.9 operator, kept here as the reference the plan's first 3.7 test compares against: a softmax over each
+    pitch's best cost inside the never-pick window, then a softmax over that pitch's targets inside the location
+    window. Both tapered. No usage weighting anywhere."""
+    win, lwin = e37.windows(s)
+    names = []
+    for (n_, q_) in costs:
+        if n_ not in names:
+            names.append(n_)
+    best_by = {n_: min(c for (m_, q_), c in costs.items() if m_ == n_) for n_ in names}
+    overall = min(best_by.values())
+
+    def soft(cs, w, ref):
+        wt = {k_: exp(-(c - ref) / temp) * e37._taper(c - ref, w) for k_, c in cs.items()}
+        t = sum(wt.values())
+        return {k_: v / t for k_, v in wt.items() if v > 0} if t > 0 else {}
+
+    pp = soft(best_by, win, overall)
+    pi = {}
+    for n_, pn in pp.items():
+        lw = max(e37.TAPER * lwin, lwin - (best_by[n_] - overall))
+        for q_, pq in soft({q_: c for (m_, q_), c in costs.items() if m_ == n_}, lw, best_by[n_]).items():
+            pi[(n_, q_)] = pn * pq
+    return pi
+
+
+def by_pitch(pi):
+    o = {}
+    for (n_, q_), v in pi.items():
+        o[n_] = o.get(n_, 0.0) + v
+    return o
+
+
+def cond(pi):
+    """The target mix within each pitch."""
+    tot = by_pitch(pi)
+    return {a: v / tot[a[0]] for a, v in pi.items() if tot[a[0]] > 0}
+
+
+# the plan's first test: with u flat and kappa_T = kappa_L = 1, the TARGET mix inside each pitch is v0.9's exactly
+mp, kt, kl = e37.MIX_PRIOR, e37.KAPPA_T, e37.KAPPA_L
+e37.MIX_PRIOR, e37.KAPPA_T, e37.KAPPA_L = {}, 1.0, 1.0
+worst_loc, n_loc = 0.0, 0
+ord_ok, ord_n = 0, 0
+for ars, s_, _pi, full, M, temp, _res in G37:
+    flat = e37.policy_from_costs(full, s_, temp, ars)
+    ref = v09_policy(full, s_, temp)
+    c_new, c_ref = cond(flat), cond(ref)
+    for a in set(c_new) | set(c_ref):
+        n_loc += 1
+        worst_loc = max(worst_loc, abs(c_new.get(a, 0.0) - c_ref.get(a, 0.0)))
+    # and the pitch-type ORDER matches v0.9's best-cost order wherever two best costs differ by more than T
+    best_by = {}
+    for (n_, q_), c in full.items():
+        if n_ not in best_by or c < best_by[n_]:
+            best_by[n_] = c
+    pt = by_pitch(flat)
+    names = sorted(pt)
+    for i in range(len(names)):
+        for j in range(i + 1, len(names)):
+            x, y = names[i], names[j]
+            if abs(best_by[x] - best_by[y]) <= temp:
+                continue
+            ord_n += 1
+            ord_ok += (pt[x] > pt[y]) == (best_by[x] < best_by[y])
+e37.MIX_PRIOR, e37.KAPPA_T, e37.KAPPA_L = mp, kt, kl
+check("3.7 with a flat prior and kappa = 1 the target mix inside each pitch is v0.9's exactly",
+      worst_loc < 1e-12,
+      f"largest difference {worst_loc:.2e} over {n_loc} (pitch, target) shares on the {len(G37)}-situation grid")
+check("3.7 the pitch-type order follows the best-cost order wherever the best costs differ by more than T",
+      ord_ok == ord_n,
+      f"{ord_ok}/{ord_n} pitch pairs whose best costs differ by more than T")
+
+# shares sum to 1, and nothing outside the guards is ever picked
+worst_sum, outside = 0.0, 0
+for ars, s_, pi, full, M, temp, _res in G37:
+    worst_sum = max(worst_sum, abs(sum(pi.values()) - 1.0))
+    outside += len(set(pi) - set(M))
+check("3.7 the mix sums to 1 and never picks a call the guards removed",
+      worst_sum < 1e-12 and outside == 0,
+      f"largest |sum - 1| {worst_sum:.2e}, {outside} calls outside the guarded set, over {len(G37)} situations")
+
+# the sit game still converges everywhere on the grid
+worst_res = max(r for *_x, r in G37)
+check("3.7 the sit game converges on the whole grid",
+      worst_res < e37.QRE_TOL,
+      f"largest residual {worst_res:.2e} (tolerance {e37.QRE_TOL}) over {len(G37)} situations")
+
+# the prior is doing the work it was added for: off-speed is no longer shut out of a hitter's count, and the engine's
+# own 0-0 mix now sits close to what real pitchers throw in that count and platoon
+pri = e37.MIX_PRIOR["u_T"]["FB+SL+CH"]
+worst_mix = 0.0
+mix_lines = []
+for side, plat in ((True, "same"), (False, "opp")):
+    s_ = Situation(0, 0, 1, E, level="college_d1", same_side=side)
+    tab = solve_table(A, s_)
+    pi = root_call(A, replace(s_, look=tab.h0), tab)[0]
+    got = by_pitch(pi)
+    want = pri[plat]["0-0"]
+    kind = {x.name: x.kind for x in A}
+    d = {kind[n_]: v for n_, v in got.items()}
+    worst_mix = max(worst_mix, max(abs(d.get(k_, 0.0) - want[k_]) for k_ in want))
+    mix_lines.append(f"{plat} " + " ".join(f"{k_} {d.get(k_, 0.0):.0%}/{want[k_]:.0%}" for k_ in sorted(want)))
+check("3.7 the 0-0 pitch-type mix tracks real usage (engine/real, within 8 points)",
+      worst_mix < 0.08,
+      "; ".join(mix_lines))
+
+s20 = Situation(2, 0, 1, E, level="college_d1", same_side=False)
+tab20 = solve_table(A, s20)
+ch20 = by_pitch(root_call(A, replace(s20, balls=2, strikes=0, look=tab20.h0), tab20)[0]).get("Changeup", 0.0)
+check("3.7 off-speed is not shut out of a hitter's count (issue 6)",
+      ch20 > 0.05,
+      f"changeup at 2-0 to an opposite-side hitter: {ch20:.1%} (real changeup usage there is "
+      f"{pri['opp']['2-0']['CH']:.1%})")
+
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)
