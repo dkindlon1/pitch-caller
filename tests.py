@@ -37,7 +37,9 @@ E, R1, R3 = (False, False, False), (True, False, False), (False, False, True)
 A = arsenal()
 
 # R1 mix, don't script: no situation is 100% one pitch unless it's clearly right
-p = share(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in")))
+# level pinned to "college", the Situation default this check always ran at (v1.0 #27 changed the default to college_d3;
+# this check exercises the retired v0.7c mixed_policy, which Step 6 deletes along with it)
+p = share(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in"), level="college"))
 check("R1 mixing: 1-2 with a runner on 3rd is mostly slider, not all slider",
       0.5 < p["Slider"] < 0.95, f"slider {p['Slider']:.0%}, fastball {p['Fastball']:.0%}, changeup {p['Changeup']:.0%}")
 
@@ -175,6 +177,95 @@ for (b, k) in ((3, 0), (3, 1), (2, 2), (0, 0)):
     tops.append(f"{b}-{k} {d_[0][2].name} {d_[0][3]} {d_[0][0]:.0%}")
 check("v0.9 calls: no chase at 3-0, 3-1 or 2-2; every count has a top call",
       rule_ok and len(tops) == 4, "; ".join(tops))
+
+# ---------------------------------------------------------------- v1.0 Step 1 (docs/PLAN_v1.0_2026-11-09.md)
+import json as _json
+from engine import (solve_table, frozen_inputs, needs_resolve, is_big_spot, gb_rate, hbp_loc, ev_adj,
+                    perceived as _perceived, outcome_probs as _op)
+from dataclasses import replace as _replace
+R2 = (False, True, False)
+
+
+def _dist(ars, s, **kw):
+    _, d_, tab_, _ = call_v08(ars, s, rng=random.Random(0), **kw)
+    out = {}
+    for pr, _, p_, q_ in d_:
+        out[(p_.name, q_)] = out.get((p_.name, q_), 0.0) + pr
+    return out
+
+
+def _tv(a, b):
+    return 0.5 * sum(abs(a.get(k, 0.0) - b.get(k, 0.0)) for k in set(a) | set(b))
+
+
+# #2: a runner moves mid at-bat -> the table is re-solved, and the stale table really did give a different call
+s_r1 = Situation(1, 1, 1, R1, level="college_d3")
+tab_r1 = solve_table(AVG3, _replace(s_r1, balls=0, strikes=0, last=None))
+fz = frozen_inputs(AVG3, s_r1)
+s_r2 = _replace(s_r1, bases=R2)
+stale, fresh = _dist(AVG3, s_r2, tab=tab_r1), _dist(AVG3, s_r2, tab=solve_table(AVG3, _replace(s_r2, balls=0, strikes=0, last=None)))
+tv2 = _tv(stale, fresh)
+same = needs_resolve(fz, AVG3, s_r1)
+out_ch = needs_resolve(fz, AVG3, _replace(s_r1, outs=2))
+check("v1.0 #2 re-solve: a runner moving R1 -> R2 (or an out) forces a re-solve; the stale table's call differs",
+      needs_resolve(fz, AVG3, s_r2) and out_ch and not same and tv2 > 0.05,
+      f"needs_resolve R1->R2 {needs_resolve(fz, AVG3, s_r2)}, outs 1->2 {out_ch}, unchanged {same}; "
+      f"stale vs fresh 1-1 mix differ by {tv2:.0%} (total variation)")
+
+# #9: the live entry points validate their input
+errs = []
+for fn in (lambda: call_v08(AVG3, Situation(0, 0, 3, E, level="college_d3")),
+           lambda: solve_table(AVG3, Situation(0, 0, 3, E, level="college_d3")),
+           lambda: call_v08(AVG3, Situation(4, 0, 0, E, level="college_d3"))):
+    try:
+        fn(); errs.append("no error")
+    except ValueError as ex:
+        errs.append(str(ex))
+    except Exception as ex:
+        errs.append(f"{type(ex).__name__}: {ex}")
+check("v1.0 #9 input check: call_v08 and solve_table reject 3 outs and a 4-ball count with ValueError",
+      errs[0].startswith("impossible number of outs") and errs[1].startswith("impossible number of outs")
+      and errs[2].startswith("impossible count"), "; ".join(errs))
+
+# #6 / D2: a shake-off removes the pitch at every spot (names, or the older (pitch, spot) pairs)
+s22 = Situation(2, 2, 1, E, level="college_d3")
+fb_by_name = sum(v for (n, _), v in _dist(AVG3, s22, exclude={"Fastball"}).items() if n == "Fastball")
+fb_by_pair = sum(v for (n, _), v in _dist(AVG3, s22, exclude={("Fastball", "middle")}).items() if n == "Fastball")
+fb_none = sum(v for (n, _), v in _dist(AVG3, s22).items() if n == "Fastball")
+check("v1.0 #6 shake-off = the pitch: after shaking off the fastball at 2-2 it gets 0% at every spot",
+      fb_by_name == 0.0 and fb_by_pair == 0.0 and fb_none > 0.0,
+      f"fastball share {fb_none:.0%} fresh, {fb_by_name:.3f} after a shake by name, {fb_by_pair:.3f} after a (pitch, spot) shake")
+
+# #10: chase is class-aware for effective velocity and HBP
+fb_, ch_ = AVG3[0], AVG3[2]
+hbp_r = {}
+for _l in ("hs", "college_d3", "college_d1"):
+    sh = Situation(0, 2, 0, E, level=_l)
+    hbp_r[_l] = (_op(fb_, "chase", sh, AVG3)["hbp"], _op(fb_, "middle", sh, AVG3)["hbp"])
+hbp_ch, hbp_mid = hbp_r["hs"]
+check("v1.0 #10 chase by class: a fastball chase (up) plays fast and hits batters no more than a middle fastball"
+      " at every level;"
+      " an off-speed chase (low) plays slow",
+      all(c_ <= m_ + 1e-12 for c_, m_ in hbp_r.values()) and ev_adj(fb_, "chase") == 3.0 and ev_adj(ch_, "chase") == -3.0
+      and _perceived(fb_, "chase") > _perceived(fb_, "middle") and hbp_loc(ch_, "chase") == 0.8,
+      "P(HBP) FB chase / FB middle at 0-2: " + ", ".join(f"{l} {c_:.4f}/{m_:.4f}" for l, (c_, m_) in hbp_r.items())
+      + f"; EV adj FB chase {ev_adj(fb_, 'chase'):+.0f}, "
+      f"CH chase {ev_adj(ch_, 'chase'):+.0f}")
+
+# #8: "late" is the last three innings of the scheduled game
+bs = {(lvl, inn): is_big_spot(Situation(0, 0, 1, R2, inning=inn, margin=0, level=lvl))
+      for lvl, inn in (("hs", 4), ("hs", 5), ("college_d3", 6), ("college_d3", 7))}
+check("v1.0 #8 big spot: HS 5th of 7, tie, R2 is late and close; HS 4th and college 6th of 9 are not",
+      bs[("hs", 5)] and bs[("college_d3", 7)] and not bs[("hs", 4)] and not bs[("college_d3", 6)],
+      ", ".join(f"{l} inning {i}: {v}" for (l, i), v in bs.items()))
+
+# #16: ground-ball rates are the 2024 Statcast fit
+gbt = _json.load(open("fit_v08.json"))["results"]["gb_types"]
+mk = lambda k, sh_="": Pitch("x", k, grade=3, command=3, conf=0.7, shape=sh_)
+got = {"4-seam": gb_rate(mk("FB", "ride")), "sink": gb_rate(mk("FB", "sink")), "cut": gb_rate(mk("FB", "cut")),
+       "SL": gb_rate(mk("SL")), "CB": gb_rate(mk("CB")), "CH": gb_rate(mk("CH"))}
+check("v1.0 #16 ground-ball rates match fit_v08.json results.gb_types",
+      all(abs(got[k] - gbt[k]) < 1e-12 for k in got), ", ".join(f"{k} {v:.3f}" for k, v in got.items()))
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
 # exit non-zero when anything failed, so a direct run (a hook, a pre-commit, another agent) cannot read a pass

@@ -52,7 +52,10 @@ P08 = dict(
 )
 TYPED = dict(beta_y=-0.8, gamma={"weak": 0.3, "solid": 0.0, "hard": -0.3},       # 7.3 batted-ball types
              nongb={"weak": (0.10, 0.40, 0.50), "solid": (0.45, 0.45, 0.10), "hard": (0.45, 0.55, 0.0)},
-             dp={"weak": 0.30, "solid": 0.20, "hard": 0.10}, gb_infield_in=0.10, r2_to_3rd={"GB": 0.50, "FB": 0.25})
+             dp={"weak": 0.30, "solid": 0.20, "hard": 0.10}, gb_infield_in=0.10, r2_to_3rd={"GB": 0.50, "FB": 0.25},
+             # v1.0 #16: MLB ground-ball rate by pitch, 2024 Statcast (fit_v08.json results.gb_types; _apply_fit loads
+             # the exact values, these are the same to 4 places for a tree without the json)
+             gb={"4-seam": 0.3400, "sink": 0.5558, "cut": 0.4124, "SL": 0.3969, "CB": 0.4343, "CH": 0.4940})
 RHO_L = {"hs": 0.6, "travel": 0.6}            # 3.2 level scaling of MLB-fitted timing effects (others 1.0)
 # v0.9 item 6, fitted in Step 3 (readthrough/step3_fits.py, results/step3): whiff | swing on a pitch class
 # rises with the whiffs and called strikes that class got from this hitter in earlier trips today (M1, capped at 4), and
@@ -218,6 +221,23 @@ EV_ADJ = {"up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0,
           "middle": 0.0, "chase": -3.0}
 
 
+def ev_adj(p, q):
+    """v1.0 #10: the chase target is class-aware. A fastball chase is up (y_target 3.8 ft), so it plays fast like up-in
+    (+3); an off-speed chase is below the zone (-3), which is what seq_fit.py's "chase" label meant when beta_T was fit."""
+    if q == "chase":
+        return -3.0 if is_offspeed(p.kind) else 3.0
+    return EV_ADJ[q]
+
+
+def hbp_loc(p, q):
+    """v1.0 #10: a fastball chase is aimed above the zone, away from the batter's body, so its multiplier is the away
+    spots' 0.3 (Drew, Nov 10: the plan's 0.5 left it hitting 1.3-1.4x as many batters as a middle fastball, because a
+    chase target misses off the plate more; 0.3 puts it at ~0.85x middle). An off-speed chase in the dirt keeps 0.8."""
+    if q == "chase":
+        return 0.8 if is_offspeed(p.kind) else 0.3
+    return HBP_LOC[q]
+
+
 @dataclass
 class Pitch:
     name: str
@@ -256,7 +276,7 @@ class Situation:
     margin: int = 0    # our runs minus theirs
     pitch_count: int = 0
     batters_faced: int = 0          # [R8] continuous decline, no third-time cliff
-    level: str = "college"
+    level: str = "college_d3"          # v1.0 #27: same default as engine.js
     same_side: bool = True          # pitcher and hitter same handedness
     last: tuple = None              # (pitch name, quad[, result]) of previous pitch this AB
     hitter_seen: dict = field(default_factory=dict)       # pitch name -> times seen
@@ -332,7 +352,9 @@ def is_offspeed(kind):
 
 
 def is_big_spot(s):
-    return s.inning >= 7 and abs(s.margin) <= 2 and (s.bases[1] or s.bases[2])
+    """Late and close with a runner in scoring position. v1.0 #8: "late" is the last three innings of the scheduled game
+    (5th on in a 7-inning HS game, 7th on in a 9-inning game), not a fixed 7th inning."""
+    return s.inning >= sched(s) - 2 and abs(s.margin) <= 2 and (s.bases[1] or s.bases[2])
 
 
 # ---------------------------------------------------------------------------
@@ -575,7 +597,7 @@ def tunnel_score(p1: Pitch, q1: str, p2: Pitch, q2: str, same_side: bool):
 
 def perceived(p: Pitch, q: str):
     """[R7] Location-adjusted speed: how fast the pitch looks to the hitter."""
-    return p.mph() + EV_ADJ[q]
+    return p.mph() + ev_adj(p, q)
 
 
 def pairing(p: Pitch, q: str, s: Situation, arsenal):
@@ -700,7 +722,7 @@ def timing_B(p, q, s, v_sit):
     """3.1 timing surprise benefit, 0..1."""
     v_hat = s.look[0] if s.look else v_sit
     vt = (1 - P08["alpha"]) * v_hat + P08["alpha"] * v_sit
-    vp = speed_today(p, s) + 0.5 * EV_ADJ[q]
+    vp = speed_today(p, s) + 0.5 * ev_adj(p, q)
     r = (vt - vp) / vt
     sr = min(1.0, max(0.0, (abs(r) - P08["dead"]) / P08["ramp"]))
     if r < 0:
@@ -842,7 +864,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         take = 1 - S
         ball_p = pz * take * (1 - C)
         if z in ("noncomp", "off") and A["hbp"] > 0:   # v0.6: hit by pitch
-            hb = min(0.9, A["hbp"] * HBP_LOC[q] * (1.0 if z == "noncomp" else 0.1))
+            hb = min(0.9, A["hbp"] * hbp_loc(p, q) * (1.0 if z == "noncomp" else 0.1))
             out["hbp"] += ball_p * hb
             ball_p *= (1 - hb)
         if z == "noncomp" and any(s.bases):   # wild pitch risk with runners on
@@ -926,10 +948,11 @@ B_TYPES = ("GB", "LD", "FB", "PU")
 
 
 def gb_rate(p):
-    """7.3 MLB ground-ball rate by pitch (sinker and cutter by fastball shape)."""
+    """7.3 MLB ground-ball rate by pitch (sinker and cutter by fastball shape); v1.0 #16: fitted, TYPED["gb"]."""
+    g = TYPED["gb"]
     if p.kind == "FB":
-        return {"sink": 0.495, "cut": 0.430}.get(p.shape, 0.379)
-    return {"SL": 0.439, "CB": 0.487, "CH": 0.478}[p.kind]
+        return g[p.shape] if p.shape in ("sink", "cut") else g["4-seam"]
+    return g[p.kind]
 
 
 def type_mix(p, q, c):
@@ -1120,6 +1143,11 @@ def _apply_fit():
             P08[k_] = float(sh[k_])
     if sh.get("beta_y") is not None:
         TYPED["beta_y"] = float(sh["beta_y"])
+    try:   # v1.0 #16: the fitted ground-ball rates replace the spec guesses
+        gbt = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "fit_v08.json")))["results"]["gb_types"]
+        TYPED["gb"] = {k_: float(gbt[k_]) for k_ in ("4-seam", "sink", "cut", "SL", "CB", "CH")}
+    except Exception:
+        pass
     if sh.get("kappa"):
         raw = {(0, 0): 0.0}
         raw.update({tuple(int(x) for x in c.split("-")): v for c, v in sh["kappa"].items()})
@@ -1396,7 +1424,7 @@ def v_fb(arsenal, s):
 def look_update(look, p, q, s):
     """2.6 the hitter's look after pitch (p, q)."""
     lam = P08["lam"]
-    vp = speed_today(p, s) + 0.5 * EV_ADJ[q]
+    vp = speed_today(p, s) + 0.5 * ev_adj(p, q)
     return (lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * y_target(q, p.kind))
 
 
@@ -1544,9 +1572,16 @@ def not_landing(p, s):
     return n >= LAND_BLOCK_N and est <= LAND_BLOCK_EST
 
 
+def shaken_names(exclude):
+    """v1.0 #6 / D2: a shake-off means "not that pitch" at any spot. Entries may be pitch names or the older
+    (pitch, spot) pairs; either way the whole pitch is excluded."""
+    return {e if isinstance(e, str) else e[0] for e in (exclude or ())}
+
+
 def allowed_calls(arsenal, s, exclude=None):
     tq = targets(s.balls, s.strikes)
-    out = [(p.name, q) for p in candidates(arsenal, s) for q in tq if not (exclude and (p.name, q) in exclude)]
+    ex = shaken_names(exclude)
+    out = [(p.name, q) for p in candidates(arsenal, s) if p.name not in ex for q in tq]
     if s.landing_today and out:
         names = {a[0] for a in out}
         bad = {p.name for p in arsenal if p.name in names and not_landing(p, s)}
@@ -1683,6 +1718,7 @@ RUN_GAME = {}   # 7.4 delta_L by level (we_rates.json steal success minus 0.72),
 
 def solve_table(arsenal, s, sweeps=10, tol=0.001):
     """6.1 sweeps over counts (deepest first), sit game per count, values per look bin."""
+    check_inputs(arsenal, s)      # v1.0 #9
     tab = Table(arsenal, s)
     order = sorted(COUNTS, key=lambda c: -(c[0] + c[1]))
     ks = sit_options(arsenal)
@@ -1762,6 +1798,7 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
 
 def call_v08(arsenal, s, rng=None, exclude=None, tab=None):
     """v0.8 call: solve (or reuse) the PA table, then the root. Returns ((p, q, prob, cost), dist, tab, info)."""
+    check_inputs(arsenal, s)      # v1.0 #9: the live entry point validates like callV08 does
     rng = rng or _random
     if tab is None:
         tab = solve_table(arsenal, s)
@@ -1808,13 +1845,18 @@ def lean_b_h(arsenal, s, fooled=()):
 def frozen_inputs(arsenal, s):
     """6.2 the inputs a plate-appearance table is solved with, for the re-solve triggers."""
     return dict(conf={x.name: x.conf for x in arsenal}, wild={x.name: wild_today(x, s) for x in arsenal}, ump=s.ump_u,
-                names=tuple(x.name for x in arsenal))
+                names=tuple(x.name for x in arsenal), outs=s.outs, bases=tuple(bool(b) for b in s.bases),
+                infield_in=bool(s.infield_in))
 
 
 def needs_resolve(frozen, arsenal, s):
-    """6.2 re-solve mid at-bat only when the pitcher changes, a confidence or wild-today value moves by > 0.10, or the
-    umpire shift moves by > 0.20 logits."""
+    """6.2 re-solve mid at-bat when the pitcher changes, the outs, bases or infield-in setting change (v1.0 #2: the
+    table's count values are priced at the base-out state it was solved at), a confidence or wild-today value moves by
+    > 0.10, or the umpire shift moves by > 0.20 logits."""
     if frozen is None or frozen["names"] != tuple(x.name for x in arsenal):
+        return True
+    if (frozen.get("outs") != s.outs or frozen.get("bases") != tuple(bool(b) for b in s.bases)
+            or frozen.get("infield_in") != bool(s.infield_in)):
         return True
     if any(abs(x.conf - frozen["conf"][x.name]) > 0.10 for x in arsenal):
         return True
@@ -2044,7 +2086,7 @@ def why_line(arsenal, s, tab, pick, info):
     if term == "timing":
         vs = sum(v * speed_today(next(x for x in arsenal if x.name == n), s) for (n, j), v in sigma.items())
         vt = (1 - P08["alpha"]) * look[0] + P08["alpha"] * vs
-        vp = speed_today(p, s) + 0.5 * EV_ADJ[q]
+        vp = speed_today(p, s) + 0.5 * ev_adj(p, q)
         line = f"He's timed for {vt:.0f} mph; this plays {abs(vt - vp):.0f} mph {'slower' if vt > vp else 'faster'}"
     elif term == "look value":
         nxt = min((x for x in full if x[0] != p.name), key=lambda x: full[x], default=b)

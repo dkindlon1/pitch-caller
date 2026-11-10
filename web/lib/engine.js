@@ -17,6 +17,9 @@
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
   const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0 };
   const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3 };
+  // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
+  const evAdj = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? -3.0 : 3.0) : EV_ADJ[q]);
+  const hbpLoc = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? 0.8 : 0.3) : HBP_LOC[q]);   // FB chase 0.3: Drew, Nov 10
   const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.20 };
   const CONF_CAP_ABOVE = 0.10, CONF_REGRESS = 0.15, LOC_WINDOW = 0.010;
   const S0 = { heart: 0.72, edge: 0.50, off: 0.28, noncomp: 0.05 };
@@ -90,7 +93,8 @@
   function logit(p) { p = Math.min(Math.max(p, 1e-4), 1 - 1e-4); return Math.log(p / (1 - p)); }
   const sig = (x) => 1 / (1 + Math.exp(-x));
   const isOffspeed = (k) => k === "SL" || k === "CB" || k === "CH";
-  const isBigSpot = (s) => s.inning >= 7 && Math.abs(s.margin) <= 2 && (s.bases[1] || s.bases[2]);
+  // v1.0 #8: "late" = the last three innings of the scheduled game (sched is defined with the WE blend below)
+  const isBigSpot = (s) => s.inning >= sched(s) - 2 && Math.abs(s.margin) <= 2 && (s.bases[1] || s.bases[2]);
   const anyBase = (b) => b[0] || b[1] || b[2];
 
   // ---------------------------------------------------------------- landing today (v0.6d)
@@ -232,7 +236,7 @@
     const score = 0.6 * Math.min(dB, 18) / 18 + 0.4 * Math.min(dP, 24) / 24 - dT / 10 - dR / 8;
     return [Math.max(-1.0, Math.min(1.0, score)), dT, dB, dP];
   }
-  const perceived = (p, q) => mph(p) + EV_ADJ[q];
+  const perceived = (p, q) => mph(p) + evAdj(p, q);
 
   function pairing(p, q, s, arsenal) {
     if (!s.last) return 0.0;
@@ -358,7 +362,7 @@
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
-      Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
+      Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
       zones.push(Z);
     }
@@ -712,7 +716,7 @@
   function timingB(p, q, s, vSit) {
     const vHat = s.look ? s.look[0] : vSit;
     const vt = (1 - P08.alpha) * vHat + P08.alpha * vSit;
-    const vp = speedToday(p, s) + 0.5 * EV_ADJ[q];
+    const vp = speedToday(p, s) + 0.5 * evAdj(p, q);
     const r = (vt - vp) / vt;
     const sr = Math.min(1.0, Math.max(0.0, (Math.abs(r) - P08.dead) / P08.ramp));
     if (r < 0) return P08.fast_mult * sr;
@@ -755,8 +759,9 @@
     return (1 - w.omega) * base + w.omega * (w.WE0 - we) / w.m0;
   }
   function gbRate(p) {
-    if (p.kind === "FB") return ({ sink: 0.495, cut: 0.430 })[p.shape] ?? 0.379;
-    return ({ SL: 0.439, CB: 0.487, CH: 0.478 })[p.kind];
+    const g = TYPED.gb;   // v1.0 #16: fitted ground-ball rates (fit_v08.json results.gb_types, exported with TYPED)
+    if (p.kind === "FB") return (p.shape === "sink" || p.shape === "cut") ? g[p.shape] : g["4-seam"];
+    return g[p.kind];
   }
   function typeMix(p, q, c) {
     const g = sig(logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c]);
@@ -1012,10 +1017,12 @@
   // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
+  // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
+  const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
   function allowedCalls(arsenal, s, exclude) {
-    const tq = targets(s.balls, s.strikes);
+    const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
-    for (const p of candidates(arsenal, s)) for (const q of tq) if (!(exclude && exclude.some(([n, qq]) => n === p.name && qq === q))) out.push(ck(p.name, q));
+    for (const p of candidates(arsenal, s)) if (!ex.has(p.name)) for (const q of tq) out.push(ck(p.name, q));
     if (s.landing_today && Object.keys(s.landing_today).length && out.length) {
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
@@ -1035,7 +1042,7 @@
     return m;
   }
   function lookUpdate(look, p, q, s) {
-    const lam = P08.lam, vp = speedToday(p, s) + 0.5 * EV_ADJ[q];
+    const lam = P08.lam, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
     return [lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * yTarget(q, p.kind)];
   }
   function interpAxis(x, c) {
@@ -1187,6 +1194,7 @@
   const PURE = new Map();
   const pureSit = (key) => { let r = PURE.get(key); if (!r) { r = ["pure", skName(key), skH(key)]; PURE.set(key, r); } return r; };
   function solveTable(arsenal, s, sweeps = 10, tol = 0.001) {
+    checkInputs(arsenal, s);   // v1.0 #9, as in solve_table
     const tab = Table(arsenal, s);
     const order = COUNTS.slice().sort((a, b) => -(a[0] + a[1]) + (b[0] + b[1]));
     const ks = sitOptions(arsenal);
@@ -1278,10 +1286,12 @@
   function frozenInputs(arsenal, s) {
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
-    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|") };
+    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
+      infield_in: !!s.infield_in };
   }
-  function needsResolve(frozen, arsenal, s) {
+  function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
+    if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
     return Math.abs(s.ump_u - frozen.ump) > 0.20;
@@ -1418,7 +1428,7 @@
     let line;
     if (term === "timing") {
       const vs = psum(Object.keys(sigma).map((k) => sigma[k] * speedToday(byName(arsenal, skName(k)), s)));
-      const vt = (1 - P08.alpha) * look[0] + P08.alpha * vs, vp = speedToday(p, s) + 0.5 * EV_ADJ[q];
+      const vt = (1 - P08.alpha) * look[0] + P08.alpha * vs, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
       line = `He's timed for ${vt.toFixed(0)} mph; this plays ${Math.abs(vt - vp).toFixed(0)} mph ${vt > vp ? "slower" : "faster"}`;
     } else if (term === "look value") {
       let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;

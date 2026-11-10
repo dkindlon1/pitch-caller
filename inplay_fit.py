@@ -16,7 +16,8 @@ import chain_v08
 TYPES = ("GB", "LD", "FB", "PU")
 SHAPE = {"GB": (0.75, 0.225, 0.02, 0.002, 0.0, 0.03), "LD": (0.32, 0.48, 0.16, 0.02, 0.02, 0.005),
          "FB": (0.78, 0.04, 0.06, 0.01, 0.11, 0.005), "PU": (0.98, 0.015, 0.003, 0.0, 0.0, 0.005)}
-REF_GB = (0.379, 0.439, 0.478)          # reference mix: four-seam, slider, changeup at 2.5 ft
+REF_GB = (e.TYPED["gb"]["4-seam"], e.TYPED["gb"]["SL"], e.TYPED["gb"]["CH"])   # reference mix: four-seam, slider,
+# changeup at 2.5 ft (v1.0 #16: the fitted rates, previously the spec guesses 0.379 / 0.439 / 0.478)
 
 
 def type_mix(gb_p, y, c):

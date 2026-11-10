@@ -479,6 +479,7 @@ def play_game(log_path):
                     batter_idx -= 1          # inning over before he batted; he leads off next inning
                     batters_faced -= 1
                     break
+            shaken = set()                  # v1.0 #6 / D2: pitches he shook off stay out for the rest of the at-bat
             while not pa_done:
                 pitch_no += 1
                 pitch_count += 1
@@ -507,13 +508,12 @@ def play_game(log_path):
                             usage_by_call=dict(K.usage_call[(pitcher["name"], balls, strikes)]))
                 # engine call, with possible shake-offs
                 shakes = []
-                shaken = set()
                 for attempt in range(3):
                     (p, q, prob, cst), dist, tab, _info = CALLER.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
                     p_shake = min(0.9, SHAKE * max(0.0, 0.35 * (0.75 - p.conf))) if attempt < 2 else 0.0
                     if rng.random() < p_shake:
                         shakes.append(f"{p.name} {q}")
-                        shaken.add((p.name, q))
+                        shaken.add(p.name)
                         conf_event(p, "shakeoff")
                         continue
                     break

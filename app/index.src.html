@@ -781,7 +781,8 @@ function makeCall() {
   const tab = paTable(ars, s);
   s = Object.assign({}, situation(), { look: G().pa.look });
   s.b_h = E.v08.leanBh(ars, s, G().pa.fooled);
-  const r = E.callV08(ars, s, { exclude: shakenNow, tab });
+  const shakenPA = G().pa.shaken || [];   // v1.0 #6 / D2: pitches shaken off this at-bat, any spot
+  const r = E.callV08(ars, s, { exclude: shakenPA, tab });
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
   const c = G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
     sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
@@ -791,7 +792,7 @@ function makeCall() {
     if (G().call !== c) return;
     try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info)[0]; } catch (e) { c.why = null; }
     // v0.9 item 4: the call's job in the at-bat (display only; computed after the call, changes nothing)
-    try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenNow); }
+    try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenPA); }
     catch (e) { c.intent = c.mechanism = c.intentLine = null; }
     save(); render();
   }, 0);
@@ -995,6 +996,7 @@ function shakeOff() {
   const g = G(), ars = arsenal(); snapshot();
   confEvent(ars, g.call.pitch, "shakeoff"); storeConf(ars);
   shakenNow.push([g.call.pitch, g.call.quad]);
+  if (g.pa) { g.pa.shaken = g.pa.shaken || []; if (!g.pa.shaken.includes(g.call.pitch)) g.pa.shaken.push(g.call.pitch); }
   toast(`Shook off the ${g.call.pitch.toLowerCase()}. His confidence in it drops.`);
   pickMode = false; recall();
 }
