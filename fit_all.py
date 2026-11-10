@@ -25,7 +25,28 @@ def save():
 save()
 show("mlb", "mlb (stored fit)")
 m = OUT["mlb"]
-levels = sys.argv[1:] or ["college_d1", "college_d3", "hs"]
+
+# v1.0 3.7 (Drew, Nov 10): --mlb refits the MLB level too. MLB is normally a CHECK level -- its shifts were fitted
+# once against MLB pitch-level rates and stored in fit_mlb.json -- but Phase 3.7's usage prior moved the call mix
+# enough that the MLB per-PA strikeout rate fell 1.1 points below real, and Drew chose to refit rather than leave the
+# check red. It fits the same three shifts the amateur levels fit (wild, wz, hbp, with wo tied to wz), keeps the
+# pitch-level-fitted cmd/zsw/osw/cs, and leaves the MLB in-play table alone, so this changes the outcome shifts only.
+# The new values are written back into fit_mlb.json as well, or the next plain `fit_all.py` run would revert them.
+if "--mlb" in sys.argv:
+    tg = {k: RV["mlb_check"][k] for k in ("K", "BB", "HBP")}
+    start = {"wild": OUTCOME_ADJ["mlb"].get("wild", 0.15), "wz": m["wz"], "hbp": m["hbp"]}
+    for outer in range(2):
+        start = fit("mlb", ["wild", "wz", "hbp"], tg, {}, start=start, tie={"wo": ("wz", m["wo"] - m["wz"])})
+        OUT["mlb"] = dict(OUTCOME_ADJ["mlb"])
+        show("mlb", f"mlb pass {outer+1}")
+        save()
+    saved["OUT"]["mlb"] = {k: float(v) for k, v in OUT["mlb"].items()}
+    json.dump(saved, open("fit_mlb.json", "w"), indent=1, sort_keys=True)
+    print(f"[{time.time()-t0:.0f}s] target K {tg['K']:.1%} BB {tg['BB']:.1%} HBP {tg['HBP']:.1%}; "
+          "rewrote fit_mlb.json", flush=True)
+    m = OUT["mlb"]
+
+levels = [a for a in sys.argv[1:] if not a.startswith("--")] or ["college_d1", "college_d3", "hs"]
 for lvl in levels:
     key = lvl
     tg = {k: RV[key][k] for k in ("K", "BB", "HBP")}
