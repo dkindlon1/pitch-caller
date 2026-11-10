@@ -188,3 +188,29 @@ One simulated game takes ~2.5 min on this workspace's 2 cores, so the four 108-g
 tree's own world, plays the frozen v0.9 engine and that tree's v1.0 engine on seeds 101-112:
 2a = `b50f02f` (tunneling off), 2b = the Step 2 head (tunneling on). Output: `results/v10/yardstick_step2a.txt` and
 `yardstick_step2b.txt`. **Not yet run.** D7: under 0.25 runs/game the step ships; over it, stop and show Drew.
+
+### Step 2 checks
+
+- **`stage2_test` D5 (learner safety switch), Drew Nov 10: 40 seasons, same bars.** On 5 seasons it read 2/5 caught
+  on Step 2 (4/5 on Step 1); on 40 fresh seasons (600-639) 37/40 on the Step 1 engine and 38/40 on Step 2, with 1
+  false switch-off each (pre-existing). Now caught in >= 80% of seasons 500-539 and at most 1 false switch-off:
+  **34/40 caught, 1/40 false** -> ok.
+
+```
+$ python3 golden/golden_v10.py check          (after `make --force` for Step 2)
+500 cases, largest difference 0.00e+00
+PASS: v1.0 reproduced within 1e-09
+$ python3 golden/fast.py 40 ; (cd app && node ../golden/fast.js 40)
+PASS: 0 mismatches
+PASS: 0 mismatches
+$ python3 tests_v09_followups.py | tail -1
+all follow-up checks passed
+$ bash scripts/test-app.sh ; echo exit=$?
+tests.py: 29 checks passed        parity: 1      golden_v10: 1      build: app/dist matches the source
+learn_test: 27   db_test: 18   import_test: 11   rails_test: 31   schema_test: 24   stage2_test: 21
+worlds_test: 31 (check 8: 176 of 240, 73%)   pitch_rules_test: 41   smoke: passed   rules_e2e: 20   v10_step1_e2e: 6
+exit=0
+```
+
+**Step 2 status: built and checked here; the yardstick (D5 keep/drop of tunneling, D7 runs budget) is the one open
+item, run on Drew's PC with `scripts/yardstick_step2.ps1`.**
