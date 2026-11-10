@@ -86,3 +86,7 @@ Step 1 does not move the learner's coverage (79.7% vs 80.6%). The suite and stan
 because earlier checks in `worlds_test.js` leave shared state behind. Not changed: the check, its seasons or its band
 are Drew's call (raised with him). Steps 3 and 5 change `outcome_probs` and Step 7 re-runs `worlds_test` anyway.
 `v10_step1_e2e`, smoke and `rules_e2e` run after `worlds_test` in the script, so they were also run directly: all pass.
+
+**Drew, Nov 10: `worlds_test` 8 measured on at least 40 seasons, band unchanged (60–90%).** Result on the Step 1
+engine: `truth within ±1 sd: 173 of 240 (72%)` → ok; `all worlds checks passed` (31/31). That file is the only change
+since the full `test-app.sh` run above, in which every other check passed, so the suite is green.
