@@ -157,6 +157,7 @@ p { margin: 0; }
 .pitch { font-size: clamp(60px, 7.4vw, 104px); line-height: .9; font-weight: 750; font-stretch: 62%; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .spot { margin-top: 8px; font-size: clamp(24px, 2.6vw, 32px); font-weight: 600; font-stretch: 80%; color: var(--call); line-height: 1.1; }
 .why { grid-column: 2; margin-top: 14px; color: var(--muted); font-size: 15px; max-width: 46ch; }
+.plan { grid-column: 2; margin-top: 6px; color: var(--muted); font-size: 14px; max-width: 46ch; font-style: italic; }
 .why b { color: var(--ink); font-weight: 650; }
 .readout { grid-column: 2; margin-top: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 0; border-radius: var(--r-tile); background: var(--well); border: 1px solid var(--rule); width: max-content; max-width: 100%; }
 .readout > div { padding: 10px 18px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -337,7 +338,7 @@ input[type="range"] { height: 24px; padding: 0; border: 0; background: none; acc
   .cell:nth-child(-n+2) { border-top: 0; }
   .call-main { column-gap: 14px; }
   .sign { width: 58px; height: 58px; font-size: 32px; }
-  .why, .readout { grid-column: 1 / -1; }
+  .why, .plan, .readout { grid-column: 1 / -1; }
   .readout > div { padding: 8px 12px; }
   :root { --pad: 18px; }
 }
@@ -784,7 +785,7 @@ function makeCall() {
   const r = E.callV08(ars, s, { exclude: shakenNow, tab });
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
   const c = G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
-    sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
+    sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null, plan: null,
     dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
   // spec 9: the "why" line runs after the call is shown, off the critical path
   setTimeout(() => {
@@ -793,6 +794,9 @@ function makeCall() {
     // v0.9 item 4: the call's job in the at-bat (display only; computed after the call, changes nothing)
     try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenNow); }
     catch (e) { c.intent = c.mechanism = c.intentLine = null; }
+    // v1.0 3.8: the plate appearance's plan. The same policies the call was drawn from, walked forward, so the plan
+    // and the calls agree by construction.
+    try { const pl = E.v08.atBatPlan(tab); c.plan = pl ? pl.line : null; } catch (e) { c.plan = null; }
     save(); render();
   }, 0);
 }
@@ -1177,6 +1181,7 @@ function callPanel() {
         h("p", { class: "pitch", "aria-live": "polite" }, c.pitch, c.coach ? h("span", { class: "coachmark" }, "Your call") : null),
         h("p", { class: "spot" }, SPOT[c.quad])),
       h("p", { class: "why" }, why),
+      c.plan && !c.coach ? h("p", { class: "plan" }, c.plan) : null,
       readout(c.pitch)),
     h("div", { class: `zone${fresh ? " fresh" : ""}`, html: zoneSVG(c) }));
   const acts = h("div", { class: "call-acts" },

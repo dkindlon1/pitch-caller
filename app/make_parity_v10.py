@@ -114,6 +114,20 @@ def resolve_flags(ars, s):
     return out
 
 
+def plan_out(pl):
+    """3.8 the at-bat plan, serialized the way app/parity_v10.js reads it."""
+    if pl is None:
+        return None
+    return {
+        "reach": {f"{b}-{k}": v for (b, k), v in pl["reach"].items()},
+        "ends": dict(pl["ends"]),
+        "opener": [[K(a), v] for a, v in pl["opener"]],
+        "putaway": None if pl["putaway"] is None else [pl["putaway"][0], pl["putaway"][1], pl["putaway"][2]],
+        "behind": {f"{b}-{k}": [[K(a), v] for a, v in rows] for (b, k), rows in pl["behind"].items()},
+        "line": pl["line"],
+    }
+
+
 def bk(bn):
     return "none" if bn is None else f"{bn[0]},{bn[1]}"
 
@@ -135,6 +149,8 @@ def compute(c):
         "allowed": sorted(K(a) for a in e.allowed_calls(ars, s)),
         # 3.4: the frozen inputs and every re-solve trigger, so both engines must agree on when the plan is rebuilt
         "resolve": resolve_flags(ars, s),
+        # 3.8: the at-bat plan -- the reach chain, the end chances, the opener, the put-away and the plan line
+        "plan": plan_out(e.at_bat_plan(tab)),
         # the plan asks for the table at 0-0 and 1-1
         "tableV": {f"{b}-{k}": {bk(bn): v for bn, v in tab.V[(b, k)].items()} for (b, k) in ((0, 0), (1, 1))},
         "tableN": {f"{b}-{k}": {bk(bn): v for bn, v in tab.N[(b, k)].items()} for (b, k) in ((0, 0), (1, 1))},

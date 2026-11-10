@@ -1096,7 +1096,10 @@
   function Table(arsenal, s) {
     const looked = true, bins = [];      // 2.6: values carry the hitter's look
     for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy);
-    return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [] };
+    // planPi / planP: v1.0 3.8, what the at-bat plan reads -- the policy at the plate appearance's starting look
+    // and each call's outcome probabilities there. Filled by solveTable once the sweeps have converged.
+    return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0,
+      residuals: [], planPi: {}, planP: {} };
   }
   function binLook(tab, bn) {
     if (bn === "none") return tab.h0;
@@ -1271,6 +1274,89 @@
       if (delta < tol) break;
     }
     return tab;
+  }
+  // v1.0 3.8: one pass over the counts at the starting look, through rootCall -- the two guards, the sit game
+  // re-solved, then the operator -- because that is what the live call uses (engine.py _fill_plan). Filled on demand,
+  // because the simulator solves hundreds of thousands of tables and never asks for a plan.
+  function fillPlan(tab) {
+    const arsenal = tab.ars, s = tab.s0;
+    for (const [b, k] of COUNTS) {
+      const ck_ = cntKey(b, k);
+      if (!(ck_ in tab.sigma)) continue;
+      const sc = replace(s, { balls: b, strikes: k, last: null, usage_this_count: {}, usage_by_call: {}, history: [],
+        b_h: Object.assign({}, s.b_h), look: tab.h0 });
+      const [pi, sg] = rootCall(arsenal, sc, tab);
+      tab.planPi[ck_] = pi;
+      const Ps = {}, mix = ["mix", sg];
+      for (const a in pi) Ps[a] = cost08(byName(arsenal, skName(a)), skH(a), sc, arsenal, tab, tab.h0, mix)[1];
+      tab.planP[ck_] = Ps;
+    }
+    return tab;
+  }
+  // v1.0 3.8 (issue 11): the at-bat plan (engine.py PLAN_QUAD / PA_ENDS / at_bat_plan).
+  const PLAN_QUAD = { "up-in": "up and in", "up-away": "up and away", "down-in": "down and in",
+    "down-away": "down and away", "middle": "over the middle", "chase": "off the plate" };
+  const PA_ENDS = ["walk", "strikeout", "in play", "hit by pitch"];
+  function atBatPlan(tab) {
+    if (!Object.keys(tab.sigma).length) return null;
+    if (!Object.keys(tab.planPi).length) fillPlan(tab);
+    const reach = {}, inflow = {}, ends = {};
+    for (const [b, k] of COUNTS) reach[cntKey(b, k)] = 0.0;
+    for (const x of PA_ENDS) ends[x] = 0.0;
+    reach["0-0"] = 1.0;
+    const order = COUNTS.slice().sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]) || a[0] - b[0]);
+    for (const [b, k] of order) {
+      const ck_ = cntKey(b, k), pi = tab.planPi[ck_];
+      if (!pi || !Object.keys(pi).length) continue;
+      const mix = {};
+      for (const a in pi) for (const ev in tab.planP[ck_][a]) mix[ev] = (mix[ev] || 0.0) + pi[a] * tab.planP[ck_][a][ev];
+      inflow[ck_] = reach[ck_];
+      // a foul with two strikes keeps the count, so that share is a self-loop: reach = inflow / (1 - share), exact
+      const self_ = k === 2 ? (mix.foul || 0.0) : 0.0;
+      const r = self_ < 1.0 ? reach[ck_] / (1.0 - self_) : 0.0;
+      reach[ck_] = r;
+      if (!(r > 0.0)) continue;
+      const ball = (mix.ball || 0.0) + (mix.wp_ball || 0.0);
+      const up = (mix.cstrike || 0.0) + (mix.whiff || 0.0) + ((mix.foul || 0.0) - self_);
+      const inPlay = (mix.weak || 0.0) + (mix.solid || 0.0) + (mix.hard || 0.0);
+      if (b + 1 > 3) ends.walk += r * ball; else reach[cntKey(b + 1, k)] += r * ball;
+      if (k + 1 > 2) ends.strikeout += r * up; else reach[cntKey(b, k + 1)] += r * up;
+      ends["in play"] += r * inPlay;
+      ends["hit by pitch"] += r * (mix.hbp || 0.0);
+    }
+    const top = (ck_, n_) => Object.keys(tab.planPi[ck_] || {})
+      .sort((x, y) => (tab.planPi[ck_][y] - tab.planPi[ck_][x]) || (x < y ? -1 : x > y ? 1 : 0))
+      .slice(0, n_).map((a) => [[skName(a), skH(a)], tab.planPi[ck_][a]]);
+    const opener = top("0-0", 2);
+    const pw = ["0-2", "1-2", "2-2"];
+    let tw = 0.0; for (const c of pw) tw += reach[c];
+    const byPitch = {}, byCall = {};
+    for (const c of pw) {
+      const w = tw > 0 ? reach[c] / tw : 0.0;
+      for (const a in (tab.planPi[c] || {})) {
+        const n_ = skName(a);
+        byPitch[n_] = (byPitch[n_] || 0.0) + w * tab.planPi[c][a];
+        byCall[a] = (byCall[a] || 0.0) + w * tab.planPi[c][a];
+      }
+    }
+    let putaway = null;
+    const pitches = Object.keys(byPitch).sort();
+    if (pitches.length) {
+      let n_ = pitches[0];
+      for (const x of pitches) if (byPitch[x] > byPitch[n_]) n_ = x;
+      const qs = Object.keys(byCall).filter((a) => skName(a) === n_).map(skH).sort();
+      let q_ = qs[0];
+      for (const q of qs) if (byCall[ck(n_, q)] > byCall[ck(n_, q_)]) q_ = q;
+      putaway = [n_, q_, byPitch[n_]];
+    }
+    let line = null;
+    if (opener.length && putaway) {
+      line = `Plan: ${opener[0][0][0]} ${PLAN_QUAD[opener[0][0][1]]} to start, ` +
+        `put away with the ${putaway[0]} ${PLAN_QUAD[putaway[1]]}.`;
+    }
+    const behind = {};
+    for (const c of ["2-0", "2-1", "3-1"]) behind[c] = top(c, 2);
+    return { reach, inflow, ends, opener, putaway, behind, line };
   }
   // 6.3 the myopic guardrail window (runs x run scale); named only so the simulator can test a wider one (engine.py GUARD_DELTA)
   const GUARD_DELTA = 0.010;
@@ -1578,6 +1664,7 @@
   }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
+    atBatPlan, PLAN_QUAD, PA_ENDS,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
     repeatBlocks, coachBlocks, ruleNotes, RULE_WHY, nothingTrusted,

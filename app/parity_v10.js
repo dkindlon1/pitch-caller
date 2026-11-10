@@ -60,6 +60,25 @@ cases.forEach((c, i) => {
 
   same(i, "allowed", o.allowed, V.allowedCalls(ars, s).slice().sort());
 
+  // 3.8: the at-bat plan -- the reach chain at 1e-9, and the opener, put-away and plan line exactly
+  const pl = V.atBatPlan(tab), opl = o.plan;
+  if (!opl !== !pl) note(`case ${i} plan: py ${!!opl} js ${!!pl}`);
+  else if (pl) {
+    for (const cnt in opl.reach) num(i, "planReach", cnt, opl.reach[cnt], pl.reach[cnt]);
+    for (const k in opl.ends) num(i, "planEnds", k, opl.ends[k], pl.ends[k]);
+    // which calls, and in what order, has to match exactly; the shares are floats, so they match at the tolerance
+    const ckey = ([a]) => a[0] + "|" + a[1];
+    same(i, "plan.opener", opl.opener.map((r) => r[0]), pl.opener.map(ckey));
+    opl.opener.forEach(([a, v], j) => num(i, "planOpener", a, v, (pl.opener[j] || [])[1]));
+    same(i, "plan.putaway", opl.putaway && opl.putaway.slice(0, 2), pl.putaway && pl.putaway.slice(0, 2));
+    if (opl.putaway) num(i, "planPutaway", "share", opl.putaway[2], pl.putaway[2]);
+    for (const c in opl.behind) {
+      same(i, `plan.behind.${c}`, opl.behind[c].map((r) => r[0]), (pl.behind[c] || []).map(ckey));
+      opl.behind[c].forEach(([a, v], j) => num(i, "planBehind", `${c}.${a}`, v, ((pl.behind[c] || [])[j] || [])[1]));
+    }
+    same(i, "plan.line", opl.line, pl.line);
+  }
+
   // 3.4: both engines must agree on every re-solve trigger
   const fz = V.frozenInputs(ars, s);
   const b = s.bases.map((x) => !!x);

@@ -490,5 +490,133 @@ check("3.7 off-speed is not shut out of a hitter's count (issue 6)",
       f"{pri['opp']['2-0']['CH']:.1%})")
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# 3.8 the at-bat plan
+# ---------------------------------------------------------------------------------------------------------------
+PLAN_GRID = []
+for lvl38 in ("hs", "college_d3", "college_d1"):
+    for nm38, ars38 in AR37.items():
+        for side38 in (True, False):
+            s38 = Situation(0, 0, 1, E, level=lvl38, same_side=side38)
+            t38 = solve_table(ars38, s38)
+            PLAN_GRID.append((nm38, lvl38, side38, ars38, s38, t38, e37.at_bat_plan(t38)))
+
+# the plate-appearance end chances sum to 1
+worst_end = max(abs(sum(pl["ends"].values()) - 1.0) for *_a, pl in PLAN_GRID)
+check("3.8 the plate-appearance end chances sum to 1",
+      worst_end < 1e-12,
+      f"largest |sum - 1| {worst_end:.2e} over {len(PLAN_GRID)} plate appearances "
+      f"(ends: {', '.join(e37.PA_ENDS)})")
+
+
+def recompute_inflow(tab, reach):
+    """The inflow into each count, recomputed from the reach chances and the stored policies, independently of the
+    order at_bat_plan resolved them in. A foul with two strikes is the self-loop and is left out."""
+    inf = {c: 0.0 for c in tab.plan_pi}
+    for (b_, k_), pi38 in tab.plan_pi.items():
+        mix = {}
+        for a38, pv38 in pi38.items():
+            for ev38, pe38 in tab.plan_P[(b_, k_)][a38].items():
+                mix[ev38] = mix.get(ev38, 0.0) + pv38 * pe38
+        r38 = reach[(b_, k_)]
+        ball = mix.get("ball", 0.0) + mix.get("wp_ball", 0.0)
+        up = mix.get("cstrike", 0.0) + mix.get("whiff", 0.0) + (mix.get("foul", 0.0) if k_ < 2 else 0.0)
+        if b_ + 1 <= 3:
+            inf[(b_ + 1, k_)] += r38 * ball
+        if k_ + 1 <= 2:
+            inf[(b_, k_ + 1)] += r38 * up
+    inf[(0, 0)] = inf.get((0, 0), 0.0) + 1.0        # the plate appearance starts at 0-0
+    return inf
+
+
+worst_in = 0.0
+for nm38, lvl38, side38, ars38, s38, t38, pl38 in PLAN_GRID:
+    inf = recompute_inflow(t38, pl38["reach"])
+    for c38 in t38.plan_pi:
+        worst_in = max(worst_in, abs(pl38["inflow"][c38] - inf[c38]))
+check("3.8 every count's in equals its out",
+      worst_in < 1e-12,
+      f"largest difference between a count's inflow and what the other counts send it: {worst_in:.2e}")
+
+
+def mc_reach(tab, n_pa, seed):
+    """Monte Carlo over the same stored policies: draw a call, draw an outcome, move the count."""
+    rng = random.Random(seed)
+    cum = {}
+    for c38, pi38 in tab.plan_pi.items():
+        calls, acc = [], 0.0
+        for a38, pv38 in pi38.items():
+            acc += pv38
+            calls.append((acc, a38))
+        evs = {}
+        for a38 in pi38:
+            e_acc, lst = 0.0, []
+            for ev38, pe38 in tab.plan_P[c38][a38].items():
+                e_acc += pe38
+                lst.append((e_acc, ev38))
+            evs[a38] = lst
+        cum[c38] = (calls, evs)
+    hit = {c38: 0 for c38 in tab.plan_pi}
+    for _ in range(n_pa):
+        b_, k_ = 0, 0
+        while True:
+            hit[(b_, k_)] += 1
+            calls, evs = cum[(b_, k_)]
+            r38 = rng.random()
+            a38 = next((x for acc, x in calls if r38 <= acc), calls[-1][1])
+            r38 = rng.random()
+            ev38 = next((x for acc, x in evs[a38] if r38 <= acc), evs[a38][-1][1])
+            if ev38 in ("ball", "wp_ball"):
+                b_ += 1
+                if b_ > 3:
+                    break
+            elif ev38 in ("cstrike", "whiff") or (ev38 == "foul" and k_ < 2):
+                k_ += 1
+                if k_ > 2:
+                    break
+            elif ev38 == "foul":
+                pass
+            else:
+                break
+    return {c38: v / n_pa for c38, v in hit.items()}
+
+
+N_MC = 20000
+worst_mc, where_mc = 0.0, ""
+for nm38, lvl38, side38, ars38, s38, t38, pl38 in PLAN_GRID[:3]:
+    got = mc_reach(t38, N_MC, 20261110)
+    for c38, v in got.items():
+        d38 = abs(v - pl38["reach"][c38])
+        if d38 > worst_mc:
+            worst_mc, where_mc = d38, f"{nm38} {lvl38} at {c38[0]}-{c38[1]}: chain {pl38['reach'][c38]:.3f} vs {v:.3f}"
+check("3.8 the reach chances match a 20,000 plate-appearance Monte Carlo within 0.01",
+      worst_mc < 0.01,
+      f"largest difference {worst_mc:.4f} ({where_mc})")
+
+# the plan lines up with the calls: the opener is the same call the engine actually makes most often at 0-0
+_nm, _lvl, _side, _ars, _s, _tab, _pl = PLAN_GRID[1]
+_pi00 = root_call(_ars, replace(_s, look=_tab.h0), _tab)[0]
+_live_top = max(sorted(_pi00), key=lambda a: _pi00[a])
+check("3.8 the plan's opener is the call the engine actually makes most often at 0-0",
+      _live_top == _pl["opener"][0][0],
+      f"plan {_pl['opener'][0][0][0]} {_pl['opener'][0][0][1]} at {_pl['opener'][0][1]:.1%}; "
+      f"live {_live_top[0]} {_live_top[1]} at {_pi00[_live_top]:.1%}")
+
+check("3.8 the plan line reads as one plain sentence",
+      bool(_pl["line"]) and _pl["line"].startswith("Plan: ") and _pl["line"].endswith(".")
+      and all(pl38["line"] for *_a, pl38 in PLAN_GRID),
+      _pl["line"])
+
+# the put-away pitch is chosen on the two-strike counts, weighted by the chance of reaching them
+_pw = [(0, 2), (1, 2), (2, 2)]
+check("3.8 the put-away pitch has the biggest chance-weighted two-strike share",
+      _pl["putaway"][2] >= max(
+          sum((_pl["reach"][c] / sum(_pl["reach"][x] for x in _pw)) * v
+              for c in _pw for a, v in _tab.plan_pi[c].items() if a[0] == n_)
+          for n_ in {a[0] for c in _pw for a in _tab.plan_pi[c]}) - 1e-12,
+      f"{_pl['putaway'][0]} at {_pl['putaway'][2]:.1%} across 0-2, 1-2 and 2-2 (reach "
+      + ", ".join("%d-%d %.1f%%" % (c[0], c[1], 100 * _pl["reach"][c]) for c in _pw) + ")")
+
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 sys.exit(0 if all(results) else 1)

@@ -9,6 +9,10 @@ const path = require("path");
   await page.waitForTimeout(500);
   const call = async () => (await page.locator(".pitch").innerText()) + " / " + (await page.locator(".spot").innerText());
   console.log("first call:", await call());
+  // v1.0 3.8: the at-bat plan line, computed off the critical path with the why line
+  const planTxt = await page.locator(".plan").innerText();
+  if (!/^Plan: .*put away with the .*\.$/.test(planTxt)) throw new Error("no at-bat plan line: " + JSON.stringify(planTxt));
+  console.log("plan line:", planTxt);
   await page.keyboard.press("b"); await page.waitForTimeout(200);
   await page.locator(".key", { hasText: "Swing and miss" }).click(); await page.locator(".detail .seg button", { hasText: "Late" }).click(); await page.getByRole("button", { name: "Log pitch" }).click(); await page.waitForTimeout(200);
   await page.keyboard.press("f"); await page.keyboard.press("Enter"); await page.waitForTimeout(200);

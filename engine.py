@@ -1219,6 +1219,10 @@ class Table:
         self.V = {}           # (b, k) -> {bin: value}
         self.N = {}           # (b, k) -> {bin: expected pitches left in the PA} (7.6)
         self.sigma = {}       # (b, k) -> sit mix
+        # v1.0 3.8: what the at-bat plan reads -- the policy at the PA's starting look, and each call's outcome
+        # probabilities there. Filled by solve_table once the sweeps have converged.
+        self.plan_pi = {}     # (b, k) -> {(name, target): share}
+        self.plan_P = {}      # (b, k) -> {(name, target): outcome probabilities}
         self.h0 = None
         self.sweeps = 0
         self.residuals = []
@@ -1643,6 +1647,108 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
         if delta < tol:
             break
     return tab
+
+
+# v1.0 3.8 (issue 11): the at-bat plan. The live call draws from the same policies solve_table stored, so the plan and
+# the calls agree by construction -- there is no second model of what the pitcher intends to do.
+PLAN_QUAD = {"up-in": "up and in", "up-away": "up and away", "down-in": "down and in", "down-away": "down and away",
+             "middle": "over the middle", "chase": "off the plate"}
+PA_ENDS = ("walk", "strikeout", "in play", "hit by pitch")
+
+
+def _fill_plan(tab):
+    """3.8 one pass over the counts at the plate appearance's starting look, storing what at_bat_plan walks forward.
+
+    It goes through root_call, not through the table's own per-count policy, because root_call is what the live call
+    uses: the two guards, the sit game re-solved, then the operator. That is what makes the plan and the calls agree by
+    construction rather than by resemblance -- at 0-0 the plan's opener IS the live call.
+
+    Filled on demand rather than inside solve_table, because the simulator solves hundreds of thousands of tables and
+    never asks for a plan; this pass is about a tenth of a table solve. Cached on the table either way.
+    """
+    arsenal, s = tab.ars, tab.s0
+    by = {x.name: x for x in arsenal}
+    for (b, k) in COUNTS:
+        if (b, k) not in tab.sigma:
+            continue
+        sc = replace(s, balls=b, strikes=k, last=None, usage_this_count={}, usage_by_call={},
+                     history=(), b_h=dict(s.b_h), look=tab.h0)
+        pi, sg, _full, _res, _M = root_call(arsenal, sc, tab)
+        tab.plan_pi[(b, k)] = pi
+        tab.plan_P[(b, k)] = {a: cost08(by[a[0]], a[1], sc, arsenal, tab, tab.h0, ("mix", sg))[1] for a in pi}
+    return tab
+
+
+def at_bat_plan(tab):
+    """3.8 walk the count chain forward from 0-0 under the stored policies. Returns None for an unsolved table.
+
+      reach    {(b, k): the chance of reaching that count from 0-0}
+      ends     {walk, strikeout, in play, hit by pitch}, summing to 1
+      opener   the top two calls at 0-0, [((name, target), share), ...]
+      putaway  (name, target, share): the pitch type with the biggest chance-weighted share across 0-2, 1-2 and 2-2,
+               and that pitch's biggest target over those three counts
+      behind   {(b, k): [((name, target), share), ...]} the main calls at 2-0, 2-1 and 3-1
+      line     the one-line plan the app shows under the call
+
+    A foul with two strikes keeps the count, so a two-strike count's own foul share is a self-loop: its reach is the
+    inflow divided by (1 - that share), which is exact, not an iteration. Every other event raises balls or strikes
+    or ends the plate appearance, so the counts resolve in order of balls + strikes."""
+    if not tab.sigma:
+        return None
+    if not tab.plan_pi:
+        _fill_plan(tab)
+    reach = {c: 0.0 for c in COUNTS}
+    reach[(0, 0)] = 1.0
+    ends = {x: 0.0 for x in PA_ENDS}
+    inflow = {}
+    for (b, k) in sorted(COUNTS, key=lambda c: (c[0] + c[1], c[0])):
+        pi, Ps = tab.plan_pi.get((b, k)), tab.plan_P.get((b, k))
+        if not pi:
+            continue
+        mix = {}
+        for a, pv in pi.items():
+            for ev, pe in Ps[a].items():
+                mix[ev] = mix.get(ev, 0.0) + pv * pe
+        inflow[(b, k)] = reach[(b, k)]
+        self_loop = mix.get("foul", 0.0) if k == 2 else 0.0
+        r = reach[(b, k)] / (1.0 - self_loop) if self_loop < 1.0 else 0.0
+        reach[(b, k)] = r
+        if r <= 0.0:
+            continue
+        ball = mix.get("ball", 0.0) + mix.get("wp_ball", 0.0)
+        up = mix.get("cstrike", 0.0) + mix.get("whiff", 0.0) + (mix.get("foul", 0.0) - self_loop)
+        in_play = mix.get("weak", 0.0) + mix.get("solid", 0.0) + mix.get("hard", 0.0)
+        if b + 1 > 3:
+            ends["walk"] += r * ball
+        else:
+            reach[(b + 1, k)] += r * ball
+        if k + 1 > 2:
+            ends["strikeout"] += r * up
+        else:
+            reach[(b, k + 1)] += r * up
+        ends["in play"] += r * in_play
+        ends["hit by pitch"] += r * mix.get("hbp", 0.0)
+    top = lambda c, n_: sorted(tab.plan_pi.get(c, {}).items(), key=lambda kv: (-kv[1], kv[0]))[:n_]
+    opener = top((0, 0), 2)
+    pw = [(0, 2), (1, 2), (2, 2)]
+    tw = sum(reach[c] for c in pw)
+    by_pitch, by_call = {}, {}
+    for c in pw:
+        w = (reach[c] / tw) if tw > 0 else 0.0
+        for (n_, q_), pv in tab.plan_pi.get(c, {}).items():
+            by_pitch[n_] = by_pitch.get(n_, 0.0) + w * pv
+            by_call[(n_, q_)] = by_call.get((n_, q_), 0.0) + w * pv
+    putaway = None
+    if by_pitch:
+        n_ = max(sorted(by_pitch), key=lambda x: by_pitch[x])
+        q_ = max(sorted(q for (m, q) in by_call if m == n_), key=lambda q: by_call[(n_, q)])
+        putaway = (n_, q_, by_pitch[n_])
+    line = None
+    if opener and putaway:
+        line = (f"Plan: {opener[0][0][0]} {PLAN_QUAD[opener[0][0][1]]} to start, "
+                f"put away with the {putaway[0]} {PLAN_QUAD[putaway[1]]}.")
+    return {"reach": reach, "inflow": inflow, "ends": ends, "opener": opener, "putaway": putaway,
+            "behind": {c: top(c, 2) for c in ((2, 0), (2, 1), (3, 1))}, "line": line}
 
 
 # 6.3 the myopic guardrail window (runs, times the level's run scale). A named constant only so the simulator can test a

@@ -65,7 +65,9 @@ def load_arsenals():
 
 
 # --------------------------------------------------------------------------------------------------
-# count weights: the chance of being in each count. Phase 3.8 will supply the engine's own reach chain;
+# count weights: the chance of being in each count. v1.0 3.8 supplies the engine's own reach chain per plate
+# appearance (see wof()); what follows is the fallback, and what --weights-uniform replaces it with.
+# Originally:
 # until then this is real MLB count frequency from the Statcast CSVs, as the plan specifies.
 # --------------------------------------------------------------------------------------------------
 def count_weights():
@@ -74,7 +76,9 @@ def count_weights():
         return {tuple(int(x) for x in k.split("-")): v for k, v in d["weights"].items()}
     files = sorted(glob.glob(os.path.join(ROOT, "data", "statcast", "sc_*.csv")))
     if not files:
-        sys.exit("no data/statcast/sc_*.csv; run python3 fetch_statcast.py (or use --weights-uniform)")
+        print("no data/statcast/sc_*.csv for the fallback count weights; the 3.8 reach chain supplies them instead",
+              flush=True)
+        return {c: 1 / len(COUNTS) for c in COUNTS}
     n = defaultdict(int)
     for f in files:
         with open(f, newline="", encoding="utf-8-sig") as fh:
@@ -92,6 +96,25 @@ def count_weights():
                "weights": {f"{b}-{k}": v for (b, k), v in w.items()}},
               open(WEIGHT_CACHE, "w", encoding="utf-8"), indent=1)
     return w
+
+
+USE_CHAIN = True          # --weights-uniform turns this off and weights every count equally
+
+
+def wof(cr, b, k, weights):
+    """The weight on this count for this plate appearance.
+
+    v1.0 3.8: the engine's own chance of reaching the count from 0-0 under its own policies (`at_bat_plan`), which is
+    what the plan asks band B5 to weight by -- a count the engine rarely reaches should not carry the same weight as
+    0-0. The chain is normalized here, because reach sums to the expected number of counts in a plate appearance
+    (about 4), not to 1. Falls back to the real MLB count frequency for a cell recorded before 3.8 existed, and for
+    --weights-uniform.
+    """
+    r = cr.get("reach") if USE_CHAIN else None
+    if r:
+        t = sum(r.values())
+        return (r.get(f"{b}-{k}", 0.0) / t) if t > 0 else 0.0
+    return weights[(b, k)]
 
 
 def situation(level, bases, outs, same, state, count, variant, ars):
@@ -155,6 +178,11 @@ def cell(spec):
             "residual": res,
             "pre_guard": sorted({f"{n}|{q}" for (n, q) in e.allowed_calls(ars, s)}),
         }
+    # v1.0 3.8: the plate appearance's own count-reach chain, which is what band B5 weights by from here on.
+    pl = e.at_bat_plan(tab)
+    if pl:
+        out["reach"] = {f"{b}-{k}": v for (b, k), v in pl["reach"].items()}
+        out["plan_line"] = pl["line"]
     out["secs"] = time.time() - t0
     out["kinds"] = {p.name: p.kind for p in ars}
     out["grades"] = {p.name: p.grade for p in ars}
@@ -366,7 +394,7 @@ def evaluate(cells, weights):
             if "error" in d or not d["policy"]:
                 continue
             b, k = (int(x) for x in cnt.split("-"))
-            w = weights[(b, k)]
+            w = wof(cr, b, k, weights)
             tot += w
             for key, val in d["policy"].items():
                 n, q = key.split("|")
@@ -507,7 +535,8 @@ def report(B, cells, tier, tag, weights, elapsed):
     enforced_fail = [k for k, b in B.items() if b.mode == "enforced" and b.verdict()[0] == "FAIL"]
     L = [f"# Call sheet: {tag}", "",
          f"Tier `{tier}`, {len(cells)} plate appearances x 12 counts, {elapsed:.0f}s.",
-         f"Count weights: real MLB frequency from Statcast (Phase 3.8 will replace this with the engine's own chain).",
+         ("Count weights: each plate appearance's own count-reach chain from at_bat_plan (v1.0 3.8)."
+          if USE_CHAIN else "Count weights: every count equally (--weights-uniform)."),
          "", "## Bands", "",
          "| Band | What | Mode | Result | Detail |", "|---|---|---|---|---|"]
     for k in ("B1", "B2", "B3", "B5", "B6", "B7", "B8a", "B8b", "B8c", "B9", "B10", "B11", "B12", "B13",
@@ -535,7 +564,7 @@ def report(B, cells, tier, tag, weights, elapsed):
             if "error" in d:
                 continue
             b, k = (int(x) for x in cnt.split("-"))
-            w = weights[(b, k)]
+            w = wof(cr, b, k, weights)
             for key, val in d["policy"].items():
                 n, q = key.split("|")
                 pitch_sh[cr["kinds"][n]] += w * val
@@ -560,6 +589,8 @@ def main():
     ap.add_argument("--weights-uniform", action="store_true", help="skip Statcast and weight every count equally")
     a = ap.parse_args()
     tag = a.tag or a.tier
+    global USE_CHAIN
+    USE_CHAIN = not a.weights_uniform
     weights = ({c: 1 / len(COUNTS) for c in COUNTS} if a.weights_uniform else count_weights())
     sp = specs(a.tier)
     print(f"{len(sp)} plate appearances ({a.tier} tier), {a.jobs} jobs", flush=True)
