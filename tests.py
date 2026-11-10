@@ -154,18 +154,19 @@ a_, b_, c_ = sl_mid(fresh), sl_mid(missing), sl_mid(landing_ok)
 check("v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more",
       b_ < 0.55 * a_ and abs(c_ - a_) < 0.02, f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9")
 
-# v0.7c Drew (2026-11-03): 3-0 leans on the cheaper pitch (tightest mix, like 3-2); 3-1 is left as it was
 AVG3 = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", velo=86),
         Pitch("Slider", "SL", grade=3, command=3, conf=0.75, shape="tight", velo=78),
         Pitch("Changeup", "CH", grade=3, command=3, conf=0.65, shape="fade", velo=78)]
-def fb_share(b, k, lvl):
-    _, d_ = call_mixed(AVG3, Situation(b, k, 0, E, level=lvl), rng=random.Random(0))
-    return sum(pr for pr, _, p, q in d_ if p.kind == "FB")
-f30 = {l: fb_share(3, 0, l) for l in ("hs", "college_d3", "college_d1")}
-f31 = fb_share(3, 1, "college_d3")
-check("v0.7c 3-0: an average arsenal throws mostly fastballs (60%+ at every level), 3-1 still mixes",
-      all(v >= 0.60 for v in f30.values()) and 0.6 < f31 < 0.95,
-      ", ".join(f"{l} 3-0 fastball {v:.0%}" for l, v in f30.items()) + f", college_d3 3-1 fastball {f31:.0%}")
+
+# v1.0 Step 2: the predictability grid (grid_v10.py) replaces the v0.7c "3-0 / 3-1" check, which measured the retired
+# call_mixed path. call_v08 in 12 counts x hs/D3/D1 x 5 arsenals x bases empty/R1/R3; hard checks gate, the rest print.
+import grid_v10
+_g = grid_v10.grid()
+for _name, _ok, _det, _hard in grid_v10.checks(_g):
+    if _hard:
+        check("v1.0 grid: " + _name, _ok, _det)
+    else:
+        print(f"[INFO] v1.0 grid: {_name}\n       {_det}")
 
 # v0.9 hitter's-count rule and a real mix: the engine's own calls never include a chase at 3-0, 3-1 or 2-2, and its
 # top call there is a pitch in the zone

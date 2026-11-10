@@ -496,6 +496,7 @@
   function stakesFactor(b, k, level) {
     if (!D.LW[level]) return 1.0;
     if (b === 3 && k === 0) return 0.5;   // v0.7c (Drew): 3-0 gets the tightest setting, like 3-2 (engine.py)
+    if (b === 3 && k === 1) return 1.3;   // v1.0 D1 (Drew, Nov 10): 3-1 moderate mix, top call ~55-70% (engine.py)
     let avg = 0; for (const [b_, k_] of COUNTS) avg += countStakes(b_, k_, level);
     avg /= COUNTS.length;
     return Math.min(1.5, Math.max(0.5, avg / countStakes(b, k, level)));
@@ -1233,8 +1234,6 @@
     }
     return tab;
   }
-  // 6.3 the myopic guardrail window (runs x run scale); named only so the simulator can test a wider one (engine.py GUARD_DELTA)
-  const GUARD_DELTA = 0.010;
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {
     const ks = sitOptions(arsenal);
     const look = s.look || tab.h0;
@@ -1242,17 +1241,9 @@
     let calls = allowedCalls(arsenal, s, exclude);
     if (!calls.length) calls = allowedCalls(arsenal, s);
     const sL = replace(s, { look });
+    // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)
     let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
-    const sgTab = tab.sigma[cntKey(s.balls, s.strikes)];
-    {
-      const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
-      let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
-      const delta = GUARD_DELTA * runScale(s.level);
-      const keep = calls.filter((a) => cmy[a] - best <= delta);     // the guardrail: no call clearly worse on this pitch alone
-      const M2 = {};
-      for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
-      M = M2;
-    }
+    if (s.balls === 3 || !lookValue) M = Mmy;   // three-ball counts rank by myopic cost (no setups)
     const [pi, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
     return [pi, sg, full, res, M];

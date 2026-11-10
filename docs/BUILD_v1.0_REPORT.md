@@ -90,3 +90,67 @@ are Drew's call (raised with him). Steps 3 and 5 change `outcome_probs` and Step
 **Drew, Nov 10: `worlds_test` 8 measured on at least 40 seasons, band unchanged (60–90%).** Result on the Step 1
 engine: `truth within ±1 sd: 173 of 240 (72%)` → ok; `all worlds checks passed` (31/31). That file is the only change
 since the full `test-app.sh` run above, in which every other check passed, so the suite is green.
+
+## Step 2 — One window (#1, #25, D1, D7, then D5)
+
+### 2a. Guardrail removed, 3-1 setting, recalibration (tunneling off)
+
+- `root_call` / `rootCall`: the `GUARD_DELTA` cut is deleted (constant removed from both engines). The root now costs
+  every allowed call and `policy_from_costs`' stakes-scaled never-pick window is the only rule that drops one, the same
+  operator `solve_table` uses (#1, #25). `tests_v09_followups.py` now asserts the constant is gone and the root covers
+  every allowed call.
+- **D1, Drew's calls (Nov 10):** one 3-1 setting at every level (stakes factor **1.3**, see below); the floor is by
+  pitch type ("the fastball as a pitch >= 50%"), not the exact spot; cells where the window leaves one pitch are the
+  engine's call and are reported, not gated (no new variety rule; the plan adds no new terms).
+- **Walks rose 1.2-1.3 points at every level** with the guardrail gone (more off-speed in 2-0/2-1/3-1); the 3-1 setting
+  added 0.02. **Drew: recalibrate to the v1.0 mix.** `fit_all.py college_d1 college_d3 hs` (187 s, converged, max
+  weighted relative error 0.005), mlb left as is, as in Step 0. Only the four pitcher-side keys moved:
+
+| key | Step 1 | Step 2 | change |
+|---|---|---|---|
+| `hs.hbp` | 0.1318 | 0.1292 | -0.0026 |
+| `hs.wild` | 0.2679 | 0.2384 | -0.0295 |
+| `hs.wz` | -0.3140 | -0.3267 | -0.0127 |
+| `hs.wo` | 0.1288 | 0.1162 | -0.0126 |
+| `college_d3.hbp` | 0.1402 | 0.1462 | +0.0060 |
+| `college_d3.wild` | 0.2259 | 0.1880 | -0.0379 |
+| `college_d3.wz` | -0.8645 | -0.9031 | -0.0386 |
+| `college_d3.wo` | -0.4217 | -0.4603 | -0.0386 |
+| `college_d1.hbp` | 0.1141 | 0.1177 | +0.0036 |
+| `college_d1.wild` | 0.1993 | 0.1601 | -0.0392 |
+| `college_d1.wz` | -0.4267 | -0.4831 | -0.0564 |
+| `college_d1.wo` | 0.0162 | -0.0403 | -0.0565 |
+
+  Wildness came back down 0.03-0.04 at each level, part of the rise Step 0 needed for v0.9's fastball-heavy mix.
+- The recalibration moved the 3-1 mix (less wild pitchers make the fastball-middle strike worth more): at 1.2 D1 with a
+  runner on 1st went to 81.3%. Re-running Drew's rule (one value at every level, best fit) in the recalibrated world:
+  1.2 -> 7/9 in 55-70% (D1/R1 81.3%), **1.3 -> 8/9** (D1/R1 78.9%), 1.4 -> 7/9, 1.5 -> 6/9. Set to 1.3. Before the
+  recalibration the best single value was 1.2 (6/9).
+
+`tests.py` (grid gates as Drew settled them; the v0.7c "3-0 / 3-1" check on the retired `call_mixed` is replaced):
+
+```
+[PASS] v0.6 realism (mlb): K 19.5% vs 20.0%, BB 7.9% vs 7.9%, HBP 0.8% vs 0.9%
+[PASS] v0.6 realism (college_d3): K 16.3% vs 16.2%, BB 11.4% vs 11.4%, HBP 4.2% vs 4.2%
+[PASS] v0.6 realism (hs): K 21.0% vs 21.0%, BB 14.0% vs 14.1%, HBP 4.1% vs 4.1%
+[PASS] v1.0 grid: AVG3, every count but 3-0: top call <= 85% and >= 2 calls survive the window   0 of 99 cells fail
+[PASS] v1.0 grid: D1 3-1, AVG3: top call inside 50-80% in all 9 situations (target 55-70%), two pitch types > 10%
+       8 of 9 in 55-70%; D1/R1 78.9%, D1/R3 57.3%, D1/empty 61.1%, D3/R1 68.5%, D3/R3 57.5%, D3/empty 59.1%,
+       hs/R1 67.2%, hs/R3 61.6%, hs/empty 55.2%
+[PASS] v1.0 grid: floor: AVG3's top pitch type >= 50% at 2-0, 2-1, 3-1   lowest 51%
+[PASS] v1.0 grid: race to two strikes: AVG3 first-pitch strike-target share >= 85%   lowest 100%
+[PASS] v1.0 grid: no chase as the top call at 3-0, 3-1, 2-2 (every arsenal)   0 cells
+[INFO] 3-0 AVG3 fastball: hs/empty 61%, hs/R1 74%, hs/R3 71%, D3 66/77/77%, D1 69/90/82%
+[INFO] all arsenals: cells where the window leaves a call over 85% or one call: 19 of 495
+[INFO] Medium variety: cells with a pitch type over 85%: 22
+[INFO] Medium variety: trusted secondaries under 5%: 100 pitch-cells (power changeup 53, four-pitch changeup 26, ...)
+29/29 checks passed
+```
+
+The 3-0 line: v0.7c's "60%+ fastball at 3-0" was only ever measured on the retired path. On the live engine HS with
+the bases empty read 58.9% at Step 1 (guardrail on) and 58.8% with it off before the recalibration; 61% now. Reported,
+not gated; the plan leaves 3-0 untouched.
+
+Full grid (all five arsenals, top-call share per count): `results/v10/step2_grid_tunneling_off.txt`.
+Parity: `golden/fast.py 40` and `fast.js 40`, 0 mismatches. `golden_v10` is re-frozen once, at the end of Step 2.
+

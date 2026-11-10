@@ -21,33 +21,16 @@ check(not any(hasattr(e, n) for n in ("FLAGS", "set_flags", "flags", "FLAGS_V07"
       "engine.py has no flags")
 check("FLAGS" not in js and "setFlags" not in js, "engine.js has no flags")
 
-# --- guardrail window: a named constant, same value in Python and JS
-m = re.search(r"const GUARD_DELTA = ([0-9.]+);", js)
-check(e.GUARD_DELTA == 0.010, f"engine.py GUARD_DELTA = {e.GUARD_DELTA}")
-check(m is not None and float(m.group(1)) == e.GUARD_DELTA, "engine.js GUARD_DELTA matches")
-check("0.010 * run_scale(s.level)" not in open(os.path.join(HERE, "engine.py")).read().split("def root_call")[1].split("def call_v08")[0],
-      "root_call reads the constant (no literal left)")
+# --- v1.0 Step 2 (#1, #25): the guardrail cut is gone in both engines; the never-pick window is the only rule
+check(not hasattr(e, "GUARD_DELTA") and "GUARD_DELTA" not in js, "no guardrail constant left in engine.py or engine.js")
 
 simulate.STAFF = "default"
 ARS = simulate.our_staff()[0]["arsenal"]
 
-
-def kept(delta, s):
-    """Calls the guardrail keeps at this window."""
-    old = e.GUARD_DELTA
-    e.GUARD_DELTA = delta
-    try:
-        tab = e.solve_table(ARS, s)
-        _, _, full, _, M = e.root_call(ARS, s, tab)
-        return set(M)
-    finally:
-        e.GUARD_DELTA = old
-
-
 s = e.Situation(1, 0, 0, (False, False, False), inning=3, level="college_d3", same_side=False)
-k1, k2, k3 = kept(0.010, s), kept(0.020, s), kept(0.030, s)
+_, _, _, _, M_ = e.root_call(ARS, s, e.solve_table(ARS, s))
 allc = set(e.allowed_calls(ARS, s))
-check(k1 <= k2 <= k3 <= allc, f"a wider window keeps a superset of calls (1-0: {len(k1)}, {len(k2)}, {len(k3)} at 0.010/0.020/0.030, of {len(allc)} allowed)")
+check(set(M_) == allc, f"the root costs every allowed call; only the window can drop one (1-0: {len(M_)} of {len(allc)})")
 
 # --- TRUE_POWER: item 8's HR shift in the batted-ball draw matches the engine's value exactly
 seen = {}

@@ -1180,6 +1180,13 @@ def stakes_factor(b, k, level):
         # count (a ball there only turns a near-walk into a walk), so the mix was at its loosest and off-speed took about
         # half the calls even when the engine's own costs favored the fastball.
         return 0.5
+    if (b, k) == (3, 1):
+        # v1.0 D1 (Drew, Nov 10): 3-1 mixes moderately among the pitches landing today, top call ~55-70%, one setting at
+        # every level. With the guardrail gone the formula's 0.85-0.94 left the average three-pitch starter at 62-93%
+        # fastball. Chosen as the single value that best fits after Step 2's recalibration: 1.3 puts 8 of 9 situations
+        # (3 levels x bases empty / R1 / R3) in 55-70%; D1 with a runner on 1st reads 78.9% (a walk costs more with a
+        # runner on, which the count setting can't see). Before the recalibration the best single value was 1.2.
+        return 1.3
     avg = sum(count_stakes(b_, k_, level) for (b_, k_) in COUNTS) / len(COUNTS)
     return min(1.5, max(0.5, avg / count_stakes(b, k, level)))
 
@@ -1764,13 +1771,11 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     return tab
 
 
-# 6.3 the myopic guardrail window (runs, times the level's run scale). A named constant only so the simulator can test a
-# wider window (v0.9 follow-up; simulate.py GUARD_DELTA). Unchanged in every engine version.
-GUARD_DELTA = 0.010
-
 
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
-    """6.3/6.4 the pitch being called now: live look, last pitch and lean; guardrail on myopic cost; sit game re-solved."""
+    """6.3/6.4 the pitch being called now: live look, last pitch and lean; sit game re-solved. v1.0 Step 2 (#1, #25): no
+    separate guardrail cut. The stakes-scaled never-pick window inside policy_from_costs is the only rule that removes a
+    call, so the root and the table (solve_table) use one operator. Three-ball counts rank by myopic cost (no setups)."""
     by = {x.name: x for x in arsenal}
     ks = sit_options(arsenal)
     look = s.look or tab.h0
@@ -1779,17 +1784,8 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     if not calls:
         calls = allowed_calls(arsenal, s)
     sL = replace(s, look=look)
-    M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk)[0] for kk in ks} for a in calls}
-    sg_tab = tab.sigma.get((s.balls, s.strikes))
-    Mmy = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=True)[0] for kk in ks} for a in calls}
-    cmy = {a: sum(sg_tab[kk] * Mmy[a][kk] for kk in ks) for a in calls}
-    best = min(cmy.values())
-    delta = GUARD_DELTA * run_scale(s.level)
-    keep = [a for a in calls if cmy[a] - best <= delta]       # the guardrail: no call clearly worse on this pitch alone
-    if s.balls == 3 or not look_value:     # three-ball counts rank by myopic cost (no setups); test switch
-        M = {a: Mmy[a] for a in keep}
-    else:
-        M = {a: M[a] for a in keep}
+    my = s.balls == 3 or not look_value     # three-ball counts rank by myopic cost (no setups); test switch
+    M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks} for a in calls}
     usage = s.usage_by_call
     pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
