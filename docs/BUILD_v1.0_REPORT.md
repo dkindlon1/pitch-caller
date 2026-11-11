@@ -237,3 +237,33 @@ runs per game, v1.0 minus v0.9:
   are not paired against each other). The yardstick shows no measurable gain from tunneling and no clear harm.
 
 Per D7 nothing was tuned. Waiting on Drew's call.
+
+### 2c. Over budget: 0-0 and 1-0 tightened (Drew, Nov 10); tunneling kept
+
+**Drew's calls:** tighten 0-0 and 1-0 only (keep the hitter's-count variety), aiming at ~0.2 runs/game; **keep
+tunneling on chase** (real-data fit +0.310, 9 SE; the yardstick showed no measurable gain or harm).
+
+- Both counts sat at the formula's cap (stakes factor 1.5). Set to **0.9** in both engines (`stakes_factor`).
+- Chosen with a regret proxy, so the PC isn't burned on guesses: per-pitch expected regret against the engine's own
+  costs (sum of mix x cost minus the best call's cost), over AVG3 / two-pitch / four-pitch x hs/D3/D1 x bases empty /
+  R1 x three last pitches. Checked against the yardstick: the proxy puts the 0-0 excess over the guardrail engine at
+  0.0018 runs/pitch, the yardstick 0.0020; at 1-0 the proxy reads about twice the yardstick, so it is scaled.
+
+  | 0-0 / 1-0 setting | proxy regret/pitch, 0-0 | 1-0 | AVG3 top call (max) |
+  |---|---|---|---|
+  | Step 1 engine (guardrail) | 0.0107 | 0.0076 | 100% |
+  | 1.5 (Step 2b as run) | 0.0125 | 0.0140 | 55% |
+  | 1.0 | 0.0112 | 0.0117 | 65% |
+  | **0.9** | **0.0102** | **0.0102** | 68% |
+  | 0.8 | 0.0091 | 0.0086 | 71% |
+  | 0.6 | 0.0067 | 0.0049 | 80% |
+
+  Projection at 0.9: the 0-0 excess goes to about zero and 1-0 keeps ~40% of it, so 0-0 + 1-0 drop from +0.168 to
+  ~+0.03 runs/game: **~0.20 with tunneling on** (~0.17 off). A projection, not a measurement: the yardstick re-run
+  (`scripts/yardstick.ps1 -Tag 2c`) decides.
+- First pitches still mix: AVG3 at 0-0 throws the fastball 47-60% (top single call 17-37%); 1-0 fastball 54-69%.
+  Grid at 0.9: every hard check passes (0 of 99 AVG3 cells over 85%; 3-1 8 of 9 in band, unchanged; floor 51%;
+  first-pitch strike target 100%; no chase at 3-0/3-1/2-2).
+- Realism after the change, no recalibration (inside the 1-point gate): D3 K 16.3 / BB 11.0 / HBP 4.1 vs real
+  16.2 / 11.4 / 4.2; HS 21.1 / 13.7 / 4.0 vs 21.0 / 14.1 / 4.1; mlb 19.4 / 7.7 / 0.9 vs 20.0 / 7.9 / 0.9.
+  `tests.py` 29/29; `golden/fast.py 40` 0 mismatches.

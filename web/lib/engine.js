@@ -496,6 +496,7 @@
   function stakesFactor(b, k, level) {
     if (!D.LW[level]) return 1.0;
     if (b === 3 && k === 0) return 0.5;   // v0.7c (Drew): 3-0 gets the tightest setting, like 3-2 (engine.py)
+    if ((b === 0 || b === 1) && k === 0) return 0.9;   // v1.0 D7 (Drew, Nov 10): 0-0 and 1-0 tightened (engine.py)
     if (b === 3 && k === 1) return 1.3;   // v1.0 D1 (Drew, Nov 10): 3-1 moderate mix, top call ~55-70% (engine.py)
     let avg = 0; for (const [b_, k_] of COUNTS) avg += countStakes(b_, k_, level);
     avg /= COUNTS.length;

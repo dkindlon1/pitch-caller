@@ -1181,6 +1181,13 @@ def stakes_factor(b, k, level):
         # count (a ball there only turns a near-walk into a walk), so the mix was at its loosest and off-speed took about
         # half the calls even when the engine's own costs favored the fastball.
         return 0.5
+    if (b, k) in ((0, 0), (1, 0)):
+        # v1.0 Step 2, D7 (Drew, Nov 10): with the guardrail gone the formula's cap (1.5) let 0-0 and 1-0 mix off-speed
+        # into the zone far more than v0.9; on the yardstick those two counts carried 55% of the 0.31-0.35 runs/game
+        # variety cost, over the 0.25 budget. Drew: tighten 0-0 and 1-0 only, keep the hitter's-count variety. 0.9 is
+        # projected at ~0.20 with tunneling on (regret proxy, checked against the yardstick's 0-0 number); the
+        # yardstick re-run decides. The first pitch still mixes (average three-pitch starter: fastball 47-60%).
+        return 0.9
     if (b, k) == (3, 1):
         # v1.0 D1 (Drew, Nov 10): 3-1 mixes moderately among the pitches landing today, top call ~55-70%, one setting at
         # every level. With the guardrail gone the formula's 0.85-0.94 left the average three-pitch starter at 62-93%
