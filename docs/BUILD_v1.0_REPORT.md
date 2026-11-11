@@ -684,3 +684,16 @@ Diagnosis (4 simulated D3 games per engine, what the engine reads as "wild today
   and an off day moves the true strike chance only ~2.5 points. So in this world every sharpening read is noise and
   costs regret, while the Statcast fit (Step 5) found landing-better a real effect (slope +1.24 vs +0.88 for missing).
 - Step 5's fitted values should remove most of this. Drew is running the Step 5 yardstick now; that number decides.
+
+## Yardstick, Step 5 (`2b6d8ad`, Drew's PC, Nov 11) and the budget decision
+
+`results/v10/yardstick_step5.txt`: world regret (`regret_w_pick`) **+0.358** runs/game (SE 0.074), down from Step 3's
++0.536; runs +0.10 (SE 0.54); pitches +3.8. Split: the mixing part (pick minus info) is +0.21, the same as Step 2c's
+accepted cost; the rest is the engine's best guess (`regret_w_info` +0.17 vs Step 2c's −0.07). Same-state check (the
+Step 5 engine plays, variants are asked on the identical states, 9 games): turning off the landing-better boost changes
+world regret by −0.012 (SE 0.007), turning off landing reads by −0.009 (SE 0.007), so the fitted landing reads are not
+where the remaining cost is. (A check of the landing block rule was started and stopped.)
+
+**Drew, Nov 11:** the simulation is not the main basis. The engine is built around whether its logic and calls match
+what a great pitching coach would call; the hitting sim is one input, and the 0.25 runs/game budget no longer gates
+(0.25 or 0.5 doesn't matter). Step 7's coaching read-through is the main check.
