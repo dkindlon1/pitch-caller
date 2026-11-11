@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Haze } from "./_components/Haze";
+import { Seam } from "./_components/Seam";
 import { ContactForm } from "./_components/ContactForm";
 import { Hero } from "./_components/Hero";
 import { AtBat } from "./_components/AtBat";
@@ -40,6 +42,7 @@ export default function Home() {
         <Hero />
 
         <section className="mk-between" id="between" tabIndex={-1} aria-labelledby="between-h">
+          <Seam />
           <div className="mk-wrap">
             <h2 id="between-h" className="mk-sr">A few seconds between pitches</h2>
             <Reveal className="mk-between-text" text={BETWEEN} clock />
@@ -57,10 +60,8 @@ export default function Home() {
         <Faq />
 
         <section className="mk-contact" id="contact" tabIndex={-1} aria-labelledby="contact-h">
+          <Haze />
           <svg className="mk-contact-art" viewBox="0 0 800 700" preserveAspectRatio="xMinYMid slice" aria-hidden="true">
-            <path d="M120 -20 C 260 140, 420 260, 860 380" />
-            <path d="M60 -20 C 240 180, 460 300, 860 470" />
-            <path d="M180 -20 C 300 120, 500 200, 860 300" />
             <path className="is-live" d="M90 -20 C 260 200, 470 380, 860 600" />
           </svg>
           <div className="mk-wrap mk-contact-grid">

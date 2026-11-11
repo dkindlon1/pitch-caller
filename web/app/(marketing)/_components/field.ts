@@ -85,7 +85,7 @@ function glowTexture(): THREE.Texture {
 
 // lights, ground, chalk, plate, mound, light towers and the zone. Returns what the caller must dispose that the
 // scene traversal won't (the glow texture).
-export function buildField(scene: THREE.Scene, opts: { distance?: boolean } = {}) {
+export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitcher?: boolean; onReady?: () => void } = {}) {
   scene.fog = new THREE.Fog(0x000000, 26, 170);
   scene.add(new THREE.HemisphereLight(0xdfe6ee, 0x050505, 0.35));
   const spot = new THREE.SpotLight(0xffffff, 3.2, 0, 0.42, 0.9, 0);
@@ -162,7 +162,29 @@ export function buildField(scene: THREE.Scene, opts: { distance?: boolean } = {}
   pane.position.set(0, (ZONE.lo + ZONE.hi) / 2, 0);
   scene.add(pane);
 
-  return { dispose: () => tex.dispose() };
+  // the pitcher: a backlit silhouette (a Runway still, cut out, the ball taken out of his hand) standing on the mound
+  // as a card that turns to face the camera. His hand sits just behind and above the release point, so each flight
+  // comes out of him. Scale: 828 px from cap to the cut-off ankles is about 5.6 ft.
+  // Only the at-bat shows him: the hero's framing puts the mound above the top of the screen.
+  let ptex: THREE.Texture | null = null, dead = false;
+  if (opts.pitcher) new THREE.TextureLoader().load("/media/runway/pitcher-release.webp", (t) => {
+    if (dead) { t.dispose(); return; }
+    ptex = t;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    const ftPerPx = 5.6 / 828, img = t.image as { width: number; height: number };
+    const W = img.width * ftPerPx, H = img.height * ftPerPx;
+    const card = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, fog: true }));
+    // the hand (97 px from the card's left edge) lands about 0.15 ft outside the release point
+    // facing the camera, the card's local +x is world -x, so the hand (left of center) sits at center + offset
+    card.position.set(world(RELEASE.x, 0, 0).x + 0.15 + (97 - img.width / 2) * ftPerPx, 0.45 + H / 2, 56.5);
+    card.renderOrder = -1;
+    card.onBeforeRender = (_r, _s, cam) => { card.lookAt(cam.position.x, card.position.y, cam.position.z); card.updateMatrixWorld(); };
+    scene.add(card);
+    opts.onReady?.();
+  });
+
+  return { dispose: () => { dead = true; tex.dispose(); ptex?.dispose(); } };
 }
 
 // a flight as a tube (WebGL lines are one pixel wide); setDrawRange on it reveals the flight as the ball travels

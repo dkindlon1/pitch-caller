@@ -39,7 +39,7 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   el.appendChild(renderer.domElement);
   const accent = new THREE.Color(opts.accent);
   const scene = new THREE.Scene();
-  const field = buildField(scene, { distance: true });
+  const field = buildField(scene, { distance: true, pitcher: true, onReady: () => { if (w) draw(cur); } });
   const camera = new THREE.PerspectiveCamera(26, 1, 0.1, 600);
   const b = ball(accent);
   b.scale.multiplyScalar(1.6);   // a little larger than life so it reads in the wide shots

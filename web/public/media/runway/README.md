@@ -1,7 +1,16 @@
 # Runway exports for the public site
 
-Put the files exactly as named below in this folder (`web/public/media/runway/`). Nothing on the site loads them yet:
-each one gets wired in once the file is here and looks right. The site works without any of them.
+Status (Nov 11): Drew made the first set in Runway (Seedream 5.5 stills, one Gen-4.5 clip) and these are live:
+- `pitcher-release.webp`: option 2 of 4 (arm cocked, striding), cut out with rembg (isnet-general-use), the ball
+  erased from his hand. He stands on the mound in the at-bat chapter only (the hero's framing puts the mound off screen).
+- `haze-loop.mp4/.webm/.jpg`: the Gen-4.5 clip, crossfaded into an 8.5 s loop, behind "Talk to us".
+- `seam-1.webp`: option 1 of 4, graded dark behind "Between pitches", scrubbed slowly with the scroll.
+
+Not used: pitcher options 1, 3 and 4 (option 3's matte fused the light tower to his hand), seam options 2 to 4. A sharper
+3:4 pitcher at true release on pure black (prompt below) would still be an upgrade; the current one is 1024 px square
+with stadium and towers baked in.
+
+The site works without any of these files.
 
 Models (Runway's menu, Nov 2026): stills with **Gen-4 Image**, fixed up with **Nano Banana 2** (or GPT-Image-1.5 for
 the seam macro); video with **Gen-4.5 Image to Video**, which makes 720p clips of 2 to 10 seconds, so upscale in Runway
