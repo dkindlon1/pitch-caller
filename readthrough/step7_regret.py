@@ -4,7 +4,7 @@ regret_w_* columns (TRUTH_TAB=world runs only): scored against one table solved 
 engines. exp = the engine's whole mix, pick = the call actually made, info = the engine's own best call.
 Also prints the regret_w_pick by call (pitch class x spot) and by count, so the source of a difference is visible.
 usage (repo root): python3 readthrough/step7_regret.py DIR_A DIR_B [--out results/step7/regret_A_vs_B.txt]"""
-import csv, glob, math, os, sys
+import csv, glob, io, math, os, sys
 from collections import defaultdict
 
 COLS = ["regret_exp", "regret_pick", "regret_info", "regret_w_exp", "regret_w_pick", "regret_w_info"]
@@ -15,9 +15,19 @@ def spot(r):
     return "inside" if q in ("up-in", "down-in") else q if q in ("middle", "chase") else "edge-away"
 
 
+def read_text(fn):
+    """A game log as text. Logs are UTF-8 from v1.0 on; ones written on Windows before that used the system code page
+    (cp1252), which breaks on the why line's dash. Try UTF-8, then cp1252."""
+    raw = open(fn, "rb").read()
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return raw.decode("cp1252")
+
+
 def game(fn):
     g, by_call, by_count, n = defaultdict(float), defaultdict(lambda: [0, 0.0]), defaultdict(lambda: [0, 0.0]), 0
-    for r in csv.DictReader(open(fn)):
+    for r in csv.DictReader(io.StringIO(read_text(fn))):
         if not r.get("quad"):
             continue
         n += 1

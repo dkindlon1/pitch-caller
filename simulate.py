@@ -711,7 +711,7 @@ def play_game(log_path):
     # extra innings not simulated: tie after 9 counts as a tie
 
     rows = [r for r in log if "pitch" in r]
-    with open(log_path, "w", newline="") as f:
+    with open(log_path, "w", newline="", encoding="utf-8") as f:     # UTF-8 everywhere (Windows' default code page broke readers)
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
