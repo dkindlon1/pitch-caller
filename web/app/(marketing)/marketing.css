@@ -1,0 +1,178 @@
+/* PitchIQ public site. Black and white, like a baseball under lights, with one color: seam red, used only where the
+   ball would put it (the called pitch's flight, the stitches, a live call). Glass is for things that float over the
+   field (navigation, the live call, the contact panel) and always has the 3D scene or pitch trails behind it to blur;
+   anything long is read on solid black. One typeface, Instrument Sans, tight for headlines. */
+
+.mk {
+  --mk-ink: #000000;
+  --mk-chalk: #f4f4f1;
+  --mk-text-2: #a3a39f;
+  --mk-text-3: #7c7c78;
+  --mk-line: rgba(255, 255, 255, 0.12);
+  --mk-accent: #f04a3e;
+  --mk-radius: 28px;
+  --mk-pad: clamp(20px, 5vw, 72px);
+  min-height: 100vh;
+  background: var(--mk-ink);
+  color: var(--mk-chalk);
+  font-family: var(--mk-font), "Helvetica Neue", Arial, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  font-variation-settings: "wdth" 100;
+  -webkit-font-smoothing: antialiased;
+}
+:where(.mk) :where(h1, h2, h3) { margin: 0; }
+/* beats the portal's h1/h2 rules in globals.css; the section rules below come later and set size and weight */
+.mk :is(h1, h2, h3) { font-family: inherit; font-weight: 600; line-height: 1.1; letter-spacing: normal; text-wrap: balance; }
+:where(.mk) :where(p) { margin: 0; text-wrap: pretty; }
+:where(.mk) :where(a) { color: inherit; text-decoration: none; }
+.mk :focus-visible { outline: 2px solid var(--mk-chalk); outline-offset: 3px; border-radius: 6px; }
+.mk-wrap { width: 100%; max-width: 1360px; margin: 0 auto; padding: 0 var(--mk-pad); }
+.mk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mk-skip { position: absolute; left: 12px; top: -60px; z-index: 50; padding: 10px 16px; border-radius: 999px; background: var(--mk-chalk); color: var(--mk-ink) !important; font-weight: 600; }
+.mk-skip:focus { top: 12px; }
+.mk main:focus { outline: none; }
+.mk section:focus { outline: none; }
+
+/* glass: a tint, a heavy blur, a lit top edge and a soft drop. Without backdrop-filter it falls back to a dark pane. */
+.mk .mk-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  backdrop-filter: blur(26px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mk .mk-glass { background: rgba(22, 22, 22, 0.92); }
+}
+
+/* buttons and links */
+.mk-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 50px; padding: 0 24px; border: 0; border-radius: 999px;
+  background: var(--mk-chalk); color: var(--mk-ink) !important;
+  font: 600 1rem/1 var(--mk-font), sans-serif; cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.mk-btn:hover { background: #ffffff; transform: translateY(-1px); }
+.mk-btn:active { transform: translateY(0); }
+.mk-btn:disabled { opacity: 0.6; cursor: progress; transform: none; }
+.mk-btn-sm { height: 38px; padding: 0 16px; font-size: 0.9375rem; }
+.mk-link { font-weight: 600; padding: 12px 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.35); transition: border-color 0.2s; }
+.mk-link:hover { border-color: var(--mk-chalk); }
+
+/* navigation: a glass pill floating over the page */
+.mk-nav { position: fixed; top: 16px; left: 0; right: 0; z-index: 40; display: flex; justify-content: center; padding: 0 12px; pointer-events: none; }
+.mk-nav-pill { pointer-events: auto; display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 16px; border-radius: 999px; }
+.mk-nav-brand { display: inline-flex; align-items: center; gap: 9px; font-weight: 650; font-size: 1.0625rem; letter-spacing: -0.01em; margin-right: 18px; }
+.mk-nav-link { padding: 8px 14px; border-radius: 999px; color: var(--mk-text-2); font-weight: 500; font-size: 0.9375rem; transition: color 0.2s, background-color 0.2s; }
+.mk-nav-link:hover { color: var(--mk-chalk); background: rgba(255, 255, 255, 0.07); }
+@media (max-width: 560px) { .mk-nav-link { display: none; } .mk-nav-brand { margin-right: 12px; } }
+
+/* hero */
+.mk-hero { position: relative; min-height: max(680px, 100svh); display: flex; align-items: flex-end; overflow: hidden; isolation: isolate; }
+.mk-hero-stage {
+  position: absolute; inset: 0; z-index: -2;
+  /* what shows before the 3D field loads, and instead of it without WebGL: the light towers and the pool on the plate */
+  background:
+    radial-gradient(40% 30% at 66% 72%, rgba(255, 255, 255, 0.08), transparent 70%),
+    radial-gradient(10% 8% at 18% 14%, rgba(255, 255, 255, 0.35), transparent 70%),
+    radial-gradient(12% 9% at 88% 10%, rgba(255, 255, 255, 0.3), transparent 70%),
+    #000;
+}
+.mk-hero-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; opacity: 0; transition: opacity 1.2s ease; }
+.mk-hero-stage.is-on canvas { opacity: 1; }
+.mk-hero-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.5) 40%, transparent 62%), linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0) 30%); }
+.mk-hero-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 380px); gap: 48px; align-items: end; padding-top: 140px; padding-bottom: clamp(48px, 8vh, 96px); }
+.mk-hero h1 {
+  font-size: clamp(3rem, 6.2vw, 6.25rem); line-height: 0.94; letter-spacing: -0.04em;
+  font-variation-settings: "wdth" 82; font-weight: 640;
+}
+.mk-hero h1 span { display: block; }
+.mk-hero-lede { margin-top: 36px; max-width: 46ch; color: var(--mk-text-2); font-size: clamp(1.0625rem, 1.3vw, 1.25rem); }
+.mk-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 36px; }
+
+/* the live call */
+.mk-call { margin: 0; padding: 22px; border-radius: var(--mk-radius); display: grid; gap: 18px; }
+.mk-call-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.mk-call-count { font-size: 2.5rem; line-height: 1; font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; font-variation-settings: "wdth" 85; }
+.mk-call-step { display: inline-flex; align-items: center; gap: 8px; color: var(--mk-text-2); font-size: 0.875rem; font-weight: 500; }
+.mk-call-step::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--mk-accent); box-shadow: 0 0 0 3px rgba(240, 74, 62, 0.22); }
+.mk-call-main { display: flex; align-items: center; gap: 16px; animation: mk-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.mk-call-sign {
+  flex: none; display: grid; place-items: center; width: 76px; height: 88px; border-radius: 16px;
+  background: var(--mk-chalk); color: var(--mk-ink); font-size: 3.5rem; font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums;
+}
+.mk-call-what { display: grid; gap: 4px; min-width: 0; }
+.mk-call-what b { font-size: 2.125rem; line-height: 1; font-weight: 640; letter-spacing: -0.03em; font-variation-settings: "wdth" 84; }
+.mk-call-what span { color: var(--mk-text-2); font-size: 1.0625rem; font-weight: 500; }
+.mk-call-why { font-size: 1.0625rem; line-height: 1.4; font-weight: 500; min-height: 2.8em; animation: mk-in 0.45s 0.08s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.mk-call figcaption { color: var(--mk-text-3); font-size: 0.8125rem; line-height: 1.4; padding-top: 14px; border-top: 1px solid var(--mk-line); }
+@keyframes mk-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* a few seconds between pitches */
+.mk-between { padding: clamp(120px, 22vh, 240px) 0 clamp(100px, 18vh, 200px); }
+.mk-between-text { font-size: clamp(1.75rem, 3.6vw, 3.375rem); line-height: 1.12; letter-spacing: -0.03em; font-weight: 560; font-variation-settings: "wdth" 90; max-width: 26ch; }
+.mk-between-after { margin-top: 40px; font-size: clamp(1.125rem, 1.6vw, 1.5rem); color: var(--mk-text-2); max-width: 36ch; }
+
+/* contact: glass over pitch trails */
+.mk-contact { position: relative; overflow: hidden; padding: clamp(100px, 16vh, 180px) 0; isolation: isolate; }
+.mk-contact-art { position: absolute; top: 0; bottom: 0; right: 0; width: 64%; height: 100%; z-index: -1; }
+@media (max-width: 960px) { .mk-contact-art { width: 100%; top: 34%; height: 66%; } }
+.mk-contact-art path { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 3; }
+.mk-contact-art path.is-live { stroke: var(--mk-accent); stroke-width: 6; }
+.mk-contact-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
+.mk-contact h2 { font-size: clamp(2.75rem, 5.5vw, 5rem); line-height: 0.95; letter-spacing: -0.04em; font-variation-settings: "wdth" 82; font-weight: 640; }
+.mk-contact-copy p { margin-top: 24px; color: var(--mk-text-2); max-width: 36ch; font-size: 1.125rem; }
+.mk-contact-panel { padding: clamp(22px, 3vw, 36px); border-radius: var(--mk-radius); }
+
+.mk-form { display: grid; gap: 18px; }
+.mk-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mk-form label { display: grid; gap: 8px; font-size: 0.9375rem; font-weight: 550; }
+.mk-form-label { display: block; }
+.mk-form-opt { color: var(--mk-text-3); font-weight: 450; }
+.mk-form input, .mk-form select, .mk-form textarea {
+  width: 100%; min-height: 50px; padding: 12px 14px; border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(0, 0, 0, 0.38); color: var(--mk-chalk);
+  font: 450 1rem/1.4 var(--mk-font), sans-serif; transition: border-color 0.2s, background-color 0.2s;
+}
+.mk-form select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #a3a39f 50%), linear-gradient(135deg, #a3a39f 50%, transparent 50%); background-position: calc(100% - 20px) 22px, calc(100% - 15px) 22px; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 36px; }
+.mk-form select option { background: #111; color: var(--mk-chalk); }
+.mk-form textarea { resize: vertical; min-height: 120px; }
+.mk-form input::placeholder, .mk-form textarea::placeholder { color: #6f6f6b; }
+.mk-form input:hover, .mk-form select:hover, .mk-form textarea:hover { border-color: rgba(255, 255, 255, 0.3); }
+.mk-form input:focus-visible, .mk-form select:focus-visible, .mk-form textarea:focus-visible { outline: 2px solid var(--mk-chalk); outline-offset: 1px; border-color: transparent; background: rgba(0, 0, 0, 0.55); }
+.mk-form [aria-invalid="true"] { border-color: var(--mk-accent); }
+.mk-form-err { color: #ff8a80; font-size: 0.875rem; font-weight: 500; }
+.mk-form-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.mk-form-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 4px; }
+.mk-form-problem { color: #ff8a80; font-weight: 500; }
+.mk-form-done { display: grid; gap: 10px; padding: 12px 0; }
+.mk-form-done-h { font-size: 1.75rem; font-weight: 640; letter-spacing: -0.03em; }
+.mk-form-done p:last-child { color: var(--mk-text-2); }
+
+/* footer */
+.mk-foot { border-top: 1px solid var(--mk-line); padding: 28px 0 40px; color: var(--mk-text-3); font-size: 0.9375rem; }
+.mk-foot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 32px; }
+.mk-foot .mk-nav-brand { color: var(--mk-chalk); }
+.mk-foot-links { display: flex; gap: 24px; margin-left: auto; }
+.mk-foot-links a:hover { color: var(--mk-chalk); }
+
+/* tablet and phone */
+@media (max-width: 960px) {
+  .mk-hero { align-items: flex-end; }
+  .mk-hero-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 46svh; }
+  .mk-hero-shade { background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.9) 48%, rgba(0, 0, 0, 0) 68%); }
+  .mk-call { max-width: 460px; }
+  .mk-contact-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .mk-form-row { grid-template-columns: minmax(0, 1fr); }
+  .mk-hero-grid { padding-top: 42svh; }
+  .mk-call-sign { width: 64px; height: 76px; font-size: 3rem; }
+  .mk-call-what b { font-size: 1.75rem; }
+  .mk-foot-links { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mk *, .mk *::before, .mk *::after { animation: none !important; transition: none !important; }
+}

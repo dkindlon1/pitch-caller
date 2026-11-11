@@ -1,10 +1,13 @@
 # PitchIQ web
 
-The public landing page with the spring waitlist (Plan 0), and the signed-in shell: sign-in, your teams, and joining a
+The public site, and the signed-in shell: sign-in, your teams, and joining a
 team by invite link (Plan 1, Task 9). Next.js 16 App Router on the Pitch Caller design system (Barlow, Barlow
 Condensed, JetBrains Mono), no tracking.
 
-- `app/page.tsx`: the landing page. The hero's call panel plays a real at-bat from the engine (`content/at-bat.ts` says where it came from).
+- `app/(marketing)/`: the public site, with its own layout and styles (`marketing.css`): black and white with seam red,
+  glass over the 3D field, Instrument Sans. The hero (`_components/heroScene.ts`, Three.js) throws a real engine at-bat
+  (`content/at-bat.ts`) while the glass call panel shows each call; GSAP + Lenis drive the scroll; `ContactForm.tsx`
+  posts to `app/api/contact` (email through Resend to `CONTACT_TO`). Checked by `tests/site_e2e.js`.
 - `app/api/waitlist/route.ts` + `lib/waitlist.ts`: the sign-up API. It writes only through `public.pc_join_waitlist` with the service key.
 - `app/privacy/page.tsx`: what the waitlist keeps.
 - `proxy.ts`: refreshes the Supabase session and sends signed-out visitors from `/app` to `/login`.

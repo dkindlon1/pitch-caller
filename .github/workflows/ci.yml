@@ -75,8 +75,8 @@ jobs:
         run: npm test
       - working-directory: web
         run: npm run build
-      - name: Landing page end to end (built site + real waitlist function)
-        run: scripts/run-check.sh landing_e2e node web/tests/landing_e2e.js
+      - name: Public site end to end (3D hero, live call, contact form)
+        run: scripts/run-check.sh site_e2e node web/tests/site_e2e.js
 
   web-shell:
     name: Web shell, offline game and coach portal on a real local Supabase
