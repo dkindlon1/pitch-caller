@@ -32,9 +32,17 @@ export function AtBat() {
   const [still, setStill] = useState(false);
   const [on, setOn] = useState(false);
 
+  // which layout to show is decided first; the scene loads in a second pass, once that layout's elements are in place
+  const [mode, setMode] = useState<"" | "scroll" | "still">("");
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setStill(reduced);
+    setMode(reduced ? "still" : "scroll");
+  }, []);
+
+  useEffect(() => {
+    if (!mode) return;
+    const reduced = mode === "still";
     let scene: AtBatScene | null = null, dead = false, kill = () => {};
     const webgl = reduced ? (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } })() : can3d();
     // load the scene when the chapter is a screen away
@@ -72,14 +80,15 @@ export function AtBat() {
     }, { rootMargin: "40% 0px" });
     if (sec.current) io.observe(sec.current);
     return () => { dead = true; io.disconnect(); kill(); scene?.dispose(); };
-  }, []);
+  }, [mode]);
 
   // the rail: jump the scroll to the middle of a pitch's stretch (its flight just landed)
   const jump = (i: number) => {
     const el = sec.current;
     if (!el) return;
     const top = el.getBoundingClientRect().top + window.scrollY, len = el.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: top + len * (START + i * EACH + EACH * 0.72), behavior: "smooth" });
+    const y = top + len * (START + i * EACH + EACH * 0.72);
+    if (window.__mkLenis) window.__mkLenis.scrollTo(y, { duration: 1.4 }); else window.scrollTo({ top: y, behavior: "smooth" });
   };
 
   const p = AT_BAT[v.i];
@@ -87,7 +96,7 @@ export function AtBat() {
 
   if (still) {
     return (
-      <section className="mk-ab is-still" id="at-bat" aria-labelledby="ab-h">
+      <section className={`mk-ab is-still${on ? " is-on" : ""}`} id="at-bat" ref={sec} aria-labelledby="ab-h">
         <div className="mk-ab-stage" ref={stage} />
         <div className="mk-wrap mk-ab-list">
           <h2 id="ab-h">One at-bat, four calls</h2>

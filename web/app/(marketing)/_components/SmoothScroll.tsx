@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+declare global { interface Window { __mkLenis?: { scrollTo: (target: number | HTMLElement, o?: { offset?: number; duration?: number }) => void } } }
+
 // Lenis smooth scrolling, driven by GSAP's ticker so pinned scroll scenes stay in step with it. Off on touch screens
 // (iPad and phones scroll natively and Lenis fights the finger) and under reduced motion.
 export function SmoothScroll() {
@@ -33,6 +35,7 @@ export function SmoothScroll() {
       if (dead) return;
       gsap.registerPlugin(ScrollTrigger);
       const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+      window.__mkLenis = lenis;   // so in-page jumps (the at-bat rail) glide with the same scroller
       lenis.on("scroll", ScrollTrigger.update);
       const tick = (t: number) => lenis.raf(t * 1000);
       gsap.ticker.add(tick);
@@ -50,7 +53,7 @@ export function SmoothScroll() {
         el.focus({ preventScroll: true });
       };
       document.addEventListener("click", onClick);
-      cleanup = () => { document.removeEventListener("click", onClick); gsap.ticker.remove(tick); lenis.destroy(); };
+      cleanup = () => { document.removeEventListener("click", onClick); gsap.ticker.remove(tick); lenis.destroy(); window.__mkLenis = undefined; };
     });
     return () => { dead = true; cleanup(); };
   }, []);
