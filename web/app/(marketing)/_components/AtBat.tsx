@@ -20,7 +20,8 @@ type View = { i: number; landed: boolean; phase: "intro" | "pitch" | "end"; side
 function viewAt(p: number): View {
   const i = Math.max(0, Math.min(3, Math.floor((p - START) / EACH)));
   const u = (p - START - i * EACH) / EACH;
-  return { i, landed: u >= 0.66, phase: p < START ? "intro" : p >= 0.9 ? "end" : "pitch", side: p > 0.44 && p < 0.64 };
+  // landed and side follow atbatScene.ts: the flight ends 78% into a pitch's stretch; the side shot is up from 0.48 to 0.69
+  return { i, landed: u >= 0.78, phase: p < START ? "intro" : p >= 0.9 ? "end" : "pitch", side: p > 0.5 && p < 0.69 };
 }
 
 export function AtBat() {
@@ -50,7 +51,9 @@ export function AtBat() {
     const io = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       io.disconnect();
-      if (webgl) import("./atbatScene").then(({ mountAtBat }) => {
+      // the film draws on a 2D canvas, so the scene loads even without WebGL (the graphics over it need WebGL)
+      void webgl;
+      import("./atbatScene").then(({ mountAtBat }) => {
         if (dead || !stage.current) return;
         scene = mountAtBat(stage.current, AT_BAT.map(toField), {
           accent: ACCENT,
@@ -90,7 +93,7 @@ export function AtBat() {
     const el = sec.current;
     if (!el) return;
     const top = el.getBoundingClientRect().top + window.scrollY, len = el.offsetHeight - window.innerHeight;
-    const y = top + len * (START + i * EACH + EACH * 0.72);
+    const y = top + len * (START + i * EACH + EACH * 0.86);
     if (window.__mkLenis) window.__mkLenis.scrollTo(y, { duration: 1.4 }); else window.scrollTo({ top: y, behavior: "smooth" });
   };
 
@@ -120,7 +123,7 @@ export function AtBat() {
   }
 
   return (
-    <section className={`mk-ab is-${v.phase}${on ? " is-on" : ""}`} id="at-bat" ref={sec} aria-labelledby="ab-h" tabIndex={-1}>
+    <section className={`mk-ab is-${v.phase}${v.side ? " is-side" : ""}${on ? " is-on" : ""}`} id="at-bat" ref={sec} aria-labelledby="ab-h" tabIndex={-1}>
       <div className="mk-ab-pin">
         <div className="mk-ab-stage" ref={stage} />
         <div className="mk-ab-shade" aria-hidden="true" />

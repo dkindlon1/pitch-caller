@@ -779,3 +779,14 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-ab-board-r { font-size: 0.875rem; font-weight: 600; text-align: right; min-width: 90px; }
 .mk-ab-board li:last-child .mk-ab-board-r { color: var(--pt); }
 @media (max-width: 760px) { .mk-ab-board li { grid-template-columns: 20px 34px minmax(0, 1fr) auto; } .mk-ab-board-s { display: none; } }
+
+/* the side shot has the pitcher on the left, where the card sits: on wide screens the card rises into the empty sky
+   at the top center for that pitch, and comes back after */
+@media (min-aspect-ratio: 11/10) {
+  .mk-ab.is-side .mk-ab-note { opacity: 0; }
+  .mk-ab.is-side .mk-ab-panel { transform: translate(calc(50vw - 200px - max(var(--mk-pad), (100vw - 1360px) / 2 + var(--mk-pad))), -17vh); }
+}
+@media (min-aspect-ratio: 11/10) and (min-width: 1800px) {
+  .mk-ab.is-side .mk-ab-panel { transform: translate(calc(50vw - 200px - max(var(--mk-pad), (100vw - 1560px) / 2 + var(--mk-pad))), -17vh); }
+}
+.mk-ab-film { background: #000; }

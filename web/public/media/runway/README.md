@@ -74,3 +74,17 @@ scroll); this is PitchIQ's version of it.
   pitcher's hand in extreme slow motion. The red seam travels smoothly across the frame. Camera locked off, the light
   stays fixed, no cuts, no zoom.*
 - Check the seam frame by frame: video models often bend or duplicate stitches. If it warps, skip this one.
+
+## At-bat footage (Nov 11, made in Runway by Claude in Drew's account)
+
+Session "Night Baseball Stadium Pitcher Shot". Seedream 5.5 stills (16:9, 2K, the flyover's frames as references) and a
+Kling 4.0 delivery (image to video, 1080p, 5 s, the catcher still as first frame). In `../film/atbat/`:
+- `catcher/0001-0073.webp`: the delivery from the set position (frame 48 of the clip) to the follow-through (120),
+  1600 px. The clip's own ball was painted out after it leaves his hand (frames 93-98), so only the drawn pitch shows.
+- `side.webp`, `over.webp`: up the third-base line, and high behind the plate, 2400 px.
+
+The cameras in `atbatScene.ts` were solved from points marked on each frame (plate corners, batter's boxes, rubber,
+bases) with OpenCV solvePnP over a sweep of focal lengths: fit errors 8.4, 8.1 and 5.6 px at 2816 x 1584. The AI drew
+plates a little large and the mound too big, so the fits lean on the plate and the rubber. Each shot also has its own
+release point, where the filmed pitcher's hand is. To swap in new footage, re-mark the points and re-solve; keep the
+camera locked off and the boxes empty.

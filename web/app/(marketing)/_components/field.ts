@@ -23,8 +23,9 @@ export function target(cell: FieldPitch["cell"]) {
 }
 export const world = (x: number, y: number, z: number) => new THREE.Vector3(-x, y, z);
 
-export function flight(p: FieldPitch, steps = 80): THREE.Vector3[] {
-  const R = RELEASE, T = target(p.cell), t = (54 / (p.velo * 1.4667)) * 1.06;
+// release is in screen terms (x to the catcher's right), like RELEASE; each filmed shot passes its own pitcher's hand
+export function flight(p: FieldPitch, steps = 80, release: { x: number; y: number; z: number } = RELEASE): THREE.Vector3[] {
+  const R = release, T = target(p.cell), t = (R.z / (p.velo * 1.4667)) * 1.06;
   const [up, arm] = MOVE[p.kind];
   const ax = (2 * (-arm / 12)) / (t * t), ay = (2 * (up / 12)) / (t * t) - G;
   const pts: THREE.Vector3[] = [];
@@ -277,6 +278,46 @@ export function tube(pts: THREE.Vector3[], r: number, color: THREE.ColorRepresen
   );
 }
 
+// The strike zone and lights alone, for drawing over filmed shots: the film supplies the ballpark. Returns the measuring
+// line (60 ft 6 in, along the third-base side) so the caller can show it only in the side shot.
+export function buildOverlay(scene: THREE.Scene) {
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x334433, 1.1));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(6, 30, -20);
+  scene.add(key);
+  const zl: number[] = [];
+  for (let i = 0; i <= 3; i++) {
+    const x = -PLATE_HALF + i * CW, y = ZONE.lo + i * CH;
+    zl.push(x, ZONE.lo, 0, x, ZONE.hi, 0, -PLATE_HALF, y, 0, PLATE_HALF, y, 0);
+  }
+  const zg = new THREE.BufferGeometry();
+  zg.setAttribute("position", new THREE.Float32BufferAttribute(zl, 3));
+  scene.add(new THREE.LineSegments(zg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })));
+  const bar = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95 });
+  const zw = 2 * PLATE_HALF, zh = ZONE.hi - ZONE.lo, t = 0.04;
+  for (const [x, y, bw, bh] of [[0, ZONE.hi, zw + t, t], [0, ZONE.lo, zw + t, t], [-PLATE_HALF, ZONE.lo + zh / 2, t, zh + t], [PLATE_HALF, ZONE.lo + zh / 2, t, zh + t]] as const) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, t), bar);
+    m.position.set(x, y, 0);
+    scene.add(m);
+  }
+  const pane = new THREE.Mesh(new THREE.PlaneGeometry(zw, zh), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false }));
+  pane.position.set(0, ZONE.lo + zh / 2, 0);
+  scene.add(pane);
+  // the 60 ft 6 in from the rubber to the point of the plate, ticked every 10 ft
+  const ruler = new THREE.Group();
+  const tick = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, depthWrite: false });
+  const strip = (x1: number, z1: number, x2: number, z2: number, wd: number) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(wd, Math.hypot(x2 - x1, z2 - z1)), tick);
+    m.rotation.x = -Math.PI / 2; m.rotation.z = -Math.atan2(x2 - x1, z2 - z1);
+    m.position.set((x1 + x2) / 2, 0.05, (z1 + z2) / 2);
+    ruler.add(m);
+  };
+  strip(6, -1.42, 6, 60.5, 0.12);
+  for (let z = 0; z <= 60; z += 10) strip(5.2, z - 1.42, 6.8, z - 1.42, 0.12);
+  scene.add(ruler);
+  return { ruler };
+}
+
 // a flight drawn the way broadcast pitch-tracking graphics draw it: a thick, lit tube in the pitch's color that fades
 // in from the release point and is solid by the plate. The fade is an alpha map along the tube's length (uv.x).
 let fadeMap: THREE.Texture | null = null;
@@ -308,13 +349,13 @@ export function isSoftware(r: THREE.WebGLRenderer): boolean {
   } catch { return false; }
 }
 
-export function makeRenderer(): THREE.WebGLRenderer | null {
+export function makeRenderer(alpha = false): THREE.WebGLRenderer | null {
   let r: THREE.WebGLRenderer;
-  try { r = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" }); } catch { return null; }
+  try { r = new THREE.WebGLRenderer({ antialias: true, alpha, powerPreference: "high-performance" }); } catch { return null; }
   r.setPixelRatio(isSoftware(r) ? 1 : Math.min(1.75, window.devicePixelRatio || 1));
   r.outputColorSpace = THREE.SRGBColorSpace;
   r.toneMapping = THREE.ACESFilmicToneMapping;
-  r.setClearColor(0x000000, 1);
+  r.setClearColor(0x000000, alpha ? 0 : 1);
   r.domElement.setAttribute("aria-hidden", "true");
   return r;
 }
