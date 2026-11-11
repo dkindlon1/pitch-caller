@@ -73,13 +73,14 @@
 .mk-hero { position: relative; min-height: max(680px, 100svh); display: flex; align-items: flex-end; overflow: hidden; isolation: isolate; }
 .mk-hero-stage {
   position: absolute; inset: 0; z-index: -2;
-  /* what shows before the 3D field loads, and instead of it without WebGL: the light towers and the pool on the plate */
-  background:
-    radial-gradient(40% 30% at 66% 72%, rgba(255, 255, 255, 0.08), transparent 70%),
-    radial-gradient(10% 8% at 18% 14%, rgba(255, 255, 255, 0.35), transparent 70%),
-    radial-gradient(12% 9% at 88% 10%, rgba(255, 255, 255, 0.3), transparent 70%),
-    #000;
+  /* what shows before the 3D field loads, and instead of it without WebGL: a frame rendered from the same scene. The
+     position pins the zone where the live camera puts it (heroScene size()), so the hand-off to the canvas doesn't jump */
+  background: #000 url(/marketing/hero-wide.webp) 67% 30% / cover no-repeat;
 }
+/* one frame per camera framing; the live camera's field of view is vertical, and each frame is at least as wide as the
+   screens it serves, so cover scales it by height like the scene does */
+@media (max-aspect-ratio: 17/10) { .mk-hero-stage { background-image: url(/marketing/hero-mid.webp); background-position: 67% 27%; } }
+@media (max-aspect-ratio: 11/10) { .mk-hero-stage { background-image: url(/marketing/hero-tall.webp); background-position: 50% 25%; } }
 .mk-hero-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; opacity: 0; transition: opacity 1.2s ease; }
 .mk-hero-stage.is-on canvas { opacity: 1; }
 .mk-hero-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.5) 40%, transparent 62%), linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0) 30%); }
