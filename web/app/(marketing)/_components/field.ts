@@ -303,6 +303,15 @@ export function buildOverlay(scene: THREE.Scene) {
   const pane = new THREE.Mesh(new THREE.PlaneGeometry(zw, zh), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false }));
   pane.position.set(0, ZONE.lo + zh / 2, 0);
   scene.add(pane);
+  // the zone as a box over the plate (its depth is the plate's square part), with faint lines down to the plate's
+  // corners, so it reads as standing on the filmed plate rather than floating in front of the mound
+  const B = -0.708, box: number[] = [];
+  for (const y of [ZONE.lo, ZONE.hi]) box.push(PLATE_HALF, y, B, -PLATE_HALF, y, B, PLATE_HALF, y, 0, PLATE_HALF, y, B, -PLATE_HALF, y, 0, -PLATE_HALF, y, B);
+  box.push(PLATE_HALF, ZONE.lo, B, PLATE_HALF, ZONE.hi, B, -PLATE_HALF, ZONE.lo, B, -PLATE_HALF, ZONE.hi, B);
+  for (const x of [PLATE_HALF, -PLATE_HALF]) for (const z of [0, B]) box.push(x, 0.02, z, x, ZONE.lo, z);
+  const bg = new THREE.BufferGeometry();
+  bg.setAttribute("position", new THREE.Float32BufferAttribute(box, 3));
+  scene.add(new THREE.LineSegments(bg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.4 })));
   // the 60 ft 6 in from the rubber to the point of the plate, ticked every 10 ft
   const ruler = new THREE.Group();
   const tick = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, depthWrite: false });

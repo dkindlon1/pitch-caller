@@ -790,3 +790,8 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
   .mk-ab.is-side .mk-ab-panel { transform: translate(calc(50vw - 200px - max(var(--mk-pad), (100vw - 1560px) / 2 + var(--mk-pad))), -17vh); }
 }
 .mk-ab-film { background: #000; }
+
+/* over footage the glass picks up the grass and turns olive: give the at-bat's cards a darker base so they stay neutral */
+.mk-ab .mk-ab-card, .mk-ab .mk-ab-board { background: linear-gradient(160deg, rgba(22, 24, 28, 0.62), rgba(10, 11, 13, 0.72)) !important; }
+.mk-ab .mk-ab-rail button { background: rgba(12, 13, 15, 0.55); }
+.mk-ab .mk-ab-rail button.is-now { background: var(--mk-chalk); }

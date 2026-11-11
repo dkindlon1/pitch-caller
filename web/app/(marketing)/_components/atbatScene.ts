@@ -63,8 +63,11 @@ const FADE = 0.035;
 const CUTS: { at: number; shot: Shot["key"] }[] = [
   { at: -1, shot: "catcher" }, { at: 0.48, shot: "side" }, { at: 0.69, shot: "catcher" }, { at: 0.9, shot: "over" },
 ];
-// the delivery: frame 0 is the set position, the ball leaves his hand at frame 44, the follow-through ends at 72
-const FRAMES = 73, RELEASE_FRAME = 44, FOLLOW_END = 64;
+// the delivery: frame 0 is the set position, the ball leaves his hand at frame 38 (clip frame 86), the follow-through
+// is at 49 when the ball reaches the plate; the clip's own ball is painted out from 39 on, so only the drawn pitch is in the air
+// a real pitch takes under half a second, about 11 frames of the clip, so the film only moves that far while the ball
+// is in the air; the rest of the follow-through plays after it lands
+const FRAMES = 73, RELEASE_FRAME = 38, FOLLOW_END = 49;
 const frameUrl = (k: number) => `/media/film/atbat/catcher/${String(k + 1).padStart(4, "0")}.webp`;
 
 export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accent: string; onHoop?: (xy: { x: number; y: number; show: boolean }) => void; onLabel?: (xy: { x: number; y: number; show: boolean }) => void; onBall?: (s: { x: number; y: number; show: boolean; text: string }) => void; onReady?: () => void }): AtBatScene | null {
