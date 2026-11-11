@@ -51,7 +51,7 @@ function season(o) {
         const sit = E.Situation({ balls: b, strikes: k, outs, bases, inning, margin: 0, pitch_count: pc, batters_faced: bf, level, same_side: same,
           last, timing: {}, hitter_damage: {}, landing_today: JSON.parse(JSON.stringify(land)) });
         // truth
-        const arsT = names.map((x) => E.Pitch(Object.assign(trueSpec(x), { conf: conf[x], base_conf: feel, strike_rate: srTrue[x] })));
+        const arsT = names.map((x) => E.Pitch(Object.assign(trueSpec(x), { conf: conf[x], base_conf: feel, strike_rate: srTrue[x], strike_ref: L.strikeRef(E, trueSpec(x), level) })));
         const pT = arsT.find((x) => x.name === nm);
         const bz = {}; E.outcomeProbs(pT, quad, sit, arsT, null, bz);
         const zs = Object.keys(bz), z = zs[pick(zs.map((zz) => bz[zz].land))];
@@ -95,7 +95,7 @@ function season(o) {
           land[nm] = E.landingRecord(land[nm], !(res === "ball" || res === "hbp"), E.expectedStrike(arsE.find((x) => x.name === nm), quad, sit, arsE));
         }
         const ce = res === "ball" ? E.ballConfEvent(quad, z) : res === "cstrike" ? "cstrike" : res === "whiff" ? "whiff" : cat === "hard" ? "hard" : null;
-        if (ce) { const q = E.Pitch(Object.assign(trueSpec(nm), { conf: conf[nm], base_conf: feel, strike_rate: srTrue[nm] })); E.updateConfidence(q, ce); conf[nm] = q.conf; }
+        if (ce) { const q = E.Pitch(Object.assign(trueSpec(nm), { conf: conf[nm], base_conf: feel, strike_rate: srTrue[nm], strike_ref: L.strikeRef(E, trueSpec(nm), level) })); E.updateConfidence(q, ce); conf[nm] = q.conf; }
         const lce = logRes === "ball" ? E.ballConfEvent(quad, o.loc ? logZone : undefined) : logRes === "cstrike" ? "cstrike" : logRes === "whiff" ? "whiff" : contact === "hard" ? "hard" : null;
         if (lce) { const q = E.Pitch({ name: nm, kind: pd.kind, grade: 3, command: 3, conf: confApp[nm], base_conf: feel }); E.updateConfidence(q, lce); confApp[nm] = q.conf; }
         last = [nm, quad, res === "whiff" ? "whiff" : res];

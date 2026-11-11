@@ -372,3 +372,13 @@ stage2_test: 20/21 (D5 false switch-offs, left red by Drew)      worlds_test: 31
 smoke, rules_e2e, gameday_e2e, replay_e2e, v08_e2e, v09_matchup_e2e, v09_labels_e2e, v10_step1_e2e, v10_step3_e2e: all passed
 ```
 **Step 3 done:** #4 (all parts), #13, D1 acceptance, D8 closed; one known red (stage2 D5, until Step 7).
+
+### Independent review of Steps 0-3 (Nov 11): SOUND WITH ISSUES
+
+Full findings and status: `docs/REVIEW_v1.0_steps0-3_2026-11-11.md`. Fixed here: (1, High) the website demo's
+`web/lib/engine_data.json` was stale since Step 0c and crashed every call; synced, and `test-app.sh` now `cmp`s both
+web files and runs `web/lib/demo.test.ts` (0/2 before, 2/2 after); (4) the learner's worlds truth pitcher now carries
+`strike_ref` (`worlds_test` 31/31 after; `stage2_test` D5 still 2/40, so that was not its cause); (6) the 0.72-pitch
+check title now says what it asserts; (12) the simulator logs `engine.is_big_spot`. Open for Drew: (2) landing estimate
+noise and sharpen-cap saturation, (3) a yardstick run on Step 3, (7) sharpening a chase target shifts it toward the zone.
+`tests.py` 34/34; fast parity 0 mismatches.

@@ -691,7 +691,7 @@ def play_game(log_path):
                     "trusted": sum(x.conf >= LEVEL[LEVEL_NAME]["cutoff"] for x in ars),
                     "off_today": round(CURRENT_OFF.get(p.name, 0.0), 2), "inputs": INPUTS, "noise": NOISE,
                     "regret_exp": round(regret_exp, 5), "regret_pick": round(regret_pick, 5),
-                    "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(s.inning >= 7 and abs(margin) <= 2 and (s.bases[1] or s.bases[2])),
+                    "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(engine.is_big_spot(s)),
                     **rw, **({"true_w": round(hitter["w"], 2)} if TRUE_POWER else {}),
                 })
                 last = (p.name, q, "whiff" if ev == "whiff" else result)

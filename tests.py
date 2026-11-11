@@ -315,7 +315,9 @@ check("v1.0 #4 chase takes: a ball on a chase target is no confidence debit (jus
 s_ = Situation(1, 1, 1, E, level="college_d3")
 low = _replace(s_, landing_today={"Slider": (2, 4 * 0.30, 4)})
 high = _replace(s_, landing_today={"Slider": (2, 4 * 0.72, 4)})
-check("v1.0 #4 landing filter: a 0.30-strike-rate pitch going 2/4 is not blocked or wild; a 0.72 pitch going 2/4 is flagged",
+# (v1.0 review: at 4 pitches the plan's -0.15 block needs 1/4 for a 0.72 pitch, so 2/4 is kept but read as wild)
+check("v1.0 #4 landing filter: a 0.30-strike-rate pitch going 2/4 is not blocked or wild; a 0.72 pitch going 2/4 is"
+      " read as wild (+0.3 or more) but not blocked",
       not _nl(sl_, low) and _wt(sl_, low) <= 0 and _wt(sl_, high) >= 0.3 and not _nl(sl_, high),
       f"0.30 pitch 2/4: wild {_wt(sl_, low):+.2f}, blocked {_nl(sl_, low)}; 0.72 pitch 2/4: wild {_wt(sl_, high):+.2f}, "
       f"blocked {_nl(sl_, high)}")

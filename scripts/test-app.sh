@@ -14,6 +14,13 @@ if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1
 fi
 echo "build: app/dist matches the source"
+# the website demo loads web/lib/engine.js with web/lib/engine_data.json: both must be the app's copies (v1.0 review)
+for f in engine.js engine_data.json; do
+  if ! cmp -s "app/$f" "web/lib/$f"; then echo "::error::web/lib/$f differs from app/$f: copy it"; exit 1; fi
+done
+echo "web/lib: engine.js and engine_data.json match the app's"
+node --test web/lib/demo.test.ts > /tmp/web_demo.txt 2>&1 || { cat /tmp/web_demo.txt; echo "::error::web demo test failed"; exit 1; }
+echo "web_demo: $(grep -E "^# pass" /tmp/web_demo.txt) (the website demo runs the engine with that data)"
 for t in learn_test db_test import_test rails_test schema_test stage2_test worlds_test pitch_rules_test; do
   [ -f "app/$t.js" ] || continue
   (cd app && ../$run "$t" node "$t.js")
