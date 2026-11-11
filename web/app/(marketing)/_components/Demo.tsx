@@ -32,7 +32,11 @@ function Zone({ c, g, side }: { c: Call | null; g: Game; side: "R" | "L" }) {
       {[1, 2].map((i) => <line key={`h${i}`} y1={y0 + i * ch} y2={y0 + i * ch} x1={x0} x2={x0 + W} className="mk-dm-zgrid" />)}
       <text x={side === "L" ? x0 + W + 10 : x0 - 10} y={y0 + H / 2} textAnchor={side === "L" ? "start" : "end"} className="mk-dm-ztag">{side === "L" ? "LHH" : "RHH"}</text>
       <path d={`M${x0 + 20} ${y0 + H + 34} h${W - 40} l10 10 l-${(W - 20) / 2} 12 l-${(W - 20) / 2} -12 z`} className="mk-dm-plate" />
-      {g.atBat.map((l, n) => { const p = at(l.call.spot); return <g key={n}><circle cx={p.x + (n % 2 ? 7 : -7)} cy={p.y + 8} r="9" className="mk-dm-prev" /><text x={p.x + (n % 2 ? 7 : -7)} y={p.y + 11.5} textAnchor="middle" className="mk-dm-prevn">{n + 1}</text></g>; })}
+      {g.atBat.map((l, n) => {
+        // earlier pitches sit around their spot (fanned by order) so they never cover the live target
+        const p = at(l.call.spot), a = -Math.PI / 2 + n * 1.25, x = p.x + Math.cos(a) * 30, y = p.y + Math.sin(a) * 30;
+        return <g key={n}><circle cx={x} cy={y} r="9" className="mk-dm-prev" /><text x={x} y={y + 3.5} textAnchor="middle" className="mk-dm-prevn">{n + 1}</text></g>;
+      })}
       {now ? <g key={`${g.pitches}`} className="mk-dm-target"><circle cx={now.x} cy={now.y} r="22" className="mk-dm-ring" /><circle cx={now.x} cy={now.y} r="6" className="mk-dm-dot" /></g> : null}
     </svg>
   );
@@ -67,7 +71,7 @@ export function Demo() {
     if (!el) return;
     let dead = false;
     const load = () =>
-      Promise.all([import("@/lib/engine"), import("@/lib/engine_data.json")])
+      Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")])   // college D3 tables only (scripts/trim-engine-data.cjs)
         .then(([m, d]) => {
           if (dead) return;
           const E = ((m as { default?: Engine }).default ?? m) as Engine;

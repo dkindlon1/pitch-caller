@@ -17,9 +17,20 @@ import { Reveal } from "./_components/Reveal";
 const BETWEEN =
   "Between pitches you get a few seconds. In that time you weigh the count, the runners, what this hitter has already seen and what your pitcher actually has working today. Then you put down a sign.";
 
+// what search engines read about the product: no price, no ratings, only what's true on this page
+const LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "PitchIQ",
+  applicationCategory: "SportsApplication",
+  operatingSystem: "iPadOS, Web",
+  description: "Pitch calling for high school, travel and college baseball. Calls every pitch from the pitcher's stuff today, the hitter and the count, and gives the reason for it.",
+};
+
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LD) }} />
       <a className="mk-skip" href="#main">Skip to content</a>
       <GlassLight />
       <div className="mk-grain" aria-hidden="true" />
@@ -31,7 +42,7 @@ export default function Home() {
         <section className="mk-between" id="between" tabIndex={-1} aria-labelledby="between-h">
           <div className="mk-wrap">
             <h2 id="between-h" className="mk-sr">A few seconds between pitches</h2>
-            <Reveal className="mk-between-text" text={BETWEEN} />
+            <Reveal className="mk-between-text" text={BETWEEN} clock />
             <p className="mk-between-after">PitchIQ does that weighing for every pitch, and shows its work.</p>
           </div>
         </section>

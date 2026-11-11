@@ -30,6 +30,7 @@ export function ContactForm() {
   if (state === "sent") {
     return (
       <div className="mk-form-done" role="status">
+        <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" /><path d="M13 22.5l6 6 12-13" /></svg>
         <p className="mk-form-done-h">Message sent</p>
         <p>Thanks. You&apos;ll get a reply at the email you gave, usually within a day or two.</p>
       </div>

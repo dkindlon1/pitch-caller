@@ -651,3 +651,50 @@
 /* small things: selection in the accent, dark scrollbars */
 .mk ::selection { background: var(--mk-accent); color: #fff; }
 html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
+
+/* the statement between the hero and the at-bat: centered, large, Apple-style */
+.mk-between .mk-wrap { display: grid; justify-items: center; text-align: center; }
+.mk-between-text { font-size: clamp(2rem, 4.4vw, 4.5rem); line-height: 1.08; max-width: 22ch; letter-spacing: -0.035em; }
+.mk-between-after { margin-top: 48px; }
+
+/* bigger instruments in the hitter and umpire tiles */
+.mk-rd-hitter svg { max-width: none; }
+.mk-rd-ump svg { max-width: 190px; margin: 0 auto; }
+.mk-rd-ump p { text-align: center; }
+
+/* Day in the dugout: switching the screen to Day turns the whole section to daylight */
+.mk-dg { --dg-bg: #000; background: var(--dg-bg); transition: background-color 0.7s ease, color 0.7s ease; }
+.mk-dg.is-day { --dg-bg: #ecece8; background: #ecece8; color: #0b0b0b; }
+.mk-dg.is-day .mk-sec-head p, .mk-dg.is-day .mk-dg-facts dd { color: #4a4a47; transition: color 0.7s ease; }
+.mk-dg.is-day .mk-dg-facts dt { color: #0b0b0b; }
+.mk-dg.is-day .mk-seg { background: rgba(255, 255, 255, 0.7) !important; border-color: rgba(0, 0, 0, 0.12) !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), inset 0 1px 0 #fff !important; }
+.mk-dg.is-day .mk-seg button { color: #4a4a47; }
+.mk-dg.is-day .mk-seg button.is-on { background: #0b0b0b; color: #fff; }
+.mk-dg.is-day .mk-dg-ipad { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 60px 120px rgba(0, 0, 0, 0.28); }
+.mk-dg.is-day .mk-dg-floor { background: radial-gradient(50% 50% at 50% 0%, rgba(0, 0, 0, 0.14), transparent 70%); }
+.mk-dg.is-day :focus-visible { outline-color: #0b0b0b; }
+
+/* system settings: reduced transparency gets solid panels; increased contrast gets stronger edges and text */
+@media (prefers-reduced-transparency: reduce) {
+  .mk .mk-glass, .mk .mk-speed, .mk .mk-ab-dist, .mk .mk-ab-recap li, .mk .mk-ab-rail button, .mk .mk-gd-card-2 {
+    background: #161616 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  }
+  .mk .mk-glass::after { display: none; }
+}
+@media (prefers-contrast: more) {
+  .mk { --mk-text-2: #d6d6d2; --mk-text-3: #b5b5b0; --mk-line: rgba(255, 255, 255, 0.35); }
+  .mk .mk-glass { border-color: rgba(255, 255, 255, 0.45) !important; }
+}
+
+/* the form's thank-you: a check that draws itself */
+.mk-form-done svg { width: 44px; height: 44px; }
+.mk-form-done circle { fill: none; stroke: rgba(255, 255, 255, 0.25); stroke-width: 2; }
+.mk-form-done path { fill: none; stroke: var(--mk-chalk); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 30; stroke-dashoffset: 30; animation: mk-check 0.6s 0.15s cubic-bezier(0.3, 0.6, 0.2, 1) forwards; }
+@keyframes mk-check { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .mk-form-done path { stroke-dashoffset: 0; } }
+
+/* the few seconds between pitches, as a clock that runs out under the words */
+.mk-clock { display: block; width: min(420px, 70%); height: 2px; margin: 40px auto 0; border-radius: 1px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.mk-clock span { display: block; height: 100%; background: var(--mk-chalk); transform-origin: left; transform: scaleX(0); transition: background-color 0.4s ease; }
+.mk-clock span.is-late { background: var(--mk-accent); }
+@media (prefers-reduced-motion: reduce) { .mk-clock { display: none; } }
