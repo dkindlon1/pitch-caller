@@ -815,25 +815,21 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-ru-checks .v-q { color: #f6d58e; background: rgba(242, 179, 61, 0.12); border: 1px solid rgba(242, 179, 61, 0.36); }
 
 /* inside the call: the dugout footage, the engine at work inside the screen, and back out */
-.mk-in-run { position: relative; height: 760vh; }
+.mk-in-run { position: relative; height: 560vh; }
 .mk-in-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; isolation: isolate; background: #000; }
 .mk-in-film { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.mk-in-stage { position: absolute; inset: 0; opacity: 0; background: radial-gradient(70% 60% at 50% 42%, #0d1626 0%, #04060a 60%, #000 100%); }
+.mk-in-stage { position: absolute; inset: 0; opacity: 0; background: #020306; }
 .mk-in-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; }
-.mk-in-glow { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: radial-gradient(60% 60% at 50% 50%, #eaf2ff 0%, #9fc0ef 45%, #2b4a78 100%); }
-.mk-in-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(0deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.35) 30%, transparent 52%); }
+/* a scrim under the words, so nothing in the shot (the zone, the app's own text) runs through them */
+.mk-in-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.72) 26%, transparent 46%), linear-gradient(0deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.35) 30%, transparent 52%); }
+@media (max-width: 960px) { .mk-in-shade { background: linear-gradient(0deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.75) 26%, transparent 44%); } }
 .mk-in-tag { position: absolute; left: 0; top: 0; z-index: 2; display: grid; gap: 2px; max-width: 240px; padding: 8px 12px; border-radius: 14px;
-  background: rgba(12, 13, 16, 0.74); border: 1px solid rgba(255, 255, 255, 0.14); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  background: rgba(10, 11, 14, 0.9); border: 1px solid rgba(255, 255, 255, 0.14); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
   font-size: 0.8125rem; line-height: 1.3; opacity: 0; transition: opacity 0.35s ease; pointer-events: none; font-variant-numeric: tabular-nums; }
 .mk-in-tag[data-show="1"] { opacity: 1; }
 .mk-in-tag b { font-weight: 620; font-size: 0.875rem; }
 .mk-in-tag span { color: var(--mk-text-2); }
 .mk-in-read { translate: -50% -120%; }
-.mk-in-col { translate: -50% -130%; white-space: nowrap; max-width: none; }
-.mk-in-arc { translate: -50% -50%; white-space: nowrap; max-width: none; text-align: center; }
-.mk-in-arc b { font-size: 1.125rem; }
-.mk-in-arc.is-pick { background: var(--mk-chalk); color: var(--mk-ink); border-color: transparent; }
-.mk-in-arc.is-pick span { color: rgba(0, 0, 0, 0.62); }
 .mk-in-beats { position: absolute; left: var(--mk-pad); right: var(--mk-pad); bottom: clamp(56px, 10vh, 96px); display: grid; z-index: 3; pointer-events: none; }
 .mk-in-beat { grid-area: 1 / 1; max-width: 30ch; }
 .mk-in-t { font-size: clamp(2rem, 4.4vw, 4rem); line-height: 0.98; letter-spacing: -0.035em; font-weight: 640; font-variation-settings: "wdth" 82; }
@@ -847,15 +843,25 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-in-steps { margin: 32px 0 0; padding-left: 1.2em; display: grid; gap: 12px; color: var(--mk-text-2); max-width: 60ch; }
 .mk-in-steps b { color: var(--mk-chalk); font-weight: 620; }
 @media (max-width: 960px) {
-  .mk-in-run { height: 680vh; }
+  .mk-in-run { height: 500vh; }
   .mk-in-src { left: var(--mk-pad); right: auto; text-align: left; bottom: 14px; }
   .mk-in-beats { bottom: 64px; }
   .mk-in-tag { max-width: 180px; font-size: 0.75rem; }
-  .mk-in-read span { display: none; }
-  .mk-in-col { white-space: normal; }
 }
-.mk-in-touch { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; pointer-events: none; z-index: 1; }
-.mk-in-touch::before, .mk-in-touch::after { content: ""; position: absolute; left: 0; top: 0; border-radius: 50%; translate: -50% -50%; }
-.mk-in-touch::before { width: calc(14px + 90px * var(--t, 0)); height: calc(14px + 90px * var(--t, 0)); border: 2px solid rgba(255, 255, 255, 0.9); }
-.mk-in-touch::after { width: 10px; height: 10px; background: rgba(255, 255, 255, calc(0.7 - 0.7 * var(--t, 0))); }
 .mk-in-tags { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; }
+
+/* the crisp app screenshot that docks onto the footage's screen and onto the 3D zone; matrix3d set from script */
+.mk-in-app { position: absolute; left: 0; top: 0; transform-origin: 0 0; opacity: 0; pointer-events: none; }
+.mk-in-app img { display: block; width: 100%; height: 100%; }
+/* everything but the zone falls away into the dark as the camera dives in */
+.mk-in-app-zone { position: absolute; display: block; }
+.mk-in-app-dim { position: absolute; }
+/* the press: the app's Foul button, lit for a moment */
+.mk-in-press { position: absolute; left: 0; top: 0; width: 1180px; height: 820px; transform-origin: 0 0; opacity: 0; pointer-events: none; }
+.mk-in-press span { position: absolute; border-radius: 16px; background: rgba(255, 255, 255, calc(0.26 * var(--on, 0)));
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, calc(0.75 * var(--on, 0))), 0 0 28px rgba(190, 215, 255, calc(0.55 * var(--on, 0)));
+  transform: scale(calc(1 - 0.035 * var(--on, 0))); }
+.mk-in-pick { translate: -50% -130%; white-space: nowrap; max-width: none; background: var(--mk-chalk); color: var(--mk-ink); border-color: transparent; }
+.mk-in-pick span { color: rgba(0, 0, 0, 0.62); }
+.mk-in-short { display: none; }
+@media (max-width: 600px) { .mk-in-long { display: none; } .mk-in-short { display: inline; } }

@@ -7,8 +7,8 @@ screen and nothing crossing it), fits its four corners from the four edges, smoo
 screenshot onto it. Two clips come out, one per screenshot, each 24 frames a second:
   <out_dir>/push.mp4   public/marketing/app-call-before.png (the 1-1 call, before the coach logs the foul)
   <out_dir>/pull.mp4   public/marketing/app-call-after.png  (the engine's 1-2 call, for the pull-out, played backwards)
-After the hold, the app fades into the screen's own glow as the camera closes in, so the clip ends on a clean glow the
-site hands over to the 3D scene. Also writes <out_dir>/track.json: the corners per frame and where the Foul button sits
+The app stays on the screen to the last frame; there the site swaps in the crisp screenshot on the same corners and
+carries on into the app's strike zone. Also writes <out_dir>/track.json: the corners per frame and where the Foul button sits
 on the held frame (as fractions of the frame), which InsideCall.tsx uses for the tap.
 Then cut each with scripts/film-frames.sh <clip> inside <push|pull> 24.
 """
@@ -23,7 +23,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 SHOTS = {"push": os.path.join(HERE, "../public/marketing/app-call-before.png"),
          "pull": os.path.join(HERE, "../public/marketing/app-call-after.png")}
-FOUL = (0.8967, 0.6092)      # the Foul button's centre on app-call-before.png, from scripts/capture-app-call.cjs
+FOUL = (0.8967, 0.6092)      # the Foul button's centre on app-call-before.png (scripts/capture-app-call.cjs prints its box)
 
 
 def read(path):
@@ -212,7 +212,7 @@ def main():
         os.makedirs(tmp, exist_ok=True)
         for i, f in enumerate(frames):
             t = 0 if i <= hold else (i - hold) / max(1, n - 1 - hold)
-            fade = 1.0 - np.clip((t - 0.5) / 0.45, 0, 1) ** 1.5         # the app gives way to the glow as we close in
+            fade = 1.0   # the app stays to the last frame: the site takes over from there with the crisp screenshot
             # the screen's quad, pushed out a touch so the app reaches the very edge of the glass (the matte below
             # stops it at the bezel)
             qd = trk[i].astype(np.float32)
@@ -250,6 +250,18 @@ def main():
     json.dump({"fps": fps, "frames": n, "hold": hold, "size": [w, h], "touch": [float(p[0] / w), float(p[1] / h)],
                "tracked": int((~np.isnan(raw[:, :, 0])).sum()), "corners": trk.round(2).tolist()},
               open(os.path.join(out_dir, "track.json"), "w"))
+    # the corners per frame, for the site (InsideCall.tsx lines its crisp screenshot up with them)
+    geo = json.load(open(os.path.join(HERE, "../content/app-call-geometry.json")))
+    app = {k: {kk: round(vv, 4) for kk, vv in v.items()} for k, v in geo.items() if v}
+    pts = [[[round(float(x), 1), round(float(y), 1)] for x, y in q] for q in trk]
+    with open(os.path.join(HERE, "../content/inside-track.ts"), "w") as fh:
+        fh.write("// The dugout push-in (web/public/media/film/inside), measured by scripts/screen-composite.py: the iPad screen's four\n"
+                 "// corners (top-left, top-right, bottom-right, bottom-left) in every frame, in pixels of the clip, and the frame the\n"
+                 "// locked-off hold ends on. APP is where things sit on the app screenshots (fractions of the screenshot), from\n"
+                 "// scripts/capture-app-call.cjs. Regenerate with those scripts; don't edit by hand.\n"
+                 f"export const CLIP = {{ w: {w}, h: {h}, frames: {n}, hold: {hold} }};\n"
+                 f"export const APP = {json.dumps(app)};\n"
+                 f"export const SCREEN: [number, number][][] = {json.dumps(pts, separators=(',', ':'))};\n")
     print(f"{n} frames, {int((~np.isnan(raw[:, :, 0])).sum())} of {4 * n} corners seen directly, touch at {p[0] / w:.3f}, {p[1] / h:.3f}")
 
 

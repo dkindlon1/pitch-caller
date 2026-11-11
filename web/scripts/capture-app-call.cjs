@@ -9,6 +9,30 @@ const cand = fs.readFileSync(require("path").join(__dirname, "../content/candida
 const CANDS = JSON.parse(cand.slice(cand.indexOf("= [", cand.indexOf("export const CANDIDATES")) + 2).trim().replace(/;$/, ""));
 const server = http.createServer((q, r) => { r.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   r.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${fs.readFileSync(DIST, "utf8")}</body></html>`); });
+const geo = async (page) => page.evaluate(() => {
+  const f = (r) => ({ x: r.x / innerWidth, y: r.y / innerHeight, w: r.width / innerWidth, h: r.height / innerHeight });
+  const rects = [...document.querySelectorAll(".zone svg rect")];
+  const box = rects.find((r) => r.getAttribute("stroke") === "var(--ink)"), dash = rects.find((r) => r.getAttribute("stroke-dasharray"));
+  const foul = [...document.querySelectorAll("button")].find((b) => /^Foul/.test(b.textContent.trim()));
+  return { zone: f(box.getBoundingClientRect()), chase: f(dash.getBoundingClientRect()), foul: foul ? f(foul.getBoundingClientRect()) : null };
+});
+// the zone panel again at 6x, for the site's dive into it (the full screenshot is 2x, too soft at that zoom): the same
+// saved game opened in a 6x browser, the panel clipped out with room for the marks' halos
+const zoneShot = async (page, file) => {
+  const g = await geo(page), c = g.chase, px = 24 / 1180, py = 24 / 820;
+  const clip = { x: (c.x - px) * 1180, y: (c.y - py) * 820, width: (c.w + 2 * px) * 1180, height: (c.h + 2 * py) * 820 };
+  const state = await page.evaluate(() => localStorage.getItem("pitchcaller.v2"));
+  const ctx = await page.context().browser().newContext({ viewport: { width: 1180, height: 820 }, deviceScaleFactor: 6 });
+  await ctx.addInitScript((st) => { try { localStorage.setItem("pitchcaller.v2", st); } catch (e) {} }, state);
+  const p2 = await ctx.newPage();
+  await p2.goto(page.url()); await p2.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 15000 });
+  await p2.evaluate(() => { S.view = "live"; render(); }); await p2.waitForTimeout(700);
+  const g2 = await geo(p2);
+  if (Math.abs(g2.zone.x - g.zone.x) > 1e-3 || Math.abs(g2.zone.y - g.zone.y) > 1e-3) throw new Error("the 6x copy laid out differently");
+  await p2.screenshot({ path: file, clip });
+  await ctx.close();
+  return { x: clip.x / 1180, y: clip.y / 820, w: clip.width / 1180, h: clip.height / 820 };
+};
 (async () => {
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const url = `http://127.0.0.1:${server.address().port}/`;
@@ -29,12 +53,14 @@ const server = http.createServer((q, r) => { r.writeHead(200, { "content-type": 
     if (key === "f") {
       // the 1-1 call: the app's own call, redrawn until its draw is the fastball up and away (so it is one the engine
       // really makes here), then the "before the tap" screen
-      const got = await page.evaluate(() => { G().takes = []; for (let i = 0; i < 400; i++) { G().call = null; makeCall(); if (G().call.pitch === "Fastball" && G().call.quad === "up-away") return { i, prob: G().call.prob }; } return null; });
+      const got = await page.evaluate(() => { G().takes = []; let sd = 11; Math.random = () => (sd = (sd * 16807) % 2147483647) / 2147483647; for (let i = 0; i < 400; i++) { G().call = null; makeCall(); if (G().call.pitch === "Fastball" && G().call.quad === "up-away") return { i, prob: G().call.prob }; } return null; });
       console.log("1-1 call:", JSON.stringify(got));
       await page.evaluate(() => { save(); render(); }); await page.waitForTimeout(600);
       await page.screenshot({ path: require("path").join(__dirname, "../public/marketing/app-call-before.png") });
-      const box = await page.getByRole("button", { name: /^Foul/ }).first().boundingBox();
-      console.log("foul button:", JSON.stringify({ x: (box.x + box.width / 2) / 1180, y: (box.y + box.height / 2) / 820 }));
+      const g = await geo(page);
+      g.zoneHi = await zoneShot(page, require("path").join(__dirname, "../public/marketing/app-zone-before.png"));
+      console.log("before geometry (fractions of the screenshot):", JSON.stringify(g));
+      fs.writeFileSync(require("path").join(__dirname, "../content/app-call-geometry.json"), JSON.stringify(g, null, 1) + "\n");
       await page.mouse.click(5, 5); await page.keyboard.press(key); await page.waitForTimeout(300);
       if (await page.evaluate(() => !!pending)) { await page.keyboard.press("Enter"); await page.waitForTimeout(300); }
       continue;
@@ -62,9 +88,11 @@ const server = http.createServer((q, r) => { r.writeHead(200, { "content-type": 
     save(); render();
   });
   await page.waitForTimeout(800);
+  console.log("after geometry (fractions of the screenshot):", JSON.stringify(await geo(page)));
   const why = await page.evaluate(() => ({ same: JSON.stringify(G().call) === window.__lock, pick: G().call.pitch + " " + G().call.quad, prob: G().call.prob, why: G().call.why, intent: G().call.intentLine }));
   console.log(JSON.stringify(why));
   await page.screenshot({ path: require("path").join(__dirname, "../public/marketing/app-call-after.png") });
+  await zoneShot(page, require("path").join(__dirname, "../public/marketing/app-zone-after.png"));
   console.log(errs.join("\n") || "no errors");
   await b.close(); server.close();
 })();
