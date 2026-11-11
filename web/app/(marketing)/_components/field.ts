@@ -131,7 +131,7 @@ function fieldTexture(max: number): THREE.CanvasTexture {
   for (let r = 3; r < 13; r += 0.55) { g.beginPath(); g.arc(X(0), Y(0), r * s, 0, Math.PI * 2); g.stroke(); }
   for (const bx of [-3.2, 3.2]) { g.fillStyle = "rgba(0,0,0,0.12)"; g.beginPath(); g.ellipse(X(bx), Y(0.2), 1.6 * s, 2.6 * s, 0, 0, Math.PI * 2); g.fill(); }
   // grain: a scatter of light and dark specks so the clay and grass aren't flat
-  for (let i = 0; i < N * 90; i++) { g.fillStyle = Math.random() < 0.5 ? "rgba(0,0,0,0.09)" : "rgba(255,235,210,0.04)"; g.fillRect(Math.random() * N, Math.random() * N, 1.5, 1.5); }
+  for (let i = 0; i < N * 40; i++) { g.fillStyle = Math.random() < 0.5 ? "rgba(0,0,0,0.09)" : "rgba(255,235,210,0.04)"; g.fillRect(Math.random() * N, Math.random() * N, 1.5, 1.5); }
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -230,8 +230,16 @@ export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitch
   }
   const zg = new THREE.BufferGeometry();
   zg.setAttribute("position", new THREE.Float32BufferAttribute(zl, 3));
-  scene.add(new THREE.LineSegments(zg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, fog: false })));
-  const pane = new THREE.Mesh(new THREE.PlaneGeometry(2 * PLATE_HALF, ZONE.hi - ZONE.lo), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false }));
+  scene.add(new THREE.LineSegments(zg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, fog: false })));
+  // the zone's frame as solid bars (WebGL lines are one pixel), so it reads like a broadcast strike zone
+  const bar = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, fog: false });
+  const zw = 2 * PLATE_HALF, zh = ZONE.hi - ZONE.lo, t = 0.035;
+  for (const [x, y, bw, bh] of [[0, ZONE.hi, zw + t, t], [0, ZONE.lo, zw + t, t], [-PLATE_HALF, ZONE.lo + zh / 2, t, zh + t], [PLATE_HALF, ZONE.lo + zh / 2, t, zh + t]] as const) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, t), bar);
+    m.position.set(x, y, 0);
+    scene.add(m);
+  }
+  const pane = new THREE.Mesh(new THREE.PlaneGeometry(2 * PLATE_HALF, ZONE.hi - ZONE.lo), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1, side: THREE.DoubleSide, depthWrite: false }));
   pane.position.set(0, (ZONE.lo + ZONE.hi) / 2, 0);
   scene.add(pane);
 
@@ -268,6 +276,27 @@ export function tube(pts: THREE.Vector3[], r: number, color: THREE.ColorRepresen
     new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending }),
   );
 }
+
+// a flight drawn the way broadcast pitch-tracking graphics draw it: a thick, lit tube in the pitch's color that fades
+// in from the release point and is solid by the plate. The fade is an alpha map along the tube's length (uv.x).
+let fadeMap: THREE.Texture | null = null;
+function fadeTexture() {
+  if (fadeMap) return fadeMap;
+  const c = document.createElement("canvas"); c.width = 256; c.height = 4;
+  const g = c.getContext("2d")!, gr = g.createLinearGradient(0, 0, 256, 0);
+  gr.addColorStop(0, "#000"); gr.addColorStop(0.08, "#333"); gr.addColorStop(0.4, "#fff"); gr.addColorStop(1, "#fff");
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 4);
+  fadeMap = new THREE.CanvasTexture(c);
+  return fadeMap;
+}
+export function flightTube(pts: THREE.Vector3[], r: number, color: THREE.ColorRepresentation) {
+  const col = new THREE.Color(color);
+  return new THREE.Mesh(
+    new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), SEG, r, 14, false),
+    new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 0.45, roughness: 0.28, metalness: 0.05, transparent: true, alphaMap: fadeTexture(), depthWrite: false, fog: false }),
+  );
+}
+export const FLIGHT_PER = 14 * 6;   // index count per tube segment for flightTube (radial segments x 6)
 
 // a software renderer (no GPU: SwiftShader, llvmpipe, Microsoft Basic Render) can't keep a 3D scene smooth, so the
 // scenes drop to 1x pixels on one and watch their own frame cost

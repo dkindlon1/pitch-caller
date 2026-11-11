@@ -75,6 +75,8 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     const legend = await page.locator(".mk-rd-legend li").allInnerTexts();
     const sum = legend.reduce((a, t) => a + Number(/(\d+)%/.exec(t)[1]), 0);
     check(legend.length >= 3 && sum >= 98 && sum <= 102, `the mix lists ${legend.length} calls adding to ${sum}%`);
+    // the draw animates for a moment (longer on a software renderer), so wait for it to land
+    await page.waitForSelector(".mk-rd-legend li.is-pick", { timeout: 8000 }).catch(() => {});
     check((await page.locator(".mk-rd-legend li.is-pick").count()) === 1, "the draw lands on one call");
     await page.getByRole("button", { name: "Draw again" }).click(); await wait(1800);
     check((await page.locator(".mk-rd-legend li.is-pick").count()) === 1, "drawing again lands on a call");

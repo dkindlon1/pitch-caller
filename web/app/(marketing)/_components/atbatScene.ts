@@ -3,7 +3,7 @@
 // swings out up the third-base line for the third pitch so the flights can be seen across the full 60 ft 6 in, comes back in
 // tight for the two-strike slider, and pulls up and back to show all four flights at once.
 import * as THREE from "three";
-import { along, ball, buildField, PITCH_COLOR, disposeScene, flight, makeRenderer, PER, SEG, spinBall, target, tube, world, type FieldPitch } from "./field";
+import { along, ball, buildField, flightTube, FLIGHT_PER, PITCH_COLOR, disposeScene, flight, makeRenderer, PER, SEG, spinBall, target, tube, world, type FieldPitch } from "./field";
 
 export type AtBatScene = { set: (p: number) => void; dispose: () => void };
 // where a hitter has to decide whether to swing: about 24 ft in front of the plate
@@ -48,18 +48,27 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   scene.add(b);
 
   const paths = pitches.map((p) => flight(p, 120));
-  // every flight drawn twice: a faint white line for "already thrown", and a line in the pitch's color with a glow for
-  // "this pitch"
-  const ghosts = paths.map((p) => { const m = tube(p, 0.035, 0xffffff, 0.24); scene.add(m); return m; });
-  // the glow blends normally: added over green grass, red would read as yellow
-  const reds = paths.map((p, j) => { const c = PITCH_COLOR[pitches[j].kind]; const a = tube(p, 0.055, c, 1), g = tube(p, 0.2, c, 0.2); scene.add(a, g); return [a, g]; });
-  const rings = pitches.map((p) => {
-    const T = target(p.cell);
-    const m = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.21, 48), new THREE.MeshBasicMaterial({ color: PITCH_COLOR[p.kind], transparent: true, opacity: 0.9, side: THREE.DoubleSide, fog: false }));
-    m.position.copy(world(T.x, T.y, -0.03));
-    scene.add(m);
-    return m;
+  // each flight as a broadcast-style tube in its pitch color, with a soft halo; thrown pitches stay on screen (dimmer)
+  // so the at-bat builds up, and each landed pitch leaves a ball resting where it crossed the plate
+  const tubes = paths.map((p, j) => {
+    const c = PITCH_COLOR[pitches[j].kind];
+    const core = flightTube(p, 0.11, c);
+    const halo = tube(p, 0.24, c, 0.14);
+    scene.add(halo, core);
+    return [core, halo] as const;
   });
+  const rests = pitches.map((p) => {
+    const T = target(p.cell);
+    const g = new THREE.Group();
+    const bb = ball(accent); bb.scale.multiplyScalar(1.6); bb.rotation.set(0.4, 0.8, 0);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.24, 0.3, 48), new THREE.MeshBasicMaterial({ color: PITCH_COLOR[p.kind], transparent: true, opacity: 0.95, side: THREE.DoubleSide, fog: false }));
+    g.add(bb, ring);
+    g.position.copy(world(T.x, T.y, -0.08));
+    g.visible = false;
+    scene.add(g);
+    return g;
+  });
+
   // the decision point: a thin hoop around the flights where the hitter has to commit, shown in the side view so the
   // two pitch shapes can be read against it (they still share a path there, and split after)
   const hoop = new THREE.Group();
@@ -97,17 +106,21 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
 
   function draw(p: number) {
     const { i, fly } = stepAt(p);
+    const end = p >= 0.9;
     for (let j = 0; j < 4; j++) {
-      const thrown = j < i || (j === i && fly > 0);
-      const isLive = j === i || (p >= 0.9 && j === 3);
-      ghosts[j].visible = j < i && !(p >= 0.9 && j === 3);
-      const n = j === i ? Math.max(1, Math.round(fly * SEG)) * PER : SEG * PER;
-      for (const m of reds[j]) { m.visible = isLive && thrown; m.geometry.setDrawRange(0, n); }
-      rings[j].visible = j < i || (j === i && fly >= 1);
-      (rings[j].material as THREE.MeshBasicMaterial).opacity = j === i ? 0.95 : 0.35;
+      const thrown = j < i || (j === i && fly > 0) || end;
+      const live = j === i && !end;
+      const [core, halo] = tubes[j];
+      const n = live ? Math.max(1, Math.round(fly * SEG)) : SEG;
+      core.visible = halo.visible = thrown;
+      core.geometry.setDrawRange(0, n * FLIGHT_PER); halo.geometry.setDrawRange(0, n * PER);
+      // the pitch in the air is full strength; earlier ones step back, and at the end all four come up together
+      (core.material as THREE.MeshStandardMaterial).opacity = live || end ? 1 : 0.5;
+      (halo.material as THREE.MeshBasicMaterial).opacity = live || end ? 0.16 : 0.06;
+      rests[j].visible = j < i || (j === i && fly >= 1) || end;
     }
     hoop.visible = p > 0.42 && p < 0.66;
-    b.visible = p >= SPAN.start && fly > 0;
+    b.visible = p >= SPAN.start && fly > 0 && fly < 1 && !end;
     along(paths[i], fly, b.position);
     spinBall(b, pitches[i].kind, fly * 1700);
     camAt(p);

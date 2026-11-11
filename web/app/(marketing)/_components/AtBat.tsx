@@ -165,13 +165,20 @@ export function AtBat() {
           <div className="mk-ab-end">
             <p className="mk-ab-k">Strikeout swinging.</p>
             <p>Four calls, each with the reason it was made. That&apos;s what a coach sees on the iPad, one pitch at a time.</p>
-            <ol className="mk-ab-recap" aria-label="The at-bat">
-              {AT_BAT.map((x, n) => (
-                <li key={n} style={{ transitionDelay: `${n * 70}ms` }}>
-                  <span>{x.balls}-{x.strikes}</span><b><i className="mk-pt" data-k={x.pitch} aria-hidden="true" />{x.pitch}</b><span>{n === 3 ? "Strikeout" : x.result}</span>
-                </li>
-              ))}
-            </ol>
+            <div className="mk-glass mk-ab-board" aria-label="The at-bat, pitch by pitch">
+              <div className="mk-ab-board-h"><b>The at-bat</b><span>Right-handed hitter, first time up</span></div>
+              <ol>
+                {AT_BAT.map((x, n) => (
+                  <li key={n} data-k={x.pitch} style={{ transitionDelay: `${120 + n * 90}ms` }}>
+                    <i aria-hidden="true" />
+                    <span className="mk-ab-board-c">{x.balls}-{x.strikes}</span>
+                    <b>{x.pitch}</b>
+                    <span className="mk-ab-board-s">{x.spot}</span>
+                    <span className="mk-ab-board-r">{n === 3 ? "Strikeout" : x.result}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
         </div>
       </div>
