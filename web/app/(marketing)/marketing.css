@@ -425,7 +425,13 @@
 /* in the dugout */
 .mk-dg { padding: clamp(120px, 16vh, 200px) 0; overflow: hidden; transition: background-color 0.6s ease; }
 .mk-dg-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-.mk-dg-scene { margin-top: 56px; perspective: 2200px; }
+.mk-dg-scene { margin-top: 56px; perspective: 2200px; position: relative; }
+/* the 3D tablet draws over the same box the flat one fills, so nothing moves when it takes over; the flat one stays in
+   the page (it carries the screenshots' descriptions) but goes invisible */
+.mk-dg-stage { position: absolute; inset: -14% -8%; z-index: 1; pointer-events: none; }
+.mk-dg-stage canvas { width: 100% !important; height: 100% !important; display: block; opacity: 0; transition: opacity 0.6s ease; }
+.mk-dg-scene.is-3d .mk-dg-stage canvas { opacity: 1; }
+.mk-dg-scene.is-3d .mk-dg-tilt { visibility: hidden; }
 .mk-dg-tilt { transform-style: preserve-3d; transform-origin: 50% 100%; will-change: transform; }
 .mk-dg-ipad { padding: clamp(10px, 1.4vw, 18px); border-radius: clamp(24px, 3vw, 44px); background: linear-gradient(160deg, #2c2c2c, #0b0b0b 45%, #1c1c1c); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 80px 140px rgba(0, 0, 0, 0.8); max-width: 1120px; margin: 0 auto; }
 .mk-dg-glass { position: relative; aspect-ratio: 2360 / 1640; border-radius: clamp(14px, 2vw, 28px); overflow: hidden; background: #000; }
@@ -718,3 +724,12 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-clock span { display: block; height: 100%; background: var(--mk-chalk); transform-origin: left; transform: scaleX(0); transition: background-color 0.4s ease; }
 .mk-clock span.is-late { background: var(--mk-accent); }
 @media (prefers-reduced-motion: reduce) { .mk-clock { display: none; } }
+
+/* films that play as you scroll (ScrollFilm) */
+.mk-film { position: relative; }
+.mk-film-pin { position: sticky; top: 0; height: 100svh; overflow: hidden; isolation: isolate; }
+.mk-film.is-still .mk-film-pin { position: relative; }
+.mk-film-canvas, .mk-film-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000 center / cover no-repeat; z-index: -2; }
+.mk-film-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.25) 26%, rgba(0, 0, 0, 0) 55%), linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 22%); }
+.mk-film-beat { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 0 var(--mk-pad) clamp(56px, 10vh, 120px); will-change: opacity, transform; pointer-events: none; }
+.mk-film-beat > * { pointer-events: auto; }

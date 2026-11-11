@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import night from "@/public/marketing/app-night.png";
 import day from "@/public/marketing/app-day.png";
+import type { IpadScene } from "./ipadScene";
 
 // "In the dugout": the real live-calling screen from the iPad app (captured from app/dist/pitch-caller.html at iPad
 // landscape size, two pitches into a game), in Night and Day. The tablet settles flat as it scrolls into view.
@@ -16,21 +17,39 @@ const FACTS = [
 
 export function Dugout() {
   const [mode, setMode] = useState<"night" | "day">("night");
+  const [three, setThree] = useState(false);
   const tilt = useRef<HTMLDivElement>(null);
   const sec = useRef<HTMLElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  const scene = useRef<IpadScene | null>(null);
 
+  // the tablet in 3D where WebGL is there and motion is welcome; otherwise the flat one below tilts into place
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let kill = () => {};
-    Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
-      if (!tilt.current || !sec.current) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let dead = false, kill = () => {};
+    const el = stage.current;
+    if (!el) return;
+    const start = () => Promise.all([import("./ipadScene"), import("gsap"), import("gsap/ScrollTrigger")]).then(([{ mountIpad }, { gsap }, { ScrollTrigger }]) => {
+      if (dead || !stage.current || !sec.current) return;
+      const s = still ? null : mountIpad(stage.current, { night: night.src, day: day.src }, { onReady: () => setThree(true) });
       gsap.registerPlugin(ScrollTrigger);
-      const tw = gsap.fromTo(tilt.current, { rotateX: 24, rotateZ: -4, y: 60, scale: 0.92 }, { rotateX: 4, rotateZ: 0, y: 0, scale: 1, ease: "none",
-        scrollTrigger: { trigger: sec.current, start: "top bottom", end: "center center", scrub: 0.8 } });
-      kill = () => { tw.scrollTrigger?.kill(); tw.kill(); };
+      if (s) {
+        scene.current = s;
+        const st = ScrollTrigger.create({ trigger: stage.current, start: "top bottom", end: "center 55%", scrub: 0.8, onUpdate: (t) => s.set(t.progress) });
+        s.set(st.progress);
+        kill = () => { st.kill(); s.dispose(); scene.current = null; };
+      } else if (!still && tilt.current) {
+        const tw = gsap.fromTo(tilt.current, { rotateX: 24, rotateZ: -4, y: 60, scale: 0.92 }, { rotateX: 4, rotateZ: 0, y: 0, scale: 1, ease: "none",
+          scrollTrigger: { trigger: sec.current, start: "top bottom", end: "center center", scrub: 0.8 } });
+        kill = () => { tw.scrollTrigger?.kill(); tw.kill(); };
+      }
     });
-    return () => kill();
+    // load it only as the chapter comes near
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io.disconnect(); start(); } }, { rootMargin: "80% 0px" });
+    io.observe(el);
+    return () => { dead = true; io.disconnect(); kill(); };
   }, []);
+  useEffect(() => { scene.current?.mode(mode); }, [mode]);
 
   return (
     <section className={`mk-dg is-${mode}`} id="dugout" ref={sec} aria-labelledby="dg-h" tabIndex={-1}>
@@ -49,7 +68,8 @@ export function Dugout() {
           </div>
         </div>
 
-        <div className="mk-dg-scene">
+        <div className={`mk-dg-scene${three ? " is-3d" : ""}`}>
+          <div className="mk-dg-stage" ref={stage} />
           <div className="mk-dg-tilt" ref={tilt}>
             <div className="mk-dg-ipad">
               <span className="mk-dg-cam" aria-hidden="true" />
