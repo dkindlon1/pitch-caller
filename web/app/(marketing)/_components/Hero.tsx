@@ -29,7 +29,11 @@ export function Hero() {
       ? whenIdle(() => {
           import("./heroScene").then(({ mountHero }) => {
             if (dead || !stage.current) return;
-            scene = mountHero(stage.current, AT_BAT.map(toScene), { accent: ACCENT, still, onPitch: setI });
+            scene = mountHero(stage.current, AT_BAT.map(toScene), {
+              accent: ACCENT, still, onPitch: setI,
+              // a device too slow for the 3D keeps the last frame, and the call card steps on its own
+              onStill: () => { timer = window.setInterval(() => setI((n) => (n + 1) % AT_BAT.length), 3200); },
+            });
             if (scene) setOn(true);
           }).catch(() => {});
         })
@@ -52,7 +56,7 @@ export function Hero() {
           </p>
           <div className="mk-hero-actions">
             <a className="mk-btn" href="#contact">Talk to us</a>
-            <a className="mk-link" href="#between">See how it calls</a>
+            <a className="mk-link" href="#at-bat">See how it calls</a>
           </div>
         </div>
 

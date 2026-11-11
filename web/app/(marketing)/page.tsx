@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { ContactForm } from "./_components/ContactForm";
 import { Hero } from "./_components/Hero";
+import { AtBat } from "./_components/AtBat";
+import { Demo } from "./_components/Demo";
+import { Dugout } from "./_components/Dugout";
+import { Faq } from "./_components/Faq";
+import { GameDay } from "./_components/GameDay";
+import { Program } from "./_components/Program";
+import { Reads } from "./_components/Reads";
+import { Rules } from "./_components/Rules";
+import { GlassLight } from "./_components/GlassLight";
 import { Mark } from "./_components/Mark";
+import { Nav } from "./_components/Nav";
 import { Reveal } from "./_components/Reveal";
 
 const BETWEEN =
@@ -11,14 +21,9 @@ export default function Home() {
   return (
     <>
       <a className="mk-skip" href="#main">Skip to content</a>
-      <header className="mk-nav">
-        <nav className="mk-nav-pill mk-glass" aria-label="Main">
-          <Link href="/" className="mk-nav-brand" aria-label="PitchIQ home"><Mark /><span>PitchIQ</span></Link>
-          <a className="mk-nav-link" href="#between">How it calls</a>
-          <Link className="mk-nav-link" href="/login">Sign in</Link>
-          <a className="mk-btn mk-btn-sm" href="#contact">Talk to us</a>
-        </nav>
-      </header>
+      <GlassLight />
+      <div className="mk-grain" aria-hidden="true" />
+      <Nav />
 
       <main id="main" tabIndex={-1}>
         <Hero />
@@ -30,6 +35,15 @@ export default function Home() {
             <p className="mk-between-after">PitchIQ does that weighing for every pitch, and shows its work.</p>
           </div>
         </section>
+
+        <AtBat />
+        <Reads />
+        <Demo />
+        <Dugout />
+        <GameDay />
+        <Program />
+        <Rules />
+        <Faq />
 
         <section className="mk-contact" id="contact" tabIndex={-1} aria-labelledby="contact-h">
           <svg className="mk-contact-art" viewBox="0 0 800 700" preserveAspectRatio="xMinYMid slice" aria-hidden="true">

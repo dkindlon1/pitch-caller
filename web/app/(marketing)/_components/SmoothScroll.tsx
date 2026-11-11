@@ -5,6 +5,25 @@ import { useEffect } from "react";
 // Lenis smooth scrolling, driven by GSAP's ticker so pinned scroll scenes stay in step with it. Off on touch screens
 // (iPad and phones scroll natively and Lenis fights the finger) and under reduced motion.
 export function SmoothScroll() {
+  // every scroll scene is measured again once the web fonts and images have settled the page's real heights
+  useEffect(() => {
+    let dead = false;
+    const refresh = () => import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => { if (!dead) ScrollTrigger.refresh(); });
+    document.fonts?.ready.then(refresh);
+    if (document.readyState === "complete") refresh(); else window.addEventListener("load", refresh, { once: true });
+    // and whenever the page changes height later (the demo grows when its engine loads), debounced
+    let t = 0, last = document.body.scrollHeight;
+    const ro = new ResizeObserver(() => {
+      const hgt = document.body.scrollHeight;
+      if (Math.abs(hgt - last) < 2) return;
+      last = hgt;
+      window.clearTimeout(t);
+      t = window.setTimeout(refresh, 200);
+    });
+    ro.observe(document.body);
+    return () => { dead = true; ro.disconnect(); window.clearTimeout(t); window.removeEventListener("load", refresh); };
+  }, []);
+
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (window.matchMedia("(pointer: coarse)").matches) return;

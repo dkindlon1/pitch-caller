@@ -17,7 +17,7 @@ export function Reveal({ text, className }: { text: string; className?: string }
       const spans = ref.current.querySelectorAll("span");
       const tween = gsap.fromTo(
         spans,
-        { opacity: 0.16 },
+        { opacity: 0.3 },
         { opacity: 1, ease: "none", stagger: 0.08, scrollTrigger: { trigger: ref.current, start: "top 78%", end: "bottom 42%", scrub: 0.6 } },
       );
       kill = () => { tween.scrollTrigger?.kill(); tween.kill(); };

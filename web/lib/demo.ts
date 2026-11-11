@@ -19,7 +19,7 @@ export const STARTER = [
 export const LINEUP: ("R" | "L" | "S")[] = ["R", "R", "L", "R", "L", "R", "R", "L", "S"];
 const HAND = "R";
 
-export type Call = { pitch: string; kind: EPitch["kind"]; quad: string; spot: Spot; sign: number; prob: number; mix: { pitch: string; spot: Spot; prob: number }[] };
+export type Call = { pitch: string; kind: EPitch["kind"]; quad: string; spot: Spot; sign: number; prob: number; mix: { pitch: string; spot: Spot; prob: number }[]; why: string | null; ms: number };
 export type Logged = { balls: number; strikes: number; call: Call; result: Result };
 export type Game = {
   inning: number; outs: number; balls: number; strikes: number; bases: [boolean, boolean, boolean]; runs: number; batter: number; pitches: number;
@@ -42,10 +42,15 @@ export function call(E: Engine, ars: EPitch[], g: Game, rng?: () => number): Cal
   const s = E.Situation({ balls: g.balls, strikes: g.strikes, outs: g.outs, bases: g.bases.slice(), inning: g.inning, margin: 0, pitch_count: g.pitches,
     batters_faced: g.batter, level: "college_d3", same_side: bats(g) === HAND, last: g.last, hitter_seen: { ...g.seen },
     usage_this_count: { ...(g.usage[`${g.balls}-${g.strikes}`] || {}) } });
-  const r = E.callV08(ars, s, rng ? { rng } : {});     // the app's one engine: v0.9 plans the at-bat
+  const t0 = performance.now();
+  const r = E.callV08(ars, s, rng ? { rng } : {});     // the app's one engine
+  const ms = performance.now() - t0;
+  // the engine's own reason for the call, the line the app shows under it
+  let why: string | null = null;
+  try { const w = E.whyLine(ars, r.info.s, r.tab, r.pick, r.info); why = Array.isArray(w) && typeof w[0] === "string" ? w[0] : null; } catch { why = null; }
   const top = (d: Pick) => ({ pitch: d.pitch.name, spot: SPOT[d.quad], prob: d.prob });
   return { pitch: r.pick.pitch.name, kind: r.pick.pitch.kind, quad: r.pick.quad, spot: SPOT[r.pick.quad], sign: SIGN[r.pick.pitch.kind], prob: r.pick.prob,
-    mix: r.dist.slice(0, 4).map(top) };
+    mix: r.dist.slice(0, 4).map(top), why, ms };
 }
 
 // a plain explanation of the call (app/index.src.html, callPanel): how often the mix picks it here and where
@@ -88,3 +93,7 @@ export function record(E: Engine, ars: EPitch[], g0: Game, c: Call, result: Resu
   }
   return g;
 }
+
+// where a spot sits in the 3x3 zone for a right-handed hitter, catcher's view: [column, row]; null for a chase pitch
+const CELLS: Record<string, [number, number]> = { "Up and in": [0, 0], "Up and away": [2, 0], "Get it over": [1, 1], "Down and in": [0, 2], "Down and away": [2, 2] };
+export const CELL_OF = (spot: string): [number, number] | null => CELLS[spot] ?? null;
