@@ -267,3 +267,8 @@ tunneling on chase** (real-data fit +0.310, 9 SE; the yardstick showed no measur
 - Realism after the change, no recalibration (inside the 1-point gate): D3 K 16.3 / BB 11.0 / HBP 4.1 vs real
   16.2 / 11.4 / 4.2; HS 21.1 / 13.7 / 4.0 vs 21.0 / 14.1 / 4.1; mlb 19.4 / 7.7 / 0.9 vs 20.0 / 7.9 / 0.9.
   `tests.py` 29/29; `golden/fast.py 40` 0 mismatches.
+- Step 2c checks: `golden_v10` re-frozen, `golden_v10.py check` 500 cases, largest difference 0 -> PASS;
+  `scripts/test-app.sh` **exit 0** (tests.py 29, parity, golden_v10, dist build, learn 27, db 18, import 11,
+  rails 31, schema 24, stage2 21, worlds 31, pitch_rules 41, smoke, rules_e2e 20, v10_step1_e2e 6).
+- **Open: the yardstick re-run on Drew's PC** (`scripts/yardstick.ps1 -Tag 2c -Commit dd1be1e`). Under 0.25 runs/game,
+  Step 2 is done; over it, back to Drew.
