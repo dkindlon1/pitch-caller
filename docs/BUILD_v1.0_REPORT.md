@@ -393,3 +393,84 @@ noise and sharpen-cap saturation, (3) a yardstick run on Step 3, (7) sharpening 
 - Checks after the chase fix: `tests.py` 35/35; fast parity 0 mismatches; `golden_v10` re-frozen (17,395 chase values
   moved), `golden_v10.py check` PASS, `golden_v10.js` PASS; worlds_test 31/31; learn_test passed; stage2_test D5 2/40
   (known red, until Step 7); v10_step1/v10_step3/rules/v08/v09_matchup/replay e2e and smoke passed; web demo 2/2.
+
+## Step 4 — Explanations (#3)
+
+The why line and the intent label used different comparisons, so they could contradict each other (case 0 of the golden:
+why "Sets up the slider middle", intent "Best strike here: slider down-away"). Both engines, display only:
+
+- **One comparison** (`_explain` in `engine.py`, `explain` in `app/engine.js`), read by both `why_line` and
+  `intent_label` and cached on the call's `info`. Comparator: **b\***, the allowed call with the lowest myopic cost; when the
+  drawn call is b\* itself, the next-lowest myopic cost.
+- **Three-ball counts:** `root_call` ranks them by myopic cost, so the term re-costs are now myopic too and look value is
+  not a term there (before, every term's Δ silently included look value at 3 balls).
+- **"Sets up" ⇔ Setup:** the why line names look value exactly when the intent is Setup; otherwise look value is not
+  eligible. The named pitch is the engine's own top call at the count a strike leads to (`next_count_top`): (b, k+1), the
+  look moved by `look_update`, this pitch as the last one (its most likely count-keeping strike), one more sighting, and
+  one more strike in its landing record on a non-chase target. Per-count usage at the new count isn't known there and is
+  left empty.
+- **Eye level** by the sign of the fitted `beta_E` (−0.142): "Stays at his eye level — a change costs here"; the
+  "after the {last}" suffix is gone. The intent mechanism had the same wording bug ("because it changes his eye level");
+  it now follows the same sign ("because it stays at his eye level").
+- **Not in the plan, added (flag for Drew):** when no term favors the call and it costs more than the comparator (drawn
+  for mixing), the line was "Best call on its own merits", which is false. It now reads "Mixed in so he can't sit on one
+  pitch" (1 of 250 golden cases, 7 of 139 pitches in one simulated game).
+- `why_line` takes the shaken-off pitches (`exclude`) like `intent_label`; the app and the simulator pass them.
+
+**Golden re-frozen.** Only `why.line` (69 of 250 full cases) and `why.deltas` (704 values) moved. No call, probability,
+table value or intent label changed in any of the 500 cases.
+
+| On the 250 golden calls | Before | After |
+|---|---|---|
+| "Sets up …" why lines | 15 (all 15 beside a non-Setup intent) | 0 |
+| "Changes his eye level" (wrong sign) | 47 | 0 ("Stays at his eye level": 46) |
+| Three-ball lines that changed | — | 20 |
+| Intent labels changed | — | 0 |
+
+**Finding: Setup is effectively unreachable at the shipped noise margin.** In 681 calls scanned (every call in every
+distribution, golden cases with 0-1 strikes and fewer than 3 balls), look value reversed the myopic order in only 4, and
+by at most 0.74 × `INTENT_E`. So the app will no longer say "Sets up". The plan expected this ("the honest state of v0.8's
+planning term").
+
+Ten examples (golden case: count, call | why before → why after | intent):
+
+| # | Count, call | Why before | Why after | Intent |
+|---|---|---|---|---|
+| 0 | 2-0 slider down-away | Sets up the slider middle | He's looking up (33%) | Best strike here: slider down-away |
+| 10 | 2-1 fastball down-in | Changes his eye level | Stays at his eye level — a change costs here | Best strike here: fastball down-in |
+| 13 | 0-2 slider down-away | Changes his eye level after the curveball | Stays at his eye level — a change costs here | Put-away: slider down-away |
+| 15 | 0-0 curveball down-away | Sets up the changeup down-away | He's looking middle (34%) | Best strike here: curveball down-away |
+| 19 | 1-1 fastball up-away | Sets up the changeup middle | He's looking down (35%) | Best strike here: fastball up-away |
+| 29 | 3-0 slider middle | Changes his eye level after the slider | Stays at his eye level — a change costs here | Need a strike: slider middle is the safest one |
+| 70 | 1-2 slider down-in | Best call on its own merits | Mixed in so he can't sit on one pitch | Put-away: slider down-in |
+| 92 | 3-1 slider middle | Best call on its own merits | He's timed for 82 mph; this plays 5 mph slower | Need a strike: slider middle is the safest one |
+| 93 | 3-0 changeup middle | Best call on its own merits | He's seen the changeup 5 times today | Need a strike: changeup middle is the safest one |
+| 128 | 1-2 curveball down-away | Sets up the slider down-away | Stays at his eye level — a change costs here | Put-away: curveball down-away |
+
+**New `tests_v10_explain.py`** (in `test-app.sh`), on 60 golden cases, 7/7:
+1. the named term has the smallest eligible Δ, and it is negative;
+2. the comparator is b\* (recomputed from `cost08`);
+3. three-ball counts: no look value, and the timing Δ equals a myopic re-cost done in the test (12 cases);
+4. "Sets up" exactly when the intent is Setup, never beside "Best strike here";
+5. the eye-level line and the mechanism text follow sign(`beta_E`) (10 eye-level lines);
+6. the setup line names the engine's actual next-count top call, computed in the test with `call_v08` on a situation it
+   builds itself. Setup never occurs at the shipped margin, so this check sets `INTENT_E = 0` on the three golden cases
+   where look value reverses the myopic order, and requires at least 3 Setup calls (4 found);
+7. Python and JS agree on the why line, intent and next-count top call on 20 cases, both as called and with the drawn
+   pitch shaken off (`golden/explain_twin.js`).
+
+`golden/fast.py`/`fast.js` now compare the intent label live as well.
+
+App/DB: text only; `doc.v08.intent`/`.mechanism` unchanged; old event docs keep their old text.
+
+Checks run:
+```
+tests.py 35/35   tests_v10_explain 7/7   tests_v09_followups: all passed   fuzz.py 300 50: 29/29
+golden_v10 re-frozen; golden_v10.py check: 500 cases, largest difference 0 -> PASS; golden_v10.js: PASS
+golden/fast.py 40: 0 mismatches (intent included)   parity (make_parity + parity.js): PASS
+build: app/dist matches the source; web/lib matches the app; web demo 2/2
+learn_test, db_test, import_test, rails_test, schema_test, pitch_rules_test: all passed
+stage2_test: D5 2/40 (known red, until Step 7)   worlds_test: 31/31
+smoke, rules_e2e, v10_step1_e2e, v10_step3_e2e, v08_e2e, v09_labels_e2e, v09_matchup_e2e, gameday_e2e, replay_e2e: all passed
+one simulated game (simulate.py): 139 pitches, why and intent logged, 0 "Sets up"
+```

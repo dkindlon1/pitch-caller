@@ -10,12 +10,12 @@ usage: python3 golden/fast.py N          -> compute both sides, diff, exit non-z
        python3 golden/fast.py --emit N   -> print this side's results as JSON (used by golden/fast.js)
 """
 import json, os, subprocess, sys
-from dataclasses import replace
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path[:0] = [HERE, ROOT]
 import cases as G                                  # noqa: E402
+import golden_v09 as G9                            # noqa: E402  (compute() with the intent label)
 
 TOL = 1e-9
 GOLD = os.path.join(HERE, "golden_v09.json")
@@ -29,20 +29,9 @@ def load(n):
 
 
 def compute(c):
-    """cases.compute() on one golden case, with v0.9's matchup applied the way golden_v09.py applies it."""
-    d = dict(c)
-    s = dict(c["s"])
-    mm = s.pop("matchup", None)
-    d["s"] = s
-    ars, sit = G.from_dicts(d)
-    if mm:
-        sit = replace(sit, matchup=mm)
-    orig = G.from_dicts
-    G.from_dicts = lambda _c: (ars, sit)             # cases.compute() re-derives inputs; hand it ours
-    try:
-        return G.compute(c)
-    finally:
-        G.from_dicts = orig
+    """golden_v09.compute() on one golden case (cases.py's outputs with v0.9's matchup applied, plus the intent label),
+    the same function golden_v10.py freezes."""
+    return G9.compute(c)
 
 
 def py_side(n):

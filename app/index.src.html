@@ -804,7 +804,7 @@ function makeCall() {
   // spec 9: the "why" line runs after the call is shown, off the critical path
   setTimeout(() => {
     if (G().call !== c) return;
-    try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info)[0]; } catch (e) { c.why = null; }
+    try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info, shakenPA)[0]; } catch (e) { c.why = null; }
     // v0.9 item 4: the call's job in the at-bat (display only; computed after the call, changes nothing)
     try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenPA); }
     catch (e) { c.intent = c.mechanism = c.intentLine = null; }

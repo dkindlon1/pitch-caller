@@ -539,8 +539,10 @@ def play_game(log_path):
                 # most likely sit
                 why_txt, guess_txt, intent_txt = "", "", ""
                 if not override:
-                    why_txt = CALLER.why_line(ars, s, tab, (p, q), _info)[0]
-                    intent_txt = CALLER.intent_label(ars, s, tab, (p, q), _info, exclude=shaken_pairs if legacy else shaken)[0]     # v0.9 item 4
+                    ex_ = shaken_pairs if legacy else shaken
+                    why_txt = (CALLER.why_line(ars, s, tab, (p, q), _info) if legacy else
+                               CALLER.why_line(ars, s, tab, (p, q), _info, exclude=ex_))[0]
+                    intent_txt = CALLER.intent_label(ars, s, tab, (p, q), _info, exclude=ex_)[0]     # v0.9 item 4
                     sg = _info["sigma"]
                     gk = max(sg, key=sg.get)
                     guess_txt = f"{gk[0]} {gk[1]} {sg[gk]:.0%}"

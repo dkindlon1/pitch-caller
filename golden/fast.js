@@ -41,6 +41,7 @@ function compute(c) {
              dist, sigma: plain(res.info.sigma), residual: res.info.residual };
   const [line, deltas] = V.whyLine(ars, res.info.s, tab, res.pick, res.info);
   r.why = { line, deltas: plain(deltas) };
+  r.intent = plain(V.intentLabel(ars, res.info.s, tab, res.pick, res.info));   // v1.0 Step 4: compared live too
   const p0 = ars[0], q0 = E.targets(s.balls, s.strikes)[0];
   r.take = Array.from(V.takeStats(p0, q0, sw, ars));
   const g = V.gradeStats(p0, q0, sw, ars, null, c.s.grades);

@@ -2099,48 +2099,111 @@ def _root_cost_pair(arsenal, s, tab, a, b, sigma, myopic=False):
     return c(a), c(b)
 
 
-def why_line(arsenal, s, tab, pick, info):
-    """9: Delta_k = [C(a) - C(b)] - [C_-k(a) - C_-k(b)] for the drawn call a and the best other allowed call b; the most
-    negative term's template. Delta values rank only. Returns (line, {term: Delta}, b)."""
-    M, sigma = info["M"], info["sigma"]
-    a = (pick[0].name, pick[1])
-    full = {x: sum(sigma[k] * M[x][k] for k in M[x]) for x in M}
-    others = [x for x in full if x != a]
-    if not others:
-        return "Only call allowed here", {}, None
-    b = min(others, key=lambda x: full[x])
-    base = full[a] - full[b]
-    deltas = {}
-    for term, names in _WHY_PARAMS.items():
-        saved = {n: P08[n] for n in names}
-        try:
-            for n in names:
-                P08[n] = 0.0
-            ca, cb = _root_cost_pair(arsenal, s, tab, a, b, sigma)
-        finally:
-            P08.update(saved)
-        deltas[term] = base - (ca - cb)
-    ca, cb = _root_cost_pair(arsenal, s, tab, a, b, sigma, myopic=True)
-    deltas["look value"] = base - (ca - cb)
-    for term, s_off in (("situation", replace(s, win=None)), ("umpire", replace(s, ump_u=0.0)),
-                        ("running game", replace(s, steal=None)), ("grades", replace(s, grades=None))):
-        ca, cb = _root_cost_pair(arsenal, s_off, tab, a, b, sigma)
-        deltas[term] = base - (ca - cb)
-    term = min(deltas, key=lambda t: deltas[t])
-    if deltas[term] >= -1e-6:
-        return "Best call on its own merits", deltas, b
+def next_count_top(arsenal, s, tab, pick, info, exclude=None):
+    """v1.0 Step 4 (#3): the engine's own top call at the count this pitch leads to if it goes for a strike: (b, k+1), the
+    look moved by look_update, this pitch as the last one (its most likely count-keeping strike: taken, missed or fouled),
+    one more sighting of it, and, on a non-chase target, one more strike in its landing record. Per-count usage at the new
+    count is not known here and is left empty. Read by the "Sets up the X" lines only; it changes no call."""
     p, q = pick[0], pick[1]
     look = s.look or tab.h0
+    P = outcome_probs(p, q, replace(s, look=look), arsenal, sit=("mix", info["sigma"]))
+    res = "cstrike"
+    for r in ("whiff", "foul"):
+        if P[r] > P[res]:
+            res = r
+    seen = dict(s.hitter_seen or {})
+    seen[p.name] = seen.get(p.name, 0) + 1
+    land = dict(s.landing_today or {})
+    if q != "chase":
+        land[p.name] = landing_record(landing_triple(p, land.get(p.name)), True, expected_strike(p, q, s, arsenal))
+    sn = replace(s, strikes=min(2, s.strikes + 1), look=look_update(look, p, q, s), last=(p.name, q, res),
+                 hitter_seen=seen, landing_today=land, usage_this_count={}, usage_by_call={})
+    pi = root_call(arsenal, sn, tab, exclude)[0]
+    top = None
+    for x, v in pi.items():
+        if top is None or v > pi[top]:
+            top = x
+    return top
+
+
+def _explain(arsenal, s, tab, pick, info, exclude=None):
+    """v1.0 Step 4 (#3): the one comparison behind both the why line and the intent label. Costs are re-priced the way
+    root_call ranked them (myopic at three balls). b* = the allowed call with the lowest myopic cost; the comparator is b*,
+    or, when the drawn call is b* itself, the next-lowest myopic cost. Delta_k = [C(a) - C(b)] - [C_-k(a) - C_-k(b)].
+    Cached on info, since the why line and the intent read the same numbers."""
+    key = (pick[0].name, pick[1], tuple(sorted(exclude or ())))
+    cache = info.setdefault("explain", {})
+    if key in cache:
+        return cache[key]
+    sigma = info["sigma"]
+    p, q = pick[0], pick[1]
+    a = (p.name, q)
+    allowed = list(info["M"])
+    calls = allowed + ([a] if a not in info["M"] else [])
+    my = s.balls == 3
+    cmy = {x: _root_cost_one(arsenal, s, tab, x, sigma, True) for x in calls}
+    cful = cmy if my else {x: _root_cost_one(arsenal, s, tab, x, sigma) for x in calls}
+    bstar = allowed[0]
+    for x in allowed:
+        if cmy[x] < cmy[bstar]:
+            bstar = x
+    others = [x for x in allowed if x != a]
+    comp = bstar if bstar != a else (min(others, key=lambda x: cmy[x]) if others else None)
+    label = intent_from_costs(s.balls, s.strikes, q, cmy[a], cmy[bstar], cful[a], cful[bstar], INTENT_E * run_scale(s.level))
+    deltas = {}
+    if comp is not None:
+        base = cful[a] - cful[comp]
+        for term, names in _WHY_PARAMS.items():
+            saved = {n: P08[n] for n in names}
+            try:
+                for n in names:
+                    P08[n] = 0.0
+                ca, cb = _root_cost_pair(arsenal, s, tab, a, comp, sigma, myopic=my)
+            finally:
+                P08.update(saved)
+            deltas[term] = base - (ca - cb)
+        if not my:      # three-ball counts are ranked without look value, so it explains nothing there
+            deltas["look value"] = base - (cmy[a] - cmy[comp])
+        for term, s_off in (("situation", replace(s, win=None)), ("umpire", replace(s, ump_u=0.0)),
+                            ("running game", replace(s, steal=None)), ("grades", replace(s, grades=None))):
+            ca, cb = _root_cost_pair(arsenal, s_off, tab, a, comp, sigma, myopic=my)
+            deltas[term] = base - (ca - cb)
+    nxt = next_count_top(arsenal, s, tab, pick, info, exclude) if label == "Setup" else None
+    out = dict(a=a, bstar=bstar, comp=comp, cmy=cmy, cful=cful, label=label, deltas=deltas, next=nxt)
+    cache[key] = out
+    return out
+
+
+def why_line(arsenal, s, tab, pick, info, exclude=None):
+    """9 / v1.0 Step 4: the term that most favors the drawn call a over the comparator (see _explain). "Sets up" exactly
+    when the intent label is Setup, naming the engine's top call at the next count; otherwise look value is not eligible.
+    Delta values rank only. Returns (line, {term: Delta}, comparator)."""
+    X = _explain(arsenal, s, tab, pick, info, exclude)
+    deltas, b = X["deltas"], X["comp"]
+    if b is None:
+        return "Only call allowed here", {}, None
+    if X["label"] == "Setup":
+        term = "look value"
+    else:
+        elig = [t for t in deltas if t != "look value"]
+        term = min(elig, key=lambda t: deltas[t])
+        if deltas[term] >= -1e-6:
+            if X["cful"][X["a"]] <= X["cful"][b] + 1e-9:
+                return "Best call on its own merits", deltas, b
+            return "Mixed in so he can't sit on one pitch", deltas, b
+    p, q = pick[0], pick[1]
+    look = s.look or tab.h0
+    sigma = info["sigma"]
     if term == "timing":
         vs = sum(v * speed_today(next(x for x in arsenal if x.name == n), s) for (n, j), v in sigma.items())
         vt = (1 - P08["alpha"]) * look[0] + P08["alpha"] * vs
         vp = speed_today(p, s) + 0.5 * ev_adj(p, q)
         line = f"He's timed for {vt:.0f} mph; this plays {abs(vt - vp):.0f} mph {'slower' if vt > vp else 'faster'}"
     elif term == "look value":
-        nxt = min((x for x in full if x[0] != p.name), key=lambda x: full[x], default=b)
+        nxt = X["next"]
         line = f"Sets up the {nxt[0].lower()} {nxt[1]}"
     elif term == "eye level":
-        line = f"Changes his eye level after the {s.last[0].lower()}" if s.last else "Changes his eye level"
+        line = "Stays at his eye level — a change costs here" if P08["beta_E"] < 0 else "Changes his eye level"
     elif term == "familiarity":
         c_ = "OS" if is_offspeed(next(x for x in arsenal if x.name == b[0]).kind) else "FB"
         line = f"He's seen the {b[0].lower()} {s.familiar.get(c_, 0)} times today"
@@ -2177,8 +2240,14 @@ def why_line(arsenal, s, tab, pick, info):
 # ---------------------------------------------------------------------------
 INTENT_E = 0.0005           # x run scale: numerical-noise margin for "costs more now" (plan item 4)
 INTENT_TERMS = ("timing", "eye level", "repeat", "tunneling")   # what can do a setup's work (side to side did not ship)
-INTENT_MECH = {"timing": "of his timing", "eye level": "it changes his eye level", "repeat": "he just saw it",
-               "tunneling": "it tunnels off the last pitch", None: "of the counts it leads to"}
+INTENT_MECH = {"timing": "of his timing", "repeat": "he just saw it", "tunneling": "it tunnels off the last pitch",
+               None: "of the counts it leads to"}
+
+
+def intent_mech_text(m):
+    if m == "eye level":        # v1.0 Step 4: the sign of the fitted coefficient decides what the eye-level term rewards
+        return "it stays at his eye level" if P08["beta_E"] < 0 else "it changes his eye level"
+    return INTENT_MECH[m]
 
 
 def intent_from_costs(balls, strikes, quad, c_my_a, c_my_best, c_a, c_best, e):
@@ -2201,36 +2270,17 @@ def _root_cost_one(arsenal, s, tab, x, sigma, myopic=False):
 
 
 def intent_label(arsenal, s, tab, pick, info, exclude=None):
-    """v0.9 item 4. Returns (label, mechanism, coach line). pick = (pitch, quad, ...) as returned by call_v08; info its info.
-    Mechanism (Setup and Early off-zone only): the term whose removal most weakens the call against b* (the why line's
-    term-off comparison), or None when no single term carries it."""
-    sigma = info["sigma"]
+    """v0.9 item 4 / v1.0 Step 4. Returns (label, mechanism, coach line). pick = (pitch, quad, ...) as returned by call_v08;
+    info its info. The same comparison as the why line (_explain). Mechanism (Setup and Early off-zone only, when the call
+    is not b* itself): the timing / eye level / repeat / tunneling term that most favors the call over b*, or None."""
+    X = _explain(arsenal, s, tab, pick, info, exclude)
     p, q = pick[0], pick[1]
-    a = (p.name, q)
-    calls = allowed_calls(arsenal, s, exclude) or allowed_calls(arsenal, s)
-    cmy = {x: _root_cost_one(arsenal, s, tab, x, sigma, True) for x in calls}
-    bstar = calls[0]
-    for x in calls:
-        if cmy[x] < cmy[bstar]:
-            bstar = x
-    if a not in cmy:
-        cmy[a] = _root_cost_one(arsenal, s, tab, a, sigma, True)
-    c_a = _root_cost_one(arsenal, s, tab, a, sigma)
-    c_b = _root_cost_one(arsenal, s, tab, bstar, sigma)
-    label = intent_from_costs(s.balls, s.strikes, q, cmy[a], cmy[bstar], c_a, c_b, INTENT_E * run_scale(s.level))
+    label = X["label"]
     mech = None
-    if label in ("Setup", "Early off-zone") and bstar != a:
-        base = c_a - c_b
+    if label in ("Setup", "Early off-zone") and X["bstar"] != X["a"]:
         best_d = -1e-9
         for term in INTENT_TERMS:
-            names = _WHY_PARAMS[term]
-            saved = {n: P08[n] for n in names}
-            try:
-                for n in names:
-                    P08[n] = 0.0
-                d = base - (_root_cost_one(arsenal, s, tab, a, sigma) - _root_cost_one(arsenal, s, tab, bstar, sigma))
-            finally:
-                P08.update(saved)
+            d = X["deltas"][term]
             if d < best_d:
                 best_d, mech = d, term
     spot = q
@@ -2239,13 +2289,12 @@ def intent_label(arsenal, s, tab, pick, info, exclude=None):
     elif label == "Get it over":
         line = f"Need a strike: {p.name.lower()} {spot} is the safest one"
     elif label == "Setup":
-        full = {x: sum(sigma[k] * info["M"][x][k] for k in info["M"][x]) for x in info["M"]}
-        nxt = min((x for x in full if x[0] != p.name), key=lambda x: full[x], default=bstar)
-        line = f"Sets up the {nxt[0].lower()} {nxt[1]}, because {INTENT_MECH[mech]}"
+        nxt = X["next"]
+        line = f"Sets up the {nxt[0].lower()} {nxt[1]}, because {intent_mech_text(mech)}"
     elif label == "Expand":
         line = f"Two strikes: {p.name.lower()} {spot}, off the zone"
     elif label == "Finish":
         line = f"Put-away: {p.name.lower()} {spot}"
     else:
-        line = f"Off the zone early: {p.name.lower()} {spot}" + (f", because {INTENT_MECH[mech]}" if mech else "")
+        line = f"Off the zone early: {p.name.lower()} {spot}" + (f", because {intent_mech_text(mech)}" if mech else "")
     return label, mech, line

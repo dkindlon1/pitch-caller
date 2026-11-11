@@ -1980,39 +1980,75 @@ td.wrapcell .line { display: block; }
     const c = (x) => psum(ks.filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
     return [c(a), c(b)];
   }
-  function whyLine(arsenal, s, tab, pick, info) {
-    const M = info.M, sigma = info.sigma, a = ck(pick.pitch.name, pick.quad);
-    const full = {}; for (const x in M) full[x] = psum(Object.keys(M[x]).map((k) => sigma[k] * M[x][k]));
-    const others = Object.keys(full).filter((x) => x !== a);
-    if (!others.length) return ["Only call allowed here", {}, null];
-    let b = others[0]; for (const x of others) if (full[x] < full[b]) b = x;
-    const base = full[a] - full[b], deltas = {};
-    for (const term in WHY_PARAMS) {
-      const saved = {}; for (const n of WHY_PARAMS[term]) saved[n] = P08[n];
-      let ca, cb;
-      try { for (const n of WHY_PARAMS[term]) P08[n] = 0.0; [ca, cb] = rootCostPair(arsenal, s, tab, a, b, sigma); } finally { Object.assign(P08, saved); }
-      deltas[term] = base - (ca - cb);
-    }
-    let [ca, cb] = rootCostPair(arsenal, s, tab, a, b, sigma, true);
-    deltas["look value"] = base - (ca - cb);
-    for (const [term, sOff] of [["situation", replace(s, { win: null })], ["umpire", replace(s, { ump_u: 0.0 })],
-      ["running game", replace(s, { steal: null })], ["grades", replace(s, { grades: null })]]) {
-      [ca, cb] = rootCostPair(arsenal, sOff, tab, a, b, sigma);
-      deltas[term] = base - (ca - cb);
-    }
-    let term = null; for (const t in deltas) if (term === null || deltas[t] < deltas[term]) term = t;
-    if (deltas[term] >= -1e-6) return ["Best call on its own merits", deltas, b];
+  // v1.0 Step 4 (#3): mirror of engine.py next_count_top: the engine's own top call at the count a strike leads to
+  function nextCountTop(arsenal, s, tab, pick, info, exclude) {
     const p = pick.pitch, q = pick.quad, look = s.look || tab.h0;
+    const P = outcomeProbs(p, q, replace(s, { look }), arsenal, null, null, ["mix", info.sigma]);
+    let res = "cstrike";
+    for (const r of ["whiff", "foul"]) if (P[r] > P[res]) res = r;
+    const seen = Object.assign({}, s.hitter_seen || {}); seen[p.name] = (seen[p.name] || 0) + 1;
+    const land = Object.assign({}, s.landing_today || {});
+    if (q !== "chase") land[p.name] = landingRecord(landingTriple(p, land[p.name]), true, expectedStrike(p, q, s, arsenal));
+    const sn = replace(s, { strikes: Math.min(2, s.strikes + 1), look: lookUpdate(look, p, q, s), last: [p.name, q, res],
+      hitter_seen: seen, landing_today: land, usage_this_count: {}, usage_by_call: {} });
+    const pi = rootCall(arsenal, sn, tab, exclude)[0];
+    let top = null; for (const x in pi) if (top === null || pi[x] > pi[top]) top = x;
+    return top;
+  }
+  // v1.0 Step 4 (#3): mirror of engine.py _explain: one comparison for the why line and the intent label
+  function explain(arsenal, s, tab, pick, info, exclude) {
+    const key = pick.pitch.name + "|" + pick.quad + "|" + [...(exclude || [])].map(String).sort().join(",");
+    info.explain = info.explain || {};
+    if (key in info.explain) return info.explain[key];
+    const sigma = info.sigma, p = pick.pitch, q = pick.quad, a = ck(p.name, q);
+    const allowed = Object.keys(info.M), calls = allowed.includes(a) ? allowed : allowed.concat([a]);
+    const my = s.balls === 3;
+    const cmy = {}; for (const x of calls) cmy[x] = rootCostOne(arsenal, s, tab, x, sigma, true);
+    let cful = cmy; if (!my) { cful = {}; for (const x of calls) cful[x] = rootCostOne(arsenal, s, tab, x, sigma, false); }
+    let bstar = allowed[0]; for (const x of allowed) if (cmy[x] < cmy[bstar]) bstar = x;
+    const others = allowed.filter((x) => x !== a);
+    let comp = null;
+    if (bstar !== a) comp = bstar;
+    else for (const x of others) if (comp === null || cmy[x] < cmy[comp]) comp = x;
+    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cful[a], cful[bstar], INTENT_E * runScale(s.level));
+    const deltas = {};
+    if (comp !== null) {
+      const base = cful[a] - cful[comp];
+      for (const term in WHY_PARAMS) {
+        const saved = {}; for (const n of WHY_PARAMS[term]) saved[n] = P08[n];
+        let ca, cb;
+        try { for (const n of WHY_PARAMS[term]) P08[n] = 0.0; [ca, cb] = rootCostPair(arsenal, s, tab, a, comp, sigma, my); } finally { Object.assign(P08, saved); }
+        deltas[term] = base - (ca - cb);
+      }
+      if (!my) deltas["look value"] = base - (cmy[a] - cmy[comp]);
+      for (const [term, sOff] of [["situation", replace(s, { win: null })], ["umpire", replace(s, { ump_u: 0.0 })],
+        ["running game", replace(s, { steal: null })], ["grades", replace(s, { grades: null })]]) {
+        const [ca, cb] = rootCostPair(arsenal, sOff, tab, a, comp, sigma, my);
+        deltas[term] = base - (ca - cb);
+      }
+    }
+    const nxt = label === "Setup" ? nextCountTop(arsenal, s, tab, pick, info, exclude) : null;
+    const out = { a, bstar, comp, cmy, cful, label, deltas, next: nxt };
+    info.explain[key] = out;
+    return out;
+  }
+  function whyLine(arsenal, s, tab, pick, info, exclude) {
+    const X = explain(arsenal, s, tab, pick, info, exclude), deltas = X.deltas, b = X.comp;
+    if (b === null) return ["Only call allowed here", {}, null];
+    let term;
+    if (X.label === "Setup") term = "look value";
+    else {
+      term = null; for (const t in deltas) if (t !== "look value" && (term === null || deltas[t] < deltas[term])) term = t;
+      if (deltas[term] >= -1e-6) return [X.cful[X.a] <= X.cful[b] + 1e-9 ? "Best call on its own merits" : "Mixed in so he can't sit on one pitch", deltas, b];
+    }
+    const p = pick.pitch, q = pick.quad, look = s.look || tab.h0, sigma = info.sigma;
     let line;
     if (term === "timing") {
       const vs = psum(Object.keys(sigma).map((k) => sigma[k] * speedToday(byName(arsenal, skName(k)), s)));
       const vt = (1 - P08.alpha) * look[0] + P08.alpha * vs, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
       line = `He's timed for ${vt.toFixed(0)} mph; this plays ${Math.abs(vt - vp).toFixed(0)} mph ${vt > vp ? "slower" : "faster"}`;
-    } else if (term === "look value") {
-      let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;
-      if (nxt === null) nxt = b;
-      line = `Sets up the ${skName(nxt).toLowerCase()} ${skH(nxt)}`;
-    } else if (term === "eye level") line = s.last ? `Changes his eye level after the ${s.last[0].toLowerCase()}` : "Changes his eye level";
+    } else if (term === "look value") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}`;
+    else if (term === "eye level") line = P08.beta_E < 0 ? "Stays at his eye level — a change costs here" : "Changes his eye level";
     else if (term === "familiarity") {
       const c_ = isOffspeed(byName(arsenal, skName(b)).kind) ? "OS" : "FB";
       line = `He's seen the ${skName(b).toLowerCase()} ${(s.familiar || {})[c_] || 0} times today`;
@@ -2037,8 +2073,12 @@ td.wrapcell .line { display: block; }
   // v0.9 item 4: intent labels. DISPLAY ONLY (mirror of engine.py intent_label): nothing here feeds back into a call.
   const INTENT_E = 0.0005;
   const INTENT_TERMS = ["timing", "eye level", "repeat", "tunneling"];
-  const INTENT_MECH = { timing: "of his timing", "eye level": "it changes his eye level", repeat: "he just saw it",
-    tunneling: "it tunnels off the last pitch" };
+  const INTENT_MECH = { timing: "of his timing", repeat: "he just saw it", tunneling: "it tunnels off the last pitch" };
+  function intentMechText(m) {
+    if (m === null) return "of the counts it leads to";
+    if (m === "eye level") return P08.beta_E < 0 ? "it stays at his eye level" : "it changes his eye level";
+    return INTENT_MECH[m];
+  }
   function intentFromCosts(balls, strikes, quad, cMyA, cMyBest, cA, cBest, e) {
     if (balls === 3 && strikes < 2) return "Get it over";
     if (strikes === 2) return quad === "chase" ? "Expand" : "Finish";
@@ -2050,37 +2090,20 @@ td.wrapcell .line { display: block; }
     return psum(sitOptions(arsenal).filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
   }
   function intentLabel(arsenal, s, tab, pick, info, exclude) {
-    const sigma = info.sigma, p = pick.pitch, q = pick.quad, a = ck(p.name, q);
-    let calls = allowedCalls(arsenal, s, exclude);
-    if (!calls.length) calls = allowedCalls(arsenal, s);
-    const cmy = {}; for (const x of calls) cmy[x] = rootCostOne(arsenal, s, tab, x, sigma, true);
-    let bstar = calls[0]; for (const x of calls) if (cmy[x] < cmy[bstar]) bstar = x;
-    if (!(a in cmy)) cmy[a] = rootCostOne(arsenal, s, tab, a, sigma, true);
-    const cA = rootCostOne(arsenal, s, tab, a, sigma, false), cB = rootCostOne(arsenal, s, tab, bstar, sigma, false);
-    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cA, cB, INTENT_E * runScale(s.level));
+    const X = explain(arsenal, s, tab, pick, info, exclude), p = pick.pitch, q = pick.quad, label = X.label;
     let mech = null;
-    if ((label === "Setup" || label === "Early off-zone") && bstar !== a) {
-      const base = cA - cB; let bestD = -1e-9;
-      for (const term of INTENT_TERMS) {
-        const names = WHY_PARAMS[term], saved = {}; for (const n of names) saved[n] = P08[n];
-        let d;
-        try { for (const n of names) P08[n] = 0.0; d = base - (rootCostOne(arsenal, s, tab, a, sigma, false) - rootCostOne(arsenal, s, tab, bstar, sigma, false)); }
-        finally { Object.assign(P08, saved); }
-        if (d < bestD) { bestD = d; mech = term; }
-      }
+    if ((label === "Setup" || label === "Early off-zone") && X.bstar !== X.a) {
+      let bestD = -1e-9;
+      for (const term of INTENT_TERMS) if (X.deltas[term] < bestD) { bestD = X.deltas[term]; mech = term; }
     }
-    const pl = p.name.toLowerCase(), why = (m) => (m === null ? "of the counts it leads to" : INTENT_MECH[m]);
+    const pl = p.name.toLowerCase();
     let line;
     if (label === "Get ahead") line = `Best strike here: ${pl} ${q}`;
     else if (label === "Get it over") line = `Need a strike: ${pl} ${q} is the safest one`;
-    else if (label === "Setup") {
-      const full = {}; for (const x in info.M) full[x] = psum(Object.keys(info.M[x]).map((k) => sigma[k] * info.M[x][k]));
-      let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;
-      if (nxt === null) nxt = bstar;
-      line = `Sets up the ${skName(nxt).toLowerCase()} ${skH(nxt)}, because ${why(mech)}`;
-    } else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
+    else if (label === "Setup") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}, because ${intentMechText(mech)}`;
+    else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
     else if (label === "Finish") line = `Put-away: ${pl} ${q}`;
-    else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${why(mech)}` : "");
+    else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${intentMechText(mech)}` : "");
     return [label, mech, line];
   }
   function gradeCallV08(arsenal, s, pitchName, quad, tab, opts = {}) {
@@ -2100,7 +2123,7 @@ td.wrapcell .line { display: block; }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
-    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
+    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, nextCountTop,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
@@ -5686,39 +5709,75 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const c = (x) => psum(ks.filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
     return [c(a), c(b)];
   }
-  function whyLine(arsenal, s, tab, pick, info) {
-    const M = info.M, sigma = info.sigma, a = ck(pick.pitch.name, pick.quad);
-    const full = {}; for (const x in M) full[x] = psum(Object.keys(M[x]).map((k) => sigma[k] * M[x][k]));
-    const others = Object.keys(full).filter((x) => x !== a);
-    if (!others.length) return ["Only call allowed here", {}, null];
-    let b = others[0]; for (const x of others) if (full[x] < full[b]) b = x;
-    const base = full[a] - full[b], deltas = {};
-    for (const term in WHY_PARAMS) {
-      const saved = {}; for (const n of WHY_PARAMS[term]) saved[n] = P08[n];
-      let ca, cb;
-      try { for (const n of WHY_PARAMS[term]) P08[n] = 0.0; [ca, cb] = rootCostPair(arsenal, s, tab, a, b, sigma); } finally { Object.assign(P08, saved); }
-      deltas[term] = base - (ca - cb);
-    }
-    let [ca, cb] = rootCostPair(arsenal, s, tab, a, b, sigma, true);
-    deltas["look value"] = base - (ca - cb);
-    for (const [term, sOff] of [["situation", replace(s, { win: null })], ["umpire", replace(s, { ump_u: 0.0 })],
-      ["running game", replace(s, { steal: null })], ["grades", replace(s, { grades: null })]]) {
-      [ca, cb] = rootCostPair(arsenal, sOff, tab, a, b, sigma);
-      deltas[term] = base - (ca - cb);
-    }
-    let term = null; for (const t in deltas) if (term === null || deltas[t] < deltas[term]) term = t;
-    if (deltas[term] >= -1e-6) return ["Best call on its own merits", deltas, b];
+  // v1.0 Step 4 (#3): mirror of engine.py next_count_top: the engine's own top call at the count a strike leads to
+  function nextCountTop(arsenal, s, tab, pick, info, exclude) {
     const p = pick.pitch, q = pick.quad, look = s.look || tab.h0;
+    const P = outcomeProbs(p, q, replace(s, { look }), arsenal, null, null, ["mix", info.sigma]);
+    let res = "cstrike";
+    for (const r of ["whiff", "foul"]) if (P[r] > P[res]) res = r;
+    const seen = Object.assign({}, s.hitter_seen || {}); seen[p.name] = (seen[p.name] || 0) + 1;
+    const land = Object.assign({}, s.landing_today || {});
+    if (q !== "chase") land[p.name] = landingRecord(landingTriple(p, land[p.name]), true, expectedStrike(p, q, s, arsenal));
+    const sn = replace(s, { strikes: Math.min(2, s.strikes + 1), look: lookUpdate(look, p, q, s), last: [p.name, q, res],
+      hitter_seen: seen, landing_today: land, usage_this_count: {}, usage_by_call: {} });
+    const pi = rootCall(arsenal, sn, tab, exclude)[0];
+    let top = null; for (const x in pi) if (top === null || pi[x] > pi[top]) top = x;
+    return top;
+  }
+  // v1.0 Step 4 (#3): mirror of engine.py _explain: one comparison for the why line and the intent label
+  function explain(arsenal, s, tab, pick, info, exclude) {
+    const key = pick.pitch.name + "|" + pick.quad + "|" + [...(exclude || [])].map(String).sort().join(",");
+    info.explain = info.explain || {};
+    if (key in info.explain) return info.explain[key];
+    const sigma = info.sigma, p = pick.pitch, q = pick.quad, a = ck(p.name, q);
+    const allowed = Object.keys(info.M), calls = allowed.includes(a) ? allowed : allowed.concat([a]);
+    const my = s.balls === 3;
+    const cmy = {}; for (const x of calls) cmy[x] = rootCostOne(arsenal, s, tab, x, sigma, true);
+    let cful = cmy; if (!my) { cful = {}; for (const x of calls) cful[x] = rootCostOne(arsenal, s, tab, x, sigma, false); }
+    let bstar = allowed[0]; for (const x of allowed) if (cmy[x] < cmy[bstar]) bstar = x;
+    const others = allowed.filter((x) => x !== a);
+    let comp = null;
+    if (bstar !== a) comp = bstar;
+    else for (const x of others) if (comp === null || cmy[x] < cmy[comp]) comp = x;
+    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cful[a], cful[bstar], INTENT_E * runScale(s.level));
+    const deltas = {};
+    if (comp !== null) {
+      const base = cful[a] - cful[comp];
+      for (const term in WHY_PARAMS) {
+        const saved = {}; for (const n of WHY_PARAMS[term]) saved[n] = P08[n];
+        let ca, cb;
+        try { for (const n of WHY_PARAMS[term]) P08[n] = 0.0; [ca, cb] = rootCostPair(arsenal, s, tab, a, comp, sigma, my); } finally { Object.assign(P08, saved); }
+        deltas[term] = base - (ca - cb);
+      }
+      if (!my) deltas["look value"] = base - (cmy[a] - cmy[comp]);
+      for (const [term, sOff] of [["situation", replace(s, { win: null })], ["umpire", replace(s, { ump_u: 0.0 })],
+        ["running game", replace(s, { steal: null })], ["grades", replace(s, { grades: null })]]) {
+        const [ca, cb] = rootCostPair(arsenal, sOff, tab, a, comp, sigma, my);
+        deltas[term] = base - (ca - cb);
+      }
+    }
+    const nxt = label === "Setup" ? nextCountTop(arsenal, s, tab, pick, info, exclude) : null;
+    const out = { a, bstar, comp, cmy, cful, label, deltas, next: nxt };
+    info.explain[key] = out;
+    return out;
+  }
+  function whyLine(arsenal, s, tab, pick, info, exclude) {
+    const X = explain(arsenal, s, tab, pick, info, exclude), deltas = X.deltas, b = X.comp;
+    if (b === null) return ["Only call allowed here", {}, null];
+    let term;
+    if (X.label === "Setup") term = "look value";
+    else {
+      term = null; for (const t in deltas) if (t !== "look value" && (term === null || deltas[t] < deltas[term])) term = t;
+      if (deltas[term] >= -1e-6) return [X.cful[X.a] <= X.cful[b] + 1e-9 ? "Best call on its own merits" : "Mixed in so he can't sit on one pitch", deltas, b];
+    }
+    const p = pick.pitch, q = pick.quad, look = s.look || tab.h0, sigma = info.sigma;
     let line;
     if (term === "timing") {
       const vs = psum(Object.keys(sigma).map((k) => sigma[k] * speedToday(byName(arsenal, skName(k)), s)));
       const vt = (1 - P08.alpha) * look[0] + P08.alpha * vs, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
       line = `He's timed for ${vt.toFixed(0)} mph; this plays ${Math.abs(vt - vp).toFixed(0)} mph ${vt > vp ? "slower" : "faster"}`;
-    } else if (term === "look value") {
-      let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;
-      if (nxt === null) nxt = b;
-      line = `Sets up the ${skName(nxt).toLowerCase()} ${skH(nxt)}`;
-    } else if (term === "eye level") line = s.last ? `Changes his eye level after the ${s.last[0].toLowerCase()}` : "Changes his eye level";
+    } else if (term === "look value") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}`;
+    else if (term === "eye level") line = P08.beta_E < 0 ? "Stays at his eye level — a change costs here" : "Changes his eye level";
     else if (term === "familiarity") {
       const c_ = isOffspeed(byName(arsenal, skName(b)).kind) ? "OS" : "FB";
       line = `He's seen the ${skName(b).toLowerCase()} ${(s.familiar || {})[c_] || 0} times today`;
@@ -5743,8 +5802,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // v0.9 item 4: intent labels. DISPLAY ONLY (mirror of engine.py intent_label): nothing here feeds back into a call.
   const INTENT_E = 0.0005;
   const INTENT_TERMS = ["timing", "eye level", "repeat", "tunneling"];
-  const INTENT_MECH = { timing: "of his timing", "eye level": "it changes his eye level", repeat: "he just saw it",
-    tunneling: "it tunnels off the last pitch" };
+  const INTENT_MECH = { timing: "of his timing", repeat: "he just saw it", tunneling: "it tunnels off the last pitch" };
+  function intentMechText(m) {
+    if (m === null) return "of the counts it leads to";
+    if (m === "eye level") return P08.beta_E < 0 ? "it stays at his eye level" : "it changes his eye level";
+    return INTENT_MECH[m];
+  }
   function intentFromCosts(balls, strikes, quad, cMyA, cMyBest, cA, cBest, e) {
     if (balls === 3 && strikes < 2) return "Get it over";
     if (strikes === 2) return quad === "chase" ? "Expand" : "Finish";
@@ -5756,37 +5819,20 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return psum(sitOptions(arsenal).filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
   }
   function intentLabel(arsenal, s, tab, pick, info, exclude) {
-    const sigma = info.sigma, p = pick.pitch, q = pick.quad, a = ck(p.name, q);
-    let calls = allowedCalls(arsenal, s, exclude);
-    if (!calls.length) calls = allowedCalls(arsenal, s);
-    const cmy = {}; for (const x of calls) cmy[x] = rootCostOne(arsenal, s, tab, x, sigma, true);
-    let bstar = calls[0]; for (const x of calls) if (cmy[x] < cmy[bstar]) bstar = x;
-    if (!(a in cmy)) cmy[a] = rootCostOne(arsenal, s, tab, a, sigma, true);
-    const cA = rootCostOne(arsenal, s, tab, a, sigma, false), cB = rootCostOne(arsenal, s, tab, bstar, sigma, false);
-    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cA, cB, INTENT_E * runScale(s.level));
+    const X = explain(arsenal, s, tab, pick, info, exclude), p = pick.pitch, q = pick.quad, label = X.label;
     let mech = null;
-    if ((label === "Setup" || label === "Early off-zone") && bstar !== a) {
-      const base = cA - cB; let bestD = -1e-9;
-      for (const term of INTENT_TERMS) {
-        const names = WHY_PARAMS[term], saved = {}; for (const n of names) saved[n] = P08[n];
-        let d;
-        try { for (const n of names) P08[n] = 0.0; d = base - (rootCostOne(arsenal, s, tab, a, sigma, false) - rootCostOne(arsenal, s, tab, bstar, sigma, false)); }
-        finally { Object.assign(P08, saved); }
-        if (d < bestD) { bestD = d; mech = term; }
-      }
+    if ((label === "Setup" || label === "Early off-zone") && X.bstar !== X.a) {
+      let bestD = -1e-9;
+      for (const term of INTENT_TERMS) if (X.deltas[term] < bestD) { bestD = X.deltas[term]; mech = term; }
     }
-    const pl = p.name.toLowerCase(), why = (m) => (m === null ? "of the counts it leads to" : INTENT_MECH[m]);
+    const pl = p.name.toLowerCase();
     let line;
     if (label === "Get ahead") line = `Best strike here: ${pl} ${q}`;
     else if (label === "Get it over") line = `Need a strike: ${pl} ${q} is the safest one`;
-    else if (label === "Setup") {
-      const full = {}; for (const x in info.M) full[x] = psum(Object.keys(info.M[x]).map((k) => sigma[k] * info.M[x][k]));
-      let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;
-      if (nxt === null) nxt = bstar;
-      line = `Sets up the ${skName(nxt).toLowerCase()} ${skH(nxt)}, because ${why(mech)}`;
-    } else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
+    else if (label === "Setup") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}, because ${intentMechText(mech)}`;
+    else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
     else if (label === "Finish") line = `Put-away: ${pl} ${q}`;
-    else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${why(mech)}` : "");
+    else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${intentMechText(mech)}` : "");
     return [label, mech, line];
   }
   function gradeCallV08(arsenal, s, pitchName, quad, tab, opts = {}) {
@@ -5806,7 +5852,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
-    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
+    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, nextCountTop,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
@@ -6845,7 +6891,7 @@ function makeCall() {
   // spec 9: the "why" line runs after the call is shown, off the critical path
   setTimeout(() => {
     if (G().call !== c) return;
-    try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info)[0]; } catch (e) { c.why = null; }
+    try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info, shakenPA)[0]; } catch (e) { c.why = null; }
     // v0.9 item 4: the call's job in the at-bat (display only; computed after the call, changes nothing)
     try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenPA); }
     catch (e) { c.intent = c.mechanism = c.intentLine = null; }
