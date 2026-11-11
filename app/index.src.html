@@ -695,7 +695,11 @@ function know() {
   const k = G().know, i = String(slotIdx());
   if (!k[i]) {   // a hitter we've seen before starts with what we learned about him (capped, so tonight still matters most)
     const b = batterDef(), m = DB.ready && b && b.hitterId ? hModel(b.hitterId) : null;
-    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m, 8, true) : {}, seen: {} };
+    // v1.0 #20: center the seed only when this hitter's grades are on (otherwise nothing carries his overall level).
+    // v1.0 #7: the engine reads only this cross-game seed; tonight's swings feed the matchup memory (mm), and `damage`
+    // keeps tonight's running read for the hitter card only.
+    const seed = m ? PCLearner.seedDamage(m, 8, hitterGrades(b) !== null) : {};
+    k[i] = { timing: { FB: 0, OS: 0 }, damage: Object.assign({}, seed), seed, seen: {} };
   }
   return k[i];
 }
@@ -718,7 +722,7 @@ function situation() {
     margin: g.us - g.them, pitch_count: (g.pc[pKey()] || 0) + fatigueShift(pitcherDef()), batters_faced: g.bf[pKey()] || 0, level: S.setup.level,
     same_side: sameSide(), last: g.last, hitter_seen: Object.assign({}, kn.seen),
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
-    timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
+    timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.seed || {}),   // v1.0 #7: cross-game seed only
     landing_today: landToday(g),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
     ...v08Inputs() });
@@ -727,8 +731,8 @@ function situation() {
 const hitterKey = () => { const b = batterDef() || {}; return b.hitterId || `g:${G().dbId || "local"}|${slotIdx()}|${b.name || ""}`; };
 function mmFor() { const m = ((G().mm || {})[pKey()] || {})[hitterKey()]; return m ? Object.assign({}, m) : {}; }
 function famFor() { const f = ((G().fam || {})[pKey()] || {})[hitterKey()]; return f ? { FB: f.FB || 0, OS: f.OS || 0 } : {}; }
-function hitterGrades() {   // coach's grades, then what's been learned (served) when there's enough of it
-  const b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
+function hitterGrades(bd) {   // coach's grades, then what's been learned (served) when there's enough of it (bd: a lineup slot; default the batter up)
+  const b = bd || batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
   const coach = Object.assign({}, (x && x.grades) || b.grades || {});
   const m = DB.ready && b.hitterId ? hModel(b.hitterId) : null;
   if (m && m.grades) for (const g of ["c", "w", "d"]) if (m.grades[g] && m.grades[g].served !== undefined && !m.grades[g].flag) coach[g] = m.grades[g].served;
@@ -886,12 +890,17 @@ function record(res) {
   {   // planning state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
     const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
     uc[uk] = uc[uk] || {}; uc[uk][ck_] = (uc[uk][ck_] || 0) + 1;
-    if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow); g.pa.cls[cls]++; }
+    // v1.0 #24: the look moves toward where the catcher logged the pitch (row of the grid), else toward the called target
+    const yLoc = res.locCell ? E.v08.LOC_ROW_Y[res.locCell[0]] : undefined;
+    if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow, yLoc); g.pa.cls[cls]++; }
     if (["ball", "cstrike", "hbp"].includes(res.result) && evBase.v08) g.takes.push([res.result === "cstrike" ? 1 : 0, evBase.v08.ump[0], evBase.v08.ump[1]]);
     if (res.result === "whiff" && res.read === "fooled" && g.pa) g.pa.fooled.push(cls);
     if (g.pa) {   // v0.9 item 6: whiffs and called strikes by pitch class, hard contact by class and spot (simulate.py's mm)
       const hardHit = res.result === "play" && ((S.setup.inputs >= 2 && res.contact) ? res.contact === "hard" : ["2B", "3B", "HR"].includes(res.out));
-      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + call.quad : null;
+      // v1.0 #7: a hard hit is keyed on where the catcher logged it (as M2 was fitted), else on the called target
+      const bh = batterDef().hand, bRight = bh === "S" ? pitcherDef().hand !== "R" : bh !== "L";
+      const spot = res.locCell ? E.v08.locQuad(res.locCell, p.kind, bRight) : call.quad;
+      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + spot : null;
       if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1; }
     }
     if (res.radar && +res.radar > 40) { const rr = (g.radar[pk] = g.radar[pk] || {}); (rr[p.name] = rr[p.name] || []).push(+res.radar); }

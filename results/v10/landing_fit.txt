@@ -1,0 +1,32 @@
+Statcast pitches 336324 (train 171717, test 164607); strike rate 2024 0.645, 2025 0.642; count offsets (logit) 0-0 -0.11, 0-1 -0.21, 0-2 -0.38, 1-0 +0.08, 1-1 +0.04, 1-2 -0.12, 2-0 +0.19, 2-1 +0.24, 2-2 +0.20, 3-0 +0.02, 3-1 +0.39, 3-2 +0.59
+pitches with an earlier same-type pitch today: 300822 (89%)
+  calibration train, first of type: observed 0.6024 vs expected 0.6231
+  calibration test, first of type: observed 0.6016 vs expected 0.6214
+  calibration test, with history: observed 0.6474 vs expected 0.6453
+
+K grid (2024 log likelihood gain over beta = 0, pitches with history)
+  K   0.0: beta +0.146, train gain 22.59
+  K   1.0: beta +0.244, train gain 30.28
+  K   2.0: beta +0.316, train gain 33.74
+  K   5.0: beta +0.479, train gain 37.63
+  K  10.0: beta +0.691, train gain 39.18
+  K  20.0: beta +1.051, train gain 39.45
+  K  40.0: beta +1.696, train gain 38.89
+  K  80.0: beta +2.908, train gain 38.04
+
+chosen K 20.0 (train), beta +1.0510; 2025 held-out gain 3.57e-04 (boot sd 6.43e-05, +5.6 sd) -> SHIP
+beta 95% game-clustered bootstrap (train): +0.798 to +1.277
+
+2025 by the record's est (K chosen): observed minus expected strike rate, and the model's
+  est -0.25..-0.15: n    284, mean est -0.165, observed -0.0307, model -0.0377
+  est -0.15..-0.08: n   6351, mean est -0.101, observed -0.0297, model -0.0234
+  est -0.08..-0.03: n  30427, mean est -0.049, observed -0.0078, model -0.0114
+  est -0.03..+0.03: n  74378, mean est +0.001, observed +0.0002, model +0.0001
+  est +0.03..+0.08: n  30148, mean est +0.049, observed +0.0174, model +0.0116
+  est +0.08..+0.15: n   5259, mean est +0.098, observed +0.0355, model +0.0235
+
+report only, two slopes: landing better +1.237, missing +0.884; held-out gain over one slope 1.91e-05 (boot sd 1.05e-05, +1.8 sd)
+
+engine: strike-chance slope c = 0.119 per unit wt at wt 0 (average over 45 cells); league e = 0.645
+implied LAND_GAIN = e(1-e) * beta / c = 2.02 (shipped 4.0); LAND_K = 20.0 (shipped 5.0)
+engine strike-chance change by wt (mean of cells): wt -0.30: +0.0358, wt -0.15: +0.0179, wt +0.15: -0.0179, wt +0.30: -0.0358, wt +0.60: -0.0715

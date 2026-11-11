@@ -315,10 +315,11 @@ check("v1.0 #4 chase takes: a ball on a chase target is no confidence debit (jus
 s_ = Situation(1, 1, 1, E, level="college_d3")
 low = _replace(s_, landing_today={"Slider": (2, 4 * 0.30, 4)})
 high = _replace(s_, landing_today={"Slider": (2, 4 * 0.72, 4)})
-# (v1.0 review: at 4 pitches the plan's -0.15 block needs 1/4 for a 0.72 pitch, so 2/4 is kept but read as wild)
+# (v1.0 review: at 4 pitches the -0.15 block needs 1/4 for a 0.72 pitch, so 2/4 is kept but read as wild. v1.0 Step 5:
+# with the fitted LAND_K 20 / GAIN 2, four pitches move wild-today only a little; the direction is what's checked)
 check("v1.0 #4 landing filter: a 0.30-strike-rate pitch going 2/4 is not blocked or wild; a 0.72 pitch going 2/4 is"
-      " read as wild (+0.3 or more) but not blocked",
-      not _nl(sl_, low) and _wt(sl_, low) <= 0 and _wt(sl_, high) >= 0.3 and not _nl(sl_, high),
+      " read as wild but not blocked",
+      not _nl(sl_, low) and _wt(sl_, low) <= 0 and _wt(sl_, high) > 0.03 and not _nl(sl_, high),
       f"0.30 pitch 2/4: wild {_wt(sl_, low):+.2f}, blocked {_nl(sl_, low)}; 0.72 pitch 2/4: wild {_wt(sl_, high):+.2f}, "
       f"blocked {_nl(sl_, high)}")
 
@@ -330,14 +331,21 @@ check("v1.0 D8 repeat: fastball up-away again after a take whiffs within 0.002 o
       abs(wh["ball"] - wh["fresh"]) < 0.002 and abs(wh["cstrike"] - wh["fresh"]) < 0.002 and wh["foul"] < wh["fresh"] - 0.005,
       ", ".join(f"{k} {v:.4f}" for k, v in wh.items()))
 
-# D1 acceptance: the 3-1 call goes to the pitch he's controlling today
-d1 = {}
+# D1 acceptance: the 3-1 call moves to the pitch he's controlling today. Drew, Nov 11 (Step 5): ship the real-data landing
+# fit, so the check is that the slider rises clearly at 8-for-10 vs a 4-for-10 fastball, and takes over the top once the
+# fastball is clearly off (3+ strikes under his own expectation over 10)
+d1, d1n, d1o = {}, {}, {}
 for lvl in ("hs", "college_d3", "college_d1"):
     lt = {"Slider": (8, _exp(sl_, lvl, 10), 10), "Fastball": (4, _exp(fb_, lvl, 10), 10)}
     d1[lvl] = type_shares(AVG3, Situation(3, 1, 1, E, level=lvl, landing_today=lt))
-check("v1.0 D1 3-1: with the slider 8-for-10 and the fastball 4-for-10 today, the slider is the top 3-1 pitch at every level",
-      all(max(t, key=t.get) == "Slider" for t in d1.values()),
-      "; ".join(f"{l}: " + ", ".join(f"{n} {v:.0%}" for n, v in sorted(t.items(), key=lambda x: -x[1])) for l, t in d1.items()))
+    d1n[lvl] = type_shares(AVG3, Situation(3, 1, 1, E, level=lvl))
+    d1o[lvl] = type_shares(AVG3, Situation(3, 1, 1, E, level=lvl, landing_today={"Slider": (9, _exp(sl_, lvl, 10), 10),
+                                                                                 "Fastball": (int(_exp(fb_, lvl, 10) - 3), _exp(fb_, lvl, 10), 10)}))
+check("v1.0 D1 3-1: slider 8-for-10 and fastball 4-for-10 today: the slider gains 8+ points over a neutral day at every "
+      "level; slider 9-for-10 and the fastball 3+ strikes under his expectation: the slider is the top 3-1 pitch",
+      all(d1[l].get("Slider", 0) >= d1n[l].get("Slider", 0) + 0.08 and max(d1o[l], key=d1o[l].get) == "Slider" for l in d1),
+      "; ".join(f"{l}: slider {d1n[l].get('Slider', 0):.0%} -> {d1[l].get('Slider', 0):.0%} (fastball {d1[l].get('Fastball', 0):.0%}),"
+                f" fastball clearly off: slider {d1o[l].get('Slider', 0):.0%}" for l in d1))
 
 # v1.0 review (Drew, Nov 11): sharpening never moves a chase target toward the plate
 from engine import landing as _land
@@ -348,6 +356,102 @@ check("v1.0 review: a slider landing better than expected (9 of 10, 4.5 expected
       _wt(sl_, _sh) < 0 and all(abs(_c0[k] - _c1[k]) < 1e-12 for k in _c0) and _z1["off"] < _z0["off"],
       f"wild {_wt(sl_, _sh):+.2f}; chase off {_c0['off']:.3f} -> {_c1['off']:.3f}, edge {_c0['edge']:.3f} -> {_c1['edge']:.3f}; "
       f"down-away off {_z0['off']:.3f} -> {_z1['off']:.3f}")
+
+# ---------------------------------------------------------------- v1.0 Step 5 (fits and model changes)
+import json as _json
+import engine as _e
+import grid_v10 as _G
+from dataclasses import replace as _rp
+
+
+def _cnt_shares(ars, s0, pick):
+    """Share of the calls `pick(pitch, quad)` accepts at every count, from one table solved at 0-0 (the live path)."""
+    tab = _e.solve_table(ars, s0)
+    out = {}
+    for (b, k) in _G.COUNTS:
+        _, d_, _, _ = call_v08(ars, _rp(s0, balls=b, strikes=k), rng=random.Random(0), tab=tab)
+        out[(b, k)] = sum(pr for pr, _, p_, q_ in d_ if pick(p_, q_))
+    return out
+
+
+# #22: one same-side changeup term
+chs = {}
+for lvl in ("hs", "college_d3", "college_d1"):
+    r_ = []
+    for side in (True, False):
+        s0 = Situation(0, 0, 1, E, inning=3, margin=0, level=lvl, same_side=side)
+        r_.append(_cnt_shares(_G.ARSENALS["AVG3"], s0, lambda p_, q_: p_.kind == "CH")[(2, 1)])
+    chs[lvl] = r_
+check("v1.0 #22 same-side changeup: one term (no duplicate); at 2-1 its share is >= 60% of the opposite-side share",
+      all(v[0] >= 0.6 * v[1] for v in chs.values()), ", ".join(f"{l} {v[0]:.0%} vs {v[1]:.0%}" for l, v in chs.items()))
+
+# D3: mashed twice at a height -> the call's share at least halves at every count but 3-0 (cells with 2%+ to start)
+d3, d3_30 = [], []
+for lvl in ("hs", "college_d3", "college_d1"):
+    for an in ("AVG3", "power"):
+        fbm = lambda p_, q_: p_.kind == "FB" and q_ == "middle"
+        b0 = _cnt_shares(_G.ARSENALS[an], Situation(0, 0, 1, E, inning=3, margin=0, level=lvl), fbm)
+        b2 = _cnt_shares(_G.ARSENALS[an], Situation(0, 0, 1, E, inning=3, margin=0, level=lvl,
+                                                    matchup={"hard|FB|middle": 2}), fbm)
+        d3 += [(lvl, an, c, b0[c], b2[c]) for c in b0 if c != (3, 0) and b0[c] >= 0.02]
+        d3_30.append((lvl, an, b0[(3, 0)], b2[(3, 0)]))
+worst = max(d3, key=lambda x: x[4] / x[3])
+check("v1.0 D3 mashed twice: fastball middle after two hard hits there (earlier trips) keeps <= half its share at every "
+      "count but 3-0; a soft cost (MASHED_PENALTY), separate from the fitted memory",
+      all(x[4] <= 0.5 * x[3] for x in d3) and _e.mashed(fb_, "middle", Situation(0, 0, 1, E, matchup={"hard|FB|middle": 2}))
+      and not _e.mashed(fb_, "middle", Situation(0, 0, 1, E, matchup={"hard|FB|middle": 1})),
+      f"{len(d3)} cells; least cut {worst[0]}/{worst[1]} {worst[2][0]}-{worst[2][1]} {worst[3]:.0%} -> {worst[4]:.0%}; at 3-0 "
+      + ", ".join(f"{a}/{b} {c:.0%}->{d:.0%}" for a, b, c, d in d3_30[:4]))
+
+# #7: matchup memory has its own caps, no shared clip; spot damage per pitch kind (#21)
+mw = _e.matchup_whiff(fb_, "middle", Situation(1, 1, 1, E, level="college_d3", matchup={"hard|FB|middle": 3}))
+want = _e.MM["hard"] * 2
+mw1 = _e.matchup_whiff(fb_, "middle", Situation(1, 1, 1, E, level="college_d3", matchup={"succ|FB": 6}))
+s_dk = Situation(1, 1, 1, E, level="college_d3", hitter_damage={"middle": (0.9, 30), "SL|middle": (0.9, 30)})
+check("v1.0 #7 / #21: matchup memory = M1 (cap 4) + M2 (cap 2) with no shared clip; spot damage is read per pitch kind",
+      abs(mw - want) < 1e-12 and abs(want) > _e.P08["fam_cap"] and abs(mw1 - 4 * _e.MM["succ"]) < 1e-12
+      and _e.damage(fb_, "middle", s_dk) == 0.0
+      and _e.damage(sl_, "middle", s_dk) > 0,
+      f"3 hard hits {mw:+.3f} (2 x {_e.MM['hard']}; the old shared clip was +/-{_e.P08['fam_cap']}), 6 successes {mw1:+.3f}; FB middle damage {_e.damage(fb_, 'middle', s_dk):.3f}, "
+      f"SL middle {_e.damage(sl_, 'middle', s_dk):.3f}")
+
+# #12: infield in, more ground balls get through
+s_in = Situation(1, 1, 1, R3, inning=7, margin=0, level="college_d3")
+low_ = lambda p_, q_: _e.target_height(q_, p_.kind) == "down"
+sh0 = _cnt_shares(_G.ARSENALS["AVG3"], s_in, low_)[(1, 1)]
+sh1 = _cnt_shares(_G.ARSENALS["AVG3"], _rp(s_in, infield_in=True), low_)[(1, 1)]
+_saved = _e.TYPED["gb_babip_in"]
+try:
+    _e.TYPED["gb_babip_in"] = 0.0
+    sh_old = _cnt_shares(_G.ARSENALS["AVG3"], _rp(s_in, infield_in=True), low_)[(1, 1)]
+finally:
+    _e.TYPED["gb_babip_in"] = _saved
+check("v1.0 #12 infield in: ground balls get through more (+0.08 hit rate, the plan's fallback: Statcast has no infield-in "
+      "alignment); the pull toward low targets shrinks (Drew, Nov 11: some pull is right)",
+      _e.TYPED["gb_babip_in"] == 0.08 and sh0 <= sh1 < sh_old,
+      f"D3 AVG3 1-1 R3: low targets {sh0:.1%} -> {sh1:.1%} with the infield in (no hit cost: {sh_old:.1%})")
+
+# #19: one RHO_L rule: eye level, tunneling and familiarity scale at HS like timing, MM, SIDE and POWER_HR
+s_c = Situation(1, 1, 1, E, level="college_d3", look=(85.0, 3.3), last=("Fastball", "up-in", "ball"), familiar={"OS": 6})
+s_h = _rp(s_c, level="hs")
+pc_, ph_ = _e.pair_terms(sl_, "chase", s_c, AVG3), _e.pair_terms(sl_, "chase", s_h, AVG3)
+check("v1.0 #19 RHO_L: eye level and tunneling (pair terms) at HS are 0.6x the college values",
+      abs(ph_[0] - 0.6 * pc_[0]) < 1e-12 and abs(ph_[1] - 0.6 * pc_[1]) < 1e-12 and abs(pc_[1]) > 0.01,
+      f"college whiff {pc_[0]:+.4f} swing {pc_[1]:+.4f}; hs {ph_[0]:+.4f} {ph_[1]:+.4f}")
+
+# #24: the look follows the logged landing height
+lk = (85.0, 2.5)
+l_t = _e.look_update(lk, fb_, "down-away", s_c)
+l_y = _e.look_update(lk, fb_, "down-away", s_c, _e.LOC_ROW_Y[0])
+check("v1.0 #24 look: a fastball called down-away but logged in the top row moves his eye level up, not down",
+      l_t[1] < 2.5 < l_y[1] and l_t[0] == l_y[0], f"look height after target {l_t[1]:.2f}, after logged top row {l_y[1]:.2f}")
+
+# landing fit (Drew, Nov 11): the shipped constants are the fitted ones
+lf = _json.load(open("results/v10/landing_fit.json"))["chosen"]
+check("v1.0 Step 5 landing fit: LAND_K and LAND_GAIN are the Statcast fit (shipped only on held-out gain > 2 boot SD)",
+      lf["ship"] and _e.LAND_K == lf["K"] and abs(_e.LAND_GAIN - lf["implied_gain"]) < 0.05 and _e.LAND_BLOCK_K == 5.0,
+      f"K {_e.LAND_K} (fit {lf['K']}), GAIN {_e.LAND_GAIN} (fit {lf['implied_gain']:.2f}), held-out {lf['test_gain'] / lf['test_sd']:+.1f} SD;"
+      f" block keeps K {_e.LAND_BLOCK_K}")
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
 # exit non-zero when anything failed, so a direct run (a hook, a pre-commit, another agent) cannot read a pass

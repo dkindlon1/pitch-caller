@@ -39,7 +39,8 @@ thinks about between pitches:
   so a pitch is valued for what it sets up. A guardrail keeps every call within 0.010 runs of the best call on its own.
 - **Timing, eye level, repeats, familiarity** by class from earlier at-bats today (replacing v0.7c's pairing and
   batters-faced terms), with Statcast-fitted sizes (`seq_fit.py`, `fit_v08.json`): timing surprise ships at half the
-  guess, a change of eye level slightly *hurts* in MLB data, and the tunnel score showed no effect, so it's off.
+  guess, a change of eye level slightly *hurts* in MLB data, and tunneling ships on chase swings only (v1.0 D5:
+  `beta_tun_chase` 0.310 fitted, `beta_tun_whiff` 0; the tunnel score showed no effect on whiffs).
 - **The game situation.** Win expectancy and leverage tables (`we_tables.py`) blend runs with winning late in close
   games; typed batted balls with runner-on-third and double-play rules; the running game; an intentional-walk
   suggestion.
@@ -49,6 +50,15 @@ thinks about between pitches:
 Checks: `golden/golden_v09.*`, `tests.py`, `tests_v09_followups.py`, `readthrough/scenarios.py`, `app/budget_v08.js`,
 `app/v08_e2e.js`. The v0.7c and v0.8 engines are gone; their golden data files stay in `golden/` untouched.
 Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
+
+## Known limits (v1.0)
+
+- **Runner advancement (#23, D10, skipped for 1.0):** a non-double-play ground out doesn't move a runner from first to
+  second, and a single doesn't take a runner from first to third. Small run-value gaps; the simulator shares them.
+- **Side-blind misses (D6, deferred):** a missed pitch misses up/down and in/off the zone, never specifically arm side or
+  glove side.
+- **Familiarity (#26, dropped):** the within-game familiarity term stays as fitted; the claim that it "erases the pitch"
+  did not reproduce, and in-game hitter memory has one owner (#7).
 
 ## Files
 

@@ -696,7 +696,7 @@
       const exp = (P.whiff * DMG_VAL.whiff + P.foul * DMG_VAL.foul + P.weak * DMG_VAL.weak + P.solid * DMG_VAL.solid + P.hard * DMG_VAL.hard) / sw;
       const w = ev.ts ? Math.pow(0.5, Math.max(0, (t0 - ev.ts) / DAY) / 365) : 1;   // hitters develop: a year-old swing counts half
       add(isOS(ev.kind) ? "OS" : "FB", obs - exp, w);
-      if (ev.quad) add(ev.quad, obs - exp, w);
+      if (ev.quad) add(ev.kind + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's
       if (ev.gameId) games.add(ev.gameId); n++;
     }
     const damage = {};

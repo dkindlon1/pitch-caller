@@ -474,3 +474,136 @@ stage2_test: D5 2/40 (known red, until Step 7)   worlds_test: 31/31
 smoke, rules_e2e, v10_step1_e2e, v10_step3_e2e, v08_e2e, v09_labels_e2e, v09_matchup_e2e, gameday_e2e, replay_e2e: all passed
 one simulated game (simulate.py): 139 pitches, why and intent logged, 0 "Sets up"
 ```
+
+## Step 5 — Fits and model changes (#7, #11/#28, #12, #19, #20, #21, #22, #24, D3; landing fit)
+
+The Statcast data (`fetch_statcast.py`: every 4th day, Apr 5–Sep 25, 2024 and 2025; 88 files, 336k usable pitches) was
+downloaded in this session. Every fit uses `seq_fit.py`'s rule: 2024 train, 2025 held out, game-clustered bootstrap, ship
+only on held-out gain > 2 boot SD (plus a 95% cluster-robust interval excluding 0 where a coefficient is tested).
+Drew's Nov 11 decisions are marked **(Drew)**.
+
+### Landing fit (Drew's Step 5 addition; review #2) — `readthrough/v10_landing_fit.py`, `results/v10/landing_fit.txt`
+Does a pitcher's strike rate on a pitch type earlier in this game, against his own expectation (his season rate for the
+type leaving this game out, moved by league count offsets), predict his next pitch of that type?
+
+| | Step 3 (guess) | Fit |
+|---|---|---|
+| `LAND_K` (shrinkage, pitches) | 5 | **20** (train likelihood flat 10–40) |
+| `LAND_GAIN` | 4.0 | **2.0** (beta 1.05 logits per unit est, 95% 0.80–1.28; the engine's strike-chance slope is 0.119 per unit wild-today) |
+| held-out gain | — | **+5.6 SD → ship** |
+| separate slope for landing better vs missing | — | +1.24 vs +0.88, +1.8 SD → not shipped |
+
+Binned 2025 data: est −0.10 → strike rate −3.0 points, +0.10 → +3.6 points. The caps (+0.6 / −0.3) stay; the data never
+reaches them. The landing **block** is a coaching rule, so it keeps its own shrinkage (`LAND_BLOCK_K` = 5) and doesn't
+move with the fit.
+
+**(Drew) ship the fit over the Step 3 D1 acceptance.** With the fitted values, slider 8-for-10 / fastball 4-for-10 at 3-1
+gives fastball 47% / slider 32% (neutral day 58% / 21%). The slider no longer tops it until the fastball is clearly off
+(3+ strikes under expectation: slider 63–64%). The D1 check now reads: the slider gains 8+ points at every level, and
+takes the top once the fastball is clearly off. The landing-filter check keeps its direction (a 0.72 pitch at 2/4 reads
+wild +0.07, was +0.30 or more).
+
+### #7 one owner of in-game hitter memory — `readthrough/v10_memory_fit.py`, `results/v10/memory_fit.txt`
+R5 in-game damage (as the engine computes it) and the matchup memory (M1 earlier-trip successes, M2 earlier-trip hard
+hits at the spot, actual plate location) refit together:
+
+| Test | beta | held-out | ship |
+|---|---|---|---|
+| R5 damage alone, whiff | −1.66 | +3.4 SD | (report) |
+| M1 whiff, with damage control | +0.079 | +4.4 SD | **yes** |
+| M2 whiff, with damage control | −0.240 | +2.6 SD | **yes** |
+| M1 / M2 hard | −0.004 / +0.145 | +1.6 / +2.0 SD | no |
+| R5 damage on top of M1+M2, whiff / hard | −1.33 / +0.21 | +1.9 / +2.4 SD (interval includes 0) | no |
+
+M1 and M2 survive, so per the plan the matchup memory owns in-game memory. R5 `damage()` now reads only the cross-game
+seed: the app passes `know().seed` (tonight's running read stays on the hitter card only), and the simulator passes none
+(the frozen v0.9 caller keeps its old input). MM keeps its no-control values (0.107 / −0.346): with in-game damage gone,
+that is the effect MM carries alone. Each part has its own cap and the shared ±0.5 clip is gone (two hard hits = −0.692).
+The app keys a hard hit on the logged landing cell (`locQuad`) when the catcher logged one, else the called target.
+
+### D3 mashed twice — `MASHED_PENALTY` 0.015 × run scale, in `cost08`
+A named soft cost on (pitch type, height) after two hard hits there in earlier trips, read from the same `s.matchup`
+counts but separate from the fitted logits. Sized as the smallest round value meeting the plan: the swept 0.010 left 13
+cells cut by less than half; 0.015 cuts every cell (2%+ to start, every count but 3-0, 5 arsenals × 3 levels) by 63% or
+more. At 3-0 it is still called in some cells (four-pitch 8–20%, finesse 7–13%).
+**(Drew) accept the fitted one-hit effect:** one hard hit moves fastball-middle share more than 5 points in 28 of 180
+cells, almost all at 2-2/3-2 (worst 65% → 40% at 3-2); median move 0.9 points.
+
+### #11/#28 power scale
+`fit_hitter_spread.py`: the power target is now one SD of raw hard-hit share (0.0518), and `POWER_HR` = 0.112 per grade
+point (was 0.112 × 0.03/0.053 = 0.063). **The script was broken:** it set `P08`, but the engine reads the per-level
+`HITTER_SPREAD` first, so its iterations changed nothing and ran away (g_w 0.45 → 1.49). Fixed to set the values the
+engine reads; it converges in two passes with every slope on target (K per contact point = sd_k, walks per discipline
+point = sd_walk, hard share per power point 0.0518):
+
+| Level | g_c | g_w | g_d |
+|---|---|---|---|
+| hs | 0.589 → 0.573 | 0.168 → 0.304 | 0.985 → 0.993 |
+| college_d3 | 0.650 → 0.630 | 0.173 → 0.318 | 1.003 → 1.029 |
+| college_d1 | 0.492 → 0.477 | 0.171 → 0.310 | 0.848 → 0.856 |
+
+### #12 infield in
+**Statcast 2024–25 has no infield-in alignment** (`if_fielding_alignment` is only Standard / Infield shade /
+Strategic), so nothing can be fitted. **(Drew) keep the plan's fallback:** +0.08 hit rate on ground balls with the infield
+in (outs → singles, `TYPED["gb_babip_in"]`). The pull toward low targets shrinks from at most 12.0 to at most 8.9 points
+(D3 AVG3 1-1 R3: 28.0% → 31.8%, 34.8% with no hit cost). That misses the plan's under-3 bar; pitching down for a grounder
+with the infield in is real logic.
+
+### #19 one RHO_L rule
+Every MLB-fitted behavioral term now scales by `RHO_L` (HS / travel 0.6): timing, MM, SIDE and POWER_HR already did; eye
+level, tunneling and familiarity now do too. Structural terms (count kappa, beta_y, GB rates) and the unfitted repeat
+guesses don't. **Testing 0.6:** HS strikeout spread barely moves with it (implied SD 0.0589 / 0.0602 / 0.0609 at RHO_L
+0.3 / 0.6 / 1.0, vs an *estimated* HS target of 0.056), so the data can't pin it down. 0.6 stays as the stated
+assumption, not a fit.
+
+### #20, #21, #22, #24, notes
+- **#20** the cross-game seed is centered only when the hitter has grades on (`hitterGrades(b) !== null`, both call sites).
+- **#21** the cross-game spot damage is keyed per pitch kind (`"SL|down-away"`, learner v2 and both engines).
+- **#22** `outcome_probs`' duplicate +0.2 same-side-changeup hard term deleted (`shape_fit`'s −0.3 stays). Same-side vs
+  opposite-side CH share at 2-1 is now 21–22% vs 22–23% (ratio ≥ 0.95; it was 0.86–0.92 here, above the 60% bar either way).
+- **#24** `look_update(…, y)`: the hitter's look follows the logged landing row (`LOC_ROW_Y`: 3.8 / 3.2 / 2.5 / 1.8 /
+  1.2 ft), else the called target. The simulator logs no landing spot, so it keeps the target.
+- README: tunneling line fixed (ships on chase swings); known limits for #23 runner rules (skipped, D10), D6 side-blind
+  misses (deferred), #26 familiarity (dropped). D5 tunneling was done in Step 2.
+
+### Checks
+New `tests.py` checks (42 in all): #22, D3, #7/#21, #12, #19, #24, the landing fit constants, plus the rewritten D1 and
+landing-filter checks. New browser test `app/v10_step5_e2e.js` (in `test-app.sh`): look from the logged row, hard hit keyed
+on the logged spot, engine reads the seed only, seed centering. Against the Step 4 build it fails 3 checks and crashes on
+the 4th.
+
+Realism gate vs the Step 0 baseline (`calib.evaluate`, percent per PA; gate 1 point):
+
+| Level | K | BB | HBP | Δ K | Δ BB | Δ HBP |
+|---|---|---|---|---|---|---|
+| `hs` | 21.27 | 13.82 | 4.02 | +0.22 | −0.23 | −0.08 |
+| `college_d3` | 16.29 | 11.00 | 4.14 | +0.01 | −0.38 | −0.08 |
+| `college_d1` | 19.29 | 10.46 | 3.30 | −0.06 | −0.32 | −0.06 |
+| `mlb` | 19.40 | 7.72 | 0.86 | | | |
+
+`spread_test.py` (not in CI): walk+HBP spread is 11–14% under the real one at D3 (0.0438 vs 0.0491) and D1 (0.0340 vs
+0.0394), outside its 10% tolerance. **The Step 4 commit reads exactly the same**, so Step 5 didn't cause it; it dates from
+the Step 2 recalibration. A `fit_spread.py` refit would fix it. Open for Drew.
+
+`tests_v10_explain.py` check 6 had hard-coded the three golden cases where look value reversed the myopic order; Step 5
+moved them (Setup is even rarer now). It now scans for a Setup line and also checks the next-count helper on every
+eligible drawn call (33).
+
+Golden re-frozen: 75 of 250 picks and 75 intent labels moved (familiarity, matchup memory, landing, power and grade
+values all feed the outcome probabilities).
+
+Checks run:
+```
+tests.py 42/42   tests_v10_explain 7/7   tests_v09_followups: all passed   fuzz.py 300 50: 29/29
+golden_v10 re-frozen; golden_v10.py check: 500 cases, largest difference 0 -> PASS; golden_v10.js: PASS
+golden/fast.py 40: 0 mismatches (after each sub-item)   parity (make_parity + parity.js): PASS
+build: app/dist rebuilt; web/lib engine.js and engine_data.json match the app; web demo 2/2
+learn_test, db_test, import_test, rails_test, schema_test, pitch_rules_test: all passed   worlds_test: 31/31
+stage2_test: D5 2/40 (known red, until Step 7)
+smoke, rules_e2e, v10_step1_e2e, v10_step3_e2e, v10_step5_e2e (10/10), v08_e2e, v09_labels_e2e, v09_matchup_e2e,
+replay_e2e: all passed; gameday_e2e 13/13 (its 200 ms timing check read 213 ms while the golden and worlds runs shared
+the CPU; 157 ms re-run alone)
+one simulated game (simulate.py): 116 pitches, no errors
+spread_test.py: walk+HBP spread low at D3/D1 (same as Step 4, open)
+```
+Yardstick for Step 5 (Drew's PC): `scripts/yardstick.ps1 -Tag step5 -Commit <this commit>`.

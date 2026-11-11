@@ -1,0 +1,20 @@
+Statcast rows 337195, usable 337195 (train 172167, test 165028)
+pitches with in-game class damage 183135; with an M1 success 64520; with an M2 hard hit on the class and spot 3950
+
+D. R5 in-game class damage on its own (on top of the shipped v0.8 terms)
+  [D_whiff] whiff | swing: train n=82354, test n=78722; beta=[-1.6594] se=[0.2509]; held-out gain 3.11e-04 (boot sd 9.04e-05, +3.4 sd) -> report only
+  [D_hard] hard | ball in play: train n=30115, test n=29008; beta=[0.3251] se=[0.3177]; held-out gain 1.23e-06 (boot sd 3.73e-05, +0.0 sd) -> report only
+
+M1/M2 without the damage control (v0.9 Step 3 as shipped, for comparison)
+  [M1_whiff_nodmg] M1 whiff | swing: train n=82354, test n=78722; beta=[0.1074] se=[0.0216]; held-out gain 3.55e-04 (boot sd 6.83e-05, +5.2 sd) -> report only
+  [M2_whiff_nodmg] M2 whiff | swing: train n=82354, test n=78722; beta=[-0.3458] se=[0.0935]; held-out gain 1.55e-04 (boot sd 4.82e-05, +3.2 sd) -> report only
+
+M1/M2 WITH R5 damage as a control (the #7 decision)
+  [M1_whiff] M1 whiff | swing: train n=82354, test n=78722; beta=[0.0787] se=[0.0221]; held-out gain 2.09e-04 (boot sd 4.77e-05, +4.4 sd) -> SHIP
+  [M1_hard] M1 hard | ball in play: train n=30115, test n=29008; beta=[-0.0038] se=[0.0299]; held-out gain 1.21e-04 (boot sd 7.41e-05, +1.6 sd) -> no ship
+  [M2_whiff] M2 whiff | swing: train n=82354, test n=78722; beta=[-0.2404] se=[0.0946]; held-out gain 8.06e-05 (boot sd 3.09e-05, +2.6 sd) -> SHIP
+  [M2_hard] M2 hard | ball in play: train n=30115, test n=29008; beta=[0.1446] se=[0.0989]; held-out gain 1.15e-04 (boot sd 5.76e-05, +2.0 sd) -> no ship
+
+Damage on top of M1+M2 (does R5 add anything once MM is in?)
+  [D_whiff_given_MM] R5 damage, whiff | swing, given M1+M2: train n=82354, test n=78722; beta=[-1.3275] se=[0.2609]; held-out gain 1.29e-04 (boot sd 6.73e-05, +1.9 sd) -> report only
+  [D_hard_given_MM] R5 damage, hard | ball in play, given M1+M2: train n=30115, test n=29008; beta=[0.2088] se=[0.3349]; held-out gain 6.71e-05 (boot sd 2.81e-05, +2.4 sd) -> report only

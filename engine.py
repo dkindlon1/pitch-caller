@@ -52,15 +52,22 @@ P08 = dict(
 )
 TYPED = dict(beta_y=-0.8, gamma={"weak": 0.3, "solid": 0.0, "hard": -0.3},       # 7.3 batted-ball types
              nongb={"weak": (0.10, 0.40, 0.50), "solid": (0.45, 0.45, 0.10), "hard": (0.45, 0.55, 0.0)},
-             dp={"weak": 0.30, "solid": 0.20, "hard": 0.10}, gb_infield_in=0.10, r2_to_3rd={"GB": 0.50, "FB": 0.25},
+             dp={"weak": 0.30, "solid": 0.20, "hard": 0.10}, gb_infield_in=0.10, gb_babip_in=0.08, r2_to_3rd={"GB": 0.50, "FB": 0.25},
              # v1.0 #16: MLB ground-ball rate by pitch, 2024 Statcast (fit_v08.json results.gb_types; _apply_fit loads
              # the exact values, these are the same to 4 places for a tree without the json)
              gb={"4-seam": 0.3400, "sink": 0.5558, "cut": 0.4124, "SL": 0.3969, "CB": 0.4343, "CH": 0.4940})
-RHO_L = {"hs": 0.6, "travel": 0.6}            # 3.2 level scaling of MLB-fitted timing effects (others 1.0)
+RHO_L = {"hs": 0.6, "travel": 0.6}            # 3.2 level scaling of MLB-fitted behavioral effects (others 1.0). v1.0 #19, one
+# rule: every term fitted on MLB hitter behavior scales by it (timing, eye level, tunneling, familiarity, matchup memory,
+# SIDE, POWER_HR); structural terms (count kappa, beta_y, ground-ball rates) and the unfitted repeat guesses do not.
 # v0.9 item 6, fitted in Step 3 (readthrough/step3_fits.py, results/step3): whiff | swing on a pitch class
 # rises with the whiffs and called strikes that class got from this hitter in earlier trips today (M1, capped at 4), and
-# falls after he hit that class hard at that spot in an earlier trip (M2, capped at 2). The total sits under the
-# familiarity cap and is scaled by RHO_L (HS and travel 0.6). Their hard-contact effects did not ship.
+# falls after he hit that class hard at that spot in an earlier trip (M2, capped at 2), scaled by RHO_L. Their hard-contact
+# effects did not ship. v1.0 #7 (readthrough/v10_memory_fit.py, results/v10/memory_fit.txt): MM is the one owner of
+# in-game hitter memory. Refit with R5's in-game damage as a control, both still ship (M1 +0.079, +4.4 sd; M2 -0.240,
+# +2.6 sd) and damage adds nothing that ships on top of them, so R5 damage reads only the cross-game seed (no in-game
+# updates feed the engine) and MM keeps its values fitted without that control (0.107, -0.346: the effect MM carries
+# alone). Each part has its own cap; the shared familiarity clip on their sum is gone. M2's earlier hard hits are
+# keyed on the logged landing spot when the catcher logged one (as fitted), else the called target.
 MM = dict(succ=0.107, succ_cap=4, hard=-0.346, hard_cap=2)
 
 # v0.9 item 3, widened, fitted in Step 5 (readthrough/step5_inside_fit.py, results/step5): on and near the
@@ -74,9 +81,10 @@ SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0,
 
 # v0.9 item 8, fitted in Step 4b (readthrough/step4b_power_hr.py, results/step4b/power_hr.txt): a power
 # hitter's hard contact leaves the park more often, +0.112 logits on HR | hard ball in play per SD of power (P3; power x
-# zone and the HR effect x heart did not ship). One power-grade point = 0.03 of hard-contact share (spec 8.2) = 0.03 /
-# 0.053 SD (the spread of hitters' hard-hit rates) = 0.566 SD. The extra home runs come out of that type's outs.
-POWER_HR = 0.112 * 0.03 / 0.053
+# zone and the HR effect x heart did not ship). v1.0 #11/#28: one power-grade point = one SD of hitters' hard-hit share
+# (0.0518, fit_hitter_spread.py's g_w target), so the fitted per-SD effect applies as is. The extra home runs come out of
+# that type's outs.
+POWER_HR = 0.112
 
 
 def power_hr_shift(s, gr):
@@ -99,9 +107,31 @@ def matchup_whiff(p, q, s):
     if not m:
         return 0.0
     x = MM["succ"] * min(MM["succ_cap"], m.get("succ|" + p.kind, 0)) + \
-        MM["hard"] * min(MM["hard_cap"], m.get("hard|" + p.kind + "|" + q, 0))
-    x = max(-P08["fam_cap"], min(P08["fam_cap"], x))
+        MM["hard"] * min(MM["hard_cap"], m.get("hard|" + p.kind + "|" + q, 0))      # v1.0 #7: separate caps, no shared clip
     return RHO_L.get(s.level, 1.0) * x
+# v1.0 D3 (Drew's coach rule, Nov 5/9): a pitch type hit hard twice at one height in his earlier trips today is not gone
+# back to. A coaching RULE, not a fit: a named soft cost (runs x run_scale) added in cost08, separate from the fitted MM
+# logits, read from the same s.matchup counts. Soft so the pitch is still called when it is clearly the best one.
+MASHED_N = 2
+MASHED_PENALTY = 0.015
+
+
+def target_height(q, kind):
+    """up / middle / down for target q (HEIGHTS; fastball chase is up, off-speed chase is down)."""
+    if q == "middle":
+        return "middle"
+    return "up" if (q.startswith("up") or (q == "chase" and kind == "FB")) else "down"
+
+
+def mashed(p, q, s):
+    """D3: his earlier trips today put this pitch type in play hard MASHED_N+ times at this target's height."""
+    m = s.matchup
+    if not m:
+        return False
+    h = target_height(q, p.kind)
+    return sum(m.get("hard|" + p.kind + "|" + x, 0) for x in QUADS if target_height(x, p.kind) == h) >= MASHED_N
+
+
 Y_TARGET = {"up-in": 3.2, "up-away": 3.2, "middle": 2.5, "down-in": 1.8, "down-away": 1.8}
 HEIGHTS = ("up", "middle", "down")   # amendment A1: middle is its own sit option (spec had up/down with middle = half)
 
@@ -283,7 +313,7 @@ class Situation:
     hitter_seen: dict = field(default_factory=dict)       # pitch name -> times seen
     usage_this_count: dict = field(default_factory=dict)  # pitch name -> times thrown in this count today
     timing: dict = field(default_factory=dict)            # "FB"/"OS" -> -1 early .. +1 late
-    hitter_damage: dict = field(default_factory=dict)     # [R5] key ("FB"/"OS" or quad) -> (score -1..+1, n pitches)
+    hitter_damage: dict = field(default_factory=dict)     # [R5] key ("FB"/"OS" or "KIND|quad", v1.0 #21) -> (score -1..+1, n pitches)
     catcher_block: int = 3
     landing_today: dict = field(default_factory=dict)     # v1.0 Step 3: pitch name -> (strikes, expected strikes, pitches)
                                                           # today, this pitcher, non-chase targets only
@@ -372,8 +402,13 @@ def is_big_spot(s):
 # shrunk toward zero (worth LAND_K pitches). Two-sided (Drew, Nov 10, for D1): missing more than expected makes the
 # pitch wilder (up to LAND_MAX), landing better than expected sharpens it (up to LAND_SHARP_MAX), so "the pitch he is
 # controlling today" rises in the mix ("if the off-speed gets it over, then get it over").
-LAND_K = 5.0
-LAND_GAIN = 4.0
+# v1.0 Step 5 (Drew, Nov 11; readthrough/v10_landing_fit.py, results/v10/landing_fit.txt): K and GAIN fitted on Statcast
+# (a pitcher's strikes vs his own expectation on a pitch type earlier in the game -> his next pitch of that type; 2024
+# train, 2025 held out +5.6 boot SD). K = 20 on train likelihood; beta = 1.05 logits per unit est, which at the engine's
+# strike-chance slope (0.119 per unit wild-today) is GAIN 2.0. A separate slope for landing better vs missing didn't ship
+# (+1.8 SD). The caps stay: in the data the deviation never reaches them (|wild-today| <= ~0.35 at the 2025 extremes).
+LAND_K = 20.0
+LAND_GAIN = 2.0
 LAND_MAX = 0.6
 LAND_SHARP_MAX = 0.3
 
@@ -691,7 +726,7 @@ def shape_fit(p: Pitch, q: str, s: Situation):
         if p.kind == "SL" and s.same_side and ("away" in q or q == "chase"):
             f += 0.3
     if p.kind == "CH" and s.same_side:
-        f -= 0.3
+        f -= 0.3        # the one same-side changeup term (v1.0 #22: outcome_probs' separate +0.2 hard was a duplicate)
     return f
 
 
@@ -704,7 +739,7 @@ def damage(p: Pitch, q: str, s: Situation):
     """[R5] Hitter's damage read for this pitch class and location, shrunk toward 0.
     Strengths (+) count fully; holes (-) count half until well established (20+ pitches)."""
     total = 0.0
-    for key in ("OS" if is_offspeed(p.kind) else "FB", q):
+    for key in ("OS" if is_offspeed(p.kind) else "FB", p.kind + "|" + q):     # v1.0 #21: spot read per pitch kind
         if key in s.hitter_damage:
             score, n = s.hitter_damage[key]
             eff = score * n / (n + 10.0)
@@ -784,8 +819,9 @@ def pair_terms(p, q, s, arsenal):
     """4.1-4.3 (whiff shift, off-zone swing shift) from eye level, tunneling and repeats; halved in a big spot."""
     y_hat = s.look[1] if s.look else 2.5
     ey = g_mod((1 if p.kind == "FB" else -1) * (y_target(q, p.kind) - y_hat), P08["dstar_E"])
-    w = P08["beta_E"] * ey
-    sw = P08["beta_E_S"] * ey
+    rho = RHO_L.get(s.level, 1.0)       # v1.0 #19: every MLB-fitted behavioral term scales by RHO_L (eye level, tunneling)
+    w = rho * (P08["beta_E"] * ey)
+    sw = rho * (P08["beta_E_S"] * ey)
     if s.last:
         last = next((x for x in arsenal if x.name == s.last[0]), None)
         lq = s.last[1]
@@ -802,8 +838,8 @@ def pair_terms(p, q, s, arsenal):
                          (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5
                 tun = max(-1.0, min(1.0, exp(-d_tun / 6) * g_mod(d_plate, 18) - d_rel / 8))
                 kap = P08["kappa_brk"] if p.kind in ("SL", "CB") else 1.0
-                w += kap * P08["beta_tun_whiff"] * tun     # v1.0 D5: whiff and chase-swing tunneling, each from its fit
-                sw += kap * P08["beta_tun_chase"] * tun
+                w += rho * (kap * P08["beta_tun_whiff"] * tun)     # v1.0 D5: whiff and chase-swing tunneling, each from its fit
+                sw += rho * (kap * P08["beta_tun_chase"] * tun)
     if is_big_spot(s):
         w, sw = 0.5 * w, 0.5 * sw
     return w, sw
@@ -885,13 +921,11 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         hx = max(-P08["capH"] * hL, min(P08["capH"] * hL, hx))
         hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + hx + hL * 0.8 * DMG_SCALE * dmg - 0.3 * f
         c_ = "OS" if is_offspeed(p.kind) else "FB"
-        hl += min(P08["fam_cap"], P08["phi_" + c_] * s.familiar.get(c_, 0))     # familiarity within the game
+        hl += RHO_L.get(s.level, 1.0) * min(P08["fam_cap"], P08["phi_" + c_] * s.familiar.get(c_, 0))     # familiarity within the game (#19: x RHO_L)
         if gr:
             hl += gval("g_w", s.level) * (gr.get("w", 3) - 3)
         if s.crowding and q in ("up-in", "down-in"):
             hl -= P08["crowd"]
-        if p.kind == "CH" and s.same_side:
-            hl += 0.2
         if z == "heart" and is_offspeed(p.kind):
             hl += 0.5          # hanger: off-speed over the middle gets hit hard
         if is_offspeed(p.kind) and (q.startswith("up") or q == "middle"):
@@ -1028,6 +1062,9 @@ def in_play_value_typed(c, p, q, s):
         if dh and 0 < phr < 1:                 # item 8: more of a power hitter's hard contact leaves the park
             nhr = sig(logit(phr) + dh)
             po, phr = max(0.0, po - (nhr - phr)), nhr
+        if s.infield_in and t == "GB":         # v1.0 #12: drawn in, more ground balls get through (outs -> singles)
+            sh = min(po, TYPED["gb_babip_in"])
+            po, p1 = po - sh, p1 + sh
         # out
         if o + 1 >= 3:
             v_out = ev(3, (False, False, False), 0)
@@ -1479,11 +1516,31 @@ def v_fb(arsenal, s):
     return max(speed_today(x, s) for x in (fbs or arsenal))
 
 
-def look_update(look, p, q, s):
-    """2.6 the hitter's look after pitch (p, q)."""
+# v1.0 #24: height (ft) of each row of the app's 5x5 landing grid (catcher's view, row 0 = above the zone), on the same
+# scale as Y_TARGET and the chase heights: the look follows where the pitch ended up when the catcher logged it.
+LOC_ROW_Y = (3.8, 3.2, 2.5, 1.8, 1.2)
+
+
+def loc_quad(cell, kind, batter_right):
+    """v1.0 #7: the engine target a logged landing cell (row, col of the app's 5x5 catcher's-view grid) falls in, for
+    keying M2's earlier hard hits on where the pitch actually went. The center cell is middle; out of the zone on the
+    chase side (low for off-speed, high for a fastball) is chase; otherwise up (rows 0-1) or down (rows 2-4, as Statcast's
+    split puts mid-height off-center pitches) and in or away (a right-handed hitter stands on the catcher's left)."""
+    r, c = cell
+    if (r, c) == (2, 2):
+        return "middle"
+    if (r == 4 and kind != "FB") or (r == 0 and kind == "FB"):
+        return "chase"
+    inside = (c <= 1) if batter_right else (c >= 3)
+    return ("up" if r <= 1 else "down") + ("-in" if inside else "-away")
+
+
+def look_update(look, p, q, s, y=None):
+    """2.6 the hitter's look after pitch (p, q). y: the logged landing height (LOC_ROW_Y) when there is one; otherwise the
+    called target's height (v1.0 #24)."""
     lam = P08["lam"]
     vp = speed_today(p, s) + 0.5 * ev_adj(p, q)
-    return (lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * y_target(q, p.kind))
+    return (lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * (y_target(q, p.kind) if y is None else y))
 
 
 def _interp_axis(x, centers):
@@ -1622,13 +1679,19 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
 # be called as a chase; otherwise it is left out. If nothing is landing, or the rule would leave nothing to call, the
 # filter stands down (there is no landing pitch to give way to). v1.0 Step 3: measured as a deviation from his own
 # expectation, so a pitch with a low normal strike rate isn't blocked for being itself.
+# v1.0 Step 5: the block is a coaching rule, so it keeps its own shrinkage (LAND_BLOCK_K = the Step 3 K of 5) and does
+# not move when the fitted LAND_K does (rules and fits don't share a parameter).
 LAND_BLOCK_N = 4
 LAND_BLOCK_EST = -0.15
+LAND_BLOCK_K = 5.0
 
 
 def not_landing(p, s):
-    est, _, n = landing_estimate(p, s)
-    return n >= LAND_BLOCK_N and est <= LAND_BLOCK_EST
+    ev = landing_triple(p, s.landing_today.get(p.name)) if s.landing_today else None
+    if not ev or ev[-1] < LAND_BLOCK_N:
+        return False
+    st, ex, n = ev
+    return (st - ex) / (LAND_BLOCK_K + n) <= LAND_BLOCK_EST
 
 
 def shaken_names(exclude):
@@ -1681,6 +1744,8 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
         v += P[c] * ipv[j]
     if s.steal and s.steal.get("a", 0) > 0:
         v += steal_cost(p, q, s, tab, nl)
+    if s.matchup and mashed(p, q, s):
+        v += MASHED_PENALTY * run_scale(s.level)     # v1.0 D3: mashed twice at this height today
     if s.level in ("hs", "travel"):
         w_ = min(1.0, max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20))
         if w_ > 0:

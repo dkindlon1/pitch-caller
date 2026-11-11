@@ -101,7 +101,7 @@
 
   // ---------------------------------------------------------------- landing today (v0.6d; v1.0 Step 3 one anchor)
   // record per pitch: [strikes, expected strikes, pitches], non-chase targets only (engine.py landing_estimate)
-  const LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6, LAND_SHARP_MAX = 0.3;   // two-sided (Drew, Nov 10, D1)
+  const LAND_K = 20.0, LAND_GAIN = 2.0, LAND_MAX = 0.6, LAND_SHARP_MAX = 0.3;   // two-sided (Drew, Nov 10, D1); K and GAIN fitted (v1.0 Step 5)
   const DMG_SCALE = 3.0;   // v0.6e: a strong masher is worth ~+0.03 runs per pitch, like the best real fastball hitters
   function expectedStrike(p, q, s, arsenal) {
     const P = outcomeProbs(p, q, Object.assign({}, s, { landing_today: {}, wild_true: {} }), arsenal);
@@ -294,7 +294,7 @@
 
   function damage(p, q, s) {
     let total = 0.0;
-    for (const key of [isOffspeed(p.kind) ? "OS" : "FB", q]) {
+    for (const key of [isOffspeed(p.kind) ? "OS" : "FB", p.kind + "|" + q]) {   // v1.0 #21: spot read per pitch kind
       if (key in s.hitter_damage) {
         const [score, n] = s.hitter_damage[key];
         let eff = score * n / (n + 10.0);
@@ -309,14 +309,13 @@
   const MM = { succ: 0.107, succ_cap: 4, hard: -0.346, hard_cap: 2 };
   function matchupWhiff(p, q, s) {
     const m = s.matchup || {};
-    let x = MM.succ * Math.min(MM.succ_cap, m["succ|" + p.kind] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + p.kind + "|" + q] || 0);
-    x = Math.max(-P08.fam_cap, Math.min(P08.fam_cap, x));
+    const x = MM.succ * Math.min(MM.succ_cap, m["succ|" + p.kind] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + p.kind + "|" + q] || 0);   // v1.0 #7: no shared clip
     return (RHO_L[s.level] ?? 1.0) * x;
   }
   // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
   const SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}};
   // v0.9 item 8: more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
-  const POWER_HR = 0.112 * 0.03 / 0.053;
+  const POWER_HR = 0.112;   // v1.0 #11/#28: one power-grade point = one SD of hard-hit share
   const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
     if ((z !== "heart" && z !== "edge") || q === "middle" || q === "chase") return 0.0;
@@ -374,10 +373,9 @@
       Z.F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
       Z.h1 = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6); Z.h2 = hL * 0.8 * DMG_SCALE * dmg; Z.h3 = 0.3 * f;
       Z.hlPost = [];
-      { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
+      { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push((RHO_L[s.level] ?? 1.0) * Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }   // #19
       if (gr) Z.hlPost.push(gval("g_w", s.level) * ((gr.w ?? 3) - 3));
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
-      if (p.kind === "CH" && s.same_side) Z.hlPost.push(0.2);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
@@ -748,7 +746,8 @@
   function pairTerms(p, q, s, arsenal) {
     const yHat = s.look ? s.look[1] : 2.5;
     const ey = gMod((p.kind === "FB" ? 1 : -1) * (yTarget(q, p.kind) - yHat), P08.dstar_E);
-    let w = P08.beta_E * ey, sw = P08.beta_E_S * ey;
+    const rho = RHO_L[s.level] ?? 1.0;   // v1.0 #19: eye level and tunneling scale by RHO_L
+    let w = rho * (P08.beta_E * ey), sw = rho * (P08.beta_E_S * ey);
     if (s.last) {
       const last = byName(arsenal, s.last[0]);
       const lq = s.last[1], res = s.last.length > 2 ? s.last[2] : null;
@@ -761,7 +760,7 @@
           const dRel = ((last.release_offset_in[0] - p.release_offset_in[0]) ** 2 + (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5;
           const tun = Math.max(-1.0, Math.min(1.0, Math.exp(-dTun / 6) * gMod(dPlate, 18) - dRel / 8));
           const kap = (p.kind === "SL" || p.kind === "CB") ? P08.kappa_brk : 1.0;
-          w += kap * P08.beta_tun_whiff * tun; sw += kap * P08.beta_tun_chase * tun;   // v1.0 D5
+          w += rho * (kap * P08.beta_tun_whiff * tun); sw += rho * (kap * P08.beta_tun_chase * tun);   // v1.0 D5
         }
       }
     }
@@ -800,6 +799,7 @@
     for (const t of B_TYPES) {
       let [po, p1, p2, p3, phr, pe] = tab[t];
       if (dh && phr > 0 && phr < 1) { const nhr = sig(logit(phr) + dh); po = Math.max(0.0, po - (nhr - phr)); phr = nhr; }   // item 8
+      if (s.infield_in && t === "GB") { const sh = Math.min(po, TYPED.gb_babip_in); po -= sh; p1 += sh; }   // v1.0 #12: infield in, more singles
       let vOut;
       if (o + 1 >= 3) vOut = ev(3, [false, false, false], 0);
       else {
@@ -1036,8 +1036,14 @@
     return out(sg, res);
   }
   // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
-  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15;   // v1.0 Step 3: a deviation from his own expectation
-  function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
+  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15, LAND_BLOCK_K = 5.0;   // v1.0: a deviation from his own expectation; the
+  // block is a rule with its own shrinkage, so it doesn't move with the fitted LAND_K (v1.0 Step 5)
+  function notLanding(p, s) {
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || ev[ev.length - 1] < LAND_BLOCK_N) return false;
+    const [st, ex, n] = ev;
+    return (st - ex) / (LAND_BLOCK_K + n) <= LAND_BLOCK_EST;
+  }
   // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
   const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
   function allowedCalls(arsenal, s, exclude) {
@@ -1062,9 +1068,19 @@
     let m = -Infinity; for (const x of (fbs.length ? fbs : arsenal)) m = Math.max(m, speedToday(x, s));
     return m;
   }
-  function lookUpdate(look, p, q, s) {
+  // v1.0 #24: mirror of engine.py LOC_ROW_Y / look_update(y): the look follows the logged landing height when there is one
+  const LOC_ROW_Y = [3.8, 3.2, 2.5, 1.8, 1.2];
+  // v1.0 #7: mirror of engine.py loc_quad: the target a logged landing cell falls in (M2 keys earlier hard hits on it)
+  function locQuad(cell, kind, batterRight) {
+    const [r, c] = cell;
+    if (r === 2 && c === 2) return "middle";
+    if ((r === 4 && kind !== "FB") || (r === 0 && kind === "FB")) return "chase";
+    const inside = batterRight ? c <= 1 : c >= 3;
+    return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
+  }
+  function lookUpdate(look, p, q, s, y) {
     const lam = P08.lam, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
-    return [lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * yTarget(q, p.kind)];
+    return [lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * (y === undefined || y === null ? yTarget(q, p.kind) : y)];
   }
   function interpAxis(x, c) {
     if (x >= c[0]) return [[0, 1.0]];
@@ -1144,6 +1160,17 @@
     }
     return [M, Mmy];
   }
+  // v1.0 D3: mirror of engine.py mashed(): a coaching rule (soft cost), separate from the fitted MM logits
+  const MASHED_N = 2;
+  const MASHED_PENALTY = 0.015;
+  function targetHeight(q, kind) { return q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && kind === "FB")) ? "up" : "down"; }
+  function mashed(p, q, s) {
+    const m = s.matchup;
+    if (!m || !Object.keys(m).length) return false;
+    const h = targetHeight(q, p.kind);
+    let n = 0; for (const x of QUADS) if (targetHeight(x, p.kind) === h) n += m["hard|" + p.kind + "|" + x] || 0;
+    return n >= MASHED_N;
+  }
   function costFromP(p, q, s, tab, look, P, myopic) {
     const b = s.balls, k = s.strikes, o = s.outs, B = s.bases;
     const nl = myopic ? tab.h0 : lookUpdate(look, p, q, s);
@@ -1157,6 +1184,7 @@
     v += P.foul * (k < 2 ? tv(b, k + 1) : tv(b, k));
     for (const c of ["weak", "solid", "hard"]) v += P[c] * ipvCached(tab, c, p, q, s);
     if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
+    if (s.matchup && mashed(p, q, s)) v += MASHED_PENALTY * runScale(s.level);   // v1.0 D3: mashed twice at this height today
     if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
@@ -1555,7 +1583,7 @@
   }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
-    solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
+    solveTable, tabValue, rootCall, callV08, rootCosts, cost08, LOC_ROW_Y, locQuad, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, nextCountTop,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 

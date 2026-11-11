@@ -492,7 +492,7 @@ def play_game(log_path):
                               pitch_count=pitch_count, batters_faced=batters_faced, level=LEVEL_NAME,
                               same_side=(hitter["hand"] == pitcher["hand"]), last=last,
                               hitter_seen=dict(K.seen[h]), usage_this_count=dict(K.usage[(balls, strikes)]),
-                              timing=dict(K.timing[h]), hitter_damage=dict(K.damage[h]),
+                              timing=dict(K.timing[h]), hitter_damage=(dict(K.damage[h]) if LEGACY_CALLER else {}),   # v1.0 #7: no in-game damage (MM owns it); the simulator has no cross-game seed
                               landing_today=({x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
                                               if land[(pitcher["name"], x.name)][1]} if LEGACY_CALLER else
                                              {x.name: land3[(pitcher["name"], x.name)] for x in pitcher["arsenal"]

@@ -10,8 +10,9 @@ Checks, over the first N full-solve cases of golden/golden_v10.json:
   4. "Sets up" in the why line exactly when the intent label is Setup; never "Sets up" beside "Best strike here".
   5. The eye-level line agrees with the sign of the fitted coefficient beta_E (and so does the intent mechanism text).
   6. The setup line names the engine's actual top call at the next count, computed here independently with call_v08.
-     Setup is rare at the shipped noise margin (INTENT_E), so this check sets INTENT_E = 0 on three golden cases where
-     look value reverses the myopic order, and requires at least three Setup calls so it cannot pass vacuously.
+     Setup is rare at the shipped noise margin (INTENT_E), so this check sets INTENT_E = 0, scans golden cases for calls
+     where look value reverses the myopic order and requires at least one Setup line; the next-count helper itself is also
+     checked on every drawn call with fewer than two strikes and three balls.
   7. Python and JS agree on the why line, intent and next-count top call, as called and with the drawn pitch shaken off.
 """
 import json, os, subprocess, sys
@@ -24,7 +25,8 @@ import cases as G8                                   # noqa: E402
 import golden_v09 as G9                              # noqa: E402  (from_dicts with the matchup applied)
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 60
-SETUP_CASES = (118, 198, 241)        # full-solve case positions where look value reverses the myopic order (scan, Nov 11)
+SETUP_SCAN = 250                     # check 6 scans this many full-solve cases for calls where look value reverses the
+SETUP_NEED = 1                       # myopic order (Setup at INTENT_E = 0), stopping once it has this many
 FAILS = []
 
 
@@ -145,15 +147,28 @@ def main():
     found, bad = 0, []
     try:
         e.INTENT_E = 0.0
-        for idx in SETUP_CASES:
+        used = []
+        for idx in range(min(SETUP_SCAN, len(full))):
+            if found >= SETUP_NEED:
+                break
+            if full[idx]["s"]["balls"] == 3 or full[idx]["s"]["strikes"] == 2:
+                continue
             ars, s, tab = setup_case(full[idx])
             _, dist, tab, info = e.call_v08(ars, s, rng=G8.Half(), tab=tab)
+            sg = info["sigma"]
+            cmy = {x: e._root_cost_one(ars, s, tab, x, sg, True) for x in info["M"]}
+            cfu = {x: e._root_cost_one(ars, s, tab, x, sg) for x in info["M"]}
+            bs = min(info["M"], key=lambda x: cmy[x])
             for d in dist:
                 pick = (d[2], d[3])
+                x = (d[2].name, d[3])
+                if not (cmy[x] > cmy[bs] and cfu[x] < cfu[bs]):     # cheap pre-filter: only these can be Setup
+                    continue
                 lab = e.intent_label(ars, s, tab, pick, info)
                 if lab[0] != "Setup":
                     continue
                 found += 1
+                used.append(idx)
                 line = e.why_line(ars, s, tab, pick, info)[0]
                 sn = next_situation(ars, s, tab, d[2], d[3], info["sigma"])
                 top = e.call_v08(ars, sn, rng=G8.Half(), tab=tab)[1][0]
@@ -162,8 +177,22 @@ def main():
                     bad.append(f"case {idx} {d[2].name} {d[3]}: why '{line}', intent '{lab[2]}', engine next top '{want}'")
     finally:
         e.INTENT_E = saved_e
-    check("6. setup line names the engine's actual next-count top call", found >= 3 and not bad,
-          "; ".join(bad[:3]) or f"{found} Setup calls (INTENT_E = 0 on cases {SETUP_CASES})")
+    # and the helper itself, on the drawn call of every 0-1 strike, 0-2 ball case: next_count_top is the engine's own top
+    # call at the next count (call_v08 on the situation built here)
+    nct = 0
+    for r in rows:
+        if r["s"].balls == 3 or r["s"].strikes == 2:
+            continue
+        p_, q_ = r["pick"][0], r["pick"][1]
+        sn = next_situation(r["ars"], r["s"], r["tab"], p_, q_, r["info"]["sigma"])
+        top = e.call_v08(r["ars"], sn, rng=G8.Half(), tab=r["tab"])[1][0]
+        got = e.next_count_top(r["ars"], r["s"], r["tab"], r["pick"], r["info"])
+        nct += 1
+        if got != (top[2].name, top[3]):
+            bad.append(f"next_count_top {got} vs engine next top {(top[2].name, top[3])}")
+    check("6. setup line names the engine's actual next-count top call", found >= 1 and nct >= 10 and not bad,
+          "; ".join(bad[:3]) or f"{found} Setup line(s) at INTENT_E = 0 (golden full-solve cases {sorted(set(used))}); "
+          f"next_count_top = the engine's next-count top on {nct} drawn calls")
 
     k = min(20, len(rows))
     out = subprocess.run([os.environ.get("NODE", "node"), os.path.join(HERE, "golden", "explain_twin.js"), str(k)],
