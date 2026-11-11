@@ -68,14 +68,45 @@ export default function Home() {
       </main>
 
       <footer className="mk-foot">
-        <div className="mk-wrap mk-foot-row">
-          <span className="mk-nav-brand"><Mark size={18} /><span>PitchIQ</span></span>
-          <span className="mk-foot-links">
-            <Link href="/login">Sign in</Link>
-            <Link href="/terms">Terms</Link>
-            <Link href="/privacy">Privacy</Link>
-          </span>
-          <span className="mk-foot-copy">© 2026 PitchIQ</span>
+        <div className="mk-wrap">
+          <div className="mk-foot-top">
+            <div className="mk-foot-brand">
+              <span className="mk-nav-brand"><Mark size={22} /><span>PitchIQ</span></span>
+              <p>Pitch calling for high school, travel and college baseball.</p>
+            </div>
+            <nav className="mk-foot-cols" aria-label="Footer">
+              <div>
+                <h2>Product</h2>
+                <ul>
+                  <li><a href="#at-bat">How it calls</a></li>
+                  <li><a href="#demo">Try the engine</a></li>
+                  <li><a href="#dugout">In the dugout</a></li>
+                  <li><a href="#gameday">A game with PitchIQ</a></li>
+                </ul>
+              </div>
+              <div>
+                <h2>Teams</h2>
+                <ul>
+                  <li><a href="#program">Coaches and players</a></li>
+                  <li><a href="#rules">The rules it plays by</a></li>
+                  <li><a href="#faq">Questions</a></li>
+                  <li><a href="#contact">Talk to us</a></li>
+                </ul>
+              </div>
+              <div>
+                <h2>Account</h2>
+                <ul>
+                  <li><Link href="/login">Sign in</Link></li>
+                  <li><Link href="/terms">Terms</Link></li>
+                  <li><Link href="/privacy">Privacy</Link></li>
+                </ul>
+              </div>
+            </nav>
+          </div>
+          <div className="mk-foot-row">
+            <span>© 2026 PitchIQ</span>
+            <span>Check your association&apos;s rules on electronic devices before using a tablet in the dugout.</span>
+          </div>
         </div>
       </footer>
     </>

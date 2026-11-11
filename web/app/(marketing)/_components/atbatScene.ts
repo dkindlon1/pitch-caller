@@ -33,7 +33,7 @@ const KEYS: Key[] = [
 ];
 const ease = (x: number) => x * x * (3 - 2 * x);
 
-export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accent: string; onLabel?: (xy: { x: number; y: number; show: boolean }) => void }): AtBatScene | null {
+export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accent: string; onLabel?: (xy: { x: number; y: number; show: boolean }) => void; onBall?: (s: { x: number; y: number; show: boolean; text: string }) => void }): AtBatScene | null {
   const renderer = makeRenderer();
   if (!renderer) return null;
   el.appendChild(renderer.domElement);
@@ -95,6 +95,10 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
     spinBall(b, pitches[i].kind, fly * 1700);
     camAt(p);
     renderer!.render(scene, camera);
+    if (opts.onBall) {
+      const v = b.position.clone().project(camera);
+      opts.onBall({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, show: b.visible && fly > 0.04 && fly < 1, text: `${pitches[i].velo} mph` });
+    }
     // the "60 ft 6 in" label rides the measuring line in the side view
     if (opts.onLabel) {
       const v = mid.clone().project(camera);

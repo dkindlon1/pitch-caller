@@ -15,6 +15,10 @@ const ACCENT = "#F04A3E";
 
 export function Hero() {
   const stage = useRef<HTMLDivElement>(null);
+  const sec = useRef<HTMLElement>(null);
+  const copy = useRef<HTMLDivElement>(null);
+  const card = useRef<HTMLElement>(null);
+  const speed = useRef<HTMLSpanElement>(null);
   const [i, setI] = useState(0);
   const [on, setOn] = useState(false);
 
@@ -31,6 +35,7 @@ export function Hero() {
             if (dead || !stage.current) return;
             scene = mountHero(stage.current, AT_BAT.map(toScene), {
               accent: ACCENT, still, onPitch: setI,
+              onBall: ({ x, y, show, text }) => { const l = speed.current; if (!l) return; l.style.transform = `translate(${x}px, ${y}px)`; l.dataset.show = show ? "1" : "0"; if (l.textContent !== text) l.textContent = text; },
               // a device too slow for the 3D keeps the last frame, and the call card steps on its own
               onStill: () => { timer = window.setInterval(() => setI((n) => (n + 1) % AT_BAT.length), 3200); },
             });
@@ -42,14 +47,34 @@ export function Hero() {
     return () => { dead = true; cancel(); window.clearInterval(timer); scene?.dispose(); };
   }, []);
 
+  // as the hero scrolls away, the copy and the call lift and fade while the field pushes in and dims. The fade is on the
+  // glass card itself: opacity on an ancestor would make that ancestor the card's backdrop and switch its blur off
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let kill = () => {};
+    Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
+      if (!sec.current || !copy.current || !card.current || !stage.current) return;
+      gsap.registerPlugin(ScrollTrigger);
+      const st = { trigger: sec.current, start: "top top", end: "bottom top", scrub: true };
+      // explicit start values: the tweens are created while the entrance is still running, and must not record its
+      // half-faded state as where they start
+      const a = gsap.fromTo(copy.current, { y: 0, opacity: 1 }, { y: -90, opacity: 0, ease: "none", immediateRender: false, scrollTrigger: { ...st, end: "70% top" } });
+      const b = gsap.fromTo(card.current, { y: 0, opacity: 1 }, { y: -50, opacity: 0, ease: "none", immediateRender: false, scrollTrigger: { ...st, end: "60% top" } });
+      const c = gsap.fromTo(stage.current, { scale: 1, opacity: 1 }, { scale: 1.07, opacity: 0.25, ease: "none", immediateRender: false, scrollTrigger: st });
+      kill = () => [a, b, c].forEach((t) => { t.scrollTrigger?.kill(); t.kill(); });
+    });
+    return () => kill();
+  }, []);
+
   const p = AT_BAT[i];
   return (
-    <section className="mk-hero" aria-labelledby="hero-h">
+    <section className="mk-hero" aria-labelledby="hero-h" ref={sec}>
       <div className={`mk-hero-stage${on ? " is-on" : ""}`} ref={stage} />
+      <span className="mk-speed" ref={speed} aria-hidden="true" />
       <div className="mk-hero-shade" aria-hidden="true" />
       <div className="mk-wrap mk-hero-grid">
-        <div className="mk-hero-copy">
-          <h1 id="hero-h"><span>Every pitch called.</span> <span>Every call explained.</span></h1>
+        <div className="mk-hero-copy" ref={copy}>
+          <h1 id="hero-h"><span className="mk-line"><span style={{ "--d": "0.15s" } as React.CSSProperties}>Every pitch called.</span></span> <span className="mk-line"><span style={{ "--d": "0.27s" } as React.CSSProperties}>Every call explained.</span></span></h1>
           <p className="mk-hero-lede">
             PitchIQ reads your pitcher&apos;s stuff today, the hitter and the count, then gives you a sign, a spot and the
             reason for it. Built for high school, travel and college coaches.
@@ -60,7 +85,8 @@ export function Hero() {
           </div>
         </div>
 
-        <figure className="mk-call mk-glass" aria-live="polite" aria-atomic="true">
+        <div className="mk-call-wrap">
+        <figure className="mk-call mk-glass" ref={card} aria-live="polite" aria-atomic="true">
           <div className="mk-call-top">
             <span className="mk-call-count" aria-label={`Count ${p.balls} and ${p.strikes}`}>{p.balls}-{p.strikes}</span>
             <span className="mk-call-step">Pitch {i + 1} of {AT_BAT.length}</span>
@@ -75,6 +101,7 @@ export function Hero() {
           <p className="mk-call-why" key={`w${i}`}>{p.why}</p>
           <figcaption>A real at-bat called by the PitchIQ engine, right-handed hitter, college D3.</figcaption>
         </figure>
+        </div>
       </div>
     </section>
   );

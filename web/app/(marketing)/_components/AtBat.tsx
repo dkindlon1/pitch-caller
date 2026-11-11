@@ -13,6 +13,7 @@ const VELO: Record<Pitch["pitch"], number> = { Fastball: 86, Slider: 78, Changeu
 const KIND: Record<Pitch["pitch"], FieldPitch["kind"]> = { Fastball: "FB", Slider: "SL", Changeup: "CH", Curveball: "CB" };
 const toField = (p: Pitch): FieldPitch => ({ kind: KIND[p.pitch], velo: VELO[p.pitch], cell: p.spot === "Chase" ? "chase" : CELL[p.spot] });
 const ACCENT = "#F04A3E";
+declare global { interface Window { __mkAbProgress?: number } }
 const START = 0.06, EACH = 0.21;   // keep in step with atbatScene.ts SPAN
 
 type View = { i: number; landed: boolean; phase: "intro" | "pitch" | "end"; side: boolean };
@@ -26,6 +27,7 @@ export function AtBat() {
   const sec = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLSpanElement>(null);
+  const speed = useRef<HTMLSpanElement>(null);
   const [v, setV] = useState<View>({ i: 0, landed: false, phase: "intro", side: false });
   const [still, setStill] = useState(false);
   const [on, setOn] = useState(false);
@@ -44,9 +46,11 @@ export function AtBat() {
         scene = mountAtBat(stage.current, AT_BAT.map(toField), {
           accent: ACCENT,
           onLabel: ({ x, y, show }) => { const l = label.current; if (l) { l.style.transform = `translate(${x}px, ${y}px)`; l.dataset.show = show ? "1" : "0"; } },
+          onBall: ({ x, y, show, text }) => { const l = speed.current; if (!l) return; l.style.transform = `translate(${x}px, ${y}px)`; l.dataset.show = show ? "1" : "0"; if (l.textContent !== text) l.textContent = text; },
         });
         if (!scene) return;
         setOn(true);
+        if (window.__mkAbProgress !== undefined) scene.set(window.__mkAbProgress);
         if (reduced) scene.set(1);
       }).catch(() => {});
       if (reduced) return;
@@ -54,14 +58,15 @@ export function AtBat() {
         if (dead || !sec.current) return;
         gsap.registerPlugin(ScrollTrigger);
         let last = "";
-        const st = ScrollTrigger.create({
-          trigger: sec.current, start: "top top", end: "bottom bottom",
-          onUpdate: (self) => {
-            scene?.set(self.progress);
-            const nv = viewAt(self.progress), key = `${nv.i}${nv.landed}${nv.phase}${nv.side}`;
-            if (key !== last) { last = key; setV(nv); }
-          },
-        });
+        const apply = (p: number) => {
+          window.__mkAbProgress = p;
+          scene?.set(p);
+          const nv = viewAt(p), key = `${nv.i}${nv.landed}${nv.phase}${nv.side}`;
+          if (key !== last) { last = key; setV(nv); }
+        };
+        const st = ScrollTrigger.create({ trigger: sec.current, start: "top top", end: "bottom bottom", onUpdate: (self) => apply(self.progress) });
+        // arriving mid-chapter (a reload, a link to #at-bat) starts from where the page already is, not from the intro
+        apply(st.progress);
         kill = () => st.kill();
       });
     }, { rootMargin: "40% 0px" });
@@ -108,6 +113,7 @@ export function AtBat() {
         <div className="mk-ab-stage" ref={stage} />
         <div className="mk-ab-shade" aria-hidden="true" />
         <span className="mk-ab-dist" ref={label} aria-hidden="true">60 ft 6 in</span>
+        <span className="mk-speed" ref={speed} aria-hidden="true" />
 
         <div className="mk-wrap mk-ab-ui">
           <div className="mk-ab-intro">
@@ -146,6 +152,13 @@ export function AtBat() {
           <div className="mk-ab-end">
             <p className="mk-ab-k">Strikeout swinging.</p>
             <p>Four calls, each with the reason it was made. That&apos;s what a coach sees on the iPad, one pitch at a time.</p>
+            <ol className="mk-ab-recap" aria-label="The at-bat">
+              {AT_BAT.map((x, n) => (
+                <li key={n} style={{ transitionDelay: `${n * 70}ms` }}>
+                  <span>{x.balls}-{x.strikes}</span><b>{x.pitch}</b><span>{n === 3 ? "Strikeout" : x.result}</span>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       </div>

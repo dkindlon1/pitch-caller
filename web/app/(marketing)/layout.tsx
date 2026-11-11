@@ -7,10 +7,16 @@ import "./marketing.css";
 // app/globals.css). One variable family, set tight for headlines and at regular width for reading.
 const sans = Instrument_Sans({ subsets: ["latin"], weight: "variable", axes: ["wdth"], display: "swap", variable: "--mk-font" });
 
+const TITLE = "PitchIQ: pitch calling for high school, travel and college baseball";
+const DESCRIPTION = "PitchIQ calls every pitch from your pitcher's stuff today, the hitter and the count, and tells you why. Built for high school, travel and college coaches.";
+
+// SITE_URL (web/.env.example) makes the share image's address absolute; without it links resolve against localhost
 export const metadata: Metadata = {
-  title: "PitchIQ: pitch calling for high school, travel and college baseball",
-  description:
-    "PitchIQ calls every pitch from your pitcher's stuff today, the hitter and the count, and tells you why. Built for high school, travel and college coaches.",
+  metadataBase: new URL(process.env.SITE_URL || "http://localhost:3000"),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: { title: "PitchIQ: every pitch called, every call explained", description: DESCRIPTION, type: "website", siteName: "PitchIQ" },
+  twitter: { card: "summary_large_image", title: "PitchIQ: every pitch called, every call explained", description: DESCRIPTION },
 };
 
 export default function MarketingLayout({ children }: Readonly<{ children: React.ReactNode }>) {

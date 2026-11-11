@@ -106,12 +106,24 @@ export function Demo() {
     setC(call(x.E, x.ars, next));
   }, [c, g]);
 
-  // keyboard shortcuts, like the app, while focus is inside the demo
-  const onKey = (e: React.KeyboardEvent) => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    const hit = RESULTS.find((x) => x.key === e.key.toUpperCase());
-    if (hit && (e.target as HTMLElement).tagName !== "INPUT") { e.preventDefault(); tap(hit.r); }
-  };
+  // keyboard shortcuts, like the app: live whenever the demo is on screen, except while typing in a form field
+  const tapRef = useRef(tap);
+  tapRef.current = tap;
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    // on screen = at least 40% of the device visible, measured at the key press itself
+    const onScreen = () => { const r = el.getBoundingClientRect(), vis = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0); return vis > r.height * 0.4; };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.repeat || !onScreen()) return;
+      const t = e.target as HTMLElement;
+      if (t.closest("input, textarea, select, [contenteditable]")) return;
+      const hit = RESULTS.find((x) => x.key !== "G" && x.key === e.key.toUpperCase());
+      if (hit) { e.preventDefault(); tapRef.current(hit.r); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   const restart = () => {
     const x = eng.current;
@@ -138,11 +150,11 @@ export function Demo() {
             This is the engine from the iPad app, running in your browser. The pitcher is the app&apos;s sample right-hander:
             fastball 86, slider 78, changeup 77, at college D3. Tap what happened and it calls the next pitch.
           </p>
-          <p className="mk-dm-keys">Keys work too: <kbd>B</kbd> ball, <kbd>C</kbd> called strike, <kbd>S</kbd> swing and miss, <kbd>F</kbd> foul, <kbd>X</kbd> in play, <kbd>H</kbd> hit by pitch.</p>
+          <p className="mk-dm-keys">Keys work while it&apos;s on screen: <kbd>B</kbd> ball, <kbd>C</kbd> called strike, <kbd>S</kbd> swing and miss, <kbd>F</kbd> foul, <kbd>X</kbd> in play, <kbd>H</kbd> hit by pitch.</p>
         </div>
 
         <div className="mk-dm-stage" ref={root}>
-          <div className="mk-dm-device" ref={dev} onKeyDown={onKey}>
+          <div className="mk-dm-device" ref={dev}>
             <div className="mk-dm-screen mk-glass" data-engine={version || undefined}>
               <header className="mk-dm-top">
                 <span className="mk-dm-who"><b>{hitter}</b><span>{how}</span></span>
@@ -180,6 +192,12 @@ export function Demo() {
                 )}
                 <Zone c={c} g={g} side={side} />
               </div>
+
+              <ol className="mk-dm-log" aria-label="This at-bat so far">
+                {g.atBat.length ? g.atBat.map((l, n) => (
+                  <li key={n}><span className="mk-dm-logc">{l.balls}-{l.strikes}</span><b>{l.call.pitch}</b><span>{RESULT_LABEL[l.result]}</span></li>
+                )) : <li className="mk-dm-logempty">This at-bat&apos;s pitches show up here.</li>}
+              </ol>
 
               <fieldset className="mk-dm-results" disabled={!c}>
                 <legend>What happened?</legend>

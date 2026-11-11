@@ -84,8 +84,8 @@ const frames = (page) => page.locator(".mk-hero-stage").evaluate((el) => Number(
     check((await page.locator(".mk-dm-count b").innerText()) === "2-2", "tapping called strike, ball, foul, ball leaves the count at 2-2");
     check((await page.locator(".mk-dm-why").innerText()).length > 8, `each call carries the engine's reason ("${await page.locator(".mk-dm-why").innerText()}")`);
     check(Math.max(...times) < 1000, `every call came back in under a second on this machine (${times.join(", ")} ms, software rendering)`);
-    await page.locator(".mk-dm-device").press("s"); await wait(300);
-    check((await page.locator(".mk-dm-ended").innerText()).startsWith("Strikeout"), "the S key logs a swing and miss: strikeout");
+    await page.locator(".mk-dm-device").evaluate((d) => d.scrollIntoView({ block: "center" })); await wait(600); await page.mouse.click(5, 450); await page.keyboard.press("s"); await wait(300);
+    check((await page.locator(".mk-dm-ended").innerText()).startsWith("Strikeout"), "the S key logs a swing and miss while the demo is on screen: strikeout");
 
     await page.locator("#dugout").scrollIntoViewIfNeeded();
     await page.getByRole("radio", { name: "Day" }).click(); await wait(700);

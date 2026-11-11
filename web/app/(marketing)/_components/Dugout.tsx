@@ -52,9 +52,11 @@ export function Dugout() {
         <div className="mk-dg-scene">
           <div className="mk-dg-tilt" ref={tilt}>
             <div className="mk-dg-ipad">
+              <span className="mk-dg-cam" aria-hidden="true" />
               <div className="mk-dg-glass">
                 <Image src={night} alt="The live-calling screen at night: first inning, count 1-1, the call is fastball, get it over, with its reason, the zone, the six result buttons and the at-bat so far." sizes="(max-width: 960px) 92vw, 1100px" className={mode === "night" ? "is-on" : ""} priority={false} />
                 <Image src={day} alt="The same screen in Day mode, with a light background, darker lines and solid buttons for bright sun." sizes="(max-width: 960px) 92vw, 1100px" className={mode === "day" ? "is-on" : ""} aria-hidden={mode !== "day"} />
+                <span className="mk-dg-glare" key={mode} aria-hidden="true" />
               </div>
             </div>
             <div className="mk-dg-floor" aria-hidden="true" />
