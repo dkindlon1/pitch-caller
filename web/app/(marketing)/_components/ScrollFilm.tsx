@@ -57,18 +57,28 @@ export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, clas
       }
       return -1;
     }
+    // the scroll lands between frames: draw the frame below and fade the next one over it by the fraction, so the
+    // film moves continuously instead of stepping
+    let fwant = 0, fshown = -1;
     function paint() {
       raf = 0;
-      const i = nearest(want);
-      if (i < 0) return;
-      const im = imgs[i]!;
+      const lo = Math.floor(fwant), hi = Math.min(set.count - 1, lo + 1), frac = fwant - lo;
+      const a = nearest(lo);
+      if (a < 0) return;
       const dpr = Math.min(1.5, window.devicePixelRatio || 1), cw = canvas!.clientWidth, ch = canvas!.clientHeight;
-      if (canvas!.width !== Math.round(cw * dpr) || canvas!.height !== Math.round(ch * dpr)) { canvas!.width = Math.round(cw * dpr); canvas!.height = Math.round(ch * dpr); shown = -1; }
-      if (i === shown) return;
-      const s = Math.max(canvas!.width / im.naturalWidth, canvas!.height / im.naturalHeight);
-      const w = im.naturalWidth * s, h = im.naturalHeight * s;
-      ctx!.drawImage(im, (canvas!.width - w) / 2, (canvas!.height - h) / 2, w, h);
-      shown = i;
+      if (canvas!.width !== Math.round(cw * dpr) || canvas!.height !== Math.round(ch * dpr)) { canvas!.width = Math.round(cw * dpr); canvas!.height = Math.round(ch * dpr); fshown = -1; }
+      const key = ok[lo] && ok[hi] ? fwant : a;
+      if (key === fshown) return;
+      const draw = (im: HTMLImageElement, alpha: number) => {
+        const s = Math.max(canvas!.width / im.naturalWidth, canvas!.height / im.naturalHeight);
+        const w = im.naturalWidth * s, h = im.naturalHeight * s;
+        ctx!.globalAlpha = alpha;
+        ctx!.drawImage(im, (canvas!.width - w) / 2, (canvas!.height - h) / 2, w, h);
+      };
+      draw(imgs[a]!, 1);
+      if (a === lo && ok[hi] && hi !== lo && frac > 0.02) draw(imgs[hi]!, frac);
+      ctx!.globalAlpha = 1;
+      fshown = key; shown = a;
     }
     const queue = () => { if (!raf) raf = requestAnimationFrame(paint); };
 
@@ -90,11 +100,11 @@ export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, clas
       if (dead || !sec.current) return;
       gsap.registerPlugin(ScrollTrigger);
       const st = ScrollTrigger.create({
-        trigger: sec.current, start: "top top", end: "bottom bottom", scrub: 0.35,
-        onUpdate: (t) => { want = Math.round(t.progress * (set.count - 1)); queue(); beatsAt(t.progress); },
+        trigger: sec.current, start: "top top", end: "bottom bottom", scrub: 0.6,
+        onUpdate: (t) => { fwant = t.progress * (set.count - 1); want = Math.round(fwant); queue(); beatsAt(t.progress); },
       });
-      want = Math.round(st.progress * (set.count - 1)); beatsAt(st.progress); queue();
-      const onResize = () => { const s = pick(); if (s.dir !== set.dir) { set = s; shown = -1; load(set); } shown = -1; queue(); };
+      fwant = st.progress * (set.count - 1); want = Math.round(fwant); beatsAt(st.progress); queue();
+      const onResize = () => { const s = pick(); if (s.dir !== set.dir) { set = s; load(set); } shown = -1; fshown = -1; queue(); };
       window.addEventListener("resize", onResize);
       kill = () => { st.kill(); window.removeEventListener("resize", onResize); };
     });

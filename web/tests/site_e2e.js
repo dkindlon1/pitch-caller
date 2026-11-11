@@ -59,16 +59,23 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     check(seen.size >= 2 && [...seen].every((c) => /^[0-3]-[0-2]$/.test(c)), `the live call steps through the at-bat (${[...seen].join(", ")})`);
     check(/^[1-4]$/.test(await page.locator(".mk-call-sign").innerText()) && (await page.locator(".mk-call-why").innerText()).length > 10, "each call shows a sign and the engine's reason");
 
-    console.log("1b. One at-bat (scroll-driven)");
-    const ab = async (q) => { await page.evaluate((q) => { const s = document.getElementById("at-bat"); const top = s.getBoundingClientRect().top + scrollY; scrollTo(0, top + (s.offsetHeight - innerHeight) * q); }, q); await wait(1800); };
-    await ab(0.3); await ab(0.02);
-    const introOk = await page.waitForSelector(".mk-ab.is-intro", { timeout: 6000 }).then(() => true, () => false);
-    check(introOk, `the chapter opens on its title (${await page.locator(".mk-ab").getAttribute("class")})`);
-    await ab(0.65);
-    check((await page.locator(".mk-ab-card .mk-ab-count").innerText()) === "1-1" && (await page.locator(".mk-ab-rail .is-now").innerText()).includes("1-1"), "scrolling into the third pitch shows the 1-1 call and marks it on the rail");
-    check(await page.locator(".mk-ab-res.is-shown").count() === 1, "the result appears once that pitch has landed");
-    await ab(0.97);
-    check((await page.locator(".mk-ab.is-end").count()) === 1 && await page.locator(".mk-ab-k").isVisible(), "the chapter ends on the strikeout");
+    console.log("1b. One at-bat (plays on its own)");
+    await page.evaluate(() => document.getElementById("at-bat").scrollIntoView()); await wait(600);
+    const introOk = await page.waitForSelector(".mk-ab.is-intro, .mk-ab.is-pitch", { timeout: 8000 }).then(() => true, () => false);
+    check(introOk, `the chapter opens on its title and starts (${await page.locator(".mk-ab").getAttribute("class")})`);
+    const playing = await page.waitForFunction(() => document.querySelector(".mk-ab-card .mk-ab-count")?.textContent === "0-1", null, { timeout: 20000 }).then(() => true, () => false);
+    check(playing, "the replay moves on to the second pitch by itself");
+    await page.getByRole("button", { name: /count 1-1/ }).click();
+    await wait(800);
+    check((await page.locator(".mk-ab-card .mk-ab-count").innerText()) === "1-1" && (await page.locator(".mk-ab-rail .is-now").innerText()).includes("1-1"), "the rail jumps to the third pitch and marks it");
+    const landed = await page.waitForSelector(".mk-ab-res.is-shown", { timeout: 8000 }).then(() => true, () => false);
+    check(landed, "the result appears once that pitch has landed");
+    await page.getByRole("button", { name: "Pause the at-bat" }).click(); const held = await page.locator(".mk-ab-card .mk-ab-count").innerText(); await wait(3000);
+    check(held === (await page.locator(".mk-ab-card .mk-ab-count").innerText()) && (await page.getByRole("button", { name: "Play the at-bat" }).count()) === 1, "Pause holds the replay");
+    await page.getByRole("button", { name: "Play the at-bat" }).click();
+    await page.getByRole("button", { name: /count 1-2/ }).click();
+    const ended = await page.waitForSelector(".mk-ab.is-end", { timeout: 15000 }).then(() => true, () => false);
+    check(ended && await page.locator(".mk-ab-k").isVisible() && (await page.getByRole("button", { name: "Replay the at-bat" }).count()) === 1, "the at-bat ends on the strikeout, with a Replay button");
 
     console.log("1c. The mix, the demo, the dugout, the game, the questions");
     await page.locator(".mk-rd-tile-mix").scrollIntoViewIfNeeded(); await wait(2200);

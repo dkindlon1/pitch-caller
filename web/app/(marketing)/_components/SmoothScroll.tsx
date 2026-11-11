@@ -34,7 +34,9 @@ export function SmoothScroll() {
     Promise.all([import("lenis"), import("gsap"), import("gsap/ScrollTrigger")]).then(([{ default: Lenis }, { gsap }, { ScrollTrigger }]) => {
       if (dead) return;
       gsap.registerPlugin(ScrollTrigger);
-      const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+      // lerp rather than a fixed duration: each frame closes a share of the distance, which reads as one continuous glide
+      // however fast the wheel ticks come in
+      const lenis = new Lenis({ lerp: 0.085, smoothWheel: true, wheelMultiplier: 0.9, touchMultiplier: 1 });
       window.__mkLenis = lenis;   // so in-page jumps (the at-bat rail) glide with the same scroller
       lenis.on("scroll", ScrollTrigger.update);
       const tick = (t: number) => lenis.raf(t * 1000);

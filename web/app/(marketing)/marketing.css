@@ -202,7 +202,7 @@
 .mk-nav-link.is-here { color: var(--mk-chalk); background: rgba(255, 255, 255, 0.09); }
 
 /* one at-bat: a tall section whose inner frame stays on screen while the scroll throws each pitch */
-.mk-ab { position: relative; height: 560vh; }
+.mk-ab { position: relative; height: max(660px, 100svh); }
 .mk-ab-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; isolation: isolate; }
 .mk-ab-stage { position: absolute; inset: 0; z-index: -2; background: radial-gradient(40% 30% at 62% 60%, rgba(255, 255, 255, 0.06), transparent 70%), #000; }
 .mk-ab-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; opacity: 0; transition: opacity 1s ease; }
@@ -795,3 +795,10 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-ab .mk-ab-card, .mk-ab .mk-ab-board { background: linear-gradient(160deg, rgba(22, 24, 28, 0.62), rgba(10, 11, 13, 0.72)) !important; }
 .mk-ab .mk-ab-rail button { background: rgba(12, 13, 15, 0.55); }
 .mk-ab .mk-ab-rail button.is-now { background: var(--mk-chalk); }
+
+/* the replay's controls and the fill on the current pitch */
+.mk-ab-ctl { position: absolute; right: var(--mk-pad); bottom: clamp(20px, 4vh, 40px); z-index: 3; }
+.mk-ab-ctl .mk-chip { background: rgba(12, 13, 15, 0.6); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.mk-ab-rail button { position: relative; overflow: hidden; }
+.mk-ab-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--mk-ink); opacity: 0.35; transform-origin: left; transform: scaleX(0); }
+@media (max-width: 760px) { .mk-ab-ctl { top: 76px; bottom: auto; } }

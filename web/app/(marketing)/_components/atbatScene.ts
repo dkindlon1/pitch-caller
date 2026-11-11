@@ -9,7 +9,7 @@
 import * as THREE from "three";
 import { along, ball, buildOverlay, disposeScene, flight, flightTube, FLIGHT_PER, makeRenderer, PER, PITCH_COLOR, SEG, spinBall, target, tube, world, type FieldPitch } from "./field";
 
-export type AtBatScene = { set: (p: number) => void; dispose: () => void };
+export type AtBatScene = { set: (p: number, snap?: boolean) => void; dispose: () => void };
 // where a hitter has to decide whether to swing: about 24 ft in front of the plate
 export const DECIDE_Z = 24;
 
@@ -269,7 +269,12 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   size();
 
   return {
-    set(p: number) { want = Math.max(0, Math.min(1, p)); if (!raf && visible) raf = requestAnimationFrame(frame); },
+    // snap: draw exactly p now (the replay's clock is already smooth); otherwise glide there
+    set(p: number, snap = false) {
+      want = Math.max(0, Math.min(1, p));
+      if (snap) { cur = want; if (visible) { cancelAnimationFrame(raf); raf = 0; draw(cur); } return; }
+      if (!raf && visible) raf = requestAnimationFrame(frame);
+    },
     dispose() {
       dead = true;
       cancelAnimationFrame(raf);
