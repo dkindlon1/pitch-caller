@@ -3,6 +3,10 @@
 Put the files exactly as named below in this folder (`web/public/media/runway/`). Nothing on the site loads them yet:
 each one gets wired in once the file is here and looks right. The site works without any of them.
 
+Models (Runway's menu, Nov 2026): stills with **Gen-4 Image**, fixed up with **Nano Banana 2** (or GPT-Image-1.5 for
+the seam macro); video with **Gen-4.5 Image to Video**, which makes 720p clips of 2 to 10 seconds, so upscale in Runway
+before exporting. Send the raw downloads: the loop crossfade, WebM/MP4 encodes and first-frame JPGs are done here.
+
 House rules for every asset: black and white only (the site adds its one red itself), no text, no logos, no team
 uniforms or colors, no faces, no MLB or real-team look. Shot at night under stadium lights, with soft haze.
 
@@ -29,7 +33,10 @@ Where: behind the glass panels in "Questions from coaches" and "Talk to us", in 
 - Prompt: *Out-of-focus banks of stadium lights at night, seen from low on the field looking up, drifting very slowly
   left to right through thin haze. Large soft circular light blooms on a pure black sky, lower third fading to black.
   Monochrome, very dark overall, subtle film grain, calm and slow. No people, no field, no text.*
-- Camera: a slow continuous pan, roughly 3 degrees across the clip, so the loop point is invisible.
+- Make it in two steps: a 16:9 still from the prompt above (Gen-4 Image), then Gen-4.5 Image to Video, 10 seconds,
+  with only the motion: *Very slow continuous camera pan left to right, about three degrees across the whole clip. The
+  haze drifts gently through the light blooms. The lights stay steady with no flicker. Calm and slow, no cuts, no zoom.*
+- The loop point is hidden here with a crossfade; Gen-4.5 does not make seamless loops.
 
 ## 3. Leather and seam macro (`seam-macro.jpg`)
 
@@ -41,3 +48,16 @@ Where: the at-bat chapter's ending, as a slow-moving backdrop behind "Strikeout 
   the left side falling softly out of focus into near-black. Photographic, crisp, high detail. No logos, no printing,
   no text.*
 - Note: this is the one asset that carries red, and only in the stitching.
+
+## 4. Spinning seam, scrubbed by scroll (`seam-spin.mp4`), optional
+
+Where: between "Between pitches" and the at-bat. Scrolling turns the ball, frame by frame. Video scrubbed by scroll is
+the most common pattern in web-design Reels this fall (an AI-made product shot, turned into frames that follow the
+scroll); this is PitchIQ's version of it.
+
+- Make it from asset 3: Gen-4.5 Image to Video, 16:9, 10 seconds, with `seam-macro.jpg` (or a 16:9 crop of it) as the
+  first frame, then upscale.
+- Motion prompt: *The baseball rotates slowly and steadily toward the camera on its axis, as if spinning out of a
+  pitcher's hand in extreme slow motion. The red seam travels smoothly across the frame. Camera locked off, the light
+  stays fixed, no cuts, no zoom.*
+- Check the seam frame by frame: video models often bend or duplicate stitches. If it warps, skip this one.
