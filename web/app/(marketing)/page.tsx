@@ -61,9 +61,6 @@ export default function Home() {
 
         <section className="mk-contact" id="contact" tabIndex={-1} aria-labelledby="contact-h">
           <Haze />
-          <svg className="mk-contact-art" viewBox="0 0 800 700" preserveAspectRatio="xMinYMid slice" aria-hidden="true">
-            <path className="is-live" d="M90 -20 C 260 200, 470 380, 860 600" />
-          </svg>
           <div className="mk-wrap mk-contact-grid">
             <div className="mk-contact-copy">
               <h2 id="contact-h">Talk to us</h2>

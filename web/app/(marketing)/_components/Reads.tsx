@@ -151,12 +151,7 @@ export function Reads() {
   const [ref, seen] = useSeen<HTMLDivElement>();
   return (
     <section className="mk-rd" id="reads" aria-labelledby="rd-h">
-      <svg className="mk-rd-art" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <path d="M1500 -40 C 1100 160, 900 320, 520 980" />
-        <path d="M1500 40 C 1150 200, 980 420, 700 980" />
-        <path className="is-live" d="M1500 120 C 1180 260, 1040 520, 860 980" />
-        <path d="M-80 640 C 260 560, 520 640, 760 980" />
-      </svg>
+      <div className="mk-rd-bg" aria-hidden="true" />
       <div className="mk-wrap">
         <div className="mk-sec-head">
           <h2 id="rd-h">It watches what a pitching coach watches</h2>
@@ -183,13 +178,16 @@ export function Reads() {
             <p>How wide he&apos;s calling it, learned from the pitches you log.</p>
             <Umpire on={seen} />
           </article>
+          <svg className="mk-rd-flow" viewBox="0 0 1000 64" preserveAspectRatio="none" aria-hidden="true">
+            {[125, 375, 625, 875].map((x) => <path key={x} d={`M${x} 0 C ${x} 34, 500 30, 500 64`} />)}
+          </svg>
           <article className="mk-glass mk-rd-tile mk-rd-tile-mix">
             <h3>Then it draws the call</h3>
             <p>Every reasonable call gets a share. The best ones get the most. In big counts like 2-2 and 3-2 the mix tightens around the best call.</p>
             <Mix />
           </article>
         </div>
-        <p className="mk-rd-note">The four tiles above are an illustrated example of what gets logged in a game.</p>
+        <p className="mk-rd-note">The four reads are an illustrated example of what gets logged in a game; the mix is real engine output.</p>
       </div>
     </section>
   );

@@ -142,10 +142,12 @@ export function GameDay() {
           <div className="mk-gd-track" ref={track}>
             {PANELS.map(({ t, d, V }, n) => (
               <article key={t} className="mk-glass mk-gd-panel">
-                <span className="mk-gd-step" aria-hidden="true">{n + 1}</span>
-                <h3>{t}</h3>
-                <p>{d}</p>
-                <V on={on} />
+                <div className="mk-gd-stage"><V on={on} /></div>
+                <div className="mk-gd-copy">
+                  <span className="mk-gd-step" aria-hidden="true">{n + 1}</span>
+                  <h3>{t}</h3>
+                  <p>{d}</p>
+                </div>
               </article>
             ))}
           </div>

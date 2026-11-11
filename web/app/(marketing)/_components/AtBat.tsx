@@ -6,10 +6,9 @@ import { can3d } from "@/app/components/can3d";
 import type { AtBatScene } from "./atbatScene";
 import type { FieldPitch } from "./field";
 
-// "One at-bat": a real engine at-bat played like a broadcast replay. It plays on its own once most of the chapter is on
-// screen and pauses when it leaves; the rail jumps to a pitch, and there's a pause button. Each pitch: the windup at
-// about real speed, the flight slowed to about a third (a real pitch is under half a second), then the result. Under
-// reduced motion it's a plain list of the four calls beside a still of all four flights.
+// "One at-bat": the hero's at-bat again, slowed down and driven by scroll. The section is tall; inside it the field
+// and the glass call card stay on screen while the scroll throws each pitch. Under reduced motion it's a plain list
+// of the four calls beside a still of all four flights.
 const VELO: Record<Pitch["pitch"], number> = { Fastball: 86, Slider: 78, Changeup: 77, Curveball: 72 };
 const KIND: Record<Pitch["pitch"], FieldPitch["kind"]> = { Fastball: "FB", Slider: "SL", Changeup: "CH", Curveball: "CB" };
 const toField = (p: Pitch): FieldPitch => ({ kind: KIND[p.pitch], velo: VELO[p.pitch], cell: p.spot === "Chase" ? "chase" : CELL[p.spot] });
@@ -17,36 +16,12 @@ const ACCENT = "#F04A3E";
 declare global { interface Window { __mkAbProgress?: number } }
 const START = 0.06, EACH = 0.21;   // keep in step with atbatScene.ts SPAN
 
-// the replay's clock: keyframes of (seconds, chapter progress). The side shot (third pitch) is a still, so its windup
-// is short
-const W_UP = [2.0, 2.0, 0.9, 2.0], FLIGHT = 1.4, AFTER = 2.3, INTRO = 2.4, OUTRO = 1.4, HOLD = 7;
-const KEYS: [number, number][] = (() => {
-  const k: [number, number][] = [[0, 0], [INTRO, START]];
-  let t = INTRO;
-  for (let i = 0; i < 4; i++) {
-    const b = START + i * EACH;
-    t += W_UP[i]; k.push([t, b + EACH * 0.38]);
-    t += FLIGHT; k.push([t, b + EACH * 0.78]);
-    t += AFTER; k.push([t, b + EACH * (i === 3 ? 0.995 : 1)]);
-  }
-  t += OUTRO; k.push([t, 1]);
-  return k;
-})();
-const T_END = KEYS[KEYS.length - 1][0];
-const pAt = (t: number) => {
-  let j = 0;
-  while (j < KEYS.length - 2 && t > KEYS[j + 1][0]) j++;
-  const [t0, p0] = KEYS[j], [t1, p1] = KEYS[j + 1];
-  return p0 + (p1 - p0) * Math.max(0, Math.min(1, (t - t0) / (t1 - t0)));
-};
-const tOfPitch = (i: number) => KEYS[1 + i * 3][0];   // when pitch i's windup starts
-
 type View = { i: number; landed: boolean; phase: "intro" | "pitch" | "end"; side: boolean };
 function viewAt(p: number): View {
   const i = Math.max(0, Math.min(3, Math.floor((p - START) / EACH)));
   const u = (p - START - i * EACH) / EACH;
-  // landed and side follow atbatScene.ts: the flight ends 78% into a pitch's stretch; the side shot is up from 0.48 to 0.69 (the card moves with the cut)
-  return { i, landed: u >= 0.78, phase: p < START ? "intro" : p >= 0.9 ? "end" : "pitch", side: p >= 0.48 && p < 0.69 };
+  // landed and side follow atbatScene.ts: the flight ends 78% into a pitch's stretch; the side shot is up from 0.48 to 0.69
+  return { i, landed: u >= 0.78, phase: p < START ? "intro" : p >= 0.9 ? "end" : "pitch", side: p > 0.5 && p < 0.69 };
 }
 
 export function AtBat() {
@@ -61,9 +36,6 @@ export function AtBat() {
 
   // which layout to show is decided first; the scene loads in a second pass, once that layout's elements are in place
   const [mode, setMode] = useState<"" | "scroll" | "still">("");
-  const [paused, setPaused] = useState(false);
-  const ctl = useRef<{ seek: (t: number) => void; toggle: () => void }>({ seek: () => {}, toggle: () => {} });
-  const fill = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     setStill(reduced);
@@ -96,46 +68,34 @@ export function AtBat() {
         if (reduced) scene.set(1);
       }).catch(() => {});
       if (reduced) return;
-      // the replay: a clock that runs while most of the chapter is on screen and the page is visible
-      let last = "", t = 0, prev = 0, raf = 0, inView = false, user = false;
-      const apply = (p: number) => {
-        window.__mkAbProgress = p;
-        scene?.set(p, true);
-        const nv = viewAt(p), key = `${nv.i}${nv.landed}${nv.phase}${nv.side}`;
-        if (key !== last) { last = key; setV(nv); }
-        // the current pitch's rail button fills as the pitch plays
-        const f = fill.current;
-        if (f) { const u = Math.max(0, Math.min(1, (p - START - nv.i * EACH) / EACH)); f.style.transform = `scaleX(${nv.phase === "pitch" ? u : 0})`; }
-      };
-      const loop = (now: number) => {
-        raf = 0;
-        const dt = prev ? Math.min(0.1, (now - prev) / 1000) : 0;
-        prev = now;
-        t += dt;
-        // after the strikeout holds, it starts over from the first pitch
-        if (t > T_END + HOLD) t = tOfPitch(0);
-        apply(pAt(t));
-        if (inView && !user && !document.hidden) raf = requestAnimationFrame(loop); else prev = 0;
-      };
-      const run = () => { if (!raf && inView && !user && !document.hidden) { prev = 0; raf = requestAnimationFrame(loop); } };
-      const stop = () => { cancelAnimationFrame(raf); raf = 0; prev = 0; };
-      ctl.current = {
-        seek: (to) => { t = to; apply(pAt(t)); if (user) { user = false; setPaused(false); } run(); },
-        toggle: () => { user = !user; setPaused(user); if (user) stop(); else { if (t >= T_END) t = tOfPitch(0); run(); } },
-      };
-      const seen = new IntersectionObserver(([e]) => { inView = e.intersectionRatio >= 0.5; if (inView) run(); else stop(); }, { threshold: [0, 0.5, 1] });
-      if (sec.current) seen.observe(sec.current);
-      const onVis = () => { if (document.hidden) stop(); else run(); };
-      document.addEventListener("visibilitychange", onVis);
-      apply(0);
-      kill = () => { stop(); seen.disconnect(); document.removeEventListener("visibilitychange", onVis); };
+      Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
+        if (dead || !sec.current) return;
+        gsap.registerPlugin(ScrollTrigger);
+        let last = "";
+        const apply = (p: number) => {
+          window.__mkAbProgress = p;
+          scene?.set(p);
+          const nv = viewAt(p), key = `${nv.i}${nv.landed}${nv.phase}${nv.side}`;
+          if (key !== last) { last = key; setV(nv); }
+        };
+        const st = ScrollTrigger.create({ trigger: sec.current, start: "top top", end: "bottom bottom", onUpdate: (self) => apply(self.progress) });
+        // arriving mid-chapter (a reload, a link to #at-bat) starts from where the page already is, not from the intro
+        apply(st.progress);
+        kill = () => st.kill();
+      });
     }, { rootMargin: "40% 0px" });
     if (sec.current) io.observe(sec.current);
     return () => { dead = true; io.disconnect(); kill(); scene?.dispose(); };
   }, [mode]);
 
-  // the rail: replay from that pitch's windup
-  const jump = (i: number) => ctl.current.seek(tOfPitch(i));
+  // the rail: jump the scroll to the middle of a pitch's stretch (its flight just landed)
+  const jump = (i: number) => {
+    const el = sec.current;
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY, len = el.offsetHeight - window.innerHeight;
+    const y = top + len * (START + i * EACH + EACH * 0.86);
+    if (window.__mkLenis) window.__mkLenis.scrollTo(y, { duration: 1.4 }); else window.scrollTo({ top: y, behavior: "smooth" });
+  };
 
   const p = AT_BAT[v.i];
   const result = v.i === AT_BAT.length - 1 ? "Strikeout swinging" : p.result;
@@ -170,16 +130,11 @@ export function AtBat() {
         <span className="mk-ab-dist" ref={label} aria-hidden="true">60 ft 6 in</span>
         <span className="mk-ab-dist mk-ab-hoop" ref={hoopLabel} aria-hidden="true">Hitter decides here, 24 ft out</span>
         <span className="mk-speed" ref={speed} aria-hidden="true" />
-        <div className="mk-ab-ctl">
-          {v.phase === "end"
-            ? <button type="button" className="mk-chip" onClick={() => jump(0)} aria-label="Replay the at-bat">Replay</button>
-            : <button type="button" className="mk-chip" onClick={() => ctl.current.toggle()} aria-label={paused ? "Play the at-bat" : "Pause the at-bat"}>{paused ? "Play" : "Pause"}</button>}
-        </div>
 
         <div className="mk-wrap mk-ab-ui">
           <div className="mk-ab-intro">
             <h2 id="ab-h">One at-bat, four calls</h2>
-            <p>A right-handed hitter&apos;s first time up, called by the PitchIQ engine, pitch by pitch.</p>
+            <p>A right-handed hitter&apos;s first time up, called by the PitchIQ engine. Scroll to throw each pitch.</p>
           </div>
 
           <div className="mk-ab-panel">
@@ -188,7 +143,6 @@ export function AtBat() {
                 <li key={n}>
                   <button type="button" onClick={() => jump(n)} aria-current={v.phase === "pitch" && n === v.i ? "step" : undefined}
                     className={n < v.i || v.phase === "end" ? "is-done" : n === v.i && v.phase !== "intro" ? "is-now" : ""}>
-                    {n === v.i && v.phase === "pitch" ? <span className="mk-ab-fill" ref={fill} aria-hidden="true" /> : null}
                     <i className="mk-pt" data-k={x.pitch} aria-hidden="true" /><span className="mk-sr">Pitch {n + 1}, {x.pitch.toLowerCase()}, count </span>{x.balls}-{x.strikes}
                   </button>
                 </li>

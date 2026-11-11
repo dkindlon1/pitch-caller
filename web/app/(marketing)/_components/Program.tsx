@@ -100,12 +100,29 @@ export function Program() {
           <p>Coaches run the team. Pitchers and their parents see their own numbers and bring in their bullpen data.</p>
         </div>
         <div className="mk-pg-grid">
-          {PEOPLE.map((g) => (
-            <article key={g.t} className="mk-pg-people">
-              <h3>{g.t}</h3>
-              <ul>{g.items.map((x) => <li key={x}>{x}</li>)}</ul>
-            </article>
-          ))}
+          <article className="mk-glass mk-pg-people">
+            <div className="mk-pg-mock" aria-hidden="true">
+              <p className="mk-pg-mockh"><b>Your staff</b><span>4 pitchers</span></p>
+              {[["Starter", "Right-handed", ["fb", "sl", "ch"]], ["Starter", "Left-handed", ["fb", "cb", "ch"]], ["Reliever", "Right-handed", ["fb", "sl"]], ["Closer", "Right-handed", ["fb", "sl"]]].map(([r, h, ks], n) => (
+                <p key={n} className="mk-pg-row"><span><b>{r as string}</b>{h as string}</span><span className="mk-pg-dots">{(ks as string[]).map((k) => <i key={k} className={`d-${k}`} />)}</span></p>
+              ))}
+              <p className="mk-pg-row mk-pg-invite"><span><b>Pitching coach</b>Invited</span><span className="mk-pg-chip">Can edit grades</span></p>
+            </div>
+            <h3>{PEOPLE[0].t}</h3>
+            <ul>{PEOPLE[0].items.map((x) => <li key={x}>{x}</li>)}</ul>
+          </article>
+          <article className="mk-glass mk-pg-people">
+            <div className="mk-pg-mock" aria-hidden="true">
+              <p className="mk-pg-mockh"><b>My pitches</b><span>Only he and his coaches see this</span></p>
+              {[["Fastball", 0.8, "fb"], ["Slider", 0.72, "sl"], ["Changeup", 0.5, "ch"]].map(([n, v, k]) => (
+                <p key={n as string} className="mk-pg-row"><span><b>{n as string}</b></span><span className="mk-pg-bar"><i className={`d-${k}`} style={{ width: `${(v as number) * 100}%` }} /></span></p>
+              ))}
+              <p className="mk-pg-row mk-pg-note"><span>Slider grade changed by him</span><span className="mk-pg-chip">Coach can undo</span></p>
+              <p className="mk-pg-row mk-pg-note"><span>Bullpen file, 42 pitches</span><span className="mk-pg-chip">Waiting for his OK</span></p>
+            </div>
+            <h3>{PEOPLE[1].t}</h3>
+            <ul>{PEOPLE[1].items.map((x) => <li key={x}>{x}</li>)}</ul>
+          </article>
           <article className="mk-glass mk-pg-up">
             <div className="mk-pg-upcopy">
               <h3>TrackMan and Rapsodo files</h3>

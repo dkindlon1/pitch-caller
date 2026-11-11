@@ -25,6 +25,16 @@ const RULES = [
   { k: "mix" as const, t: "Mixes, but leans on the best call", d: "A hitter can't sit on a pattern, and in big counts the mix tightens around the strongest call." },
 ];
 
+// from review.py's WRONG and QUESTIONABLE checks, in a coach's words
+const CHECKS: [string, string][] = [
+  ["Wrong", "A chase pitch at 3-0 or 3-1"],
+  ["Wrong", "A pitch down the middle at 0-2 or 1-2"],
+  ["Wrong", "The same pitch he just shook off"],
+  ["Questionable", "An off-speed pitch up in the zone"],
+  ["Questionable", "A breaking ball in the dirt with a runner on third"],
+  ["Questionable", "The same pitch four times in a row to one hitter"],
+];
+
 const LEVELS = [
   { l: "High school", s: "2026 national varsity averages" },
   { l: "Travel ball", s: "The high school numbers" },
@@ -56,9 +66,12 @@ export function Rules() {
           <article className="mk-glass mk-ru-card">
             <h3>Checked call by call</h3>
             <p>
-              Every version plays full simulated games, and every call is graded against these coaching rules and for how
-              predictable the pattern is.
+              Every version plays full simulated games. Each call is graded by a separate set of coaching checks the engine
+              never sees, and the whole pattern is graded for how predictable it is.
             </p>
+            <ul className="mk-ru-checks">
+              {CHECKS.map(([v, t]) => <li key={t}><span className={`v-${v === "Wrong" ? "w" : "q"}`}>{v}</span>{t}</li>)}
+            </ul>
           </article>
         </div>
       </div>

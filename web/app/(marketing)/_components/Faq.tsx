@@ -32,11 +32,11 @@ export function Faq() {
       <div className="mk-wrap mk-fq-grid">
         <div className="mk-sec-head">
           <h2 id="fq-h">Questions from coaches</h2>
-          <p>Anything else, ask us below.</p>
+          <p>Anything else? <a className="mk-link" href="#contact">Ask us directly</a> and we'll write back.</p>
         </div>
         <div className="mk-fq-list">
-          {FAQ.map((f) => (
-            <details key={f.q} className="mk-fq-item">
+          {FAQ.map((f, n) => (
+            <details key={f.q} className="mk-fq-item" open={n === 0}>
               <summary><span>{f.q}</span><i aria-hidden="true" /></summary>
               <p>{f.a}</p>
             </details>

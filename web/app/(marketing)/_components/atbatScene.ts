@@ -7,19 +7,9 @@
 //   side:    up the third-base line, where the two pitch shapes can be compared (pitch 3)
 //   over:    high behind the plate, all four flights at the end
 import * as THREE from "three";
-import { along, buildOverlay, disposeScene, flight, flightTube, FLIGHT_PER, makeRenderer, PER, PITCH_COLOR, SEG, target, tube, world, type FieldPitch } from "./field";
+import { along, ball, buildOverlay, disposeScene, flight, flightTube, FLIGHT_PER, makeRenderer, PER, PITCH_COLOR, SEG, spinBall, target, tube, world, type FieldPitch } from "./field";
 
-// the ball is a photograph of a real one (lit from above, like the floodlights), cut out and drawn facing the camera:
-// a ball looks the same from any side, and at this size a photo reads as real where a modelled one didn't
-let ballTex: THREE.Texture | null = null;
-function photoBall(diameterFt: number) {
-  if (!ballTex) { ballTex = new THREE.TextureLoader().load("/media/runway/ball.webp"); ballTex.colorSpace = THREE.SRGBColorSpace; ballTex.anisotropy = 4; }
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: ballTex, color: 0xffffff, toneMapped: false, depthWrite: false }));
-  s.scale.setScalar(diameterFt);
-  return s;
-}
-
-export type AtBatScene = { set: (p: number, snap?: boolean) => void; dispose: () => void };
+export type AtBatScene = { set: (p: number) => void; dispose: () => void };
 // where a hitter has to decide whether to swing: about 24 ft in front of the plate
 export const DECIDE_Z = 24;
 
@@ -93,9 +83,8 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   const scene = new THREE.Scene();
   const { ruler } = buildOverlay(scene);
   const camera = new THREE.PerspectiveCamera(36, 16 / 9, 0.1, 600);
-  void accent;
-  // a real ball is 2.9 in across; drawn a little larger so it reads at broadcast distances
-  const b = photoBall(0.39);
+  const b = ball(accent);
+  b.scale.multiplyScalar(1.6);
   scene.add(b);
 
   // per shot, the flights from that shot's pitcher; thrown pitches stay on screen, dimmer
@@ -113,7 +102,7 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   }
   const rests = pitches.map((p) => {
     const T = target(p.cell), g = new THREE.Group();
-    const bb = photoBall(0.3);
+    const bb = ball(accent); bb.scale.multiplyScalar(1.2); bb.rotation.set(0.4, 0.8, 0);
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.18, 0.23, 48), new THREE.MeshBasicMaterial({ color: PITCH_COLOR[p.kind], transparent: true, opacity: 0.95, side: THREE.DoubleSide }));
     g.add(bb, ring);
     g.position.copy(world(T.x, T.y, -0.08));
@@ -245,13 +234,11 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
     hoop.visible = side; ruler.visible = side;
     b.visible = p >= SPAN.start && fly > 0 && fly < 1 && !end;
     along(paths[s.key][i], fly, b.position);
-    // backspin on the fastball, sidespin on the slider: at this size it shows as the seams turning
-    (b.material as THREE.SpriteMaterial).rotation = (pitches[i].kind === "FB" ? -1 : 1) * fly * 40;
+    spinBall(b, pitches[i].kind, fly * 1700);
     aim(s);
     renderer.render(scene, camera);
     const proj = (v: THREE.Vector3) => { const q = v.clone().project(camera); return { x: (q.x * 0.5 + 0.5) * w, y: (-q.y * 0.5 + 0.5) * h }; };
-    // in the side shot the hoop and the ruler carry the labels; the speed tag would crowd them
-    opts.onBall?.({ ...proj(b.position), show: b.visible && !side && fly > 0.04 && fly < 1 && alpha > 0.9, text: `${pitches[i].velo} mph ${({ FB: "fastball", SL: "slider", CH: "changeup", CB: "curveball" } as const)[pitches[i].kind]}` });
+    opts.onBall?.({ ...proj(b.position), show: b.visible && fly > 0.04 && fly < 1 && alpha > 0.9, text: `${pitches[i].velo} mph ${({ FB: "fastball", SL: "slider", CH: "changeup", CB: "curveball" } as const)[pitches[i].kind]}` });
     opts.onHoop?.({ ...proj(hoop.position.clone().add(tmp.set(0, -1.6, 0))), show: side && alpha > 0.9 });
     opts.onLabel?.({ ...proj(mid), show: side && alpha > 0.9 });
   }
@@ -282,12 +269,7 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   size();
 
   return {
-    // snap: draw exactly p now (the replay's clock is already smooth); otherwise glide there
-    set(p: number, snap = false) {
-      want = Math.max(0, Math.min(1, p));
-      if (snap) { cur = want; if (visible) { cancelAnimationFrame(raf); raf = 0; draw(cur); } return; }
-      if (!raf && visible) raf = requestAnimationFrame(frame);
-    },
+    set(p: number) { want = Math.max(0, Math.min(1, p)); if (!raf && visible) raf = requestAnimationFrame(frame); },
     dispose() {
       dead = true;
       cancelAnimationFrame(raf);
@@ -295,7 +277,6 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
       ro.disconnect();
       frames.forEach((im) => { if (im) im.src = ""; });
       disposeScene(scene);
-      ballTex?.dispose(); ballTex = null;
       renderer?.dispose();
       renderer?.domElement.remove();
       bg.remove();

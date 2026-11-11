@@ -202,7 +202,7 @@
 .mk-nav-link.is-here { color: var(--mk-chalk); background: rgba(255, 255, 255, 0.09); }
 
 /* one at-bat: a tall section whose inner frame stays on screen while the scroll throws each pitch */
-.mk-ab { position: relative; height: max(660px, 100svh); }
+.mk-ab { position: relative; height: 560vh; }
 .mk-ab-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; isolation: isolate; }
 .mk-ab-stage { position: absolute; inset: 0; z-index: -2; background: radial-gradient(40% 30% at 62% 60%, rgba(255, 255, 255, 0.06), transparent 70%), #000; }
 .mk-ab-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; opacity: 0; transition: opacity 1s ease; }
@@ -284,17 +284,20 @@
 
 /* what it watches */
 .mk-rd { position: relative; overflow: hidden; isolation: isolate; padding: clamp(120px, 16vh, 200px) 0; }
-.mk-rd-art { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
-.mk-rd-art path { fill: none; stroke: rgba(255, 255, 255, 0.14); stroke-width: 3; }
-.mk-rd-art path.is-live { stroke: var(--mk-accent); stroke-width: 7; opacity: 0.85; }
+/* the ballpark from high behind the plate, very dark, so the glass has a real field to blur */
+.mk-rd-bg { position: absolute; inset: 0; z-index: -1; background: url(/media/film/atbat/over.webp) 50% 40% / cover no-repeat; opacity: 0.32; filter: saturate(0.9);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 28%, #000 72%, transparent 100%); }
 .mk-rd-grid { margin-top: 56px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-.mk-rd-tile { border-radius: var(--mk-radius); padding: 22px; display: flex; flex-direction: column; gap: 8px; min-height: 340px; }
+.mk-rd-tile { border-radius: var(--mk-radius); padding: 24px; display: flex; flex-direction: column; gap: 8px; }
 .mk-rd-tile > p { color: var(--mk-text-2); font-size: 0.9375rem; line-height: 1.45; }
 .mk-rd-tile-mix { grid-column: 1 / -1; min-height: 0; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr); column-gap: 48px; align-items: start; padding: 28px; }
 .mk-rd-tile-mix > h3 { grid-column: 1; font-size: 1.75rem; letter-spacing: -0.03em; }
 .mk-rd-tile-mix > p { grid-column: 1; font-size: 1rem; }
 .mk-rd-tile-mix > .mk-rd-mix { grid-column: 2; grid-row: 1 / span 3; }
-.mk-rd-viz { margin-top: auto; padding-top: 18px; }
+/* every read gets the same stage, so the four tiles line up and the visual sits right under its sentence */
+.mk-rd-viz { margin-top: 18px; min-height: 196px; display: flex; flex-direction: column; justify-content: center; padding: 16px; border-radius: 18px; background: rgba(0, 0, 0, 0.32); border: 1px solid rgba(255, 255, 255, 0.07); }
+.mk-rd-flow { grid-column: 1 / -1; width: 100%; height: 56px; margin: -6px 0 -6px; }
+.mk-rd-flow path { fill: none; stroke: rgba(255, 255, 255, 0.28); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-dasharray: 3 5; }
 .mk-rd-row { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 9px 0; border-top: 1px solid var(--mk-line); }
 .mk-rd-row:first-child { border-top: 0; }
 .mk-rd-name { display: flex; justify-content: space-between; font-weight: 600; font-size: 0.9375rem; }
@@ -351,7 +354,11 @@
 .mk-dm { padding: clamp(120px, 16vh, 200px) 0; position: relative; isolation: isolate; overflow: hidden; }
 .mk-dm::before { content: ""; position: absolute; inset: 10% -10% 0 30%; z-index: -1; background: radial-gradient(50% 50% at 60% 50%, rgba(255, 255, 255, 0.08), transparent 70%); }
 .mk-dm-grid { display: grid; grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.5fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
-.mk-dm-keys { margin-top: 24px; font-size: 0.875rem; color: var(--mk-text-3); line-height: 2; }
+.mk-dm-keys { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--mk-line); max-width: 360px; }
+.mk-dm-keys > p { font-size: 0.875rem; color: var(--mk-text-3); }
+.mk-dm-keys dl { margin: 12px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+.mk-dm-keys dl div { display: flex; align-items: center; gap: 10px; }
+.mk-dm-keys dd { margin: 0; font-size: 0.9375rem; color: var(--mk-text-2); }
 .mk-dm-stage { perspective: 1800px; position: relative; }
 .mk-dm-stage::before { /* the light behind the device, so its glass has something to blur */
   content: ""; position: absolute; inset: 6% 8%; z-index: -1; border-radius: 40px;
@@ -415,7 +422,7 @@
 .mk-dm-tally { color: var(--mk-text-3); font-variant-numeric: tabular-nums; }
 
 /* in the dugout */
-.mk-dg { padding: clamp(120px, 16vh, 200px) 0; overflow: hidden; transition: background-color 0.6s ease; }
+.mk-dg { padding: clamp(120px, 16vh, 200px) 0 clamp(60px, 8vh, 100px); overflow: hidden; transition: background-color 0.6s ease; }
 .mk-dg-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .mk-dg-scene { margin-top: 56px; perspective: 2200px; position: relative; }
 /* the 3D tablet draws over the same box the flat one fills, so nothing moves when it takes over; the flat one stays in
@@ -440,7 +447,7 @@
 .mk-gd-inner { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; gap: 48px; padding: 120px 0 80px; }
 .mk-gd-viewport { overflow: hidden; padding: 0 var(--mk-pad); }
 .mk-gd-track { display: flex; gap: 20px; width: max-content; padding-right: 10vw; will-change: transform; }
-.mk-gd-panel { width: min(560px, 80vw); border-radius: var(--mk-radius); padding: 30px; display: flex; flex-direction: column; gap: 10px; min-height: 520px; }
+.mk-gd-panel { width: min(560px, 80vw); border-radius: var(--mk-radius); padding: 14px 14px 30px; display: flex; flex-direction: column; gap: 22px; }
 .mk-gd-panel > p { color: var(--mk-text-2); max-width: 44ch; }
 .mk-gd-panel h3 { font-size: 1.75rem; letter-spacing: -0.03em; }
 .mk-gd-step { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.24); font-weight: 650; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
@@ -490,8 +497,26 @@
 /* the staff */
 .mk-pg { padding: clamp(120px, 16vh, 200px) 0; }
 .mk-pg-grid { margin-top: 56px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 48px; }
-.mk-pg-people ul { list-style: none; margin: 16px 0 0; padding: 0; }
-.mk-pg-people li { padding: 12px 0; border-top: 1px solid var(--mk-line); color: var(--mk-text-2); }
+.mk-pg-people { border-radius: var(--mk-radius); padding: 14px 14px 26px; display: flex; flex-direction: column; }
+.mk-pg-people > h3 { margin: 24px 16px 0; font-size: 1.375rem; letter-spacing: -0.02em; }
+.mk-pg-people ul { list-style: none; margin: 10px 16px 0; padding: 0; }
+.mk-pg-people li { position: relative; padding: 11px 0 11px 22px; border-top: 1px solid var(--mk-line); color: var(--mk-text-2); font-size: 0.9375rem; }
+.mk-pg-people li::before { content: ""; position: absolute; left: 2px; top: 1.15em; width: 8px; height: 5px; border-left: 1.5px solid var(--mk-chalk); border-bottom: 1.5px solid var(--mk-chalk); transform: rotate(-45deg); }
+/* a small illustrated screen at the top of each card: what that person actually sees */
+.mk-pg-mock { border-radius: 20px; background: rgba(0, 0, 0, 0.36); border: 1px solid rgba(255, 255, 255, 0.07); padding: 18px 20px; display: grid; gap: 2px; }
+.mk-pg-mockh { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 10px; font-size: 0.8125rem; color: var(--mk-text-3); }
+.mk-pg-mockh b { color: var(--mk-chalk); font-size: 1rem; font-weight: 650; }
+.mk-pg-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 10px 0; border-top: 1px solid rgba(255, 255, 255, 0.07); font-size: 0.875rem; color: var(--mk-text-3); }
+.mk-pg-row > span:first-child { display: flex; gap: 10px; align-items: baseline; }
+.mk-pg-row b { color: var(--mk-chalk); font-weight: 600; min-width: 74px; }
+.mk-pg-dots { display: inline-flex; gap: 5px; }
+.mk-pg-dots i, .mk-pg-bar i { display: block; border-radius: 99px; }
+.mk-pg-dots i { width: 9px; height: 9px; }
+.d-fb { background: var(--mk-fb); } .d-sl { background: var(--mk-sl); } .d-ch { background: var(--mk-ch); } .d-cb { background: var(--mk-cb); }
+.mk-pg-bar { flex: 1; max-width: 60%; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); }
+.mk-pg-bar i { height: 100%; }
+.mk-pg-chip { flex: none; padding: 4px 10px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.16); color: var(--mk-text-2); font-size: 0.75rem; font-weight: 600; }
+.mk-pg-invite b, .mk-pg-note span { color: var(--mk-text-2); }
 .mk-pg-up { grid-column: 1 / -1; border-radius: var(--mk-radius); padding: clamp(22px, 3vw, 36px); display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: center; }
 .mk-pg-upcopy > p { margin-top: 12px; color: var(--mk-text-2); }
 .mk-pg-facts { list-style: none; margin: 20px 0 0; padding: 0; }
@@ -796,9 +821,27 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-ab .mk-ab-rail button { background: rgba(12, 13, 15, 0.55); }
 .mk-ab .mk-ab-rail button.is-now { background: var(--mk-chalk); }
 
-/* the replay's controls and the fill on the current pitch */
-.mk-ab-ctl { position: absolute; right: var(--mk-pad); bottom: clamp(20px, 4vh, 40px); z-index: 3; }
-.mk-ab-ctl .mk-chip { background: rgba(12, 13, 15, 0.6); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
-.mk-ab-rail button { position: relative; overflow: hidden; }
-.mk-ab-fill { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--mk-ink); opacity: 0.35; transform-origin: left; transform: scaleX(0); }
-@media (max-width: 760px) { .mk-ab-ctl { top: 76px; bottom: auto; } }
+
+
+@media (max-width: 1100px) { .mk-rd-flow { display: none; } }
+
+/* each step: its visual on a fixed stage at the top, then the step number, title and sentence */
+.mk-gd-stage { height: 340px; border-radius: 20px; background: rgba(0, 0, 0, 0.34); border: 1px solid rgba(255, 255, 255, 0.07); padding: 22px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.mk-gd-stage .mk-gd-viz { margin: 0; padding: 0; }
+.mk-gd-copy { padding: 0 16px; display: grid; gap: 10px; }
+.mk-gd-copy .mk-gd-step { margin-bottom: 4px; width: 34px; height: 34px; font-size: 0.875rem; }
+.mk-gd-copy > p { color: var(--mk-text-2); max-width: 46ch; }
+.mk-gd-copy h3 { font-size: 1.625rem; letter-spacing: -0.03em; }
+.mk-gd-before { height: 270px; }
+.mk-gd-stage .mk-gd-after svg { max-height: 196px; }
+.mk-gd-stage .mk-gd-key { margin-top: 8px; }
+.mk-gd-stage .mk-gd-flag { margin-top: 6px; }
+.mk-gd-card { width: 74%; }
+.mk-gd-card-2 { top: auto; bottom: 0; width: 66%; }
+@media (max-width: 760px) { .mk-gd-stage { height: auto; } .mk-gd-before { height: auto; } }
+
+.mk-ru-checks { list-style: none; margin: 18px 0 0; padding: 0; }
+.mk-ru-checks li { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--mk-line); font-size: 0.9375rem; }
+.mk-ru-checks li span { flex: none; width: 104px; font-size: 0.75rem; font-weight: 650; padding: 4px 0; text-align: center; border-radius: 99px; }
+.mk-ru-checks .v-w { color: #ffb3ad; background: rgba(240, 74, 62, 0.16); border: 1px solid rgba(240, 74, 62, 0.4); }
+.mk-ru-checks .v-q { color: #f6d58e; background: rgba(242, 179, 61, 0.12); border: 1px solid rgba(242, 179, 61, 0.36); }

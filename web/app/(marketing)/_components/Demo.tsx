@@ -31,7 +31,6 @@ function Zone({ c, g, side }: { c: Call | null; g: Game; side: "R" | "L" }) {
       {[1, 2].map((i) => <line key={`v${i}`} x1={x0 + i * cw} x2={x0 + i * cw} y1={y0} y2={y0 + H} className="mk-dm-zgrid" />)}
       {[1, 2].map((i) => <line key={`h${i}`} y1={y0 + i * ch} y2={y0 + i * ch} x1={x0} x2={x0 + W} className="mk-dm-zgrid" />)}
       <text x={side === "L" ? x0 + W + 10 : x0 - 10} y={y0 + H / 2} textAnchor={side === "L" ? "start" : "end"} className="mk-dm-ztag">{side === "L" ? "LHH" : "RHH"}</text>
-      <path d={`M${x0 + 20} ${y0 + H + 34} h${W - 40} l10 10 l-${(W - 20) / 2} 12 l-${(W - 20) / 2} -12 z`} className="mk-dm-plate" />
       {g.atBat.map((l, n) => {
         // earlier pitches sit around their spot (fanned by order) so they never cover the live target
         const p = at(l.call.spot), a = -Math.PI / 2 + n * 1.25, x = p.x + Math.cos(a) * 30, y = p.y + Math.sin(a) * 30;
@@ -154,7 +153,14 @@ export function Demo() {
             This is the engine from the iPad app, running in your browser. The pitcher is the app&apos;s sample right-hander:
             fastball 86, slider 78, changeup 77, at college D3. Tap what happened and it calls the next pitch.
           </p>
-          <p className="mk-dm-keys">Keys work while it&apos;s on screen: <kbd>B</kbd> ball, <kbd>C</kbd> called strike, <kbd>S</kbd> swing and miss, <kbd>F</kbd> foul, <kbd>X</kbd> in play, <kbd>H</kbd> hit by pitch.</p>
+          <div className="mk-dm-keys">
+            <p>Or use the keyboard while it&apos;s on screen</p>
+            <dl>
+              {([["B", "Ball"], ["C", "Called strike"], ["S", "Swing and miss"], ["F", "Foul"], ["X", "In play, out"], ["H", "Hit by pitch"]] as const).map(([k, t]) => (
+                <div key={k}><dt><kbd>{k}</kbd></dt><dd>{t}</dd></div>
+              ))}
+            </dl>
+          </div>
         </div>
 
         <div className="mk-dm-stage" ref={root}>
