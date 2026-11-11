@@ -250,7 +250,8 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
     aim(s);
     renderer.render(scene, camera);
     const proj = (v: THREE.Vector3) => { const q = v.clone().project(camera); return { x: (q.x * 0.5 + 0.5) * w, y: (-q.y * 0.5 + 0.5) * h }; };
-    opts.onBall?.({ ...proj(b.position), show: b.visible && fly > 0.04 && fly < 1 && alpha > 0.9, text: `${pitches[i].velo} mph ${({ FB: "fastball", SL: "slider", CH: "changeup", CB: "curveball" } as const)[pitches[i].kind]}` });
+    // in the side shot the hoop and the ruler carry the labels; the speed tag would crowd them
+    opts.onBall?.({ ...proj(b.position), show: b.visible && !side && fly > 0.04 && fly < 1 && alpha > 0.9, text: `${pitches[i].velo} mph ${({ FB: "fastball", SL: "slider", CH: "changeup", CB: "curveball" } as const)[pitches[i].kind]}` });
     opts.onHoop?.({ ...proj(hoop.position.clone().add(tmp.set(0, -1.6, 0))), show: side && alpha > 0.9 });
     opts.onLabel?.({ ...proj(mid), show: side && alpha > 0.9 });
   }

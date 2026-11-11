@@ -45,8 +45,8 @@ type View = { i: number; landed: boolean; phase: "intro" | "pitch" | "end"; side
 function viewAt(p: number): View {
   const i = Math.max(0, Math.min(3, Math.floor((p - START) / EACH)));
   const u = (p - START - i * EACH) / EACH;
-  // landed and side follow atbatScene.ts: the flight ends 78% into a pitch's stretch; the side shot is up from 0.48 to 0.69
-  return { i, landed: u >= 0.78, phase: p < START ? "intro" : p >= 0.9 ? "end" : "pitch", side: p > 0.5 && p < 0.69 };
+  // landed and side follow atbatScene.ts: the flight ends 78% into a pitch's stretch; the side shot is up from 0.48 to 0.69 (the card moves with the cut)
+  return { i, landed: u >= 0.78, phase: p < START ? "intro" : p >= 0.9 ? "end" : "pitch", side: p >= 0.48 && p < 0.69 };
 }
 
 export function AtBat() {
