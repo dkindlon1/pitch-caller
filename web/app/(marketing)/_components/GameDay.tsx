@@ -32,10 +32,11 @@ function Before(_: { on?: boolean }) {
 
 function During({ on }: { on: boolean }) {
   // a tap, then the next call comes up
+  // cell: where the next call is aimed in a 3x3 zone seen from behind the plate, right-handed hitter on the left
   const seq = [
-    { tap: "Called strike", next: ["0-1", "Slider", "Get it over"] },
-    { tap: "Foul", next: ["0-2", "Fastball", "Up and away"] },
-    { tap: "Swing and miss", next: ["Strikeout", "Next hitter", "Fastball, get it over"] },
+    { tap: "Called strike", next: ["0-1", "Slider", "Get it over"], cell: 4 },
+    { tap: "Foul", next: ["0-2", "Fastball", "Up and away"], cell: 2 },
+    { tap: "Swing and miss", next: ["Strikeout", "Next hitter", "Fastball, get it over"], cell: 4 },
   ];
   const [i, setI] = useState(0);
   useEffect(() => {
@@ -46,13 +47,12 @@ function During({ on }: { on: boolean }) {
   const s = seq[i];
   return (
     <div className="mk-gd-viz mk-gd-during" aria-hidden="true">
+      <div className="mk-gd-next" key={i}>
+        <div><span>{s.next[0]}</span><b>{s.next[1]}</b><span>{s.next[2]}</span></div>
+        <i className="mk-gd-zone">{Array.from({ length: 9 }, (_, c) => <i key={c} className={c === s.cell ? "is-on" : ""} />)}</i>
+      </div>
       <div className="mk-gd-buttons">
         {["Ball", "Called strike", "Swing and miss", "Foul", "In play", "Hit by pitch"].map((b) => <span key={b === s.tap ? `${b}-${i}` : b} className={b === s.tap ? "is-tap" : ""}>{b}</span>)}
-      </div>
-      <div className="mk-gd-next" key={i}>
-        <span>{s.next[0]}</span>
-        <b>{s.next[1]}</b>
-        <span>{s.next[2]}</span>
       </div>
     </div>
   );
