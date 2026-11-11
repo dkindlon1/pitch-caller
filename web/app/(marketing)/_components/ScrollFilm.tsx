@@ -10,8 +10,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 export type Beat = { from: number; to: number; node: ReactNode; className?: string };
 type Set = { dir: string; count: number };
 
-export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, className, label }: {
-  name: string; wide: number; tall?: number; length?: number; poster: string; beats: Beat[]; className?: string; label: string;
+export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, className, label, labelledBy, id, children }: {
+  name: string; wide: number; tall?: number; length?: number; poster: string; beats: Beat[]; className?: string;
+  label?: string; labelledBy?: string; id?: string; children?: ReactNode;
 }) {
   const sec = useRef<HTMLElement>(null);
   const cvs = useRef<HTMLCanvasElement>(null);
@@ -101,12 +102,13 @@ export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, clas
   }, [name, wide, tall, beats]);
 
   return (
-    <section ref={sec} className={`mk-film${still ? " is-still" : ""}${className ? ` ${className}` : ""}`} style={still ? undefined : { height: `${length}vh` }} aria-label={label}>
+    <section ref={sec} id={id} className={`mk-film${still ? " is-still" : ""}${className ? ` ${className}` : ""}`} style={still ? undefined : { height: `${length}vh` }} aria-label={label} aria-labelledby={labelledBy}>
       <div className="mk-film-pin">
         {still
           ? <img className="mk-film-poster" src={poster} alt="" />
           : <canvas ref={cvs} className="mk-film-canvas" aria-hidden="true" style={{ backgroundImage: `url(${poster})` }} />}
         <div className="mk-film-shade" aria-hidden="true" />
+        {children}
         {beats.map((b, i) => (
           <div key={i} ref={(n) => { beatEls.current[i] = n; }} className={`mk-film-beat${b.className ? ` ${b.className}` : ""}`} style={still ? { opacity: i === 0 ? 1 : 0 } : { opacity: i === 0 ? 1 : 0 }}>
             {b.node}

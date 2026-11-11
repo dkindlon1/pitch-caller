@@ -1,6 +1,7 @@
 /*
- * The public site end to end, on the built site (next start): the 3D hero (SwiftShader's software WebGL) drawing the
- * at-bat and stopping off screen, the live call stepping with it, reduced motion holding the two-strike call, the
+ * The public site end to end, on the built site (next start): the hero's flyover film drawing frames as you scroll,
+ * the live call stepping through the at-bat, the 3D at-bat chapter (SwiftShader's software WebGL), reduced motion
+ * showing one still and holding the two-strike call, the
  * phone layout, keyboard order, and the "Talk to us" form and its API (validation, the honeypot, and the honest
  * "can't send yet" answer while no email provider is set).
  * Run from the repo root after `npm run build` in web/:
@@ -27,7 +28,12 @@ async function startWeb() {
   }
   throw new Error("next start did not come up:\n" + log);
 }
-const frames = (page) => page.locator(".mk-hero-stage").evaluate((el) => Number(el.dataset.frames || 0));
+// a small fingerprint of what the hero's canvas is showing, to tell one film frame from another
+const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c) => {
+  const x = c.getContext("2d"), d = x.getImageData(0, 0, c.width, c.height).data; let h = 0;
+  for (let i = 0; i < d.length; i += 4099) h = (h * 31 + d[i]) >>> 0;
+  return h;
+});
 
 (async () => {
   const web = await startWeb();
@@ -39,18 +45,19 @@ const frames = (page) => page.locator(".mk-hero-stage").evaluate((el) => Number(
     page.on("pageerror", (e) => errors.push(String(e))); page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
     await page.goto(URL_);
     check((await page.locator("h1").innerText()).replace(/\s+/g, " ") === "Every pitch called. Every call explained.", "one h1, the headline");
-    await page.waitForSelector(".mk-hero-stage.is-on canvas", { timeout: 20000 });
-    const f0 = await frames(page); await wait(1500); const f1 = await frames(page);
-    // without a GPU (as in CI, on SwiftShader) the hero times its frames and settles on a still one; on a GPU it keeps animating
-    const still = await page.locator(".mk-hero-stage").getAttribute("data-still");
-    check((f1 > f0 && f1 > 10) || (still === "1" && f1 >= 3), `the 3D field draws the at-bat (${f0} then ${f1} frames${still ? ", then held still: no GPU here" : ""})`);
+    // the film: frames come in, and scrolling through the hero moves to a later one
+    await page.waitForFunction(() => performance.getEntriesByType("resource").filter((e) => e.name.includes("/media/film/flyover/")).length >= 8, null, { timeout: 20000 });
+    await wait(800);
+    const p0 = await filmPrint(page);
+    await page.evaluate(() => { const s = document.getElementById("hero"); scrollTo(0, (s.offsetHeight - innerHeight) * 0.8); }); await wait(1500);
+    const p1 = await filmPrint(page);
+    check(p0 !== p1, "the flyover plays as you scroll: a later frame shows partway down");
+    check(await page.locator(".mk-hero-late").evaluate((e) => Number(e.parentElement.style.opacity) > 0), "the closing line comes up as the camera comes down");
+    await page.evaluate(() => scrollTo(0, 0)); await wait(1200);
     const seen = new Set();
     for (let n = 0; n < 14; n++) { seen.add(await page.locator(".mk-call-count").innerText()); await wait(500); }
-    check(seen.size >= 2 && [...seen].every((c) => /^[0-3]-[0-2]$/.test(c)), `the live call steps with the pitches (${[...seen].join(", ")})`);
+    check(seen.size >= 2 && [...seen].every((c) => /^[0-3]-[0-2]$/.test(c)), `the live call steps through the at-bat (${[...seen].join(", ")})`);
     check(/^[1-4]$/.test(await page.locator(".mk-call-sign").innerText()) && (await page.locator(".mk-call-why").innerText()).length > 10, "each call shows a sign and the engine's reason");
-    await page.locator("#contact").scrollIntoViewIfNeeded(); await wait(1200);
-    const g0 = await frames(page); await wait(2500);
-    check((await frames(page)) === g0, "it stops drawing once the hero is scrolled away (or once held still)");
 
     console.log("1b. One at-bat (scroll-driven)");
     const ab = async (q) => { await page.evaluate((q) => { const s = document.getElementById("at-bat"); const top = s.getBoundingClientRect().top + scrollY; scrollTo(0, top + (s.offsetHeight - innerHeight) * q); }, q); await wait(1800); };
@@ -110,6 +117,7 @@ const frames = (page) => page.locator(".mk-hero-stage").evaluate((el) => Number(
     const a = await rp.locator(".mk-call-count").innerText(); await wait(3500);
     check(a === "1-2" && (await rp.locator(".mk-call-count").innerText()) === "1-2", "under reduced motion the call rests on the two-strike pitch");
     check((await rp.locator(".mk-ab.is-still .mk-ab-card").count()) === 4, "under reduced motion the at-bat is a plain list of its four calls");
+    check((await rp.locator(".mk-film.is-still .mk-film-poster").count()) === 1 && (await rp.locator(".mk-film-canvas").count()) === 0, "under reduced motion the flyover is one still");
     await rm.close();
     const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const pp = await phone.newPage(); await pp.goto(URL_, { waitUntil: "networkidle" });

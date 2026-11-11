@@ -10,6 +10,10 @@ Not used: pitcher options 1, 3 and 4 (option 3's matte fused the light tower to 
 3:4 pitcher at true release on pure black (prompt below) would still be an upgrade; the current one is 1024 px square
 with stadium and towers baked in.
 
+- `../film/flyover/` (Nov 11, second batch): the Gen-4.5 night flyover, regenerated with a flat mound, cut by
+  `scripts/film-frames.sh` into 121 graded frames (wide 3.9 MB, phone 9:16 crop 1.4 MB). It is the hero, playing as you
+  scroll. A true 9:16 version would look better on phones than the crop.
+
 The site works without any of these files.
 
 Models (Runway's menu, Nov 2026): stills with **Gen-4 Image**, fixed up with **Nano Banana 2** (or GPT-Image-1.5 for

@@ -71,18 +71,6 @@
 
 /* hero */
 .mk-hero { position: relative; min-height: max(680px, 100svh); display: flex; align-items: flex-end; overflow: hidden; isolation: isolate; }
-.mk-hero-stage {
-  position: absolute; inset: 0; z-index: -2;
-  /* what shows before the 3D field loads, and instead of it without WebGL: a frame rendered from the same scene. The
-     position pins the zone where the live camera puts it (heroScene size()), so the hand-off to the canvas doesn't jump */
-  background: #000 url(/marketing/hero-wide.webp) 67% 30% / cover no-repeat;
-}
-/* one frame per camera framing; the live camera's field of view is vertical, and each frame is at least as wide as the
-   screens it serves, so cover scales it by height like the scene does */
-@media (max-aspect-ratio: 17/10) { .mk-hero-stage { background-image: url(/marketing/hero-mid.webp); background-position: 67% 27%; } }
-@media (max-aspect-ratio: 11/10) { .mk-hero-stage { background-image: url(/marketing/hero-tall.webp); background-position: 50% 25%; } }
-.mk-hero-stage canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; opacity: 0; transition: opacity 1.2s ease; }
-.mk-hero-stage.is-on canvas { opacity: 1; }
 .mk-hero-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.5) 40%, transparent 62%), linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0) 30%); }
 .mk-hero-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 380px); gap: 48px; align-items: end; padding-top: 140px; padding-bottom: clamp(48px, 8vh, 96px); }
 .mk-hero h1 {
@@ -601,7 +589,6 @@
 @keyframes mk-fadeup { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes mk-card { from { opacity: 0; transform: translateX(36px) scale(0.97); } to { opacity: 1; transform: none; } }
 @keyframes mk-drop { from { opacity: 0; transform: translateY(-14px) scale(0.98); } to { opacity: 1; transform: none; } }
-.mk-hero-stage { transform-origin: 66% 40%; will-change: transform, opacity; }
 
 /* a pitch's speed, riding beside the ball in flight */
 .mk-speed { position: absolute; left: 0; top: 0; z-index: 1; margin: -11px 0 0 16px; padding: 4px 9px; border-radius: 999px; pointer-events: none;
@@ -609,7 +596,6 @@
   background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.2); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   opacity: 0; transition: opacity 0.25s ease; white-space: nowrap; will-change: transform; }
 .mk-speed[data-show="1"] { opacity: 1; }
-.mk-hero .mk-speed { z-index: 0; }
 
 /* phone menu: a Menu button in the pill and a glass sheet under it */
 .mk-nav-menu { display: none; position: relative; width: 38px; height: 38px; border-radius: 999px; border: 0; background: rgba(255, 255, 255, 0.08); cursor: pointer; }
@@ -733,3 +719,12 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-film-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.25) 26%, rgba(0, 0, 0, 0) 55%), linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 22%); }
 .mk-film-beat { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 0 var(--mk-pad) clamp(56px, 10vh, 120px); will-change: opacity, transform; pointer-events: none; }
 .mk-film-beat > * { pointer-events: auto; }
+
+/* the film hero: the hero block fills the pinned frame over the flyover; its shade keeps the copy and the card on dark */
+.mk-hfilm .mk-hero { position: absolute; inset: 0; min-height: 0; height: 100%; }
+.mk-hfilm .mk-hero-shade { background: linear-gradient(90deg, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.42) 42%, rgba(0, 0, 0, 0.05) 70%), linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.55) 24%, rgba(0, 0, 0, 0) 50%); }
+.mk-hfilm .mk-film-shade { background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, transparent 18%), linear-gradient(0deg, #000 0%, transparent 16%); }
+.mk-hero-beat { align-items: center; justify-content: center; text-align: center; padding-bottom: 0; }
+.mk-hero-late { font-size: clamp(2.5rem, 6.4vw, 7rem); line-height: 0.96; letter-spacing: -0.04em; font-weight: 640; font-variation-settings: "wdth" 82; max-width: 14ch; color: var(--mk-chalk); text-shadow: 0 4px 60px rgba(0, 0, 0, 0.6); }
+.mk-hfilm .mk-hero-beat::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 50% at 50% 50%, rgba(0, 0, 0, 0.5), transparent 75%); }
+@media (max-width: 960px) { .mk-hfilm .mk-hero-shade { background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.88) 46%, rgba(0, 0, 0, 0) 70%); } }
