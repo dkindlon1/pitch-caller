@@ -214,3 +214,26 @@ exit=0
 
 **Step 2 status: built and checked here; the yardstick (D5 keep/drop of tunneling, D7 runs budget) is the one open
 item, run on Drew's PC with `scripts/yardstick_step2.ps1`.**
+
+### Yardstick results (Drew's PC, Nov 10): **over the D7 budget, stopped**
+
+`scripts/yardstick_step2.ps1`, 108 paired games per comparison, seeds 101-112, 3 levels x 3 staffs, each tree's own
+world. Files: `results/v10/yardstick_step2a.txt`, `yardstick_step2b.txt` (commit `b2437df`). The measure is world
+regret (`regret_w_*`: every call scored against one table solved in the world's model, the same for both engines),
+runs per game, v1.0 minus v0.9:
+
+| | world regret, whole mix | world regret, call made | runs allowed |
+|---|---|---|---|
+| 2a, tunneling off | **+0.313 ± 0.043** | +0.305 ± 0.047 | +0.74 ± 0.54 |
+| 2b, tunneling on | **+0.352 ± 0.060** | +0.335 ± 0.063 | +0.35 ± 0.58 |
+
+- **D7 (0.25 runs/game): over.** Tunneling off reads 0.31, 1.5 SE above the budget; on, 0.35. Runs allowed point the
+  same way but are noise at this sample (SE ~0.55), as the plan expected.
+- **Where the cost is (2a):** 0-0 and 1-0 carry +0.168 of the +0.305 (55%); the hitter's counts 2-0/2-1/3-1 +0.079
+  (26%); the rest +0.058. By call it is off-speed in the zone (middle and edge-away): +0.32/game; fastball middle and
+  edge-away calls got cheaper. Removing the guardrail loosened every count, and the early counts are where most
+  pitches are.
+- **D5, tunneling:** 2b's cost is 0.03-0.04 higher than 2a's, inside the noise (the two use different worlds, so they
+  are not paired against each other). The yardstick shows no measurable gain from tunneling and no clear harm.
+
+Per D7 nothing was tuned. Waiting on Drew's call.
