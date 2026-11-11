@@ -583,7 +583,7 @@ Realism gate vs the Step 0 baseline (`calib.evaluate`, percent per PA; gate 1 po
 
 `spread_test.py` (not in CI): walk+HBP spread is 11–14% under the real one at D3 (0.0438 vs 0.0491) and D1 (0.0340 vs
 0.0394), outside its 10% tolerance. **The Step 4 commit reads exactly the same**, so Step 5 didn't cause it; it dates from
-the Step 2 recalibration. A `fit_spread.py` refit would fix it. Open for Drew.
+the Step 2 recalibration. A `fit_spread.py` refit would fix it. **Drew, Nov 11: leave it** (level averages match real; no refit).
 
 `tests_v10_explain.py` check 6 had hard-coded the three golden cases where look value reversed the myopic order; Step 5
 moved them (Setup is even rarer now). It now scans for a Setup line and also checks the next-count helper on every
@@ -604,6 +604,6 @@ smoke, rules_e2e, v10_step1_e2e, v10_step3_e2e, v10_step5_e2e (10/10), v08_e2e, 
 replay_e2e: all passed; gameday_e2e 13/13 (its 200 ms timing check read 213 ms while the golden and worlds runs shared
 the CPU; 157 ms re-run alone)
 one simulated game (simulate.py): 116 pitches, no errors
-spread_test.py: walk+HBP spread low at D3/D1 (same as Step 4, open)
+spread_test.py: walk+HBP spread low at D3/D1 (same as Step 4; Drew: leave it)
 ```
 Yardstick for Step 5 (Drew's PC): `scripts/yardstick.ps1 -Tag step5 -Commit <this commit>`.
