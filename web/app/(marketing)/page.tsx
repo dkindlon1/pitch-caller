@@ -5,7 +5,7 @@ import { ContactForm } from "./_components/ContactForm";
 import { Hero } from "./_components/Hero";
 import { AtBat } from "./_components/AtBat";
 import { Demo } from "./_components/Demo";
-import { Dugout } from "./_components/Dugout";
+import { InsideCall } from "./_components/InsideCall";
 import { Faq } from "./_components/Faq";
 import { GameDay } from "./_components/GameDay";
 import { Program } from "./_components/Program";
@@ -53,7 +53,7 @@ export default function Home() {
         <AtBat />
         <Reads />
         <Demo />
-        <Dugout />
+        <InsideCall />
         <GameDay />
         <Program />
         <Rules />

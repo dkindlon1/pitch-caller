@@ -96,9 +96,12 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     await page.locator(".mk-dm-device").evaluate((d) => d.scrollIntoView({ block: "center" })); await wait(600); await page.mouse.click(5, 450); await page.keyboard.press("s"); await wait(300);
     check((await page.locator(".mk-dm-ended").innerText()).startsWith("Strikeout"), "the S key logs a swing and miss while the demo is on screen: strikeout");
 
-    await page.locator("#dugout").scrollIntoViewIfNeeded();
-    await page.getByRole("radio", { name: "Day" }).click(); await wait(700);
-    check(await page.locator(".mk-dg-glass img.is-on").evaluate((i) => i.currentSrc.includes("app-day")), "the Day switch shows the real Day screen");
+    // inside the call: scrolled to where the ring has stopped, the drawn call is the one labelled, with its real share
+    const inRun = await page.evaluate(() => { const r = document.querySelector(".mk-in-run").getBoundingClientRect(); return { y: r.top + scrollY, hh: r.height - innerHeight }; });
+    await page.evaluate(({ y, hh }) => scrollTo(0, y + hh * 0.8), inRun); await wait(2600);
+    const pickTag = page.locator('.mk-in-arc.is-pick[data-show="1"]');
+    check((await pickTag.count()) === 1 && /31%/.test(await pickTag.innerText()) && /Slider/.test(await pickTag.innerText()), "inside the call, the ring stops on the drawn call: slider, down and away, 31%");
+    check((await page.locator('.mk-in-arc[data-show="1"]').count()) === 1, "only the drawn call is labelled once the ring stops");
 
     const gdTop = await page.evaluate(() => { const s = document.getElementById("gameday").parentElement; return s.getBoundingClientRect().top + scrollY; });
     await page.evaluate((y) => scrollTo(0, y + 40), gdTop); await wait(1400);
@@ -120,6 +123,7 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     const a = await rp.locator(".mk-call-count").innerText(); await wait(3500);
     check(a === "1-2" && (await rp.locator(".mk-call-count").innerText()) === "1-2", "under reduced motion the call rests on the two-strike pitch");
     check((await rp.locator(".mk-ab.is-still .mk-ab-card").count()) === 4, "under reduced motion the at-bat is a plain list of its four calls");
+    check((await rp.locator(".mk-in.is-still .mk-in-steps li").count()) === 5 && (await rp.locator(".mk-in-stage").count()) === 0, "under reduced motion inside the call is a still and its five steps");
     check((await rp.locator(".mk-film.is-still .mk-film-poster").count()) === 1 && (await rp.locator(".mk-film-canvas").count()) === 0, "under reduced motion the flyover is one still");
     await rm.close();
     const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
