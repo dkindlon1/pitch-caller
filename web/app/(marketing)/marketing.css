@@ -865,3 +865,5 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-in-pick span { color: rgba(0, 0, 0, 0.62); }
 .mk-in-short { display: none; }
 @media (max-width: 600px) { .mk-in-long { display: none; } .mk-in-short { display: inline; } }
+.mk-in-t { overflow: hidden; padding-bottom: 0.08em; }
+.mk-in-t span { display: block; transform: translate3d(0, calc(var(--rise, 0) * 105%), 0); }

@@ -14,6 +14,9 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { Reflector } from "three/examples/jsm/objects/Reflector.js";
+import { HorizontalTiltShiftShader } from "three/examples/jsm/shaders/HorizontalTiltShiftShader.js";
+import { VerticalTiltShiftShader } from "three/examples/jsm/shaders/VerticalTiltShiftShader.js";
 import { CANDIDATES, CAND_PICK } from "@/content/candidates";
 import { APP } from "@/content/inside-track";
 import { isSoftware, PITCH_COLOR, type FieldPitch } from "./field";
@@ -71,12 +74,16 @@ void main(){ float t=vUv.x; if(t>uHead) discard; float pulse=0.35+0.65*pow(0.5+0
   float tail=smoothstep(0.0,0.25,t); float head=smoothstep(uHead-0.18,uHead,t);
   gl_FragColor=vec4(uColor*(pulse+1.6*head),uOpacity*tail*(0.45+0.55*pulse)); }`;
 // the last pass: the footage's grade (cool shadows, a touch of lift), a vignette and film grain
-const GRADE = { uniforms: { tDiffuse: { value: null }, uSeed: { value: 0 }, uAspect: { value: 1 } },
+const GRADE = { uniforms: { tDiffuse: { value: null }, uSeed: { value: 0 }, uAspect: { value: 1 }, uWarm: { value: 0 }, uCool: { value: 0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float uSeed; uniform float uAspect; varying vec2 vUv;
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uSeed; uniform float uAspect; uniform float uWarm; uniform float uCool; varying vec2 vUv;
   float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))+uSeed)*43758.5453); }
-  void main(){ vec4 c=texture2D(tDiffuse,vUv); vec3 col=c.rgb;
-    float l=dot(col,vec3(0.299,0.587,0.114)); col=mix(col,col*vec3(0.92,0.98,1.08),1.0-smoothstep(0.0,0.5,l)); col=col*0.97+0.012;
+  void main(){ vec2 dc=(vUv-0.5); float ca=0.0018*dot(dc,dc)*4.0;
+    vec3 col=vec3(texture2D(tDiffuse,vUv+dc*ca).r, texture2D(tDiffuse,vUv).g, texture2D(tDiffuse,vUv-dc*ca).b);
+    float l=dot(col,vec3(0.299,0.587,0.114)); col=mix(col,col*vec3(0.92,0.98,1.08),1.0-smoothstep(0.0,0.5,l));
+    // the colour script: cooler while it reads, warmer (the slider's gold) when the call lands
+    col*=mix(vec3(1.0),vec3(0.9,1.0,1.12),uCool*(1.0-l)); col*=mix(vec3(1.0),vec3(1.1,1.0,0.86),uWarm*(0.4+0.6*l));
+    col=col*0.97+0.012;
     vec2 d=(vUv-0.5)*vec2(uAspect,1.0); col*=1.0-0.42*smoothstep(0.35,1.05,length(d));
     col+=(h(vUv*vec2(1920.0,1080.0))-0.5)*0.035; gl_FragColor=vec4(col,1.0); }` };
 
@@ -100,7 +107,17 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
 
   // ---- the stage: a glossy black floor (things below it show through faintly, as reflections), a pool of light under the
   // zone, haze in the air, dust drifting through it
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshBasicMaterial({ color: 0x010203, transparent: true, opacity: 0.86, depthWrite: false }));
+  // a real mirror under the stage (rendered small, so its reflections come out soft, like a polished floor), then a dark
+  // glossy overlay. Phones get faked reflections instead (mirrored copies of the pillars), which cost nothing.
+  const narrowStart = el.getBoundingClientRect().width < 600;
+  const mirror = narrowStart ? null : new Reflector(new THREE.PlaneGeometry(220, 220), { textureWidth: 512, textureHeight: 288, color: 0x8a92a6, clipBias: 0.003, multisample: soft ? 0 : 4 });
+  if (mirror) { mirror.rotation.x = -Math.PI / 2; mirror.position.y = -0.002; mirror.renderOrder = -1; scene.add(mirror); }
+  // the overlay is glossier near the zone and goes to black with distance, so the mirror has no far edge
+  const floorFade = (() => { const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d")!;
+    const r = g.createRadialGradient(128, 128, 0, 128, 128, 128); r.addColorStop(0, "#9a9a9a"); r.addColorStop(0.18, "#b0b0b0"); r.addColorStop(0.55, "#f2f2f2"); r.addColorStop(1, "#ffffff");
+    g.fillStyle = r; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+  disposables.push(floorFade);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshBasicMaterial({ color: 0x010203, transparent: true, opacity: mirror ? 1 : 0.86, alphaMap: mirror ? floorFade : null, depthWrite: false }));
   floor.rotation.x = -Math.PI / 2; floor.renderOrder = 1; scene.add(floor);
   const pool = new THREE.Mesh(new THREE.PlaneGeometry(14, 14), new THREE.MeshBasicMaterial({ map: glow, color: 0x2a4a80, transparent: true, opacity: 0.0, depthWrite: false, blending: THREE.AdditiveBlending }));
   pool.rotation.x = -Math.PI / 2; pool.position.y = 0.003; pool.renderOrder = 2; scene.add(pool);
@@ -260,8 +277,8 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
       k(0.26, ob(T(0.2, 5.2, -9.6), T(0, 0.9, 0.6)), T(0, 0.9, 0.6)),
       k(0.45, ob(T(2.0, 4.2, -7.8), T(-0.85, 0.85, -0.2)), T(-0.85, 0.85, -0.2)),
       k(0.57, ob(T(0.0, 3.0, -6.8), T(-1.3, 0.9, -0.25)), T(-1.3, 0.9, -0.25)),
-      k(0.72, ob(T(-0.4, 2.4, -5.9), T(pick.g.position.x * 1.15, 0.95, pick.g.position.z * 0.6)), T(pick.g.position.x * 1.15, 0.95, pick.g.position.z * 0.6)),
-      k(0.79, ob(T(-0.7, 2.2, -5.2), T(pick.g.position.x * 1.1, 0.9, pick.g.position.z * 0.65)), T(pick.g.position.x * 1.1, 0.9, pick.g.position.z * 0.65)),
+      k(0.72, ob(T(-0.4, 2.7, -6.7), T(pick.g.position.x * 1.15, 1.1, pick.g.position.z * 0.6)), T(pick.g.position.x * 1.15, 1.1, pick.g.position.z * 0.6)),
+      k(0.79, ob(T(-0.8, 2.5, -6.1), T(pick.g.position.x * 1.1, 1.05, pick.g.position.z * 0.65)), T(pick.g.position.x * 1.1, 1.05, pick.g.position.z * 0.65)),
       k(0.91, T(0, topH * 1.04, -1.1), T(0, 0.05, 0.12)),
       k(0.97, T(0, topH * 0.995, -0.03), T(0, 0, 0.01)),
       k(1.0, T(0, topH, 0.0001), T(0, 0, 0)),
@@ -270,7 +287,7 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
   const posCurve = () => new THREE.CatmullRomCurve3(keys.map((k) => k.pos), false, "centripetal");
   const lookCurve = () => new THREE.CatmullRomCurve3(keys.map((k) => k.look), false, "centripetal");
   let pc = posCurve(), lc = lookCurve();
-  const fwd = new THREE.Vector3(), upHint = new THREE.Vector3(), tmp = new THREE.Vector3();
+  const fwd = new THREE.Vector3(), upHint = new THREE.Vector3(), tmp = new THREE.Vector3(), tmpF = new THREE.Vector3(), tmpG = new THREE.Vector3();
   function camAt(u: number) {
     let i = 0;
     while (i < keys.length - 2 && u > keys[i + 1].t) i++;
@@ -292,6 +309,9 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.8, 0.45, 0.82);
   composer.addPass(bloom);
+  // focus: a soft tilt-shift band on the subject (the scene's glass doesn't write depth, so this, not a depth-of-field pass)
+  const tiltH = new ShaderPass(HorizontalTiltShiftShader), tiltV = new ShaderPass(VerticalTiltShiftShader);
+  composer.addPass(tiltH); composer.addPass(tiltV);
   composer.addPass(new OutputPass());
   const grade = new ShaderPass(GRADE);
   composer.addPass(grade);
@@ -341,7 +361,7 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
       let hh = Math.max(0.001, p.h * grow * left * (1 - settleK));
       const onBeam = sw > 0 && sw < 1 ? 0 : 0;
       const isLit = p.keep && sw >= 1 ? (p === pick ? 1 : 0.35 * (1 - ease(at(u, [0.8, 0.88])))) : 1;
-      p.core.scale.y = hh; p.shell.scale.y = hh; p.refl.scale.y = -hh * 0.9;
+      p.core.scale.y = hh; p.shell.scale.y = hh; p.refl.scale.y = -hh * 0.9; p.refl.visible = !mirror;
       const op = grow > 0 ? 1 : 0;
       (p.core.material as THREE.ShaderMaterial).uniforms.uOpacity.value = op * isLit;
       (p.shell.material as THREE.ShaderMaterial).uniforms.uOpacity.value = 0.7 * op * isLit;
@@ -378,13 +398,13 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
       beam.position.set(A.g.position.x + (B.g.position.x - A.g.position.x) * hop, 0.01, A.g.position.z + (B.g.position.z - A.g.position.z) * hop);
       const landed = sw >= 0.999;
       beam.material.opacity = (landed ? 0.55 : 0.8) * (1 - ease(st)) * Math.min(1, sw * 8);
-      (beamGlow.material as THREE.SpriteMaterial).opacity = (landed ? 1 : 0.6) * (1 - ease(st));
+      (beamGlow.material as THREE.SpriteMaterial).opacity = (landed ? 0.7 : 0.5) * (1 - ease(st));
       beamGlow.position.set(beam.position.x, 0.15, beam.position.z);
-      beamGlow.scale.setScalar(landed ? 2.2 : 1.3);
+      beamGlow.scale.setScalar(landed ? 1.6 : 1.2);
       for (const p of kept) {
         const near = Math.max(0, 1 - Math.hypot(p.g.position.x - beam.position.x, p.g.position.z - beam.position.z) / 0.35);
-        (p.core.material as THREE.ShaderMaterial).uniforms.uHeat.value = near * 1.8 + (landed && p === pick ? 1.2 : 0);
-        (p.shell.material as THREE.ShaderMaterial).uniforms.uHeat.value = landed && p === pick ? 0.9 : near * 0.6;
+        (p.core.material as THREE.ShaderMaterial).uniforms.uHeat.value = near * 1.4 + (landed && p === pick ? 0.45 : 0);
+        (p.shell.material as THREE.ShaderMaterial).uniforms.uHeat.value = landed && p === pick ? 0.3 : near * 0.45;
         if (landed && p === pick) p.aura.material.opacity *= 0.4;
       }
     } else {
@@ -395,6 +415,17 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
     zoneAfter.uniforms.uOpacity.value = ease(at(st, [0.45, 0.92]));
     camAt(u);
     grade.uniforms.uSeed.value = Math.floor(u * 400) * 1.37;
+    // the colour script and the focus, beat by beat
+    const landed = ease(at(sw, [0.9, 1])) * (1 - ease(at(st, [0.1, 0.5])));
+    grade.uniforms.uCool.value = ease(at(u, [0.04, 0.16])) * (1 - ease(at(u, [0.3, 0.42])));
+    grade.uniforms.uWarm.value = landed;
+    bloom.strength = 0.8 + 0.12 * landed;
+    const focusAmt = ease(at(u, [0.3, 0.4])) * (1 - ease(at(u, [0.8, 0.88])));
+    const fp = sw > 0 ? pick.g.position : tmpF.set(-0.5, 0, -0.2);
+    const fy = proj(tmpG.set(fp.x, 0.8, fp.z)).y;
+    tiltH.uniforms.r.value = tiltV.uniforms.r.value = Math.max(0.2, Math.min(0.8, Number.isFinite(fy) ? 1 - fy / h : 0.5));
+    tiltH.uniforms.h.value = (2.2 * focusAmt) / (w * dpr);
+    tiltV.uniforms.v.value = (2.2 * focusAmt) / (h * dpr);
     composer.render();
 
     if (opts.onAnchors) {
@@ -413,6 +444,7 @@ export function mountInside(el: HTMLElement, opts: { onAnchors?: (a: Anchor[]) =
     composer.setSize(w, h);
     composer.setPixelRatio(dpr);
     bloom.resolution.set(w * dpr * 0.5, h * dpr * 0.5);
+    mirror?.getRenderTarget().setSize(Math.round(w * dpr * 0.35), Math.round(h * dpr * 0.35));
     camera.aspect = w / h;
     tall = w / h < 1;
     camera.fov = tall ? (w < 600 ? 58 : 48) : 34;

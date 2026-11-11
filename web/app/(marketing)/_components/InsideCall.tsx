@@ -202,8 +202,10 @@ export function InsideCall() {
         const node = beatEls.current[i];
         if (!node) return;
         const t = (p - b.from) / (b.to - b.from), e = 0.14;
-        const o = t < 0 || t > 1 ? 0 : Math.min(1, t / e, (1 - t) / e);
+        const o = t < 0 || t > 1 ? 0 : Math.min(1, t / (e * 0.4), (1 - t) / e);
         node.style.opacity = String(o);
+        // the headline rises into place inside its mask on the way in (and only fades on the way out)
+        node.style.setProperty("--rise", String(1 - inOut(clamp(t / e))));
         node.setAttribute("aria-hidden", o > 0.5 ? "false" : "true");
       });
     }
@@ -306,7 +308,7 @@ export function InsideCall() {
           <div className="mk-in-beats">
             {BEATS.map((b, i) => (
               <div key={b.t} className="mk-in-beat" ref={(n) => { beatEls.current[i] = n; }} style={{ opacity: 0 }}>
-                <p className="mk-in-t">{b.t}</p>
+                <p className="mk-in-t"><span>{b.t}</span></p>
                 <p className="mk-in-d">{b.d}</p>
               </div>
             ))}
