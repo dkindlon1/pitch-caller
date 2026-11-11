@@ -620,7 +620,7 @@ td.wrapcell .line { display: block; }
   // ---------------------------------------------------------------- objects
   function Pitch(o) {
     const p = Object.assign({ shape: "", velo: 0, base_conf: -1, ivb: null, hb: null, slot: "three-quarter",
-      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, traits: null }, o);
+      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, strike_ref: null, traits: null }, o);
     if (p.base_conf < 0) p.base_conf = p.conf;
     return p;
   }
@@ -647,8 +647,10 @@ td.wrapcell .line { display: block; }
   function updateConfidence(p, event) {
     let d = CONF_DELTA[event];
     if (event === "whiff" && p.kind === "FB") d += 0.02;
-    if (p.strike_rate !== null && p.strike_rate !== undefined) {   // v0.7: news measured against his usual strike rate
-      const c = LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"], q = Math.min(0.95, Math.max(0.05, p.strike_rate));
+    // v0.7: news measured against his usual strike rate; v1.0 Step 3: the average pitcher's rate (strike_ref) comes from
+    // the same model as his, served with it by the learner (LAND_CENTER is gone)
+    if (p.strike_rate !== null && p.strike_rate !== undefined && p.strike_ref !== null && p.strike_ref !== undefined) {
+      const c = Math.min(0.95, Math.max(0.05, p.strike_ref)), q = Math.min(0.95, Math.max(0.05, p.strike_rate));
       if (event === "ball") d *= (1 - c) / (1 - q);
       else if (event === "cstrike" || event === "whiff") d *= c / q;
     }
@@ -664,21 +666,37 @@ td.wrapcell .line { display: block; }
   const isBigSpot = (s) => s.inning >= sched(s) - 2 && Math.abs(s.margin) <= 2 && (s.bases[1] || s.bases[2]);
   const anyBase = (b) => b[0] || b[1] || b[2];
 
-  // ---------------------------------------------------------------- landing today (v0.6d)
-  const LAND_CENTER = { FB: 0.66, OS: 0.58 }, LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6;
+  // ---------------------------------------------------------------- landing today (v0.6d; v1.0 Step 3 one anchor)
+  // record per pitch: [strikes, expected strikes, pitches], non-chase targets only (engine.py landing_estimate)
+  const LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6, LAND_SHARP_MAX = 0.3;   // two-sided (Drew, Nov 10, D1)
   const DMG_SCALE = 3.0;   // v0.6e: a strong masher is worth ~+0.03 runs per pitch, like the best real fastball hitters
+  function expectedStrike(p, q, s, arsenal) {
+    const P = outcomeProbs(p, q, Object.assign({}, s, { landing_today: {}, wild_true: {} }), arsenal);
+    return 1.0 - P.ball - P.wp_ball - P.hbp;
+  }
+  function landingRecord(rec, strike, expected) {
+    const [st, ex, n] = rec || [0, 0.0, 0];
+    return [st + (strike ? 1 : 0), ex + expected, n + 1];
+  }
+  // a pre-v1.0 [strikes, pitches] pair is read once as expected = pitches x the old typical rate (engine.py landing_triple)
+  const LEGACY_LAND_RATE = { FB: 0.66, OS: 0.58 };
+  function landingTriple(p, rec) {
+    if (rec && rec.length === 2) return [rec[0], rec[1] * LEGACY_LAND_RATE[isOffspeed(p.kind) ? "OS" : "FB"], rec[1]];
+    return rec;
+  }
   function landingEstimate(p, s) {
-    const ev = s.landing_today ? s.landing_today[p.name] : null;
-    const center = p.strike_rate !== null && p.strike_rate !== undefined ? p.strike_rate : LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"];
-    if (!ev) return [center, center, 0];
-    const [st, n] = ev;
-    return [(center * LAND_K + st) / (LAND_K + n), center, n];
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || !ev[ev.length - 1]) return [0.0, null, 0];
+    const [st, ex, n] = ev;
+    return [(st - ex) / (LAND_K + n), ex / n, n];
   }
   function wildToday(p, s) {
     if (s.wild_true && Object.keys(s.wild_true).length) return s.wild_true[p.name] || 0.0;
-    const [est, center, n] = landingEstimate(p, s);
-    return n ? Math.min(LAND_MAX, Math.max(0.0, LAND_GAIN * (center - est))) : 0.0;
+    const [est, , n] = landingEstimate(p, s);
+    return n ? Math.max(-LAND_SHARP_MAX, Math.min(LAND_MAX, -LAND_GAIN * est)) : 0.0;   // < 0: sharper than normal today
   }
+  // v1.0 Step 3: a ball on a chase target is no confidence debit unless it went way off (engine.py ball_conf_event)
+  const ballConfEvent = (q, loc) => (q === "chase" && loc !== "noncomp" ? null : "ball");
 
   // ---------------------------------------------------------------- landing
   // v0.7 personal traits (see engine.py TRAIT_KEYS); absent = the default engine
@@ -1303,7 +1321,7 @@ td.wrapcell .line { display: block; }
       if (last) {
         if (last.name === p.name) {
           if (res === "whiff") w += lq === q ? P08.rep_whiff_same : P08.rep_whiff_other;
-          else if (lq === q) w += P08.rep_same_spot;
+          else if (lq === q && res !== "ball" && res !== "cstrike") w += P08.rep_same_spot;   // v1.0 D8
         } else {
           const ts = tunnelScore(last, lq, p, q, s.same_side), dTun = ts[1], dPlate = ts[3];
           const dRel = ((last.release_offset_in[0] - p.release_offset_in[0]) ** 2 + (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5;
@@ -1584,7 +1602,7 @@ td.wrapcell .line { display: block; }
     return out(sg, res);
   }
   // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
-  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
+  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15;   // v1.0 Step 3: a deviation from his own expectation
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
   // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
   const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
@@ -2087,6 +2105,7 @@ td.wrapcell .line { display: block; }
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
+    expectedStrike, landingRecord, landingTriple, ballConfEvent,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
@@ -2446,7 +2465,7 @@ td.wrapcell .line { display: block; }
   }
 
   // the pitch's arsenal entry and situation, small enough to keep with every logged pitch
-  const PITCH_KEYS = ["name", "kind", "grade", "command", "conf", "base_conf", "shape", "velo", "slot", "height_ft", "ivb", "hb", "release_offset_in", "strike_rate", "traits"];
+  const PITCH_KEYS = ["name", "kind", "grade", "command", "conf", "base_conf", "shape", "velo", "slot", "height_ft", "ivb", "hb", "release_offset_in", "strike_rate", "strike_ref", "traits"];
   function snapArsenal(arsenal) { return arsenal.map((p) => { const o = {}; for (const k of PITCH_KEYS) if (p[k] !== undefined) o[k] = p[k]; return o; }); }
   function snapSituation(s) { const o = Object.assign({}, s); delete o.wild_true; return JSON.parse(JSON.stringify(o)); }
 
@@ -2906,13 +2925,21 @@ td.wrapcell .line { display: block; }
     for (const [k, x] of Object.entries(spec.traits || {})) if (slope[k]) v += ((1 - sa) * slope[k][sk] + sa * slope[k][sk + 1]) * x;
     return Math.min(0.9, Math.max(0.2, v));
   }
+  // v1.0 Step 3: his expected strike rate is the engine's own (gridStrike), no longer re-centered on the deleted
+  // LAND_CENTER (served rates drop ~0.1, to what the model actually expects). strikeRef is the same rate for an average
+  // (3/3) pitch of the kind at his level; the engine scales confidence news by the two (engine.py update_confidence).
+  function strikeRef(E, spec, level) {
+    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
+    if (!SR_REF.has(key)) {
+      const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
+      SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
+    }
+    return Math.min(0.9, Math.max(0.2, SR_REF.get(key)));
+  }
   function strikeRate(E, spec, level) {
     const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
-    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
-    if (!SR_REF.has(key)) SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
-    const center = E.landingEstimate(E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), E.Situation({ balls: 0, strikes: 0, outs: 0, bases: [false, false, false], level }))[1];
     const mine = gridStrike(E, E.Pitch(Object.assign({}, base, { grade: spec.grade, command: spec.command, traits: spec.traits || null })), level);
-    return Math.min(0.9, Math.max(0.2, center + (mine - SR_REF.get(key))));
+    return Math.min(0.9, Math.max(0.2, mine));
   }
 
   // ---------------------------------------------------------------- preparing the raw data
@@ -2971,7 +2998,9 @@ td.wrapcell .line { display: block; }
         }
         script.push({ op: "mark" });
         const r = ev.res, hardish = r === "play" && (ev.contact === "hard" || (!ev.contact && ["2B", "3B", "HR"].includes(ev.out)));
-        const ce = r === "ball" || r === "hbp" ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
+        // v1.0 Step 3: a ball on a chase target is no debit unless it went way off, and an HBP is no "ball" (the engine's rule)
+        const ball = r === "ball" && !(ev.quad === "chase" && ev.loc !== "noncomp");   // = engine ballConfEvent
+        const ce = ball ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
         if (ce) script.push({ op: "event", ev: ce });
       }
       if (ev.end && !logged) script.push({ op: "regress" });   // older logs and simulations: one drift after each hitter
@@ -2979,8 +3008,8 @@ td.wrapcell .line { display: block; }
     return { rows, script, base: base === null ? 0.7 : base };
   }
   // rebuild his confidence in this pitch before each of his pitches tonight, for a given strike rate
-  function confPath(E, kind, base, script, sr) {
-    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr });
+  function confPath(E, kind, base, script, sr, ref) {
+    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr, strike_ref: sr === null ? null : ref });
     const out = [];
     for (const st of script) {
       if (st.op === "mark") out.push(p.conf);
@@ -3004,7 +3033,7 @@ td.wrapcell .line { display: block; }
         if (!srCache.has(k2)) srCache.set(k2, strikeRateFast(E, Object.assign({}, shapeSpec, { command: theta.command, grade: theta.grade, traits: theta.traits }), level));
         sr = srCache.get(k2);
       }
-      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr);
+      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr, sr === null ? null : strikeRef(E, shapeSpec, level));
       // marks are in script order; map row -> its mark number
       if (!G._markAt) { let mark = 0; G._markAt = []; for (let i = 0; i < G.script.length; i++) if (G.script[i].op === "mark") G._markAt[i] = mark++; }
       const markAt = G._markAt;
@@ -3015,6 +3044,7 @@ td.wrapcell .line { display: block; }
           r._others = r.ars.map((x) => (x.name === r.name ? null : E.Pitch(Object.assign({}, x))));
         }
         const p = E.Pitch(Object.assign({}, r._snap, { command: theta.command, grade: theta.grade, traits: theta.traits, strike_rate: sr,
+          strike_ref: sr === null ? null : strikeRef(E, shapeSpec, level),
           conf: path[markAt[r.idx]] ?? G.base, base_conf: G.base }));
         const arsP = r._others.map((x) => x || p);
         const s = r._S;
@@ -3449,7 +3479,7 @@ td.wrapcell .line { display: block; }
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
@@ -4295,7 +4325,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // ---------------------------------------------------------------- objects
   function Pitch(o) {
     const p = Object.assign({ shape: "", velo: 0, base_conf: -1, ivb: null, hb: null, slot: "three-quarter",
-      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, traits: null }, o);
+      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, strike_ref: null, traits: null }, o);
     if (p.base_conf < 0) p.base_conf = p.conf;
     return p;
   }
@@ -4322,8 +4352,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function updateConfidence(p, event) {
     let d = CONF_DELTA[event];
     if (event === "whiff" && p.kind === "FB") d += 0.02;
-    if (p.strike_rate !== null && p.strike_rate !== undefined) {   // v0.7: news measured against his usual strike rate
-      const c = LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"], q = Math.min(0.95, Math.max(0.05, p.strike_rate));
+    // v0.7: news measured against his usual strike rate; v1.0 Step 3: the average pitcher's rate (strike_ref) comes from
+    // the same model as his, served with it by the learner (LAND_CENTER is gone)
+    if (p.strike_rate !== null && p.strike_rate !== undefined && p.strike_ref !== null && p.strike_ref !== undefined) {
+      const c = Math.min(0.95, Math.max(0.05, p.strike_ref)), q = Math.min(0.95, Math.max(0.05, p.strike_rate));
       if (event === "ball") d *= (1 - c) / (1 - q);
       else if (event === "cstrike" || event === "whiff") d *= c / q;
     }
@@ -4339,21 +4371,37 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const isBigSpot = (s) => s.inning >= sched(s) - 2 && Math.abs(s.margin) <= 2 && (s.bases[1] || s.bases[2]);
   const anyBase = (b) => b[0] || b[1] || b[2];
 
-  // ---------------------------------------------------------------- landing today (v0.6d)
-  const LAND_CENTER = { FB: 0.66, OS: 0.58 }, LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6;
+  // ---------------------------------------------------------------- landing today (v0.6d; v1.0 Step 3 one anchor)
+  // record per pitch: [strikes, expected strikes, pitches], non-chase targets only (engine.py landing_estimate)
+  const LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6, LAND_SHARP_MAX = 0.3;   // two-sided (Drew, Nov 10, D1)
   const DMG_SCALE = 3.0;   // v0.6e: a strong masher is worth ~+0.03 runs per pitch, like the best real fastball hitters
+  function expectedStrike(p, q, s, arsenal) {
+    const P = outcomeProbs(p, q, Object.assign({}, s, { landing_today: {}, wild_true: {} }), arsenal);
+    return 1.0 - P.ball - P.wp_ball - P.hbp;
+  }
+  function landingRecord(rec, strike, expected) {
+    const [st, ex, n] = rec || [0, 0.0, 0];
+    return [st + (strike ? 1 : 0), ex + expected, n + 1];
+  }
+  // a pre-v1.0 [strikes, pitches] pair is read once as expected = pitches x the old typical rate (engine.py landing_triple)
+  const LEGACY_LAND_RATE = { FB: 0.66, OS: 0.58 };
+  function landingTriple(p, rec) {
+    if (rec && rec.length === 2) return [rec[0], rec[1] * LEGACY_LAND_RATE[isOffspeed(p.kind) ? "OS" : "FB"], rec[1]];
+    return rec;
+  }
   function landingEstimate(p, s) {
-    const ev = s.landing_today ? s.landing_today[p.name] : null;
-    const center = p.strike_rate !== null && p.strike_rate !== undefined ? p.strike_rate : LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"];
-    if (!ev) return [center, center, 0];
-    const [st, n] = ev;
-    return [(center * LAND_K + st) / (LAND_K + n), center, n];
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || !ev[ev.length - 1]) return [0.0, null, 0];
+    const [st, ex, n] = ev;
+    return [(st - ex) / (LAND_K + n), ex / n, n];
   }
   function wildToday(p, s) {
     if (s.wild_true && Object.keys(s.wild_true).length) return s.wild_true[p.name] || 0.0;
-    const [est, center, n] = landingEstimate(p, s);
-    return n ? Math.min(LAND_MAX, Math.max(0.0, LAND_GAIN * (center - est))) : 0.0;
+    const [est, , n] = landingEstimate(p, s);
+    return n ? Math.max(-LAND_SHARP_MAX, Math.min(LAND_MAX, -LAND_GAIN * est)) : 0.0;   // < 0: sharper than normal today
   }
+  // v1.0 Step 3: a ball on a chase target is no confidence debit unless it went way off (engine.py ball_conf_event)
+  const ballConfEvent = (q, loc) => (q === "chase" && loc !== "noncomp" ? null : "ball");
 
   // ---------------------------------------------------------------- landing
   // v0.7 personal traits (see engine.py TRAIT_KEYS); absent = the default engine
@@ -4978,7 +5026,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       if (last) {
         if (last.name === p.name) {
           if (res === "whiff") w += lq === q ? P08.rep_whiff_same : P08.rep_whiff_other;
-          else if (lq === q) w += P08.rep_same_spot;
+          else if (lq === q && res !== "ball" && res !== "cstrike") w += P08.rep_same_spot;   // v1.0 D8
         } else {
           const ts = tunnelScore(last, lq, p, q, s.same_side), dTun = ts[1], dPlate = ts[3];
           const dRel = ((last.release_offset_in[0] - p.release_offset_in[0]) ** 2 + (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5;
@@ -5259,7 +5307,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return out(sg, res);
   }
   // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
-  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
+  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15;   // v1.0 Step 3: a deviation from his own expectation
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
   // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
   const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
@@ -5762,6 +5810,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
+    expectedStrike, landingRecord, landingTriple, ballConfEvent,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
@@ -5972,13 +6021,21 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     for (const [k, x] of Object.entries(spec.traits || {})) if (slope[k]) v += ((1 - sa) * slope[k][sk] + sa * slope[k][sk + 1]) * x;
     return Math.min(0.9, Math.max(0.2, v));
   }
+  // v1.0 Step 3: his expected strike rate is the engine's own (gridStrike), no longer re-centered on the deleted
+  // LAND_CENTER (served rates drop ~0.1, to what the model actually expects). strikeRef is the same rate for an average
+  // (3/3) pitch of the kind at his level; the engine scales confidence news by the two (engine.py update_confidence).
+  function strikeRef(E, spec, level) {
+    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
+    if (!SR_REF.has(key)) {
+      const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
+      SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
+    }
+    return Math.min(0.9, Math.max(0.2, SR_REF.get(key)));
+  }
   function strikeRate(E, spec, level) {
     const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
-    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
-    if (!SR_REF.has(key)) SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
-    const center = E.landingEstimate(E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), E.Situation({ balls: 0, strikes: 0, outs: 0, bases: [false, false, false], level }))[1];
     const mine = gridStrike(E, E.Pitch(Object.assign({}, base, { grade: spec.grade, command: spec.command, traits: spec.traits || null })), level);
-    return Math.min(0.9, Math.max(0.2, center + (mine - SR_REF.get(key))));
+    return Math.min(0.9, Math.max(0.2, mine));
   }
 
   // ---------------------------------------------------------------- preparing the raw data
@@ -6037,7 +6094,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
         }
         script.push({ op: "mark" });
         const r = ev.res, hardish = r === "play" && (ev.contact === "hard" || (!ev.contact && ["2B", "3B", "HR"].includes(ev.out)));
-        const ce = r === "ball" || r === "hbp" ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
+        // v1.0 Step 3: a ball on a chase target is no debit unless it went way off, and an HBP is no "ball" (the engine's rule)
+        const ball = r === "ball" && !(ev.quad === "chase" && ev.loc !== "noncomp");   // = engine ballConfEvent
+        const ce = ball ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
         if (ce) script.push({ op: "event", ev: ce });
       }
       if (ev.end && !logged) script.push({ op: "regress" });   // older logs and simulations: one drift after each hitter
@@ -6045,8 +6104,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return { rows, script, base: base === null ? 0.7 : base };
   }
   // rebuild his confidence in this pitch before each of his pitches tonight, for a given strike rate
-  function confPath(E, kind, base, script, sr) {
-    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr });
+  function confPath(E, kind, base, script, sr, ref) {
+    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr, strike_ref: sr === null ? null : ref });
     const out = [];
     for (const st of script) {
       if (st.op === "mark") out.push(p.conf);
@@ -6070,7 +6129,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
         if (!srCache.has(k2)) srCache.set(k2, strikeRateFast(E, Object.assign({}, shapeSpec, { command: theta.command, grade: theta.grade, traits: theta.traits }), level));
         sr = srCache.get(k2);
       }
-      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr);
+      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr, sr === null ? null : strikeRef(E, shapeSpec, level));
       // marks are in script order; map row -> its mark number
       if (!G._markAt) { let mark = 0; G._markAt = []; for (let i = 0; i < G.script.length; i++) if (G.script[i].op === "mark") G._markAt[i] = mark++; }
       const markAt = G._markAt;
@@ -6081,6 +6140,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
           r._others = r.ars.map((x) => (x.name === r.name ? null : E.Pitch(Object.assign({}, x))));
         }
         const p = E.Pitch(Object.assign({}, r._snap, { command: theta.command, grade: theta.grade, traits: theta.traits, strike_rate: sr,
+          strike_ref: sr === null ? null : strikeRef(E, shapeSpec, level),
           conf: path[markAt[r.idx]] ?? G.base, base_conf: G.base }));
         const arsP = r._others.map((x) => x || p);
         const s = r._S;
@@ -6515,7 +6575,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
@@ -6649,12 +6709,14 @@ function arsenal() {
     // own number after "Keep mine", and a blank grade is the level average (D8). A stored served value from before a
     // re-grade can't get past this.
     const fin = PCLearner.clampServed(d, pd, sv && sv.learned ? sv : null);
+    // v1.0 Step 3: the strike rate is always recomputed on the engine's own scale (a stored served value may predate it),
+    // with the average pitcher's rate beside it for the confidence scaling
     const adj = sv && sv.learned ? { grade: fin.grade, command: fin.command, traits: sv.traits && Object.keys(sv.traits).length ? sv.traits : null,
-      strike_rate: fin.grade === sv.grade && fin.command === sv.command ? sv.strike_rate ?? null
-        : PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level) }
-      : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null };
+      strike_rate: PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level),
+      strike_ref: PCLearner.strikeRef(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo }, S.setup.level) }
+      : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null, strike_ref: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
-    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, conf: c === undefined ? feel : c,
+    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
       ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0] });
   });
@@ -6677,6 +6739,18 @@ function know() {
   return k[i];
 }
 
+// v1.0 Step 3: the landing record per pitch is [strikes, expected strikes, pitches] (non-chase targets). A game saved
+// before v1.0 holds [strikes, pitches] pairs; the engine reads those once (E.landingTriple).
+function landTriple(name, l) {
+  if (!l || l.length !== 2) return l;
+  const d = (pitcherDef().pitches || []).find((x) => x.name === name);
+  return E.landingTriple({ kind: d ? d.kind : "FB" }, l);
+}
+function landToday(g) {
+  const out = {}, rec = (g.land || {})[pKey()] || {};
+  for (const [nm, l] of Object.entries(rec)) out[nm] = landTriple(nm, l);
+  return out;
+}
 function situation() {
   const g = G(), kn = know();
   return E.Situation({ balls: g.balls, strikes: g.strikes, outs: g.outs, bases: g.bases.slice(), inning: g.inning,
@@ -6684,7 +6758,7 @@ function situation() {
     same_side: sameSide(), last: g.last, hitter_seen: Object.assign({}, kn.seen),
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
-    landing_today: Object.assign({}, (g.land || {})[pKey()] || {}),
+    landing_today: landToday(g),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
     ...v08Inputs() });
 }
@@ -6843,9 +6917,10 @@ function record(res) {
   g.pc[pKey()] = (g.pc[pKey()] || 0) + 1;
   const kn = know();
   kn.seen[p.name] = (kn.seen[p.name] || 0) + 1;
-  g.land = g.land || {}; g.land[pKey()] = g.land[pKey()] || {};      // strikes per pitch today, for "is it landing"
-  const lt = g.land[pKey()][p.name] || [0, 0];
-  g.land[pKey()][p.name] = [lt[0] + (res.result === "ball" || res.result === "hbp" ? 0 : 1), lt[1] + 1];
+  g.land = g.land || {}; g.land[pKey()] = g.land[pKey()] || {};      // strikes vs his own expectation today, "is it landing"
+  if (call.quad !== "chase")   // v1.0 Step 3: chase targets stay out (a ball by design); expectation taken before the result
+    g.land[pKey()][p.name] = E.landingRecord(landTriple(p.name, g.land[pKey()][p.name]), !(res.result === "ball" || res.result === "hbp"),
+      E.expectedStrike(p, call.quad, sitNow, ars));
   const uk = g.balls + "-" + g.strikes; g.usage[uk] = g.usage[uk] || {}; g.usage[uk][p.name] = (g.usage[uk][p.name] || 0) + 1;
   {   // planning state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
     const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
@@ -6866,10 +6941,11 @@ function record(res) {
   const walkBases = () => { if (b[0] && b[1] && b[2]) runs++; g.bases = [true, b[0] || b[1], b[2] || (b[0] && b[1])]; };
 
   if (res.result === "ball") {
-    confEvent(ars, p.name, "ball"); g.balls++; text = "Ball";
+    { const ce = E.ballConfEvent(call.quad, res.loc); if (ce) confEvent(ars, p.name, ce); }   // v1.0 Step 3: chase balls
+    g.balls++; text = "Ball";
     if (g.balls === 4) { walkBases(); paEnd = "walk"; text = "Walk"; }
   } else if (res.result === "hbp") {
-    confEvent(ars, p.name, "ball"); walkBases(); paEnd = "hbp"; text = "Hit by pitch";
+    walkBases(); paEnd = "hbp"; text = "Hit by pitch";   // v1.0 Step 3: an HBP is no "ball" for his confidence
   } else if (res.result === "cstrike" || res.result === "whiff") {
     g.strikes++;
     if (res.result === "whiff") {
@@ -7178,12 +7254,12 @@ function callPanel() {
 
 function readout(name) {
   const d = pitcherDef().pitches.find((p) => p.name === name) || {}, p = arsenal().find((x) => x.name === name);
-  const l = ((G().land || {})[pKey()] || {})[name];
+  const l = landTriple(name, ((G().land || {})[pKey()] || {})[name]);
   const cellR = (k, v, u) => h("div", {}, h("span", { class: "k" }, k), h("span", { class: "v" }, v, u ? h("small", {}, u) : null));
   return h("div", { class: "readout", "aria-label": `About the ${name.toLowerCase()}` },
     cellR("Velo", +d.velo ? String(Math.round(+d.velo)) : "–", +d.velo ? "mph" : null),
     cellR("His confidence", p ? p.conf.toFixed(2) : "–"),
-    cellR("Strikes today", l ? `${l[0]}/${l[1]}` : "–", l ? null : null));
+    cellR("Strikes today", l ? `${l[0]}/${l[2]}` : "–", l ? null : null));
 }
 
 function hitterRead() {
@@ -7328,7 +7404,7 @@ function pitcherPanel(ars, st) {
     status,
     h("div", { class: "trust" }, ars.map((p) => h("div", { class: `trow k-${p.kind}` },
       chip(p.kind),
-      h("span", { class: "nm" }, p.name, (() => { const l = ((g.land || {})[pKey()] || {})[p.name]; return l ? h("span", {}, `  ${l[0]} of ${l[1]} for strikes`) : null; })()),
+      h("span", { class: "nm" }, p.name, (() => { const l = landTriple(p.name, ((g.land || {})[pKey()] || {})[p.name]); return l ? h("span", {}, `  ${l[0]} of ${l[2]} for strikes`) : null; })()),
       h("span", { class: "v" }, p.conf.toFixed(2)),
       h("div", { class: `bullet${p.conf < cutoff ? " out" : ""}`, title: `Bullpen feel ${p.base_conf.toFixed(2)}` },
         h("i", { style: { width: `${Math.min(100, p.conf * 100)}%` } }), h("b", { style: { left: `calc(${cutoff * 100}% - 1px)` } }))))),

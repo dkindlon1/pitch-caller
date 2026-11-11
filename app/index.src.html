@@ -670,12 +670,14 @@ function arsenal() {
     // own number after "Keep mine", and a blank grade is the level average (D8). A stored served value from before a
     // re-grade can't get past this.
     const fin = PCLearner.clampServed(d, pd, sv && sv.learned ? sv : null);
+    // v1.0 Step 3: the strike rate is always recomputed on the engine's own scale (a stored served value may predate it),
+    // with the average pitcher's rate beside it for the confidence scaling
     const adj = sv && sv.learned ? { grade: fin.grade, command: fin.command, traits: sv.traits && Object.keys(sv.traits).length ? sv.traits : null,
-      strike_rate: fin.grade === sv.grade && fin.command === sv.command ? sv.strike_rate ?? null
-        : PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level) }
-      : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null };
+      strike_rate: PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level),
+      strike_ref: PCLearner.strikeRef(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo }, S.setup.level) }
+      : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null, strike_ref: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
-    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, conf: c === undefined ? feel : c,
+    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
       ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0] });
   });
@@ -698,6 +700,18 @@ function know() {
   return k[i];
 }
 
+// v1.0 Step 3: the landing record per pitch is [strikes, expected strikes, pitches] (non-chase targets). A game saved
+// before v1.0 holds [strikes, pitches] pairs; the engine reads those once (E.landingTriple).
+function landTriple(name, l) {
+  if (!l || l.length !== 2) return l;
+  const d = (pitcherDef().pitches || []).find((x) => x.name === name);
+  return E.landingTriple({ kind: d ? d.kind : "FB" }, l);
+}
+function landToday(g) {
+  const out = {}, rec = (g.land || {})[pKey()] || {};
+  for (const [nm, l] of Object.entries(rec)) out[nm] = landTriple(nm, l);
+  return out;
+}
 function situation() {
   const g = G(), kn = know();
   return E.Situation({ balls: g.balls, strikes: g.strikes, outs: g.outs, bases: g.bases.slice(), inning: g.inning,
@@ -705,7 +719,7 @@ function situation() {
     same_side: sameSide(), last: g.last, hitter_seen: Object.assign({}, kn.seen),
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
-    landing_today: Object.assign({}, (g.land || {})[pKey()] || {}),
+    landing_today: landToday(g),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
     ...v08Inputs() });
 }
@@ -864,9 +878,10 @@ function record(res) {
   g.pc[pKey()] = (g.pc[pKey()] || 0) + 1;
   const kn = know();
   kn.seen[p.name] = (kn.seen[p.name] || 0) + 1;
-  g.land = g.land || {}; g.land[pKey()] = g.land[pKey()] || {};      // strikes per pitch today, for "is it landing"
-  const lt = g.land[pKey()][p.name] || [0, 0];
-  g.land[pKey()][p.name] = [lt[0] + (res.result === "ball" || res.result === "hbp" ? 0 : 1), lt[1] + 1];
+  g.land = g.land || {}; g.land[pKey()] = g.land[pKey()] || {};      // strikes vs his own expectation today, "is it landing"
+  if (call.quad !== "chase")   // v1.0 Step 3: chase targets stay out (a ball by design); expectation taken before the result
+    g.land[pKey()][p.name] = E.landingRecord(landTriple(p.name, g.land[pKey()][p.name]), !(res.result === "ball" || res.result === "hbp"),
+      E.expectedStrike(p, call.quad, sitNow, ars));
   const uk = g.balls + "-" + g.strikes; g.usage[uk] = g.usage[uk] || {}; g.usage[uk][p.name] = (g.usage[uk][p.name] || 0) + 1;
   {   // planning state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
     const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
@@ -887,10 +902,11 @@ function record(res) {
   const walkBases = () => { if (b[0] && b[1] && b[2]) runs++; g.bases = [true, b[0] || b[1], b[2] || (b[0] && b[1])]; };
 
   if (res.result === "ball") {
-    confEvent(ars, p.name, "ball"); g.balls++; text = "Ball";
+    { const ce = E.ballConfEvent(call.quad, res.loc); if (ce) confEvent(ars, p.name, ce); }   // v1.0 Step 3: chase balls
+    g.balls++; text = "Ball";
     if (g.balls === 4) { walkBases(); paEnd = "walk"; text = "Walk"; }
   } else if (res.result === "hbp") {
-    confEvent(ars, p.name, "ball"); walkBases(); paEnd = "hbp"; text = "Hit by pitch";
+    walkBases(); paEnd = "hbp"; text = "Hit by pitch";   // v1.0 Step 3: an HBP is no "ball" for his confidence
   } else if (res.result === "cstrike" || res.result === "whiff") {
     g.strikes++;
     if (res.result === "whiff") {
@@ -1199,12 +1215,12 @@ function callPanel() {
 
 function readout(name) {
   const d = pitcherDef().pitches.find((p) => p.name === name) || {}, p = arsenal().find((x) => x.name === name);
-  const l = ((G().land || {})[pKey()] || {})[name];
+  const l = landTriple(name, ((G().land || {})[pKey()] || {})[name]);
   const cellR = (k, v, u) => h("div", {}, h("span", { class: "k" }, k), h("span", { class: "v" }, v, u ? h("small", {}, u) : null));
   return h("div", { class: "readout", "aria-label": `About the ${name.toLowerCase()}` },
     cellR("Velo", +d.velo ? String(Math.round(+d.velo)) : "–", +d.velo ? "mph" : null),
     cellR("His confidence", p ? p.conf.toFixed(2) : "–"),
-    cellR("Strikes today", l ? `${l[0]}/${l[1]}` : "–", l ? null : null));
+    cellR("Strikes today", l ? `${l[0]}/${l[2]}` : "–", l ? null : null));
 }
 
 function hitterRead() {
@@ -1349,7 +1365,7 @@ function pitcherPanel(ars, st) {
     status,
     h("div", { class: "trust" }, ars.map((p) => h("div", { class: `trow k-${p.kind}` },
       chip(p.kind),
-      h("span", { class: "nm" }, p.name, (() => { const l = ((g.land || {})[pKey()] || {})[p.name]; return l ? h("span", {}, `  ${l[0]} of ${l[1]} for strikes`) : null; })()),
+      h("span", { class: "nm" }, p.name, (() => { const l = landTriple(p.name, ((g.land || {})[pKey()] || {})[p.name]); return l ? h("span", {}, `  ${l[0]} of ${l[2]} for strikes`) : null; })()),
       h("span", { class: "v" }, p.conf.toFixed(2)),
       h("div", { class: `bullet${p.conf < cutoff ? " out" : ""}`, title: `Bullpen feel ${p.base_conf.toFixed(2)}` },
         h("i", { style: { width: `${Math.min(100, p.conf * 100)}%` } }), h("b", { style: { left: `calc(${cutoff * 100}% - 1px)` } }))))),

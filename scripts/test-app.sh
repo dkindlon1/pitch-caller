@@ -22,3 +22,4 @@ node app/smoke.js
 echo "smoke: passed"
 (cd app && ../$run rules_e2e node rules_e2e.js)
 (cd app && ../$run v10_step1_e2e node v10_step1_e2e.js)   # v1.0 Step 1: shake-off by pitch (D2), re-solve on bases/outs (#2)
+(cd app && ../$run v10_step3_e2e node v10_step3_e2e.js)   # v1.0 Step 3: chase balls, HBP, landing record, old-format games

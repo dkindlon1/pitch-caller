@@ -138,7 +138,8 @@ for lvl in LEVELS:
         if b < 3 and cv[(b + 1, k)] <= cv[(b, k)]: bad += 1
 report("Counts: a strike always helps the pitcher, a ball always helps the hitter", bad, 4 * 17)
 sf = [(lvl, e.stakes_factor(2, 2, lvl), e.stakes_factor(3, 2, lvl), e.stakes_factor(0, 0, lvl)) for lvl in LEVELS]
-report("Big counts (2-2, 3-2) mix tighter than 0-0", sum(1 for _, a, b_, c in sf if not (a < 1 < c and b_ < 1)), len(sf))
+# v1.0 Step 2c (Drew, Nov 10) set 0-0 to 0.9, under 1, so the check compares the counts directly instead of against 1
+report("Big counts (2-2, 3-2) mix tighter than 0-0", sum(1 for _, a, b_, c in sf if not (a < c and b_ < c)), len(sf))
 
 # full calls
 f2 = {k: 0 for k in ["dsum", "window", "cutoff", "chase30", "chase31", "nan"]}

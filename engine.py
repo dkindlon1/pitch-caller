@@ -255,7 +255,8 @@ class Pitch:
     height_ft: float = 6.1
     release_offset_in: tuple = (0.0, 0.0)   # (side, height) vs his fastball slot; nonzero = tips the pitch
     # v0.7 personal traits (learned per pitcher; None/absent = the default engine, exactly as before)
-    strike_rate: float = None  # his expected strike rate with this pitch; "landing today" and confidence measure against it
+    strike_rate: float = None  # his expected strike rate with this pitch (served by the learner); confidence news is scaled by it
+    strike_ref: float = None   # v1.0 Step 3: the same model rate for an average (3/3) pitch at his level, served with it
     traits: dict = None        # situational effects and miss tendency, see TRAIT_KEYS
 
     def __post_init__(self):
@@ -284,7 +285,8 @@ class Situation:
     timing: dict = field(default_factory=dict)            # "FB"/"OS" -> -1 early .. +1 late
     hitter_damage: dict = field(default_factory=dict)     # [R5] key ("FB"/"OS" or quad) -> (score -1..+1, n pitches)
     catcher_block: int = 3
-    landing_today: dict = field(default_factory=dict)     # v0.6d: pitch name -> (strikes, thrown) today, this pitcher
+    landing_today: dict = field(default_factory=dict)     # v1.0 Step 3: pitch name -> (strikes, expected strikes, pitches)
+                                                          # today, this pitcher, non-chase targets only
     wild_true: dict = field(default_factory=dict)         # v0.6f: simulator truth only: a pitch's real off-day wildness
     # v0.8 inputs (all inert at their defaults, so v0.7c callers are unchanged)
     sit_sigma: dict = None          # hitter's sit mix {(pitch name, 'up'|'down'): prob}; set by the solver (2.3)
@@ -320,9 +322,10 @@ def update_confidence(p, event):
     d = CONF_DELTA[event]
     if event == "whiff" and p.kind == "FB":
         d += 0.02                       # blowing a fastball by someone still counts extra
-    if p.strike_rate is not None:       # v0.7: news is measured against HIS usual strike rate, so a pitcher who is
-        c = LAND_CENTER["OS" if is_offspeed(p.kind) else "FB"]     # always wild doesn't sink all game, and the drift
-        q = min(0.95, max(0.05, p.strike_rate))                     # from his normal mix matches an average pitcher's
+    if p.strike_rate is not None and p.strike_ref is not None:   # v0.7: news is measured against HIS usual strike rate,
+        c = min(0.95, max(0.05, p.strike_ref))   # so a pitcher who is always wild doesn't sink all game. v1.0 Step 3: the
+        q = min(0.95, max(0.05, p.strike_rate))  # average pitcher's rate comes from the same model (strike_ref), not the
+                                                 # deleted LAND_CENTER, since the learner now serves rates on that scale
         if event == "ball":
             d *= (1 - c) / (1 - q)
         elif event in ("cstrike", "whiff"):
@@ -361,29 +364,66 @@ def is_big_spot(s):
 # Stage 1: command -> landing zone shares
 # ---------------------------------------------------------------------------
 
-# v0.6d: "if the off-speed gets it over, then get it over" (Drew). Each pitch's strike rate today, shrunk toward a
-# typical rate (worth LAND_K pitches), makes it miss more when it's below that rate. One-sided: a pitch landing well
-# keeps its normal model. Applied to every target alike, so the engine reaches for a pitch that IS landing.
-LAND_CENTER = {"FB": 0.66, "OS": 0.58}     # typical strike rate by pitch class (simulated college games)
+# v0.6d: "if the off-speed gets it over, then get it over" (Drew). v1.0 Step 3 (#4): one landing anchor. Each pitch's
+# record today is (strikes, expected strikes, pitches), where expected sums the model's own strike probability at each
+# called target (expected_strike, with no landing news), so a pitcher doing exactly what the model expects reads zero.
+# Chase targets stay out of the record: a chase is a ball by design and says nothing about whether he can throw the
+# pitch for strikes (four chase takes leave it unchanged). The estimate is his deviation from his own expectation,
+# shrunk toward zero (worth LAND_K pitches). Two-sided (Drew, Nov 10, for D1): missing more than expected makes the
+# pitch wilder (up to LAND_MAX), landing better than expected sharpens it (up to LAND_SHARP_MAX), so "the pitch he is
+# controlling today" rises in the mix ("if the off-speed gets it over, then get it over").
 LAND_K = 5.0
 LAND_GAIN = 4.0
 LAND_MAX = 0.6
+LAND_SHARP_MAX = 0.3
+
+
+def expected_strike(p: Pitch, q: str, s: Situation, arsenal):
+    """The model's chance this call is a strike (anything but a ball, wild-pitch ball or HBP), with no landing news."""
+    P = outcome_probs(p, q, replace(s, landing_today={}, wild_true={}), arsenal)
+    return 1.0 - P["ball"] - P["wp_ball"] - P["hbp"]
+
+
+def landing_record(rec, strike, expected):
+    """Add one non-chase pitch to a (strikes, expected strikes, pitches) record."""
+    st, ex, n = rec if rec else (0, 0.0, 0)
+    return (st + (1 if strike else 0), ex + expected, n + 1)
+
+
+# A record saved before v1.0 is a (strikes, pitches) pair over every target; it is read once as expected = pitches x the
+# old typical rate for the pitch class (the plan's compat rule, for open games, older inputs and offline tools).
+LEGACY_LAND_RATE = {"FB": 0.66, "OS": 0.58}
+
+
+def landing_triple(p, rec):
+    if rec is not None and len(rec) == 2:
+        st, n = rec
+        return (st, n * LEGACY_LAND_RATE["OS" if is_offspeed(p.kind) else "FB"], n)
+    return rec
 
 
 def landing_estimate(p: Pitch, s: Situation):
-    ev = s.landing_today.get(p.name) if s.landing_today else None
-    center = p.strike_rate if p.strike_rate is not None else LAND_CENTER["OS" if is_offspeed(p.kind) else "FB"]
-    if not ev:
-        return center, center, 0
-    st, n = ev
-    return (center * LAND_K + st) / (LAND_K + n), center, n
+    """-> (deviation from his own expectation, shrunk toward 0; his expected strike rate on these calls; pitches)."""
+    ev = landing_triple(p, s.landing_today.get(p.name)) if s.landing_today else None
+    if not ev or not ev[-1]:
+        return 0.0, None, 0
+    st, ex, n = ev
+    return (st - ex) / (LAND_K + n), ex / n, n
 
 
 def wild_today(p: Pitch, s: Situation):
     if s.wild_true:                        # the simulated world: how off the pitch really is today, not an estimate
         return s.wild_true.get(p.name, 0.0)
-    est, center, n = landing_estimate(p, s)
-    return min(LAND_MAX, max(0.0, LAND_GAIN * (center - est))) if n else 0.0
+    est, _, n = landing_estimate(p, s)
+    return max(-LAND_SHARP_MAX, min(LAND_MAX, -LAND_GAIN * est)) if n else 0.0   # < 0: sharper than his normal today
+
+
+def ball_conf_event(q, loc=None):
+    """v1.0 Step 3 (#4): the confidence event for a ball. A ball on a chase target is what was asked for: no debit when it
+    landed just off, or when no location was logged (location is optional in the app); a way-off miss still counts."""
+    if q == "chase" and loc != "noncomp":
+        return None
+    return "ball"
 
 
 # v0.7 personal traits. Effects are offsets in grade points; all default to 0, which is the default engine.
@@ -457,8 +497,9 @@ def landing(p: Pitch, q: str, s: Situation):
         z["edge"] -= me
         z["off"] += 0.6 * (mh + me)
         z["noncomp"] += 0.4 * (mh + me)
-    wt = wild_today(p, s)                    # v0.6d: this pitch isn't landing today
-    if wt:                                   # v0.6e: misses go both ways, so a wild pitch also leaves more over the plate
+    wt = wild_today(p, s)                    # v0.6d: this pitch isn't landing today (v1.0: < 0 = landing better than his
+    if wt:                                   # normal, the same shift run backwards). v0.6e: misses go both ways, so a
+                                             # wild pitch also leaves more over the plate
         me = wt * z["edge"]                  # edge pitches miss off the plate, and some leak over the heart
         mh = 0.6 * wt * z["heart"]           # heart pitches spray to the edge and off it
         z["edge"] += 0.6 * mh - me
@@ -751,8 +792,8 @@ def pair_terms(p, q, s, arsenal):
             if last.name == p.name:
                 if res == "whiff":
                     w += P08["rep_whiff_same"] if lq == q else P08["rep_whiff_other"]
-                elif lq == q:
-                    w += P08["rep_same_spot"]
+                elif lq == q and res not in ("ball", "cstrike"):
+                    w += P08["rep_same_spot"]      # v1.0 D8: after a foul or contact only; a take is no reason to move
             else:
                 _, d_tun, _, d_plate = tunnel_score(last, lq, p, q, s.same_side)
                 d_rel = ((last.release_offset_in[0] - p.release_offset_in[0]) ** 2 +
@@ -1577,9 +1618,10 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
 # v0.9 item 9: a pitch that isn't landing today (at least LAND_BLOCK_N thrown and its shrunk strike rate
 # at or below LAND_BLOCK_EST) gives way to the pitches that are. With two strikes and fewer than three balls it may still
 # be called as a chase; otherwise it is left out. If nothing is landing, or the rule would leave nothing to call, the
-# filter stands down (there is no landing pitch to give way to).
+# filter stands down (there is no landing pitch to give way to). v1.0 Step 3: measured as a deviation from his own
+# expectation, so a pitch with a low normal strike rate isn't blocked for being itself.
 LAND_BLOCK_N = 4
-LAND_BLOCK_EST = 0.40
+LAND_BLOCK_EST = -0.15
 
 
 def not_landing(p, s):

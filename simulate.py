@@ -102,6 +102,7 @@ def _load_call_engine(path):
 
 CALLER = _load_call_engine(CALL_ENGINE) if CALL_ENGINE else engine
 CALLER_NAME = (os.path.abspath(CALL_ENGINE) if CALL_ENGINE else "this tree")
+LEGACY_CALLER = not hasattr(CALLER, "expected_strike")   # a frozen pre-v1.0 engine reads (strikes, thrown) landing pairs
 
 
 
@@ -429,7 +430,10 @@ def play_game(log_path):
         for hh in lineup:
             hh["w"] = max(1.0, min(5.0, 3.0 + prng.gauss(0, 1)))
     K = Knowledge()
-    land = defaultdict(lambda: [0, 0])          # (pitcher, pitch name) -> [strikes, thrown] today
+    land = defaultdict(lambda: [0, 0])          # (pitcher, pitch name) -> [strikes, thrown] today, every pitch: what a
+    # frozen pre-v1.0 caller (CALL_ENGINE) reads. v1.0 Step 3: the engine reads land3 instead, (strikes, expected
+    # strikes, pitches) over non-chase targets (engine.landing_record).
+    land3 = {}
     orng = random.Random(SEED_FOR_MOVE[0] * 31 + 7)
     offs = {starter["name"]: draw_off(orng, starter["arsenal"]), reliever["name"]: draw_off(orng, reliever["arsenal"])}
     CURRENT_OFF.clear(); CURRENT_OFF.update(offs[starter["name"]])
@@ -489,8 +493,10 @@ def play_game(log_path):
                               same_side=(hitter["hand"] == pitcher["hand"]), last=last,
                               hitter_seen=dict(K.seen[h]), usage_this_count=dict(K.usage[(balls, strikes)]),
                               timing=dict(K.timing[h]), hitter_damage=dict(K.damage[h]),
-                              landing_today={x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
-                                             if land[(pitcher["name"], x.name)][1]},
+                              landing_today=({x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
+                                              if land[(pitcher["name"], x.name)][1]} if LEGACY_CALLER else
+                                             {x.name: land3[(pitcher["name"], x.name)] for x in pitcher["arsenal"]
+                                              if (pitcher["name"], x.name) in land3}),
                               familiar=fam_prev, matchup=mm_prev,
                               ump_u=CALLER.ump_estimate(takes, LEVEL_NAME),
                               home=True, sched_innings=9,
@@ -587,6 +593,10 @@ def play_game(log_path):
                     takes.append((1 if ev == "cstrike" else 0, p0, d0))
                 land[(pitcher["name"], p.name)][1] += 1
                 land[(pitcher["name"], p.name)][0] += ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard")
+                if q != "chase":            # v1.0 Step 3: his own expectation at the called target, before the result
+                    land3[(pitcher["name"], p.name)] = engine.landing_record(
+                        land3.get((pitcher["name"], p.name)), ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard"),
+                        engine.expected_strike(p, q, s, ars))
                 K.usage[(balls, strikes)][p.name] += 1
                 K.usage_call[(pitcher["name"], balls, strikes)][(p.name, q)] += 1
                 look = CALLER.look_update(look, p, q, s)
@@ -600,7 +610,8 @@ def play_game(log_path):
                         detail = "wild pitch, runners move up"
                         result = "ball"
                     balls += 1
-                    conf_event(p, "ball")
+                    if engine.ball_conf_event(q) is not None:   # v1.0 Step 3: a ball on a chase target isn't a debit
+                        conf_event(p, "ball")                   # (the simulator logs no landing location)
                     if balls == 4:
                         b1, b2, b3 = bases
                         runs_scored += 1 if (b1 and b2 and b3) else 0
@@ -611,8 +622,7 @@ def play_game(log_path):
                     b1, b2, b3 = bases
                     runs_scored += 1 if (b1 and b2 and b3) else 0
                     bases = (True, b1 or b2, b3 or (b1 and b2))
-                    detail = "HIT BY PITCH"
-                    conf_event(p, "ball")
+                    detail = "HIT BY PITCH"             # v1.0 Step 3: an HBP is no longer a "ball" for confidence
                     pa_done = True
                 elif ev in ("cstrike", "whiff"):
                     strikes += 1

@@ -53,7 +53,7 @@
   // ---------------------------------------------------------------- objects
   function Pitch(o) {
     const p = Object.assign({ shape: "", velo: 0, base_conf: -1, ivb: null, hb: null, slot: "three-quarter",
-      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, traits: null }, o);
+      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, strike_ref: null, traits: null }, o);
     if (p.base_conf < 0) p.base_conf = p.conf;
     return p;
   }
@@ -80,8 +80,10 @@
   function updateConfidence(p, event) {
     let d = CONF_DELTA[event];
     if (event === "whiff" && p.kind === "FB") d += 0.02;
-    if (p.strike_rate !== null && p.strike_rate !== undefined) {   // v0.7: news measured against his usual strike rate
-      const c = LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"], q = Math.min(0.95, Math.max(0.05, p.strike_rate));
+    // v0.7: news measured against his usual strike rate; v1.0 Step 3: the average pitcher's rate (strike_ref) comes from
+    // the same model as his, served with it by the learner (LAND_CENTER is gone)
+    if (p.strike_rate !== null && p.strike_rate !== undefined && p.strike_ref !== null && p.strike_ref !== undefined) {
+      const c = Math.min(0.95, Math.max(0.05, p.strike_ref)), q = Math.min(0.95, Math.max(0.05, p.strike_rate));
       if (event === "ball") d *= (1 - c) / (1 - q);
       else if (event === "cstrike" || event === "whiff") d *= c / q;
     }
@@ -97,21 +99,37 @@
   const isBigSpot = (s) => s.inning >= sched(s) - 2 && Math.abs(s.margin) <= 2 && (s.bases[1] || s.bases[2]);
   const anyBase = (b) => b[0] || b[1] || b[2];
 
-  // ---------------------------------------------------------------- landing today (v0.6d)
-  const LAND_CENTER = { FB: 0.66, OS: 0.58 }, LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6;
+  // ---------------------------------------------------------------- landing today (v0.6d; v1.0 Step 3 one anchor)
+  // record per pitch: [strikes, expected strikes, pitches], non-chase targets only (engine.py landing_estimate)
+  const LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6, LAND_SHARP_MAX = 0.3;   // two-sided (Drew, Nov 10, D1)
   const DMG_SCALE = 3.0;   // v0.6e: a strong masher is worth ~+0.03 runs per pitch, like the best real fastball hitters
+  function expectedStrike(p, q, s, arsenal) {
+    const P = outcomeProbs(p, q, Object.assign({}, s, { landing_today: {}, wild_true: {} }), arsenal);
+    return 1.0 - P.ball - P.wp_ball - P.hbp;
+  }
+  function landingRecord(rec, strike, expected) {
+    const [st, ex, n] = rec || [0, 0.0, 0];
+    return [st + (strike ? 1 : 0), ex + expected, n + 1];
+  }
+  // a pre-v1.0 [strikes, pitches] pair is read once as expected = pitches x the old typical rate (engine.py landing_triple)
+  const LEGACY_LAND_RATE = { FB: 0.66, OS: 0.58 };
+  function landingTriple(p, rec) {
+    if (rec && rec.length === 2) return [rec[0], rec[1] * LEGACY_LAND_RATE[isOffspeed(p.kind) ? "OS" : "FB"], rec[1]];
+    return rec;
+  }
   function landingEstimate(p, s) {
-    const ev = s.landing_today ? s.landing_today[p.name] : null;
-    const center = p.strike_rate !== null && p.strike_rate !== undefined ? p.strike_rate : LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"];
-    if (!ev) return [center, center, 0];
-    const [st, n] = ev;
-    return [(center * LAND_K + st) / (LAND_K + n), center, n];
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || !ev[ev.length - 1]) return [0.0, null, 0];
+    const [st, ex, n] = ev;
+    return [(st - ex) / (LAND_K + n), ex / n, n];
   }
   function wildToday(p, s) {
     if (s.wild_true && Object.keys(s.wild_true).length) return s.wild_true[p.name] || 0.0;
-    const [est, center, n] = landingEstimate(p, s);
-    return n ? Math.min(LAND_MAX, Math.max(0.0, LAND_GAIN * (center - est))) : 0.0;
+    const [est, , n] = landingEstimate(p, s);
+    return n ? Math.max(-LAND_SHARP_MAX, Math.min(LAND_MAX, -LAND_GAIN * est)) : 0.0;   // < 0: sharper than normal today
   }
+  // v1.0 Step 3: a ball on a chase target is no confidence debit unless it went way off (engine.py ball_conf_event)
+  const ballConfEvent = (q, loc) => (q === "chase" && loc !== "noncomp" ? null : "ball");
 
   // ---------------------------------------------------------------- landing
   // v0.7 personal traits (see engine.py TRAIT_KEYS); absent = the default engine
@@ -736,7 +754,7 @@
       if (last) {
         if (last.name === p.name) {
           if (res === "whiff") w += lq === q ? P08.rep_whiff_same : P08.rep_whiff_other;
-          else if (lq === q) w += P08.rep_same_spot;
+          else if (lq === q && res !== "ball" && res !== "cstrike") w += P08.rep_same_spot;   // v1.0 D8
         } else {
           const ts = tunnelScore(last, lq, p, q, s.same_side), dTun = ts[1], dPlate = ts[3];
           const dRel = ((last.release_offset_in[0] - p.release_offset_in[0]) ** 2 + (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5;
@@ -1017,7 +1035,7 @@
     return out(sg, res);
   }
   // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
-  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
+  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15;   // v1.0 Step 3: a deviation from his own expectation
   function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
   // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
   const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
@@ -1520,6 +1538,7 @@
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
     outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
+    expectedStrike, landingRecord, landingTriple, ballConfEvent,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;

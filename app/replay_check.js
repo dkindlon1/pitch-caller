@@ -5,6 +5,10 @@
  */
 const fs = require("fs");
 const E = require("./engine.js"); E.init(require("./engine_data.json"));
+// v1.0 Step 3: landing records hold expected strikes (floats from the logged situation): strikes and pitches must match
+// exactly, the expectation to 1e-9 (the logged snapshot can differ from the live situation in the last digit)
+const sameLand = (a, b) => { const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
+  return ka.join() === kb.join() && ka.every((k) => a[k].length === b[k].length && a[k].every((v, i) => (i === 1 && a[k].length === 3 ? Math.abs(v - b[k][i]) < 1e-9 : v === b[k][i]))); };
 const L2 = require("./learner.js");
 const bk = JSON.parse(fs.readFileSync(process.argv[2], "utf8")), st = bk.stores;
 const pitchers = new Map(st.pitchers.map((p) => [p.id, p]));
@@ -22,15 +26,20 @@ for (const g of st.games) {
       if (!thrown.length) continue;
       const { script, base } = L2._pitchGame(G, pd, () => pd.name);
       const snap0 = mine.map((e) => e.ars.find((x) => x.name === pd.name)).find(Boolean);
-      const path = L2._confPath(E, pd.kind, base, script, snap0 && snap0.strike_rate != null ? snap0.strike_rate : null);
+      const path = L2._confPath(E, pd.kind, base, script, snap0 && snap0.strike_rate != null ? snap0.strike_rate : null,
+        snap0 && snap0.strike_ref != null ? snap0.strike_ref : null);
       thrown.forEach((e, k) => { confWorst = Math.max(confWorst, Math.abs(path[k] - e.ars.find((x) => x.name === pd.name).conf)); });
     }
     const land = {};
     mine.forEach((e, i) => {
-      if (JSON.stringify(e.sit.landing_today || {}) !== JSON.stringify(land)) landBad++;
+      if (!sameLand(e.sit.landing_today || {}, land)) landBad++;
       if (e.pcRaw !== i || e.sit.pitch_count !== e.pcRaw + e.fatigueShift) pcBad++;
-      const t = e.thrown || e.pitchName, x = land[t] || [0, 0];
-      land[t] = [x[0] + (e.res === "ball" || e.res === "hbp" ? 0 : 1), x[1] + 1];
+      // v1.0 Step 3: [strikes, expected strikes, pitches] over non-chase targets, expectation from the logged situation
+      const t = e.thrown || e.pitchName;
+      if (e.quad !== "chase") {
+        const arsE = e.ars.map((x) => E.Pitch(Object.assign({}, x)));
+        land[t] = E.landingRecord(land[t], !(e.res === "ball" || e.res === "hbp"), E.expectedStrike(arsE.find((x) => x.name === t), e.quad, E.Situation(e.sit), arsE));
+      }
     });
   }
 }

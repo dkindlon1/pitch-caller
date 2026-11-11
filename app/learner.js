@@ -203,13 +203,21 @@
     for (const [k, x] of Object.entries(spec.traits || {})) if (slope[k]) v += ((1 - sa) * slope[k][sk] + sa * slope[k][sk + 1]) * x;
     return Math.min(0.9, Math.max(0.2, v));
   }
+  // v1.0 Step 3: his expected strike rate is the engine's own (gridStrike), no longer re-centered on the deleted
+  // LAND_CENTER (served rates drop ~0.1, to what the model actually expects). strikeRef is the same rate for an average
+  // (3/3) pitch of the kind at his level; the engine scales confidence news by the two (engine.py update_confidence).
+  function strikeRef(E, spec, level) {
+    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
+    if (!SR_REF.has(key)) {
+      const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
+      SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
+    }
+    return Math.min(0.9, Math.max(0.2, SR_REF.get(key)));
+  }
   function strikeRate(E, spec, level) {
     const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
-    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
-    if (!SR_REF.has(key)) SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
-    const center = E.landingEstimate(E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), E.Situation({ balls: 0, strikes: 0, outs: 0, bases: [false, false, false], level }))[1];
     const mine = gridStrike(E, E.Pitch(Object.assign({}, base, { grade: spec.grade, command: spec.command, traits: spec.traits || null })), level);
-    return Math.min(0.9, Math.max(0.2, center + (mine - SR_REF.get(key))));
+    return Math.min(0.9, Math.max(0.2, mine));
   }
 
   // ---------------------------------------------------------------- preparing the raw data
@@ -268,7 +276,9 @@
         }
         script.push({ op: "mark" });
         const r = ev.res, hardish = r === "play" && (ev.contact === "hard" || (!ev.contact && ["2B", "3B", "HR"].includes(ev.out)));
-        const ce = r === "ball" || r === "hbp" ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
+        // v1.0 Step 3: a ball on a chase target is no debit unless it went way off, and an HBP is no "ball" (the engine's rule)
+        const ball = r === "ball" && !(ev.quad === "chase" && ev.loc !== "noncomp");   // = engine ballConfEvent
+        const ce = ball ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
         if (ce) script.push({ op: "event", ev: ce });
       }
       if (ev.end && !logged) script.push({ op: "regress" });   // older logs and simulations: one drift after each hitter
@@ -276,8 +286,8 @@
     return { rows, script, base: base === null ? 0.7 : base };
   }
   // rebuild his confidence in this pitch before each of his pitches tonight, for a given strike rate
-  function confPath(E, kind, base, script, sr) {
-    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr });
+  function confPath(E, kind, base, script, sr, ref) {
+    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr, strike_ref: sr === null ? null : ref });
     const out = [];
     for (const st of script) {
       if (st.op === "mark") out.push(p.conf);
@@ -301,7 +311,7 @@
         if (!srCache.has(k2)) srCache.set(k2, strikeRateFast(E, Object.assign({}, shapeSpec, { command: theta.command, grade: theta.grade, traits: theta.traits }), level));
         sr = srCache.get(k2);
       }
-      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr);
+      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr, sr === null ? null : strikeRef(E, shapeSpec, level));
       // marks are in script order; map row -> its mark number
       if (!G._markAt) { let mark = 0; G._markAt = []; for (let i = 0; i < G.script.length; i++) if (G.script[i].op === "mark") G._markAt[i] = mark++; }
       const markAt = G._markAt;
@@ -312,6 +322,7 @@
           r._others = r.ars.map((x) => (x.name === r.name ? null : E.Pitch(Object.assign({}, x))));
         }
         const p = E.Pitch(Object.assign({}, r._snap, { command: theta.command, grade: theta.grade, traits: theta.traits, strike_rate: sr,
+          strike_ref: sr === null ? null : strikeRef(E, shapeSpec, level),
           conf: path[markAt[r.idx]] ?? G.base, base_conf: G.base }));
         const arsP = r._others.map((x) => x || p);
         const s = r._S;
@@ -746,7 +757,7 @@
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;

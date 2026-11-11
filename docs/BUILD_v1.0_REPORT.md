@@ -290,3 +290,85 @@ Drew's PC, 108 paired games, seeds 101-112. `results/v10/yardstick_step2c.txt` i
   (landing) and Step 5 (fits) change D3's numbers again.
 
 **Step 2 done:** #1, #25, D1, D5 (kept), D7 closed.
+
+## Step 3 — Landing, confidence, repeats (#4 all parts, #13, D1 acceptance, D8)
+
+**One landing anchor.** `landing_today[pitch] = (strikes, expected strikes, pitches)`; `expected_strike(p, q, s, ars)`
+is the model's own chance the call is a strike (1 - ball - wild-pitch ball - HBP) with no landing news, taken before
+the result. `landing_estimate` returns his deviation from his own expectation, shrunk toward 0 (`(strikes - expected)
+/ (LAND_K + n)`); `LAND_CENTER` is deleted; `not_landing` = 4+ pitches and deviation <= -0.15. Both engines, the
+simulator, the app, the learner's worlds and both replay checks build the same record.
+
+Two places where the plan had to be read, both settled in favour of its intent:
+- **Chase targets stay out of the record.** The plan's formula charges a taken chase as a 0.42-strike miss; four
+  chase takes would then read -0.19, past the -0.15 block, which is bug #4 itself, while the plan's own test says
+  four chase takes leave it unchanged. Followed the test and the review's fix: a chase is a ball by design.
+- **Confidence scaling (v0.7) needed a reference on the new scale.** `update_confidence` used `LAND_CENTER` to
+  compare a learned pitcher's strike rate with an average one. The learner now serves `strike_rate` as the model's
+  own rate (drops ~0.1, as the plan expected) and the app passes `strike_ref`, the same model rate for a 3/3 pitch of
+  that kind at his level; the scaling uses the two. Plumbing, no new term; with no `strike_ref` there is no scaling.
+
+**Drew, Nov 10 (D1): landing is two-sided.** With the honest expectation the fastball (4/10) took a wildness penalty
+but the slider (8/10) got nothing for beating expectations, so the fastball stayed the top 3-1 pitch (35-40% vs
+32-34%). Now a pitch landing better than expected sharpens, capped at `LAND_SHARP_MAX = 0.3` (the landing shift run
+backwards; mass is conserved). Slider on top at every level: hs 44 / D3 47 / D1 49%.
+
+- Old-format records (open games in the app, golden inputs, fuzzers, offline tools) are read once as expected =
+  pitches x the old class rate (`landing_triple`, the plan's compat rule), in the engine so every reader agrees.
+- Confidence: a ball on a chase target is no debit unless it went way off (no location logged counts as just off);
+  an HBP is no longer a "ball" (simulator, app, learner's script and worlds).
+- D8: `rep_same_spot` applies after a foul or contact only, not after a ball or called strike.
+- Get-it-over: a slider 3-for-9 at 2-1 (5.2 expected) now loses all its get-it-over calls: 3 against 5.2 crosses the
+  not-landing line. Drew's bar was "about half or more"; reported so it isn't a surprise. 7-for-9 gains (26% -> 34%).
+
+`tests.py` **34/34** (5 new):
+```
+[PASS] v1.0 #4 landing: at his own expected strike rate after 12 pitches, wild-today < 0.03 at every level
+       hs -0.000, college_d3 -0.000, college_d1 -0.000; HS fastball 6/12 with 6.2 expected reads 0.056 (the old fixed center read 0.45)
+[PASS] v1.0 #4 chase takes: a ball on a chase target is no confidence debit (just off, or no location logged); way off is
+[PASS] v1.0 #4 landing filter: a 0.30-strike-rate pitch going 2/4 is not blocked or wild; a 0.72 pitch going 2/4 is flagged
+       0.30 pitch 2/4: wild -0.30, blocked False; 0.72 pitch 2/4: wild +0.39, blocked False
+[PASS] v1.0 D8 repeat: fastball up-away again after a take whiffs within 0.002 of fresh; after a foul the penalty applies
+       fresh 0.0428, ball 0.0428, cstrike 0.0428, foul 0.0328
+[PASS] v1.0 D1 3-1: with the slider 8-for-10 and the fastball 4-for-10 today, the slider is the top 3-1 pitch at every level
+       hs: Slider 44%, Fastball 33%, Changeup 23%; college_d3: Slider 47%, Fastball 30%, Changeup 23%; college_d1: Slider 49%, Fastball 27%, Changeup 24%
+```
+New browser test `app/v10_step3_e2e.js` (in `test-app.sh`): chase balls (no location / just off) leave confidence
+and the record alone, a zone ball adds one pitch and his expectation, an HBP changes confidence only by the usual
+between-hitters drift, an old-format game calls and converts. On the Step 0 build it fails 5 checks.
+`replay_e2e` / `replay_check`: landing records compared with strikes and pitches exact and the expectation to 1e-9
+(the logged snapshot differs from the live situation in the 16th digit).
+
+Realism gate against the Step 0 baseline (gate: 1 point), `calib.evaluate` on `call_v08`:
+
+| Level | K | BB | HBP | Δ K | Δ BB | Δ HBP |
+|---|---|---|---|---|---|---|
+| `hs` | 21.10 | 13.67 | 3.99 | +0.05 | -0.38 | -0.11 |
+| `college_d3` | 16.29 | 10.99 | 4.13 | +0.01 | -0.39 | -0.09 |
+| `college_d1` | 19.30 | 10.45 | 3.30 | -0.05 | -0.33 | -0.06 |
+
+Limit: `calib` plays at-bats one at a time from a fresh state, so in-game landing and confidence don't reach it; only
+full simulated games (the yardstick) exercise them.
+
+Learner checks after Step 3 (the learner now serves the model's own strike rate and replays confidence by the new
+rules):
+- `stage2_test` D5 false switch-offs: **2 of 40, red** (bar at most 1). On 80 fresh seasons (700-779) the Step 2 engine
+  reads 1/80 false and 78% caught, Step 3 2/80 and 81%: Step 3 didn't change the switch; its false rate (~2%) sits at
+  the bar. **Drew, Nov 10: leave it red until Step 7 retunes the switch.**
+- `worlds_test` 3 (v2 at least as close as v1) flipped on 5 seasons (v1 2.01, v2 2.06; truth 2). On 40 (seeds 30-69)
+  v2 is closer: mean error 0.085 vs 0.090 (Step 2 engine 0.131 vs 0.157, so both learners got more accurate). Per
+  Drew's standing rule for noisy learner checks, now 40 seasons, bar unchanged: v1 2.06, v2 2.05 -> ok; 31/31.
+- `fuzz.py` "big counts mix tighter than 0-0" was encoded as "2-2 below 1, 0-0 above 1"; Step 2c set 0-0 to 0.9, so it
+  had failed since 2c (the fuzzer isn't in `test-app.sh`). Rewritten as its title says (2-2 and 3-2 below 0-0: 0.59-0.63
+  and 0.50 vs 0.90): 29/29.
+
+Checks run (`test-app.sh` stops at the first red suite, so everything after `stage2_test` was run on its own):
+```
+tests.py 34/34   tests_v09_followups: all passed   parity (make_parity + parity.js): PASS   fuzz.py 300 50: 29/29
+golden_v10 re-frozen; golden_v10.py check: 500 cases, largest difference 0 -> PASS; golden_v10.js: PASS
+golden/fast.py 40 / fast.js 40: 0 mismatches
+learn_test, db_test, import_test, rails_test, schema_test, pitch_rules_test: all passed
+stage2_test: 20/21 (D5 false switch-offs, left red by Drew)      worlds_test: 31/31
+smoke, rules_e2e, gameday_e2e, replay_e2e, v08_e2e, v09_matchup_e2e, v09_labels_e2e, v10_step1_e2e, v10_step3_e2e: all passed
+```
+**Step 3 done:** #4 (all parts), #13, D1 acceptance, D8 closed; one known red (stage2 D5, until Step 7).

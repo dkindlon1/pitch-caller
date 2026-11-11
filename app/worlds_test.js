@@ -51,7 +51,11 @@ console.log("3. The in-game leak: a low-command pitcher, in-game state live (v1 
 {
   const entered = grades({ command: 3.5, grade: 3 }, C3, C3), truth = flat(grades({ command: 2, grade: 3 }, C3, C3));
   const v2 = [], v1 = [];
-  for (let r = 0; r < REPS; r++) {
+  // Drew, Nov 10 (v1.0 Step 3, his standing rule for noisy learner checks): at least 40 seasons, bars unchanged. On 5
+  // seasons v2 vs v1 flipped when Step 3 re-rolled the seasons (v1 2.01, v2 2.06); on 40 (seeds 30-69) v2 is closer,
+  // mean error 0.085 vs 0.090 (Step 2 engine: 0.131 vs 0.157).
+  const SEASONS3 = Math.max(40, REPS);
+  for (let r = 0; r < SEASONS3; r++) {
     const evs = season({ pitches: P3, entered, truth, games: 20, pas: 22, seed: 30 + r, loc: true });
     v2.push(L.learnPitcher(E, pitcherOf(entered), evs, { scoreboard: false }).pitches.fb.talent.command);
     v1.push(V1.pitcherModel(E, { id: "p1", pitches: pitcherOf(entered).pitches }, evs).pitches.fb.fit.command);

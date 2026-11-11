@@ -9,6 +9,10 @@
 const { chromium } = require("playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const E = require("./engine.js"); E.init(require("./engine_data.json"));
+// v1.0 Step 3: landing records hold expected strikes (floats from the logged situation): strikes and pitches must match
+// exactly, the expectation to 1e-9 (the logged snapshot can differ from the live situation in the last digit)
+const sameLand = (a, b) => { const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
+  return ka.join() === kb.join() && ka.every((k) => a[k].length === b[k].length && a[k].every((v, i) => (i === 1 && a[k].length === 3 ? Math.abs(v - b[k][i]) < 1e-9 : v === b[k][i]))); };
 const L2 = require("./learner.js");
 const DIST = path.join(__dirname, "dist/pitch-caller.html"), OUT = path.join(__dirname, "e2e_shots");
 fs.mkdirSync(OUT, { recursive: true });
@@ -141,17 +145,22 @@ const server = http.createServer((req, res) => {
       const { script, base } = L2._pitchGame(games[0], pd, () => pd.name);
       // the strike rate the app served for this pitch in this game (logged in each pitch's arsenal snapshot)
       const firstSnap = mine.map((e) => e.ars.find((x) => x.name === pd.name)).find(Boolean);
-      const path_ = L2._confPath(E, pd.kind, base, script, firstSnap && firstSnap.strike_rate != null ? firstSnap.strike_rate : null);
+      const path_ = L2._confPath(E, pd.kind, base, script, firstSnap && firstSnap.strike_rate != null ? firstSnap.strike_rate : null,
+        firstSnap && firstSnap.strike_ref != null ? firstSnap.strike_ref : null);
       const thrownEvs = mine.filter((e) => (e.thrown || e.pitchName) === pd.name);
       thrownEvs.forEach((e, k) => { const snap = e.ars.find((x) => x.name === pd.name); confWorst = Math.max(confWorst, Math.abs(path_[k] - snap.conf)); confN++; });
     }
     // landing today and pitch count, rebuilt by counting
     const land = {};
     mine.forEach((e, i) => {
-      if (JSON.stringify(e.sit.landing_today || {}) !== JSON.stringify(land)) landBad++;
+      if (!sameLand(e.sit.landing_today || {}, land)) landBad++;
       if (e.pcRaw !== i || e.sit.pitch_count !== e.pcRaw + e.fatigueShift) pcBad++;
-      const t = e.thrown || e.pitchName, x = land[t] || [0, 0];
-      land[t] = [x[0] + (e.res === "ball" || e.res === "hbp" ? 0 : 1), x[1] + 1];
+      // v1.0 Step 3: [strikes, expected strikes, pitches] over non-chase targets, expectation from the logged situation
+      const t = e.thrown || e.pitchName;
+      if (e.quad !== "chase") {
+        const arsE = e.ars.map((x) => E.Pitch(Object.assign({}, x)));
+        land[t] = E.landingRecord(land[t], !(e.res === "ball" || e.res === "hbp"), E.expectedStrike(arsE.find((x) => x.name === t), e.quad, E.Situation(e.sit), arsE));
+      }
       if (L2.usable(e) !== (e.choice === "engine")) usableBad++;
     });
   }

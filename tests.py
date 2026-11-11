@@ -152,8 +152,11 @@ for lvl, key in (("mlb", "mlb_check"), ("college_d3", "college_d3"), ("hs", "hs"
 
 # v0.6d Drew's rule: if the off-speed gets it over, get it over; if it isn't landing, don't lean on it
 fresh = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"))
-missing = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"), landing_today={"Slider": (3, 9)})
-landing_ok = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"), landing_today={"Slider": (7, 9)})
+# v1.0 Step 3: the landing record is (strikes, expected strikes, pitches); 9 slider calls at his own expectation
+from engine import expected_strike as _exs
+_ex9 = 9 * _exs(next(p for p in A if p.name == "Slider"), "middle", fresh, A)
+missing = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"), landing_today={"Slider": (3, _ex9, 9)})
+landing_ok = Situation(2, 1, 1, E, level="college_d3", last=("Fastball", "up-in"), landing_today={"Slider": (7, _ex9, 9)})
 def sl_mid(s_):
     _, d_, _, _ = call_v08(A, s_, rng=random.Random(0))
     return sum(pr for pr, _, p, q in d_ if p.name == "Slider" and q == "middle")
@@ -161,8 +164,12 @@ a_, b_, c_ = sl_mid(fresh), sl_mid(missing), sl_mid(landing_ok)
 # bar set by Drew (2026-11-02): losing about half is right ("it's good"); v0.6f lost 50.4%, the calibrated engine 47%.
 # v1.0 Step 2 (Drew, Nov 10): measured on the live call (call_v08); "about half" = 40% or more. On the live engine at
 # Step 1 the guardrail cut this call to 0% even when the slider was landing, so the rule had never acted there.
-check("v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more",
-      a_ > 0.05 and b_ < 0.60 * a_ and abs(c_ - a_) < 0.02, f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9")
+# v1.0 Step 3 (Drew, Nov 10): landing is two-sided, so a slider landing better than expected may gain calls; the check
+# is that it doesn't lose them.
+check("v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more;"
+      " 7-for-9 doesn't lose any",
+      a_ > 0.05 and b_ < 0.60 * a_ and c_ >= a_ - 0.02,
+      f"slider get-it-over at 2-1: {a_:.0%} fresh, {b_:.0%} at 3 of 9 strikes, {c_:.0%} at 7 of 9 (expected {_ex9:.1f} of 9)")
 
 AVG3 = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", velo=86),
         Pitch("Slider", "SL", grade=3, command=3, conf=0.75, shape="tight", velo=78),
@@ -277,6 +284,58 @@ got = {"4-seam": gb_rate(mk("FB", "ride")), "sink": gb_rate(mk("FB", "sink")), "
        "SL": gb_rate(mk("SL")), "CB": gb_rate(mk("CB")), "CH": gb_rate(mk("CH"))}
 check("v1.0 #16 ground-ball rates match fit_v08.json results.gb_types",
       all(abs(got[k] - gbt[k]) < 1e-12 for k in got), ", ".join(f"{k} {v:.3f}" for k, v in got.items()))
+
+# ---------------------------------------------------------------- v1.0 Step 3 (landing, confidence, repeats)
+from engine import (wild_today as _wt, not_landing as _nl, landing_estimate as _le, ball_conf_event as _bce,
+                    expected_strike as _xs)
+fb_, sl_, ch_ = AVG3
+_seq = [(0, 0, "down-away"), (0, 1, "up-in"), (1, 1, "middle"), (1, 2, "down-away"), (0, 0, "middle"), (1, 0, "down-away"),
+        (2, 1, "middle"), (0, 0, "up-away"), (0, 1, "down-away"), (1, 1, "down-in"), (2, 2, "down-away"), (0, 0, "middle")]
+_exp = lambda p, lvl, n=12: sum(_xs(p, q, Situation(b, k, 1, E, level=lvl), AVG3) for b, k, q in _seq[:n])
+
+# #4: a pitcher doing what the model expects reads as not wild, at every level
+w_at, w_hs = {}, None
+for lvl in ("hs", "college_d3", "college_d1"):
+    ex = _exp(fb_, lvl)
+    w_at[lvl] = _wt(fb_, Situation(0, 0, 1, E, level=lvl, landing_today={"Fastball": (ex, ex, 12)}))
+    if lvl == "hs":
+        w_hs = (round(ex), ex, _wt(fb_, Situation(0, 0, 1, E, level=lvl, landing_today={"Fastball": (round(ex), ex, 12)})))
+check("v1.0 #4 landing: at his own expected strike rate after 12 pitches, wild-today < 0.03 at every level",
+      all(abs(v) < 0.03 for v in w_at.values()) and abs(w_hs[2]) < 0.1,
+      ", ".join(f"{l} {v:.3f}" for l, v in w_at.items())
+      + f"; HS fastball {w_hs[0]}/12 with {w_hs[1]:.1f} expected reads {w_hs[2]:.3f} (the old fixed center read 0.45)")
+
+# #4: chase balls are no confidence debit (unless way off), and chase targets stay out of the landing record (callers)
+check("v1.0 #4 chase takes: a ball on a chase target is no confidence debit (just off, or no location logged); way off is",
+      _bce("chase") is None and _bce("chase", "off") is None and _bce("chase", "noncomp") == "ball"
+      and _bce("down-away") == "ball", f"chase/none {_bce('chase')}, chase/off {_bce('chase', 'off')}, "
+      f"chase/noncomp {_bce('chase', 'noncomp')}, down-away {_bce('down-away')}")
+
+# #4 Q4: the block is relative to his own expectation
+s_ = Situation(1, 1, 1, E, level="college_d3")
+low = _replace(s_, landing_today={"Slider": (2, 4 * 0.30, 4)})
+high = _replace(s_, landing_today={"Slider": (2, 4 * 0.72, 4)})
+check("v1.0 #4 landing filter: a 0.30-strike-rate pitch going 2/4 is not blocked or wild; a 0.72 pitch going 2/4 is flagged",
+      not _nl(sl_, low) and _wt(sl_, low) <= 0 and _wt(sl_, high) >= 0.3 and not _nl(sl_, high),
+      f"0.30 pitch 2/4: wild {_wt(sl_, low):+.2f}, blocked {_nl(sl_, low)}; 0.72 pitch 2/4: wild {_wt(sl_, high):+.2f}, "
+      f"blocked {_nl(sl_, high)}")
+
+# #13 / D8: no repeat penalty after a take; after a foul it applies
+wh = {lab: _op(fb_, "up-away", Situation(1, 1, 1, E, level="college_d3", last=last), AVG3)["whiff"]
+      for lab, last in (("fresh", None), ("ball", ("Fastball", "up-away", "ball")), ("cstrike", ("Fastball", "up-away", "cstrike")),
+                        ("foul", ("Fastball", "up-away", "foul")))}
+check("v1.0 D8 repeat: fastball up-away again after a take whiffs within 0.002 of fresh; after a foul the penalty applies",
+      abs(wh["ball"] - wh["fresh"]) < 0.002 and abs(wh["cstrike"] - wh["fresh"]) < 0.002 and wh["foul"] < wh["fresh"] - 0.005,
+      ", ".join(f"{k} {v:.4f}" for k, v in wh.items()))
+
+# D1 acceptance: the 3-1 call goes to the pitch he's controlling today
+d1 = {}
+for lvl in ("hs", "college_d3", "college_d1"):
+    lt = {"Slider": (8, _exp(sl_, lvl, 10), 10), "Fastball": (4, _exp(fb_, lvl, 10), 10)}
+    d1[lvl] = type_shares(AVG3, Situation(3, 1, 1, E, level=lvl, landing_today=lt))
+check("v1.0 D1 3-1: with the slider 8-for-10 and the fastball 4-for-10 today, the slider is the top 3-1 pitch at every level",
+      all(max(t, key=t.get) == "Slider" for t in d1.values()),
+      "; ".join(f"{l}: " + ", ".join(f"{n} {v:.0%}" for n, v in sorted(t.items(), key=lambda x: -x[1])) for l, t in d1.items()))
 
 print(f"\n{sum(results)}/{len(results)} checks passed")
 # exit non-zero when anything failed, so a direct run (a hook, a pre-commit, another agent) cannot read a pass
