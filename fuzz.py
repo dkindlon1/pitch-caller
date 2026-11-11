@@ -76,26 +76,30 @@ for i in range(N_CHEAP):
     if min(P.values()) < -1e-12: f["neg"] += 1; ex["neg"] = (p.name, q, P)
     L = e.landing(p, q, s)
     if abs(sum(L.values()) - 1) > 1e-9 or min(L.values()) <= 0: f["land"] += 1
-    c0 = e.cost(p, q, s, ars)[0]
+    # v1.0 #18: the live cost (cost08) at the PA's starting look, every variant priced with this situation's at-bat table
+    # (the retired v0.7c cost() used fixed count values instead)
+    tab_ = e.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
+    cst = lambda p_, s_, a_: e.cost08(p_, q, s_, a_, tab_, tab_.h0, None)[0]
+    c0 = cst(p, s, ars)
     # better stuff never makes the pitch worse. Outside 2-0, 3-0, 3-1, like the timing rule below: in those counts more
     # swing-and-misses replace balls in play that are usually outs, and the miss leaves a hitter's count. With stuff
     # spread to real pitchers (v0.7) that reversal reaches 0.002-0.003 runs (8 of 3000, all in those counts).
     hitters_count = (s.balls, s.strikes) in ((2, 0), (3, 0), (3, 1))
     if p.grade < 5 and not hitters_count:
         p2 = replace(p, grade=p.grade + 1); ars2 = [p2 if x is p else x for x in ars]
-        if worse(e.cost(p2, q, s, ars2)[0] - c0, "Better stuff never makes a pitch cost more (outside 2-0, 3-0, 3-1)"): f["grade"] += 1; ex["grade"] = (p.name, q, s.balls, s.strikes)
+        if worse(cst(p2, s, ars2) - c0, "Better stuff never makes a pitch cost more (outside 2-0, 3-0, 3-1)"): f["grade"] += 1; ex["grade"] = (p.name, q, s.balls, s.strikes)
     # more confidence never makes the pitch worse
     if p.conf < 0.9:
         p3 = replace(p, conf=p.conf + 0.05, base_conf=p.base_conf); ars3 = [p3 if x is p else x for x in ars]
-        if worse(e.cost(p3, q, s, ars3)[0] - c0, "More confidence never makes a pitch cost more"): f["conf"] += 1; ex["conf"] = (p.name, q, s.balls, s.strikes, p.conf, s.level)
+        if worse(cst(p3, s, ars3) - c0, "More confidence never makes a pitch cost more"): f["conf"] += 1; ex["conf"] = (p.name, q, s.balls, s.strikes, p.conf, s.level)
     # a hitter who crushes this pitch class makes it costlier (more damage evidence, same n)
     key = "OS" if e.is_offspeed(p.kind) else "FB"
     s_hi = replace(s, hitter_damage={**s.hitter_damage, key: (0.8, 20)}); s_lo = replace(s, hitter_damage={**s.hitter_damage, key: (-0.2, 20)})
-    if not hitters_count and worse(e.cost(p, q, s_lo, ars)[0] - e.cost(p, q, s_hi, ars)[0], "A hitter crushing a pitch class makes it cost more (outside 2-0, 3-0, 3-1)"): f["dmg"] += 1
+    if not hitters_count and worse(cst(p, s_lo, ars) - cst(p, s_hi, ars), "A hitter crushing a pitch class makes it cost more (outside 2-0, 3-0, 3-1)"): f["dmg"] += 1
     # a fastball looks better to a hitter who is late on fastballs than to one who is early
     if p.kind == "FB" and (s.balls, s.strikes) not in ((2, 0), (3, 0), (3, 1)):   # hitter's counts: a ball in play beats a whiff
         s_late = replace(s, timing={**s.timing, "FB": 0.8}); s_early = replace(s, timing={**s.timing, "FB": -0.8})
-        if worse(e.cost(p, q, s_late, ars)[0] - e.cost(p, q, s_early, ars)[0], "Fastball costs less vs a hitter late on fastballs than one early (outside 2-0, 3-0, 3-1)"): f["timing"] += 1
+        if worse(cst(p, s_late, ars) - cst(p, s_early, ars), "Fastball costs less vs a hitter late on fastballs than one early (outside 2-0, 3-0, 3-1)"): f["timing"] += 1
     # a pitch landing worse today is never better
     s_good = replace(s, landing_today={**s.landing_today, p.name: (8, 10)}); s_bad = replace(s, landing_today={**s.landing_today, p.name: (2, 10)})
     pass   # landing is judged at the call level below: a pitch that isn't landing must never be called more
@@ -148,26 +152,26 @@ for i in range(N_FULL):
     ars = rand_arsenal(); s = rand_situation(ars)
     if i % 5 == 0:
         s = replace(s, balls=3, strikes=rng.choice([0, 1]))
-    (pick, q, prob, c), dist = e.call_mixed(ars, s, rng=random.Random(i))
+    (pick, q, prob, c), dist, _, info = e.call_v08(ars, s, rng=random.Random(i))     # v1.0 #18: the live call
     probs = [d[0] for d in dist]
     if abs(sum(probs) - 1) > 1e-9 or min(probs) <= 0: f2["dsum"] += 1
     if any(math.isnan(d[1]) for d in dist): f2["nan"] += 1
-    best = min(d[1] for d in dist)
-    k_ = e.run_scale(s.level) * min(1.0, e.stakes_factor(s.balls, s.strikes, s.level))
-    policy, costs, _ = e.mixed_policy(ars, s, cv=e.at_bat_values(ars, s)[1])
-    tq = e.targets(s.balls, s.strikes)            # v0.7b: no chase target at 3-0 or 3-1
-    allbest = min(c for (_, qq), c in costs.items() if qq in tq)
+    # the live never-pick window (policy_from_costs): a pitch is in the mix only within `win` of the best pitch, a spot
+    # only within `lwin` of its pitch's best, on the full costs under the hitter's sit mix
+    win, lwin = e.windows(s)
+    full = {a: sum(info["sigma"][k] * info["M"][a][k] for k in info["M"][a]) for a in info["M"]}
+    allbest = min(full.values())
     for d in dist:
-        pbest = min(costs[(d[2].name, qq)] for qq in tq)
-        if d[1] - allbest > 0.030 * k_ + 1e-9 and d[1] - pbest > 1e-12:
-            f2["window"] += 1; ex2["window"] = (d[2].name, d[3], round(d[1] - allbest, 4), s.level, s.balls, s.strikes); break
+        pbest = min(v for a, v in full.items() if a[0] == d[2].name)
+        if pbest - allbest > win + 1e-9 or d[1] - pbest > lwin + 1e-9:
+            f2["window"] += 1; ex2["window"] = (d[2].name, d[3], round(pbest - allbest, 4), round(d[1] - pbest, 4), s.level, s.balls, s.strikes); break
     cut = e.LEVEL[s.level]["cutoff"]
     trusted = [x for x in ars if x.conf >= cut]
     if trusted and any(d[2].conf < cut for d in dist): f2["cutoff"] += 1
     if (s.balls, s.strikes) == (3, 0) and any(d[3] == "chase" for d in dist): f2["chase30"] += 1; ex2["chase30"] = [(d[2].name, d[3], round(d[0], 2)) for d in dist]
     if (s.balls, s.strikes) == (3, 1) and any(d[3] == "chase" for d in dist): f2["chase31"] += 1; ex2["chase31"] = [(d[2].name, d[3], round(d[0], 2)) for d in dist]
 report("Call mix: probabilities add to 1, none zero, no NaN", f2["dsum"] + f2["nan"], N_FULL)
-report("Every option in the mix is within the never-pick window (or its pitch's best spot)", f2["window"], N_FULL, ex2.get("window"))
+report("Every option in the mix is inside the never-pick windows (pitch and spot)", f2["window"], N_FULL, ex2.get("window"))
 report("Nothing below the trust line is called while a trusted pitch exists", f2["cutoff"], N_FULL)
 n30 = sum(1 for i in range(N_FULL) if i % 5 == 0)
 # the call-level landing rule
@@ -175,7 +179,7 @@ bad_l, ex_l, n_l = 0, None, 0
 for i in range(N_FULL // 2):
     ars = rand_arsenal(); s = rand_situation(ars); p = rng.choice(ars); n_l += 1
     sg = replace(s, landing_today={**s.landing_today, p.name: (8, 10)}); sb = replace(s, landing_today={**s.landing_today, p.name: (2, 10)})
-    shr = lambda s_: sum(d[0] for d in e.call_mixed(ars, s_, rng=random.Random(0))[1] if d[2].name == p.name)
+    shr = lambda s_: sum(d[0] for d in e.call_v08(ars, s_, rng=random.Random(0))[1] if d[2].name == p.name)
     g_, b_ = shr(sg), shr(sb)
     if b_ > g_ + 0.02:
         bad_l += 1; ex_l = (p.name, s.balls, s.strikes, s.level, f"{g_:.0%} landing, {b_:.0%} not landing")
@@ -188,7 +192,7 @@ A = st["arsenal"]
 
 
 def share(s, name=None, kind=None, quad=None):
-    _, d = e.call_mixed(A, s, rng=random.Random(0))
+    _, d, _, _ = e.call_v08(A, s, rng=random.Random(0))     # v1.0 #18: the live call
     return sum(pr for pr, _, p, q in d if (name is None or p.name == name) and (kind is None or p.kind == kind) and (quad is None or q == quad))
 
 
@@ -214,14 +218,14 @@ ch = next(p for p in A2 if p.name == "Changeup")
 for _ in range(12):
     e.update_confidence(ch, "ball")
 s = e.Situation(1, 1, 0, (False,) * 3, level="college_d3")
-_, d = e.call_mixed(A2, s, rng=random.Random(0))
+_, d, _, _ = e.call_v08(A2, s, rng=random.Random(0))
 ok = ch.conf < e.LEVEL["college_d3"]["cutoff"] and all(p.name != "Changeup" for _, _, p, _ in d)
 results.append(ok); print(f"[{'PASS' if ok else 'FAIL'}] 12 straight balls on the changeup: confidence {ch.conf:.2f}, below the 0.45 line, and it leaves the mix")
 # shake-off lowers that pitch's share on the next call
 s = e.Situation(2, 1, 0, (False,) * 3, level="college_d3", last=("Fastball", "up-in"))
 before = share(s, name="Slider")
 A3 = [replace(p) for p in A]; sl = next(p for p in A3 if p.name == "Slider"); e.update_confidence(sl, "shakeoff")
-_, d = e.call_mixed(A3, s, rng=random.Random(0)); after = sum(pr for pr, _, p, _ in d if p.name == "Slider")
+_, d, _, _ = e.call_v08(A3, s, rng=random.Random(0)); after = sum(pr for pr, _, p, _ in d if p.name == "Slider")
 ok = after < before
 results.append(ok); print(f"[{'PASS' if ok else 'FAIL'}] After a slider shake-off the slider is called less: {before:.0%} -> {after:.0%}")
 # change flag

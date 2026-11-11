@@ -3,7 +3,7 @@ v0.6 outcome-model calibration.
 
 Plays out a plate appearance EXACTLY (no dice): the engine's own call in each count, against
 the simulator's hidden hitters, through the count Markov chain (fouls with 2 strikes loop).
-v1.0 Step 0c: the calls come from call_v08 -- the shipped engine's call path -- not the old v0.7c call_mixed, so
+v1.0 Step 0c: the calls come from call_v08 -- the shipped engine's call path -- not the old v0.7c call path, so
 the level fits are made against the mix the engine actually throws. The table is solved once per
 (level, pitcher, side) at 0-0 and reused for every count, exactly as the app and the simulator do inside a PA.
 Returns per-PA rates (K, BB, HBP, ball-in-play mix) and pitch-level rates (zone, swing, contact).

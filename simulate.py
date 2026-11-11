@@ -21,8 +21,8 @@ from dataclasses import replace
 
 import os
 import engine
-from engine import (Pitch, Situation, outcome_probs, landing, IN_PLAY,
-                    LEVEL, is_offspeed, mixed_policy, QUADS)
+from engine import (Pitch, Situation, outcome_probs, landing,
+                    LEVEL, is_offspeed, QUADS)
 
 # One engine (v0.9) makes the calls, and the simulated world is the same model plus the hidden truth.
 SEED = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 2026
@@ -354,7 +354,7 @@ def hit_advance(ev, bases):
 
 def run_ball_in_play(contact, outs, bases):
     """Returns (outs_added, runs, new_bases, label)."""
-    po, p1, p2, p3, phr, pe = engine.IN_PLAY_BY_LEVEL[LEVEL_NAME][contact] if hasattr(engine, "IN_PLAY_BY_LEVEL") else IN_PLAY[contact]
+    po, p1, p2, p3, phr, pe = engine.IN_PLAY_BY_LEVEL[LEVEL_NAME][contact]      # the simulated world's hit mix (truth)
     ev = sample({"out": po, "single": p1, "double": p2, "triple": p3, "homer": phr, "error": pe})
     b1, b2, b3 = bases
     if ev == "out":
@@ -719,19 +719,25 @@ def play_game(log_path):
 
 
 def pregame_plan(staff):
-    """The engine's attack plan with zero scouting: mix by count vs a generic same-side hitter."""
+    """The engine's attack plan with zero scouting: mix by count vs a generic hitter (v1.0 #18: the live call path,
+    call_v08 with one at-bat table per side; was the retired v0.7c mixed_policy)."""
     starter = staff[0]
+    ars = starter["arsenal"]
+    counts = [(0, 0), (1, 0), (0, 1), (1, 1), (2, 1), (1, 2), (0, 2), (3, 1), (2, 2), (3, 2)]
     out = []
-    for (b, k) in [(0, 0), (1, 0), (0, 1), (1, 1), (2, 1), (1, 2), (0, 2), (3, 1), (2, 2), (3, 2)]:
-        for same in (True, False):
-            s = Situation(b, k, 0, (False, False, False), same_side=same, level=LEVEL_NAME)
-            pol, costs, _ = mixed_policy(starter["arsenal"], s)
-            best_q = {}
-            for name in pol:
-                if pol[name] > 0.005:
-                    best_q[name] = min(QUADS, key=lambda q: costs[(name, q)])
+    for same in (True, False):
+        s0 = Situation(0, 0, 0, (False, False, False), same_side=same, level=LEVEL_NAME)
+        tab = engine.solve_table(ars, s0)
+        for (b, k) in counts:
+            _, dist, _, _ = engine.call_v08(ars, replace(s0, balls=b, strikes=k), rng=random.Random(0), tab=tab)
+            pol, best_q = {}, {}
+            for pr, _, p, q in dist:            # dist is sorted by probability, so the first spot per pitch is its top
+                pol[p.name] = pol.get(p.name, 0.0) + pr
+                best_q.setdefault(p.name, q)
             mix = ", ".join(f"{n} {v:.0%} ({best_q[n]})" for n, v in sorted(pol.items(), key=lambda t: -t[1]) if v > 0.005)
             out.append((f"{b}-{k}", "same side" if same else "opposite side", mix))
+    order = [f"{b}-{k}" for b, k in counts]
+    out.sort(key=lambda r: (order.index(r[0]), r[1] != "same side"))     # by count, same side first (as before)
     return out
 
 

@@ -1,23 +1,22 @@
 """
-Pitch Caller - scoring engine, v0.7c (3-0 mixes tightest, travel ball uses the high school tables, clear errors on
-impossible input). Earlier: v0.6e prototype (v0.6c stakes-scaled randomness; v0.6d pitches not landing today miss more; v0.6e two-way wildness, timing affects contact, hitter damage scaled to real pitch values).
+Pitch Caller - the engine, v1.0. One engine, no flags or modes.
 
-Cost(p, q | s) = sum_e P(e | p, q, s) * [R(e) + V(s'_e)]
-Calls are drawn at random, weighted toward low cost, at a game-theory balance point.
+Each call (call_v08) solves the at-bat once (solve_table: count x the hitter's look, with the hitter's sit game at each
+count) and then the root: cost08(p, q | s) = sum_e P(e | p, q, s) * [value after e], with the outcome model
+(outcome_probs: landing, swing, whiff, contact quality, typed balls in play) and every end of the plate appearance through
+v_end (runs, blended with win expectancy late in close games). Calls are drawn at random, weighted toward low cost, inside
+a stakes-scaled never-pick window (policy_from_costs); 3-ball counts rank by the pitch's own cost (no setups).
 
-v0.2 adds the eight research-backed philosophy changes (tagged [R1]..[R8] below):
-  R1 mix, don't script            -> call_mixed (weighted random pick + equilibrium loop)
-  R2 think in at-bats             -> at_bat_values(): count values solved from this matchup
-  R3 no hard-coded count rules    -> pitcher-side choices come only from run values
-  R4 expand, don't waste          -> chase target aims just off the zone
-  R5 avoid strengths > hunt holes -> hitter_damage with asymmetric shrinkage
-  R6 repeat after a whiff         -> pairing bonus for same pitch/spot after a swing and miss
-  R7 perceived speed (EV)         -> sequencing uses location-adjusted speed
-  R8 no third-time-through cliff  -> continuous decline by batters faced
-  + learning mode                 -> grade_call(): how the engine rates the catcher's call
+The research-backed principles from v0.2 still hold, now inside that solve: mix, don't script (R1); think in at-bats (R2);
+no hard-coded count rules (R3, apart from the coach rules below); expand, don't waste (R4); avoid hitter strengths over
+hunting holes (R5, the cross-game damage seed); timing and perceived speed (R7); no third-time-through cliff (R8).
+Coach rules, each a named constant: no chase at 3-0 / 3-1; a pitch not landing today gives way (LAND_BLOCK_*); mashed
+twice at a height today (MASHED_PENALTY). Display only: the why line and the intent label (why_line, intent_label).
 
-All numbers are PLACEHOLDERS (MLB-based run values, hand-set odds). They exist to
-check that the structure produces sensible baseball calls, not to be trusted in a game.
+Fitted on real data: count kappas, timing, eye level, familiarity, tunneling on chase swings, matchup memory, inside/away
+(SIDE), power HR, landing today (Statcast; seq_fit.py, readthrough/); level averages and pitcher/hitter spreads (college and
+high school stats; calib.py, fit_all.py, fit_spread.py, fit_hitter_spread.py). Docs: docs/PLAN_v1.0_2026-11-09.md,
+docs/BUILD_v1.0_REPORT.md.
 """
 from dataclasses import dataclass, field, replace
 import json as _json, os as _os
@@ -37,7 +36,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 
-# v0.8 parameters (docs/SPEC_v0.8.md). Starting values; perturb.py samples them and seq_fit.py can replace some.
+# v0.8 parameters (docs/SPEC_v0.8.md). Starting values; seq_fit.py replaces the fitted ones (fit_v08.json).
 P08 = dict(
     sit_tW=1.5, sit_hW=0.75, sit_tH=1.0, sit_hH=0.5, sit_tS=0.3, sit_hS=0.15,     # 2.2 sit effects (type, height)
     alpha=0.4, lam=0.6,                                                            # 2.6 look
@@ -567,30 +566,6 @@ ZONE_IN = {"heart": 1.0, "edge": 0.5, "off": 0.0, "noncomp": 0.0}   # edge strad
 KIND_W = {"FB": -0.20, "SL": 0.25, "CB": 0.20, "CH": 0.25}
 
 
-def expectation(p: Pitch, arsenal, s: Situation, policy=None):
-    """E_p: chance the hitter is sitting on p. Count prior + our own mix + what we've shown."""
-    m = len(arsenal)
-    hitters_count = s.balls > s.strikes and s.strikes < 2
-    fb = [x for x in arsenal if x.kind == "FB"]
-    os_ = [x for x in arsenal if x.kind != "FB"]
-    prior = {}
-    if fb and os_:
-        fb_share = 0.65 if hitters_count else (0.35 if s.strikes == 2 else 0.5)
-        for x in fb:
-            prior[x.name] = fb_share / len(fb)
-        for x in os_:
-            prior[x.name] = (1 - fb_share) / len(os_)
-    else:
-        prior = {x.name: 1 / m for x in arsenal}
-    if policy:   # [R1] a smart hitter anticipates our own tendencies in this spot
-        lam = 0.6
-        prior = {x.name: (1 - lam) * prior[x.name] + lam * policy.get(x.name, 0.0) for x in arsenal}
-    n = sum(s.usage_this_count.values())   # what a dugout could pick up today, k = 4
-    k = 4.0
-    e = {x.name: (k * prior[x.name] + s.usage_this_count.get(x.name, 0)) / (k + n) for x in arsenal}
-    return e[p.name], 1 / m
-
-
 # ---------------------------------------------------------------------------
 # Tunneling (v0.4): pitch flight paths from movement + release
 # ---------------------------------------------------------------------------
@@ -671,46 +646,6 @@ def tunnel_score(p1: Pitch, q1: str, p2: Pitch, q2: str, same_side: bool):
                  (p1.release_offset_in[1] - p2.release_offset_in[1]) ** 2) ** 0.5
     score = 0.6 * min(d_break, 18) / 18 + 0.4 * min(d_plate, 24) / 24 - d_tunnel / 10 - d_release / 8
     return max(-1.0, min(1.0, score)), d_tunnel, d_break, d_plate
-
-
-def perceived(p: Pitch, q: str):
-    """[R7] Location-adjusted speed: how fast the pitch looks to the hitter."""
-    return p.mph() + ev_adj(p, q)
-
-
-def pairing(p: Pitch, q: str, s: Situation, arsenal):
-    """T: one sequencing term from the last pitch, -1..+1.
-    Type and eye-level pattern, plus [R7] perceived-speed gap, plus [R6] repeat-after-whiff."""
-    if not s.last:
-        return 0.0
-    last_name, last_q = s.last[0], s.last[1]
-    last_result = s.last[2] if len(s.last) > 2 else None
-    last = next((x for x in arsenal if x.name == last_name), None)
-    if last is None:      # the last pitch came from someone else (a pitching change mid at-bat): no sequencing read
-        return 0.0
-    up_last, up_now = last_q.startswith("up"), q.startswith("up")
-
-    # [R6] if he can't hit it, make him prove it
-    if last.name == p.name:
-        if last_result == "whiff":
-            return 0.4 if last_q == q else 0.3
-        if last_q == q:
-            return -0.8                      # same pitch, same spot, and he didn't miss it
-
-    if last.kind == "FB":
-        base = (1.0 if (up_last and not up_now) else 0.6) if is_offspeed(p.kind) else (0.3 if up_last != up_now else -0.2)
-    elif p.kind == "FB":
-        base = 0.6 if up_now else 0.3
-    else:
-        base = -0.3 if last.name == p.name else 0.2
-
-    # [R7] perceived-speed gap: a big gap as the hitter sees it disrupts timing
-    gap = abs(perceived(p, q) - perceived(last, last_q))
-    speed = min(gap / 16.0, 1.0) * 0.6 - 0.2
-    # v0.4 tunnel: looks the same at the decision point, finishes somewhere else
-    # tunneling is about two different pitches; same pitch, new spot is an eye-level change (above)
-    tun = tunnel_score(last, last_q, p, q, s.same_side)[0] if last.name != p.name else 0.0
-    return max(-1.0, min(1.0, 0.30 * base + speed + 0.50 * tun))
 
 
 def shape_fit(p: Pitch, q: str, s: Situation):
@@ -970,51 +905,9 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
 # Situation terms: what each outcome does to the game
 # ---------------------------------------------------------------------------
 
-IN_PLAY = {  # out, 1B, 2B, 3B, HR, error  (amateur-ish placeholder)
-    "weak": (0.80, 0.14, 0.02, 0.00, 0.00, 0.04),
-    "solid": (0.52, 0.28, 0.12, 0.02, 0.02, 0.04),
-    "hard": (0.28, 0.30, 0.22, 0.04, 0.13, 0.03),
-}
-
 
 def end_pa_value(outs, bases, runs, level="mlb"):
     return runs + re(outs, bases, level)
-
-
-def in_play_value(contact, outs, bases, level="mlb"):
-    b1, b2, b3 = bases
-    po, p1, p2, p3, phr, pe = IN_PLAY_BY_LEVEL[level][contact]
-    def end_pa_value(o_, b_, r_):
-        return r_ + re(o_, b_, level)
-    total = 0.0
-    if outs + 1 >= 3:
-        v_out = 0.0
-    else:
-        dp = 0.20 if (b1 and contact == "weak" and outs < 2) else 0.0
-        v_dp = 0.0 if outs + 2 >= 3 else end_pa_value(outs + 2, (False, b2, b3), 0)
-        if b3:   # runner on 3rd scores 40% of the time on an out with <2 outs
-            v_reg = 0.4 * end_pa_value(outs + 1, (b1, b2, False), 1) + 0.6 * end_pa_value(outs + 1, bases, 0)
-        else:
-            v_reg = end_pa_value(outs + 1, bases, 0)
-        v_out = dp * v_dp + (1 - dp) * v_reg
-    total += po * v_out
-
-    runs = 1 if b3 else 0           # single / error
-    if b2:
-        v1 = 0.55 * end_pa_value(outs, (True, b1, False), runs + 1) + 0.45 * end_pa_value(outs, (True, b1, True), runs)
-    else:
-        v1 = end_pa_value(outs, (True, b1, False), runs)
-    total += (p1 + pe) * v1
-
-    runs = (1 if b2 else 0) + (1 if b3 else 0)   # double
-    if b1:
-        v2 = 0.4 * end_pa_value(outs, (False, True, False), runs + 1) + 0.6 * end_pa_value(outs, (False, True, True), runs)
-    else:
-        v2 = end_pa_value(outs, (False, True, False), runs)
-    total += p2 * v2
-    total += p3 * end_pa_value(outs, (False, False, True), b1 + b2 + b3)
-    total += phr * end_pa_value(outs, (False, False, False), b1 + b2 + b3 + 1)
-    return total
 
 
 try:   # v0.8 typed batted-ball tables (inplay_fit.py); absent = flag can't be turned on
@@ -1120,45 +1013,9 @@ def advance_all(bases):
     return (False, b1, b2), (1 if b3 else 0)
 
 
-def cost(p: Pitch, q: str, s: Situation, arsenal, policy=None, cv=None, sit=None):
-    P = outcome_probs(p, q, s, arsenal, policy, sit=sit)
-    b, k, o, B, L = s.balls, s.strikes, s.outs, s.bases, s.level
-
-    def after_ball(bases, runs):
-        if b + 1 == 4:
-            return runs + walk_value(o, bases, L)
-        return runs + V(b + 1, k, o, bases, cv, L)
-
-    def after_strike():
-        if k + 1 == 3:
-            return re(o + 1, B, L)
-        return V(b, k + 1, o, B, cv, L)
-
-    v = 0.0
-    v += P["ball"] * after_ball(B, 0)
-    nb, r = advance_all(B)
-    v += P["wp_ball"] * after_ball(nb, r)
-    v += P["hbp"] * walk_value(o, B, L)
-    v += (P["cstrike"] + P["whiff"]) * after_strike()
-    v += P["foul"] * (V(b, k + 1, o, B, cv, L) if k < 2 else V(b, k, o, B, cv, L))
-    for c in ("weak", "solid", "hard"):
-        v += P[c] * in_play_value_typed(c, p, q, s)
-    return v, P
-
-
 # ---------------------------------------------------------------------------
 # Decision rule: [R1] weighted random pick at a game-theory balance point
 # ---------------------------------------------------------------------------
-
-def _softmax(costs, temp, window, best=None):
-    best = min(costs.values()) if best is None else best
-    keep = {k: c for k, c in costs.items() if c - best <= window}
-    if not keep:
-        return {}
-    w = {k: exp(-(c - min(keep.values())) / temp) for k, c in keep.items()}
-    t = sum(w.values())
-    return {k: v / t for k, v in w.items()}
-
 
 def candidates(arsenal, s, forced=None):
     cutoff = LEVEL[s.level]["cutoff"]
@@ -1279,57 +1136,6 @@ def stakes_factor(b, k, level):
     return min(1.5, max(0.5, avg / count_stakes(b, k, level)))
 
 
-def mixed_policy(arsenal, s, T=0.010, window=0.030, forced=None, iters=8, cv=None):
-    """Returns (pitch policy, cost table). Policy is the equilibrium mix over pitch types."""
-    cands = candidates(arsenal, s, forced)
-    k = run_scale(s.level)
-    f = stakes_factor(s.balls, s.strikes, s.level)
-    T, window = T * k, window * k * min(1.0, f)        # big counts: tighter never-pick window too
-    temp = T * (0.5 if is_big_spot(s) else 1.0) * f
-    policy = None
-    tq = targets(s.balls, s.strikes)
-    for _ in range(iters):
-        costs = {(p.name, q): cost(p, q, s, arsenal, policy, cv)[0] for p in cands for q in QUADS}
-        best_by_pitch = {p.name: min(costs[(p.name, q)] for q in tq) for p in cands}
-        p_pitch = _softmax(best_by_pitch, temp, window)
-        new = {x.name: p_pitch.get(x.name, 0.0) for x in arsenal}
-        policy = new if policy is None else {k: 0.5 * policy[k] + 0.5 * new[k] for k in new}
-    return policy, costs, temp
-
-
-def at_bat_values(arsenal, s, T=0.010, window=0.030, sweeps=10, iters=4):
-    """[R2] Solve every count's value for THIS pitcher, hitter and base-out state.
-    Value iteration over the 12 counts: each count's value is the expected cost of the
-    engine's own mixed policy there, which depends on the values of the counts after it.
-    Returns cv: hitter's runs relative to the base-out run expectancy, per count."""
-    cv = dict(CV_BY_LEVEL[s.level])        # start from this level's average count values
-    base = re(s.outs, s.bases, s.level)
-    order = sorted(COUNTS, key=lambda c: -(c[0] + c[1]))   # deep counts first
-    for _ in range(sweeps):
-        delta = 0.0
-        for (b, k) in order:
-            sc = replace(s, balls=b, strikes=k, last=None if (b, k) != (s.balls, s.strikes) else s.last,
-                         usage_this_count={} if (b, k) != (s.balls, s.strikes) else s.usage_this_count)
-            policy, costs, temp = mixed_policy(arsenal, sc, T, window, iters=iters, cv=cv)
-            ev = 0.0
-            tq = targets(b, k)
-            best_ok = min(c for (_, q), c in costs.items() if q in tq)
-            for name, pp in policy.items():
-                if pp <= 0:
-                    continue
-                loc = _softmax({q: costs[(name, q)] for q in tq}, temp, LOC_WINDOW * run_scale(s.level) * min(1.0, stakes_factor(b, k, s.level)), best_ok) \
-                      or {min(tq, key=lambda q: costs[(name, q)]): 1.0}
-                ev += pp * sum(pq * costs[(name, q)] for q, pq in loc.items())
-            new = ev - base
-            delta = max(delta, abs(new - cv[(b, k)]))
-            cv[(b, k)] = new
-        if delta < 0.001:
-            break
-    # express relative to 0-0, like the MLB table
-    zero = cv[(0, 0)]
-    return {c: v - zero for c, v in cv.items()}, cv
-
-
 LOC_WINDOW = 0.010   # v0.3: a location this much worse than the best call is never picked
 
 
@@ -1356,99 +1162,9 @@ def check_inputs(arsenal, s: Situation):
         raise ValueError(f"bases must be three flags (1st, 2nd, 3rd), got {s.bases!r}")
 
 
-def call_mixed(arsenal, s: Situation, T=0.010, window=0.030, forced=None, rng=None, iters=8, at_bat=True, exclude=None):
-    """
-    Probabilistic call, in two stages, at a game-theory balance point.
-      Stage A - pitch type:  P(p) ~ exp(-(best cost of p - best overall) / T)
-      Stage B - location:    P(q | p) ~ exp(-(cost(p,q) - best cost of p) / T)
-    Options more than `window` runs worse than the best are never picked; big spot halves T.
-    at_bat=True uses count values solved for this matchup [R2] instead of MLB averages.
-    Returns (pick, dist) with dist = list of (prob, cost, pitch, quad), for logging.
-    """
-    check_inputs(arsenal, s)
-    rng = rng or _random
-    cv = at_bat_values(arsenal, s, T, window)[1] if at_bat else None
-    policy, costs, temp = mixed_policy(arsenal, s, T, window, forced, iters, cv)
-    p_pitch = {k: v for k, v in policy.items() if v > 0.005}
-    t = sum(p_pitch.values())
-    p_pitch = {k: v / t for k, v in p_pitch.items()}
-    dist = []
-    tq = targets(s.balls, s.strikes)
-    overall_best = min(c for (_, q), c in costs.items() if q in tq)
-    for name, pp in p_pitch.items():
-        loc = _softmax({q: costs[(name, q)] for q in tq}, temp,
-                       LOC_WINDOW * run_scale(s.level) * min(1.0, stakes_factor(s.balls, s.strikes, s.level)), overall_best)
-        if not loc:   # pitch made the mix but none of its spots are close: use its best spot
-            bq = min(tq, key=lambda q: costs[(name, q)])
-            loc = {bq: 1.0}
-        p = next(x for x in arsenal if x.name == name)
-        for q, pq in loc.items():
-            dist.append((pp * pq, costs[(name, q)], p, q))
-    if exclude:   # v0.6f: never re-call what he just shook off (unless nothing else is left)
-        kept = [d for d in dist if (d[2].name, d[3]) not in exclude]
-        if kept:
-            t_ = sum(d[0] for d in kept)
-            dist = [(d[0] / t_,) + tuple(d[1:]) for d in kept]
-    dist.sort(key=lambda t: -t[0])
-    r, acc = rng.random(), 0.0
-    for prob, c, p, q in dist:
-        acc += prob
-        if r <= acc:
-            return (p, q, prob, c), dist
-    prob, c, p, q = dist[-1]
-    return (p, q, prob, c), dist
-
-
-def call(arsenal, s: Situation, forced=None):
-    """Single best option (lowest cost). Kept for inspection and tests."""
-    check_inputs(arsenal, s)
-    scored = []
-    for p in candidates(arsenal, s, forced):
-        for q in QUADS:
-            c, P = cost(p, q, s, arsenal)
-            scored.append((c, p, q, P))
-    scored.sort(key=lambda t: t[0])
-    dropped = [x.name for x in arsenal if x not in candidates(arsenal, s, forced)]
-    return scored, dropped
-
-
-# ---------------------------------------------------------------------------
-# Learning mode: grade the catcher's (or coach's) call
-# ---------------------------------------------------------------------------
-
-def grade_call(arsenal, s: Situation, pitch_name: str, quad: str, **kw):
-    """How the engine rates a human call: its pick probability, run cost vs the best,
-    and the engine's own top calls. Used to teach, not to overrule."""
-    _, dist = call_mixed(arsenal, s, **kw)
-    # v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
-    cv = at_bat_values(arsenal, s)[1] if kw.get("at_bat", True) else None
-    policy, costs, _ = mixed_policy(arsenal, s, cv=cv)
-    p = next(x for x in arsenal if x.name == pitch_name)
-    c_human = costs.get((pitch_name, quad), cost(p, quad, s, arsenal, policy, cv)[0])
-    tq = targets(s.balls, s.strikes)
-    best = min(c for (_, q), c in costs.items() if q in tq)
-    prob = sum(pr for pr, _, pp, q in dist if pp.name == pitch_name and q == quad)
-    allowed = quad in tq
-    return {
-        "call": f"{pitch_name} {quad}",
-        "engine_prob": prob,
-        "runs_vs_best": c_human - best,
-        "allowed": allowed,
-        "verdict": "costly" if not allowed else "in the engine's mix" if prob >= 0.02 else
-                   ("close" if c_human - best <= 0.03 * run_scale(s.level) else "costly"),
-        "engine_top": [(pp.name, q, pr) for pr, _, pp, q in dist[:3]],
-    }
-
-
 # ---------------------------------------------------------------------------
 # v0.8 sit game (docs/SPEC_v0.8.md 2.3): pure-sit costs, the hitter's response, exploitability
 # ---------------------------------------------------------------------------
-
-def sit_matrix(arsenal, s, calls, cv=None):
-    """M[(name, q)][k] = C(a | pure sit k), runs to the pitcher."""
-    ks = sit_options(arsenal)
-    by = {x.name: x for x in arsenal}
-    return {a: {k: cost(by[a[0]], a[1], s, arsenal, cv=cv, sit=("pure",) + k)[0] for k in ks} for a in calls}, ks
 
 
 def sit_payoff(M, ks, pi):
@@ -1470,16 +1186,6 @@ def exploitability(M, ks, pi, sigma):
     """2.3 X: runs a hitter gains by sitting on the single best option instead of his mix."""
     cb = sit_payoff(M, ks, pi)
     return max(cb.values()) - sum(sigma[k] * cb[k] for k in ks)
-
-
-def call_costs(arsenal, s, cv=None):
-    """Cost of every allowed call (candidate pitch x allowed target) at this count, as the engine ranks them.
-    v0.7c path: costs under the solved count values. (v0.8 replaces this with the planning solve's root costs.)"""
-    if cv is None:
-        cv = at_bat_values(arsenal, s)[1]
-    pol, costs, temp = mixed_policy(arsenal, s, cv=cv)
-    tq = targets(s.balls, s.strikes)
-    return {a: c for a, c in costs.items() if a[1] in tq}
 
 
 # ---------------------------------------------------------------------------
@@ -1562,7 +1268,6 @@ class Table:
     def __init__(self, arsenal, s):
         self.ars, self.s0 = arsenal, s
         self.vfb = v_fb(arsenal, s)
-        self.looked = True    # 2.6: values carry the hitter's look
         self.bins = [(iv, iy) for iv in range(len(V_CENTERS)) for iy in range(len(Y_CENTERS))]
         self.V = {}           # (b, k) -> {bin: value}
         self.N = {}           # (b, k) -> {bin: expected pitches left in the PA} (7.6)
@@ -1578,8 +1283,6 @@ class Table:
 
     def value(self, b, k, look, which="V"):
         tab = (self.V if which == "V" else self.N)[(b, k)]
-        if not self.looked:
-            return tab[None]
         tot = 0.0
         for iv, wv in _interp_axis(look[0] / self.vfb, V_CENTERS):
             for iy, wy in _interp_axis(look[1], Y_CENTERS):
@@ -1588,15 +1291,10 @@ class Table:
 
 
 def temperature(arsenal, s):
-    """6.6 T(b, k): the v0.7c temperature, floored by the uncertainty table."""
+    """6.6 T(b, k): the v0.7c temperature. (v1.0 #18: the uncertainty floor never bound -- at most 0.47 of T -- and is gone.)"""
     k_ = run_scale(s.level)
     f = stakes_factor(s.balls, s.strikes, s.level)
-    t = 0.010 * k_ * (0.5 if is_big_spot(s) else 1.0) * f
-    size = {2: "two", 3: "three"}.get(len(arsenal), "four")
-    tu = SIM_CONST.get("T_unc", {}).get(s.level, {}).get(size, {}).get(f"{s.balls}-{s.strikes}")
-    if tu is not None:
-        t = max(t, tu)
-    return t
+    return 0.010 * k_ * (0.5 if is_big_spot(s) else 1.0) * f
 
 
 def windows(s):
@@ -1779,43 +1477,6 @@ def pitches_left(P, s, tab, nl):
         P["foul"] * tab.value(b, min(k + 1, 2), nl, "N")
 
 
-def in_play_value_ev(contact, s):
-    """v0.7c in_play_value with every end of the PA through v_end (equal to it when the win blend is off)."""
-    if not (s.win and s.win["omega"] > 0):
-        return in_play_value(contact, s.outs, s.bases, s.level)
-    outs, bases, level = s.outs, s.bases, s.level
-    b1, b2, b3 = bases
-    po, p1, p2, p3, phr, pe = IN_PLAY_BY_LEVEL[level][contact]
-    ev = lambda o_, b_, r_: v_end(s, o_, b_, r_)
-    total = 0.0
-    if outs + 1 >= 3:
-        v_out = ev(3, (False, False, False), 0)
-    else:
-        dp = 0.20 if (b1 and contact == "weak" and outs < 2) else 0.0
-        v_dp = ev(3, (False, False, False), 0) if outs + 2 >= 3 else ev(outs + 2, (False, b2, b3), 0)
-        if b3:
-            v_reg = 0.4 * ev(outs + 1, (b1, b2, False), 1) + 0.6 * ev(outs + 1, bases, 0)
-        else:
-            v_reg = ev(outs + 1, bases, 0)
-        v_out = dp * v_dp + (1 - dp) * v_reg
-    total += po * v_out
-    runs = 1 if b3 else 0
-    if b2:
-        v1 = 0.55 * ev(outs, (True, b1, False), runs + 1) + 0.45 * ev(outs, (True, b1, True), runs)
-    else:
-        v1 = ev(outs, (True, b1, False), runs)
-    total += (p1 + pe) * v1
-    runs = (1 if b2 else 0) + (1 if b3 else 0)
-    if b1:
-        v2 = 0.4 * ev(outs, (False, True, False), runs + 1) + 0.6 * ev(outs, (False, True, True), runs)
-    else:
-        v2 = ev(outs, (False, True, False), runs)
-    total += p2 * v2
-    total += p3 * ev(outs, (False, False, True), b1 + b2 + b3)
-    total += phr * ev(outs, (False, False, False), b1 + b2 + b3 + 1)
-    return total
-
-
 def steal_cost(p, q, s, tab, nl):
     """7.4 a * [p_s V(steal) + (1 - p_s) V(caught) - V(no attempt)], values shifted to the new base-out state."""
     st = s.steal
@@ -1888,7 +1549,6 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     return tab
 
 
-
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
     """6.3/6.4 the pitch being called now: live look, last pitch and lean; sit game re-solved. v1.0 Step 2 (#1, #25): no
     separate guardrail cut. The stakes-scaled never-pick window inside policy_from_costs is the only rule that removes a
@@ -1935,21 +1595,15 @@ def call_v08(arsenal, s, rng=None, exclude=None, tab=None):
     return (pick[2], pick[3], pick[0], pick[1]), dist, tab, info
 
 
-ETA_LEAN = 0.0     # 2.5 eta (flag-able to 0.25)
-
-
 def lean_b_h(arsenal, s, fooled=()):
-    """2.5 b_h(k) = eta * s_{h,c(i)} + e_h(k). fooled: classes ('FB'/'OS') of this at-bat's whiffs marked fooled; each
-    adds log 1.3 to every sit whose pitch is not in that class."""
+    """2.5 b_h(k): the in-at-bat evidence e_h(k) (the spec's eta * damage lean shipped at eta = 0 and is gone, v1.0 #18).
+    fooled: classes ('FB'/'OS') of this at-bat's whiffs marked fooled; each adds log 1.3 to every sit whose pitch is not
+    in that class."""
     out = {}
     for (n, j) in sit_options(arsenal):
         p = next(x for x in arsenal if x.name == n)
         c = "FB" if p.kind == "FB" else "OS"
-        v = 0.0
-        if ETA_LEAN and c in (s.hitter_damage or {}):
-            d, nn = s.hitter_damage[c]
-            v += ETA_LEAN * d * nn / (nn + 10)
-        v += sum(log(1.3) for fc in fooled if fc != c)
+        v = sum(log(1.3) for fc in fooled if fc != c)
         if v:
             out[(n, j)] = v
     return out
@@ -2075,6 +1729,27 @@ except Exception:
 
 def gval(name, level):
     return HITTER_SPREAD.get(level, {}).get(name, P08[name])
+
+
+def grade_call(arsenal, s, pitch_name, quad, tab=None, rng=None, exclude=None):
+    """Learning mode: how the engine rates a human call, priced the way the engine prices its own calls (the live root,
+    against the hitter's sit mix, with the at-bat table). Mirror of engine.js v08.gradeCall (v1.0 #18: replaces the
+    v0.7c grade_call, which graded against a solver the engine no longer runs)."""
+    rng = rng or _random.Random(0)
+    pick, dist, tab, info = call_v08(arsenal, s, rng=rng, exclude=exclude, tab=tab)
+    sg, ks = info["sigma"], sit_options(arsenal)
+    costs = root_costs(arsenal, s, tab, sg)
+    p = next(x for x in arsenal if x.name == pitch_name)
+    look = s.look or tab.h0
+    c_human = costs[(pitch_name, quad)] if (pitch_name, quad) in costs else \
+        sum(sg[k] * cost08(p, quad, s, arsenal, tab, look, ("pure",) + k)[0] for k in ks if sg[k] > 1e-4)
+    best = min(sum(sg[k] * info["M"][a][k] for k in ks) for a in info["M"])
+    allowed = quad in targets(s.balls, s.strikes)
+    prob = sum(d[0] for d in dist if d[2].name == pitch_name and d[3] == quad)
+    verdict = ("costly" if not allowed else "in the engine's mix" if prob >= 0.02
+               else "close" if c_human - best <= 0.03 * run_scale(s.level) else "costly")
+    return dict(call=f"{pitch_name} {quad}", engine_prob=prob, runs_vs_best=c_human - best, allowed=allowed,
+                verdict=verdict, engine_top=[(d[2].name, d[3], d[0]) for d in dist[:3]])
 
 
 def grade_stats(p, q, s, arsenal, sit=None, grades=None):

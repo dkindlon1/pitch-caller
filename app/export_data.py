@@ -1,5 +1,5 @@
 """Export the Python engine's tables to app/engine_data.json for the JavaScript engine.
-The Python engine is the reference; run this after any change to its tables, then app/make_parity.py + parity.js.
+The Python engine is the reference; run this after any change to its tables, then golden/fast.py and golden/golden_v10.js.
 Usage (from the repo root): python3 app/export_data.py [--check]   (--check: compare to the current file, write nothing)"""
 import json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -12,7 +12,6 @@ bk = lambda b: ("1" if b[0] else "0") + ("2" if b[1] else "0") + ("3" if b[2] el
 data = {
     "RE": {l: {f"{o}|{b}": v for (o, b), v in e.RE_BY_LEVEL[l].items()} for l in LEVELS},
     "CV": {l: {f"{b}-{k}": v for (b, k), v in e.CV_BY_LEVEL[l].items()} for l in LEVELS},
-    "IN_PLAY": {l: {c: list(v) for c, v in e.IN_PLAY_BY_LEVEL[l].items()} for l in LEVELS},
     "OUTCOME_ADJ": {l: dict(e.OUTCOME_ADJ[l]) for l in LEVELS},
     "LW": {l: list(e.LW_BY_LEVEL[l]) for l in LEVELS if l in e.LW_BY_LEVEL},
     "LEVEL": {l: dict(e.LEVEL[l]) for l in LEVELS},
@@ -23,7 +22,7 @@ from hitter_spread_params import HITTER_SPREAD
 data["V08"] = {
     "P08": dict(e.P08), "TYPED": e.TYPED, "RHO_L": e.RHO_L,
     "KAPPA_FIT": {f"{b}-{k}": v for (b, k), v in e.KAPPA_FIT.items()},
-    "SIM": {k: v for k, v in e.SIM_CONST.items() if k in ("A_BAR", "I_BAR_UMP", "T_unc", "I0_GRADE", "TAKE_W", "PITCHES_PER_PA")},
+    "SIM": {k: v for k, v in e.SIM_CONST.items() if k in ("A_BAR", "I_BAR_UMP", "I0_GRADE", "TAKE_W", "PITCHES_PER_PA")},
     "OUT_TABLE": itp.OUT_TABLE, "RUNNER_FIT": itp.RUNNER_FIT, "HITTER_SPREAD": HITTER_SPREAD, "RUN_GAME": dict(e.RUN_GAME),
 }
 data["WE"] = json.load(open(os.path.join(HERE, "..", "we_tables.json")))

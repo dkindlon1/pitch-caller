@@ -16,17 +16,19 @@ Levels: high school, college D3, college D1, and pro tables for comparison.
 - **Outcome model**: where the pitch lands (command, confidence, level wildness, whether it's landing today), then
   swing, whiff, called strike, foul, contact quality, hit by pitch, wild pitch. Fitted so simulated games
   reproduce each level's real strikeout, walk, HBP and hit rates (`calib.py`, `fit_all.py`, `outcome_params.py`).
-- **Calls** come from a mixed strategy at a game-theory balance point: count values are solved for this matchup, and
-  randomness scales with the stakes of the count.
+- **Calls**: each at-bat is solved once over count x the hitter's look, with the hitter's guess (what he's sitting on)
+  settled at each count; the call is drawn from the low-cost calls inside a never-pick window, and randomness scales
+  with the stakes of the count.
 - **Coach rules built in**: get it over with off-speed only when that pitch is landing today; attack the zone at
   2-2; never re-call what he just shook off; nothing below the pitcher's trust line while he trusts something.
 
-## The engine: v0.9, one version
+## The engine: v1.0, one version
 
-There is one engine, v0.9, with no flags or modes (Nov 6). It is v0.8's at-bat planning (below) plus the v0.9 terms:
-the landing filter, each hitter's earlier at-bats today, the inside/away term and the power home-run effect, with the
-guardrail on. `golden/golden_v09.py` and `golden/golden_v09.js` check Python and JavaScript against one frozen reference
-(500 cases). Report: `docs/FOLLOWUPS_v0.9_REPORT.md`.
+There is one engine, with no flags or modes, in Python (`engine.py`, the reference) and JavaScript (`app/engine.js`,
+copied to `web/lib/`). It is v0.8's at-bat planning (below) plus the v0.9 terms and the v1.0 fixes and fits
+(`docs/PLAN_v1.0_2026-11-09.md`, build log `docs/BUILD_v1.0_REPORT.md`). `golden/golden_v10.py` and
+`golden/golden_v10.js` check Python and JavaScript against one frozen reference (500 cases); `golden/fast.py` compares
+the two live. The v0.7c call path and the other v0.9 leftovers were removed in v1.0 Step 6.
 
 ## Planning the at-bat (from v0.8)
 
@@ -47,8 +49,8 @@ thinks about between pitches:
 - **Today's umpire**, fatigue (speed and stuff, or radar), hitter grades (contact, power, eye) learned across games.
 - **A why line** on every call.
 
-Checks: `golden/golden_v09.*`, `tests.py`, `tests_v09_followups.py`, `readthrough/scenarios.py`, `app/budget_v08.js`,
-`app/v08_e2e.js`. The v0.7c and v0.8 engines are gone; their golden data files stay in `golden/` untouched.
+Checks: `golden/golden_v10.*`, `tests.py`, `tests_v09_followups.py`, `readthrough/scenarios.py`, `app/budget_v08.js`,
+`app/v08_e2e.js`. The v0.7c and v0.8 engines and their golden files are gone (v1.0 Step 6); `golden/golden_v09.json` stays as the historical v0.9 reference and the source of the golden inputs.
 Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
 
 ## Known limits (v1.0)
@@ -64,7 +66,7 @@ Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
 
 | File | What it is |
 | --- | --- |
-| `engine.py` | The engine (v0.7c: per-pitcher traits; command and stuff spread and the walk/strikeout link calibrated to real pitchers, one grade point = one SD at the level; no chase target at 3-0 or 3-1; 3-0 mixes as tightly as 3-2; travel ball uses the high school tables; clear errors on impossible input) |
+| `engine.py` | The engine, v1.0 (the reference; `app/engine.js` is its JavaScript twin): the at-bat solve and live call (`call_v08`), the outcome model, coach rules, the why line and intent label; one grade point = one SD of real pitchers (and hitters) at the level |
 | `pitcher_lines.py`, `talent_spread.py`, `fit_spread.py`, `spread_params.py`, `spread_test.py` | Spread calibration: real 2026 per-pitcher lines, the true spread between pitchers, the fitted scales, and the check |
 | `flags.py` | "Time for a change" flag |
 | `simulate.py` | Full-game simulator with hidden hitter traits and pitch off-days; presets for pitcher and lineup types |
@@ -72,7 +74,7 @@ Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
 | `batch.py`, `regrade.py`, `inputs_report.py` | Run many games and summarize them |
 | `college_rates.py`, `hs_rates.py`, `run_tables.py` | Run values from real stats |
 | `calib.py`, `fit_all.py`, `refit_mlb.py` | Fit the outcome model to real rates |
-| `tests.py` | 19 regression checks |
+| `tests.py` | Regression checks (42 in v1.0), including the predictability grid (`grid_v10.py`) |
 | `statcast_check.py` | The hitter-vs-pitch model against MLB Statcast pitches, by attack zone and count (`results/statcast_check.txt`) |
 | `fuzz.py` | 29 logic and learning checks on thousands of random situations |
 | `matrix/` | 21-setup test matrix: levels, pitcher types, lineups, input levels, shake-offs, coach overrides |
@@ -83,14 +85,14 @@ Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
 
 Python 3.11+ with `numpy` and `scipy`. Node 18+ for the app checks (Playwright for the browser test).
 
-    python3 tests.py                                     # 19 regression checks
+    python3 tests.py                                     # regression checks (42)
     python3 spread_test.py                               # calibrated spread between pitchers (about 2 minutes)
     python3 fuzz.py 3000 300                             # logic and learning checks
     LEVEL=college_d3 python3 batch.py runs/d3 1 10        # 10 simulated D3 games, graded
     STAFF=power LINEUP=fb_mashers LEVEL=hs python3 batch.py runs/x 1 10
     ./matrix/run.sh && python3 matrix/report.py           # the full matrix (about an hour)
 
-    python3 app/make_parity.py 150 && node app/parity.js   # JS engine must match Python exactly
+    python3 golden/fast.py 40 && node golden/golden_v10.js  # JS engine must match Python exactly
     cd app && python3 build.py                             # builds dist/pitch-caller.html
     node app/smoke.js                                      # drives the page in a browser (from the repo root)
 

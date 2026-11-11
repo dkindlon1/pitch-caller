@@ -607,3 +607,57 @@ one simulated game (simulate.py): 116 pitches, no errors
 spread_test.py: walk+HBP spread low at D3/D1 (same as Step 4; Drew: leave it)
 ```
 Yardstick for Step 5 (Drew's PC): `scripts/yardstick.ps1 -Tag step5 -Commit <this commit>`.
+
+## Step 6 — One engine: dead code (#18, #17 wording)
+
+Built while the Step 3/5 yardstick runs were still pending (Drew, Nov 11): Step 6 changes no call, and the proof is the
+frozen golden reproducing exactly.
+
+**Removed from `engine.py` and both `engine.js`:** the v0.7c solver and its users (`call_mixed`/`callMixed`,
+`mixed_policy`, `at_bat_values`, v0.7c `grade_call`/`gradeCall`, `cost`, `call_costs`, `sit_matrix`, `call`), `pairing`,
+`perceived`, `expectation`, `in_play_value`, `in_play_value_ev`, `IN_PLAY`, the `ETA_LEAN` lean branch (shipped at 0),
+`Table.looked`, the `T_unc` temperature floor (checked first: at most 0.47 of T in any level/size/count, big spot
+included, so it never bound) with its `sim_constants.json` key and `perturb.py`, and the JS-only leftovers that only
+those used (`softmax`, `minAllowed`, `walkValue`, `V`). `tunnel_score` and the "tunneling" intent term stay (D5 ships
+tunneling on chase swings). `engine.py` 2,365 → 2,040 lines, `engine.js` 1,597 → 1,368. Both headers now describe v1.0.
+
+**New Python twin:** `engine.grade_call` now mirrors the live JS grader (`v08.gradeCall`, which the app's "Your call" box
+uses), so the learning-mode grade has a Python reference. `golden/fast.py`/`fast.js` compare it live, along with each
+pitch's confidence after every event.
+
+**Callers rewritten onto the live engine:**
+- `tests.py`: the R2 at-bat-values check now reads the at-bat table (`solve_table`); R5, R6 and learning mode run on
+  `call_v08` / `grade_call`; R7 uses the timing term's perceived speed (speed + `ev_adj`).
+- `fuzz.py`: monotonic-cost checks use `cost08` with each situation's table; the window check tests the live
+  never-pick windows (pitch and spot, on the full costs under the sit mix); calls run on `call_v08`.
+- `simulate.py`: `pregame_plan` uses `call_v08` (one table per side); the `IN_PLAY` fallback is gone. The legacy-caller
+  paths the yardstick needs stay; checked by running a game with the frozen v0.9 engine as `CALL_ENGINE`.
+- `sim_constants.py`, `statcast_check.py`, `app/learn_test.js`, `app/gate_test.js`, and `supabase/test/app_sync_e2e.js`
+  (it called the v0.7c `E.gradeCall`; now `E.v08.gradeCall`. Not run here: it needs a live Supabase).
+- `app/make_parity.py` + `app/parity.js` retired: `test-app.sh` runs `golden/fast.py 40` instead (it covers what they did
+  that the golden didn't: confidence updates, and now grading).
+- `app/export_data.py` no longer exports `IN_PLAY` or `T_unc`.
+
+**Deleted files:** `golden/golden_v07c.json`, `golden_v08.json`, `labels_parity.json`, and `golden/golden_v09.js` (it
+checked the JS engine against frozen v0.9 outputs, which v1.0 no longer reproduces; `golden_v09.json` stays as the v0.9
+reference and the source of the golden inputs). README: the v1.0 engine section, the Files row for `engine.py`, the
+check count, the parity command.
+
+Not touched: `readthrough/followup_landing.py`, a v0.9 analysis script that has read the Step 3-removed `LAND_CENTER`
+since Step 3 (historical, not run by anything).
+
+**Proof:**
+```
+grep -c "call_mixed\|mixedPolicy\|ETA_LEAN\|T_unc" engine.py app/engine.js web/lib/engine.js -> 0 / 0 / 0
+grep -rn "call_mixed\|callMixed" (py, js, html; outside docs and app/dist) -> 0
+every engine name used by a Python script / JS consumer still exists (scripted scan; only comments matched)
+golden_v10.py check: 500 cases, largest difference 0.00e+00 -> PASS; golden_v10.js: PASS
+golden/fast.py 40: 0 mismatches (19,100 values, now including confidence and grading)
+realism (calib.evaluate) identical to Step 5: hs 21.27/13.82/4.02, D3 16.29/11.00/4.14, D1 19.29/10.46/3.30, mlb 19.40/7.72/0.86
+tests.py 42/42   tests_v10_explain 7/7   tests_v09_followups: all passed (one-engine check ok)   fuzz.py 300 50: 29/29
+learn, db, import, rails, schema, pitch_rules: all passed   worlds_test 31/31   stage2_test: D5 2/40 (known red, Step 7)
+smoke; rules, v10_step1/3/5, v08, v09_labels, v09_matchup, gameday, replay, d0, travel, stage2, db e2e: all passed
+web demo 2/2; app/dist rebuilt; web/lib synced
+simulate.py (main, with the new pregame plan): same 116-pitch game as Step 5; CALL_ENGINE=v0.9 game: ran (138 pitches)
+gate_test.js 1: runs on the live costs (its 1-rep output was not kept: app/gate_result.json restored)
+```

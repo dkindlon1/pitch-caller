@@ -31,6 +31,10 @@ function compute(c) {
     }
   });
   if (sw.win) { r.win = {}; for (const k of ["omega", "WE0", "m0", "LI"]) r.win[k] = sw.win[k]; }
+  r.conf = {};     // v1.0 #18: confidence after each event (retiring app/parity.js)
+  for (const d of c.arsenal) for (const ev of ["ball", "cstrike", "whiff", "hard", "shakeoff"]) {
+    const p = E.Pitch(Object.assign({}, d)); E.updateConfidence(p, ev); r.conf[d.name + "|" + ev] = p.conf;
+  }
   if (!c.full) return r;
   const tab = V.solveTable(ars, Object.assign({}, sw, { balls: 0, strikes: 0, last: null }));
   r.table = { h0: Array.from(tab.h0), sweeps: tab.sweeps, V: plain(tab.V), N: plain(tab.N), sigma: plain(tab.sigma) };
@@ -42,6 +46,10 @@ function compute(c) {
   const [line, deltas] = V.whyLine(ars, res.info.s, tab, res.pick, res.info);
   r.why = { line, deltas: plain(deltas) };
   r.intent = plain(V.intentLabel(ars, res.info.s, tab, res.pick, res.info));   // v1.0 Step 4: compared live too
+  {   // v1.0 #18: the learning-mode grade (retiring app/parity.js), compared live
+    const g = V.gradeCall(ars, sw, ars[ars.length - 1].name, E.targets(s.balls, s.strikes).slice(-1)[0], tab, { rng: () => 0.5 });
+    r.gradecall = plain(g);
+  }
   const p0 = ars[0], q0 = E.targets(s.balls, s.strikes)[0];
   r.take = Array.from(V.takeStats(p0, q0, sw, ars));
   const g = V.gradeStats(p0, q0, sw, ars, null, c.s.grades);

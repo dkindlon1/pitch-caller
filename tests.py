@@ -3,8 +3,7 @@ import sys
 import time
 import random
 from collections import Counter
-from engine import (Pitch, Situation, call_v08, outcome_probs, call_mixed, mixed_policy, at_bat_values, grade_call,
-                    pairing, landing, CV)
+from engine import Pitch, Situation, call_v08, outcome_probs, grade_call, landing, solve_table, ev_adj, CV
 
 random.seed(11)
 results = []
@@ -23,13 +22,17 @@ def arsenal(sl_grade=4, sl_conf=0.75):
     ]
 
 
-def share(ars, s, **kw):
-    policy, _, _ = mixed_policy(ars, s, **kw)
-    return policy
+def share(ars, s):
+    """Pitch-type shares of the live call (call_v08). v1.0 #18: was the retired v0.7c mixed_policy."""
+    _, d_, _, _ = call_v08(ars, s, rng=random.Random(0))
+    out = {p_.name: 0.0 for p_ in ars}
+    for pr, _, p_, q_ in d_:
+        out[p_.name] += pr
+    return out
 
 
 def loc_share(ars, s, pitch, quad):
-    _, dist = call_mixed(ars, s)
+    _, dist, _, _ = call_v08(ars, s, rng=random.Random(0))
     return sum(pr for pr, _, p, q in dist if p.name == pitch and q == quad)
 
 
@@ -51,14 +54,19 @@ check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider is the
       max(p, key=p.get) == "Slider" and max(p.values()) < 0.95,
       ", ".join(f"{n} {v:.0%}" for n, v in sorted(p.items(), key=lambda x: -x[1])))
 
-# R2 think in at-bats: count values come from this matchup
+# R2 think in at-bats: count values come from this matchup (v1.0 #18: the live at-bat table, solve_table, read at the
+# hitter's starting look; was the retired v0.7c at_bat_values)
+def _rel(ars):
+    tab_ = solve_table(ars, Situation(0, 0, 0, E))
+    v00 = tab_.value(0, 0, tab_.h0)
+    return {c: tab_.value(c[0], c[1], tab_.h0) - v00 for c in tab_.V}
 t0 = time.time()
-rel_k, _ = at_bat_values(arsenal(sl_grade=5), Situation(0, 0, 0, E))
+rel_k = _rel(arsenal(sl_grade=5))
 t_k = time.time() - t0
 contact = [Pitch("Fastball", "FB", grade=2, command=5, conf=0.8, velo=82),
            Pitch("Curve", "CB", grade=2, command=4, conf=0.7, velo=68),
            Pitch("Changeup", "CH", grade=2, command=4, conf=0.7, velo=73)]
-rel_c, _ = at_bat_values(contact, Situation(0, 0, 0, E))
+rel_c = _rel(contact)
 check("R2 at-bat values: a strikeout pitcher's 0-2 is worth more to him than a contact pitcher's",
       rel_k[(0, 2)] < rel_c[(0, 2)],
       f"0-2 value (hitter runs vs 0-0): strikeout pitcher {rel_k[(0,2)]:+.3f}, contact pitcher {rel_c[(0,2)]:+.3f}, "
@@ -90,9 +98,10 @@ w, f_ = loc_share(A, s_whiff, "Slider", "down-away"), loc_share(A, s_foul, "Slid
 check("R6 repeat after a whiff: same slider, same spot is called more after a whiff than after a foul",
       w > f_ + 0.03, f"slider down-away {w:.0%} after a whiff vs {f_:.0%} after a foul")
 
-# R7 perceived speed: after fastball up-in, the down-away changeup has the bigger perceived-speed gap
-# (v0.4: the combined pairing can now prefer down-in, because tunneling favors the same lane)
-from engine import perceived, tunnel_score
+# R7 perceived speed: after fastball up-in, the down-away changeup has the bigger perceived-speed gap (the timing term's
+# perceived speed is the pitch's speed + its location adjustment; v1.0 #18 dropped the retired pairing() path)
+from engine import tunnel_score
+perceived = lambda p_, q_: p_.mph() + ev_adj(p_, q_)
 gap_away = abs(perceived(A[2], "down-away") - perceived(A[0], "up-in"))
 gap_in = abs(perceived(A[2], "down-in") - perceived(A[0], "up-in"))
 check("R7 perceived speed: after fastball up-in, changeup down-away looks slower than changeup down-in",
@@ -176,7 +185,7 @@ AVG3 = [Pitch("Fastball", "FB", grade=3, command=3, conf=0.80, shape="ride", vel
         Pitch("Changeup", "CH", grade=3, command=3, conf=0.65, shape="fade", velo=78)]
 
 # v1.0 Step 2: the predictability grid (grid_v10.py) replaces the v0.7c "3-0 / 3-1" check, which measured the retired
-# call_mixed path. call_v08 in 12 counts x hs/D3/D1 x 5 arsenals x bases empty/R1/R3; hard checks gate, the rest print.
+# v0.7c call path. call_v08 in 12 counts x hs/D3/D1 x 5 arsenals x bases empty/R1/R3; hard checks gate, the rest print.
 import grid_v10
 _g = grid_v10.grid()
 for _name, _ok, _det, _hard in grid_v10.checks(_g):
@@ -199,7 +208,8 @@ check("v0.9 calls: no chase at 3-0, 3-1 or 2-2; every count has a top call",
 # ---------------------------------------------------------------- v1.0 Step 1 (docs/PLAN_v1.0_2026-11-09.md)
 import json as _json
 from engine import (solve_table, frozen_inputs, needs_resolve, is_big_spot, gb_rate, hbp_loc, ev_adj,
-                    perceived as _perceived, outcome_probs as _op)
+                    outcome_probs as _op)
+_perceived = lambda p_, q_: p_.mph() + ev_adj(p_, q_)      # the timing term's perceived speed (v1.0 #18: no engine helper)
 from dataclasses import replace as _replace
 R2 = (False, True, False)
 

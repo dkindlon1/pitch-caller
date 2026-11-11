@@ -30,8 +30,25 @@ def load(n):
 
 def compute(c):
     """golden_v09.compute() on one golden case (cases.py's outputs with v0.9's matchup applied, plus the intent label),
-    the same function golden_v10.py freezes."""
-    return G9.compute(c)
+    the same function golden_v10.py freezes; plus two live-only outputs (v1.0 #18, retiring app/make_parity.py +
+    parity.js): each pitch's confidence after each event, and, on full cases, the learning-mode grade of a call."""
+    from dataclasses import replace
+    import engine as e
+    r = G9.compute(c)
+    ars, s = G9.from_dicts(c)
+    conf = {}
+    for d in c["arsenal"]:
+        for ev in ("ball", "cstrike", "whiff", "hard", "shakeoff"):
+            p = G9.G8.from_dicts(dict(c, arsenal=[d]))[0][0]
+            e.update_confidence(p, ev)
+            conf[f"{d['name']}|{ev}"] = p.conf
+    r["conf"] = conf
+    if c["full"]:
+        s_w = replace(s, win=e.win_constants(s)) if s.home is not None else s
+        tab = e.solve_table(ars, replace(s_w, balls=0, strikes=0, last=None))
+        g = e.grade_call(ars, s_w, ars[-1].name, e.targets(s.balls, s.strikes)[-1], tab=tab, rng=G9.G8.Half())
+        r["gradecall"] = dict(g, engine_top=[list(t) for t in g["engine_top"]])
+    return r
 
 
 def py_side(n):
