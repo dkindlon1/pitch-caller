@@ -272,3 +272,21 @@ tunneling on chase** (real-data fit +0.310, 9 SE; the yardstick showed no measur
   rails 31, schema 24, stage2 21, worlds 31, pitch_rules 41, smoke, rules_e2e 20, v10_step1_e2e 6).
 - **Open: the yardstick re-run on Drew's PC** (`scripts/yardstick.ps1 -Tag 2c -Commit dd1be1e`). Under 0.25 runs/game,
   Step 2 is done; over it, back to Drew.
+
+### Yardstick re-run, Step 2c (`dd1be1e`, tunneling on): **under budget, Step 2 ships**
+
+Drew's PC, 108 paired games, seeds 101-112. `results/v10/yardstick_step2c.txt` is copied from his terminal output.
+
+| | world regret, whole mix | world regret, call made | runs allowed | pitches |
+|---|---|---|---|---|
+| 2b (0-0/1-0 at 1.5) | +0.352 ± 0.060 | +0.335 ± 0.063 | +0.35 ± 0.58 | +1.7 |
+| **2c (0-0/1-0 at 0.9)** | **+0.158 ± 0.050** | **+0.141 ± 0.052** | -0.60 ± 0.49 | -4.3 |
+
+- **D7: 0.16 runs/game, under 0.25** (1.8 SE below). The projection was ~0.20. 0-0 and 1-0 went from +0.168 to
+  +0.004; what's left sits in the hitter's counts (2-0/2-1/3-1 +0.066) and 0-1/1-1 (+0.064), as intended.
+  Runs allowed and pitches per game both point the right way but are inside the noise.
+- **By level, D3 stands out:** world regret hs +0.050 ± 0.086, **D3 +0.369 ± 0.090**, D1 +0.054 ± 0.077. The budget is
+  per game over all levels, which passes, but D3 alone would sit above 0.25. Flagged for Drew; worth a look when Step 3
+  (landing) and Step 5 (fits) change D3's numbers again.
+
+**Step 2 done:** #1, #25, D1, D5 (kept), D7 closed.
