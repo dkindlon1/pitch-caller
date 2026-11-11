@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Instrument_Sans } from "next/font/google";
 import { SmoothScroll } from "./_components/SmoothScroll";
+import { ScrollFx } from "./_components/ScrollFx";
 import "./marketing.css";
 import { SITE_ORIGIN } from "@/lib/site";
 
@@ -24,6 +25,7 @@ export default function MarketingLayout({ children }: Readonly<{ children: React
   return (
     <div className={`mk ${sans.variable}`}>
       <SmoothScroll />
+      <ScrollFx />
       {children}
     </div>
   );

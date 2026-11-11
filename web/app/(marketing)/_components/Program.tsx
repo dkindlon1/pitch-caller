@@ -8,7 +8,7 @@ import type { Cloud, View } from "@/app/components/cloud3d";
 // Who uses it (coaches, pitchers and their parents) and the TrackMan/Rapsodo uploads, shown as a bullpen's movement
 // cloud (content/movement.ts, a made-up bullpen shaped like the sample starter, labelled as such). The cloud is drawn
 // flat first; with WebGL it becomes a 3D cloud that turns to show velocity, in the site's black, white and red.
-const COLORS: Record<MovePoint["kind"], string> = { FB: "#F4F4F1", SL: "#F04A3E", CH: "#8C8C88" };
+const COLORS: Record<MovePoint["kind"], string> = { FB: "#F04A3E", SL: "#F2B33D", CH: "#3FCB8C" };   // --mk-fb, --mk-sl, --mk-ch
 const L = 44, R = 344, T = 14, B = 278;
 const px = (hb: number) => L + ((RANGE.hb[1] - hb) / (RANGE.hb[1] - RANGE.hb[0])) * (R - L);
 const py = (ivb: number) => B - ((ivb - RANGE.ivb[0]) / (RANGE.ivb[1] - RANGE.ivb[0])) * (B - T);

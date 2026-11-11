@@ -31,7 +31,7 @@ function Pitcher({ on }: { on: boolean }) {
   return (
     <div className="mk-rd-viz mk-rd-pitcher">
       {ARSENAL.map((p, n) => (
-        <div key={p.name} className={`mk-rd-row${p.off ? " is-off" : ""}`}>
+        <div key={p.name} className={`mk-rd-row${p.off ? " is-off" : ""}`} data-k={p.name}>
           <span className="mk-rd-name">{p.name}<small>{p.velo} mph</small></span>
           <span className="mk-rd-bar" aria-hidden="true">
             <span style={{ transform: `scaleX(${on ? p.conf : 0})`, transitionDelay: `${n * 120}ms` }} />
@@ -127,7 +127,7 @@ function Mix() {
     <div className="mk-rd-mix" ref={ref}>
       <div className="mk-rd-mixbar" role="img" aria-label={`The mix: ${MIX.map((x) => `${x.pitch.toLowerCase()} ${x.spot.toLowerCase()} ${Math.round(x.prob * 100)}%`).join(", ")}`}>
         {MIX.map((x, n) => (
-          <span key={n} className={lit(n)} style={{ flexGrow: x.prob }}>
+          <span key={n} className={lit(n)} data-k={x.pitch} style={{ flexGrow: x.prob }}>
             <b>{Math.round(x.prob * 100)}%</b>
           </span>
         ))}
@@ -135,7 +135,7 @@ function Mix() {
       </div>
       <ol className="mk-rd-legend">
         {MIX.map((x, n) => (
-          <li key={n} className={lit(n)}><span>{x.pitch}, {x.spot.toLowerCase()}</span><span>{Math.round(x.prob * 100)}%</span></li>
+          <li key={n} className={lit(n)}><span><i className="mk-pt" data-k={x.pitch} aria-hidden="true" />{x.pitch}, {x.spot.toLowerCase()}</span><span>{Math.round(x.prob * 100)}%</span></li>
         ))}
       </ol>
       <div className="mk-rd-mixfoot">

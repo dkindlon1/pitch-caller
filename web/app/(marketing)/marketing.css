@@ -10,6 +10,10 @@
   --mk-text-3: #7c7c78;
   --mk-line: rgba(255, 255, 255, 0.12);
   --mk-accent: #f04a3e;
+  /* pitch colors (broadcast convention), shared with the 3D flights in field.ts */
+  --mk-fb: #f04a3e; --mk-sl: #f2b33d; --mk-ch: #3fcb8c; --mk-cb: #4d8dff;
+  /* the ballpark at night, from the hero film: grass, clay, sky */
+  --mk-grass: #2f5a2b; --mk-clay: #b0663a; --mk-sky: #13213a;
   --mk-radius: 28px;
   --mk-pad: clamp(20px, 5vw, 72px);
   min-height: 100vh;
@@ -728,3 +732,32 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-hero-late { font-size: clamp(2.5rem, 6.4vw, 7rem); line-height: 0.96; letter-spacing: -0.04em; font-weight: 640; font-variation-settings: "wdth" 82; max-width: 14ch; color: var(--mk-chalk); text-shadow: 0 4px 60px rgba(0, 0, 0, 0.6); }
 .mk-hfilm .mk-hero-beat::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 50% at 50% 50%, rgba(0, 0, 0, 0.5), transparent 75%); }
 @media (max-width: 960px) { .mk-hfilm .mk-hero-shade { background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.88) 46%, rgba(0, 0, 0, 0) 70%); } }
+
+/* pitch color dots */
+.mk-pt { display: inline-block; width: 0.55em; height: 0.55em; border-radius: 50%; margin-right: 0.4em; vertical-align: 0.12em; background: var(--mk-fb); box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 0%, transparent), 0 0 12px color-mix(in srgb, var(--pt, var(--mk-fb)) 60%, transparent); }
+.mk-pt[data-k="Fastball"] { background: var(--mk-fb); --pt: var(--mk-fb); }
+.mk-pt[data-k="Slider"] { background: var(--mk-sl); --pt: var(--mk-sl); }
+.mk-pt[data-k="Changeup"] { background: var(--mk-ch); --pt: var(--mk-ch); }
+.mk-pt[data-k="Curveball"] { background: var(--mk-cb); --pt: var(--mk-cb); }
+.mk-ab-rail .mk-pt { width: 7px; height: 7px; margin-right: 6px; vertical-align: 1px; }
+.mk-ab-hoop { margin: -34px 0 0 0; }
+
+/* pitch colors in the charts */
+[data-k="Fastball"] { --pt: var(--mk-fb); } [data-k="Slider"] { --pt: var(--mk-sl); } [data-k="Changeup"] { --pt: var(--mk-ch); } [data-k="Curveball"] { --pt: var(--mk-cb); }
+.mk-rd-row .mk-rd-bar span { background: var(--pt, var(--mk-chalk)); }
+.mk-rd-row.is-off .mk-rd-bar span { background: color-mix(in srgb, var(--pt) 40%, transparent); }
+.mk-rd-mixbar span { background: color-mix(in srgb, var(--pt, #fff) 16%, transparent); border-color: color-mix(in srgb, var(--pt, #fff) 34%, transparent); }
+.mk-rd-mixbar span.is-pick { background: var(--pt, var(--mk-accent)); border-color: var(--pt, var(--mk-accent)); }
+.mk-dm-bar i { background: color-mix(in srgb, var(--pt, #fff) 55%, transparent); }
+.mk-dm-mix li.is-pick .mk-dm-bar i { background: var(--pt, var(--mk-accent)); }
+/* the night ballpark's colors as light in a few sections: grass under what it reads, sky behind the demo, clay
+   under the rules */
+.mk-rd, .mk-dm, .mk-ru { position: relative; isolation: isolate; }
+.mk-rd::before, .mk-dm::before, .mk-ru::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.mk-rd::before { background: radial-gradient(60% 45% at 85% 30%, color-mix(in srgb, var(--mk-grass) 34%, transparent), transparent 70%), radial-gradient(40% 40% at 5% 90%, color-mix(in srgb, var(--mk-grass) 18%, transparent), transparent 70%); }
+.mk-dm::before { background: radial-gradient(55% 55% at 70% 45%, color-mix(in srgb, var(--mk-sky) 90%, transparent), transparent 72%); }
+.mk-ru::before { background: radial-gradient(50% 45% at 15% 20%, color-mix(in srgb, var(--mk-clay) 22%, transparent), transparent 70%); }
+
+/* titles split into words by ScrollFx: each word rises out of its own mask */
+.mk-w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.mk-w > span { display: inline-block; transform-origin: 0 100%; will-change: transform; }

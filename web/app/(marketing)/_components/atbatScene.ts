@@ -3,9 +3,11 @@
 // swings out up the third-base line for the third pitch so the flights can be seen across the full 60 ft 6 in, comes back in
 // tight for the two-strike slider, and pulls up and back to show all four flights at once.
 import * as THREE from "three";
-import { along, ball, buildField, disposeScene, flight, makeRenderer, PER, SEG, spinBall, target, tube, world, type FieldPitch } from "./field";
+import { along, ball, buildField, PITCH_COLOR, disposeScene, flight, makeRenderer, PER, SEG, spinBall, target, tube, world, type FieldPitch } from "./field";
 
 export type AtBatScene = { set: (p: number) => void; dispose: () => void };
+// where a hitter has to decide whether to swing: about 24 ft in front of the plate
+export const DECIDE_Z = 24;
 
 // where the scroll is in the chapter (0..1): which pitch, and how far its flight has got
 export const SPAN = { start: 0.06, each: 0.21 };
@@ -33,7 +35,7 @@ const KEYS: Key[] = [
 ];
 const ease = (x: number) => x * x * (3 - 2 * x);
 
-export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accent: string; onLabel?: (xy: { x: number; y: number; show: boolean }) => void; onBall?: (s: { x: number; y: number; show: boolean; text: string }) => void }): AtBatScene | null {
+export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accent: string; onHoop?: (xy: { x: number; y: number; show: boolean }) => void; onLabel?: (xy: { x: number; y: number; show: boolean }) => void; onBall?: (s: { x: number; y: number; show: boolean; text: string }) => void }): AtBatScene | null {
   const renderer = makeRenderer();
   if (!renderer) return null;
   el.appendChild(renderer.domElement);
@@ -46,16 +48,30 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   scene.add(b);
 
   const paths = pitches.map((p) => flight(p, 120));
-  // every flight drawn twice: a faint white line for "already thrown", and a red line with a glow for "this pitch"
+  // every flight drawn twice: a faint white line for "already thrown", and a line in the pitch's color with a glow for
+  // "this pitch"
   const ghosts = paths.map((p) => { const m = tube(p, 0.035, 0xffffff, 0.24); scene.add(m); return m; });
-  const reds = paths.map((p) => { const a = tube(p, 0.055, accent, 1), g = tube(p, 0.18, accent, 0.2, true); scene.add(a, g); return [a, g]; });
+  // the glow blends normally: added over green grass, red would read as yellow
+  const reds = paths.map((p, j) => { const c = PITCH_COLOR[pitches[j].kind]; const a = tube(p, 0.055, c, 1), g = tube(p, 0.2, c, 0.2); scene.add(a, g); return [a, g]; });
   const rings = pitches.map((p) => {
     const T = target(p.cell);
-    const m = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.2, 48), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.21, 48), new THREE.MeshBasicMaterial({ color: PITCH_COLOR[p.kind], transparent: true, opacity: 0.9, side: THREE.DoubleSide, fog: false }));
     m.position.copy(world(T.x, T.y, -0.03));
     scene.add(m);
     return m;
   });
+  // the decision point: a thin hoop around the flights where the hitter has to commit, shown in the side view so the
+  // two pitch shapes can be read against it (they still share a path there, and split after)
+  const hoop = new THREE.Group();
+  {
+    const c = along(paths[0], 1 - DECIDE_Z / 54);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.025, 8, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, fog: false }));
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(0.9, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+    hoop.add(ring, disc);
+    hoop.position.copy(c);
+    hoop.visible = false;
+    scene.add(hoop);
+  }
 
   let want = 0, cur = 0, raf = 0, visible = true, w = 1, h = 1, wide = true;
   const look = new THREE.Vector3(), tmp = new THREE.Vector3(), mid = new THREE.Vector3(6, 0, 9);
@@ -90,6 +106,7 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
       rings[j].visible = j < i || (j === i && fly >= 1);
       (rings[j].material as THREE.MeshBasicMaterial).opacity = j === i ? 0.95 : 0.35;
     }
+    hoop.visible = p > 0.42 && p < 0.66;
     b.visible = p >= SPAN.start && fly > 0;
     along(paths[i], fly, b.position);
     spinBall(b, pitches[i].kind, fly * 1700);
@@ -97,7 +114,11 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
     renderer!.render(scene, camera);
     if (opts.onBall) {
       const v = b.position.clone().project(camera);
-      opts.onBall({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, show: b.visible && fly > 0.04 && fly < 1, text: `${pitches[i].velo} mph` });
+      opts.onBall({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, show: b.visible && fly > 0.04 && fly < 1, text: `${pitches[i].velo} mph ${({ FB: "fastball", SL: "slider", CH: "changeup", CB: "curveball" } as const)[pitches[i].kind]}` });
+    }
+    if (opts.onHoop) {
+      const v = hoop.position.clone().add(tmp.set(0, 1.25, 0)).project(camera);
+      opts.onHoop({ x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h, show: hoop.visible });
     }
     // the "60 ft 6 in" label rides the measuring line in the side view
     if (opts.onLabel) {

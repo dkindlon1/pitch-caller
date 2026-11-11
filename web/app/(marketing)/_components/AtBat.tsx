@@ -27,6 +27,7 @@ export function AtBat() {
   const sec = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLSpanElement>(null);
+  const hoopLabel = useRef<HTMLSpanElement>(null);
   const speed = useRef<HTMLSpanElement>(null);
   const [v, setV] = useState<View>({ i: 0, landed: false, phase: "intro", side: false });
   const [still, setStill] = useState(false);
@@ -53,6 +54,8 @@ export function AtBat() {
         if (dead || !stage.current) return;
         scene = mountAtBat(stage.current, AT_BAT.map(toField), {
           accent: ACCENT,
+          // kept on screen: on a phone the hoop sits near the left edge
+          onHoop: ({ x, y, show }) => { const l = hoopLabel.current; if (l) { const half = l.offsetWidth / 2 || 110, cx = Math.min(window.innerWidth - half - 12, Math.max(half + 12, x)); l.style.transform = `translate(${cx - half}px, ${y}px)`; l.dataset.show = show ? "1" : "0"; } },
           onLabel: ({ x, y, show }) => { const l = label.current; if (l) { l.style.transform = `translate(${x}px, ${y}px)`; l.dataset.show = show ? "1" : "0"; } },
           onBall: ({ x, y, show, text }) => { const l = speed.current; if (!l) return; l.style.transform = `translate(${x}px, ${y}px)`; l.dataset.show = show ? "1" : "0"; if (l.textContent !== text) l.textContent = text; },
         });
@@ -122,6 +125,7 @@ export function AtBat() {
         <div className="mk-ab-stage" ref={stage} />
         <div className="mk-ab-shade" aria-hidden="true" />
         <span className="mk-ab-dist" ref={label} aria-hidden="true">60 ft 6 in</span>
+        <span className="mk-ab-dist mk-ab-hoop" ref={hoopLabel} aria-hidden="true">Hitter decides here, 24 ft out</span>
         <span className="mk-speed" ref={speed} aria-hidden="true" />
 
         <div className="mk-wrap mk-ab-ui">
@@ -136,7 +140,7 @@ export function AtBat() {
                 <li key={n}>
                   <button type="button" onClick={() => jump(n)} aria-current={v.phase === "pitch" && n === v.i ? "step" : undefined}
                     className={n < v.i || v.phase === "end" ? "is-done" : n === v.i && v.phase !== "intro" ? "is-now" : ""}>
-                    <span className="mk-sr">Pitch {n + 1}, count </span>{x.balls}-{x.strikes}
+                    <i className="mk-pt" data-k={x.pitch} aria-hidden="true" /><span className="mk-sr">Pitch {n + 1}, {x.pitch.toLowerCase()}, count </span>{x.balls}-{x.strikes}
                   </button>
                 </li>
               ))}
@@ -149,13 +153,13 @@ export function AtBat() {
               </div>
               <div className="mk-ab-call" key={`c${v.i}`}>
                 <span className="mk-ab-sign" aria-label={`Sign ${p.sign}`}>{p.sign}</span>
-                <span><b>{p.pitch}</b><span>{p.spot}</span></span>
+                <span><b><i className="mk-pt" data-k={p.pitch} aria-hidden="true" />{p.pitch}</b><span>{p.spot}</span></span>
               </div>
               <p className="mk-ab-why" key={`w${v.i}`}><span className="mk-sr">Why: </span>{p.why}</p>
               <p className={`mk-ab-res${v.landed || v.phase === "end" ? " is-shown" : ""}`}>{result}</p>
             </article>
 
-            <p className={`mk-ab-note${v.side ? " is-shown" : ""}`}>From up the line: the fastball rides, the slider drops off its line.</p>
+            <p className={`mk-ab-note${v.side ? " is-shown" : ""}`}>From up the line: the fastball rides, the slider drops off its line. Both look alike until the hitter has to decide.</p>
           </div>
 
           <div className="mk-ab-end">
@@ -164,7 +168,7 @@ export function AtBat() {
             <ol className="mk-ab-recap" aria-label="The at-bat">
               {AT_BAT.map((x, n) => (
                 <li key={n} style={{ transitionDelay: `${n * 70}ms` }}>
-                  <span>{x.balls}-{x.strikes}</span><b>{x.pitch}</b><span>{n === 3 ? "Strikeout" : x.result}</span>
+                  <span>{x.balls}-{x.strikes}</span><b><i className="mk-pt" data-k={x.pitch} aria-hidden="true" />{x.pitch}</b><span>{n === 3 ? "Strikeout" : x.result}</span>
                 </li>
               ))}
             </ol>

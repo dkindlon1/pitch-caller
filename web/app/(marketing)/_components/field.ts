@@ -5,6 +5,9 @@
 import * as THREE from "three";
 
 export type FieldPitch = { kind: "FB" | "SL" | "CB" | "CH"; velo: number; cell: [number, number] | "chase" };
+// pitch colors, the way broadcasts and pitch-tracking apps color them; the same values are --mk-fb and friends in
+// marketing.css, so the 3D flights, the cards and the charts agree
+export const PITCH_COLOR: Record<FieldPitch["kind"], string> = { FB: "#F04A3E", SL: "#F2B33D", CH: "#3FCB8C", CB: "#4D8DFF" };
 
 export const PLATE_HALF = 17 / 24;
 export const ZONE = { lo: 1.6, hi: 3.4 };
@@ -83,12 +86,74 @@ function glowTexture(): THREE.Texture {
   return t;
 }
 
+// The ground as one painted map, seen from above: mown grass in a diamond pattern, the clay infield arc, the infield
+// grass, the circles around home and the bases, in the colors of the night flyover in the hero. It covers 400 x 400 ft
+// from 60 ft behind the plate out past center field. World x is mirrored, but a field is symmetric about that line.
+export const MAP = { x0: -200, z0: -60, size: 400 };
+function fieldTexture(max: number): THREE.CanvasTexture {
+  const N = Math.min(2048, max), c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d")!, s = N / MAP.size;
+  const X = (x: number) => (x - MAP.x0) * s, Y = (z: number) => (z - MAP.z0) * s;
+  // grass, then the mowing: bands 12 ft wide along both foul-line directions, lighter and darker, make the diamonds
+  g.fillStyle = "#2b4a25"; g.fillRect(0, 0, N, N);
+  g.save();
+  g.translate(X(0), Y(0)); g.rotate(Math.PI / 4);
+  for (const dir of [0, 1]) {
+    if (dir) g.rotate(-Math.PI / 2);
+    for (let k = -40; k < 40; k++) { g.fillStyle = k % 2 ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.05)"; g.fillRect(k * 12 * s, -600 * s, 12 * s, 1200 * s); }
+  }
+  g.restore();
+  const clay = "#5c3620", clayDark = "#4f2e1b";
+  // the infield skin: an arc 95 ft from the front of the mound, inside the foul lines (and a little past them)
+  g.save();
+  g.beginPath(); g.moveTo(X(0), Y(-6)); g.lineTo(X(-140), Y(134)); g.lineTo(X(140), Y(134)); g.closePath(); g.clip();
+  g.fillStyle = clay; g.beginPath(); g.arc(X(0), Y(59), 95 * s, 0, Math.PI * 2); g.fill();
+  g.restore();
+  // base paths along the foul lines, 6 ft wide
+  g.strokeStyle = clay; g.lineWidth = 6 * s; g.lineCap = "round";
+  g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(63.6), Y(63.6)); g.moveTo(X(0), Y(0)); g.lineTo(X(-63.6), Y(63.6)); g.stroke();
+  // the infield grass: the diamond inside the base paths, its far side bowed out toward second
+  g.fillStyle = "#2e5028";
+  g.beginPath(); g.moveTo(X(0), Y(13)); g.lineTo(X(57), Y(63.6)); g.quadraticCurveTo(X(0), Y(126), X(-57), Y(63.6)); g.closePath(); g.fill();
+  g.save(); g.clip();
+  g.translate(X(0), Y(0)); g.rotate(Math.PI / 4);
+  for (let k = -12; k < 12; k++) { g.fillStyle = k % 2 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)"; g.fillRect(k * 9 * s, -200 * s, 9 * s, 400 * s); }
+  g.restore();
+  // dirt circles: home (13 ft), the bases, the mound (9 ft)
+  const disc = (x: number, z: number, r: number, col: string) => { g.fillStyle = col; g.beginPath(); g.arc(X(x), Y(z), r * s, 0, Math.PI * 2); g.fill(); };
+  disc(0, 0, 13, clay); disc(63.6, 63.6, 9, clay); disc(-63.6, 63.6, 9, clay); disc(0, 127.3, 9, clay); disc(0, 59, 9.2, clayDark);
+  // the dirt around home is worked: darker where it's been watered at the edge, raked in arcs, scuffed in the boxes
+  const rg = g.createRadialGradient(X(0), Y(0), 2 * s, X(0), Y(0), 13 * s);
+  rg.addColorStop(0, "rgba(255,220,180,0.05)"); rg.addColorStop(0.75, "rgba(0,0,0,0)"); rg.addColorStop(1, "rgba(0,0,0,0.28)");
+  g.fillStyle = rg; g.beginPath(); g.arc(X(0), Y(0), 13 * s, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = "rgba(0,0,0,0.07)"; g.lineWidth = 0.6;
+  for (let r = 3; r < 13; r += 0.55) { g.beginPath(); g.arc(X(0), Y(0), r * s, 0, Math.PI * 2); g.stroke(); }
+  for (const bx of [-3.2, 3.2]) { g.fillStyle = "rgba(0,0,0,0.12)"; g.beginPath(); g.ellipse(X(bx), Y(0.2), 1.6 * s, 2.6 * s, 0, 0, Math.PI * 2); g.fill(); }
+  // grain: a scatter of light and dark specks so the clay and grass aren't flat
+  for (let i = 0; i < N * 90; i++) { g.fillStyle = Math.random() < 0.5 ? "rgba(0,0,0,0.09)" : "rgba(255,235,210,0.04)"; g.fillRect(Math.random() * N, Math.random() * N, 1.5, 1.5); }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// the night sky: a dome from a deep navy glow at the horizon to black overhead
+function sky(): THREE.Mesh {
+  const geo = new THREE.SphereGeometry(450, 32, 16), pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+  const lo = new THREE.Color(0x13213a), hi = new THREE.Color(0x020306), tmp = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) { const t = Math.min(1, Math.max(0, pos.getY(i) / 220)); tmp.copy(lo).lerp(hi, Math.pow(t, 0.6)); col.set([tmp.r, tmp.g, tmp.b], i * 3); }
+  geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+}
+
 // lights, ground, chalk, plate, mound, light towers and the zone. Returns what the caller must dispose that the
 // scene traversal won't (the glow texture).
-export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitcher?: boolean; onReady?: () => void } = {}) {
-  scene.fog = new THREE.Fog(0x000000, 26, 170);
-  scene.add(new THREE.HemisphereLight(0xdfe6ee, 0x050505, 0.35));
-  const spot = new THREE.SpotLight(0xffffff, 3.2, 0, 0.42, 0.9, 0);
+export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitcher?: boolean; onReady?: () => void; maxTexture?: number; anisotropy?: number } = {}) {
+  scene.fog = new THREE.Fog(0x070b14, 40, 260);
+  scene.background = new THREE.Color(0x020306);
+  scene.add(sky());
+  scene.add(new THREE.HemisphereLight(0xdfe8f5, 0x1a2414, 0.55));
+  const spot = new THREE.SpotLight(0xfff4e6, 2.4, 0, 0.42, 0.9, 0);
   spot.position.set(14, 42, -18);
   spot.target.position.set(0, 0, 4);
   scene.add(spot, spot.target);
@@ -100,10 +165,18 @@ export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitch
   key.position.set(6, 12, -10);
   scene.add(key);
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 1 }));
+  const map = fieldTexture(opts.maxTexture ?? 2048);
+  map.anisotropy = opts.anisotropy ?? 8;
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(MAP.size, MAP.size), new THREE.MeshStandardMaterial({ map, roughness: 0.95 }));
   ground.rotation.x = -Math.PI / 2;
+  ground.position.set(MAP.x0 + MAP.size / 2, 0, MAP.z0 + MAP.size / 2);
   scene.add(ground);
-  const chalk = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.24 });
+  // beyond the map, grass running out into the dark
+  const outer = new THREE.Mesh(new THREE.RingGeometry(MAP.size * 0.7, 900, 48), new THREE.MeshStandardMaterial({ color: 0x24401f, roughness: 1 }));
+  outer.rotation.x = -Math.PI / 2;
+  outer.position.set(0, -0.02, MAP.z0 + MAP.size / 2);
+  scene.add(outer);
+  const chalk = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, transparent: true, opacity: 0.7 });
   const strip = (x1: number, z1: number, x2: number, z2: number, w = 0.2, mat: THREE.Material = chalk) => {
     const dx = x2 - x1, dz = z2 - z1, len = Math.hypot(dx, dz);
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, len), mat);
@@ -129,7 +202,7 @@ export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitch
   plate.rotation.x = -Math.PI / 2;
   plate.position.y = 0.015;
   scene.add(plate);
-  const mound = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 9.5, 0.7, 64), new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 1 }));
+  const mound = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 9.5, 0.7, 64), new THREE.MeshStandardMaterial({ color: 0x55321d, roughness: 1 }));
   mound.position.set(0, 0.35, 59);
   scene.add(mound);
   const rubber = new THREE.Mesh(new THREE.BoxGeometry(2, 0.08, 0.5), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }));
@@ -138,7 +211,7 @@ export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitch
 
   const tex = glowTexture();
   const glow = (x: number, y: number, z: number, s: number, o: number) => {
-    const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: o, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, fog: false }));
+    const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: 0xfff1dc, transparent: true, opacity: o, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending, fog: false }));
     m.position.set(x, y, z);
     m.scale.setScalar(s);
     scene.add(m);
@@ -157,8 +230,8 @@ export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitch
   }
   const zg = new THREE.BufferGeometry();
   zg.setAttribute("position", new THREE.Float32BufferAttribute(zl, 3));
-  scene.add(new THREE.LineSegments(zg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, fog: false })));
-  const pane = new THREE.Mesh(new THREE.PlaneGeometry(2 * PLATE_HALF, ZONE.hi - ZONE.lo), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.035, side: THREE.DoubleSide, depthWrite: false }));
+  scene.add(new THREE.LineSegments(zg, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, fog: false })));
+  const pane = new THREE.Mesh(new THREE.PlaneGeometry(2 * PLATE_HALF, ZONE.hi - ZONE.lo), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false }));
   pane.position.set(0, (ZONE.lo + ZONE.hi) / 2, 0);
   scene.add(pane);
 
@@ -184,7 +257,7 @@ export function buildField(scene: THREE.Scene, opts: { distance?: boolean; pitch
     opts.onReady?.();
   });
 
-  return { dispose: () => { dead = true; tex.dispose(); ptex?.dispose(); } };
+  return { dispose: () => { dead = true; tex.dispose(); map.dispose(); ptex?.dispose(); } };
 }
 
 // a flight as a tube (WebGL lines are one pixel wide); setDrawRange on it reveals the flight as the ball travels

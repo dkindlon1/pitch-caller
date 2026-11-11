@@ -175,15 +175,15 @@ export function Demo() {
                   <div className="mk-dm-call" key={g.pitches}>
                     <div className="mk-dm-callrow">
                       <span className="mk-dm-sign" aria-label={`Sign ${c.sign}`}>{c.sign}</span>
-                      <span className="mk-dm-what"><b>{c.pitch}</b><span>{c.spot}</span></span>
+                      <span className="mk-dm-what"><b><i className="mk-pt" data-k={c.pitch} aria-hidden="true" />{c.pitch}</b><span>{c.spot}</span></span>
                     </div>
                     <p className="mk-dm-why">{c.why && c.why !== "Only call allowed here" ? c.why : c.quad === "middle" ? "Throw a strike: aim at the heart of the plate." : "The best call here on its own."}</p>
                     <p className="mk-dm-meta">Comes up {pct(c.prob)} of the time here<span aria-hidden="true"> · </span><span className="mk-dm-ms">called in {Math.max(1, Math.round(c.ms))} ms</span></p>
                     {others.length ? (
                       <ul className="mk-dm-mix" aria-label="Also in the mix">
                         {[{ pitch: c.pitch, spot: c.spot, prob: c.prob }, ...others].slice(0, 4).map((m, n) => (
-                          <li key={n} className={n === 0 ? "is-pick" : ""}>
-                            <span>{m.pitch}, {m.spot.toLowerCase()}</span>
+                          <li key={n} className={n === 0 ? "is-pick" : ""} data-k={m.pitch}>
+                            <span><i className="mk-pt" data-k={m.pitch} aria-hidden="true" />{m.pitch}, {m.spot.toLowerCase()}</span>
                             <span className="mk-dm-bar"><i style={{ transform: `scaleX(${Math.min(1, m.prob / Math.max(0.0001, c.mix[0]?.prob || m.prob))})` }} /></span>
                             <span>{pct(m.prob)}</span>
                           </li>
