@@ -382,3 +382,14 @@ web files and runs `web/lib/demo.test.ts` (0/2 before, 2/2 after); (4) the learn
 check title now says what it asserts; (12) the simulator logs `engine.is_big_spot`. Open for Drew: (2) landing estimate
 noise and sharpen-cap saturation, (3) a yardstick run on Step 3, (7) sharpening a chase target shifts it toward the zone.
 `tests.py` 34/34; fast parity 0 mismatches.
+
+**Drew, Nov 11, on the review's open items:**
+- (2) Landing noise / saturation: **fit LAND_K, LAND_GAIN and the two caps to real data in Step 5** (added to Step 5's
+  list: within-game strike-rate persistence from Statcast, 2024 train / 2025 held-out, ship only on held-out gain).
+- (7) **No sharpening on chase targets**, both engines. Slider 9-for-10 (4.5 expected): chase landing unchanged
+  (off 0.646 -> 0.646), down-away still sharper (off 0.361 -> 0.316). New `tests.py` check: 35/35.
+- (3) Yardstick on Step 3 running on Drew's PC at `03c7cf2` (before this chase fix; the fix only touches chase calls
+  for a pitch landing better than expected).
+- Checks after the chase fix: `tests.py` 35/35; fast parity 0 mismatches; `golden_v10` re-frozen (17,395 chase values
+  moved), `golden_v10.py check` PASS, `golden_v10.js` PASS; worlds_test 31/31; learn_test passed; stage2_test D5 2/40
+  (known red, until Step 7); v10_step1/v10_step3/rules/v08/v09_matchup/replay e2e and smoke passed; web demo 2/2.

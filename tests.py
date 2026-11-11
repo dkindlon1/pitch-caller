@@ -339,6 +339,16 @@ check("v1.0 D1 3-1: with the slider 8-for-10 and the fastball 4-for-10 today, th
       all(max(t, key=t.get) == "Slider" for t in d1.values()),
       "; ".join(f"{l}: " + ", ".join(f"{n} {v:.0%}" for n, v in sorted(t.items(), key=lambda x: -x[1])) for l, t in d1.items()))
 
+# v1.0 review (Drew, Nov 11): sharpening never moves a chase target toward the plate
+from engine import landing as _land
+_sh = _replace(Situation(0, 2, 1, E, level="college_d3"), landing_today={"Slider": (9, 4.5, 10)})
+_c0, _c1 = _land(sl_, "chase", Situation(0, 2, 1, E, level="college_d3")), _land(sl_, "chase", _sh)
+_z0, _z1 = _land(sl_, "down-away", Situation(0, 2, 1, E, level="college_d3")), _land(sl_, "down-away", _sh)
+check("v1.0 review: a slider landing better than expected (9 of 10, 4.5 expected) sharpens its zone targets, not its chase",
+      _wt(sl_, _sh) < 0 and all(abs(_c0[k] - _c1[k]) < 1e-12 for k in _c0) and _z1["off"] < _z0["off"],
+      f"wild {_wt(sl_, _sh):+.2f}; chase off {_c0['off']:.3f} -> {_c1['off']:.3f}, edge {_c0['edge']:.3f} -> {_c1['edge']:.3f}; "
+      f"down-away off {_z0['off']:.3f} -> {_z1['off']:.3f}")
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 # exit non-zero when anything failed, so a direct run (a hook, a pre-commit, another agent) cannot read a pass
 # from $? while checks are failing. scripts/run-check.sh also parses the line above, so CI is unaffected.

@@ -498,8 +498,10 @@ def landing(p: Pitch, q: str, s: Situation):
         z["off"] += 0.6 * (mh + me)
         z["noncomp"] += 0.4 * (mh + me)
     wt = wild_today(p, s)                    # v0.6d: this pitch isn't landing today (v1.0: < 0 = landing better than his
-    if wt:                                   # normal, the same shift run backwards). v0.6e: misses go both ways, so a
-                                             # wild pitch also leaves more over the plate
+    if wt < 0 and q == "chase":              # normal, the same shift run backwards). v0.6e: misses go both ways, so a
+        wt = 0.0                             # wild pitch also leaves more over the plate. v1.0 review (Drew, Nov 11): no
+    if wt:                                   # sharpening on a chase target; run backwards it would move the chase toward
+                                             # the plate, when a sharper chase lands just off
         me = wt * z["edge"]                  # edge pitches miss off the plate, and some leak over the heart
         mh = 0.6 * wt * z["heart"]           # heart pitches spray to the edge and off it
         z["edge"] += 0.6 * mh - me

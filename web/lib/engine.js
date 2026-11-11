@@ -173,7 +173,8 @@
       const mh = w * z.heart, me = w * z.edge;
       z.heart -= mh; z.edge -= me; z.off += 0.6 * (mh + me); z.noncomp += 0.4 * (mh + me);
     }
-    const wt = wildToday(p, s);
+    let wt = wildToday(p, s);
+    if (wt < 0 && q === "chase") wt = 0.0;   // v1.0 review (Drew, Nov 11): no sharpening on a chase target (engine.py)
     if (wt) {   // v0.6e: misses go both ways
       const me = wt * z.edge, mh = 0.6 * wt * z.heart;
       z.edge += 0.6 * mh - me; z.heart += 0.30 * me - mh; z.off += 0.45 * me + 0.4 * mh; z.noncomp += 0.25 * me;
