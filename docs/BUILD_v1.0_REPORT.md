@@ -661,3 +661,26 @@ web demo 2/2; app/dist rebuilt; web/lib synced
 simulate.py (main, with the new pregame plan): same 116-pitch game as Step 5; CALL_ENGINE=v0.9 game: ran (138 pitches)
 gate_test.js 1: runs on the live costs (its 1-rep output was not kept: app/gate_result.json restored)
 ```
+
+## Yardstick, Step 3 (`03c7cf2`, Drew's PC, Nov 11): **over budget**
+
+`results/v10/yardstick_step3.txt` (108 paired games, frozen v0.9 vs v1.0 at `03c7cf2`):
+
+| | v0.9 | v1.0 Step 3 | diff | SE |
+|---|---|---|---|---|
+| world regret (`regret_w_pick`), runs/game | 1.450 | 1.986 | **+0.536** | 0.076 |
+| runs/game | 7.51 | 8.42 | +0.91 | 0.45 |
+| pitches/game | 166.2 | 177.0 | +10.9 | 3.1 |
+
+Budget (D7) 0.25; Step 2c measured 0.158, so Step 3 added about 0.38. All three levels are over (hs +0.32, D3 +0.87,
+D1 +0.41). By call, the cost sits in off-speed thrown in the zone (slider middle +11.4 runs over all games, changeup
+edge-away +10.6, changeup middle +9.2, curveball edge-away +9.2, curveball middle +9.1) while fastball middle/edge got
+cheaper; by count, in early and hitter's counts (0-0 +11.5, 1-0 +8.0, 1-1 +7.6, 2-0 +7.1, 3-1 +6.3, 2-1 +6.1).
+
+Diagnosis (4 simulated D3 games per engine, what the engine reads as "wild today" for every pitch at every call):
+- Step 3's landing settings (K 5, gain 4) swing hard on a few pitches: **32% of off-speed calls sat at or below −0.2**
+  (sharpened toward the −0.3 cap) on normal days. With Step 5's fitted values (K 20, gain 2): **0%**.
+- The simulated world has off days but **no sharp days** (`simulate.py` `CURRENT_OFF`: wildness 0 or +0.15..+0.35),
+  and an off day moves the true strike chance only ~2.5 points. So in this world every sharpening read is noise and
+  costs regret, while the Statcast fit (Step 5) found landing-better a real effect (slope +1.24 vs +0.88 for missing).
+- Step 5's fitted values should remove most of this. Drew is running the Step 5 yardstick now; that number decides.
