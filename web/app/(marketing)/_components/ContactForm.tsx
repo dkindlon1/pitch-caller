@@ -49,7 +49,7 @@ export function ContactForm() {
   return (
     <form className="mk-form" onSubmit={submit} noValidate>
       <div className="mk-form-row">
-        <label htmlFor="c-name">Name<input {...field("name")} autoComplete="name" required />{err("name")}</label>
+        <label htmlFor="c-name">Name<input {...field("name")} autoComplete="name" placeholder="Alex Rivera" required />{err("name")}</label>
         <label htmlFor="c-email">Email<input {...field("email")} type="email" autoComplete="email" placeholder="coach@school.edu" required />{err("email")}</label>
       </div>
       <div className="mk-form-row">
@@ -66,7 +66,7 @@ export function ContactForm() {
           </select>{err("level")}
         </label>
       </div>
-      <label htmlFor="c-org"><span className="mk-form-label">Team or school <span className="mk-form-opt">(optional)</span></span><input {...field("org")} autoComplete="organization" /></label>
+      <label htmlFor="c-org"><span className="mk-form-label">Team or school <span className="mk-form-opt">(optional)</span></span><input {...field("org")} autoComplete="organization" placeholder="Lincoln High School" /></label>
       <label htmlFor="c-message">What would you like to know?<textarea {...field("message")} rows={4} placeholder="How many pitchers you have, what level, what you'd want it to help with." required />{err("message")}</label>
       <div className="mk-form-hp" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
       <div className="mk-form-foot">

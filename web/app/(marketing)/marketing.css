@@ -121,9 +121,9 @@
 .mk-contact { position: relative; overflow: hidden; padding: clamp(100px, 16vh, 180px) 0; isolation: isolate; }
 /* the haze sits under everything; the shade keeps the copy on the left on near-black and fades the clip into the
    sections above and below */
-.mk-haze { position: absolute; inset: 0; z-index: -2; pointer-events: none; }
+.mk-haze { position: absolute; inset: 0 0 26% 0; z-index: -2; pointer-events: none; }   /* the lights hang above the field: the clip sits in the top of the section and fades out well before its lone low blob */
 .mk-haze img, .mk-haze video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
-.mk-haze::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #000 0%, rgba(0, 0, 0, 0.82) 34%, rgba(0, 0, 0, 0.25) 66%, rgba(0, 0, 0, 0.1) 100%), linear-gradient(0deg, #000 0%, transparent 24%, transparent 76%, #000 100%); }
+.mk-haze::after { content: ""; position: absolute; inset: -1px; background: linear-gradient(90deg, #000 0%, #000 32%, rgba(0, 0, 0, 0.6) 52%, rgba(0, 0, 0, 0.12) 100%), linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.85) 22%, transparent 58%, transparent 86%, #000 100%); }
 @media (max-width: 960px) { .mk-haze::after { background: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.35) 30%, rgba(0, 0, 0, 0.35) 60%, #000 100%), linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.8) 30%, transparent 55%); } }
 .mk-contact-art { position: absolute; top: 0; bottom: 0; right: 0; width: 64%; height: 100%; z-index: -1; }
 @media (max-width: 960px) { .mk-contact-art { width: 100%; top: 34%; height: 66%; } }
@@ -138,7 +138,7 @@
 .mk-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .mk-form label { display: grid; gap: 8px; font-size: 0.9375rem; font-weight: 550; }
 .mk-form-label { display: block; }
-.mk-form-opt { color: var(--mk-text-3); font-weight: 450; }
+.mk-form-opt { color: var(--mk-text-2); font-weight: 450; }
 .mk-form input, .mk-form select, .mk-form textarea {
   width: 100%; min-height: 50px; padding: 12px 14px; border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(0, 0, 0, 0.38); color: var(--mk-chalk);
@@ -147,7 +147,7 @@
 .mk-form select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #a3a39f 50%), linear-gradient(135deg, #a3a39f 50%, transparent 50%); background-position: calc(100% - 20px) 22px, calc(100% - 15px) 22px; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 36px; }
 .mk-form select option { background: #111; color: var(--mk-chalk); }
 .mk-form textarea { resize: vertical; min-height: 120px; }
-.mk-form input::placeholder, .mk-form textarea::placeholder { color: #6f6f6b; }
+.mk-form input::placeholder, .mk-form textarea::placeholder { color: #8b8b86; }
 .mk-form input:hover, .mk-form select:hover, .mk-form textarea:hover { border-color: rgba(255, 255, 255, 0.3); }
 .mk-form input:focus-visible, .mk-form select:focus-visible, .mk-form textarea:focus-visible { outline: 2px solid var(--mk-chalk); outline-offset: 1px; border-color: transparent; background: rgba(0, 0, 0, 0.55); }
 .mk-form [aria-invalid="true"] { border-color: var(--mk-accent); }

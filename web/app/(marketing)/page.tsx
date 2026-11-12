@@ -111,7 +111,6 @@ export default function Home() {
           </div>
           <div className="mk-foot-row">
             <span>© 2026 PitchIQ</span>
-            <span>Check your association&apos;s rules on electronic devices before using a tablet in the dugout.</span>
           </div>
         </div>
       </footer>

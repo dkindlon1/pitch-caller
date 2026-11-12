@@ -1,8 +1,8 @@
-// Questions coaches ask. Native details/summary, so it works without script and with the keyboard.
+// Questions coaches ask, the product ones first and the rules question after them. Native details/summary, so it works without script and with the keyboard.
 const FAQ = [
   {
-    q: "Can I use it during games?",
-    a: "Rules differ by level. High school follows the NFHS and your state association; college follows NCAA Rule 5-16 on electronic devices. Check with your state association or compliance office before using a tablet in the dugout. Game prep, bullpens and scrimmages are fine anywhere.",
+    q: "Is it just going to call fastballs?",
+    a: "No. It draws every call from a mix of the reasonable options, so the same count doesn't always get the same pitch, and it follows what each pitcher actually has working that day.",
   },
   {
     q: "Does it work without a signal?",
@@ -17,8 +17,8 @@ const FAQ = [
     a: "No. Your own grades for each pitch are enough to start. When you have them, files from either one (or any pitch file with a header row) sharpen its read of velocity, pitch shape and arm slot. Files are read on your device, a game counts more than a bullpen, older files count less, and nothing changes until the pitcher or his coach accepts it.",
   },
   {
-    q: "Is it just going to call fastballs?",
-    a: "No. It draws every call from a mix of the reasonable options, so the same count doesn't always get the same pitch, and it follows what each pitcher actually has working that day.",
+    q: "Can I use it during games?",
+    a: "Rules differ by level. High school follows the NFHS and your state association; college follows NCAA Rule 5-16 on electronic devices. Check with your state association or compliance office before using a tablet in the dugout. Game prep, bullpens and scrimmages are fine anywhere.",
   },
   {
     q: "Who builds PitchIQ?",
