@@ -506,7 +506,9 @@ reads7 = [   # (rule, situation, which calls it should move toward, arsenal); "s
     ("squared_up", Situation(0, 1, 0, E, last=("Changeup", "down-away", "foul", "back")), lambda p_, q_: p_.name == "Changeup" and q_ == "down-away", AVG3),
     ("away", Situation(1, 1, 0, E, matchup={"hard|FB|up-in": 1}), lambda p_, q_: FBk(p_) and q_ in ("up-away", "down-away"), AVG3),
     ("went_back", Situation(1, 2, 0, E, matchup={"succ|CH": 2, "succ|CH|down-away": 2}), lambda p_, q_: p_.name == "Changeup" and q_ == "down-away", AVG3),
-    ("hot", Situation(1, 2, 1, R3, landing_today={"Changeup": (9, 10)}), lambda p_, q_: p_.name == "Changeup", AVG3),
+    # v1.1: the read now wears off as his share of today's pitches climbs (hot_fade), so the situation carries a real pitch
+    # count (50, the read-through's default) instead of 0 with ten changeups thrown
+    ("hot", Situation(1, 2, 1, R3, landing_today={"Changeup": (9, 10)}, pitch_count=50), lambda p_, q_: p_.name == "Changeup", AVG3),
     ("plus_opp", Situation(1, 2, 0, E, same_side=False), lambda p_, q_: (p_.kind == "CH" and q_ in ("down-away", "chase")) or (p_.kind == "SL" and q_ == "down-in"), _plus),
 ]
 moved7, ok7 = [], True

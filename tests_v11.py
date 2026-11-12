@@ -232,6 +232,21 @@ sp_ok = ([x.mph() for x in RA] == [94, round(94 - gap("CH", ""), 1), round(94 - 
 check("a pitch with no speed is read off his main fastball's entered speed (94 mph: changeup 87, hard cutter 91); with none entered, "
       "off the default fastball (85); both engines", sp_ok, f"{[x.mph() for x in RA]}, no FB speed: changeup {RB[1].mph()}")
 
+# ------------------------------------------------------------------ 6. the hot read wears off once he has leaned (FINDING_v1.0_game_mix_collapse)
+A3 = [e.Pitch("Fastball", "FB", 3, 3, .8, velo=86), e.Pitch("Slider", "SL", 3, 3, .75, shape="tight", velo=78), e.Pitch("Changeup", "CH", 3, 3, .65, velo=78)]
+def _sit(n_sl, pc): return e.Situation(1, 2, 1, (False, False, True), landing_today={"Slider": (min(n_sl, round(n_sl * 0.9)), n_sl)}, pitch_count=pc)
+fades = {(n, pc): e.hot_fade(A3[1], _sit(n, pc), A3) for (n, pc) in ((10, 50), (17, 50), (25, 50), (34, 50), (33, 39), (10, 10))}
+js_f = json.loads(subprocess.run(["node", "-e", """
+const E = require('./app/engine.js');
+const A = [E.Pitch({name:'Fastball',kind:'FB',grade:3,command:3,conf:.8,velo:86}), E.Pitch({name:'Slider',kind:'SL',shape:'tight',grade:3,command:3,conf:.75,velo:78}), E.Pitch({name:'Changeup',kind:'CH',grade:3,command:3,conf:.65,velo:78})];
+const out = {}; for (const [n, pc] of [[10,50],[17,50],[25,50],[34,50],[33,39],[10,10]]) out[n + ',' + pc] = E.v08.hotFade(A[1], E.Situation({balls:1,strikes:2,outs:1,bases:[false,false,true],landing_today:{Slider:[Math.min(n, Math.round(n*0.9)), n]},pitch_count:pc}), A);
+console.log(JSON.stringify(out));"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+fade_ok = (fades[(10, 50)] == 1.0 and fades[(17, 50)] == 1.0 and 0 < fades[(25, 50)] < 1 and fades[(34, 50)] == 0.0 and fades[(33, 39)] == 0.0
+           and all(abs(js_f[f"{n},{pc}"] - v) < 1e-12 for (n, pc), v in fades.items()))
+check("the hot read keeps its full size until his share of today's pitches is 10 points over its normal share (slider 25% here) and "
+      "is gone at 40 over (the v1.0 collapse: 33 sliders of 39 pitches); both engines", fade_ok,
+      ", ".join(f"{n}/{pc} -> {v:.2f}" for (n, pc), v in fades.items()))
+
 # ------------------------------------------------------------------ 4. no class logic left on the bare string "FB"
 CMP = re.compile(r"""kind\s*(==|===|!=|!==)\s*['"]FB['"]|['"]FB['"]\s*(==|===|!=|!==)\s*\w*kind""")
 ALLOWED = ("shape", "gb_rate", "gbRate", "4-seam", "rides")   # four-seam profile lines (incl. tag_for's tag rules), not class logic

@@ -31,4 +31,5 @@ echo "smoke: passed"
 (cd app && ../$run rules_e2e node rules_e2e.js)
 (cd app && ../$run v10_step1_e2e node v10_step1_e2e.js)   # v1.0 Step 1: shake-off by pitch (D2), re-solve on bases/outs (#2)
 (cd app && ../$run v10_step3_e2e node v10_step3_e2e.js)   # v1.0 Step 3: chase balls, HBP, landing record, old-format games
-(cd app && ../$run v10_step5_e2e node v10_step5_e2e.js)   # v1.0 Step 5: look from logged spot (#24), one owner of hitter memory (#7), seed centering (#20)
+(cd app && ../$run v10_step5_e2e node v10_step5_e2e.js)
+(cd app && ../$run game_mix_e2e node game_mix_e2e.js)    # v1.1: whole games through the app keep a mix (FINDING_v1.0_game_mix_collapse)   # v1.0 Step 5: look from logged spot (#24), one owner of hitter memory (#7), seed centering (#20)

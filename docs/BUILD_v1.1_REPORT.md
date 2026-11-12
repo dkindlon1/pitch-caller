@@ -167,3 +167,63 @@ Step 0 complete. Next: Step 1 (six kinds, one migration table, exact v1.0 reprod
 | Read-through | **71/71**; 110 of 705 numbers moved, the largest by 0.65 points of one call's share |
 | Predictability grid | every check passes; **0 of 540 cells changed** (every grid arsenal has speeds entered, and the root calls have no previous pitch, so tunneling doesn't enter) |
 | Golden cases still in v1.0 terms (149 with full calls) vs v1.0 | median largest share change 0.8 points, 90th percentile 9.3, max 78; drawn call changed in 21. Six of the eight biggest movers are the default-speed correction above (an entered fastball speed with an off-speed pitch that had none); the other two have no speeds and move from the sinker and sweeper profiles |
+
+## Before Step 2: the in-game mix collapse (FINDING_v1.0_game_mix_collapse_2026-11-12, Nov 12)
+
+The finding: in the v1.0 app, an 82-pitch game of random results collapses onto one pitch (75–95%), while one-off
+calls look normal. I fixed it before the fits, because the fits and the read-through test single situations and can't
+see a game-long effect.
+
+### Diagnosis (run in this session on `v1.1-work`, same script as the finding)
+- **Reproduced:** by pitch 10 the mix is 100% slider and stays there.
+- **Re-solving the app's own state at pitches 1–40 with one input removed at a time** isolates today's landing record,
+  and within it the hot pitch's record. Removing the fastball's record changes nothing. Removing the slider's restores
+  about 50 / 25 / 25.
+- **The cause is the v1.0 Step 7 coach read "landing better than normal → lean on it".** It fires once a pitch lands
+  0.10 better than expected (shrunk with K = 5): the slider went 4-for-5 (0.098, off), then 5-for-6 (0.13, on). It then
+  adds a flat 0.03-run credit to every spot of that pitch, about 3× the mixing temperature, which pushes every other
+  pitch outside the mix. The hot pitch is then the only one thrown, so it keeps the evidence that keeps it hot.
+- **Only that read's credit at 0 → every test game spreads** (as is → credit off): tier 2 seeded 76/3/3 → 43/26/13; tier 3
+  seeded 70/9/3 → 44/28/10; tier 3 every whiff "Fooled" 62/17/3 → 41/25/16; plus two unseeded runs. The fitted landing
+  model alone leans a little (slider 35% instead of 29% at pitch 20), which is the right size.
+
+### Fix (both engines)
+- **"Lean on it" wears off once he has leaned:** `hot_fade` keeps the read at full size until the pitch's share of
+  today's pitches is 10 points over its normal share, then fades to nothing at 40 over.
+  - Normal share: its class's half of the pitches, split evenly (the count prior's shape).
+  - Today's pitches: the larger of the pitch count and the landing record.
+  - With fastball, slider and changeup, a hot slider leans at full strength up to 35% of his pitches and stops at 65%.
+- **Drew's graded rows are unchanged:** all 15 read-through rows with a landing record give the same shares (each has
+  at most 10 throws of the pitch at a pitch count of 50, so the read is at full size). Row C5 is still 76%; E4 and J5,
+  which Drew graded acceptable at 100% slider in that single situation, still give it.
+- **`tests.py` coaching-read check:** its hot situation had ten changeups thrown at a pitch count of 0, which can't
+  happen; it now carries the read-through's pitch count of 50. Still moves its calls 20+ points.
+
+### Regression check: `app/game_mix_e2e.js` (new, in `scripts/test-app.sh`)
+- Five 82-pitch games through the real app. Each one collapsed on the unfixed v1.1 app; the test asserts no pitch over
+  70% of a game (v0.9 threw 61% fastballs on this script).
+- Before the fix: 93%, 84%, 85%, 94%, 87% → **5 FAIL**. After: 48%, 49%, 52%, 49%, 55% → **5 pass**.
+
+### For Drew: a residual pattern from the not-landing rule
+- In one more game (tier 3, seed 11) the slider still reached 79%, and the cause is different. On random results the
+  fastball went 1-for-5, then 5-for-12, so it reads as not landing.
+- Your v1.0 Step 7 rule holds a not-landing pitch back at 0-0 and when he's behind, and still calls it in up counts so
+  he can regain confidence. Here it got 12 throws in 60 pitches, not enough to recover, so the slider got most of the
+  game.
+- That's the rule as set, so I left it alone and left that game out of the regression test. The open question: should a
+  not-landing pitch get "comeback" calls sooner (for example, the hold lifts after a run of pitches without it, or a
+  small guaranteed share in up counts)?
+
+### Proof (this session, final code)
+
+| Check | Result |
+|---|---|
+| `app/game_mix_e2e.js` (new) | **10/10**: five whole games, top pitch 48 / 49 / 52 / 49 / 55%. The same games on the unfixed build: 93 / 84 / 85 / 94 / 87%, all FAIL |
+| `tests_v11.py` | **23/23** (adds: the fade's size at 10, 17, 25, 34 of 50 and 33 of 39 sliders, identical in both engines) |
+| `tests.py` | **45/45** |
+| Read-through | **71/71**; the 15 rows with a landing record give the same shares as before the fix |
+| `golden_v11a` | re-frozen with the fix; Python check 500 cases, largest difference **0.00e+00**; JS reproduces it; `fast.py 40` 0 mismatches |
+| `scripts/test-app.sh` | **exit 0**, no errors: 354 counted checks + smoke, browser tests, website demo, built-app and `web/lib` copy checks |
+
+**The live app (`main`, v1.0) still has this bug.** The fix is two small functions plus one changed line in each engine,
+and it could ship to `main` as v1.0.1 on its own, ahead of v1.1, if Drew wants it there.

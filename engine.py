@@ -161,6 +161,29 @@ HOT_EST = 0.10         # landing better than his normal by this much (the not-la
 SIDE_TARGETS = {"in": ("up-in", "down-in"), "away": ("up-away", "down-away")}
 
 
+# v1.1 (FINDING_v1.0_game_mix_collapse, Nov 12): "lean on it" wears off once he has leaned. In a game, a hot pitch gets
+# called more, which keeps it hot, and the flat credit (3x the mix temperature) pushed every other pitch out: the v1.0 app
+# threw 75-95% of one pitch over 82 pitches of random results. The read keeps its full size until this pitch's share of
+# today's pitches is HOT_FADE[0] over its normal share (its class's half of the pitches, split evenly; the count prior's
+# shape), then fades to nothing at HOT_FADE[1] over. Today's pitches = the larger of the pitch count and the landing record.
+HOT_FADE = (0.10, 0.40)
+
+
+def hot_fade(p, s, arsenal):
+    lt = s.landing_today or {}
+    if not arsenal or p.name not in lt:
+        return 1.0
+    ns = {x.name: landing_triple(x, lt[x.name])[-1] for x in arsenal if x.name in lt}
+    total = max(s.pitch_count, sum(ns.values()))
+    if total <= 0:
+        return 1.0
+    fbs = sum(1 for x in arsenal if is_fastball(x.kind))
+    oss = len(arsenal) - fbs
+    base = (0.5 / fbs if is_fastball(p.kind) else 0.5 / oss) if fbs and oss else 1.0 / len(arsenal)
+    over = ns.get(p.name, 0) / total - base
+    return min(1.0, max(0.0, 1.0 - (over - HOT_FADE[0]) / (HOT_FADE[1] - HOT_FADE[0])))
+
+
 def landing_hot(p, s):
     ev = landing_triple(p, s.landing_today.get(p.name)) if s.landing_today else None
     if not ev or ev[-1] < LAND_BLOCK_N:
@@ -169,8 +192,9 @@ def landing_hot(p, s):
     return (st - ex) / (LAND_BLOCK_K + n) >= HOT_EST
 
 
-def coach_credit(p, q, s):
-    """Sum of the coaching-read credits for call (p, q) in situation s (runs, before run_scale)."""
+def coach_credit(p, q, s, arsenal=None):
+    """Sum of the coaching-read credits for call (p, q) in situation s (runs, before run_scale). arsenal: for the hot
+    read's fade (without it, the read is at full size)."""
     R, c = COACH_RULE, 0.0
     fb = is_fastball(p.kind)
     tm = s.timing or {}
@@ -190,7 +214,7 @@ def coach_credit(p, q, s):
         if m.get(f"succ|{key_kind(p.kind)}|{q}", 0):
             c += R["went_back"]
     if s.landing_today and landing_hot(p, s):
-        c += R["hot"]
+        c += R["hot"] * hot_fade(p, s, arsenal)
     if not s.same_side and p.grade >= 4 and ((p.kind == "CH" and q in ("down-away", "chase")) or (p.kind == "SL" and q == "down-in")):
         c += R["plus_opp"]
     return c
@@ -1856,7 +1880,7 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
         v += MASHED_PENALTY * run_scale(s.level)     # v1.0 D3: mashed twice at this height today
     if q in GB_RULE_TARGETS and ground_ball_spot(s):
         v -= GB_RULE_BONUS * run_scale(s.level)     # v1.0 Step 7: the ground-ball rule
-    cc = coach_credit(p, q, s)
+    cc = coach_credit(p, q, s, arsenal)
     if cc:
         v -= cc * run_scale(s.level)                # v1.0 Step 7: the coaching reads (COACH_RULE)
     if s.level in ("hs", "travel"):
