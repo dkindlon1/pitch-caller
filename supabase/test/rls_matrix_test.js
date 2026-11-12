@@ -75,7 +75,7 @@ const now = () => Date.now();
   const caller = (await teams("caller")).find((t) => t.team_id === tA);
   check(JSON.stringify(caller.perms) === JSON.stringify({ call_games: true, manage_opponents: true }), `the caller preset is exactly call games and manage opponents (${JSON.stringify(caller.perms)})`);
   const head = (await teams("head")).find((t) => t.team_id === tA);
-  check(Object.keys(head.perms).length === 6 && Object.values(head.perms).every(Boolean), "the head coach preset has every toggle");
+  check(Object.keys(head.perms).length === 6 && Object.values(head.perms).every(Boolean), "the head coach preset has every toggle but view_plan (calling games already shows the plan)");
   const ownerTeams = await teams("owner");
   check(ownerTeams.length === 2 && ownerTeams.every((t) => t.is_owner && t.role === null), "the owner sees both of his teams, as owner, with no role on them");
   check((await teams("head")).length === 2 && (await teams("nonmember")).length === 0, "a coach on two teams sees two; a stranger sees none");
@@ -101,13 +101,17 @@ const now = () => Date.now();
   let allCoach = true, allPlayer = true, allNone = true;
   for (const t of TABLES) {
     const full = t === "pitchers" ? want.pitchers : want.other;
-    for (const who of ["head", "pitching", "caller", "viewer"]) if ((await count(who, t, tA)) !== full) { allCoach = false; console.log(`     ${who} ${t}: ${await count(who, t, tA)}`); }
+    // game plans (20261114000000_game_plans.sql): games and packs only for coaches who call games or have view_plan
+    for (const who of ["head", "pitching", "caller", "viewer"]) {
+      const want = who === "viewer" && (t === "games" || t === "packs") ? 0 : full;
+      if ((await count(who, t, tA)) !== want) { allCoach = false; console.log(`     ${who} ${t}: ${await count(who, t, tA)} (want ${want})`); }
+    }
     const own = ["checkins", "sessions", "readings"].includes(t) ? 1 : 0;   // his pitcher record only through pc_pull (no coach notes)
     if ((await count("pl1", t, tA)) !== own) { allPlayer = false; console.log(`     pl1 ${t}: ${await count("pl1", t, tA)} (want ${own})`); }
     for (const who of ["owner", "nonmember", "xhead"]) { const n = await count(who, t, tA); if (n !== 0 && n !== "denied") { allNone = false; console.log(`     ${who} ${t}: ${n}`); } }
     const an = await count("anon", t, tA); if (an !== "denied" && an !== 0) { allNone = false; console.log(`     anon ${t}: ${an}`); }
   }
-  check(allCoach, "every coach preset sees all of its own team's rows in every table");
+  check(allCoach, "every coach preset sees all of its own team's rows in every table, except a viewer, who doesn't see games or packs (the game plans)");
   check(allPlayer, "reading the tables, a player sees only his own check-ins, sessions and readings: no pitcher records, events, games, hitters, packs or learned values");
   const plPull = await pull("pl1", tA, "pitchers");
   check(plPull.rows.length === 1 && plPull.rows[0].id === "p1" && !("notes" in plPull.rows[0]), "his own pitcher record comes through pc_pull, without the coaches' notes");
@@ -187,6 +191,33 @@ const now = () => Date.now();
   check(r.rows.every((d) => d.pitcherId === "p1") && r.rows.length === 2, "his pull of sessions returns only his own");
   const headA = await pull("head", tA, "events"), headB = await pull("head", tB, "events");
   check(headA.rows.length === 2 && headB.rows.length === 0, "a coach on two teams pulls each team's rows separately");
+  // ---------------------------------------------------------------- game plans: who sees them, and who decides
+  console.log("2b. Game plans");
+  check((await pull("viewer", tA, "games")).rows.length === 0 && (await pull("viewer", tA, "packs")).rows.length === 0, "a viewer's pull of games and packs returns nothing");
+  check((await pull("caller", tA, "games")).rows.length === 2, "a pitch caller pulls the game plans");
+  const list = await as("viewer", "select * from public.pc_game_list($1)", [tA]);
+  check(!list.error && list.rows.length === 2 && list.rows.every((x) => Object.keys(x).join() === "id,date,status,opponent_id,home,starts"),
+    "every coach gets the schedule from pc_game_list: date, status, opponent, home and start only, no lineup or staff");
+  check((await as("pl1", "select * from public.pc_game_list($1)", [tA])).rows.length === 0 && (await as("nonmember", "select * from public.pc_game_list($1)", [tA])).rows.length === 0,
+    "a player and a stranger get no schedule");
+  const plan0 = (await pull("viewer", tA, "events")).access;
+  let pe = await as("head", "select public.pc_set_member($1, $2, 'viewer', '{\"view_plan\": true}'::jsonb)", [tA, U.viewer]);
+  check(/owner decides/.test(pe.error || ""), `a head coach can't give "see the game plan" (${pe.error})`);
+  pe = await as("owner", "select public.pc_set_member($1, $2, 'viewer', '{\"view_plan\": true}'::jsonb)", [tA, U.viewer]);
+  check(!pe.error && (await count("viewer", "games", tA)) === 2 && (await count("viewer", "packs", tA)) === 2, `the owner gives a viewer "see the game plan", and he reads games and packs (${pe.error || ""})`);
+  check((await pull("viewer", tA, "games")).rows.length === 2 && (await pull("viewer", tA, "events")).access !== plan0, "his pull returns them, and its access string changed so his device starts over");
+  pe = await push("viewer", tA, "games", [{ id: "games-a1", updatedAt: now() + 5, note: "viewer edit" }]);
+  check(pe.applied === 0 && pe.rejected.length === 1, "seeing the plan doesn't let him change it");
+  pe = await as("head", "select public.pc_set_member($1, $2, 'viewer', '{}'::jsonb)", [tA, U.viewer]);
+  check(!pe.error && (await count("viewer", "games", tA)) === 2, "a head coach saving that viewer's preset keeps the owner's choice");
+  pe = await as("head", "select public.pc_set_member($1, $2, 'viewer', '{\"view_plan\": false}'::jsonb)", [tA, U.viewer]);
+  check(/owner decides/.test(pe.error || ""), "and can't take it away either");
+  check(!(await as("head", "select public.pc_set_member($1, $2, 'viewer', '{\"view_plan\": true}'::jsonb)", [tA, U.viewer])).error, "sending the value it already has is fine");
+  pe = await as("owner", "select public.pc_set_member($1, $2, 'viewer', '{\"view_plan\": false}'::jsonb)", [tA, U.viewer]);
+  check(!pe.error && (await count("viewer", "games", tA)) === 0, "the owner takes it away again");
+  const vp = await one("owner", "select perms r from public.members where program_id = $1 and user_id = $2", [tA, U.viewer]);
+  check(vp && !("view_plan" in vp), `off is stored as no toggle at all (${JSON.stringify(vp)})`);
+
   const acc1 = (await pull("viewer", tA, "events")).access;
   await as("head", "select public.pc_set_member($1, $2, 'viewer', '{\"call_games\": true}'::jsonb)", [tA, U.viewer]);
   const acc2 = (await pull("viewer", tA, "events")).access;

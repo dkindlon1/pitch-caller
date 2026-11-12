@@ -18,7 +18,7 @@ const ROLE: Record<string, string> = { head: "Head coach", pitching: "Pitching c
 
 export default function AppHome() {
   return (
-    <Shell title="Your teams" actions={<form action={signOut}><button type="submit" className="shell-btn text">Sign out</button></form>}>
+    <Shell title="Your teams" wide actions={<form action={signOut}><button type="submit" className="shell-btn text">Sign out</button></form>}>
       <Suspense fallback={<p className="shell-note">Loading your teams…</p>}>
         <Teams />
       </Suspense>
@@ -45,7 +45,7 @@ async function Teams() {
       {rows.length ? (
         <ul className="team-cards" aria-label="Teams">
           {rows.map((t) => (
-            <li key={t.team_id} className="team-card">
+            <li key={t.team_id} className="team-card glass">
               <h2>{t.role === "player" ? <Link href={`/app/me/${t.team_id}`}>{t.team_name}</Link> : t.role ? <Link href={`/app/t/${t.team_id}`}>{t.team_name}</Link> : t.team_name}</h2>
               <p>{t.org_name}{t.level ? ` · ${t.level}` : ""}</p>
               <p className="lbl">{t.role ? ROLE[t.role] || t.role : "Owner, not on the staff"}</p>

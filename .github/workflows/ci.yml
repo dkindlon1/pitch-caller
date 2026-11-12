@@ -108,5 +108,7 @@ jobs:
         run: scripts/run-check.sh uploads_e2e node web/tests/uploads_e2e.js
       - name: Retention sweep end to end (12 months after a lapse; deletes only when turned on)
         run: scripts/run-check.sh retention_e2e node web/tests/retention_e2e.js
+      - name: Game Day (set up on the website, start on a device)
+        run: scripts/run-check.sh gameplan_e2e node web/tests/gameplan_e2e.js
       - if: always()
         run: npx -y supabase@2.122.1 stop --no-backup

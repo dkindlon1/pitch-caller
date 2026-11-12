@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { pitchersOf, teamFor, ROLE, TOGGLES, PRESET_PERMS } from "@/lib/team";
+import { pitchersOf, teamFor, ROLE, TOGGLES, PRESET_PERMS, OWNER_ONLY } from "@/lib/team";
 import { approveInvite, cancelInvite, inviteStaff, removeMember, setMember } from "../actions";
 import { Notice, one, type Search } from "../ui";
 
@@ -17,7 +17,8 @@ export default function StaffPage({ params, searchParams }: { params: Params; se
 
 async function Body({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { team } = await params, sp = await searchParams;
-  const { user, manage } = await teamFor(team);
+  const { user, manage, team: t } = await teamFor(team);
+  const owner = t.is_owner && t.status !== "removed";
   const staffOk = manage("manage_staff"), rosterOk = manage("manage_roster");
   if (!staffOk && !rosterOk) return <p className="shell-note">The staff list is for coaches who manage the staff or the roster.</p>;
   const sb = await getServerSupabase();
@@ -44,7 +45,8 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
                 <select name="role" defaultValue={m.role} aria-label={`Preset for ${m.email}`} disabled={me}>{COACH.map((r) => <option key={r} value={r}>{ROLE[r]}</option>)}</select>
                 <details className="adv"><summary>Advanced</summary>
                   <input type="hidden" name="advanced" value="on" />
-                  {TOGGLES.map(([k, l]) => <label key={k} className="check"><input type="checkbox" name={`perm_${k}`} defaultChecked={eff(k)} disabled={me} /> {l}</label>)}
+                  {TOGGLES.map(([k, l]) => <label key={k} className="check"><input type="checkbox" name={`perm_${k}`} defaultChecked={eff(k)} disabled={me || (OWNER_ONLY.has(k) && !owner)} /> {l}</label>)}
+                  <span className="owner-only">{owner ? "See the game plan: you decide who sees game plans. Coaches who call games always see them." : "See the game plan: only the organization's owner changes this. Coaches who call games always see the plan."}</span>
                 </details>
                 {me ? null : <button type="submit" className="shell-btn">Save</button>}
               </form>

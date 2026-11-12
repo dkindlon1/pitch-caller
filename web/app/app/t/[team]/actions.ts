@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { inviteMail, sendMail } from "@/lib/email";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { ensureOurTeam, hittersOf, pitchersOf, push, teamFor, teamsOf, TOGGLES, PRESET_PERMS } from "@/lib/team";
+import { ensureOurTeam, hittersOf, pitchersOf, push, teamFor, teamsOf, TOGGLES, PRESET_PERMS, OWNER_ONLY } from "@/lib/team";
 import { PITCH_TYPES, newHitter, newPitch, newPitcher, parseHitters, parseRoster, type Pitch } from "@/lib/docs";
 import PCRules from "@/lib/pitch_rules";
 
@@ -142,9 +142,15 @@ export async function setMember(f: FormData) {
   const role = str(f, "role"), base = PRESET_PERMS[role] || [];
   // the advanced toggles: only what differs from the preset is kept
   const perms: Record<string, boolean> = {};
-  if (f.get("advanced") === "on") for (const [k] of TOGGLES) { const on = f.get(`perm_${k}`) === "on"; if (on !== base.includes(k)) perms[k] = on; }
+  const owner = c.row.is_owner && c.row.status !== "removed";
+  if (f.get("advanced") === "on") for (const [k] of TOGGLES) {
+    const on = f.get(`perm_${k}`) === "on";
+    // the owner-only switch goes either way, and only from the owner: anyone else leaves it as it is
+    if (OWNER_ONLY.has(k)) { if (owner) perms[k] = on; continue; }
+    if (on !== base.includes(k)) perms[k] = on;
+  }
   const { error } = await sb.rpc("pc_set_member", { p: c.team, member: str(f, "member"), member_role: role, member_perms: perms });
-  back(c.team, "/staff", error ? `error=${/own permissions/.test(error.message) ? "self" : /head coach/.test(error.message) ? "last_head" : /don't have/.test(error.message) ? "ceiling" : "member"}` : "ok=member");
+  back(c.team, "/staff", error ? `error=${/own permissions/.test(error.message) ? "self" : /head coach/.test(error.message) ? "last_head" : /don't have/.test(error.message) ? "ceiling" : /owner decides/.test(error.message) ? "owner_only" : "member"}` : "ok=member");
 }
 
 export async function removeMember(f: FormData) {

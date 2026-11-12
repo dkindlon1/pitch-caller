@@ -16,8 +16,10 @@ if (location.pathname === "/app/game") location.replace("/app/game/" + location.
 window.PC_CONFIG_URL = "/app/game/config.json";
 (function () {
   if (!("serviceWorker" in navigator)) return;
-  var reloading = false;
-  navigator.serviceWorker.addEventListener("controllerchange", function () { if (reloading) return; reloading = true; location.reload(); });
+  var reloading = false, had = !!navigator.serviceWorker.controller;
+  // a new version taking over reloads the page; the very first worker taking control of a first visit doesn't (that
+  // page is already this version, and a reload would cut off whatever it's doing, like opening a game from the website)
+  navigator.serviceWorker.addEventListener("controllerchange", function () { if (!had) { had = true; return; } if (reloading) return; reloading = true; location.reload(); });
   navigator.serviceWorker.register("/app/game/sw.js", { scope: "/app/game/" }).then(function (reg) {
     function live() { try { return typeof G === "function" && !!G().dbId; } catch (e) { return false; } }
     function apply() {

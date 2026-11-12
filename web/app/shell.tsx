@@ -1,20 +1,15 @@
 import "./portal.css";
-import Link from "next/link";
 import type { ReactNode } from "react";
-import { Mark } from "./components/Mark";
+import { Frame } from "./app/_frame/Frame";
 
-// The signed-in pages' frame. Functional for now: the coach portal's design is Plan 3.
-export function Shell({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
+// The single screens outside a team (sign-in, join, your teams, billing, downloads): the night, the bar, one column.
+export function Shell({ title, children, actions, email, wide }: { title: string; children: ReactNode; actions?: ReactNode; email?: string | null; wide?: boolean }) {
   return (
-    <div className="shell field-grid">
-      <header className="shell-top wrap">
-        <Link href="/" className="shell-brand" aria-label="PitchIQ home"><Mark /> <span>PitchIQ</span></Link>
-        {actions}
-      </header>
-      <main className="shell-main wrap">
-        <h1 className="shell-h1">{title}</h1>
+    <Frame end={actions} email={email}>
+      <div className={wide ? undefined : "pq-solo"}>
+        <h1 className="pq-h1">{title}</h1>
         {children}
-      </main>
-    </div>
+      </div>
+    </Frame>
   );
 }

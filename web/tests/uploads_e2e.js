@@ -157,9 +157,9 @@ const ODD = "Throw,MPH,Up,Over,When\n" + Array.from({ length: 10 }, (_, i) => `F
     const asst = await fresh();
     await signIn(asst, "asst");
     await goto(asst, `/app/t/${team}`);
-    const home = await text(asst, /waiting for review/i);
-    check(/Avery Brooks 3 proposed values · 1 new upload/i.test(home), `his home: "Avery Brooks 3 proposed values · 1 new upload" (${(home.match(/Uploads waiting for review.{0,80}/i) || [""])[0]})`);
-    await click(asst, asst.locator("main:visible").getByRole("link", { name: "Avery Brooks" }).first(), /\/uploads$/);
+    const home = await text(asst, /Needs you/i);
+    check(/Avery Brooks\s+3 proposed values · 1 new upload/i.test(home), `his home, under Needs you: "Avery Brooks 3 proposed values · 1 new upload" (${(home.match(/Needs you.{0,80}/is) || [""])[0]})`);
+    await click(asst, asst.getByRole("region", { name: "Needs you" }).getByRole("link", { name: "Avery Brooks" }).first(), /\/uploads$/);
     await click(asst, asst.getByRole("form", { name: "Accept Fastball shape" }).getByRole("button", { name: "Accept" }), /ok=accepted/);
     d1 = await doc(P1);
     check(d1.pitches[0].shape === "ride" && d1.pitches[0].ivb === 17 && d1.pitches[0].hb === 9 && d1.pitches[0].velo === 91, "the fastball's shape is in: ride, 17 up, 9 arm side (and the velo stays)");

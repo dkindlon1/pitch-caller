@@ -3,6 +3,8 @@
 // Reads during a game come from an in-memory copy (the engine needs answers instantly); writes go straight through.
 const DB = { D: null, ready: false, failed: null, teams: new Map(), pitchers: new Map(), catchers: new Map(), hitters: new Map(),
   checkins: new Map(), models: new Map(), sessions: new Map(), counts: new Map() };
+// games set up on the website (see openFromPortal): a message to show, and today's planned games on this device
+var PORTAL = { msg: null, today: [] };
 const FATIGUE = { hs: 60, travel: 60, college_d3: 75, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
 const LOCZ = ["heart", "edge", "off", "noncomp"];
 let pendingLoc = null;
@@ -47,6 +49,8 @@ async function boot() {
     await flushQueued();
     await syncSetup().catch((e) => console.warn("sync setup", e));
     await loadPrep().catch(() => {});
+    await openFromPortal().catch((e) => { PORTAL.msg = syncMessage(e); console.warn("open from the website", e); });
+    await loadPlanned().catch(() => {});
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
     setTimeout(async () => {
@@ -989,6 +993,14 @@ function prepPanel() {
 }
 // the Game screen's one line about it: not ready today (when the iPad is on a team), or an update waiting for the game to end
 function prepNotice() {
+  if (PORTAL.msg) return h("p", { class: "pstat watch", role: "alert", id: "portal-notice" }, PORTAL.msg, " ", h("button", { class: "btn text", on: { click: () => { PORTAL.msg = null; render(); } } }, "Dismiss"));
+  // a game set up on the website for today, offered when no game is going on this device
+  const plan = !G().dbId && PORTAL.today.length && may("call_games") ? PORTAL.today[0] : null;
+  if (plan) {
+    const opp = plan.opponentId && DB.teams.get(plan.opponentId);
+    return h("p", { class: "pstat note", role: "status", id: "planned-notice" }, `Today's game${opp ? ` ${plan.setup && plan.setup.home === false ? "at" : "vs"} ${opp.name}` : ""} is set up.`, " ",
+      h("button", { class: "btn pill", on: { click: () => startPlanned(plan).catch((e) => { PORTAL.msg = e.message; render(); }) } }, "Start it"));
+  }
   if (typeof window !== "undefined" && window.PC_UPDATE_WAITING && G().dbId) return h("p", { class: "pstat note", role: "status" }, "An update is ready. It installs after this game.");
   if (SYNC.cfg && SYNC.cfg.programId && !(prepToday() && PREP.ready)) return h("p", { class: "pstat watch", role: "status", id: "prep-notice" }, "This iPad isn't ready for offline today: Setup, Get ready for offline (on Wi-Fi).");
   return null;
@@ -1296,6 +1308,7 @@ async function reloadFromDb() {
   const c = G().call;
   if (c && typeof arsenal === "function" && !arsenal().some((x) => x.name === c.pitch)) G().call = null;
   if (live && JSON.stringify(packContents()) !== before) packChanged("sync");
+  await loadPlanned().catch(() => {});
   save(); render();
 }
 function syncPanel() {
@@ -1349,4 +1362,97 @@ function syncPanel() {
     err,
     may("manage_staff") || may("manage_roster") ? staffAdder() : null,
     h("div", { class: "row-acts" }, h("button", { class: "btn primary", disabled: SYNC.busy ? true : null, on: { click: () => syncNow() } }, SYNC.busy ? "Syncing…" : "Sync now"), signOut, fresh)];
+}
+
+// ---------------------------------------------------------------- games set up on the website (PLAN_portal_2026-11-12)
+// The portal saves a games record with status "planned"; its "Start on this device" opens
+//   /app/game/?game=<id>&team=<team>&name=<team name>#pq=<single-use sign-in>
+// Here: sign in with the hand-off, join or sync the team, then start the game on that very record. A game in progress
+// stays on the one device calling it: a game live on another device is refused, and this device's claim goes up as
+// soon as the game starts, so another device (and the website) can tell.
+async function openFromPortal() {
+  if (typeof location === "undefined" || !DB.D) return;
+  const q = new URLSearchParams(location.search), hash = new URLSearchParams((location.hash || "").slice(1));
+  let gameId = q.get("game"), teamId = q.get("team"), teamName = q.get("name") || "this team";
+  const hand = hash.get("pq");
+  // an open that a reload cut short (this tab only, for two minutes): carry on with it, without the used sign-in
+  let carry = null;
+  try { carry = JSON.parse(sessionStorage.getItem("pq-open") || "null"); } catch (e) {}
+  if (!gameId && !hand && carry && Date.now() - carry.at < 120000) ({ gameId, teamId, teamName } = carry);
+  if (!gameId && !hand) return;
+  // the sign-in link works once: it never stays in the address bar or the history
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+  try { sessionStorage.setItem("pq-open", JSON.stringify({ gameId, teamId, teamName, at: Date.now() })); } catch (e) {}
+  try { await openPlannedFrom(gameId, teamId, teamName, hand); }
+  finally { try { sessionStorage.removeItem("pq-open"); } catch (e) {} }
+}
+async function openPlannedFrom(gameId, teamId, teamName, hand) {
+  if (!/^[a-z]{3}_[0-9a-z]{10,40}$/.test(gameId || "") || !/^[0-9a-f-]{36}$/.test(teamId || "")) { PORTAL.msg = "That link doesn't name a game. Open it again from Game Day on the website."; return; }
+  const g = G();
+  if (g.dbId === gameId) { S.view = "live"; return; }   // already calling it here (a reload)
+  if (g.dbId) { PORTAL.msg = "A game is in progress on this device. End it before starting another one here."; return; }
+  if (!SYNC.cfg || !SYNC.auth) { PORTAL.msg = "This device can't reach PitchIQ yet. Connect to Wi-Fi and open the game again from the website."; return; }
+  if (navigator.onLine === false) { PORTAL.msg = "No signal: open the game from the website once this device is online, or start it from Setup."; return; }
+  if (hand) {
+    const was = SYNC.authSession;
+    const s = await SYNC.auth.handoff(hand).catch(() => null);
+    if (s) {
+      SYNC.authSession = s;
+      if (was && was.userId && was.userId !== s.userId) { SYNC.teams = SYNC.invites = SYNC.staff = null; }
+      await syncConfig({ email: s.email });
+    } else if (!SYNC.authSession) { PORTAL.msg = "The sign-in from the website has expired. Open the game again from Game Day, or sign in under Setup."; return; }
+  }
+  if (!SYNC.authSession) { PORTAL.msg = `Sign in under Setup (Sync), then open the game again from the website.`; return; }
+  await refreshTeams();
+  const t = (SYNC.teams || []).find((x) => x.team_id === teamId && x.role);
+  if (!t) { PORTAL.msg = `This account isn't on ${teamName}'s staff on this device.`; return; }
+  if (!t.perms || !t.perms.call_games) { PORTAL.msg = `Your role on ${t.team_name} can't call games.`; return; }
+  if (!SYNC.cfg.programId || SYNC.cfg.programId !== teamId) await joinProgram(t);   // refuses if this device holds another team
+  else if (SYNC.sync) await syncNow(true);
+  const rec = await DB.D.get("games", gameId);
+  if (!rec || rec.deletedAt) { PORTAL.msg = `That game isn't on ${t.team_name}'s schedule any more.`; return; }
+  await startPlanned(rec);
+  toast(`Game started. First pitch is up.`);
+}
+// today's planned games on this device, newest plan first (offered by prepNotice)
+async function loadPlanned() {
+  if (!DB.D) return;
+  const today = todayT();
+  PORTAL.today = (await DB.D.byIndex("games", "status", "planned")).filter((x) => !x.deletedAt && x.date === today)
+    .sort((a, b) => (a.time || "").localeCompare(b.time || "") || (b.updatedAt || 0) - (a.updatedAt || 0));
+}
+async function startPlanned(rec) {
+  const g = G();
+  if (g.dbId === rec.id) { S.view = "live"; save(); render(); return; }
+  if (g.dbId) throw new Error("A game is in progress on this device. End it before starting another one here.");
+  if (rec.status === "final") throw new Error("That game is over.");
+  if ((rec.status === "live" || rec.status === "suspended") && rec.deviceId !== (DB.deviceId || null))
+    throw new Error("This game is being called on another device. A game in progress stays on the one device calling it.");
+  const staffIds = (rec.staffIds || []).filter((id) => DB.pitchers.has(id));
+  if (!staffIds.length) throw new Error("None of this plan's pitchers are on this device's roster yet. Sync under Setup, then try again.");
+  const st = S.setup, s = rec.setup || {};
+  if (rec.level) st.level = rec.level;
+  st.inputs = [1, 2, 3, 4].includes(+rec.inputs) ? +rec.inputs : st.inputs;
+  st.logLoc = !!rec.logLoc; st.radar = !!rec.radar;
+  st.home = s.home === true || s.home === false ? s.home : null;
+  st.innings = s.innings || null; st.extrasRunner = !!s.extrasRunner; st.umpSeed = s.umpSeed || "normal";
+  st.opponentId = rec.opponentId && DB.teams.has(rec.opponentId) ? rec.opponentId : null;
+  st.catcherId = rec.catcherId && DB.catchers.has(rec.catcherId) ? rec.catcherId : null;
+  st.staffIds = staffIds;   // the starter is first: he's the one on the mound
+  attachStaff();
+  st.lineup = (rec.lineup || []).slice(0, 12).map((b) => ({ hitterId: b.hitterId && DB.hitters.has(b.hitterId) ? b.hitterId : null, name: b.name || "", hand: b.hand === "L" || b.hand === "S" ? b.hand : "R" }));
+  while (st.lineup.length < 9) st.lineup.push({ hitterId: null, name: "", hand: "R" });
+  S.game = newGame(); S.sample = false; undo = [];
+  G().pitcher = 0;
+  // start the game on the planned record itself (ensureGameRecord sees dbId and makes no new one)
+  G().dbId = rec.id;
+  const live = PCDB.moveGame(Object.assign(rec, { startedAt: Date.now(), deviceId: DB.deviceId || null }), rec.status === "planned" ? "live" : rec.status);
+  await dbPut("games", live);
+  makePack("start");
+  PORTAL.today = PORTAL.today.filter((x) => x.id !== rec.id); PORTAL.msg = null;
+  S.view = "live"; save();
+  await refreshLineupMemory().catch(() => {});
+  // claim it now: the record goes up as live on this device (the pitches go up when the game ends, as always)
+  if (SYNC.sync && SYNC.authSession && navigator.onLine !== false) await SYNC.sync.push().catch((e) => console.warn("claim", e));
+  render();
 }

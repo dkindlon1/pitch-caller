@@ -82,8 +82,9 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await signIn(coach, "coach");
     await coach.getByRole("link", { name: "RIT Tigers" }).click(); await coach.waitForURL(/\/app\/t\//, { timeout: 10000 }).catch(() => {}); await settle(coach);
     check(new URL(coach.url()).pathname === `/app/t/${tA}` && /No pitchers yet/.test(await text(coach, /No pitchers yet/)), "his team's home page, empty so far");
-    const nav = await coach.getByRole("navigation", { name: "Team" }).innerText();
-    check(["Home", "Roster", "Opponents", "Staff", "Settings", "Open the game app"].every((x) => nav.includes(x)), "the head coach sees every section");
+    // the launcher's tiles (the dock steps aside on the launcher at laptop width; inside a screen it carries the same list)
+    const nav = await coach.getByRole("list", { name: "Screens you can open" }).innerText();
+    check(["Game Day", "Roster", "Opponents", "Staff", "Settings", "Game app"].every((x) => nav.includes(x)), "the head coach sees a tile for every section");
 
     console.log("2. Roster: paste the names");
     await goto(coach, `/app/t/${tA}/roster`);
@@ -197,7 +198,7 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await goto(coach, `/app/t/${tB}/roster`);
     const rB = await text(coach, /Roster/);
     check(!/Smith|Jones|Brooks/.test(rB) && !(await coach.getByRole("form", { name: "Add pitchers" }).count()), "on the other team (where he's a pitch caller) none of RIT's pitchers, and no roster editing");
-    const navB = await coach.getByRole("navigation", { name: "Team" }).innerText();
+    const navB = await coach.getByRole("navigation", { name: "Screens" }).innerText();
     check(!/Settings/.test(navB) && !/Staff/.test(navB), "and no Staff or Settings there");
 
     console.log("9. A viewer");
