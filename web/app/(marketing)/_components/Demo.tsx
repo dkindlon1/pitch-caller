@@ -75,8 +75,7 @@ export function Demo() {
     const load = () => {
       if (started) return;
       started = true; io.disconnect(); cancelStill();
-      return 
-      Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")])   // college D3 tables only (scripts/trim-engine-data.cjs)
+      return Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")])   // college D3 tables only (scripts/trim-engine-data.cjs)
         .then(([m, d]) => {
           if (dead) return;
           const E = ((m as { default?: Engine }).default ?? m) as Engine;
