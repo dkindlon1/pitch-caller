@@ -1,7 +1,9 @@
-// Every pitcher gets his own page: shown as one picture of that page, full of his numbers. Every figure is one the
-// portal's pitcher page really shows (app/_uploads/stats-panel.tsx: by pitch, by hitter side, usage by count, the outing
-// log; the uploads' velocity and movement; the learned page's expected strikes next to his grades), for a made-up
-// pitcher shaped like the site's sample starter (fastball 86, slider 77, changeup 78), labelled as a sample.
+// Every pitcher gets his own page: shown as one picture of that page, full of his numbers, for a made-up pitcher shaped
+// like the site's sample starter (fastball 86, slider 77, changeup 78), labelled as a sample. The figures are the ones
+// the portal's pitcher page shows (app/_uploads/stats-panel.tsx: by pitch, by hitter side, usage by count; the uploads'
+// velocity and movement; the learned page's expected strikes next to his grades). "What happened next" (how his at-bats
+// ended after a strike or a ball in a count) comes from what every saved pitch already records (pc_pitch_rows' pa_end
+// and out); the portal doesn't show it yet.
 
 const FB = "var(--mk-fb)", SL = "var(--mk-sl)", CH = "var(--mk-ch)";
 
@@ -34,6 +36,13 @@ const LEARNED: { name: string; c: string; exp: number; got: number; grade: strin
   { name: "Fastball", c: FB, exp: 63, got: 64, grade: "Holds at 4" },
   { name: "Slider", c: SL, exp: 57, got: 61, grade: "Up, 3.5 to 4" },
   { name: "Changeup", c: CH, exp: 58, got: 52, grade: "Down, 3 to 2.5" },
+];
+
+// after a strike vs after a ball, in one count: the share of his at-bats that ended in an out
+const NEXT: { when: string; pitch: string; c: string; strike: number; ball: number }[] = [
+  { when: "First pitch", pitch: "Any pitch", c: "var(--mk-chalk)", strike: 70, ball: 59 },
+  { when: "2-1 count", pitch: "Fastball", c: FB, strike: 69, ball: 52 },
+  { when: "1-1 count", pitch: "Slider", c: SL, strike: 72, ball: 57 },
 ];
 
 function Velo() {
@@ -128,9 +137,24 @@ export function Program() {
                   </tbody>
                 </table>
               </section>
+
+              <section className="mk-sb-card mk-sb-next">
+                <h3>What happened next</h3>
+                <p className="mk-sb-sub">How his at-bats ended after a strike, and after a ball</p>
+                <div className="mk-sb-nexts">
+                  {NEXT.map((x) => (
+                    <div key={x.when} className="mk-sb-nx">
+                      <p className="mk-sb-nxh"><b>{x.when}</b><span><i style={{ background: x.c }} />{x.pitch}</span></p>
+                      <div className="mk-sb-nxrow"><span>For a strike</span><span className="mk-sb-nxbar"><i style={{ width: `${x.strike}%` }} /></span><b>{x.strike}%</b></div>
+                      <div className="mk-sb-nxrow is-ball"><span>For a ball</span><span className="mk-sb-nxbar"><i style={{ width: `${x.ball}%` }} /></span><b>{x.ball}%</b></div>
+                      <p className="mk-sb-nxs">ended in an out, {x.strike - x.ball} points better after the strike</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
           </div>
-          <figcaption>A sample pitcher, not a real player. Every number here is one his page shows.</figcaption>
+          <figcaption>A sample pitcher, not a real player.</figcaption>
         </figure>
       </div>
     </section>
