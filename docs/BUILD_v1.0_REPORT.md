@@ -697,3 +697,70 @@ where the remaining cost is. (A check of the landing block rule was started and 
 **Drew, Nov 11:** the simulation is not the main basis. The engine is built around whether its logic and calls match
 what a great pitching coach would call; the hitting sim is one input, and the 0.25 runs/game budget no longer gates
 (0.25 or 0.5 doesn't matter). Step 7's coaching read-through is the main check.
+
+## Step 7: coverage and release (Nov 11)
+
+Commits `9496c98` (read-through, knee-high target, ground-ball rule), `c138d15` (learner switch, golden, VERSION 1.0),
+`cf7fddb` (website spot type, no call after the third out).
+
+### Coaching read-through (`readthrough/scenarios_v10.json`, 70 rows; the main check per Drew, Nov 11)
+- Built from v0.9's graded rows with Drew's Nov 11 regrades: an off-speed strike is fine in D5/D8/F3, G4 at 56%
+  fastballs is fine, I1 at 32% fastball middle is fine, H1's fastball middle is acceptable, the J5 changeup strike is
+  fine, a knee-high strike is fine in C1/H2/D7. Six new rows, one per fixed issue (J1 re-solve after a wild pitch, J2
+  chase taken, J3 HS 5th-inning big spot, J4 repeat after a take, J5/J6 3-1 mixes).
+- Drew: "middle" means "throw it somewhere in the strike zone", and the engine should aim down more in double-play and
+  runner-on-3rd spots. Two engine changes, both Drew's choice:
+  - **Knee-high target `down-middle`** ("Keep it down", knee-high over the plate). Lands in the zone between a corner
+    and middle (zone share corner 0.380 < knee-high 0.451 < middle 0.522), as low as the down corners; in every count.
+    Graded like middle (arguable) where a row asks for corners.
+  - **Ground-ball rule** (`GB_RULE_BONUS` 0.005 x run scale toward the three down targets with fewer than 2 outs, a
+    runner on 1st or 3rd, under 3 balls and 2 strikes). Why it is a rule and not math: corner targets cost ~13 points
+    of balls at D3 and a down target gains only ~6 points of ground balls, and a weak ground ball is priced worse than a
+    weak pop-up, so the run math alone stays in the middle. DP spot at 1-1: down targets 22% -> 82%.
+- Result: **40/70 pass** (v0.9 engine on the same rows: 34). No row that passed on v0.9 fails now. Newly passing:
+  A7, D2, D3, D9, H1, I4, plus new rows J1, J4, J5, J6. J2 and J3 fail.
+- The 30 failures: **29 have 0% not-acceptable calls**; they miss the 70%-acceptable bar with calls graded arguable
+  (mostly middle or knee-high where corners were asked for). One row has not-acceptable calls: **F5** (0-1 after a
+  hard-hit foul on a changeup down-away: the same changeup down-away is 8.8% of calls, bar 5%). Patterns:
+  - corners asked, middle/knee-high called (B1, B5, B6, D10, I3, J3: acceptable 1-49%);
+  - two-strike counts asked for chase or the same pitch again, engine spreads to edges (C2, C3, C9, F2, G1, I2, J2);
+  - reads the hitter in ways the engine doesn't move enough on: late on the fastball -> fastball up/in (F6, 0%),
+    crowding -> fastball in (H4, 0%), out front on the slider -> stay soft (F7, 27%);
+  - pitch-quality rows (B2, B9, E4, E5, E7, E8, G2, G3) at 27-67%.
+
+### Learner safety switch (plan: retune only if failing)
+worlds_test 31/31 on the Step 7 engine; stage2_test D5 failed (noise-chaser caught 36/40, real learner wrongly
+switched off 2/40, bar <= 1). The wrong switch-offs were almost all a 15% changeup at 140-170 scored pitches; no margin
+or SE setting fixed that on tuning seeds without losing the noise-chaser. Retuned on seeds 700-739: min rows 150 ->
+175, 1.5 SE (was 1.645), margin 0.015 kept.
+
+| seeds | new: caught / wrongly off | old |
+|---|---|---|
+| tuning 700-739 | 35/40, 1 | 37/40, 2 |
+| D5 test 500-539 (held out) | **33/40, 0** | 36/40, 2 |
+| fresh 900-939 | 31/40, 2 | 33/40, 5 |
+| wrong grades 800-819 | 0/20 wrongly off | 0/20 |
+
+Over 120 seasons: caught 82.5% (was 88%), wrongly off 2.5% (was 7.5%). That sits at D5's bar (about 1 in 40), so the
+D5 check passing depends partly on the seeds; on the fresh 40 it would miss both bars. Reported, not tuned further.
+
+### Golden coverage
+`golden_v10.json` re-frozen (Step 7 changed outputs) with the plan's coverage: quad-keyed hitter damage on 39% of
+cases, the walk suggestion on all 250 full cases (it is never suggested in them; both values are compared), a shake-off
+list on 86 full cases (41 change the pick) with the call, why line and intent recomputed under it. Matchup and intent
+were already covered. `fast.py`/`fast.js` read the v1.0 inputs and compare the new outputs.
+
+### Release checks (on `c138d15`, plus the e2e reruns after `cf7fddb`)
+```
+scripts/test-app.sh: EXIT 0  (tests.py 44/44, explain 7/7, fast_parity 0 mismatches, golden_v10.js PASS (worst 7e-14),
+  build matches source, web/lib matches, web demo 2/2, learn 27, db 18, import 11, rails 31, schema 24, stage2 21,
+  worlds 31, pitch_rules 41, smoke, rules_e2e 20, v10_step1 6, v10_step3 7, v10_step5 10)
+golden_v10.py check: PASS (largest difference 0)
+tests_v09_followups.py: all passed; fuzz.py 300 50: 29/29
+other e2e: v08, v09_labels, v09_matchup, gameday, replay, d0, travel, stage2_e2e, db_e2e, security: all passed
+scripts/test-sql.sh: not runnable here (this machine has Postgres 16; the migrations use Postgres 17's MAINTAIN
+  privilege). GitHub CI's Postgres 17 job ran it on c138d15: passed.
+web: npm run typecheck clean after cf7fddb (CI had failed on the missing "Keep it down" spot type)
+```
+Engine `VERSION` is "1.0" (the saved setup label stays "v09"). `git tag v1.0` waits for Drew's sign-off on the
+read-through.
