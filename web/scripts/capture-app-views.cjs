@@ -35,7 +35,7 @@ const pick = (pairs) => { let x = rnd(), acc = 0; for (const [v, w] of pairs) { 
     // between innings and any other prompt the game screen raises: take the default way forward
     if (await click(/^(Take the field for the .*|Next inning|Continue|Done)$/)) { await page.waitForTimeout(150); continue; }
     if (process.env.MIXLOG) {
-      const m = await page.evaluate(() => { const c = G().call; if (!c) return null; const by = {}; for (const d of (c.dist || [])) by[d.pitch] = Math.round(((by[d.pitch] || 0) + d.prob) * 100); return { count: G().balls + "-" + G().strikes, call: c.pitch + " " + c.quad, mix: by }; });
+      const m = await page.evaluate(() => { const c = G().call; if (!c) return null; const by = {}; for (const d of (c.dist || [])) by[d.pitch] = (by[d.pitch] || 0) + d.prob; for (const k in by) by[k] = Math.round(by[k] * 100); return { count: G().balls + "-" + G().strikes, call: c.pitch + " " + c.quad, mix: by }; });
       if (m) console.log(pitches + 1, JSON.stringify(m));   // the pitch counts thrown are on the Data screen it writes
     }
     const key = pick([["b", 0.36], ["c", 0.17], ["s", 0.11], ["f", 0.18], ["x", 0.17], ["h", 0.01]]);
