@@ -430,10 +430,13 @@
 .mk-gd { padding: clamp(120px, 16vh, 200px) 0 clamp(100px, 14vh, 170px); }
 .mk-gd-body { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(40px, 5vw, 88px); align-items: start; }
 .mk-gd-steps { list-style: none; margin: 0; padding: 0; }
-.mk-gd-steps li { min-height: 80vh; min-height: 80svh; display: flex; flex-direction: column; justify-content: center; gap: 14px; opacity: 0.32; transition: opacity 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.mk-gd-steps li { min-height: 80vh; min-height: 80svh; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
 .mk-gd-steps li:first-child { min-height: 64vh; min-height: 64svh; justify-content: flex-start; padding-top: clamp(40px, 7vh, 72px); }
 .mk-gd-steps li:last-child { min-height: 100vh; min-height: 100svh; }
-.mk-gd-steps li[data-on="1"] { opacity: 1; }
+/* the steps not in the middle dim by colour, not opacity, so their text keeps a readable contrast (4.5:1 or better) */
+.mk-gd-steps h3, .mk-gd-steps p, .mk-gd-n { transition: color 0.5s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.mk-gd-steps li:not([data-on="1"]) h3, .mk-gd-steps li:not([data-on="1"]) p, .mk-gd-steps li:not([data-on="1"]) .mk-gd-n { color: var(--mk-text-3); }
+.mk-gd-steps li:not([data-on="1"]) .mk-gd-n { border-color: rgba(255, 255, 255, 0.12); }
 .mk-gd-n { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.26); font-weight: 650; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 .mk-gd-steps h3 { font-size: clamp(2rem, 3.2vw, 2.875rem); line-height: 1; letter-spacing: -0.035em; font-weight: 640; font-variation-settings: "wdth" 84; }
 .mk-gd-steps p { color: var(--mk-text-2); font-size: clamp(1.0625rem, 1.25vw, 1.1875rem); line-height: 1.5; max-width: 34ch; }
@@ -451,12 +454,14 @@
   .mk-gd-stage { display: none; }
   .mk-gd-steps { display: grid; gap: 64px; }
   .mk-gd-steps { margin-top: 48px; }
-  .mk-gd-steps li, .mk-gd-steps li:first-child, .mk-gd-steps li:last-child { min-height: 0; padding-top: 0; opacity: 1; }
+  .mk-gd-steps li, .mk-gd-steps li:first-child, .mk-gd-steps li:last-child { min-height: 0; padding-top: 0; }
+  .mk-gd-steps li:not([data-on="1"]) h3, .mk-gd-steps li:not([data-on="1"]) .mk-gd-n { color: var(--mk-chalk); }
+  .mk-gd-steps li:not([data-on="1"]) p { color: var(--mk-text-2); }
   .mk-gd-src-sm { display: block; margin-top: 32px; text-align: left; }
   .mk-gd-ipad-sm { display: block; margin-bottom: 14px; padding: 8px; border-radius: 20px; }
   .mk-gd-ipad-sm .mk-gd-screen { border-radius: 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .mk-gd-steps li, .mk-gd-screen img { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mk-gd-steps h3, .mk-gd-steps p, .mk-gd-n, .mk-gd-screen img { transition: none; } }
 
 /* the staff */
 /* a small illustrated screen at the top of each card: what that person actually sees */
