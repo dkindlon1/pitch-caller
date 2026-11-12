@@ -775,5 +775,7 @@ GitHub CI on b9b003e: all four jobs green (engine/parity/app checks, Supabase sy
   app, web shell with the offline game on a real local Supabase). The offline game had failed once at a790700
   ("impossible number of outs 3"); it has passed on every run since the inning-over guard (3617f01, b9b003e).
 ```
-Engine `VERSION` is "1.0" (the saved setup label stays "v09"). `git tag v1.0` waits for Drew's sign-off on the
-read-through.
+Engine `VERSION` is "1.0" (the saved setup label stays "v09").
+
+**Drew signed off on Nov 12: tag v1.0** at the commit that carries this line. This session can push branches but not
+tags (the push was refused with HTTP 403), so the tag is pushed from Drew's PC.
