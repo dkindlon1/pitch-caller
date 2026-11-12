@@ -35,14 +35,17 @@ const server = http.createServer((req, res) => {
     const slot = slotIdx(), pk = pKey(), kinds = [], during = [];
     for (let i = 0; i < 3; i++) {
       G().call = null; makeCall();
-      kinds.push(arsenal().find((x) => x.name === G().call.pitch).kind);
+      kinds.push(arsenal().find((x) => x.name === G().call.pitch).kind + "|" + G().call.quad);
       during.push(JSON.stringify(situation().matchup));
       record({ result: "whiff" });
       if (i === 0) hk0 = hitterKey();   // his key, once the game has its id (the first pitch gives it one)
     }
     const hk = hk0;
-    const want = {}; for (const k of kinds) want["succ|" + k] = (want["succ|" + k] || 0) + 1;
-    return { slot, hk, pk, want, during, kept: ((G().mm || {})[pk] || {})[hk] || null, nextSlot: slotIdx(), nextMM: situation().matchup };
+    // v1.0 Step 7: also where it worked ('succ|KIND|spot', the went-back rule; no location logged, so the called spot)
+    const want = {};
+    for (const ks of kinds) for (const k of ["succ|" + ks.split("|")[0], "succ|" + ks]) want[k] = (want[k] || 0) + 1;
+    const sortKeys = (o) => o && Object.fromEntries(Object.entries(o).sort());
+    return { slot, hk, pk, want: sortKeys(want), during, kept: sortKeys(((G().mm || {})[pk] || {})[hk] || null), nextSlot: slotIdx(), nextMM: situation().matchup };
   });
   check(r2.during.every((x) => x === "{}"), `during his first trip the engine sees no matchup record (${r2.during.join(", ")})`);
   check(JSON.stringify(r2.kept) === JSON.stringify(r2.want), `kept for him: ${JSON.stringify(r2.kept)} (expected ${JSON.stringify(r2.want)})`);
@@ -89,6 +92,21 @@ const server = http.createServer((req, res) => {
   check(r5.strikesNow === 2, `two more whiffs recorded (count now has ${r5.strikesNow} strikes); still the same trip, record unchanged until it ends`);
   const r5b = await page.evaluate(() => JSON.stringify(((G().mm || {})[pKey()] || {})[hitterKey()] || {}));
   check(r5b === r5.before, `record mid-trip unchanged: ${r5b}`);
+
+  console.log("6. v1.0 Step 7: a foul straight back reaches the engine as 'he was on it' (with hitter reads on), a plain foul doesn't");
+  const r6 = await page.evaluate(() => {
+    const keep = S.setup.inputs, out = {};
+    S.setup.inputs = 3;
+    nextBatter(); G().call = null; makeCall(); const c = G().call; record({ result: "foul", read: "back" });
+    out.back = G().last; out.sitLast = situation().last; out.want = [c.pitch, c.quad];
+    G().call = null; makeCall(); record({ result: "foul", read: "pull" }); out.pull = G().last;
+    S.setup.inputs = 1; G().call = null; makeCall(); record({ result: "foul", read: "back" }); out.off = G().last;
+    S.setup.inputs = keep;
+    return out;
+  });
+  check(r6.back.length === 4 && r6.back[3] === "back" && r6.back[0] === r6.want[0] && r6.back[1] === r6.want[1] &&
+        JSON.stringify(r6.sitLast) === JSON.stringify(r6.back) && r6.pull.length === 3 && r6.off.length === 3,
+        `straight back: ${JSON.stringify(r6.back)} (engine sees ${JSON.stringify(r6.sitLast)}); pulled: ${JSON.stringify(r6.pull)}; reads off: ${JSON.stringify(r6.off)}`);
 
   check(!errs.length, `no page errors${errs.length ? ": " + errs.slice(0, 2).join(" | ") : ""}`);
   await browser.close(); server.close();

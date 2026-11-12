@@ -703,30 +703,41 @@ what a great pitching coach would call; the hitting sim is one input, and the 0.
 Commits `9496c98` (read-through, knee-high target, ground-ball rule), `c138d15` (learner switch, golden, VERSION 1.0),
 `cf7fddb` (website spot type, no call after the third out).
 
-### Coaching read-through (`readthrough/scenarios_v10.json`, 70 rows; the main check per Drew, Nov 11)
-- Built from v0.9's graded rows with Drew's Nov 11 regrades: an off-speed strike is fine in D5/D8/F3, G4 at 56%
-  fastballs is fine, I1 at 32% fastball middle is fine, H1's fastball middle is acceptable, the J5 changeup strike is
-  fine, a knee-high strike is fine in C1/H2/D7. Six new rows, one per fixed issue (J1 re-solve after a wild pitch, J2
-  chase taken, J3 HS 5th-inning big spot, J4 repeat after a take, J5/J6 3-1 mixes).
-- Drew: "middle" means "throw it somewhere in the strike zone", and the engine should aim down more in double-play and
-  runner-on-3rd spots. Two engine changes, both Drew's choice:
-  - **Knee-high target `down-middle`** ("Keep it down", knee-high over the plate). Lands in the zone between a corner
-    and middle (zone share corner 0.380 < knee-high 0.451 < middle 0.522), as low as the down corners; in every count.
-    Graded like middle (arguable) where a row asks for corners.
-  - **Ground-ball rule** (`GB_RULE_BONUS` 0.005 x run scale toward the three down targets with fewer than 2 outs, a
-    runner on 1st or 3rd, under 3 balls and 2 strikes). Why it is a rule and not math: corner targets cost ~13 points
-    of balls at D3 and a down target gains only ~6 points of ground balls, and a weak ground ball is priced worse than a
-    weak pop-up, so the run math alone stays in the middle. DP spot at 1-1: down targets 22% -> 82%.
-- Result: **40/70 pass**. No row that passed on v0.9 fails now. Newly passing:
-  A7, D2, D3, D9, H1, I4, plus new rows J1, J4, J5, J6. J2 and J3 fail.
-- The 30 failures: **29 have 0% not-acceptable calls**; they miss the 70%-acceptable bar with calls graded arguable
-  (mostly middle or knee-high where corners were asked for). One row has not-acceptable calls: **F5** (0-1 after a
-  hard-hit foul on a changeup down-away: the same changeup down-away is 8.8% of calls, bar 5%). Patterns:
-  - corners asked, middle/knee-high called (B1, B5, B6, D10, I3, J3: acceptable 1-49%);
-  - two-strike counts asked for chase or the same pitch again, engine spreads to edges (C2, C3, C9, F2, G1, I2, J2);
-  - reads the hitter in ways the engine doesn't move enough on: late on the fastball -> fastball up/in (F6, 0%),
-    crowding -> fastball in (H4, 0%), out front on the slider -> stay soft (F7, 27%);
-  - pitch-quality rows (B2, B9, E4, E5, E7, E8, G2, G3) at 27-67%.
+### Coaching read-through (`readthrough/scenarios_v10.json`, 71 rows; the main check per Drew, Nov 11): **71/71**
+- Built from v0.9's graded rows with Drew's first-pass regrades (D5/D8/F3 off-speed strikes, G4 56% fastballs, I1 32%
+  fastball middle, H1 fastball middle, J5 changeup strike, C1/H2/D7 knee-high strike) and one new row per fixed issue
+  (J1 re-solve after a wild pitch, J2 chase taken, J3 HS 5th-inning big spot, J4 repeat after a take, J5/J6 3-1 mixes).
+- First engine pass (Drew: "middle" means "somewhere in the strike zone"; aim down more in DP and runner-on-3rd spots):
+  - **Knee-high target `down-middle`** ("Keep it down"). Lands in the zone between a corner and middle (zone share
+    corner 0.380 < knee-high 0.451 < middle 0.522), as low as the down corners; in every count.
+  - **Ground-ball rule** (`GB_RULE_BONUS` 0.005 x run scale toward the down targets with fewer than 2 outs, a runner on
+    1st or 3rd, under 3 balls and 2 strikes). The run math alone stays in the middle there (corners cost ~13 points of
+    balls at D3, a down target gains ~6 points of ground balls, and a weak grounder is priced worse than a weak pop-up).
+  - Result 40/70; 29 of the 30 failures had no not-acceptable calls.
+- Second pass, Drew going through the 30 failures by group and row:
+  - Regrades: middle/knee-high acceptable in the corner rows (B1, B5, B6, D10, I3, J3) and at 1-2 (C3, J2; C2, F2, G1,
+    G3 "same rule"; C10 by the same rule); quality rows lean enough, secondary choices acceptable (B2, B9, E4, E5, E7,
+    G2, F8); edges acceptable at two strikes (C2, G1, F2 with a floor: the repeat and chase stay >= 15% of calls); a
+    third fastball fine (C9); slider for a strike with a runner on 3rd (C4, D3); curveball for a strike or chase (E8,
+    its "corner not acceptable" withdrawn); weak slider down-away fine (G3). F5's "hit hard foul" is now the app's foul
+    read "straight back" in its input. New row J7: a plus changeup goes away, a plus slider to an opposite-side hitter
+    is a back-foot slider.
+  - **Not-landing rule** (Drew: "a pitch that isn't landing doesn't just have to be a chase pitch; it can still be used
+    in an up count, as a setup pitch, or just for a strike to see if he can gain confidence"; "first-pitch strike is
+    super important"): the pitch is held back only when he is behind in the count or at 0-0. Elsewhere it is callable
+    at any spot, priced by today's landing. Before, it was held back at every count and with two strikes left only the
+    chase spot.
+  - **Coaching reads** (Drew: fix the hitter reads), each a named soft credit in `cost08` (`COACH_RULE`, runs x run
+    scale), sized as the smallest round value that passes its row; share of the read's calls with the rule off -> on
+    (tests.py): late on the fastball -> fastball up/in (0.027; 0 -> 84%); out front on soft -> soft and down (0.02;
+    0 -> 79%); crowds -> fastball in (0.03; 0 -> 87%); fouled straight back -> not that pitch at that spot (0.005 cost;
+    9 -> 0%); hit hard on one side -> that pitch to the other side (0.01; 0 -> 24%); a whiff or called strike at a spot
+    on an earlier trip -> go back to it (0.03; 11 -> 81%); landing clearly better than his normal -> lean on it (0.03;
+    21 -> 51%); plus changeup away and plus back-foot slider to an opposite-side hitter (0.015; 10 -> 74%).
+  - App: a foul read "straight back" (hitter reads on) passes as the last pitch's fourth element; the matchup memory
+    also records where a pitch got its whiff or called strike (`succ|KIND|spot`). v09_matchup_e2e checks both.
+- Plan note: section 5 said no new terms in v1.0. The ground-ball rule and the coaching reads are Drew's calls after
+  the read-through, made as named coach rules (not fitted terms), each with its own row and test.
 
 ### Learner safety switch (plan: retune only if failing)
 worlds_test 31/31 on the Step 7 engine; stage2_test D5 failed (noise-chaser caught 36/40, real learner wrongly
@@ -750,17 +761,18 @@ cases, the walk suggestion on all 250 full cases (it is never suggested in them;
 list on 86 full cases (41 change the pick) with the call, why line and intent recomputed under it. Matchup and intent
 were already covered. `fast.py`/`fast.js` read the v1.0 inputs and compare the new outputs.
 
-### Release checks (on `c138d15`, plus the e2e reruns after `cf7fddb`)
+### Release checks (on `b9b003e` plus the test updates in the next commit)
 ```
-scripts/test-app.sh: EXIT 0  (tests.py 44/44, explain 7/7, fast_parity 0 mismatches, golden_v10.js PASS (worst 7e-14),
-  build matches source, web/lib matches, web demo 2/2, learn 27, db 18, import 11, rails 31, schema 24, stage2 21,
-  worlds 31, pitch_rules 41, smoke, rules_e2e 20, v10_step1 6, v10_step3 7, v10_step5 10)
-golden_v10.py check: PASS (largest difference 0)
-tests_v09_followups.py: all passed; fuzz.py 300 50: 29/29
-other e2e: v08, v09_labels, v09_matchup, gameday, replay, d0, travel, stage2_e2e, db_e2e, security: all passed
-scripts/test-sql.sh: not runnable here (this machine has Postgres 16; the migrations use Postgres 17's MAINTAIN
-  privilege). GitHub CI's Postgres 17 job ran it on c138d15: passed.
-web: npm run typecheck clean after cf7fddb (CI had failed on the missing "Keep it down" spot type)
+scripts/test-app.sh: EXIT 0  (tests.py 45/45, explain 7/7, fast_parity 0 mismatches, golden_v10.js PASS, build matches
+  source, web/lib matches, web demo 2/2, learn 27, db 18, import 11, rails 31, schema 24, stage2 21 (D5 33/40 caught,
+  0/40 wrongly off), worlds 31, pitch_rules 41, smoke, rules_e2e 20, v10_step1 6, v10_step3 7, v10_step5 10)
+golden_v10.py check: PASS (largest difference 0); tests_v09_followups.py: all passed; fuzz.py 300 50: 29/29
+other e2e: v08, v09_labels, v09_matchup (updated for the spot keys, + a straight-back foul check), gameday, replay, d0,
+  travel, stage2_e2e, db_e2e, security: all passed
+web: npm run typecheck clean
+scripts/test-sql.sh: not runnable here (Postgres 16 on this machine; the migrations need Postgres 17's MAINTAIN). GitHub
+  CI's Postgres 17 job ran it on c138d15 and on 05b3a9e: passed. The web shell job (offline game on a real local
+  Supabase) passed on 05b3a9e after the inning-over guard.
 ```
 Engine `VERSION` is "1.0" (the saved setup label stays "v09"). `git tag v1.0` waits for Drew's sign-off on the
 read-through.
