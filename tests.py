@@ -463,6 +463,32 @@ check("v1.0 Step 5 landing fit: LAND_K and LAND_GAIN are the Statcast fit (shipp
       f"K {_e.LAND_K} (fit {lf['K']}), GAIN {_e.LAND_GAIN} (fit {lf['implied_gain']:.2f}), held-out {lf['test_gain'] / lf['test_sd']:+.1f} SD;"
       f" block keeps K {_e.LAND_BLOCK_K}")
 
+# ---------------------------------------------------------------- v1.0 Step 7: down-middle and the ground-ball rule
+s7 = Situation(1, 1, 1, E, level="college_d3")
+zm, zd, zc = (landing(fb_, q, s7) for q in ("middle", "down-middle", "down-away"))
+inz = lambda z: z["heart"] + 0.5 * z["edge"]
+ok_dm = (inz(zc) < inz(zd) < inz(zm) and _e.y_target("down-middle", "FB") == _e.y_target("down-away", "FB")
+         and _e.target_height("down-middle", "FB") == "down" and "down-middle" in _e.targets(3, 1)
+         and _e.loc_quad((3, 2), "FB", True) == "down-middle")
+check("v1.0 Step 7 down-middle (knee-high over the plate): lands in the zone between a corner and middle, as low as the "
+      "down corners, allowed in every count, the low center cell of the logging grid",
+      ok_dm, f"zone share corner {inz(zc):.3f} < down-middle {inz(zd):.3f} < middle {inz(zm):.3f}")
+dp = Situation(1, 1, 0, R1, level="college_d3")
+down_ = lambda p_, q_: q_ in _e.GB_RULE_TARGETS
+d_on = _cnt_shares(AVG3, _rp(dp, balls=0, strikes=0), down_)
+_saved = _e.GB_RULE_BONUS
+try:
+    _e.GB_RULE_BONUS = 0.0
+    d_off = _cnt_shares(AVG3, _rp(dp, balls=0, strikes=0), down_)
+finally:
+    _e.GB_RULE_BONUS = _saved
+gb_spots = [_e.ground_ball_spot(x) for x in (dp, _rp(dp, outs=2), _rp(dp, balls=3), _rp(dp, strikes=2),
+                                             Situation(1, 1, 1, R3), Situation(1, 1, 1, E))]
+check("v1.0 Step 7 ground-ball rule (Drew): double play on, 1-1: most calls go down (a coach rule on top of the run math); "
+      "off with 2 outs, 3 balls, 2 strikes or nobody on",
+      d_on[(1, 1)] >= 0.70 > d_off[(1, 1)] and gb_spots == [True, False, False, False, True, False],
+      f"1-1, runner on 1st, 0 outs: down targets {d_off[(1, 1)]:.0%} on the run math alone -> {d_on[(1, 1)]:.0%} with the rule")
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 # exit non-zero when anything failed, so a direct run (a hook, a pre-commit, another agent) cannot read a pass
 # from $? while checks are failing. scripts/run-check.sh also parses the line above, so CI is unaffected.

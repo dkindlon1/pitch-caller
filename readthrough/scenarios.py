@@ -1,5 +1,6 @@
-"""v0.9 Step 1: grade an engine version against the frozen scenario suite (readthrough/scenarios_v09.json).
-usage (repo root): python3 readthrough/scenarios.py [v09] [--out results/scenarios_<tag>.json]
+"""Grade the engine against a frozen coaching read-through: readthrough/scenarios_v10.json (v1.0, the default) or the
+historical v0.9 suite (--suite v09).
+usage (repo root): python3 readthrough/scenarios.py [--suite v10|v09] [--out results/scenarios_<tag>.json]
 Every row's full call spread is sorted into Acceptable / Arguable / Not acceptable (see make_scenarios_v09.py) and
 graded by the frozen pass rule. Refuses to run if the scenario file no longer matches its recorded sha256."""
 import hashlib, json, os, sys
@@ -9,11 +10,14 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 import engine as e
 
-PATH = os.path.join(HERE, "scenarios_v09.json")
-SHA = os.path.join(HERE, "scenarios_v09.sha256")
+SUITE = sys.argv[sys.argv.index("--suite") + 1] if "--suite" in sys.argv else "v10"
+PATH = os.path.join(HERE, f"scenarios_{SUITE}.json")
+SHA = os.path.join(HERE, f"scenarios_{SUITE}.sha256")
 CORNERS = ["up-in", "up-away", "down-in", "down-away"]
-GROUPS = {"zone": CORNERS + ["middle"], "corners": CORNERS, "down": ["down-in", "down-away"], "up": ["up-in", "up-away"],
-          "away": ["up-away", "down-away"], "in": ["up-in", "down-in"], "any": CORNERS + ["middle", "chase"]}
+# v1.0 Step 7: down-middle (knee-high over the plate) is in the zone and down; it is not a corner, not in or away
+GROUPS = {"zone": CORNERS + ["middle", "down-middle"], "corners": CORNERS, "down": ["down-in", "down-away", "down-middle"],
+          "up": ["up-in", "up-away"], "away": ["up-away", "down-away"], "in": ["up-in", "down-in"],
+          "any": CORNERS + ["middle", "chase", "down-middle"]}
 MODES = ("v09",)        # one engine (Nov 6); the name is kept so saved results read the same
 
 
@@ -120,12 +124,12 @@ def report(mode, res):
 def main():
     argv = sys.argv[1:]
     out_path = argv[argv.index("--out") + 1] if "--out" in argv else None
-    modes = [a for a in argv if not a.startswith("--") and a != out_path] or ["v09"]
+    modes = [a for a in argv if not a.startswith("--") and a not in (out_path, SUITE)] or ["v09"]
     bad = [m for m in modes if m not in MODES]
     if bad:
         raise SystemExit(f"unknown engine mode(s) {bad}; expected {list(MODES)}")
     doc, h = load()
-    print(f"scenario suite sha256 {h} ({len(doc['rows'])} rows)")
+    print(f"scenario suite {SUITE}, sha256 {h} ({len(doc['rows'])} rows)")
     out = {"sha256": h, "results": {}}
     for m in modes:
         res = run(m, doc)

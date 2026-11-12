@@ -591,7 +591,7 @@ const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4 };                 // the standard cat
 const KCOLOR = { FB: "var(--fb)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
 const SHAPE_OPTS = { FB: ["ride", "run", "sink", "cut", ""], SL: ["tight", "sweeper", ""], CB: ["loopy", "sharp", ""], CH: ["fade", "drop", ""] };
 const SLOT_OPTS = ["over the top", "high three-quarter", "three-quarter", "low three-quarter", "sidearm", "submarine"];
-const LOC = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase" };
+const LOC = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 const GLYPH = { ball: "•", cstrike: "✓", whiff: "✓", foul: "F", play: "X", hbp: "H" };
 
 function sampleSetup() {
@@ -1057,7 +1057,7 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 const pct = (x) => Math.round(x * 100) + "%";
 const ord = (n) => n + (["th", "st", "nd", "rd"][((n % 100) - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
-const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase it" };
+const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase it", "down-middle": "Keep it down" };
 const spotLower = (q) => SPOT[q].toLowerCase();
 let fixing = false;
 
@@ -1195,7 +1195,7 @@ function callPanel() {
   const why = c.coach
     ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs more than the engine's best call here.` : "."]
     : [c.v08 && c.why ? h("b", { class: "whyline" }, c.why + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
-       c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
+       c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "down-middle" ? " Knee-high, over the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
   const call = h("div", { class: "call" },
     h("div", { class: "call-main" },
@@ -1250,7 +1250,7 @@ function zoneSVG(c) {
   const kind = kindOf(c.pitch);
   const VW = 260, X = 70, Y = 44, W = 120, H = 150, cw = W / 3, ch = H / 3;
   const F = `font-family="Saira, sans-serif"`;
-  const cell = (q) => { const a = inLeft ? 0 : 2, b = inLeft ? 2 : 0; return { "up-in": [a, 0], "up-away": [b, 0], "down-in": [a, 2], "down-away": [b, 2], middle: [1, 1] }[q]; };
+  const cell = (q) => { const a = inLeft ? 0 : 2, b = inLeft ? 2 : 0; return { "up-in": [a, 0], "up-away": [b, 0], "down-in": [a, 2], "down-away": [b, 2], middle: [1, 1], "down-middle": [1, 2] }[q]; };
   const at = (q, k) => {
     if (q === "chase") return E.isOffspeed(k) ? [inLeft ? X + W + 26 : X - 26, Y + H + 22] : [X + W / 2, Y - 24];
     const [cx, cy] = cell(q); return [X + cw * cx + cw / 2, Y + ch * cy + ch / 2];
@@ -1581,7 +1581,7 @@ function zonePanel(rows) {
   const max = Math.max(1, ...E.QUADS.map((q) => by(q).length));
   // Catcher's view against a right-handed hitter: inside is on the left. Lefties are mirrored into the same frame.
   const X = 40, Y = 30, W = 180, H = 210, cw = W / 3, chh = H / 3;
-  const cells = { "up-in": [0, 0], "up-away": [2, 0], middle: [1, 1], "down-in": [0, 2], "down-away": [2, 2] };
+  const cells = { "up-in": [0, 0], "up-away": [2, 0], middle: [1, 1], "down-in": [0, 2], "down-away": [2, 2], "down-middle": [1, 2] };
   let s = `<svg viewBox="0 0 260 300" role="img" aria-label="Where the pitches went, by target">`;
   s += `<rect x="${X - 26}" y="${Y - 22}" width="${W + 52}" height="${H + 44}" rx="12" fill="none" stroke="var(--stroke-2)" stroke-dasharray="3 5"/>`;
   s += `<rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="var(--rule)"/>`;

@@ -8,15 +8,15 @@
   "use strict";
   let D = null;                       // tables, set by init(data)
 
-  const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"];
+  const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle", "down-middle"];   // v1.0 Step 7: down-middle = "keep it down"
   // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
   // v0.8 (Drew's rule): attack the zone at 2-2 too
   const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
-  const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0 };
-  const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3 };
+  const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0, "down-middle": -1.5 };
+  const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3, "down-middle": 0.5 };
   // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
   const evAdj = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? -3.0 : 3.0) : EV_ADJ[q]);
   const hbpLoc = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? 0.8 : 0.3) : HBP_LOC[q]);   // FB chase 0.3: Drew, Nov 10
@@ -152,6 +152,7 @@
     let z0, sl, z;
     if (q === "chase") { z0 = { heart: 0.05, edge: 0.24, off: 0.57, noncomp: 0.14 }; sl = { heart: -0.01, edge: 0.0, off: 0.04, noncomp: -0.03 }; }
     else if (q === "middle") { z0 = { heart: 0.50, edge: 0.30, off: 0.13, noncomp: 0.07 }; sl = { heart: 0.03, edge: 0.0, off: -0.02, noncomp: -0.01 }; }
+    else if (q === "down-middle") { z0 = { heart: 0.38, edge: 0.36, off: 0.175, noncomp: 0.085 }; sl = { heart: 0.0, edge: 0.04, off: -0.025, noncomp: -0.015 }; }   // v1.0 Step 7
     else { z0 = { heart: 0.26, edge: 0.42, off: 0.22, noncomp: 0.10 }; sl = { heart: -0.03, edge: 0.08, off: -0.03, noncomp: -0.02 }; }
     if (sc === 1.0) {   // the v0.6 straight-line shares, exactly
       z = {}; for (const k of ZONES) z[k] = z0[k] + sl[k] * d;
@@ -201,6 +202,7 @@
       case "down-in": return [7 * inside, 22];
       case "down-away": return [-7 * inside, 22];
       case "middle": return [0, 30];
+      case "down-middle": return [0, 22];
       default: return offspeed ? [-10 * inside, 14] : [0, 46];
     }
   }
@@ -276,7 +278,7 @@
   const POWER_HR = 0.112;   // v1.0 #11/#28: one power-grade point = one SD of hard-hit share
   const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
-    if ((z !== "heart" && z !== "edge") || q === "middle" || q === "chase") return 0.0;
+    if ((z !== "heart" && z !== "edge") || q === "middle" || q === "chase" || q === "down-middle") return 0.0;   // no side over the plate
     const [h, side] = q.split("-");
     const b = SIDE[what][(isOffspeed(p.kind) ? "OS" : "FB") + "|" + h + "|" + (s.same_side ? "same" : "opp")];
     return (RHO_L[s.level] ?? 1.0) * (side === "in" ? 0.5 : -0.5) * b;
@@ -483,7 +485,7 @@
     RUN_GAME = {}, WE = null;
   let GRADES_OVERRIDE = null;
   const HEIGHTS = ["up", "middle", "down"];            // amendment A1
-  const Y_TARGET = { "up-in": 3.2, "up-away": 3.2, middle: 2.5, "down-in": 1.8, "down-away": 1.8 };
+  const Y_TARGET = { "up-in": 3.2, "up-away": 3.2, middle: 2.5, "down-in": 1.8, "down-away": 1.8, "down-middle": 1.8 };
   const V_CENTERS = [1.00, 0.94, 0.88], Y_CENTERS = [3.0, 2.0];
   const QRE_ITERS = 3000, QRE_TOL = 1e-3, QRE_WMIN = 0.002, TAPER = 0.2;
   const B_TYPES = ["GB", "LD", "FB", "PU"];
@@ -849,6 +851,7 @@
     const [r, c] = cell;
     if (r === 2 && c === 2) return "middle";
     if ((r === 4 && kind !== "FB") || (r === 0 && kind === "FB")) return "chase";
+    if (c === 2 && r >= 3) return "down-middle";   // low over the plate (v1.0 Step 7)
     const inside = batterRight ? c <= 1 : c >= 3;
     return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
   }
@@ -944,6 +947,9 @@
     let n = 0; for (const x of QUADS) if (targetHeight(x, p.kind) === h) n += m["hard|" + p.kind + "|" + x] || 0;
     return n >= MASHED_N;
   }
+  // v1.0 Step 7: mirror of engine.py's ground-ball rule (a coach rule, not a fit)
+  const GB_RULE_BONUS = 0.005, GB_RULE_TARGETS = ["down-in", "down-away", "down-middle"];
+  const groundBallSpot = (s) => s.outs < 2 && (s.bases[0] || s.bases[2]) && s.balls < 3 && s.strikes < 2;
   function costFromP(p, q, s, tab, look, P, myopic) {
     const b = s.balls, k = s.strikes, o = s.outs, B = s.bases;
     const nl = myopic ? tab.h0 : lookUpdate(look, p, q, s);
@@ -958,6 +964,7 @@
     for (const c of ["weak", "solid", "hard"]) v += P[c] * ipvCached(tab, c, p, q, s);
     if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
     if (s.matchup && mashed(p, q, s)) v += MASHED_PENALTY * runScale(s.level);   // v1.0 D3: mashed twice at this height today
+    if (GB_RULE_TARGETS.includes(q) && groundBallSpot(s)) v -= GB_RULE_BONUS * runScale(s.level);   // v1.0 Step 7: ground-ball rule
     if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
@@ -1290,7 +1297,7 @@
       let topT = null; for (const n in byT) if (topT === null || byT[n] > byT[topT]) topT = n;
       if (topT !== p.name) line = `He's sitting ${topT.toLowerCase()} (${Math.round(100 * byT[topT])}%)`;
       else {
-        let topH = null; for (const j in byH) if (!(q.startsWith(j) || (j === "middle" && q === "middle")) && (topH === null || byH[j] > byH[topH])) topH = j;
+        let topH = null; for (const j in byH) if (j !== targetHeight(q, p.kind) && (topH === null || byH[j] > byH[topH])) topH = j;
         line = `He's looking ${topH} (${Math.round(100 * byH[topH])}%)`;
       }
     } else if (term === "situation") line = (s.bases[2] && s.win && Math.abs(s.margin) <= 1) ? "Tying run on third: need a strikeout or a ground ball"

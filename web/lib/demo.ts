@@ -5,8 +5,8 @@ import type { EPitch, Pick } from "./engine";
 
 type Engine = typeof import("./engine").default;
 export type Result = "ball" | "cstrike" | "whiff" | "foul" | "out" | "hit" | "hbp";
-export type Spot = "Up and in" | "Up and away" | "Down and in" | "Down and away" | "Get it over" | "Chase";
-export const SPOT: Record<string, Spot> = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase" };
+export type Spot = "Up and in" | "Up and away" | "Down and in" | "Down and away" | "Get it over" | "Chase" | "Keep it down";
+export const SPOT: Record<string, Spot> = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 export const SIGN: Record<string, number> = { FB: 1, CB: 2, SL: 3, CH: 4 };
 export const RESULT_LABEL: Record<Result, string> = { ball: "Ball", cstrike: "Called strike", whiff: "Swing and miss", foul: "Foul", out: "In play, out", hit: "Base hit", hbp: "Hit by pitch" };
 
@@ -54,7 +54,7 @@ export function reason(c: Call, g: Game): string {
   const pct = (x: number) => `${Math.round(x * 100)}%`;
   const others = c.mix.filter((m) => !(m.pitch === c.pitch && m.spot === c.spot)).slice(0, 2);
   let s = `Picked at random from the mix, where it comes up ${pct(c.prob)} of the time.`;
-  if (c.quad === "middle") s += " Aim at the heart of the plate."; else if (c.quad === "chase") s += " Just off the plate, not in the dirt.";
+  if (c.quad === "middle") s += " Aim at the heart of the plate."; else if (c.quad === "down-middle") s += " Knee-high, over the plate."; else if (c.quad === "chase") s += " Just off the plate, not in the dirt.";
   if (others.length) s += ` Also in the mix: ${others.map((m) => `${m.pitch.toLowerCase()} ${m.spot.toLowerCase()} (${pct(m.prob)})`).join(", ")}.`;
   if (g.balls === 3 && g.strikes < 2) s += " No chase pitch at 3-0 or 3-1.";
   return s;

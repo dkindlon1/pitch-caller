@@ -93,7 +93,7 @@ def power_hr_shift(s, gr):
 
 def side_shift(p, q, s, z, what):
     """Logit shift for 'swing' / 'whiff' / 'hard' at target q, landing band z (heart and edge only)."""
-    if z not in ("heart", "edge") or q in ("middle", "chase"):
+    if z not in ("heart", "edge") or q in ("middle", "chase", "down-middle"):     # no side: over the plate
         return 0.0
     h, side = q.split("-")
     b = SIDE[what][("OS" if is_offspeed(p.kind) else "FB") + "|" + h + "|" + ("same" if s.same_side else "opp")]
@@ -131,7 +131,21 @@ def mashed(p, q, s):
     return sum(m.get("hard|" + p.kind + "|" + x, 0) for x in QUADS if target_height(x, p.kind) == h) >= MASHED_N
 
 
-Y_TARGET = {"up-in": 3.2, "up-away": 3.2, "middle": 2.5, "down-in": 1.8, "down-away": 1.8}
+# v1.0 Step 7 (Drew, Nov 11): the coach's ground-ball rule. With a double play on (runner on 1st, fewer than 2 outs) or a
+# runner on 3rd with fewer than 2 outs, and fewer than 3 balls and 2 strikes, a down target in the zone gets a soft
+# credit (runs x run_scale) in cost08. A RULE, not a fit: the run math alone keeps the middle on top in these spots
+# (aiming low adds ~6 points of balls, and a weak grounder is worse than a weak pop-up), and Drew wants a coach's
+# "get a ground ball" call there. With three balls the goal is a strike, with two strikes the strikeout.
+GB_RULE_BONUS = 0.005
+GB_RULE_TARGETS = ("down-in", "down-away", "down-middle")
+
+
+def ground_ball_spot(s):
+    b1, _, b3 = s.bases
+    return s.outs < 2 and (b1 or b3) and s.balls < 3 and s.strikes < 2
+
+
+Y_TARGET = {"up-in": 3.2, "up-away": 3.2, "middle": 2.5, "down-in": 1.8, "down-away": 1.8, "down-middle": 1.8}
 HEIGHTS = ("up", "middle", "down")   # amendment A1: middle is its own sit option (spec had up/down with middle = half)
 
 
@@ -199,7 +213,10 @@ def V(balls, strikes, outs, bases, cv=None, level="mlb"):
 # Inputs
 # ---------------------------------------------------------------------------
 
-QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"]
+# v1.0 Step 7 (Drew, Nov 11): "down-middle" is the coach's "keep it down": knee-high over the plate. It sits near one
+# edge of the zone (the bottom) where a corner sits near two and the middle near none, so it misses between the two;
+# it is as low as the down corners, so it gets their ground balls. Kept last so every older target keeps its place.
+QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle", "down-middle"]
 NO_CHASE = {(3, 0), (3, 1)}     # v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
 
 
@@ -225,7 +242,8 @@ LEVEL = {  # c_L confidence weight, h_L hitter-read weight, confidence cutoff, f
 #   wild  level wildness: share of in-zone landing mass that misses off the plate instead
 OUTCOME_ADJ = {lvl: dict(cmd=0.0, zsw=0.0, osw=0.0, wz=0.0, wo=0.0, cs=0.0, hbp=0.0, wild=0.0)
                for lvl in ("hs", "college", "college_d1", "college_d3", "mlb")}
-HBP_LOC = {"up-in": 1.6, "down-in": 1.6, "chase": 0.8, "middle": 0.5, "up-away": 0.3, "down-away": 0.3}
+HBP_LOC = {"up-in": 1.6, "down-in": 1.6, "chase": 0.8, "middle": 0.5, "up-away": 0.3, "down-away": 0.3,
+           "down-middle": 0.5}     # down-middle: over the plate, like middle
 try:
     from outcome_params import OUTCOME_FIT
     for _lvl, _d in OUTCOME_FIT.items():
@@ -247,7 +265,7 @@ DEFAULT_VELO = {"FB": 85, "SL": 77, "CB": 71, "CH": 77}   # mph, placeholder col
 # [R7] Effective velocity: how much faster (+) or slower (-) a pitch looks by location.
 # Up and in plays fastest, down and away slowest (Husband: ~3 mph per 6 in. lateral).
 EV_ADJ = {"up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0,
-          "middle": 0.0, "chase": -3.0}
+          "middle": 0.0, "chase": -3.0, "down-middle": -1.5}     # down-middle: the down half of the table, no side
 
 
 def ev_adj(p, q):
@@ -496,6 +514,8 @@ def landing(p: Pitch, q: str, s: Situation):
         z0, sl = {"heart": 0.05, "edge": 0.24, "off": 0.57, "noncomp": 0.14}, {"heart": -0.01, "edge": 0.0, "off": 0.04, "noncomp": -0.03}
     elif q == "middle":   # "get it over": aim at the heart
         z0, sl = {"heart": 0.50, "edge": 0.30, "off": 0.13, "noncomp": 0.07}, {"heart": 0.03, "edge": 0.0, "off": -0.02, "noncomp": -0.01}
+    elif q == "down-middle":   # v1.0 Step 7 "keep it down": one zone edge near, halfway between middle and a corner
+        z0, sl = {"heart": 0.38, "edge": 0.36, "off": 0.175, "noncomp": 0.085}, {"heart": 0.0, "edge": 0.04, "off": -0.025, "noncomp": -0.015}
     else:
         z0, sl = {"heart": 0.26, "edge": 0.42, "off": 0.22, "noncomp": 0.10}, {"heart": -0.03, "edge": 0.08, "off": -0.03, "noncomp": -0.02}
     if sc == 1.0:   # the v0.6 straight-line shares, exactly
@@ -603,7 +623,7 @@ def target_xy(q: str, same_side: bool, offspeed: bool):
     """Plate target in inches, catcher's view: x + = pitcher's arm side, z = height."""
     inside = 1 if same_side else -1          # for a same-side hitter, inside is the arm side
     t = {"up-in": (7 * inside, 38), "up-away": (-7 * inside, 38), "down-in": (7 * inside, 22),
-         "down-away": (-7 * inside, 22), "middle": (0, 30),
+         "down-away": (-7 * inside, 22), "middle": (0, 30), "down-middle": (0, 22),
          "chase": ((-10 * inside, 14) if offspeed else (0, 46))}[q]
     return t
 
@@ -1237,6 +1257,8 @@ def loc_quad(cell, kind, batter_right):
         return "middle"
     if (r == 4 and kind != "FB") or (r == 0 and kind == "FB"):
         return "chase"
+    if c == 2 and r >= 3:
+        return "down-middle"     # low over the plate (v1.0 Step 7)
     inside = (c <= 1) if batter_right else (c >= 3)
     return ("up" if r <= 1 else "down") + ("-in" if inside else "-away")
 
@@ -1444,6 +1466,8 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
         v += steal_cost(p, q, s, tab, nl)
     if s.matchup and mashed(p, q, s):
         v += MASHED_PENALTY * run_scale(s.level)     # v1.0 D3: mashed twice at this height today
+    if q in GB_RULE_TARGETS and ground_ball_spot(s):
+        v -= GB_RULE_BONUS * run_scale(s.level)     # v1.0 Step 7: the ground-ball rule
     if s.level in ("hs", "travel"):
         w_ = min(1.0, max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20))
         if w_ > 0:
@@ -1956,7 +1980,7 @@ def why_line(arsenal, s, tab, pick, info, exclude=None):
         if top_t != p.name:
             line = f"He's sitting {top_t.lower()} ({by_t[top_t]:.0%})"
         else:
-            top_h = max((j for j in by_h if not (q.startswith(j) or (j == "middle" and q == "middle"))), key=lambda j: by_h[j])
+            top_h = max((j for j in by_h if j != target_height(q, p.kind)), key=lambda j: by_h[j])
             line = f"He's looking {top_h} ({by_h[top_h]:.0%})"
     elif term == "situation":
         line = "Tying run on third: need a strikeout or a ground ball" if (s.bases[2] and s.win and abs(s.margin) <= 1) \

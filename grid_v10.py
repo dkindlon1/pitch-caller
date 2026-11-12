@@ -63,14 +63,17 @@ def checks(g):
     res.append(("AVG3, every count but 3-0: top call <= 85% and >= 2 calls survive the window", not bad,
                 f"{len(bad)} of {sum(1 for k in avg if k[3] != (3, 0))} cells fail" + (f"; {fmt(bad[:4])}" if bad else ""), True))
     a31 = sorted((k, c) for k, c in avg.items() if k[3] == (3, 1))
-    inb = [k for k, c in a31 if 0.55 - 1e-9 <= c["top_share"] <= 0.70 + 1e-9]
+    # v1.0 Step 7: measured by pitch type (the top pitch's share), as Drew set the floor on Nov 10: the down-middle target
+    # (Nov 11) splits the fastball's strikes between two spots, so the top single (pitch, spot) no longer measures the mix
+    top_t = lambda c: max(c["types"].values())
+    inb = [k for k, c in a31 if 0.55 - 1e-9 <= top_t(c) <= 0.70 + 1e-9]
     # Drew, Nov 10: one 3-1 setting at every level (1.3 after Step 2's recalibration). Runners move the 3-1 stakes and the
     # setting can't see them, so the gate is every situation inside 50-80% with two pitch types > 10%; how many sit in
     # 55-70% is printed (8 of 9 at 1.3: D1 with a runner on 1st reads 78.9%).
-    ok31 = (all(0.50 - 1e-9 <= c["top_share"] <= 0.80 + 1e-9 for _, c in a31)
+    ok31 = (all(0.50 - 1e-9 <= top_t(c) <= 0.80 + 1e-9 for _, c in a31)
             and all(sum(1 for v in c["types"].values() if v > 0.10) >= 2 for _, c in a31))
-    res.append(("D1 3-1, AVG3: top call inside 50-80% in all 9 situations (target 55-70%), two pitch types > 10%",
-                ok31, f"{len(inb)} of 9 in 55-70%; " + ", ".join(f"{k[0]}/{k[2]} {c['top_share']:.1%}" for k, c in a31), True))
+    res.append(("D1 3-1, AVG3: top pitch type inside 50-80% in all 9 situations (target 55-70%), two pitch types > 10%",
+                ok31, f"{len(inb)} of 9 in 55-70%; " + ", ".join(f"{k[0]}/{k[2]} {top_t(c):.1%}" for k, c in a31), True))
     fl = [(k, max(c["types"].values())) for k, c in avg.items() if k[3] in ((2, 0), (2, 1), (3, 1))]
     res.append(("floor: AVG3's top pitch type >= 50% at 2-0, 2-1, 3-1 (Drew: by pitch, not exact spot)",
                 all(v >= 0.50 - 1e-9 for _, v in fl), f"lowest {min(v for _, v in fl):.0%}", True))
