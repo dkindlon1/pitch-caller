@@ -9,7 +9,7 @@ $run tests.py      python3 tests.py
 $run explain       python3 tests_v10_explain.py 60   # v1.0 Step 4 (#3): why line and intent tell the truth
 $run tests_v11     python3 tests_v11.py              # v1.1: six kinds, one migration table, exactly v1.0's calls (Step 1)
 $run fast_parity   python3 golden/fast.py 40      # live Python vs JS on 40 golden inputs, plus confidence and grading (v1.0 #18)
-$run golden_v10    node golden/golden_v10.js     # the one engine against its frozen v1.0 reference (JS)
+$run golden_v11a   node golden/golden_v11.js v11a   # v1.1 Step 1b: the one engine against its frozen reference (JS); golden_v10 stays as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1

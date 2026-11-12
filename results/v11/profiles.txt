@@ -1,0 +1,43 @@
+v1.1 Step 1b profile fit: 2024 172,292 pitches (train), 2025 165,129 pitches (check)
+typical fastball-class pitch, 2024 (IVB, HB arm side +): FB 16.0/7.7, SI 7.8/15.2, FC 7.9/-2.5
+normalization check: four-seam HB median righties 7.6, lefties 8.0; sweeper HB median -14.2 (glove side is negative)
+
+agreement with Statcast labels (share of the label's pitches given the matching tag; precision = share of that tag's pitches carrying the label):
+  ST -> sweeper  start 70.8%  final 2024 84.1% (n 12,693, precision 79.8%)  2025 81.6%  [2024 tags {'sweeper': 0.8406, 'tight': 0.1358, 'slurve': 0.0174, 'gyro': 0.0061}]
+  FS -> split    start 27.4%  final 2024 27.4% (n 5,204, precision 58.1%)  2025 20.3%  [2024 tags {'split': 0.2738, '': 0.2725, 'drop': 0.2275, 'firm': 0.1351}]
+  FO -> split    start 60.7%  final 2024 60.7% (n 28, precision 0.7%)  2025 45.8%  [2024 tags {'split': 0.6071, '': 0.2143, 'drop': 0.1786}]
+  SV -> slurve   start 22.9%  final 2024 12.2% (n 1,014, precision 9.9%)  2025 13.6%  [2024 tags {'sweeper': 0.8077, 'slurve': 0.1223, 'tight': 0.0611, 'gyro': 0.0089}]
+  CS -> slow     start 0.0%  final 2024 0.0% (n 2, precision 0.0%)  2025 16.0%  [2024 tags {'': 0.5, '12-6': 0.5}]
+threshold moves: sl_sweeper_hb -12.0 -> -10.0 (70.8% -> 84.1%), ch_split_divb -12.0 -> -12.0 (27.4% -> 80% not reachable by one move; kept), sl_slurve_ivb -3.0 -> -3.0 (22.9% -> 80% not reachable by one move; kept)
+labels that name a profile set the tag in the table, the fits and the app (ST sweeper, SV slurve, FS/FO split); the agreement above measures the thresholds alone, i.e. how a pitch with no such label is tagged
+gated labels: those with 500+ pitches in 2024 (ST, FS, SV); the rest are reported only
+
+MLB profile table, 2024 (dmph off a four-seam main fastball; IVB; HB arm side +; n; share of the kind):
+  FB|            dmph   0.0  IVB   16.0  HB    7.7  n  55,287  100.0%
+  FB|rides       dmph   0.0  IVB   19.0  HB    6.5  n  12,307  22.3%
+  FB|runs        dmph   0.0  IVB   14.0  HB   12.5  n  11,693  21.1%
+  FB|cuts        dmph   0.0  IVB   14.3  HB    0.8  n   4,504  8.1%
+  FB|straight    dmph   0.0  IVB   12.7  HB    7.9  n   4,973  9.0%
+  SI|            dmph   0.3  IVB    7.8  HB   15.2  n  27,638  100.0%
+  SI|two-seam    dmph   0.2  IVB   12.8  HB   13.8  n   6,735  24.4%
+  SI|drop        dmph   0.5  IVB    2.4  HB   15.8  n   7,241  26.2%
+  SI|run         dmph   0.3  IVB    7.4  HB   18.2  n   3,379  12.2%
+  FC|            dmph   5.0  IVB    7.9  HB   -2.5  n  13,994  100.0%
+  FC|big         dmph   7.8  IVB    5.0  HB   -7.0  n   1,875  13.4%
+  FC|hard        dmph   3.0  IVB    9.2  HB   -1.2  n   6,590  47.1%
+  FC|ride        dmph   4.5  IVB   12.5  HB   -4.3  n     806  5.8%
+  SL|            dmph   9.4  IVB    1.3  HB   -6.4  n  39,124  100.0%
+  SL|sweeper     dmph  11.5  IVB    1.0  HB  -13.8  n  14,581  37.3%
+  SL|slurve      dmph  11.8  IVB   -4.8  HB   -9.2  n   1,917  4.9%
+  SL|gyro        dmph   7.9  IVB    2.3  HB   -1.4  n   9,185  23.5%
+  SL|tight       dmph   8.5  IVB    1.8  HB   -5.0  n  13,441  34.4%
+  CB|            dmph  13.7  IVB   -9.8  HB   -8.9  n  13,496  100.0%
+  CB|12-6        dmph  13.3  IVB  -11.8  HB   -3.4  n   3,123  23.1%
+  CB|sweeping    dmph  13.3  IVB   -7.3  HB  -12.2  n   5,774  42.8%
+  CB|power       dmph   7.9  IVB  -11.5  HB   -8.3  n     296  2.2%
+  CB|slow        dmph  17.2  IVB  -13.7  HB   -9.6  n   1,745  12.9%
+  CH|            dmph   8.1  IVB    4.4  HB   13.8  n  22,753  100.0%
+  CH|firm        dmph   4.3  IVB    4.3  HB   14.8  n   2,728  12.0%
+  CH|split       dmph   8.2  IVB    1.9  HB   11.0  n   6,241  27.4%
+  CH|drop        dmph   8.2  IVB    2.6  HB   15.1  n   3,204  14.1%
+  CH|fade        dmph   8.6  IVB    8.8  HB   14.9  n   4,887  21.5%

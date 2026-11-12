@@ -444,7 +444,11 @@ check("v1.0 #12 infield in: ground balls get through more (+0.08 hit rate, the p
 # #19: one RHO_L rule: eye level, tunneling and familiarity scale at HS like timing, MM, SIDE and POWER_HR
 s_c = Situation(1, 1, 1, E, level="college_d3", look=(85.0, 3.3), last=("Fastball", "up-in", "ball"), familiar={"OS": 6})
 s_h = _rp(s_c, level="hs")
-pc_, ph_ = _e.pair_terms(sl_, "chase", s_c, AVG3), _e.pair_terms(sl_, "chase", s_h, AVG3)
+# v1.1 Step 1b: HS profiles move 15% less than college, so the tunnel geometry differs by level; with measured movement
+# (the same numbers at both levels) the check isolates the RHO_L rule it is about
+_meas = lambda x: _rp(x, ivb=_e.movement(x)[0], hb=_e.movement(x)[1])
+AVG3m, sl_m = [_meas(x) for x in AVG3], _meas(sl_)
+pc_, ph_ = _e.pair_terms(sl_m, "chase", s_c, AVG3m), _e.pair_terms(sl_m, "chase", s_h, AVG3m)
 check("v1.0 #19 RHO_L: eye level and tunneling (pair terms) at HS are 0.6x the college values",
       abs(ph_[0] - 0.6 * pc_[0]) < 1e-12 and abs(ph_[1] - 0.6 * pc_[1]) < 1e-12 and abs(pc_[1]) > 0.01,
       f"college whiff {pc_[0]:+.4f} swing {pc_[1]:+.4f}; hs {ph_[0]:+.4f} {ph_[1]:+.4f}")

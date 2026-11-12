@@ -23,12 +23,15 @@ const LEVEL = opt("--level", null), JSON_OUT = opt("--json", null);
 if (!file) { console.error("usage: node shadow.js <backup.json> [--level L] [--json out.json]"); process.exit(2); }
 const bk = JSON.parse(fs.readFileSync(file, "utf8"));
 const st = bk.stores;
+// v1.1: each pitcher's pitch types, so a game logged before the six kinds is read in v1.1 terms
+const TYPES = new Map((st.pitchers || []).map((p) => [p.id, Object.fromEntries((p.pitches || []).filter((d) => d.type).map((d) => [d.name, d.type]))]));
+const typeOf = (ev, x) => x.type || (TYPES.get(ev.pitcherId) || {})[x.name];
 const gamesById = new Map((st.games || []).map((g) => [g.id, g]));
 const LOCS = ["heart", "edge", "off", "noncomp"];
 
 // probability of what happened under a given set of grades for every pitch in the logged arsenal
 function surprise(ev, grades, withLoc) {
-  const ars = ev.ars.map((x) => E.Pitch(Object.assign({}, x, grades[x.name] || {}, { traits: null, strike_rate: null })));
+  const ars = ev.ars.map((x) => E.Pitch(Object.assign({}, x, grades[x.name] || {}, { traits: null, strike_rate: null, type: typeOf(ev, x) })));
   const name = ev.thrown || ev.pitchName, p = ars.find((x) => x.name === name);
   if (!p) return null;
   const s = E.Situation(ev.sit), bz = {};

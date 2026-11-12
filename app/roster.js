@@ -163,7 +163,9 @@ async function relearnHitter(hid) {
   const evs = (await DB.D.byIndex("events", "hitterId", hid)).filter((e) => !e.deletedAt && PCDB.isPitch(e) && !dups.has(e.gameId));
   const team = DB.teams.get(x.teamId);
   let r;
-  try { r = await learnCall({ type: "hitter", hitter: x, events: evs, level: (team && team.level) || levelOf(), prev: hModel(hid) || null }); } catch (e) { console.error(e); return hModel(hid) || null; }
+  // v1.1: each pitcher's pitch types, so a game logged before the six kinds is read in v1.1 terms
+  const types = {}; for (const p of DB.pitchers.values()) { const t = {}; for (const d of p.pitches || []) if (d.type) t[d.name] = d.type; types[p.id] = t; }
+  try { r = await learnCall({ type: "hitter", hitter: x, events: evs, level: (team && team.level) || levelOf(), prev: hModel(hid) || null, types }); } catch (e) { console.error(e); return hModel(hid) || null; }
   const m = Object.assign({ id: "h2:" + hid }, r.model);
   DB.models.set(m.id, await dbPut("learned", m));
   return m;

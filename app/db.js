@@ -218,7 +218,7 @@
   const PITCH_TYPES = {
     "Four-seam": { kind: "FB", shape: "rides" }, "Two-seam": { kind: "SI", shape: "two-seam" }, "Sinker": { kind: "SI", shape: "run" },
     "Cutter": { kind: "FC", shape: "" }, "Slider": { kind: "SL", shape: "tight" }, "Sweeper": { kind: "SL", shape: "sweeper" },
-    "Slurve": { kind: "SL", shape: "slurve" }, "Curveball": { kind: "CB", shape: "" }, "Knuckle curve": { kind: "CB", shape: "power" },
+    "Slurve": { kind: "SL", shape: "slurve" }, "Curveball": { kind: "CB", shape: "" }, "Knuckle curve": { kind: "CB", shape: "" },
     "12-6 curve": { kind: "CB", shape: "12-6" }, "Changeup": { kind: "CH", shape: "fade" }, "Splitter": { kind: "CH", shape: "split" },
     "Forkball": { kind: "CH", shape: "split" },
   };

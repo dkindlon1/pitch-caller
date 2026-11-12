@@ -72,6 +72,9 @@ Settled (Drew, Nov 12):
 - **Main fastball** `primary_fb(arsenal)`: the coach's "main" mark; else the fastball-class pitch he has thrown most in his
   records; else the first of FB, SI, FC; else the fastest pitch. The fits use the same idea (most-thrown fastball-class
   pitch per pitcher-game). `v_fb` (`engine.py:1296`) uses fastball class.
+- **Default speed off his own fastball (Step 1b):** a pitch with no speed entered is his main fastball's entered speed
+  less the profile's college speed gap (`resolve_speeds`, called where a call is solved); with no fastball speed entered,
+  the default fastball (85) less the gap. v1.0 used fixed defaults (a 72-mph fastball got a 77-mph slider).
 - **Relative shape** `rel_shape(p, arsenal)`: (Δmph = main FB − pitch, ΔIVB = pitch − main FB, HB with arm side +), from
   measured numbers when present, else the tag defaults for his level (2.2). Speed and vertical are relative because the
   hitter judges them against the fastball; horizontal break stays absolute because the hitter sees the ball's sideways
@@ -98,15 +101,25 @@ match wins, in the order listed; nothing matched = typical (`""`).
 |---|---|
 | FB | **rides:** IVB ≥ typical + 2. **runs:** HB ≥ typical + 3. **cuts:** HB ≤ typical − 5. **straight** (dead zone): IVB ≤ typical − 2 and HB within typical ± 3. |
 | SI | **two-seam:** IVB ≥ typical + 3. **drop:** IVB ≤ typical − 3. **run:** HB ≥ typical + 2. |
-| FC | **big:** HB ≤ −7 or Δmph ≥ 7. **hard:** Δmph ≤ 4 and HB ≥ −4. **ride:** ΔIVB ≥ −4. |
-| SL | **sweeper:** HB ≤ −12. **slurve:** IVB ≤ −3 and HB ≤ −6. **gyro:** \|HB\| ≤ 3. **tight:** otherwise. |
+| FC | **big:** HB ≤ −7 or Δmph ≥ 7. **hard:** Δmph ≤ 4 and HB ≥ −4. **ride:** IVB ≥ typical + 3 (Step 1b; was ΔIVB ≥ −4). |
+| SL | **sweeper:** HB ≤ −10 (Step 1b; was −12). **slurve:** IVB ≤ −3 and HB ≤ −6. **gyro:** \|HB\| ≤ 3. **tight:** otherwise. |
 | CB | **12-6:** drop (−IVB) ≥ 2 × \|HB\|. **sweeping:** \|HB\| ≥ drop. **power:** Δmph ≤ 9. **slow:** Δmph ≥ 15. |
 | CH | **firm:** Δmph ≤ 5. **split:** ΔIVB ≤ −12 and \|HB − main FB HB\| ≤ 4. **drop:** ΔIVB ≤ −11. **fade:** HB ≥ main FB HB + 4. |
 
-These are starting values. Step 1b checks them once against Statcast's own labels (sweepers → `sweeper`, splitters →
-`split`, knuckle curves split by shape like any curve, not by grip) and adjusts each threshold at most once to reach at
-least 80% agreement where a label exists; the agreement table goes in the report. The same thresholds classify measured
-pitches in the app (`import.js`) and the fits (2.5), so a tag means one thing everywhere.
+These were the starting values; Step 1b checked them against Statcast's own labels (2024 fit, 2025 held out;
+`results/v11/profiles.txt`):
+- **Sweeper:** one move (HB ≤ −12 → −10) reaches 84% (2024) and 82% (2025) agreement, precision 80%.
+- **Splitter and slurve:** no movement threshold reaches 80% without tagging mostly other pitches (best 62% of splitters
+  at 43% precision, 71% of slurves at 17%). Those labels come from the grip, which movement can't see. So **a pitch name
+  that names a profile sets the tag**: Statcast ST / SV / FS / FO in the fits, and Sweeper / Slurve / Splitter /
+  Forkball / Two-seam / 12-6 curve in the app. The thresholds tag everything no such name covers.
+- **Knuckle curve** names a grip, not a profile, so it is tagged by its movement like any curve (and a stored "Knuckle
+  curve" migrates to a typical curve).
+- **Ride cutter:** judged against the typical cutter, like every fastball-class tag. The first draft compared it with
+  the game's main fastball, which tagged flat cutters from sinker pitchers as "ride".
+
+The same thresholds classify measured pitches in the app (`import.js`, through the engines' `tag_for`) and the fits
+(2.5), so a tag means one thing everywhere.
 
 ### 2.3 Profiles that change calls: fits, with a data-backed fallback
 
@@ -221,7 +234,7 @@ Pure refactor. Its proof is that v1.0's golden reproduces exactly.
   | Sweeper (SL/sweeper) | SL/sweeper | | SL/tight, SL/sweeper | same |
   | Slurve (SL/"") | SL/slurve | | CB/loopy | CB/slow |
   | Curveball (CB/loopy) | CB/typical | | CB/sharp | CB/power |
-  | Knuckle curve (CB/sharp) | CB/power | | CH/fade | CH/fade |
+  | Knuckle curve (CB/sharp) | CB/typical (Step 1b: a grip, not a profile) | | CH/fade | CH/fade |
   | 12-6 curve (CB/sharp) | CB/12-6 | | CH/drop | CH/drop |
   | Changeup (CH/fade) | CH/fade | | | |
   | Splitter, Forkball (CH/drop) | CH/split | | | |

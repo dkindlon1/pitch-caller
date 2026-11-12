@@ -54,5 +54,17 @@ let threw = false;
 try { E.callV08([E.Pitch({ name: "y", kind: "SI", shape: "rides", grade: 3, command: 3, conf: 0.7 })], s, { rng: () => 0.5 }); } catch (e) { threw = /unknown shape/.test(e.message); }
 check(threw, "a tag from another kind (SI/rides) is rejected with a clear message");
 
+console.log("5. Step 1b: the profile table in the app, and old games read through the roster's type");
+const L = require("./learner.js");
+const pd = { pitches: [{ name: "Two-seam", type: "Two-seam", kind: "SI", shape: "two-seam" }, { name: "Splitter", type: "Splitter", kind: "CH", shape: "split" }] };
+const types = L.typesOf(pd);
+const old2 = L.snapPitch(E, { name: "Two-seam", kind: "FB", shape: "run", grade: 3, command: 3, conf: 0.7 }, types);
+const oldSp = L.snapPitch(E, { name: "Splitter", kind: "CH", shape: "drop", grade: 3, command: 3, conf: 0.7 }, types);
+const new2 = L.snapPitch(E, { name: "Two-seam", kind: "SI", shape: "drop", grade: 3, command: 3, conf: 0.7 }, types);
+check(old2.kind === "SI" && old2.shape === "two-seam" && oldSp.shape === "split", "a v1.0 snapshot of a two-seamer (FB/run) and a splitter (CH/drop) read as SI/two-seam and CH/split through the roster's type");
+check(new2.kind === "SI" && new2.shape === "drop", "a v1.1 snapshot is never changed by the type (a sinker logged as SI/drop stays SI/drop)");
+check(E.profile("SL", "sweeper", "hs")[2] < E.profile("SL", "gyro", "hs")[2] && E.defaultMph("FC", "") < E.defaultMph("FB", "") && E.mph(E.Pitch({ name: "c", kind: "CB", shape: "slow", grade: 3, command: 3, conf: 0.7 })) === E.defaultMph("CB", "slow"),
+  "the app's engine has the profile table: a sweeper sweeps more than a gyro slider, a cutter's default speed is under the fastball's, a pitch with no speed gets its profile's default");
+
 console.log(fails ? `\n${fails} kinds check(s) FAILED` : `\nall ${n} kinds checks passed`);
 process.exit(fails ? 1 : 0);

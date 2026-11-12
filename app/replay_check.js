@@ -11,6 +11,9 @@ const sameLand = (a, b) => { const ka = Object.keys(a).sort(), kb = Object.keys(
   return ka.join() === kb.join() && ka.every((k) => a[k].length === b[k].length && a[k].every((v, i) => (i === 1 && a[k].length === 3 ? Math.abs(v - b[k][i]) < 1e-9 : v === b[k][i]))); };
 const L2 = require("./learner.js");
 const bk = JSON.parse(fs.readFileSync(process.argv[2], "utf8")), st = bk.stores;
+// v1.1: each pitcher's pitch types, so a game logged before the six kinds is read in v1.1 terms
+const TYPES = new Map((st.pitchers || []).map((p) => [p.id, Object.fromEntries((p.pitches || []).filter((d) => d.type).map((d) => [d.name, d.type]))]));
+const typeOf = (ev, x) => x.type || (TYPES.get(ev.pitcherId) || {})[x.name];
 const pitchers = new Map(st.pitchers.map((p) => [p.id, p]));
 let games = 0, pitches = 0, confWorst = 0, landBad = 0, pcBad = 0, holes = 0, unversioned = 0;
 for (const g of st.games) {
@@ -37,7 +40,7 @@ for (const g of st.games) {
       // v1.0 Step 3: [strikes, expected strikes, pitches] over non-chase targets, expectation from the logged situation
       const t = e.thrown || e.pitchName;
       if (e.quad !== "chase") {
-        const arsE = e.ars.map((x) => E.Pitch(Object.assign({}, x)));
+        const arsE = e.ars.map((x) => E.Pitch(Object.assign({}, x, { type: typeOf(e, x) })));
         land[t] = E.landingRecord(land[t], !(e.res === "ball" || e.res === "hbp"), E.expectedStrike(arsE.find((x) => x.name === t), e.quad, E.Situation(e.sit), arsE));
       }
     });

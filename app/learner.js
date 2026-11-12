@@ -299,6 +299,11 @@
 
   // ---------------------------------------------------------------- the likelihood of one pitch's games
   // theta: { command, grade, traits{} }. games: [{ rows, script, base, kind, w }]. Rows carry the raw situation.
+  // v1.1 Step 1b: a game logged before the six kinds stored its pitches in v1.0 terms and without a type, so each one is
+  // read through its roster type (the engine applies a type only while the pitch still has that type's v1.0 tags)
+  const snapPitch = (E, x, types) => E.Pitch(Object.assign({}, x, (!x.type && types && types[x.name]) ? { type: types[x.name] } : {}));
+  const typesOf = (pd) => { const t = {}; for (const d of (pd && pd.pitches) || []) if (d.type) t[d.name] = d.type; return t; };
+
   function loglikGames(E, games, theta, level, srCache, opts = {}) {
     const key = theta.command.toFixed(4) + "|" + theta.grade.toFixed(4) + "|" + JSON.stringify(theta.traits || {});
     let ll = 0;
@@ -318,8 +323,9 @@
       for (const r of G.rows) {
         if (!r._S) {   // built once per row: the situation and the other pitches don't depend on theta
           r._S = E.Situation(r.sit);
-          r._snap = r.ars.find((x) => x.name === r.name);
-          r._others = r.ars.map((x) => (x.name === r.name ? null : E.Pitch(Object.assign({}, x))));
+          const sn = r.ars.find((x) => x.name === r.name);
+          r._snap = (!sn.type && G.types && G.types[sn.name]) ? Object.assign({}, sn, { type: G.types[sn.name] }) : sn;
+          r._others = r.ars.map((x) => (x.name === r.name ? null : snapPitch(E, x, G.types)));
         }
         const p = E.Pitch(Object.assign({}, r._snap, { command: theta.command, grade: theta.grade, traits: theta.traits, strike_rate: sr,
           strike_ref: sr === null ? null : strikeRef(E, shapeSpec, level),
@@ -416,7 +422,7 @@
       // v1.1: a snapshot from before the six kinds is read in v1.1 terms (by the pitch's type while it still has that
       // type's v1.0 tags), so the migration alone never looks like a change of pitch
       const [k11, s11] = E.migratePitch((sp && sp.kind) || pd.kind, (sp && sp.shape) || pd.shape || "", pd.type);
-      return Object.assign(pg, { id: g.id, ts: g.ts, spec: { name: nm, kind: k11, shape: s11, velo: (sp && sp.velo) || pd.velo || 0 } });
+      return Object.assign(pg, { id: g.id, ts: g.ts, types: typesOf(pd), spec: { name: nm, kind: k11, shape: s11, velo: (sp && sp.velo) || pd.velo || 0 } });
     }).filter((g) => g.rows.length || g.script.some((s) => s.op === "mark"));
     // change points: coach marks, shape changes from TrackMan, a change of kind
     const changeAt = new Set();
@@ -697,7 +703,7 @@
       const swing = ev.res === "whiff" || ev.res === "foul" || (ev.res === "play" && ev.contact);
       if (!swing) continue;
       const obs = ev.res === "play" ? DMG_VAL[ev.contact] : DMG_VAL[ev.res];
-      const ars = ev.ars.map((x) => E.Pitch(Object.assign({}, x)));
+      const ars = ev.ars.map((x) => snapPitch(E, x, (opts.types || {})[ev.pitcherId]));   // v1.1: old snapshots by roster type
       const p = ars.find((x) => x.name === ev.pitchName); if (!p) continue;
       const P = E.outcomeProbs(p, ev.quad, E.Situation(Object.assign({}, ev.sit, { hitter_damage: {}, timing: {} })), ars, null);
       const sw = P.whiff + P.foul + P.weak + P.solid + P.hard;
@@ -766,7 +772,7 @@
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;

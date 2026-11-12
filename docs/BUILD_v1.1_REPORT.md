@@ -104,3 +104,66 @@ Step 0 complete. Next: Step 1 (six kinds, one migration table, exact v1.0 reprod
   Supabase shape whitelist. The six extra table rows keep an accepted v1.0 proposal from breaking a v1.1 pitch in the
   meantime.
 - **Release (plan Step 6):** a v1.0 app can't read SI / FC pitchers, so every device updates together.
+
+## Step 1b: profile table and thresholds (Nov 12)
+
+### The data (`profiles_fit.py`, `results/v11/profiles.txt` / `profiles.json`)
+- 2024 Statcast, 172,292 pitches (fit), and 2025, 165,129 (held-out check).
+- Pitch types are mapped to the six kinds, and movement is normalized to a right-hander. Check: four-seam arm-side run
+  is 7.6 in. for righties and 8.0 for lefties after the flip; sweepers sweep −14.2 in.
+- Each pitcher-game's main fastball is his most-thrown fastball-class pitch that game.
+- Every tag has a row: 28 rows (6 typical + 22 profiles).
+- MLB highlights:
+  - riding four-seam 19.0 in. IVB;
+  - drop sinker 2.4 in. IVB with 15.8 in. run;
+  - cutter 5.0 mph off the four-seam (the plan guessed about 4);
+  - sweeper 11.5 mph off with 13.8 in. of sweep, gyro 7.9 off with 1.4;
+  - 12-6 curve −11.8 in. IVB / −3.4 in. side;
+  - slow curve 17.2 mph off;
+  - fade changeup 8.8 in. IVB, split 1.9.
+- College rows are Rapsodo's college averages plus each profile's MLB difference. HS rows are college × 0.85 movement,
+  same speed gaps. D1 = D3 = college; travel = HS.
+
+### What the label check settled (plan 2.2 updated)
+
+| Statcast label | Thresholds alone, 2024 → 2025 | Decision |
+|---|---|---|
+| Sweeper (ST, 12,693) | 70.8% at HB ≤ −12 → **84.1%** at −10 (precision 79.8%); 2025 **81.6%** | one move, −12 → −10 |
+| Splitter (FS, 5,204) | 27.4%; the best movement or spin rule reaches 62% at 43% precision | the pitch name sets the tag |
+| Slurve (SV, 1,014) | 22.9%; best 71% at 17% precision | the pitch name sets the tag |
+| Forkball (FO, 28), slow curve (CS, 2) | too few to gate; reported | the name sets split; slow by speed |
+
+- **A pitch name that names a profile sets the tag**, in the fits (ST / SV / FS / FO) and in the app (Sweeper, Slurve,
+  Splitter, Forkball, Two-seam, 12-6 curve). The thresholds tag everything no such name covers. Those labels carry
+  grip information that movement can't see.
+- **A grip name (knuckle curve) is tagged by its movement.** A stored "Knuckle curve" now migrates to a typical curve
+  instead of "power": MLB knuckle curves are 12.3 mph off the fastball, and the power profile is 7.9.
+- **Ride cutter is judged against the typical cutter**, like every fastball tag. The first draft compared it with the
+  game's main fastball and tagged flat cutters from sinker pitchers as "ride".
+
+### What changed in the engines
+- `PROFILES` (by level), `PROFILE_T` (thresholds) and `MOVE_RATIO` are generated into both engines
+  (`profiles_fit.py --write-engines`). `SHAPES` and `DEFAULT_VELO` are gone; `profile()`, `default_mph()` and
+  `movement(p, level)` read the table. Tunneling uses his level's movement.
+- **Default speed off his own fastball:** a pitch with no speed is his main fastball's entered speed less the profile's
+  gap (`resolve_speeds`); with none entered, 85 less the gap. Under v1.0's fixed defaults a 72-mph fastball got a 77-mph
+  slider and a 94-mph fastball a 71-mph curve; they now get 63.9 and 87.8. Measured speed and movement always win.
+- **New helpers (plan 2.1 / 2.2), both engines:** `primary_fb` (coach's mark, else FB > SI > FC, else fastest),
+  `rel_shape`, and `tag_for`, which the importer (Step 5) and the fits (Step 2) use.
+- **Old games read through the roster's type:** the learner (pitcher and hitter models) and the offline tools
+  (`shadow.js`, `replay_check.js`) read a pre-v1.1 snapshot pitch through its roster type, so an old two-seamer is a
+  sinker, not a running four-seam.
+- **Simulator:** the hidden "true movement" starts from his level's profile.
+
+### Proof (this session, final code)
+
+| Check | Result |
+|---|---|
+| `tests_v11.py` | **22/22**. New in 1b: the table, thresholds, ratios, names and default speeds are identical in both engines; every tag has a row at every level; MLB rows = the Statcast medians; sweeper ≥ 80% in 2024 and 2025; **both engines' `tag_for` reproduce the fit script's tags on 4,200 real 2024 pitches (0 misses)**; Python = JS on 3,000 random pitches at every level; names set tags, grips don't; default speeds follow the profiles; main fastball and relative shape; speeds read off the main fastball in both engines. The Step 1 check against git `v1.0` now gives every pitch v1.0's own entered speed and movement: **still identical (96 situations, difference 0)**, so 1b changed only the defaults |
+| `app/kinds_test.js` | **20/20** (adds: old snapshots read through the roster type; a v1.1 snapshot is never changed by it; the table in the app) |
+| `tests.py` | **45/45**. One check (HS tunneling = 0.6 × college) now holds movement fixed with measured numbers, because HS profiles move 15% less by design |
+| `golden_v11a` | frozen (500 cases, 225 rewritten into v1.1 terms); Python check **500 cases, largest difference 0.00e+00**; **JS reproduces it**; `golden/fast.py 40` 0 mismatches. It replaces `golden_v10` as the gate in `scripts/test-app.sh` (`golden_v10` stays as history) |
+| `scripts/test-app.sh` | **exit 0**, no errors: 343 counted checks + smoke, browser tests, website demo, built-app and `web/lib` copy checks |
+| Read-through | **71/71**; 110 of 705 numbers moved, the largest by 0.65 points of one call's share |
+| Predictability grid | every check passes; **0 of 540 cells changed** (every grid arsenal has speeds entered, and the root calls have no previous pitch, so tunneling doesn't enter) |
+| Golden cases still in v1.0 terms (149 with full calls) vs v1.0 | median largest share change 0.8 points, 90th percentile 9.3, max 78; drawn call changed in 21. Six of the eight biggest movers are the default-speed correction above (an entered fastball speed with an off-speed pitch that had none); the other two have no speeds and move from the sinker and sweeper profiles |

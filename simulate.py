@@ -424,7 +424,7 @@ def play_game(log_path):
     true_move = {}
     for who in (starter, reliever):
         for x in who["arsenal"]:
-            ivb, hb = engine.movement(x)
+            ivb, hb = engine.movement(x, LEVEL_NAME) if "level" in engine.movement.__code__.co_varnames else engine.movement(x)   # v1.1: his level's profile
             true_move[(who["name"], x.name)] = ((ivb + mrng.gauss(0, 3), hb + mrng.gauss(0, 3)) if TRUE_MOVE else (ivb, hb))
             if INPUTS >= 4:   # measured: the engine sees the real numbers
                 x.ivb, x.hb = true_move[(who["name"], x.name)]
