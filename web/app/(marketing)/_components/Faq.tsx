@@ -10,11 +10,11 @@ const FAQ = [
   },
   {
     q: "Do my players need accounts?",
-    a: "No. A coach can enter the staff and call a game alone. Players and parents can join later to see their own stats.",
+    a: "No. A coach can enter the staff and call a game alone. Players and parents can join later to see their own numbers, and only their own: teammates never see each other's. Players under 13 join through a parent, who gives consent first.",
   },
   {
     q: "Do I need a TrackMan or Rapsodo?",
-    a: "No. Your own grades for each pitch are enough to start. Files from either one sharpen its read of velocity, pitch shape and arm slot when you have them.",
+    a: "No. Your own grades for each pitch are enough to start. When you have them, files from either one (or any pitch file with a header row) sharpen its read of velocity, pitch shape and arm slot. Files are read on your device, a game counts more than a bullpen, older files count less, and nothing changes until the pitcher or his coach accepts it.",
   },
   {
     q: "Is it just going to call fastballs?",

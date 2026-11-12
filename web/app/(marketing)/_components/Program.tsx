@@ -5,9 +5,10 @@ import { MOVE_POINTS, MOVE_TYPES, RANGE, type MovePoint } from "@/content/moveme
 import { can3d, whenStill } from "@/app/components/can3d";
 import type { Cloud, View } from "@/app/components/cloud3d";
 
-// Who uses it (coaches, pitchers and their parents) and the TrackMan/Rapsodo uploads, shown as a bullpen's movement
-// cloud (content/movement.ts, a made-up bullpen shaped like the sample starter, labelled as such). The cloud is drawn
-// flat first; with WebGL it becomes a 3D cloud that turns to show velocity, in the site's black, white and red.
+// Every pitcher gets his own page: one idea, shown with one picture, his bullpen's movement cloud (content/movement.ts, a
+// made-up bullpen shaped like the sample starter, labelled as such), big and on the black stage like the rest of the
+// page. Drawn flat first; with WebGL it becomes a 3D cloud that turns to show velocity. The details (accounts, consent,
+// how files are weighed) live in the FAQ.
 const COLORS: Record<MovePoint["kind"], string> = { FB: "#F04A3E", SL: "#F2B33D", CH: "#3FCB8C" };   // --mk-fb, --mk-sl, --mk-ch
 const L = 44, R = 344, T = 14, B = 278;
 const px = (hb: number) => L + ((RANGE.hb[1] - hb) / (RANGE.hb[1] - RANGE.hb[0])) * (R - L);
@@ -38,7 +39,7 @@ function Cloud3D() {
       cancel = whenStill(() => {
         import("@/app/components/cloud3d").then(({ mount }) => {
           if (dead || !box.current) return;
-          cloud.current = mount(box.current, MOVE_POINTS, COLORS);
+          cloud.current = mount(box.current, MOVE_POINTS, COLORS, { zoom: 1.5 });
           if (cloud.current) setOn(true);
         }).catch(() => {});
       });
@@ -70,73 +71,20 @@ function Cloud3D() {
   );
 }
 
-const PEOPLE = [
-  {
-    t: "For coaches",
-    items: [
-      "Your roster and each pitcher's arsenal in one place.",
-      "Invite a pitching coach and choose what he can change.",
-      "Scouting notes on the other team's hitters.",
-      "Each pitcher's results by count and pitch, from the games you called.",
-    ],
-  },
-  {
-    t: "For pitchers and parents",
-    items: [
-      "His own stats, and only his. Teammates can't see each other's.",
-      "He can update his own grades; his coach sees every change and can undo it.",
-      "Bullpen and game files from TrackMan or Rapsodo, on his own page.",
-      "Players under 13 join through a parent, who gives consent first.",
-    ],
-  },
-];
-
 export function Program() {
   return (
     <section className="mk-pg" id="program" aria-labelledby="pg-h">
-      <div className="mk-wrap">
-        <div className="mk-sec-head">
-          <h2 id="pg-h">One place for the whole staff</h2>
-          <p>Coaches run the team. Pitchers and their parents see their own numbers and bring in their bullpen data.</p>
-        </div>
-        <div className="mk-pg-grid">
-          <article className="mk-glass mk-pg-people">
-            <div className="mk-pg-mock" aria-hidden="true">
-              <p className="mk-pg-mockh"><b>Your staff</b><span>4 pitchers</span></p>
-              {[["Starter", "Right-handed", ["fb", "sl", "ch"]], ["Starter", "Left-handed", ["fb", "cb", "ch"]], ["Reliever", "Right-handed", ["fb", "sl"]], ["Closer", "Right-handed", ["fb", "sl"]]].map(([r, h, ks], n) => (
-                <p key={n} className="mk-pg-row"><span><b>{r as string}</b>{h as string}</span><span className="mk-pg-dots">{(ks as string[]).map((k) => <i key={k} className={`d-${k}`} />)}</span></p>
-              ))}
-              <p className="mk-pg-row mk-pg-invite"><span><b>Pitching coach</b>Invited</span><span className="mk-pg-chip">Can edit grades</span></p>
-            </div>
-            <h3>{PEOPLE[0].t}</h3>
-            <ul>{PEOPLE[0].items.map((x) => <li key={x}>{x}</li>)}</ul>
-          </article>
-          <article className="mk-glass mk-pg-people">
-            <div className="mk-pg-mock" aria-hidden="true">
-              <p className="mk-pg-mockh"><b>My pitches</b><span>Only he and his coaches see this</span></p>
-              {[["Fastball", 0.8, "fb"], ["Slider", 0.72, "sl"], ["Changeup", 0.5, "ch"]].map(([n, v, k]) => (
-                <p key={n as string} className="mk-pg-row"><span><b>{n as string}</b></span><span className="mk-pg-bar"><i className={`d-${k}`} style={{ width: `${(v as number) * 100}%` }} /></span></p>
-              ))}
-              <p className="mk-pg-row mk-pg-note"><span>Slider grade changed by him</span><span className="mk-pg-chip">Coach can undo</span></p>
-              <p className="mk-pg-row mk-pg-note"><span>Bullpen file, 42 pitches</span><span className="mk-pg-chip">Waiting for his OK</span></p>
-            </div>
-            <h3>{PEOPLE[1].t}</h3>
-            <ul>{PEOPLE[1].items.map((x) => <li key={x}>{x}</li>)}</ul>
-          </article>
-          <article className="mk-glass mk-pg-up">
-            <div className="mk-pg-upcopy">
-              <h3>TrackMan and Rapsodo files</h3>
-              <p>Drop in an export, or any pitch file with a header row. It&apos;s read on your device and you leave out the warmups. PitchIQ proposes his velocity, pitch shape and arm slot from it, and nothing changes until he or his coach accepts.</p>
-              <ul className="mk-pg-facts">
-                <li>A game file counts more than live BP, and live BP more than a bullpen.</li>
-                <li>A file counts half as much after 60 days.</li>
-                <li>New column names are matched once, then read the same way every time.</li>
-              </ul>
-            </div>
-            <Cloud3D />
-          </article>
-        </div>
+      <div className="mk-wrap mk-pg-head">
+        <h2 id="pg-h">Every pitcher gets his own page</h2>
+        <p>His pitches, his numbers and his bullpen files. Coaches see the whole staff. Teammates never see each other&apos;s.</p>
       </div>
+      <div className="mk-pg-stage">
+        <Cloud3D />
+      </div>
+      <p className="mk-wrap mk-pg-note">
+        Drop in a TrackMan or Rapsodo file and PitchIQ proposes his velocity, pitch shapes and arm slot from it. Nothing
+        changes until he or his coach says yes.
+      </p>
     </section>
   );
 }
