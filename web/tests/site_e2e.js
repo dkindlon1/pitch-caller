@@ -110,13 +110,19 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     });
     check(lit.src >= 4 && lit.n > 50, `the rendered 3D frames load (${lit.src} so far) and light up the stage (${lit.n} bright samples)`);
 
-    const gdTop = await page.evaluate(() => { const s = document.getElementById("gameday"); return s.getBoundingClientRect().top + scrollY; });   // a CSS sticky pin: the section itself is the tall scroll run
-    await page.evaluate((y) => scrollTo(0, y + 40), gdTop); await wait(1400);
-    const tx0 = await page.locator(".mk-gd-track").evaluate((t) => new DOMMatrix(getComputedStyle(t).transform).m41);
-    await page.evaluate((y) => scrollTo(0, y + 420), gdTop); await wait(1400);
-    const tx1 = await page.locator(".mk-gd-track").evaluate((t) => new DOMMatrix(getComputedStyle(t).transform).m41);
-    const pinned = await page.locator(".mk-gd-inner").evaluate((e) => Math.abs(e.getBoundingClientRect().top) < 2);
-    check(tx1 < tx0 - 50 && pinned, `the game panels slide sideways while the section holds still (${Math.round(tx0)} to ${Math.round(tx1)} px)`);
+    // a game with PitchIQ: scrolling a step to the middle of the screen puts its real app screen on the held iPad
+    const gdShown = async (i) => {
+      await page.locator(".mk-gd-steps li").nth(i).evaluate((li) => { const r = li.getBoundingClientRect(); scrollTo(0, scrollY + r.top + r.height / 2 - innerHeight / 2); });
+      await wait(900);
+      return page.evaluate(() => {
+        const ipad = document.querySelector(".mk-gd-stage .mk-gd-ipad").getBoundingClientRect();
+        const on = document.querySelector('.mk-gd-stage img[data-on="1"]');
+        return { src: on ? on.getAttribute("src") : "", ok: on ? on.complete && on.naturalWidth > 1000 : false, held: ipad.top > 0 && ipad.bottom < innerHeight };
+      });
+    };
+    const g0 = await gdShown(0), g2 = await gdShown(2);
+    check(/game-before/.test(g0.src) && /game-after/.test(g2.src) && g0.ok && g2.ok && g0.held && g2.held,
+      `a game with PitchIQ: the held iPad shows the step in the middle (${g0.src.split("/").pop()} then ${g2.src.split("/").pop()})`);
 
     await page.locator("#faq").scrollIntoViewIfNeeded();
     check(await page.locator(".mk-fq-item").first().evaluate((d) => d.open), "the first answer starts open");

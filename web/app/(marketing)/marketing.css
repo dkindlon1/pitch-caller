@@ -313,7 +313,7 @@
 .mk-rd-arc { fill: none; stroke: rgba(255, 255, 255, 0.18); stroke-width: 10; stroke-linecap: round; }
 .mk-rd-needle { stroke: var(--mk-accent); stroke-width: 3; stroke-linecap: round; transform-origin: 110px 110px; transition: transform 1.4s cubic-bezier(0.3, 1.4, 0.4, 1); }
 .mk-rd-hub { fill: var(--mk-chalk); }
-.mk-rd-tick, .mk-gd-t, .mk-dm-ztag { fill: var(--mk-text-3); font: 500 11px var(--mk-font), sans-serif; }
+.mk-rd-tick, .mk-dm-ztag { fill: var(--mk-text-3); font: 500 11px var(--mk-font), sans-serif; }
 .mk-rd-fouls { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-size: 0.8125rem; color: var(--mk-text-2); }
 .mk-rd-fouls svg { width: 84px; flex: none; }
 .mk-rd-lines { fill: none; stroke: rgba(255, 255, 255, 0.28); stroke-width: 1.5; }
@@ -426,63 +426,37 @@
 .mk-dg-facts dt { font-weight: 620; font-size: 1.0625rem; }
 .mk-dg-facts dd { margin: 8px 0 0; color: var(--mk-text-2); font-size: 0.9375rem; line-height: 1.5; }
 
-/* a game with PitchIQ */
-.mk-gd { position: relative; overflow-x: clip; }   /* clip, not hidden: hidden would make it a scroller and break the sticky inside */
-.mk-gd:not(.is-flat) .mk-gd-inner { position: sticky; top: 0; height: 100vh; height: 100svh; min-height: 0; box-sizing: border-box; justify-content: flex-start; gap: 32px; padding: 104px 0 24px; }
-/* scaled by --gd-k (set by GameDay.tsx) to fit a short screen; widened by the same factor so it still spans the screen */
-.mk-gd:not(.is-flat) .mk-gd-viewport { flex: none; width: calc(100% / var(--gd-k, 1)); transform: scale(var(--gd-k, 1)); transform-origin: 0 0; margin-bottom: calc((var(--gd-k, 1) - 1) * var(--gd-vh, 0px)); box-sizing: border-box; }
-@media (max-height: 760px) { .mk-gd:not(.is-flat) .mk-gd-inner { padding-top: 92px; gap: 24px; } .mk-gd:not(.is-flat) .mk-sec-head p { display: none; } }
-.mk-gd-inner { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; gap: 48px; padding: 120px 0 80px; }
-.mk-gd-viewport { overflow: hidden; padding: 0 var(--mk-pad); }
-.mk-gd-track { display: flex; gap: 20px; width: max-content; padding-right: 10vw; will-change: transform; }
-/* these panels slide over a plain background, where a live blur shows nothing but still costs every frame: same look, no blur */
-.mk-gd .mk-glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
-.mk-gd-panel { width: min(560px, 80vw); border-radius: var(--mk-radius); padding: 14px 14px 30px; display: flex; flex-direction: column; gap: 22px; }
-.mk-gd-panel > p { color: var(--mk-text-2); max-width: 44ch; }
-.mk-gd-panel h3 { font-size: 1.75rem; letter-spacing: -0.03em; }
-.mk-gd-step { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.24); font-weight: 650; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
-.mk-gd-viz { margin-top: auto; padding-top: 24px; }
-.mk-gd-before { position: relative; height: 250px; }
-.mk-gd-card { position: absolute; left: 0; top: 0; width: 78%; padding: 16px; border-radius: 18px; background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.14); display: grid; gap: 8px; }
-.mk-gd-card-2 { left: auto; right: 0; top: 110px; width: 70%; background: rgba(22, 22, 22, 0.94); }
-.mk-gd-cardh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 0.8125rem; color: var(--mk-text-3); }
-.mk-gd-cardh b { color: var(--mk-chalk); font-size: 0.9375rem; }
-.mk-gd-pitch { display: grid; grid-template-columns: 1fr auto 32px; gap: 12px; align-items: center; font-size: 0.9375rem; }
-.mk-gd-pitch span:last-child { text-align: right; color: var(--mk-text-2); font-variant-numeric: tabular-nums; }
-.mk-gd-pips { display: inline-flex; gap: 4px; }
-.mk-gd-pips i { width: 14px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.14); }
-.mk-gd-pips i.is-on { background: var(--mk-chalk); }
-.mk-gd-line { font-size: 0.875rem; color: var(--mk-text-2); padding: 6px 0; border-top: 1px solid var(--mk-line); }
-.mk-gd-during { display: grid; gap: 10px; }
-.mk-gd-buttons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.mk-gd-buttons span { height: 54px; display: flex; align-items: center; padding: 0 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); font-size: 0.8125rem; font-weight: 600; }
-.mk-gd-buttons span.is-tap { animation: mk-tap 0.7s ease; }
-@keyframes mk-tap { 0% { background: rgba(255, 255, 255, 0.06); } 18% { background: var(--mk-chalk); color: var(--mk-ink); transform: scale(0.96); } 100% { background: rgba(255, 255, 255, 0.06); } }
-.mk-gd-next { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border-radius: 16px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.14); animation: mk-in 0.4s 0.25s both cubic-bezier(0.2, 0.7, 0.2, 1); }
-.mk-gd-next div { display: grid; gap: 4px; }
-.mk-gd-next span:first-child { font-size: 0.8125rem; color: var(--mk-text-3); font-variant-numeric: tabular-nums; }
-.mk-gd-next b { font-size: 1.875rem; font-weight: 640; letter-spacing: -0.03em; font-variation-settings: "wdth" 84; }
-.mk-gd-next span:last-child { color: var(--mk-text-2); font-size: 0.875rem; }
-.mk-gd-zone { display: grid; grid-template-columns: repeat(3, 22px); grid-template-rows: repeat(3, 26px); border: 1px solid rgba(255, 255, 255, 0.3); flex: none; }
-.mk-gd-zone i { border: 0.5px solid rgba(255, 255, 255, 0.12); position: relative; }
-.mk-gd-zone i.is-on::after { content: ""; position: absolute; inset: 0; margin: auto; width: 12px; height: 12px; border-radius: 50%; background: var(--mk-accent); box-shadow: 0 0 0 4px rgba(240, 74, 62, 0.25); }
-.mk-gd-after svg { width: 100%; display: block; }
-.mk-gd-band { fill: rgba(255, 255, 255, 0.05); }
-.mk-gd-coach { stroke: rgba(255, 255, 255, 0.5); stroke-width: 1.5; stroke-dasharray: 4 5; }
-.mk-gd-res { fill: rgba(255, 255, 255, 0.35); }
-.mk-gd-learn { fill: none; stroke: var(--mk-accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 2.2s cubic-bezier(0.3, 0.6, 0.2, 1) 0.4s; }
-.mk-gd-learn.is-on { stroke-dashoffset: 0; }
-.mk-gd-key { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.8125rem; color: var(--mk-text-2); }
-.mk-gd-key li { display: inline-flex; align-items: center; gap: 7px; }
-.mk-gd-key i { width: 12px; height: 12px; border-radius: 3px; }
-.k-res { background: rgba(255, 255, 255, 0.35); border-radius: 50% !important; }
-.k-learn { background: var(--mk-accent); height: 3px !important; }
-.k-band { background: rgba(255, 255, 255, 0.1); }
-.mk-gd-flag { margin-top: 10px; font-size: 0.875rem; color: var(--mk-chalk); }
-.mk-gd.is-flat .mk-gd-inner { min-height: 0; padding: clamp(100px, 14vh, 160px) 0; }
-.mk-gd.is-flat .mk-gd-track { flex-direction: column; width: auto; padding-right: 0; max-width: 1360px; margin: 0 auto; }
-.mk-gd.is-flat .mk-gd-panel { width: 100%; min-height: 0; }
-@media (min-width: 1024px) { .mk-gd.is-flat .mk-gd-track { flex-direction: row; } .mk-gd.is-flat .mk-gd-panel { width: auto; flex: 1; } }
+/* a game with PitchIQ: the three steps on the left, one iPad held beside them showing the real screen of the step in the middle */
+.mk-gd { padding: clamp(120px, 16vh, 200px) 0 clamp(100px, 14vh, 170px); }
+.mk-gd-body { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: clamp(40px, 5vw, 88px); align-items: start; }
+.mk-gd-steps { list-style: none; margin: 0; padding: 0; }
+.mk-gd-steps li { min-height: 80vh; min-height: 80svh; display: flex; flex-direction: column; justify-content: center; gap: 14px; opacity: 0.32; transition: opacity 0.5s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.mk-gd-steps li:first-child { min-height: 64vh; min-height: 64svh; justify-content: flex-start; padding-top: clamp(40px, 7vh, 72px); }
+.mk-gd-steps li:last-child { min-height: 100vh; min-height: 100svh; }
+.mk-gd-steps li[data-on="1"] { opacity: 1; }
+.mk-gd-n { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, 0.26); font-weight: 650; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.mk-gd-steps h3 { font-size: clamp(2rem, 3.2vw, 2.875rem); line-height: 1; letter-spacing: -0.035em; font-weight: 640; font-variation-settings: "wdth" 84; }
+.mk-gd-steps p { color: var(--mk-text-2); font-size: clamp(1.0625rem, 1.25vw, 1.1875rem); line-height: 1.5; max-width: 34ch; }
+.mk-gd-stage { position: sticky; top: 0; height: 100vh; height: 100svh; display: flex; align-items: center; }
+.mk-gd-ipad { position: relative; padding: clamp(10px, 1.05vw, 16px); border-radius: clamp(22px, 2.3vw, 34px); background: linear-gradient(160deg, #2a2b2f, #141518 55%, #0d0e10); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 40px 90px -30px rgba(0, 0, 0, 0.75); }
+.mk-gd-fig { width: min(100%, calc(66svh * 1180 / 820)); margin-left: auto; }
+.mk-gd-screen { position: relative; aspect-ratio: 1180 / 820; border-radius: clamp(10px, 1vw, 16px); overflow: hidden; background: #000; }
+.mk-gd-screen img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 0.55s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.mk-gd-screen img[data-on="1"] { opacity: 1; }
+.mk-gd-ipad-sm { display: none; }
+.mk-gd-src { margin-top: 14px; font-size: 0.875rem; color: var(--mk-text-3); text-align: right; }
+.mk-gd-src-sm { display: none; }
+@media (max-width: 900px) {
+  .mk-gd-body { grid-template-columns: minmax(0, 1fr); }
+  .mk-gd-stage { display: none; }
+  .mk-gd-steps { display: grid; gap: 64px; }
+  .mk-gd-steps { margin-top: 48px; }
+  .mk-gd-steps li, .mk-gd-steps li:first-child, .mk-gd-steps li:last-child { min-height: 0; padding-top: 0; opacity: 1; }
+  .mk-gd-src-sm { display: block; margin-top: 32px; text-align: left; }
+  .mk-gd-ipad-sm { display: block; margin-bottom: 14px; padding: 8px; border-radius: 20px; }
+  .mk-gd-ipad-sm .mk-gd-screen { border-radius: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .mk-gd-steps li, .mk-gd-screen img { transition: none; } }
 
 /* the staff */
 /* a small illustrated screen at the top of each card: what that person actually sees */
@@ -618,14 +592,9 @@
   .mk-dm-state { gap: 14px; }
   .mk-dg-facts { grid-template-columns: minmax(0, 1fr); }
   .mk-fq-grid { grid-template-columns: minmax(0, 1fr); }
-  .mk-gd-during { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (pointer: coarse) { .mk-dm-keys { display: none; } .mk-dm-res kbd { display: none; } }
-@media (max-width: 760px) {
-  .mk-gd-before { height: auto; display: grid; gap: 10px; }
-  .mk-gd-card, .mk-gd-card-2 { position: relative; left: auto; right: auto; top: auto; width: 100%; }
-}
 
 /* the page's one orchestrated entrance: the nav drops in, the headline rises line by line out of a mask, then the lede,
    the actions and the live call follow. Reduced motion turns all of it off (rule at the end of the file). */
@@ -725,7 +694,7 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 
 /* system settings: reduced transparency gets solid panels; increased contrast gets stronger edges and text */
 @media (prefers-reduced-transparency: reduce) {
-  .mk .mk-glass, .mk .mk-speed, .mk .mk-ab-dist, .mk .mk-ab-recap li, .mk .mk-ab-rail button, .mk .mk-gd-card-2 {
+  .mk .mk-glass, .mk .mk-speed, .mk .mk-ab-dist, .mk .mk-ab-recap li, .mk .mk-ab-rail button {
     background: #161616 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   }
   .mk .mk-glass::after { display: none; }
@@ -832,20 +801,6 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 
 @media (max-width: 1100px) { .mk-rd-flow { display: none; } }
 
-/* each step: its visual on a fixed stage at the top, then the step number, title and sentence */
-.mk-gd-stage { height: 340px; border-radius: 20px; background: rgba(0, 0, 0, 0.34); border: 1px solid rgba(255, 255, 255, 0.07); padding: 22px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-.mk-gd-stage .mk-gd-viz { margin: 0; padding: 0; }
-.mk-gd-copy { padding: 0 16px; display: grid; gap: 10px; }
-.mk-gd-copy .mk-gd-step { margin-bottom: 4px; width: 34px; height: 34px; font-size: 0.875rem; }
-.mk-gd-copy > p { color: var(--mk-text-2); max-width: 46ch; }
-.mk-gd-copy h3 { font-size: 1.625rem; letter-spacing: -0.03em; }
-.mk-gd-before { height: 270px; }
-.mk-gd-stage .mk-gd-after svg { max-height: 196px; }
-.mk-gd-stage .mk-gd-key { margin-top: 8px; }
-.mk-gd-stage .mk-gd-flag { margin-top: 6px; }
-.mk-gd-card { width: 74%; }
-.mk-gd-card-2 { top: auto; bottom: 0; width: 66%; }
-@media (max-width: 760px) { .mk-gd-stage { height: auto; } .mk-gd-before { height: auto; } }
 
 
 /* inside the call: the dugout footage, the engine at work inside the screen, and back out */
