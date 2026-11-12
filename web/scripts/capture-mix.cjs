@@ -9,7 +9,7 @@ const { STARTER_JS } = { STARTER_JS: [
 const ars = STARTER_JS.map((p) => E.Pitch({ name: p.name, kind: p.kind, grade: p.grade, command: p.command, conf: p.feel, base_conf: p.feel, shape: p.shape, velo: p.velo, slot: "three-quarter", height_ft: 6.1 }));
 const sit = { balls: 1, strikes: 2, outs: 1, bases: [false, true, false], inning: 5, margin: 0, pitch_count: 61, batters_faced: 17, level: "college_d3", same_side: true, last: ["Fastball", "up-away"], hitter_seen: { Fastball: 2, Slider: 1 }, usage_this_count: {} };
 const r = E.callV08(ars, E.Situation(sit), {});
-const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase" };
+const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 const dist = r.dist.map((d) => ({ pitch: d.pitch.name, spot: SPOT[d.quad], prob: Math.round(d.prob * 1000) / 1000 })).filter((d) => d.prob >= 0.005);
 console.log(`// One real call mix from the PitchIQ engine (lib/engine.js, version ${E.VERSION}), captured by scripts/capture-mix.cjs.
 // The app's sample right-hander (fastball 86, slider 78, changeup 77) at college D3: 1-2 count, runner on second, one out,

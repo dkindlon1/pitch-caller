@@ -178,24 +178,6 @@ h2 { font-size: clamp(2.4rem, 4vw, 3.6rem); }
 /* close */
 .close-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 6vw, 96px); align-items: center; }
 
-/* ---- the waitlist form (Night) */
-.wl { display: grid; gap: 14px; }
-.wl-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.9fr); gap: 10px; }
-.wl-field { display: grid; gap: 7px; }
-.wl-field > span { color: var(--pc-text-2); font-size: 0.95rem; font-weight: 600; }
-.wl input, .wl select {
-  min-height: 52px; width: 100%; padding: 0 14px; border-radius: 10px;
-  font: 500 1.0625rem var(--f-body); color: var(--pc-text); background: var(--pc-surface-2); border: 1px solid var(--pc-btn-line);
-}
-.wl input::placeholder { color: var(--pc-text-3); }
-.wl select option { color: #07090c; }
-.wl input:focus-visible, .wl select:focus-visible { outline: 3px solid var(--pc-text); outline-offset: 1px; }
-.wl-actions { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 18px; }
-.wl-note { font-size: 0.95rem; color: var(--pc-text-2); }
-.wl-error { font-weight: 700; color: var(--pc-warn-text); }
-.wl-done { font-weight: 700; font-size: 1.25rem; padding: 18px 20px; border-radius: 14px; background: var(--pc-surface); border: 1px solid var(--pc-line); }
-.wl-trap { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-
 /* ---- footer */
 .foot { background: var(--pc-bg); border-top: 1px solid var(--pc-line); color: var(--pc-text-2); font-size: 0.95rem; }
 .foot-row { display: flex; align-items: center; gap: 28px; min-height: 76px; flex-wrap: wrap; }
@@ -219,10 +201,6 @@ h2 { font-size: clamp(2.4rem, 4vw, 3.6rem); }
 @media (max-width: 720px) {
   body { font-size: 1.0625rem; }
   .hero { min-height: 0; padding-block: 40px 48px; }
-  .wl-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .wl-email { grid-column: 1 / -1; }
-  .wl-actions { grid-template-columns: minmax(0, 1fr); }
-  .wl-actions .btn { width: 100%; }
   .call-body { grid-template-columns: minmax(0, 1fr) 118px; }
   .reads { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .nav .btn-sm { display: none; }

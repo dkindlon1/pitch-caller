@@ -1,6 +1,6 @@
 // The version of the Terms and Privacy Policy an account agrees to (D15). Change it when either page changes in
 // substance: accounts that agreed to an older one are asked again in the portal.
-export const LEGAL_VERSION = "2026-11-06-draft";
+export const LEGAL_VERSION = "2026-11-12-draft";
 
 // Where questions and deletion requests go. A placeholder until Drew picks the address (shown as such on the pages).
 export const CONTACT_EMAIL: string | null = null;

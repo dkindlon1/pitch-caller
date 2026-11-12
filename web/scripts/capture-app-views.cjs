@@ -22,7 +22,7 @@ const pick = (pairs) => { let x = rnd(), acc = 0; for (const [v, w] of pairs) { 
   const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
   await page.goto(url); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 15000 });
   // the app draws its calls with Math.random: seed it too, so the game (and the screens) come out the same every time
-  await page.evaluate(() => { let sd = 11; Math.random = () => (sd = (sd * 16807) % 2147483647) / 2147483647; S.view = "live"; G().call = null; makeCall(); save(); render(); });
+  await page.evaluate(() => { if (window.__SEED !== 0) { let sd = 11; Math.random = () => (sd = (sd * 16807) % 2147483647) / 2147483647; } S.view = "live"; G().call = null; makeCall(); save(); render(); });
 
   const visible = (re) => page.evaluate((src) => { const r = new RegExp(src); return [...document.querySelectorAll("button")].some((b) => b.offsetParent && r.test(b.textContent.trim())); }, re.source);
   const click = (re) => page.evaluate((src) => { const r = new RegExp(src); const b = [...document.querySelectorAll("button")].find((x) => x.offsetParent && r.test(x.textContent.trim().replace(/\s+/g, " "))); if (b) b.click(); return !!b; }, re.source);

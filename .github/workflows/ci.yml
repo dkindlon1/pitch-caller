@@ -47,7 +47,7 @@ jobs:
       - run: scripts/test-app.sh
 
   web:
-    name: Web app (landing page and waitlist)
+    name: Web app (public site)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:

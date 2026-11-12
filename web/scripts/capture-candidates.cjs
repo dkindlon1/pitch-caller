@@ -14,7 +14,7 @@ let seed = 7; const rng = () => (seed = (seed * 16807) % 2147483647) / 214748364
 const r = E.callV08(ars, sit, { rng });
 const costs = E.v08.rootCosts(ars, sit, r.tab, r.info.sigma);
 const share = {}; for (const d of r.dist) share[`${d.pitch.name}|${d.quad}`] = d.prob;
-const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase" };
+const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 const out = Object.entries(costs).map(([k, c]) => {
   const i = k.lastIndexOf("|"), pitch = k.slice(0, i), quad = k.slice(i + 1);
   return { pitch, quad, spot: SPOT[quad] || quad, cost: Math.round(c * 10000) / 10000, share: Math.round((share[`${pitch}|${quad}`] || 0) * 1000) / 1000 };

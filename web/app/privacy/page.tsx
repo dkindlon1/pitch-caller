@@ -39,11 +39,18 @@ export default function Privacy() {
         While the team subscribes. If its subscription lapses, the data is kept for 12 months so it all comes back when the team pays again,
         then deleted. The exports emailed at a lapse are kept for the same 12 months. Ask and we delete your data sooner.
       </p>
-      <h2>The spring waitlist</h2>
+      <h2>Messages from the &ldquo;Talk to us&rdquo; form</h2>
       <p>
-        If you joined the waitlist, we keep your email, your role and level, when you signed up, and a one-way scrambled code made from your
-        network address to stop automated sign-ups (the address itself isn&apos;t stored). We send one email when teams can sign up, keep it 12
-        months after that, then delete it. The waitlist isn&apos;t for children under 13.
+        A message sent from the form on our home page reaches us as an email, sent through Resend: your name, email, role, level, team or
+        school if you gave one, and what you wrote. We use it only to reply. We keep it for 12 months after our last reply, or until your team
+        signs up and it becomes part of that account, and delete it sooner if you ask. To stop the form being used to flood us, your network
+        address is held in the server&apos;s memory for up to an hour; it isn&apos;t stored. The form isn&apos;t for children under 13.
+      </p>
+      <h2>The old waitlist</h2>
+      <p>
+        The spring waitlist is closed. If you joined it, we keep your email, your role and level, when you signed up, and a one-way scrambled
+        code made from your network address (the address itself isn&apos;t stored). We send one email when teams can sign up, keep it 12 months
+        after that, then delete it.
       </p>
       <h2>Contact</h2>
       <p>Questions, or a request to see or delete your data: {CONTACT_EMAIL ? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> : CONTACT_TEXT}.</p>
