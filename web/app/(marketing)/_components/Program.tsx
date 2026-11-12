@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MOVE_POINTS, MOVE_TYPES, RANGE, type MovePoint } from "@/content/movement";
-import { can3d, whenIdle } from "@/app/components/can3d";
+import { can3d, whenStill } from "@/app/components/can3d";
 import type { Cloud, View } from "@/app/components/cloud3d";
 
 // Who uses it (coaches, pitchers and their parents) and the TrackMan/Rapsodo uploads, shown as a bullpen's movement
@@ -35,7 +35,7 @@ function Cloud3D() {
     const io = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       io.disconnect();
-      cancel = whenIdle(() => {
+      cancel = whenStill(() => {
         import("@/app/components/cloud3d").then(({ mount }) => {
           if (dead || !box.current) return;
           cloud.current = mount(box.current, MOVE_POINTS, COLORS);

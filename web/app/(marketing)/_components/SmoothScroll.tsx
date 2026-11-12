@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { whenStill } from "@/app/components/can3d";
 
 // Scrolling is the browser's own (no smooth-scroll library): it runs on the compositor thread, so it stays smooth and
 // answers the wheel or finger at once even while the page is busy, and the scroll scenes follow it almost 1:1. This
@@ -25,20 +26,12 @@ export function SmoothScroll() {
     return () => { dead = true; ro.disconnect(); window.clearTimeout(t); window.removeEventListener("load", refresh); };
   }, []);
 
-  // the heavy parts further down (the at-bat's 3D, the demo's engine and tables, the staff cloud) are fetched and evaluated
-  // while the visitor is still reading the top of the page, one per idle moment, so none of them freezes a scroll later
+  // the code of the heavy parts further down (the demo's engine and tables, the staff cloud) is fetched and evaluated in
+  // quiet moments while the visitor is still up top (the at-bat and the demo start themselves the same way)
   useEffect(() => {
-    const warm: (() => Promise<unknown>)[] = [
-      () => import("./atbatScene"),
-      () => Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")]),
-      () => import("@/app/components/cloud3d"),
-    ];
-    let dead = false, id = 0;
-    const idle = (f: () => void): number => (typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(f, { timeout: 4000 }) : setTimeout(f, 300) as unknown as number);
-    const next = () => { const job = warm.shift(); if (!job || dead) return; id = idle(() => { if (!dead) job().catch(() => {}).finally(next); }); };
-    const start = () => window.setTimeout(next, 1200);
-    if (document.readyState === "complete") start(); else window.addEventListener("load", start, { once: true });
-    return () => { dead = true; if (typeof window.cancelIdleCallback === "function") window.cancelIdleCallback(id); window.removeEventListener("load", start); };
+    const c1 = whenStill(() => { Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")]).catch(() => {}); });
+    const c2 = whenStill(() => { import("@/app/components/cloud3d").catch(() => {}); });
+    return () => { c1(); c2(); };
   }, []);
   return null;
 }

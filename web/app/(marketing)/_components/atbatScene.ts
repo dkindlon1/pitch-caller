@@ -9,7 +9,7 @@
 import * as THREE from "three";
 import { along, ball, buildOverlay, disposeScene, flight, flightTube, FLIGHT_PER, makeRenderer, PER, PITCH_COLOR, SEG, spinBall, target, tube, world, type FieldPitch } from "./field";
 
-export type AtBatScene = { set: (p: number) => void; dispose: () => void };
+export type AtBatScene = { set: (p: number) => void; prime: () => void; dispose: () => void };
 // where a hitter has to decide whether to swing: about 24 ft in front of the plate
 export const DECIDE_Z = 24;
 
@@ -273,6 +273,8 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
 
   return {
     set(p: number) { want = Math.max(0, Math.min(1, p)); if (!raf && visible) { lastT = 0; raf = requestAnimationFrame(frame); } },
+    // draw once while still off screen, so its shaders compile now (in a quiet moment) instead of on its first visible frame
+    prime() { try { draw(cur); } catch { /* drawn properly once visible */ } },
     dispose() {
       dead = true;
       cancelAnimationFrame(raf);

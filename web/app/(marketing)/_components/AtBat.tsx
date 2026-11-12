@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AT_BAT, CELL, type Pitch } from "@/content/at-bat";
-import { can3d } from "@/app/components/can3d";
+import { can3d, whenStill } from "@/app/components/can3d";
 import type { AtBatScene } from "./atbatScene";
 import type { FieldPitch } from "./field";
 
@@ -47,10 +47,12 @@ export function AtBat() {
     const reduced = mode === "still";
     let scene: AtBatScene | null = null, dead = false, kill = () => {};
     const webgl = reduced ? (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } })() : can3d();
-    // load the scene when the chapter is a screen away
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
+    // build the scene while the visitor is still up top and not scrolling (whenStill), so the build never lands on a
+    // scroll; or when the chapter comes near first, whichever happens first
+    let started = false, cancelStill = () => {};
+    const start = () => {
+      if (started || dead) return;
+      started = true; io.disconnect(); cancelStill();
       // the film draws on a 2D canvas, so the scene loads even without WebGL (the graphics over it need WebGL)
       void webgl;
       import("./atbatScene").then(({ mountAtBat }) => {
@@ -63,6 +65,7 @@ export function AtBat() {
           onBall: ({ x, y, show, text }) => { const l = speed.current; if (!l) return; l.style.transform = `translate(${x}px, ${y}px)`; l.dataset.show = show ? "1" : "0"; if (l.textContent !== text) l.textContent = text; },
         });
         if (!scene) return;
+        scene.prime();
         setOn(true);
         if (window.__mkAbProgress !== undefined) scene.set(window.__mkAbProgress);
         if (reduced) scene.set(1);
@@ -83,9 +86,11 @@ export function AtBat() {
         apply(st.progress);
         kill = () => st.kill();
       });
-    }, { rootMargin: "40% 0px" });
+    };
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) start(); }, { rootMargin: "40% 0px" });
     if (sec.current) io.observe(sec.current);
-    return () => { dead = true; io.disconnect(); kill(); scene?.dispose(); };
+    cancelStill = whenStill(start);
+    return () => { dead = true; io.disconnect(); cancelStill(); kill(); scene?.dispose(); };
   }, [mode]);
 
   // the rail: jump the scroll to the middle of a pitch's stretch (its flight just landed)
