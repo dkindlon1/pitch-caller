@@ -41,7 +41,7 @@
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "0.9";      // engine logic version; the tables carry their own fingerprint (data.version)
+  const VERSION = "1.0";      // engine logic version (v1.0, Nov 11; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own

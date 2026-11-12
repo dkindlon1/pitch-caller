@@ -35,7 +35,7 @@
       // bug and is gone (+0.0028). The flat step stays.
       evidence: false, evidenceRef: 0.15 },
     flags: { gradeGap: 1.0, gradeZ: 2.5, stuffMinN: 400, cmdMinLoc: 150, changeWindow: 8, changeZ2: 9.21,
-      starvedShare: 0.05, starvedGames: 5, scoreMinRows: 150, scoreMargin: 0.015, scoreWindow: 300, scoreZ: 1.645 },
+      starvedShare: 0.05, starvedGames: 5, scoreMinRows: 175, scoreMargin: 0.015, scoreWindow: 300, scoreZ: 1.5 },
   };
   // Traits the learner fits. Set by the trait gate (gate_test.js, gate_result.json, 12 seasons per trait). All six are
   // learnable on the calibrated engine, but with the real walk/strikeout link (v0.7b) command no longer buys strikeouts,
@@ -505,6 +505,12 @@
     // off: tuning seeds 300-309 9/10 (was 5/10), held-out 500-509 7/10 (was 5/10), fresh 600-619 13/20 (was 12/20); the real learner
     // was never switched off on right or wrong grades in any of those 40 seasons. Any fitted estimate pays a small price for its own noise when the grades are already
     // right (about 1/(2n) per pitch per learned number), and that price must not read as "learning is broken".
+    // Retuned Nov 11 for the v1.0 engine (min rows 150 -> 175, 1.645 SE -> 1.5 SE; margin 0.015 kept). On v1.0 the
+    // false switch-offs were almost all a third pitch at 140-170 scored pitches (a 15% changeup's whole season), too
+    // few to say learning is worse: no margin or SE setting fixed that on the tuning seeds without missing the noise-
+    // chaser. Chosen on tuning seeds 700-739: noise-chaser switched off 35/40 (was 37/40), real learner 1/40 (was
+    // 2/40). Held out: stage2_test D5 seeds 500-539 33/40 and 0/40 (was 36/40 and 2/40); wrong grades (seeds 800-819)
+    // 0/20 either way. Below 175 scored pitches the pitch keeps learning under the caps.
     const gap = rows ? (coachLL - learnedLL) / rows : 0;       // + = learned predicted worse (more surprise per pitch)
     const se = rows ? Math.sqrt(win.reduce((a, g) => a + ((g.c - g.l) - gap * g.n) ** 2, 0)) / rows : 0;
     const allN = scored.reduce((a, g) => a + g.n, 0);

@@ -29,6 +29,8 @@ console.log("D5. The safety switch trips on a learner that chases noise");
   // Drew, Nov 10 (v1.0 Step 2): 40 seasons, same bars (caught in >= 80%, the old 4 of 5; false switch-offs at most 1
   // in 40). On 5 seasons the count moved 4/5 -> 2/5 when Step 2 re-rolled the simulated seasons, while 40 fresh seasons
   // (600-639) read 37/40 caught on the Step 1 engine and 38/40 on Step 2, each with 1 false switch-off.
+  // Nov 11 (v1.0 Step 7): the v1.0 engine read 36/40 caught with 2 false switch-offs here; the switch was retuned on
+  // seeds 700-739 (min rows 175, 1.5 SE; see learner.js) and these seeds were only used to check it.
   const SEASONS = 40;
   for (let r = 0; r < SEASONS; r++) {
     const evs = season({ pitches: P3, entered: G3, truth: () => G3, games: 16, pas: 22, seed: 500 + r, loc: true });

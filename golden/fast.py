@@ -1,6 +1,6 @@
 """Fast live Python-vs-JS parity harness (v1.0 Step 0b).
 
-Runs golden/cases.py's compute() on the first N cases of golden/golden_v09.json in Python, runs the JS twin
+Runs golden/golden_v10.py's compute() on the first N cases of golden/golden_v10.json (v1.0 Step 7: the v1.0 inputs) in Python, runs the JS twin
 (golden/fast.js) on the same inputs, and diffs the two live. Unlike golden/golden_v09.py this compares the two
 *current* engines against each other rather than against the frozen golden JSON, so it is immune to the
 platform libm drift that makes bit-exact comparison against a glibc-generated reference impossible off that
@@ -15,10 +15,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path[:0] = [HERE, ROOT]
 import cases as G                                  # noqa: E402
-import golden_v09 as G9                            # noqa: E402  (compute() with the intent label)
+import golden_v09 as G9                            # noqa: E402  (from_dicts(), Half via G9.G8)
+import golden_v10 as G10                           # noqa: E402  (compute() with the Step 7 coverage)
 
 TOL = 1e-9
-GOLD = os.path.join(HERE, "golden_v09.json")
+GOLD = os.path.join(HERE, "golden_v10.json")
 
 
 def load(n):
@@ -29,12 +30,12 @@ def load(n):
 
 
 def compute(c):
-    """golden_v09.compute() on one golden case (cases.py's outputs with v0.9's matchup applied, plus the intent label),
-    the same function golden_v10.py freezes; plus two live-only outputs (v1.0 #18, retiring app/make_parity.py +
+    """golden_v10.compute() on one golden case (the function golden_v10.py freezes: cases.py's outputs with v0.9's
+    matchup and intent label and the Step 7 coverage); plus two live-only outputs (v1.0 #18, retiring app/make_parity.py +
     parity.js): each pitch's confidence after each event, and, on full cases, the learning-mode grade of a call."""
     from dataclasses import replace
     import engine as e
-    r = G9.compute(c)
+    r = G10.compute(c)
     ars, s = G9.from_dicts(c)
     conf = {}
     for d in c["arsenal"]:

@@ -1,6 +1,6 @@
 // Fast live Python-vs-JS parity harness, JS side (v1.0 Step 0b).
 // The JS twin of golden/cases.py's compute(), modeled on golden/golden_v09.js. Runs on the first N cases of
-// golden/golden_v09.json and diffs against the live Python side, tolerance 1e-9, non-zero exit on any mismatch.
+// golden/golden_v10.json (v1.0 Step 7: its inputs carry the Step 7 coverage) and diffs against the live Python side, tolerance 1e-9, non-zero exit on any mismatch.
 //   node golden/fast.js N         -> compute both sides, diff, exit non-zero on any mismatch
 //   node golden/fast.js --emit N  -> print this side's results as JSON (used by golden/fast.py)
 const fs = require("fs"), path = require("path");
@@ -55,6 +55,14 @@ function compute(c) {
   const g = V.gradeStats(p0, q0, sw, ars, null, c.s.grades);
   r.grade = {};
   for (const k in g) r.grade[k] = Array.from(g[k]);
+  r.walk = Array.from(V.walkSuggestion(ars, sw, tab));     // v1.0 Step 7 coverage, as golden_v10.py
+  if (c.exclude) {
+    const x = V.callV08(ars, sw, { rng: () => 0.5, tab, exclude: c.exclude }), xd = {};
+    for (const d of x.dist) xd[d.pitch.name + "|" + d.quad] = [d.prob, d.cost];
+    const [xl, xdel] = V.whyLine(ars, x.info.s, tab, x.pick, x.info, c.exclude);
+    r.shaken = { pick: [x.pick.pitch.name, x.pick.quad], prob: x.pick.prob, cost: x.pick.cost, dist: xd, why: xl,
+                 deltas: plain(xdel), intent: plain(V.intentLabel(ars, x.info.s, tab, x.pick, x.info, c.exclude)) };
+  }
   r.ump = { u: V.umpEstimate(c.takes, s.level),
             g: Array.from(V.gradeEstimate(c.takes, 3, 2.5, 3.0, c.takes.length + 20)) };
   return r;
@@ -89,7 +97,7 @@ function main() {
   const args = process.argv.slice(2).filter((a) => a !== "--emit");
   const emit = process.argv.includes("--emit");
   const n = args.length ? parseInt(args[0], 10) : 40;
-  const all = JSON.parse(fs.readFileSync(path.join(HERE, "golden_v09.json")));
+  const all = JSON.parse(fs.readFileSync(path.join(HERE, "golden_v10.json")));
   if (n > all.length) { console.error(`only ${all.length} golden cases available, asked for ${n}`); process.exit(1); }
   const cases = all.slice(0, n);
   if (emit) { process.stdout.write(JSON.stringify(cases.map(compute))); return; }

@@ -1,5 +1,6 @@
 // v1.0 golden (Nov 9): the JS engine against golden/golden_v10.json (python3 golden/golden_v10.py make).
 // node golden/golden_v10.js   (continuous values to 1e-12; picks, sweeps, why lines and flags exactly)
+// Step 7 coverage (Nov 11): quad-keyed hitter damage (in the inputs), the walk suggestion, and a shake-off list.
 const fs = require("fs"), path = require("path");
 const E = require(path.join(__dirname, "..", "app", "engine.js"));
 E.init(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "app", "engine_data.json"))));
@@ -54,6 +55,22 @@ cases.forEach((c, i) => {
   const t = V.takeStats(p0, q0, s, ars); o.take.forEach((v, j) => num(i, "take", j, v, t[j]));
   const g = V.gradeStats(p0, q0, s, ars, null, c.s.grades);
   for (const k in o.grade) o.grade[k].forEach((v, j) => num(i, "grade", k + "." + j, v, g[k][j]));
+  const w = V.walkSuggestion(ars, s, tab);
+  same(i, "walk.suggest", o.walk[0], w[0]); num(i, "walk", "vWalk", o.walk[1], w[1]); num(i, "walk", "vPa", o.walk[2], w[2]);
+  if (c.exclude) {
+    const x = V.callV08(ars, s, { rng: () => 0.5, tab, exclude: c.exclude }), sh = o.shaken;
+    same(i, "shaken.pick", sh.pick, [x.pick.pitch.name, x.pick.quad]);
+    num(i, "shaken", "prob", sh.prob, x.pick.prob); num(i, "shaken", "cost", sh.cost, x.pick.cost);
+    const xd = {}; for (const d of x.dist) xd[d.pitch.name + "|" + d.quad] = d;
+    for (const k of new Set([...Object.keys(sh.dist), ...Object.keys(xd)])) {
+      if (!sh.dist[k] || !xd[k]) { note(`case ${i} shaken.dist ${k}: only in ${sh.dist[k] ? "golden" : "JS"}`); continue; }
+      num(i, "shaken", "dist." + k, sh.dist[k][0], xd[k].prob); num(i, "shaken", "distCost." + k, sh.dist[k][1], xd[k].cost);
+    }
+    const [xl, xdel] = V.whyLine(ars, x.info.s, tab, x.pick, x.info, c.exclude);
+    same(i, "shaken.why", sh.why, xl);
+    for (const k in sh.deltas) num(i, "shaken", "delta." + k, sh.deltas[k], xdel[k]);
+    same(i, "shaken.intent", sh.intent, V.intentLabel(ars, x.info.s, tab, x.pick, x.info, c.exclude));
+  }
   num(i, "ump", "u", o.ump.u, V.umpEstimate(c.takes, s.level));
   const ge = V.gradeEstimate(c.takes, 3, 2.5, 3.0, c.takes.length + 20);
   num(i, "gradeEst", 0, o.ump.g[0], ge[0]); num(i, "gradeEst", 1, o.ump.g[1], ge[1]); same(i, "gradeEst.flag", o.ump.g[2], ge[2]);
