@@ -214,15 +214,36 @@
   }
 
   // ------------------------------------------------------------ pitch types
-  // Real pitch names, and how each maps onto the four families the engine models.
+  // Real pitch names, and the v1.1 kind and profile each is (the engine's MIGRATE_BY_TYPE; db_test checks they match).
   const PITCH_TYPES = {
-    "Four-seam": { kind: "FB", shape: "ride" }, "Two-seam": { kind: "FB", shape: "run" }, "Sinker": { kind: "FB", shape: "sink" },
-    "Cutter": { kind: "FB", shape: "cut" }, "Slider": { kind: "SL", shape: "tight" }, "Sweeper": { kind: "SL", shape: "sweeper" },
-    "Slurve": { kind: "SL", shape: "" }, "Curveball": { kind: "CB", shape: "loopy" }, "Knuckle curve": { kind: "CB", shape: "sharp" },
-    "12-6 curve": { kind: "CB", shape: "sharp" }, "Changeup": { kind: "CH", shape: "fade" }, "Splitter": { kind: "CH", shape: "drop" },
-    "Forkball": { kind: "CH", shape: "drop" },
+    "Four-seam": { kind: "FB", shape: "rides" }, "Two-seam": { kind: "SI", shape: "two-seam" }, "Sinker": { kind: "SI", shape: "run" },
+    "Cutter": { kind: "FC", shape: "" }, "Slider": { kind: "SL", shape: "tight" }, "Sweeper": { kind: "SL", shape: "sweeper" },
+    "Slurve": { kind: "SL", shape: "slurve" }, "Curveball": { kind: "CB", shape: "" }, "Knuckle curve": { kind: "CB", shape: "power" },
+    "12-6 curve": { kind: "CB", shape: "12-6" }, "Changeup": { kind: "CH", shape: "fade" }, "Splitter": { kind: "CH", shape: "split" },
+    "Forkball": { kind: "CH", shape: "split" },
   };
-  const DEFAULT_TYPE = { FB: "Four-seam", SL: "Slider", CB: "Curveball", CH: "Changeup" };
+  const DEFAULT_TYPE = { FB: "Four-seam", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
+  // v1.0's standard signs: a pitch whose kind changes in the v1.1 migration (a sinker or cutter that was a fastball) keeps
+  // the sign it had (plan O1) until the coach changes its type
+  const V10_SIGN = { FB: 1, CB: 2, SL: 3, CH: 4 };
+  const KINDS_V = 11;
+
+  // v1.1 Step 1: a stored pitcher's pitches into the six kinds through the engine's one migration table (passed in as
+  // migrate(kind, shape, type) -> [kind, shape]). Runs once per record (kindsV marks it), returns what changed.
+  function migratePitcherV11(p, migrate) {
+    if (!p || p.kindsV === KINDS_V) return [];
+    const log = [];
+    for (const d of p.pitches || []) {
+      const [k, s] = migrate(d.kind, d.shape || "", d.type);
+      if (k !== d.kind || s !== (d.shape || "")) {
+        if (k !== d.kind && d.sign == null && V10_SIGN[d.kind]) d.sign = V10_SIGN[d.kind];
+        log.push({ pitcherId: p.id || null, pitcher: p.name || "", pitch: d.name, type: d.type || null, from: `${d.kind}/${d.shape || ""}`, to: `${k}/${s}`, sign: d.sign == null ? null : d.sign });
+        d.kind = k; d.shape = s;
+      }
+    }
+    p.kindsV = KINDS_V;
+    return log;
+  }
 
   function newPitch(type, extra = {}) {
     const t = PITCH_TYPES[type] || PITCH_TYPES["Four-seam"];
@@ -303,7 +324,7 @@
     return out;
   }
 
-  const PCDB = { open, uid, today, STORES, VERSION, likelyDuplicates, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy,
+  const PCDB = { open, uid, today, STORES, VERSION, likelyDuplicates, PITCH_TYPES, DEFAULT_TYPE, V10_SIGN, KINDS_V, migratePitcherV11, newPitch, newPitcher, newHitter, migrateLegacy,
     isPitch, isPlay, PLAY_KINDS, GAME_STATUS, moveGame, upgradeBackup };
   if (typeof module !== "undefined" && module.exports) module.exports = PCDB;
   else root.PCDB = PCDB;

@@ -55,7 +55,7 @@ def inputs():
     for i in range(N):
         ars = F.rand_arsenal()
         s = F.rand_situation(ars)
-        vfb = max(x.mph() for x in ars if x.kind == "FB")
+        vfb = max(x.mph() for x in ars if e.is_fastball(x.kind))
         s = replace(s, level=rng.choice(LEVELS),
                     look=(round(rng.uniform(0.86, 1.02) * vfb, 2), round(rng.uniform(1.8, 3.2), 2)) if rng.random() < 0.7 else None,
                     familiar={c: rng.randint(0, 12) for c in ("FB", "OS") if rng.random() < 0.6},

@@ -21,7 +21,7 @@ for d in sys.argv[1:]:
         level = rows[0].get("level", "mlb")
         for r in rows:
             kinds[r["kind"]] += 1
-            if r["kind"] != "FB" and r["quad"] == "middle":
+            if r["kind"] not in ("FB", "SI", "FC") and r["quad"] == "middle":
                 os_mid += 1
             dd = r["detail"]
             if "STRIKEOUT" in dd: pa.update(PA=1, K=1)

@@ -227,7 +227,11 @@ Pure refactor. Its proof is that v1.0's golden reproduces exactly.
   | Splitter, Forkball (CH/drop) | CH/split | | | |
 
   Without a `type`, "cut" and "run" could be a four-seamer's movement, so those stay four-seam profiles; "sink" exists
-  only for sinkers. Every change is logged with the pitch's name. A migration-only kind change is **not** a learner change
+  only for sinkers. A type migrates a pitch only while it still carries that type's v1.0 tags, so a coach's later edit is
+  never undone. Six more rows cover a v1.0 fastball tag arriving on a v1.1 sinker or cutter (a shape accepted from the
+  v1.0 portal before Step 5): SI/sink → SI/run, SI/ride → SI/two-seam, SI/cut → SI/typical, FC/cut, FC/run, FC/sink →
+  FC/typical. The one deliberate number change: a stored generic "Curveball" (v1.0 CB/loopy) becomes CB/typical, which
+  moves only its tunnel movement (−14/−5 → −10/−7). Migrated pitches keep their v1.0 sign in their own `sign` field (O1). Every change is logged with the pitch's name. A migration-only kind change is **not** a learner change
   point (`learner.js:421`); a real kind change still is. `roster.js:583` updates `kind` with `type` on re-import.
 - In this step every migrated pitch carries exactly its old numbers: movement, `shape_fit` line, `KIND_W`, grounder rate,
   default velocity (a migrated cutter with no velocity entered keeps the FB default until Step 1b). `shape_fit` and
@@ -244,6 +248,10 @@ Pure refactor. Its proof is that v1.0's golden reproduces exactly.
   data). `SHAPES` (`:650`) and `DEFAULT_VELO` (`:319`) become views of `PROFILES`.
 - This changes calls slightly (tunnel movement and default velocity only). Report: v1.0 vs Step 1b pitch-type shares on
   the grid arsenals; re-freeze `golden_v11a`.
+- **Old event snapshots read through the roster's type** (open from Step 1): a game logged before v1.1 stored its pitches
+  in v1.0 terms without a type, so a typed Two-seam in an old snapshot reads as FB/runs, not SI/two-seam. Identical
+  numbers in Step 1; from 1b on they differ, so the learner and replay read old snapshot pitches through
+  `migratePitch(kind, shape, roster type)` (the learner's change-point check already does).
 
 ### Step 2: Profiles that change calls (3 days; each fitted item ships only on its own numbers, priors fill the rest)
 Fit hygiene: 2024 train, 2025 held out, game-clustered bootstrap, cluster-robust SE, ship on held-out gain > 2 boot SD
@@ -321,6 +329,8 @@ and a 95% interval excluding 0 where a coefficient is tested.
   real roster backup, it is run the same way and its before / after calls are captured.
 
 ### Step 6: Release (1 day)
+- **Every device updates together:** a v1.0 app can't read a pitcher stored with SI / FC (its engine rejects the kind),
+  so the release note tells the coach to update every iPad, and the portal (Step 5) ships the same day.
 - Final `golden_v11` freeze; `scripts/test-app.sh` and `scripts/test-sql.sh` exit 0; GitHub CI green; read-through graded;
   build report complete; Drew signs off; tag `v1.1`.
 

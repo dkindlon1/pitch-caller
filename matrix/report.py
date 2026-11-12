@@ -26,7 +26,7 @@ for tag in tags:
         guess_mem.append(int(g.group(1))); guess_fb.append(int(g.group(2)))
         rows = list(csv.DictReader(open(f)))
         level = rows[0]["level"]
-        mash = {r["batter"] for r in rows if r["kind"] == "FB" and float(r["true_dmg"]) > 0.4}
+        mash = {r["batter"] for r in rows if r["kind"] in ("FB", "SI", "FC") and float(r["true_dmg"]) > 0.4}
         trip = Counter()
         for r in rows:
             npitch += 1
@@ -43,7 +43,7 @@ for tag in tags:
                 ended = False
             pa["R"] += int(r["runs"])
             key = (r["batter"] in mash, min(trip[r["batter"]] + 1, 3))   # fastball share: mashers vs everyone else, by time up
-            masher[key][0] += r["kind"] == "FB"; masher[key][1] += 1
+            masher[key][0] += r["kind"] in ("FB", "SI", "FC"); masher[key][1] += 1
             if ended:
                 trip[r["batter"]] += 1
     # fastball share to mashers, 1st trip vs 3rd+ trip (pooled over games is fine: same hitter ids differ by game, so key by file)

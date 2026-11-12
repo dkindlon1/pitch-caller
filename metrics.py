@@ -53,7 +53,7 @@ def rho_from_logs(paths):
         rows = list(csv.DictReader(open(path)))
         for a, b in zip(rows, rows[1:]):
             if a["batter"] == b["batter"] and a["inning"] == b["inning"] and int(b["pc"]) == int(a["pc"]) + 1:
-                pairs[b["count"]].append((a["kind"] == "FB", b["kind"] == "FB"))
+                pairs[b["count"]].append((a["kind"] in ("FB", "SI", "FC"), b["kind"] in ("FB", "SI", "FC")))
     tot, acc = 0, 0.0
     for c, xs in pairs.items():
         n = len(xs)

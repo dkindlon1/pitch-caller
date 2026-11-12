@@ -59,9 +59,9 @@ const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if
   check(m.games === 1 && mev.length === 2 && mev.find((e) => e.n === 2).pitcherId === m.staffIds[1], "saved games become events credited to the right pitcher");
   check((await PCDB.migrateLegacy(D3, S)) === null && (await D3.all("pitchers")).length === 2, "runs once only");
 
-  console.log("5. Pitch types map onto the engine's four families");
+  console.log("5. Pitch types map onto the engine's six kinds (v1.1)");
   const t = PCDB.PITCH_TYPES;
-  check(t.Cutter.kind === "FB" && t.Sweeper.shape === "sweeper" && t.Splitter.kind === "CH" && t["Knuckle curve"].kind === "CB", "cutter, sweeper, splitter, knuckle curve");
+  check(t.Cutter.kind === "FC" && t.Sinker.kind === "SI" && t["Two-seam"].kind === "SI" && t.Sweeper.shape === "sweeper" && t.Splitter.kind === "CH" && t.Splitter.shape === "split" && t["Knuckle curve"].kind === "CB", "cutter, sinker, two-seam, sweeper, splitter, knuckle curve");
 
   for (const d of [D, D2, D3]) await d.destroy();
   console.log(fails ? `\n${fails} check(s) failed` : "\nall database checks passed");

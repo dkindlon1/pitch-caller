@@ -3,7 +3,7 @@ import sys
 import time
 import random
 from collections import Counter
-from engine import Pitch, Situation, call_v08, outcome_probs, grade_call, landing, solve_table, ev_adj, CV
+from engine import Pitch, Situation, call_v08, outcome_probs, grade_call, landing, solve_table, ev_adj, CV, is_fastball
 
 random.seed(11)
 results = []
@@ -399,7 +399,7 @@ check("v1.0 #22 same-side changeup: one term (no duplicate); at 2-1 its share is
 d3, d3_30 = [], []
 for lvl in ("hs", "college_d3", "college_d1"):
     for an in ("AVG3", "power"):
-        fbm = lambda p_, q_: p_.kind == "FB" and q_ == "middle"
+        fbm = lambda p_, q_: is_fastball(p_.kind) and q_ == "middle"
         b0 = _cnt_shares(_G.ARSENALS[an], Situation(0, 0, 1, E, inning=3, margin=0, level=lvl), fbm)
         b2 = _cnt_shares(_G.ARSENALS[an], Situation(0, 0, 1, E, inning=3, margin=0, level=lvl,
                                                     matchup={"hard|FB|middle": 2}), fbm)
@@ -493,7 +493,7 @@ check("v1.0 Step 7 ground-ball rule (Drew): double play on, 1-1: most calls go d
 def _share7(s_, pick, ars=AVG3):
     _, d_, _, _ = call_v08(ars, s_, rng=random.Random(0))
     return sum(pr for pr, _, p_, q_ in d_ if pick(p_, q_))
-FBk, OSk = (lambda p_: p_.kind == "FB"), (lambda p_: p_.kind != "FB")
+FBk, OSk = (lambda p_: is_fastball(p_.kind)), (lambda p_: not is_fastball(p_.kind))
 _plus = [_rp(x, grade=4) if x.kind in ("SL", "CH") else x for x in AVG3]
 reads7 = [   # (rule, situation, which calls it should move toward, arsenal); "squared_up" moves away
     ("late_fb", Situation(1, 1, 0, E, timing={"FB": 0.6}), lambda p_, q_: FBk(p_) and q_ in ("up-in", "up-away", "down-in"), AVG3),

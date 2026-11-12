@@ -20,7 +20,7 @@
   --stroke: rgba(255, 255, 255, 0.09); --stroke-2: rgba(255, 255, 255, 0.17); --rule: rgba(255, 255, 255, 0.07);
   --well: rgba(0, 0, 0, 0.28);
   --primary: #f4f7fb; --primary-ink: #04070c;
-  --fb: #ff5468; --sl: #f6cb4c; --cb: #45c9ff; --ch: #3ddc8c;
+  --fb: #ff5468; --sl: #f6cb4c; --cb: #45c9ff; --ch: #3ddc8c; --si: #ff9447; --fc: #c58bff;
   --call: var(--cb);
   --warn: #ffb547; --warn-bg: rgba(255, 181, 71, 0.13);
   --neg: #ff7272;  --neg-bg: rgba(255, 114, 114, 0.13);
@@ -41,7 +41,7 @@
   --stroke: rgba(20, 40, 70, 0.11); --stroke-2: rgba(20, 40, 70, 0.22); --rule: rgba(20, 40, 70, 0.08);
   --well: rgba(20, 40, 70, 0.06);
   --primary: #0a1320; --primary-ink: #ffffff;
-  --fb: #d0245a; --sl: #a07c00; --cb: #1a74c8; --ch: #0f8a52;
+  --fb: #d0245a; --sl: #a07c00; --cb: #1a74c8; --ch: #0f8a52; --si: #b8520a; --fc: #7d3fc4;
   --warn: #9a5a00; --warn-bg: rgba(255, 170, 40, 0.18);
   --neg: #b4232f;  --neg-bg: rgba(220, 50, 60, 0.12);
   --focus: #0a6fb0;
@@ -143,7 +143,7 @@ p { margin: 0; }
 
 /* pitch chips: sign number in the pitch's colour */
 .chip { --c: var(--ink); display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--c); color: var(--c); font-size: 14px; font-weight: 700; font-stretch: 75%; flex: none; line-height: 1; }
-.k-FB { --c: var(--fb); } .k-SL { --c: var(--sl); } .k-CB { --c: var(--cb); } .k-CH { --c: var(--ch); }
+.k-FB { --c: var(--fb); } .k-SL { --c: var(--sl); } .k-CB { --c: var(--cb); } .k-CH { --c: var(--ch); } .k-SI { --c: var(--si); } .k-FC { --c: var(--fc); }
 
 /* the call */
 .call-panel { position: relative; overflow: hidden; }
@@ -586,10 +586,14 @@ const TIERS = [
   { n: 3, t: "Plus hitter reads", d: "Swing timing on whiffs and where fouls go. Helps it learn each hitter." },
   { n: 4, t: "Plus measured break", d: "Trackman or Rapsodo break numbers for each pitch, entered below." },
 ];
-const KINDS = { FB: "Fastball", SL: "Slider", CB: "Curveball", CH: "Changeup" };
-const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4 };                 // the standard catcher's signs
-const KCOLOR = { FB: "var(--fb)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
-const SHAPE_OPTS = { FB: ["ride", "run", "sink", "cut", ""], SL: ["tight", "sweeper", ""], CB: ["loopy", "sharp", ""], CH: ["fade", "drop", ""] };
+// v1.1: six pitch kinds. Signs 1-4 are the standard catcher's signs; 5 and 6 are card / wristband numbers (six can't be
+// flashed with one hand). A pitch migrated from an old fastball keeps the sign it had (its own d.sign) until the coach
+// changes its type.
+const KINDS = { FB: "Fastball", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
+const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };
+const KCOLOR = { FB: "var(--fb)", SI: "var(--si)", FC: "var(--fc)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
+const SHAPE_OPTS = { FB: ["rides", "runs", "cuts", "straight", ""], SI: ["run", "drop", "two-seam", ""], FC: ["hard", "big", "ride", ""],
+  SL: ["gyro", "tight", "sweeper", "slurve", ""], CB: ["12-6", "sweeping", "power", "slow", ""], CH: ["fade", "drop", "split", "firm", ""] };
 const SLOT_OPTS = ["over the top", "high three-quarter", "three-quarter", "low three-quarter", "sidearm", "submarine"];
 const LOC = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 const GLYPH = { ball: "•", cstrike: "✓", whiff: "✓", foul: "F", play: "X", hbp: "H" };
@@ -677,7 +681,7 @@ function arsenal() {
       strike_ref: PCLearner.strikeRef(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo }, S.setup.level) }
       : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null, strike_ref: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
-    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
+    return E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
       ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0] });
   });
@@ -904,7 +908,7 @@ function record(res) {
       // v1.0 #7: a hard hit is keyed on where the catcher logged it (as M2 was fitted), else on the called target
       const bh = batterDef().hand, bRight = bh === "S" ? pitcherDef().hand !== "R" : bh !== "L";
       const spot = res.locCell ? E.v08.locQuad(res.locCell, p.kind, bRight) : call.quad;
-      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + spot : null;
+      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + E.keyKind(p.kind) : hardHit ? "hard|" + E.keyKind(p.kind) + "|" + spot : null;   // v1.1: by fastball class
       if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1;
         if (mk.startsWith("succ|")) { const k2 = mk + "|" + spot; m[k2] = (m[k2] || 0) + 1; } }   // v1.0 Step 7: and where (the went-back rule)
     }
@@ -1070,8 +1074,12 @@ let fixing = false;
 let lastZoneKey = null;
 // a pitch kind is drawn into SVG markup: only the four known kinds ever reach it (a synced or restored record could
 // carry anything)
-const PCOLOR = (k) => `var(--${["FB", "SL", "CB", "CH"].includes(k) ? k.toLowerCase() : "fb"})`;
-const chip = (kind) => h("span", { class: `chip k-${kind}`, "aria-hidden": "true" }, String(SIGN[kind]));
+const PCOLOR = (k) => `var(--${["FB", "SI", "FC", "SL", "CB", "CH"].includes(k) ? k.toLowerCase() : "fb"})`;
+// the sign shown for a pitch: its own kept sign (a migrated pitch, v1.1 O1) when it has one, else its kind's
+const signOf = (kind, sign) => String(sign || SIGN[kind] || "?");
+// the current pitcher's pitch by name, for the screens that only carry a name and kind
+const signFor = (kind, name) => { const d = name ? ((pitcherDef() || {}).pitches || []).find((x) => x.name === name && x.kind === kind) : null; return signOf(kind, d && d.sign); };
+const chip = (kind, sign) => h("span", { class: `chip k-${kind}`, "aria-hidden": "true" }, signOf(kind, sign));
 
 function applyTheme() {
   const day = S.theme === "day";
@@ -1205,7 +1213,7 @@ function callPanel() {
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
   const call = h("div", { class: "call" },
     h("div", { class: "call-main" },
-      h("div", { class: "sign", "aria-label": `Sign ${SIGN[kind]}` }, String(SIGN[kind])),
+      h("div", { class: "sign", "aria-label": `Sign ${signFor(kind, c.pitch)}` }, signFor(kind, c.pitch)),
       h("div", { style: { minWidth: 0 } },
         h("p", { class: "pitch", "aria-live": "polite" }, c.pitch, c.coach ? h("span", { class: "coachmark" }, "Your call") : null),
         h("p", { class: "spot" }, SPOT[c.quad])),
@@ -1221,7 +1229,7 @@ function callPanel() {
     c.dist.map((d) => {
       const k = kindOf(d.pitch), isCall = !c.coach && d.pitch === c.pitch && d.quad === c.quad;
       return h("div", { class: `opt k-${k}${isCall ? " is-call" : ""}` },
-        chip(k), h("span", {}, `${d.pitch}, ${spotLower(d.quad)}`),
+        chip(k, signFor(k, d.pitch)), h("span", {}, `${d.pitch}, ${spotLower(d.quad)}`),
         h("span", { class: "track" }, h("i", { style: { width: `${Math.max(4, d.prob * 100)}%` } })),
         h("span", { class: "p" }, pct(d.prob)));
     }));
@@ -1282,13 +1290,13 @@ function zoneSVG(c) {
     if (d.pitch === c.pitch && d.quad === c.quad) continue;
     const k = kindOf(d.pitch), [x, y] = at(d.quad, k), r = 5 + 10 * d.prob;
     s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${PCOLOR(k)}" fill-opacity=".08" stroke="${PCOLOR(k)}" stroke-opacity=".75" stroke-width="1.5"/>`;
-    if (r >= 8) s += `<text x="${x}" y="${y + 4}" text-anchor="middle" ${F} font-size="11" font-weight="700" fill="${PCOLOR(k)}" fill-opacity=".9">${SIGN[k]}</text>`;
+    if (r >= 8) s += `<text x="${x}" y="${y + 4}" text-anchor="middle" ${F} font-size="11" font-weight="700" fill="${PCOLOR(k)}" fill-opacity=".9">${signFor(k, d.pitch)}</text>`;
   }
   const [tx, ty] = at(c.quad, kind);
   s += `<circle class="ring r2" cx="${tx}" cy="${ty}" r="31" fill="none" stroke="var(--call)" stroke-opacity=".25" stroke-width="1.5"/>`;
   s += `<circle class="ring" cx="${tx}" cy="${ty}" r="24" fill="none" stroke="var(--call)" stroke-opacity=".55" stroke-width="1.5"/>`;
   s += `<g class="core"><circle cx="${tx}" cy="${ty}" r="17" fill="var(--call)"/>`;
-  s += `<text x="${tx}" y="${ty + 7}" text-anchor="middle" ${F} font-stretch="70%" font-weight="750" font-size="21" fill="var(--ground)">${SIGN[kind]}</text></g>`;
+  s += `<text x="${tx}" y="${ty + 7}" text-anchor="middle" ${F} font-stretch="70%" font-weight="750" font-size="21" fill="var(--ground)">${signFor(kind, c.pitch)}</text></g>`;
   return s + `</svg>`;
 }
 
@@ -1306,7 +1314,7 @@ function pickBox() {
     pickMode = false; save(); render();
   };
   return h("div", { class: "pick" }, h("span", { class: "t" }, "Your call"),
-    h("div", { class: "seg", role: "group", "aria-label": "Pitch" }, ars.map((p) => h("button", { "aria-pressed": String(pickSel.pitch === p.name), on: { click: () => { pickSel.pitch = p.name; render(); } } }, chip(p.kind), p.name))),
+    h("div", { class: "seg", role: "group", "aria-label": "Pitch" }, ars.map((p) => h("button", { "aria-pressed": String(pickSel.pitch === p.name), on: { click: () => { pickSel.pitch = p.name; render(); } } }, chip(p.kind, p.sign), p.name))),
     h("div", { class: "seg", role: "group", "aria-label": "Spot" }, E.QUADS.map((q) => h("button", { "aria-pressed": String(pickSel.quad === q), on: { click: () => { pickSel.quad = q; render(); } } }, SPOT[q]))),
     h("div", {}, h("button", { class: "btn primary", disabled: !(pickSel.pitch && pickSel.quad), on: { click: go } }, "Grade and use my call")));
 }
@@ -1366,7 +1374,7 @@ function atBatList() {
   const g = G(), i = slotIdx(), cur = [];
   for (const l of g.log) { if (l.slot !== i || l.inning !== g.inning || l.end) break; cur.unshift(l); }
   return h("div", { class: "ab" }, h("div", { class: "t" }, "This at-bat"),
-    cur.length ? h("ol", {}, cur.map((l) => h("li", {}, h("span", { class: "c" }, l.count), chip(l.kind), h("span", {}, `${l.pitch}, ${spotLower(l.quad)}`), h("span", { class: "r" }, l.text))))
+    cur.length ? h("ol", {}, cur.map((l) => h("li", {}, h("span", { class: "c" }, l.count), chip(l.kind, signFor(l.kind, l.pitch)), h("span", {}, `${l.pitch}, ${spotLower(l.quad)}`), h("span", { class: "r" }, l.text))))
       : h("p", { class: "empty" }, "First pitch is up."));
 }
 
@@ -1379,7 +1387,7 @@ function pitcherPanel(ars, st) {
     h("div", { class: "panel-head" }, h("h2", {}, `${pitcherDef().name}'s confidence`), h("span", { class: "meta" }, `${g.pc[pKey()] || 0} pitches`)),
     status,
     h("div", { class: "trust" }, ars.map((p) => h("div", { class: `trow k-${p.kind}` },
-      chip(p.kind),
+      chip(p.kind, p.sign),
       h("span", { class: "nm" }, p.name, (() => { const l = landTriple(p.name, ((g.land || {})[pKey()] || {})[p.name]); return l ? h("span", {}, `  ${l[0]} of ${l[2]} for strikes`) : null; })()),
       h("span", { class: "v" }, p.conf.toFixed(2)),
       h("div", { class: `bullet${p.conf < cutoff ? " out" : ""}`, title: `Bullpen feel ${p.base_conf.toFixed(2)}` },
@@ -1431,7 +1439,7 @@ function logPanel() {
         const extra = [l.loc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[l.loc] : null, l.thrown ? `threw ${l.thrown}` : null, l.wp ? (l.wp === "pb" ? "passed ball" : "wild pitch") : null].filter(Boolean);
         const tr = h("tr", { class: l.end ? "pa-end" : "" },
           h("td", { class: "num" }, String(l.n)), h("td", {}, ord(l.inning)), h("td", {}, S.setup.lineup[l.slot].name || `${ord(l.slot + 1)} hitter`),
-          h("td", { class: "num" }, l.count), h("td", {}, chip(l.kind)),
+          h("td", { class: "num" }, l.count), h("td", {}, chip(l.kind, signFor(l.kind, l.pitch))),
           h("td", {}, `${l.pitch}, ${spotLower(l.quad)}${l.coach ? " (your call)" : ""}`),
           h("td", { class: l.end ? "res-strong" : "" }, l.text.replace(/ \(crossed up: [^)]*\)|, (wild pitch|passed ball)$/g, ""), extra.length ? h("small", { class: "muted" }, ` · ${extra.join(", ")}`) : null),
           h("td", {}, h("button", { class: "btn text", "aria-expanded": String(fixingPitch === l.n), on: { click: () => { fixingPitch = fixingPitch === l.n ? null : l.n; render(); } } }, fixingPitch === l.n ? "Close" : "Fix")));
@@ -1492,7 +1500,7 @@ function dataRows() {
 
 function arsenalFor(idx) {
   const pd = S.setup.staff[idx], g = G(), conf = (g.conf || {})[keyOf(idx)] || {};
-  return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
+  return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
     base_conf: +d.feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1, ivb: null, hb: null }));
 }
 
@@ -1550,7 +1558,7 @@ function bullpenPanel() {
         h("span", { class: `pill ${state[0]}` }, state[1]),
         h("div", { class: "pen-load" }, h("div", { class: "load", title: `${pc} of about ${maxPc} pitches` }, h("i", { style: { width: `${Math.min(100, (100 * pc) / maxPc)}%` } })),
           h("span", {}, `${pc} pitches, ${g.bf[String(i)] || 0} faced`)),
-        h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind), p.conf.toFixed(2)))),
+        h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind, p.sign), p.conf.toFixed(2)))),
         inNow ? h("span", { class: "pen-act muted" }, "On the mound")
           : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); const out = pitcherDef().id || null; g.pitcher = i; g.last = null; if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pd.id || null }); makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
     })),
@@ -1569,7 +1577,7 @@ function arsenalPanel(rows) {
       h("tbody", {}, list.length ? list.map(([key, r]) => {
         const [kind, name] = key.split("|"), sw = r.filter(isSwing), bip = r.filter((e) => resOf(e) === "play");
         return h("tr", { class: `k-${kind}` },
-          h("td", {}, h("span", { class: "pname" }, chip(kind), name)),
+          h("td", {}, h("span", { class: "pname" }, chip(kind, signFor(kind, name)), name)),
           h("td", {}, h("span", { class: "usage" }, h("span", { class: "track" }, h("i", { style: { width: `${(100 * r.length) / max}%` } })), h("span", {}, `${r.length}`, h("small", {}, ` ${rate(r.length, rows.length)}`)))),
           h("td", { class: "num" }, rate(r.filter(isStrike).length, r.length)),
           h("td", { class: "num" }, rate(sw.filter((e) => resOf(e) === "whiff").length, sw.length)),
@@ -1617,7 +1625,7 @@ function countPanel(rows) {
   const kinds = [...new Set(rows.map((e) => `${e.kind}|${e.pitch}`))].sort((a, b) => SIGN[a.split("|")[0]] - SIGN[b.split("|")[0]]);
   return h("section", { class: "panel glass span-7", "aria-label": "Mix by count" },
     h("div", { class: "panel-head" }, h("h2", {}, "Mix by count"), h("span", { class: "meta" }, "What he threw in each count")),
-    kinds.length > 1 ? h("div", { class: "legend" }, kinds.map((k) => h("span", { class: `k-${k.split("|")[0]}` }, chip(k.split("|")[0]), k.split("|")[1]))) : null,
+    kinds.length > 1 ? h("div", { class: "legend" }, kinds.map((k) => h("span", { class: `k-${k.split("|")[0]}` }, chip(k.split("|")[0], signFor(k.split("|")[0], k.split("|")[1])), k.split("|")[1]))) : null,
     h("div", { class: "counts" }, COUNTS.map((c) => {
       const r = rows.filter((e) => e.count === c);
       return h("div", { class: "crow" },
@@ -1674,7 +1682,7 @@ function setupView() {
       return h("tr", {},
         h("td", {}, h("input", { id: `p${pi}-${i}-name`, name: `p${pi}-${i}-name`, autocomplete: "off", value: d.name, "aria-label": "Pitch name", style: { minWidth: "120px" },
           on: { change: (e) => { const nn = e.target.value.trim() || KINDS[d.kind]; renamePitch(pi, d.name, nn); d.name = nn; changed(true); } } })),
-        h("td", {}, h("div", { class: "typ" }, chip(d.kind), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; changed(true); } } },
+        h("td", {}, h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; delete d.sign; changed(true); } } },
           Object.entries(KINDS).map(([k, v]) => h("option", { value: k, selected: k === d.kind ? true : null }, `${SIGN[k]}  ${v}`))))),
         // D8: a blank grade is "not graded": the calls use the level average (3) and nothing is flagged until he sets it
         ...["grade", "command"].map((k) => h("td", {}, num(d, k, i, 1, 1, 5, "3", k === "grade" ? "Stuff, 1 to 5" : "Command, 1 to 5"),
@@ -1761,7 +1769,7 @@ function staffPick() {
     const on = S.setup.staffIds.includes(p.id), ci = todayCheckin(p.id);
     return h("button", { class: "choice", "aria-pressed": String(on), on: { click: () => toggleStaff(p.id) } },
       h("b", {}, (p.number ? `#${p.number} ` : "") + (p.name || "Unnamed")),
-      h("span", { class: "chips" }, (p.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind))),
+      h("span", { class: "chips" }, (p.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind, d.sign))),
       h("span", {}, `${p.hand === "L" ? "Lefty" : "Righty"}${ci ? ", checked in" : ""}${pModel(p.id) ? ", learned" : ""}`),
       (() => { const t = eligibleText(p.id); return t && !/today/.test(t) ? h("span", { style: { color: "var(--warn)" } }, t[0].toUpperCase() + t.slice(1)) : null; })());
   })), h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: () => { S.view = "roster"; rosterTab = "ours"; save(); render(); } } }, "Open the roster"))];

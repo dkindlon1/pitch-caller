@@ -22,9 +22,9 @@ for seed in range(first, first + n):
     rows = list(csv.DictReader(open(path)))
     st = [r for r in rows if r["pitcher"].startswith("Starter")]
     starter_n += len(st); starter_sl += sum(r["kind"] == "SL" for r in st)
-    fb += sum(r["kind"] == "FB" for r in rows)
+    fb += sum(r["kind"] in ("FB", "SI", "FC") for r in rows)
     beh = [r for r in rows if int(r["count"][0]) > int(r["count"][2]) and r["count"][2] != "2"]
-    nb += len(beh); fb_behind += sum(r["kind"] == "FB" for r in beh)
+    nb += len(beh); fb_behind += sum(r["kind"] in ("FB", "SI", "FC") for r in beh)
     runs.append(tr)
     for r in rows:
         d = r["detail"]

@@ -13,7 +13,7 @@ def summary(d):
     pas = len(pa_end)
     chase3 = sum(r["count"] in ("3-0", "3-1") and r["quad"] == "chase" for r in rows)
     reg = sum(float(r["regret_exp"]) for r in rows) / len(rows)
-    fb = sum(r["kind"] == "FB" for r in rows) / len(rows)
+    fb = sum(r["kind"] in ("FB", "SI", "FC") for r in rows) / len(rows)
     mid22 = [r for r in rows if r["count"] == "2-2"]
     inz22 = sum(r["quad"] != "chase" for r in mid22) / max(1, len(mid22))
     return dict(games=len(files), pitches=len(rows), runs=runs, rpg=runs / len(files), pas=pas, k=k / pas, bb=bb / pas,

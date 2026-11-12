@@ -97,7 +97,7 @@ for i in range(N_CHEAP):
     s_hi = replace(s, hitter_damage={**s.hitter_damage, key: (0.8, 20)}); s_lo = replace(s, hitter_damage={**s.hitter_damage, key: (-0.2, 20)})
     if not hitters_count and worse(cst(p, s_lo, ars) - cst(p, s_hi, ars), "A hitter crushing a pitch class makes it cost more (outside 2-0, 3-0, 3-1)"): f["dmg"] += 1
     # a fastball looks better to a hitter who is late on fastballs than to one who is early
-    if p.kind == "FB" and (s.balls, s.strikes) not in ((2, 0), (3, 0), (3, 1)):   # hitter's counts: a ball in play beats a whiff
+    if e.is_fastball(p.kind) and (s.balls, s.strikes) not in ((2, 0), (3, 0), (3, 1)):   # hitter's counts: a ball in play beats a whiff
         s_late = replace(s, timing={**s.timing, "FB": 0.8}); s_early = replace(s, timing={**s.timing, "FB": -0.8})
         if worse(cst(p, s_late, ars) - cst(p, s_early, ars), "Fastball costs less vs a hitter late on fastballs than one early (outside 2-0, 3-0, 3-1)"): f["timing"] += 1
     # a pitch landing worse today is never better

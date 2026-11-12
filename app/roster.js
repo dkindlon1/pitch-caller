@@ -30,6 +30,7 @@ async function boot() {
     DB.D = D;
     const mig = await PCDB.migrateLegacy(D, S);
     for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) for (const x of await D.all(store)) map.set(x.id, x);
+    await migrateRosterV11([...DB.pitchers.values()]);
     for (const x of await D.all("learned")) DB.models.set(x.id, x);
     for (const x of await D.byIndex("checkins", "date", todayT())) DB.checkins.set(x.pitcherId, x);
     if (!ourTeam()) { const t = await dbPut("teams", { name: "Our team", isOurs: true, level: S.setup.level }); DB.teams.set(t.id, t); }
@@ -67,6 +68,26 @@ async function boot() {
 }
 
 // today's staff: the roster records themselves, so edits on the Roster screen show up in the game right away
+// v1.1 Step 1: stored pitchers move to the six kinds through the engine's one migration table (PitchEngine.migratePitch,
+// by the stored pitch type first). Each changed pitcher is written back once; every change is kept in meta "v11_migration"
+// (pitcher, pitch, type, from, to, kept sign) so it can be checked or undone by hand.
+async function migrateRosterV11(list) {
+  const log = [];
+  for (const p of list) {
+    const r = PCDB.migratePitcherV11(p, PitchEngine.migratePitch);
+    if (p.kindsV === PCDB.KINDS_V && r.length) { log.push(...r); await dbPut("pitchers", p); }
+  }
+  if (log.length && DB.D) {
+    try {
+      const m = (await DB.D.get("meta", "v11_migration")) || { id: "v11_migration", log: [] };
+      const ts = Date.now();
+      m.log = (m.log || []).concat(log.map((x) => Object.assign({ ts }, x)));
+      await DB.D.put("meta", m);
+    } catch (e) { console.warn("v1.1 migration log", e); }
+  }
+  return log;
+}
+
 function attachStaff() {
   const staff = S.setup.staffIds.map((id) => DB.pitchers.get(id)).filter(Boolean);
   if (staff.length) S.setup.staff = staff;
@@ -341,7 +362,7 @@ function oursView() {
           const n = DB.counts.get(x.id) || 0, today = S.setup.staffIds.includes(x.id), ci = todayCheckin(x.id);
           return h("button", { class: `pcard${x.id === rosterSel ? " sel" : ""}`, "aria-pressed": String(x.id === rosterSel), on: { click: () => { rosterSel = x.id; importPreview = null; render(); } } },
             h("span", { class: "pc-top" }, h("b", {}, (x.number ? `#${x.number} ` : "") + (x.name || "Unnamed")), today ? h("span", { class: "pill ok" }, "Today") : null),
-            h("span", { class: "pc-mid" }, (x.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind))),
+            h("span", { class: "pc-mid" }, (x.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind, d.sign))),
             h("span", { class: "pc-sub" }, `${x.hand === "L" ? "Lefty" : "Righty"} ${x.role === "RP" ? "reliever" : "starter"}, ${n ? `${n} pitches charted` : "nothing charted yet"}${ci ? ", checked in" : ""}`),
             (() => { const t = eligibleText(x.id); return t ? h("span", { class: `pc-sub${/today/.test(t) ? "" : " flag"}`, style: /today/.test(t) ? null : { color: "var(--warn)" } }, t[0].toUpperCase() + t.slice(1)) : null; })());
         })),
@@ -430,8 +451,8 @@ function arsenalEditor(p) {
     const out = h("output", {}, (+d.feel).toFixed(2));
     return h("div", { class: `acard k-${d.kind}` },
       h("div", { class: "arow" },
-        lab("Type", h("div", { class: "typ" }, chip(d.kind), h("select", { "aria-label": "Pitch type", on: { change: (e) => {
-          const t = PCDB.PITCH_TYPES[e.target.value]; d.type = e.target.value; d.kind = t.kind; d.shape = t.shape; savePitcher(p); } } },
+        lab("Type", h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { "aria-label": "Pitch type", on: { change: (e) => {
+          const t = PCDB.PITCH_TYPES[e.target.value]; d.type = e.target.value; d.kind = t.kind; d.shape = t.shape; delete d.sign; savePitcher(p); } } },
           PTYPES.map((t) => h("option", { value: t, selected: t === (d.type || PCDB.DEFAULT_TYPE[d.kind]) ? true : null }, t)))), "a-type"),
         lab("His name for it", h("input", { value: d.name, on: { change: (e) => {
           const nn = e.target.value.trim() || d.type || KINDS[d.kind];
@@ -476,7 +497,7 @@ function checkinPanel(p) {
       (p.pitches || []).map((d) => {
         const v = c.conf[d.id] ?? "";
         const out = h("output", {}, v === "" ? "–" : String(v));
-        return h("div", { class: `ci-row k-${d.kind}` }, chip(d.kind), h("span", { class: "nm" }, d.name),
+        return h("div", { class: `ci-row k-${d.kind}` }, chip(d.kind, d.sign), h("span", { class: "nm" }, d.name),
           h("input", { type: "range", min: 1, max: 10, step: 1, value: v === "" ? Math.round((d.feel - 0.3) / 0.65 * 9 + 1) : v, "aria-label": `${d.name} confidence today`,
             on: { input: (e) => { c.conf[d.id] = +e.target.value; out.textContent = e.target.value; dirty.v = true; } } }), out);
       })),
@@ -530,7 +551,7 @@ function learnedPanel(p) {
     h("i", { class: "e", style: { left: `${((entered - 1) / 4) * 100}%` } }), h("i", { class: "l", style: { left: `${((Math.min(5, Math.max(1, fit)) - 1) / 4) * 100}%` } }));
   const row = (d) => {
     const x = prof && prof.pitches[d.id], s = sv && sv.pitches[d.id];
-    if (!x || !x.n) return h("tr", {}, h("td", {}, h("span", { class: "pname" }, chip(d.kind), d.name)), h("td", { colspan: "4", class: "muted" }, "No charted pitches yet"));
+    if (!x || !x.n) return h("tr", {}, h("td", {}, h("span", { class: "pname" }, chip(d.kind, d.sign), d.name)), h("td", { colspan: "4", class: "muted" }, "No charted pitches yet"));
     const cell = (dim) => {
       const ent = +d[dim], fit = x.talent[dim], sd = x.sd[dim], use = s && s.learned && on ? s[dim] : ent;
       const enough = dim === "grade" ? x.n >= 150 : x.nLoc >= 60;    // below this, show it as early
@@ -540,7 +561,7 @@ function learnedPanel(p) {
     };
     const sc = x.score;
     return h("tr", { class: `k-${d.kind}` },
-      h("td", {}, h("span", { class: "pname" }, chip(d.kind), d.name)),
+      h("td", {}, h("span", { class: "pname" }, chip(d.kind, d.sign), d.name)),
       cell("grade"), cell("command"),
       h("td", { class: "num" }, `${x.n}`, x.nLoc ? h("small", { class: "muted" }, ` (${x.nLoc} located)`) : null,
         h("button", { class: "btn text tiny", title: "Injury, new grip, mechanics change: what came before counts less", on: { click: () => markChanged(p, d.id) } }, "Mark changed")),
@@ -934,8 +955,9 @@ function printSignCard() {
   const staff = S.setup.staff || [];
   printOut("Signs", [
     h("p", {}, Object.entries(SIGN).sort((a, b) => a[1] - b[1]).map(([k, n]) => `${n} ${KINDS[k]}`).join("   ")),
+    h("p", {}, "5 and 6 are card or wristband numbers. A pitch shows its own number when it keeps an older sign."),
     ...staff.map((p) => h("div", { class: "card" }, h("h2", {}, (p.number ? `#${p.number} ` : "") + (p.name || "Pitcher")),
-      h("table", {}, h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map((d) => h("tr", {}, h("td", { class: "sign" }, String(SIGN[d.kind])), h("td", {}, d.name), h("td", {}, KINDS[d.kind]))))))),
+      h("table", {}, h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map((d) => h("tr", {}, h("td", { class: "sign" }, signOf(d.kind, d.sign)), h("td", {}, d.name), h("td", {}, KINDS[d.kind]))))))),
   ]);
 }
 // a game's log, chosen on the Data screen: the last few games, newest first
@@ -1283,6 +1305,7 @@ async function reloadFromDb() {
   const fresh = {};
   for (const store of ["teams", "pitchers", "catchers", "hitters", "learned"]) fresh[store] = await DB.D.all(store);
   const checkins = await DB.D.byIndex("checkins", "date", todayT());
+  await migrateRosterV11(fresh.pitchers);   // a record synced from a device still on v1.0 arrives in four kinds
   for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) { map.clear(); for (const x of fresh[store]) map.set(x.id, x); }
   for (const x of fresh.learned) DB.models.set(x.id, x);
   for (const x of checkins) DB.checkins.set(x.pitcherId, x);

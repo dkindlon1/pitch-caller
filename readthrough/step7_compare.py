@@ -21,7 +21,7 @@ def game_stats(fn):
         st["pa"] += ("WALK" in d) or ("STRIKEOUT" in d) or r["result"] == "hbp" or r["result"] in ("weak", "solid", "hard")
         st["ch"] += r["kind"] == "CH"
         st["os"] += r["kind"] in ("SL", "CB", "CH")
-        st["fb"] += r["kind"] == "FB"
+        st["fb"] += r["kind"] in ("FB", "SI", "FC")
         st["inside"] += r["quad"] in ("up-in", "down-in")
         st["middle"] += r["quad"] == "middle"
         if r["count"].endswith("-2"):

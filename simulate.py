@@ -382,11 +382,16 @@ def run_ball_in_play(contact, outs, bases):
 # The game
 # ---------------------------------------------------------------------------
 
+def _key_kind(kind):
+    """v1.1: matchup memory keys by class for fastballs (engine.key_kind; inlined so older CALL_ENGINE trees still run)."""
+    return "FB" if kind in ("FB", "SI", "FC") else kind
+
+
 def conf_event(p, event):
     if hasattr(engine, "update_confidence"):
         engine.update_confidence(p, event)
         return
-    delta = {"ball": -0.02, "cstrike": 0.04, "whiff": 0.08 if p.kind == "FB" else 0.04,
+    delta = {"ball": -0.02, "cstrike": 0.04, "whiff": 0.08 if p.kind in ("FB", "SI", "FC") else 0.04,
              "hard": -0.08, "shakeoff": -0.20}[event]
     p.conf = max(0.0, min(1.0, p.conf + delta))
 
@@ -587,9 +592,9 @@ def play_game(log_path):
                 K.seen[h][p.name] += 1
                 fam[(pitcher["name"], h)][cls] += 1
                 if ev in ("whiff", "cstrike"):
-                    mm[(pitcher["name"], h)]["succ|" + p.kind] += 1
+                    mm[(pitcher["name"], h)]["succ|" + _key_kind(p.kind)] += 1
                 elif ev == "hard":
-                    mm[(pitcher["name"], h)]["hard|" + p.kind + "|" + q] += 1
+                    mm[(pitcher["name"], h)]["hard|" + _key_kind(p.kind) + "|" + q] += 1
                 if ev in ("ball", "wp_ball", "cstrike", "hbp"):
                     p0, d0 = CALLER.take_stats(p, q, replace(s, ump_u=0.0), ars)
                     takes.append((1 if ev == "cstrike" else 0, p0, d0))

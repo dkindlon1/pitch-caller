@@ -36,7 +36,7 @@ def load(path=PATH, sha=SHA):
 
 def matches(pattern, kind, q):
     p, t = pattern.split(":")
-    if not (p == "ANY" or p == kind or (p == "OS" and kind != "FB")):
+    if not (p == "ANY" or p == kind or (p == "OS" and not e.is_fastball(kind)) or (p == "FB" and e.is_fastball(kind))):
         return False
     return q in GROUPS[t] if t in GROUPS else q == t
 
@@ -63,7 +63,7 @@ def build(doc, row):
         if k in sd:
             sd[k] = {a: tuple(v) for a, v in sd[k].items()}
     # v0.9 item 6: the row's earlier-trip events as the engine's matchup input
-    kind = {x.name: x.kind for x in ars}
+    kind = {x.name: e.key_kind(x.kind) for x in ars}     # v1.1: stored keys by fastball class
     mm = {}
     for ev in row.get("matchup", []):
         if ev["result"] in ("whiff", "cstrike"):

@@ -413,7 +413,10 @@
       const pg = pitchGame(g, pd, () => nm);
       const anyEv = g.evs.find((e) => e.ars && e.ars.some((x) => x.name === nm));
       const sp = anyEv ? anyEv.ars.find((x) => x.name === nm) : null;
-      return Object.assign(pg, { id: g.id, ts: g.ts, spec: { name: nm, kind: (sp && sp.kind) || pd.kind, shape: (sp && sp.shape) || pd.shape || "", velo: (sp && sp.velo) || pd.velo || 0 } });
+      // v1.1: a snapshot from before the six kinds is read in v1.1 terms (by the pitch's type while it still has that
+      // type's v1.0 tags), so the migration alone never looks like a change of pitch
+      const [k11, s11] = E.migratePitch((sp && sp.kind) || pd.kind, (sp && sp.shape) || pd.shape || "", pd.type);
+      return Object.assign(pg, { id: g.id, ts: g.ts, spec: { name: nm, kind: k11, shape: s11, velo: (sp && sp.velo) || pd.velo || 0 } });
     }).filter((g) => g.rows.length || g.script.some((s) => s.op === "mark"));
     // change points: coach marks, shape changes from TrackMan, a change of kind
     const changeAt = new Set();
@@ -702,7 +705,7 @@
       const exp = (P.whiff * DMG_VAL.whiff + P.foul * DMG_VAL.foul + P.weak * DMG_VAL.weak + P.solid * DMG_VAL.solid + P.hard * DMG_VAL.hard) / sw;
       const w = ev.ts ? Math.pow(0.5, Math.max(0, (t0 - ev.ts) / DAY) / 365) : 1;   // hitters develop: a year-old swing counts half
       add(isOS(ev.kind) ? "OS" : "FB", obs - exp, w);
-      if (ev.quad) add(ev.kind + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's
+      if (ev.quad) add(E.keyKind(ev.kind) + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's (v1.1: by fastball class)
       if (ev.gameId) games.add(ev.gameId); n++;
     }
     const damage = {};

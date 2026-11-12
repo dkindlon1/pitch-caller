@@ -77,7 +77,7 @@ for r in rows:
         flags.append(("QUESTIONABLE", "Q4 chase at 3-2"))
     if kind in OS and quad == "chase" and "3" in r["bases"] and int(r["outs"]) < 2 and k < 2:
         flags.append(("QUESTIONABLE", "Q5 dirt-ball risk, runner on 3rd"))
-    if kind == "FB" and quad != "chase" and float(r["est_dmg"]) > 0.4 and int(r.get("est_n", 0)) >= 3:
+    if kind not in OS and quad != "chase" and float(r["est_dmg"]) > 0.4 and int(r.get("est_n", 0)) >= 3:
         flags.append(("QUESTIONABLE", f"Q6 fastball in zone to a fastball masher (est {r['est_dmg']})"))
     if quad == "chase" and (b, k) in ((0, 0), (1, 0), (2, 0), (2, 1)):
         flags.append(("QUESTIONABLE", f"Q8 chase pitch at {r['count']}"))
@@ -110,7 +110,7 @@ def predictability():
             n += 1
             guess = seen[c].most_common(1)[0][0]
             hits_a += guess == kind
-            hits_b += kind == "FB"
+            hits_b += kind not in OS          # v1.1: any fastball-class pitch
             hits_c += last_to.get((r["batter"], r["inning"])) == kind
         seen[c][kind] += 1
         last_to[(r["batter"], r["inning"])] = kind

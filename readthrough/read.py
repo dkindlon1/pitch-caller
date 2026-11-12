@@ -27,7 +27,7 @@ HITTERS_COUNT = {"2-0", "3-0", "3-1"}
 
 
 def cls(kind):
-    return "FB" if kind == "FB" else "OS"
+    return "FB" if kind in ("FB", "SI", "FC") else "OS"     # v1.1: fastball class
 
 
 def load(path):
@@ -149,7 +149,7 @@ def count_paths(pitches):
     to12 = sum(x["result"] in ("cstrike", "whiff", "foul") for x in at11)     # 1-1 pitch went to 1-2
     to21 = sum(x["result"] == "ball" for x in at11)                         # went to 2-1 (in play ends the PA)
     return dict(pas=n, pitchers_count_rate=reach(PITCHERS_COUNT), hitters_count_rate=reach(HITTERS_COUNT),
-                first_pitch_fb=sum(f["kind"] == "FB" for f in first) / n,
+                first_pitch_fb=sum(cls(f["kind"]) == "FB" for f in first) / n,
                 first_pitch_strike=sum(f["result"] in STRIKEISH for f in first) / n,
                 early_ball_rate=early_ball, one_one_to_one_two=to12 / max(1, to12 + to21))
 
@@ -158,7 +158,7 @@ def usage_by_count(pitches):
     by = defaultdict(Counter)
     for p in pitches:
         by[p["count"]]["n"] += 1
-        by[p["count"]]["fb"] += p["kind"] == "FB"
+        by[p["count"]]["fb"] += cls(p["kind"]) == "FB"
         by[p["count"]]["chase"] += p["quad"] == "chase"
         by[p["count"]]["middle"] += p["quad"] == "middle"
         by[p["count"]]["inside"] += p["quad"] in ("up-in", "down-in")
@@ -199,7 +199,7 @@ def analyze(d, tag, outdir):
                    count_paths=count_paths(pitches), predictability=predictability(pitches),
                    usage_by_count=usage_by_count(pitches),
                    by_level={lv: dict(count_paths=count_paths([p for p in pitches if p["level"] == lv]),
-                                      fb_share=round(sum(p["kind"] == "FB" for p in pitches if p["level"] == lv) /
+                                      fb_share=round(sum(cls(p["kind"]) == "FB" for p in pitches if p["level"] == lv) /
                                                      max(1, sum(p["level"] == lv for p in pitches)), 3))
                              for lv in sorted({p["level"] for p in pitches})})
     os.makedirs(outdir, exist_ok=True)

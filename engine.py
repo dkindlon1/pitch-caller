@@ -105,8 +105,8 @@ def matchup_whiff(p, q, s):
     m = s.matchup
     if not m:
         return 0.0
-    x = MM["succ"] * min(MM["succ_cap"], m.get("succ|" + p.kind, 0)) + \
-        MM["hard"] * min(MM["hard_cap"], m.get("hard|" + p.kind + "|" + q, 0))      # v1.0 #7: separate caps, no shared clip
+    x = MM["succ"] * min(MM["succ_cap"], m.get("succ|" + key_kind(p.kind), 0)) + \
+        MM["hard"] * min(MM["hard_cap"], m.get("hard|" + key_kind(p.kind) + "|" + q, 0))      # v1.0 #7: separate caps, no shared clip
     return RHO_L.get(s.level, 1.0) * x
 # v1.0 D3 (Drew's coach rule, Nov 5/9): a pitch type hit hard twice at one height in his earlier trips today is not gone
 # back to. A coaching RULE, not a fit: a named soft cost (runs x run_scale) added in cost08, separate from the fitted MM
@@ -119,7 +119,7 @@ def target_height(q, kind):
     """up / middle / down for target q (HEIGHTS; fastball chase is up, off-speed chase is down)."""
     if q == "middle":
         return "middle"
-    return "up" if (q.startswith("up") or (q == "chase" and kind == "FB")) else "down"
+    return "up" if (q.startswith("up") or (q == "chase" and is_fastball(kind))) else "down"
 
 
 def mashed(p, q, s):
@@ -128,7 +128,7 @@ def mashed(p, q, s):
     if not m:
         return False
     h = target_height(q, p.kind)
-    return sum(m.get("hard|" + p.kind + "|" + x, 0) for x in QUADS if target_height(x, p.kind) == h) >= MASHED_N
+    return sum(m.get("hard|" + key_kind(p.kind) + "|" + x, 0) for x in QUADS if target_height(x, p.kind) == h) >= MASHED_N
 
 
 # v1.0 Step 7 (Drew, Nov 11): the coach's ground-ball rule. With a double play on (runner on 1st, fewer than 2 outs) or a
@@ -172,7 +172,7 @@ def landing_hot(p, s):
 def coach_credit(p, q, s):
     """Sum of the coaching-read credits for call (p, q) in situation s (runs, before run_scale)."""
     R, c = COACH_RULE, 0.0
-    fb = p.kind == "FB"
+    fb = is_fastball(p.kind)
     tm = s.timing or {}
     if fb and tm.get("FB", 0.0) >= READ_T and q in ("up-in", "up-away", "down-in"):
         c += R["late_fb"]
@@ -185,9 +185,9 @@ def coach_credit(p, q, s):
     m = s.matchup
     if m:
         for side, other in (("in", "away"), ("away", "in")):
-            if q in SIDE_TARGETS[other] and any(m.get(f"hard|{p.kind}|{x}", 0) for x in SIDE_TARGETS[side]):
+            if q in SIDE_TARGETS[other] and any(m.get(f"hard|{key_kind(p.kind)}|{x}", 0) for x in SIDE_TARGETS[side]):
                 c += R["away"]
-        if m.get(f"succ|{p.kind}|{q}", 0):
+        if m.get(f"succ|{key_kind(p.kind)}|{q}", 0):
             c += R["went_back"]
     if s.landing_today and landing_hot(p, s):
         c += R["hot"]
@@ -217,7 +217,7 @@ def height_member(q, kind, j):
     down-in, down-away, off-speed chase -> down."""
     if q == "middle":
         h = "middle"
-    elif q.startswith("up") or (q == "chase" and kind == "FB"):
+    elif q.startswith("up") or (q == "chase" and is_fastball(kind)):
         h = "up"
     else:
         h = "down"
@@ -316,7 +316,7 @@ try:   # v0.7: one grade point = one SD of real pitchers at the level (fit_sprea
 except ImportError:
     pass
 
-DEFAULT_VELO = {"FB": 85, "SL": 77, "CB": 71, "CH": 77}   # mph, placeholder college-ish
+DEFAULT_VELO = {"FB": 85, "SI": 85, "FC": 85, "SL": 77, "CB": 71, "CH": 77}   # mph; v1.1 Step 1: SI / FC = FB until Step 1b
 
 # [R7] Effective velocity: how much faster (+) or slower (-) a pitch looks by location.
 # Up and in plays fastest, down and away slowest (Husband: ~3 mph per 6 in. lateral).
@@ -344,7 +344,7 @@ def hbp_loc(p, q):
 @dataclass
 class Pitch:
     name: str
-    kind: str          # FB, SL, CB, CH
+    kind: str          # FB, SI, FC, SL, CB, CH (v1.1)
     grade: int         # 1-5 stuff
     command: int       # 1-5
     conf: float        # 0-1 confidence today
@@ -361,10 +361,12 @@ class Pitch:
     strike_rate: float = None  # his expected strike rate with this pitch (served by the learner); confidence news is scaled by it
     strike_ref: float = None   # v1.0 Step 3: the same model rate for an average (3/3) pitch at his level, served with it
     traits: dict = None        # situational effects and miss tendency, see TRAIT_KEYS
+    type: str = None           # v1.1: the pitch's real name from the app ("Cutter", "12-6 curve"); used only to migrate
 
     def __post_init__(self):
         if self.base_conf < 0:
             self.base_conf = self.conf
+        self.kind, self.shape = migrate_pitch(self.kind, self.shape, self.type)   # v1.1 Step 1: the one migration point
 
     def mph(self):
         return self.velo or DEFAULT_VELO[self.kind]
@@ -423,7 +425,7 @@ CONF_REGRESS = 0.15        # 15% back toward bullpen feel each new batter
 
 def update_confidence(p, event):
     d = CONF_DELTA[event]
-    if event == "whiff" and p.kind == "FB":
+    if event == "whiff" and is_fastball(p.kind):
         d += 0.02                       # blowing a fastball by someone still counts extra
     if p.strike_rate is not None and p.strike_ref is not None:   # v0.7: news is measured against HIS usual strike rate,
         c = min(0.95, max(0.05, p.strike_ref))   # so a pitcher who is always wild doesn't sink all game. v1.0 Step 3: the
@@ -455,6 +457,66 @@ def sig(x):
 
 def is_offspeed(kind):
     return kind in ("SL", "CB", "CH")
+
+
+# v1.1 Step 1: six kinds. Fastball class = four-seam, sinker, cutter. Every "fastball vs off-speed" decision reads
+# is_fastball / pclass; every stored situation key that contains a kind (damage, matchup memory, coach reads) reads
+# key_kind, so a sinker or cutter uses the same stored keys a v1.0 fastball did (matchup memory was fitted by class).
+FASTBALL_KINDS = ("FB", "SI", "FC")
+
+
+def is_fastball(kind):
+    return kind in FASTBALL_KINDS
+
+
+def pclass(kind):
+    return "FB" if kind in FASTBALL_KINDS else "OS"
+
+
+def key_kind(kind):
+    return "FB" if kind in FASTBALL_KINDS else kind
+
+
+# v1.1 Step 1: the one migration table (docs/PLAN_v1.1_2026-11-12.md, Step 1). Keyed on the pitch's real name (the app's
+# stored `type`) when there is one, else on the v1.0 kind and tag. Idempotent: v1.1 kinds and tags pass through.
+MIGRATE_BY_TYPE = {
+    "Four-seam": ("FB", "rides"), "Two-seam": ("SI", "two-seam"), "Sinker": ("SI", "run"), "Cutter": ("FC", ""),
+    "Slider": ("SL", "tight"), "Sweeper": ("SL", "sweeper"), "Slurve": ("SL", "slurve"), "Curveball": ("CB", ""),
+    "Knuckle curve": ("CB", "power"), "12-6 curve": ("CB", "12-6"), "Changeup": ("CH", "fade"),
+    "Splitter": ("CH", "split"), "Forkball": ("CH", "split"),
+}
+# The v1.0 kind and tag each type was stored with (app/db.js at v1.0). A type migrates a pitch only while the pitch still
+# carries exactly these, so a coach's later edit of a v1.1 pitch is never undone by its type.
+V10_TYPE_TAGS = {
+    "Four-seam": ("FB", "ride"), "Two-seam": ("FB", "run"), "Sinker": ("FB", "sink"), "Cutter": ("FB", "cut"),
+    "Slider": ("SL", "tight"), "Sweeper": ("SL", "sweeper"), "Slurve": ("SL", ""), "Curveball": ("CB", "loopy"),
+    "Knuckle curve": ("CB", "sharp"), "12-6 curve": ("CB", "sharp"), "Changeup": ("CH", "fade"),
+    "Splitter": ("CH", "drop"), "Forkball": ("CH", "drop"),
+}
+# Without a type, "cut" and "run" may be a four-seamer's own movement, so they stay four-seam profiles; "sink" was only
+# ever a sinker.
+MIGRATE_BY_TAG = {
+    ("FB", "ride"): ("FB", "rides"), ("FB", "run"): ("FB", "runs"), ("FB", "cut"): ("FB", "cuts"),
+    ("FB", "sink"): ("SI", "run"), ("CB", "loopy"): ("CB", "slow"), ("CB", "sharp"): ("CB", "power"),
+    # a v1.0 fastball tag that reaches a v1.1 sinker or cutter (a shape accepted from a v1.0 portal proposal) maps to that
+    # kind's nearest tag instead of being rejected
+    ("SI", "sink"): ("SI", "run"), ("SI", "ride"): ("SI", "two-seam"), ("SI", "cut"): ("SI", ""),
+    ("FC", "cut"): ("FC", ""), ("FC", "run"): ("FC", ""), ("FC", "sink"): ("FC", ""),
+}
+SHAPE_TAGS = {
+    "FB": ("rides", "runs", "cuts", "straight", ""), "SI": ("run", "drop", "two-seam", ""),
+    "FC": ("hard", "big", "ride", ""), "SL": ("gyro", "tight", "sweeper", "slurve", ""),
+    "CB": ("12-6", "sweeping", "power", "slow", ""), "CH": ("fade", "drop", "split", "firm", ""),
+}
+
+
+def migrate_pitch(kind, shape, type_=None):
+    """(kind, shape) in v1.1 terms. A known type wins while the pitch still has that type's v1.0 tags; else the v1.0
+    kind/tag map; anything else (every v1.1 kind and tag) passes through."""
+    shape = shape or ""
+    if type_ in MIGRATE_BY_TYPE and V10_TYPE_TAGS[type_] == (kind, shape):
+        return MIGRATE_BY_TYPE[type_]
+    return MIGRATE_BY_TAG.get((kind, shape), (kind, shape))
 
 
 def is_big_spot(s):
@@ -639,7 +701,7 @@ F0 = {"heart": 0.40, "edge": 0.50, "off": 0.50, "noncomp": 0.45}
 Q0 = {"heart": (0.30, 0.38, 0.32), "edge": (0.48, 0.34, 0.18),
       "off": (0.60, 0.30, 0.10), "noncomp": (0.75, 0.20, 0.05)}
 ZONE_IN = {"heart": 1.0, "edge": 0.5, "off": 0.0, "noncomp": 0.0}   # edge straddles the border
-KIND_W = {"FB": -0.20, "SL": 0.25, "CB": 0.20, "CH": 0.25}
+KIND_W = {"FB": -0.20, "SI": -0.20, "FC": -0.20, "SL": 0.25, "CB": 0.20, "CH": 0.25}   # v1.1 Step 1: SI / FC = FB
 
 
 # ---------------------------------------------------------------------------
@@ -648,11 +710,18 @@ KIND_W = {"FB": -0.20, "SL": 0.25, "CB": 0.20, "CH": 0.25}
 # Typical movement for a right-hander by shape tag: (induced vertical break, horizontal break), inches.
 # Horizontal break + = arm side. Placeholder values in the range public tracking data shows.
 SHAPES = {
-    ("FB", "ride"): (18, 8), ("FB", "run"): (13, 15), ("FB", "sink"): (8, 16), ("FB", "cut"): (12, -3),
+    # v1.1 Step 1: the v1.1 tags, each with exactly the v1.0 numbers of the tag it migrated from; tags with no v1.0
+    # source use their kind's typical row. Step 1b replaces this table with PROFILES.
+    ("FB", "rides"): (18, 8), ("FB", "runs"): (13, 15), ("FB", "cuts"): (12, -3), ("FB", "straight"): (15, 10),
     ("FB", ""): (15, 10),
-    ("SL", "tight"): (3, -5), ("SL", "sweeper"): (0, -15), ("SL", ""): (2, -7),
-    ("CB", "loopy"): (-14, -5), ("CB", "sharp"): (-8, -9), ("CB", ""): (-10, -7),
-    ("CH", "fade"): (7, 15), ("CH", "drop"): (3, 10), ("CH", ""): (6, 13),
+    ("SI", "run"): (8, 16), ("SI", "two-seam"): (13, 15), ("SI", "drop"): (8, 16), ("SI", ""): (8, 16),
+    ("FC", "hard"): (12, -3), ("FC", "big"): (12, -3), ("FC", "ride"): (12, -3), ("FC", ""): (12, -3),
+    ("SL", "gyro"): (2, -7), ("SL", "tight"): (3, -5), ("SL", "sweeper"): (0, -15), ("SL", "slurve"): (2, -7),
+    ("SL", ""): (2, -7),
+    ("CB", "12-6"): (-8, -9), ("CB", "sweeping"): (-10, -7), ("CB", "power"): (-8, -9), ("CB", "slow"): (-14, -5),
+    ("CB", ""): (-10, -7),
+    ("CH", "fade"): (7, 15), ("CH", "drop"): (3, 10), ("CH", "split"): (3, 10), ("CH", "firm"): (6, 13),
+    ("CH", ""): (6, 13),
 }
 # Release point by arm slot, as (height as share of body height, side in ft toward arm side)
 SLOTS = {"over the top": (1.05, 1.0), "high three-quarter": (0.95, 1.6), "three-quarter": (0.88, 2.0),
@@ -727,10 +796,10 @@ def tunnel_score(p1: Pitch, q1: str, p2: Pitch, q2: str, same_side: bool):
 def shape_fit(p: Pitch, q: str, s: Situation):
     f = 0.0
     up = q.startswith("up")
-    if p.kind == "FB":
-        if p.shape == "ride":
+    if is_fastball(p.kind):
+        if (p.kind, p.shape) == ("FB", "rides"):      # v1.0 FB/ride
             f += 0.5 if up else -0.2
-        if p.shape == "sink":
+        if (p.kind, p.shape) == ("SI", "run"):        # v1.0 FB/sink (Step 2 extends the sinker line to every SI tag)
             f += 0.5 if not up else -0.3
     else:
         f += 0.4 if (not up or q == "chase") else -1.0   # hanging off-speed up is bad
@@ -750,7 +819,7 @@ def damage(p: Pitch, q: str, s: Situation):
     """[R5] Hitter's damage read for this pitch class and location, shrunk toward 0.
     Strengths (+) count fully; holes (-) count half until well established (20+ pitches)."""
     total = 0.0
-    for key in ("OS" if is_offspeed(p.kind) else "FB", p.kind + "|" + q):     # v1.0 #21: spot read per pitch kind
+    for key in (pclass(p.kind), key_kind(p.kind) + "|" + q):     # v1.0 #21: spot read per pitch kind (v1.1: key_kind)
         if key in s.hitter_damage:
             score, n = s.hitter_damage[key]
             eff = score * n / (n + 10.0)
@@ -773,11 +842,11 @@ def sit_prior(arsenal, s):
     """v0.7c count prior over pitches (no policy, no usage), split evenly over heights."""
     m = len(arsenal)
     hitters_count = s.balls > s.strikes and s.strikes < 2
-    fb = [x for x in arsenal if x.kind == "FB"]
-    os_ = [x for x in arsenal if x.kind != "FB"]
+    fb = [x for x in arsenal if is_fastball(x.kind)]
+    os_ = [x for x in arsenal if not is_fastball(x.kind)]
     if fb and os_:
         fb_share = 0.65 if hitters_count else (0.35 if s.strikes == 2 else 0.5)
-        pr = {x.name: (fb_share / len(fb) if x.kind == "FB" else (1 - fb_share) / len(os_)) for x in arsenal}
+        pr = {x.name: (fb_share / len(fb) if is_fastball(x.kind) else (1 - fb_share) / len(os_)) for x in arsenal}
     else:
         pr = {x.name: 1 / m for x in arsenal}
     return {(n, j): pr[n] / len(HEIGHTS) for n in pr for j in HEIGHTS}
@@ -829,7 +898,7 @@ def g_mod(d, dstar):
 def pair_terms(p, q, s, arsenal):
     """4.1-4.3 (whiff shift, off-zone swing shift) from eye level, tunneling and repeats; halved in a big spot."""
     y_hat = s.look[1] if s.look else 2.5
-    ey = g_mod((1 if p.kind == "FB" else -1) * (y_target(q, p.kind) - y_hat), P08["dstar_E"])
+    ey = g_mod((1 if is_fastball(p.kind) else -1) * (y_target(q, p.kind) - y_hat), P08["dstar_E"])
     rho = RHO_L.get(s.level, 1.0)       # v1.0 #19: every MLB-fitted behavioral term scales by RHO_L (eye level, tunneling)
     w = rho * (P08["beta_E"] * ey)
     sw = rho * (P08["beta_E_S"] * ey)
@@ -871,7 +940,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     f = shape_fit(p, q, s)
     dmg = damage(p, q, s)
     tau = s.timing.get("OS" if is_offspeed(p.kind) else "FB", 0.0)
-    tau_eff = tau if p.kind == "FB" else -tau        # late (+) helps fastballs, early (-) helps off-speed
+    tau_eff = tau if is_fastball(p.kind) else -tau        # late (+) helps fastballs, early (-) helps off-speed
 
     hitters_count = s.balls > s.strikes and s.strikes < 2
     land = landing(p, q, s)
@@ -996,8 +1065,14 @@ B_TYPES = ("GB", "LD", "FB", "PU")
 def gb_rate(p):
     """7.3 MLB ground-ball rate by pitch (sinker and cutter by fastball shape); v1.0 #16: fitted, TYPED["gb"]."""
     g = TYPED["gb"]
+    # v1.1 Step 1: the v1.0 rates by migrated tag (FB/sink -> SI/run, a stored Two-seam FB/run -> SI/two-seam, FB/cut ->
+    # FB/cuts or FC). Step 2e replaces this with rates by kind and profile.
+    if p.kind == "SI":
+        return g["4-seam"] if p.shape == "two-seam" else g["sink"]
+    if p.kind == "FC" or (p.kind == "FB" and p.shape == "cuts"):
+        return g["cut"]
     if p.kind == "FB":
-        return g[p.shape] if p.shape in ("sink", "cut") else g["4-seam"]
+        return g["4-seam"]
     return g[p.kind]
 
 
@@ -1215,7 +1290,7 @@ def stakes_factor(b, k, level):
 LOC_WINDOW = 0.010   # v0.3: a location this much worse than the best call is never picked
 
 
-KINDS = ("FB", "SL", "CB", "CH")
+KINDS = ("FB", "SI", "FC", "SL", "CB", "CH")
 
 
 def check_inputs(arsenal, s: Situation):
@@ -1228,6 +1303,8 @@ def check_inputs(arsenal, s: Situation):
     for x in arsenal:
         if x.kind not in KINDS:
             raise ValueError(f"unknown pitch kind {x.kind!r} for {x.name} (expected one of {KINDS})")
+        if x.shape not in SHAPE_TAGS[x.kind]:   # v1.1: checked after migration, so v1.0 tags arrive already mapped
+            raise ValueError(f"unknown shape {x.shape!r} for {x.name} ({x.kind}: expected one of {SHAPE_TAGS[x.kind]})")
     if s.level not in LEVEL or s.level not in RE_BY_LEVEL:
         raise ValueError(f"unknown level {s.level!r}")
     if not (0 <= s.balls <= 3 and 0 <= s.strikes <= 2):
@@ -1294,7 +1371,7 @@ QRE_ITERS, QRE_TOL, QRE_WMIN = 3000, 1e-3, 0.002
 
 
 def v_fb(arsenal, s):
-    fbs = [x for x in arsenal if x.kind == "FB"]
+    fbs = [x for x in arsenal if is_fastball(x.kind)]
     return max(speed_today(x, s) for x in (fbs or arsenal))
 
 
@@ -1311,7 +1388,7 @@ def loc_quad(cell, kind, batter_right):
     r, c = cell
     if (r, c) == (2, 2):
         return "middle"
-    if (r == 4 and kind != "FB") or (r == 0 and kind == "FB"):
+    if (r == 4 and not is_fastball(kind)) or (r == 0 and is_fastball(kind)):
         return "chase"
     if c == 2 and r >= 3:
         return "down-middle"     # low over the plate (v1.0 Step 7)
@@ -1692,7 +1769,7 @@ def lean_b_h(arsenal, s, fooled=()):
     out = {}
     for (n, j) in sit_options(arsenal):
         p = next(x for x in arsenal if x.name == n)
-        c = "FB" if p.kind == "FB" else "OS"
+        c = pclass(p.kind)
         v = sum(log(1.3) for fc in fooled if fc != c)
         if v:
             out[(n, j)] = v

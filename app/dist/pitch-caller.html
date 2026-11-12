@@ -20,7 +20,7 @@
   --stroke: rgba(255, 255, 255, 0.09); --stroke-2: rgba(255, 255, 255, 0.17); --rule: rgba(255, 255, 255, 0.07);
   --well: rgba(0, 0, 0, 0.28);
   --primary: #f4f7fb; --primary-ink: #04070c;
-  --fb: #ff5468; --sl: #f6cb4c; --cb: #45c9ff; --ch: #3ddc8c;
+  --fb: #ff5468; --sl: #f6cb4c; --cb: #45c9ff; --ch: #3ddc8c; --si: #ff9447; --fc: #c58bff;
   --call: var(--cb);
   --warn: #ffb547; --warn-bg: rgba(255, 181, 71, 0.13);
   --neg: #ff7272;  --neg-bg: rgba(255, 114, 114, 0.13);
@@ -41,7 +41,7 @@
   --stroke: rgba(20, 40, 70, 0.11); --stroke-2: rgba(20, 40, 70, 0.22); --rule: rgba(20, 40, 70, 0.08);
   --well: rgba(20, 40, 70, 0.06);
   --primary: #0a1320; --primary-ink: #ffffff;
-  --fb: #d0245a; --sl: #a07c00; --cb: #1a74c8; --ch: #0f8a52;
+  --fb: #d0245a; --sl: #a07c00; --cb: #1a74c8; --ch: #0f8a52; --si: #b8520a; --fc: #7d3fc4;
   --warn: #9a5a00; --warn-bg: rgba(255, 170, 40, 0.18);
   --neg: #b4232f;  --neg-bg: rgba(220, 50, 60, 0.12);
   --focus: #0a6fb0;
@@ -143,7 +143,7 @@ p { margin: 0; }
 
 /* pitch chips: sign number in the pitch's colour */
 .chip { --c: var(--ink); display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--c); color: var(--c); font-size: 14px; font-weight: 700; font-stretch: 75%; flex: none; line-height: 1; }
-.k-FB { --c: var(--fb); } .k-SL { --c: var(--sl); } .k-CB { --c: var(--cb); } .k-CH { --c: var(--ch); }
+.k-FB { --c: var(--fb); } .k-SL { --c: var(--sl); } .k-CB { --c: var(--cb); } .k-CH { --c: var(--ch); } .k-SI { --c: var(--si); } .k-FC { --c: var(--fc); }
 
 /* the call */
 .call-panel { position: relative; overflow: hidden; }
@@ -581,7 +581,7 @@ td.wrapcell .line { display: block; }
   const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
-  const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
+  const DEFAULT_VELO = { FB: 85, SI: 85, FC: 85, SL: 77, CB: 71, CH: 77 };   // v1.1 Step 1: SI / FC = FB until Step 1b
   const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0, "down-middle": -1.5 };
   const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3, "down-middle": 0.5 };
   // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
@@ -595,13 +595,48 @@ td.wrapcell .line { display: block; }
   const F0 = { heart: 0.40, edge: 0.50, off: 0.50, noncomp: 0.45 };
   const Q0 = { heart: [0.30, 0.38, 0.32], edge: [0.48, 0.34, 0.18], off: [0.60, 0.30, 0.10], noncomp: [0.75, 0.20, 0.05] };
   const ZONE_IN = { heart: 1.0, edge: 0.5, off: 0.0, noncomp: 0.0 };
-  const KIND_W = { FB: -0.20, SL: 0.25, CB: 0.20, CH: 0.25 };
+  const KIND_W = { FB: -0.20, SI: -0.20, FC: -0.20, SL: 0.25, CB: 0.20, CH: 0.25 };   // v1.1 Step 1: SI / FC = FB
+  // v1.1 Step 1: the v1.1 tags, each with exactly the v1.0 numbers of the tag it migrated from (mirror of engine.py)
   const SHAPES = {
-    "FB|ride": [18, 8], "FB|run": [13, 15], "FB|sink": [8, 16], "FB|cut": [12, -3], "FB|": [15, 10],
-    "SL|tight": [3, -5], "SL|sweeper": [0, -15], "SL|": [2, -7],
-    "CB|loopy": [-14, -5], "CB|sharp": [-8, -9], "CB|": [-10, -7],
-    "CH|fade": [7, 15], "CH|drop": [3, 10], "CH|": [6, 13],
+    "FB|rides": [18, 8], "FB|runs": [13, 15], "FB|cuts": [12, -3], "FB|straight": [15, 10], "FB|": [15, 10],
+    "SI|run": [8, 16], "SI|two-seam": [13, 15], "SI|drop": [8, 16], "SI|": [8, 16],
+    "FC|hard": [12, -3], "FC|big": [12, -3], "FC|ride": [12, -3], "FC|": [12, -3],
+    "SL|gyro": [2, -7], "SL|tight": [3, -5], "SL|sweeper": [0, -15], "SL|slurve": [2, -7], "SL|": [2, -7],
+    "CB|12-6": [-8, -9], "CB|sweeping": [-10, -7], "CB|power": [-8, -9], "CB|slow": [-14, -5], "CB|": [-10, -7],
+    "CH|fade": [7, 15], "CH|drop": [3, 10], "CH|split": [3, 10], "CH|firm": [6, 13], "CH|": [6, 13],
   };
+  // v1.1 Step 1: six kinds; fastball class = FB, SI, FC (mirror of engine.py is_fastball / pclass / key_kind)
+  const FASTBALL_KINDS = ["FB", "SI", "FC"];
+  const isFastball = (k) => FASTBALL_KINDS.includes(k);
+  const pclass = (k) => (FASTBALL_KINDS.includes(k) ? "FB" : "OS");
+  const keyKind = (k) => (FASTBALL_KINDS.includes(k) ? "FB" : k);
+  // v1.1 Step 1: the one migration table (mirror of engine.py MIGRATE_BY_TYPE / MIGRATE_BY_TAG); idempotent
+  const MIGRATE_BY_TYPE = {
+    "Four-seam": ["FB", "rides"], "Two-seam": ["SI", "two-seam"], "Sinker": ["SI", "run"], "Cutter": ["FC", ""],
+    "Slider": ["SL", "tight"], "Sweeper": ["SL", "sweeper"], "Slurve": ["SL", "slurve"], "Curveball": ["CB", ""],
+    "Knuckle curve": ["CB", "power"], "12-6 curve": ["CB", "12-6"], "Changeup": ["CH", "fade"],
+    "Splitter": ["CH", "split"], "Forkball": ["CH", "split"],
+  };
+  // the v1.0 kind and tag each type was stored with: a type migrates a pitch only while it still carries exactly these
+  const V10_TYPE_TAGS = {
+    "Four-seam": ["FB", "ride"], "Two-seam": ["FB", "run"], "Sinker": ["FB", "sink"], "Cutter": ["FB", "cut"],
+    "Slider": ["SL", "tight"], "Sweeper": ["SL", "sweeper"], "Slurve": ["SL", ""], "Curveball": ["CB", "loopy"],
+    "Knuckle curve": ["CB", "sharp"], "12-6 curve": ["CB", "sharp"], "Changeup": ["CH", "fade"],
+    "Splitter": ["CH", "drop"], "Forkball": ["CH", "drop"],
+  };
+  const MIGRATE_BY_TAG = { "FB|ride": ["FB", "rides"], "FB|run": ["FB", "runs"], "FB|cut": ["FB", "cuts"],
+    "FB|sink": ["SI", "run"], "CB|loopy": ["CB", "slow"], "CB|sharp": ["CB", "power"],
+    // a v1.0 fastball tag that reaches a v1.1 sinker or cutter (an old portal proposal) maps to that kind's nearest tag
+    "SI|sink": ["SI", "run"], "SI|ride": ["SI", "two-seam"], "SI|cut": ["SI", ""], "FC|cut": ["FC", ""], "FC|run": ["FC", ""], "FC|sink": ["FC", ""] };
+  const SHAPE_TAGS = { FB: ["rides", "runs", "cuts", "straight", ""], SI: ["run", "drop", "two-seam", ""],
+    FC: ["hard", "big", "ride", ""], SL: ["gyro", "tight", "sweeper", "slurve", ""],
+    CB: ["12-6", "sweeping", "power", "slow", ""], CH: ["fade", "drop", "split", "firm", ""] };
+  function migratePitch(kind, shape, type) {
+    shape = shape || "";
+    if (type && Object.prototype.hasOwnProperty.call(MIGRATE_BY_TYPE, type) && V10_TYPE_TAGS[type][0] === kind && V10_TYPE_TAGS[type][1] === shape) return MIGRATE_BY_TYPE[type].slice();
+    const m = MIGRATE_BY_TAG[kind + "|" + shape];
+    return m ? m.slice() : [kind, shape];
+  }
   const SLOTS = { "over the top": [1.05, 1.0], "high three-quarter": [0.95, 1.6], "three-quarter": [0.88, 2.0],
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
@@ -622,6 +657,7 @@ td.wrapcell .line { display: block; }
     const p = Object.assign({ shape: "", velo: 0, base_conf: -1, ivb: null, hb: null, slot: "three-quarter",
       height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, strike_ref: null, traits: null }, o);
     if (p.base_conf < 0) p.base_conf = p.conf;
+    [p.kind, p.shape] = migratePitch(p.kind, p.shape, p.type);   // v1.1 Step 1: the one migration point
     return p;
   }
   function Situation(o) {
@@ -645,7 +681,7 @@ td.wrapcell .line { display: block; }
   // ---------------------------------------------------------------- confidence
   function updateConfidence(p, event) {
     let d = CONF_DELTA[event];
-    if (event === "whiff" && p.kind === "FB") d += 0.02;
+    if (event === "whiff" && isFastball(p.kind)) d += 0.02;
     // v0.7: news measured against his usual strike rate; v1.0 Step 3: the average pitcher's rate (strike_ref) comes from
     // the same model as his, served with it by the learner (LAND_CENTER is gone)
     if (p.strike_rate !== null && p.strike_rate !== undefined && p.strike_ref !== null && p.strike_ref !== undefined) {
@@ -808,9 +844,9 @@ td.wrapcell .line { display: block; }
   function shapeFit(p, q, s) {
     let f = 0.0;
     const up = q.startsWith("up");
-    if (p.kind === "FB") {
-      if (p.shape === "ride") f += up ? 0.5 : -0.2;
-      if (p.shape === "sink") f += !up ? 0.5 : -0.3;
+    if (isFastball(p.kind)) {
+      if (p.kind === "FB" && p.shape === "rides") f += up ? 0.5 : -0.2;   // v1.0 FB/ride
+      if (p.kind === "SI" && p.shape === "run") f += !up ? 0.5 : -0.3;    // v1.0 FB/sink
     } else {
       f += (!up || q === "chase") ? 0.4 : -1.0;
       if (p.kind === "SL" && s.same_side && (q.includes("away") || q === "chase")) f += 0.3;
@@ -821,7 +857,7 @@ td.wrapcell .line { display: block; }
 
   function damage(p, q, s) {
     let total = 0.0;
-    for (const key of [isOffspeed(p.kind) ? "OS" : "FB", p.kind + "|" + q]) {   // v1.0 #21: spot read per pitch kind
+    for (const key of [pclass(p.kind), keyKind(p.kind) + "|" + q]) {   // v1.0 #21: spot read per pitch kind (v1.1: keyKind)
       if (key in s.hitter_damage) {
         const [score, n] = s.hitter_damage[key];
         let eff = score * n / (n + 10.0);
@@ -836,7 +872,7 @@ td.wrapcell .line { display: block; }
   const MM = { succ: 0.107, succ_cap: 4, hard: -0.346, hard_cap: 2 };
   function matchupWhiff(p, q, s) {
     const m = s.matchup || {};
-    const x = MM.succ * Math.min(MM.succ_cap, m["succ|" + p.kind] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + p.kind + "|" + q] || 0);   // v1.0 #7: no shared clip
+    const x = MM.succ * Math.min(MM.succ_cap, m["succ|" + keyKind(p.kind)] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + keyKind(p.kind) + "|" + q] || 0);   // v1.0 #7: no shared clip
     return (RHO_L[s.level] ?? 1.0) * x;
   }
   // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
@@ -863,7 +899,7 @@ td.wrapcell .line { display: block; }
     const f = shapeFit(p, q, s);
     const dmg = damage(p, q, s);
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
-    const tauEff = p.kind === "FB" ? tau : -tau;
+    const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
     let [command, grade] = effective(p, s);
@@ -995,12 +1031,13 @@ td.wrapcell .line { display: block; }
 
 
 
-  const KINDS = ["FB", "SL", "CB", "CH"];
+  const KINDS = ["FB", "SI", "FC", "SL", "CB", "CH"];
   function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
     if (!arsenal || !arsenal.length) throw new Error("no pitches: the arsenal is empty");
     const names = arsenal.map((x) => x.name);
     if (new Set(names).size !== names.length) throw new Error(`two pitches share a name: ${names.join(", ")}`);
     for (const x of arsenal) if (!KINDS.includes(x.kind)) throw new Error(`unknown pitch kind "${x.kind}" for ${x.name}`);
+    for (const x of arsenal) if (!SHAPE_TAGS[x.kind].includes(x.shape || "")) throw new Error(`unknown shape "${x.shape}" for ${x.name} (${x.kind})`);   // v1.1: after migration
     if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
@@ -1072,17 +1109,17 @@ td.wrapcell .line { display: block; }
   }
   const yTarget = (q, kind) => (q === "chase" ? (kind === "SL" || kind === "CB" || kind === "CH" ? 1.2 : 3.8) : Y_TARGET[q]);
   function heightMember(q, kind, j) {
-    const h = q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && kind === "FB")) ? "up" : "down";
+    const h = q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && isFastball(kind))) ? "up" : "down";
     return h === j ? 1.0 : 0.0;
   }
   const sitOptions = (arsenal) => { const o = []; for (const x of arsenal) for (const j of HEIGHTS) o.push(sk(x.name, j)); return o; };
   function sitPrior(arsenal, s) {
     const m = arsenal.length, hc = s.balls > s.strikes && s.strikes < 2;
-    const fb = arsenal.filter((x) => x.kind === "FB"), os = arsenal.filter((x) => x.kind !== "FB");
+    const fb = arsenal.filter((x) => isFastball(x.kind)), os = arsenal.filter((x) => !isFastball(x.kind));
     const pr = {};
     if (fb.length && os.length) {
       const fs = hc ? 0.65 : (s.strikes === 2 ? 0.35 : 0.5);
-      for (const x of arsenal) pr[x.name] = x.kind === "FB" ? fs / fb.length : (1 - fs) / os.length;
+      for (const x of arsenal) pr[x.name] = isFastball(x.kind) ? fs / fb.length : (1 - fs) / os.length;
     } else for (const x of arsenal) pr[x.name] = 1 / m;
     const out = {};
     for (const n in pr) for (const j of HEIGHTS) out[sk(n, j)] = pr[n] / HEIGHTS.length;
@@ -1119,7 +1156,7 @@ td.wrapcell .line { display: block; }
   const gMod = (d, ds) => (d > 0 ? (d / ds) * Math.exp(1 - d / ds) : 0.0);
   function pairTerms(p, q, s, arsenal) {
     const yHat = s.look ? s.look[1] : 2.5;
-    const ey = gMod((p.kind === "FB" ? 1 : -1) * (yTarget(q, p.kind) - yHat), P08.dstar_E);
+    const ey = gMod((isFastball(p.kind) ? 1 : -1) * (yTarget(q, p.kind) - yHat), P08.dstar_E);
     const rho = RHO_L[s.level] ?? 1.0;   // v1.0 #19: eye level and tunneling scale by RHO_L
     let w = rho * (P08.beta_E * ey), sw = rho * (P08.beta_E_S * ey);
     if (s.last) {
@@ -1154,7 +1191,10 @@ td.wrapcell .line { display: block; }
   }
   function gbRate(p) {
     const g = TYPED.gb;   // v1.0 #16: fitted ground-ball rates (fit_v08.json results.gb_types, exported with TYPED)
-    if (p.kind === "FB") return (p.shape === "sink" || p.shape === "cut") ? g[p.shape] : g["4-seam"];
+    // v1.1 Step 1: the v1.0 rates by migrated tag (mirror of engine.py gb_rate); Step 2e replaces them
+    if (p.kind === "SI") return p.shape === "two-seam" ? g["4-seam"] : g.sink;
+    if (p.kind === "FC" || (p.kind === "FB" && p.shape === "cuts")) return g.cut;
+    if (p.kind === "FB") return g["4-seam"];
     return g[p.kind];
   }
   function typeMix(p, q, c) {
@@ -1405,7 +1445,7 @@ td.wrapcell .line { display: block; }
 
   // ---------------------------------------------------------------- 2.6-2.7 look, 6 planning table
   function vFb(arsenal, s) {
-    const fbs = arsenal.filter((x) => x.kind === "FB");
+    const fbs = arsenal.filter((x) => isFastball(x.kind));
     let m = -Infinity; for (const x of (fbs.length ? fbs : arsenal)) m = Math.max(m, speedToday(x, s));
     return m;
   }
@@ -1415,7 +1455,7 @@ td.wrapcell .line { display: block; }
   function locQuad(cell, kind, batterRight) {
     const [r, c] = cell;
     if (r === 2 && c === 2) return "middle";
-    if ((r === 4 && kind !== "FB") || (r === 0 && kind === "FB")) return "chase";
+    if ((r === 4 && !isFastball(kind)) || (r === 0 && isFastball(kind))) return "chase";
     if (c === 2 && r >= 3) return "down-middle";   // low over the plate (v1.0 Step 7)
     const inside = batterRight ? c <= 1 : c >= 3;
     return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
@@ -1504,12 +1544,12 @@ td.wrapcell .line { display: block; }
   // v1.0 D3: mirror of engine.py mashed(): a coaching rule (soft cost), separate from the fitted MM logits
   const MASHED_N = 2;
   const MASHED_PENALTY = 0.015;
-  function targetHeight(q, kind) { return q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && kind === "FB")) ? "up" : "down"; }
+  function targetHeight(q, kind) { return q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && isFastball(kind))) ? "up" : "down"; }
   function mashed(p, q, s) {
     const m = s.matchup;
     if (!m || !Object.keys(m).length) return false;
     const h = targetHeight(q, p.kind);
-    let n = 0; for (const x of QUADS) if (targetHeight(x, p.kind) === h) n += m["hard|" + p.kind + "|" + x] || 0;
+    let n = 0; for (const x of QUADS) if (targetHeight(x, p.kind) === h) n += m["hard|" + keyKind(p.kind) + "|" + x] || 0;
     return n >= MASHED_N;
   }
   // v1.0 Step 7: mirror of engine.py's ground-ball rule (a coach rule, not a fit)
@@ -1525,7 +1565,7 @@ td.wrapcell .line { display: block; }
     return (st - ex) / (LAND_BLOCK_K + n) >= HOT_EST;
   }
   function coachCredit(p, q, s) {
-    const R = COACH_RULE, fb = p.kind === "FB", tm = s.timing || {};
+    const R = COACH_RULE, fb = isFastball(p.kind), tm = s.timing || {};
     let c = 0;
     if (fb && (tm.FB || 0) >= READ_T && ["up-in", "up-away", "down-in"].includes(q)) c += R.late_fb;
     if (!fb && (tm.OS || 0) <= -READ_T && ["down-in", "down-away", "down-middle", "chase"].includes(q)) c += R.early_os;
@@ -1534,9 +1574,9 @@ td.wrapcell .line { display: block; }
     const m = s.matchup;
     if (m && Object.keys(m).length) {
       for (const [side, other] of [["in", "away"], ["away", "in"]]) {
-        if (SIDE_TARGETS[other].includes(q) && SIDE_TARGETS[side].some((x) => m["hard|" + p.kind + "|" + x])) c += R.away;
+        if (SIDE_TARGETS[other].includes(q) && SIDE_TARGETS[side].some((x) => m["hard|" + keyKind(p.kind) + "|" + x])) c += R.away;
       }
-      if (m["succ|" + p.kind + "|" + q]) c += R.went_back;
+      if (m["succ|" + keyKind(p.kind) + "|" + q]) c += R.went_back;
     }
     if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot;
     if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
@@ -1712,7 +1752,7 @@ td.wrapcell .line { display: block; }
   function leanBh(arsenal, s, fooled = []) {   // 2.5 (v1.0 #18: the eta damage lean shipped at 0 and is gone)
     const out = {};
     for (const key of sitOptions(arsenal)) {
-      const p = byName(arsenal, skName(key)), c = p.kind === "FB" ? "FB" : "OS";
+      const p = byName(arsenal, skName(key)), c = pclass(p.kind);
       const v = psum(fooled.filter((fc) => fc !== c).map(() => Math.log(1.3)));
       if (v) out[key] = v;
     }
@@ -1963,7 +2003,8 @@ td.wrapcell .line { display: block; }
     outcomeProbs, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     expectedStrike, landingRecord, landingTriple, ballConfEvent,
-    v08, callV08, solveTable, whyLine, intentLabel };
+    v08, callV08, solveTable, whyLine, intentLabel,
+    KINDS, FASTBALL_KINDS, SHAPE_TAGS, MIGRATE_BY_TYPE, MIGRATE_BY_TAG, V10_TYPE_TAGS, migratePitch, isFastball, pclass, keyKind };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);
@@ -2186,15 +2227,36 @@ td.wrapcell .line { display: block; }
   }
 
   // ------------------------------------------------------------ pitch types
-  // Real pitch names, and how each maps onto the four families the engine models.
+  // Real pitch names, and the v1.1 kind and profile each is (the engine's MIGRATE_BY_TYPE; db_test checks they match).
   const PITCH_TYPES = {
-    "Four-seam": { kind: "FB", shape: "ride" }, "Two-seam": { kind: "FB", shape: "run" }, "Sinker": { kind: "FB", shape: "sink" },
-    "Cutter": { kind: "FB", shape: "cut" }, "Slider": { kind: "SL", shape: "tight" }, "Sweeper": { kind: "SL", shape: "sweeper" },
-    "Slurve": { kind: "SL", shape: "" }, "Curveball": { kind: "CB", shape: "loopy" }, "Knuckle curve": { kind: "CB", shape: "sharp" },
-    "12-6 curve": { kind: "CB", shape: "sharp" }, "Changeup": { kind: "CH", shape: "fade" }, "Splitter": { kind: "CH", shape: "drop" },
-    "Forkball": { kind: "CH", shape: "drop" },
+    "Four-seam": { kind: "FB", shape: "rides" }, "Two-seam": { kind: "SI", shape: "two-seam" }, "Sinker": { kind: "SI", shape: "run" },
+    "Cutter": { kind: "FC", shape: "" }, "Slider": { kind: "SL", shape: "tight" }, "Sweeper": { kind: "SL", shape: "sweeper" },
+    "Slurve": { kind: "SL", shape: "slurve" }, "Curveball": { kind: "CB", shape: "" }, "Knuckle curve": { kind: "CB", shape: "power" },
+    "12-6 curve": { kind: "CB", shape: "12-6" }, "Changeup": { kind: "CH", shape: "fade" }, "Splitter": { kind: "CH", shape: "split" },
+    "Forkball": { kind: "CH", shape: "split" },
   };
-  const DEFAULT_TYPE = { FB: "Four-seam", SL: "Slider", CB: "Curveball", CH: "Changeup" };
+  const DEFAULT_TYPE = { FB: "Four-seam", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
+  // v1.0's standard signs: a pitch whose kind changes in the v1.1 migration (a sinker or cutter that was a fastball) keeps
+  // the sign it had (plan O1) until the coach changes its type
+  const V10_SIGN = { FB: 1, CB: 2, SL: 3, CH: 4 };
+  const KINDS_V = 11;
+
+  // v1.1 Step 1: a stored pitcher's pitches into the six kinds through the engine's one migration table (passed in as
+  // migrate(kind, shape, type) -> [kind, shape]). Runs once per record (kindsV marks it), returns what changed.
+  function migratePitcherV11(p, migrate) {
+    if (!p || p.kindsV === KINDS_V) return [];
+    const log = [];
+    for (const d of p.pitches || []) {
+      const [k, s] = migrate(d.kind, d.shape || "", d.type);
+      if (k !== d.kind || s !== (d.shape || "")) {
+        if (k !== d.kind && d.sign == null && V10_SIGN[d.kind]) d.sign = V10_SIGN[d.kind];
+        log.push({ pitcherId: p.id || null, pitcher: p.name || "", pitch: d.name, type: d.type || null, from: `${d.kind}/${d.shape || ""}`, to: `${k}/${s}`, sign: d.sign == null ? null : d.sign });
+        d.kind = k; d.shape = s;
+      }
+    }
+    p.kindsV = KINDS_V;
+    return log;
+  }
 
   function newPitch(type, extra = {}) {
     const t = PITCH_TYPES[type] || PITCH_TYPES["Four-seam"];
@@ -2275,7 +2337,7 @@ td.wrapcell .line { display: block; }
     return out;
   }
 
-  const PCDB = { open, uid, today, STORES, VERSION, likelyDuplicates, PITCH_TYPES, DEFAULT_TYPE, newPitch, newPitcher, newHitter, migrateLegacy,
+  const PCDB = { open, uid, today, STORES, VERSION, likelyDuplicates, PITCH_TYPES, DEFAULT_TYPE, V10_SIGN, KINDS_V, migratePitcherV11, newPitch, newPitcher, newHitter, migrateLegacy,
     isPitch, isPlay, PLAY_KINDS, GAME_STATUS, moveGame, upgradeBackup };
   if (typeof module !== "undefined" && module.exports) module.exports = PCDB;
   else root.PCDB = PCDB;
@@ -2992,7 +3054,10 @@ td.wrapcell .line { display: block; }
       const pg = pitchGame(g, pd, () => nm);
       const anyEv = g.evs.find((e) => e.ars && e.ars.some((x) => x.name === nm));
       const sp = anyEv ? anyEv.ars.find((x) => x.name === nm) : null;
-      return Object.assign(pg, { id: g.id, ts: g.ts, spec: { name: nm, kind: (sp && sp.kind) || pd.kind, shape: (sp && sp.shape) || pd.shape || "", velo: (sp && sp.velo) || pd.velo || 0 } });
+      // v1.1: a snapshot from before the six kinds is read in v1.1 terms (by the pitch's type while it still has that
+      // type's v1.0 tags), so the migration alone never looks like a change of pitch
+      const [k11, s11] = E.migratePitch((sp && sp.kind) || pd.kind, (sp && sp.shape) || pd.shape || "", pd.type);
+      return Object.assign(pg, { id: g.id, ts: g.ts, spec: { name: nm, kind: k11, shape: s11, velo: (sp && sp.velo) || pd.velo || 0 } });
     }).filter((g) => g.rows.length || g.script.some((s) => s.op === "mark"));
     // change points: coach marks, shape changes from TrackMan, a change of kind
     const changeAt = new Set();
@@ -3281,7 +3346,7 @@ td.wrapcell .line { display: block; }
       const exp = (P.whiff * DMG_VAL.whiff + P.foul * DMG_VAL.foul + P.weak * DMG_VAL.weak + P.solid * DMG_VAL.solid + P.hard * DMG_VAL.hard) / sw;
       const w = ev.ts ? Math.pow(0.5, Math.max(0, (t0 - ev.ts) / DAY) / 365) : 1;   // hitters develop: a year-old swing counts half
       add(isOS(ev.kind) ? "OS" : "FB", obs - exp, w);
-      if (ev.quad) add(ev.kind + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's
+      if (ev.quad) add(E.keyKind(ev.kind) + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's (v1.1: by fastball class)
       if (ev.gameId) games.add(ev.gameId); n++;
     }
     const damage = {};
@@ -3449,7 +3514,8 @@ td.wrapcell .line { display: block; }
     changeup: "Changeup", change: "Changeup", ch: "Changeup", splitter: "Splitter", split: "Splitter", fs: "Splitter", splitfinger: "Splitter", forkball: "Forkball",
   };
   const typeOf = (s) => TYPE_ALIASES[norm(s)] || null;
-  const KIND = { "Four-seam": "FB", "Two-seam": "FB", Sinker: "FB", Cutter: "FB", Slider: "SL", Sweeper: "SL", Slurve: "SL",
+  // v1.1: six kinds, the same as the migration table's types (sinkers and two-seamers are SI, cutters FC)
+  const KIND = { "Four-seam": "FB", "Two-seam": "SI", Sinker: "SI", Cutter: "FC", Slider: "SL", Sweeper: "SL", Slurve: "SL",
     Curveball: "CB", "Knuckle curve": "CB", Changeup: "CH", Splitter: "CH", Forkball: "CH" };
 
   const num = (s) => { if (s === undefined || s === null) return null; const t = String(s).trim(); if (t === "" || t === "-" || /^n\/?a$/i.test(t)) return null; const v = +t; return Number.isFinite(v) ? v : null; };
@@ -3502,7 +3568,7 @@ td.wrapcell .line { display: block; }
     const fileHand = rows.map((r) => String(r.throws || "").trim().toUpperCase()[0]).find((c) => c === "L" || c === "R");
     const hand = fileHand || opts.hand;
     // arm side positive: decided by his fastballs, else by his hand (assuming the catcher's-view convention)
-    const fbHb = rows.filter((r) => r.kind === "FB" && r.type !== "Cutter" && r.hb !== null).map((r) => r.hb);
+    const fbHb = rows.filter((r) => (r.kind === "FB" || r.kind === "SI") && r.hb !== null).map((r) => r.hb);   // fastballs, not cutters
     let flip;
     if (fbHb.length >= 3) flip = median(fbHb) < 0;
     else { flip = hand === "L"; if (rows.some((r) => r.hb !== null)) warnings.push("No fastballs in the file to tell which way is arm side; went by his throwing hand. Check the break numbers."); }
@@ -3522,7 +3588,7 @@ td.wrapcell .line { display: block; }
     }).sort((a, b) => b.n - a.n);
 
     // release point of each pitch relative to his fastball, in inches: what the engine's tunneling uses
-    const fb = byType.find((t) => t.kind === "FB" && t.relH !== null && t.relS !== null);
+    const fb = byType.find((t) => ["FB", "SI", "FC"].includes(t.kind) && t.relH !== null && t.relS !== null);   // his most-thrown fastball-class pitch
     for (const t of byType) {
       t.releaseOffset = fb && t.relH !== null && t.relS !== null ? [Math.round((t.relS - fb.relS) * 12 * 10) / 10, Math.round((t.relH - fb.relH) * 12 * 10) / 10] : null;
       t.relH = t.relH === null ? null : Math.round(t.relH * 100) / 100; t.relS = t.relS === null ? null : Math.round(t.relS * 100) / 100;
@@ -4149,7 +4215,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
-  const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
+  const DEFAULT_VELO = { FB: 85, SI: 85, FC: 85, SL: 77, CB: 71, CH: 77 };   // v1.1 Step 1: SI / FC = FB until Step 1b
   const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0, "down-middle": -1.5 };
   const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3, "down-middle": 0.5 };
   // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
@@ -4163,13 +4229,48 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const F0 = { heart: 0.40, edge: 0.50, off: 0.50, noncomp: 0.45 };
   const Q0 = { heart: [0.30, 0.38, 0.32], edge: [0.48, 0.34, 0.18], off: [0.60, 0.30, 0.10], noncomp: [0.75, 0.20, 0.05] };
   const ZONE_IN = { heart: 1.0, edge: 0.5, off: 0.0, noncomp: 0.0 };
-  const KIND_W = { FB: -0.20, SL: 0.25, CB: 0.20, CH: 0.25 };
+  const KIND_W = { FB: -0.20, SI: -0.20, FC: -0.20, SL: 0.25, CB: 0.20, CH: 0.25 };   // v1.1 Step 1: SI / FC = FB
+  // v1.1 Step 1: the v1.1 tags, each with exactly the v1.0 numbers of the tag it migrated from (mirror of engine.py)
   const SHAPES = {
-    "FB|ride": [18, 8], "FB|run": [13, 15], "FB|sink": [8, 16], "FB|cut": [12, -3], "FB|": [15, 10],
-    "SL|tight": [3, -5], "SL|sweeper": [0, -15], "SL|": [2, -7],
-    "CB|loopy": [-14, -5], "CB|sharp": [-8, -9], "CB|": [-10, -7],
-    "CH|fade": [7, 15], "CH|drop": [3, 10], "CH|": [6, 13],
+    "FB|rides": [18, 8], "FB|runs": [13, 15], "FB|cuts": [12, -3], "FB|straight": [15, 10], "FB|": [15, 10],
+    "SI|run": [8, 16], "SI|two-seam": [13, 15], "SI|drop": [8, 16], "SI|": [8, 16],
+    "FC|hard": [12, -3], "FC|big": [12, -3], "FC|ride": [12, -3], "FC|": [12, -3],
+    "SL|gyro": [2, -7], "SL|tight": [3, -5], "SL|sweeper": [0, -15], "SL|slurve": [2, -7], "SL|": [2, -7],
+    "CB|12-6": [-8, -9], "CB|sweeping": [-10, -7], "CB|power": [-8, -9], "CB|slow": [-14, -5], "CB|": [-10, -7],
+    "CH|fade": [7, 15], "CH|drop": [3, 10], "CH|split": [3, 10], "CH|firm": [6, 13], "CH|": [6, 13],
   };
+  // v1.1 Step 1: six kinds; fastball class = FB, SI, FC (mirror of engine.py is_fastball / pclass / key_kind)
+  const FASTBALL_KINDS = ["FB", "SI", "FC"];
+  const isFastball = (k) => FASTBALL_KINDS.includes(k);
+  const pclass = (k) => (FASTBALL_KINDS.includes(k) ? "FB" : "OS");
+  const keyKind = (k) => (FASTBALL_KINDS.includes(k) ? "FB" : k);
+  // v1.1 Step 1: the one migration table (mirror of engine.py MIGRATE_BY_TYPE / MIGRATE_BY_TAG); idempotent
+  const MIGRATE_BY_TYPE = {
+    "Four-seam": ["FB", "rides"], "Two-seam": ["SI", "two-seam"], "Sinker": ["SI", "run"], "Cutter": ["FC", ""],
+    "Slider": ["SL", "tight"], "Sweeper": ["SL", "sweeper"], "Slurve": ["SL", "slurve"], "Curveball": ["CB", ""],
+    "Knuckle curve": ["CB", "power"], "12-6 curve": ["CB", "12-6"], "Changeup": ["CH", "fade"],
+    "Splitter": ["CH", "split"], "Forkball": ["CH", "split"],
+  };
+  // the v1.0 kind and tag each type was stored with: a type migrates a pitch only while it still carries exactly these
+  const V10_TYPE_TAGS = {
+    "Four-seam": ["FB", "ride"], "Two-seam": ["FB", "run"], "Sinker": ["FB", "sink"], "Cutter": ["FB", "cut"],
+    "Slider": ["SL", "tight"], "Sweeper": ["SL", "sweeper"], "Slurve": ["SL", ""], "Curveball": ["CB", "loopy"],
+    "Knuckle curve": ["CB", "sharp"], "12-6 curve": ["CB", "sharp"], "Changeup": ["CH", "fade"],
+    "Splitter": ["CH", "drop"], "Forkball": ["CH", "drop"],
+  };
+  const MIGRATE_BY_TAG = { "FB|ride": ["FB", "rides"], "FB|run": ["FB", "runs"], "FB|cut": ["FB", "cuts"],
+    "FB|sink": ["SI", "run"], "CB|loopy": ["CB", "slow"], "CB|sharp": ["CB", "power"],
+    // a v1.0 fastball tag that reaches a v1.1 sinker or cutter (an old portal proposal) maps to that kind's nearest tag
+    "SI|sink": ["SI", "run"], "SI|ride": ["SI", "two-seam"], "SI|cut": ["SI", ""], "FC|cut": ["FC", ""], "FC|run": ["FC", ""], "FC|sink": ["FC", ""] };
+  const SHAPE_TAGS = { FB: ["rides", "runs", "cuts", "straight", ""], SI: ["run", "drop", "two-seam", ""],
+    FC: ["hard", "big", "ride", ""], SL: ["gyro", "tight", "sweeper", "slurve", ""],
+    CB: ["12-6", "sweeping", "power", "slow", ""], CH: ["fade", "drop", "split", "firm", ""] };
+  function migratePitch(kind, shape, type) {
+    shape = shape || "";
+    if (type && Object.prototype.hasOwnProperty.call(MIGRATE_BY_TYPE, type) && V10_TYPE_TAGS[type][0] === kind && V10_TYPE_TAGS[type][1] === shape) return MIGRATE_BY_TYPE[type].slice();
+    const m = MIGRATE_BY_TAG[kind + "|" + shape];
+    return m ? m.slice() : [kind, shape];
+  }
   const SLOTS = { "over the top": [1.05, 1.0], "high three-quarter": [0.95, 1.6], "three-quarter": [0.88, 2.0],
     "low three-quarter": [0.78, 2.5], "sidearm": [0.62, 3.0], "submarine": [0.35, 3.2] };
   const FLIGHT_FT = 54.0, DECISION_S = 0.175, G_IN = 32.17 * 12;
@@ -4190,6 +4291,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const p = Object.assign({ shape: "", velo: 0, base_conf: -1, ivb: null, hb: null, slot: "three-quarter",
       height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, strike_ref: null, traits: null }, o);
     if (p.base_conf < 0) p.base_conf = p.conf;
+    [p.kind, p.shape] = migratePitch(p.kind, p.shape, p.type);   // v1.1 Step 1: the one migration point
     return p;
   }
   function Situation(o) {
@@ -4213,7 +4315,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // ---------------------------------------------------------------- confidence
   function updateConfidence(p, event) {
     let d = CONF_DELTA[event];
-    if (event === "whiff" && p.kind === "FB") d += 0.02;
+    if (event === "whiff" && isFastball(p.kind)) d += 0.02;
     // v0.7: news measured against his usual strike rate; v1.0 Step 3: the average pitcher's rate (strike_ref) comes from
     // the same model as his, served with it by the learner (LAND_CENTER is gone)
     if (p.strike_rate !== null && p.strike_rate !== undefined && p.strike_ref !== null && p.strike_ref !== undefined) {
@@ -4376,9 +4478,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function shapeFit(p, q, s) {
     let f = 0.0;
     const up = q.startsWith("up");
-    if (p.kind === "FB") {
-      if (p.shape === "ride") f += up ? 0.5 : -0.2;
-      if (p.shape === "sink") f += !up ? 0.5 : -0.3;
+    if (isFastball(p.kind)) {
+      if (p.kind === "FB" && p.shape === "rides") f += up ? 0.5 : -0.2;   // v1.0 FB/ride
+      if (p.kind === "SI" && p.shape === "run") f += !up ? 0.5 : -0.3;    // v1.0 FB/sink
     } else {
       f += (!up || q === "chase") ? 0.4 : -1.0;
       if (p.kind === "SL" && s.same_side && (q.includes("away") || q === "chase")) f += 0.3;
@@ -4389,7 +4491,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   function damage(p, q, s) {
     let total = 0.0;
-    for (const key of [isOffspeed(p.kind) ? "OS" : "FB", p.kind + "|" + q]) {   // v1.0 #21: spot read per pitch kind
+    for (const key of [pclass(p.kind), keyKind(p.kind) + "|" + q]) {   // v1.0 #21: spot read per pitch kind (v1.1: keyKind)
       if (key in s.hitter_damage) {
         const [score, n] = s.hitter_damage[key];
         let eff = score * n / (n + 10.0);
@@ -4404,7 +4506,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const MM = { succ: 0.107, succ_cap: 4, hard: -0.346, hard_cap: 2 };
   function matchupWhiff(p, q, s) {
     const m = s.matchup || {};
-    const x = MM.succ * Math.min(MM.succ_cap, m["succ|" + p.kind] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + p.kind + "|" + q] || 0);   // v1.0 #7: no shared clip
+    const x = MM.succ * Math.min(MM.succ_cap, m["succ|" + keyKind(p.kind)] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + keyKind(p.kind) + "|" + q] || 0);   // v1.0 #7: no shared clip
     return (RHO_L[s.level] ?? 1.0) * x;
   }
   // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
@@ -4431,7 +4533,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const f = shapeFit(p, q, s);
     const dmg = damage(p, q, s);
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
-    const tauEff = p.kind === "FB" ? tau : -tau;
+    const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
     let [command, grade] = effective(p, s);
@@ -4563,12 +4665,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
 
 
-  const KINDS = ["FB", "SL", "CB", "CH"];
+  const KINDS = ["FB", "SI", "FC", "SL", "CB", "CH"];
   function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
     if (!arsenal || !arsenal.length) throw new Error("no pitches: the arsenal is empty");
     const names = arsenal.map((x) => x.name);
     if (new Set(names).size !== names.length) throw new Error(`two pitches share a name: ${names.join(", ")}`);
     for (const x of arsenal) if (!KINDS.includes(x.kind)) throw new Error(`unknown pitch kind "${x.kind}" for ${x.name}`);
+    for (const x of arsenal) if (!SHAPE_TAGS[x.kind].includes(x.shape || "")) throw new Error(`unknown shape "${x.shape}" for ${x.name} (${x.kind})`);   // v1.1: after migration
     if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
@@ -4640,17 +4743,17 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   }
   const yTarget = (q, kind) => (q === "chase" ? (kind === "SL" || kind === "CB" || kind === "CH" ? 1.2 : 3.8) : Y_TARGET[q]);
   function heightMember(q, kind, j) {
-    const h = q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && kind === "FB")) ? "up" : "down";
+    const h = q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && isFastball(kind))) ? "up" : "down";
     return h === j ? 1.0 : 0.0;
   }
   const sitOptions = (arsenal) => { const o = []; for (const x of arsenal) for (const j of HEIGHTS) o.push(sk(x.name, j)); return o; };
   function sitPrior(arsenal, s) {
     const m = arsenal.length, hc = s.balls > s.strikes && s.strikes < 2;
-    const fb = arsenal.filter((x) => x.kind === "FB"), os = arsenal.filter((x) => x.kind !== "FB");
+    const fb = arsenal.filter((x) => isFastball(x.kind)), os = arsenal.filter((x) => !isFastball(x.kind));
     const pr = {};
     if (fb.length && os.length) {
       const fs = hc ? 0.65 : (s.strikes === 2 ? 0.35 : 0.5);
-      for (const x of arsenal) pr[x.name] = x.kind === "FB" ? fs / fb.length : (1 - fs) / os.length;
+      for (const x of arsenal) pr[x.name] = isFastball(x.kind) ? fs / fb.length : (1 - fs) / os.length;
     } else for (const x of arsenal) pr[x.name] = 1 / m;
     const out = {};
     for (const n in pr) for (const j of HEIGHTS) out[sk(n, j)] = pr[n] / HEIGHTS.length;
@@ -4687,7 +4790,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const gMod = (d, ds) => (d > 0 ? (d / ds) * Math.exp(1 - d / ds) : 0.0);
   function pairTerms(p, q, s, arsenal) {
     const yHat = s.look ? s.look[1] : 2.5;
-    const ey = gMod((p.kind === "FB" ? 1 : -1) * (yTarget(q, p.kind) - yHat), P08.dstar_E);
+    const ey = gMod((isFastball(p.kind) ? 1 : -1) * (yTarget(q, p.kind) - yHat), P08.dstar_E);
     const rho = RHO_L[s.level] ?? 1.0;   // v1.0 #19: eye level and tunneling scale by RHO_L
     let w = rho * (P08.beta_E * ey), sw = rho * (P08.beta_E_S * ey);
     if (s.last) {
@@ -4722,7 +4825,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   }
   function gbRate(p) {
     const g = TYPED.gb;   // v1.0 #16: fitted ground-ball rates (fit_v08.json results.gb_types, exported with TYPED)
-    if (p.kind === "FB") return (p.shape === "sink" || p.shape === "cut") ? g[p.shape] : g["4-seam"];
+    // v1.1 Step 1: the v1.0 rates by migrated tag (mirror of engine.py gb_rate); Step 2e replaces them
+    if (p.kind === "SI") return p.shape === "two-seam" ? g["4-seam"] : g.sink;
+    if (p.kind === "FC" || (p.kind === "FB" && p.shape === "cuts")) return g.cut;
+    if (p.kind === "FB") return g["4-seam"];
     return g[p.kind];
   }
   function typeMix(p, q, c) {
@@ -4973,7 +5079,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   // ---------------------------------------------------------------- 2.6-2.7 look, 6 planning table
   function vFb(arsenal, s) {
-    const fbs = arsenal.filter((x) => x.kind === "FB");
+    const fbs = arsenal.filter((x) => isFastball(x.kind));
     let m = -Infinity; for (const x of (fbs.length ? fbs : arsenal)) m = Math.max(m, speedToday(x, s));
     return m;
   }
@@ -4983,7 +5089,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function locQuad(cell, kind, batterRight) {
     const [r, c] = cell;
     if (r === 2 && c === 2) return "middle";
-    if ((r === 4 && kind !== "FB") || (r === 0 && kind === "FB")) return "chase";
+    if ((r === 4 && !isFastball(kind)) || (r === 0 && isFastball(kind))) return "chase";
     if (c === 2 && r >= 3) return "down-middle";   // low over the plate (v1.0 Step 7)
     const inside = batterRight ? c <= 1 : c >= 3;
     return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
@@ -5072,12 +5178,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // v1.0 D3: mirror of engine.py mashed(): a coaching rule (soft cost), separate from the fitted MM logits
   const MASHED_N = 2;
   const MASHED_PENALTY = 0.015;
-  function targetHeight(q, kind) { return q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && kind === "FB")) ? "up" : "down"; }
+  function targetHeight(q, kind) { return q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && isFastball(kind))) ? "up" : "down"; }
   function mashed(p, q, s) {
     const m = s.matchup;
     if (!m || !Object.keys(m).length) return false;
     const h = targetHeight(q, p.kind);
-    let n = 0; for (const x of QUADS) if (targetHeight(x, p.kind) === h) n += m["hard|" + p.kind + "|" + x] || 0;
+    let n = 0; for (const x of QUADS) if (targetHeight(x, p.kind) === h) n += m["hard|" + keyKind(p.kind) + "|" + x] || 0;
     return n >= MASHED_N;
   }
   // v1.0 Step 7: mirror of engine.py's ground-ball rule (a coach rule, not a fit)
@@ -5093,7 +5199,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return (st - ex) / (LAND_BLOCK_K + n) >= HOT_EST;
   }
   function coachCredit(p, q, s) {
-    const R = COACH_RULE, fb = p.kind === "FB", tm = s.timing || {};
+    const R = COACH_RULE, fb = isFastball(p.kind), tm = s.timing || {};
     let c = 0;
     if (fb && (tm.FB || 0) >= READ_T && ["up-in", "up-away", "down-in"].includes(q)) c += R.late_fb;
     if (!fb && (tm.OS || 0) <= -READ_T && ["down-in", "down-away", "down-middle", "chase"].includes(q)) c += R.early_os;
@@ -5102,9 +5208,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const m = s.matchup;
     if (m && Object.keys(m).length) {
       for (const [side, other] of [["in", "away"], ["away", "in"]]) {
-        if (SIDE_TARGETS[other].includes(q) && SIDE_TARGETS[side].some((x) => m["hard|" + p.kind + "|" + x])) c += R.away;
+        if (SIDE_TARGETS[other].includes(q) && SIDE_TARGETS[side].some((x) => m["hard|" + keyKind(p.kind) + "|" + x])) c += R.away;
       }
-      if (m["succ|" + p.kind + "|" + q]) c += R.went_back;
+      if (m["succ|" + keyKind(p.kind) + "|" + q]) c += R.went_back;
     }
     if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot;
     if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
@@ -5280,7 +5386,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function leanBh(arsenal, s, fooled = []) {   // 2.5 (v1.0 #18: the eta damage lean shipped at 0 and is gone)
     const out = {};
     for (const key of sitOptions(arsenal)) {
-      const p = byName(arsenal, skName(key)), c = p.kind === "FB" ? "FB" : "OS";
+      const p = byName(arsenal, skName(key)), c = pclass(p.kind);
       const v = psum(fooled.filter((fc) => fc !== c).map(() => Math.log(1.3)));
       if (v) out[key] = v;
     }
@@ -5531,7 +5637,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     outcomeProbs, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
     expectedStrike, landingRecord, landingTriple, ballConfEvent,
-    v08, callV08, solveTable, whyLine, intentLabel };
+    v08, callV08, solveTable, whyLine, intentLabel,
+    KINDS, FASTBALL_KINDS, SHAPE_TAGS, MIGRATE_BY_TYPE, MIGRATE_BY_TAG, V10_TYPE_TAGS, migratePitch, isFastball, pclass, keyKind };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);
@@ -5951,7 +6058,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       const pg = pitchGame(g, pd, () => nm);
       const anyEv = g.evs.find((e) => e.ars && e.ars.some((x) => x.name === nm));
       const sp = anyEv ? anyEv.ars.find((x) => x.name === nm) : null;
-      return Object.assign(pg, { id: g.id, ts: g.ts, spec: { name: nm, kind: (sp && sp.kind) || pd.kind, shape: (sp && sp.shape) || pd.shape || "", velo: (sp && sp.velo) || pd.velo || 0 } });
+      // v1.1: a snapshot from before the six kinds is read in v1.1 terms (by the pitch's type while it still has that
+      // type's v1.0 tags), so the migration alone never looks like a change of pitch
+      const [k11, s11] = E.migratePitch((sp && sp.kind) || pd.kind, (sp && sp.shape) || pd.shape || "", pd.type);
+      return Object.assign(pg, { id: g.id, ts: g.ts, spec: { name: nm, kind: k11, shape: s11, velo: (sp && sp.velo) || pd.velo || 0 } });
     }).filter((g) => g.rows.length || g.script.some((s) => s.op === "mark"));
     // change points: coach marks, shape changes from TrackMan, a change of kind
     const changeAt = new Set();
@@ -6240,7 +6350,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       const exp = (P.whiff * DMG_VAL.whiff + P.foul * DMG_VAL.foul + P.weak * DMG_VAL.weak + P.solid * DMG_VAL.solid + P.hard * DMG_VAL.hard) / sw;
       const w = ev.ts ? Math.pow(0.5, Math.max(0, (t0 - ev.ts) / DAY) / 365) : 1;   // hitters develop: a year-old swing counts half
       add(isOS(ev.kind) ? "OS" : "FB", obs - exp, w);
-      if (ev.quad) add(ev.kind + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's
+      if (ev.quad) add(E.keyKind(ev.kind) + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's (v1.1: by fastball class)
       if (ev.gameId) games.add(ev.gameId); n++;
     }
     const damage = {};
@@ -6351,10 +6461,14 @@ const TIERS = [
   { n: 3, t: "Plus hitter reads", d: "Swing timing on whiffs and where fouls go. Helps it learn each hitter." },
   { n: 4, t: "Plus measured break", d: "Trackman or Rapsodo break numbers for each pitch, entered below." },
 ];
-const KINDS = { FB: "Fastball", SL: "Slider", CB: "Curveball", CH: "Changeup" };
-const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4 };                 // the standard catcher's signs
-const KCOLOR = { FB: "var(--fb)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
-const SHAPE_OPTS = { FB: ["ride", "run", "sink", "cut", ""], SL: ["tight", "sweeper", ""], CB: ["loopy", "sharp", ""], CH: ["fade", "drop", ""] };
+// v1.1: six pitch kinds. Signs 1-4 are the standard catcher's signs; 5 and 6 are card / wristband numbers (six can't be
+// flashed with one hand). A pitch migrated from an old fastball keeps the sign it had (its own d.sign) until the coach
+// changes its type.
+const KINDS = { FB: "Fastball", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
+const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };
+const KCOLOR = { FB: "var(--fb)", SI: "var(--si)", FC: "var(--fc)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
+const SHAPE_OPTS = { FB: ["rides", "runs", "cuts", "straight", ""], SI: ["run", "drop", "two-seam", ""], FC: ["hard", "big", "ride", ""],
+  SL: ["gyro", "tight", "sweeper", "slurve", ""], CB: ["12-6", "sweeping", "power", "slow", ""], CH: ["fade", "drop", "split", "firm", ""] };
 const SLOT_OPTS = ["over the top", "high three-quarter", "three-quarter", "low three-quarter", "sidearm", "submarine"];
 const LOC = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 const GLYPH = { ball: "•", cstrike: "✓", whiff: "✓", foul: "F", play: "X", hbp: "H" };
@@ -6442,7 +6556,7 @@ function arsenal() {
       strike_ref: PCLearner.strikeRef(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo }, S.setup.level) }
       : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null, strike_ref: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
-    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
+    return E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
       ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0] });
   });
@@ -6669,7 +6783,7 @@ function record(res) {
       // v1.0 #7: a hard hit is keyed on where the catcher logged it (as M2 was fitted), else on the called target
       const bh = batterDef().hand, bRight = bh === "S" ? pitcherDef().hand !== "R" : bh !== "L";
       const spot = res.locCell ? E.v08.locQuad(res.locCell, p.kind, bRight) : call.quad;
-      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + spot : null;
+      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + E.keyKind(p.kind) : hardHit ? "hard|" + E.keyKind(p.kind) + "|" + spot : null;   // v1.1: by fastball class
       if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1;
         if (mk.startsWith("succ|")) { const k2 = mk + "|" + spot; m[k2] = (m[k2] || 0) + 1; } }   // v1.0 Step 7: and where (the went-back rule)
     }
@@ -6835,8 +6949,12 @@ let fixing = false;
 let lastZoneKey = null;
 // a pitch kind is drawn into SVG markup: only the four known kinds ever reach it (a synced or restored record could
 // carry anything)
-const PCOLOR = (k) => `var(--${["FB", "SL", "CB", "CH"].includes(k) ? k.toLowerCase() : "fb"})`;
-const chip = (kind) => h("span", { class: `chip k-${kind}`, "aria-hidden": "true" }, String(SIGN[kind]));
+const PCOLOR = (k) => `var(--${["FB", "SI", "FC", "SL", "CB", "CH"].includes(k) ? k.toLowerCase() : "fb"})`;
+// the sign shown for a pitch: its own kept sign (a migrated pitch, v1.1 O1) when it has one, else its kind's
+const signOf = (kind, sign) => String(sign || SIGN[kind] || "?");
+// the current pitcher's pitch by name, for the screens that only carry a name and kind
+const signFor = (kind, name) => { const d = name ? ((pitcherDef() || {}).pitches || []).find((x) => x.name === name && x.kind === kind) : null; return signOf(kind, d && d.sign); };
+const chip = (kind, sign) => h("span", { class: `chip k-${kind}`, "aria-hidden": "true" }, signOf(kind, sign));
 
 function applyTheme() {
   const day = S.theme === "day";
@@ -6970,7 +7088,7 @@ function callPanel() {
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
   const call = h("div", { class: "call" },
     h("div", { class: "call-main" },
-      h("div", { class: "sign", "aria-label": `Sign ${SIGN[kind]}` }, String(SIGN[kind])),
+      h("div", { class: "sign", "aria-label": `Sign ${signFor(kind, c.pitch)}` }, signFor(kind, c.pitch)),
       h("div", { style: { minWidth: 0 } },
         h("p", { class: "pitch", "aria-live": "polite" }, c.pitch, c.coach ? h("span", { class: "coachmark" }, "Your call") : null),
         h("p", { class: "spot" }, SPOT[c.quad])),
@@ -6986,7 +7104,7 @@ function callPanel() {
     c.dist.map((d) => {
       const k = kindOf(d.pitch), isCall = !c.coach && d.pitch === c.pitch && d.quad === c.quad;
       return h("div", { class: `opt k-${k}${isCall ? " is-call" : ""}` },
-        chip(k), h("span", {}, `${d.pitch}, ${spotLower(d.quad)}`),
+        chip(k, signFor(k, d.pitch)), h("span", {}, `${d.pitch}, ${spotLower(d.quad)}`),
         h("span", { class: "track" }, h("i", { style: { width: `${Math.max(4, d.prob * 100)}%` } })),
         h("span", { class: "p" }, pct(d.prob)));
     }));
@@ -7047,13 +7165,13 @@ function zoneSVG(c) {
     if (d.pitch === c.pitch && d.quad === c.quad) continue;
     const k = kindOf(d.pitch), [x, y] = at(d.quad, k), r = 5 + 10 * d.prob;
     s += `<circle cx="${x}" cy="${y}" r="${r}" fill="${PCOLOR(k)}" fill-opacity=".08" stroke="${PCOLOR(k)}" stroke-opacity=".75" stroke-width="1.5"/>`;
-    if (r >= 8) s += `<text x="${x}" y="${y + 4}" text-anchor="middle" ${F} font-size="11" font-weight="700" fill="${PCOLOR(k)}" fill-opacity=".9">${SIGN[k]}</text>`;
+    if (r >= 8) s += `<text x="${x}" y="${y + 4}" text-anchor="middle" ${F} font-size="11" font-weight="700" fill="${PCOLOR(k)}" fill-opacity=".9">${signFor(k, d.pitch)}</text>`;
   }
   const [tx, ty] = at(c.quad, kind);
   s += `<circle class="ring r2" cx="${tx}" cy="${ty}" r="31" fill="none" stroke="var(--call)" stroke-opacity=".25" stroke-width="1.5"/>`;
   s += `<circle class="ring" cx="${tx}" cy="${ty}" r="24" fill="none" stroke="var(--call)" stroke-opacity=".55" stroke-width="1.5"/>`;
   s += `<g class="core"><circle cx="${tx}" cy="${ty}" r="17" fill="var(--call)"/>`;
-  s += `<text x="${tx}" y="${ty + 7}" text-anchor="middle" ${F} font-stretch="70%" font-weight="750" font-size="21" fill="var(--ground)">${SIGN[kind]}</text></g>`;
+  s += `<text x="${tx}" y="${ty + 7}" text-anchor="middle" ${F} font-stretch="70%" font-weight="750" font-size="21" fill="var(--ground)">${signFor(kind, c.pitch)}</text></g>`;
   return s + `</svg>`;
 }
 
@@ -7071,7 +7189,7 @@ function pickBox() {
     pickMode = false; save(); render();
   };
   return h("div", { class: "pick" }, h("span", { class: "t" }, "Your call"),
-    h("div", { class: "seg", role: "group", "aria-label": "Pitch" }, ars.map((p) => h("button", { "aria-pressed": String(pickSel.pitch === p.name), on: { click: () => { pickSel.pitch = p.name; render(); } } }, chip(p.kind), p.name))),
+    h("div", { class: "seg", role: "group", "aria-label": "Pitch" }, ars.map((p) => h("button", { "aria-pressed": String(pickSel.pitch === p.name), on: { click: () => { pickSel.pitch = p.name; render(); } } }, chip(p.kind, p.sign), p.name))),
     h("div", { class: "seg", role: "group", "aria-label": "Spot" }, E.QUADS.map((q) => h("button", { "aria-pressed": String(pickSel.quad === q), on: { click: () => { pickSel.quad = q; render(); } } }, SPOT[q]))),
     h("div", {}, h("button", { class: "btn primary", disabled: !(pickSel.pitch && pickSel.quad), on: { click: go } }, "Grade and use my call")));
 }
@@ -7131,7 +7249,7 @@ function atBatList() {
   const g = G(), i = slotIdx(), cur = [];
   for (const l of g.log) { if (l.slot !== i || l.inning !== g.inning || l.end) break; cur.unshift(l); }
   return h("div", { class: "ab" }, h("div", { class: "t" }, "This at-bat"),
-    cur.length ? h("ol", {}, cur.map((l) => h("li", {}, h("span", { class: "c" }, l.count), chip(l.kind), h("span", {}, `${l.pitch}, ${spotLower(l.quad)}`), h("span", { class: "r" }, l.text))))
+    cur.length ? h("ol", {}, cur.map((l) => h("li", {}, h("span", { class: "c" }, l.count), chip(l.kind, signFor(l.kind, l.pitch)), h("span", {}, `${l.pitch}, ${spotLower(l.quad)}`), h("span", { class: "r" }, l.text))))
       : h("p", { class: "empty" }, "First pitch is up."));
 }
 
@@ -7144,7 +7262,7 @@ function pitcherPanel(ars, st) {
     h("div", { class: "panel-head" }, h("h2", {}, `${pitcherDef().name}'s confidence`), h("span", { class: "meta" }, `${g.pc[pKey()] || 0} pitches`)),
     status,
     h("div", { class: "trust" }, ars.map((p) => h("div", { class: `trow k-${p.kind}` },
-      chip(p.kind),
+      chip(p.kind, p.sign),
       h("span", { class: "nm" }, p.name, (() => { const l = landTriple(p.name, ((g.land || {})[pKey()] || {})[p.name]); return l ? h("span", {}, `  ${l[0]} of ${l[2]} for strikes`) : null; })()),
       h("span", { class: "v" }, p.conf.toFixed(2)),
       h("div", { class: `bullet${p.conf < cutoff ? " out" : ""}`, title: `Bullpen feel ${p.base_conf.toFixed(2)}` },
@@ -7196,7 +7314,7 @@ function logPanel() {
         const extra = [l.loc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[l.loc] : null, l.thrown ? `threw ${l.thrown}` : null, l.wp ? (l.wp === "pb" ? "passed ball" : "wild pitch") : null].filter(Boolean);
         const tr = h("tr", { class: l.end ? "pa-end" : "" },
           h("td", { class: "num" }, String(l.n)), h("td", {}, ord(l.inning)), h("td", {}, S.setup.lineup[l.slot].name || `${ord(l.slot + 1)} hitter`),
-          h("td", { class: "num" }, l.count), h("td", {}, chip(l.kind)),
+          h("td", { class: "num" }, l.count), h("td", {}, chip(l.kind, signFor(l.kind, l.pitch))),
           h("td", {}, `${l.pitch}, ${spotLower(l.quad)}${l.coach ? " (your call)" : ""}`),
           h("td", { class: l.end ? "res-strong" : "" }, l.text.replace(/ \(crossed up: [^)]*\)|, (wild pitch|passed ball)$/g, ""), extra.length ? h("small", { class: "muted" }, ` · ${extra.join(", ")}`) : null),
           h("td", {}, h("button", { class: "btn text", "aria-expanded": String(fixingPitch === l.n), on: { click: () => { fixingPitch = fixingPitch === l.n ? null : l.n; render(); } } }, fixingPitch === l.n ? "Close" : "Fix")));
@@ -7257,7 +7375,7 @@ function dataRows() {
 
 function arsenalFor(idx) {
   const pd = S.setup.staff[idx], g = G(), conf = (g.conf || {})[keyOf(idx)] || {};
-  return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
+  return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
     base_conf: +d.feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1, ivb: null, hb: null }));
 }
 
@@ -7315,7 +7433,7 @@ function bullpenPanel() {
         h("span", { class: `pill ${state[0]}` }, state[1]),
         h("div", { class: "pen-load" }, h("div", { class: "load", title: `${pc} of about ${maxPc} pitches` }, h("i", { style: { width: `${Math.min(100, (100 * pc) / maxPc)}%` } })),
           h("span", {}, `${pc} pitches, ${g.bf[String(i)] || 0} faced`)),
-        h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind), p.conf.toFixed(2)))),
+        h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind, p.sign), p.conf.toFixed(2)))),
         inNow ? h("span", { class: "pen-act muted" }, "On the mound")
           : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); const out = pitcherDef().id || null; g.pitcher = i; g.last = null; if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pd.id || null }); makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
     })),
@@ -7334,7 +7452,7 @@ function arsenalPanel(rows) {
       h("tbody", {}, list.length ? list.map(([key, r]) => {
         const [kind, name] = key.split("|"), sw = r.filter(isSwing), bip = r.filter((e) => resOf(e) === "play");
         return h("tr", { class: `k-${kind}` },
-          h("td", {}, h("span", { class: "pname" }, chip(kind), name)),
+          h("td", {}, h("span", { class: "pname" }, chip(kind, signFor(kind, name)), name)),
           h("td", {}, h("span", { class: "usage" }, h("span", { class: "track" }, h("i", { style: { width: `${(100 * r.length) / max}%` } })), h("span", {}, `${r.length}`, h("small", {}, ` ${rate(r.length, rows.length)}`)))),
           h("td", { class: "num" }, rate(r.filter(isStrike).length, r.length)),
           h("td", { class: "num" }, rate(sw.filter((e) => resOf(e) === "whiff").length, sw.length)),
@@ -7382,7 +7500,7 @@ function countPanel(rows) {
   const kinds = [...new Set(rows.map((e) => `${e.kind}|${e.pitch}`))].sort((a, b) => SIGN[a.split("|")[0]] - SIGN[b.split("|")[0]]);
   return h("section", { class: "panel glass span-7", "aria-label": "Mix by count" },
     h("div", { class: "panel-head" }, h("h2", {}, "Mix by count"), h("span", { class: "meta" }, "What he threw in each count")),
-    kinds.length > 1 ? h("div", { class: "legend" }, kinds.map((k) => h("span", { class: `k-${k.split("|")[0]}` }, chip(k.split("|")[0]), k.split("|")[1]))) : null,
+    kinds.length > 1 ? h("div", { class: "legend" }, kinds.map((k) => h("span", { class: `k-${k.split("|")[0]}` }, chip(k.split("|")[0], signFor(k.split("|")[0], k.split("|")[1])), k.split("|")[1]))) : null,
     h("div", { class: "counts" }, COUNTS.map((c) => {
       const r = rows.filter((e) => e.count === c);
       return h("div", { class: "crow" },
@@ -7449,6 +7567,7 @@ async function boot() {
     DB.D = D;
     const mig = await PCDB.migrateLegacy(D, S);
     for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) for (const x of await D.all(store)) map.set(x.id, x);
+    await migrateRosterV11([...DB.pitchers.values()]);
     for (const x of await D.all("learned")) DB.models.set(x.id, x);
     for (const x of await D.byIndex("checkins", "date", todayT())) DB.checkins.set(x.pitcherId, x);
     if (!ourTeam()) { const t = await dbPut("teams", { name: "Our team", isOurs: true, level: S.setup.level }); DB.teams.set(t.id, t); }
@@ -7486,6 +7605,26 @@ async function boot() {
 }
 
 // today's staff: the roster records themselves, so edits on the Roster screen show up in the game right away
+// v1.1 Step 1: stored pitchers move to the six kinds through the engine's one migration table (PitchEngine.migratePitch,
+// by the stored pitch type first). Each changed pitcher is written back once; every change is kept in meta "v11_migration"
+// (pitcher, pitch, type, from, to, kept sign) so it can be checked or undone by hand.
+async function migrateRosterV11(list) {
+  const log = [];
+  for (const p of list) {
+    const r = PCDB.migratePitcherV11(p, PitchEngine.migratePitch);
+    if (p.kindsV === PCDB.KINDS_V && r.length) { log.push(...r); await dbPut("pitchers", p); }
+  }
+  if (log.length && DB.D) {
+    try {
+      const m = (await DB.D.get("meta", "v11_migration")) || { id: "v11_migration", log: [] };
+      const ts = Date.now();
+      m.log = (m.log || []).concat(log.map((x) => Object.assign({ ts }, x)));
+      await DB.D.put("meta", m);
+    } catch (e) { console.warn("v1.1 migration log", e); }
+  }
+  return log;
+}
+
 function attachStaff() {
   const staff = S.setup.staffIds.map((id) => DB.pitchers.get(id)).filter(Boolean);
   if (staff.length) S.setup.staff = staff;
@@ -7760,7 +7899,7 @@ function oursView() {
           const n = DB.counts.get(x.id) || 0, today = S.setup.staffIds.includes(x.id), ci = todayCheckin(x.id);
           return h("button", { class: `pcard${x.id === rosterSel ? " sel" : ""}`, "aria-pressed": String(x.id === rosterSel), on: { click: () => { rosterSel = x.id; importPreview = null; render(); } } },
             h("span", { class: "pc-top" }, h("b", {}, (x.number ? `#${x.number} ` : "") + (x.name || "Unnamed")), today ? h("span", { class: "pill ok" }, "Today") : null),
-            h("span", { class: "pc-mid" }, (x.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind))),
+            h("span", { class: "pc-mid" }, (x.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind, d.sign))),
             h("span", { class: "pc-sub" }, `${x.hand === "L" ? "Lefty" : "Righty"} ${x.role === "RP" ? "reliever" : "starter"}, ${n ? `${n} pitches charted` : "nothing charted yet"}${ci ? ", checked in" : ""}`),
             (() => { const t = eligibleText(x.id); return t ? h("span", { class: `pc-sub${/today/.test(t) ? "" : " flag"}`, style: /today/.test(t) ? null : { color: "var(--warn)" } }, t[0].toUpperCase() + t.slice(1)) : null; })());
         })),
@@ -7849,8 +7988,8 @@ function arsenalEditor(p) {
     const out = h("output", {}, (+d.feel).toFixed(2));
     return h("div", { class: `acard k-${d.kind}` },
       h("div", { class: "arow" },
-        lab("Type", h("div", { class: "typ" }, chip(d.kind), h("select", { "aria-label": "Pitch type", on: { change: (e) => {
-          const t = PCDB.PITCH_TYPES[e.target.value]; d.type = e.target.value; d.kind = t.kind; d.shape = t.shape; savePitcher(p); } } },
+        lab("Type", h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { "aria-label": "Pitch type", on: { change: (e) => {
+          const t = PCDB.PITCH_TYPES[e.target.value]; d.type = e.target.value; d.kind = t.kind; d.shape = t.shape; delete d.sign; savePitcher(p); } } },
           PTYPES.map((t) => h("option", { value: t, selected: t === (d.type || PCDB.DEFAULT_TYPE[d.kind]) ? true : null }, t)))), "a-type"),
         lab("His name for it", h("input", { value: d.name, on: { change: (e) => {
           const nn = e.target.value.trim() || d.type || KINDS[d.kind];
@@ -7895,7 +8034,7 @@ function checkinPanel(p) {
       (p.pitches || []).map((d) => {
         const v = c.conf[d.id] ?? "";
         const out = h("output", {}, v === "" ? "–" : String(v));
-        return h("div", { class: `ci-row k-${d.kind}` }, chip(d.kind), h("span", { class: "nm" }, d.name),
+        return h("div", { class: `ci-row k-${d.kind}` }, chip(d.kind, d.sign), h("span", { class: "nm" }, d.name),
           h("input", { type: "range", min: 1, max: 10, step: 1, value: v === "" ? Math.round((d.feel - 0.3) / 0.65 * 9 + 1) : v, "aria-label": `${d.name} confidence today`,
             on: { input: (e) => { c.conf[d.id] = +e.target.value; out.textContent = e.target.value; dirty.v = true; } } }), out);
       })),
@@ -7949,7 +8088,7 @@ function learnedPanel(p) {
     h("i", { class: "e", style: { left: `${((entered - 1) / 4) * 100}%` } }), h("i", { class: "l", style: { left: `${((Math.min(5, Math.max(1, fit)) - 1) / 4) * 100}%` } }));
   const row = (d) => {
     const x = prof && prof.pitches[d.id], s = sv && sv.pitches[d.id];
-    if (!x || !x.n) return h("tr", {}, h("td", {}, h("span", { class: "pname" }, chip(d.kind), d.name)), h("td", { colspan: "4", class: "muted" }, "No charted pitches yet"));
+    if (!x || !x.n) return h("tr", {}, h("td", {}, h("span", { class: "pname" }, chip(d.kind, d.sign), d.name)), h("td", { colspan: "4", class: "muted" }, "No charted pitches yet"));
     const cell = (dim) => {
       const ent = +d[dim], fit = x.talent[dim], sd = x.sd[dim], use = s && s.learned && on ? s[dim] : ent;
       const enough = dim === "grade" ? x.n >= 150 : x.nLoc >= 60;    // below this, show it as early
@@ -7959,7 +8098,7 @@ function learnedPanel(p) {
     };
     const sc = x.score;
     return h("tr", { class: `k-${d.kind}` },
-      h("td", {}, h("span", { class: "pname" }, chip(d.kind), d.name)),
+      h("td", {}, h("span", { class: "pname" }, chip(d.kind, d.sign), d.name)),
       cell("grade"), cell("command"),
       h("td", { class: "num" }, `${x.n}`, x.nLoc ? h("small", { class: "muted" }, ` (${x.nLoc} located)`) : null,
         h("button", { class: "btn text tiny", title: "Injury, new grip, mechanics change: what came before counts less", on: { click: () => markChanged(p, d.id) } }, "Mark changed")),
@@ -8353,8 +8492,9 @@ function printSignCard() {
   const staff = S.setup.staff || [];
   printOut("Signs", [
     h("p", {}, Object.entries(SIGN).sort((a, b) => a[1] - b[1]).map(([k, n]) => `${n} ${KINDS[k]}`).join("   ")),
+    h("p", {}, "5 and 6 are card or wristband numbers. A pitch shows its own number when it keeps an older sign."),
     ...staff.map((p) => h("div", { class: "card" }, h("h2", {}, (p.number ? `#${p.number} ` : "") + (p.name || "Pitcher")),
-      h("table", {}, h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map((d) => h("tr", {}, h("td", { class: "sign" }, String(SIGN[d.kind])), h("td", {}, d.name), h("td", {}, KINDS[d.kind]))))))),
+      h("table", {}, h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map((d) => h("tr", {}, h("td", { class: "sign" }, signOf(d.kind, d.sign)), h("td", {}, d.name), h("td", {}, KINDS[d.kind]))))))),
   ]);
 }
 // a game's log, chosen on the Data screen: the last few games, newest first
@@ -8702,6 +8842,7 @@ async function reloadFromDb() {
   const fresh = {};
   for (const store of ["teams", "pitchers", "catchers", "hitters", "learned"]) fresh[store] = await DB.D.all(store);
   const checkins = await DB.D.byIndex("checkins", "date", todayT());
+  await migrateRosterV11(fresh.pitchers);   // a record synced from a device still on v1.0 arrives in four kinds
   for (const [store, map] of [["teams", DB.teams], ["pitchers", DB.pitchers], ["catchers", DB.catchers], ["hitters", DB.hitters]]) { map.clear(); for (const x of fresh[store]) map.set(x.id, x); }
   for (const x of fresh.learned) DB.models.set(x.id, x);
   for (const x of checkins) DB.checkins.set(x.pitcherId, x);
@@ -8791,7 +8932,7 @@ function setupView() {
       return h("tr", {},
         h("td", {}, h("input", { id: `p${pi}-${i}-name`, name: `p${pi}-${i}-name`, autocomplete: "off", value: d.name, "aria-label": "Pitch name", style: { minWidth: "120px" },
           on: { change: (e) => { const nn = e.target.value.trim() || KINDS[d.kind]; renamePitch(pi, d.name, nn); d.name = nn; changed(true); } } })),
-        h("td", {}, h("div", { class: "typ" }, chip(d.kind), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; changed(true); } } },
+        h("td", {}, h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; delete d.sign; changed(true); } } },
           Object.entries(KINDS).map(([k, v]) => h("option", { value: k, selected: k === d.kind ? true : null }, `${SIGN[k]}  ${v}`))))),
         // D8: a blank grade is "not graded": the calls use the level average (3) and nothing is flagged until he sets it
         ...["grade", "command"].map((k) => h("td", {}, num(d, k, i, 1, 1, 5, "3", k === "grade" ? "Stuff, 1 to 5" : "Command, 1 to 5"),
@@ -8878,7 +9019,7 @@ function staffPick() {
     const on = S.setup.staffIds.includes(p.id), ci = todayCheckin(p.id);
     return h("button", { class: "choice", "aria-pressed": String(on), on: { click: () => toggleStaff(p.id) } },
       h("b", {}, (p.number ? `#${p.number} ` : "") + (p.name || "Unnamed")),
-      h("span", { class: "chips" }, (p.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind))),
+      h("span", { class: "chips" }, (p.pitches || []).filter((d) => d.active !== false).map((d) => chip(d.kind, d.sign))),
       h("span", {}, `${p.hand === "L" ? "Lefty" : "Righty"}${ci ? ", checked in" : ""}${pModel(p.id) ? ", learned" : ""}`),
       (() => { const t = eligibleText(p.id); return t && !/today/.test(t) ? h("span", { style: { color: "var(--warn)" } }, t[0].toUpperCase() + t.slice(1)) : null; })());
   })), h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: () => { S.view = "roster"; rosterTab = "ours"; save(); render(); } } }, "Open the roster"))];
