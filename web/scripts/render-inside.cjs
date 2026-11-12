@@ -1,5 +1,6 @@
 // Renders the "Inside the call" 3D shot offline into PNG frames (plus where its labels point), for one screen shape.
 //   node scripts/render-inside.cjs <set> <lw> <lh> <scale> <frames> <subs> [from] [to]
+// STEP (px per motion-blur subframe, default 2) and MAXSUBS (default 48) trade quality for time.
 // Needs the harness bundled into $RENDER_WWW (default /home/claude/inside_render/www) and served on $RENDER_URL.
 const { chromium } = require(process.env.PW || "playwright");
 const fs = require("fs"), path = require("path");
@@ -19,7 +20,7 @@ const fs = require("fs"), path = require("path");
     const f = path.join(outDir, String(i + 1).padStart(4, "0") + ".png");
     if (fs.existsSync(f) && !process.env.FORCE) continue;
     const t0 = Date.now(), u = i / (N - 1), still = i === 0 || i === N - 1;   // the two docking frames stand still
-    const r = await pg.evaluate(([u, du, s]) => window.frame(u, du, s, 0.6), [u, still ? 0 : du, subs]);
+    const r = await pg.evaluate(([u, du, s, st, mx]) => window.frame(u, du, s, 0.6, st, mx), [u, still ? 0 : du, subs, +(process.env.STEP || 2), +(process.env.MAXSUBS || 48)]);
     fs.writeFileSync(f, Buffer.from(r.png, "base64"));
     fs.writeFileSync(f.replace(/\.png$/, ".json"), JSON.stringify(r.anchors));
     console.log(set, i, r.subs + " subs", ((Date.now() - t0) / 1000).toFixed(1) + "s");

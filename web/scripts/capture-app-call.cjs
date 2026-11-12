@@ -18,7 +18,7 @@ const geo = async (page) => page.evaluate(() => {
 });
 // the zone panel again at 6x, for the site's dive into it (the full screenshot is 2x, too soft at that zoom): the same
 // saved game opened in a 6x browser, the panel clipped out with room for the marks' halos
-const zoneShot = async (page, file) => {
+const zoneShot = async (page, file, whyH = 0) => {
   const g = await geo(page), c = g.chase, px = 24 / 1180, py = 24 / 820;
   const clip = { x: (c.x - px) * 1180, y: (c.y - py) * 820, width: (c.w + 2 * px) * 1180, height: (c.h + 2 * py) * 820 };
   const state = await page.evaluate(() => localStorage.getItem("pitchcaller.v2"));
@@ -26,7 +26,7 @@ const zoneShot = async (page, file) => {
   await ctx.addInitScript((st) => { try { localStorage.setItem("pitchcaller.v2", st); } catch (e) {} }, state);
   const p2 = await ctx.newPage();
   await p2.goto(page.url()); await p2.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 15000 });
-  await p2.evaluate(() => { S.view = "live"; render(); }); await p2.waitForTimeout(700);
+  await p2.evaluate((h) => { S.view = "live"; render(); if (h) document.querySelector(".call .why").style.minHeight = h + "px"; }, whyH); await p2.waitForTimeout(700);
   const g2 = await geo(p2);
   if (Math.abs(g2.zone.x - g.zone.x) > 1e-3 || Math.abs(g2.zone.y - g.zone.y) > 1e-3) throw new Error("the 6x copy laid out differently");
   await p2.screenshot({ path: file, clip });
@@ -49,6 +49,7 @@ const zoneShot = async (page, file) => {
   });
   // the at-bat so far, through the app's own result keys: slider away for a ball, fastball in for a called strike,
   // fastball up and away fouled off
+  let beforeGeo = null, whyH = 0;
   for (const [pitch, quad, key] of [["Slider", "down-away", "b"], ["Fastball", "up-in", "c"], ["Fastball", "up-away", "f"]]) {
     if (key === "f") {
       // the 1-1 call: the app's own call, redrawn until its draw is the fastball up and away (so it is one the engine
@@ -61,6 +62,7 @@ const zoneShot = async (page, file) => {
       g.zoneHi = await zoneShot(page, require("path").join(__dirname, "../public/marketing/app-zone-before.png"));
       console.log("before geometry (fractions of the screenshot):", JSON.stringify(g));
       fs.writeFileSync(require("path").join(__dirname, "../content/app-call-geometry.json"), JSON.stringify(g, null, 1) + "\n");
+      beforeGeo = g; whyH = await page.evaluate(() => document.querySelector(".call .why").getBoundingClientRect().height);
       await page.mouse.click(5, 5); await page.keyboard.press(key); await page.waitForTimeout(300);
       if (await page.evaluate(() => !!pending)) { await page.keyboard.press("Enter"); await page.waitForTimeout(300); }
       continue;
@@ -87,12 +89,18 @@ const zoneShot = async (page, file) => {
     window.__lock = JSON.stringify(c);
     save(); render();
   });
+  // the site holds one layout for both screens (the 3D zone docks onto the same panel going in and coming out), so when
+  // the before screen's reason runs to more lines, the after screen's reason box is given the same height: blank space
+  // under its text, nothing else changes
+  await page.evaluate((h) => { const w = document.querySelector(".call .why"); if (w.getBoundingClientRect().height < h) w.style.minHeight = h + "px"; }, whyH);
   await page.waitForTimeout(800);
+  const ag = await geo(page);
+  if (Math.abs(ag.zone.y - beforeGeo.zone.y) > 1e-3 || Math.abs(ag.zone.x - beforeGeo.zone.x) > 1e-3) throw new Error("the after screen's zone moved: " + JSON.stringify(ag.zone));
   console.log("after geometry (fractions of the screenshot):", JSON.stringify(await geo(page)));
   const why = await page.evaluate(() => ({ same: JSON.stringify(G().call) === window.__lock, pick: G().call.pitch + " " + G().call.quad, prob: G().call.prob, why: G().call.why, intent: G().call.intentLine }));
   console.log(JSON.stringify(why));
   await page.screenshot({ path: require("path").join(__dirname, "../public/marketing/app-call-after.png") });
-  await zoneShot(page, require("path").join(__dirname, "../public/marketing/app-zone-after.png"));
+  await zoneShot(page, require("path").join(__dirname, "../public/marketing/app-zone-after.png"), await page.evaluate(() => parseFloat(document.querySelector(".call .why").style.minHeight) || 0));
   console.log(errs.join("\n") || "no errors");
   await b.close(); server.close();
 })();

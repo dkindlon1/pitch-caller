@@ -11,7 +11,7 @@ import { SCENE, type SceneSet } from "@/content/inside-scene";
 //   2 reads     the camera keeps going into the app's own strike zone, which becomes the 3D zone; the four reads pour in
 //               (the 3D is rendered offline, frame by frame, by scripts/render-inside.cjs from render/insideScene.ts, and
 //               scrubbed here like the footage, one frame set per screen shape)
-//   3 weigh     every call rises as a pillar of light; the 13 clearly worse burn out
+//   3 weigh     every call rises as a pillar of light; the clearly worse ones burn out
 //   4 draw      a light lands on the drawn call; the camera rises back over the zone, which becomes the app's zone again,
 //               now showing that call, and pulls back out to the coach
 // Both cuts are docks: the crisp app screenshot is lined up exactly on the footage's screen (or on the 3D zone) before
@@ -30,7 +30,12 @@ const clamp = (x: number) => Math.max(0, Math.min(1, x));
 const span = (p: number, [a, b]: readonly number[]) => clamp((p - a) / (b - a));
 const inOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const pad = (i: number) => String(i + 1).padStart(4, "0");
-const src = (i: number) => i < FRAMES ? `/media/film/inside/push/${pad(i)}.webp` : `/media/film/inside/pull/${pad(i - FRAMES)}.webp`;
+// the footage: full 1920x1080 frames, or on phones only the strip around the iPad that a phone ever shows (a tall screen
+// fits the iPad to its width, so it sees at most ~0.62 x 1080 px of the frame's width), cut by scripts/film-phone.sh
+type Foot = "full" | "phone";
+const FOOT_CROP = { x: 627, w: 720 };   // the phone strip, in frame px; must match scripts/film-phone.sh
+const footFor = (w: number, h: number): Foot => (w / h < 0.62 ? "phone" : "full");
+const src = (kind: Foot) => (i: number) => `/media/film/inside/${i < FRAMES ? "push" : "pull"}${kind === "phone" ? "-phone" : ""}/${pad(i < FRAMES ? i : i - FRAMES)}.webp`;
 // which rendered frame set suits this screen
 const setFor = (w: number, h: number): keyof typeof SCENE => (w >= h ? "wide" : w >= 600 ? "tablet" : "phone");
 type Anchor = { id: string; x: number; y: number; show: boolean };
@@ -69,7 +74,7 @@ const FEATHER = 8;   // app pixels
 const onGlass = (q: number[][]): Pt[] => { const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, cy = (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4; return q.map(([x, y]) => [cx + (x - cx) * 1.02, cy + (y - cy) * 1.02] as Pt); };
 
 const kept = CANDIDATES.filter((c) => c.share > 0);
-const SPOT: Record<string, string> = { "down-away": "down and away", "up-away": "up and away", middle: "middle", "down-in": "down and in", "up-in": "up and in", chase: "chase" };
+const SPOT: Record<string, string> = { "down-away": "down and away", "up-away": "up and away", middle: "middle", "down-in": "down and in", "up-in": "up and in", chase: "chase", "down-middle": "keep it down" };
 const pick = kept.find((c) => c.pitch === CAND_PICK.pitch && c.quad === CAND_PICK.quad)!;
 // what each read says, in full and short (phones)
 const READ_TEXT: Record<string, [string, string, string]> = {
@@ -126,12 +131,11 @@ export function InsideCall() {
     };
     const near1 = (s: Strip, i: number, lo = 0, hi = s.imgs.length - 1) => { for (let d = 0; d <= hi - lo; d++) { if (i - d >= lo && s.ok[i - d]) return i - d; if (i + d <= hi && s.ok[i + d]) return i + d; } return -1; };
     // the footage (both strips) and the rendered 3D for this screen shape
-    const foot = strip(2 * FRAMES, src);
+    let footKind = footFor(window.innerWidth, window.innerHeight), foot = strip(2 * FRAMES, src(footKind));
     let setName = setFor(window.innerWidth, window.innerHeight), set: SceneSet = SCENE[setName];
     const sceneStrip = (name: keyof typeof SCENE) => strip(SCENE[name].frames, (i) => `/media/film/inside/scene-${name}/${pad(i)}.webp`);
     let shot = sceneStrip(setName);
     const nearest = (i: number) => (i < FRAMES ? near1(foot, i, 0, FRAMES - 1) : near1(foot, i, FRAMES, 2 * FRAMES - 1));
-    const imgs = foot.imgs;
     let want = 0, raf = 0;
     // where the footage sits (CSS px). Wide: cover. Tall: scaled so the iPad keeps inside the width, centred on it.
     type Fit = { sc: number; ox: number; oy: number; cw: number; ch: number };
@@ -160,7 +164,8 @@ export function InsideCall() {
       if (k < 0) return;
       const W = CLIP.w * f.sc * dpr, H = CLIP.h * f.sc * dpr, X = f.ox * dpr, Y = f.oy * dpr;
       ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas!.width, canvas!.height);
-      ctx.drawImage(imgs[k]!, X, Y, W, H);
+      if (footKind === "phone") ctx.drawImage(foot.imgs[k]!, X + FOOT_CROP.x * f.sc * dpr, Y, FOOT_CROP.w * f.sc * dpr, H);
+      else ctx.drawImage(foot.imgs[k]!, X, Y, W, H);
       if (Y > 0 || Y + H < canvas!.height) {   // letterboxed on tall screens: fade the frame's top and bottom into black
         const e = Math.min(120 * dpr, H * 0.18);
         for (const [y0, y1] of [[Y, Y + e], [Y + H, Y + H - e]]) {
@@ -314,10 +319,12 @@ export function InsideCall() {
     const onResize = () => {
       const n = setFor(window.innerWidth, window.innerHeight);
       if (n !== setName) { shot.gone = true; setName = n; set = SCENE[n]; shot = sceneStrip(n); if (started) load([shot]); }
+      const fk = footFor(window.innerWidth, window.innerHeight);
+      if (fk !== footKind) { foot.gone = true; footKind = fk; foot = strip(2 * FRAMES, src(fk)); if (started) load([foot]); }
       queue();
     };
     window.addEventListener("resize", onResize);
-    return () => { dead = true; near.disconnect(); kill(); cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); [...imgs, ...shot.imgs].forEach((im) => { if (im) im.src = ""; }); };
+    return () => { dead = true; near.disconnect(); kill(); cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); [...foot.imgs, ...shot.imgs].forEach((im) => { if (im) im.src = ""; }); };
   }, []);
 
   if (still) {

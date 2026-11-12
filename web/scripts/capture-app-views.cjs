@@ -3,10 +3,13 @@
 // played through the app's own result keys and buttons with a seeded random (so it's repeatable), then the Roster screen
 // (the starter's arsenal and check-in: before the game) and the Data screen (this game's numbers: after it). The call
 // screen (during) is public/marketing/app-call-before.png from capture-app-call.cjs.
+// Also a check on how the engine mixes its calls over a whole game (Nov 12: v1.0 collapsed onto one pitch where v0.9
+// didn't): DIST=<another pitch-caller.html> OUT=<dir> INPUTS=<1-4, the app's logging tier> MIXLOG=1 prints each call's
+// mix by pitch; the Data screen it writes to OUT has the pitch counts.
 const { chromium } = require(process.env.PW || "playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
-const DIST = path.join(__dirname, "../../app/dist/pitch-caller.html");
-const OUT = path.join(__dirname, "../public/marketing");
+const DIST = process.env.DIST || path.join(__dirname, "../../app/dist/pitch-caller.html");
+const OUT = process.env.OUT || path.join(__dirname, "../public/marketing");
 const server = http.createServer((q, r) => { r.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   r.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${fs.readFileSync(DIST, "utf8")}</body></html>`); });
 
@@ -22,7 +25,7 @@ const pick = (pairs) => { let x = rnd(), acc = 0; for (const [v, w] of pairs) { 
   const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
   await page.goto(url); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 15000 });
   // the app draws its calls with Math.random: seed it too, so the game (and the screens) come out the same every time
-  await page.evaluate(() => { if (window.__SEED !== 0) { let sd = 11; Math.random = () => (sd = (sd * 16807) % 2147483647) / 2147483647; } S.view = "live"; G().call = null; makeCall(); save(); render(); });
+  await page.evaluate((inputs) => { let sd = 11; Math.random = () => (sd = (sd * 16807) % 2147483647) / 2147483647; if (inputs) S.setup.inputs = inputs; S.view = "live"; G().call = null; makeCall(); save(); render(); }, +(process.env.INPUTS || 0));
 
   const visible = (re) => page.evaluate((src) => { const r = new RegExp(src); return [...document.querySelectorAll("button")].some((b) => b.offsetParent && r.test(b.textContent.trim())); }, re.source);
   const click = (re) => page.evaluate((src) => { const r = new RegExp(src); const b = [...document.querySelectorAll("button")].find((x) => x.offsetParent && r.test(x.textContent.trim().replace(/\s+/g, " "))); if (b) b.click(); return !!b; }, re.source);
@@ -31,6 +34,10 @@ const pick = (pairs) => { let x = rnd(), acc = 0; for (const [v, w] of pairs) { 
   for (let guard = 0; pitches < 82 && guard < 400; guard++) {
     // between innings and any other prompt the game screen raises: take the default way forward
     if (await click(/^(Take the field for the .*|Next inning|Continue|Done)$/)) { await page.waitForTimeout(150); continue; }
+    if (process.env.MIXLOG) {
+      const m = await page.evaluate(() => { const c = G().call; if (!c) return null; const by = {}; for (const d of (c.dist || [])) by[d.pitch] = Math.round(((by[d.pitch] || 0) + d.prob) * 100); return { count: G().balls + "-" + G().strikes, call: c.pitch + " " + c.quad, mix: by }; });
+      if (m) console.log(pitches + 1, JSON.stringify(m));   // the pitch counts thrown are on the Data screen it writes
+    }
     const key = pick([["b", 0.36], ["c", 0.17], ["s", 0.11], ["f", 0.18], ["x", 0.17], ["h", 0.01]]);
     await page.keyboard.press(key); await page.waitForTimeout(120);
     // the app's follow-up questions for this pitch (an in-play result, contact and direction; how a swing missed), then

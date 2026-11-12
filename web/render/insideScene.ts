@@ -6,8 +6,8 @@
 // It opens and closes looking straight down on the strike zone, drawn to match the zone on the app's screen exactly
 // (same proportions, same box, same dashed chase band), so the site can cut from the app's zone into this one and back.
 //   reads   four reads pour into the zone as light
-//   weigh   every call it could make rises as a pillar of light, as tall as it is good; the 13 clearly worse burn out
-//   draw    a light sweeps the five left and lands on the drawn call; the camera rises back over the zone and the five
+//   weigh   every call it could make rises as a pillar of light, as tall as it is good; the clearly worse ones burn out
+//   draw    a light sweeps the ones left and lands on the drawn call; the camera rises back over the zone and the ones
 //           settle into the marks the app shows
 // The zone lies flat like the app draws it seen from behind the plate: far row is up, the hitter's inside on the left.
 import * as THREE from "three";
@@ -37,7 +37,7 @@ export function zoneTarget(w: number, h: number) {
 }
 
 const KIND: Record<string, FieldPitch["kind"]> = { Fastball: "FB", Slider: "SL", Changeup: "CH" };
-const CELL: Record<string, [number, number]> = { "up-in": [1, 1], "up-away": [-1, 1], "down-in": [1, -1], "down-away": [-1, -1], middle: [0, 0] };
+const CELL: Record<string, [number, number]> = { "up-in": [1, 1], "up-away": [-1, 1], "down-in": [1, -1], "down-away": [-1, -1], middle: [0, 0], "down-middle": [0, -1] };
 const SLOT: Record<string, [number, number]> = { Fastball: [0.24, -0.16], Slider: [-0.24, -0.16], Changeup: [0, 0.22] };
 const cellXZ = (quad: string): [number, number] => quad === "chase" ? [-1.72, -(ZD / 2 + 0.25)] : [CELL[quad][0], CELL[quad][1] * CZ];
 // the stages, as fractions of this scene's stretch of scroll

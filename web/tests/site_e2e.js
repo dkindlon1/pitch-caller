@@ -100,7 +100,7 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     const inRun = await page.evaluate(() => { const r = document.querySelector(".mk-in-run").getBoundingClientRect(); return { y: r.top + scrollY, hh: r.height - innerHeight }; });
     await page.evaluate(({ y, hh }) => scrollTo(0, y + hh * 0.68), inRun); await wait(2800);
     const pickTag = page.locator('.mk-in-pick[data-show="1"]');
-    check((await pickTag.count()) === 1 && /31%/.test(await pickTag.innerText()) && /Slider, down and away/.test(await pickTag.innerText()), "inside the call, the draw lands on slider, down and away, 31% of the mix");
+    check((await pickTag.count()) === 1 && /34%/.test(await pickTag.innerText()) && /Slider, down and away/.test(await pickTag.innerText()), "inside the call, the draw lands on slider, down and away, 34% of the mix");
     check((await page.locator('.mk-in-tag[data-show="1"]').count()) === 1, "only the drawn call is labelled once the draw lands");
     // the 3D is rendered offline: this screen's frame set loads and actually paints the stage
     const lit = await page.locator(".mk-in-stage").evaluate((c) => {
@@ -142,6 +142,11 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const pp = await phone.newPage(); await pp.goto(URL_, { waitUntil: "networkidle" });
     check(await pp.evaluate(() => document.documentElement.scrollWidth <= 390), "no sideways scroll on a phone");
+    // inside the call on a phone loads the phone strip of the footage, not the full 1920 frames
+    await pp.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; document.getElementById("dugout").scrollIntoView(); }); await wait(4000);
+    const ft = await pp.evaluate(() => { const r = performance.getEntriesByType("resource").map((e) => e.name); return { phone: r.filter((n) => /\/inside\/(push|pull)-phone\//.test(n)).length, full: r.filter((n) => /\/inside\/(push|pull)\/\d+\.webp$/.test(n)).length }; });
+    check(ft.phone >= 4 && ft.full === 0, `a phone loads the phone footage (${ft.phone} phone frames, ${ft.full} full frames)`);
+    await pp.evaluate(() => scrollTo(0, 0)); await wait(500);
     const btn = await pp.locator(".mk-hero-actions .mk-btn").boundingBox();
     check(btn && btn.y + btn.height < 844, "the hero's 'Talk to us' button is on the first phone screen");
     check(!(await pp.locator(".mk-nav-link").first().isVisible()), "the phone nav keeps only the mark and 'Talk to us'");

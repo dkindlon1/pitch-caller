@@ -18,12 +18,13 @@ async function setup(lw: number, lh: number, scale: number) {
   return { W, H, zone: S.zone };
 }
 
-// subframes needed so that no step of the motion blur is more than ~2 device pixels (at least `min`, at most 48)
-const subsFor = (u: number, du: number, shutter: number, min: number) =>
-  du > 0 ? Math.max(min, Math.min(48, Math.ceil(S.motion(u - (du * shutter) / 2, u + (du * shutter) / 2) / 2))) : min;
+// subframes needed so that no step of the motion blur is more than `step` device pixels (at least `min`, at most `max`;
+// the defaults, 2 px and 48, are the full-quality render; render-inside.cjs can pass STEP and MAXSUBS for a faster one)
+const subsFor = (u: number, du: number, shutter: number, min: number, step = 2, max = 48) =>
+  du > 0 ? Math.max(min, Math.min(max, Math.ceil(S.motion(u - (du * shutter) / 2, u + (du * shutter) / 2) / step))) : min;
 
-async function frame(u: number, du: number, minSubs: number, shutter: number) {
-  const subs = subsFor(u, du, shutter, minSubs);
+async function frame(u: number, du: number, minSubs: number, shutter: number, step = 2, max = 48) {
+  const subs = subsFor(u, du, shutter, minSubs, step, max);
   acc.fill(0);
   const ctx = out.getContext("2d", { willReadFrequently: true })!;
   for (let k = 0; k < subs; k++) {
