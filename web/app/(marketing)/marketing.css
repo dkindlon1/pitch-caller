@@ -856,11 +856,15 @@ html:has(.mk) { scrollbar-color: #3a3a3a #000; color-scheme: dark; }
 .mk-in-tags { position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; }
 
 /* the crisp app screenshot that docks onto the footage's screen and onto the 3D zone; matrix3d set from script */
-.mk-in-app { position: absolute; left: 0; top: 0; transform-origin: 0 0; opacity: 0; pointer-events: none; }
-.mk-in-app img { display: block; width: 100%; height: 100%; }
+.mk-in-app { position: absolute; left: 0; top: 0; display: block; width: 1180px; height: 820px; max-width: none; transform-origin: 0 0; opacity: 0; pointer-events: none; }
 /* everything but the zone falls away into the dark as the camera dives in */
-.mk-in-app-zone { position: absolute; display: block; }
-.mk-in-app-dim { position: absolute; }
+.mk-in-app.mk-in-app-zone { width: 618px; height: 708px; }
+/* the dim around the app's zone panel: flat (no 3D transform, no giant shadow), with a soft rectangular hole over the panel;
+   the two masks each darken outside one pair of edges, added together they darken everything outside the box */
+.mk-in-dim { position: absolute; inset: 0; opacity: 0; pointer-events: none; background: rgb(2, 3, 6);
+  --m1: linear-gradient(to right, #000 calc(var(--x1, 0px) - var(--f, 0px) / 2), transparent calc(var(--x1, 0px) + var(--f, 0px) / 2), transparent calc(var(--x2, 0px) - var(--f, 0px) / 2), #000 calc(var(--x2, 0px) + var(--f, 0px) / 2));
+  --m2: linear-gradient(to bottom, #000 calc(var(--y1, 0px) - var(--f, 0px) / 2), transparent calc(var(--y1, 0px) + var(--f, 0px) / 2), transparent calc(var(--y2, 0px) - var(--f, 0px) / 2), #000 calc(var(--y2, 0px) + var(--f, 0px) / 2));
+  -webkit-mask-image: var(--m1), var(--m2); mask-image: var(--m1), var(--m2); -webkit-mask-composite: source-over; mask-composite: add; }
 /* the press: the app's Foul button, lit for a moment */
 .mk-in-press { position: absolute; left: 0; top: 0; width: 1180px; height: 820px; transform-origin: 0 0; opacity: 0; pointer-events: none; }
 .mk-in-press span { position: absolute; border-radius: 16px; background: rgba(255, 255, 255, calc(0.26 * var(--on, 0)));

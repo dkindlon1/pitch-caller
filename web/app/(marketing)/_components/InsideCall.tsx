@@ -55,9 +55,16 @@ function homography(s: Pt[], d: Pt[]) {
 const mapPt = (H: number[], [x, y]: Pt): Pt => { const w = H[6] * x + H[7] * y + H[8]; return [(H[0] * x + H[1] * y + H[2]) / w, (H[3] * x + H[4] * y + H[5]) / w]; };
 const css = (H: number[]) => `matrix3d(${[H[0], H[3], 0, H[6], H[1], H[4], 0, H[7], 0, 0, 1, 0, H[2], H[5], 0, H[8]].map((v) => +v.toFixed(9)).join(",")})`;
 const LAYER: Pt[] = [[0, 0], [APP_W, 0], [APP_W, APP_H], [0, APP_H]];
-// the crisp layers are laid out K times bigger than the screenshot and scaled down, so the browser rasterises them at
-// (about) the size they reach at the end of the zoom instead of blowing up a small raster
-const K = 3.6, BIG: Pt[] = LAYER.map(([x, y]) => [x * K, y * K]);
+// The crisp layers are kept small, at their images' own pixel sizes: the screenshot (2360 px) is laid out 1180 wide, and
+// the app's zone panel (its 6x capture, 1236 px) is its own layer at 618 wide, warped by the same perspective so the two
+// stay locked together. (Laying them out bigger only adds raster work the image can't fill: a 3.6x layout here cost
+// ~200MB of graphics memory per layer and up-to-1s paints.)
+const ZW = 618, ZH = 708, ZLAYER: Pt[] = [[0, 0], [ZW, 0], [ZW, ZH], [0, ZH]];
+const ZONE_APP: Pt[] = [[APP.zoneHi.x * APP_W, APP.zoneHi.y * APP_H], [(APP.zoneHi.x + APP.zoneHi.w) * APP_W, APP.zoneHi.y * APP_H], [(APP.zoneHi.x + APP.zoneHi.w) * APP_W, (APP.zoneHi.y + APP.zoneHi.h) * APP_H], [APP.zoneHi.x * APP_W, (APP.zoneHi.y + APP.zoneHi.h) * APP_H]];
+// the part of the panel that stays lit: its dashed chase box, the same area the 3D copy keeps (scripts/zone-3d-textures.py
+// keeps (132, 124)-(W-122, H-128) of the 6x capture), so the app's neighbouring labels dim away before the cut
+const HOLE_APP: Pt[] = (() => { const x0 = APP.zoneHi.x * APP_W + 22, y0 = APP.zoneHi.y * APP_H + 20.7, x1 = (APP.zoneHi.x + APP.zoneHi.w) * APP_W - 20.3, y1 = (APP.zoneHi.y + APP.zoneHi.h) * APP_H - 21.3; return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; })();
+const FEATHER = 8;   // app pixels
 // the app was composited onto the footage 2% outside the tracked corners (to reach the glass's very edge); match it
 const onGlass = (q: number[][]): Pt[] => { const cx = (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, cy = (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4; return q.map(([x, y]) => [cx + (x - cx) * 1.02, cy + (y - cy) * 1.02] as Pt); };
 
@@ -82,8 +89,8 @@ export function InsideCall() {
   const run = useRef<HTMLDivElement>(null);
   const film = useRef<HTMLCanvasElement>(null);
   const stage = useRef<HTMLCanvasElement>(null);
-  const before = useRef<HTMLDivElement>(null), after = useRef<HTMLDivElement>(null);
-  const beforeDim = useRef<HTMLDivElement>(null), afterDim = useRef<HTMLDivElement>(null);
+  const before = useRef<HTMLImageElement>(null), after = useRef<HTMLImageElement>(null);
+  const beforeZone = useRef<HTMLImageElement>(null), afterZone = useRef<HTMLImageElement>(null), dimEl = useRef<HTMLDivElement>(null);
   const press = useRef<HTMLDivElement>(null), pressBtn = useRef<HTMLSpanElement>(null);
   const tagsEl = useRef<HTMLDivElement>(null);
   const srcEl = useRef<HTMLParagraphElement>(null);
@@ -247,21 +254,30 @@ export function InsideCall() {
         press.current.style.opacity = k > 0 && k < 1 ? "1" : "0";
         pressBtn.current.style.setProperty("--on", String(Math.sin(Math.PI * Math.min(1, k * 1.35))));
       }
-      // the crisp screenshots and the cuts
-      if (before.current && beforeDim.current) {
-        const z = span(p, T.zoomIn);
-        const op = p < T.toCrisp[0] ? 0 : Math.min(span(p, T.toCrisp), 1 - span(p, T.crispOut));
-        before.current.style.opacity = String(op);
-        if (op > 0) before.current.style.transform = css(homography(BIG, crispCorners(f, z)));
-        beforeDim.current.style.setProperty("--dim", String(0.98 * inOut(clamp(z * 1.25))));
-      }
-      if (after.current && afterDim.current) {
-        const z = 1 - span(p, T.zoomOut);
-        const op = Math.min(span(p, T.sceneOut), 1 - span(p, T.crispGone));
-        after.current.style.opacity = String(op);
-        if (op > 0) after.current.style.transform = css(homography(BIG, crispCorners(f, z)));
-        afterDim.current.style.setProperty("--dim", String(0.98 * inOut(clamp(z * 1.25))));
-      }
+      // the crisp screenshots and the cuts (before and after are never up at the same time, so they share the dim)
+      let dimOp = 0;
+      const crispAt = (img: HTMLImageElement | null, zone: HTMLImageElement | null, z: number, op: number) => {
+        if (!img || !zone) return;
+        img.style.opacity = zone.style.opacity = String(op);
+        if (op <= 0) return;
+        const Happ = homography(LAYER, crispCorners(f, z));
+        img.style.transform = css(Happ);
+        const q = ZONE_APP.map((c) => mapPt(Happ, c));
+        zone.style.transform = css(homography(ZLAYER, q));
+        // everything outside the panel dims, feathered: a flat overlay with a soft rectangular hole over the panel
+        const d = 0.98 * inOut(clamp(z * 1.25)) * op;
+        if (d > dimOp && dimEl.current) {
+          dimOp = d;
+          const h = HOLE_APP.map((c) => mapPt(Happ, c)), xs = h.map((v) => v[0]), ys = h.map((v) => v[1]);
+          const n = dimEl.current.style, fe = FEATHER * (Math.max(...xs) - Math.min(...xs)) / (HOLE_APP[1][0] - HOLE_APP[0][0]);
+          n.setProperty("--x1", `${Math.min(...xs)}px`); n.setProperty("--x2", `${Math.max(...xs)}px`);
+          n.setProperty("--y1", `${Math.min(...ys)}px`); n.setProperty("--y2", `${Math.max(...ys)}px`);
+          n.setProperty("--f", `${fe * 2}px`);
+        }
+      };
+      crispAt(before.current, beforeZone.current, span(p, T.zoomIn), p < T.toCrisp[0] ? 0 : Math.min(span(p, T.toCrisp), 1 - span(p, T.crispOut)));
+      crispAt(after.current, afterZone.current, 1 - span(p, T.zoomOut), Math.min(span(p, T.sceneOut), 1 - span(p, T.crispGone)));
+      if (dimEl.current) dimEl.current.style.opacity = String(dimOp);
       if (srcEl.current) srcEl.current.style.opacity = String(Math.max(1 - span(p, [0.18, 0.2]), span(p, [0.322, 0.34])) * Math.max(1 - span(p, [0.78, 0.8]), span(p, [0.93, 0.98])));
       const sOp = Math.min(span(p, T.sceneIn), 1 - span(p, T.sceneOut));
       if (stage.current) stage.current.style.opacity = String(sOp);
@@ -322,17 +338,12 @@ export function InsideCall() {
     );
   }
 
-  // the crisp screenshot, with the zone panel laid over it from its 6x capture so it stays sharp all the way in; everything
-  // outside that panel dims (feathered like the 3D copy of the panel, so the two match at the cut)
-  const hi = { left: `${APP.zoneHi.x * 100}%`, top: `${APP.zoneHi.y * 100}%`, width: `${APP.zoneHi.w * 100}%`, height: `${APP.zoneHi.h * 100}%` };
-  const F = 34 * K;   // the feather, matching the 3D copy's (34 app pixels)
-  const dimRect = { left: `calc(${APP.zoneHi.x * 100}% + ${F / 2}px)`, top: `calc(${APP.zoneHi.y * 100}% + ${F / 2}px)`, width: `calc(${APP.zoneHi.w * 100}% - ${F}px)`, height: `calc(${APP.zoneHi.h * 100}% - ${F}px)`, boxShadow: `0 0 ${2 * F}px 99999px rgba(2, 3, 6, var(--dim, 0))`, borderRadius: F };
-  const crisp = (ref: React.RefObject<HTMLDivElement | null>, dim: React.RefObject<HTMLDivElement | null>, file: string, zoneFile: string) => (
-    <div className="mk-in-app" ref={ref} aria-hidden="true" style={{ width: APP_W * K, height: APP_H * K }}>
-      <img src={`/marketing/${file}`} alt="" width={APP_W} height={APP_H} decoding="async" />
-      <img className="mk-in-app-zone" src={`/marketing/${zoneFile}`} alt="" style={hi} decoding="async" />
-      <div className="mk-in-app-dim" ref={dim} style={dimRect} />
-    </div>
+  // the crisp screenshot, with the zone panel laid over it from its 6x capture so it stays sharp all the way in
+  const crisp = (ref: React.RefObject<HTMLImageElement | null>, zone: React.RefObject<HTMLImageElement | null>, file: string, zoneFile: string) => (
+    <>
+      <img className="mk-in-app" ref={ref} src={`/marketing/${file}`} alt="" aria-hidden="true" width={APP_W} height={APP_H} decoding="async" />
+      <img className="mk-in-app mk-in-app-zone" ref={zone} src={`/marketing/${zoneFile}`} alt="" aria-hidden="true" width={ZW} height={ZH} decoding="async" />
+    </>
   );
 
   return (
@@ -343,8 +354,9 @@ export function InsideCall() {
           <div className="mk-in-press" ref={press} aria-hidden="true">
             <span ref={pressBtn} style={{ left: `${APP.foul.x * 100}%`, top: `${APP.foul.y * 100}%`, width: `${APP.foul.w * 100}%`, height: `${APP.foul.h * 100}%` }} />
           </div>
-          {crisp(before, beforeDim, "app-call-before.png", "app-zone-before.png")}
-          {crisp(after, afterDim, "app-call-after.png", "app-zone-after.png")}
+          {crisp(before, beforeZone, "app-call-before.png", "app-zone-before.png")}
+          {crisp(after, afterZone, "app-call-after.png", "app-zone-after.png")}
+          <div className="mk-in-dim" ref={dimEl} aria-hidden="true" />
           <canvas className="mk-in-stage" ref={stage} aria-hidden="true" />
           <div className="mk-in-shade" aria-hidden="true" />
           <h2 id="in-h" className="mk-sr">Inside the call</h2>
