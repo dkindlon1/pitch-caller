@@ -10,7 +10,6 @@ import { Faq } from "./_components/Faq";
 import { GameDay } from "./_components/GameDay";
 import { Program } from "./_components/Program";
 import { Reads } from "./_components/Reads";
-import { Rules } from "./_components/Rules";
 import { GlassLight } from "./_components/GlassLight";
 import { Mark } from "./_components/Mark";
 import { Nav } from "./_components/Nav";
@@ -56,7 +55,6 @@ export default function Home() {
         <InsideCall />
         <GameDay />
         <Program />
-        <Rules />
         <Faq />
 
         <section className="mk-contact" id="contact" tabIndex={-1} aria-labelledby="contact-h">
@@ -97,7 +95,6 @@ export default function Home() {
                 <h2>Teams</h2>
                 <ul>
                   <li><a href="#program">Coaches and players</a></li>
-                  <li><a href="#rules">The rules it plays by</a></li>
                   <li><a href="#faq">Questions</a></li>
                   <li><a href="#contact">Talk to us</a></li>
                 </ul>

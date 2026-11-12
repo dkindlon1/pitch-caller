@@ -1,73 +1,51 @@
-"use client";
+// Every pitcher gets his own page: shown as one picture of that page, full of his numbers. Every figure is one the
+// portal's pitcher page really shows (app/_uploads/stats-panel.tsx: by pitch, by hitter side, usage by count, the outing
+// log; the uploads' velocity and movement; the learned page's expected strikes next to his grades), for a made-up
+// pitcher shaped like the site's sample starter (fastball 86, slider 77, changeup 78), labelled as a sample.
 
-import { useEffect, useRef, useState } from "react";
-import { MOVE_POINTS, MOVE_TYPES, RANGE, type MovePoint } from "@/content/movement";
-import { can3d, whenStill } from "@/app/components/can3d";
-import type { Cloud, View } from "@/app/components/cloud3d";
+const FB = "var(--mk-fb)", SL = "var(--mk-sl)", CH = "var(--mk-ch)";
 
-// Every pitcher gets his own page: one idea, shown with one picture, his bullpen's movement cloud (content/movement.ts, a
-// made-up bullpen shaped like the sample starter, labelled as such), big and on the black stage like the rest of the
-// page. Drawn flat first; with WebGL it becomes a 3D cloud that turns to show velocity. The details (accounts, consent,
-// how files are weighed) live in the FAQ.
-const COLORS: Record<MovePoint["kind"], string> = { FB: "#F04A3E", SL: "#F2B33D", CH: "#3FCB8C" };   // --mk-fb, --mk-sl, --mk-ch
-const L = 44, R = 344, T = 14, B = 278;
-const px = (hb: number) => L + ((RANGE.hb[1] - hb) / (RANGE.hb[1] - RANGE.hb[0])) * (R - L);
-const py = (ivb: number) => B - ((ivb - RANGE.ivb[0]) / (RANGE.ivb[1] - RANGE.ivb[0])) * (B - T);
+const TOP: [string, string][] = [
+  ["412", "Game pitches"],
+  ["61%", "Strikes"],
+  ["26%", "Whiffs per swing"],
+  ["37%", "K with two strikes"],
+  ["20%", "Hard contact"],
+];
 
-function Flat() {
+const PITCHES = [
+  { name: "Fastball", c: FB, velo: "86.1", move: "17 in. ride, 9 in. run", strike: 64, whiff: 19, hard: 24 },
+  { name: "Slider", c: SL, velo: "77.4", move: "2 in. drop, 4 in. sweep", strike: 61, whiff: 34, hard: 14 },
+  { name: "Changeup", c: CH, velo: "78.0", move: "8 in. ride, 14 in. fade", strike: 52, whiff: 29, hard: 18 },
+];
+
+// fastball / slider / changeup share in each count
+const USAGE: [string, number, number, number][] = [
+  ["0-0", 62, 24, 14], ["1-0", 66, 18, 16], ["2-0", 74, 12, 14], ["3-0", 92, 4, 4],
+  ["0-1", 48, 34, 18], ["1-1", 50, 30, 20], ["2-1", 60, 22, 18], ["3-1", 76, 12, 12],
+  ["0-2", 34, 46, 20], ["1-2", 36, 44, 20], ["2-2", 42, 38, 20], ["3-2", 58, 26, 16],
+];
+
+const VELO = [85.2, 85.6, 85.9, 86.3, 85.8, 86.4, 86.1, 86.6];   // fastball average, last eight outings
+
+const SIDES: [string, number, number][] = [["Same-side hitters", 63, 28], ["Opposite-side hitters", 59, 23]];
+
+const LEARNED: { name: string; c: string; exp: number; got: number; grade: string }[] = [
+  { name: "Fastball", c: FB, exp: 63, got: 64, grade: "Holds at 4" },
+  { name: "Slider", c: SL, exp: 57, got: 61, grade: "Up, 3.5 to 4" },
+  { name: "Changeup", c: CH, exp: 58, got: 52, grade: "Down, 3 to 2.5" },
+];
+
+function Velo() {
+  const W = 260, H = 96, lo = 84.8, hi = 86.9;
+  const x = (i: number) => 8 + (i / (VELO.length - 1)) * (W - 16), y = (v: number) => H - 10 - ((v - lo) / (hi - lo)) * (H - 22);
+  const d = VELO.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join("");
   return (
-    <svg className="mk-pg-flat" viewBox="0 0 360 320" role="img"
-      aria-label="Sample movement plot. Fastballs ride about 18 inches with 8 inches of arm-side run, sliders break about 5 inches to the glove side with little ride, changeups fade about 15 inches to the arm side.">
-      {[-6, 0, 6, 12, 18].map((hb) => <line key={`x${hb}`} className={hb === 0 ? "z" : "g"} x1={px(hb)} x2={px(hb)} y1={T} y2={B} />)}
-      {[-5, 0, 5, 10, 15, 20, 25].map((ivb) => <line key={`y${ivb}`} className={ivb === 0 ? "z" : "g"} x1={L} x2={R} y1={py(ivb)} y2={py(ivb)} />)}
-      {MOVE_POINTS.map((p, i) => <circle key={i} cx={px(p.hb)} cy={py(p.ivb)} r="3.4" fill={COLORS[p.kind]} fillOpacity="0.9" />)}
+    <svg viewBox={`0 0 ${W} ${H}`} className="mk-sb-velo" aria-hidden="true">
+      <path d={`${d}L${x(VELO.length - 1)} ${H}L${x(0)} ${H}Z`} className="a" />
+      <path d={d} className="l" />
+      {VELO.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r={i === VELO.length - 1 ? 4 : 2.4} className={i === VELO.length - 1 ? "p on" : "p"} />)}
     </svg>
-  );
-}
-
-function Cloud3D() {
-  const box = useRef<HTMLDivElement>(null);
-  const cloud = useRef<Cloud | null>(null);
-  const [on, setOn] = useState(false);
-  const [view, setView] = useState<View>("break");
-  useEffect(() => {
-    if (!can3d() || !box.current) return;
-    let dead = false, cancel = () => {};
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      io.disconnect();
-      cancel = whenStill(() => {
-        import("@/app/components/cloud3d").then(({ mount }) => {
-          if (dead || !box.current) return;
-          cloud.current = mount(box.current, MOVE_POINTS, COLORS, { zoom: 1.5 });
-          if (cloud.current) setOn(true);
-        }).catch(() => {});
-      });
-    }, { rootMargin: "400px 0px" });
-    io.observe(box.current);
-    return () => { dead = true; io.disconnect(); cancel(); cloud.current?.dispose(); };
-  }, []);
-  useEffect(() => { cloud.current?.view(view); }, [view]);
-  return (
-    <div className={`mk-pg-cloud${on ? " is-on" : ""}`}>
-      <div className="mk-pg-cloudbox">
-        <Flat />
-        <div className="mk-pg-3d" ref={box} />
-      </div>
-      <div className="mk-pg-cloudbar">
-        <ul className="mk-pg-legend">
-          {MOVE_TYPES.map((t) => <li key={t.kind}><i style={{ background: COLORS[t.kind] }} />{t.name}<span>{t.n}</span></li>)}
-        </ul>
-        {on ? (
-          <div className="mk-seg mk-seg-sm" role="radiogroup" aria-label="View">
-            {(["break", "velo"] as const).map((v) => (
-              <button key={v} type="button" role="radio" aria-checked={view === v} className={view === v ? "is-on" : ""} onClick={() => setView(v)}>{v === "break" ? "Movement" : "Velocity"}</button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      <p className="mk-pg-src">A sample bullpen, not a real file. Induced vertical break against horizontal break, in inches{on ? "; drag to turn it" : ""}.</p>
-    </div>
   );
 }
 
@@ -76,15 +54,85 @@ export function Program() {
     <section className="mk-pg" id="program" aria-labelledby="pg-h">
       <div className="mk-wrap mk-pg-head">
         <h2 id="pg-h">Every pitcher gets his own page</h2>
-        <p>His pitches, his numbers and his bullpen files. Coaches see the whole staff. Teammates never see each other&apos;s.</p>
+        <p>His numbers from every pitch you call and every bullpen file he brings. Coaches see the whole staff. Teammates never see each other&apos;s.</p>
       </div>
-      <div className="mk-pg-stage">
-        <Cloud3D />
+
+      <div className="mk-wrap">
+        <figure className="mk-sb" aria-label="A sample pitcher's page in PitchIQ">
+          <div className="mk-sb-board">
+            <header className="mk-sb-who">
+              <span className="mk-sb-num">17</span>
+              <div><b>Sample pitcher</b><span>Right-handed starter, three-quarter slot</span></div>
+              <span className="mk-sb-meta">8 outings, 3 bullpen files</span>
+            </header>
+
+            <dl className="mk-sb-top">
+              {TOP.map(([v, l]) => <div key={l}><dt>{l}</dt><dd>{v}</dd></div>)}
+            </dl>
+
+            <div className="mk-sb-grid">
+              <section className="mk-sb-card mk-sb-pitches">
+                <h3>By pitch</h3>
+                <table>
+                  <thead><tr><th scope="col">Pitch</th><th scope="col">Strikes</th><th scope="col">Whiff</th><th scope="col">Hard</th></tr></thead>
+                  <tbody>
+                    {PITCHES.map((p) => (
+                      <tr key={p.name}>
+                        <th scope="row"><i style={{ background: p.c }} /><span><b>{p.name}</b><small>{p.velo} mph, {p.move}</small></span></th>
+                        <td>{p.strike}%</td><td>{p.whiff}%</td><td>{p.hard}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+
+              <section className="mk-sb-card mk-sb-usage">
+                <h3>Usage by count</h3>
+                <div className="mk-sb-counts">
+                  {USAGE.map(([n, f, s, c]) => (
+                    <div key={n} title={`${n}: fastball ${f}%, slider ${s}%, changeup ${c}%`}>
+                      <span className="mk-sb-bar"><i style={{ height: `${c}%`, background: CH }} /><i style={{ height: `${s}%`, background: SL }} /><i style={{ height: `${f}%`, background: FB }} /></span>
+                      <small>{n}</small>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="mk-sb-card mk-sb-trend">
+                <h3>Fastball velocity</h3>
+                <p className="mk-sb-big">86.6<small> mph</small></p>
+                <Velo />
+                <p className="mk-sb-sub">Last 8 outings, from his TrackMan files</p>
+              </section>
+
+              <section className="mk-sb-card mk-sb-sides">
+                <h3>By hitter side</h3>
+                {SIDES.map(([s, st, wh]) => (
+                  <div key={s} className="mk-sb-side"><span>{s}</span><b>{st}%</b><small>strikes</small><b>{wh}%</b><small>whiff</small></div>
+                ))}
+              </section>
+
+              <section className="mk-sb-card mk-sb-learned">
+                <h3>What the engine learned</h3>
+                <table>
+                  <thead><tr><th scope="col">Pitch</th><th scope="col">Expected strikes</th><th scope="col">Actual</th><th scope="col">His grade</th></tr></thead>
+                  <tbody>
+                    {LEARNED.map((r) => (
+                      <tr key={r.name}>
+                        <th scope="row"><i style={{ background: r.c }} />{r.name}</th>
+                        <td>{r.exp}%</td>
+                        <td className={r.got > r.exp + 1 ? "up" : r.got < r.exp - 1 ? "down" : ""}>{r.got}%</td>
+                        <td>{r.grade}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            </div>
+          </div>
+          <figcaption>A sample pitcher, not a real player. Every number here is one his page shows.</figcaption>
+        </figure>
       </div>
-      <p className="mk-wrap mk-pg-note">
-        Drop in a TrackMan or Rapsodo file and PitchIQ proposes his velocity, pitch shapes and arm slot from it. Nothing
-        changes until he or his coach says yes.
-      </p>
     </section>
   );
 }

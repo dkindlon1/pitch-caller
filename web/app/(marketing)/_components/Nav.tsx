@@ -25,7 +25,7 @@ export function Nav() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) setHere(e.target.id); }, { rootMargin: "-45% 0px -50% 0px" });
-    for (const l of [...SHEET.map((x) => x.id), "contact", "between", "reads", "program", "rules"]) { const el = document.getElementById(l); if (el) io.observe(el); }
+    for (const l of [...SHEET.map((x) => x.id), "contact", "between", "reads", "program"]) { const el = document.getElementById(l); if (el) io.observe(el); }
     return () => { window.removeEventListener("scroll", onScroll); io.disconnect(); };
   }, []);
 

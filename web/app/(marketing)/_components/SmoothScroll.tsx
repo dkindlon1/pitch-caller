@@ -26,12 +26,8 @@ export function SmoothScroll() {
     return () => { dead = true; ro.disconnect(); window.clearTimeout(t); window.removeEventListener("load", refresh); };
   }, []);
 
-  // the code of the heavy parts further down (the demo's engine and tables, the staff cloud) is fetched and evaluated in
-  // quiet moments while the visitor is still up top (the at-bat and the demo start themselves the same way)
-  useEffect(() => {
-    const c1 = whenStill(() => { Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")]).catch(() => {}); });
-    const c2 = whenStill(() => { import("@/app/components/cloud3d").catch(() => {}); });
-    return () => { c1(); c2(); };
-  }, []);
+  // the demo's engine and tables are fetched and evaluated in a quiet moment while the visitor is still up top (the
+  // at-bat and the demo start themselves the same way)
+  useEffect(() => whenStill(() => { Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")]).catch(() => {}); }), []);
   return null;
 }
