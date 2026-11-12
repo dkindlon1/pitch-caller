@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { CANDIDATES, CAND_PICK, CAND_ENGINE } from "@/content/candidates";
 import { CLIP, APP, SCREEN } from "@/content/inside-track";
-import type { Anchor, InsideScene } from "./insideScene";
+import { SCENE, type SceneSet } from "@/content/inside-scene";
 
 // "Inside the call", one pinned shot in four beats:
 //   1 the tap   a coach in the dugout holds the iPad with the real app on it (Runway footage, the app tracked onto the
 //               screen by scripts/screen-composite.py); he logs the foul and the camera pushes into the screen
-//   2 reads     the camera keeps going into the app's own strike zone, which becomes the 3D zone (insideScene.ts); the
-//               four reads pour into it
+//   2 reads     the camera keeps going into the app's own strike zone, which becomes the 3D zone; the four reads pour in
+//               (the 3D is rendered offline, frame by frame, by scripts/render-inside.cjs from render/insideScene.ts, and
+//               scrubbed here like the footage, one frame set per screen shape)
 //   3 weigh     every call rises as a pillar of light; the 13 clearly worse burn out
 //   4 draw      a light lands on the drawn call; the camera rises back over the zone, which becomes the app's zone again,
 //               now showing that call, and pulls back out to the coach
@@ -28,7 +29,11 @@ const T = {
 const clamp = (x: number) => Math.max(0, Math.min(1, x));
 const span = (p: number, [a, b]: readonly number[]) => clamp((p - a) / (b - a));
 const inOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const src = (i: number) => i < FRAMES ? `/media/film/inside/push/${String(i + 1).padStart(4, "0")}.webp` : `/media/film/inside/pull/${String(i - FRAMES + 1).padStart(4, "0")}.webp`;
+const pad = (i: number) => String(i + 1).padStart(4, "0");
+const src = (i: number) => i < FRAMES ? `/media/film/inside/push/${pad(i)}.webp` : `/media/film/inside/pull/${pad(i - FRAMES)}.webp`;
+// which rendered frame set suits this screen
+const setFor = (w: number, h: number): keyof typeof SCENE => (w >= h ? "wide" : w >= 600 ? "tablet" : "phone");
+type Anchor = { id: string; x: number; y: number; show: boolean };
 
 type Pt = [number, number];
 // the projective transform taking four points to four points (row-major 3x3), by solving the eight equations directly
@@ -76,7 +81,7 @@ const BEATS: { from: number; to: number; t: string; d: string }[] = [
 export function InsideCall() {
   const run = useRef<HTMLDivElement>(null);
   const film = useRef<HTMLCanvasElement>(null);
-  const stage = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLCanvasElement>(null);
   const before = useRef<HTMLDivElement>(null), after = useRef<HTMLDivElement>(null);
   const beforeDim = useRef<HTMLDivElement>(null), afterDim = useRef<HTMLDivElement>(null);
   const press = useRef<HTMLDivElement>(null), pressBtn = useRef<HTMLSpanElement>(null);
@@ -88,30 +93,39 @@ export function InsideCall() {
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setStill(true); return; }
-    const canvas = film.current, el = run.current;
-    if (!canvas || !el) return;
-    const ctx = canvas.getContext("2d");
-    type ZT = (w: number, h: number) => { cx: number; cy: number; zw: number; zh: number };
-    let dead = false, kill = () => {}, scene: InsideScene | null = null, zoneTarget: ZT | null = null;
-    // the footage: both strips, coarse to fine
-    const imgs: (HTMLImageElement | null)[] = new Array(2 * FRAMES).fill(null), ok: boolean[] = new Array(2 * FRAMES).fill(false);
-    let want = 0, raf = 0;
-    {
-      const order: number[] = [], seen = new Set<number>();
-      for (const base of [0, FRAMES]) for (const step of [16, 8, 4, 2, 1]) for (let i = 0; i < FRAMES; i += step) if (!seen.has(base + i)) { seen.add(base + i); order.push(base + i); }
+    const canvas = film.current, el = run.current, sc3 = stage.current;
+    if (!canvas || !el || !sc3) return;
+    const ctx = canvas.getContext("2d"), sctx = sc3.getContext("2d");
+    let dead = false, kill = () => {}, started = false;
+    // frames load coarse to fine: every 16th frame of each strip first, then every 8th, and so on
+    type Strip = { imgs: (HTMLImageElement | null)[]; ok: boolean[]; url: (i: number) => string; gone?: boolean };
+    const strip = (n: number, url: (i: number) => string): Strip => ({ imgs: new Array(n).fill(null), ok: new Array(n).fill(false), url });
+    const load = (strips: Strip[]) => {
+      const order: [Strip, number][] = [], seen = new Set<string>();
+      for (const step of [16, 8, 4, 2, 1]) strips.forEach((s, k) => { for (let i = 0; i < s.imgs.length; i += step) { const key = k + ":" + i; if (!seen.has(key)) { seen.add(key); order.push([s, i]); } } });
       let next = 0, active = 0;
       const pump = () => {
         while (!dead && active < 6 && next < order.length) {
-          const i = order[next++], im = new window.Image();
+          const [s, i] = order[next++];
+          if (s.gone) continue;
+          const im = new window.Image();
           active++; im.decoding = "async";
-          im.onload = () => { ok[i] = true; active--; queue(); pump(); };
+          im.onload = () => { s.ok[i] = true; active--; queue(); pump(); };
           im.onerror = () => { active--; pump(); };
-          im.src = src(i); imgs[i] = im;
+          im.src = s.url(i); s.imgs[i] = im;
         }
       };
       pump();
-    }
-    const nearest = (i: number) => { const lo = i < FRAMES ? 0 : FRAMES, hi = lo + FRAMES - 1; for (let d = 0; d < FRAMES; d++) { if (i - d >= lo && ok[i - d]) return i - d; if (i + d <= hi && ok[i + d]) return i + d; } return -1; };
+    };
+    const near1 = (s: Strip, i: number, lo = 0, hi = s.imgs.length - 1) => { for (let d = 0; d <= hi - lo; d++) { if (i - d >= lo && s.ok[i - d]) return i - d; if (i + d <= hi && s.ok[i + d]) return i + d; } return -1; };
+    // the footage (both strips) and the rendered 3D for this screen shape
+    const foot = strip(2 * FRAMES, src);
+    let setName = setFor(window.innerWidth, window.innerHeight), set: SceneSet = SCENE[setName];
+    const sceneStrip = (name: keyof typeof SCENE) => strip(SCENE[name].frames, (i) => `/media/film/inside/scene-${name}/${pad(i)}.webp`);
+    let shot = sceneStrip(setName);
+    const nearest = (i: number) => (i < FRAMES ? near1(foot, i, 0, FRAMES - 1) : near1(foot, i, FRAMES, 2 * FRAMES - 1));
+    const imgs = foot.imgs;
+    let want = 0, raf = 0;
     // where the footage sits (CSS px). Wide: cover. Tall: scaled so the iPad keeps inside the width, centred on it.
     type Fit = { sc: number; ox: number; oy: number; cw: number; ch: number };
     // creep: during the hold the camera eases in a few percent around the iPad, so the shot never sits dead still
@@ -148,13 +162,68 @@ export function InsideCall() {
         }
       }
     }
-    // the crisp screenshot's corners at zoom z: from the footage's screen (z = 0) into the app's zone on zoneTarget's box
+    // the rendered 3D covers the screen; this is where its composed screen lands
+    type SFit = { k: number; ox: number; oy: number; cw: number; ch: number };
+    function sceneFit(): SFit {
+      const cw = sc3!.clientWidth || window.innerWidth, ch = sc3!.clientHeight || window.innerHeight, k = Math.max(cw / set.lw, ch / set.lh);
+      return { k, ox: (cw - set.lw * k) / 2, oy: (ch - set.lh * k) / 2, cw, ch };
+    }
+    // the zone's box when the shot looks straight down, on this screen (what the crisp app docks onto)
+    const zoneOn = (s: SFit) => ({ cx: s.ox + set.zone.cx * s.k, cy: s.oy + set.zone.cy * s.k, zw: set.zone.zw * s.k, zh: set.zone.zh * s.k });
+    // a fractional frame: the two nearest frames blended, so slow scrolling glides instead of stepping
+    function paintScene(u: number, s: SFit) {
+      if (!sctx) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      if (sc3!.width !== Math.round(s.cw * dpr) || sc3!.height !== Math.round(s.ch * dpr)) { sc3!.width = Math.round(s.cw * dpr); sc3!.height = Math.round(s.ch * dpr); }
+      const x = u * (set.frames - 1), a = Math.floor(x), b = Math.min(set.frames - 1, a + 1), f = x - a;
+      const ia = near1(shot, a), ib = shot.ok[b] ? b : ia;
+      if (ia < 0) return;
+      const X = s.ox * dpr, Y = s.oy * dpr, W = set.lw * s.k * dpr, H = set.lh * s.k * dpr;
+      sctx.globalAlpha = 1; sctx.drawImage(shot.imgs[ia]!, X, Y, W, H);
+      if (ib !== ia && f > 0.01) { sctx.globalAlpha = f; sctx.drawImage(shot.imgs[ib]!, X, Y, W, H); sctx.globalAlpha = 1; }
+    }
+    // where the labels point at u, on this screen
+    // (a hidden label still gets the place it's about to have, so the ones already up can make room before it arrives)
+    function anchorsAt(u: number, s: SFit): Anchor[] {
+      const i = Math.round(u * (set.frames - 1));
+      return Object.entries(set.anchors).map(([id, arr]) => {
+        let q = arr[i];
+        const show = !!q;
+        for (let d = 1; !q && d < 40; d++) q = arr[i + d] || arr[i - d];
+        return q ? { id, x: s.ox + q[0] * set.lw * s.k, y: s.oy + q[1] * set.lh * s.k, show } : { id, x: 0, y: 0, show: false };
+      });
+    }
+    // place each label (its box sits above its point), inside the edges and below the nav, then push apart any on the same
+    // side that would touch
+    function placeLabels(A: Anchor[], W: number) {
+      const M = W < 600 ? 14 : 48, narrow = W < 600;
+      const boxes = A.map((a) => {
+        const n = anchorEls.current[a.id];
+        if (!n) return null;
+        const bw = n.offsetWidth, bh = n.offsetHeight;
+        const side = a.x < W / 2 ? 0 : 1;
+        let x = Math.max(bw / 2 + M, Math.min(W - bw / 2 - M, a.x));
+        if (narrow && a.id in READ_TEXT) x = side ? Math.max(x, W / 2 + bw / 2 + 6) : Math.min(x, W / 2 - bw / 2 - 6);   // phones: each side keeps to its half
+        return { a, n, bw, bh, x, y: Math.max(bh * 1.3 + 110, a.y), side };
+      }).filter((b): b is NonNullable<typeof b> => !!b);
+      // while any read is up, all four reads keep their slots (shown or about to be), so nothing jumps when one arrives
+      const readsUp = boxes.some((b) => b.a.show && b.a.id in READ_TEXT);
+      for (const side of [0, 1]) {
+        const g = boxes.filter((b) => b.side === side && (b.a.show || (readsUp && b.a.id in READ_TEXT && b.a.x !== 0))).sort((p, q) => p.y - q.y);
+        for (let i = 1; i < g.length; i++) { const need = g[i - 1].y + g[i].bh + 16; if (g[i].y < need) g[i].y = need; }
+      }
+      for (const b of boxes) {
+        if (b.a.show || readsUp) b.n.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
+        b.n.dataset.show = b.a.show ? "1" : "0";
+      }
+    }
+    // the crisp screenshot's corners at zoom z: from the footage's screen (z = 0) into the app's zone, on the rendered zone's box
     // (z = 1). The zoom is geometric (equal scroll, equal ratio) and the perspective flattens out on the way.
     function crispCorners(f: Fit, z: number): Pt[] {
       const start = onGlass(SCREEN[LAST]).map((p) => toScreen(f, p));
       const H0 = homography(LAYER, start);
       const zc: Pt = [(APP.zone.x + APP.zone.w / 2) * APP_W, (APP.zone.y + APP.zone.h / 2) * APP_H];
-      const zt = zoneTarget ? zoneTarget(f.cw, f.ch) : { cx: f.cw / 2, cy: f.ch / 2, zw: 100, zh: 125 };
+      const zt = zoneOn(sceneFit());
       const P0 = mapPt(H0, zc), top = mapPt(H0, [zc[0], APP.zone.y * APP_H]), bot = mapPt(H0, [zc[0], (APP.zone.y + APP.zone.h) * APP_H]);
       const S0 = Math.hypot(bot[0] - top[0], bot[1] - top[1]) / (APP.zone.h * APP_H), S1 = zt.zh / (APP.zone.h * APP_H);
       const e = inOut(z), S = S0 * Math.pow(S1 / S0, e);
@@ -197,7 +266,8 @@ export function InsideCall() {
       const sOp = Math.min(span(p, T.sceneIn), 1 - span(p, T.sceneOut));
       if (stage.current) stage.current.style.opacity = String(sOp);
       if (tagsEl.current) tagsEl.current.style.opacity = String(sOp);
-      scene?.set(span(p, T.scene));
+      if (sOp > 0) { const s = sceneFit(), u = span(p, T.scene); paintScene(u, s); placeLabels(anchorsAt(u, s), s.cw); }
+      else placeLabels(anchorsAt(0, sceneFit()), sceneFit().cw);
       BEATS.forEach((b, i) => {
         const node = beatEls.current[i];
         if (!node) return;
@@ -212,45 +282,26 @@ export function InsideCall() {
     const queue = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; applyAt(want); }); };
 
     const near = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      near.disconnect();
-      Promise.all([import("./insideScene"), import("gsap"), import("gsap/ScrollTrigger")]).then(([mod, { gsap }, { ScrollTrigger }]) => {
-        if (dead || !stage.current || !run.current) return;
-        zoneTarget = mod.zoneTarget;
-        scene = mod.mountInside(stage.current, {
-          onAnchors: (A: Anchor[]) => {
-            const W = stage.current?.clientWidth || window.innerWidth, M = W < 600 ? 14 : 48, narrow = W < 600;
-            // place each label (its box sits above its point), inside the edges and below the nav, then push apart any on
-            // the same side that would touch
-            const boxes = A.map((a) => {
-              const n = anchorEls.current[a.id];
-              if (!n) return null;
-              const bw = n.offsetWidth, bh = n.offsetHeight;
-              const side = a.x < W / 2 ? 0 : 1;
-              let x = Math.max(bw / 2 + M, Math.min(W - bw / 2 - M, a.x));
-              if (narrow && a.id in READ_TEXT) x = side ? Math.max(x, W / 2 + bw / 2 + 6) : Math.min(x, W / 2 - bw / 2 - 6);   // phones: each side keeps to its half
-              return { a, n, bw, bh, x, y: Math.max(bh * 1.3 + 110, a.y), side };
-            }).filter((b): b is NonNullable<typeof b> => !!b);
-            for (const side of [0, 1]) {
-              const g = boxes.filter((b) => b.side === side && b.a.show).sort((p, q) => p.y - q.y);
-              for (let i = 1; i < g.length; i++) { const need = g[i - 1].y + g[i].bh + 16; if (g[i].y < need) g[i].y = need; }
-            }
-            for (const b of boxes) {
-              b.n.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
-              b.n.dataset.show = b.a.show ? "1" : "0";
-            }
-          },
-        });
+      if (!e.isIntersecting || started) return;
+      started = true; near.disconnect();
+      load([foot, shot]);
+      import("gsap").then(({ gsap }) => import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
+        if (dead || !run.current) return;
         gsap.registerPlugin(ScrollTrigger);
         const st = ScrollTrigger.create({ trigger: run.current, start: "top top", end: "bottom bottom", scrub: 0.5, onUpdate: (t) => { want = t.progress; queue(); } });
         want = st.progress; queue();
         kill = () => st.kill();
-      });
+      }));
     }, { rootMargin: "80% 0px" });
     near.observe(el);
-    const onResize = () => queue();
+    // a different screen shape gets its own frame set
+    const onResize = () => {
+      const n = setFor(window.innerWidth, window.innerHeight);
+      if (n !== setName) { shot.gone = true; setName = n; set = SCENE[n]; shot = sceneStrip(n); if (started) load([shot]); }
+      queue();
+    };
     window.addEventListener("resize", onResize);
-    return () => { dead = true; near.disconnect(); kill(); scene?.dispose(); cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); imgs.forEach((im) => { if (im) im.src = ""; }); };
+    return () => { dead = true; near.disconnect(); kill(); cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); [...imgs, ...shot.imgs].forEach((im) => { if (im) im.src = ""; }); };
   }, []);
 
   if (still) {
@@ -294,7 +345,7 @@ export function InsideCall() {
           </div>
           {crisp(before, beforeDim, "app-call-before.png", "app-zone-before.png")}
           {crisp(after, afterDim, "app-call-after.png", "app-zone-after.png")}
-          <div className="mk-in-stage" ref={stage} />
+          <canvas className="mk-in-stage" ref={stage} aria-hidden="true" />
           <div className="mk-in-shade" aria-hidden="true" />
           <h2 id="in-h" className="mk-sr">Inside the call</h2>
           <div className="mk-in-tags" ref={tagsEl}>

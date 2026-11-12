@@ -102,6 +102,13 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     const pickTag = page.locator('.mk-in-pick[data-show="1"]');
     check((await pickTag.count()) === 1 && /31%/.test(await pickTag.innerText()) && /Slider, down and away/.test(await pickTag.innerText()), "inside the call, the draw lands on slider, down and away, 31% of the mix");
     check((await page.locator('.mk-in-tag[data-show="1"]').count()) === 1, "only the drawn call is labelled once the draw lands");
+    // the 3D is rendered offline: this screen's frame set loads and actually paints the stage
+    const lit = await page.locator(".mk-in-stage").evaluate((c) => {
+      const x = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0;
+      for (let i = 0; i < x.length; i += 4 * 97) if (x[i] + x[i + 1] + x[i + 2] > 120) n++;
+      return { n, src: performance.getEntriesByType("resource").filter((e) => /\/scene-wide\/\d+\.webp$/.test(e.name)).length };
+    });
+    check(lit.src >= 4 && lit.n > 50, `the rendered 3D frames load (${lit.src} so far) and light up the stage (${lit.n} bright samples)`);
 
     const gdTop = await page.evaluate(() => { const s = document.getElementById("gameday").parentElement; return s.getBoundingClientRect().top + scrollY; });
     await page.evaluate((y) => scrollTo(0, y + 40), gdTop); await wait(1400);
