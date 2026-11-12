@@ -4,7 +4,7 @@
 // The calls and reasons are the engine's own output; the results were chosen by hand to play out the at-bat.
 // Regenerate by re-running the capture rather than editing these lines.
 
-export type Spot = "Up and in" | "Up and away" | "Down and in" | "Down and away" | "Get it over" | "Chase";
+export type Spot = "Up and in" | "Up and away" | "Down and in" | "Down and away" | "Get it over" | "Chase" | "Keep it down";   // "Keep it down": v1.0 knee-high target
 
 export type Pitch = {
   balls: number;
@@ -30,6 +30,7 @@ export const CELL: Record<Exclude<Spot, "Chase">, [number, number]> = {
   "Get it over": [1, 1],
   "Down and in": [0, 2],
   "Down and away": [2, 2],
+  "Keep it down": [1, 2],
 };
 
 // Pitch colors from the Pitch Caller design system (Claude Design canvas, DesignSystem board): fill for chips, bars and

@@ -10,7 +10,7 @@ import type { Scene, StagePitch } from "./pitch3d";
 // keep); once the page has loaded and the browser is idle, the 3D pitch takes its place in the same box.
 const VELO: Record<Pitch["pitch"], number> = { Fastball: 86, Slider: 78, Changeup: 77, Curveball: 72 };
 const KIND: Record<Pitch["pitch"], StagePitch["kind"]> = { Fastball: "FB", Slider: "SL", Changeup: "CH", Curveball: "CB" };
-const QUAD: Record<Pitch["spot"], string> = { "Up and in": "UP-IN", "Up and away": "UP-AWAY", "Down and in": "DOWN-IN", "Down and away": "DOWN-AWAY", "Get it over": "MIDDLE", Chase: "CHASE" };
+const QUAD: Record<Pitch["spot"], string> = { "Up and in": "UP-IN", "Up and away": "UP-AWAY", "Down and in": "DOWN-IN", "Down and away": "DOWN-AWAY", "Get it over": "MIDDLE", Chase: "CHASE", "Keep it down": "DOWN-MIDDLE" };
 const toStage = (p: Pitch): StagePitch => ({ kind: KIND[p.pitch], velo: VELO[p.pitch], cell: p.spot === "Chase" ? "chase" : CELL[p.spot], color: PITCH_COLOR[p.pitch].fill });
 
 export function PitchStage({ pitches, current }: { pitches: Pitch[]; current: number }) {

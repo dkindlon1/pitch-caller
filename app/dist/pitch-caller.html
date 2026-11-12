@@ -6505,6 +6505,10 @@ function paTable(ars, s) {
   return paTab;
 }
 function makeCall() {
+  // No call once the third out is in (outs reads 3 until the next inning starts). A re-call scheduled by recall() can
+  // land after the inning-ending pitch, and a pitching change between innings calls this too; either asked the engine
+  // with 3 outs, which it rejects (seen as "impossible number of outs 3" in web/tests/offline_game_e2e.js, Nov 11).
+  if (G().inningOver) return;
   const ars = arsenal();
   let s = situation();
   const tab = paTable(ars, s);
