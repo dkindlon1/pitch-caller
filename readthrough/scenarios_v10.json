@@ -220,9 +220,171 @@
   },
   {
    "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: Plus changeup: away. A plus slider to an opposite-side hitter is a back-foot slider (starts middle, breaks in at his back foot)",
+   "date": "2026-11-11",
+   "row": "J7"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
    "change": "new v1.0 row: 3-1: a strike, mixed moderately among the pitches he can land",
    "date": "2026-11-11",
    "row": "J6"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: middle means anywhere in the zone: acceptable at 0-0",
+   "date": "2026-11-11",
+   "row": "B1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:corners', 'SL:corners'] + ['ANY:middle', 'ANY:down-middle']: the engine leans on command enough; middle strikes acceptable",
+   "date": "2026-11-11",
+   "row": "B2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable at 1-1",
+   "date": "2026-11-11",
+   "row": "B5"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable at 1-1, even in a big spot",
+   "date": "2026-11-11",
+   "row": "B6"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:zone'] + ['FB:zone', 'SL:chase']: the engine leans on confidence enough",
+   "date": "2026-11-11",
+   "row": "B9"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:up-in', 'FB:chase', 'SL:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: edges are acceptable at 0-2 after a whiff; middle too (same rule as C3)",
+   "date": "2026-11-11",
+   "row": "C2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:chase', 'ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: middle is acceptable at 1-2",
+   "date": "2026-11-11",
+   "row": "C3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:away', 'FB:up-in', 'FB:chase', 'CH:down'] + ['SL:zone']: the slider for a strike is what you'd want with the runner on 3rd (not in the dirt)",
+   "date": "2026-11-11",
+   "row": "C4"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:chase', 'CH:chase', 'SL:down', 'CH:down'] + ['FB:any']: a third fastball is fine",
+   "date": "2026-11-11",
+   "row": "C9"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['CH:down-away', 'CH:chase', 'FB:corners', 'SL:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: with an average changeup and slider the edge calls are acceptable; middle at 1-2 as in C3 (the plus-pitch version is J7)",
+   "date": "2026-11-11",
+   "row": "C10"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:corners', 'CH:zone'] + ['SL:zone']: after the landing rule changed (a pitch not landing is held back only when behind or at 0-0): the slider for a strike is OK here",
+   "date": "2026-11-11",
+   "row": "D3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable at 0-0 with 2 outs",
+   "date": "2026-11-11",
+   "row": "D10"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:zone', 'SL:chase'] + ['FB:zone', 'CH:zone']: the engine leans on today's landing enough; the changeup strikes are fine",
+   "date": "2026-11-11",
+   "row": "E4"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:zone', 'CH:zone'] + ['FB:zone']: the shake-off moves the mix enough",
+   "date": "2026-11-11",
+   "row": "E5"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:chase', 'CH:chase', 'SL:down', 'CH:down'] + ['FB:chase', 'ANY:middle', 'ANY:down-middle']: the engine leans off a tired fastball enough",
+   "date": "2026-11-11",
+   "row": "E7"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:corners', 'FB:chase'] + ['CB:any']: call the curveball, for a strike or a chase (and a curveball corner is no longer not acceptable)",
+   "date": "2026-11-11",
+   "row": "E8"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "not acceptable ['CB:corners'] - ['CB:corners']",
+   "date": "2026-11-11",
+   "row": "E8"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:down-away', 'SL:chase', 'FB:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: edges and middle are acceptable as long as the chase and the repeat stay on the table (floor)",
+   "date": "2026-11-11",
+   "row": "F2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "floor ['SL:down-away', 'ANY:chase'] >= 15%: the repeat (slider down-away) and chase stay at least 15% of calls",
+   "date": "2026-11-11",
+   "row": "F2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:zone'] + ['SL:any']: a fourth slider is fine",
+   "date": "2026-11-11",
+   "row": "F8"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:chase', 'SL:down-away', 'FB:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: edges are acceptable at 1-2 against a same-side hitter; middle too (same rule as C3)",
+   "date": "2026-11-11",
+   "row": "G1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['CB:zone', 'FB:zone'] + ['SL:zone', 'CH:zone']: the engine leans on the best pitch enough",
+   "date": "2026-11-11",
+   "row": "G2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:chase', 'FB:corners', 'SL:chase'] + ['SL:down-away', 'ANY:middle', 'ANY:down-middle']: a weak slider down-away is acceptable; middle too (same rule as C3)",
+   "date": "2026-11-11",
+   "row": "G3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable on the third trip",
+   "date": "2026-11-11",
+   "row": "I3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:chase', 'ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: middle is acceptable after a taken chase",
+   "date": "2026-11-11",
+   "row": "J2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable in the HS 5th-inning spot",
+   "date": "2026-11-11",
+   "row": "J3"
   }
  ],
  "defaults": {
@@ -436,11 +598,11 @@
   },
   {
    "acceptable": [
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
-   "arguable": [
-    "ANY:middle"
-   ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "B1",
@@ -456,11 +618,11 @@
   {
    "acceptable": [
     "FB:corners",
-    "SL:corners"
+    "SL:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
-   "arguable": [
-    "ANY:middle"
-   ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "B2",
@@ -533,11 +695,12 @@
   },
   {
    "acceptable": [
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "SL:chase",
-    "ANY:middle"
+    "SL:chase"
    ],
    "exclude": [],
    "hard": false,
@@ -554,11 +717,12 @@
   },
   {
    "acceptable": [
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "SL:chase",
-    "ANY:middle"
+    "SL:chase"
    ],
    "exclude": [],
    "hard": false,
@@ -639,12 +803,11 @@
   },
   {
    "acceptable": [
-    "SL:zone"
-   ],
-   "arguable": [
+    "SL:zone",
     "FB:zone",
     "SL:chase"
    ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "B9",
@@ -693,12 +856,13 @@
    "acceptable": [
     "FB:up-in",
     "FB:chase",
-    "SL:chase"
+    "SL:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "CH:chase",
-    "ANY:corners",
-    "ANY:middle"
+    "CH:chase"
    ],
    "exclude": [],
    "hard": false,
@@ -720,11 +884,11 @@
   {
    "acceptable": [
     "ANY:chase",
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
-   "arguable": [
-    "ANY:middle"
-   ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "C3",
@@ -743,7 +907,8 @@
     "FB:away",
     "FB:up-in",
     "FB:chase",
-    "CH:down"
+    "CH:down",
+    "SL:zone"
    ],
    "arguable": [
     "SL:down",
@@ -902,7 +1067,8 @@
     "SL:chase",
     "CH:chase",
     "SL:down",
-    "CH:down"
+    "CH:down",
+    "FB:any"
    ],
    "arguable": [
     "FB:chase",
@@ -930,11 +1096,13 @@
     "CH:down-away",
     "CH:chase",
     "FB:corners",
-    "SL:chase"
+    "SL:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "SL:down-in",
-    "ANY:middle"
+    "SL:down-in"
    ],
    "exclude": [],
    "hard": false,
@@ -1009,7 +1177,8 @@
   {
    "acceptable": [
     "FB:corners",
-    "CH:zone"
+    "CH:zone",
+    "SL:zone"
    ],
    "arguable": [
     "SL:down",
@@ -1209,11 +1378,11 @@
   },
   {
    "acceptable": [
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
-   "arguable": [
-    "ANY:middle"
-   ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "D10",
@@ -1322,11 +1491,11 @@
   {
    "acceptable": [
     "SL:zone",
-    "SL:chase"
+    "SL:chase",
+    "FB:zone",
+    "CH:zone"
    ],
-   "arguable": [
-    "FB:zone"
-   ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "E4",
@@ -1359,11 +1528,10 @@
   {
    "acceptable": [
     "SL:zone",
-    "CH:zone"
-   ],
-   "arguable": [
+    "CH:zone",
     "FB:zone"
    ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "E5",
@@ -1421,12 +1589,12 @@
     "SL:chase",
     "CH:chase",
     "SL:down",
-    "CH:down"
-   ],
-   "arguable": [
+    "CH:down",
     "FB:chase",
-    "ANY:middle"
+    "ANY:middle",
+    "ANY:down-middle"
    ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "E7",
@@ -1447,7 +1615,8 @@
   {
    "acceptable": [
     "FB:corners",
-    "FB:chase"
+    "FB:chase",
+    "CB:any"
    ],
    "arguable": [
     "CB:chase",
@@ -1469,9 +1638,7 @@
     "strikes": 2
    },
    "matchup": [],
-   "not_acceptable": [
-    "CB:corners"
-   ],
+   "not_acceptable": [],
    "pitch_edits": {},
    "situation": "1-2, high school, two-pitch (FB, CB), curveball landing 0 of 4",
    "why": "Off the zone a bad curveball can still get a chase; in it, it hangs"
@@ -1509,13 +1676,22 @@
    "acceptable": [
     "SL:down-away",
     "SL:chase",
-    "FB:chase"
+    "FB:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "CH:chase",
-    "ANY:middle"
+    "CH:chase"
    ],
    "exclude": [],
+   "floor": [
+    [
+     "SL:down-away",
+     "ANY:chase"
+    ],
+    0.15
+   ],
    "hard": false,
    "id": "F2",
    "inputs": {
@@ -1664,11 +1840,10 @@
   },
   {
    "acceptable": [
-    "FB:zone"
-   ],
-   "arguable": [
+    "FB:zone",
     "SL:any"
    ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "F8",
@@ -1692,11 +1867,13 @@
    "acceptable": [
     "SL:chase",
     "SL:down-away",
-    "FB:chase"
+    "FB:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "CH:chase",
-    "ANY:middle"
+    "CH:chase"
    ],
    "exclude": [],
    "hard": false,
@@ -1714,12 +1891,11 @@
   {
    "acceptable": [
     "CB:zone",
-    "FB:zone"
-   ],
-   "arguable": [
+    "FB:zone",
     "SL:zone",
     "CH:zone"
    ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "G2",
@@ -1742,11 +1918,13 @@
    "acceptable": [
     "FB:chase",
     "FB:corners",
-    "SL:chase"
+    "SL:chase",
+    "SL:down-away",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "SL:corners",
-    "ANY:middle"
+    "SL:corners"
    ],
    "exclude": [],
    "hard": false,
@@ -1968,11 +2146,11 @@
   },
   {
    "acceptable": [
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
-   "arguable": [
-    "ANY:middle"
-   ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "I3",
@@ -2068,11 +2246,11 @@
   {
    "acceptable": [
     "ANY:chase",
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
-   "arguable": [
-    "ANY:middle"
-   ],
+   "arguable": [],
    "exclude": [],
    "hard": false,
    "id": "J2",
@@ -2093,11 +2271,12 @@
   },
   {
    "acceptable": [
-    "ANY:corners"
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
    ],
    "arguable": [
-    "CB:chase",
-    "ANY:middle"
+    "CB:chase"
    ],
    "exclude": [],
    "hard": false,
@@ -2178,6 +2357,38 @@
    "pitch_edits": {},
    "situation": "3-1, slider landing 9 of 10 today, fastball 2 of 10",
    "why": "3-1: the pitch he's landing today"
+  },
+  {
+   "acceptable": [
+    "CH:down-away",
+    "CH:chase",
+    "SL:down-in",
+    "FB:corners"
+   ],
+   "arguable": [
+    "SL:chase",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "J7",
+   "inputs": {
+    "balls": 1,
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Changeup": {
+     "grade": 4
+    },
+    "Slider": {
+     "grade": 4
+    }
+   },
+   "situation": "1-2, opposite-side hitter, plus changeup and plus slider (grade 4)",
+   "why": "Plus changeup: away. A plus slider to an opposite-side hitter is a back-foot slider (starts middle, breaks in at his back foot)"
   },
   {
    "acceptable": [

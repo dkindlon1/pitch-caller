@@ -101,6 +101,11 @@ def grade(doc, row, mode):
         fails.append(f"not {sh['not']:.1%} > {cap:.0%}")
     if sh["acc"] < rule["acc_min"] - 1e-9:
         fails.append(f"acceptable {sh['acc']:.1%} < {rule['acc_min']:.0%}")
+    if row.get("floor"):          # v1.0 Step 7 (Drew, F2): a share of calls that must stay on the table
+        pats, mn = row["floor"]
+        fl = sum(pr for pr, _, kind, q in dist if any(matches(x, kind, q) for x in pats))
+        if fl < mn - 1e-9:
+            fails.append(f"{'/'.join(pats)} {fl:.1%} < floor {mn:.0%}")
     return dict(id=row["id"], hard=row["hard"], shares={k: round(v, 4) for k, v in sh.items()}, passed=not fails,
                 fails=fails, calls=sorted(calls, key=lambda c: -c[2]))
 

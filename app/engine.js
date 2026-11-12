@@ -811,7 +811,9 @@
     res = -Infinity; for (let k = 0; k < nK; k++) res = Math.max(res, Math.abs(sg[k] - f[k]));
     return out(sg, res);
   }
-  // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
+  // v0.9 item 9: a pitch that isn't landing today gives way when he is behind in the count or at 0-0 (engine.py
+  // not_landing, land_block_count; v1.0 Step 7, Drew: otherwise it is still callable at any spot, for a strike too)
+  const landBlockCount = (s) => s.balls > s.strikes || (s.balls === 0 && s.strikes === 0);
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15, LAND_BLOCK_K = 5.0;   // v1.0: a deviation from his own expectation; the
   // block is a rule with its own shrinkage, so it doesn't move with the fitted LAND_K (v1.0 Step 5)
   function notLanding(p, s) {
@@ -826,14 +828,10 @@
     const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
     for (const p of candidates(arsenal, s)) if (!ex.has(p.name)) for (const q of tq) out.push(ck(p.name, q));
-    if (s.landing_today && Object.keys(s.landing_today).length && out.length) {
+    if (s.landing_today && Object.keys(s.landing_today).length && out.length && landBlockCount(s)) {
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
-      if (bad.size && bad.size !== names.size) {
-        const chaseOk = s.strikes === 2 && s.balls < 3;
-        const kept = out.filter((a) => !bad.has(skName(a)) || (chaseOk && skH(a) === "chase"));
-        if (kept.length) out = kept;
-      }
+      if (bad.size && bad.size !== names.size) out = out.filter((a) => !bad.has(skName(a)));
     }
     return out;
   }

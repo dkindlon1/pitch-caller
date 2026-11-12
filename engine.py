@@ -10,7 +10,7 @@ a stakes-scaled never-pick window (policy_from_costs); 3-ball counts rank by the
 The research-backed principles from v0.2 still hold, now inside that solve: mix, don't script (R1); think in at-bats (R2);
 no hard-coded count rules (R3, apart from the coach rules below); expand, don't waste (R4); avoid hitter strengths over
 hunting holes (R5, the cross-game damage seed); timing and perceived speed (R7); no third-time-through cliff (R8).
-Coach rules, each a named constant: no chase at 3-0 / 3-1; a pitch not landing today gives way (LAND_BLOCK_*); mashed
+Coach rules, each a named constant: no chase at 3-0 / 3-1; a pitch not landing today gives way when he is behind in the count or on the first pitch (LAND_BLOCK_*); mashed
 twice at a height today (MASHED_PENALTY). Display only: the why line and the intent label (why_line, intent_label).
 
 Fitted on real data: count kappas, timing, eye level, familiarity, tunneling on chase swings, matchup memory, inside/away
@@ -1401,9 +1401,19 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
 # expectation, so a pitch with a low normal strike rate isn't blocked for being itself.
 # v1.0 Step 5: the block is a coaching rule, so it keeps its own shrinkage (LAND_BLOCK_K = the Step 3 K of 5) and does
 # not move when the fitted LAND_K does (rules and fits don't share a parameter).
+# v1.0 Step 7 (Drew, Nov 11): the rule applies only when he is behind in the count (more balls than strikes), where a
+# pitch that isn't landing walks him, and on the first pitch ("first-pitch strike is super important"). Otherwise, a pitch that isn't landing is still callable at any spot, for a
+# strike too: "a pitch that isn't landing doesn't just have to be a chase pitch; it can still be used in an up count,
+# as a setup pitch, or just for a strike to see if he can gain confidence." Today's landing still prices it there
+# (wild_today raises its ball chance), so the call leans off it without being forced to the chase spot. (Until now the
+# rule held at every count, and with two strikes left only the chase spot open.)
 LAND_BLOCK_N = 4
 LAND_BLOCK_EST = -0.15
 LAND_BLOCK_K = 5.0
+
+
+def land_block_count(s):
+    return s.balls > s.strikes or (s.balls == 0 and s.strikes == 0)
 
 
 def not_landing(p, s):
@@ -1424,14 +1434,11 @@ def allowed_calls(arsenal, s, exclude=None):
     tq = targets(s.balls, s.strikes)
     ex = shaken_names(exclude)
     out = [(p.name, q) for p in candidates(arsenal, s) if p.name not in ex for q in tq]
-    if s.landing_today and out:
+    if s.landing_today and out and land_block_count(s):      # behind in the count or 0-0 (v1.0 Step 7, Drew)
         names = {a[0] for a in out}
         bad = {p.name for p in arsenal if p.name in names and not_landing(p, s)}
         if bad and bad != names:
-            chase_ok = s.strikes == 2 and s.balls < 3
-            kept = [a for a in out if a[0] not in bad or (chase_ok and a[1] == "chase")]
-            if kept:
-                out = kept
+            out = [a for a in out if a[0] not in bad]
     return out
 
 
