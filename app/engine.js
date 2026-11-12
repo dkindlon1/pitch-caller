@@ -1,6 +1,6 @@
 /*
- * Pitch Caller engine v0.7c, JavaScript port of engine.py (same math, same order of operations).
- * Cost(p,q|s) = sum_e P(e|p,q,s) * [R(e) + V(s'_e)]; calls drawn at a game-theory balance point.
+ * Pitch Caller engine v1.0, JavaScript port of engine.py (same math, same order of operations).
+ * cost08(p,q|s) = sum_e P(e|p,q,s) * [value after e] over the at-bat table; calls drawn inside a stakes-scaled window.
  * Data tables (run values, outcome fit) come from engine_data.json, exported from the Python engine.
  * Works in the browser (window.PitchEngine) and in Node (module.exports) for parity tests.
  */
@@ -8,15 +8,18 @@
   "use strict";
   let D = null;                       // tables, set by init(data)
 
-  const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle"];
+  const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle", "down-middle"];   // v1.0 Step 7: down-middle = "keep it down"
   // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
   // v0.8 (Drew's rule): attack the zone at 2-2 too
   const targets = (b, k) => (((b === 3 && (k === 0 || k === 1)) || (b === 2 && k === 2)) ? QUADS.filter((q) => q !== "chase") : QUADS);
   const ZONES = ["heart", "edge", "off", "noncomp"];
   const COUNTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1], [0, 2], [1, 2], [2, 2], [3, 2]];
   const DEFAULT_VELO = { FB: 85, SL: 77, CB: 71, CH: 77 };
-  const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0 };
-  const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3 };
+  const EV_ADJ = { "up-in": 3.0, "up-away": 0.0, "down-in": 0.0, "down-away": -3.0, middle: 0.0, chase: -3.0, "down-middle": -1.5 };
+  const HBP_LOC = { "up-in": 1.6, "down-in": 1.6, chase: 0.8, middle: 0.5, "up-away": 0.3, "down-away": 0.3, "down-middle": 0.5 };
+  // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
+  const evAdj = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? -3.0 : 3.0) : EV_ADJ[q]);
+  const hbpLoc = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? 0.8 : 0.3) : HBP_LOC[q]);   // FB chase 0.3: Drew, Nov 10
   const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.20 };
   const CONF_CAP_ABOVE = 0.10, CONF_REGRESS = 0.15, LOC_WINDOW = 0.010;
   const S0 = { heart: 0.72, edge: 0.50, off: 0.28, noncomp: 0.05 };
@@ -38,11 +41,11 @@
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "0.9";      // engine logic version; the tables carry their own fingerprint (data.version)
+  const VERSION = "1.0";      // engine logic version (v1.0, Nov 11; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
-    for (const t of [D.RE, D.CV, D.IN_PLAY, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.hs && !t.travel) t.travel = t.hs;
+    for (const t of [D.RE, D.CV, D.OUTCOME_ADJ, D.LW, D.LEVEL]) if (t && t.hs && !t.travel) t.travel = t.hs;
     if (D.V08) initV08(D.V08);
   }
   const dataVersion = () => (D && D.version) || null;
@@ -50,7 +53,7 @@
   // ---------------------------------------------------------------- objects
   function Pitch(o) {
     const p = Object.assign({ shape: "", velo: 0, base_conf: -1, ivb: null, hb: null, slot: "three-quarter",
-      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, traits: null }, o);
+      height_ft: 6.1, release_offset_in: [0, 0], strike_rate: null, strike_ref: null, traits: null }, o);
     if (p.base_conf < 0) p.base_conf = p.conf;
     return p;
   }
@@ -71,14 +74,15 @@
   const re = (outs, bases, level) => (outs >= 3 ? 0.0 : D.RE[level][outs + "|" + basesKey(bases)]);
   const runScale = (level) => D.RE[level]["0|000"] / D.RE.mlb["0|000"];
   const cvKey = (b, k) => b + "-" + k;
-  const V = (b, k, outs, bases, cv, level) => re(outs, bases, level) + (cv || D.CV[level])[cvKey(b, k)];
 
   // ---------------------------------------------------------------- confidence
   function updateConfidence(p, event) {
     let d = CONF_DELTA[event];
     if (event === "whiff" && p.kind === "FB") d += 0.02;
-    if (p.strike_rate !== null && p.strike_rate !== undefined) {   // v0.7: news measured against his usual strike rate
-      const c = LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"], q = Math.min(0.95, Math.max(0.05, p.strike_rate));
+    // v0.7: news measured against his usual strike rate; v1.0 Step 3: the average pitcher's rate (strike_ref) comes from
+    // the same model as his, served with it by the learner (LAND_CENTER is gone)
+    if (p.strike_rate !== null && p.strike_rate !== undefined && p.strike_ref !== null && p.strike_ref !== undefined) {
+      const c = Math.min(0.95, Math.max(0.05, p.strike_ref)), q = Math.min(0.95, Math.max(0.05, p.strike_rate));
       if (event === "ball") d *= (1 - c) / (1 - q);
       else if (event === "cstrike" || event === "whiff") d *= c / q;
     }
@@ -90,24 +94,41 @@
   function logit(p) { p = Math.min(Math.max(p, 1e-4), 1 - 1e-4); return Math.log(p / (1 - p)); }
   const sig = (x) => 1 / (1 + Math.exp(-x));
   const isOffspeed = (k) => k === "SL" || k === "CB" || k === "CH";
-  const isBigSpot = (s) => s.inning >= 7 && Math.abs(s.margin) <= 2 && (s.bases[1] || s.bases[2]);
+  // v1.0 #8: "late" = the last three innings of the scheduled game (sched is defined with the WE blend below)
+  const isBigSpot = (s) => s.inning >= sched(s) - 2 && Math.abs(s.margin) <= 2 && (s.bases[1] || s.bases[2]);
   const anyBase = (b) => b[0] || b[1] || b[2];
 
-  // ---------------------------------------------------------------- landing today (v0.6d)
-  const LAND_CENTER = { FB: 0.66, OS: 0.58 }, LAND_K = 5.0, LAND_GAIN = 4.0, LAND_MAX = 0.6;
+  // ---------------------------------------------------------------- landing today (v0.6d; v1.0 Step 3 one anchor)
+  // record per pitch: [strikes, expected strikes, pitches], non-chase targets only (engine.py landing_estimate)
+  const LAND_K = 20.0, LAND_GAIN = 2.0, LAND_MAX = 0.6, LAND_SHARP_MAX = 0.3;   // two-sided (Drew, Nov 10, D1); K and GAIN fitted (v1.0 Step 5)
   const DMG_SCALE = 3.0;   // v0.6e: a strong masher is worth ~+0.03 runs per pitch, like the best real fastball hitters
+  function expectedStrike(p, q, s, arsenal) {
+    const P = outcomeProbs(p, q, Object.assign({}, s, { landing_today: {}, wild_true: {} }), arsenal);
+    return 1.0 - P.ball - P.wp_ball - P.hbp;
+  }
+  function landingRecord(rec, strike, expected) {
+    const [st, ex, n] = rec || [0, 0.0, 0];
+    return [st + (strike ? 1 : 0), ex + expected, n + 1];
+  }
+  // a pre-v1.0 [strikes, pitches] pair is read once as expected = pitches x the old typical rate (engine.py landing_triple)
+  const LEGACY_LAND_RATE = { FB: 0.66, OS: 0.58 };
+  function landingTriple(p, rec) {
+    if (rec && rec.length === 2) return [rec[0], rec[1] * LEGACY_LAND_RATE[isOffspeed(p.kind) ? "OS" : "FB"], rec[1]];
+    return rec;
+  }
   function landingEstimate(p, s) {
-    const ev = s.landing_today ? s.landing_today[p.name] : null;
-    const center = p.strike_rate !== null && p.strike_rate !== undefined ? p.strike_rate : LAND_CENTER[isOffspeed(p.kind) ? "OS" : "FB"];
-    if (!ev) return [center, center, 0];
-    const [st, n] = ev;
-    return [(center * LAND_K + st) / (LAND_K + n), center, n];
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || !ev[ev.length - 1]) return [0.0, null, 0];
+    const [st, ex, n] = ev;
+    return [(st - ex) / (LAND_K + n), ex / n, n];
   }
   function wildToday(p, s) {
     if (s.wild_true && Object.keys(s.wild_true).length) return s.wild_true[p.name] || 0.0;
-    const [est, center, n] = landingEstimate(p, s);
-    return n ? Math.min(LAND_MAX, Math.max(0.0, LAND_GAIN * (center - est))) : 0.0;
+    const [est, , n] = landingEstimate(p, s);
+    return n ? Math.max(-LAND_SHARP_MAX, Math.min(LAND_MAX, -LAND_GAIN * est)) : 0.0;   // < 0: sharper than normal today
   }
+  // v1.0 Step 3: a ball on a chase target is no confidence debit unless it went way off (engine.py ball_conf_event)
+  const ballConfEvent = (q, loc) => (q === "chase" && loc !== "noncomp" ? null : "ball");
 
   // ---------------------------------------------------------------- landing
   // v0.7 personal traits (see engine.py TRAIT_KEYS); absent = the default engine
@@ -131,6 +152,7 @@
     let z0, sl, z;
     if (q === "chase") { z0 = { heart: 0.05, edge: 0.24, off: 0.57, noncomp: 0.14 }; sl = { heart: -0.01, edge: 0.0, off: 0.04, noncomp: -0.03 }; }
     else if (q === "middle") { z0 = { heart: 0.50, edge: 0.30, off: 0.13, noncomp: 0.07 }; sl = { heart: 0.03, edge: 0.0, off: -0.02, noncomp: -0.01 }; }
+    else if (q === "down-middle") { z0 = { heart: 0.38, edge: 0.36, off: 0.175, noncomp: 0.085 }; sl = { heart: 0.0, edge: 0.04, off: -0.025, noncomp: -0.015 }; }   // v1.0 Step 7
     else { z0 = { heart: 0.26, edge: 0.42, off: 0.22, noncomp: 0.10 }; sl = { heart: -0.03, edge: 0.08, off: -0.03, noncomp: -0.02 }; }
     if (sc === 1.0) {   // the v0.6 straight-line shares, exactly
       z = {}; for (const k of ZONES) z[k] = z0[k] + sl[k] * d;
@@ -151,7 +173,8 @@
       const mh = w * z.heart, me = w * z.edge;
       z.heart -= mh; z.edge -= me; z.off += 0.6 * (mh + me); z.noncomp += 0.4 * (mh + me);
     }
-    const wt = wildToday(p, s);
+    let wt = wildToday(p, s);
+    if (wt < 0 && q === "chase") wt = 0.0;   // v1.0 review (Drew, Nov 11): no sharpening on a chase target (engine.py)
     if (wt) {   // v0.6e: misses go both ways
       const me = wt * z.edge, mh = 0.6 * wt * z.heart;
       z.edge += 0.6 * mh - me; z.heart += 0.30 * me - mh; z.off += 0.45 * me + 0.4 * mh; z.noncomp += 0.25 * me;
@@ -164,26 +187,6 @@
     return out;
   }
 
-  // ---------------------------------------------------------------- hitter expectation
-  function expectation(p, arsenal, s, policy) {
-    const m = arsenal.length;
-    const hittersCount = s.balls > s.strikes && s.strikes < 2;
-    const fb = arsenal.filter((x) => x.kind === "FB"), os = arsenal.filter((x) => x.kind !== "FB");
-    let prior = {};
-    if (fb.length && os.length) {
-      const fbShare = hittersCount ? 0.65 : (s.strikes === 2 ? 0.35 : 0.5);
-      for (const x of fb) prior[x.name] = fbShare / fb.length;
-      for (const x of os) prior[x.name] = (1 - fbShare) / os.length;
-    } else for (const x of arsenal) prior[x.name] = 1 / m;
-    if (policy) {
-      const lam = 0.6, np = {};
-      for (const x of arsenal) np[x.name] = (1 - lam) * prior[x.name] + lam * (policy[x.name] || 0.0);
-      prior = np;
-    }
-    let n = 0; for (const k in s.usage_this_count) n += s.usage_this_count[k];
-    const k = 4.0;
-    return [(k * prior[p.name] + (s.usage_this_count[p.name] || 0)) / (k + n), 1 / m];
-  }
 
   // ---------------------------------------------------------------- tunneling
   function movement(p) {
@@ -199,6 +202,7 @@
       case "down-in": return [7 * inside, 22];
       case "down-away": return [-7 * inside, 22];
       case "middle": return [0, 30];
+      case "down-middle": return [0, 22];
       default: return offspeed ? [-10 * inside, 14] : [0, 46];
     }
   }
@@ -232,28 +236,7 @@
     const score = 0.6 * Math.min(dB, 18) / 18 + 0.4 * Math.min(dP, 24) / 24 - dT / 10 - dR / 8;
     return [Math.max(-1.0, Math.min(1.0, score)), dT, dB, dP];
   }
-  const perceived = (p, q) => mph(p) + EV_ADJ[q];
 
-  function pairing(p, q, s, arsenal) {
-    if (!s.last) return 0.0;
-    const lastName = s.last[0], lastQ = s.last[1];
-    const lastResult = s.last.length > 2 ? s.last[2] : null;
-    const last = arsenal.find((x) => x.name === lastName);
-    if (!last) return 0.0;
-    const upLast = lastQ.startsWith("up"), upNow = q.startsWith("up");
-    if (last.name === p.name) {
-      if (lastResult === "whiff") return lastQ === q ? 0.4 : 0.3;
-      if (lastQ === q) return -0.8;
-    }
-    let base;
-    if (last.kind === "FB") base = isOffspeed(p.kind) ? ((upLast && !upNow) ? 1.0 : 0.6) : (upLast !== upNow ? 0.3 : -0.2);
-    else if (p.kind === "FB") base = upNow ? 0.6 : 0.3;
-    else base = last.name === p.name ? -0.3 : 0.2;
-    const gap = Math.abs(perceived(p, q) - perceived(last, lastQ));
-    const speed = Math.min(gap / 16.0, 1.0) * 0.6 - 0.2;
-    const tun = last.name !== p.name ? tunnelScore(last, lastQ, p, q, s.same_side)[0] : 0.0;
-    return Math.max(-1.0, Math.min(1.0, 0.30 * base + speed + 0.50 * tun));
-  }
 
   function shapeFit(p, q, s) {
     let f = 0.0;
@@ -271,7 +254,7 @@
 
   function damage(p, q, s) {
     let total = 0.0;
-    for (const key of [isOffspeed(p.kind) ? "OS" : "FB", q]) {
+    for (const key of [isOffspeed(p.kind) ? "OS" : "FB", p.kind + "|" + q]) {   // v1.0 #21: spot read per pitch kind
       if (key in s.hitter_damage) {
         const [score, n] = s.hitter_damage[key];
         let eff = score * n / (n + 10.0);
@@ -286,17 +269,16 @@
   const MM = { succ: 0.107, succ_cap: 4, hard: -0.346, hard_cap: 2 };
   function matchupWhiff(p, q, s) {
     const m = s.matchup || {};
-    let x = MM.succ * Math.min(MM.succ_cap, m["succ|" + p.kind] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + p.kind + "|" + q] || 0);
-    x = Math.max(-P08.fam_cap, Math.min(P08.fam_cap, x));
+    const x = MM.succ * Math.min(MM.succ_cap, m["succ|" + p.kind] || 0) + MM.hard * Math.min(MM.hard_cap, m["hard|" + p.kind + "|" + q] || 0);   // v1.0 #7: no shared clip
     return (RHO_L[s.level] ?? 1.0) * x;
   }
   // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
   const SIDE = {"hard": {"FB|up|same": -0.818, "FB|up|opp": -0.989, "FB|down|same": 0.0, "FB|down|opp": 0.0, "OS|up|same": -0.212, "OS|up|opp": -0.465, "OS|down|same": 0.596, "OS|down|opp": 0.388}, "whiff": {"FB|up|same": -0.435, "FB|up|opp": -0.329, "FB|down|same": -0.852, "FB|down|opp": -0.635, "OS|up|same": -0.856, "OS|up|opp": -0.853, "OS|down|same": -0.251, "OS|down|opp": 0.276}, "swing": {"FB|up|same": 1.077, "FB|up|opp": 0.56, "FB|down|same": 0.551, "FB|down|opp": -0.128, "OS|up|same": -0.394, "OS|up|opp": -0.436, "OS|down|same": 0.257, "OS|down|opp": 0.343}};
   // v0.9 item 8: more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
-  const POWER_HR = 0.112 * 0.03 / 0.053;
+  const POWER_HR = 0.112;   // v1.0 #11/#28: one power-grade point = one SD of hard-hit share
   const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
-    if ((z !== "heart" && z !== "edge") || q === "middle" || q === "chase") return 0.0;
+    if ((z !== "heart" && z !== "edge") || q === "middle" || q === "chase" || q === "down-middle") return 0.0;   // no side over the plate
     const [h, side] = q.split("-");
     const b = SIDE[what][(isOffspeed(p.kind) ? "OS" : "FB") + "|" + h + "|" + (s.same_side ? "same" : "opp")];
     return (RHO_L[s.level] ?? 1.0) * (side === "in" ? 0.5 : -0.5) * b;
@@ -351,14 +333,13 @@
       Z.F = sig(logit(F0[z]) + (s.strikes === 2 ? 0.3 : 0));
       Z.h1 = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6); Z.h2 = hL * 0.8 * DMG_SCALE * dmg; Z.h3 = 0.3 * f;
       Z.hlPost = [];
-      { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push(Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }
+      { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push((RHO_L[s.level] ?? 1.0) * Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }   // #19
       if (gr) Z.hlPost.push(gval("g_w", s.level) * ((gr.w ?? 3) - 3));
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
-      if (p.kind === "CH" && s.same_side) Z.hlPost.push(0.2);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       if (isOffspeed(p.kind) && (q.startsWith("up") || q === "middle")) Z.hlPost.push(0.4);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
-      Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * HBP_LOC[q] * (z === "noncomp" ? 1.0 : 0.1)) : 0;
+      Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
       zones.push(Z);
     }
@@ -420,63 +401,8 @@
   }
 
   // ---------------------------------------------------------------- situation terms
-  function inPlayValue(contact, outs, bases, level) {
-    const [b1, b2, b3] = bases;
-    const [po, p1, p2, p3, phr, pe] = D.IN_PLAY[level][contact];
-    const epv = (o, b, r) => r + re(o, b, level);
-    let total = 0.0, vOut;
-    if (outs + 1 >= 3) vOut = 0.0;
-    else {
-      const dp = (b1 && contact === "weak" && outs < 2) ? 0.20 : 0.0;
-      const vDp = outs + 2 >= 3 ? 0.0 : epv(outs + 2, [false, b2, b3], 0);
-      const vReg = b3 ? 0.4 * epv(outs + 1, [b1, b2, false], 1) + 0.6 * epv(outs + 1, bases, 0) : epv(outs + 1, bases, 0);
-      vOut = dp * vDp + (1 - dp) * vReg;
-    }
-    total += po * vOut;
-    let runs = b3 ? 1 : 0, v1;
-    if (b2) v1 = 0.55 * epv(outs, [true, b1, false], runs + 1) + 0.45 * epv(outs, [true, b1, true], runs);
-    else v1 = epv(outs, [true, b1, false], runs);
-    total += (p1 + pe) * v1;
-    runs = (b2 ? 1 : 0) + (b3 ? 1 : 0);
-    let v2;
-    if (b1) v2 = 0.4 * epv(outs, [false, true, false], runs + 1) + 0.6 * epv(outs, [false, true, true], runs);
-    else v2 = epv(outs, [false, true, false], runs);
-    total += p2 * v2;
-    total += p3 * epv(outs, [false, false, true], +b1 + +b2 + +b3);
-    total += phr * epv(outs, [false, false, false], +b1 + +b2 + +b3 + 1);
-    return total;
-  }
-  function walkValue(outs, bases, level) {
-    const [b1, b2, b3] = bases;
-    const runs = (b1 && b2 && b3) ? 1 : 0;
-    return runs + re(outs, [true, b1 || b2, b3 || (b1 && b2)], level);
-  }
-  function cost(p, q, s, arsenal, policy, cv, sit) {
-    const P = outcomeProbs(p, q, s, arsenal, policy, null, sit);
-    const b = s.balls, k = s.strikes, o = s.outs, B = s.bases, L = s.level;
-    const afterBall = (bases, runs) => (b + 1 === 4 ? runs + walkValue(o, bases, L) : runs + V(b + 1, k, o, bases, cv, L));
-    const afterStrike = () => (k + 1 === 3 ? re(o + 1, B, L) : V(b, k + 1, o, B, cv, L));
-    let v = 0.0;
-    v += P.ball * afterBall(B, 0);
-    const nb = [false, B[0], B[1]], r = B[2] ? 1 : 0;
-    v += P.wp_ball * afterBall(nb, r);
-    v += P.hbp * walkValue(o, B, L);
-    v += (P.cstrike + P.whiff) * afterStrike();
-    v += P.foul * (k < 2 ? V(b, k + 1, o, B, cv, L) : V(b, k, o, B, cv, L));
-    for (const c of ["weak", "solid", "hard"]) v += P[c] * inPlayValueTyped(c, p, q, s);
-    return [v, P];
-  }
 
   // ---------------------------------------------------------------- decision rule
-  function softmax(costs, temp, window, best) {   // costs: array of [key, cost] in insertion order
-    if (best === undefined || best === null) best = Math.min(...costs.map((c) => c[1]));
-    const keep = costs.filter((c) => c[1] - best <= window);
-    if (!keep.length) return [];
-    const mk = Math.min(...keep.map((c) => c[1]));
-    const w = keep.map((c) => [c[0], Math.exp(-(c[1] - mk) / temp)]);
-    let t = 0; for (const x of w) t += x[1];
-    return w.map((x) => [x[0], x[1] / t]);
-  }
   function candidates(arsenal, s, forced) {
     const cutoff = D.LEVEL[s.level].cutoff;
     let c = arsenal.filter((x) => x.conf >= cutoff || (forced && x.name === forced));
@@ -492,67 +418,15 @@
   function stakesFactor(b, k, level) {
     if (!D.LW[level]) return 1.0;
     if (b === 3 && k === 0) return 0.5;   // v0.7c (Drew): 3-0 gets the tightest setting, like 3-2 (engine.py)
+    if ((b === 0 || b === 1) && k === 0) return 0.9;   // v1.0 D7 (Drew, Nov 10): 0-0 and 1-0 tightened (engine.py)
+    if (b === 3 && k === 1) return 1.3;   // v1.0 D1 (Drew, Nov 10): 3-1 moderate mix, top call ~55-70% (engine.py)
     let avg = 0; for (const [b_, k_] of COUNTS) avg += countStakes(b_, k_, level);
     avg /= COUNTS.length;
     return Math.min(1.5, Math.max(0.5, avg / countStakes(b, k, level)));
   }
   const ck = (name, q) => name + "|" + q;
 
-  function mixedPolicy(arsenal, s, T = 0.010, window = 0.030, forced = null, iters = 8, cv = null) {
-    const cands = candidates(arsenal, s, forced);
-    const k = runScale(s.level);
-    const f = stakesFactor(s.balls, s.strikes, s.level);
-    T = T * k; window = window * k * Math.min(1.0, f);
-    const temp = T * (isBigSpot(s) ? 0.5 : 1.0) * f;
-    let policy = null, costs = null;
-    for (let it = 0; it < iters; it++) {
-      costs = new Map();
-      for (const p of cands) for (const q of QUADS) costs.set(ck(p.name, q), cost(p, q, s, arsenal, policy, cv)[0]);
-      const tq = targets(s.balls, s.strikes);
-      const bestBy = cands.map((p) => [p.name, Math.min(...tq.map((q) => costs.get(ck(p.name, q))))]);
-      const pp = new Map(softmax(bestBy, temp, window));
-      const nw = {}; for (const x of arsenal) nw[x.name] = pp.get(x.name) || 0.0;
-      if (policy === null) policy = nw;
-      else { const m = {}; for (const kk in nw) m[kk] = 0.5 * policy[kk] + 0.5 * nw[kk]; policy = m; }
-    }
-    return [policy, costs, temp];
-  }
-  const minAllowed = (costs, tq) => { let m = Infinity; for (const [key, v] of costs) if (tq.includes(key.slice(key.lastIndexOf("|") + 1)) && v < m) m = v; return m; };
 
-  function atBatValues(arsenal, s, T = 0.010, window = 0.030, sweeps = 10, iters = 4) {
-    const cv = Object.assign({}, D.CV[s.level]);
-    const base = re(s.outs, s.bases, s.level);
-    const order = COUNTS.slice().sort((a, b) => -(a[0] + a[1]) + (b[0] + b[1]));   // stable: same as Python
-    for (let sw = 0; sw < sweeps; sw++) {
-      let delta = 0.0;
-      for (const [b, k] of order) {
-        const same = b === s.balls && k === s.strikes;
-        const sc = replace(s, { balls: b, strikes: k, last: same ? s.last : null, usage_this_count: same ? s.usage_this_count : {} });
-        const [policy, costs, temp] = mixedPolicy(arsenal, sc, T, window, null, iters, cv);
-        let ev = 0.0;
-        const tq = targets(b, k), bestOk = minAllowed(costs, tq);
-        for (const name in policy) {
-          const pp = policy[name];
-          if (pp <= 0) continue;
-          let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
-            LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(b, k, s.level)), bestOk);
-          if (!loc.length) {
-            let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
-            loc = [[bq, 1.0]];
-          }
-          let sub = 0; for (const [q, pq] of loc) sub += pq * costs.get(ck(name, q));
-          ev += pp * sub;
-        }
-        const nv = ev - base;
-        delta = Math.max(delta, Math.abs(nv - cv[cvKey(b, k)]));
-        cv[cvKey(b, k)] = nv;
-      }
-      if (delta < 0.001) break;
-    }
-    const zero = cv["0-0"], rel = {};
-    for (const key in cv) rel[key] = cv[key] - zero;
-    return [rel, cv];
-  }
 
   const KINDS = ["FB", "SL", "CB", "CH"];
   function checkInputs(arsenal, s) {   // v0.7c: impossible input gets a clear error, not a crash or a silent empty call
@@ -566,51 +440,7 @@
     if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
   }
 
-  function callMixed(arsenal, s, opts = {}) {
-    checkInputs(arsenal, s);
-    const T = opts.T ?? 0.010, window = opts.window ?? 0.030, forced = opts.forced ?? null, iters = opts.iters ?? 8;
-    const rng = opts.rng || Math.random, atBat = opts.atBat ?? true;
-    const cv = atBat ? atBatValues(arsenal, s, T, window)[1] : null;
-    const [policy, costs, temp] = mixedPolicy(arsenal, s, T, window, forced, iters, cv);
-    let pPitch = Object.entries(policy).filter(([, v]) => v > 0.005);
-    let t = 0; for (const [, v] of pPitch) t += v;
-    pPitch = pPitch.map(([kk, v]) => [kk, v / t]);
-    const dist = [];
-    const tq = targets(s.balls, s.strikes), overall = minAllowed(costs, tq);
-    for (const [name, pp] of pPitch) {
-      let loc = softmax(tq.map((q) => [q, costs.get(ck(name, q))]), temp,
-        LOC_WINDOW * runScale(s.level) * Math.min(1.0, stakesFactor(s.balls, s.strikes, s.level)), overall);
-      if (!loc.length) {
-        let bq = tq[0]; for (const q of tq) if (costs.get(ck(name, q)) < costs.get(ck(name, bq))) bq = q;
-        loc = [[bq, 1.0]];
-      }
-      const p = arsenal.find((x) => x.name === name);
-      for (const [q, pq] of loc) dist.push({ prob: pp * pq, cost: costs.get(ck(name, q)), pitch: p, quad: q });
-    }
-    if (opts.exclude && opts.exclude.length) {   // never re-call what he just shook off (unless nothing else is left)
-      const kept = dist.filter((d) => !opts.exclude.some(([n, q]) => d.pitch.name === n && d.quad === q));
-      if (kept.length) { const t_ = kept.reduce((a, d) => a + d.prob, 0); dist.length = 0; for (const d of kept) dist.push(Object.assign(d, { prob: d.prob / t_ })); }
-    }
-    dist.sort((a, b) => b.prob - a.prob);
-    const r = rng();
-    let acc = 0.0;
-    for (const d of dist) { acc += d.prob; if (r <= acc) return { pick: d, dist, best: overall, policy }; }
-    return { pick: dist[dist.length - 1], dist, best: overall, policy };
-  }
 
-  function gradeCall(arsenal, s, pitchName, quad, opts = {}) {
-    const { dist } = callMixed(arsenal, s, opts);
-    // v0.7c: scored the way the call is made: count values solved for this matchup, and only the targets allowed here
-    const cv = (opts.atBat ?? true) ? atBatValues(arsenal, s)[1] : null;
-    const [policy, costs] = mixedPolicy(arsenal, s, 0.010, 0.030, null, 8, cv);
-    const p = arsenal.find((x) => x.name === pitchName);
-    const cHuman = costs.has(ck(pitchName, quad)) ? costs.get(ck(pitchName, quad)) : cost(p, quad, s, arsenal, policy, cv)[0];
-    const tq = targets(s.balls, s.strikes), best = minAllowed(costs, tq), allowed = tq.includes(quad);
-    let prob = 0; for (const d of dist) if (d.pitch.name === pitchName && d.quad === quad) prob += d.prob;
-    return { call: pitchName + " " + quad, engine_prob: prob, runs_vs_best: cHuman - best, allowed,
-      verdict: !allowed ? "costly" : prob >= 0.02 ? "in the engine's mix" : (cHuman - best <= 0.03 * runScale(s.level) ? "close" : "costly"),
-      engine_top: dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
-  }
 
   // ---------------------------------------------------------------- "time for a change" (flags.py)
   function pitcherStatus(arsenal, level, pitchCount, recent) {
@@ -655,7 +485,7 @@
     RUN_GAME = {}, WE = null;
   let GRADES_OVERRIDE = null;
   const HEIGHTS = ["up", "middle", "down"];            // amendment A1
-  const Y_TARGET = { "up-in": 3.2, "up-away": 3.2, middle: 2.5, "down-in": 1.8, "down-away": 1.8 };
+  const Y_TARGET = { "up-in": 3.2, "up-away": 3.2, middle: 2.5, "down-in": 1.8, "down-away": 1.8, "down-middle": 1.8 };
   const V_CENTERS = [1.00, 0.94, 0.88], Y_CENTERS = [3.0, 2.0];
   const QRE_ITERS = 3000, QRE_TOL = 1e-3, QRE_WMIN = 0.002, TAPER = 0.2;
   const B_TYPES = ["GB", "LD", "FB", "PU"];
@@ -664,7 +494,7 @@
     KAPPA_FIT = v.KAPPA_FIT && Object.keys(v.KAPPA_FIT).length ? v.KAPPA_FIT : null;
     SIM = v.SIM; OUT_TABLE = v.OUT_TABLE; RUNNER_FIT = v.RUNNER_FIT; HITTER_SPREAD = v.HITTER_SPREAD || {}; RUN_GAME = v.RUN_GAME;
     WE = D.WE || null;
-    for (const t of [OUT_TABLE, RUNNER_FIT, HITTER_SPREAD, RUN_GAME, SIM.A_BAR || {}, SIM.I_BAR_UMP || {}, SIM.I0_GRADE || {}, SIM.T_unc || {}])
+    for (const t of [OUT_TABLE, RUNNER_FIT, HITTER_SPREAD, RUN_GAME, SIM.A_BAR || {}, SIM.I_BAR_UMP || {}, SIM.I0_GRADE || {}])
       if (t.hs && !t.travel) t.travel = t.hs;
   }
   const SIGMA_PARSE = new WeakMap();   // speed only: a sit mix's [name, height, prob] list, parsed once
@@ -712,7 +542,7 @@
   function timingB(p, q, s, vSit) {
     const vHat = s.look ? s.look[0] : vSit;
     const vt = (1 - P08.alpha) * vHat + P08.alpha * vSit;
-    const vp = speedToday(p, s) + 0.5 * EV_ADJ[q];
+    const vp = speedToday(p, s) + 0.5 * evAdj(p, q);
     const r = (vt - vp) / vt;
     const sr = Math.min(1.0, Math.max(0.0, (Math.abs(r) - P08.dead) / P08.ramp));
     if (r < 0) return P08.fast_mult * sr;
@@ -723,20 +553,21 @@
   function pairTerms(p, q, s, arsenal) {
     const yHat = s.look ? s.look[1] : 2.5;
     const ey = gMod((p.kind === "FB" ? 1 : -1) * (yTarget(q, p.kind) - yHat), P08.dstar_E);
-    let w = P08.beta_E * ey, sw = P08.beta_E_S * ey;
+    const rho = RHO_L[s.level] ?? 1.0;   // v1.0 #19: eye level and tunneling scale by RHO_L
+    let w = rho * (P08.beta_E * ey), sw = rho * (P08.beta_E_S * ey);
     if (s.last) {
       const last = byName(arsenal, s.last[0]);
       const lq = s.last[1], res = s.last.length > 2 ? s.last[2] : null;
       if (last) {
         if (last.name === p.name) {
           if (res === "whiff") w += lq === q ? P08.rep_whiff_same : P08.rep_whiff_other;
-          else if (lq === q) w += P08.rep_same_spot;
+          else if (lq === q && res !== "ball" && res !== "cstrike") w += P08.rep_same_spot;   // v1.0 D8
         } else {
           const ts = tunnelScore(last, lq, p, q, s.same_side), dTun = ts[1], dPlate = ts[3];
           const dRel = ((last.release_offset_in[0] - p.release_offset_in[0]) ** 2 + (last.release_offset_in[1] - p.release_offset_in[1]) ** 2) ** 0.5;
           const tun = Math.max(-1.0, Math.min(1.0, Math.exp(-dTun / 6) * gMod(dPlate, 18) - dRel / 8));
           const kap = (p.kind === "SL" || p.kind === "CB") ? P08.kappa_brk : 1.0;
-          w += kap * P08.beta_tun * tun; sw += kap * P08.beta_tun * tun;
+          w += rho * (kap * P08.beta_tun_whiff * tun); sw += rho * (kap * P08.beta_tun_chase * tun);   // v1.0 D5
         }
       }
     }
@@ -755,8 +586,9 @@
     return (1 - w.omega) * base + w.omega * (w.WE0 - we) / w.m0;
   }
   function gbRate(p) {
-    if (p.kind === "FB") return ({ sink: 0.495, cut: 0.430 })[p.shape] ?? 0.379;
-    return ({ SL: 0.439, CB: 0.487, CH: 0.478 })[p.kind];
+    const g = TYPED.gb;   // v1.0 #16: fitted ground-ball rates (fit_v08.json results.gb_types, exported with TYPED)
+    if (p.kind === "FB") return (p.shape === "sink" || p.shape === "cut") ? g[p.shape] : g["4-seam"];
+    return g[p.kind];
   }
   function typeMix(p, q, c) {
     const g = sig(logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c]);
@@ -774,6 +606,7 @@
     for (const t of B_TYPES) {
       let [po, p1, p2, p3, phr, pe] = tab[t];
       if (dh && phr > 0 && phr < 1) { const nhr = sig(logit(phr) + dh); po = Math.max(0.0, po - (nhr - phr)); phr = nhr; }   // item 8
+      if (s.infield_in && t === "GB") { const sh = Math.min(po, TYPED.gb_babip_in); po -= sh; p1 += sh; }   // v1.0 #12: infield in, more singles
       let vOut;
       if (o + 1 >= 3) vOut = ev(3, [false, false, false], 0);
       else {
@@ -808,33 +641,6 @@
     }
     return total;
   }
-  function inPlayValueEv(contact, s) {   // v0.7c in_play_value with every PA end through vEnd
-    if (!(s.win && s.win.omega > 0)) return inPlayValue(contact, s.outs, s.bases, s.level);
-    const outs = s.outs, bases = s.bases, [b1, b2, b3] = bases;
-    const [po, p1, p2, p3, phr, pe] = D.IN_PLAY[s.level][contact];
-    const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
-    let total = 0.0, vOut;
-    if (outs + 1 >= 3) vOut = ev(3, [false, false, false], 0);
-    else {
-      const dp = (b1 && contact === "weak" && outs < 2) ? 0.20 : 0.0;
-      const vDp = outs + 2 >= 3 ? ev(3, [false, false, false], 0) : ev(outs + 2, [false, b2, b3], 0);
-      const vReg = b3 ? 0.4 * ev(outs + 1, [b1, b2, false], 1) + 0.6 * ev(outs + 1, bases, 0) : ev(outs + 1, bases, 0);
-      vOut = dp * vDp + (1 - dp) * vReg;
-    }
-    total += po * vOut;
-    let runs = b3 ? 1 : 0, v1;
-    if (b2) v1 = 0.55 * ev(outs, [true, b1, false], runs + 1) + 0.45 * ev(outs, [true, b1, true], runs);
-    else v1 = ev(outs, [true, b1, false], runs);
-    total += (p1 + pe) * v1;
-    runs = (b2 ? 1 : 0) + (b3 ? 1 : 0);
-    let v2;
-    if (b1) v2 = 0.4 * ev(outs, [false, true, false], runs + 1) + 0.6 * ev(outs, [false, true, true], runs);
-    else v2 = ev(outs, [false, true, false], runs);
-    total += p2 * v2;
-    total += p3 * ev(outs, [false, false, true], +b1 + +b2 + +b3);
-    total += phr * ev(outs, [false, false, false], +b1 + +b2 + +b3 + 1);
-    return total;
-  }
 
   // ---------------------------------------------------------------- 2.3 sit game
   function sitPayoff(M, ks, pi) {
@@ -856,13 +662,9 @@
     let mx = -Infinity; for (const k of ks) if (cb[k] > mx) mx = cb[k];
     return mx - psum(ks.map((k) => sigma[k] * cb[k]));
   }
-  function temperature(arsenal, s) {
+  function temperature(arsenal, s) {   // v1.0 #18: no uncertainty floor (it never bound)
     const k_ = runScale(s.level), f = stakesFactor(s.balls, s.strikes, s.level);
-    let t = 0.010 * k_ * (isBigSpot(s) ? 0.5 : 1.0) * f;
-    const size = ({ 2: "two", 3: "three" })[arsenal.length] || "four";
-    const tu = (((SIM.T_unc || {})[s.level] || {})[size] || {})[cntKey(s.balls, s.strikes)];
-    if (tu !== undefined && tu !== null) t = Math.max(t, tu);
-    return t;
+    return 0.010 * k_ * (isBigSpot(s) ? 0.5 : 1.0) * f;
   }
   function windows(s) {
     const k_ = runScale(s.level), f = Math.min(1.0, stakesFactor(s.balls, s.strikes, s.level));
@@ -1009,21 +811,27 @@
     res = -Infinity; for (let k = 0; k < nK; k++) res = Math.max(res, Math.abs(sg[k] - f[k]));
     return out(sg, res);
   }
-  // v0.9 item 9: a pitch that isn't landing today is not called in the zone (engine.py not_landing)
-  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = 0.40;
-  function notLanding(p, s) { const [est, , n] = landingEstimate(p, s); return n >= LAND_BLOCK_N && est <= LAND_BLOCK_EST; }
+  // v0.9 item 9: a pitch that isn't landing today gives way when he is behind in the count or at 0-0 (engine.py
+  // not_landing, land_block_count; v1.0 Step 7, Drew: otherwise it is still callable at any spot, for a strike too)
+  const landBlockCount = (s) => s.balls > s.strikes || (s.balls === 0 && s.strikes === 0);
+  const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15, LAND_BLOCK_K = 5.0;   // v1.0: a deviation from his own expectation; the
+  // block is a rule with its own shrinkage, so it doesn't move with the fitted LAND_K (v1.0 Step 5)
+  function notLanding(p, s) {
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || ev[ev.length - 1] < LAND_BLOCK_N) return false;
+    const [st, ex, n] = ev;
+    return (st - ex) / (LAND_BLOCK_K + n) <= LAND_BLOCK_EST;
+  }
+  // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
+  const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
   function allowedCalls(arsenal, s, exclude) {
-    const tq = targets(s.balls, s.strikes);
+    const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
-    for (const p of candidates(arsenal, s)) for (const q of tq) if (!(exclude && exclude.some(([n, qq]) => n === p.name && qq === q))) out.push(ck(p.name, q));
-    if (s.landing_today && Object.keys(s.landing_today).length && out.length) {
+    for (const p of candidates(arsenal, s)) if (!ex.has(p.name)) for (const q of tq) out.push(ck(p.name, q));
+    if (s.landing_today && Object.keys(s.landing_today).length && out.length && landBlockCount(s)) {
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
-      if (bad.size && bad.size !== names.size) {
-        const chaseOk = s.strikes === 2 && s.balls < 3;
-        const kept = out.filter((a) => !bad.has(skName(a)) || (chaseOk && skH(a) === "chase"));
-        if (kept.length) out = kept;
-      }
+      if (bad.size && bad.size !== names.size) out = out.filter((a) => !bad.has(skName(a)));
     }
     return out;
   }
@@ -1034,9 +842,20 @@
     let m = -Infinity; for (const x of (fbs.length ? fbs : arsenal)) m = Math.max(m, speedToday(x, s));
     return m;
   }
-  function lookUpdate(look, p, q, s) {
-    const lam = P08.lam, vp = speedToday(p, s) + 0.5 * EV_ADJ[q];
-    return [lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * yTarget(q, p.kind)];
+  // v1.0 #24: mirror of engine.py LOC_ROW_Y / look_update(y): the look follows the logged landing height when there is one
+  const LOC_ROW_Y = [3.8, 3.2, 2.5, 1.8, 1.2];
+  // v1.0 #7: mirror of engine.py loc_quad: the target a logged landing cell falls in (M2 keys earlier hard hits on it)
+  function locQuad(cell, kind, batterRight) {
+    const [r, c] = cell;
+    if (r === 2 && c === 2) return "middle";
+    if ((r === 4 && kind !== "FB") || (r === 0 && kind === "FB")) return "chase";
+    if (c === 2 && r >= 3) return "down-middle";   // low over the plate (v1.0 Step 7)
+    const inside = batterRight ? c <= 1 : c >= 3;
+    return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
+  }
+  function lookUpdate(look, p, q, s, y) {
+    const lam = P08.lam, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
+    return [lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * (y === undefined || y === null ? yTarget(q, p.kind) : y)];
   }
   function interpAxis(x, c) {
     if (x >= c[0]) return [[0, 1.0]];
@@ -1047,9 +866,9 @@
     }
   }
   function Table(arsenal, s) {
-    const looked = true, bins = [];      // 2.6: values carry the hitter's look
+    const bins = [];      // 2.6: values carry the hitter's look
     for (let iv = 0; iv < V_CENTERS.length; iv++) for (let iy = 0; iy < Y_CENTERS.length; iy++) bins.push(iv + "," + iy);
-    return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), looked, bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [] };
+    return { ars: arsenal, s0: s, vfb: vFb(arsenal, s), bins, V: {}, N: {}, sigma: {}, h0: null, sweeps: 0, residuals: [] };
   }
   function binLook(tab, bn) {
     if (bn === "none") return tab.h0;
@@ -1068,7 +887,6 @@
   const AXV = [0, 0, 0, 0], AXY = [0, 0, 0, 0];
   function tabValue(tab, b, k, look, which) {
     const t = (which === "N" ? tab.N : tab.V)[cntKey(b, k)];
-    if (!tab.looked) return t.none;
     axisW(look[0] / tab.vfb, V_CENTERS, AXV); axisW(look[1], Y_CENTERS, AXY);
     let tot = 0.0;
     for (let a = 0; a < 2; a++) {
@@ -1116,6 +934,47 @@
     }
     return [M, Mmy];
   }
+  // v1.0 D3: mirror of engine.py mashed(): a coaching rule (soft cost), separate from the fitted MM logits
+  const MASHED_N = 2;
+  const MASHED_PENALTY = 0.015;
+  function targetHeight(q, kind) { return q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && kind === "FB")) ? "up" : "down"; }
+  function mashed(p, q, s) {
+    const m = s.matchup;
+    if (!m || !Object.keys(m).length) return false;
+    const h = targetHeight(q, p.kind);
+    let n = 0; for (const x of QUADS) if (targetHeight(x, p.kind) === h) n += m["hard|" + p.kind + "|" + x] || 0;
+    return n >= MASHED_N;
+  }
+  // v1.0 Step 7: mirror of engine.py's ground-ball rule (a coach rule, not a fit)
+  const GB_RULE_BONUS = 0.005, GB_RULE_TARGETS = ["down-in", "down-away", "down-middle"];
+  const groundBallSpot = (s) => s.outs < 2 && (s.bases[0] || s.bases[2]) && s.balls < 3 && s.strikes < 2;
+  // v1.0 Step 7 (Drew): the coaching reads, each a named soft credit (engine.py COACH_RULE and coach_credit)
+  const COACH_RULE = { late_fb: 0.027, early_os: 0.02, crowd: 0.03, squared_up: 0.005, away: 0.01, went_back: 0.03, hot: 0.03, plus_opp: 0.015 };
+  const READ_T = 0.2, HOT_EST = 0.10, SIDE_TARGETS = { in: ["up-in", "down-in"], away: ["up-away", "down-away"] };
+  function landingHot(p, s) {
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || ev[ev.length - 1] < LAND_BLOCK_N) return false;
+    const [st, ex, n] = ev;
+    return (st - ex) / (LAND_BLOCK_K + n) >= HOT_EST;
+  }
+  function coachCredit(p, q, s) {
+    const R = COACH_RULE, fb = p.kind === "FB", tm = s.timing || {};
+    let c = 0;
+    if (fb && (tm.FB || 0) >= READ_T && ["up-in", "up-away", "down-in"].includes(q)) c += R.late_fb;
+    if (!fb && (tm.OS || 0) <= -READ_T && ["down-in", "down-away", "down-middle", "chase"].includes(q)) c += R.early_os;
+    if (fb && s.crowding && SIDE_TARGETS.in.includes(q)) c += R.crowd;
+    if (s.last && s.last.length > 3 && s.last[3] === "back" && s.last[0] === p.name && s.last[1] === q) c -= R.squared_up;
+    const m = s.matchup;
+    if (m && Object.keys(m).length) {
+      for (const [side, other] of [["in", "away"], ["away", "in"]]) {
+        if (SIDE_TARGETS[other].includes(q) && SIDE_TARGETS[side].some((x) => m["hard|" + p.kind + "|" + x])) c += R.away;
+      }
+      if (m["succ|" + p.kind + "|" + q]) c += R.went_back;
+    }
+    if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot;
+    if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
+    return c;
+  }
   function costFromP(p, q, s, tab, look, P, myopic) {
     const b = s.balls, k = s.strikes, o = s.outs, B = s.bases;
     const nl = myopic ? tab.h0 : lookUpdate(look, p, q, s);
@@ -1129,6 +988,10 @@
     v += P.foul * (k < 2 ? tv(b, k + 1) : tv(b, k));
     for (const c of ["weak", "solid", "hard"]) v += P[c] * ipvCached(tab, c, p, q, s);
     if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
+    if (s.matchup && mashed(p, q, s)) v += MASHED_PENALTY * runScale(s.level);   // v1.0 D3: mashed twice at this height today
+    if (GB_RULE_TARGETS.includes(q) && groundBallSpot(s)) v -= GB_RULE_BONUS * runScale(s.level);   // v1.0 Step 7: ground-ball rule
+    const cc = coachCredit(p, q, s);
+    if (cc) v -= cc * runScale(s.level);      // v1.0 Step 7: the coaching reads
     if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
@@ -1187,6 +1050,7 @@
   const PURE = new Map();
   const pureSit = (key) => { let r = PURE.get(key); if (!r) { r = ["pure", skName(key), skH(key)]; PURE.set(key, r); } return r; };
   function solveTable(arsenal, s, sweeps = 10, tol = 0.001) {
+    checkInputs(arsenal, s);   // v1.0 #9, as in solve_table
     const tab = Table(arsenal, s);
     const order = COUNTS.slice().sort((a, b) => -(a[0] + a[1]) + (b[0] + b[1]));
     const ks = sitOptions(arsenal);
@@ -1225,8 +1089,6 @@
     }
     return tab;
   }
-  // 6.3 the myopic guardrail window (runs x run scale); named only so the simulator can test a wider one (engine.py GUARD_DELTA)
-  const GUARD_DELTA = 0.010;
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {
     const ks = sitOptions(arsenal);
     const look = s.look || tab.h0;
@@ -1234,17 +1096,9 @@
     let calls = allowedCalls(arsenal, s, exclude);
     if (!calls.length) calls = allowedCalls(arsenal, s);
     const sL = replace(s, { look });
+    // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)
     let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
-    const sgTab = tab.sigma[cntKey(s.balls, s.strikes)];
-    {
-      const cmy = {}; for (const a of calls) cmy[a] = psum(ks.map((kk) => sgTab[kk] * Mmy[a][kk]));
-      let best = Infinity; for (const a of calls) if (cmy[a] < best) best = cmy[a];
-      const delta = GUARD_DELTA * runScale(s.level);
-      const keep = calls.filter((a) => cmy[a] - best <= delta);     // the guardrail: no call clearly worse on this pitch alone
-      const M2 = {};
-      for (const a of keep) M2[a] = (s.balls === 3 || !lookValue) ? Mmy[a] : M[a];
-      M = M2;
-    }
+    if (s.balls === 3 || !lookValue) M = Mmy;   // three-ball counts rank by myopic cost (no setups)
     const [pi, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
     return [pi, sg, full, res, M];
@@ -1278,21 +1132,21 @@
   function frozenInputs(arsenal, s) {
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
-    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|") };
+    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
+      infield_in: !!s.infield_in };
   }
-  function needsResolve(frozen, arsenal, s) {
+  function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
+    if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
     return Math.abs(s.ump_u - frozen.ump) > 0.20;
   }
-  function leanBh(arsenal, s, fooled = [], eta = 0.0) {   // 2.5
+  function leanBh(arsenal, s, fooled = []) {   // 2.5 (v1.0 #18: the eta damage lean shipped at 0 and is gone)
     const out = {};
     for (const key of sitOptions(arsenal)) {
       const p = byName(arsenal, skName(key)), c = p.kind === "FB" ? "FB" : "OS";
-      let v = 0.0;
-      if (eta && s.hitter_damage && c in s.hitter_damage) { const [d, nn] = s.hitter_damage[c]; v += eta * d * nn / (nn + 10); }
-      v += psum(fooled.filter((fc) => fc !== c).map(() => Math.log(1.3)));
+      const v = psum(fooled.filter((fc) => fc !== c).map(() => Math.log(1.3)));
       if (v) out[key] = v;
     }
     return out;
@@ -1385,46 +1239,82 @@
 
   // ---------------------------------------------------------------- 9 "why" line
   const WHY_PARAMS = { sit: ["sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS"], timing: ["beta_T", "gamma_T"],
-    "eye level": ["beta_E", "beta_E_S"], tunneling: ["beta_tun"], repeat: ["rep_whiff_same", "rep_whiff_other", "rep_same_spot"],
+    "eye level": ["beta_E", "beta_E_S"], tunneling: ["beta_tun_whiff", "beta_tun_chase"], repeat: ["rep_whiff_same", "rep_whiff_other", "rep_same_spot"],
     familiarity: ["phi_FB", "phi_OS"] };
   function rootCostPair(arsenal, s, tab, a, b, sigma, myopic) {
     const look = s.look || tab.h0, ks = sitOptions(arsenal);
     const c = (x) => psum(ks.filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
     return [c(a), c(b)];
   }
-  function whyLine(arsenal, s, tab, pick, info) {
-    const M = info.M, sigma = info.sigma, a = ck(pick.pitch.name, pick.quad);
-    const full = {}; for (const x in M) full[x] = psum(Object.keys(M[x]).map((k) => sigma[k] * M[x][k]));
-    const others = Object.keys(full).filter((x) => x !== a);
-    if (!others.length) return ["Only call allowed here", {}, null];
-    let b = others[0]; for (const x of others) if (full[x] < full[b]) b = x;
-    const base = full[a] - full[b], deltas = {};
-    for (const term in WHY_PARAMS) {
-      const saved = {}; for (const n of WHY_PARAMS[term]) saved[n] = P08[n];
-      let ca, cb;
-      try { for (const n of WHY_PARAMS[term]) P08[n] = 0.0; [ca, cb] = rootCostPair(arsenal, s, tab, a, b, sigma); } finally { Object.assign(P08, saved); }
-      deltas[term] = base - (ca - cb);
-    }
-    let [ca, cb] = rootCostPair(arsenal, s, tab, a, b, sigma, true);
-    deltas["look value"] = base - (ca - cb);
-    for (const [term, sOff] of [["situation", replace(s, { win: null })], ["umpire", replace(s, { ump_u: 0.0 })],
-      ["running game", replace(s, { steal: null })], ["grades", replace(s, { grades: null })]]) {
-      [ca, cb] = rootCostPair(arsenal, sOff, tab, a, b, sigma);
-      deltas[term] = base - (ca - cb);
-    }
-    let term = null; for (const t in deltas) if (term === null || deltas[t] < deltas[term]) term = t;
-    if (deltas[term] >= -1e-6) return ["Best call on its own merits", deltas, b];
+  // v1.0 Step 4 (#3): mirror of engine.py next_count_top: the engine's own top call at the count a strike leads to
+  function nextCountTop(arsenal, s, tab, pick, info, exclude) {
     const p = pick.pitch, q = pick.quad, look = s.look || tab.h0;
+    const P = outcomeProbs(p, q, replace(s, { look }), arsenal, null, null, ["mix", info.sigma]);
+    let res = "cstrike";
+    for (const r of ["whiff", "foul"]) if (P[r] > P[res]) res = r;
+    const seen = Object.assign({}, s.hitter_seen || {}); seen[p.name] = (seen[p.name] || 0) + 1;
+    const land = Object.assign({}, s.landing_today || {});
+    if (q !== "chase") land[p.name] = landingRecord(landingTriple(p, land[p.name]), true, expectedStrike(p, q, s, arsenal));
+    const sn = replace(s, { strikes: Math.min(2, s.strikes + 1), look: lookUpdate(look, p, q, s), last: [p.name, q, res],
+      hitter_seen: seen, landing_today: land, usage_this_count: {}, usage_by_call: {} });
+    const pi = rootCall(arsenal, sn, tab, exclude)[0];
+    let top = null; for (const x in pi) if (top === null || pi[x] > pi[top]) top = x;
+    return top;
+  }
+  // v1.0 Step 4 (#3): mirror of engine.py _explain: one comparison for the why line and the intent label
+  function explain(arsenal, s, tab, pick, info, exclude) {
+    const key = pick.pitch.name + "|" + pick.quad + "|" + [...(exclude || [])].map(String).sort().join(",");
+    info.explain = info.explain || {};
+    if (key in info.explain) return info.explain[key];
+    const sigma = info.sigma, p = pick.pitch, q = pick.quad, a = ck(p.name, q);
+    const allowed = Object.keys(info.M), calls = allowed.includes(a) ? allowed : allowed.concat([a]);
+    const my = s.balls === 3;
+    const cmy = {}; for (const x of calls) cmy[x] = rootCostOne(arsenal, s, tab, x, sigma, true);
+    let cful = cmy; if (!my) { cful = {}; for (const x of calls) cful[x] = rootCostOne(arsenal, s, tab, x, sigma, false); }
+    let bstar = allowed[0]; for (const x of allowed) if (cmy[x] < cmy[bstar]) bstar = x;
+    const others = allowed.filter((x) => x !== a);
+    let comp = null;
+    if (bstar !== a) comp = bstar;
+    else for (const x of others) if (comp === null || cmy[x] < cmy[comp]) comp = x;
+    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cful[a], cful[bstar], INTENT_E * runScale(s.level));
+    const deltas = {};
+    if (comp !== null) {
+      const base = cful[a] - cful[comp];
+      for (const term in WHY_PARAMS) {
+        const saved = {}; for (const n of WHY_PARAMS[term]) saved[n] = P08[n];
+        let ca, cb;
+        try { for (const n of WHY_PARAMS[term]) P08[n] = 0.0; [ca, cb] = rootCostPair(arsenal, s, tab, a, comp, sigma, my); } finally { Object.assign(P08, saved); }
+        deltas[term] = base - (ca - cb);
+      }
+      if (!my) deltas["look value"] = base - (cmy[a] - cmy[comp]);
+      for (const [term, sOff] of [["situation", replace(s, { win: null })], ["umpire", replace(s, { ump_u: 0.0 })],
+        ["running game", replace(s, { steal: null })], ["grades", replace(s, { grades: null })]]) {
+        const [ca, cb] = rootCostPair(arsenal, sOff, tab, a, comp, sigma, my);
+        deltas[term] = base - (ca - cb);
+      }
+    }
+    const nxt = label === "Setup" ? nextCountTop(arsenal, s, tab, pick, info, exclude) : null;
+    const out = { a, bstar, comp, cmy, cful, label, deltas, next: nxt };
+    info.explain[key] = out;
+    return out;
+  }
+  function whyLine(arsenal, s, tab, pick, info, exclude) {
+    const X = explain(arsenal, s, tab, pick, info, exclude), deltas = X.deltas, b = X.comp;
+    if (b === null) return ["Only call allowed here", {}, null];
+    let term;
+    if (X.label === "Setup") term = "look value";
+    else {
+      term = null; for (const t in deltas) if (t !== "look value" && (term === null || deltas[t] < deltas[term])) term = t;
+      if (deltas[term] >= -1e-6) return [X.cful[X.a] <= X.cful[b] + 1e-9 ? "Best call on its own merits" : "Mixed in so he can't sit on one pitch", deltas, b];
+    }
+    const p = pick.pitch, q = pick.quad, look = s.look || tab.h0, sigma = info.sigma;
     let line;
     if (term === "timing") {
       const vs = psum(Object.keys(sigma).map((k) => sigma[k] * speedToday(byName(arsenal, skName(k)), s)));
-      const vt = (1 - P08.alpha) * look[0] + P08.alpha * vs, vp = speedToday(p, s) + 0.5 * EV_ADJ[q];
+      const vt = (1 - P08.alpha) * look[0] + P08.alpha * vs, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
       line = `He's timed for ${vt.toFixed(0)} mph; this plays ${Math.abs(vt - vp).toFixed(0)} mph ${vt > vp ? "slower" : "faster"}`;
-    } else if (term === "look value") {
-      let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;
-      if (nxt === null) nxt = b;
-      line = `Sets up the ${skName(nxt).toLowerCase()} ${skH(nxt)}`;
-    } else if (term === "eye level") line = s.last ? `Changes his eye level after the ${s.last[0].toLowerCase()}` : "Changes his eye level";
+    } else if (term === "look value") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}`;
+    else if (term === "eye level") line = P08.beta_E < 0 ? "Stays at his eye level — a change costs here" : "Changes his eye level";
     else if (term === "familiarity") {
       const c_ = isOffspeed(byName(arsenal, skName(b)).kind) ? "OS" : "FB";
       line = `He's seen the ${skName(b).toLowerCase()} ${(s.familiar || {})[c_] || 0} times today`;
@@ -1434,7 +1324,7 @@
       let topT = null; for (const n in byT) if (topT === null || byT[n] > byT[topT]) topT = n;
       if (topT !== p.name) line = `He's sitting ${topT.toLowerCase()} (${Math.round(100 * byT[topT])}%)`;
       else {
-        let topH = null; for (const j in byH) if (!(q.startsWith(j) || (j === "middle" && q === "middle")) && (topH === null || byH[j] > byH[topH])) topH = j;
+        let topH = null; for (const j in byH) if (j !== targetHeight(q, p.kind) && (topH === null || byH[j] > byH[topH])) topH = j;
         line = `He's looking ${topH} (${Math.round(100 * byH[topH])}%)`;
       }
     } else if (term === "situation") line = (s.bases[2] && s.win && Math.abs(s.margin) <= 1) ? "Tying run on third: need a strikeout or a ground ball"
@@ -1449,8 +1339,12 @@
   // v0.9 item 4: intent labels. DISPLAY ONLY (mirror of engine.py intent_label): nothing here feeds back into a call.
   const INTENT_E = 0.0005;
   const INTENT_TERMS = ["timing", "eye level", "repeat", "tunneling"];
-  const INTENT_MECH = { timing: "of his timing", "eye level": "it changes his eye level", repeat: "he just saw it",
-    tunneling: "it tunnels off the last pitch" };
+  const INTENT_MECH = { timing: "of his timing", repeat: "he just saw it", tunneling: "it tunnels off the last pitch" };
+  function intentMechText(m) {
+    if (m === null) return "of the counts it leads to";
+    if (m === "eye level") return P08.beta_E < 0 ? "it stays at his eye level" : "it changes his eye level";
+    return INTENT_MECH[m];
+  }
   function intentFromCosts(balls, strikes, quad, cMyA, cMyBest, cA, cBest, e) {
     if (balls === 3 && strikes < 2) return "Get it over";
     if (strikes === 2) return quad === "chase" ? "Expand" : "Finish";
@@ -1462,37 +1356,20 @@
     return psum(sitOptions(arsenal).filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
   }
   function intentLabel(arsenal, s, tab, pick, info, exclude) {
-    const sigma = info.sigma, p = pick.pitch, q = pick.quad, a = ck(p.name, q);
-    let calls = allowedCalls(arsenal, s, exclude);
-    if (!calls.length) calls = allowedCalls(arsenal, s);
-    const cmy = {}; for (const x of calls) cmy[x] = rootCostOne(arsenal, s, tab, x, sigma, true);
-    let bstar = calls[0]; for (const x of calls) if (cmy[x] < cmy[bstar]) bstar = x;
-    if (!(a in cmy)) cmy[a] = rootCostOne(arsenal, s, tab, a, sigma, true);
-    const cA = rootCostOne(arsenal, s, tab, a, sigma, false), cB = rootCostOne(arsenal, s, tab, bstar, sigma, false);
-    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cA, cB, INTENT_E * runScale(s.level));
+    const X = explain(arsenal, s, tab, pick, info, exclude), p = pick.pitch, q = pick.quad, label = X.label;
     let mech = null;
-    if ((label === "Setup" || label === "Early off-zone") && bstar !== a) {
-      const base = cA - cB; let bestD = -1e-9;
-      for (const term of INTENT_TERMS) {
-        const names = WHY_PARAMS[term], saved = {}; for (const n of names) saved[n] = P08[n];
-        let d;
-        try { for (const n of names) P08[n] = 0.0; d = base - (rootCostOne(arsenal, s, tab, a, sigma, false) - rootCostOne(arsenal, s, tab, bstar, sigma, false)); }
-        finally { Object.assign(P08, saved); }
-        if (d < bestD) { bestD = d; mech = term; }
-      }
+    if ((label === "Setup" || label === "Early off-zone") && X.bstar !== X.a) {
+      let bestD = -1e-9;
+      for (const term of INTENT_TERMS) if (X.deltas[term] < bestD) { bestD = X.deltas[term]; mech = term; }
     }
-    const pl = p.name.toLowerCase(), why = (m) => (m === null ? "of the counts it leads to" : INTENT_MECH[m]);
+    const pl = p.name.toLowerCase();
     let line;
     if (label === "Get ahead") line = `Best strike here: ${pl} ${q}`;
     else if (label === "Get it over") line = `Need a strike: ${pl} ${q} is the safest one`;
-    else if (label === "Setup") {
-      const full = {}; for (const x in info.M) full[x] = psum(Object.keys(info.M[x]).map((k) => sigma[k] * info.M[x][k]));
-      let nxt = null; for (const x in full) if (skName(x) !== p.name && (nxt === null || full[x] < full[nxt])) nxt = x;
-      if (nxt === null) nxt = bstar;
-      line = `Sets up the ${skName(nxt).toLowerCase()} ${skH(nxt)}, because ${why(mech)}`;
-    } else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
+    else if (label === "Setup") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}, because ${intentMechText(mech)}`;
+    else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
     else if (label === "Finish") line = `Put-away: ${pl} ${q}`;
-    else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${why(mech)}` : "");
+    else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${intentMechText(mech)}` : "");
     return [label, mech, line];
   }
   function gradeCallV08(arsenal, s, pitchName, quad, tab, opts = {}) {
@@ -1510,14 +1387,15 @@
       engine_top: r.dist.slice(0, 3).map((d) => [d.pitch.name, d.quad, d.prob]) };
   }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
-    inPlayValueEv, sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
-    solveTable, tabValue, rootCall, callV08, rootCosts, cost08, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
-    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts,
+    sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
+    solveTable, tabValue, rootCall, callV08, coachCredit, COACH_RULE, rootCosts, cost08, LOC_ROW_Y, locQuad, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
+    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, nextCountTop,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
-  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, expectation, movement, tunnelScore, pairing,
-    outcomeProbs, cost, mixedPolicy, atBatValues, callMixed, gradeCall, candidates, stakesFactor, countStakes,
+  const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,
+    outcomeProbs, candidates, stakesFactor, countStakes,
     runScale, re, updateConfidence, effective, TRAIT_KEYS, regressConfidence, pitcherStatus, isOffspeed, isBigSpot, landingEstimate, wildToday,
+    expectedStrike, landingRecord, landingTriple, ballConfEvent,
     v08, callV08, solveTable, whyLine, intentLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;

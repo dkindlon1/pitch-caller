@@ -60,8 +60,11 @@ def eng(cls, z, b, k):
         for same in (True, False):
             p = e.Pitch("P", "FB" if cls == "FB" else "SL", grade=3, command=3, conf=0.6)
             s = e.Situation(b, k, 1, (False, False, False), level="mlb", same_side=same)
-            c, P = e.cost(p, "down-away", s, [p])
-            v0 = e.V(b, k, 1, (False, False, False), None, "mlb")
+            # v1.0 #18: the live cost (cost08) against this one-pitch at-bat table, relative to the count's own value
+            # there (was the retired v0.7c cost() against fixed MLB count values)
+            tab = e.solve_table([p], e.replace(s, balls=0, strikes=0))
+            c, P = e.cost08(p, "down-away", s, [p], tab, tab.h0, None)
+            v0 = tab.value(b, k, tab.h0)
             sw = P["whiff"] + P["foul"] + P["weak"] + P["solid"] + P["hard"]
             tk = P["ball"] + P["cstrike"] + P["wp_ball"]
             bip = P["weak"] + P["solid"] + P["hard"]

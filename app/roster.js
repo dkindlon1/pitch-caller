@@ -80,7 +80,7 @@ async function refreshLineupMemory() {
   const k = G().know; let redo = false;
   S.setup.lineup.forEach((b, i) => {
     const e = k[String(i)], m = b.hitterId && hModel(b.hitterId);
-    if (e && m && !Object.keys(e.seen).length) { e.damage = PCLearner.seedDamage(m, 8, true); if (i === slotIdx()) redo = true; }
+    if (e && m && !Object.keys(e.seen).length) { e.seed = PCLearner.seedDamage(m, 8, hitterGrades(b) !== null); e.damage = Object.assign({}, e.seed); if (i === slotIdx()) redo = true; }   // v1.0 #20, #7
   });
   if (redo && G().call && !G().call.coach && !G().inningOver) makeCall();
 }

@@ -1,0 +1,152 @@
+{
+ "D_whiff": {
+  "label": "whiff | swing",
+  "beta": [
+   -1.6594047770685703
+  ],
+  "se": [
+   0.2508951384208586
+  ],
+  "gain": 0.00031139510150325893,
+  "sd": 9.041595642349981e-05,
+  "ship": false,
+  "ci_excludes_zero": true,
+  "report_only": true,
+  "n_train": 82354
+ },
+ "D_hard": {
+  "label": "hard | ball in play",
+  "beta": [
+   0.3251225433097106
+  ],
+  "se": [
+   0.3176624306121359
+  ],
+  "gain": 1.2264811768129567e-06,
+  "sd": 3.7261208713863454e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 30115
+ },
+ "M1_whiff_nodmg": {
+  "label": "M1 whiff | swing",
+  "beta": [
+   0.10736315820348345
+  ],
+  "se": [
+   0.021572355277243306
+  ],
+  "gain": 0.0003545464605647267,
+  "sd": 6.833202031517571e-05,
+  "ship": false,
+  "ci_excludes_zero": true,
+  "report_only": true,
+  "n_train": 82354
+ },
+ "M2_whiff_nodmg": {
+  "label": "M2 whiff | swing",
+  "beta": [
+   -0.34575142376769086
+  ],
+  "se": [
+   0.09349584988753891
+  ],
+  "gain": 0.00015477234009497664,
+  "sd": 4.8192569526293966e-05,
+  "ship": false,
+  "ci_excludes_zero": true,
+  "report_only": true,
+  "n_train": 82354
+ },
+ "M1_whiff": {
+  "label": "M1 whiff | swing",
+  "beta": [
+   0.07870039467752893
+  ],
+  "se": [
+   0.022086663305275027
+  ],
+  "gain": 0.00020938063972134727,
+  "sd": 4.7677059943816035e-05,
+  "ship": true,
+  "ci_excludes_zero": true,
+  "report_only": false,
+  "n_train": 82354
+ },
+ "M1_hard": {
+  "label": "M1 hard | ball in play",
+  "beta": [
+   -0.003815540072928834
+  ],
+  "se": [
+   0.029944749200743016
+  ],
+  "gain": 0.00012112593341610048,
+  "sd": 7.40611445655248e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": false,
+  "n_train": 30115
+ },
+ "M2_whiff": {
+  "label": "M2 whiff | swing",
+  "beta": [
+   -0.2403584359732327
+  ],
+  "se": [
+   0.09463314662260223
+  ],
+  "gain": 8.061377099703918e-05,
+  "sd": 3.093752921991713e-05,
+  "ship": true,
+  "ci_excludes_zero": true,
+  "report_only": false,
+  "n_train": 82354
+ },
+ "M2_hard": {
+  "label": "M2 hard | ball in play",
+  "beta": [
+   0.14463805427844534
+  ],
+  "se": [
+   0.09887409271220347
+  ],
+  "gain": 0.00011539158960478194,
+  "sd": 5.762264856689635e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": false,
+  "n_train": 30115
+ },
+ "D_whiff_given_MM": {
+  "label": "R5 damage, whiff | swing, given M1+M2",
+  "beta": [
+   -1.3274992242637926
+  ],
+  "se": [
+   0.26091371896492677
+  ],
+  "gain": 0.0001293794858831747,
+  "sd": 6.730102170317261e-05,
+  "ship": false,
+  "ci_excludes_zero": true,
+  "report_only": true,
+  "n_train": 82354
+ },
+ "D_hard_given_MM": {
+  "label": "R5 damage, hard | ball in play, given M1+M2",
+  "beta": [
+   0.2088174186199514
+  ],
+  "se": [
+   0.3348600369101815
+  ],
+  "gain": 6.711013949082754e-05,
+  "sd": 2.811667114823311e-05,
+  "ship": false,
+  "ci_excludes_zero": false,
+  "report_only": true,
+  "n_train": 30115
+ }
+}

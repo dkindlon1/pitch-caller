@@ -27,9 +27,12 @@ function valueOf(trait, size, onPitch = "Fastball", mod = null) {
     const mk = (withTrait) => pitches.map((p) => E.Pitch(Object.assign({ name: p.name, kind: p.kind, shape: p.shape, velo: p.velo, grade: 3, command: 3, conf: 0.7, base_conf: 0.7,
       traits: withTrait && p.name === onPitch && !mod ? { [trait]: size } : null }, withTrait && p.name === onPitch && mod ? mod : {})));
     const truth = mk(true), believed = mk(false);
-    const costTrue = new Map(); for (const p of truth) for (const q of E.QUADS) costTrue.set(p.name + "|" + q, E.cost(p, q, s, truth)[0]);
+    // v1.0 #18: the live costs (rootCosts over each world's own at-bat table); was the retired v0.7c E.cost
+    const live = (ars) => { const tab = E.v08.solveTable(ars, Object.assign({}, s, { balls: 0, strikes: 0, last: null })); return E.v08.rootCosts(ars, s, tab); };
+    const ct = live(truth), cb = live(believed);
+    const costTrue = new Map(Object.entries(ct));
     let bestB = null, bestBv = Infinity, bestT = Infinity;
-    for (const p of believed) for (const q of E.QUADS) { const c = E.cost(p, q, s, believed)[0]; if (c < bestBv) { bestBv = c; bestB = p.name + "|" + q; } }
+    for (const k in cb) if (cb[k] < bestBv) { bestBv = cb[k]; bestB = k; }
     for (const v of costTrue.values()) bestT = Math.min(bestT, v);
     lost += costTrue.get(bestB) - bestT; n++;
   }

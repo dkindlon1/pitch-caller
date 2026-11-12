@@ -16,5 +16,7 @@ for name, code in (("engine.js", eng), ("modules", modules), ("roster.js", roste
     assert "</script" not in code.lower(), name
 out = src.replace("/*__ENGINE__*/", eng).replace("/*__DATA__*/", data).replace("/*__MODULES__*/", modules).replace("/*__ROSTER__*/", roster).replace("/*__WORKER__*/", worker)
 os.makedirs("dist", exist_ok=True)
-open("dist/pitch-caller.html", "w").write(out)
+# newline=LF on every platform, so the committed page (and the app/dist freshness check in
+# scripts/test-app.sh) is byte-identical whether the build runs on Linux CI or on Windows
+open("dist/pitch-caller.html", "w", newline="\n").write(out)
 print("built", len(out) // 1024, "KB")

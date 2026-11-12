@@ -192,7 +192,7 @@ console.log("8. Hitter memory: a fastball masher across two games makes the engi
   const ars = arsenal(TRUE);
   const share = (dmg) => {
     const s = E.Situation({ balls: 1, strikes: 1, outs: 1, bases: [false, false, false], level: "college_d3", same_side: true, hitter_damage: dmg, timing: {}, landing_today: {} });
-    const r = E.callMixed(ars, s, { rng: () => 0.5 });
+    const r = E.callV08(ars, s, { rng: () => 0.5 });   // v1.0 #18: the live call (was the retired v0.7c call)
     return r.dist.filter((d) => d.pitch.kind === "FB").reduce((a, d) => a + d.prob, 0);
   };
   const a = share({}), b = share(L.seedDamage(hm));

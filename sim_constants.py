@@ -2,8 +2,7 @@
 A_BAR (7.5): weighted geometric mean of the count zone area, weights = taken pitches per count in simulated games.
 I_BAR_UMP (7.5): average per-take information d^2/(p(1-p)) for a three-pitch reference arsenal.
 usage: python3 sim_constants.py runs/v07base/g*.csv"""
-# Nov 6: the engine is now one flag-free v0.9 engine. This script ran under the v0.7c settings when its data was made;
-# those settings no longer exist, so a rerun computes v0.9-based values.
+# The stored values were made under the v0.7c settings; a rerun computes them on the current engine (v1.0: call_v08).
 
 import csv, json, os, sys
 from math import exp, log
@@ -23,12 +22,23 @@ cons = json.load(open(path)) if os.path.exists(path) else {}
 cons["A_BAR"] = {}; cons["I_BAR_UMP"] = {}
 cons["TAKE_W"] = {f"{b}-{k}": n / tot for (b, k), n in sorted(takes.items())}   # count weights for centering kappa
 ars = ref_arsenals()["three"]
+_TABS = {}
+
+
+def live_dist(level, b, k):
+    """v1.0 #18: the live call's mix (call_v08, one at-bat table per level); was the retired v0.7c call path."""
+    s0 = e.Situation(0, 0, 0, (False, False, False), level=level)
+    if level not in _TABS:
+        _TABS[level] = e.solve_table(ars, s0)
+    return e.call_v08(ars, e.replace(s0, balls=b, strikes=k), rng=__import__("random").Random(0), tab=_TABS[level])[1]
+
+
 for level in ("hs", "college_d3", "college_d1", "mlb"):
     cons["A_BAR"][level] = a_bar
     num = den = 0.0
     for (b, k), n in takes.items():
         s = e.Situation(b, k, 0, (False, False, False), level=level)
-        _, dist = e.call_mixed(ars, s)
+        dist = live_dist(level, b, k)
         for pr, _, p, q in dist:
             P = e.outcome_probs(p, q, s, ars)
             pt = P["cstrike"] + P["ball"] + P["wp_ball"] + P["hbp"]
@@ -52,7 +62,7 @@ for level in ("hs", "college_d3", "college_d1", "mlb"):
     wt = sum(allp.values())
     for (b, k), n in allp.items():
         s = e.Situation(b, k, 0, (False, False, False), level=level)
-        _, dist = e.call_mixed(ars, s)
+        dist = live_dist(level, b, k)
         for pr, _, p, q in dist:
             P = e.outcome_probs(p, q, s, ars)
             gs = e.grade_stats(p, q, s, ars)

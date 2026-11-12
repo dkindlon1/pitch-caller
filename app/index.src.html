@@ -591,7 +591,7 @@ const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4 };                 // the standard cat
 const KCOLOR = { FB: "var(--fb)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
 const SHAPE_OPTS = { FB: ["ride", "run", "sink", "cut", ""], SL: ["tight", "sweeper", ""], CB: ["loopy", "sharp", ""], CH: ["fade", "drop", ""] };
 const SLOT_OPTS = ["over the top", "high three-quarter", "three-quarter", "low three-quarter", "sidearm", "submarine"];
-const LOC = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase" };
+const LOC = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 const GLYPH = { ball: "•", cstrike: "✓", whiff: "✓", foul: "F", play: "X", hbp: "H" };
 
 function sampleSetup() {
@@ -670,12 +670,14 @@ function arsenal() {
     // own number after "Keep mine", and a blank grade is the level average (D8). A stored served value from before a
     // re-grade can't get past this.
     const fin = PCLearner.clampServed(d, pd, sv && sv.learned ? sv : null);
+    // v1.0 Step 3: the strike rate is always recomputed on the engine's own scale (a stored served value may predate it),
+    // with the average pitcher's rate beside it for the confidence scaling
     const adj = sv && sv.learned ? { grade: fin.grade, command: fin.command, traits: sv.traits && Object.keys(sv.traits).length ? sv.traits : null,
-      strike_rate: fin.grade === sv.grade && fin.command === sv.command ? sv.strike_rate ?? null
-        : PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level) }
-      : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null };
+      strike_rate: PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level),
+      strike_ref: PCLearner.strikeRef(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo }, S.setup.level) }
+      : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null, strike_ref: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
-    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, conf: c === undefined ? feel : c,
+    return E.Pitch({ name: d.name, kind: d.kind, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
       ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0] });
   });
@@ -693,19 +695,35 @@ function know() {
   const k = G().know, i = String(slotIdx());
   if (!k[i]) {   // a hitter we've seen before starts with what we learned about him (capped, so tonight still matters most)
     const b = batterDef(), m = DB.ready && b && b.hitterId ? hModel(b.hitterId) : null;
-    k[i] = { timing: { FB: 0, OS: 0 }, damage: m ? PCLearner.seedDamage(m, 8, true) : {}, seen: {} };
+    // v1.0 #20: center the seed only when this hitter's grades are on (otherwise nothing carries his overall level).
+    // v1.0 #7: the engine reads only this cross-game seed; tonight's swings feed the matchup memory (mm), and `damage`
+    // keeps tonight's running read for the hitter card only.
+    const seed = m ? PCLearner.seedDamage(m, 8, hitterGrades(b) !== null) : {};
+    k[i] = { timing: { FB: 0, OS: 0 }, damage: Object.assign({}, seed), seed, seen: {} };
   }
   return k[i];
 }
 
+// v1.0 Step 3: the landing record per pitch is [strikes, expected strikes, pitches] (non-chase targets). A game saved
+// before v1.0 holds [strikes, pitches] pairs; the engine reads those once (E.landingTriple).
+function landTriple(name, l) {
+  if (!l || l.length !== 2) return l;
+  const d = (pitcherDef().pitches || []).find((x) => x.name === name);
+  return E.landingTriple({ kind: d ? d.kind : "FB" }, l);
+}
+function landToday(g) {
+  const out = {}, rec = (g.land || {})[pKey()] || {};
+  for (const [nm, l] of Object.entries(rec)) out[nm] = landTriple(nm, l);
+  return out;
+}
 function situation() {
   const g = G(), kn = know();
   return E.Situation({ balls: g.balls, strikes: g.strikes, outs: g.outs, bases: g.bases.slice(), inning: g.inning,
     margin: g.us - g.them, pitch_count: (g.pc[pKey()] || 0) + fatigueShift(pitcherDef()), batters_faced: g.bf[pKey()] || 0, level: S.setup.level,
     same_side: sameSide(), last: g.last, hitter_seen: Object.assign({}, kn.seen),
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
-    timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.damage),
-    landing_today: Object.assign({}, (g.land || {})[pKey()] || {}),
+    timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.seed || {}),   // v1.0 #7: cross-game seed only
+    landing_today: landToday(g),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
     ...v08Inputs() });
 }
@@ -713,8 +731,8 @@ function situation() {
 const hitterKey = () => { const b = batterDef() || {}; return b.hitterId || `g:${G().dbId || "local"}|${slotIdx()}|${b.name || ""}`; };
 function mmFor() { const m = ((G().mm || {})[pKey()] || {})[hitterKey()]; return m ? Object.assign({}, m) : {}; }
 function famFor() { const f = ((G().fam || {})[pKey()] || {})[hitterKey()]; return f ? { FB: f.FB || 0, OS: f.OS || 0 } : {}; }
-function hitterGrades() {   // coach's grades, then what's been learned (served) when there's enough of it
-  const b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
+function hitterGrades(bd) {   // coach's grades, then what's been learned (served) when there's enough of it (bd: a lineup slot; default the batter up)
+  const b = bd || batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
   const coach = Object.assign({}, (x && x.grades) || b.grades || {});
   const m = DB.ready && b.hitterId ? hModel(b.hitterId) : null;
   if (m && m.grades) for (const g of ["c", "w", "d"]) if (m.grades[g] && m.grades[g].served !== undefined && !m.grades[g].flag) coach[g] = m.grades[g].served;
@@ -776,12 +794,17 @@ function paTable(ars, s) {
   return paTab;
 }
 function makeCall() {
+  // No call once the third out is in (outs reads 3 until the next inning starts). A re-call scheduled by recall() can
+  // land after the inning-ending pitch, and a pitching change between innings calls this too; either asked the engine
+  // with 3 outs, which it rejects (seen as "impossible number of outs 3" in web/tests/offline_game_e2e.js, Nov 11).
+  if (G().inningOver) return;
   const ars = arsenal();
   let s = situation();
   const tab = paTable(ars, s);
   s = Object.assign({}, situation(), { look: G().pa.look });
   s.b_h = E.v08.leanBh(ars, s, G().pa.fooled);
-  const r = E.callV08(ars, s, { exclude: shakenNow, tab });
+  const shakenPA = G().pa.shaken || [];   // v1.0 #6 / D2: pitches shaken off this at-bat, any spot
+  const r = E.callV08(ars, s, { exclude: shakenPA, tab });
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
   const c = G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
     sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
@@ -789,9 +812,9 @@ function makeCall() {
   // spec 9: the "why" line runs after the call is shown, off the critical path
   setTimeout(() => {
     if (G().call !== c) return;
-    try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info)[0]; } catch (e) { c.why = null; }
+    try { c.why = E.whyLine(ars, r.info.s, tab, r.pick, r.info, shakenPA)[0]; } catch (e) { c.why = null; }
     // v0.9 item 4: the call's job in the at-bat (display only; computed after the call, changes nothing)
-    try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenNow); }
+    try { [c.intent, c.mechanism, c.intentLine] = E.intentLabel(ars, r.info.s, tab, r.pick, r.info, shakenPA); }
     catch (e) { c.intent = c.mechanism = c.intentLine = null; }
     save(); render();
   }, 0);
@@ -863,20 +886,27 @@ function record(res) {
   g.pc[pKey()] = (g.pc[pKey()] || 0) + 1;
   const kn = know();
   kn.seen[p.name] = (kn.seen[p.name] || 0) + 1;
-  g.land = g.land || {}; g.land[pKey()] = g.land[pKey()] || {};      // strikes per pitch today, for "is it landing"
-  const lt = g.land[pKey()][p.name] || [0, 0];
-  g.land[pKey()][p.name] = [lt[0] + (res.result === "ball" || res.result === "hbp" ? 0 : 1), lt[1] + 1];
+  g.land = g.land || {}; g.land[pKey()] = g.land[pKey()] || {};      // strikes vs his own expectation today, "is it landing"
+  if (call.quad !== "chase")   // v1.0 Step 3: chase targets stay out (a ball by design); expectation taken before the result
+    g.land[pKey()][p.name] = E.landingRecord(landTriple(p.name, g.land[pKey()][p.name]), !(res.result === "ball" || res.result === "hbp"),
+      E.expectedStrike(p, call.quad, sitNow, ars));
   const uk = g.balls + "-" + g.strikes; g.usage[uk] = g.usage[uk] || {}; g.usage[uk][p.name] = (g.usage[uk][p.name] || 0) + 1;
   {   // planning state: usage by call (2.3), the look (2.6), umpire takes (7.5), radar (8.1), this at-bat's class counts (5)
     const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
     uc[uk] = uc[uk] || {}; uc[uk][ck_] = (uc[uk][ck_] || 0) + 1;
-    if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow); g.pa.cls[cls]++; }
+    // v1.0 #24: the look moves toward where the catcher logged the pitch (row of the grid), else toward the called target
+    const yLoc = res.locCell ? E.v08.LOC_ROW_Y[res.locCell[0]] : undefined;
+    if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow, yLoc); g.pa.cls[cls]++; }
     if (["ball", "cstrike", "hbp"].includes(res.result) && evBase.v08) g.takes.push([res.result === "cstrike" ? 1 : 0, evBase.v08.ump[0], evBase.v08.ump[1]]);
     if (res.result === "whiff" && res.read === "fooled" && g.pa) g.pa.fooled.push(cls);
     if (g.pa) {   // v0.9 item 6: whiffs and called strikes by pitch class, hard contact by class and spot (simulate.py's mm)
       const hardHit = res.result === "play" && ((S.setup.inputs >= 2 && res.contact) ? res.contact === "hard" : ["2B", "3B", "HR"].includes(res.out));
-      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + call.quad : null;
-      if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1; }
+      // v1.0 #7: a hard hit is keyed on where the catcher logged it (as M2 was fitted), else on the called target
+      const bh = batterDef().hand, bRight = bh === "S" ? pitcherDef().hand !== "R" : bh !== "L";
+      const spot = res.locCell ? E.v08.locQuad(res.locCell, p.kind, bRight) : call.quad;
+      const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + spot : null;
+      if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1;
+        if (mk.startsWith("succ|")) { const k2 = mk + "|" + spot; m[k2] = (m[k2] || 0) + 1; } }   // v1.0 Step 7: and where (the went-back rule)
     }
     if (res.radar && +res.radar > 40) { const rr = (g.radar[pk] = g.radar[pk] || {}); (rr[p.name] = rr[p.name] || []).push(+res.radar); }
   }
@@ -886,10 +916,11 @@ function record(res) {
   const walkBases = () => { if (b[0] && b[1] && b[2]) runs++; g.bases = [true, b[0] || b[1], b[2] || (b[0] && b[1])]; };
 
   if (res.result === "ball") {
-    confEvent(ars, p.name, "ball"); g.balls++; text = "Ball";
+    { const ce = E.ballConfEvent(call.quad, res.loc); if (ce) confEvent(ars, p.name, ce); }   // v1.0 Step 3: chase balls
+    g.balls++; text = "Ball";
     if (g.balls === 4) { walkBases(); paEnd = "walk"; text = "Walk"; }
   } else if (res.result === "hbp") {
-    confEvent(ars, p.name, "ball"); walkBases(); paEnd = "hbp"; text = "Hit by pitch";
+    walkBases(); paEnd = "hbp"; text = "Hit by pitch";   // v1.0 Step 3: an HBP is no "ball" for his confidence
   } else if (res.result === "cstrike" || res.result === "whiff") {
     g.strikes++;
     if (res.result === "whiff") {
@@ -939,6 +970,7 @@ function record(res) {
     slot: slotIdx(), inning: g.inning, end: !!paEnd, p: g.pitcher, pid: pd0.id, res: res.result, out: res.out, contact: res.contact, read: res.read, loc: res.loc,
     thrown: crossed ? crossed.name : undefined, wp: res.wp, evId, on: !!(evBase.sit.bases && evBase.sit.bases.some(Boolean)) });
   g.last = [p.name, call.quad, res.result === "whiff" ? "whiff" : res.result];
+  if (res.result === "foul" && res.read === "back" && S.setup.inputs >= 3) g.last.push("back");   // v1.0 Step 7: he was on it (squared-up rule)
 
   if (paEnd) {
     const rk = pKey(); g.recent[rk] = g.recent[rk] || []; g.recent[rk].push(paEnd);
@@ -995,6 +1027,7 @@ function shakeOff() {
   const g = G(), ars = arsenal(); snapshot();
   confEvent(ars, g.call.pitch, "shakeoff"); storeConf(ars);
   shakenNow.push([g.call.pitch, g.call.quad]);
+  if (g.pa) { g.pa.shaken = g.pa.shaken || []; if (!g.pa.shaken.includes(g.call.pitch)) g.pa.shaken.push(g.call.pitch); }
   toast(`Shook off the ${g.call.pitch.toLowerCase()}. His confidence in it drops.`);
   pickMode = false; recall();
 }
@@ -1030,7 +1063,7 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 const pct = (x) => Math.round(x * 100) + "%";
 const ord = (n) => n + (["th", "st", "nd", "rd"][((n % 100) - 20) % 10] || ["th", "st", "nd", "rd"][n % 100] || "th");
-const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase it" };
+const SPOT = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase it", "down-middle": "Keep it down" };
 const spotLower = (q) => SPOT[q].toLowerCase();
 let fixing = false;
 
@@ -1168,7 +1201,7 @@ function callPanel() {
   const why = c.coach
     ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs more than the engine's best call here.` : "."]
     : [c.v08 && c.why ? h("b", { class: "whyline" }, c.why + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
-       c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
+       c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "down-middle" ? " Knee-high, over the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
   const call = h("div", { class: "call" },
     h("div", { class: "call-main" },
@@ -1197,12 +1230,12 @@ function callPanel() {
 
 function readout(name) {
   const d = pitcherDef().pitches.find((p) => p.name === name) || {}, p = arsenal().find((x) => x.name === name);
-  const l = ((G().land || {})[pKey()] || {})[name];
+  const l = landTriple(name, ((G().land || {})[pKey()] || {})[name]);
   const cellR = (k, v, u) => h("div", {}, h("span", { class: "k" }, k), h("span", { class: "v" }, v, u ? h("small", {}, u) : null));
   return h("div", { class: "readout", "aria-label": `About the ${name.toLowerCase()}` },
     cellR("Velo", +d.velo ? String(Math.round(+d.velo)) : "–", +d.velo ? "mph" : null),
     cellR("His confidence", p ? p.conf.toFixed(2) : "–"),
-    cellR("Strikes today", l ? `${l[0]}/${l[1]}` : "–", l ? null : null));
+    cellR("Strikes today", l ? `${l[0]}/${l[2]}` : "–", l ? null : null));
 }
 
 function hitterRead() {
@@ -1223,7 +1256,7 @@ function zoneSVG(c) {
   const kind = kindOf(c.pitch);
   const VW = 260, X = 70, Y = 44, W = 120, H = 150, cw = W / 3, ch = H / 3;
   const F = `font-family="Saira, sans-serif"`;
-  const cell = (q) => { const a = inLeft ? 0 : 2, b = inLeft ? 2 : 0; return { "up-in": [a, 0], "up-away": [b, 0], "down-in": [a, 2], "down-away": [b, 2], middle: [1, 1] }[q]; };
+  const cell = (q) => { const a = inLeft ? 0 : 2, b = inLeft ? 2 : 0; return { "up-in": [a, 0], "up-away": [b, 0], "down-in": [a, 2], "down-away": [b, 2], middle: [1, 1], "down-middle": [1, 2] }[q]; };
   const at = (q, k) => {
     if (q === "chase") return E.isOffspeed(k) ? [inLeft ? X + W + 26 : X - 26, Y + H + 22] : [X + W / 2, Y - 24];
     const [cx, cy] = cell(q); return [X + cw * cx + cw / 2, Y + ch * cy + ch / 2];
@@ -1347,7 +1380,7 @@ function pitcherPanel(ars, st) {
     status,
     h("div", { class: "trust" }, ars.map((p) => h("div", { class: `trow k-${p.kind}` },
       chip(p.kind),
-      h("span", { class: "nm" }, p.name, (() => { const l = ((g.land || {})[pKey()] || {})[p.name]; return l ? h("span", {}, `  ${l[0]} of ${l[1]} for strikes`) : null; })()),
+      h("span", { class: "nm" }, p.name, (() => { const l = landTriple(p.name, ((g.land || {})[pKey()] || {})[p.name]); return l ? h("span", {}, `  ${l[0]} of ${l[2]} for strikes`) : null; })()),
       h("span", { class: "v" }, p.conf.toFixed(2)),
       h("div", { class: `bullet${p.conf < cutoff ? " out" : ""}`, title: `Bullpen feel ${p.base_conf.toFixed(2)}` },
         h("i", { style: { width: `${Math.min(100, p.conf * 100)}%` } }), h("b", { style: { left: `calc(${cutoff * 100}% - 1px)` } }))))),
@@ -1554,7 +1587,7 @@ function zonePanel(rows) {
   const max = Math.max(1, ...E.QUADS.map((q) => by(q).length));
   // Catcher's view against a right-handed hitter: inside is on the left. Lefties are mirrored into the same frame.
   const X = 40, Y = 30, W = 180, H = 210, cw = W / 3, chh = H / 3;
-  const cells = { "up-in": [0, 0], "up-away": [2, 0], middle: [1, 1], "down-in": [0, 2], "down-away": [2, 2] };
+  const cells = { "up-in": [0, 0], "up-away": [2, 0], middle: [1, 1], "down-in": [0, 2], "down-away": [2, 2], "down-middle": [1, 2] };
   let s = `<svg viewBox="0 0 260 300" role="img" aria-label="Where the pitches went, by target">`;
   s += `<rect x="${X - 26}" y="${Y - 22}" width="${W + 52}" height="${H + 44}" rx="12" fill="none" stroke="var(--stroke-2)" stroke-dasharray="3 5"/>`;
   s += `<rect x="${X}" y="${Y}" width="${W}" height="${H}" fill="var(--rule)"/>`;

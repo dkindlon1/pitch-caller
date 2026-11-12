@@ -79,3 +79,16 @@ Decisions (spec 10 ship rule; A3 for terms that do not ship)
   phi_OS: no ship; interval +0.050..+0.128 includes the spec +0.116 -> keep spec
   beta_y: ships at -0.363 (spec -0.800)
   kappa: ships (held-out gain 2.46e-03, 3.6 boot SD; joint Wald 169 on 11 df): fitted count zone replaces the linear area rule
+
+Decisions (spec 10 ship rule; A3 for terms that do not ship)
+  beta_T: ships at +0.241 (spec +0.500)
+  gamma_T: no ship; interval -0.353..-0.133 includes the spec -0.300 -> keep spec
+  lam/alpha: best grid values (lambda 0.8, alpha 0.6); corr(alpha, beta_T) not computable: the train likelihood rises to the grid edge in alpha
+  beta_E: ships at -0.142 (spec +0.250)
+  beta_E_S: ships at -0.253 (spec +0.250)
+  beta_tun_whiff: no ship; interval -0.069..+0.081 excludes the spec +0.150, includes 0 -> off (0)
+  beta_tun_chase: ships at +0.310 (spec +0.150)
+  phi_FB: no ship; interval +0.004..+0.055 excludes the spec +0.058 and 0 -> fitted +0.030
+  phi_OS: no ship; interval +0.050..+0.128 includes the spec +0.116 -> keep spec
+  beta_y: ships at -0.363 (spec -0.800)
+  kappa: ships (held-out gain 2.46e-03, 3.6 boot SD; joint Wald 169 on 11 df): fitted count zone replaces the linear area rule

@@ -1,8 +1,11 @@
 """
 v0.6 outcome-model calibration.
 
-Plays out a plate appearance EXACTLY (no dice): the engine's own mixed call in each count, against
+Plays out a plate appearance EXACTLY (no dice): the engine's own call in each count, against
 the simulator's hidden hitters, through the count Markov chain (fouls with 2 strikes loop).
+v1.0 Step 0c: the calls come from call_v08 -- the shipped engine's call path -- not the old v0.7c call path, so
+the level fits are made against the mix the engine actually throws. The table is solved once per
+(level, pitcher, side) at 0-0 and reused for every count, exactly as the app and the simulator do inside a PA.
 Returns per-PA rates (K, BB, HBP, ball-in-play mix) and pitch-level rates (zone, swing, contact).
 Then fits the level's OUTCOME_ADJ logit shifts so those match real league rates.
 
@@ -18,7 +21,7 @@ import numpy as np
 from scipy.optimize import least_squares
 
 import engine
-from engine import Situation, call_mixed, outcome_probs, OUTCOME_ADJ, IN_PLAY_BY_LEVEL
+from engine import Situation, call_v08, solve_table, outcome_probs, OUTCOME_ADJ, IN_PLAY_BY_LEVEL
 import simulate
 
 KEYS = ["cmd", "zsw", "osw", "wz", "wo", "cs", "hbp"]   # MLB fit; college/HS add "wild"
@@ -59,6 +62,7 @@ def evaluate(level, adj=None, policy_cache=None):
                 continue
             ws = w * len(hs) / len(HITTERS)
             dists = {}
+            tab0 = None                        # one PA table per (level, pitcher, side), solved at 0-0 and reused
             for c in COUNTS:
                 key = (level, who["name"], same, c)
                 if policy_cache is not None and key in policy_cache:
@@ -66,7 +70,9 @@ def evaluate(level, adj=None, policy_cache=None):
                     continue
                 s = Situation(c[0], c[1], 0, (False, False, False), level=level, same_side=same,
                               pitch_count=40, batters_faced=9)
-                _, dist = call_mixed(ars, s, rng=random.Random(0))
+                if tab0 is None:
+                    tab0 = solve_table(ars, replace(s, balls=0, strikes=0, last=None))
+                _, dist, _, _ = call_v08(ars, s, rng=random.Random(0), tab=tab0)
                 dists[c] = [(pr, p, q) for pr, _, p, q in dist]
                 if policy_cache is not None:
                     policy_cache[key] = dists[c]

@@ -21,8 +21,8 @@ from dataclasses import replace
 
 import os
 import engine
-from engine import (Pitch, Situation, outcome_probs, landing, IN_PLAY,
-                    LEVEL, is_offspeed, mixed_policy, QUADS)
+from engine import (Pitch, Situation, outcome_probs, landing,
+                    LEVEL, is_offspeed, QUADS)
 
 # One engine (v0.9) makes the calls, and the simulated world is the same model plus the hidden truth.
 SEED = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 2026
@@ -54,6 +54,56 @@ TRUTH_TAB = os.environ.get("TRUTH_TAB", "")
 #   SEE_POWER=1       (with TRUE_POWER) the engine is told a coach's power grade: the true grade rounded to a whole number.
 TRUE_POWER = os.environ.get("TRUE_POWER", "") == "1"
 SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
+
+# ---------------------------------------------------------------------------
+# Yardstick hook (v1.0 Step 0d): CALL_ENGINE=<path to an engine.py> makes THAT engine call the pitches inside THIS
+# tree's world. The caller supplies the table, the policy, the call and its explanation; the world (outcome_probs, the
+# hitters, the in-play draw) and the truth judge (the regret columns, which score every call against a table solved on
+# the hidden truth) always stay this tree's, so two callers are measured by the same ruler.
+#   CALL_ENGINE=../pitch-caller-v09/engine.py python3 readthrough/run_games.py ...
+# The frozen engine is loaded with its OWN sibling data modules (run_tables, outcome_params, spread_params,
+# inplay_typed_params, hitter_spread_params), so it calls with the parameters it shipped with, not today's.
+# It is handed this tree's Situation/Pitch objects, so a frozen caller must still read the fields it knows about.
+# ---------------------------------------------------------------------------
+CALL_ENGINE = os.environ.get("CALL_ENGINE", "")
+_CALL_DEPS = ("run_tables", "outcome_params", "spread_params", "inplay_typed_params", "hitter_spread_params")
+
+
+def _load_call_engine(path):
+    """Import an engine.py from another tree, resolving its sibling data modules against that tree."""
+    import importlib.util
+    path = os.path.abspath(path)
+    if not os.path.isfile(path):
+        raise SystemExit(f"CALL_ENGINE: no such file: {path}")
+    home = os.path.dirname(path)
+    saved_path = list(sys.path)
+    saved_mods = {k: sys.modules.pop(k, None) for k in _CALL_DEPS}
+    sys.path.insert(0, home)
+    try:
+        spec = importlib.util.spec_from_file_location("_call_engine_frozen", path)
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules["_call_engine_frozen"] = mod
+        spec.loader.exec_module(mod)
+        took = {k: sys.modules.get(k) for k in _CALL_DEPS}
+    finally:
+        sys.path[:] = saved_path
+        for k, m in saved_mods.items():
+            if m is None:
+                sys.modules.pop(k, None)
+            else:
+                sys.modules[k] = m
+    wrong = sorted(k for k, m in took.items()
+                   if m is not None and getattr(m, "__file__", None)
+                   and os.path.dirname(os.path.abspath(m.__file__)) != home)
+    if wrong:
+        raise SystemExit(f"CALL_ENGINE: {path} picked up this tree's {', '.join(wrong)}; its own copies must be loadable")
+    return mod
+
+
+CALLER = _load_call_engine(CALL_ENGINE) if CALL_ENGINE else engine
+CALLER_NAME = (os.path.abspath(CALL_ENGINE) if CALL_ENGINE else "this tree")
+LEGACY_CALLER = not hasattr(CALLER, "expected_strike")   # a frozen pre-v1.0 engine reads (strikes, thrown) landing pairs
+
 
 
 # ---------------------------------------------------------------------------
@@ -304,7 +354,7 @@ def hit_advance(ev, bases):
 
 def run_ball_in_play(contact, outs, bases):
     """Returns (outs_added, runs, new_bases, label)."""
-    po, p1, p2, p3, phr, pe = engine.IN_PLAY_BY_LEVEL[LEVEL_NAME][contact] if hasattr(engine, "IN_PLAY_BY_LEVEL") else IN_PLAY[contact]
+    po, p1, p2, p3, phr, pe = engine.IN_PLAY_BY_LEVEL[LEVEL_NAME][contact]      # the simulated world's hit mix (truth)
     ev = sample({"out": po, "single": p1, "double": p2, "triple": p3, "homer": phr, "error": pe})
     b1, b2, b3 = bases
     if ev == "out":
@@ -380,7 +430,10 @@ def play_game(log_path):
         for hh in lineup:
             hh["w"] = max(1.0, min(5.0, 3.0 + prng.gauss(0, 1)))
     K = Knowledge()
-    land = defaultdict(lambda: [0, 0])          # (pitcher, pitch name) -> [strikes, thrown] today
+    land = defaultdict(lambda: [0, 0])          # (pitcher, pitch name) -> [strikes, thrown] today, every pitch: what a
+    # frozen pre-v1.0 caller (CALL_ENGINE) reads. v1.0 Step 3: the engine reads land3 instead, (strikes, expected
+    # strikes, pitches) over non-chase targets (engine.landing_record).
+    land3 = {}
     orng = random.Random(SEED_FOR_MOVE[0] * 31 + 7)
     offs = {starter["name"]: draw_off(orng, starter["arsenal"]), reliever["name"]: draw_off(orng, reliever["arsenal"])}
     CURRENT_OFF.clear(); CURRENT_OFF.update(offs[starter["name"]])
@@ -430,6 +483,7 @@ def play_game(log_path):
                     batter_idx -= 1          # inning over before he batted; he leads off next inning
                     batters_faced -= 1
                     break
+            shaken = set()                  # v1.0 #6 / D2: pitches he shook off stay out for the rest of the at-bat
             while not pa_done:
                 pitch_no += 1
                 pitch_count += 1
@@ -438,50 +492,57 @@ def play_game(log_path):
                               pitch_count=pitch_count, batters_faced=batters_faced, level=LEVEL_NAME,
                               same_side=(hitter["hand"] == pitcher["hand"]), last=last,
                               hitter_seen=dict(K.seen[h]), usage_this_count=dict(K.usage[(balls, strikes)]),
-                              timing=dict(K.timing[h]), hitter_damage=dict(K.damage[h]),
-                              landing_today={x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
-                                             if land[(pitcher["name"], x.name)][1]},
+                              timing=dict(K.timing[h]), hitter_damage=(dict(K.damage[h]) if LEGACY_CALLER else {}),   # v1.0 #7: no in-game damage (MM owns it); the simulator has no cross-game seed
+                              landing_today=({x.name: tuple(land[(pitcher["name"], x.name)]) for x in pitcher["arsenal"]
+                                              if land[(pitcher["name"], x.name)][1]} if LEGACY_CALLER else
+                                             {x.name: land3[(pitcher["name"], x.name)] for x in pitcher["arsenal"]
+                                              if (pitcher["name"], x.name) in land3}),
                               familiar=fam_prev, matchup=mm_prev,
-                              ump_u=engine.ump_estimate(takes, LEVEL_NAME),
+                              ump_u=CALLER.ump_estimate(takes, LEVEL_NAME),
                               home=True, sched_innings=9,
                               grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None))
                 if win_pa is None:
-                    win_pa = engine.win_constants(s)
+                    win_pa = CALLER.win_constants(s)
                 s = replace(s, win=win_pa)
                 ars = pitcher["arsenal"]
-                if tab is None or engine.needs_resolve(frozen, ars, s):
-                    tab = engine.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
-                    frozen = engine.frozen_inputs(ars, s)
+                if tab is None or CALLER.needs_resolve(frozen, ars, s):
+                    tab = CALLER.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
+                    frozen = CALLER.frozen_inputs(ars, s)
                     if look is None:
                         look = tab.h0
-                s = replace(s, look=look, b_h=engine.lean_b_h(ars, s, fooled),
+                s = replace(s, look=look, b_h=CALLER.lean_b_h(ars, s, fooled),
                             usage_by_call=dict(K.usage_call[(pitcher["name"], balls, strikes)]))
                 # engine call, with possible shake-offs
                 shakes = []
-                shaken = set()
+                shaken_pairs = set()          # a frozen pre-v1.0 caller (CALL_ENGINE) gets shake-offs the way it took them:
+                legacy = not hasattr(CALLER, "shaken_names")   # (pitch, spot) pairs for this pitch only
                 for attempt in range(3):
-                    (p, q, prob, cst), dist, tab, _info = engine.call_v08(ars, s, rng=rng, exclude=shaken, tab=tab)
+                    ex_ = shaken_pairs if legacy else shaken
+                    (p, q, prob, cst), dist, tab, _info = CALLER.call_v08(ars, s, rng=rng, exclude=ex_, tab=tab)
                     p_shake = min(0.9, SHAKE * max(0.0, 0.35 * (0.75 - p.conf))) if attempt < 2 else 0.0
                     if rng.random() < p_shake:
                         shakes.append(f"{p.name} {q}")
-                        shaken.add((p.name, q))
+                        shaken.add(p.name)
+                        shaken_pairs.add((p.name, q))
                         conf_event(p, "shakeoff")
                         continue
                     break
                 override = 0
                 if OVERRIDE and rng.random() < OVERRIDE:   # the coach calls his own pitch instead
-                    cands_ = engine.candidates(ars, s)
+                    cands_ = CALLER.candidates(ars, s)
                     p = rng.choice(cands_); q = rng.choice(QUADS); override = 1
                     prob = next((d[0] for d in dist if d[2].name == p.name and d[3] == q), 0.0)
-                    cst = engine.root_costs(ars, s, tab)[(p.name, q)]
+                    cst = CALLER.root_costs(ars, s, tab)[(p.name, q)]
                 best_cost = min(d[1] for d in dist)
                 top3 = "; ".join(f"{d[2].name} {d[3]} {d[0]:.0%}" for d in dist[:3])
                 # read-through, log-only (no rng draw, no change to the call): the why line, the intent and the hitter's
                 # most likely sit
                 why_txt, guess_txt, intent_txt = "", "", ""
                 if not override:
-                    why_txt = engine.why_line(ars, s, tab, (p, q), _info)[0]
-                    intent_txt = engine.intent_label(ars, s, tab, (p, q), _info, exclude=shaken)[0]     # v0.9 item 4
+                    ex_ = shaken_pairs if legacy else shaken
+                    why_txt = (CALLER.why_line(ars, s, tab, (p, q), _info) if legacy else
+                               CALLER.why_line(ars, s, tab, (p, q), _info, exclude=ex_))[0]
+                    intent_txt = CALLER.intent_label(ars, s, tab, (p, q), _info, exclude=ex_)[0]     # v0.9 item 4
                     sg = _info["sigma"]
                     gk = max(sg, key=sg.get)
                     guess_txt = f"{gk[0]} {gk[1]} {sg[gk]:.0%}"
@@ -530,13 +591,17 @@ def play_game(log_path):
                 elif ev == "hard":
                     mm[(pitcher["name"], h)]["hard|" + p.kind + "|" + q] += 1
                 if ev in ("ball", "wp_ball", "cstrike", "hbp"):
-                    p0, d0 = engine.take_stats(p, q, replace(s, ump_u=0.0), ars)
+                    p0, d0 = CALLER.take_stats(p, q, replace(s, ump_u=0.0), ars)
                     takes.append((1 if ev == "cstrike" else 0, p0, d0))
                 land[(pitcher["name"], p.name)][1] += 1
                 land[(pitcher["name"], p.name)][0] += ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard")
+                if q != "chase":            # v1.0 Step 3: his own expectation at the called target, before the result
+                    land3[(pitcher["name"], p.name)] = engine.landing_record(
+                        land3.get((pitcher["name"], p.name)), ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard"),
+                        engine.expected_strike(p, q, s, ars))
                 K.usage[(balls, strikes)][p.name] += 1
                 K.usage_call[(pitcher["name"], balls, strikes)][(p.name, q)] += 1
-                look = engine.look_update(look, p, q, s)
+                look = CALLER.look_update(look, p, q, s)
                 result = ev
 
                 if ev in ("ball", "wp_ball"):
@@ -547,7 +612,8 @@ def play_game(log_path):
                         detail = "wild pitch, runners move up"
                         result = "ball"
                     balls += 1
-                    conf_event(p, "ball")
+                    if engine.ball_conf_event(q) is not None:   # v1.0 Step 3: a ball on a chase target isn't a debit
+                        conf_event(p, "ball")                   # (the simulator logs no landing location)
                     if balls == 4:
                         b1, b2, b3 = bases
                         runs_scored += 1 if (b1 and b2 and b3) else 0
@@ -558,8 +624,7 @@ def play_game(log_path):
                     b1, b2, b3 = bases
                     runs_scored += 1 if (b1 and b2 and b3) else 0
                     bases = (True, b1 or b2, b3 or (b1 and b2))
-                    detail = "HIT BY PITCH"
-                    conf_event(p, "ball")
+                    detail = "HIT BY PITCH"             # v1.0 Step 3: an HBP is no longer a "ball" for confidence
                     pa_done = True
                 elif ev in ("cstrike", "whiff"):
                     strikes += 1
@@ -628,7 +693,7 @@ def play_game(log_path):
                     "trusted": sum(x.conf >= LEVEL[LEVEL_NAME]["cutoff"] for x in ars),
                     "off_today": round(CURRENT_OFF.get(p.name, 0.0), 2), "inputs": INPUTS, "noise": NOISE,
                     "regret_exp": round(regret_exp, 5), "regret_pick": round(regret_pick, 5),
-                    "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(s.inning >= 7 and abs(margin) <= 2 and (s.bases[1] or s.bases[2])),
+                    "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(engine.is_big_spot(s)),
                     **rw, **({"true_w": round(hitter["w"], 2)} if TRUE_POWER else {}),
                 })
                 last = (p.name, q, "whiff" if ev == "whiff" else result)
@@ -646,7 +711,7 @@ def play_game(log_path):
     # extra innings not simulated: tie after 9 counts as a tie
 
     rows = [r for r in log if "pitch" in r]
-    with open(log_path, "w", newline="") as f:
+    with open(log_path, "w", newline="", encoding="utf-8") as f:     # UTF-8 everywhere (Windows' default code page broke readers)
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
@@ -654,19 +719,25 @@ def play_game(log_path):
 
 
 def pregame_plan(staff):
-    """The engine's attack plan with zero scouting: mix by count vs a generic same-side hitter."""
+    """The engine's attack plan with zero scouting: mix by count vs a generic hitter (v1.0 #18: the live call path,
+    call_v08 with one at-bat table per side; was the retired v0.7c mixed_policy)."""
     starter = staff[0]
+    ars = starter["arsenal"]
+    counts = [(0, 0), (1, 0), (0, 1), (1, 1), (2, 1), (1, 2), (0, 2), (3, 1), (2, 2), (3, 2)]
     out = []
-    for (b, k) in [(0, 0), (1, 0), (0, 1), (1, 1), (2, 1), (1, 2), (0, 2), (3, 1), (2, 2), (3, 2)]:
-        for same in (True, False):
-            s = Situation(b, k, 0, (False, False, False), same_side=same, level=LEVEL_NAME)
-            pol, costs, _ = mixed_policy(starter["arsenal"], s)
-            best_q = {}
-            for name in pol:
-                if pol[name] > 0.005:
-                    best_q[name] = min(QUADS, key=lambda q: costs[(name, q)])
+    for same in (True, False):
+        s0 = Situation(0, 0, 0, (False, False, False), same_side=same, level=LEVEL_NAME)
+        tab = engine.solve_table(ars, s0)
+        for (b, k) in counts:
+            _, dist, _, _ = engine.call_v08(ars, replace(s0, balls=b, strikes=k), rng=random.Random(0), tab=tab)
+            pol, best_q = {}, {}
+            for pr, _, p, q in dist:            # dist is sorted by probability, so the first spot per pitch is its top
+                pol[p.name] = pol.get(p.name, 0.0) + pr
+                best_q.setdefault(p.name, q)
             mix = ", ".join(f"{n} {v:.0%} ({best_q[n]})" for n, v in sorted(pol.items(), key=lambda t: -t[1]) if v > 0.005)
             out.append((f"{b}-{k}", "same side" if same else "opposite side", mix))
+    order = [f"{b}-{k}" for b, k in counts]
+    out.sort(key=lambda r: (order.index(r[0]), r[1] != "same side"))     # by count, same side first (as before)
     return out
 
 

@@ -35,7 +35,7 @@
       // bug and is gone (+0.0028). The flat step stays.
       evidence: false, evidenceRef: 0.15 },
     flags: { gradeGap: 1.0, gradeZ: 2.5, stuffMinN: 400, cmdMinLoc: 150, changeWindow: 8, changeZ2: 9.21,
-      starvedShare: 0.05, starvedGames: 5, scoreMinRows: 150, scoreMargin: 0.015, scoreWindow: 300, scoreZ: 1.645 },
+      starvedShare: 0.05, starvedGames: 5, scoreMinRows: 175, scoreMargin: 0.015, scoreWindow: 300, scoreZ: 1.5 },
   };
   // Traits the learner fits. Set by the trait gate (gate_test.js, gate_result.json, 12 seasons per trait). All six are
   // learnable on the calibrated engine, but with the real walk/strikeout link (v0.7b) command no longer buys strikeouts,
@@ -203,13 +203,21 @@
     for (const [k, x] of Object.entries(spec.traits || {})) if (slope[k]) v += ((1 - sa) * slope[k][sk] + sa * slope[k][sk + 1]) * x;
     return Math.min(0.9, Math.max(0.2, v));
   }
+  // v1.0 Step 3: his expected strike rate is the engine's own (gridStrike), no longer re-centered on the deleted
+  // LAND_CENTER (served rates drop ~0.1, to what the model actually expects). strikeRef is the same rate for an average
+  // (3/3) pitch of the kind at his level; the engine scales confidence news by the two (engine.py update_confidence).
+  function strikeRef(E, spec, level) {
+    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
+    if (!SR_REF.has(key)) {
+      const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
+      SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
+    }
+    return Math.min(0.9, Math.max(0.2, SR_REF.get(key)));
+  }
   function strikeRate(E, spec, level) {
     const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
-    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
-    if (!SR_REF.has(key)) SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
-    const center = E.landingEstimate(E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), E.Situation({ balls: 0, strikes: 0, outs: 0, bases: [false, false, false], level }))[1];
     const mine = gridStrike(E, E.Pitch(Object.assign({}, base, { grade: spec.grade, command: spec.command, traits: spec.traits || null })), level);
-    return Math.min(0.9, Math.max(0.2, center + (mine - SR_REF.get(key))));
+    return Math.min(0.9, Math.max(0.2, mine));
   }
 
   // ---------------------------------------------------------------- preparing the raw data
@@ -268,7 +276,9 @@
         }
         script.push({ op: "mark" });
         const r = ev.res, hardish = r === "play" && (ev.contact === "hard" || (!ev.contact && ["2B", "3B", "HR"].includes(ev.out)));
-        const ce = r === "ball" || r === "hbp" ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
+        // v1.0 Step 3: a ball on a chase target is no debit unless it went way off, and an HBP is no "ball" (the engine's rule)
+        const ball = r === "ball" && !(ev.quad === "chase" && ev.loc !== "noncomp");   // = engine ballConfEvent
+        const ce = ball ? "ball" : r === "cstrike" ? "cstrike" : r === "whiff" ? "whiff" : hardish ? "hard" : null;
         if (ce) script.push({ op: "event", ev: ce });
       }
       if (ev.end && !logged) script.push({ op: "regress" });   // older logs and simulations: one drift after each hitter
@@ -276,8 +286,8 @@
     return { rows, script, base: base === null ? 0.7 : base };
   }
   // rebuild his confidence in this pitch before each of his pitches tonight, for a given strike rate
-  function confPath(E, kind, base, script, sr) {
-    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr });
+  function confPath(E, kind, base, script, sr, ref) {
+    const p = E.Pitch({ name: "x", kind, grade: 3, command: 3, conf: base, base_conf: base, strike_rate: sr, strike_ref: sr === null ? null : ref });
     const out = [];
     for (const st of script) {
       if (st.op === "mark") out.push(p.conf);
@@ -301,7 +311,7 @@
         if (!srCache.has(k2)) srCache.set(k2, strikeRateFast(E, Object.assign({}, shapeSpec, { command: theta.command, grade: theta.grade, traits: theta.traits }), level));
         sr = srCache.get(k2);
       }
-      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr);
+      const path = confPath(E, shapeSpec.kind, G.base, G.script, sr, sr === null ? null : strikeRef(E, shapeSpec, level));
       // marks are in script order; map row -> its mark number
       if (!G._markAt) { let mark = 0; G._markAt = []; for (let i = 0; i < G.script.length; i++) if (G.script[i].op === "mark") G._markAt[i] = mark++; }
       const markAt = G._markAt;
@@ -312,6 +322,7 @@
           r._others = r.ars.map((x) => (x.name === r.name ? null : E.Pitch(Object.assign({}, x))));
         }
         const p = E.Pitch(Object.assign({}, r._snap, { command: theta.command, grade: theta.grade, traits: theta.traits, strike_rate: sr,
+          strike_ref: sr === null ? null : strikeRef(E, shapeSpec, level),
           conf: path[markAt[r.idx]] ?? G.base, base_conf: G.base }));
         const arsP = r._others.map((x) => x || p);
         const s = r._S;
@@ -494,6 +505,12 @@
     // off: tuning seeds 300-309 9/10 (was 5/10), held-out 500-509 7/10 (was 5/10), fresh 600-619 13/20 (was 12/20); the real learner
     // was never switched off on right or wrong grades in any of those 40 seasons. Any fitted estimate pays a small price for its own noise when the grades are already
     // right (about 1/(2n) per pitch per learned number), and that price must not read as "learning is broken".
+    // Retuned Nov 11 for the v1.0 engine (min rows 150 -> 175, 1.645 SE -> 1.5 SE; margin 0.015 kept). On v1.0 the
+    // false switch-offs were almost all a third pitch at 140-170 scored pitches (a 15% changeup's whole season), too
+    // few to say learning is worse: no margin or SE setting fixed that on the tuning seeds without missing the noise-
+    // chaser. Chosen on tuning seeds 700-739: noise-chaser switched off 35/40 (was 37/40), real learner 1/40 (was
+    // 2/40). Held out: stage2_test D5 seeds 500-539 33/40 and 0/40 (was 36/40 and 2/40); wrong grades (seeds 800-819)
+    // 0/20 either way. Below 175 scored pitches the pitch keeps learning under the caps.
     const gap = rows ? (coachLL - learnedLL) / rows : 0;       // + = learned predicted worse (more surprise per pitch)
     const se = rows ? Math.sqrt(win.reduce((a, g) => a + ((g.c - g.l) - gap * g.n) ** 2, 0)) / rows : 0;
     const allN = scored.reduce((a, g) => a + g.n, 0);
@@ -685,7 +702,7 @@
       const exp = (P.whiff * DMG_VAL.whiff + P.foul * DMG_VAL.foul + P.weak * DMG_VAL.weak + P.solid * DMG_VAL.solid + P.hard * DMG_VAL.hard) / sw;
       const w = ev.ts ? Math.pow(0.5, Math.max(0, (t0 - ev.ts) / DAY) / 365) : 1;   // hitters develop: a year-old swing counts half
       add(isOS(ev.kind) ? "OS" : "FB", obs - exp, w);
-      if (ev.quad) add(ev.quad, obs - exp, w);
+      if (ev.quad) add(ev.kind + "|" + ev.quad, obs - exp, w);   // v1.0 #21: a fastball's damage down-away isn't the slider's
       if (ev.gameId) games.add(ev.gameId); n++;
     }
     const damage = {};
@@ -746,7 +763,7 @@
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
