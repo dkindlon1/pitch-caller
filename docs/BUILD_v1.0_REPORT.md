@@ -770,9 +770,10 @@ golden_v10.py check: PASS (largest difference 0); tests_v09_followups.py: all pa
 other e2e: v08, v09_labels, v09_matchup (updated for the spot keys, + a straight-back foul check), gameday, replay, d0,
   travel, stage2_e2e, db_e2e, security: all passed
 web: npm run typecheck clean
-scripts/test-sql.sh: not runnable here (Postgres 16 on this machine; the migrations need Postgres 17's MAINTAIN). GitHub
-  CI's Postgres 17 job ran it on c138d15 and on 05b3a9e: passed. The web shell job (offline game on a real local
-  Supabase) passed on 05b3a9e after the inning-over guard.
+scripts/test-sql.sh: not runnable here (Postgres 16 on this machine; the migrations need Postgres 17's MAINTAIN).
+GitHub CI on b9b003e: all four jobs green (engine/parity/app checks, Supabase sync and security on Postgres 17, web
+  app, web shell with the offline game on a real local Supabase). The offline game had failed once at a790700
+  ("impossible number of outs 3"); it has passed on every run since the inning-over guard (3617f01, b9b003e).
 ```
 Engine `VERSION` is "1.0" (the saved setup label stays "v09"). `git tag v1.0` waits for Drew's sign-off on the
 read-through.
