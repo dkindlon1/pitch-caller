@@ -5,6 +5,8 @@
 The v0.9 golden's 500 cases and outputs (imported from golden_v09.py, not copied), plus the v1.0 Step 7 coverage
 (re-frozen Nov 11 after Step 7's knee-high target and ground-ball rule):
   - quad-keyed hitter damage ("KIND|target", v1.0 #21) on about a third of the cases, next to the FB/OS keys;
+  - the Step 7 coaching reads' inputs: success at a spot in the matchup memory ('succ|KIND|target') and a last pitch
+    fouled straight back ([pitch, spot, "foul", "back"]);
   - on full cases, the walk suggestion (never auto-called) and, on about a third of them, a shake-off list (a pitch, or
     a pitch and spot) with the call, why line and intent label recomputed under it.
 Matchup memory and the intent label were already in the v0.9 inputs and outputs. golden/golden_v09.json stays frozen as
@@ -37,6 +39,13 @@ def inputs():
             for _ in range(rng.randint(1, 3)):
                 p = rng.choice(c["arsenal"])
                 c["s"]["hitter_damage"][f"{p['kind']}|{rng.choice(e.QUADS)}"] = [round(rng.uniform(-1, 1), 2), rng.randint(1, 15)]
+        mm = c["s"].get("matchup") or {}         # Step 7 coaching reads: success at a spot, a foul straight back
+        if rng.random() < 0.3:
+            p = rng.choice(c["arsenal"])
+            mm[f"succ|{p['kind']}|{rng.choice(e.QUADS)}"] = rng.randint(1, 2)
+            c["s"]["matchup"] = mm
+        if c["s"].get("last") and len(c["s"]["last"]) == 2 and rng.random() < 0.3:
+            c["s"]["last"] = list(c["s"]["last"]) + ["foul", "back"]
         c["exclude"] = None
         names = [p["name"] for p in c["arsenal"]]
         if c["full"] and len(names) > 1 and rng.random() < 0.35:

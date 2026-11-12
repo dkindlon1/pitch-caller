@@ -948,6 +948,33 @@
   // v1.0 Step 7: mirror of engine.py's ground-ball rule (a coach rule, not a fit)
   const GB_RULE_BONUS = 0.005, GB_RULE_TARGETS = ["down-in", "down-away", "down-middle"];
   const groundBallSpot = (s) => s.outs < 2 && (s.bases[0] || s.bases[2]) && s.balls < 3 && s.strikes < 2;
+  // v1.0 Step 7 (Drew): the coaching reads, each a named soft credit (engine.py COACH_RULE and coach_credit)
+  const COACH_RULE = { late_fb: 0.027, early_os: 0.02, crowd: 0.03, squared_up: 0.005, away: 0.01, went_back: 0.03, hot: 0.03, plus_opp: 0.015 };
+  const READ_T = 0.2, HOT_EST = 0.10, SIDE_TARGETS = { in: ["up-in", "down-in"], away: ["up-away", "down-away"] };
+  function landingHot(p, s) {
+    const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
+    if (!ev || ev[ev.length - 1] < LAND_BLOCK_N) return false;
+    const [st, ex, n] = ev;
+    return (st - ex) / (LAND_BLOCK_K + n) >= HOT_EST;
+  }
+  function coachCredit(p, q, s) {
+    const R = COACH_RULE, fb = p.kind === "FB", tm = s.timing || {};
+    let c = 0;
+    if (fb && (tm.FB || 0) >= READ_T && ["up-in", "up-away", "down-in"].includes(q)) c += R.late_fb;
+    if (!fb && (tm.OS || 0) <= -READ_T && ["down-in", "down-away", "down-middle", "chase"].includes(q)) c += R.early_os;
+    if (fb && s.crowding && SIDE_TARGETS.in.includes(q)) c += R.crowd;
+    if (s.last && s.last.length > 3 && s.last[3] === "back" && s.last[0] === p.name && s.last[1] === q) c -= R.squared_up;
+    const m = s.matchup;
+    if (m && Object.keys(m).length) {
+      for (const [side, other] of [["in", "away"], ["away", "in"]]) {
+        if (SIDE_TARGETS[other].includes(q) && SIDE_TARGETS[side].some((x) => m["hard|" + p.kind + "|" + x])) c += R.away;
+      }
+      if (m["succ|" + p.kind + "|" + q]) c += R.went_back;
+    }
+    if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot;
+    if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
+    return c;
+  }
   function costFromP(p, q, s, tab, look, P, myopic) {
     const b = s.balls, k = s.strikes, o = s.outs, B = s.bases;
     const nl = myopic ? tab.h0 : lookUpdate(look, p, q, s);
@@ -963,6 +990,8 @@
     if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
     if (s.matchup && mashed(p, q, s)) v += MASHED_PENALTY * runScale(s.level);   // v1.0 D3: mashed twice at this height today
     if (GB_RULE_TARGETS.includes(q) && groundBallSpot(s)) v -= GB_RULE_BONUS * runScale(s.level);   // v1.0 Step 7: ground-ball rule
+    const cc = coachCredit(p, q, s);
+    if (cc) v -= cc * runScale(s.level);      // v1.0 Step 7: the coaching reads
     if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
@@ -1359,7 +1388,7 @@
   }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
-    solveTable, tabValue, rootCall, callV08, rootCosts, cost08, LOC_ROW_Y, locQuad, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
+    solveTable, tabValue, rootCall, callV08, coachCredit, COACH_RULE, rootCosts, cost08, LOC_ROW_Y, locQuad, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, nextCountTop,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 

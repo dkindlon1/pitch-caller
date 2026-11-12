@@ -905,7 +905,8 @@ function record(res) {
       const bh = batterDef().hand, bRight = bh === "S" ? pitcherDef().hand !== "R" : bh !== "L";
       const spot = res.locCell ? E.v08.locQuad(res.locCell, p.kind, bRight) : call.quad;
       const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + p.kind : hardHit ? "hard|" + p.kind + "|" + spot : null;
-      if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1; }
+      if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1;
+        if (mk.startsWith("succ|")) { const k2 = mk + "|" + spot; m[k2] = (m[k2] || 0) + 1; } }   // v1.0 Step 7: and where (the went-back rule)
     }
     if (res.radar && +res.radar > 40) { const rr = (g.radar[pk] = g.radar[pk] || {}); (rr[p.name] = rr[p.name] || []).push(+res.radar); }
   }
@@ -969,6 +970,7 @@ function record(res) {
     slot: slotIdx(), inning: g.inning, end: !!paEnd, p: g.pitcher, pid: pd0.id, res: res.result, out: res.out, contact: res.contact, read: res.read, loc: res.loc,
     thrown: crossed ? crossed.name : undefined, wp: res.wp, evId, on: !!(evBase.sit.bases && evBase.sit.bases.some(Boolean)) });
   g.last = [p.name, call.quad, res.result === "whiff" ? "whiff" : res.result];
+  if (res.result === "foul" && res.read === "back" && S.setup.inputs >= 3) g.last.push("back");   // v1.0 Step 7: he was on it (squared-up rule)
 
   if (paEnd) {
     const rk = pKey(); g.recent[rk] = g.recent[rk] || []; g.recent[rk].push(paEnd);

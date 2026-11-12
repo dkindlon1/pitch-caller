@@ -345,6 +345,12 @@
    "row": "F2"
   },
   {
+   "approved": "v1.0 Step 7 (mechanical)",
+   "change": "inputs {'last': ['Changeup', 'down-away', 'foul']} -> {'last': ['Changeup', 'down-away', 'foul', 'back']}",
+   "date": "2026-11-11",
+   "row": "F5"
+  },
+  {
    "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
    "change": "acceptable ['FB:zone'] + ['SL:any']: a fourth slider is fine",
    "date": "2026-11-11",
@@ -1772,7 +1778,8 @@
     "last": [
      "Changeup",
      "down-away",
-     "foul"
+     "foul",
+     "back"
     ],
     "strikes": 1,
     "timing": {

@@ -489,6 +489,41 @@ check("v1.0 Step 7 ground-ball rule (Drew): double play on, 1-1: most calls go d
       d_on[(1, 1)] >= 0.70 > d_off[(1, 1)] and gb_spots == [True, False, False, False, True, False],
       f"1-1, runner on 1st, 0 outs: down targets {d_off[(1, 1)]:.0%} on the run math alone -> {d_on[(1, 1)]:.0%} with the rule")
 
+# v1.0 Step 7 (Drew): the coaching reads. Each read, switched off and on, on the situation of its read-through row
+def _share7(s_, pick, ars=AVG3):
+    _, d_, _, _ = call_v08(ars, s_, rng=random.Random(0))
+    return sum(pr for pr, _, p_, q_ in d_ if pick(p_, q_))
+FBk, OSk = (lambda p_: p_.kind == "FB"), (lambda p_: p_.kind != "FB")
+_plus = [_rp(x, grade=4) if x.kind in ("SL", "CH") else x for x in AVG3]
+reads7 = [   # (rule, situation, which calls it should move toward, arsenal); "squared_up" moves away
+    ("late_fb", Situation(1, 1, 0, E, timing={"FB": 0.6}), lambda p_, q_: FBk(p_) and q_ in ("up-in", "up-away", "down-in"), AVG3),
+    ("early_os", Situation(1, 1, 0, E, timing={"OS": -0.6}), lambda p_, q_: OSk(p_) and q_ in ("down-in", "down-away", "down-middle", "chase"), AVG3),
+    ("crowd", Situation(1, 1, 0, E, crowding=True), lambda p_, q_: FBk(p_) and q_ in ("up-in", "down-in"), AVG3),
+    ("squared_up", Situation(0, 1, 0, E, last=("Changeup", "down-away", "foul", "back")), lambda p_, q_: p_.name == "Changeup" and q_ == "down-away", AVG3),
+    ("away", Situation(1, 1, 0, E, matchup={"hard|FB|up-in": 1}), lambda p_, q_: FBk(p_) and q_ in ("up-away", "down-away"), AVG3),
+    ("went_back", Situation(1, 2, 0, E, matchup={"succ|CH": 2, "succ|CH|down-away": 2}), lambda p_, q_: p_.name == "Changeup" and q_ == "down-away", AVG3),
+    ("hot", Situation(1, 2, 1, R3, landing_today={"Changeup": (9, 10)}), lambda p_, q_: p_.name == "Changeup", AVG3),
+    ("plus_opp", Situation(1, 2, 0, E, same_side=False), lambda p_, q_: (p_.kind == "CH" and q_ in ("down-away", "chase")) or (p_.kind == "SL" and q_ == "down-in"), _plus),
+]
+moved7, ok7 = [], True
+for rule, s_, pick, ars_ in reads7:
+    _saved = _e.COACH_RULE[rule]
+    try:
+        _e.COACH_RULE[rule] = 0.0
+        off_ = _share7(s_, pick, ars_)
+    finally:
+        _e.COACH_RULE[rule] = _saved
+    on_ = _share7(s_, pick, ars_)
+    ok7 &= (on_ <= 0.01 < off_) if rule == "squared_up" else (on_ >= off_ + 0.20)
+    moved7.append(f"{rule} {off_:.0%}->{on_:.0%}")
+quiet7 = _e.coach_credit(fb_, "up-in", Situation(1, 1, 0, E, timing={"FB": 0.1})) == 0.0 and \
+    _e.coach_credit(ch_, "down-away", Situation(0, 1, 0, E, last=("Changeup", "down-away", "foul"))) == 0.0
+check("v1.0 Step 7 coaching reads (Drew): late on the fastball -> up/in, out front on soft -> soft and down, crowds -> "
+      "fastball in, fouled straight back -> not that pitch there again, hit hard on one side -> the other side, worked "
+      "earlier -> go back, landing better than normal -> lean on it, plus pitches to an opposite-side hitter -> changeup "
+      "away and back-foot slider; each moves its calls by 20+ points, and nothing fires on a weak read or a plain foul",
+      ok7 and quiet7, "; ".join(moved7))
+
 print(f"\n{sum(results)}/{len(results)} checks passed")
 # exit non-zero when anything failed, so a direct run (a hook, a pre-commit, another agent) cannot read a pass
 # from $? while checks are failing. scripts/run-check.sh also parses the line above, so CI is unaffected.

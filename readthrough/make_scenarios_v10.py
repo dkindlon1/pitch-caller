@@ -56,6 +56,9 @@ ADD = {
     "D3": (["SL:zone"], "after the landing rule changed (a pitch not landing is held back only when behind or at 0-0): the slider for a strike is OK here"),
     "C10": (["ANY:corners"] + MID, "with an average changeup and slider the edge calls are acceptable; middle at 1-2 as in C3 (the plus-pitch version is J7)"),
 }
+# Input edits carrying a row's meaning into v1.0's inputs. F5 "hit hard foul": the app's foul read "straight back" (he was
+# on it), which v1.0 now passes as the fourth element of the last pitch.
+INPUT_EDIT = {"F5": {"last": ["Changeup", "down-away", "foul", "back"]}}
 # Not-acceptable entries Drew withdrew (E8: "strike is fine")
 NOT_CLEAR = {"E8": ["CB:corners"]}
 # A share the row's calls must keep (Drew on F2: "as long as the chase and repeat are still on the table").
@@ -129,6 +132,10 @@ def main():
                                 change=f"acceptable {r['acceptable']} + {add}: {why}"))
             r["acceptable"] = r["acceptable"] + [a for a in add if a not in r["acceptable"]]
             r["arguable"] = [a for a in r["arguable"] if a not in add]
+        if r["id"] in INPUT_EDIT:
+            changes.append(dict(row=r["id"], date="2026-11-11", approved="v1.0 Step 7 (mechanical)",
+                                change=f"inputs {dict((k, r['inputs'].get(k)) for k in INPUT_EDIT[r['id']])} -> {INPUT_EDIT[r['id']]}"))
+            r["inputs"].update(INPUT_EDIT[r["id"]])
         if r["id"] in NOT_CLEAR:
             changes.append(dict(row=r["id"], date="2026-11-11", approved=WHO + ", second pass",
                                 change=f"not acceptable {r['not_acceptable']} - {NOT_CLEAR[r['id']]}"))

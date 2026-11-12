@@ -68,6 +68,8 @@ def build(doc, row):
     for ev in row.get("matchup", []):
         if ev["result"] in ("whiff", "cstrike"):
             key = "succ|" + kind[ev["pitch"]]
+            k2 = key + "|" + ev["target"]              # v1.0 Step 7: and at which spot (the went-back rule)
+            mm[k2] = mm.get(k2, 0) + 1
         elif ev["result"] == "hard":
             key = "hard|" + kind[ev["pitch"]] + "|" + ev["target"]
         else:

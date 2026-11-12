@@ -140,6 +140,62 @@ GB_RULE_BONUS = 0.005
 GB_RULE_TARGETS = ("down-in", "down-away", "down-middle")
 
 
+# v1.0 Step 7 (Drew, Nov 11, the read-through's second pass): coaching reads that the fitted terms only nudge, each a
+# named soft credit (runs x run_scale) in cost08 like the ground-ball rule. RULES, not fits: Drew graded the calls a
+# great pitching coach would make, and the fitted terms left these at 0-27% of calls. Each is sized on its read-through
+# row (smallest size that passes it) with every other row checked. Positive = the call gets cheaper.
+#   late_fb     he's late on the fastball (timing >= READ_T): fastball up or in, where a late bat can't get to it (F6)
+#   early_os    he's out front on off-speed (timing <= -READ_T): stay soft and down (F7)
+#   crowd       he crowds the plate: fastball in (H4)
+#   squared_up  last pitch fouled straight back (he was on it): not that pitch at that spot again (F5; a cost)
+#   away        he hit this pitch hard on one side earlier today: the same pitch to the other side (H3)
+#   went_back   this pitch got a swing-and-miss or called strike at this spot earlier today: go back to it (I2)
+#   hot         the pitch is landing clearly better than his normal today: lean on it (C5)
+#   plus_opp    to an opposite-side hitter, a plus changeup (grade 4+) away and a plus slider at the back foot (J7)
+# Sizes (runs before run_scale), each the smallest round size that passes its row with room (share of acceptable calls
+# on its row at the size: F6 84%, F7 79%, H4 87%, F5 0% not-acceptable, H3 77%, I2 80%, C5 76%, J7 82%; all 71 rows pass).
+COACH_RULE = {"late_fb": 0.027, "early_os": 0.02, "crowd": 0.03, "squared_up": 0.005, "away": 0.01, "went_back": 0.03,
+              "hot": 0.03, "plus_opp": 0.015}
+READ_T = 0.2           # the app labels a hitter "late on"/"early on" a pitch class from |timing| 0.2
+HOT_EST = 0.10         # landing better than his normal by this much (the not-landing rule's shrinkage), at least LAND_BLOCK_N thrown
+SIDE_TARGETS = {"in": ("up-in", "down-in"), "away": ("up-away", "down-away")}
+
+
+def landing_hot(p, s):
+    ev = landing_triple(p, s.landing_today.get(p.name)) if s.landing_today else None
+    if not ev or ev[-1] < LAND_BLOCK_N:
+        return False
+    st, ex, n = ev
+    return (st - ex) / (LAND_BLOCK_K + n) >= HOT_EST
+
+
+def coach_credit(p, q, s):
+    """Sum of the coaching-read credits for call (p, q) in situation s (runs, before run_scale)."""
+    R, c = COACH_RULE, 0.0
+    fb = p.kind == "FB"
+    tm = s.timing or {}
+    if fb and tm.get("FB", 0.0) >= READ_T and q in ("up-in", "up-away", "down-in"):
+        c += R["late_fb"]
+    if not fb and tm.get("OS", 0.0) <= -READ_T and q in ("down-in", "down-away", "down-middle", "chase"):
+        c += R["early_os"]
+    if fb and s.crowding and q in SIDE_TARGETS["in"]:
+        c += R["crowd"]
+    if s.last and len(s.last) > 3 and s.last[3] == "back" and s.last[0] == p.name and s.last[1] == q:
+        c -= R["squared_up"]
+    m = s.matchup
+    if m:
+        for side, other in (("in", "away"), ("away", "in")):
+            if q in SIDE_TARGETS[other] and any(m.get(f"hard|{p.kind}|{x}", 0) for x in SIDE_TARGETS[side]):
+                c += R["away"]
+        if m.get(f"succ|{p.kind}|{q}", 0):
+            c += R["went_back"]
+    if s.landing_today and landing_hot(p, s):
+        c += R["hot"]
+    if not s.same_side and p.grade >= 4 and ((p.kind == "CH" and q in ("down-away", "chase")) or (p.kind == "SL" and q == "down-in")):
+        c += R["plus_opp"]
+    return c
+
+
 def ground_ball_spot(s):
     b1, _, b3 = s.bases
     return s.outs < 2 and (b1 or b3) and s.balls < 3 and s.strikes < 2
@@ -1475,6 +1531,9 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
         v += MASHED_PENALTY * run_scale(s.level)     # v1.0 D3: mashed twice at this height today
     if q in GB_RULE_TARGETS and ground_ball_spot(s):
         v -= GB_RULE_BONUS * run_scale(s.level)     # v1.0 Step 7: the ground-ball rule
+    cc = coach_credit(p, q, s)
+    if cc:
+        v -= cc * run_scale(s.level)                # v1.0 Step 7: the coaching reads (COACH_RULE)
     if s.level in ("hs", "travel"):
         w_ = min(1.0, max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20))
         if w_ > 0:
