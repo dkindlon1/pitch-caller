@@ -717,7 +717,7 @@ Commits `9496c98` (read-through, knee-high target, ground-ball rule), `c138d15` 
     runner on 1st or 3rd, under 3 balls and 2 strikes). Why it is a rule and not math: corner targets cost ~13 points
     of balls at D3 and a down target gains only ~6 points of ground balls, and a weak ground ball is priced worse than a
     weak pop-up, so the run math alone stays in the middle. DP spot at 1-1: down targets 22% -> 82%.
-- Result: **40/70 pass** (v0.9 engine on the same rows: 34). No row that passed on v0.9 fails now. Newly passing:
+- Result: **40/70 pass**. No row that passed on v0.9 fails now. Newly passing:
   A7, D2, D3, D9, H1, I4, plus new rows J1, J4, J5, J6. J2 and J3 fail.
 - The 30 failures: **29 have 0% not-acceptable calls**; they miss the 70%-acceptable bar with calls graded arguable
   (mostly middle or knee-high where corners were asked for). One row has not-acceptable calls: **F5** (0-1 after a
