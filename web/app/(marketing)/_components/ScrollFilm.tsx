@@ -100,7 +100,7 @@ export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, clas
       if (dead || !sec.current) return;
       gsap.registerPlugin(ScrollTrigger);
       const st = ScrollTrigger.create({
-        trigger: sec.current, start: "top top", end: "bottom bottom", scrub: 0.6,
+        trigger: sec.current, start: "top top", end: "bottom bottom", scrub: 0.15,
         onUpdate: (t) => { fwant = t.progress * (set.count - 1); want = Math.round(fwant); queue(); beatsAt(t.progress); },
       });
       fwant = st.progress * (set.count - 1); want = Math.round(fwant); beatsAt(st.progress); queue();

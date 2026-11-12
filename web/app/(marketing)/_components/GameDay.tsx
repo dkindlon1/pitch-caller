@@ -110,21 +110,35 @@ export function GameDay() {
     return () => io.disconnect();
   }, []);
 
-  // the sideways scroll is measured only once the track is laid out in a row (after the render that drops is-flat)
+  // the sideways scroll is measured only once the track is laid out in a row (after the render that drops is-flat). The
+  // section is made tall enough for the track's travel and its inside sticks to the screen (CSS sticky, so the pin is
+  // the browser's own, not a script toggling position mid-scroll); scroll just slides the track.
   useEffect(() => {
     if (flat) return;
     let kill = () => {}, dead = false;
     Promise.all([import("gsap"), import("gsap/ScrollTrigger")]).then(([{ gsap }, { ScrollTrigger }]) => {
       if (dead || !sec.current || !track.current) return;
       gsap.registerPlugin(ScrollTrigger);
-      const t = track.current;
-      const dist = () => Math.max(0, t.scrollWidth - t.parentElement!.clientWidth);
+      const s = sec.current, t = track.current, vp = t.parentElement!, head = s.querySelector<HTMLElement>(".mk-gd-headwrap")!;
+      const dist = () => Math.max(0, t.scrollWidth - vp.clientWidth);
+      // on a short screen the row of panels is scaled down to fit under the heading (scale, so the panels keep their
+      // proportions), then the section is made tall enough for the track's travel
+      const size = () => {
+        s.style.setProperty("--gd-k", "1");
+        const cs = getComputedStyle(s.querySelector(".mk-gd-inner")!);
+        const room = window.innerHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - parseFloat(cs.rowGap || "0") - head.offsetHeight;
+        const k = Math.max(0.6, Math.min(1, room / vp.offsetHeight));
+        s.style.setProperty("--gd-k", k.toFixed(3));
+        s.style.setProperty("--gd-vh", `${vp.offsetHeight}px`);
+        s.style.height = `${Math.round(window.innerHeight + dist() * k * 1.4)}px`;
+      };
+      size();
       const tw = gsap.to(t, {
         x: () => -dist(), ease: "none",
-        scrollTrigger: { trigger: sec.current, start: "top top", end: () => `+=${dist() * 1.4}`, pin: true, scrub: 0.6, invalidateOnRefresh: true, anticipatePin: 1 },
+        scrollTrigger: { trigger: s, start: "top top", end: "bottom bottom", scrub: 0.15, invalidateOnRefresh: true, onRefreshInit: size },
       });
       ScrollTrigger.refresh();
-      kill = () => { tw.scrollTrigger?.kill(); tw.kill(); };
+      kill = () => { tw.scrollTrigger?.kill(); tw.kill(); s.style.height = ""; s.style.removeProperty("--gd-k"); };
     });
     return () => { dead = true; kill(); };
   }, [flat]);

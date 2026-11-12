@@ -94,7 +94,7 @@ export function AtBat() {
     if (!el) return;
     const top = el.getBoundingClientRect().top + window.scrollY, len = el.offsetHeight - window.innerHeight;
     const y = top + len * (START + i * EACH + EACH * 0.86);
-    if (window.__mkLenis) window.__mkLenis.scrollTo(y, { duration: 1.4 }); else window.scrollTo({ top: y, behavior: "smooth" });
+    window.scrollTo({ top: y, behavior: "smooth" });
   };
 
   const p = AT_BAT[v.i];

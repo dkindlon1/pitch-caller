@@ -288,7 +288,7 @@ export function InsideCall() {
       import("gsap").then(({ gsap }) => import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
         if (dead || !run.current) return;
         gsap.registerPlugin(ScrollTrigger);
-        const st = ScrollTrigger.create({ trigger: run.current, start: "top top", end: "bottom bottom", scrub: 0.5, onUpdate: (t) => { want = t.progress; queue(); } });
+        const st = ScrollTrigger.create({ trigger: run.current, start: "top top", end: "bottom bottom", scrub: 0.15, onUpdate: (t) => { want = t.progress; queue(); } });
         want = st.progress; queue();
         kill = () => st.kill();
       }));

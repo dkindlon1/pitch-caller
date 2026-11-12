@@ -254,22 +254,25 @@ export function mountAtBat(el: HTMLElement, pitches: FieldPitch[], opts: { accen
   const ro = new ResizeObserver(size);
   ro.observe(el);
 
-  // scroll sets where the chapter wants to be; each frame moves part of the way there, so a fast flick still glides
-  function frame() {
+  // scroll sets where the chapter wants to be; each frame closes most of the gap (time-based, ~70ms to settle, so it
+  // feels the same at 30, 60 or 120 frames a second): close to the scroll, with just enough give to hide frame steps
+  let lastT = 0;
+  function frame(t: number = performance.now()) {
     raf = 0;
     if (!visible) return;
-    cur += (want - cur) * 0.16;
+    const dt = lastT ? Math.min(0.1, (t - lastT) / 1000) : 1 / 60; lastT = t;
+    cur += (want - cur) * (1 - Math.exp(-dt / 0.07));
     if (Math.abs(want - cur) < 0.0004) cur = want;
     draw(cur);
     if (cur !== want) raf = requestAnimationFrame(frame);
   }
-  function queue() { if (!raf && visible) raf = requestAnimationFrame(() => { raf = 0; draw(cur); if (cur !== want) frame(); }); }
+  function queue() { if (!raf && visible) raf = requestAnimationFrame((t) => { raf = 0; lastT = t; draw(cur); if (cur !== want) frame(t); }); }
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) queue(); });
   io.observe(el);
   size();
 
   return {
-    set(p: number) { want = Math.max(0, Math.min(1, p)); if (!raf && visible) raf = requestAnimationFrame(frame); },
+    set(p: number) { want = Math.max(0, Math.min(1, p)); if (!raf && visible) { lastT = 0; raf = requestAnimationFrame(frame); } },
     dispose() {
       dead = true;
       cancelAnimationFrame(raf);

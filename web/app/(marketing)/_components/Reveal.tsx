@@ -19,10 +19,10 @@ export function Reveal({ text, className, clock }: { text: string; className?: s
       const tween = gsap.fromTo(
         spans,
         { opacity: 0.3 },
-        { opacity: 1, ease: "none", stagger: 0.08, scrollTrigger: { trigger: ref.current, start: "top 78%", end: "bottom 42%", scrub: 0.6 } },
+        { opacity: 1, ease: "none", stagger: 0.08, scrollTrigger: { trigger: ref.current, start: "top 78%", end: "bottom 42%", scrub: 0.3 } },
       );
       // the clock: a thin line under the words that runs out with them and turns red on the last ones
-      const t2 = bar.current ? gsap.fromTo(bar.current, { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { trigger: ref.current, start: "top 78%", end: "bottom 42%", scrub: 0.6,
+      const t2 = bar.current ? gsap.fromTo(bar.current, { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { trigger: ref.current, start: "top 78%", end: "bottom 42%", scrub: 0.3,
         onUpdate: (st) => bar.current?.classList.toggle("is-late", st.progress > 0.86) } }) : null;
       kill = () => { tween.scrollTrigger?.kill(); tween.kill(); t2?.scrollTrigger?.kill(); t2?.kill(); };
     });

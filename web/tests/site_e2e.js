@@ -110,7 +110,7 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     });
     check(lit.src >= 4 && lit.n > 50, `the rendered 3D frames load (${lit.src} so far) and light up the stage (${lit.n} bright samples)`);
 
-    const gdTop = await page.evaluate(() => { const s = document.getElementById("gameday").parentElement; return s.getBoundingClientRect().top + scrollY; });
+    const gdTop = await page.evaluate(() => { const s = document.getElementById("gameday"); return s.getBoundingClientRect().top + scrollY; });   // a CSS sticky pin: the section itself is the tall scroll run
     await page.evaluate((y) => scrollTo(0, y + 40), gdTop); await wait(1400);
     const tx0 = await page.locator(".mk-gd-track").evaluate((t) => new DOMMatrix(getComputedStyle(t).transform).m41);
     await page.evaluate((y) => scrollTo(0, y + 420), gdTop); await wait(1400);
