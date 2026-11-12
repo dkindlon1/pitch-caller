@@ -6,6 +6,8 @@ import { abilities, coachNav } from "@/lib/nav";
 import { waitingOn } from "@/lib/upload_data";
 import { Tiles } from "../../_frame/Tiles";
 import { SeamEdge } from "../../_frame/Icon";
+import { Num } from "../../_frame/Num";
+import { LauncherSkeleton } from "../../_frame/Skeleton";
 import { type Search } from "./ui";
 
 export const metadata: Metadata = { title: "Team · PitchIQ", robots: { index: false } };
@@ -14,7 +16,7 @@ type Params = Promise<{ team: string }>;
 // The launcher: the next game on top (the one question a coach opens this with), then a tile for every screen this
 // account may open on this team, and on the side what needs him and who can pitch today.
 export default function Home({ params }: { params: Params; searchParams: Search }) {
-  return <Suspense fallback={<p className="shell-note">Loading the team…</p>}><HomeBody params={params} /></Suspense>;
+  return <Suspense fallback={<LauncherSkeleton />}><HomeBody params={params} /></Suspense>;
 }
 
 async function HomeBody({ params }: { params: Params }) {
@@ -72,7 +74,7 @@ async function HomeBody({ params }: { params: Params }) {
                   <tr key={x.pitcher.id}>
                     <td><Link href={`/app/t/${team}/roster/${x.pitcher.id}`}>{x.pitcher.number ? `#${x.pitcher.number} ` : ""}{x.pitcher.name || "Unnamed"}</Link></td>
                     <td>{x.last ? `${dayName(x.last.date)}, ${x.last.pitches} pitches` : "None in 30 days"}</td>
-                    <td className="num">{x.week}</td>
+                    <td className="num"><Num value={x.week} delay={300} /></td>
                     <td>{!x.eligible ? "–" : x.eligible.today ? <span className="pill-ok">Today</span> : <span className="pill-warn" title={x.eligible.why}>{dayName(x.eligible.date)}</span>}</td>
                   </tr>))}</tbody>
               </table></div>

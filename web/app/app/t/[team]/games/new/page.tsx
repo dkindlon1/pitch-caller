@@ -5,12 +5,13 @@ import { teamFor, teamToday } from "@/lib/team";
 import { abilities } from "@/lib/nav";
 import { GamePlanForm } from "../GamePlanForm";
 import { blankPlan, planOptions } from "../opts";
+import { SheetSkeleton } from "../../../../_frame/Skeleton";
 
 export const metadata: Metadata = { title: "Set up a game · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string }>;
 
 export default function NewGame({ params }: { params: Params }) {
-  return <Suspense fallback={<p className="shell-note">Loading…</p>}><Body params={params} /></Suspense>;
+  return <Suspense fallback={<SheetSkeleton label="Loading the setup" />}><Body params={params} /></Suspense>;
 }
 
 async function Body({ params }: { params: Params }) {

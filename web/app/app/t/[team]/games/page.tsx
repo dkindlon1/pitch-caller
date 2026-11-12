@@ -5,6 +5,7 @@ import { dayName, gameList, teamFor, teamToday, teamsOf, timeName, type GameList
 import { abilities } from "@/lib/nav";
 import { one, type Search } from "../ui";
 import { Icon } from "../../../_frame/Icon";
+import { ListSkeleton } from "../../../_frame/Skeleton";
 
 export const metadata: Metadata = { title: "Game Day · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string }>;
@@ -17,7 +18,7 @@ const MSG: Record<string, string> = {
 // Game Day: the schedule. Games set up ahead, the one being called (only that it's live: nothing from it shows here
 // until it ends), and the last few played.
 export default function GameDay({ params, searchParams }: { params: Params; searchParams: Search }) {
-  return <Suspense fallback={<p className="shell-note">Loading the schedule…</p>}><Body params={params} searchParams={searchParams} /></Suspense>;
+  return <Suspense fallback={<ListSkeleton label="Loading the schedule" />}><Body params={params} searchParams={searchParams} /></Suspense>;
 }
 
 async function Body({ params, searchParams }: { params: Params; searchParams: Search }) {

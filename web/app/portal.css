@@ -326,3 +326,86 @@
 
 /* the sign-in and other single screens */
 .pq-solo { max-width: 760px; }
+
+/* ---- motion. One rule above all: nothing that fades sits above glass. A glass panel's blur needs every ancestor at full
+   opacity (the site's rule), so each thing fades on itself, never through a wrapper. Content rises into place once
+   when a screen opens, in a short stagger (--i on panels and tiles, --j on rows), the bar and the dock stay still,
+   numbers count up, charts draw. Reduced motion gets none of it. */
+@keyframes pq-rise { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes pq-row { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes pq-pop { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes pq-step-in { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 22px)); } to { opacity: 1; transform: none; } }
+@keyframes pq-draw { to { stroke-dashoffset: 0; } }
+@keyframes pq-stitch { from { opacity: 0; transform: scale(0.4); } to { opacity: .85; transform: none; } }
+@keyframes pq-dot { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: none; } }
+@keyframes pq-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes pq-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(240, 74, 62, 0.55); } 70% { box-shadow: 0 0 0 7px rgba(240, 74, 62, 0); } }
+.pq { --ease-out: cubic-bezier(0.2, 0.75, 0.2, 1); }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* panels and tiles: each its own fade, in order down the screen */
+  .pq :is(.pq-head, .pq-game, .pq-tile, .pq-panel, .tbl-scroll, .pq-gamerow, .pq-sheet, .dash-card, .team-card, .shell-form, .chart, .pq-sum, .invite-box, .upload-box, .shell-alert, .ok-note) {
+    animation: pq-rise 560ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 50ms); }
+  .pq .pq-head { --i: 0; } .pq .pq-game { --i: 1; } .pq .pq-launch aside .pq-panel:nth-child(1) { --i: 3; } .pq .pq-launch aside .pq-panel:nth-child(2) { --i: 5; }
+  .pq .pq-tiles > li:nth-child(1) { --i: 2; } .pq .pq-tiles > li:nth-child(2) { --i: 3; } .pq .pq-tiles > li:nth-child(3) { --i: 4; } .pq .pq-tiles > li:nth-child(4) { --i: 5; }
+  .pq .pq-tiles > li:nth-child(5) { --i: 6; } .pq .pq-tiles > li:nth-child(6) { --i: 7; } .pq .pq-tiles > li:nth-child(7) { --i: 8; } .pq .pq-tiles > li:nth-child(n+8) { --i: 9; }
+  .pq .pq-games > li:nth-child(1) { --i: 1; } .pq .pq-games > li:nth-child(2) { --i: 2; } .pq .pq-games > li:nth-child(3) { --i: 3; } .pq .pq-games > li:nth-child(n+4) { --i: 4; }
+  .pq .tbl-scroll { --i: 6; }
+  /* rows: the data arrives a line at a time, after its pane */
+  .pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div) {
+    animation: pq-row 460ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 50ms + 110ms + min(var(--j, 1), 14) * 32ms); }
+  /* the seam stitches itself down the game card: the curve draws, then each stitch lands */
+  .pq-game .seam .curve { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: pq-draw 1.1s 0.25s var(--ease-out) forwards; }
+  .pq-game .seam .st { transform-box: fill-box; transform-origin: center; opacity: 0; animation: pq-stitch 340ms var(--ease-out) forwards; animation-delay: calc(0.3s + var(--s) * 45ms); }
+  .pq .pill-live::before { animation: pq-pulse 1.8s ease-out infinite; }
+  /* charts draw in: lines trace, points land */
+  .pq .chart polyline { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: pq-draw 1.4s 0.35s var(--ease-out) forwards; }
+  .pq .chart circle { transform-box: fill-box; transform-origin: center; animation: pq-dot 420ms var(--ease-out) both; animation-delay: calc(0.5s + var(--k, 0) * 12ms); }
+  .pq .chart rect:not(.grid) { transform-box: fill-box; transform-origin: bottom; animation: pq-grow 700ms 0.35s var(--ease-out) both; }
+  /* menus open from where they hang; a wizard step slides in from the side it came from */
+  .pq .pq-switch[open] .pq-menu { animation: pq-pop 200ms var(--ease-out) both; transform-origin: top left; }
+  .pq .pq-me[open] .pq-menu { transform-origin: top right; }
+  .pq .pq-step { animation: pq-step-in 380ms var(--ease-out) both; }
+  .pq .pq-err { animation: pq-pop 260ms var(--ease-out) both; }
+  /* everything that answers a press eases instead of snapping */
+  .pq :is(.pq-pick, .pq-seg button, .pq-steps button, .pq-lineup .hands button, .pq-dock a, .pq-switch > summary, .pq-menu a, .pq-menu button) {
+    transition: background-color 0.22s ease, color 0.22s ease, border-color 0.22s ease, transform 0.22s var(--ease-out), box-shadow 0.22s ease; }
+  .pq .pq-pick:active, .pq .pq-seg button:active, .pq .pq-dock a:active { transform: scale(0.97); }
+  .pq .pq-pick[aria-pressed="true"] { box-shadow: 0 0 0 1px var(--chalk) inset; }
+  .pq .pq-pick .tag { animation: pq-pop 240ms var(--ease-out) both; }
+}
+@keyframes pq-grow { from { transform: scaleY(0); } to { transform: none; } }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(1) { --j: 1; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(2) { --j: 2; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(3) { --j: 3; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(4) { --j: 4; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(5) { --j: 5; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(6) { --j: 6; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(7) { --j: 7; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(8) { --j: 8; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(9) { --j: 9; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(10) { --j: 10; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(11) { --j: 11; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(12) { --j: 12; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(13) { --j: 13; }
+.pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div):nth-child(14) { --j: 14; }
+
+/* the glass catches the light where the pointer is (Motion.tsx sets --mx/--my on the panel under a mouse) */
+/* (every glass element is already positioned: the bar, the dock, menus, tiles, cards, the sheet) */
+.pq :is(.pq-bar-in, .pq-sheet) { position: relative; }
+.pq .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.35s ease;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.11), transparent 60%); }
+.pq .glass.is-lit::after { opacity: 1; }
+
+/* loading: the shapes of what's coming, shimmering, instead of a line of text */
+.pq-skel { display: grid; gap: var(--gap); }
+.pq-skel .sk { border-radius: var(--r-md); background: linear-gradient(100deg, rgba(255, 255, 255, 0.04) 30%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.04) 70%) 0 0 / 240% 100%;
+  border: 1px solid rgba(255, 255, 255, 0.06); animation: pq-shimmer 1.5s linear infinite; }
+.pq-skel .sk.h1 { height: 40px; width: min(320px, 60%); border-radius: 12px; }
+.pq-skel .sk.card { height: 210px; border-radius: var(--r-lg); }
+.pq-skel .sk-tiles { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.pq-skel .sk.tile { height: 148px; border-radius: 22px; }
+.pq-skel .sk.row { height: 64px; }
+@media (prefers-reduced-motion: reduce) { .pq-skel .sk { animation: none; } }
+/* a menu hangs out of the glass bar, whose own blur stops its blur at the bar's edge: a near-solid pane instead */
+.pq .pq-menu.glass { background: rgba(22, 22, 22, 0.94); -webkit-backdrop-filter: none; backdrop-filter: none; }

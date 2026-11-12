@@ -7,6 +7,7 @@ import { LEVELS, TIERS, defaultInnings, type GameDoc } from "@/lib/gameplan";
 import { removeGamePlan } from "../actions";
 import { one, type Search } from "../../ui";
 import { SeamEdge } from "../../../../_frame/Icon";
+import { SheetSkeleton } from "../../../../_frame/Skeleton";
 
 export const metadata: Metadata = { title: "Game plan · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string; game: string }>;
@@ -19,7 +20,7 @@ const ERR: Record<string, string> = {
 // One game's plan, and the button that starts it on this device. Shown only to coaches who call games or whom the
 // owner lets see the plan (the database won't hand the record to anyone else).
 export default function GamePlan({ params, searchParams }: { params: Params; searchParams: Search }) {
-  return <Suspense fallback={<p className="shell-note">Loading the plan…</p>}><Body params={params} searchParams={searchParams} /></Suspense>;
+  return <Suspense fallback={<SheetSkeleton label="Loading the plan" />}><Body params={params} searchParams={searchParams} /></Suspense>;
 }
 
 async function Body({ params, searchParams }: { params: Params; searchParams: Search }) {

@@ -58,10 +58,10 @@ export function SeamEdge() {
   const stitches = Array.from({ length: 24 }, (_, i) => 12 + i * 34);
   return (
     <svg viewBox="0 0 34 820" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
-      <path d="M10 0C24 120 24 290 12 410S2 700 16 820" fill="none" stroke="currentColor" strokeWidth="1.6" opacity=".9" />
+      <path className="curve" d="M10 0C24 120 24 290 12 410S2 700 16 820" fill="none" stroke="currentColor" strokeWidth="1.6" opacity=".9" pathLength={1000} />
       {stitches.map((y, i) => {
         const x = 10 + 6 * Math.sin((y / 820) * Math.PI * 2 + 0.4);
-        return <path key={i} d={`M${x - 5} ${y - 4}l9 4M${x - 5} ${y + 4}l9 -4`} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".85" />;
+        return <path key={i} className="st" style={{ ["--s" as string]: i } as React.CSSProperties} d={`M${x - 5} ${y - 4}l9 4M${x - 5} ${y + 4}l9 -4`} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity=".85" />;
       })}
     </svg>
   );

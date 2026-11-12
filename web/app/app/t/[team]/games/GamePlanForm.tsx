@@ -20,6 +20,7 @@ const dayName = (d: string) => (d ? new Date(d + "T12:00:00").toLocaleDateString
 export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
   const [p, setP] = useState<PlanInput>(initial);
   const [step, setStep] = useState(1);
+  const [dir, setDir] = useState(1);   // which side the next step slides in from
   const [local, setLocal] = useState<string | null>(null);
   const [state, action, pending] = useActionState<SaveState, FormData>(saveGamePlan, null);
   const head = useRef<HTMLHeadingElement>(null);
@@ -36,7 +37,7 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
   };
   const go = (n: number) => {
     if (n > step) for (let s = step; s < n; s++) { const e = check(s); if (e) { setStep(s); setLocal(e); return; } }
-    setStep(n); setLocal(null);
+    setDir(n >= step ? 1 : -1); setStep(n); setLocal(null);
     requestAnimationFrame(() => head.current?.focus());
   };
   const serverErr = state?.errors?.length ? state.errors : null;
@@ -70,7 +71,7 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
       </ol>
 
       {step === 1 ? (
-        <section className="pq-step" aria-labelledby="st-h">
+        <section className="pq-step" aria-labelledby="st-h" style={{ ["--dir" as string]: dir } as React.CSSProperties}>
           <h2 id="st-h" ref={head} tabIndex={-1}>The game</h2>
           <p>When and against whom. Home or away and the scheduled innings let the engine weigh the score late in close games.</p>
           <div className="pq-fields">
@@ -98,7 +99,7 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
       ) : null}
 
       {step === 2 ? (
-        <section className="pq-step" aria-labelledby="st-h">
+        <section className="pq-step" aria-labelledby="st-h" style={{ ["--dir" as string]: dir } as React.CSSProperties}>
           <h2 id="st-h" ref={head} tabIndex={-1}>Our staff today</h2>
           <p>Who&apos;s available to pitch. Pitchers still resting under your pitch-count rule show the day they&apos;re eligible. Tap again to make one the starter.</p>
           {o.pitchers.length ? (
@@ -127,7 +128,7 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
       ) : null}
 
       {step === 3 ? (
-        <section className="pq-step" aria-labelledby="st-h">
+        <section className="pq-step" aria-labelledby="st-h" style={{ ["--dir" as string]: dir } as React.CSSProperties}>
           <h2 id="st-h" ref={head} tabIndex={-1}>Their lineup</h2>
           <p>{oppName ? `${oppName}'s batting order. ` : ""}Only how each hitter bats is needed. A hitter you&apos;ve faced before starts with what was learned about him; a new name joins their roster.</p>
           {roster.length ? <div><button type="button" className="shell-btn" onClick={fillFromRoster}>Fill from their roster</button></div> : null}
@@ -148,7 +149,7 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
       ) : null}
 
       {step === 4 ? (
-        <section className="pq-step" aria-labelledby="st-h">
+        <section className="pq-step" aria-labelledby="st-h" style={{ ["--dir" as string]: dir } as React.CSSProperties}>
           <h2 id="st-h" ref={head} tabIndex={-1}>How you&apos;ll chart</h2>
           <p>Pick what your charter can keep up with. Every option calls the game; more detail mostly helps it learn each hitter.</p>
           <div className="pq-picks" role="radiogroup" aria-label="What you'll log">
@@ -165,7 +166,7 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
       ) : null}
 
       {step === 5 ? (
-        <section className="pq-step" aria-labelledby="st-h">
+        <section className="pq-step" aria-labelledby="st-h" style={{ ["--dir" as string]: dir } as React.CSSProperties}>
           <h2 id="st-h" ref={head} tabIndex={-1}>Review</h2>
           <p>Save it, then start it on the iPad or any device signed in to this team. Everything here can still change on the device during the game.</p>
           <dl className="pq-sum">

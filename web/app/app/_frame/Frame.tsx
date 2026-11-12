@@ -4,6 +4,7 @@ import { signOut } from "@/app/login/actions";
 import { Ball, Icon } from "./Icon";
 import { Night } from "./Night";
 import { Dock } from "./Dock";
+import { Motion } from "./Motion";
 import type { NavItem } from "@/lib/nav";
 import { portalSans } from "@/app/portal-font";
 
@@ -17,6 +18,7 @@ export function Frame({ children, org, current, switchTo = [], dock, home, email
   return (
     <div className={`pq ${portalSans.variable}`}>
       <Night />
+      <Motion />
       <div className={`pq-frame${dock && dock.length ? "" : " no-dock"}`}>
         <header className="pq-bar">
           <div className="pq-bar-in glass">

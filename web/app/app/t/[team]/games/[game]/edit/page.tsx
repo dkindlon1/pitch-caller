@@ -6,12 +6,13 @@ import { abilities } from "@/lib/nav";
 import type { GameDoc } from "@/lib/gameplan";
 import { GamePlanForm } from "../../GamePlanForm";
 import { planOf, planOptions } from "../../opts";
+import { SheetSkeleton } from "../../../../../_frame/Skeleton";
 
 export const metadata: Metadata = { title: "Change the game plan · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string; game: string }>;
 
 export default function EditGame({ params }: { params: Params }) {
-  return <Suspense fallback={<p className="shell-note">Loading…</p>}><Body params={params} /></Suspense>;
+  return <Suspense fallback={<SheetSkeleton label="Loading the plan" />}><Body params={params} /></Suspense>;
 }
 
 async function Body({ params }: { params: Params }) {
