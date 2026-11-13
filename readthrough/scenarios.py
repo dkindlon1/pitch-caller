@@ -34,6 +34,37 @@ def load(path=PATH, sha=SHA):
     return json.loads(blob), got
 
 
+INSIDE_THIRD = 17.0 / 6.0      # v1.2: in. toward the batter from plate centre where the inside third starts
+
+
+def p_cross_inside(p, q, s):
+    """v1.2 (Drew, Nov 13: "inside" is judged by where the pitch crosses): the chance a pitch aimed at q crosses the
+    inside third or further in, under the engine's miss model (engine.geo_*; size solved from landing's own shares)."""
+    mx, mz = e.geo_target(p, q)
+    zp = e.landing_pre(p, q, s)
+    sd = e.geo_sigma(mx, mz, 1.0 - zp["noncomp"] / sum(zp.values()))
+    lx = (p.lean_x if s.same_side else -p.lean_x) if e.has_lean(p) else 0.0
+    return 1.0 - e.geo_ncdf((INSIDE_THIRD - mx - lx) / (sd * (p.spread if e.has_lean(p) else 1.0)))
+
+
+def pattern_share(pats, dist, ars, s):
+    """Share of the call mix a list of patterns covers. A pattern ending ":inx" counts each call of that pitch class by
+    its chance of crossing the inside third (v1.2), any other pattern counts the call whole if it matches."""
+    by = {p.name: p for p in ars}
+    tot = 0.0
+    for pr, name, kind, q in dist:
+        w = 0.0
+        for x in pats:
+            pc, t = x.split(":")
+            if t == "inx":
+                if matches(pc + ":any", kind, q):
+                    w = max(w, p_cross_inside(by[name], q, s))
+            elif matches(x, kind, q):
+                w = 1.0
+        tot += pr * w
+    return tot
+
+
 def matches(pattern, kind, q):
     p, t = pattern.split(":")
     if not (p == "ANY" or p == kind or (p == "OS" and not e.is_fastball(kind)) or (p == "FB" and e.is_fastball(kind))
@@ -110,12 +141,12 @@ def grade(doc, row, mode):
         fails.append(f"acceptable {sh['acc']:.1%} < {rule['acc_min']:.0%}")
     if row.get("floor"):          # v1.0 Step 7 (Drew, F2): a share of calls that must stay on the table
         pats, mn = row["floor"]
-        fl = sum(pr for pr, _, kind, q in dist if any(matches(x, kind, q) for x in pats))
+        fl = pattern_share(pats, dist, ars, s)
         if fl < mn - 1e-9:
             fails.append(f"{'/'.join(pats)} {fl:.1%} < floor {mn:.0%}")
     if row.get("ceiling"):        # v1.1 Step 3 (N2, an anti-setup): a share of calls that must stay under a cap
         pats, mx = row["ceiling"]
-        cl = sum(pr for pr, _, kind, q in dist if any(matches(x, kind, q) for x in pats))
+        cl = pattern_share(pats, dist, ars, s)
         if cl > mx + 1e-9:
             fails.append(f"{'/'.join(pats)} {cl:.1%} > ceiling {mx:.0%}")
     return dict(id=row["id"], hard=row["hard"], shares={k: round(v, 4) for k, v in sh.items()}, passed=not fails,

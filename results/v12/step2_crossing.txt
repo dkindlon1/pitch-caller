@@ -1,0 +1,17 @@
+level      arsenal     pitch       aimed in  crossing in   (share of that pitch's calls)
+hs         sink_sweep  Sinker         13.3%        36.5%
+hs         deadzone    Fastball        6.8%        34.7%
+hs         deadzone    Sinker         19.1%        38.7%
+hs         AVG3        Fastball       10.9%        34.3%
+college_d3 sink_sweep  Sinker         17.5%        38.7%
+college_d3 deadzone    Sinker         18.3%        39.0%
+college_d3 deadzone    Fastball        1.7%        34.7%
+college_d3 AVG3        Fastball       14.9%        36.1%
+college_d1 sink_sweep  Sinker         19.4%        39.2%
+college_d1 deadzone    Sinker         21.5%        40.1%
+college_d1 deadzone    Fastball        3.3%        34.7%
+college_d1 AVG3        Fastball       18.2%        37.4%
+mlb        sink_sweep  Sinker         36.1%        43.9%
+mlb        deadzone    Sinker         38.1%        45.1%
+mlb        deadzone    Fastball       21.9%        38.5%
+mlb        AVG3        Fastball       27.9%        38.9%

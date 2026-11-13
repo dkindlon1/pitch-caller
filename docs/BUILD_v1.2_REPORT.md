@@ -61,3 +61,50 @@ Environment: Linux cloud workspace, 2 CPUs, Python 3.13, Node 22. `npm ci` (repo
 | `python3 golden/golden_v11.py check --tag v11` | **PASS, 500 cases, largest difference 0.00e+00** (and the same on the v1.1 base worktree). Note: without `--tag v11` the script checks the older Step 1b reference `golden_v11a`, which the v1.1 engine no longer matches either |
 | `node golden/golden_v11.js v11` | **PASS: JS engine reproduces v11** (run on the Step 1 engine code before the zone-geometry change; the geometry runs only with a lean, so it can't touch the golden inputs, which have none) |
 | `scripts/test-app.sh` | SUITE |
+
+## Step 2: inside pitching and the hit-batter price (Nov 13)
+
+### What the plan's reference mix found
+`calib.evaluate` was given the reference mix (same-side fastball calls reweighted to the inside aim that puts 27% across
+the inside third), as plan 2.4 specified. Before any refit:
+
+| Same-side fastballs, miss model | aimed inside | crossing the inside third |
+|---|---|---|
+| MLB, calib's staff (the conversion check) | 18.4% | **40.3%** (real: four-seam 28%, sinker 48%) |
+| D3, calib's staff | 10.1% | **39.2%** |
+| Row P1 (D3, sink_sweep, 1-0): the sinker, as a share of all calls | 6% | **30%** (43% of sinker calls); floor 25% |
+
+The engine's own D3 calls already cross the inside third more often than the 27% reference, so fitting the price on
+it would have **raised** the hit-batter price, the opposite of the plan's intent. With about 10 in. of miss at D3, a
+lot of pitches cross inside from any target. **Stopped and asked Drew (a decision that's his).**
+
+**Drew's answer (Nov 13, Q9):** judge "inside" by where the pitch crosses (his v1.1 rule); keep v1.1's HBP price; no
+refit.
+
+### What changed
+- `calib.py` and the refit driver: not changed (the reference-mix code was backed out, never committed).
+- `readthrough/scenarios.py`: a pattern ending `:inx` (for example `SI:inx`) counts each call of that pitch class by
+  its chance of crossing the inside third under the miss model (`p_cross_inside`, size solved from `landing()`'s own
+  shares, a lean included). Floors and ceilings use it; every other pattern counts as before.
+- The v1.2 read-through suite (Step 6) grades P1 as `SI:inx`.
+
+### Crossing shares by level (`research_v12/step2_crossing.py` → `results/v12/step2_crossing.txt`; same-side, counts 0-0 to 2-2)
+
+| Level | sink_sweep sinker | deadzone sinker | deadzone four-seam | AVG3 four-seam |
+|---|---|---|---|---|
+| HS | aimed 13% / crossing 37% | 19% / 39% | 7% / 35% | 11% / 34% |
+| D3 | 18% / 39% | 18% / 39% | 2% / 35% | 15% / 36% |
+| D1 | 19% / 39% | 22% / 40% | 3% / 35% | 18% / 37% |
+| MLB | 36% / 44% | 38% / 45% | 22% / 39% | 28% / 39% |
+
+Against Drew's D3 20-35%, Single-A's 34% (four-seam) / 41% (sinker) and MLB's 28% / 48%: college fastballs cross inside
+35-40% by the model, inside or just above Drew's range and close to Single-A.
+
+### For Drew
+- **The miss model is probably too wide side to side.** Even a four-seam aimed inside under 2% of the time crosses
+  inside 35%, and at MLB the model's four-seams cross 38.5% against the real 28%. The size is solved from `landing()`'s
+  hand-set way-off share and is the same both ways. A narrower side-to-side miss (fit to MLB's 28% / 48%) would lower
+  every crossing share and the size of lean effects. Not built (your Q9 answer didn't need it); it's the option C you
+  passed on, still open.
+- **The four-seam diagnosis** (plan 2.4) is moot under Q9: by crossing, college four-seams aren't off the inside.
+- No calibration checkpoint: nothing was refit, so `golden_v11` stays the gate.

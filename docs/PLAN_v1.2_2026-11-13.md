@@ -68,6 +68,7 @@ Settled:
 | O4 (Nov 12, carried) | **Hitter tags:** swing path (uppercut / lift · average · flat / level), early-count approach (aggressive · average · patient), off-speed hitter (struggles · average · hits it hard), spray (pull · all fields · oppo). Height preference and bat speed dropped. Unknown = average; measured numbers override. |
 | Q7 (Nov 13) | **Off-speed hitter tag: keep it, small, coach-set only.** A small prior on the existing off-speed damage seed; no learned version unless the logs pass the gate. (Its own-skill part barely persists in MLB data, r 0.06; 2.8.) |
 | Q8 (Nov 13) | **One release, but Part A can ship alone** from its frozen checkpoint if Part B slips. |
+| Q9 (Nov 13, during Step 2) | **"Inside" is judged by where the pitch crosses** (Drew's v1.1 rule). Under the miss model the engine's own D3 calls already put 39% of same-side fastballs across the inside third, above the 27% reference, so a crossing-share refit would have *raised* the hit-batter price. **v1.1's HBP price stays; no refit.** P1 and the inside checks use crossing share (BUILD_v1.2_REPORT Step 2). |
 
 Open now: none. Decisions Drew makes during the build: the four-seam-inside fix (Step 2), any calibration stop
 (Step 2), the schema bump (Step 4), and the grades on every proposed row (Step 6).
@@ -134,7 +135,12 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
 - **Wild pitches** (`:1564`): the same rule. The delta moves the mass, and a conditional factor (the share of
   non-competitive mass in the dirt) applies only for down targets with a down lean.
 
-### 2.4 Level HBP calibration (L3, L5)
+### 2.4 Level HBP calibration (L3, L5) — superseded by Q9 during Step 2
+
+**Built instead (Q9):** no refit. "Inside" is measured by crossing share (the read-through's `:inx` patterns,
+`readthrough/scenarios.py`), v1.1's HBP price stays. The design below is kept as the record of what was planned and why
+it was dropped: its 27% crossing reference sits below what the engine's own calls already cross (39% at D3).
+
 
 - **Today:** `calib.py` fits `OUTCOME_ADJ[level]["hbp"]` against the engine's own calls (`evaluate`, policy cached per
   level × pitcher × side). College throws almost nothing inside, so the price inflates until HBP per PA matches. D3
