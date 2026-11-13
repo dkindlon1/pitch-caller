@@ -1,4 +1,4 @@
-# Pitch Caller engine v1.2: build plan (location model)
+# Pitch Caller engine v1.2: build plan (location model and hitter model)
 
 Date: 2026-11-13. Start line: `main @ 14e0ad2` (v1.1, shipped Nov 13: PR #1 fast-forwarded, migration
 `20261115000000_v11_kinds.sql` applied to prod, Vercel deployed; not tagged `v1.1` yet, waiting on iPads).
@@ -23,7 +23,8 @@ engine almost never throws a fastball inside (sinker 3–6%, four-seam 0–1% vs
 19%), because the college hit-by-pitch price is inflated by a circular calibration (research doc §4). Row P1 still
 fails.
 
-v1.2 does four things:
+v1.2 does five things (Part A, items 1–4: the location model and follow-ups; Part B, item 5: the hitter model, added by
+Drew on Nov 13):
 
 1. **Location model structure:** per-pitch miss lean (side and height, inches) and spread, in the landing model and
    in hit-batter / wild-pitch risk. **Default even miss, so nothing changes until a coach sets a lean or the learner
@@ -34,6 +35,9 @@ v1.2 does four things:
    event, an optional glove-spot tap, and a **bullpen charting mode** (pitch, glove spot, landed).
 4. **Three v1.1 follow-ups** Drew kept in: HS ride-up ceiling, the one-fastball "lean on it" fade, and S2 / S4 / S5
    resized after the location model.
+5. **The hitter model** (v1.1 plan section 8.2, carried with its reviews): coach tags for swing path, early-count
+   approach, off-speed hitter and spray, each one channel in the engine, fitted on Statcast where the held-out test
+   passes, learned where the logs allow (2.8).
 
 Standing rules carry over: baseball logic and real data over simulation; one engine, no flags, Python and JS
 identical; nothing "done" until its check ran and the output is in `docs/BUILD_v1.2_REPORT.md`; Drew grades the
@@ -56,16 +60,18 @@ Settled:
 | L7 (Nov 13) | **Setups:** narrow S4, then resize S2 / S4 / S5 after the location model; drop any that still can't move its row inside the 2–10% change band. |
 | L8 (Nov 13) | **Bullpen mode, three taps per pitch:** pitch, where the catcher set up (5×5), where it ended up (5×5 or a way-off arrow). |
 
-Open (Drew):
+| Q1 (Nov 13) | **Coach-set lean sizes: "a little" 1.5 in., "a lot" 3 in.** (MLB average leans by pitch type run 1–3.6 in. in the research check; labeled assumption.) |
+| Q2 (Nov 13) | **Show a pitch-type hint** when a coach sets a lean ("sinkers usually miss arm side"), text only; the value stays even until he picks. |
+| Q3 (Nov 13) | **Location logging on by default** for new setups. |
+| Q4 (Nov 13) | **College reference inside mix: 27%** (the middle of Drew's 20–35%) of fastballs crossing the inside third to same-side hitters, D1 and D3; Single-A's measured shares (four-seam 34%, sinker 41%) are the check; HS uses D3's (assumption). |
+| Q5 (Nov 13) | **HS ride-up: scale the rule by 0.6 at HS**, like every MLB-fitted term at HS. |
+| Q6 (Nov 13) | **The hitter model is in v1.2** (Part B). |
+| O4 (Nov 12, carried) | **Hitter tags:** swing path (uppercut / lift · average · flat / level), early-count approach (aggressive · average · patient), off-speed hitter (struggles · average · hits it hard), spray (pull · all fields · oppo). Height preference and bat speed dropped. Unknown = average; measured numbers override. |
 
-| # | Question | Proposed |
-|---|---|---|
-| Q1 | Coach-set lean sizes: "a little" / "a lot" | 1.5 / 3 in. (the MLB average leans by pitch type in the research run 1–3.6 in.; labeled assumption) |
-| Q2 | Offer pitch-type suggestions when a coach sets a lean ("sinkers usually miss arm side")? | Yes, as text only; the value stays 0 until he picks |
-| Q3 | Location logging on by default for new setups? | Yes (one tap); it's what the learner needs |
-| Q4 | College reference inside mix: Single-A's measured shares (four-seam 34%, sinker 41%) or the middle of your band (27%)? | Your band's middle for D1 / D3, Single-A's as the check; HS = D3 (assumption) |
-| Q5 | HS ride-up: scale the ride-up rule by HS's 0.6 (like every MLB-fitted term at HS) or only lower the test ceiling? | Scale the rule by 0.6 at HS |
-| Q6 | The v1.1 plan (section 8.2) put the **hitter model** in v1.2. Your brief leaves it out. | v1.3, after a season of logs |
+| Q7 (Nov 13) | **Off-speed hitter tag: keep it, small, coach-set only.** A small prior on the existing off-speed damage seed; no learned version unless the logs pass the gate. (Its own-skill part barely persists in MLB data, r 0.06; 2.8.) |
+| Q8 (Nov 13) | **One release, but Part A can ship alone** from its frozen checkpoint if Part B slips. |
+
+Open: none. Grades on every proposed row stay with Drew.
 
 ## 2. Design
 
@@ -75,7 +81,8 @@ Open (Drew):
   his miss size, 1.0). All default 0 / 0 / 1.0.
 - Units are inches, not v1.1 plan 8.1's unitless −1…+1: the data, the grid and the HBP curve all speak inches.
 - The coach sets them with chips per pitch: side (glove a lot · glove a little · even · arm a little · arm a lot), height
-  (down a lot … up a lot), spread (tighter · normal · wider). Sizes per Q1.
+  (down a lot … up a lot), spread (tighter · normal · wider). "A little" = 1.5 in., "a lot" = 3 in. (Q1). Under the
+  chips, a hint by pitch type (Q2): "Sinkers and changeups usually miss arm side; sliders glove side." Text only.
 - A learned lean (2.5) is served as an offset only when the coach hasn't set one; otherwise it's a flag ("logs say he
   misses arm side").
 - `lean_x`, `lean_z`, `spread` go into `PITCH_KEYS` (`learn.js:42`), validation (`check_inputs`), golden / fuzz / parity
@@ -117,7 +124,8 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
 - **v1.2:** the HBP price is fit on a **reference mix**:
   - the engine's own policy for everything else;
   - the fastball-class share aimed inside to same-side hitters set to the level's reference (MLB: measured, 28% four-seam
-    / 48% sinker crossing the inside third; D1 / D3 / HS: per Q4).
+    / 48% sinker crossing the inside third; D1 / D3: 27%, Q4; HS: D3's). Single-A's 34% / 41% are reported as the
+    check.
   - BB, K, swing and called-strike moments stay on the engine's own policy, as today.
 - **Split check (L3):** decompose the fitted level's HBP excess over MLB into *reach* (pitches reaching the body zone,
   from the landing model and `wild`) and *hit given reach* (the price). Passes if each carries 35–65% of the log
@@ -155,7 +163,7 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
 | **Pitcher hand and batter side on every event** (`ph`, `bs`, the side the switch hitter batted) | `evBase` `:926`, event `:1027` | today they're joined from records; a lean is in the pitcher's frame |
 | **Optional "Also log where the catcher set up"** (a second 5×5 tap, off by default) | setup row next to `logLoc` `:1800` | L4: the called spot isn't the glove |
 | **Editing a location keeps its cell** | `:1471` clears `locCell` | a corrected pitch shouldn't lose its cell |
-| **Location logging default on** for new setups (Q3) | `S.setup.logLoc` | the learner needs it |
+| **Location logging default on** for new setups (Q3, settled) | `S.setup.logLoc` | the learner needs it |
 | **Bullpen mode (L8):** pick a pitcher; per pitch: pitch, glove spot (5×5), landed (5×5 or an arrow), optional radar. Saved as a `sessions` doc (`type: "charted"`), synced like other docs. No game state, no landing-today, no confidence. Feeds only the lean estimator. | new screen; `db.js` `sessions` store | the fastest way to get both target sides and real glove spots |
 
 - **No Supabase migration expected:** `sessions` and `events` are generic `doc jsonb` tables
@@ -166,7 +174,7 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
 
 ### 2.7 The three follow-ups
 
-- **HS ride-up (Q5):** `COACH_RULE["ride_up_2k"]` (0.008, `engine.py:160`, `:376`; JS `:1262`) × `RHO_L` at HS (0.6),
+- **HS ride-up (Q5, settled):** `COACH_RULE["ride_up_2k"]` (0.008, `engine.py:160`, `:376`; JS `:1262`) × `RHO_L` at HS (0.6),
   like every MLB-fitted term at HS. From v1.1's size table, 0.005 gave 35% at every level, so HS should land near 35%.
   `tests_v11`'s HS ceiling moves from 45% to 36%. C5 (D3) is unaffected.
 - **Hot fade (L6):** `hot_fade` (`engine.py:174`, JS `:1243`) fades from 1.2× the pitch's normal share to nothing at
@@ -180,6 +188,66 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
   change rate inside 2–10% on all three staffs (`readthrough/setup_game_check.py`, `SETUP_SCALE=`). A rule that can't
   do both is dropped and listed. S5 (front door / back door) is re-gated by the lean: a sinker whose lean runs toward an
   opposite-side hitter's front hip pays the new HBP cost.
+
+### 2.8 Hitter model (Part B; v1.1 plan 8.2 and research doc Part 2, with the second and third reviews applied)
+
+**What persists (checked Nov 13, `research_v12/hitter_persistence.py` → `results/v12/hitter_persistence.txt`).** A tag
+is only worth having if the trait carries from one season to the next. MLB hitters in both seasons:
+
+| Trait | Source | 2024 → 2025 | 2025 → 2026 |
+|---|---|---|---|
+| Swing path tilt | Savant swing-path leaderboard (100+ swings) | **r 0.92** (n 402) | **0.93** (405) |
+| Attack angle | same | 0.84 | 0.85 |
+| Attack direction (pull / oppo at contact) | same | 0.79 | 0.79 |
+| Pull % / opposite % (balls in play) | Savant custom leaderboard (150+ PA) | 0.69 / 0.56 | 0.69 / 0.51 |
+| Early-count zone swing minus other zone swing | Statcast pitch sample (a quarter of the season) | 0.44 (≈ 0.76 for a full season) | (2026 not pulled) |
+| Off-speed hard % (95+ mph) | same | 0.36 | — |
+| **Off-speed hard % minus his fastball hard %** | same | **0.06** | — |
+
+- Swing path, approach and spray are real, stable traits.
+- **"Hits off-speed hard" as its own skill barely persists** (0.06). What persists in off-speed hard contact (0.36) is
+  general power, which the power grade already carries. Hence Q7.
+- Every public trait is MLB. Opponent college / HS traits come only from the coach's tag (Blast Motion data is a
+  program's own hitters, not opponents).
+
+**Tags (O4)** live in the hitter doc (RLS `manage_opponents`, `20261106000000_pitchiq_teams.sql:199-200`); no portal
+page. Unknown = average. They map to the top / bottom third of each trait at the level.
+
+**One channel each, sized net of what it overlaps** (the second review's rule):
+- **Swing path:** a term on pitch height × fastball ride / drop (and off-speed down), on whiff and hard contact, net of
+  the 2b fastball-zone fit, `SIDE`, damage and matchup memory, and S1 / S7. Inside the setup cap. Its weight shrinks as
+  that hitter's spot memory builds (10 / (n + 10)). The location model's height leans enter through landing, not here.
+- **Early-count approach:** in-zone swing rate at 0-0 / 1-0 / 0-1 minus his overall rate, on in-zone swings in those counts
+  only. The eye grade, the 0-0 swing shift and the sit term stay. Its test is first-pitch swing rates, not "more
+  first-pitch breaking balls" (this channel doesn't drive that directly).
+- **Off-speed hitter (Q7, settled):** a prior on the existing off-speed damage seed (`damage()`, `engine.py:1347`, key `OS`),
+  centred like `seedDamage` (`learner.js:767`); small size, per its persistence. The simulator maps it to `os`
+  (`simulate.py:180`).
+- **Spray:** inside / away hard contact and grounders, net of `SIDE` and crowding (`engine.py:356`, `:1544`). Pull fouls
+  aren't reused (they already feed the timing reads).
+
+**Fits** (same ship rule as every v1.1 fit: held-out gain > 2 boot SD, game-clustered bootstrap):
+- **Traits from one season, the interaction tested on the next:** 2024 traits → 2025 pitches to fit; 2025 traits →
+  2026 pitches held out. 2024 pitches carry the path metrics (checked: tilt and attack angle filled on every swing in
+  `sc_2024-06-04.csv`), and the leaderboards have all three seasons.
+- **Data to pull:** 2026 pitches (every 4th day, `fetch_statcast.py` extended to 2026; one 2026 day checked: 1,244 of
+  2,714 pitches carry tilt, i.e. every swing) and the season leaderboards (`research_v12` pulls; `seasonStart` /
+  `seasonEnd` are the working parameters, `season=` is ignored). The loader adds `hc_x` / `hc_y`, `launch_angle` and
+  bat tracking; tilt adjusted for pitch height.
+- **Behavioral effects × `RHO_L` at HS** (0.6). If a channel doesn't ship, it's a named coach rule sized by graded rows,
+  like v1.0's reads, and labeled as such.
+
+**Learning:**
+- **Approach first** (most learnable).
+- **Swing path** from whiffs / weak contact by pitch height and shape.
+- **Off-speed** only if the logs pass the gate (Q7).
+- **Spray stays coach-set:** no ball-in-play direction is logged.
+- Evidence minimums are set for how many pitches an opposing hitter really sees at HS / D3 (30 per hitter is rarely
+  reached). Coaches get the grades' "keep mine" flow. A hitter world in `worlds.js` comes first.
+
+**Storage:** the tags go in `_ipv_cached`'s key (`engine.py:2164`) if they enter it.
+
+**Not in v1.2:** ground-ball vs fly-ball tag effects; spray learning; height preference and bat speed tags (dropped, O4).
 
 ## 3. Steps
 
@@ -238,6 +306,39 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
   - setup fire rows and change rates per rule;
   - dropped rules listed.
 
+### Part A freeze (no extra time)
+- Freeze `golden_v12a`; `scripts/test-app.sh` exit 0; Part A's report section complete. Part A can ship alone from here
+  if Part B slips (Q8).
+
+### Step B1: Hitter data and fits (3 days)
+- Pull 2026 pitches and the 2024–2026 leaderboards; loader additions; a height-adjusted tilt.
+- Fit each channel (2.8): 2024 traits → 2025 pitches, held out on 2025 traits → 2026 pitches; report per channel:
+  fitted, coach rule, or dropped.
+- Approach's full-season persistence on 2025 → 2026 (the quarter-season sample gave 0.44).
+
+### Step B2: Engine and app (2½ days)
+- Both engines: the four channels, net-of sizing, the shrink with spot memory, `RHO_L` at HS.
+- App: four tag rows on the hitter card (unknown by default), carried in event snapshots only when set; the importer
+  and the opponent screens.
+- **Proof:** every tag unknown → `golden_v12a` largest difference 0; Python = JS on 600 random hitters; `tests.py`,
+  `tests_v11.py` unchanged.
+
+### Step B3: Learner and simulator (2 days)
+- Hidden hitter traits in the simulator; a hitter world in `worlds.js`; approach and swing path learning with evidence
+  minimums; off-speed per Q7; the "keep mine" flow.
+- **Proof:** worlds test recovers approach and swing path at realistic HS / D3 pitch counts per opposing hitter, or
+  reports that it can't (flag-only).
+
+### Step B4: Hitter read-through rows (½ day, proposed; Drew grades in Step 6)
+- One row per tag value that should move a call:
+  - H1: flat / level swing: fewer riding fastballs up;
+  - H2: uppercut / lift swing: the riding fastball up holds, the curve down gets riskier;
+  - H3: aggressive early: fewer grooved first pitches;
+  - H4: patient early: more first-pitch strikes in the zone;
+  - H5: hits off-speed hard: fewer hittable off-speed pitches;
+  - H6: pull-heavy: more away.
+- Each with a no-move row (an unknown hitter).
+
 ### Step 6: Read-through and grid (1 day; Drew grades)
 - `scenarios_v12.json` (own `.sha256`): v1.1's 98 rows plus location rows, **proposed**:
   - L1: arm-leaning sinker (+3) to a same-side hitter goes inside less than the same sinker at lean 0;
@@ -256,7 +357,7 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
   validation refuses unknown keys).
 - Merge, any migration, the `v1.2` tag: **only on Drew's go.**
 
-Rough total: 11–12 working days.
+Rough total: Part A 11–12 working days, Part B 8 working days; about 19–20 in all.
 
 ## 4. Evaluation suite
 
@@ -268,6 +369,8 @@ Rough total: 11–12 working days.
 6. **Game mix:** `game_mix_e2e` 21 games.
 7. **App e2e:** logging, bullpen mode, sync, the v1.0 fixture.
 8. Python = JS on every new function.
+9. **Hitter fits** ship only on held-out gain (2025 traits → 2026 pitches); coach rules are labeled; every tag unknown
+   reproduces Part A's golden exactly.
 
 ## 5. Risks
 
@@ -278,10 +381,14 @@ Rough total: 11–12 working days.
 4. **Coach-set leans without evidence** can move calls a lot (doc §5: ×1.9 HBP). Sizes per Q1, shown with the pitch.
 5. **Called spot ≠ glove (L4).** Symmetrising over both target sides cancels the middle pull; the glove tap removes it.
 6. **Bullpen ≠ game.** Bullpen leans feed only the lean estimator, not landing-today or confidence.
+7. **Hitter traits are MLB-measured; opponents are tagged by coaches.** A wrong tag moves calls. Unknown is the default,
+   sizes are net of existing terms, and the weight shrinks as in-game memory on that hitter builds.
+8. **Opposing hitters are seen rarely at HS / D3**, so hitter learning may stay flag-only. The tags carry the feature.
+9. **Size:** about 20 days in one release. The Part A freeze lets location ship alone (Q8).
 
 ## 6. Not in v1.2
 
-- The hitter model (v1.1 plan 8.2), unless Drew moves it back (Q6).
+- Hitter ground-ball vs fly-ball effects; spray learning; height-preference and bat-speed tags (2.8).
 - The familiarity refit, P2 / P3 / P5 / P7, the cutter usage table (L1). Class values (closed).
 - OpenCommand numbers in shipped code (O3).
 - Linking TrackMan / Rapsodo uploads to charted bullpens.
@@ -305,3 +412,4 @@ through `wild`?), and whether a v1.1 app refuses snapshots with lean fields.
 | `probe_hbp_scale.py` | P1 / four-seam inside vs the D3 price |
 | `lean_hbp_geometry.py` | HBP and heart share vs lean |
 | `grid_lean_sim.py` | can the 5×5 grid show a lean |
+| `hitter_persistence.py` | which hitter traits carry season to season (leaderboards 2024–2026, pitch sample) |
