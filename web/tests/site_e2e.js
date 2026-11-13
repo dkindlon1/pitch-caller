@@ -64,10 +64,16 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     await ab(0.3); await ab(0.02);
     const introOk = await page.waitForSelector(".mk-ab.is-intro", { timeout: 6000 }).then(() => true, () => false);
     check(introOk, `the chapter opens on its title (${await page.locator(".mk-ab").getAttribute("class")})`);
+    // Wait for each state instead of reading it after a fixed sleep (the scroll-driven scene settles at its own pace on a
+    // slow CI runner; this check failed intermittently in CI on main's portal branch too). Same assertions, up to 8 s each.
+    const until = (fn) => page.waitForFunction(fn, null, { timeout: 8000 }).then(() => true, () => false);
     await ab(0.65);
+    await until(() => { const c = document.querySelector(".mk-ab-card .mk-ab-count"), r = document.querySelector(".mk-ab-rail .is-now"); return c && r && c.innerText === "1-1" && r.innerText.includes("1-1"); });
     check((await page.locator(".mk-ab-card .mk-ab-count").innerText()) === "1-1" && (await page.locator(".mk-ab-rail .is-now").innerText()).includes("1-1"), "scrolling into the third pitch shows the 1-1 call and marks it on the rail");
+    await until(() => document.querySelectorAll(".mk-ab-res.is-shown").length === 1);
     check(await page.locator(".mk-ab-res.is-shown").count() === 1, "the result appears once that pitch has landed");
     await ab(0.97);
+    await until(() => document.querySelectorAll(".mk-ab.is-end").length === 1);
     check((await page.locator(".mk-ab.is-end").count()) === 1 && await page.locator(".mk-ab-k").isVisible(), "the chapter ends on the strikeout");
 
     console.log("1c. The mix, the demo, the dugout, the game, the questions");
@@ -89,7 +95,12 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     const times = [];
     const ms = async () => Number(/called in (\d+) ms/.exec(await page.locator(".mk-dm-ms").innerText())[1]);
     times.push(await ms());
-    for (const r of ["Called strike", "Ball", "Foul", "Ball"]) { await page.locator(".mk-dm-res", { hasText: r }).first().click(); await wait(250); times.push(await ms()); }
+    // each tap waits for the count it should make (a fixed 250 ms let a tap land mid-call on a loaded runner)
+    for (const [r, want] of [["Called strike", "0-1"], ["Ball", "1-1"], ["Foul", "1-2"], ["Ball", "2-2"]]) {
+      await page.locator(".mk-dm-res", { hasText: r }).first().click();
+      await page.waitForFunction((w) => { const b = document.querySelector(".mk-dm-count b"); return b && b.innerText === w; }, want, { timeout: 8000 }).catch(() => {});
+      await wait(250); times.push(await ms());
+    }
     check((await page.locator(".mk-dm-count b").innerText()) === "2-2", "tapping called strike, ball, foul, ball leaves the count at 2-2");
     check((await page.locator(".mk-dm-why").innerText()).length > 8, `each call carries the engine's reason ("${await page.locator(".mk-dm-why").innerText()}")`);
     check(Math.max(...times) < 1000, `every call came back in under a second on this machine (${times.join(", ")} ms, software rendering)`);
