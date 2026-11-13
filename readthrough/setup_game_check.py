@@ -11,7 +11,7 @@ import engine as e
 import simulate as SIM
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 12
-st = dict(pitches=0, qualifying=0, changed=0, by_rule=Counter(), tb_fired=0)
+st = dict(pitches=0, qualifying=0, changed=0, by_rule=Counter(), tb_fired=0, fired=Counter(), two_k=0, s5_two_k=0, s5_low_cmd=0)
 _call = e.call_v08
 
 
@@ -22,6 +22,15 @@ def top(pi):
 def spy(ars, s, rng=None, exclude=None, tab=None):
     r = _call(ars, s, rng=rng, exclude=exclude, tab=tab)
     st["pitches"] += 1
+    p_, q_ = r[0][0], r[0][1]
+    v_, rule_, _x = e.setup_payoff(p_, q_, s, ars) if s.pa_log else (0.0, None, None)
+    if v_ != 0:
+        st["fired"][rule_] += 1                     # the drawn call carries this rule's credit (or N2's cost)
+    if s.strikes == 2:
+        st["two_k"] += 1
+        if rule_ == "S5" and v_ > 0:
+            st["s5_two_k"] += 1
+            st["s5_low_cmd"] += p_.command < 4
     if not s.pa_log or s.balls >= 3:
         return r
     tab_ = r[2]
@@ -59,8 +68,14 @@ for g in range(N):
     SIM.run(9000 + g, f"/tmp/setup_game_{g}.csv")
     print(f"game {g + 1}: {st['pitches']} pitches, {st['qualifying']} after a qualifying setup, top call changed {st['changed']}", flush=True)
 rate = st["changed"] / st["qualifying"] if st["qualifying"] else 0.0
-out = dict(games=N, pitches=st["pitches"], qualifying=st["qualifying"], changed=st["changed"], rate=rate,
-           by_rule=dict(st["by_rule"]), tie_break_fired=st["tb_fired"], band=[0.02, 0.10], in_band=0.02 <= rate <= 0.10)
-json.dump(out, open(os.path.join(HERE, "results", "v11", "setup_game_check.json"), "w"), indent=1)
+per100 = lambda x: 100.0 * x / st["pitches"] if st["pitches"] else 0.0
+out = dict(games=N, staff=SIM.STAFF, pitches=st["pitches"], qualifying=st["qualifying"], changed=st["changed"], rate=rate,
+           by_rule=dict(st["by_rule"]), tie_break_fired=st["tb_fired"], band=[0.02, 0.10], in_band=0.02 <= rate <= 0.10,
+           fires_per_100={k: round(per100(v), 2) for k, v in st["fired"].items()},
+           top_change_per_100={k: round(per100(v), 2) for k, v in st["by_rule"].items()},
+           s5_share_of_two_strike_calls=(st["s5_two_k"] / st["two_k"]) if st["two_k"] else 0.0, s5_with_command_under_4=st["s5_low_cmd"])
+print(f"fires per 100 pitches {out['fires_per_100']}; top-call changes per 100 {out['top_change_per_100']}; S5 on "
+      f"{out['s5_share_of_two_strike_calls']:.1%} of two-strike calls ({st['s5_low_cmd']} with command under 4)")
+json.dump(out, open(os.path.join(HERE, "results", "v11", f"setup_game_check{'' if SIM.STAFF == 'default' else '_' + SIM.STAFF}.json"), "w"), indent=1)
 print(f"setup credits changed the top call on {st['changed']} of {st['qualifying']} pitches after a qualifying setup ({rate:.1%}; "
       f"band 2-10%: {'in' if out['in_band'] else 'OUT'}); by rule {dict(st['by_rule'])}; tie-break moved probability on {st['tb_fired']}")

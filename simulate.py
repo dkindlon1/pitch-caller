@@ -112,15 +112,28 @@ LEGACY_CALLER = not hasattr(CALLER, "expected_strike")   # a frozen pre-v1.0 eng
 
 def our_staff():
     P = lambda n, k, g, c, cf, sh, v: Pitch(n, k, grade=g, command=c, conf=cf, shape=sh, velo=v)
+    S_ = lambda p, slot: (setattr(p, "slot", slot), p)[1]
     presets = {
         "power": ([P("Fastball", "FB", 5, 2, .80, "ride", 93), P("Slider", "SL", 4, 2, .70, "sweeper", 82), P("Changeup", "CH", 2, 2, .50, "fade", 84)],
                   [P("Fastball", "FB", 5, 2, .80, "ride", 94), P("Curveball", "CB", 4, 2, .65, "sharp", 78), P("Changeup", "CH", 2, 3, .50, "fade", 85)]),
-        "finesse": ([P("Fastball", "FB", 2, 5, .80, "sink", 82), P("Curveball", "CB", 3, 4, .75, "loopy", 70), P("Changeup", "CH", 4, 5, .80, "fade", 74)],
+        "finesse": ([P("Fastball", "SI", 2, 5, .80, "run", 82), P("Curveball", "CB", 3, 4, .75, "loopy", 70), P("Changeup", "CH", 4, 5, .80, "fade", 74)],
                     [P("Fastball", "FB", 3, 4, .80, "run", 85), P("Slider", "SL", 3, 4, .70, "tight", 77), P("Changeup", "CH", 3, 4, .70, "fade", 77)]),
         "two_pitch": ([P("Fastball", "FB", 3, 3, .75, "", 80), P("Curveball", "CB", 3, 2, .60, "loopy", 66)],
                       [P("Fastball", "FB", 3, 3, .75, "", 81), P("Slider", "SL", 3, 3, .65, "tight", 72)]),
         "four_pitch": ([P("Fastball", "FB", 3, 4, .80, "ride", 86), P("Slider", "SL", 4, 3, .70, "tight", 79), P("Curveball", "CB", 3, 3, .65, "loopy", 73), P("Changeup", "CH", 3, 3, .60, "fade", 78)],
                        None),
+        # v1.1 Step 4: the plan's test arsenals (starter; the default reliever)
+        "ride126": ([S_(P("Fastball", "FB", 3, 3, .80, "rides", 89), "over the top"), S_(P("Curve", "CB", 3, 3, .70, "12-6", 75), "over the top"),
+                     S_(P("Splitter", "CH", 3, 3, .65, "split", 81), "over the top")], None),
+        "sink_sweep": ([S_(P("Sinker", "SI", 3, 3, .80, "run", 88), "low three-quarter"), S_(P("Sweeper", "SL", 3, 3, .70, "sweeper", 77), "low three-quarter"),
+                        S_(P("Changeup", "CH", 3, 3, .65, "fade", 80), "low three-quarter")], None),
+        # v1.1 Step 4: the same arsenal with a command-4 sinker, so the S5 limit is tested on a pitcher S5 can fire for
+        "sink_sweep_cmd4": ([S_(P("Sinker", "SI", 3, 4, .80, "run", 88), "low three-quarter"), S_(P("Sweeper", "SL", 3, 3, .70, "sweeper", 77), "low three-quarter"),
+                             S_(P("Changeup", "CH", 3, 3, .65, "fade", 80), "low three-quarter")], None),
+        "cut4": ([P("Fastball", "FB", 3, 3, .80, "", 89), P("Cutter", "FC", 3, 3, .72, "hard", 86), P("Slider", "SL", 3, 3, .70, "gyro", 81),
+                  P("Curve", "CB", 3, 3, .65, "", 75)], None),
+        "deadzone": ([P("Fastball", "FB", 3, 3, .80, "straight", 87), P("Sinker", "SI", 3, 3, .75, "run", 86), P("Slider", "SL", 3, 3, .70, "tight", 79)], None),
+        "hs_slurve": ([P("Fastball", "FB", 3, 3, .75, "", 78), P("Slurve", "SL", 3, 3, .65, "slurve", 67)], None),
     }
     if STAFF in presets:
         st_, rl_ = presets[STAFF]

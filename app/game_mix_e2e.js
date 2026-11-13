@@ -9,6 +9,9 @@
  * is the not-landing case: the fastball draws 5-for-12 early and the hold kept it out at 0-0 and when behind (slider 79%
  * with the hot fix alone); with Drew's comeback (the hold lifts after COMEBACK_N pitches without it) it is 56%.
  * Run from app/ after a build: node game_mix_e2e.js
+ * v1.1 Step 4 diagnosis: SCAN='[{"tier":2,"seed":1},...]' runs other seeds; SETUP_OFF=1 zeroes the setup sizes in the page
+ * (E.v08.SETUP_RULE, the object the engine reads) so the same seeds can be compared without the setup credits. The
+ * tie-break stays on. Neither is used by scripts/test-app.sh.
  */
 const { chromium } = require("playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -29,7 +32,7 @@ async function game(browser, url, { tier, seed, forcedReads }) {
   const page = await ctx.newPage();
   const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
   await page.goto(url); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 15000 });
-  await page.evaluate(({ tier, appSeed }) => { let a = appSeed; Math.random = () => (a = (a * 16807) % 2147483647) / 2147483647; S.setup.inputs = tier; S.view = "live"; G().call = null; makeCall(); save(); render(); }, { tier, appSeed: seed + 4 });
+  await page.evaluate(({ tier, appSeed, off }) => { let a = appSeed; Math.random = () => (a = (a * 16807) % 2147483647) / 2147483647; S.setup.inputs = tier; S.view = "live"; if (off) for (const k of Object.keys(E.v08.SETUP_RULE)) E.v08.SETUP_RULE[k] = 0; G().call = null; makeCall(); save(); render(); }, { tier, appSeed: seed + 4, off: !!process.env.SETUP_OFF });
   const visible = (re) => page.evaluate((src) => { const r = new RegExp(src); return [...document.querySelectorAll("button")].some((b) => b.offsetParent && r.test(b.textContent.trim())); }, re.source);
   const click = (re) => page.evaluate((src) => { const r = new RegExp(src); const b = [...document.querySelectorAll("button")].find((x) => x.offsetParent && r.test(x.textContent.trim().replace(/\s+/g, " "))); if (b) b.click(); return !!b; }, re.source);
   let pitches = 0;

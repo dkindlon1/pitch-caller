@@ -1,0 +1,801 @@
+{
+ "sha256": "7900fa3c47cafe24675c6075c788c8aee7cc9b8c2c8a671608eda584521c78f7",
+ "changed": [
+  {
+   "id": "A1",
+   "tv": 0.053,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "3-0"
+  },
+  {
+   "id": "A3",
+   "tv": 0.444,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-2, bases loaded, 2 outs"
+  },
+  {
+   "id": "A4",
+   "tv": 0.103,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Slider",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-2, slider landing 8 of 10 today"
+  },
+  {
+   "id": "A7",
+   "tv": 0.08,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Changeup",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, the coach just shook off SL down-away"
+  },
+  {
+   "id": "B1",
+   "tv": 0.129,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0"
+  },
+  {
+   "id": "B2",
+   "tv": 0.068,
+   "top_before": [
+    "Slider",
+    "middle"
+   ],
+   "top_after": [
+    "Slider",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0, FB command 2, SL command 4"
+  },
+  {
+   "id": "B4",
+   "tv": 0.057,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "up-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-1, last pitch FB up-in, called strike"
+  },
+  {
+   "id": "B5",
+   "tv": 0.109,
+   "top_before": [
+    "Slider",
+    "middle"
+   ],
+   "top_after": [
+    "Changeup",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1"
+  },
+  {
+   "id": "B7",
+   "tv": 0.128,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-0, changeup landing 2 of 8"
+  },
+  {
+   "id": "B9",
+   "tv": 0.104,
+   "top_before": [
+    "Changeup",
+    "middle"
+   ],
+   "top_after": [
+    "Changeup",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, FB confidence 0.50, SL confidence 0.85"
+  },
+  {
+   "id": "C1",
+   "tv": 0.181,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-2, 1 out"
+  },
+  {
+   "id": "C2",
+   "tv": 0.228,
+   "top_before": [
+    "Changeup",
+    "down-away"
+   ],
+   "top_after": [
+    "Slider",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-2, last pitch FB up-in, swinging strike"
+  },
+  {
+   "id": "C3",
+   "tv": 0.169,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2"
+  },
+  {
+   "id": "C4",
+   "tv": 0.239,
+   "top_before": [
+    "Fastball",
+    "up-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, runner on 3rd, 1 out, slider landing 2 of 9"
+  },
+  {
+   "id": "C5",
+   "tv": 0.424,
+   "top_before": [
+    "Curveball",
+    "down-away"
+   ],
+   "top_after": [
+    "Curveball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": false,
+   "situation": "1-2, runner on 3rd, 1 out, four-pitch, curveball landing 8 of 10, catcher blocks 4"
+  },
+  {
+   "id": "C6",
+   "tv": 0.302,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-2, runner on 2nd, 2 outs"
+  },
+  {
+   "id": "C7",
+   "tv": 0.136,
+   "top_before": [
+    "Slider",
+    "middle"
+   ],
+   "top_after": [
+    "Slider",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "3-2, 2 outs, changeup landing 2 of 8"
+  },
+  {
+   "id": "C8",
+   "tv": 0.255,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Slider",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "3-2, bases loaded, 2 outs"
+  },
+  {
+   "id": "C9",
+   "tv": 0.186,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Slider",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-2, last two pitches FB, FB"
+  },
+  {
+   "id": "C10",
+   "tv": 0.146,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, opposite-side hitter"
+  },
+  {
+   "id": "D1",
+   "tv": 0.145,
+   "top_before": [
+    "Fastball",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, bottom 9th, tied, runner on 3rd, 1 out, infield in"
+  },
+  {
+   "id": "D3",
+   "tv": 0.126,
+   "top_before": [
+    "Changeup",
+    "down-middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, runner on 3rd, 1 out, slider landing 2 of 9, catcher blocks 2"
+  },
+  {
+   "id": "D5",
+   "tv": 0.113,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-0, 7th inning, up 6"
+  },
+  {
+   "id": "D6",
+   "tv": 0.056,
+   "top_before": [
+    "Changeup",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "up-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, 9th, down 1, runner on 1st, 2 outs, high steal threat"
+  },
+  {
+   "id": "D7",
+   "tv": 0.174,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, 8th, tied, runners on 2nd and 3rd, 2 outs"
+  },
+  {
+   "id": "D9",
+   "tv": 0.103,
+   "top_before": [
+    "Changeup",
+    "down-middle"
+   ],
+   "top_after": [
+    "Slider",
+    "down-middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, runner on 1st, 0 outs"
+  },
+  {
+   "id": "D10",
+   "tv": 0.076,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0, high school, runner on 3rd, 2 outs"
+  },
+  {
+   "id": "E2",
+   "tv": 0.114,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-0, slider landing 2 of 9"
+  },
+  {
+   "id": "E5",
+   "tv": 0.069,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0, coach just shook off a fastball (FB confidence down 0.20 to 0.50)"
+  },
+  {
+   "id": "E6",
+   "tv": 0.129,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "3-2, 2 outs, four-pitch, curveball (grade 4) landing 1 of 6"
+  },
+  {
+   "id": "E7",
+   "tv": 0.254,
+   "top_before": [
+    "Changeup",
+    "down-away"
+   ],
+   "top_after": [
+    "Slider",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-2, pitch count 100, fastball 3 mph below normal"
+  },
+  {
+   "id": "E8",
+   "tv": 0.118,
+   "top_before": [
+    "Fastball",
+    "up-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, high school, two-pitch (FB, CB), curveball landing 0 of 4"
+  },
+  {
+   "id": "F1",
+   "tv": 0.078,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "up-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-1, last pitch FB up-in, pulled foul (out front)"
+  },
+  {
+   "id": "F2",
+   "tv": 0.141,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": false,
+   "situation": "1-2, last pitch SL down-away, swinging strike"
+  },
+  {
+   "id": "F3",
+   "tv": 0.109,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-0, last two pitches FB away, both balls"
+  },
+  {
+   "id": "F4",
+   "tv": 0.109,
+   "top_before": [
+    "Slider",
+    "middle"
+   ],
+   "top_after": [
+    "Slider",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, last three pitches all FB"
+  },
+  {
+   "id": "F7",
+   "tv": 0.022,
+   "top_before": [
+    "Slider",
+    "down-middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, hitter out front on the slider"
+  },
+  {
+   "id": "F8",
+   "tv": 0.114,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, two-pitch (FB, SL), last three pitches all SL"
+  },
+  {
+   "id": "G1",
+   "tv": 0.169,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, same-side hitter"
+  },
+  {
+   "id": "G2",
+   "tv": 0.153,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0, four-pitch, curveball grade 4 (his best)"
+  },
+  {
+   "id": "G3",
+   "tv": 0.147,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, two-pitch (FB, SL), slider grade 2"
+  },
+  {
+   "id": "H1",
+   "tv": 0.135,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "2-0, power hitter (power grade 5)"
+  },
+  {
+   "id": "H2",
+   "tv": 0.087,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Slider",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-2, contact hitter (contact grade 5)"
+  },
+  {
+   "id": "H3",
+   "tv": 0.059,
+   "top_before": [
+    "Slider",
+    "middle"
+   ],
+   "top_after": [
+    "Slider",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, he hit FB up-in hard once earlier this game"
+  },
+  {
+   "id": "H4",
+   "tv": 0.062,
+   "top_before": [
+    "Fastball",
+    "up-in"
+   ],
+   "top_after": [
+    "Fastball",
+    "up-in"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, hitter crowds the plate"
+  },
+  {
+   "id": "I1",
+   "tv": 0.117,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0, second trip, last trip FB middle was hit hard"
+  },
+  {
+   "id": "I2",
+   "tv": 0.118,
+   "top_before": [
+    "Changeup",
+    "down-away"
+   ],
+   "top_after": [
+    "Changeup",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, second trip, last trip CH down-away got 2 swinging strikes"
+  },
+  {
+   "id": "I3",
+   "tv": 0.088,
+   "top_before": [
+    "Fastball",
+    "middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0, third trip, pitch count 85"
+  },
+  {
+   "id": "I4",
+   "tv": 0.125,
+   "top_before": [
+    "Fastball",
+    "down-middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "0-0, third trip, he hit FB middle hard on both earlier trips"
+  },
+  {
+   "id": "J1",
+   "tv": 0.122,
+   "top_before": [
+    "Slider",
+    "down-middle"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, runner just moved to 3rd on a wild pitch, 1 out (the at-bat re-solves for the new bases)"
+  },
+  {
+   "id": "J2",
+   "tv": 0.204,
+   "top_before": [
+    "Slider",
+    "down-away"
+   ],
+   "top_after": [
+    "Fastball",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, he just took a slider in the dirt (chase target) for a ball"
+  },
+  {
+   "id": "J4",
+   "tv": 0.109,
+   "top_before": [
+    "Slider",
+    "middle"
+   ],
+   "top_after": [
+    "Slider",
+    "middle"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-1, last pitch FB up-away, taken for a ball"
+  },
+  {
+   "id": "J7",
+   "tv": 0.126,
+   "top_before": [
+    "Changeup",
+    "down-away"
+   ],
+   "top_after": [
+    "Changeup",
+    "down-away"
+   ],
+   "pass_before": true,
+   "pass_after": true,
+   "situation": "1-2, opposite-side hitter, plus changeup and plus slider (grade 4)"
+  }
+ ],
+ "n": 71
+}

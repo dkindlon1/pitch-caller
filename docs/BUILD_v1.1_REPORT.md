@@ -447,10 +447,11 @@ on its fire row (N2: the sinker down 3+) with both rows passing; the floors were
 | Check | Result |
 |---|---|
 | `tests_v11.py` | **36/36**. New for Step 3: 18 fire / no-fire cases (S2, S5, S7, S9, N2, the no-read cases, three balls, no chase at 2-2); the cap (with the went-back read on, a setup adds nothing; without it, the full credit); root only (every one of 18,225 table costs sees an empty `pa_log`); the tie-break (an exact tie moves 5 points, outside the margin nothing, nothing at three balls); Python = JS `setup_payoff` on the cases and 400 random at-bats. The v1.0 exactness check now also sets the setup credits and the tie-break off: still exactly v1.0 |
-| `tests_v11_explain.py` | **7/7** on 60 golden cases + 6 setup cases: named term smallest eligible; comparator; three balls; "Set up by" exactly when a rule credits the call and "Payoff" exactly then under two strikes, no "Setup" left; eye level; each rule (S1, S2, S3, S4, S6, S7) fires on its case, names its setup, is silent without it or after hard contact; Python = JS |
+| `tests_v11_explain.py` | **7/7** on 60 golden cases + 6 setup cases (the full suite first caught check 6 failing: S1's case, a fastball up-away, also sets up S4, which is sized larger, so S4 took the credit. The engine is right; the case now uses a fastball up-in, commit 50be0e7): named term smallest eligible; comparator; three balls; "Set up by" exactly when a rule credits the call and "Payoff" exactly then under two strikes, no "Setup" left; eye level; each rule (S1, S2, S3, S4, S6, S7) fires on its case, names its setup, is silent without it or after hard contact; Python = JS |
 | `tests.py` | **45/45**. R5 (holes) now holds the tie-break off while it measures the hitter-damage term: the tie-break fired on the thin-hole spot only and added its 5 points there |
 | Read-through (`scenarios_v11.json`, 89 rows) | **87/89**: all 18 setup rows pass (proposed grades); C5 and F2 as after Step 2 |
 | Tie-break report (`readthrough/tie_break_report.py`, 540 grid cells) | fires in **123 (23%)**; moves 4.2 points on average when it fires, at most 5.0; hitter's best-response gain at most **7.3e-4 runs**, at the noise margin (7.3e-4 to 1.1e-3 by level) |
+| `scripts/test-app.sh` (worktree, commit 50be0e7, 48 min) | **exit 1: every gate passes except `game_mix_e2e`, 10/12.** tests.py 45, explain 7, tests_v11 36, fast_parity, golden_v11, learn 27, db 18, import 11, rails 31, schema 24, stage2 21, worlds 31, pitch_rules 41, kinds 20, rules_e2e 20, v10 step 1 / 3 / 5 e2e 6 / 7 / 10 all pass. `game_mix_e2e` (no pitch over 70% of an 82-pitch app game): tier 2 seed 7 went 71% fastball, tier 3 seed 31337 77% (Step 2: 45% and 61%). See Step 4, "Game mix" |
 | Simulated games (`readthrough/setup_game_check.py`, 10 games, 1,300 pitches) | a setup credit or the tie-break changed the top call on **38 of 159** pitches after a qualifying setup = **23.9%, OUTSIDE the proposed 2–10% band**. By rule: S4 15, tie-break 9, S7 8, S3 3, S9 2, S6 1. The tie-break moved probability on 34 of the 159 |
 
 ### For Drew (Step 4)
@@ -463,3 +464,99 @@ on its fire row (N2: the sinker down 3+) with both rows passing; the floors were
   Each comes back if you keep it.
 - **S1 and S7** are built at their smallest sizes although part of their checks point the wrong way (S1 kept by O2; S7's
   whiff and chase checks disagree).
+
+## Step 4: read-through and test arsenals (Nov 13, overnight; Drew asleep, every grade below is proposed)
+
+### Test arsenals (plan Step 4)
+`grid_v10.py` (so `tests.py`'s grid checks too) and `simulate.py` presets now hold 10 arsenals: v1.0's AVG3, two_pitch,
+four_pitch, power and finesse (its FB/sink is now SI/run), plus ride126 (ride FB + 12-6 + split, over the top),
+sink_sweep (sinker + sweeper + fade CH, low three-quarter), cut4 (four-seam + hard cutter + gyro slider + curve), deadzone
+(straight FB + sinker + slider) and hs_slurve (HS fastball + slurve). The simulator also has sink_sweep_cmd4 (the same
+with a command-4 sinker), because S5 can't fire below command 4 and the S5 limit needs a pitcher it can fire for.
+
+### Predictability grid, tie-break on (`readthrough/v11_grid_compare.py` → `results/v11/grid_v11_step4.json`)
+Every check passes on all 10 arsenals:
+
+| Check | Result |
+|---|---|
+| AVG3, every count but 3-0: top call ≤ 85%, 2+ calls survive | 0 of 99 cells fail |
+| D1 3-1 band (50–80%, target 55–70%) | all 9 in band; 7 of 9 in 55–70% (D1 R1 71.2%, D1 R3 70.4%) |
+| 3-1 / 2-1 / 2-0 floor (top pitch type ≥ 50%) | lowest 50% |
+| First-pitch strike-target share ≥ 85% | lowest 100% |
+| No chase as the top call at 3-0 / 3-1 / 2-2 | 0 cells |
+| All arsenals: a call over 85% or a single call (reported) | 10 of 990 cells, e.g. HS two_pitch R1 3-1 (one call) |
+| Pitch type over 85% (3-0 exempt; reported) | 22 cells |
+| Trusted secondaries under 5% (reported) | 130 pitch-cells; power's changeup 54, four_pitch's changeup 19, sink_sweep's changeup 18 |
+
+v1.0 vs v1.1 on v1.0's five arsenals (540 cells): pitch-type shares move by a median 2.7 points (95th percentile 11.0,
+largest 19.4: D1 finesse R1 3-1, fastball 79% → 99%); the top call changes in 203 cells.
+
+### S5 limits (plan: S5 credits ≤ 15% of two-strike calls on the low-slot sinker arsenal, none with command < 4)
+| Staff (6 simulated games each) | S5 share of two-strike calls | With command < 4 |
+|---|---|---|
+| sink_sweep (sinker command 3) | 0% (S5 can't fire: the command gate) | 0 |
+| sink_sweep_cmd4 | **1.2%** | **0** |
+Both limits hold, and the second run shows they hold on a pitcher S5 can fire for.
+
+### Fire and change rates per 100 pitches (`readthrough/setup_game_check.py`, now with `STAFF=`)
+| Staff | Pitches | Fires per 100 (the drawn call carries the rule) | Top-call changes per 100 | Changed / qualifying |
+|---|---|---|---|---|
+| default | 763 | S9 1.31, S4 1.05, S3 0.26, S6 0.26 | S4 0.92, S7 0.79, tie-break 0.79 | 19 / 79 = **24.1%** |
+| sink_sweep | 747 | N2 4.42, S4 1.47, S2 0.94, S6 0.27, S7 0.13 | tie-break 2.54, S4 1.20, N2 0.67, S2 0.54 | 37 / 168 = **22.0%** |
+| sink_sweep_cmd4 | 796 | N2 4.27, S4 3.27, S2 0.75, S5 0.38, S6 0.25, S7 0.13 | S4 2.76, S2 1.38, tie-break 0.88, N2 0.75, S7 0.25 | 48 / 225 = **21.3%** |
+All three are **outside the proposed 2–10% band**, as at Step 3. S4 is the largest rule-driven changer on every staff.
+
+### Game mix (the one red gate)
+`app/game_mix_e2e.js` (whole 82-pitch games through the app; no pitch over 70%) fails 2 of its 6 seeds since Step 3. A
+single game is path-dependent (one changed call re-routes the rest), so I ran 20 seeds through the real app with the
+setup sizes on and zeroed in the page (`SCAN=` / `SETUP_OFF=1`, test-only; the tie-break on in both):
+
+| 20 app games | Mean top-pitch share | Tier 2 / tier 3 mean | Games over 70% | Over 60% |
+|---|---|---|---|---|
+| Setups on | 54.9% | 50.6% / **59.2%** | 2 (71%, 77%) | 5 |
+| Setups off | 52.4% | 52.4% / 52.3% | 0 | 3 |
+
+With the sizes zeroed, seed 7 replays Step 2's game exactly (45%), so the setup credits, not the tie-break, moved it.
+It's not the v1.0 collapse (75–95% every game). It's a real narrowing of about 7 points at tier 3, where the coach logs
+reads and more rules can fire. It points the same way as the 21–24% change rate, so the same decision fixes both. I
+haven't tuned sizes or swapped seeds to get the gate green.
+
+### Read-through (`scenarios_v11.json`, 98 rows, sha256 7900fa3c…; `results/v11/scenarios_step4.json`)
+**92/98.** The 18 setup rows pass. C5 and F2 fail as after Step 2. Profile rows (P1–P8, proposed; floors and ceilings
+come from the research, set before running them):
+
+| Row | Claim (research section 1) | Value vs limit | |
+|---|---|---|---|
+| P1 | Sinker in to same-side hitters (1-0) | sinker in **2.6%** vs floor 25% | FAIL |
+| P2 | Average sweeper rare vs opposite side (1-1) | sweeper 23.3% vs ceiling 20% | FAIL |
+| P2p | …unless plus (grade 5) | sweeper 33.4% vs floor 10% | pass |
+| P3 | Gyro slider for strikes (1-0) | slider in zone 8.0% vs floor 10%; chased 0% vs ceiling 5% | FAIL (floor) |
+| P4 | 12-6 steals an early strike vs opposite side (0-0) | curve in zone 22.9% vs floor 10% | pass |
+| P5 | Split is the two-strike pitch vs opposite side (1-2) | split down / chase 20.1% vs floor 20% | pass |
+| P6 | Firm changeup not a whiff pitch (1-2) | changeup chase 0% vs ceiling 8% | pass |
+| P7 | Dead-zone fastball: edges, not low (1-1) | four-seam down 14.5% vs ceiling 12% | FAIL |
+| P8 | S5 not over-relied | sinker in 8.1% vs ceiling 30% | pass |
+
+**P1 is a real gap, not a threshold call.** At every count the sinker is the top call vs same-side hitters (40–73%), and
+it goes inside 0–3% of the time. The profile terms favor the inside lane (hard contact −0.49 up-in). But aimed in, the
+sinker gets a called strike 8–10% of the time (away: 14–16%) and hits the batter 3.7% per pitch (away: 0.7%), so the
+engine keeps it over the middle. The likely cause: the engine reads "in" as the aim point and adds the arm-side run as a
+miss toward the hitter, while MLB's "sinker in" is where it crosses the plate. That's a modeling decision for you, so I
+haven't changed it. Other counts (`readthrough/profile_counts.py`, all counts 0-0 to 2-2): sweeper vs opposite side 13–28%;
+gyro slider never chased, 8–18% in the zone; dead-zone four-seam low 0–17%, up 0–12%.
+
+### v1.0 rows to regrade (`readthrough/v10_rows_changed.py` → `results/v11/v10_rows_changed.json`)
+Against v1.0's exact calls (the `step2_off` reset), **53 of 71** rows moved: their top call changed, 5+ points of their
+call mix moved, or their verdict changed. Only C5 and F2 changed verdict. The most common move: the slider down-away top
+call giving way to the fastball down-away (A3, C1, C3, C6, D7, F2, G1, G3, J2 and others), from Step 2's profile terms on
+the "tight" slider. The list is ranked by how far each row moved, so you can regrade from the top and stop when the
+changes get small.
+
+### For Drew (Step 4 decisions)
+1. **Setup sizes:** 21–24% change rate on three staffs (band 2–10%), and about 7 points narrower game mixes at tier 3. Lower the
+   sizes to the band (fire rows' floors would come down with them), narrow S4, or widen the band?
+2. **P1 sinker in:** treat "in" for a heavy-run sinker as where it crosses (aim inner-middle and let it run), lower its
+   inside miss / HBP, or accept middle-heavy sinkers?
+3. **Bands to confirm:** the Step 2 call-change bands (6 of 10 pass), the setup band, and the proposed grades on the 18
+   setup rows and 9 profile rows.
+4. **Regrade** the 53 changed v1.0 rows (ranked list above), C5 and F2 first.

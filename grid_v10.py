@@ -1,5 +1,6 @@
 """v1.0 predictability grid (docs/PLAN_v1.0_2026-11-09.md, Step 2): the live call (call_v08) in every count, at hs / D3 /
-D1, for five arsenals, with bases empty / runner on 1st / runner on 3rd. One at-bat table per (level, arsenal, bases),
+D1, for every arsenal (v1.1 Step 4 adds the plan's five test arsenals; the finesse fastball is a sinker), with bases empty /
+runner on 1st / runner on 3rd. One at-bat table per (level, arsenal, bases),
 solved at 0-0 the way the app and the simulator solve it, then the root call at each count.
 
   python3 grid_v10.py            -> prints the table (top call share and pitch-type shares per cell) and the checks
@@ -12,6 +13,7 @@ from dataclasses import replace
 import engine as e
 
 P = lambda n, k, g, c, cf, sh, v: e.Pitch(n, k, grade=g, command=c, conf=cf, shape=sh, velo=v)
+S = lambda p, slot: (setattr(p, "slot", slot), p)[1]
 # AVG3 is tests.py's average three-pitch starter; the rest are simulate.py's starter presets
 ARSENALS = {
     "AVG3": [P("Fastball", "FB", 3, 3, .80, "ride", 86), P("Slider", "SL", 3, 3, .75, "tight", 78),
@@ -21,8 +23,17 @@ ARSENALS = {
                    P("Curveball", "CB", 3, 3, .65, "loopy", 73), P("Changeup", "CH", 3, 3, .60, "fade", 78)],
     "power": [P("Fastball", "FB", 5, 2, .80, "ride", 93), P("Slider", "SL", 4, 2, .70, "sweeper", 82),
               P("Changeup", "CH", 2, 2, .50, "fade", 84)],
-    "finesse": [P("Fastball", "FB", 2, 5, .80, "sink", 82), P("Curveball", "CB", 3, 4, .75, "loopy", 70),
+    "finesse": [P("Fastball", "SI", 2, 5, .80, "run", 82), P("Curveball", "CB", 3, 4, .75, "loopy", 70),     # v1.1 Step 4: SI/run
                 P("Changeup", "CH", 4, 5, .80, "fade", 74)],
+    # v1.1 Step 4: the plan's test arsenals (six kinds, profiles, slots)
+    "ride126": [S(P("Fastball", "FB", 3, 3, .80, "rides", 89), "over the top"), S(P("Curve", "CB", 3, 3, .70, "12-6", 75), "over the top"),
+                S(P("Splitter", "CH", 3, 3, .65, "split", 81), "over the top")],
+    "sink_sweep": [S(P("Sinker", "SI", 3, 3, .80, "run", 88), "low three-quarter"), S(P("Sweeper", "SL", 3, 3, .70, "sweeper", 77), "low three-quarter"),
+                   S(P("Changeup", "CH", 3, 3, .65, "fade", 80), "low three-quarter")],
+    "cut4": [P("Fastball", "FB", 3, 3, .80, "", 89), P("Cutter", "FC", 3, 3, .72, "hard", 86), P("Slider", "SL", 3, 3, .70, "gyro", 81),
+             P("Curve", "CB", 3, 3, .65, "", 75)],
+    "deadzone": [P("Fastball", "FB", 3, 3, .80, "straight", 87), P("Sinker", "SI", 3, 3, .75, "run", 86), P("Slider", "SL", 3, 3, .70, "tight", 79)],
+    "hs_slurve": [P("Fastball", "FB", 3, 3, .75, "", 78), P("Slurve", "SL", 3, 3, .65, "slurve", 67)],
 }
 LEVELS = ("hs", "college_d3", "college_d1")
 BASES = {"empty": (False, False, False), "R1": (True, False, False), "R3": (False, False, True)}

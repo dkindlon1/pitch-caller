@@ -8,7 +8,9 @@ usage (repo root): python3 readthrough/make_scenarios_v11.py
   acceptable, and a fire row's "floor" asks that the rule's payoff stays on the table (at least this share of calls). A
   no-fire row is graded the same way without the floor, and the rule must not move it. N2 (an anti-setup) asks the
   opposite: its fire row caps the sinker ("ceiling").
-- Step 4 adds the profile rows.
+- Step 4: the profile rows (P1-P8), one per research claim in the plan's Step 4 list, also PROPOSED. Their floors and
+  ceilings come from the research (docs/RESEARCH_pitch_profiles_and_setups_2026-11-12.md), set before the engine was run
+  on them, not tuned to pass.
 """
 import copy, hashlib, json, os
 
@@ -30,6 +32,9 @@ ARSENALS = {   # v1.1 kinds and profiles (the plan's Step 4 test arsenals where 
                  dict(name="Cutter", kind="FC", shape="hard", grade=3, command=3, conf=0.66, velo=85),
                  dict(name="Slider", kind="SL", shape="gyro", grade=3, command=3, conf=0.65, velo=80),
                  dict(name="Curve", kind="CB", shape="", grade=3, command=3, conf=0.62, velo=74)],
+    "deadzone": [dict(name="Fastball", kind="FB", shape="straight", grade=3, command=3, conf=0.7, velo=87),
+                 dict(name="Sinker", kind="SI", shape="run", grade=3, command=3, conf=0.66, velo=86),
+                 dict(name="Slider", kind="SL", shape="tight", grade=3, command=3, conf=0.65, velo=79)],
     "fd": [dict(name="Sinker", kind="SI", shape="run", grade=3, command=4, conf=0.7, velo=87),
            dict(name="Curve", kind="CB", shape="", grade=3, command=3, conf=0.65, velo=74),
            dict(name="Changeup", kind="CH", shape="fade", grade=3, command=3, conf=0.62, velo=79)],
@@ -107,20 +112,53 @@ SETUP_ROWS = [
         dict(arsenal="fd", strikes=1, pa_log=[E("Curve", "down-away", "cstrike")]), ANY),
 ]
 
+# Step 4 profile rows: each row tests one claim from the research's profile tables (section 1) at a count where it matters
+PROFILE_ROWS = [
+    row("P1", "profile", True, "1-0, same-side hitter; sinker (run), sweeper, changeup, low three-quarter",
+        "Sinker in to same-side hitters (70% of MLB righty sinkers go to righties; its best spot is in)",
+        dict(arsenal="sink_sweep", balls=1, same_side=True), ANY, floor=[["SI:in"], 0.25]),
+    row("P2", "profile", True, "1-1, opposite-side hitter; same arsenal, an average (3) sweeper",
+        "Sweeper rare vs opposite-side hitters (largest platoon gap after the sinker)",
+        dict(arsenal="sink_sweep", balls=1, strikes=1, same_side=False), ANY, ceiling=[["SL:any"], 0.20]),
+    row("P2p", "profile", True, "Same, but a plus (5) sweeper", "Unless it's plus: a plus sweeper still earns a share",
+        dict(arsenal="sink_sweep", balls=1, strikes=1, same_side=False), ANY, floor=[["SL:any"], 0.10],
+        edits={"Slider": {"grade": 5}}),
+    row("P3", "profile", True, "1-0, same-side hitter; fastball, hard cutter, gyro slider, curve",
+        "Gyro slider is a strike pitch: in the zone when behind, not chased",
+        dict(arsenal="four_cut", balls=1, same_side=True), ANY, floor=[["SL:zone"], 0.10], ceiling=[["SL:chase"], 0.05]),
+    row("P4", "profile", True, "0-0, opposite-side hitter; ride fastball, 12-6 curve, split change (over the top)",
+        "12-6 curve steals an early strike vs opposite-side hitters (no platoon penalty for a vertical curve)",
+        dict(arsenal="ride126", same_side=False), ANY, floor=[["CB:zone"], 0.10]),
+    row("P5", "profile", True, "1-2, opposite-side hitter; same arsenal",
+        "Split is the two-strike pitch vs opposite-side hitters: down or chase",
+        dict(arsenal="ride126", balls=1, strikes=2, same_side=False), ANY, floor=[["CH:down", "CH:chase"], 0.20]),
+    row("P6", "profile", True, "1-2, same-side hitter; fastball 85, slider, firm changeup 82",
+        "A firm changeup is not a whiff pitch: rarely the chase call",
+        dict(arsenal="three", balls=1, strikes=2), ANY, ceiling=[["CH:chase"], 0.08],
+        edits={"Changeup": {"shape": "firm", "velo": 82}}),
+    row("P7", "profile", True, "1-1, same-side hitter; dead-zone (straight) fastball, sinker, slider",
+        "Dead-zone fastball works the edges, not low (the sinker takes the low lane)",
+        dict(arsenal="deadzone", balls=1, strikes=1), ANY, ceiling=[["FF:down"], 0.12]),
+    row("P8", "profile", True, "S5's setup (1-2, opposite side, worked away), sinker command 4",
+        "S5 not over-relied: the front door stays one option, not the call",
+        dict(arsenal="fd", balls=1, strikes=2, same_side=False, pa_log=[E("Changeup", "down-away", "whiff"),
+        E("Curve", "down-away", "cstrike"), E("Sinker", "up-away", "ball", [1, 4, False])]), ANY, ceiling=[["SI:in"], 0.30]),
+]
+
 
 def main():
     doc = json.load(open(SRC))
     out = copy.deepcopy(doc)
     out["version"] = "v1.1"
-    out["approved"] = doc["approved"] + "; v1.1 Step 3 setup rows PROPOSED (Claude, 2026-11-12), Drew grades at Step 4"
+    out["approved"] = doc["approved"] + "; v1.1 Step 3 setup rows and Step 4 profile rows PROPOSED (Claude, 2026-11-12/13), Drew grades at Step 4"
     for r in out["rows"]:
         r.setdefault("status", "graded (Drew, v1.0)")
     out["arsenals"].update(ARSENALS)
-    out["rows"] += SETUP_ROWS
+    out["rows"] += SETUP_ROWS + PROFILE_ROWS
     blob = json.dumps(out, indent=1, sort_keys=True).encode()
     open(OUT, "wb").write(blob)
     open(SHA, "w").write(hashlib.sha256(blob).hexdigest() + "\n")
-    print(f"wrote {OUT}: {len(out['rows'])} rows ({len(SETUP_ROWS)} setup rows, proposed)")
+    print(f"wrote {OUT}: {len(out['rows'])} rows ({len(SETUP_ROWS)} setup rows, {len(PROFILE_ROWS)} profile rows, proposed)")
 
 
 if __name__ == "__main__":

@@ -36,7 +36,8 @@ def load(path=PATH, sha=SHA):
 
 def matches(pattern, kind, q):
     p, t = pattern.split(":")
-    if not (p == "ANY" or p == kind or (p == "OS" and not e.is_fastball(kind)) or (p == "FB" and e.is_fastball(kind))):
+    if not (p == "ANY" or p == kind or (p == "OS" and not e.is_fastball(kind)) or (p == "FB" and e.is_fastball(kind))
+            or (p == "FF" and kind == "FB")):        # v1.1 Step 4: FF = the four-seam alone (FB matches the whole fastball class)
         return False
     return q in GROUPS[t] if t in GROUPS else q == t
 

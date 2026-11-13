@@ -1,5 +1,5 @@
 {
- "approved": "2026-11-05 by Drew; v1.0 regrades and new rows Drew, 2026-11-11 (v1.0 Step 7); v1.1 Step 3 setup rows PROPOSED (Claude, 2026-11-12), Drew grades at Step 4",
+ "approved": "2026-11-05 by Drew; v1.0 regrades and new rows Drew, 2026-11-11 (v1.0 Step 7); v1.1 Step 3 setup rows and Step 4 profile rows PROPOSED (Claude, 2026-11-12/13), Drew grades at Step 4",
  "arsenals": {
   "cut_ch": [
    {
@@ -28,6 +28,35 @@
     "name": "Changeup",
     "shape": "fade",
     "velo": 80
+   }
+  ],
+  "deadzone": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "straight",
+    "velo": 87
+   },
+   {
+    "command": 3,
+    "conf": 0.66,
+    "grade": 3,
+    "kind": "SI",
+    "name": "Sinker",
+    "shape": "run",
+    "velo": 86
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 79
    }
   ],
   "fd": [
@@ -3470,6 +3499,316 @@
    "situation": "0-1, the curve down-away taken for a strike",
    "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
    "why": "No changeup before it: no anti-setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "SI:in"
+    ],
+    0.25
+   ],
+   "hard": false,
+   "id": "P1",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "same_side": true
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-0, same-side hitter; sinker (run), sweeper, changeup, low three-quarter",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Sinker in to same-side hitters (70% of MLB righty sinkers go to righties; its best spot is in)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "SL:any"
+    ],
+    0.2
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P2",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "same_side": false,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-1, opposite-side hitter; same arsenal, an average (3) sweeper",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Sweeper rare vs opposite-side hitters (largest platoon gap after the sinker)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "SL:any"
+    ],
+    0.1
+   ],
+   "hard": false,
+   "id": "P2p",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "same_side": false,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Slider": {
+     "grade": 5
+    }
+   },
+   "rule": "profile",
+   "situation": "Same, but a plus (5) sweeper",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Unless it's plus: a plus sweeper still earns a share"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "SL:chase"
+    ],
+    0.05
+   ],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "SL:zone"
+    ],
+    0.1
+   ],
+   "hard": false,
+   "id": "P3",
+   "inputs": {
+    "arsenal": "four_cut",
+    "balls": 1,
+    "same_side": true
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-0, same-side hitter; fastball, hard cutter, gyro slider, curve",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Gyro slider is a strike pitch: in the zone when behind, not chased"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "CB:zone"
+    ],
+    0.1
+   ],
+   "hard": false,
+   "id": "P4",
+   "inputs": {
+    "arsenal": "ride126",
+    "same_side": false
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "0-0, opposite-side hitter; ride fastball, 12-6 curve, split change (over the top)",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "12-6 curve steals an early strike vs opposite-side hitters (no platoon penalty for a vertical curve)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "CH:down",
+     "CH:chase"
+    ],
+    0.2
+   ],
+   "hard": false,
+   "id": "P5",
+   "inputs": {
+    "arsenal": "ride126",
+    "balls": 1,
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-2, opposite-side hitter; same arsenal",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Split is the two-strike pitch vs opposite-side hitters: down or chase"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "CH:chase"
+    ],
+    0.08
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P6",
+   "inputs": {
+    "arsenal": "three",
+    "balls": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Changeup": {
+     "shape": "firm",
+     "velo": 82
+    }
+   },
+   "rule": "profile",
+   "situation": "1-2, same-side hitter; fastball 85, slider, firm changeup 82",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "A firm changeup is not a whiff pitch: rarely the chase call"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "FF:down"
+    ],
+    0.12
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P7",
+   "inputs": {
+    "arsenal": "deadzone",
+    "balls": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-1, same-side hitter; dead-zone (straight) fastball, sinker, slider",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Dead-zone fastball works the edges, not low (the sinker takes the low lane)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "SI:in"
+    ],
+    0.3
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P8",
+   "inputs": {
+    "arsenal": "fd",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Changeup",
+      "down-away",
+      "whiff",
+      null,
+      null,
+      null
+     ],
+     [
+      "Curve",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Sinker",
+      "up-away",
+      "ball",
+      [
+       1,
+       4,
+       false
+      ],
+      null,
+      null
+     ]
+    ],
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "S5's setup (1-2, opposite side, worked away), sinker command 4",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "S5 not over-relied: the front door stays one option, not the call"
   }
  ],
  "version": "v1.1"
