@@ -1,0 +1,43 @@
+v1.1 Step 2 fits: 336,751 pitches (2024 171,965 train, 2025 164,786 held out); controls 63 columns; pitchers 719, batters 622 in train
+
+2a. Pitch model: A (v1.0 classes) vs B (kind and profile) vs C (A + continuous shape and slot by class)
+  arm angle by slot bucket (2024 median): sidearm 14.7, low three-quarter 29.1, three-quarter 40.2, high three-quarter 48.8, over the top 58.5
+  whiff   B over A: 9.02e-04 (4.3 SD) SHIP | C over A: 2.31e-03 (7.6 SD) SHIP | B over A+C: 3.20e-04 (2.3 SD) SHIP
+  chase   B over A: 1.58e-03 (7.6 SD) SHIP | C over A: 1.60e-03 (7.9 SD) SHIP | B over A+C: 5.55e-04 (3.6 SD) SHIP
+  cstrike B over A: 6.80e-05 (1.0 SD) no | C over A: 2.57e-04 (3.1 SD) SHIP | B over A+C: -9.39e-05 (-1.4 SD) no
+  hard    B over A: 1.51e-03 (4.1 SD) SHIP | C over A: 2.58e-03 (6.5 SD) SHIP | B over A+C: 1.45e-04 (0.5 SD) no
+
+2b. Fastball zone: fastball-class profile x height (up / down vs middle) x inside, on top of the shipped 2a model
+    (A + C, plus B where B over A+C shipped)
+  whiff   gain 7.94e-04 (5.3 SD) -> SHIP
+  hard    gain -2.75e-04 (-0.9 SD) -> no ship
+  cstrike gain 5.42e-05 (0.6 SD) -> no ship
+
+2c. Platoon, on top of the shipped 2a model and the engine's SIDE split (fastball / off-speed x opposite side):
+    class: slider / changeup x opposite (the v1.0 SL and CH same-side patches); full: class + signed break and
+    vertical x opposite, per class
+  whiff   class: 1.56e-06 (0.0 SD) no | full: -8.96e-05 (-1.6 SD) no -> prior
+  hard    class: -2.30e-04 (-2.9 SD) no | full: -8.27e-05 (-0.4 SD) no -> prior
+  chase   class: 1.04e-04 (1.3 SD) no | full: 4.04e-04 (2.6 SD) SHIP -> full
+  cstrike class: -2.30e-05 (-1.3 SD) no | full: -1.92e-04 (-3.4 SD) no -> prior
+
+2.3 Profile priors for what didn't ship: 2024 per-profile rates as logit differences from the class value;
+    no-harm check on 2025 (gain > -1 boot SD, halved until it passes)
+  platoon whiff: profile x side, beyond the class's side gap (2c didn't ship):
+  whiff   51 cells (n >= 200); 2025 gain 6.50e-05 (+1.0 SD) at scale 0.5
+  platoon hard: profile x side, beyond the class's side gap (2c didn't ship):
+  hard    39 cells (n >= 200); 2025 gain -6.27e-05 (-0.2 SD) at scale 1
+  fastball zone hard: fastball profile x height, beyond the profile's overall difference (2b didn't ship):
+  hard    30 cells (n >= 200); 2025 gain -3.17e-05 (-0.6 SD) at scale 0.25
+  fastball zone cstrike: fastball profile x height, beyond the profile's overall difference (2b didn't ship):
+  cstrike 36 cells (n >= 200); 2025 gain -3.35e-04 (-35.9 SD) at scale 0
+
+Final: one joint fit per target with every shipped block (A + C [+ B] [+ 2b] [+ SIDE split + 2c]);
+the engine takes its coefficients from these, so blocks that were tested one on top of another are not added twice
+  whiff   78 terms
+  chase   51 terms
+  cstrike 16 terms
+  hard    16 terms
+
+2e. Ground balls | ball in play by kind and profile (2024; descriptive)
+  CB| 0.531 (n 390), CB|12-6 0.467 (n 405), CB|power 0.522 (n 46), CB|slow 0.390 (n 223), CB|sweeping 0.383 (n 898), CH| 0.461 (n 1240), CH|drop 0.501 (n 557), CH|fade 0.435 (n 903), CH|firm 0.568 (n 526), CH|split 0.541 (n 1069), FB| 0.332 (n 3728), FB|cuts 0.446 (n 794), FB|rides 0.264 (n 1737), FB|runs 0.341 (n 1848), FB|straight 0.420 (n 935), FC| 0.422 (n 825), FC|big 0.412 (n 340), FC|hard 0.416 (n 1227), FC|ride 0.321 (n 137), SI| 0.530 (n 2333), SI|drop 0.672 (n 1568), SI|run 0.541 (n 687), SI|two-seam 0.472 (n 1346), SL|gyro 0.433 (n 1495), SL|slurve 0.419 (n 308), SL|sweeper 0.353 (n 2355), SL|tight 0.415 (n 2237)

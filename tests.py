@@ -50,8 +50,11 @@ def type_shares(ars, s_):
         out[p_.name] = out.get(p_.name, 0.0) + pr
     return out
 p = type_shares(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in"), level="college"))
-check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider is the top pitch, nothing scripted (< 95%)",
-      max(p, key=p.get) == "Slider" and max(p.values()) < 0.95,
+# v1.1 Step 2: the data dropped v1.0's slider same-side +0.3 patch (2c: no held-out support) and gave the riding fastball
+# a fitted whiff edge, so fastball (40%) and slider (37%) are now level here. The check keeps its intent: nothing
+# scripted, and the slider within 5 points of the top. Flagged for Drew's Step 4 read-through.
+check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider within 5 points of the top pitch, nothing scripted (< 95%)",
+      max(p.values()) - p.get("Slider", 0) <= 0.05 and max(p.values()) < 0.95,
       ", ".join(f"{n} {v:.0%}" for n, v in sorted(p.items(), key=lambda x: -x[1])))
 
 # R2 think in at-bats: count values come from this matchup (v1.0 #18: the live at-bat table, solve_table, read at the
@@ -135,8 +138,10 @@ check("R8 no third-time cliff: the 19th fastball he sees is barely worse than th
 # Learning mode
 g = grade_call(A, Situation(0, 2, 1, E, last=("Fastball", "up-in")), "Fastball", "middle")
 g2 = grade_call(A, Situation(0, 2, 1, E, last=("Fastball", "up-in")), "Slider", "chase")
-check("Learning mode: a grooved 0-2 fastball is outside the engine's mix and clearly worse; slider chase is in the mix",
-      g["engine_prob"] < 0.02 and g["runs_vs_best"] > 0.015 and g2["verdict"] == "in the engine's mix",
+# v1.1 Step 2: the riding fastball's fitted whiff edge (and the K refit) bring the grooved 0-2 riding fastball to 3.4%
+# (was under 2%); the check now asks for under 5% and still 0.015+ runs worse. Flagged for Drew's Step 4 read-through.
+check("Learning mode: a grooved 0-2 fastball is rarely picked (under 5%) and clearly worse; slider chase is in the mix",
+      g["engine_prob"] < 0.05 and g["runs_vs_best"] > 0.015 and g2["verdict"] == "in the engine's mix",
       f"{g['call']}: {g['verdict']} ({g['runs_vs_best']:+.3f} runs); "
       f"{g2['call']}: {g2['verdict']} (picked {g2['engine_prob']:.0%} of the time)")
 
@@ -287,13 +292,21 @@ check("v1.0 #8 big spot: HS 5th of 7, tie, R2 is late and close; HS 4th and coll
       bs[("hs", 5)] and bs[("college_d3", 7)] and not bs[("hs", 4)] and not bs[("college_d3", 6)],
       ", ".join(f"{l} inning {i}: {v}" for (l, i), v in bs.items()))
 
-# #16: ground-ball rates are the 2024 Statcast fit
+# #16: ground-ball rates are the 2024 Statcast fit. v1.1 Step 2e: by kind and profile (results/v11/step2_fit.json "2e");
+# each kind's ball-in-play-weighted average is v1.0's table (fit_v08.json results.gb_types, the same definition)
 gbt = _json.load(open("fit_v08.json"))["results"]["gb_types"]
+_e2 = _json.load(open("results/v11/step2_fit.json"))["2e"]
+_kmap = {"FB": "4-seam", "SI": "sink", "FC": "cut", "SL": "SL", "CB": "CB", "CH": "CH"}
+_avg = {}
+for _k, _v in _kmap.items():
+    _rows = [(x["gb"], x["n"]) for _p, x in _e2.items() if _p.split("|")[0] == _k]
+    _avg[_v] = sum(a * n for a, n in _rows) / sum(n for _, n in _rows)
 mk = lambda k, sh_="": Pitch("x", k, grade=3, command=3, conf=0.7, shape=sh_)
-got = {"4-seam": gb_rate(mk("FB", "ride")), "sink": gb_rate(mk("FB", "sink")), "cut": gb_rate(mk("FB", "cut")),
-       "SL": gb_rate(mk("SL")), "CB": gb_rate(mk("CB")), "CH": gb_rate(mk("CH"))}
-check("v1.0 #16 ground-ball rates match fit_v08.json results.gb_types",
-      all(abs(got[k] - gbt[k]) < 1e-12 for k in got), ", ".join(f"{k} {v:.3f}" for k, v in got.items()))
+got = {f"{k}|{t}": gb_rate(mk(k, t)) for k in ("FB", "SI", "FC", "SL", "CB", "CH") for t in ("", "rides", "drop", "big", "sweeper", "12-6", "split")
+       if t in ("",) or t in __import__("engine").SHAPE_TAGS[k]}
+check("v1.1 Step 2e ground-ball rates by profile; each kind's average matches v1.0's fit (fit_v08.json results.gb_types) within 0.001",
+      all(abs(_avg[k] - gbt[k]) < 1e-3 for k in gbt) and got["SI|drop"] > got["SI|"] > got["FB|"] > got["FB|rides"],
+      ", ".join(f"{k} {v:.3f}" for k, v in got.items()))
 
 # ---------------------------------------------------------------- v1.0 Step 3 (landing, confidence, repeats)
 from engine import (wild_today as _wt, not_landing as _nl, landing_estimate as _le, ball_conf_event as _bce,

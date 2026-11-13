@@ -1,0 +1,17 @@
+v1.1 Step 2d familiarity: 336,751 pitches; balls in play with EV: 2024 30,072, 2025 28,931
+
+starts (18+ batters): train 17,423, held out 16,623; v1.0 class-count coefficients in the base: FB +0.0327 (se 0.0138), OS +0.0694 (se 0.0211) [v1.0 engine: +0.058, +0.116]
+  delta 0.0: train log-lik -10256.4 (base -10260.8); per-pitch FB +0.0581, OS +0.0642
+  delta 0.5: train log-lik -10256.3 (base -10260.8); per-pitch FB +0.0590, OS +0.0664
+  delta 1.0: train log-lik -10256.1 (base -10260.8); per-pitch FB +0.0658, OS +0.0685
+  delta 2.0: train log-lik -10255.8 (base -10260.8); per-pitch FB +0.0827, OS +0.0670
+  delta 4.0: train log-lik -10258.3 (base -10260.8); per-pitch FB +0.1015, OS +0.0396
+  -> delta 2.0 (chosen on 2024): held-out gain 1.90e-05 (0.1 SD) -> no ship; with it, the class counts are FB -0.0243, OS +0.0304
+
+all games: train 30,072, held out 28,931; v1.0 class-count coefficients in the base: FB +0.0291 (se 0.0130), OS +0.0813 (se 0.0198) [v1.0 engine: +0.058, +0.116]
+  delta 0.0: train log-lik -17614.7 (base -17618.0); per-pitch FB +0.0585, OS +0.0640
+  delta 0.5: train log-lik -17614.8 (base -17618.0); per-pitch FB +0.0596, OS +0.0662
+  delta 1.0: train log-lik -17613.6 (base -17618.0); per-pitch FB +0.0658, OS +0.0681
+  delta 2.0: train log-lik -17612.7 (base -17618.0); per-pitch FB +0.0814, OS +0.0671
+  delta 4.0: train log-lik -17613.9 (base -17618.0); per-pitch FB +0.0958, OS +0.0446
+  -> delta 2.0 (chosen on 2024): held-out gain 3.36e-05 (0.3 SD) -> no ship; with it, the class counts are FB -0.0274, OS +0.0419

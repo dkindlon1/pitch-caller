@@ -1,5 +1,7 @@
 """v1.1 checks (docs/PLAN_v1.1_2026-11-12.md). Step 1: six kinds, one migration table, nothing about the calls changes.
 Step 1b: the profile table and tag thresholds; with measured numbers on every pitch the calls are still exactly v1.0's.
+Step 2: the profile terms (fitted and priors) — the tables, both engines' parity, the typical pitch, HS scaling, grounders;
+outside Step 2's three functions the calls are still exactly v1.0's.
 
   python3 tests_v11.py            -> runs every check, exits non-zero on a failure
 
@@ -79,6 +81,13 @@ check("one table: engine.py, app/engine.js and the app's PITCH_TYPES (db.js) hol
 LEVELS = ["hs", "college_d3", "college_d1", "mlb"]
 
 
+# v1.1 Step 2 changes the calls on purpose in exactly three functions; readthrough/step2_off.py sets them back to Step 1b
+sys.path.insert(0, os.path.join(HERE, "readthrough"))
+from step2_off import step2_off as _s2off, params_at as _params_at
+_P1B = _params_at("7b5ebbb")
+step2_off = lambda: _s2off(e, _P1B)
+
+
 def dist_of(E, ars, s):
     tab = E.solve_table(ars, replace(s, balls=0, strikes=0, last=None))
     _, dist, _, _ = E.call_v08(ars, s, rng=random.Random(0), tab=tab)
@@ -122,14 +131,16 @@ for an, spec in arsenals.items():
                           timing={"FB": 0.5, "OS": -0.4}, hitter_damage={"FB": (0.4, 15), "FB|up-in": (0.6, 8)},
                           matchup={"succ|FB": 1, "hard|FB|down-away": 1})
                 d0, _ = dist_of(old, mk(old, spec), old.Situation(b, k, 1, bases, **ss))
-                d1, _ = dist_of(e, mk(e, spec), e.Situation(b, k, 1, bases, **ss))
+                with step2_off():
+                    d1, _ = dist_of(e, mk(e, spec), e.Situation(b, k, 1, bases, **ss))
                 n += 1
                 if set(d0) != set(d1):
                     worst = float("inf")
                 else:
                     worst = max(worst, max(abs(d0[x] - d1[x]) for x in d0))
-check(f"exactly v1.0 ({ref}) with measured numbers: FB/sink, FB/run, FB/cut, CB/loopy, CB/sharp, CH/drop, SL/'' as stored (typed "
-      f"and untyped), every pitch's speed and movement entered: the same call mix (Step 1b changed only the defaults)",
+check(f"exactly v1.0 ({ref}) with measured numbers and Step 2's three functions (profile_terms, shape_fit, gb_rate) set back: "
+      f"FB/sink, FB/run, FB/cut, CB/loopy, CB/sharp, CH/drop, SL/'' as stored (typed and untyped), every pitch's speed and "
+      f"movement entered: the same call mix (Step 1b changed only the defaults; Step 2 changes only those three)",
       worst < 1e-12, f"{n} situations, largest difference {worst:.1e}")
 
 # ------------------------------------------------------------------ 3. new kinds run and validate
@@ -263,6 +274,96 @@ console.log(JSON.stringify([at({}), at({since_thrown:{Fastball:E.v08.COMEBACK_N-
 check(f"a pitch not landing (fastball 5-for-12) is held at 0-0 and still called ahead in the count; after {e.COMEBACK_N} pitches without it "
       "the hold lifts; both engines", cb_py == cb_js and "Fastball" not in cb_py[0] and "Fastball" not in cb_py[1] and "Fastball" in cb_py[2]
       and "Fastball" in cb_py[3], f"{cb_py}")
+
+# ------------------------------------------------------------------ Step 2: profile terms (plan 2.3)
+import profile_terms_tables as PTT
+T2 = json.load(open(os.path.join(HERE, "results", "v11", "step2_terms.json")))
+fit2 = json.load(open(os.path.join(HERE, "results", "v11", "step2_fit.json")))
+names2 = ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB")
+norm = lambda x: json.loads(json.dumps(x))
+py_tab = {k: norm(getattr(e, k)) for k in names2}
+js_tab = json.loads(subprocess.run(["node", "-e", "const E=require('./app/engine.js');console.log(JSON.stringify(E.v11terms))"],
+                                   cwd=HERE, capture_output=True, text=True, check=True).stdout)
+rebuilt = norm(PTT.build(fit2, T2["PT_CHASE_MEAN"]))
+check("Step 2 tables: engine.py and app/engine.js hold the same profile terms, equal to results/v11/step2_terms.json and to a "
+      "fresh build from the fit file (step2_fit.json)", py_tab == js_tab == {k: T2[k] for k in names2} == {k: rebuilt[k] for k in names2})
+ships = {t: (fit2["2a"][t]["C_over_A"]["ship"], fit2["2a"][t]["B_over_C"]["ship"]) for t in ("whiff", "chase", "cstrike", "hard")}
+check("Step 2 shipping as fitted: shape (C) on all four targets; profile beyond shape (B) on whiff and chase; fastball zone (2b) "
+      "on whiff; opposite-side chase (2c); every other term a prior at its no-harm scale (called-strike zone prior at 0)",
+      ships == {"whiff": (True, True), "chase": (True, True), "cstrike": (True, False), "hard": (True, False)}
+      and fit2["2b"]["whiff"]["ship"] and fit2["2c"]["chase"]["ship"] and fit2["priors"]["fbzone_cstrike"]["scale"] == 0.0
+      and set(e.PT_B) == {"whiff", "chase"}, f"{ships}")
+
+# parity: random pitches, arsenals and spots, both engines
+rng2 = random.Random(7)
+cases2 = []
+for _ in range(600):
+    lv = rng2.choice(["hs", "travel", "college_d3", "college_d1", "mlb"])
+    def rp(nm, kind):
+        tag = rng2.choice(e.SHAPE_TAGS[kind])
+        d = dict(name=nm, kind=kind, shape=tag, grade=3, command=3, conf=0.7, slot=rng2.choice(list(e.SLOT_ANGLE) + ["three-quarter"]))
+        if rng2.random() < 0.4:
+            d["velo"] = round(rng2.uniform(70, 96), 1)
+        if rng2.random() < 0.3:
+            d["ivb"], d["hb"] = round(rng2.uniform(-18, 20), 1), round(rng2.uniform(-18, 19), 1)
+        return d
+    fbk = rng2.choice(["FB", "SI", "FC"])
+    ars = [rp("F", fbk), rp("A", rng2.choice(e.KINDS)), rp("B", rng2.choice(e.KINDS))]
+    if rng2.random() < 0.3:
+        ars[2]["main"] = True
+    cases2.append(dict(ars=ars, i=rng2.randrange(3), q=rng2.choice(["up-in", "up-away", "down-in", "down-away", "middle", "down-middle", "chase"]),
+                       same=rng2.random() < 0.5, level=lv))
+def py_pt(c):
+    A = [e.Pitch(**{k: v for k, v in d.items()}) for d in c["ars"]]
+    e.resolve_speeds(A)
+    s = e.Situation(0, 0, 0, (False, False, False), level=c["level"], same_side=c["same"])
+    return e.profile_terms(A[c["i"]], c["q"], s, A)
+py_r = [py_pt(c) for c in cases2]
+js_r = json.loads(subprocess.run(["node", "-e", """
+const E=require('./app/engine.js'); E.init(require('./app/engine_data.json'));
+const C=JSON.parse(require('fs').readFileSync(0,'utf8'));
+console.log(JSON.stringify(C.map((c)=>{ const A=c.ars.map((d)=>E.Pitch(d)); E.resolveSpeeds(A);
+  const s=E.Situation({balls:0,strikes:0,outs:0,bases:[false,false,false],level:c.level,same_side:c.same});
+  return E.v11profileTerms(A[c.i], c.q, s, A); })))"""], input=json.dumps(cases2), cwd=HERE, capture_output=True, text=True, check=True).stdout)
+worst2 = max(abs(a[k] - b[k]) for a, b in zip(py_r, js_r) for k in a)
+check("Step 2 parity: profile_terms in Python and JS agree on 600 random pitches (every kind and tag, measured or not, every slot "
+      "and level, sinker / cutter main fastballs, the coach's mark)", worst2 < 1e-12, f"largest difference {worst2:.1e}")
+
+# the typical pitch of each class keeps its v1.0 value at every level: only the platoon priors touch it (same side: no
+# chase-opp term). Speeds entered at the level's own gaps (default speeds use the college gaps at every level, Step 1b).
+dev = 0.0
+for lv in ("mlb", "college_d1", "college_d3", "hs", "travel"):
+    typ = [e.Pitch(k, k, grade=3, command=3, conf=0.7, shape="", velo=90 - e.profile(k, "", lv)[0]) for k in ("FB", "SL", "CB", "CH")]
+    e.resolve_speeds(typ)
+    s_m = e.Situation(0, 0, 0, (False, False, False), level=lv, same_side=True)
+    rho = e.RHO_L.get(lv, 1.0)
+    for p in typ:
+        t = e.profile_terms(p, "down-away", s_m, typ)
+        k = e.pt_key(p)
+        dev = max(dev, abs(t["whiff"] - rho * e.PT_PLAT["whiff"][k][0]), abs(t["hard"] - rho * e.PT_PLAT["hard"][k][0]),
+                  abs(t["chase"]), abs(t["cstrike"]))
+check("Step 2: the typical four-seam, slider, curve and changeup (3/4 slot) keep their v1.0 class values at every level; only "
+      "the platoon priors move them", dev < 1e-9, f"largest other term {dev:.1e}")
+
+# HS: every term is RHO_L (0.6) times college (movement read on the MLB scale, so the HS ratio doesn't shrink it again)
+worst_hs = 0.0
+for kind in e.KINDS:
+    for tag in e.SHAPE_TAGS[kind]:
+        A = [e.Pitch("F", "FB", grade=3, command=3, conf=0.7, velo=84), e.Pitch("X", kind, grade=3, command=3, conf=0.7, shape=tag, velo=76)]
+        e.resolve_speeds(A)
+        for same in (True, False):
+            tc = e.profile_terms(A[1], "down-away", e.Situation(0, 0, 0, (False, False, False), level="college_d3", same_side=same), A)
+            th = e.profile_terms(A[1], "down-away", e.Situation(0, 0, 0, (False, False, False), level="hs", same_side=same), A)
+            worst_hs = max(worst_hs, max(abs(th[k] - e.RHO_L["hs"] * tc[k]) for k in tc))
+check("Step 2 at HS: every profile term is 0.6 x its college value (same speeds), for every kind and tag, both sides (to "
+      "0.005 logit: the HS rows are the college rows x 0.85 rounded to 0.1 in.)", worst_hs < 0.005, f"largest difference {worst_hs:.1e}")
+
+# 2e grounders
+g_ok = all(e.gb_rate(e.Pitch("x", k, grade=3, command=3, conf=0.7, shape=t)) == T2["GB_PROFILE"][f"{k}|{t}"]
+           for k in e.KINDS for t in e.SHAPE_TAGS[k])
+small = [p for p, v in fit2["2e"].items() if v["n"] < 200]
+check("Step 2e: gb_rate is the 2024 grounder rate by kind and profile; a profile with under 200 balls in play uses its kind's rate "
+      f"({', '.join(small)})", g_ok and all(T2["GB_PROFILE"][p] != round(fit2["2e"][p]["gb"], 4) for p in small))
 
 # ------------------------------------------------------------------ 4. no class logic left on the bare string "FB"
 CMP = re.compile(r"""kind\s*(==|===|!=|!==)\s*['"]FB['"]|['"]FB['"]\s*(==|===|!=|!==)\s*\w*kind""")

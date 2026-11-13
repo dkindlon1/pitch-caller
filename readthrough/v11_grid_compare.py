@@ -1,12 +1,13 @@
 """v1.1: the predictability grid now vs the v1.0 baseline (results/v11/grid_v10_baseline.json); writes results/v11/grid_v11a.json.
-usage (repo root): python3 readthrough/v11_grid_compare.py"""
+usage (repo root): python3 readthrough/v11_grid_compare.py [out.json]   (Step 2: results/v11/grid_v11_step2.json)"""
 import json, sys
 import os; sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import grid_v10 as g
 G = g.grid()
 base = json.load(open("results/v11/grid_v10_baseline.json"))
 now = {'|'.join([k[0], k[1], k[2], f'{k[3][0]}-{k[3][1]}']): {'types': {n: round(v, 4) for n, v in c['types'].items()}, 'top': list(c['top']), 'top_share': round(c['top_share'], 4)} for k, c in G.items()}
-json.dump(now, open("results/v11/grid_v11a.json", "w"), indent=0, sort_keys=True)
+OUTF = sys.argv[1] if len(sys.argv) > 1 else "results/v11/grid_v11a.json"
+json.dump(now, open(OUTF, "w"), indent=0, sort_keys=True)
 moves = []
 for k in base:
     b, n = base[k]["types"], now[k]["types"]

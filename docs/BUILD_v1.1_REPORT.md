@@ -237,3 +237,105 @@ see a game-long effect.
 
 **The live app (`main`, v1.0) still has this bug** (Drew, Nov 12: it isn't live, so no hotfix). The fix is two small functions plus one changed line in each engine,
 and it could ship to `main` as v1.0.1 on its own, ahead of v1.1, if Drew wants it there.
+
+## Step 2: profile terms, fitted and priors (Nov 12)
+
+### The fits (`profile_terms_fit.py` → `results/v11/step2_report.txt`, `step2_fit.json`)
+- Statcast 2024 (171,965 pitches) to fit, 2025 (164,786) held out; `seq_fit.py`'s logistic with pitcher and batter random
+  intercepts; ship on a held-out log-loss gain over 2 game-clustered bootstrap SDs.
+- Each pitch is tagged with the Step 1b rule (thresholds; a Statcast label that names a profile wins).
+- Controls: count, outs, runners, margin, times through, pitch count, previous pitch, usage share, location splines and
+  class × location. Not the per-class speed / spin / movement block `seq_fit.py` used: in the engine a profile is its
+  movement, so the profile terms must carry that effect.
+
+| Item | whiff \| swing | chase \| out of zone | called strike \| take | hard \| contact |
+|---|---|---|---|---|
+| 2a C: shape (speed off his fastball, vertical, arm-side break, arm angle) by class, over A (v1.0 classes) | **ship** 7.6 SD | **ship** 7.9 SD | **ship** 3.1 SD | **ship** 6.5 SD |
+| 2a B: kind and profile, over A | ship 4.3 SD | ship 7.6 SD | no (1.0) | ship 4.1 SD |
+| 2a B over A + C (what a profile adds beyond its shape) | **ship** 2.3 SD | **ship** 3.6 SD | no (−1.4) | no (0.5) |
+| 2b fastball profile × up / down / inside, over the shipped 2a | **ship** 5.3 SD | — | no (0.6) → prior at 0 | no (−0.9) → prior at ¼ |
+| 2c slider / changeup × opposite side (v1.0's same-side patches) | no (0.0) | no (1.3) | no (−1.3) | no (−2.9) |
+| 2c class + signed break and vertical × opposite side | no (−1.6) → prior at ½ | **ship** 2.6 SD | no | no (−0.4) → prior at 1 |
+
+- **Priors** (plan 2.3) where nothing shipped: the 2024 per-profile rates as logit differences, checked on 2025 (must not
+  lose more than 1 boot SD; halved until they pass). Platoon whiff passed at ½ (+1.0 SD), platoon hard at full (−0.2 SD),
+  fastball-zone hard at ¼ (−0.6 SD). The fastball-zone called-strike prior cost 36 SD and stays at 0.
+- **The engine's coefficients come from one joint fit per target** with every shipped block ("final" in the fit file),
+  so blocks tested one on top of another aren't counted twice. (Adding B and 2b separately had given cutters a +0.86
+  whiff term on top of +0.95 low; the joint fit gives +0.04 and +0.95.)
+- **2e grounders by profile**: the same definition as v1.0's table; each kind's average equals v1.0's six numbers
+  (four-seam 0.340, sinker 0.556, cutter 0.412 exactly; off-speed within 0.001). Profiles with under 200 balls in play use
+  their kind's rate (power curve, ride cutter).
+- **Arm angle by slot**: 2024 medians of the Statcast buckets: sidearm 14.7°, low ¾ 29.1°, ¾ 40.2°, high ¾ 48.8°,
+  over the top 58.5°.
+
+### What changed in the engines (`profile_terms_tables.py --write-engines`, both engines)
+- `profile_terms(p, q, s, arsenal)`: four logit terms (whiff, chase, called strike, hard), added in the outcome model next
+  to the side terms. Zero for the typical pitch of each class at his level (`pt_ref`), so `KIND_W` and the other class
+  values stay; other shapes move off it. Movement is read on the MLB scale; at HS every term is × 0.6 (`RHO_L`).
+- `shape_fit` keeps only the off-speed location line. Gone: v1.0's FB/ride up line, the sinker line, and the slider
+  same-side +0.3 and changeup same-side −0.3 patches (2c found no held-out support for either).
+- `gb_rate` reads the profile table.
+- Offsets the engine gives each MLB profile: `results/v11/step2_terms.txt`. Examples (logit vs the typical pitch of its
+  class): drop sinker whiff −0.85, chase +0.54, called strike +0.33, grounders 0.67; riding four-seam whiff +0.46
+  (+0.17 when aimed up); sweeper hard −0.07 vs same-side and +0.21 vs opposite; fade changeup chase −0.43.
+
+### Realism gate (plan: refit if K / BB / HBP move more than 1 point)
+- With the terms on and the old level shifts: MLB K 21.6% vs 20.0% real, D3 18.0 vs 16.2, HS 22.3 vs 21.0. Over the line.
+- Refit `refit_mlb.py` then `fit_all.py`. MLB: in-zone whiff shift −0.56 → −0.80, out-of-zone −0.12 → −0.31, swing
+  shifts −0.16 / −0.20 → −0.25 / −0.15; called strike, command and HBP unchanged. Now: D1 K 19.4 / BB 10.8 / HBP 3.4
+  (real 19.3 / 10.8 / 3.4), D3 16.3 / 11.4 / 4.2 (16.2 / 11.4 / 4.2), HS 21.1 / 14.1 / 4.1 (21.0 / 14.1 / 4.1), MLB 20.0
+  / 7.9 / 0.9. `engine_data.json` re-exported for the app and the website.
+
+### Call-change checks (`readthrough/v11_call_changes.py`; bands proposed, Drew confirms at Step 4)
+"1b" = the same engine with Step 2's three functions and the old level shifts set back (`readthrough/step2_off.py`).
+
+| Band | 1b | Now |
+|---|---|---|
+| sweeper's slider share vs same-side ≥ gyro's + 5 | FAIL 28.4 vs 27.6 | **pass** 31.2 vs 25.6 |
+| sweeper below gyro vs opposite-side | FAIL 27.6 vs 26.8 | **pass** 21.3 vs 23.9 |
+| riding fastball aimed up ≥ 10 points more than dead-zone | FAIL 14.4 vs 9.7 | **FAIL** 11.7 vs 11.9 |
+| split changeup used more with two strikes than fade | FAIL 24.1 vs 24.4 | **pass** 25.5 vs 21.5 |
+| firm changeup chased less with two strikes than fade | pass | pass 0.0 vs 0.6 |
+| 12-6 curve used more early vs opposite-side than sweeping | FAIL 26.8 vs 26.8 | **pass** 26.0 vs 25.9 (barely) |
+| a sinker / cutter takes ≥ 10% of calls | pass / pass | pass 38.1% / pass 43.7% |
+| sinker mostly in to same-side hitters | FAIL 1% | **FAIL** 9% |
+| cutter used more vs opposite-side | FAIL | **FAIL** 40.2 vs 47.3 |
+
+7 of 10 pass now (3 at Step 1b). The three that fail are places where the 2024–25 data don't support the research doc's
+claim at held-out strength (no riding-fastball-up edge beyond its shape, no inside edge for sinkers, no cutter platoon
+edge).
+
+### Other results (this session, final code)
+
+| Check | Result |
+|---|---|
+| `tests_v11.py` | **30/30**. New: both engines' tables equal `step2_terms.json` and a fresh build from the fit file; ships as fitted; Python = JS `profile_terms` on 600 random pitches (largest difference 0); the typical pitch of each class keeps its v1.0 value at every level; HS = 0.6 × college (to 0.005, HS rows are rounded); grounders by profile. The v1.0 exactness check now sets Step 2's three functions and the old level shifts back, and is still exactly v1.0 (96 situations, difference 0) |
+| `tests.py` | **45/45**. #16 now checks the profile grounder table against v1.0's. Two v0.x checks rescoped, reasons in the code: R1 (1-2, runner on 3rd) asked for the slider on top; it is now fastball 40%, slider 37%, so it asks for the slider within 5 points. Learning mode asked for the grooved 0-2 riding fastball under 2%; it is 3.4%, 0.017 runs worse, so it asks for under 5% |
+| Predictability grid | every check passes; 169 of 540 cells change their top call; pitch-type shares move by a median of 2.4 points (95th percentile 10.3, largest 23) |
+| Read-through (v10 suite) | **69/71**. 28 rows' call mixes moved more than 10 points (8 over 20). Fails: **C5** (1-2, four-pitch, curve landing 8-for-10): the up-away fastball you graded acceptable went 24% → 0 and a down-away fastball (arguable) took 29%, so acceptable is 49%. **F2** (1-2 after a slider whiff): the slider down-away / chase floor is 13.5% vs 15% |
+| `scripts/test-app.sh` | **exit 0**, no errors: **363** counted checks (19 components) + smoke, build and `web/lib` copy checks, website demo. `game_mix_e2e` 12/12: top pitch per whole game 56 / 61 / 60 / 61 / 46 / 60% (Step 1b with comeback: 48–56%); the changeup gets only 1–3 of 82 pitches in four of the six games |
+| `golden_v11` | frozen from this engine (500 cases, 250 full solves; `golden/golden_v11.py make --tag v11`); **JS reproduces it** (largest difference 1.3e-13). It replaces `golden_v11a` as the gate in `scripts/test-app.sh`; v11a (Step 1b) stays as history. 2d changed nothing, so this freeze stands until release |
+
+### For Drew (Step 4 will ask these)
+- **The high fastball with two strikes (C5).** The data give the riding four-seam a whiff edge everywhere (+0.46 logit)
+  and less of it up (+0.17): no extra up-in-the-zone edge beyond its ride. With v1.0's hand line gone, the engine now
+  elevates the riding fastball less with two strikes. Your read says it's the strikeout pitch. Keep the data, or keep a
+  coach rule for it?
+- **Cutters and sinkers get used a lot** once they're more than copies of the four-seam: 44% and 38% of calls in a
+  four-pitch arsenal next to a riding four-seam (31% and 35% at Step 1b). Fewer hard-hit balls and more chases (cutter)
+  and more called strikes and grounders (sinker) are what the data say. Is that share believable for your pitchers?
+- The three bands above that fail.
+- In whole app games the changeup gets 1–3 of 82 pitches in four of six games (it had 2–34 at Step 1b), and the top pitch
+  is 56–61%. Still inside the 70% guard, but the mix is narrower.
+
+### 2d familiarity (`familiarity_fit.py` → `results/v11/step2d_report.txt`)
+- Built because 2a shipped. Target hard | ball in play; base = the controls plus v1.0's class counts (pitches of that class
+  the hitter saw from this pitcher in earlier plate appearances today, capped as v1.0). Tested: per-pitch familiarity
+  with carry-over to other pitches by shape distance (speed / 2 mph, IVB / 4 in., HB / 4 in.), the carry-over width
+  picked on 2024 only.
+- **No ship** in either sample: starts (18+ batters faced) +0.1 SD, all games +0.3 SD (width 2 chosen in both). So
+  v1.0's class-count term stays (the plan's fallback), and nothing changes in the engines, app, simulator or goldens.
+- Noted, not acted on: on this data the class-count coefficients come out at about half of v1.0's (FB +0.033 / OS +0.069
+  per pitch vs the engine's +0.058 / +0.116, which came from v0.8's fit with the pitch-quality controls). No step of the
+  plan refits them; I can if you want.
