@@ -680,7 +680,7 @@ new checks.
 | `scripts/test-sql.sh`, local Postgres 16 (copy without `MAINTAIN`) | **exit 0**: RLS matrix 347, v11 kinds 12, all others |
 | CI, commit 396d966 (merge) | Postgres 17 SQL **pass**; web jobs fail (the portal still v1.0 at that commit) |
 | CI, commit e71c1b4 | Postgres 17 SQL **pass**; web app (typecheck, 51 unit tests, build, landing e2e) **pass**; portal e2e: `gameplan_e2e` fails on the unknown tag above (fixed in f034624) |
-| CI, commit f034624 | Postgres 17 SQL **pass**; portal e2e (gameplan, uploads, offline game, portal, billing...) **pass**; web app: `site_e2e`'s scroll-driven at-bat scene failed 3 timing checks. This commit changed nothing the site uses, and the same job passed on e71c1b4. Locally on this tree, after a fresh `npm run build`, `site_e2e` passed **twice**, so I treat it as flaky and reran the job; see below |
+| CI, commit f034624 | Postgres 17 SQL **pass**; portal e2e (gameplan, uploads, offline game, portal, billing...) **pass**; web app: `site_e2e`'s scroll-driven at-bat scene failed 3 timing checks. This commit changed nothing the site uses, and the same job passed on e71c1b4. Locally on this tree, after a fresh `npm run build`, `site_e2e` passed **twice**. A CI rerun failed 2 of the same checks again. The same check also failed in CI on the portal branch (commit eb97589, run 43332302330) before any v1.1 code: **a timing flake that predates v1.1**, in main's scroll-driven WebGL scene test. Engine job: every gate passes except `game_mix_e2e` (tier 3 seed 31337, 76%), the same as the local run, with tests_v11 37 and v11_fixture_test 8 now running in CI |
 | Web typecheck / unit tests (local) | clean / **51/51** |
 
 ### For Drew (Step 5)
