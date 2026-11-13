@@ -64,7 +64,7 @@ E0 = (False, False, False)
 # one setup case per built rule: (rule, arsenal, situation, the payoff call to check, the case without the setup)
 SETUP_CASES = [
     ("S1", [P("Fastball", "FB", "rides", v=90), P("Curve", "CB", "12-6"), P("Changeup", "CH", "split")],
-     e.Situation(0, 1, 1, E0, level="college_d3", pa_log=(("Fastball", "up-away", "cstrike", None, None, None),)), ("Curve", "down-away")),
+     e.Situation(0, 1, 1, E0, level="college_d3", pa_log=(("Fastball", "up-in", "cstrike", None, None, None),)), ("Curve", "down-away")),
     ("S2", [P("Sinker", "SI", "run", v=89), P("Slider", "SL", "sweeper"), P("Changeup", "CH", "fade")],
      e.Situation(1, 1, 1, E0, level="college_d3", same_side=True, pa_log=(("Sinker", "down-in", "ball", (3, 0, True), None, None),
                                                                           ("Sinker", "up-in", "cstrike", None, None, None))), ("Slider", "down-away")),
