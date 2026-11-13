@@ -124,7 +124,7 @@
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {}, since_thrown: {}, pa_log: [], hitter_tags: null }, o);   // v1.2 Part B: hitter_tags (engine.py)   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
+      matchup: {}, since_thrown: {}, pa_log: [] }, o);   // v1.2 Part B: hitter_tags stays absent unless set (engine.py), so snapshots don't change   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
   }
   const replace = (s, o) => Object.assign({}, s, o);
   // v1.1 Step 1b: a pitch with no speed is his main fastball's entered speed less the profile's gap (resolveSpeeds sets
