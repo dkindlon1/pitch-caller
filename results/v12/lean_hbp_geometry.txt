@@ -1,0 +1,4 @@
+sigma 8.0: inside-third target HBP/pitch  lean -2.7: 0.0048 (x0.48) lean -1.5: 0.0067 (x0.67) lean +0.0: 0.0100 (x1.00) lean +1.5: 0.0145 (x1.46) lean +2.7: 0.0193 (x1.94)
+          away-third target, share over the middle third: lean 0 0.233, toward plate +2.7 0.288, off plate -2.7 0.169
+sigma 11.0: inside-third target HBP/pitch  lean -2.7: 0.0175 (x0.62) lean -1.5: 0.0218 (x0.77) lean +0.0: 0.0284 (x1.00) lean +1.5: 0.0365 (x1.29) lean +2.7: 0.0441 (x1.56)
+          away-third target, share over the middle third: lean 0 0.199, toward plate +2.7 0.224, off plate -2.7 0.168

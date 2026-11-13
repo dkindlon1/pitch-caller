@@ -1,0 +1,17 @@
+level      target     HBP/pitch   ball noncomp share  A_hbp  wild
+mlb        up-in         0.0051  0.340         0.109  0.026 0.000
+mlb        down-in       0.0050  0.346         0.109  0.026 0.000
+mlb        middle        0.0011  0.247         0.074  0.026 0.000
+mlb        down-away     0.0009  0.382         0.109  0.026 0.000
+college_d1 up-in         0.0286  0.394         0.153  0.106 0.169
+college_d1 down-in       0.0282  0.395         0.153  0.106 0.169
+college_d1 middle        0.0072  0.332         0.128  0.106 0.169
+college_d1 down-away     0.0053  0.445         0.153  0.106 0.169
+college_d3 up-in         0.0373  0.403         0.163  0.131 0.205
+college_d3 down-in       0.0369  0.404         0.163  0.131 0.205
+college_d3 middle        0.0097  0.350         0.139  0.131 0.205
+college_d3 down-away     0.0069  0.459         0.163  0.131 0.205
+hs         up-in         0.0339  0.448         0.173  0.111 0.242
+hs         down-in       0.0337  0.448         0.173  0.111 0.242
+hs         middle        0.0090  0.387         0.151  0.111 0.242
+hs         down-away     0.0063  0.491         0.173  0.111 0.242

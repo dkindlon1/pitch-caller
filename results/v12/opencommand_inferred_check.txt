@@ -1,0 +1,26 @@
+pitches 641147
+
+miss vector (plate - inferred target), inches; mx + = arm side, mz + = up
+kind        n  mean mx    se  mean mz  sd mx  sd mz  p10 mx  p90 mx  share of |mx|>6 that is arm side
+FB     205774     0.03  0.02     0.01   7.76   9.09    -9.7     9.9  0.506
+SI      98986     0.06  0.03    -0.02   8.05   8.43    -9.9    10.3  0.510
+FC      48511     0.01  0.04    -0.01   7.87   9.23    -9.9     9.9  0.502
+SL     144777     0.01  0.02     0.01   8.96   9.97   -11.3    11.1  0.497
+CB      54909     0.04  0.04     0.01   9.15  11.63   -11.4    11.5  0.498
+CH      88190     0.04  0.03    -0.01   8.59  10.21   -10.6    10.9  0.503
+
+by target side (pitcher frame) x batter side: mean mx (arm +), mean mz, n
+FB arm/same -0.83,-0.15 n8573 | arm/opp +0.30,+0.06 n44544 | mid/same -0.25,+0.02 n41763 | mid/opp +0.15,-0.11 n59380 | glove/same -0.10,-0.02 n31065 | glove/opp +0.24,+0.32 n20449
+SI arm/same +0.01,-0.16 n28431 | arm/opp +0.15,+0.20 n17372 | mid/same +0.17,-0.24 n21109 | mid/opp -0.04,-0.00 n14199 | glove/same -0.03,-0.16 n11188 | glove/opp -0.02,+0.88 n6687
+FC arm/same -0.11,-0.98 n618 | arm/opp +0.33,+0.18 n5388 | mid/same -0.49,-0.17 n4155 | mid/opp +0.31,+0.14 n8781 | glove/same -0.30,-0.27 n15111 | glove/opp +0.17,+0.17 n14458
+SL arm/same -1.40,-1.03 n481 | arm/opp +0.44,+0.04 n7759 | mid/same -0.77,+0.47 n14988 | mid/opp +0.71,-0.16 n26874 | glove/same -0.43,+0.28 n71550 | glove/opp +0.94,-0.90 n23125
+CB arm/same -2.72,-0.96 n294 | arm/opp +0.38,+0.03 n6529 | mid/same -0.75,+0.69 n8006 | mid/opp +0.40,-0.08 n24617 | glove/same -0.91,+0.27 n9449 | glove/opp +0.84,-0.96 n6014
+CH arm/same -0.88,-0.19 n6438 | arm/opp +0.24,+0.10 n51191 | mid/same -0.56,-0.19 n11004 | mid/opp +0.26,-0.10 n17070 | glove/same -0.57,-0.26 n2251 | glove/opp +0.12,-0.88 n236
+
+persistence: per pitcher x kind (n >= 120), split-half (odd/even pitches) correlation of mean mx and mean mz
+FB: pitchers 440, median n 338, r(mx) -0.12, r(mz) -0.54; implied K mx inf, mz inf pitches; SD of pitcher mean mx 0.40 in (p10 -0.3, p90 +0.4)
+SI: pitchers 255, median n 267, r(mx) -0.41, r(mz) -0.49; implied K mx inf, mz inf pitches; SD of pitcher mean mx 0.36 in (p10 -0.3, p90 +0.4)
+FC: pitchers 139, median n 234, r(mx) -0.52, r(mz) -0.76; implied K mx inf, mz inf pitches; SD of pitcher mean mx 0.32 in (p10 -0.4, p90 +0.3)
+SL: pitchers 383, median n 286, r(mx) -0.48, r(mz) -0.65; implied K mx inf, mz inf pitches; SD of pitcher mean mx 0.32 in (p10 -0.3, p90 +0.2)
+CB: pitchers 159, median n 226, r(mx) -0.31, r(mz) -0.84; implied K mx inf, mz inf pitches; SD of pitcher mean mx 0.42 in (p10 -0.3, p90 +0.3)
+CH: pitchers 260, median n 228, r(mx) -0.76, r(mz) -0.75; implied K mx inf, mz inf pitches; SD of pitcher mean mx 0.22 in (p10 -0.2, p90 +0.3)

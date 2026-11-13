@@ -1,0 +1,20 @@
+== MLB 2024: 173856 pitches, 44563 PA, HBP/PA 0.0102, HBP/pitch 0.00261
+kind side        n inside 3rd  off in   body HBP/pitch P(HBP|body) share of HBP
+FB   same    22250      0.276   0.081  0.033   0.00292       0.087        0.144
+FB   opp     33037      0.325   0.101  0.043   0.00154       0.031        0.113
+SI   same    16278      0.479   0.212  0.105   0.00725       0.067        0.262
+SI   opp     11360      0.289   0.093  0.042   0.00123       0.027        0.031
+FC   same     5936      0.135   0.033  0.010   0.00101       0.097        0.013
+FC   opp      8058      0.475   0.215  0.105   0.00347       0.031        0.062
+SL   same    24095      0.139   0.038  0.016   0.00133       0.085        0.071
+SL   opp     15155      0.441   0.191  0.097   0.00429       0.044        0.144
+CB   same     4561      0.218   0.066  0.031   0.00219       0.071        0.022
+CB   opp      8981      0.362   0.131  0.064   0.00323       0.049        0.064
+CH   same     4917      0.391   0.140  0.067   0.00447       0.066        0.049
+CH   opp     17866      0.184   0.048  0.018   0.00056       0.028        0.022
+all kinds: body-zone share 0.0491, P(HBP | body zone) 0.051, share of HBPs from the body zone 0.964
+HBP rate by where it crossed (in. toward the batter from plate centre; 3-in. bands):
+  +6:0.000(12783)  +9:0.001(9013)  +12:0.002(5766)  +15:0.017(3473)  +18:0.046(1836)  +21:0.110(890)  +24:0.172(377)  +27:0.351(185)  +30:0.513(113)
+3-0 fastballs, mean crossing on the arm side (+) by batter side (pitcher frame = the part shared by both sides):
+  FB: same -0.77 (n 426), opp +1.64 (n 632); pitcher-frame (arm) part +0.43 +- 0.26; batter-frame (inside) part -1.20 +- 0.26
+  SI: same +0.52 (n 157), opp +3.47 (n 227); pitcher-frame (arm) part +2.00 +- 0.46; batter-frame (inside) part -1.47 +- 0.46
