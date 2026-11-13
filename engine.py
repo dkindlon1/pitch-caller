@@ -166,9 +166,10 @@ SIDE_TARGETS = {"in": ("up-in", "down-in"), "away": ("up-away", "down-away")}
 # v1.1 (FINDING_v1.0_game_mix_collapse, Nov 12): "lean on it" wears off once he has leaned. In a game, a hot pitch gets
 # called more, which keeps it hot, and the flat credit (3x the mix temperature) pushed every other pitch out: the v1.0 app
 # threw 75-95% of one pitch over 82 pitches of random results. The read keeps its full size until this pitch's share of
-# today's pitches is HOT_FADE[0] over its normal share (its class's half of the pitches, split evenly; the count prior's
-# shape), then fades to nothing at HOT_FADE[1] over. Today's pitches = the larger of the pitch count and the landing record.
-HOT_FADE = (0.10, 0.40)
+# today's pitches is HOT_FADE[0] times its normal share (its class's half of the pitches, split evenly; the count prior's
+# shape), then fades to nothing at HOT_FADE[1] times it (v1.2: a ratio, so an off-speed pitch with a 25% share fades
+# from 30% to 40%, a lone fastball from 60% to 80%). Today's pitches = the larger of the pitch count and the landing record.
+HOT_FADE = (1.2, 1.6)   # v1.2 Step 5 (L6): by ratio to the normal share (v1.1: +0.10 to +0.40 over it, in points)
 
 
 def hot_fade(p, s, arsenal):
@@ -182,8 +183,8 @@ def hot_fade(p, s, arsenal):
     fbs = sum(1 for x in arsenal if is_fastball(x.kind))
     oss = len(arsenal) - fbs
     base = (0.5 / fbs if is_fastball(p.kind) else 0.5 / oss) if fbs and oss else 1.0 / len(arsenal)
-    over = ns.get(p.name, 0) / total - base
-    return min(1.0, max(0.0, 1.0 - (over - HOT_FADE[0]) / (HOT_FADE[1] - HOT_FADE[0])))
+    ratio = ns.get(p.name, 0) / total / base
+    return min(1.0, max(0.0, 1.0 - (ratio - HOT_FADE[0]) / (HOT_FADE[1] - HOT_FADE[0])))
 
 
 def landing_hot(p, s):
@@ -212,10 +213,16 @@ def landing_hot(p, s):
 # Drew grades the rows (they are Claude's proposals, Nov 12).
 # v1.1 Step 4 (Drew, Nov 13: "lower all sizes"): every Step 3 size halved. Credits alone then change the top call on
 # 8-11% of pitches after a qualifying setup (three staffs); below half the rate stops falling (near-tie flips).
-SETUP_RULE = {"S1": 0.002, "S2": 0.002, "S3": 0.003, "S4": 0.003, "S5": 0.002, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}
+# v1.2 Step 5 (L7): S4 narrowed, then S2 / S4 / S5 resized after the location model: the smallest size that lifts each
+# one's fire row 5+ points (research_v12/step5_setups.py -> results/v12/step5_setups.json: S2 0.004, S4 0.005, S5 0.004),
+# checked against the 2-10% credit-only change band on three staffs (readthrough/setup_game_check.py, 10 games each). With
+# all three at those sizes the rate was 17-22% (S4 and S2 drove it); S2 and S4 can't lift their rows and stay in the band,
+# so they're dropped (size 0; their code stays). S5 kept at 0.004: 4.9% / 3.5% / 10.0% (results/v12/step5_sgc_final_*).
+SETUP_RULE = {"S1": 0.002, "S2": 0.0, "S3": 0.003, "S4": 0.0, "S5": 0.004, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}
 SETUP_CAP = 0.02            # setup credit <= 0.02 x run scale; coach + setup <= max(coach, 0.02 x run scale)
 UPS, DOWNS, INS, AWAYS = ("up-in", "up-away"), ("down-in", "down-away", "down-middle"), ("up-in", "down-in"), ("up-away", "down-away")
 STRIKE_RES = ("cstrike", "whiff", "foul")
+S4_GAP = 8.0                # v1.2 Step 5 (L7): S4's payoff is 8+ mph slower than the fastball away
 SETUP_TEXT = {"S1": "up, then down", "S2": "in, then away", "S3": "hard in, soft away", "S4": "same lane, slower",
               "S5": "front door / back door", "S6": "stole strike one", "S7": "climb the ladder", "S9": "expand off the edge"}
 
@@ -311,9 +318,10 @@ def setup_payoff(p, q, s, arsenal):
         if (not same and ((x.kind == "FC" and x.shape == "hard") or x.kind == "FB") and e[1] in INS and not on_time_or_early(e)
                 and p.kind == "CH" and p.shape in ("fade", "split", "") and q in ("down-away", "chase")):
             offer("S3", e)
-        # S4 same lane, slower: fastball away, the previous pitch -> changeup (6+ mph slower, not firm) / curve away and low
-        if (last and is_fastball(x.kind) and x.kind != "FC" and e[1] in AWAYS and q in ("down-away", "chase")
-                and ((p.kind == "CH" and p.shape != "firm" and x.mph() - p.mph() >= 6) or p.kind == "CB")
+        # S4 same lane, slower: fastball away for a strike, the previous pitch -> changeup (not firm) / curve away and low,
+        # 8+ mph slower (v1.2 Step 5, L7: narrowed from any fastball away and a 6 mph changeup gap)
+        if (last and is_fastball(x.kind) and x.kind != "FC" and e[1] in AWAYS and e[2] in STRIKE_RES and q in ("down-away", "chase")
+                and ((p.kind == "CH" and p.shape != "firm") or p.kind == "CB") and x.mph() - p.mph() >= S4_GAP
                 and s.timing.get("OS", 0.0) > -READ_T):
             offer("S4", e)
         # S6 steal strike one: a first-pitch curve / gyro slider called strike -> fastball at 0-1, any strike target
@@ -371,7 +379,7 @@ def coach_credit(p, q, s, arsenal=None):
     if not s.same_side and p.grade >= 4 and ((p.kind == "CH" and q in ("down-away", "chase")) or (p.kind == "SL" and q == "down-in")):
         c += R["plus_opp"]
     if ride_up_2k(p, q, s):
-        c += R["ride_up_2k"]
+        c += R["ride_up_2k"] * RHO_L.get(s.level, 1.0)   # v1.2 Step 5 (Q5): x RHO_L at HS / travel, like every MLB-sized term
     return c
 
 

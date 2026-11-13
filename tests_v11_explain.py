@@ -165,11 +165,18 @@ def main():
           and e.intent_mech_text("eye level") == ("it stays at his eye level" if e.P08["beta_E"] < 0 else "it changes his eye level"),
           f"beta_E = {e.P08['beta_E']:.3f}, {len(eye)} eye-level lines")
 
-    bad, fired = [], []
+    bad, fired, dropped = [], [], []
     for rule, ars, s, call in SETUP_CASES:
         s2, tab = solve(ars, s)
         p = next(x for x in ars if x.name == call[0])
         v, got, ent = e.setup_payoff(p, call[1], s2, ars)
+        if e.SETUP_RULE.get(rule, 0.0) == 0.0:      # v1.2 Step 5 (L7): a dropped rule (size 0) credits nothing and names no setup
+            pick, dist, tab, info = e.call_v08(ars, s2, rng=G8.Half(), tab=tab)
+            line = e.why_line(ars, s2, tab, (p, call[1]), info)[0]
+            if (got == rule and v != 0) or line.startswith("Set up by"):
+                bad.append(f"{rule} (dropped): credit {v}, why '{line}'")
+            dropped.append(rule)
+            continue
         if got != rule or v <= 0:
             bad.append(f"{rule}: setup_payoff gave {got} {v}")
             continue
@@ -187,8 +194,8 @@ def main():
         if lab != ("Payoff" if s2.strikes < 2 else ("Expand" if call[1] == "chase" else "Finish")):
             bad.append(f"{rule}: intent {lab}")
     check("6. each built rule fires on its setup case, names that setup and is labeled Payoff (Finish / Expand at two "
-          "strikes); silent without it or when it was squared up",
-          not bad and len(fired) == len(SETUP_CASES), "; ".join(bad[:3]) or f"rules {fired}")
+          "strikes); silent without it or when it was squared up (v1.2: a rule dropped to size 0 names no setup)",
+          not bad and len(fired) + len(dropped) == len(SETUP_CASES), "; ".join(bad[:3]) or f"rules {fired}, dropped {dropped}")
 
     k = min(20, N)
     setup_in = [dict(arsenal=[asdict(x) for x in ars], s=dict(asdict(s), pa_log=[list(z) for z in s.pa_log]))

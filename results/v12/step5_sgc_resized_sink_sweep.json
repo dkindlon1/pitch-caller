@@ -1,0 +1,41 @@
+{
+ "games": 10,
+ "staff": "sink_sweep",
+ "scale": 1.0,
+ "credit_rate": 0.2222222222222222,
+ "tie_break_changed": 17,
+ "pitches": 1326,
+ "qualifying": 288,
+ "changed": 81,
+ "rate": 0.28125,
+ "by_rule": {
+  "N2": 10,
+  "S2": 14,
+  "S4": 34,
+  "tie-break": 17,
+  "S6": 2,
+  "S7": 4
+ },
+ "tie_break_fired": 86,
+ "band": [
+  0.02,
+  0.1
+ ],
+ "in_band": false,
+ "fires_per_100": {
+  "N2": 4.52,
+  "S2": 1.43,
+  "S4": 1.89,
+  "S7": 0.15
+ },
+ "top_change_per_100": {
+  "N2": 0.75,
+  "S2": 1.06,
+  "S4": 2.56,
+  "tie-break": 1.28,
+  "S6": 0.15,
+  "S7": 0.3
+ },
+ "s5_share_of_two_strike_calls": 0.0,
+ "s5_with_command_under_4": 0
+}

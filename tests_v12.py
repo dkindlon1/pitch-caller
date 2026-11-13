@@ -195,6 +195,7 @@ ars_s = [e.Pitch("Fastball", "FB", grade=3, command=3, conf=0.8, shape="rides", 
 e.resolve_speeds(ars_s)
 cells = [[1, 4, True], [2, 5, True], [-1, 4, True], [5, 3, True]]
 py = []
+_S4_SAVED = e.SETUP_RULE["S4"]; e.SETUP_RULE["S4"] = _S4_SAVED or 0.005   # v1.2 Step 5 dropped S4 (0): its logic is checked at a test size
 for c in cells:
     S = e.Situation(0, 1, 0, (False,) * 3, level="college_d3", pa_log=(("Fastball", "up-away", "cstrike", tuple(c), None, None),))
     py.append(e.setup_payoff(ars_s[1], "down-away", S, ars_s)[0])
@@ -202,13 +203,64 @@ jsv = json.loads(subprocess.run(["node", "-e", """
 const E = require('./app/engine.js'); E.init(require('./app/engine_data.json'));
 const ars = [E.Pitch({ name: 'Fastball', kind: 'FB', grade: 3, command: 3, conf: 0.8, shape: 'rides', velo: 88 }),
   E.Pitch({ name: 'Changeup', kind: 'CH', grade: 3, command: 3, conf: 0.7, shape: 'fade', velo: 79 })];
-E.resolveSpeeds(ars);
+E.resolveSpeeds(ars); E.v08.SETUP_RULE.S4 = E.v08.SETUP_RULE.S4 || 0.005;
 console.log(JSON.stringify(""" + json.dumps(cells) + """.map((c) => E.v08.setupPayoff(ars[1], 'down-away',
   E.Situation({ balls: 0, strikes: 1, outs: 0, bases: [false, false, false], level: 'college_d3', pa_log: [['Fastball', 'up-away', 'cstrike', c, null, null]] }), ars)[0])));
 """], cwd=HERE, capture_output=True, text=True, check=True).stdout)
 check("a directional Way off cell (outside the 5x5 grid) counts as way off: no setup credit, both engines (an in-grid cell "
       "at the target still credits)", py[0] > 0 and py[1:] == [0.0, 0.0, 0.0] and all(abs(a - b) < 1e-15 for a, b in zip(py, jsv)),
       f"python {py}, js {jsv}")
+
+# ------------------------------------------------------------------ 6. Step 5 follow-ups (plan 2.7)
+# HS ride-up x RHO_L (Q5)
+_ru = e.Pitch("Fastball", "FB", grade=3, command=3, conf=0.8, shape="rides", velo=88)
+_cc = {lv: e.coach_credit(_ru, "up-away", e.Situation(1, 2, 0, (False,) * 3, level=lv)) for lv in ("hs", "travel", "college_d3", "college_d1", "mlb")}
+_ccj = json.loads(subprocess.run(["node", "-e", """
+const E = require('./app/engine.js'); E.init(require('./app/engine_data.json'));
+const p = E.Pitch({ name: 'Fastball', kind: 'FB', grade: 3, command: 3, conf: 0.8, shape: 'rides', velo: 88 });
+const out = {}; for (const lv of ['hs', 'travel', 'college_d3', 'college_d1', 'mlb']) out[lv] = E.v08.coachCredit(p, 'up-away', E.Situation({ balls: 1, strikes: 2, outs: 0, bases: [false, false, false], level: lv }));
+console.log(JSON.stringify(out));"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+check("Step 5 (Q5): the riding four-seam up with two strikes gets 0.008 x RHO_L: 0.0048 at HS and travel, 0.008 at college and "
+      "MLB; both engines", all(abs(_cc[lv] - 0.008 * e.RHO_L.get(lv, 1.0)) < 1e-15 and abs(_ccj[lv] - _cc[lv]) < 1e-15 for lv in _cc), str(_cc))
+# S4 narrowed (L7): the fastball away went for a strike, and the payoff is 8+ mph slower
+_S4 = [  # (setup result, payoff kind, shape, payoff mph, fires)
+    ("cstrike", "CH", "fade", 81, True), ("foul", "CH", "fade", 81, True), ("whiff", "CB", "", 80, True), ("ball", "CH", "fade", 81, False),
+    ("cstrike", "CH", "fade", 82, False), ("cstrike", "CB", "", 82, False), ("cstrike", "CH", "firm", 80, False)]
+def _s4py(res, k, sh, v):
+    a = [e.Pitch("Fastball", "FB", grade=3, command=3, conf=0.8, velo=89), e.Pitch("Payoff", k, grade=3, command=3, conf=0.7, shape=sh, velo=v)]
+    e.resolve_speeds(a)
+    S = e.Situation(1, 1, 0, (False,) * 3, level="college_d3", pa_log=(("Fastball", "up-away", res, (1, 4, True), None, None),))
+    c, rule, _ = e.setup_payoff(a[1], "down-away", S, a)
+    return rule == "S4" and c > 0
+_s4j = json.loads(subprocess.run(["node", "-e", """
+const E = require('./app/engine.js'); E.init(require('./app/engine_data.json')); E.v08.SETUP_RULE.S4 = E.v08.SETUP_RULE.S4 || 0.005;
+console.log(JSON.stringify(""" + json.dumps([list(x[:4]) for x in _S4]) + """.map(([res, k, sh, v]) => {
+  const a = [E.Pitch({ name: 'Fastball', kind: 'FB', grade: 3, command: 3, conf: 0.8, velo: 89 }), E.Pitch({ name: 'Payoff', kind: k, grade: 3, command: 3, conf: 0.7, shape: sh, velo: v })];
+  E.resolveSpeeds(a);
+  const r = E.v08.setupPayoff(a[1], 'down-away', E.Situation({ balls: 1, strikes: 1, outs: 0, bases: [false, false, false], level: 'college_d3', pa_log: [['Fastball', 'up-away', res, [1, 4, true], null, null]] }), a);
+  return r[1] === 'S4' && r[0] > 0; })));"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+_s4p = [_s4py(*x[:4]) for x in _S4]
+e.SETUP_RULE["S4"] = _S4_SAVED
+check("Step 5 (L7): S4 fires only after a fastball away for a strike (called, foul or whiff) with a payoff 8+ mph slower "
+      "(changeup not firm, or curve); not after a ball, not at 7 mph, not a firm changeup; both engines",
+      _s4p == [x[4] for x in _S4] and _s4j == _s4p, f"python {_s4p}, js {_s4j}")
+check("Step 5 (L7): S5 resized to the smallest size that lifts its fire row 5+ points (0.004); S2 and S4 dropped to 0 (their "
+      "lifting sizes, 0.004 and 0.005, put the credit-only change rate at 17-22% on the three staffs, outside 2-10%); both engines",
+      e.SETUP_RULE["S2"] == 0.0 and e.SETUP_RULE["S4"] == 0.0 and e.SETUP_RULE["S5"] == 0.004 and json.loads(subprocess.run(
+          ["node", "-e", "const E=require('./app/engine.js');console.log(JSON.stringify(E.v08.SETUP_RULE))"], cwd=HERE, capture_output=True,
+          text=True, check=True).stdout) == e.SETUP_RULE, str({k: e.SETUP_RULE[k] for k in ("S2", "S4", "S5")}))
+# S5's lean gate: a sinker leaning toward an opposite-side hitter (glove side for a righty against a lefty) pays the HBP cost
+sys.path.insert(0, os.path.join(HERE, "readthrough"))
+import scenarios as _SC
+_doc = json.load(open(os.path.join(HERE, "readthrough", "scenarios_v11.json")))
+_fr = next(r for r in _doc["rows"] if r["id"] == "S5f")
+def _s5(lean):
+    ars, S, ex = _SC.build(_doc, _fr)
+    ars = [replace(x, lean_x=lean) if x.kind == "SI" else x for x in ars]
+    return sum(pr for pr, _, k, q in _SC.call_dist("v09", ars, S, ex) if k == "SI" and q in ("up-in", "down-in"))
+_g0, _gt, _ga = _s5(0.0), _s5(-3.0), _s5(3.0)
+check("Step 5 (L7): S5 re-gated by the lean: on its fire row the front-door sinker drops when it leans toward the opposite-side "
+      "hitter (the HBP cost) and rises when it leans away", _gt < _g0 - 0.03 and _ga > _g0, f"sinker in {_g0:.1%}; leaning toward him {_gt:.1%}; away {_ga:.1%}")
 
 fails = [r for r in results if not r[1]]
 print(f"\n{len(results) - len(fails)}/{len(results)} checks passed")

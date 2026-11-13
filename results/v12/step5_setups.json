@@ -1,0 +1,128 @@
+{
+ "grid": [
+  0.002,
+  0.003,
+  0.004,
+  0.005,
+  0.006,
+  0.008,
+  0.01,
+  0.012,
+  0.015,
+  0.02
+ ],
+ "lift": 0.05,
+ "start": {
+  "S2": 0.002,
+  "S4": 0.003,
+  "S5": 0.002
+ },
+ "rules": {
+  "S2": {
+   "base": 0,
+   "size": 0.004,
+   "tried": [
+    {
+     "size": 0.002,
+     "share": 0,
+     "moved": 0,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    },
+    {
+     "size": 0.003,
+     "share": 0.0071,
+     "moved": 0.0071,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    },
+    {
+     "size": 0.004,
+     "share": 0.0982,
+     "moved": 0.0982,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    }
+   ],
+   "note": null
+  },
+  "S4": {
+   "base": 0,
+   "size": 0.005,
+   "tried": [
+    {
+     "size": 0.002,
+     "share": 0,
+     "moved": 0,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    },
+    {
+     "size": 0.003,
+     "share": 0,
+     "moved": 0,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    },
+    {
+     "size": 0.004,
+     "share": 0,
+     "moved": 0,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    },
+    {
+     "size": 0.005,
+     "share": 0.0879,
+     "moved": 0.0879,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    }
+   ],
+   "note": null
+  },
+  "S5": {
+   "base": 0,
+   "size": 0.004,
+   "tried": [
+    {
+     "size": 0.002,
+     "share": 0.0046,
+     "moved": 0.0046,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    },
+    {
+     "size": 0.003,
+     "share": 0.0388,
+     "moved": 0.0388,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    },
+    {
+     "size": 0.004,
+     "share": 0.0668,
+     "moved": 0.0668,
+     "fire_row": true,
+     "nofire_row": true,
+     "nofire_moved": 0
+    }
+   ],
+   "note": null
+  }
+ },
+ "s5_lean_gate": {
+  "sinker_in_no_lean": 0.0668,
+  "lean_toward_hitter_3in": 0,
+  "lean_away_3in": 0.1374
+ }
+}

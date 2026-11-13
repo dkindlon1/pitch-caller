@@ -81,7 +81,7 @@ out = dict(games=N, staff=SIM.STAFF, scale=SCALE, credit_rate=credit_rate, tie_b
            s5_share_of_two_strike_calls=(st["s5_two_k"] / st["two_k"]) if st["two_k"] else 0.0, s5_with_command_under_4=st["s5_low_cmd"])
 print(f"fires per 100 pitches {out['fires_per_100']}; top-call changes per 100 {out['top_change_per_100']}; S5 on "
       f"{out['s5_share_of_two_strike_calls']:.1%} of two-strike calls ({st['s5_low_cmd']} with command under 4)")
-json.dump(out, open(os.path.join(HERE, "results", "v11", f"setup_game_check{'' if SIM.STAFF == 'default' else '_' + SIM.STAFF}{'' if SCALE == 1 else f'_x{SCALE:g}'}.json"), "w"), indent=1)
+json.dump(out, open(os.path.join(HERE, "results", os.environ.get("RESULTS_DIR", "v11"), f"setup_game_check{'' if SIM.STAFF == 'default' else '_' + SIM.STAFF}{'' if SCALE == 1 else f'_x{SCALE:g}'}.json"), "w"), indent=1)
 print(f"credits alone (sizes x {SCALE:g}): {st['changed'] - tb_ch} of {st['qualifying']} = {credit_rate:.1%}; the tie-break: {tb_ch}")
 print(f"setup credits changed the top call on {st['changed']} of {st['qualifying']} pitches after a qualifying setup ({rate:.1%}; "
       f"band 2-10%: {'in' if out['in_band'] else 'OUT'}); by rule {dict(st['by_rule'])}; tie-break moved probability on {st['tb_fired']}")

@@ -251,17 +251,21 @@ check("a pitch with no speed is read off his main fastball's entered speed (94 m
 # ------------------------------------------------------------------ 6. the hot read wears off once he has leaned (FINDING_v1.0_game_mix_collapse)
 A3 = [e.Pitch("Fastball", "FB", 3, 3, .8, velo=86), e.Pitch("Slider", "SL", 3, 3, .75, shape="tight", velo=78), e.Pitch("Changeup", "CH", 3, 3, .65, velo=78)]
 def _sit(n_sl, pc): return e.Situation(1, 2, 1, (False, False, True), landing_today={"Slider": (min(n_sl, round(n_sl * 0.9)), n_sl)}, pitch_count=pc)
-fades = {(n, pc): e.hot_fade(A3[1], _sit(n, pc), A3) for (n, pc) in ((10, 50), (17, 50), (25, 50), (34, 50), (33, 39), (10, 10))}
+fades = {(n, pc): e.hot_fade(A3[1], _sit(n, pc), A3) for (n, pc) in ((10, 50), (15, 50), (17, 50), (20, 50), (33, 39), (10, 10))}
 js_f = json.loads(subprocess.run(["node", "-e", """
 const E = require('./app/engine.js');
 const A = [E.Pitch({name:'Fastball',kind:'FB',grade:3,command:3,conf:.8,velo:86}), E.Pitch({name:'Slider',kind:'SL',shape:'tight',grade:3,command:3,conf:.75,velo:78}), E.Pitch({name:'Changeup',kind:'CH',grade:3,command:3,conf:.65,velo:78})];
-const out = {}; for (const [n, pc] of [[10,50],[17,50],[25,50],[34,50],[33,39],[10,10]]) out[n + ',' + pc] = E.v08.hotFade(A[1], E.Situation({balls:1,strikes:2,outs:1,bases:[false,false,true],landing_today:{Slider:[Math.min(n, Math.round(n*0.9)), n]},pitch_count:pc}), A);
+const out = {}; for (const [n, pc] of [[10,50],[15,50],[17,50],[20,50],[33,39],[10,10]]) out[n + ',' + pc] = E.v08.hotFade(A[1], E.Situation({balls:1,strikes:2,outs:1,bases:[false,false,true],landing_today:{Slider:[Math.min(n, Math.round(n*0.9)), n]},pitch_count:pc}), A);
 console.log(JSON.stringify(out));"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
-fade_ok = (fades[(10, 50)] == 1.0 and fades[(17, 50)] == 1.0 and 0 < fades[(25, 50)] < 1 and fades[(34, 50)] == 0.0 and fades[(33, 39)] == 0.0
+# v1.2 Step 5 (L6): by ratio to the normal share: full to 1.2x, gone at 1.6x (slider, normal 25%: 30% -> 40%; v1.1 was
+# 35% -> 65%). A lone fastball (normal 50%): 60% -> 80%.
+_fb = lambda n, pc: e.hot_fade(A3[0], e.Situation(1, 2, 1, (False, False, True), landing_today={"Fastball": (min(n, round(n * 0.9)), n)}, pitch_count=pc), A3)
+fade_ok = (fades[(10, 50)] == 1.0 and abs(fades[(15, 50)] - 1.0) < 1e-9 and abs(fades[(17, 50)] - 0.6) < 1e-9 and fades[(20, 50)] < 1e-9
+           and fades[(33, 39)] == 0.0 and fades[(10, 10)] == 0.0 and abs(_fb(30, 50) - 1.0) < 1e-9 and abs(_fb(35, 50) - 0.5) < 1e-9 and _fb(40, 50) < 1e-9
            and all(abs(js_f[f"{n},{pc}"] - v) < 1e-12 for (n, pc), v in fades.items()))
-check("the hot read keeps its full size until his share of today's pitches is 10 points over its normal share (slider 25% here) and "
-      "is gone at 40 over (the v1.0 collapse: 33 sliders of 39 pitches); both engines", fade_ok,
-      ", ".join(f"{n}/{pc} -> {v:.2f}" for (n, pc), v in fades.items()))
+check("v1.2 (L6): the hot read keeps its full size until his share of today's pitches is 1.2x its normal share (slider 25% here: "
+      "30%) and is gone at 1.6x (40%); a lone fastball 60% -> 80%; both engines", fade_ok,
+      ", ".join(f"{n}/{pc} -> {v:.2f}" for (n, pc), v in fades.items()) + f"; fastball 30/35/40 of 50 -> {_fb(30, 50):.2f}/{_fb(35, 50):.2f}/{_fb(40, 50):.2f}")
 
 # ------------------------------------------------------------------ 7. the not-landing hold lifts after a run of pitches without the pitch (Drew, Nov 12)
 cold = e.Situation(0, 0, 0, (False, False, False), landing_today={"Fastball": (5, 7.8, 12)}, pitch_count=60)
@@ -421,11 +425,20 @@ rows3 = [  # (label, arsenal, situation, payoff call, rule expected or None)
     ("no chase payoff where the count has no chase target (2-2)", A_rf, S(2, 2, [_ent("Fastball", "up-in", "whiff"), _ent("Fastball", "up-away", "whiff"), _ent("Slider", "chase", "ball"), _ent("Slider", "chase", "ball")]), ("Fastball", "chase"), None),
 ]
 bad3 = []
-for lab, ars, s_, call, want in rows3:
-    v, rule, ent = sp(ars, call[0], call[1], s_)
-    got = rule if (v != 0) else None
-    if got != want or (want == "N2" and v >= 0) or (want not in (None, "N2") and v <= 0):
-        bad3.append(f"{lab}: got {rule} {v:+.4f}")
+# v1.2 Step 5 (L7) dropped S2 and S4 to size 0; their patterns are still checked here, at a test size (the code stays)
+TEST_SIZE = {"S2": 0.004, "S4": 0.005}
+saved_sr = dict(e.SETUP_RULE)
+for k_, v_ in TEST_SIZE.items():
+    if e.SETUP_RULE[k_] == 0.0:
+        e.SETUP_RULE[k_] = v_
+try:
+    for lab, ars, s_, call, want in rows3:
+        v, rule, ent = sp(ars, call[0], call[1], s_)
+        got = rule if (v != 0) else None
+        if got != want or (want == "N2" and v >= 0) or (want not in (None, "N2") and v <= 0):
+            bad3.append(f"{lab}: got {rule} {v:+.4f}")
+finally:
+    e.SETUP_RULE.update(saved_sr)
 check(f"Step 3 rules: each fires on its pattern and stays silent on its 'doesn't fire' cases, the no-read cases included "
       f"({len(rows3)} cases: S2, S5, S7, S9, N2, three balls, no chase at 2-2; S1, S3, S4, S6 in tests_v11_explain)", not bad3, "; ".join(bad3[:4]))
 
@@ -444,13 +457,19 @@ c_none = e.cost08(A_si[1], "down-away", replace(s_cap, pa_log=()), A_si, tab_c, 
 cc_ = e.coach_credit(A_si[1], "down-away", s_cap, A_si)
 moved_ = (c_none - c_with) / e.run_scale("college_d3")
 s_nc = replace(s_cap, matchup={})                                         # no coach read: the setup credit applies
-c_with2 = e.cost08(A_si[1], "down-away", s_nc, A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
-c_none2 = e.cost08(A_si[1], "down-away", replace(s_nc, pa_log=()), A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
-moved2 = (c_none2 - c_with2) / e.run_scale("college_d3")
+_s2 = e.SETUP_RULE["S2"]
+e.SETUP_RULE["S2"] = _s2 or TEST_SIZE["S2"]      # v1.2: S2 is dropped (0); the cap is checked at its test size
+try:
+    c_with2 = e.cost08(A_si[1], "down-away", s_nc, A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
+    c_none2 = e.cost08(A_si[1], "down-away", replace(s_nc, pa_log=()), A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
+    moved2 = (c_none2 - c_with2) / e.run_scale("college_d3")
+    _s2_used = e.SETUP_RULE["S2"]
+finally:
+    e.SETUP_RULE["S2"] = _s2
 check("Step 3 cap: a setup credit is at most 0.02 x run scale, and coach + setup at most max(coach, 0.02): with the "
       "went-back read (0.03) on, the setup adds nothing; without it, the setup credit applies in full",
       abs(cap_v - e.SETUP_CAP) < 1e-12 and abs(moved_) < 1e-12 and cc_ >= e.SETUP_CAP
-      and abs(moved2 - e.SETUP_RULE["S2"]) < 1e-12,
+      and abs(moved2 - _s2_used) < 1e-12,
       f"credit with every size at 0.05: {cap_v}; coach {cc_:.3f} -> setup adds {moved_:.4f}; no coach read -> {moved2:.4f}")
 
 # root only: pa_log is empty in every table solve
@@ -539,8 +558,9 @@ console.log(JSON.stringify(out));""", json.dumps(RC)], cwd=HERE, capture_output=
 check("Step 4 Q4: the riding-fastball-up rule fires on a riding four-seam aimed up with two strikes (never at three balls, "
       "never below two strikes, never a dead-zone or sinker), the same in both engines, at 0.008",
       py_rc == [x[-1] for x in RC] and js_rc == py_rc and e.COACH_RULE["ride_up_2k"] == 0.008, f"py {py_rc} js {js_rc}")
-# ...and not leaned on: the riding four-seam up stays under the ceiling on the arsenals with one (college 36%, HS 45%;
-# proposed for Drew; measured 35.1% D3, 28.4% D1, 44.3% HS at size 0.008, the smallest that passes row C5)
+# ...and not leaned on: the riding four-seam up stays under the ceiling on the arsenals with one (36% at every level;
+# v1.1 measured 35.1% D3, 28.4% D1, 44.3% HS at size 0.008; v1.2 Step 5 (Q5) scales the credit by RHO_L at HS, so HS's
+# ceiling moved from 45% to 36%)
 import grid_v10 as _G
 _worst = {}
 for _nm, _a0 in _G.ARSENALS.items():
@@ -553,16 +573,16 @@ for _nm, _a0 in _G.ARSENALS.items():
                 _s = e.Situation(_b, 2, 0, (False,) * 3, level=_lv, same_side=_same); _s = replace(_s, win=e.win_constants(_s))
                 _sh = sum(pr for pr, _, x, q in e.call_v08(_a, _s, rng=None)[1] if e.ride_up_2k(x, q, _s))
                 _worst[_lv] = max(_worst.get(_lv, 0.0), _sh)
-check("Step 4 Q4: not leaned on: the riding four-seam up is at most 36% of two-strike calls at college and 45% at HS on every "
-      "grid arsenal with a riding four-seam", _worst["college_d3"] <= 0.36 and _worst["college_d1"] <= 0.36 and _worst["hs"] <= 0.45,
+check("Step 4 Q4 (v1.2 Step 5, Q5): not leaned on: the riding four-seam up is at most 36% of two-strike calls at every level "
+      "on every grid arsenal with a riding four-seam", _worst["college_d3"] <= 0.36 and _worst["college_d1"] <= 0.36 and _worst["hs"] <= 0.36,
       ", ".join(f"{k} {v:.1%}" for k, v in _worst.items()))
 # Q2: sinkers inside: the lane prior is the sinker's alone, and a same-side sinker inside is hit softer than away
 _r = e.PT_FBL_H.get("SI|run")
 check("Step 4 Q2: the hard-contact lane prior is on sinkers only, and a same-side run sinker is hit softer inside than away",
       set(k.split("|")[0] for k in e.PT_FBL_H) == {"SI"} and _r is not None and _r[0] < _r[2], f"SI|run {_r}")
-# Q1: every setup size halved from Step 3's
-check("Step 4 Q1: every setup size is half of Step 3's", e.SETUP_RULE == {"S1": 0.002, "S2": 0.002, "S3": 0.003, "S4": 0.003, "S5": 0.002,
-      "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}, str(e.SETUP_RULE))
+# Q1: every setup size halved from Step 3's; v1.2 Step 5 (L7) resized S2 / S4 / S5 after the location model (tests_v12.py)
+check("Step 4 Q1: every setup size is half of Step 3's (v1.2 Step 5: S5 0.004; S2 and S4 dropped to 0)", e.SETUP_RULE == {"S1": 0.002, "S2": 0.0,
+      "S3": 0.003, "S4": 0.0, "S5": 0.004, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}, str(e.SETUP_RULE))
 
 # ------------------------------------------------------------------ 4. no class logic left on the bare string "FB"
 CMP = re.compile(r"""kind\s*(==|===|!=|!==)\s*['"]FB['"]|['"]FB['"]\s*(==|===|!=|!==)\s*\w*kind""")

@@ -1,0 +1,13 @@
+game 1: 138 pitches, 13 after a qualifying setup, top call changed 0
+game 2: 249 pitches, 24 after a qualifying setup, top call changed 1
+game 3: 410 pitches, 27 after a qualifying setup, top call changed 1
+game 4: 524 pitches, 34 after a qualifying setup, top call changed 2
+game 5: 660 pitches, 52 after a qualifying setup, top call changed 4
+game 6: 788 pitches, 56 after a qualifying setup, top call changed 4
+game 7: 926 pitches, 62 after a qualifying setup, top call changed 4
+game 8: 1061 pitches, 68 after a qualifying setup, top call changed 5
+game 9: 1228 pitches, 86 after a qualifying setup, top call changed 6
+game 10: 1377 pitches, 102 after a qualifying setup, top call changed 8
+fires per 100 pitches {'S9': 1.67, 'S6': 0.15, 'S7': 0.15, 'S3': 0.07}; top-call changes per 100 {'S9': 0.22, 'S7': 0.07, 'tie-break': 0.22, 'S6': 0.07}; S5 on 0.0% of two-strike calls (0 with command under 4)
+credits alone (sizes x 1): 5 of 102 = 4.9%; the tie-break: 3
+setup credits changed the top call on 8 of 102 pitches after a qualifying setup (7.8%; band 2-10%: in); by rule {'S9': 3, 'S7': 1, 'tie-break': 3, 'S6': 1}; tie-break moved probability on 2

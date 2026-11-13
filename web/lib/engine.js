@@ -1107,8 +1107,9 @@
     return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
   }
   // ---------------------------------------------------------------- v1.1 Step 3: setup and payoff rules (mirror of engine.py)
-  const SETUP_RULE = { S1: 0.002, S2: 0.002, S3: 0.003, S4: 0.003, S5: 0.002, S6: 0.004, S7: 0.005, S9: 0.001, N2: 0.001 };   // v1.1 Step 4: halved (Drew: lower all sizes; engine.py SETUP_RULE)
+  const SETUP_RULE = { S1: 0.002, S2: 0.0, S3: 0.003, S4: 0.0, S5: 0.004, S6: 0.004, S7: 0.005, S9: 0.001, N2: 0.001 };   // v1.2 Step 5: S5 resized, S2 / S4 dropped (engine.py)   // v1.1 Step 4: halved (Drew: lower all sizes; engine.py SETUP_RULE)
   const SETUP_CAP = 0.02, TIE_CAP = 0.05;
+  const S4_GAP = 8.0;   // v1.2 Step 5 (L7): engine.py S4_GAP
   const UPS = ["up-in", "up-away"], INS = ["up-in", "down-in"], AWAYS = ["up-away", "down-away"], STRIKE_RES = ["cstrike", "whiff", "foul"];
   function landedNear(e, kind) {
     const [, q, res, landed] = e;
@@ -1160,8 +1161,9 @@
       if (!same && ((x.kind === "FC" && x.shape === "hard") || x.kind === "FB") && INS.includes(e[1]) && !onTimeOrEarly(e)
           && p.kind === "CH" && ["fade", "split", ""].includes(p.shape || "") && (q === "down-away" || q === "chase"))
         offer("S3", e);
-      if (last && isFastball(x.kind) && x.kind !== "FC" && AWAYS.includes(e[1]) && (q === "down-away" || q === "chase")
-          && ((p.kind === "CH" && p.shape !== "firm" && mph(x) - mph(p) >= 6) || p.kind === "CB") && ((s.timing || {}).OS ?? 0.0) > -READ_T)
+      // v1.2 Step 5 (L7): the fastball away went for a strike, and the payoff is 8+ mph slower (engine.py S4)
+      if (last && isFastball(x.kind) && x.kind !== "FC" && AWAYS.includes(e[1]) && STRIKE_RES.includes(e[2]) && (q === "down-away" || q === "chase")
+          && ((p.kind === "CH" && p.shape !== "firm") || p.kind === "CB") && mph(x) - mph(p) >= S4_GAP && ((s.timing || {}).OS ?? 0.0) > -READ_T)
         offer("S4", e);
       if (last && i === 0 && e[2] === "cstrike" && (x.kind === "CB" || (x.kind === "SL" && x.shape === "gyro")) && bk === "0-1"
           && isFastball(p.kind) && q !== "chase")
@@ -1320,7 +1322,7 @@
   const COACH_RULE = { late_fb: 0.027, early_os: 0.02, crowd: 0.03, squared_up: 0.005, away: 0.012, went_back: 0.03, hot: 0.03, plus_opp: 0.015, ride_up_2k: 0.008 };   // v1.1 Step 4: ride_up_2k (engine.py)   // v1.1 Step 2: away 0.01 -> 0.012 (engine.py)
   const READ_T = 0.2, HOT_EST = 0.10, SIDE_TARGETS = { in: ["up-in", "down-in"], away: ["up-away", "down-away"] };
   // v1.1: "lean on it" wears off once he has leaned (mirror of engine.py HOT_FADE / hot_fade)
-  const HOT_FADE = [0.10, 0.40];
+  const HOT_FADE = [1.2, 1.6];   // v1.2 Step 5 (L6): by ratio to the normal share (engine.py)
   function hotFade(p, s, arsenal) {
     const lt = s.landing_today || {};
     if (!arsenal || !(p.name in lt)) return 1.0;
@@ -1330,8 +1332,8 @@
     if (total <= 0) return 1.0;
     const fbs = arsenal.filter((x) => isFastball(x.kind)).length, oss = arsenal.length - fbs;
     const base = fbs && oss ? (isFastball(p.kind) ? 0.5 / fbs : 0.5 / oss) : 1.0 / arsenal.length;
-    const over = (ns[p.name] || 0) / total - base;
-    return Math.min(1.0, Math.max(0.0, 1.0 - (over - HOT_FADE[0]) / (HOT_FADE[1] - HOT_FADE[0])));
+    const ratio = (ns[p.name] || 0) / total / base;
+    return Math.min(1.0, Math.max(0.0, 1.0 - (ratio - HOT_FADE[0]) / (HOT_FADE[1] - HOT_FADE[0])));
   }
   function landingHot(p, s) {
     const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
@@ -1359,7 +1361,7 @@
     }
     if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot * hotFade(p, s, arsenal);
     if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
-    if (rideUp2k(p, q, s)) c += R.ride_up_2k;
+    if (rideUp2k(p, q, s)) c += R.ride_up_2k * (RHO_L[s.level] ?? 1.0);   // v1.2 Step 5 (Q5): x RHO_L at HS / travel (engine.py)
     return c;
   }
   function costFromP(p, q, s, tab, look, P, myopic) {
