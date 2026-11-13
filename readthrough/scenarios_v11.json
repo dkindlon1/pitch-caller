@@ -2691,7 +2691,7 @@
      "CH:down",
      "OS:chase"
     ],
-    0.42
+    0.4
    ],
    "hard": false,
    "id": "S1f",
@@ -2761,13 +2761,6 @@
    "arguable": [],
    "exclude": [],
    "fires": true,
-   "floor": [
-    [
-     "SL:down-away",
-     "SL:chase"
-    ],
-    0.05
-   ],
    "hard": false,
    "id": "S2f",
    "inputs": {
@@ -2863,7 +2856,7 @@
      "CH:down-away",
      "CH:chase"
     ],
-    0.13
+    0.1
    ],
    "hard": false,
    "id": "S3f",
@@ -2931,13 +2924,6 @@
    "arguable": [],
    "exclude": [],
    "fires": true,
-   "floor": [
-    [
-     "CH:down-away",
-     "CH:chase"
-    ],
-    0.05
-   ],
    "hard": false,
    "id": "S4f",
    "inputs": {
@@ -3033,12 +3019,6 @@
    "arguable": [],
    "exclude": [],
    "fires": true,
-   "floor": [
-    [
-     "SI:in"
-    ],
-    0.05
-   ],
    "hard": false,
    "id": "S5f",
    "inputs": {
@@ -3155,7 +3135,7 @@
     [
      "FB:zone"
     ],
-    0.44
+    0.41
    ],
    "hard": false,
    "id": "S6f",
@@ -3440,7 +3420,7 @@
     [
      "SI:any"
     ],
-    0.46
+    0.47
    ],
    "exclude": [],
    "fires": true,

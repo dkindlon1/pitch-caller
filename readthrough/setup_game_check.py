@@ -11,6 +11,9 @@ import engine as e
 import simulate as SIM
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 12
+SCALE = float(os.environ.get("SETUP_SCALE", "1"))   # v1.1 Step 4 (Drew: lower all sizes): every SETUP_RULE size x this
+for _k in e.SETUP_RULE:
+    e.SETUP_RULE[_k] *= SCALE
 st = dict(pitches=0, qualifying=0, changed=0, by_rule=Counter(), tb_fired=0, fired=Counter(), two_k=0, s5_two_k=0, s5_low_cmd=0)
 _call = e.call_v08
 
@@ -68,14 +71,17 @@ for g in range(N):
     SIM.run(9000 + g, f"/tmp/setup_game_{g}.csv")
     print(f"game {g + 1}: {st['pitches']} pitches, {st['qualifying']} after a qualifying setup, top call changed {st['changed']}", flush=True)
 rate = st["changed"] / st["qualifying"] if st["qualifying"] else 0.0
+tb_ch = st["by_rule"].get("tie-break", 0)
+credit_rate = (st["changed"] - tb_ch) / st["qualifying"] if st["qualifying"] else 0.0   # what the sizes control
 per100 = lambda x: 100.0 * x / st["pitches"] if st["pitches"] else 0.0
-out = dict(games=N, staff=SIM.STAFF, pitches=st["pitches"], qualifying=st["qualifying"], changed=st["changed"], rate=rate,
+out = dict(games=N, staff=SIM.STAFF, scale=SCALE, credit_rate=credit_rate, tie_break_changed=tb_ch, pitches=st["pitches"], qualifying=st["qualifying"], changed=st["changed"], rate=rate,
            by_rule=dict(st["by_rule"]), tie_break_fired=st["tb_fired"], band=[0.02, 0.10], in_band=0.02 <= rate <= 0.10,
            fires_per_100={k: round(per100(v), 2) for k, v in st["fired"].items()},
            top_change_per_100={k: round(per100(v), 2) for k, v in st["by_rule"].items()},
            s5_share_of_two_strike_calls=(st["s5_two_k"] / st["two_k"]) if st["two_k"] else 0.0, s5_with_command_under_4=st["s5_low_cmd"])
 print(f"fires per 100 pitches {out['fires_per_100']}; top-call changes per 100 {out['top_change_per_100']}; S5 on "
       f"{out['s5_share_of_two_strike_calls']:.1%} of two-strike calls ({st['s5_low_cmd']} with command under 4)")
-json.dump(out, open(os.path.join(HERE, "results", "v11", f"setup_game_check{'' if SIM.STAFF == 'default' else '_' + SIM.STAFF}.json"), "w"), indent=1)
+json.dump(out, open(os.path.join(HERE, "results", "v11", f"setup_game_check{'' if SIM.STAFF == 'default' else '_' + SIM.STAFF}{'' if SCALE == 1 else f'_x{SCALE:g}'}.json"), "w"), indent=1)
+print(f"credits alone (sizes x {SCALE:g}): {st['changed'] - tb_ch} of {st['qualifying']} = {credit_rate:.1%}; the tie-break: {tb_ch}")
 print(f"setup credits changed the top call on {st['changed']} of {st['qualifying']} pitches after a qualifying setup ({rate:.1%}; "
       f"band 2-10%: {'in' if out['in_band'] else 'OUT'}); by rule {dict(st['by_rule'])}; tie-break moved probability on {st['tb_fired']}")

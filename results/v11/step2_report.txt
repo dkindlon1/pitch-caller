@@ -36,6 +36,8 @@ v1.1 Step 2 fits: 336,751 pitches (2024 171,965 train, 2025 164,786 held out); c
   hard    26 cells (n >= 200); 2025 gain 1.02e-05 (+0.1 SD) at scale 0.5
   fastball zone cstrike: fastball profile x height x side x early / two-strike, beyond the profile's overall difference (2b didn't ship):
   cstrike 73 cells (n >= 200); 2025 gain -3.33e-04 (-36.0 SD) at scale 0
+  sinker lane hard: sinker profile x inside / away third (where it crossed) x side, beyond the profile's overall difference, vs the fastball class in the same lane (v1.1 Step 4, Drew's sinker-inside decision):
+  hard    12 cells (n >= 200); 2025 gain -4.88e-05 (-0.4 SD) at scale 0.5
 
 Final: one joint fit per target with every shipped block (A + C [+ B] [+ 2b] [+ SIDE split + 2c]);
 the engine takes its coefficients from these, so blocks that were tested one on top of another are not added twice

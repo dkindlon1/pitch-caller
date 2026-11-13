@@ -166,7 +166,7 @@ def example_calls(n=5):
         "2a shape and profile (PT_C, PT_B)": ("PT_C", "PT_B"),
         "2b fastball zone (PT_FBZ_W)": ("PT_FBZ_W",),
         "2c opposite-side chase (PT_CHASE_OPP)": ("PT_CHASE_OPP", "PT_CHASE_MEAN"),
-        "priors (PT_PLAT, PT_FBZ_H)": ("PT_PLAT", "PT_FBZ_H"),
+        "priors (PT_PLAT, PT_FBZ_H, PT_FBL_H)": ("PT_PLAT", "PT_FBZ_H", "PT_FBL_H"),
     }
     now = mixes()
     res = {}

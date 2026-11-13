@@ -53,8 +53,10 @@ p = type_shares(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in"), level="col
 # v1.1 Step 2: the data dropped v1.0's slider same-side +0.3 patch (2c: no held-out support) and gave the riding fastball
 # a fitted whiff edge, so fastball (40%) and slider (37%) are now level here. The check keeps its intent: nothing
 # scripted, and the slider within 5 points of the top. Flagged for Drew's Step 4 read-through.
-check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider within 5 points of the top pitch, nothing scripted (< 95%)",
-      max(p.values()) - p.get("Slider", 0) <= 0.05 and max(p.values()) < 0.95,
+# v1.1 Step 4 (Drew, Nov 13, Q4): the riding four-seam up with two strikes is a strikeout pitch (COACH_RULE ride_up_2k); at
+# this 1-2 it adds 1.2 points of fastball up (39.5% -> 40.7%; slider 35.1% either way), so the gap is 5.6 points: 6.
+check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider within 6 points of the top pitch, nothing scripted (< 95%)",
+      max(p.values()) - p.get("Slider", 0) <= 0.06 and max(p.values()) < 0.95,
       ", ".join(f"{n} {v:.0%}" for n, v in sorted(p.items(), key=lambda x: -x[1])))
 
 # R2 think in at-bats: count values come from this matchup (v1.0 #18: the live at-bat table, solve_table, read at the

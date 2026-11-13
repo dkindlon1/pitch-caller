@@ -84,6 +84,8 @@ class step2_off:
         e.setup_payoff = lambda *a, **k: (0.0, None, None)
         self.saved_away = e.COACH_RULE["away"]
         e.COACH_RULE["away"] = 0.01                       # Step 2 resized it to 0.012 (engine.py COACH_RULE)
+        self.saved_ride = e.COACH_RULE.get("ride_up_2k", 0.0)
+        e.COACH_RULE["ride_up_2k"] = 0.0                  # v1.1 Step 4: Drew's riding-fastball-up rule (new in v1.1)
         if self.params is not None:
             self.saved_p = (copy.deepcopy(e.OUTCOME_ADJ), copy.deepcopy(e.IN_PLAY_BY_LEVEL))
             fit, inp = self.params
@@ -96,6 +98,7 @@ class step2_off:
         for n, f in self.saved.items():
             setattr(e, n, f)
         e.COACH_RULE["away"] = self.saved_away
+        e.COACH_RULE["ride_up_2k"] = self.saved_ride
         if self.params is not None:
             adj, inp = self.saved_p
             for lvl, d in adj.items():

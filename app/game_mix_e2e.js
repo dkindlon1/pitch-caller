@@ -10,7 +10,8 @@
  * with the hot fix alone); with Drew's comeback (the hold lifts after COMEBACK_N pitches without it) it is 56%.
  * Run from app/ after a build: node game_mix_e2e.js
  * v1.1 Step 4 diagnosis: SCAN='[{"tier":2,"seed":1},...]' runs other seeds; SETUP_OFF=1 zeroes the setup sizes in the page
- * (E.v08.SETUP_RULE, the object the engine reads) so the same seeds can be compared without the setup credits. The
+ * (E.v08.SETUP_RULE, the object the engine reads) so the same seeds can be compared without the setup credits; RIDEUP_OFF=1
+ * zeroes the riding-fastball-up rule (COACH_RULE.ride_up_2k); SETUP_ZERO=S4,S7 zeroes those rules only; COACH_ZERO=late_fb the named coach reads; HOT_END=0.25 the hot read's fade end. The
  * tie-break stays on. Neither is used by scripts/test-app.sh.
  */
 const { chromium } = require("playwright");
@@ -32,7 +33,7 @@ async function game(browser, url, { tier, seed, forcedReads }) {
   const page = await ctx.newPage();
   const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
   await page.goto(url); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 15000 });
-  await page.evaluate(({ tier, appSeed, off }) => { let a = appSeed; Math.random = () => (a = (a * 16807) % 2147483647) / 2147483647; S.setup.inputs = tier; S.view = "live"; if (off) for (const k of Object.keys(E.v08.SETUP_RULE)) E.v08.SETUP_RULE[k] = 0; G().call = null; makeCall(); save(); render(); }, { tier, appSeed: seed + 4, off: !!process.env.SETUP_OFF });
+  await page.evaluate(({ tier, appSeed, off, rideOff, zero, coachZero, hotEnd }) => { let a = appSeed; Math.random = () => (a = (a * 16807) % 2147483647) / 2147483647; S.setup.inputs = tier; S.view = "live"; if (off) for (const k of Object.keys(E.v08.SETUP_RULE)) E.v08.SETUP_RULE[k] = 0; if (rideOff) (E.v08.COACH_RULE || E.COACH_RULE).ride_up_2k = 0; for (const k of zero) E.v08.SETUP_RULE[k] = 0; for (const k of (coachZero || "").split(",").filter(Boolean)) E.v08.COACH_RULE[k] = 0; if (hotEnd) E.v08.HOT_FADE[1] = hotEnd; G().call = null; makeCall(); save(); render(); }, { tier, appSeed: seed + 4, off: !!process.env.SETUP_OFF, rideOff: !!process.env.RIDEUP_OFF, zero: (process.env.SETUP_ZERO || "").split(",").filter(Boolean), coachZero: process.env.COACH_ZERO || "", hotEnd: +(process.env.HOT_END || 0) });
   const visible = (re) => page.evaluate((src) => { const r = new RegExp(src); return [...document.querySelectorAll("button")].some((b) => b.offsetParent && r.test(b.textContent.trim())); }, re.source);
   const click = (re) => page.evaluate((src) => { const r = new RegExp(src); const b = [...document.querySelectorAll("button")].find((x) => x.offsetParent && r.test(x.textContent.trim().replace(/\s+/g, " "))); if (b) b.click(); return !!b; }, re.source);
   let pitches = 0;
@@ -52,6 +53,8 @@ async function game(browser, url, { tier, seed, forcedReads }) {
     pitches = await page.evaluate(() => Object.values(G().pc || {}).reduce((a, n) => a + n, 0));
   }
   const thrown = await page.evaluate(() => { const by = {}; for (const e of G().log || []) by[e.pitch] = (by[e.pitch] || 0) + 1; return by; });
+  if (process.env.GM_DEBUG) console.log("  landing today at the end:", await page.evaluate(() => JSON.stringify(landToday(G()))),
+    "| by 20s:", await page.evaluate(() => { const L = (G().log || []).map((e) => e.pitch[0]); const o = []; for (let i = 0; i < L.length; i += 20) o.push(L.slice(i, i + 20).join("")); return o.join(" "); }));
   await ctx.close();
   return { pitches, thrown, errs };
 }

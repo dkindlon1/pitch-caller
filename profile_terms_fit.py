@@ -306,7 +306,7 @@ def main():
         t = pd.DataFrame({"k": keys[mask], "y": y[mask]}).groupby("k").y.agg(["mean", "size"])
         return {k: (float(v["mean"]), int(v["size"])) for k, v in t.iterrows()}
 
-    def prior(tgt, base_key, kp, kc, kp0=None, kc0=None, n_min=200):
+    def prior(tgt, base_key, kp, kc, kp0=None, kc0=None, n_min=200, keep=None):
         """offset = [logit r(kp) - logit r(kc)] (- [logit r(kp0) - logit r(kc0)] for an interaction prior)"""
         mask, y = TARGETS[tgt]
         tr = mask & (yr == 2024)
@@ -322,6 +322,8 @@ def main():
             if P0 is not None:
                 v -= lg(P0[kp0[j]][0]) - lg(C0[kc0[j]][0])
             tab[k] = float(v)
+        if keep is not None:                                   # only these cells carry an offset (checked as such below)
+            tab = {k: v for k, v in tab.items() if keep(k)}
         off = np.array([tab.get(k, 0.0) for k in kp])
         te = mask & (yr == 2025)
         m0, p0 = cache[base_key]
@@ -360,6 +362,21 @@ def main():
             kc = np.where(fbm, J(np.char.add("FB@", hgt), side, stage), "x")
             res["priors"][f"fbzone_{tgt}"] = prior(tgt, base2a(tgt)[1], kp, kc, np.where(fbm, J(prof, side, stage), "x"),
                                                    np.where(fbm, J(np.full(len(prof), "FB"), side, stage), "x"))
+    # v1.1 Step 4 decision (Drew, Nov 13: "same-side sinkers inside; in means where it crosses the plate"): the hard-contact
+    # prior by lane. MLB sinkers crossing the inside third vs same-side hitters are hit hard on 26.8% of balls in play
+    # (four-seams there 32.0%), which is why 46% of them go there; the height-only prior above can't see it. Fastball
+    # profile x inside / away third (by where it crossed, xs relative to the batter) x side, beyond the profile's overall
+    # difference by side, against the four-seam in the same lane; no-harm checked on 2025 like every prior.
+    if not res["2b"]["hard"]["ship"]:
+        fbm = cls == "FB"
+        lane = np.where(xs > 0.28, "in", np.where(xs < -0.28, "away", "mid"))
+        say("  sinker lane hard: sinker profile x inside / away third (where it crossed) x side, beyond the profile's "
+            "overall difference, vs the fastball class in the same lane (v1.1 Step 4, Drew's sinker-inside decision):")
+        kp = np.where(fbm, J(np.char.add(np.char.add(prof, "@"), lane), side), "x")
+        kc = np.where(fbm, J(np.char.add("FB@", lane), side), "x")
+        # sinkers only (Drew's decision is about sinkers; on four-seams the lane values are small and moved graded row D3)
+        res["priors"]["fblane_hard"] = prior("hard", base2a("hard")[1], kp, kc, np.where(fbm, J(prof, side), "x"),
+                                             np.where(fbm, J(np.full(len(prof), "FB"), side), "x"), keep=lambda k: k.startswith("SI|"))
     # ---------------------------------------------------------------- final joint fits (the engine's coefficients)
     say("\nFinal: one joint fit per target with every shipped block (A + C [+ B] [+ 2b] [+ SIDE split + 2c]);")
     say("the engine takes its coefficients from these, so blocks that were tested one on top of another are not added twice")

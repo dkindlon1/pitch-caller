@@ -284,7 +284,7 @@ check(f"a pitch not landing (fastball 5-for-12) is held at 0-0 and still called 
 import profile_terms_tables as PTT
 T2 = json.load(open(os.path.join(HERE, "results", "v11", "step2_terms.json")))
 fit2 = json.load(open(os.path.join(HERE, "results", "v11", "step2_fit.json")))
-names2 = ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB",
+names2 = ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_FBL_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB",
           "SLOT_MOVE")
 norm = lambda x: json.loads(json.dumps(x))
 py_tab = {k: norm(getattr(e, k)) for k in names2}
@@ -520,6 +520,49 @@ diff3 = [i for i, (a, b) in enumerate(zip(py3, js3)) if a != b]
 fired3 = sum(1 for v in py3 if v[0] != 0)
 check("Step 3 parity: setup_payoff in Python and JS agree on the rule cases and 400 random at-bats",
       not diff3, f"{len(diff3)} differ; {fired3} of {len(py3)} credited")
+
+# ------------------------------------------------------------------ Step 4 decisions (Drew, Nov 13)
+# Q4: the riding four-seam up with two strikes is a strikeout pitch (a small coach credit), but not leaned on
+RC = [("FB", "rides", 1, 2, "up-away", True), ("FB", "rides", 0, 2, "chase", True), ("FB", "rides", 2, 2, "up-in", True),
+      ("FB", "rides", 3, 2, "up-away", False), ("FB", "rides", 1, 1, "up-away", False), ("FB", "rides", 1, 2, "down-away", False),
+      ("FB", "straight", 1, 2, "up-away", False), ("SI", "run", 1, 2, "up-away", False), ("FB", "", 0, 2, "up-in", False)]
+py_rc = [e.ride_up_2k(e.Pitch("F", k, 3, 3, 0.7, shape=sh), q, e.Situation(b, st, 0, (False,) * 3, level="college_d3")) for k, sh, b, st, q, _ in RC]
+js_rc = json.loads(subprocess.run(["node", "-e", """
+const E = require("./app/engine.js"); E.init(require("./app/engine_data.json"));
+const C = JSON.parse(process.argv[1]); const out = [];
+for (const [k, sh, b, st, q] of C) {
+  const p = E.Pitch({ name: "F", kind: k, grade: 3, command: 3, conf: 0.7, shape: sh });
+  const s = E.Situation({ balls: b, strikes: st, outs: 0, bases: [false, false, false], level: "college_d3" });
+  const base = Object.assign({}, E.v08.COACH_RULE); out.push(E.v08.coachCredit(p, q, s) > 0);
+}
+console.log(JSON.stringify(out));""", json.dumps(RC)], cwd=HERE, capture_output=True, text=True).stdout)
+check("Step 4 Q4: the riding-fastball-up rule fires on a riding four-seam aimed up with two strikes (never at three balls, "
+      "never below two strikes, never a dead-zone or sinker), the same in both engines, at 0.008",
+      py_rc == [x[-1] for x in RC] and js_rc == py_rc and e.COACH_RULE["ride_up_2k"] == 0.008, f"py {py_rc} js {js_rc}")
+# ...and not leaned on: the riding four-seam up stays under the ceiling on the arsenals with one (college 36%, HS 45%;
+# proposed for Drew; measured 35.1% D3, 28.4% D1, 44.3% HS at size 0.008, the smallest that passes row C5)
+import grid_v10 as _G
+_worst = {}
+for _nm, _a0 in _G.ARSENALS.items():
+    if not any(x.kind == "FB" and x.shape in ("rides", "ride") for x in _a0):
+        continue
+    for _lv in ("hs", "college_d3", "college_d1"):
+        for _b in (0, 1, 2):
+            for _same in (True, False):
+                _a = [e.Pitch(**{**x.__dict__}) for x in _a0]
+                _s = e.Situation(_b, 2, 0, (False,) * 3, level=_lv, same_side=_same); _s = replace(_s, win=e.win_constants(_s))
+                _sh = sum(pr for pr, _, x, q in e.call_v08(_a, _s, rng=None)[1] if e.ride_up_2k(x, q, _s))
+                _worst[_lv] = max(_worst.get(_lv, 0.0), _sh)
+check("Step 4 Q4: not leaned on: the riding four-seam up is at most 36% of two-strike calls at college and 45% at HS on every "
+      "grid arsenal with a riding four-seam", _worst["college_d3"] <= 0.36 and _worst["college_d1"] <= 0.36 and _worst["hs"] <= 0.45,
+      ", ".join(f"{k} {v:.1%}" for k, v in _worst.items()))
+# Q2: sinkers inside: the lane prior is the sinker's alone, and a same-side sinker inside is hit softer than away
+_r = e.PT_FBL_H.get("SI|run")
+check("Step 4 Q2: the hard-contact lane prior is on sinkers only, and a same-side run sinker is hit softer inside than away",
+      set(k.split("|")[0] for k in e.PT_FBL_H) == {"SI"} and _r is not None and _r[0] < _r[2], f"SI|run {_r}")
+# Q1: every setup size halved from Step 3's
+check("Step 4 Q1: every setup size is half of Step 3's", e.SETUP_RULE == {"S1": 0.002, "S2": 0.002, "S3": 0.003, "S4": 0.003, "S5": 0.002,
+      "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}, str(e.SETUP_RULE))
 
 # ------------------------------------------------------------------ 4. no class logic left on the bare string "FB"
 CMP = re.compile(r"""kind\s*(==|===|!=|!==)\s*['"]FB['"]|['"]FB['"]\s*(==|===|!=|!==)\s*\w*kind""")
