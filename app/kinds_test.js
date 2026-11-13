@@ -66,6 +66,19 @@ check(new2.kind === "SI" && new2.shape === "drop", "a v1.1 snapshot is never cha
 check(E.profile("SL", "sweeper", "hs")[2] < E.profile("SL", "gyro", "hs")[2] && E.defaultMph("FC", "") < E.defaultMph("FB", "") && E.mph(E.Pitch({ name: "c", kind: "CB", shape: "slow", grade: 3, command: 3, conf: 0.7 })) === E.defaultMph("CB", "slow"),
   "the app's engine has the profile table: a sweeper sweeps more than a gyro slider, a cutter's default speed is under the fastball's, a pitch with no speed gets its profile's default");
 
+console.log("v1.1 Step 5. A stored tag that isn't its kind's reads as typical, as v1.0's engine read it (no crash)");
+{
+  const rec = { id: "p9", name: "Jo", pitches: [{ name: "Fastball", type: "Four-seam", kind: "FB", shape: "ride" }, { name: "Curveball", type: "Curveball", kind: "CB", shape: "typical" }] };
+  const lg = D.migratePitcherV11(rec, E.migratePitch, E.SHAPE_TAGS);
+  const ars = rec.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, shape: d.shape, grade: 3, command: 3, conf: 0.7 }));
+  let ok = true; try { E.callV08(ars, E.Situation({ balls: 0, strikes: 0, outs: 0, bases: [false, false, false], level: "college_d3", same_side: true }), { rng: () => 0.5 }); } catch (e) { ok = false; }
+  check(rec.pitches[1].shape === "" && lg.some((x) => x.pitch === "Curveball" && x.from === "CB/typical" && x.to === "CB/") && ok,
+    `CB/"typical" -> CB/"" (logged), and the arsenal calls (${lg.map((x) => `${x.pitch} ${x.from} -> ${x.to}`).join("; ")})`);
+  const strict = { id: "p8", name: "X", pitches: [{ name: "Curveball", kind: "CB", shape: "typical" }] };
+  D.migratePitcherV11(strict, E.migratePitch);
+  check(strict.pitches[0].shape === "typical", "without the engine's tags the migration leaves it (the engine's own check still rejects it)");
+}
+
 console.log("v1.1 Step 5. The learner's specs read in v1.1 terms (a record still in v1.0 terms migrates by its type)");
 {
   const lv = "college_d3";

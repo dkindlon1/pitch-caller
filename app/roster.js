@@ -78,7 +78,7 @@ async function boot() {
 async function migrateRosterV11(list) {
   const log = [];
   for (const p of list) {
-    const r = PCDB.migratePitcherV11(p, PitchEngine.migratePitch);
+    const r = PCDB.migratePitcherV11(p, PitchEngine.migratePitch, PitchEngine.SHAPE_TAGS);   // v1.1 Step 5: an unknown tag reads as typical, as v1.0 did
     if (p.kindsV === PCDB.KINDS_V && r.length) { log.push(...r); await dbPut("pitchers", p); }
   }
   if (log.length && DB.D) {

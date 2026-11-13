@@ -230,11 +230,14 @@
 
   // v1.1 Step 1: a stored pitcher's pitches into the six kinds through the engine's one migration table (passed in as
   // migrate(kind, shape, type) -> [kind, shape]). Runs once per record (kindsV marks it), returns what changed.
-  function migratePitcherV11(p, migrate) {
+  // tags: the engine's SHAPE_TAGS. A stored tag that isn't one of its v1.1 kind's (e.g. "typical", which v1.0 never
+  // stored but read like "") becomes "" (typical), as v1.0's engine read it, and is logged; without tags it's left as is.
+  function migratePitcherV11(p, migrate, tags) {
     if (!p || p.kindsV === KINDS_V) return [];
     const log = [];
     for (const d of p.pitches || []) {
-      const [k, s] = migrate(d.kind, d.shape || "", d.type);
+      let [k, s] = migrate(d.kind, d.shape || "", d.type);
+      if (tags && tags[k] && !tags[k].includes(s)) s = "";
       if (k !== d.kind || s !== (d.shape || "")) {
         if (k !== d.kind && d.sign == null && V10_SIGN[d.kind]) d.sign = V10_SIGN[d.kind];
         log.push({ pitcherId: p.id || null, pitcher: p.name || "", pitch: d.name, type: d.type || null, from: `${d.kind}/${d.shape || ""}`, to: `${k}/${s}`, sign: d.sign == null ? null : d.sign });
