@@ -110,7 +110,7 @@
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {} }, o);   // v0.9 item 6
+      matchup: {}, since_thrown: {} }, o);   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
   }
   const replace = (s, o) => Object.assign({}, s, o);
   // v1.1 Step 1b: a pitch with no speed is his main fastball's entered speed less the profile's gap (resolveSpeeds sets
@@ -924,6 +924,9 @@
   const landBlockCount = (s) => s.balls > s.strikes || (s.balls === 0 && s.strikes === 0);
   const LAND_BLOCK_N = 4, LAND_BLOCK_EST = -0.15, LAND_BLOCK_K = 5.0;   // v1.0: a deviation from his own expectation; the
   // block is a rule with its own shrinkage, so it doesn't move with the fitted LAND_K (v1.0 Step 5)
+  // v1.1 (Drew, Nov 12): the hold lifts once he has gone COMEBACK_N pitches without the pitch (mirror of engine.py)
+  const COMEBACK_N = 8;
+  const comeback = (p, s) => ((s.since_thrown || {})[p.name] || 0) >= COMEBACK_N;
   function notLanding(p, s) {
     const ev = s.landing_today ? landingTriple(p, s.landing_today[p.name]) : null;
     if (!ev || ev[ev.length - 1] < LAND_BLOCK_N) return false;
@@ -938,7 +941,7 @@
     for (const p of candidates(arsenal, s)) if (!ex.has(p.name)) for (const q of tq) out.push(ck(p.name, q));
     if (s.landing_today && Object.keys(s.landing_today).length && out.length && landBlockCount(s)) {
       const names = new Set(out.map(skName));
-      const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s)).map((p) => p.name));
+      const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s) && !comeback(p, s)).map((p) => p.name));
       if (bad.size && bad.size !== names.size) out = out.filter((a) => !bad.has(skName(a)));
     }
     return out;
@@ -1513,7 +1516,7 @@
   }
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
-    solveTable, tabValue, rootCall, callV08, coachCredit, COACH_RULE, hotFade, HOT_FADE, rootCosts, cost08, LOC_ROW_Y, locQuad, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
+    solveTable, tabValue, rootCall, callV08, coachCredit, COACH_RULE, hotFade, HOT_FADE, COMEBACK_N, comeback, allowedCalls, rootCosts, cost08, LOC_ROW_Y, locQuad, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
     takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, nextCountTop,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 

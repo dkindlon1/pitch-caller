@@ -247,6 +247,23 @@ check("the hot read keeps its full size until his share of today's pitches is 10
       "is gone at 40 over (the v1.0 collapse: 33 sliders of 39 pitches); both engines", fade_ok,
       ", ".join(f"{n}/{pc} -> {v:.2f}" for (n, pc), v in fades.items()))
 
+# ------------------------------------------------------------------ 7. the not-landing hold lifts after a run of pitches without the pitch (Drew, Nov 12)
+cold = e.Situation(0, 0, 0, (False, False, False), landing_today={"Fastball": (5, 7.8, 12)}, pitch_count=60)
+names_at = lambda st: sorted({a[0] for a in e.allowed_calls(A3, st)})
+from dataclasses import replace as _rp
+cb_py = [names_at(cold), names_at(_rp(cold, since_thrown={"Fastball": e.COMEBACK_N - 1})), names_at(_rp(cold, since_thrown={"Fastball": e.COMEBACK_N})),
+         names_at(_rp(cold, balls=0, strikes=1, since_thrown={}))]
+cb_js = json.loads(subprocess.run(["node", "-e", """
+const E = require('./app/engine.js'); E.init(require('./app/engine_data.json'));
+const A = [E.Pitch({name:'Fastball',kind:'FB',grade:3,command:3,conf:.8,velo:86}), E.Pitch({name:'Slider',kind:'SL',shape:'tight',grade:3,command:3,conf:.75,velo:78}), E.Pitch({name:'Changeup',kind:'CH',grade:3,command:3,conf:.65,velo:78})];
+const base = {balls:0,strikes:0,outs:0,bases:[false,false,false],landing_today:{Fastball:[5,7.8,12]},pitch_count:60};
+const at = (o) => [...new Set(E.v08.allowedCalls(A, E.Situation(Object.assign({}, base, o))).map((k) => k.split('|')[0]))].sort();
+console.log(JSON.stringify([at({}), at({since_thrown:{Fastball:E.v08.COMEBACK_N-1}}), at({since_thrown:{Fastball:E.v08.COMEBACK_N}}), at({strikes:1})]));"""],
+    cwd=HERE, capture_output=True, text=True, check=True).stdout)
+check(f"a pitch not landing (fastball 5-for-12) is held at 0-0 and still called ahead in the count; after {e.COMEBACK_N} pitches without it "
+      "the hold lifts; both engines", cb_py == cb_js and "Fastball" not in cb_py[0] and "Fastball" not in cb_py[1] and "Fastball" in cb_py[2]
+      and "Fastball" in cb_py[3], f"{cb_py}")
+
 # ------------------------------------------------------------------ 4. no class logic left on the bare string "FB"
 CMP = re.compile(r"""kind\s*(==|===|!=|!==)\s*['"]FB['"]|['"]FB['"]\s*(==|===|!=|!==)\s*\w*kind""")
 ALLOWED = ("shape", "gb_rate", "gbRate", "4-seam", "rides")   # four-seam profile lines (incl. tag_for's tag rules), not class logic

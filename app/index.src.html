@@ -720,6 +720,18 @@ function landToday(g) {
   for (const [nm, l] of Object.entries(rec)) out[nm] = landTriple(nm, l);
   return out;
 }
+// v1.1: his pitches since he last threw each pitch today (the not-landing hold lifts after a run without it)
+function sinceThrown(g) {
+  const pd = pitcherDef(), out = {}; let i = 0;
+  for (const e of g.log || []) {
+    if (pd.id ? e.pid !== pd.id : e.p !== g.pitcher) continue;
+    const nm = e.thrown || e.pitch;
+    if (!(nm in out)) out[nm] = i;
+    i++;
+  }
+  for (const d of pd.pitches || []) if (!(d.name in out)) out[d.name] = i;
+  return out;
+}
 function situation() {
   const g = G(), kn = know();
   return E.Situation({ balls: g.balls, strikes: g.strikes, outs: g.outs, bases: g.bases.slice(), inning: g.inning,
@@ -727,7 +739,7 @@ function situation() {
     same_side: sameSide(), last: g.last, hitter_seen: Object.assign({}, kn.seen),
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.seed || {}),   // v1.0 #7: cross-game seed only
-    landing_today: landToday(g),
+    landing_today: landToday(g), since_thrown: sinceThrown(g),
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
     ...v08Inputs() });
 }

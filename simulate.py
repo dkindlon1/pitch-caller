@@ -439,6 +439,7 @@ def play_game(log_path):
     # frozen pre-v1.0 caller (CALL_ENGINE) reads. v1.0 Step 3: the engine reads land3 instead, (strikes, expected
     # strikes, pitches) over non-chase targets (engine.landing_record).
     land3 = {}
+    since = defaultdict(int)                    # v1.1: (pitcher, pitch name) -> his pitches since he last threw it today
     orng = random.Random(SEED_FOR_MOVE[0] * 31 + 7)
     offs = {starter["name"]: draw_off(orng, starter["arsenal"]), reliever["name"]: draw_off(orng, reliever["arsenal"])}
     CURRENT_OFF.clear(); CURRENT_OFF.update(offs[starter["name"]])
@@ -503,6 +504,8 @@ def play_game(log_path):
                                              {x.name: land3[(pitcher["name"], x.name)] for x in pitcher["arsenal"]
                                               if (pitcher["name"], x.name) in land3}),
                               familiar=fam_prev, matchup=mm_prev,
+                              **({"since_thrown": {x.name: since[(pitcher["name"], x.name)] for x in pitcher["arsenal"]}}
+                                 if "since_thrown" in Situation.__dataclass_fields__ else {}),
                               ump_u=CALLER.ump_estimate(takes, LEVEL_NAME),
                               home=True, sched_innings=9,
                               grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None))
@@ -598,6 +601,8 @@ def play_game(log_path):
                 if ev in ("ball", "wp_ball", "cstrike", "hbp"):
                     p0, d0 = CALLER.take_stats(p, q, replace(s, ump_u=0.0), ars)
                     takes.append((1 if ev == "cstrike" else 0, p0, d0))
+                for x in pitcher["arsenal"]:      # v1.1: his pitches since he last threw each one
+                    since[(pitcher["name"], x.name)] = 0 if x.name == p.name else since[(pitcher["name"], x.name)] + 1
                 land[(pitcher["name"], p.name)][1] += 1
                 land[(pitcher["name"], p.name)][0] += ev in ("cstrike", "whiff", "foul", "weak", "solid", "hard")
                 if q != "chase":            # v1.0 Step 3: his own expectation at the called target, before the result

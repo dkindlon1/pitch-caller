@@ -5,9 +5,9 @@
  * (engine hot_fade). Each game here: the sample staff at college D3, 82 pitches, every call the app's own, results drawn
  * with a seeded random through the app's own keys and follow-up buttons (the finding's own mix: 36% balls), the app's
  * Math.random seeded too, so a game is repeatable. The five games are ones that collapsed on the v1.1 app before the fix
- * (84-94% one pitch; checked Nov 12), so this test fails on that build and passes on this one. Left out on purpose: a game
- * where one pitch draws an unlucky run early (tier 3, seed 11: the fastball 5-for-12) and Drew's not-landing rule holds it
- * back at 0-0 and when behind, so the other pitch gets most of the game. That is the rule as he set it (BUILD_v1.1_REPORT).
+ * (84-94% one pitch; checked Nov 12), so this test fails on that build and passes on this one. The sixth (tier 3, seed 11)
+ * is the not-landing case: the fastball draws 5-for-12 early and the hold kept it out at 0-0 and when behind (slider 79%
+ * with the hot fix alone); with Drew's comeback (the hold lifts after COMEBACK_N pitches without it) it is 56%.
  * Run from app/ after a build: node game_mix_e2e.js
  */
 const { chromium } = require("playwright");
@@ -58,7 +58,7 @@ async function game(browser, url, { tier, seed, forcedReads }) {
   const url = `http://127.0.0.1:${server.address().port}/`;
   const browser = await chromium.launch();
   console.log("1. Whole games through the app keep a mix (sample staff: fastball, slider, changeup; college D3)");
-  const GAMES = process.env.SCAN ? JSON.parse(process.env.SCAN) : [{ tier: 2, seed: 7 }, { tier: 2, seed: 11 }, { tier: 3, seed: 7 }, { tier: 3, seed: 31337 }, { tier: 3, seed: 7, forcedReads: true }];
+  const GAMES = process.env.SCAN ? JSON.parse(process.env.SCAN) : [{ tier: 2, seed: 7 }, { tier: 2, seed: 11 }, { tier: 3, seed: 7 }, { tier: 3, seed: 31337 }, { tier: 3, seed: 7, forcedReads: true }, { tier: 3, seed: 11 }];
   for (const g of GAMES) {
     const r = await game(browser, url, g);
     const n = Object.values(r.thrown).reduce((a, b) => a + b, 0);

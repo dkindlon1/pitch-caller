@@ -210,20 +210,30 @@ see a game-long effect.
 - Your v1.0 Step 7 rule holds a not-landing pitch back at 0-0 and when he's behind, and still calls it in up counts so
   he can regain confidence. Here it got 12 throws in 60 pitches, not enough to recover, so the slider got most of the
   game.
-- That's the rule as set, so I left it alone and left that game out of the regression test. The open question: should a
-  not-landing pitch get "comeback" calls sooner (for example, the hold lifts after a run of pitches without it, or a
-  small guaranteed share in up counts)?
+- Drew's answer (Nov 12): yes, the hold lifts after a run of pitches without it. Done, below.
+
+### Comeback for a cold pitch (Drew, Nov 12; both engines)
+- `Situation.since_thrown`: pitch name → his pitches since he last threw it today. The app builds it from the game log
+  for the current pitcher (`sinceThrown(g)` in `index.src.html`, counting the pitch actually thrown when he shook off);
+  `simulate.py` keeps it too.
+- `comeback(p, s)`: true once `since_thrown[p] >= COMEBACK_N` (8). `allowed_calls` holds a not-landing pitch back at 0-0
+  and behind in the count only while it is not on a comeback. The first throw resets the count, so a pitch that still
+  doesn't land goes back on hold for another 8.
+- Nothing changes for a pitch without a landing record, or when `since_thrown` is empty (the golden inputs, the
+  read-through rows). `golden_v11a` is unchanged.
+- The tier 3, seed 11 game is now in `game_mix_e2e.js` as a sixth game: top pitch 79% before the comeback, **56%** after.
 
 ### Proof (this session, final code)
 
 | Check | Result |
 |---|---|
-| `app/game_mix_e2e.js` (new) | **10/10**: five whole games, top pitch 48 / 49 / 52 / 49 / 55%. The same games on the unfixed build: 93 / 84 / 85 / 94 / 87%, all FAIL |
-| `tests_v11.py` | **23/23** (adds: the fade's size at 10, 17, 25, 34 of 50 and 33 of 39 sliders, identical in both engines) |
+| `app/game_mix_e2e.js` (new) | five whole games, top pitch 48 / 49 / 52 / 49 / 55%. The same games on the unfixed build: 93 / 84 / 85 / 94 / 87%, all FAIL. With the comeback: a sixth game (tier 3, seed 11), 79% → 56% |
+| `tests_v11.py` | **24/24** (adds: the fade's size at 10, 17, 25, 34 of 50 and 33 of 39 sliders, identical in both engines; the comeback: a fastball landing 5-for-12 is held at 0-0 at 7 pitches without it, called at 8, and called ahead in the count throughout, identical in both engines) |
 | `tests.py` | **45/45** |
 | Read-through | **71/71**; the 15 rows with a landing record give the same shares as before the fix |
 | `golden_v11a` | re-frozen with the fix; Python check 500 cases, largest difference **0.00e+00**; JS reproduces it; `fast.py 40` 0 mismatches |
 | `scripts/test-app.sh` | **exit 0**, no errors: 354 counted checks + smoke, browser tests, website demo, built-app and `web/lib` copy checks |
+| With the comeback (`scripts/test-app.sh` components, final code) | all pass: **357** counted checks (19 components) + smoke, build and `web/lib` copy checks, website demo. Run in two parts because the session's background limit stopped the first run after `stage2_test`; the rest (`worlds_test` through `game_mix_e2e`) ran on the same code |
 
-**The live app (`main`, v1.0) still has this bug.** The fix is two small functions plus one changed line in each engine,
+**The live app (`main`, v1.0) still has this bug** (Drew, Nov 12: it isn't live, so no hotfix). The fix is two small functions plus one changed line in each engine,
 and it could ship to `main` as v1.0.1 on its own, ahead of v1.1, if Drew wants it there.

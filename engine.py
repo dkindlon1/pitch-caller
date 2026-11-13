@@ -443,6 +443,7 @@ class Situation:
     extras_runner: bool = False     # 7.1 runner on 2nd to start extra innings
     # v0.9 inputs (inert at their defaults)
     matchup: dict = field(default_factory=dict)           # item 6: earlier trips today, 'succ|KIND' / 'hard|KIND|target' -> n
+    since_thrown: dict = field(default_factory=dict)      # v1.1: pitch name -> his pitches since he last threw it today
 
 
 # ---------------------------------------------------------------------------
@@ -1815,6 +1816,15 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
 LAND_BLOCK_N = 4
 LAND_BLOCK_EST = -0.15
 LAND_BLOCK_K = 5.0
+# v1.1 (Drew, Nov 12): a comeback. The hold lifts once he has gone COMEBACK_N pitches without throwing that pitch (about
+# two hitters), so a pitch that went cold early gets a fresh chance instead of disappearing for the game; if he throws
+# it and it is still cold, the hold is back and the count starts again. (Found in a whole game: the fastball went
+# 5-for-12 on random results and got 12 throws in 60 pitches, so the slider took 79% of the game.)
+COMEBACK_N = 8
+
+
+def comeback(p, s):
+    return (s.since_thrown or {}).get(p.name, 0) >= COMEBACK_N
 
 
 def land_block_count(s):
@@ -1841,7 +1851,7 @@ def allowed_calls(arsenal, s, exclude=None):
     out = [(p.name, q) for p in candidates(arsenal, s) if p.name not in ex for q in tq]
     if s.landing_today and out and land_block_count(s):      # behind in the count or 0-0 (v1.0 Step 7, Drew)
         names = {a[0] for a in out}
-        bad = {p.name for p in arsenal if p.name in names and not_landing(p, s)}
+        bad = {p.name for p in arsenal if p.name in names and not_landing(p, s) and not comeback(p, s)}
         if bad and bad != names:
             out = [a for a in out if a[0] not in bad]
     return out
