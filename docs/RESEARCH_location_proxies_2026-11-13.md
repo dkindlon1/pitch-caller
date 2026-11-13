@@ -10,7 +10,7 @@ each level. Every number below was run in this session; scripts in `research_v12
 |---|---|---|---|
 | Statcast MLB 2024, 2025 (`fetch_statcast.py`, unchanged) | every 4th day, Apr 5–Sep 25 | 88 files, 340,378 pitches (same totals as v1.1 Step 0) | inside shares, HBP by location, 3-0 split |
 | **Statcast Single-A (Florida State League, Hawk-Eye)**, 2024, 2025 (`research_v12/fetch_minors.py`, new) | Savant minor-league search, same days | 88 files; 48,981 + 47,544 pitches | the lowest level with public pitch locations |
-| OpenCommand 2025 (`targets.csv.gz`, `pbp_info.csv.gz`) | catcher targets inferred from broadcast video, per pitch | 610,771 pitches with a target | **research check only** (CC BY-NC-SA; Drew's O3). Nothing here feeds a shipped number |
+| OpenCommand 2025 (`targets.csv.gz`, `pbp_info.csv.gz`) | catcher targets inferred from broadcast video, per pitch | 641,147 pitches with a target (2025 regular season) | **research check only** (CC BY-NC-SA; Drew's O3). Nothing here feeds a shipped number |
 
 College pitch locations: none public. Searches found program write-ups (Iowa's command score, Inside Edge for MLB) and
 paid charting (SIS, Synergy, 6-4-3 Charts); no free college location data.
@@ -20,7 +20,7 @@ paid charting (SIS, Synergy, 6-4-3 Charts); no free college location data.
 `research_v12/oc_miss_direction.py`; `results/v12/opencommand_naive_check.txt`.
 
 - **The "inferred" target can't show a lean.** Mean miss is 0.0 in. for every pitch type, and each pitcher's odd-pitch
-  and even-pitch means correlate **negatively** (−0.06 to −0.70). The inferred target is centred on each pitcher's own
+  and even-pitch means correlate **negatively** (−0.12 to −0.76). The inferred target is centred on each pitcher's own
   pitches by construction. Not usable for direction.
 - **The "naive" target (where the glove was before release)** gives this, in inches (arm side +, up +):
 
@@ -29,16 +29,17 @@ paid charting (SIS, Synergy, 6-4-3 Charts); no free college location data.
   | Four-seam | +1.6 | +3.8 | 63% | about +1.1 |
   | Sinker | +2.7 | +0.5 | 70% | about +2.7 |
   | Cutter | −0.1 | +0.8 | 50% | about −1.0 |
-  | Slider | −0.8 | −3.8 | 44% | about −2.1 |
-  | Curve | +0.1 | −5.2 | 50% | about −0.9 |
-  | Changeup | +2.8 | −5.3 | 69% | about +3.6 |
+  | Slider | −0.8 | −3.8 | 44% | about −2.2 |
+  | Curve | +0.1 | −5.3 | 50% | about −0.8 |
+  | Changeup | +2.8 | −5.3 | 69% | about +3.5 |
 
   \*Average of the arm-side-target and glove-side-target means. From an edge target, misses also come back toward the
   middle by 2–3 in. (the "pull").
 - **The lateral lean follows the pitch's own movement.** Arm-side runners (sinker, changeup) lean arm side; sliders lean
   glove side; curves and cutters are close to even. This is the coaching claim "the miss follows the run".
-- **Each pitcher's lean is stable between halves of his season** (r 0.87–0.92; pitchers differ by an SD of 2.1–2.7 in.).
-  That stability is overstated: it also carries each catcher's setup habits and each pitcher's target mix.
+- **Each pitcher's lean is stable between halves of his season** (r 0.87–0.91; pitchers differ by an SD of 2.1–2.7 in.).
+  That stability is overstated: it also carries each catcher's setup habits and each pitcher's target mix, so it is
+  **not** evidence that a lean is learnable from an amateur log.
 - **What it can't support:** sizes for shipped defaults (license), the vertical numbers (catchers set up low, so a
   fastball "misses up" mostly because the glove started low), and anything at amateur levels.
 
@@ -55,7 +56,9 @@ the **batter's** side (intent).
 | Single-A sinker 2024 / 2025 | +0.7 ± 0.7 / +0.2 ± 0.8 | +0.2 / +0.3 |
 | Single-A four-seam 2024 / 2025 | +0.7 ± 0.5 / 0.0 ± 0.5 | 0.0 / −0.8 |
 
-The MLB sinker's +2–2.6 in. agrees with OpenCommand's naive +2.7, from a different method. Single-A samples are too
+The MLB sinker's +2–2.6 in. agrees with OpenCommand's naive +2.7, from a different method. Caveats: which pitchers
+reach 3-0 isn't random, and sinker pitchers' catcher setups and the handedness mix they face aren't controlled; the
+pitcher-frame part could also be an aim in his own frame, not a miss. Single-A samples are too
 small to see it (±0.7). **Support:** direction and rough size of an average sinker lean at MLB. **Not:** a per-pitcher
 lean (no targets), amateur levels, or off-speed (3-0 is almost all fastballs).
 
@@ -139,7 +142,7 @@ What the app stores per pitch today (code at `14e0ad2`):
   batter. Drew (Nov 13): the catcher "shades it / sets up middle-ish", so the called spot isn't the glove.
 - **Landed:** only if the optional "Also log where each pitch ended up" toggle is on (`S.setup.logLoc`, separate from
   the four logging tiers): a 5×5 catcher's-view cell (`res.locCell`, inner 3×3 = the zone, outer ring = "just off"), or
-  **"Way off" with no direction** (`index.src.html:1430-1446`). Editing a logged location clears its cell (`:1471`).
+  **"Way off" with no direction** (`index.src.html:1416-1429`). Editing a logged location clears its cell (`:1471`).
 - **Hands:** pitcher hand and batter side aren't on the event; they come from the pitcher / hitter records and
   `sit.same_side` (switch hitters derived).
 - **Learner:** reads no landed cell (`learner.js` has no `locCell`); only the setup check, the "look" and the matchup spot
