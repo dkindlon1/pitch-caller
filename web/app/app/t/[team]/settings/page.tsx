@@ -24,7 +24,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
     <>
       <h1 className="shell-h1">Settings</h1>
       <Notice sp={sp} />
-      <form action={saveSettings} className="shell-form" aria-label="Team settings">
+      <form action={saveSettings} className="shell-form narrow" aria-label="Team settings">
         <input type="hidden" name="team" value={team} />
         <label>Team name<input name="name" defaultValue={t.team_name} required maxLength={120} /></label>
         <label>Time zone (the team&apos;s dates and rest days)<select name="timezone" defaultValue={t.timezone}>{zones.map((z) => <option key={z} value={z}>{z.replace(/_/g, " ")}</option>)}</select></label>

@@ -21,7 +21,7 @@ async function Body({ params }: { params: Params }) {
   const back = <Link href={`/app/t/${team}/games`}>Back to Game Day</Link>;
   if (!abilities(t).callGames) return <p className="shell-note">Changing a game plan is for coaches who call games. {back}</p>;
   const g = (await gamesOf(team)).find((x) => x.id === game) as GameDoc | undefined;
-  if (!g) return <p className="shell-note">That game isn&apos;t on this team&apos;s schedule. {back}</p>;
+  if (!g) return <p className="shell-note">That game isn’t on this team’s schedule. {back}</p>;
   if (g.status !== "planned") return <p className="shell-note">This game has started, so its plan changes on the device calling it. {back}</p>;
   return (
     <>

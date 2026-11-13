@@ -117,6 +117,6 @@ export function nextGame(rows: GameListRow[], today: string): GameListRow | null
 export const timeName = (s: string | null | undefined) => {
   if (!s || !/^\d{2}:\d{2}$/.test(s)) return "";
   const [h, m] = s.split(":").map(Number);
-  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "am" : "pm"}`;
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(Date.UTC(2000, 0, 1, h, m)).replace(" ", "\u00a0");
 };
 export const catchersOf = (teamId: string) => rows<Doc & { name: string; block?: number | string }>("catchers", teamId);

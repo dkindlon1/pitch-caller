@@ -4,6 +4,19 @@ import { useEffect } from "react";
 // The portal's glass catches the light where the pointer is: sets --mx/--my on the glass panel under a mouse (the
 // public site's GlassLight, for the signed-in screens). Touch screens and reduced motion skip it.
 export function Motion() {
+  // the bar's menus (team switcher, account) close on Escape, which hands focus back to their button, and on a click
+  // or tap anywhere outside them
+  useEffect(() => {
+    const open = () => [...document.querySelectorAll<HTMLDetailsElement>(".pq .pq-switch[open]")];
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      for (const d of open()) { d.open = false; d.querySelector<HTMLElement>("summary")?.focus(); }
+    };
+    const onDown = (e: PointerEvent) => { for (const d of open()) if (!d.contains(e.target as Node)) d.open = false; };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onDown);
+    return () => { document.removeEventListener("keydown", onKey); document.removeEventListener("pointerdown", onDown); };
+  }, []);
   useEffect(() => {
     if (!window.matchMedia("(pointer: fine)").matches || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let lit: HTMLElement | null = null, raf = 0, ev: PointerEvent | null = null;

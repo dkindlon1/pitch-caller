@@ -24,7 +24,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const sb = await getServerSupabase();
   const [list, pitchers] = [((await sb.rpc("pc_staff", { p: team })).data || []) as Staff[], await pitchersOf(team)];
   const h = await headers(), origin = `${h.get("x-forwarded-proto") || "http"}://${h.get("host")}`;
-  const pname = (id: string) => (pitchers.find((p) => p.id === id) || { name: "a player" }).name;
+  const pname = (id: string) => { const p = pitchers.find((x) => x.id === id); return p ? p.name || "an unnamed pitcher" : "a player"; };
   const coaches = list.filter((s) => !s.pending && s.role !== "player"), players = list.filter((s) => !s.pending && s.role === "player"), pending = list.filter((s) => s.pending);
   const invite = one(sp.invite);
   return (

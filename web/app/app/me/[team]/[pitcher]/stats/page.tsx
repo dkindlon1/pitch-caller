@@ -13,5 +13,5 @@ export default function Stats({ params, searchParams }: { params: Params; search
 async function Body({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { team, pitcher } = await params;
   const a = await uploadAccess(team, pitcher);
-  return <><h1 className="shell-h1">Stats</h1><StatsPanel a={a} sp={await searchParams} /></>;
+  return <><h1 className="shell-h1">Stats</h1><div className="pq-flow"><StatsPanel a={a} sp={await searchParams} /></div></>;
 }

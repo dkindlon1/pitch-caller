@@ -17,6 +17,7 @@ export function Frame({ children, org, current, switchTo = [], dock, home, email
 }) {
   return (
     <div className={`pq ${portalSans.variable}`}>
+      <a href="#main" className="pq-skip">Skip to content</a>
       <Night />
       <Motion />
       <div className={`pq-frame${dock && dock.length ? "" : " no-dock"}`}>
@@ -56,7 +57,7 @@ export function Frame({ children, org, current, switchTo = [], dock, home, email
           </div>
         </header>
         {dock && dock.length ? <Dock items={dock} home={home || ""} /> : null}
-        <main className="pq-main" id="main">{children}</main>
+        <main className="pq-main" id="main" tabIndex={-1}>{children}</main>
       </div>
     </div>
   );

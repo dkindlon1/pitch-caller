@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { availability, dayName, gameList, nextGame, ourTeamOf, pitchersOf, teamFor, teamRule, teamToday, teamsOf, timeName, type GameListRow } from "@/lib/team";
+import { availability, catchersOf, dayName, gameList, gamesOf, nextGame, ourTeamOf, pitchersOf, teamFor, teamRule, teamToday, teamsOf, timeName, type GameListRow } from "@/lib/team";
+import type { GameDoc } from "@/lib/gameplan";
 import { abilities, coachNav } from "@/lib/nav";
 import { waitingOn } from "@/lib/upload_data";
 import { Tiles } from "../../_frame/Tiles";
-import { SeamEdge } from "../../_frame/Icon";
+import { DateBlock } from "../../_frame/DateBlock";
 import { Num } from "../../_frame/Num";
 import { LauncherSkeleton } from "../../_frame/Skeleton";
 import { type Search } from "./ui";
@@ -32,10 +33,12 @@ async function HomeBody({ params }: { params: Params }) {
     return (
       <>
         <div className="pq-head"><h1 className="pq-h1">{t.team_name}</h1></div>
-        <section className="pq-game glass is-empty" aria-labelledby="own-h">
-          <span className="seam"><SeamEdge /></span>
-          <div className="pq-game-top">{t.org_name}</div>
-          <h2 id="own-h">You own this team<small>You aren&apos;t on its staff, so its players and games aren&apos;t shown to you. You decide who coaches it, who sees the game plan, and the bill.</small></h2>
+        <section className="pq-game pq-white is-empty" aria-labelledby="own-h">
+          <DateBlock />
+          <div className="pq-game-body">
+            <div className="pq-game-top">{t.org_name}</div>
+            <h2 id="own-h">You own this team<small>You aren’t on its staff, so its players and games aren’t shown to you. You decide who coaches it, who sees the game plan, and the bill.</small></h2>
+          </div>
         </section>
         <div style={{ height: "var(--gap)" }} />
         <Tiles items={tiles} label="Screens you can open" />
@@ -49,6 +52,17 @@ async function HomeBody({ params }: { params: Params }) {
   const avail = (await availability(t, live, rule)).sort((x, y) => (x.pitcher.name || "").localeCompare(y.pitcher.name || ""));
   const opp = (id?: string | null) => (teams.find((x) => x.id === id) || { name: "" }).name;
   const next = nextGame(games, today);
+  // what's in the plan, for those who may see it: starter, staff, catcher, lineup (the schedule alone has none of it)
+  let ready: Ready | null = null;
+  if (next && next.status === "planned" && a.seesPlan) {
+    const [docs, catchers] = await Promise.all([gamesOf(team), catchersOf(team)]);
+    const g = docs.find((x) => x.id === next.id) as GameDoc | undefined;
+    if (g) {
+      const starter = live.find((p) => p.id === (g.starterId || (g.staffIds || [])[0]));
+      ready = { starter: starter ? starter.name || "Unnamed" : null, staff: (g.staffIds || []).length,
+        catcher: (catchers.find((c) => c.id === g.catcherId) || { name: "" }).name || null, named: (g.lineup || []).filter((b) => b.name).length };
+    }
+  }
   const resting = avail.filter((x) => x.eligible && !x.eligible.today);
   const waitList = [...wait].filter(([pid]) => live.some((x) => x.id === pid)).slice(0, 5);
   const recent = games.filter((g) => g.status === "final").sort((x, y) => (y.date || "").localeCompare(x.date || "")).slice(0, 5);
@@ -60,7 +74,7 @@ async function HomeBody({ params }: { params: Params }) {
       </div>
       <div className="pq-launch">
         <div className="pq-col">
-          <GameCard team={team} g={next} opp={opp(next?.opponent_id)} a={a} today={today} />
+          <GameCard team={team} g={next} opp={opp(next?.opponent_id)} a={a} today={today} ready={ready} />
           <Tiles items={tiles} label="Screens you can open" />
           <section aria-labelledby="avail-h">
             <div className="pq-head" style={{ margin: "8px 0 10px" }}>
@@ -108,29 +122,41 @@ async function HomeBody({ params }: { params: Params }) {
 const LEVELS: Record<string, string> = { hs: "high school", travel: "travel ball", college_d3: "college D3", college_d1: "college D1", mlb: "pro" };
 const levelName = (l: string) => LEVELS[l] || l;
 
-function GameCard({ team, g, opp, a, today }: { team: string; g: GameListRow | null; opp: string; a: ReturnType<typeof abilities>; today: string }) {
+type Ready = { starter: string | null; staff: number; catcher: string | null; named: number };
+function GameCard({ team, g, opp, a, today, ready }: { team: string; g: GameListRow | null; opp: string; a: ReturnType<typeof abilities>; today: string; ready: Ready | null }) {
   const base = `/app/t/${team}/games`;
   if (!g) {
     return (
-      <section className="pq-game glass is-empty" aria-labelledby="game-h">
-        <span className="seam"><SeamEdge /></span>
-        <div className="pq-game-top">Next game</div>
-        <h2 id="game-h">No game set up yet<small>{a.callGames ? "Pick the opponent, today's staff and their lineup here, then start it on the iPad or any device." : "When a coach sets up the next game, it shows here."}</small></h2>
-        {a.callGames ? <div className="pq-game-acts"><Link className="shell-btn primary" href={`${base}/new`}>Set up a game</Link></div> : null}
+      <section className="pq-game pq-white is-empty" aria-labelledby="game-h">
+        <DateBlock />
+        <div className="pq-game-body">
+          <div className="pq-game-top">Next game</div>
+          <h2 id="game-h">No game set up yet<small>{a.callGames ? "Pick the opponent, today’s staff and their lineup here, then start it on the iPad or any device." : "When a coach sets up the next game, it shows here."}</small></h2>
+          {a.callGames ? <div className="pq-game-acts"><Link className="shell-btn primary" href={`${base}/new`}>Set up a game</Link></div> : null}
+        </div>
       </section>
     );
   }
   const isLive = g.status === "live" || g.status === "suspended";
   const when = g.date === today ? "Today" : dayName(g.date || "");
   return (
-    <section className="pq-game glass" aria-labelledby="game-h">
-      <span className="seam"><SeamEdge /></span>
+    <section className="pq-game pq-white" aria-labelledby="game-h">
+      <DateBlock date={g.date} today={today} />
+      <div className="pq-game-body">
       <div className="pq-game-top">
         {isLive ? <span className="pill-live">{g.status === "suspended" ? "Suspended" : "Live"}</span> : <span className="pill">Set up</span>}
         <span>Next game</span>
       </div>
       <h2 id="game-h">{when}{opp ? ` ${g.home === false ? "at" : "vs"} ${opp}` : ""}
-        <small>{isLive ? "It's being called on one device. Nothing from it shows anywhere else until it ends." : [g.home === true ? "Home" : g.home === false ? "Away" : "", timeName(g.starts)].filter(Boolean).join(", ") || "Ready to start"}</small></h2>
+        <small>{isLive ? "It’s being called on one device. Nothing from it shows anywhere else until it ends." : [g.home === true ? "Home" : g.home === false ? "Away" : "", timeName(g.starts)].filter(Boolean).join(", ") || "Ready to start"}</small></h2>
+      {ready && !isLive ? (
+        <p className="pq-ready" aria-label="What’s in the plan">
+          <span className={ready.starter ? undefined : "miss"}>Starter <b>{ready.starter || "not picked"}</b></span>
+          <span><b>{ready.staff}</b> on today’s staff</span>
+          <span>Catcher <b>{ready.catcher || "average blocker"}</b></span>
+          <span>Lineup <b>{ready.named ? `${ready.named} named` : "hands only"}</b></span>
+        </p>
+      ) : null}
       {!isLive ? (
         <div className="pq-game-acts">
           {a.callGames ? <Link className="shell-btn primary" href={`${base}/${g.id}`}>Review and start</Link> : null}
@@ -138,6 +164,7 @@ function GameCard({ team, g, opp, a, today }: { team: string; g: GameListRow | n
           {a.callGames ? <Link className="shell-btn text" href={`${base}/${g.id}/edit`}>Change the plan</Link> : null}
         </div>
       ) : null}
+      </div>
     </section>
   );
 }

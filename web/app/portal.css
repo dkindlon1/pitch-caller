@@ -10,11 +10,12 @@
 .pq {
   --ink: #000;
   --chalk: #f4f4f1;
-  --text-2: #a3a39f;
-  --text-3: #8a8a85;
-  --line: rgba(255, 255, 255, 0.12);
-  --line-2: rgba(255, 255, 255, 0.2);
-  --pane: rgba(14, 14, 14, 0.86);
+  --text-2: #bfbfba;
+  --text-3: #979792;
+  --line: rgba(255, 255, 255, 0.14);
+  --line-2: rgba(255, 255, 255, 0.26);
+  --pane: rgba(255, 255, 255, 0.065);
+  --base: #121316;
   --pane-2: rgba(255, 255, 255, 0.06);
   --seam: #f04a3e;
   --seam-text: #ff7a6f;
@@ -30,7 +31,7 @@
   --pc-selected: var(--chalk); --pc-on-selected: #000; --pc-warn: var(--warn); --pc-warn-text: var(--warn);
   --f-body: var(--pq-font), "Helvetica Neue", Arial, sans-serif; --f-cond: var(--f-body); --f-mono: var(--f-body);
   position: relative; isolation: isolate; min-height: 100vh; min-height: 100dvh;
-  background: var(--ink); color: var(--chalk);
+  background: var(--base); color: var(--chalk);
   font: 400 1rem/1.5 var(--f-body); font-variation-settings: "wdth" 100;
   -webkit-font-smoothing: antialiased;
 }
@@ -43,20 +44,21 @@
 
 /* ---- the night behind everything: the ballpark from above, graded to black and white and pushed down, so the glass
    has real light to blur. Fixed, painted once. */
-.pq-night { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: #000; overflow: hidden; }
-.pq-night img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%;
-  filter: grayscale(0.9) contrast(1.12) brightness(0.95); }
+.pq-night { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background: radial-gradient(1200px 520px at 50% -8%, rgba(255, 255, 255, 0.1), transparent 70%), radial-gradient(900px 700px at 85% 110%, rgba(255, 255, 255, 0.035), transparent 70%), linear-gradient(180deg, #17181b, var(--base) 55%, #0e0f11); }
+.pq-night img { position: absolute; inset: 0 0 auto; width: 100%; height: 78vh; object-fit: cover; object-position: 50% 40%;
+  filter: grayscale(1) contrast(1.05) brightness(1.08) blur(1.5px); transform: scale(1.03); opacity: 0.7;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 45%, transparent 100%); mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.75) 45%, transparent 100%); }
 /* darkest at the edges and the bottom, where long tables are read; the lit field stays behind the middle of the
    screen, where the game card and the tiles float */
-.pq-night::after { content: ""; position: absolute; inset: 0;
-  background: radial-gradient(90% 70% at 50% 42%, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.55) 62%, rgba(0, 0, 0, 0.9) 100%), linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.5) 100%); }
+.pq-night::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(18, 19, 22, 0.5), transparent 30%, transparent 70%, rgba(18, 19, 22, 0.5)); }
 
 /* ---- glass: a white wash, a heavy blur, a lit top edge. Its parents never carry opacity (see the site's rule). */
 .pq .glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.035));
-  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 24px 60px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.07));
+  -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 18px 50px rgba(0, 0, 0, 0.32);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .pq .glass { background: rgba(24, 24, 24, 0.94); } }
 @media (prefers-reduced-transparency: reduce) { .pq .glass { background: rgba(24, 24, 24, 0.96); -webkit-backdrop-filter: none; backdrop-filter: none; } }
@@ -236,10 +238,8 @@
 .pq-launch > .pq-col { display: grid; gap: var(--gap); min-width: 0; }
 @media (max-width: 1100px) { .pq-launch { grid-template-columns: minmax(0, 1fr); } }
 
-/* the game card: the one thing only this product has. A lineup card under the lights, the seam stitched down its edge. */
+/* the game card (restyled as a white ticket in style pass 2, below) */
 .pq-game { position: relative; overflow: hidden; border-radius: var(--r-lg); padding: clamp(20px, 2.4vw, 30px) clamp(20px, 2.6vw, 34px) clamp(20px, 2.4vw, 30px) clamp(40px, 4vw, 58px); display: grid; gap: 18px; }
-.pq-game .seam { position: absolute; left: 0; top: 0; bottom: 0; width: 34px; color: var(--seam); }
-.pq-game .seam svg { width: 100%; height: 100%; }
 .pq-game-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; color: var(--text-2); font-size: 0.9375rem; }
 .pq-game h2 { font-size: clamp(1.75rem, 3.4vw, 2.5rem); font-weight: 640; font-variation-settings: "wdth" 82; line-height: 1.05; }
 .pq-game h2 small { display: block; font-size: 0.9375rem; font-weight: 500; color: var(--text-2); margin-top: 8px; font-variation-settings: "wdth" 100; letter-spacing: 0; }
@@ -338,8 +338,6 @@
 @keyframes pq-draw { to { stroke-dashoffset: 0; } }
 @keyframes pq-stitch { from { opacity: 0; transform: scale(0.4); } to { opacity: .85; transform: none; } }
 @keyframes pq-dot { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: none; } }
-@keyframes pq-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
-@keyframes pq-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(240, 74, 62, 0.55); } 70% { box-shadow: 0 0 0 7px rgba(240, 74, 62, 0); } }
 .pq { --ease-out: cubic-bezier(0.2, 0.75, 0.2, 1); }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -354,10 +352,6 @@
   /* rows: the data arrives a line at a time, after its pane */
   .pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div) {
     animation: pq-row 460ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 50ms + 110ms + min(var(--j, 1), 14) * 32ms); }
-  /* the seam stitches itself down the game card: the curve draws, then each stitch lands */
-  .pq-game .seam .curve { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: pq-draw 1.1s 0.25s var(--ease-out) forwards; }
-  .pq-game .seam .st { transform-box: fill-box; transform-origin: center; opacity: 0; animation: pq-stitch 340ms var(--ease-out) forwards; animation-delay: calc(0.3s + var(--s) * 45ms); }
-  .pq .pill-live::before { animation: pq-pulse 1.8s ease-out infinite; }
   /* charts draw in: lines trace, points land */
   .pq .chart polyline { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: pq-draw 1.4s 0.35s var(--ease-out) forwards; }
   .pq .chart circle { transform-box: fill-box; transform-origin: center; animation: pq-dot 420ms var(--ease-out) both; animation-delay: calc(0.5s + var(--k, 0) * 12ms); }
@@ -400,7 +394,7 @@
 /* loading: the shapes of what's coming, shimmering, instead of a line of text */
 .pq-skel { display: grid; gap: var(--gap); }
 .pq-skel .sk { border-radius: var(--r-md); background: linear-gradient(100deg, rgba(255, 255, 255, 0.04) 30%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.04) 70%) 0 0 / 240% 100%;
-  border: 1px solid rgba(255, 255, 255, 0.06); animation: pq-shimmer 1.5s linear infinite; }
+  border: 1px solid rgba(255, 255, 255, 0.06); }
 .pq-skel .sk.h1 { height: 40px; width: min(320px, 60%); border-radius: 12px; }
 .pq-skel .sk.card { height: 210px; border-radius: var(--r-lg); }
 .pq-skel .sk-tiles { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
@@ -409,3 +403,205 @@
 @media (prefers-reduced-motion: reduce) { .pq-skel .sk { animation: none; } }
 /* a menu hangs out of the glass bar, whose own blur stops its blur at the bar's edge: a near-solid pane instead */
 .pq .pq-menu.glass { background: rgba(22, 22, 22, 0.94); -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+/* =====================================================================================================================
+   Style pass 2 (Nov 12): brighter. Reading surfaces are frosted glass instead of near-black; each screen has one solid
+   white card as its focal point (the next game, a plan's header, a player's card, the sign-in); buttons size to their
+   label; inputs read clearly. Later rules here win over the ones above at the same specificity on purpose.
+   ===================================================================================================================== */
+
+/* reading surfaces: frosted, light enough to lift off the charcoal, quiet enough to read on */
+.pq :is(.shell-form, .tbl-scroll, .pq-panel, .staff-row, .dash-card, .invite-box, .chart, .pq-gamerow, .pq-sum, .upload-box .drop, .team-card) {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.05));
+  -webkit-backdrop-filter: blur(24px) saturate(130%); backdrop-filter: blur(24px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.13); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 30px rgba(0, 0, 0, 0.18); }
+.pq .team-card { min-height: 140px; }
+.pq .team-card:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.07)); border-color: rgba(255, 255, 255, 0.24); }
+.pq .hist { list-style: none; margin: 0 0 18px; padding: 4px 18px; border-radius: var(--r-md); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); }
+.pq .hist li:last-child { border-bottom: 0; }
+.pq .data-tbl th { color: var(--text-2); border-bottom-color: rgba(255, 255, 255, 0.12); }
+.pq .data-tbl td { border-top-color: rgba(255, 255, 255, 0.08); }
+.pq .data-tbl tbody tr { transition: background-color 0.18s ease; }
+.pq .data-tbl tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+
+/* inputs: a clear field on frost, a white focus ring */
+.pq :is(.shell-form, .data-tbl, .inline-form, .pq-form) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea) {
+  background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease; }
+.pq :is(.shell-form, .data-tbl, .inline-form, .pq-form) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea):hover { border-color: rgba(255, 255, 255, 0.32); }
+.pq :is(.shell-form, .data-tbl, .inline-form, .pq-form) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea):focus-visible {
+  outline: none; border-color: var(--chalk); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.12); }
+.pq select { appearance: none; -webkit-appearance: none; padding-right: 38px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23d8d8d3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important; background-position: right 14px center !important; }
+.pq input[type=checkbox] { accent-color: var(--chalk); }
+
+/* buttons size to their label: no white bars across a whole pane */
+.pq .shell-form > :is(button, .shell-btn), .pq .shell-form > .btn-row { justify-self: start; }
+.pq .shell-form > button.shell-btn { min-width: 132px; }
+.pq .shell-btn { font-weight: 600; letter-spacing: -0.005em; }
+.pq .shell-btn.primary { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 6px 18px rgba(0, 0, 0, 0.25); }
+
+/* headings: a touch larger and tighter; section headings get room above */
+.pq .shell-h1, .pq .pq-h1 { font-size: clamp(1.9rem, 3vw, 2.4rem); letter-spacing: -0.015em; }
+.pq .shell-h2 { font-size: 1.3125rem; margin: 40px 0 14px; }
+.pq-head p { color: var(--text-2); font-size: 1rem; }
+
+/* ---- the white card: one per screen, the thing to look at first ---------------------------------------------- */
+.pq .pq-white {
+  --chalk: #0d0d0e; --text-2: #5c5c57; --text-3: #7c7c77; --line: rgba(0, 0, 0, 0.1); --line-2: rgba(0, 0, 0, 0.2);
+  color: #0d0d0e; background: #f7f7f4; border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 #fff, 0 2px 6px rgba(0, 0, 0, 0.12), 0 30px 70px rgba(0, 0, 0, 0.42); }
+.pq .pq-white .shell-btn { background: rgba(0, 0, 0, 0.035); color: #0d0d0e; border-color: rgba(0, 0, 0, 0.16); }
+.pq .pq-white .shell-btn:hover { background: rgba(0, 0, 0, 0.07); border-color: rgba(0, 0, 0, 0.28); }
+.pq .pq-white .shell-btn.primary { background: #0d0d0e; color: #fff; border-color: #0d0d0e; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18); }
+.pq .pq-white .shell-btn.primary:hover { background: #26262a; }
+.pq .pq-white .shell-btn.text { background: none; color: #4b4b47; }
+.pq .pq-white .shell-btn.text:hover { color: #0d0d0e; }
+.pq .pq-white .pill, .pq .pq-white .pill-ok { background: rgba(0, 0, 0, 0.06); color: #0d0d0e; }
+.pq .pq-white .pill-live { background: rgba(240, 74, 62, 0.12); color: #c3261b; }
+.pq .pq-white .pill-warn { background: rgba(242, 179, 61, 0.2); color: #7a5200; }
+.pq .pq-white :focus-visible { outline-color: #0d0d0e; }
+.pq .pq-white .shell-note { color: #5c5c57; }
+.pq .pq-white :is(input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea) {
+  background: #fff !important; color: #0d0d0e !important; border: 1px solid rgba(0, 0, 0, 0.16) !important; box-shadow: none; }
+.pq .pq-white :is(input, select, textarea):focus-visible { border-color: #0d0d0e !important; box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important; }
+.pq .pq-white select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23303030' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important; }
+.pq .pq-white label { color: #4b4b47; }
+.pq .pq-white input[type=checkbox] { accent-color: #0d0d0e; }
+.pq .pq-white a:not(.shell-btn) { color: #0d0d0e; }
+
+/* the next game, as a ticket: a calendar block on the left (the month in seam red), the matchup, the facts, the actions */
+.pq .pq-game { padding: clamp(20px, 2.4vw, 30px); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px clamp(18px, 2.4vw, 32px); align-items: start; overflow: visible; }
+.pq .pq-game > .pq-game-body { display: grid; gap: 14px; min-width: 0; align-content: start; }
+.pq .pq-date { width: 92px; border-radius: 18px; overflow: hidden; text-align: center; background: #fff; border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 20px rgba(0, 0, 0, 0.08); display: grid; }
+.pq .pq-date .m { background: var(--seam); color: #fff; font: 600 0.8125rem/1 var(--f-body); padding: 7px 0 6px; letter-spacing: 0.01em; }
+.pq .pq-date b { font: 640 2.75rem/1 var(--f-body); font-variation-settings: "wdth" 80; padding: 10px 0 2px; color: #0d0d0e; font-variant-numeric: tabular-nums; }
+.pq .pq-date .d { color: #6a6a65; font-size: 0.8125rem; padding: 0 0 10px; }
+.pq .pq-date.empty b { color: #b9b9b4; }
+.pq .pq-game-top { color: var(--text-2); font-size: 0.875rem; gap: 8px 10px; }
+.pq .pq-game h2, .pq .pq-game h1.pq-h1 { font-size: clamp(1.9rem, 3.4vw, 2.75rem); line-height: 1.02; letter-spacing: -0.02em; margin: 0; }
+.pq .pq-game h2 small { font-size: 1rem; color: var(--text-2); margin-top: 10px; font-weight: 450; }
+.pq .pq-game-facts { gap: 10px 32px; padding-top: 2px; }
+.pq .pq-game-facts dt { color: var(--text-2); font-size: 0.8125rem; }
+.pq .pq-game-facts dd { font-size: 1rem; font-weight: 600; }
+.pq .pq-game-acts { gap: 10px 12px; padding-top: 4px; }
+.pq .pq-game .shell-note { margin: 0; }
+@media (max-width: 560px) { .pq .pq-game { grid-template-columns: minmax(0, 1fr); } .pq .pq-date { width: 76px; } .pq .pq-date b { font-size: 2.25rem; } }
+
+/* tiles: brighter frost, crisper type */
+.pq .pq-tile { background: linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.06)); border-color: rgba(255, 255, 255, 0.16); min-height: 140px; padding: 18px; }
+.pq .pq-tile:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.19), rgba(255, 255, 255, 0.09)); border-color: rgba(255, 255, 255, 0.3); }
+.pq .pq-tile svg { width: 28px; height: 28px; color: #fff; opacity: 0.95; }
+.pq .pq-tile h3 { font-size: 1.0625rem; letter-spacing: -0.01em; }
+.pq .pq-tile p { color: var(--text-2); }
+.pq .pq-tile.main { background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.09)); }
+.pq .pq-tile .go { position: absolute; right: 16px; bottom: 16px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.1); color: #fff; transition: transform 0.25s var(--ease-out), background-color 0.25s ease; }
+.pq .pq-tile .go svg { width: 16px; height: 16px; }
+.pq .pq-tile:hover .go { transform: translateX(3px); background: rgba(255, 255, 255, 0.2); }
+
+/* panels on the side */
+.pq .pq-panel { padding: 18px 20px 10px; }
+.pq .pq-panel h2 { font-size: 1.0625rem; letter-spacing: -0.01em; }
+.pq .pq-list li { border-top-color: rgba(255, 255, 255, 0.09); }
+
+/* the step rail and picks in the setup sheet */
+.pq .pq-steps { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.14); }
+.pq .pq-pick { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.14); }
+.pq .pq-pick:hover { background: rgba(255, 255, 255, 0.1); }
+.pq .pq-pick[aria-pressed="true"] { background: #f7f7f4; color: #0d0d0e; border-color: #f7f7f4; }
+.pq .pq-pick[aria-pressed="true"] small { color: #5c5c57; }
+.pq .pq-pick[aria-pressed="true"] .tag { background: #0d0d0e; color: #fff; }
+.pq .pq-pick[aria-pressed="true"] .warn { color: #8a5a00; }
+.pq .pq-seg { background: rgba(255, 255, 255, 0.07); }
+.pq .pq-lineup li::before { background: rgba(255, 255, 255, 0.12); }
+
+/* the bar and the dock, brighter */
+.pq .pq-dock a { color: #cfcfca; }
+.pq .pq-dock a:hover { background: rgba(255, 255, 255, 0.1); }
+.pq .pq-me > summary { background: #f7f7f4; color: #0d0d0e; }
+
+/* sign-in and joining: a white card in the light */
+.pq .pq-solo.auth { max-width: 520px; margin: clamp(24px, 8vh, 90px) auto 0; }
+.pq .pq-solo.auth .pq-h1 { text-align: left; }
+.pq .pq-solo.auth .shell-form { --chalk: #0d0d0e; --text-2: #5c5c57; color: #0d0d0e; background: #f7f7f4; -webkit-backdrop-filter: none; backdrop-filter: none;
+  border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: inset 0 1px 0 #fff, 0 30px 70px rgba(0, 0, 0, 0.42); padding: 26px; gap: 16px; }
+.pq .pq-solo.auth .shell-form label { color: #4b4b47; }
+.pq .pq-solo.auth .shell-form :is(input:not([type=checkbox]):not([type=radio]), select) { background: #fff; color: #0d0d0e; border-color: rgba(0, 0, 0, 0.16); }
+.pq .pq-solo.auth .shell-form :is(input, select):focus-visible { border-color: #0d0d0e; box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1); }
+.pq .pq-solo.auth .shell-form > :is(button, .shell-btn) { justify-self: stretch; }
+.pq .pq-solo.auth .shell-form .shell-btn.primary { background: #0d0d0e; color: #fff; border-color: #0d0d0e; box-shadow: none; }
+.pq .pq-solo.auth .shell-form .shell-btn:not(.primary):not(.text) { background: rgba(0, 0, 0, 0.04); color: #0d0d0e; border-color: rgba(0, 0, 0, 0.16); }
+.pq .pq-solo.auth .shell-form a, .pq .pq-solo.auth .shell-form .shell-note { color: #4b4b47; }
+.pq .pq-solo.auth .shell-form input[type=checkbox] { accent-color: #0d0d0e; }
+.pq .pq-solo.auth .shell-form fieldset { border-color: rgba(0, 0, 0, 0.12); }
+
+/* round 2 fixes */
+.pq .pq-dock a[aria-current="page"] { color: #0d0d0e; background: #f7f7f4; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); }
+.pq .pq-dock a[aria-current="page"] svg { color: #0d0d0e; }
+.pq .shell-form.narrow { max-width: 760px; }
+/* a page of flowing content (the stats pages): one frosted pane under all of it, so nothing sits on the photo */
+.pq .pq-flow { padding: clamp(16px, 2vw, 24px); border-radius: var(--r-lg); background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+  -webkit-backdrop-filter: blur(24px) saturate(130%); backdrop-filter: blur(24px) saturate(130%); border: 1px solid rgba(255, 255, 255, 0.12); }
+.pq .pq-flow .shell-h2:first-child, .pq .pq-flow > :first-child { margin-top: 0; }
+.pq .pq-flow :is(.tbl-scroll, .dash-card, .chart) { background: rgba(0, 0, 0, 0.18); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; }
+/* the review: short facts in a row, the lineup across the bottom as a flowing list */
+.pq .pq-sum { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pq .pq-sum > .wide { grid-column: 1 / -1; }
+.pq .pq-sum ol.plain { padding-left: 18px; }
+.pq .pq-sum ol.flow { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.pq .pq-sum ol.flow li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); font-weight: 500; }
+.pq .pq-sum ol.flow i { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, 0.14); font-size: 0.75rem; font-weight: 640; }
+.pq .pq-sum ol.flow small { color: var(--text-2); font-size: 0.75rem; }
+/* the ticket's readiness line */
+.pq .pq-ready { display: flex; flex-wrap: wrap; gap: 8px; }
+.pq .pq-ready span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.05); font-size: 0.875rem; color: #2b2b28; }
+.pq .pq-ready span b { font-weight: 600; }
+.pq .pq-ready span.miss { background: rgba(242, 179, 61, 0.18); color: #6d4900; }
+/* on a phone the calendar block folds into one line above the matchup, so the matchup and its button stay on the
+   first screen */
+@media (max-width: 560px) {
+  .pq .pq-game { gap: 12px; padding: 18px; border-radius: 22px; }
+  .pq .pq-date { width: auto; justify-self: start; display: inline-flex; align-items: center; gap: 0; border-radius: 999px; box-shadow: none; }
+  .pq .pq-date .m { padding: 6px 10px; }
+  .pq .pq-date b { font-size: 1rem; padding: 0 6px 0 10px; font-variation-settings: "wdth" 100; }
+  .pq .pq-date .d { padding: 0 12px 0 0; }
+  .pq .pq-game h2, .pq .pq-game h1.pq-h1 { font-size: 1.75rem; }
+  .pq .pq-ready span { font-size: 0.8125rem; }
+}
+.pq .pq-list.org-list { padding: 0; display: block; }
+
+/* ---- Web Interface Guidelines pass (Nov 12) ---- */
+.pq { color-scheme: dark; -webkit-tap-highlight-color: transparent; }
+.pq .pq-white, .pq .pq-solo.auth .shell-form { color-scheme: light; }
+:root:has(.pq) { scroll-padding-top: 104px; }
+.pq :is(a, button, summary, label, input, select, textarea) { touch-action: manipulation; }
+/* skip to the page, for keyboards: hidden until focused */
+.pq .pq-skip { position: fixed; left: 16px; top: -64px; z-index: 60; padding: 10px 16px; border-radius: 999px; background: #f7f7f4; color: #0d0d0e; font-weight: 600; text-decoration: none; transition: top 0.2s ease; }
+.pq .pq-skip:focus-visible { top: 16px; outline: 2px solid #f7f7f4; outline-offset: 3px; }
+.pq .pq-main:focus { outline: none; }
+/* a tile or team card shows focus as a whole, not just its label */
+.pq :is(.pq-tile, .team-card):has(a:focus-visible) { outline: 2px solid var(--chalk); outline-offset: 3px; }
+.pq :is(.pq-tile, .team-card) a:focus-visible { outline: none; }
+/* long team names truncate in the bar instead of pushing it wider */
+.pq .pq-switch > summary, .pq .pq-switch-one { max-width: min(42vw, 360px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-flex; }
+.pq .pq-scope { min-width: 0; flex: 0 1 auto; }
+/* rows that open something answer the pointer */
+.pq .pq-gamerow { transition: background-color 0.2s ease, border-color 0.2s ease; }
+.pq .pq-gamerow:hover { background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.065)); border-color: rgba(255, 255, 255, 0.2); }
+/* an in-place confirm for a destructive action */
+.pq .pq-confirm { display: inline-flex; flex-wrap: wrap; gap: 8px; animation: pq-pop 200ms var(--ease-out) both; }
+.pq .shell-btn.danger { background: var(--seam); border-color: var(--seam); color: #fff; }
+.pq .shell-btn.danger:hover { background: #ff5b4f; border-color: #ff5b4f; }
+/* the frame keeps clear of notches and rounded corners when the page runs edge to edge */
+.pq .pq-frame { padding-left: max(var(--pad), env(safe-area-inset-left)); padding-right: max(var(--pad), env(safe-area-inset-right)); }
+@media (max-width: 640px) { .pq .pq-frame { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); } }
+/* loading shimmer and the live dot animate on the compositor (transform, opacity), not paint */
+.pq-skel .sk { position: relative; overflow: hidden; animation: none; background: rgba(255, 255, 255, 0.05); }
+.pq-skel .sk::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.09) 50%, transparent 70%); animation: pq-sweep 1.5s linear infinite; }
+@keyframes pq-sweep { to { transform: translateX(100%); } }
+@keyframes pq-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
+@media (prefers-reduced-motion: no-preference) { .pq .pill-live::before { animation: pq-blink 1.6s ease-in-out infinite; } }
+@media (prefers-reduced-motion: reduce) { .pq-skel .sk::after { animation: none; } .pq .pq-skip, .pq .pq-gamerow, .pq .pq-confirm { transition: none; animation: none; } }

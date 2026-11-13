@@ -5,6 +5,8 @@ import type { NavItem } from "@/lib/nav";
 // The launcher's tiles: one per screen this account may open, the main job first and wider.
 export function Tiles({ items, label }: { items: NavItem[]; label: string }) {
   return (
+    <>
+    <h2 className="sr">{label}</h2>
     <ul className="pq-tiles" aria-label={label}>
       {items.map((x) => (
         <li key={x.key} className={`pq-tile glass${x.main ? " main" : ""}`}>
@@ -15,5 +17,6 @@ export function Tiles({ items, label }: { items: NavItem[]; label: string }) {
         </li>
       ))}
     </ul>
+    </>
   );
 }

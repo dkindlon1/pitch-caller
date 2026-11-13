@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -8,6 +8,9 @@ import { AGE_COOKIE, MONTHS, birthYears } from "@/lib/age";
 import { signOut } from "../../login/actions";
 import { accept, answerAge, sendToParent } from "../actions";
 import { Shell } from "../../shell";
+
+// the portal's own bar colour for the browser chrome (the public site keeps its own in the root layout)
+export const viewport: Viewport = { themeColor: "#121316", colorScheme: "dark", width: "device-width", initialScale: 1 };
 
 export const metadata: Metadata = { title: "Join a team · PitchIQ", robots: { index: false } };
 
@@ -37,7 +40,7 @@ const ERRORS: Record<string, string> = {
 
 export default function JoinPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   return (
-    <Shell title="Join a team">
+    <Shell title="Join a team" auth>
       <Suspense fallback={<p className="shell-note">Opening your invite…</p>}>
         <Join params={params} searchParams={searchParams} />
       </Suspense>

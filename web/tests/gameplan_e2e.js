@@ -110,7 +110,7 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await sheet.getByRole("button", { name: /^Jo Jones/ }).click();
     await sheet.getByRole("button", { name: /^Sam Smith/ }).click();
     await sheet.getByRole("button", { name: /^Sam Smith/ }).click();   // a second tap makes him the starter
-    await sheet.getByLabel("Today's catcher").selectOption({ label: "Vega, blocking 4" });
+    await sheet.getByLabel("Today’s catcher").selectOption({ label: "Vega, blocking 4" });
     await coach.screenshot({ path: path.join(shots, "setup-staff.png"), fullPage: true });
     await sheet.getByRole("button", { name: "Next: Their lineup" }).click();
     await sheet.getByRole("button", { name: "Fill from their roster" }).click();
@@ -120,7 +120,7 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await sheet.getByRole("button", { name: "Wide zone" }).click();
     await sheet.getByRole("button", { name: "Next: Review" }).click();
     const review = await sheet.innerText();
-    check(/Sam Smith \(starts\)/.test(review) && /Diaz \(S\)/.test(review) && /vs Ithaca College/.test(review), "the review shows the starter, the lineup and the opponent");
+    check(/Sam Smith \(starts\)/.test(review) && /Diaz\s+S\b/.test(review) && /vs Ithaca College/.test(review), "the review shows the starter, the lineup and the opponent");
     await coach.screenshot({ path: path.join(shots, "setup-review.png"), fullPage: true });
     await sheet.getByRole("button", { name: "Save game" }).click();
     await coach.waitForURL(/\/games\/gam_[0-9a-z]+\?ok=planned/, { timeout: 15000 }).catch(() => {}); await settle(coach);
@@ -179,7 +179,10 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     for (let i = 0; i < 30; i++) { claimed = await gameRow(gid); if (claimed && claimed.status === "live") break; await wait(500); }
     const devA = await ipad.evaluate(() => DB.deviceId);
     check(claimed && claimed.status === "live" && claimed.deviceId === devA, `the claim went up: live on this device (${claimed && claimed.status}, ${claimed && claimed.deviceId === devA})`);
-    check(await ipad.evaluate(() => !!G().call), "and the first call is up");
+    let call = false;
+    for (let i = 0; i < 25 && !call; i++) { call = await ipad.evaluate(() => !!G().call).catch(() => false); if (!call) await wait(200); }
+    if (!call) console.log("     (no call:", JSON.stringify(await ipad.evaluate(() => ({ view: S.view, dbId: G().dbId, over: G().inningOver, staff: S.setup.staff.length, msg: PORTAL.msg })).catch((e) => String(e))), ")");
+    check(call, "and the first call is up");
     await ipad.screenshot({ path: path.join(shots, "game-app-started.png") });
 
     console.log("5. A game in progress stays on that one device");

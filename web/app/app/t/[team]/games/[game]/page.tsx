@@ -6,14 +6,15 @@ import { abilities } from "@/lib/nav";
 import { LEVELS, TIERS, defaultInnings, type GameDoc } from "@/lib/gameplan";
 import { removeGamePlan } from "../actions";
 import { one, type Search } from "../../ui";
-import { SeamEdge } from "../../../../_frame/Icon";
+import { DateBlock } from "../../../../_frame/DateBlock";
+import { ConfirmSubmit } from "../../../../_frame/ConfirmSubmit";
 import { SheetSkeleton } from "../../../../_frame/Skeleton";
 
 export const metadata: Metadata = { title: "Game plan · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string; game: string }>;
 
 const ERR: Record<string, string> = {
-  not_allowed: "Starting games is for coaches who call them.", locked: "This team isn't switched on yet (billing).", missing: "That game isn't on this team's schedule.",
+  not_allowed: "Starting games is for coaches who call them.", locked: "This team isn’t switched on yet (billing).", missing: "That game isn’t on this team’s schedule.",
   over: "That game is over.",
 };
 
@@ -28,10 +29,10 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const { team: t } = await teamFor(team);
   const a = abilities(t);
   const back = <Link href={`/app/t/${team}/games`}>Back to Game Day</Link>;
-  if (!a.seesPlan) return <p className="shell-note">Your role on this team doesn&apos;t show game plans. The organization&apos;s owner decides who sees them. {back}</p>;
+  if (!a.seesPlan) return <p className="shell-note">Your role on this team doesn’t show game plans. The organization’s owner decides who sees them. {back}</p>;
   const [games, pitchers, teams, hitters, catchers] = await Promise.all([gamesOf(team), pitchersOf(team), teamsOf(team), hittersOf(team), catchersOf(team)]);
   const g = games.find((x) => x.id === game) as GameDoc | undefined;
-  if (!g) return <p className="shell-note">That game isn&apos;t on this team&apos;s schedule. {back}</p>;
+  if (!g) return <p className="shell-note">That game isn’t on this team’s schedule. {back}</p>;
   const opp = (teams.find((x) => x.id === g.opponentId) || { name: "" }).name;
   const pname = (id: string) => { const p = pitchers.find((x) => x.id === id); return p ? `${p.number ? `#${p.number} ` : ""}${p.name || "Unnamed"}` : "A pitcher no longer on the roster"; };
   const isLive = g.status === "live" || g.status === "suspended";
@@ -42,9 +43,10 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   return (
     <>
       {err ? <p className="shell-alert" role="alert">{err}</p> : null}
-      {one(sp.ok) === "planned" ? <p className="shell-note ok-note" role="status">Saved. It&apos;s on every device signed in to this team the next time it syncs.</p> : null}
-      <section className="pq-game glass" aria-labelledby="g-h" style={{ marginBottom: "var(--gap)" }}>
-        <span className="seam"><SeamEdge /></span>
+      {one(sp.ok) === "planned" ? <p className="shell-note ok-note" role="status">Saved. It’s on every device signed in to this team the next time it syncs.</p> : null}
+      <section className="pq-game pq-white" aria-labelledby="g-h" style={{ marginBottom: "var(--gap)" }}>
+        <DateBlock date={g.date} today={today} />
+        <div className="pq-game-body">
         <div className="pq-game-top">
           {isLive ? <span className="pill-live">{g.status === "suspended" ? "Suspended" : "Live"}</span> : g.status === "final" ? <span className="pill">Final</span> : <span className="pill">Set up</span>}
           <Link href={`/app/t/${team}/games`} className="shell-btn text">Game Day</Link>
@@ -52,17 +54,18 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <h1 id="g-h" className="pq-h1" style={{ margin: 0 }}>{g.date === today ? "Today" : dayName(g.date)}{opp ? ` ${g.setup?.home === false ? "at" : "vs"} ${opp}` : ""}</h1>
         <dl className="pq-game-facts">
           <div><dt>First pitch</dt><dd>{timeName(g.time) || "Not set"}</dd></div>
-          <div><dt>We&apos;re</dt><dd>{g.setup?.home === true ? "Home" : g.setup?.home === false ? "Away" : "Not set"}</dd></div>
+          <div><dt>We’re</dt><dd>{g.setup?.home === true ? "Home" : g.setup?.home === false ? "Away" : "Not set"}</dd></div>
           <div><dt>Level</dt><dd>{LEVELS[g.level] || g.level}, {g.setup?.innings || defaultInnings(g.level)} innings</dd></div>
           <div><dt>Charting</dt><dd>{(TIERS.find((x) => x[0] === g.inputs) || [0, "Results only"])[1]}</dd></div>
         </dl>
-        {isLive ? <p className="shell-note" style={{ margin: 0 }}>It&apos;s being called on one device. A game in progress stays on that device only: nothing from it shows here or anywhere else until it ends.</p>
+        {isLive ? <p className="shell-note" style={{ margin: 0 }}>It’s being called on one device. A game in progress stays on that device only: nothing from it shows here or anywhere else until it ends.</p>
           : g.status === "final" ? null : a.callGames ? (
           <div className="pq-game-acts">
             <a className="shell-btn primary" href={`/app/t/${team}/games/${game}/open`}>Start on this device</a>
             <Link className="shell-btn" href={`/app/t/${team}/games/${game}/edit`}>Change the plan</Link>
           </div>
         ) : <p className="shell-note" style={{ margin: 0 }}>Read only: a coach who calls games starts it.</p>}
+        </div>
       </section>
 
       <div className="pq-launch">
@@ -89,12 +92,12 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
           {a.callGames && g.status === "planned" ? (
             <form action={removeGamePlan}>
               <input type="hidden" name="team" value={team} /><input type="hidden" name="game" value={game} />
-              <button type="submit" className="shell-btn text">Take it off the schedule</button>
+              <ConfirmSubmit label="Take it off the schedule" confirm="Yes, take it off" />
             </form>
           ) : null}
         </aside>
       </div>
-      <p className="shell-note small" style={{ marginTop: 18 }}>{g.plannedBy ? `Set up by ${g.plannedBy}. ` : ""}On the iPad, open the PitchIQ game app: today&apos;s planned game is offered when it opens.</p>
+      <p className="shell-note small" style={{ marginTop: 18 }}>{g.plannedBy ? `Set up by ${g.plannedBy}. ` : ""}On the iPad, open the PitchIQ game app: today’s planned game is offered when it opens.</p>
     </>
   );
 }

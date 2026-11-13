@@ -13,10 +13,10 @@ export async function saveGamePlan(_prev: SaveState, f: FormData): Promise<SaveS
   const team = String(f.get("team") || ""), gameId = String(f.get("game") || "");
   const { team: t, user } = await teamFor(team);
   const a = abilities(t);
-  if (!a.callGames) return { errors: [{ step: 5, msg: "Your role on this team can't set up games." }] };
-  if (!t.active) return { errors: [{ step: 5, msg: "This team isn't switched on yet (billing), so nothing can be saved to it." }] };
+  if (!a.callGames) return { errors: [{ step: 5, msg: "Your role on this team can’t set up games." }] };
+  if (!t.active) return { errors: [{ step: 5, msg: "This team isn’t switched on yet (billing), so nothing can be saved to it." }] };
   let inp: PlanInput;
-  try { inp = JSON.parse(String(f.get("plan") || "{}")); } catch { return { errors: [{ step: 5, msg: "That didn't come through. Try again." }] }; }
+  try { inp = JSON.parse(String(f.get("plan") || "{}")); } catch { return { errors: [{ step: 5, msg: "That didn’t come through. Try again." }] }; }
 
   const [pitchers, teams, hitters, catchers, games] = await Promise.all([pitchersOf(team), teamsOf(team), hittersOf(team), catchersOf(team), gameId ? gamesOf(team) : Promise.resolve([])]);
   const prev = gameId ? ((games.find((g) => g.id === gameId) || null) as GameDoc | null) : null;
@@ -25,12 +25,12 @@ export async function saveGamePlan(_prev: SaveState, f: FormData): Promise<SaveS
 
   // a new opponent, typed in step 1
   if (inp.opponentId === "__new" && String(inp.newOpponent || "").trim()) {
-    if (!canOpp) return { errors: [{ step: 1, msg: "Your role can't add opponents. Pick one from the list." }] };
+    if (!canOpp) return { errors: [{ step: 1, msg: "Your role can’t add opponents. Pick one from the list." }] };
     const doc = { name: String(inp.newOpponent).trim().slice(0, 80), isOurs: false, level: inp.level, notes: "" };
     const r = await push(team, "teams", [doc], "tea");
-    if (r.error || !r.applied) return { errors: [{ step: 1, msg: "The new opponent couldn't be saved. Try again." }] };
+    if (r.error || !r.applied) return { errors: [{ step: 1, msg: "The new opponent couldn’t be saved. Try again." }] };
     const fresh = (await teamsOf(team)).filter((x) => !x.isOurs && x.name === doc.name).sort((x, y) => y.createdAt - x.createdAt)[0];
-    if (!fresh) return { errors: [{ step: 1, msg: "The new opponent couldn't be saved. Try again." }] };
+    if (!fresh) return { errors: [{ step: 1, msg: "The new opponent couldn’t be saved. Try again." }] };
     teams.push(fresh); inp.opponentId = fresh.id;
   }
   // hitters typed into the lineup that aren't on the opponent's roster yet join it (when this role may add them)
@@ -56,7 +56,7 @@ export async function saveGamePlan(_prev: SaveState, f: FormData): Promise<SaveS
   if (!doc) return { errors };
   doc.plannedBy = user.email; doc.plannedAt = Date.now();
   const r = await push(team, "games", [doc], "gam");
-  if (r.error || r.rejected.length || !r.applied) return { errors: [{ step: 5, msg: r.rejected.length ? "The server kept its own copy: someone changed or started this game. Reload and try again." : "The plan couldn't be saved. Try again in a moment." }] };
+  if (r.error || r.rejected.length || !r.applied) return { errors: [{ step: 5, msg: r.rejected.length ? "The server kept its own copy: someone changed or started this game. Reload and try again." : "The plan couldn’t be saved. Try again in a moment." }] };
   const saved = prev ? prev.id : (await gamesOf(team)).filter((g) => g.status === "planned" && (g as { plannedAt?: number }).plannedAt === doc.plannedAt).map((g) => g.id)[0];
   redirect(`/app/t/${team}/games/${saved || ""}?ok=planned`);
 }

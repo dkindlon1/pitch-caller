@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -6,6 +6,9 @@ import { connection } from "next/server";
 import { resendConfirm, signIn, signUp } from "./actions";
 import { AGE_COOKIE, MONTHS, birthYears, safeNext } from "@/lib/age";
 import { Shell } from "../shell";
+
+// the portal's own bar colour for the browser chrome (the public site keeps its own in the root layout)
+export const viewport: Viewport = { themeColor: "#121316", colorScheme: "dark", width: "device-width", initialScale: 1 };
 
 export const metadata: Metadata = { title: "Sign in · PitchIQ", robots: { index: false } };
 
@@ -28,7 +31,7 @@ const ERRORS: Record<string, string> = {
 
 export default function LoginPage({ searchParams }: { searchParams: Search }) {
   return (
-    <Shell title="Sign in">
+    <Shell title="Sign in" auth>
       <Suspense fallback={null}>
         <LoginForms searchParams={searchParams} />
       </Suspense>

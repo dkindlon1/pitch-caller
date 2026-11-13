@@ -8796,20 +8796,27 @@ function syncPanel() {
 async function openFromPortal() {
   if (typeof location === "undefined" || !DB.D) return;
   const q = new URLSearchParams(location.search), hash = new URLSearchParams((location.hash || "").slice(1));
-  let gameId = q.get("game"), teamId = q.get("team"), teamName = q.get("name") || "this team";
-  const hand = hash.get("pq");
-  // an open that a reload cut short (this tab only, for two minutes): carry on with it, without the used sign-in
-  let carry = null;
-  try { carry = JSON.parse(sessionStorage.getItem("pq-open") || "null"); } catch (e) {}
-  if (!gameId && !hand && carry && Date.now() - carry.at < 120000) ({ gameId, teamId, teamName } = carry);
-  if (!gameId && !hand) return;
-  // the sign-in link works once: it never stays in the address bar or the history
+  let open = null;
+  if (q.get("game") || hash.get("pq")) open = { gameId: q.get("game"), teamId: q.get("team"), teamName: q.get("name") || "this team", hand: hash.get("pq") || null, at: Date.now() };
+  else { try { const c = JSON.parse(sessionStorage.getItem("pq-open") || "null"); if (c && Date.now() - c.at < 120000) open = c; } catch (e) {} }
+  if (!open) return;
+  // the sign-in link works once: it never stays in the address bar or the history. Until it's used it's kept for this
+  // tab only, so a reload (the offline worker taking control of a first visit reloads the page) carries on with it.
   try { history.replaceState(null, "", location.pathname); } catch (e) {}
-  try { sessionStorage.setItem("pq-open", JSON.stringify({ gameId, teamId, teamName, at: Date.now() })); } catch (e) {}
-  try { await openPlannedFrom(gameId, teamId, teamName, hand); }
+  const keep = () => { try { sessionStorage.setItem("pq-open", JSON.stringify(open)); } catch (e) {} };
+  keep();
+  // on a first visit, wait for the offline worker to take control before using the one-time sign-in: that reloads
+  // the page, and the reloaded page carries on from what's kept above
+  try {
+    if (navigator.serviceWorker && !navigator.serviceWorker.controller && window.PC_CONFIG_URL) {
+      await Promise.race([navigator.serviceWorker.ready.then(() => new Promise((r) => { if (navigator.serviceWorker.controller) r(); else navigator.serviceWorker.addEventListener("controllerchange", r, { once: true }); })), new Promise((r) => setTimeout(r, 5000))]);
+      await new Promise((r) => setTimeout(r, 400));   // a reload, if one is coming, starts here
+    }
+  } catch (e) {}
+  try { await openPlannedFrom(open.gameId, open.teamId, open.teamName, open.hand, () => { open.hand = null; keep(); }); }
   finally { try { sessionStorage.removeItem("pq-open"); } catch (e) {} }
 }
-async function openPlannedFrom(gameId, teamId, teamName, hand) {
+async function openPlannedFrom(gameId, teamId, teamName, hand, used) {
   if (!/^[a-z]{3}_[0-9a-z]{10,40}$/.test(gameId || "") || !/^[0-9a-f-]{36}$/.test(teamId || "")) { PORTAL.msg = "That link doesn't name a game. Open it again from Game Day on the website."; return; }
   const g = G();
   if (g.dbId === gameId) { S.view = "live"; return; }   // already calling it here (a reload)
@@ -8819,6 +8826,7 @@ async function openPlannedFrom(gameId, teamId, teamName, hand) {
   if (hand) {
     const was = SYNC.authSession;
     const s = await SYNC.auth.handoff(hand).catch(() => null);
+    if (used) used();   // spent either way: a reload from here on never tries it again
     if (s) {
       SYNC.authSession = s;
       if (was && was.userId && was.userId !== s.userId) { SYNC.teams = SYNC.invites = SYNC.staff = null; }

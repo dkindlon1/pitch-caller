@@ -35,7 +35,7 @@ export function buildPlan(inp: PlanInput, known: Known, prev?: GameDoc | null): 
   const errors: { step: number; msg: string }[] = [];
   const err = (step: number, msg: string) => errors.push({ step, msg });
   const date = String(inp.date || "");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(Date.parse(date + "T12:00:00Z"))) err(1, "Pick the game's date.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(Date.parse(date + "T12:00:00Z"))) err(1, "Pick the game’s date.");
   const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(inp.time || "")) ? String(inp.time) : null;
   if (!(inp.level in LEVELS)) err(1, "Pick the level.");
   const innings = inp.innings == null || (inp.innings as unknown) === "" ? null : Math.round(Number(inp.innings));
@@ -44,10 +44,10 @@ export function buildPlan(inp: PlanInput, known: Known, prev?: GameDoc | null): 
   const newOpp = String(inp.newOpponent || "").trim().slice(0, 80);
   const opponentId = inp.opponentId && known.opponentIds.has(inp.opponentId) ? inp.opponentId : null;
   if (inp.opponentId && !opponentId && inp.opponentId !== "__new") err(1, "That opponent is no longer on your list.");
-  if (inp.opponentId === "__new" && !newOpp) err(1, "Type the new opponent's name.");
+  if (inp.opponentId === "__new" && !newOpp) err(1, "Type the new opponent’s name.");
 
   const staffIds = [...new Set((inp.staffIds || []).filter((id) => known.pitcherIds.has(id)))].slice(0, 20);
-  if (!staffIds.length) err(2, "Pick at least one pitcher for today's staff.");
+  if (!staffIds.length) err(2, "Pick at least one pitcher for today’s staff.");
   const starterId = inp.starterId && staffIds.includes(inp.starterId) ? inp.starterId : staffIds[0] || null;
   // the starter goes first: the game app puts the first pitcher on today's staff on the mound
   const ordered = starterId ? [starterId, ...staffIds.filter((x) => x !== starterId)] : staffIds;
@@ -61,7 +61,7 @@ export function buildPlan(inp: PlanInput, known: Known, prev?: GameDoc | null): 
 
   const inputs = [1, 2, 3, 4].includes(Number(inp.inputs)) ? Number(inp.inputs) : 2;
   const umpSeed = (UMPS as readonly string[]).includes(inp.umpSeed) ? inp.umpSeed : "normal";
-  if (prev && prev.status !== "planned") err(5, "This game has already started, so its plan can't be changed here.");
+  if (prev && prev.status !== "planned") err(5, "This game has already started, so its plan can’t be changed here.");
   if (errors.length) return { doc: null, errors };
 
   const doc: GameDoc = Object.assign({}, prev || {}, {

@@ -14,6 +14,7 @@ type TeamRow = {
   team_id: string; team_name: string; level: string | null; org_id: string; org_name: string;
   role: string | null; is_owner: boolean; active: boolean; status: string;
 };
+const LEVEL_NAME: Record<string, string> = { hs: "high school", travel: "travel ball", college_d3: "college D3", college_d1: "college D1" };
 const ROLE: Record<string, string> = { head: "Head coach", pitching: "Pitching coach", caller: "Pitch caller", viewer: "Viewer", player: "Player" };
 
 export default function AppHome() {
@@ -36,7 +37,7 @@ async function Teams() {
     sb.from("exports").select("id").limit(1),
     hasAccepted(sb),
   ]);
-  if (error) return <p className="shell-alert" role="alert">Your teams couldn&apos;t be loaded. Try again in a moment.</p>;
+  if (error) return <p className="shell-alert" role="alert">Your teams couldn’t be loaded. Try again in a moment.</p>;
   const rows = (teams || []) as TeamRow[];
   return (
     <>
@@ -47,24 +48,26 @@ async function Teams() {
           {rows.map((t) => (
             <li key={t.team_id} className="team-card glass">
               <h2>{t.role === "player" ? <Link href={`/app/me/${t.team_id}`}>{t.team_name}</Link> : t.role ? <Link href={`/app/t/${t.team_id}`}>{t.team_name}</Link> : t.team_name}</h2>
-              <p>{t.org_name}{t.level ? ` · ${t.level}` : ""}</p>
+              <p>{t.org_name}{t.level ? `, ${LEVEL_NAME[t.level] || t.level}` : ""}</p>
               <p className="lbl">{t.role ? ROLE[t.role] || t.role : "Owner, not on the staff"}</p>
               {t.active ? null : <p className="team-off">Not active</p>}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="shell-note">You&apos;re not on a team yet. Open the invite link your coach sent you.</p>
+        <p className="shell-note">You’re not on a team yet. Open the invite link your coach sent you.</p>
       )}
       {orgs && orgs.length ? (
-        <section aria-labelledby="owned">
-          <h2 id="owned" className="shell-h2">Organizations you own</h2>
-          <ul className="org-list">
-            {orgs.map((o) => <li key={o.id}>{o.name} <span className="lbl">{o.billing_status === "active" ? "Paid up" : o.billing_status === "locked" ? "Locked: update the card" : "Not paid yet"}</span> <Link href={`/app/billing?org=${o.id}`}>Billing</Link></li>)}
+        <section aria-labelledby="owned" className="pq-panel" style={{ marginTop: 28, maxWidth: 720 }}>
+          <h2 id="owned">Organizations you own</h2>
+          <ul className="pq-list org-list">
+            {orgs.map((o) => <li key={o.id}><span>{o.name}</span><span className="meta">
+              <span className={o.billing_status === "active" ? "pill-ok" : "pill-warn"}>{o.billing_status === "active" ? "Paid up" : o.billing_status === "locked" ? "Locked: update the card" : "Not paid yet"}</span>{" "}
+              <Link href={`/app/billing?org=${o.id}`} className="shell-btn text">Billing</Link></span></li>)}
           </ul>
         </section>
       ) : null}
-      {exps && exps.length ? <p className="shell-note"><Link href="/app/exports">Your data downloads</Link>: what was sent when a team&apos;s subscription lapsed.</p> : null}
+      {exps && exps.length ? <p className="shell-note"><Link href="/app/exports">Your data downloads</Link>: what was sent when a team’s subscription lapsed.</p> : null}
       <p className="shell-note"><Link href="/app/new">Start an organization</Link>: name it, add your teams, pay by card.</p>
     </>
   );

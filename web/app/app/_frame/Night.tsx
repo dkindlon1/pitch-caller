@@ -5,7 +5,7 @@ export function Night() {
     <div className="pq-night" aria-hidden="true">
       <picture>
         <source media="(orientation: portrait)" srcSet="/media/film/flyover/tall-poster.jpg" />
-        <img src="/media/film/flyover/wide-poster.jpg" alt="" decoding="async" fetchPriority="low" />
+        <img src="/media/film/flyover/wide-poster.jpg" alt="" width={1280} height={720} decoding="async" fetchPriority="low" />
       </picture>
     </div>
   );

@@ -6,7 +6,7 @@ import { dayName, teamToday } from "@/lib/team";
 import PCRules from "@/lib/pitch_rules";
 import { playerNav } from "@/lib/nav";
 import { Tiles } from "../../../_frame/Tiles";
-import { SeamEdge } from "../../../_frame/Icon";
+import { NumberBlock } from "../../../_frame/DateBlock";
 import { Num } from "../../../_frame/Num";
 import { LauncherSkeleton } from "../../../_frame/Skeleton";
 
@@ -32,10 +32,11 @@ async function Body({ params }: { params: Params }) {
   const season = mine.reduce((a, o) => ({ n: a.n + o.pitches, s: a.s + o.strikes }), { n: 0, s: 0 });
   return (
     <>
-      <section className="pq-game glass" aria-labelledby="me-h">
-        <span className="seam"><SeamEdge /></span>
+      <section className="pq-game pq-white" aria-labelledby="me-h">
+        <NumberBlock number={me.number} sub={me.hand === "L" ? "Lefty" : "Righty"} />
+        <div className="pq-game-body">
         <div className="pq-game-top">{t.team_name}</div>
-        <h1 id="me-h" className="pq-h1" style={{ margin: 0 }}>{me.number ? `#${me.number} ` : ""}{me.name || "Unnamed"}</h1>
+        <h1 id="me-h" className="pq-h1" style={{ margin: 0 }}>{me.name || "Unnamed"}</h1>
         <dl className="pq-game-facts">
           <div><dt>Can pitch</dt><dd>{elig ? (elig.today ? "Today" : dayName(elig.date)) : "No pitch-count rule set"}</dd></div>
           <div><dt>Last outing</dt><dd>{last ? `${last.pitches} pitches, ${dayName(last.date)}` : "None in the last year"}</dd></div>
@@ -43,6 +44,7 @@ async function Body({ params }: { params: Params }) {
           <div><dt>Strikes, last 12 months</dt><dd className="num">{season.n ? `${pct(season.s, season.n)} of ${season.n}` : "–"}</dd></div>
         </dl>
         {rule ? <p className="shell-note small">Rest days under {rule.name}.</p> : null}
+        </div>
       </section>
       <Tiles items={playerNav(team, pitcher).filter((x) => x.key !== "home")} label="Your screens" />
 
@@ -59,7 +61,7 @@ async function Body({ params }: { params: Params }) {
                 <td>{Object.entries(o.by_pitch).sort((a, b) => b[1].n - a[1].n).map(([name, x]) => `${name} ${x.n}`).join(" · ")}</td>
               </tr>))}</tbody>
           </table></div>
-        ) : <p className="shell-note">Your game pitches show up here once your coach&apos;s iPad syncs a game you pitched in.</p>}
+        ) : <p className="shell-note">Your game pitches show up here once your coach’s iPad syncs a game you pitched in.</p>}
       </section>
           </>
   );

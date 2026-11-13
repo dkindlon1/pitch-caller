@@ -11,8 +11,8 @@ export const metadata: Metadata = { title: "Game Day · PitchIQ", robots: { inde
 type Params = Promise<{ team: string }>;
 
 const MSG: Record<string, string> = {
-  removed: "Taken off the schedule.", not_allowed: "Your role on this team can't do that.", started: "That game has started, so it stays on the schedule.",
-  push: "That couldn't be saved. Try again in a moment.",
+  removed: "Taken off the schedule.", not_allowed: "Your role on this team can’t do that.", started: "That game has started, so it stays on the schedule.",
+  push: "That couldn’t be saved. Try again in a moment.",
 };
 
 // Game Day: the schedule. Games set up ahead, the one being called (only that it's live: nothing from it shows here
@@ -25,7 +25,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const { team } = await params, sp = await searchParams;
   const { team: t, isCoach } = await teamFor(team);
   const a = abilities(t);
-  if (!isCoach) return <p className="shell-note">The schedule is for the team&apos;s coaches.</p>;
+  if (!isCoach) return <p className="shell-note">The schedule is for the team’s coaches.</p>;
   const [games, teams] = await Promise.all([gameList(team), teamsOf(team)]);
   const today = teamToday(t.timezone);
   const opp = (id: string | null) => (teams.find((x) => x.id === id) || { name: "" }).name;
@@ -37,13 +37,13 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   return (
     <>
       <div className="pq-head">
-        <div><h1 className="pq-h1">Game Day</h1><p>{a.callGames ? "Set a game up here, then start it on the iPad or any device signed in to this team." : a.seesPlan ? "The game plans your staff set up, read only." : "The schedule. Your role doesn't show the game plans."}</p></div>
+        <div><h1 className="pq-h1">Game Day</h1><p>{a.callGames ? "Set a game up here, then start it on the iPad or any device signed in to this team." : a.seesPlan ? "The game plans your staff set up, read only." : "The schedule. Your role doesn’t show the game plans."}</p></div>
         {a.callGames ? <Link href={`/app/t/${team}/games/new`} className="shell-btn primary"><Icon name="plus" /> Set up a game</Link> : null}
       </div>
       {msg ? <p className={sp.error ? "shell-alert" : "shell-note ok-note"} role={sp.error ? "alert" : "status"}>{msg}</p> : null}
       <h2 className="shell-h2" style={{ marginTop: 0 }}>Coming up</h2>
       {upcoming.length ? <ul className="pq-games">{upcoming.map((g) => <Row key={g.id} g={g} team={team} opp={opp(g.opponent_id)} a={a} today={today} />)}</ul>
-        : <p className="shell-note">{a.callGames ? "Nothing set up. Set up the next game and it's ready on every device signed in to this team." : "No game set up yet."}</p>}
+        : <p className="shell-note">{a.callGames ? "Nothing set up. Set up the next game and it’s ready on every device signed in to this team." : "No game set up yet."}</p>}
       {stale.length && a.callGames ? <>
         <h2 className="shell-h2">Set up but never started</h2>
         <ul className="pq-games">{stale.map((g) => <Row key={g.id} g={g} team={team} opp={opp(g.opponent_id)} a={a} today={today} />)}</ul>
