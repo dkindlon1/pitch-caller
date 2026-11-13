@@ -1,11 +1,16 @@
 <title>PitchIQ</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#04070c">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@50..125,300..800&display=swap">
+<meta name="theme-color" content="#121316">
 <style>
-/* Night game broadcast.
+/* Instrument Sans, the portal's and the website's one typeface, carried inside the page (build.py inlines it), so the
+   app looks the same with no signal in the dugout. Latin, weights 400-700, widths 75-100%. SIL Open Font License. */
+@font-face { font-family: "Instrument Sans"; font-style: normal; font-weight: 400 700; font-stretch: 75% 100%; font-display: swap;
+  src: url(data:font/woff2;base64,__FONT_WOFF2__) format("woff2"); }
+/* PitchIQ game day, in the portal's look (Nov 12): charcoal under a soft band of stadium light (the ballpark from
+   above, graded grey), frosted glass, chalk for what you press, seam red and the pitch colours on data only. The
+   day screen is the portal's white card: white surfaces, black ink, for bright afternoons.
+   (Before: a navy night-game broadcast in Saira; the layout and the one bold moment below are unchanged.)
+   Night game broadcast.
    - Ground: a stadium at night. Faint infield line art and two light towers sit behind frosted-glass panels.
    - Colour lives on data only, and it's the pitch-type colour every tracking system uses
      (fastball red, slider yellow, curveball cyan, changeup green). Chrome stays white-on-glass.
@@ -14,40 +19,42 @@
    - One family, Saira: condensed width for the call and the scoreboard, normal width for everything else.
    - Radius ladder (from Raycast's DESIGN.md): 6 keycaps, 10 controls, 16 inner tiles, 22 panels. Pills for toggles. */
 :root {
-  --ground: #04070c;
-  --ink: #eef3f8; --muted: #a6b0bd; --faint: #808b99;
-  --glass: rgba(16, 23, 33, 0.58); --glass-2: rgba(30, 41, 56, 0.55); --glass-hi: rgba(255, 255, 255, 0.055);
-  --stroke: rgba(255, 255, 255, 0.09); --stroke-2: rgba(255, 255, 255, 0.17); --rule: rgba(255, 255, 255, 0.07);
-  --well: rgba(0, 0, 0, 0.28);
-  --primary: #f4f7fb; --primary-ink: #04070c;
-  --fb: #ff5468; --sl: #f6cb4c; --cb: #45c9ff; --ch: #3ddc8c;
+  --ground: #121316;
+  --ink: #f4f4f1; --muted: #bfbfba; --faint: #979792;
+  --glass: rgba(255, 255, 255, 0.075); --glass-2: rgba(255, 255, 255, 0.1); --glass-hi: rgba(255, 255, 255, 0.08);
+  --stroke: rgba(255, 255, 255, 0.14); --stroke-2: rgba(255, 255, 255, 0.26); --rule: rgba(255, 255, 255, 0.09);
+  --well: rgba(0, 0, 0, 0.22);
+  --primary: #f4f4f1; --primary-ink: #0d0d0e;
+  --fb: #f04a3e; --sl: #f2b33d; --cb: #4d8dff; --ch: #3fcb8c;
   --call: var(--cb);
-  --warn: #ffb547; --warn-bg: rgba(255, 181, 71, 0.13);
-  --neg: #ff7272;  --neg-bg: rgba(255, 114, 114, 0.13);
-  --focus: #8fd8ff;
-  --field-line: rgba(255, 255, 255, 0.07);
-  --tower: rgba(170, 205, 255, 0.16);
-  --shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.75);
-  --blur: blur(22px) saturate(150%);
-  --font: "Saira", "Helvetica Neue", Arial, sans-serif;
-  --r-key: 6px; --r-ctl: 10px; --r-tile: 16px; --r-panel: 22px;
+  --warn: #f2b33d; --warn-bg: rgba(242, 179, 61, 0.14);
+  --neg: #ff6b5f;  --neg-bg: rgba(240, 74, 62, 0.14);
+  --focus: #f4f4f1;
+  --field-line: transparent;
+  --tower: rgba(255, 255, 255, 0.09);
+  --shadow: 0 18px 50px -24px rgba(0, 0, 0, 0.6);
+  --blur: blur(28px) saturate(140%);
+  --font: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  --r-key: 6px; --r-ctl: 12px; --r-tile: 18px; --r-panel: 24px;
   --gap: 16px; --pad: 22px;
+  --photo: 0.55;
   color-scheme: dark;
 }
 :root[data-theme="day"] {
-  --ground: #d7e0ea;
-  --ink: #0a1320; --muted: #475365; --faint: #586477;
-  --glass: rgba(255, 255, 255, 0.62); --glass-2: rgba(255, 255, 255, 0.72); --glass-hi: rgba(255, 255, 255, 0.5);
-  --stroke: rgba(20, 40, 70, 0.11); --stroke-2: rgba(20, 40, 70, 0.22); --rule: rgba(20, 40, 70, 0.08);
-  --well: rgba(20, 40, 70, 0.06);
-  --primary: #0a1320; --primary-ink: #ffffff;
-  --fb: #d0245a; --sl: #a07c00; --cb: #1a74c8; --ch: #0f8a52;
-  --warn: #9a5a00; --warn-bg: rgba(255, 170, 40, 0.18);
-  --neg: #b4232f;  --neg-bg: rgba(220, 50, 60, 0.12);
-  --focus: #0a6fb0;
-  --field-line: rgba(20, 50, 90, 0.10);
-  --tower: rgba(255, 255, 255, 0.8);
-  --shadow: 0 20px 50px -30px rgba(30, 50, 80, 0.45);
+  --ground: #e9e8e3;
+  --ink: #0d0d0e; --muted: #55554f; --faint: #6f6f69;
+  --glass: rgba(255, 255, 255, 0.78); --glass-2: #ffffff; --glass-hi: rgba(255, 255, 255, 0.7);
+  --stroke: rgba(0, 0, 0, 0.1); --stroke-2: rgba(0, 0, 0, 0.2); --rule: rgba(0, 0, 0, 0.08);
+  --well: rgba(0, 0, 0, 0.05);
+  --primary: #0d0d0e; --primary-ink: #ffffff;
+  --fb: #c8281d; --sl: #9a6a00; --cb: #1f5fd1; --ch: #0e8a55;
+  --warn: #8a5a00; --warn-bg: rgba(242, 179, 61, 0.2);
+  --neg: #c3261b;  --neg-bg: rgba(240, 74, 62, 0.12);
+  --focus: #0d0d0e;
+  --field-line: transparent;
+  --tower: rgba(255, 255, 255, 0.85);
+  --shadow: 0 14px 40px -24px rgba(0, 0, 0, 0.35);
+  --photo: 0;
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -59,11 +66,15 @@ p { margin: 0; }
 
 /* the stadium behind the glass */
 .stage { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.stage svg { position: absolute; left: 50%; bottom: -14vh; width: max(1400px, 120vw); transform: translateX(-50%); height: auto; }
+.stage svg { display: none; }
+/* the ballpark from above, graded grey and softened, fading into the charcoal by two thirds of the way down */
+.stage .photo { position: absolute; inset: 0 0 auto; height: 74vh; opacity: var(--photo); background: url(data:image/jpeg;base64,__GROUND_JPEG__) center 40% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, #000, rgba(0, 0, 0, 0.7) 45%, transparent); mask-image: linear-gradient(180deg, #000, rgba(0, 0, 0, 0.7) 45%, transparent); }
+.stage::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--ground) 55%, transparent), transparent 30%, transparent 70%, color-mix(in srgb, var(--ground) 55%, transparent)); }
 .stage .tower { position: absolute; top: -18vh; width: 46vw; height: 46vw; border-radius: 50%; background: radial-gradient(closest-side, var(--tower), transparent); }
 .stage .tower.l { left: -14vw; } .stage .tower.r { right: -14vw; }
-.stage .glow { position: absolute; left: 4vw; top: 12vh; width: 56vw; height: 56vh; border-radius: 50%; background: var(--call); opacity: .17; filter: blur(110px); }
-:root[data-theme="day"] .stage .glow { opacity: .14; }
+.stage .glow { position: absolute; left: 6vw; top: 30vh; width: 42vw; height: 42vh; border-radius: 50%; background: var(--call); opacity: .1; filter: blur(120px); }
+:root[data-theme="day"] .stage .glow { opacity: .08; }
 
 .wrap { position: relative; z-index: 1; max-width: 1320px; margin: 0 auto; padding-inline: max(20px, env(safe-area-inset-left, 0px)) max(20px, env(safe-area-inset-right, 0px)); padding-block: max(14px, env(safe-area-inset-top, 0px)) 48px; }
 
@@ -283,9 +294,10 @@ input[type="range"] { height: 24px; padding: 0; border: 0; background: none; acc
 .lineup { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; }
 .slot { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 /* v0.8 inputs */
-.slot .hgrades { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12px; color: var(--muted, inherit); }
-.hgrades .g { display: inline-flex; gap: 4px; align-items: center; }
-.hgrades select { min-width: 46px; padding: 2px 4px; }
+.slot .hgrades { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px 8px; align-items: center; font-size: 12px; color: var(--muted, inherit); padding-bottom: 6px; }
+.hgrades .g { display: flex; flex-direction: column; gap: 3px; align-items: stretch; min-width: 0; }
+.hgrades select { width: 100%; min-width: 0; min-height: 32px; height: 32px; padding: 0 22px 0 10px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.hgrades .check { grid-column: 1 / -1; }
 .strip .sitctl { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; border-top: 1px solid var(--line, rgba(127,127,127,.25)); padding-top: 8px; }
 .sitctl .seg .t { margin-right: 6px; font-size: 12px; }
 .whyline { display: block; margin-bottom: 2px; }
@@ -374,7 +386,8 @@ input[type="range"] { height: 24px; padding: 0; border: 0; background: none; acc
 .usage { display: flex; align-items: center; gap: 10px; min-width: 150px; }
 .usage .track { flex: 1; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; min-width: 60px; }
 .usage .track i { display: block; height: 100%; background: var(--c); border-radius: 3px; }
-.usage small { color: var(--muted); font-size: 13px; }
+.usage > span:last-child { min-width: 72px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.usage small { color: var(--faint); font-size: 13px; margin-left: 4px; }
 .heat { margin-top: 14px; max-width: 340px; margin-inline: auto; }
 .heat svg { display: block; width: 100%; height: auto; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 12px; font-size: 13px; }
@@ -523,8 +536,8 @@ td.wrapcell .line { display: block; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root { --glass: rgba(14, 20, 29, 0.94); --glass-2: rgba(28, 38, 52, 0.96); }
-  :root[data-theme="day"] { --glass: rgba(250, 252, 255, 0.95); --glass-2: #ffffff; }
+  :root { --glass: rgba(30, 31, 34, 0.95); --glass-2: rgba(44, 45, 48, 0.96); }
+  :root[data-theme="day"] { --glass: rgba(255, 255, 255, 0.96); --glass-2: #ffffff; }
 }
 /* game day (Plan 5): the live count against the team's rule, and printouts (pitching log, sign card) */
 .cell .v small.rule { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0; margin-top: 2px; color: var(--ink-2, inherit); opacity: .85; }
@@ -545,7 +558,7 @@ td.wrapcell .line { display: block; }
 </style>
 
 <div class="stage" aria-hidden="true">
-  <div class="tower l"></div><div class="tower r"></div><div class="glow" id="glow"></div>
+  <div class="photo"></div><div class="tower l"></div><div class="tower r"></div><div class="glow" id="glow"></div>
   <svg viewBox="0 0 1400 760" fill="none" stroke="var(--field-line)" stroke-width="2">
     <path d="M700 740 L180 220 M700 740 L1220 220"/>
     <path d="M180 220 Q700 -120 1220 220"/>
@@ -1076,6 +1089,8 @@ const chip = (kind) => h("span", { class: `chip k-${kind}`, "aria-hidden": "true
 function applyTheme() {
   const day = S.theme === "day";
   if (day) document.documentElement.setAttribute("data-theme", "day"); else document.documentElement.removeAttribute("data-theme");
+  // the browser's own bar follows the screen: charcoal at night, the day screen's light ground in the sun
+  { const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", day ? "#e9e8e3" : "#121316"); }
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", day ? "#d7e0ea" : "#04070c");
   const c = S.view === "live" && G().call ? PCOLOR(kindOf(G().call.pitch)) : "var(--cb)";
   document.documentElement.style.setProperty("--call", c);
@@ -1091,7 +1106,7 @@ function render() {
   applyTheme();
 }
 
-const MARK = `<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11.5" fill="none" stroke="var(--ink)" stroke-width="1.6"/><path d="M6.5 5.5 Q10.5 13 6.5 20.5 M19.5 5.5 Q15.5 13 19.5 20.5" fill="none" stroke="var(--ink)" stroke-width="1.4" stroke-linecap="round" opacity=".55"/><circle cx="13" cy="13" r="3.2" fill="var(--call)"/></svg>`;
+const MARK = `<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#f4f4f1" stroke="var(--stroke-2)" stroke-width=".6"/><path d="M6.2 4.6c2.3 2 3.4 4.4 3.4 7.4s-1.1 5.4-3.4 7.4M17.8 4.6c-2.3 2-3.4 4.4-3.4 7.4s1.1 5.4 3.4 7.4" fill="none" stroke="#f04a3e" stroke-width="1.6" stroke-linecap="round"/></svg>`;
 
 function topBar() {
   const go = (v) => { S.view = v; if (v === "live") { S.sample = false; if (!G().call && !G().inningOver) makeCall(); } save(); render(); };
@@ -1129,7 +1144,7 @@ function titleRow(st) {
   const outs = ["nobody out", "one out", "two outs", "three outs"][Math.min(g.outs, 3)];
   const name = pitcherDef().name;
   const sub = st.status === "ok"
-    ? `${name} trusts all ${st.trusted.length} of his pitches. ${g.pc[pKey()] || 0} pitches so far.`
+    ? `${name} trusts all ${st.trusted.length} of his pitches. ${(n => n === 1 ? "1 pitch" : n + " pitches")(g.pc[pKey()] || 0)} so far.`
     : `${name}: ${st.reasons[0]}.`;
   const nextName = S.setup.staff.length > 1 ? S.setup.staff[(g.pitcher + 1) % S.setup.staff.length].name : null;
   return h("div", { class: "head" },
@@ -1465,7 +1480,7 @@ async function endGame() {
   if (!comp) { toast("New game started. First pitch is up."); return; }
   const pct = (x) => Math.round(100 * x) + "%";
   const used = comp.located >= 0.9 ? "locations will be used" : "under 90% located, so locations from it won't be used";
-  toast(`Game saved: ${comp.pitches} pitches, ${pct(comp.located)} located (${used}). New game is up.`);
+  toast(`Game saved: ${comp.pitches} ${comp.pitches === 1 ? "pitch" : "pitches"}, ${pct(comp.located)} located (${used}). New game is up.`);
   // an update must not reload the page while the game's learning is being saved: the shell waits while PC_BUSY
   if (typeof window !== "undefined") window.PC_BUSY = true;
   try { if (comp.learn) await learnAfterGame(comp.learn); }
@@ -1549,7 +1564,7 @@ function bullpenPanel() {
         h("div", { class: "pen-who" }, h("b", {}, pd.name), h("span", {}, `${pd.hand === "L" ? "Lefty" : "Righty"}, ${pd.pitches.length} pitches`)),
         h("span", { class: `pill ${state[0]}` }, state[1]),
         h("div", { class: "pen-load" }, h("div", { class: "load", title: `${pc} of about ${maxPc} pitches` }, h("i", { style: { width: `${Math.min(100, (100 * pc) / maxPc)}%` } })),
-          h("span", {}, `${pc} pitches, ${g.bf[String(i)] || 0} faced`)),
+          h("span", {}, `${pc} ${pc === 1 ? "pitch" : "pitches"}, ${g.bf[String(i)] || 0} faced`)),
         h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind), p.conf.toFixed(2)))),
         inNow ? h("span", { class: "pen-act muted" }, "On the mound")
           : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); const out = pitcherDef().id || null; g.pitcher = i; g.last = null; if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pd.id || null }); makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
@@ -1685,7 +1700,7 @@ function setupView() {
           SHAPE_OPTS[d.kind].map((s) => h("option", { value: s, selected: s === (d.shape || "") ? true : null }, s || "typical")))),
         h("td", {}, num(d, "velo", i, 1, 50, 105, "mph", "Velocity in mph")),
         measured ? [h("td", {}, num(d, "ivb", i, 0.5, -25, 25, "in", "Induced vertical break, inches")), h("td", {}, num(d, "hb", i, 0.5, -25, 25, "in", "Horizontal break, inches"))] : null,
-        h("td", {}, h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (pd.pitches.length > 1) { pd.pitches.splice(i, 1); changed(true); } } } }, "×")));
+        h("td", {}, h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (pd.pitches.length > 1) { if (typeof confirmTwice === "function" && !confirmTwice("rmsp:" + pi + ":" + i)) { toast(`Tap × again to remove ${d.name}`); return; } pd.pitches.splice(i, 1); changed(true); } } } }, "×")));
     });
     return h("div", { class: "staff-card" },
       h("div", { class: "staff-head" }, h("h3", {}, pd.name),

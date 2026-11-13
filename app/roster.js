@@ -376,8 +376,8 @@ function profilePanel(p) {
       f("Class of", "gradYear", { inputmode: "numeric", placeholder: "2028" }, "0 1 100px"),
       f("Fatigue point", "pitchLimit", { type: "number", min: 20, max: 140, inputmode: "numeric", placeholder: String(FATIGUE[S.setup.level]) }, "0 1 130px"),
       f("Pitch cap", "pitchCap", { type: "number", min: 30, max: 150, inputmode: "numeric", placeholder: "105" }, "0 1 110px"),
-      f("Time to plate, s", "ttp", { type: "number", min: 0.9, max: 2.5, step: 0.05, inputmode: "decimal", placeholder: "optional" }, "0 1 130px")),
-    h("label", { class: "f" }, "Notes", h("input", { value: p.notes || "", placeholder: "Anything a coach should know", on: { change: (e) => { p.notes = e.target.value; savePitcher(p, false); } } })),
+      f("Time to plate, s", "ttp", { type: "number", min: 0.9, max: 2.5, step: 0.05, inputmode: "decimal", placeholder: "1.35…" }, "0 1 130px")),
+    h("label", { class: "f" }, "Notes", h("input", { value: p.notes || "", placeholder: "Anything a coach should know…", on: { change: (e) => { p.notes = e.target.value; savePitcher(p, false); } } })),
     h("div", { class: "row-acts spread" },
       h("label", { class: "check" }, h("input", { type: "checkbox", checked: p.useLearned !== false ? true : null, on: { change: (e) => { p.useLearned = e.target.checked; savePitcher(p); } } }),
         "Use what it has learned about him in the calls"),
@@ -447,7 +447,7 @@ function arsenalEditor(p) {
         lab("Command", h("div", {}, num(d, "command", 0.5, 1, 5, "3", "Command, 1 to 5", "100%"), PCLearner.graded(d, "command") ? null : h("small", { class: "muted" }, "not graded: calls use 3")), "a-n"),
         lab("Usual feel", h("div", { class: "feel" }, h("input", { type: "range", min: 0.3, max: 0.95, step: 0.05, value: d.feel, "aria-label": "Usual bullpen feel",
           on: { input: (e) => { d.feel = +e.target.value; out.textContent = (+d.feel).toFixed(2); }, change: () => savePitcher(p, false) } }), out), "a-feel"),
-        h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (p.pitches.length > 1) { p.pitches.splice(i, 1); savePitcher(p); } } } }, "×")),
+        h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (p.pitches.length > 1) { if (!confirmTwice("rmp:" + p.id + ":" + d.id)) { toast(`Tap × again to remove ${d.name}`); return; } p.pitches.splice(i, 1); savePitcher(p); } } } }, "×")),
       h("div", { class: "ameas" },
         lab("Velo", num(d, "velo", 0.5, 40, 105, "mph", "Velocity, mph", "100%")), lab("V break", num(d, "ivb", 0.5, -30, 30, "in", "Induced vertical break, inches", "100%")),
         lab("H break", num(d, "hb", 0.5, -30, 30, "in", "Horizontal break toward his arm side, inches", "100%")), lab("Spin", num(d, "spin", 10, 500, 3500, "rpm", "Spin rate", "100%"))));
@@ -627,7 +627,7 @@ function catchersPanel() {
       h("input", { value: c.name, "aria-label": "Catcher name", on: { change: (e) => { c.name = e.target.value; dbPut("catchers", c); } } }),
       h("span", { class: "blk" }, "Blocking"),
       h("div", { class: "seg small", role: "group", "aria-label": "Blocking, 1 to 5" }, [1, 2, 3, 4, 5].map((v) => h("button", { "aria-pressed": String(+c.block === v), on: { click: () => { c.block = v; dbPut("catchers", c); if (S.setup.catcherId === c.id) packChanged("catcher"); G().call = null; render(); } } }, String(v)))),
-      h("button", { class: "x", "aria-label": `Remove ${c.name}`, on: { click: async () => { await DB.D.del("catchers", c.id); DB.catchers.delete(c.id); if (S.setup.catcherId === c.id) S.setup.catcherId = null; save(); render(); } } }, "×"))))
+      h("button", { class: "x", "aria-label": `Remove ${c.name}`, on: { click: async () => { if (!confirmTwice("rmc:" + c.id)) { toast(`Tap × again to remove ${c.name}`); return; } await DB.D.del("catchers", c.id); DB.catchers.delete(c.id); if (S.setup.catcherId === c.id) S.setup.catcherId = null; save(); render(); } } }, "×"))))
       : h("p", { class: "note" }, "None yet. Without one, every catcher blocks like an average one (3)."),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => { const c = await dbPut("catchers", { teamId: ourTeam().id, name: `Catcher ${DB.catchers.size + 1}`, block: 3 }); DB.catchers.set(c.id, c); render(); } } }, "Add a catcher")));
 }
@@ -704,7 +704,7 @@ function hittersEditor(t) {
         h("td", {}, stat(x, "pa", 1, "", "68px")), h("td", {}, stat(x, "avg", 0.001, ".280", "76px")), h("td", {}, stat(x, "obp", 0.001, ".380", "76px")), h("td", {}, stat(x, "slg", 0.001, ".420", "76px")),
         h("td", {}, stat(x, "k_pct", 0.1, "18", "68px")), h("td", {}, stat(x, "bb_pct", 0.1, "10", "68px")),
         h("td", { class: "wrapcell" }, know(x)),
-        h("td", {}, h("button", { class: "x", "aria-label": `Remove ${x.name}`, on: { click: async () => { await DB.D.del("hitters", x.id); DB.hitters.delete(x.id); render(); } } }, "×"))))
+        h("td", {}, h("button", { class: "x", "aria-label": `Remove ${x.name}`, on: { click: async () => { if (!confirmTwice("rmh:" + x.id)) { toast(`Tap × again to remove ${x.name}`); return; } await DB.D.del("hitters", x.id); DB.hitters.delete(x.id); render(); } } }, "×"))))
         : h("tr", { class: "empty-row" }, h("td", { colspan: "11" }, "No hitters yet. Add them here, import a sheet, or type names into the lineup in Setup."))))),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => { const nh = await dbPut("hitters", PCDB.newHitter(t.id, { name: `Hitter ${hs.length + 1}` })); DB.hitters.set(nh.id, nh); render(); } } }, "Add a hitter")),
     h("p", { class: "note" }, "Season stats give each hitter a small starting lean, measured against the level's average and weighted by plate appearances. What he does against your pitchers takes over from there and carries from game to game."));
