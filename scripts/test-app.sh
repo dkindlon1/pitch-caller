@@ -35,4 +35,6 @@ echo "smoke: passed"
 (cd app && ../$run v10_step3_e2e node v10_step3_e2e.js)   # v1.0 Step 3: chase balls, HBP, landing record, old-format games
 (cd app && ../$run v10_step5_e2e node v10_step5_e2e.js)
 (cd app && ../$run v11_step5_e2e node v11_step5_e2e.js)   # v1.1 Step 5: profile names, the stuff hint, the main fastball mark
+(cd app && ../$run v12_step4_e2e node v12_step4_e2e.js)   # v1.2 Step 4: bullpen mode, way-off direction, ph / bs / glove, fixes at cell resolution
+(cd app && ../$run v12_oldapp_test node v12_oldapp_test.js)   # v1.2 Step 4: a v1.1 build (14e0ad2) opens a v1.2 database
 (cd app && ../$run game_mix_e2e node game_mix_e2e.js)    # v1.1: whole games through the app keep a mix (FINDING_v1.0_game_mix_collapse)   # v1.0 Step 5: look from logged spot (#24), one owner of hitter memory (#7), seed centering (#20)

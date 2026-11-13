@@ -519,6 +519,9 @@ td.wrapcell .line { display: block; }
 .lc:hover { border-color: var(--ink); }
 .lc.on, .lwild.on { background: var(--call); border-color: var(--call); box-shadow: 0 0 14px color-mix(in srgb, var(--call) 60%, transparent); }
 .lwild.on { color: var(--ground); }
+.lways { display: grid; grid-template-columns: repeat(2, auto); gap: 6px; }   /* v1.2: way off, which way */
+.pen-log { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }   /* v1.2 bullpen mode */
+.pen-log span { padding: 3px 8px; border-radius: 999px; background: var(--glass-2); font-size: 13px; }
 @media (max-width: 640px) {
   .htable th:nth-child(4), .htable td:nth-child(4), .htable th:nth-child(9), .htable td:nth-child(9) { display: none; }
   .srow2 { grid-template-columns: 90px minmax(0, 1fr); } .srow2 .pas { grid-column: 1 / -1; }
@@ -7323,6 +7326,29 @@ const E = PitchEngine;
 
 // ------------------------------------------------------------------ vocabulary
 const LEVELS = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
+// v1.2: the 5x5 landing grid. A directional "Way off" is a cell one ring outside it (row or column -1 / 5).
+function cellZone(cell) {
+  if (!cell) return null;
+  const [r, c] = cell;
+  if (r < 0 || r > 4 || c < 0 || c > 4) return "noncomp";
+  return r === 0 || r === 4 || c === 0 || c === 4 ? "off" : r === 2 && c === 2 ? "heart" : "edge";
+}
+const inGrid = (cell) => !!cell && cell[0] >= 0 && cell[0] <= 4 && cell[1] >= 0 && cell[1] <= 4;
+const rowY = (r) => (r < 0 ? 4.4 : r > 4 ? 0.6 : E.v08.LOC_ROW_Y[r]);   // ft; way high / in the dirt past the grid's rows
+const WAY_DIRS = [[[2, -1], "←", "left"], [[-1, 2], "↑", "high"], [[5, 2], "↓", "in the dirt"], [[2, 5], "→", "right"]];
+// v1.2 (plan 2.1, Q1, Q2): the coach's miss lean per pitch, inches; "a little" 1.5, "a lot" 3
+const MISS_SIDE = [[-3, "Glove side, a lot"], [-1.5, "Glove side, a little"], [0, "Even side to side"], [1.5, "Arm side, a little"], [3, "Arm side, a lot"]];
+const MISS_HEIGHT = [[-3, "Down, a lot"], [-1.5, "Down, a little"], [0, "Even up and down"], [1.5, "Up, a little"], [3, "Up, a lot"]];
+const MISS_SPREAD = [[0.8, "Tighter than his command"], [1, "As his command says"], [1.25, "Wider than his command"]];
+const MISS_HINT = { SI: "Sinkers usually miss arm side.", CH: "Changeups usually miss arm side.", FB: "Four-seams often miss a little arm side.",
+  SL: "Sliders usually miss glove side.", FC: "Cutters often miss a little glove side.", CB: "Curves miss about evenly side to side." };
+function missFields(d, onChange) {
+  const sel = (key, opts, label, dflt) => h("select", { "aria-label": label, style: { minWidth: "150px" }, on: { change: (e) => {
+    const v = +e.target.value; if (v === dflt) delete d[key]; else d[key] = v; onChange(); } } },
+    opts.map(([v, t]) => h("option", { value: v, selected: (d[key] === undefined || d[key] === "" ? dflt : +d[key]) === v ? true : null }, t)));
+  return [sel("lean_x", MISS_SIDE, "Where his misses go, side to side", 0), sel("lean_z", MISS_HEIGHT, "Where his misses go, up and down", 0),
+    sel("spread", MISS_SPREAD, "How big his misses are", 1), h("small", { class: "muted", style: { display: "block" } }, MISS_HINT[d.kind] || "")];
+}
 // v1.2: a stored pitch's miss lean (inches, + = arm side / up) and spread, passed to the engine only when set, so a
 // pitch without them is exactly v1.1's
 function leanOf(d) {
@@ -7375,7 +7401,7 @@ const GLYPH = { ball: "•", cstrike: "✓", whiff: "✓", foul: "F", play: "X",
 
 function sampleSetup() {
   return {
-    level: "college_d3", inputs: 3,
+    level: "college_d3", inputs: 3, logLoc: true,   // v1.2 (Q3): location logging on by default for new setups
     staff: [
       { name: "Starter", hand: "R", slot: "three-quarter", height_ft: 6.1, pitches: [
         { name: "Fastball", kind: "FB", grade: 3, command: 4, feel: 0.80, shape: "ride", velo: 86 },
@@ -7649,7 +7675,8 @@ function record(res) {
   const shakenBefore = shakenNow.slice();
   shakenNow = [];
   if (pendingLoc && !res.loc) { res.loc = pendingLoc.z; res.locCell = pendingLoc.cell; }
-  pendingLoc = null;
+  if (pendingGlove && !res.glove) res.glove = pendingGlove;   // v1.2: where the catcher set up (optional)
+  pendingLoc = null; pendingGlove = null;
   const g = G(), call = g.call, ars = arsenal();
   const called = ars.find((x) => x.name === call.pitch);
   // a cross-up: the catcher called one pitch and he threw another. Everything tonight (confidence, "is it landing",
@@ -7663,7 +7690,9 @@ function record(res) {
   const sitNow = situation(), ci = DB.ready && pd0.id ? todayCheckin(pd0.id) : null;
   const choice = call.coach ? "coach" : shakenBefore.length ? "recall" : "engine";   // who chose it (spec 5.4)
   const expDmg = swingExpectation(p, call.quad, sitNow, ars);
-  const evBase = { pitcherId: pd0.id || null, pitchId: (pd0.pitches.find((x) => x.name === called.name) || {}).id, pitchName: called.name, kind: called.kind, quad: call.quad, hitterId,
+  const bh0 = batterDef().hand, bRight0 = bh0 === "S" ? (pd0.hand || "R") !== "R" : bh0 !== "L";
+  const evBase = { ph: pd0.hand || "R", bs: bRight0 ? "R" : "L",   // v1.2: the pitcher's hand and the side the batter hit from
+    pitcherId: pd0.id || null, pitchId: (pd0.pitches.find((x) => x.name === called.name) || {}).id, pitchName: called.name, kind: called.kind, quad: call.quad, hitterId,
     thrown: crossed ? crossed.name : undefined, thrownId: crossed ? (pd0.pitches.find((x) => x.name === crossed.name) || {}).id : undefined,
     catcherId: S.setup.catcherId || null, coach: !!call.coach, choice, prob: call.prob ?? null, shaken: shakenBefore.length ? shakenBefore : undefined,
     pcRaw: g.pc[pKey()] || 0, fatigueShift: fatigueShift(pd0), checkinId: ci ? ci.id : null, regs: (g.regs || {})[pKey()] || 0,
@@ -7689,7 +7718,7 @@ function record(res) {
     const pk = pKey(), uc = (g.usageCall[pk] = g.usageCall[pk] || {}), ck_ = call.pitch + "|" + call.quad;
     uc[uk] = uc[uk] || {}; uc[uk][ck_] = (uc[uk][ck_] || 0) + 1;
     // v1.0 #24: the look moves toward where the catcher logged the pitch (row of the grid), else toward the called target
-    const yLoc = res.locCell ? E.v08.LOC_ROW_Y[res.locCell[0]] : undefined;
+    const yLoc = res.locCell ? rowY(res.locCell[0]) : undefined;
     if (g.pa) { g.pa.look = E.v08.lookUpdate(g.pa.look || [E.v08.speedToday(p, sitNow), 2.5], p, call.quad, sitNow, yLoc); g.pa.cls[cls]++; }
     if (["ball", "cstrike", "hbp"].includes(res.result) && evBase.v08) g.takes.push([res.result === "cstrike" ? 1 : 0, evBase.v08.ump[0], evBase.v08.ump[1]]);
     if (res.result === "whiff" && res.read === "fooled" && g.pa) g.pa.fooled.push(cls);
@@ -7697,14 +7726,14 @@ function record(res) {
       const hardHit = res.result === "play" && ((S.setup.inputs >= 2 && res.contact) ? res.contact === "hard" : ["2B", "3B", "HR"].includes(res.out));
       // v1.0 #7: a hard hit is keyed on where the catcher logged it (as M2 was fitted), else on the called target
       const bh = batterDef().hand, bRight = bh === "S" ? pitcherDef().hand !== "R" : bh !== "L";
-      const spot = res.locCell ? E.v08.locQuad(res.locCell, p.kind, bRight) : call.quad;
+      const spot = inGrid(res.locCell) ? E.v08.locQuad(res.locCell, p.kind, bRight) : call.quad;
       const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + E.keyKind(p.kind) : hardHit ? "hard|" + E.keyKind(p.kind) + "|" + spot : null;   // v1.1: by fastball class
       if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1;
         if (mk.startsWith("succ|")) { const k2 = mk + "|" + spot; m[k2] = (m[k2] || 0) + 1; } }   // v1.0 Step 7: and where (the went-back rule)
       // v1.1 Step 3: this at-bat's pitches for the setup rules (engine Situation.pa_log): the pitch thrown, its target, the
       // result, where it landed (grid cell with the hitter's side, "way" for way off, null if not logged), contact (logging
       // level 2+) and the coach's read (level 3+, like the squared-up read)
-      const landed = res.locCell ? [res.locCell[0], res.locCell[1], bRight] : (res.loc === "noncomp" ? "way" : null);
+      const landed = inGrid(res.locCell) ? [res.locCell[0], res.locCell[1], bRight] : (res.loc === "noncomp" ? "way" : null);   // v1.2: a directional way-off cell is "way"
       (g.pa.log = g.pa.log || []).push([p.name, call.quad, res.result, landed, S.setup.inputs >= 2 ? (res.contact || null) : null,
         S.setup.inputs >= 3 ? (res.read || null) : null]);
     }
@@ -7764,10 +7793,11 @@ function record(res) {
   if (res.wp) text += res.wp === "pb" ? ", passed ball" : ", wild pitch";
   ensureGameRecord();
   const evId = logEvent(Object.assign(evBase, { gameId: g.dbId, n: g.pitchNo, ts: Date.now(), slot: slotIdx(), inning: g.inning, outs: g.outs, count: countTxt,
-    res: res.result, out: res.out, contact: res.contact, read: res.read, loc: res.loc, locCell: res.locCell, wp: res.wp || undefined, end: !!paEnd, paEnd, runs }));
+    res: res.result, out: res.out, contact: res.contact, read: res.read, loc: res.loc, locCell: res.locCell, wp: res.wp || undefined, end: !!paEnd, paEnd, runs,
+    glove: res.glove || undefined }));
   if (evId) g.evIds = (g.evIds || []).concat(evId);
   g.log.unshift({ n: g.pitchNo, count: countTxt, pitch: call.pitch, kind: called.kind, quad: call.quad, coach: !!call.coach, recall: choice === "recall", glyph, text,
-    slot: slotIdx(), inning: g.inning, end: !!paEnd, p: g.pitcher, pid: pd0.id, res: res.result, out: res.out, contact: res.contact, read: res.read, loc: res.loc,
+    slot: slotIdx(), inning: g.inning, end: !!paEnd, p: g.pitcher, pid: pd0.id, res: res.result, out: res.out, contact: res.contact, read: res.read, loc: res.loc, locCell: res.locCell || undefined,
     thrown: crossed ? crossed.name : undefined, wp: res.wp, evId, on: !!(evBase.sit.bases && evBase.sit.bases.some(Boolean)) });
   g.last = [p.name, call.quad, res.result === "whiff" ? "whiff" : res.result];
   if (res.result === "foul" && res.read === "back" && S.setup.inputs >= 3) g.last.push("back");   // v1.0 Step 7: he was on it (squared-up rule)
@@ -7838,7 +7868,7 @@ function undoLast() {
   // the game's identity isn't undone: its record id, its pack versions (a re-grade since then still stands) and the
   // running event order stay, so undoing the first pitch can't start a second game record, and no pack version repeats
   for (const k of ["dbId", "packId", "packV", "seq", "keepEvIds"]) if (before[k] !== undefined) S.game[k] = before[k];
-  pending = null; pickMode = false; pendingLoc = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
+  pending = null; pickMode = false; pendingLoc = null; pendingGlove = null; syncUndone(before, S.game); save(); render(); toast("Last entry undone");
 }
 function changePitcher() {
   const g = G(), n = S.setup.staff.length;
@@ -7893,7 +7923,7 @@ function render() {
   // the database didn't open (another tab holds an older version, or it failed): said on every screen, not just once
   const dbNote = typeof DB !== "undefined" && DB.failed ? h("p", { class: "pstat change", role: "alert", style: { margin: "8px 16px" } },
     DB.failed.code === "blocked" || /another tab/.test(DB.failed.message || "") ? DB.failed.message : "The database didn't open, so this game is kept on this page only. Reload to try again.") : null;
-  app.replaceChildren(...[topBar(), dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : liveView()].filter(Boolean));
+  app.replaceChildren(...[topBar(), dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : S.view === "bullpen" ? bullpenView() : liveView()].filter(Boolean));
   applyTheme();
 }
 
@@ -7908,6 +7938,7 @@ function topBar() {
       h("button", { "aria-current": S.view === "live" ? "page" : null, on: { click: () => go("live") } }, "Game"),
       h("button", { "aria-current": S.view === "data" ? "page" : null, on: { click: () => go("data") } }, "Data"),
       h("button", { "aria-current": S.view === "roster" ? "page" : null, on: { click: () => go("roster") } }, "Roster"),
+      h("button", { "aria-current": S.view === "bullpen" ? "page" : null, on: { click: () => go("bullpen") } }, "Bullpen"),
       h("button", { "aria-current": S.view === "setup" ? "page" : null, on: { click: () => go("setup") } }, "Setup")),
     h("div", { class: "end" },
       h("span", { class: "stamp" }, `${LEVELS[S.setup.level]}, logging ${TIERS[S.setup.inputs - 1].t.toLowerCase()}`),
@@ -8149,7 +8180,7 @@ function entryPanel() {
   }
   return h("section", { class: "panel glass", "aria-label": "Log the pitch" },
     h("div", { class: "panel-head" }, h("h2", {}, "What happened"), h("span", { class: "meta" }, `Pitch ${G().pitchNo + 1}`)),
-    S.setup.logLoc ? locPicker() : null, keys, detail, atBatList());
+    S.setup.logGlove ? glovePicker() : null, S.setup.logLoc ? locPicker() : null, keys, detail, atBatList());
 }
 
 // where the catcher caught it: the middle of the zone, its edges, just off, or way off (the engine's four landing zones)
@@ -8161,11 +8192,28 @@ function locPicker() {
     cells.push(h("button", { class: `lc z-${z}${on ? " on" : ""}`, "aria-pressed": String(!!on), "aria-label": `${{ heart: "Middle of the zone", edge: "Edge of the zone", off: "Just off the plate" }[z]}, row ${r + 1}, column ${c + 1}`,
       on: { click: () => { pendingLoc = on ? null : { z, cell: [r, c] }; render(); } } }));
   }
-  const wild = pendingLoc && pendingLoc.z === "noncomp";
+  // v1.2: "Way off" says which way (a cell one ring outside the grid), so the learner can read a miss lean from it
+  const wayOn = (wc) => pendingLoc && pendingLoc.cell && pendingLoc.cell[0] === wc[0] && pendingLoc.cell[1] === wc[1];
+  const wayName = pendingLoc && pendingLoc.cell && !inGrid(pendingLoc.cell) ? (WAY_DIRS.find(([wc]) => wayOn(wc)) || [, , ""])[2] : "";
   return h("div", { class: "locpick" },
-    h("div", { class: "lg-head" }, h("span", { class: "t" }, "Where it ended up"), h("span", { class: "muted" }, pendingLoc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[pendingLoc.z] : "catcher's view, optional")),
+    h("div", { class: "lg-head" }, h("span", { class: "t" }, "Where it ended up"), h("span", { class: "muted" }, pendingLoc ? ({ heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[pendingLoc.z] + (wayName ? `, ${wayName}` : "")) : "catcher's view, optional")),
     h("div", { class: "lg-body" }, h("div", { class: "lgrid", role: "group", "aria-label": "Where it ended up, catcher's view" }, cells),
-      h("button", { class: `btn pill lwild${wild ? " on" : ""}`, "aria-pressed": String(!!wild), on: { click: () => { pendingLoc = wild ? null : { z: "noncomp", cell: null }; render(); } } }, "Way off")));
+      h("div", { class: "lways", role: "group", "aria-label": "Way off, which way (catcher's view)" }, WAY_DIRS.map(([wc, arrow, name]) =>
+        h("button", { class: `btn pill lwild${wayOn(wc) ? " on" : ""}`, "aria-pressed": String(!!wayOn(wc)), "aria-label": `Way off, ${name}`, title: `Way off, ${name}`,
+          on: { click: () => { pendingLoc = wayOn(wc) ? null : { z: "noncomp", cell: wc.slice() }; render(); } } }, `Way off ${arrow}`)))));
+}
+
+// v1.2: where the catcher set up (optional): the target a miss lean is measured from, when it isn't the called spot
+function glovePicker() {
+  const cells = [];
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+    const on = pendingGlove && pendingGlove[0] === r && pendingGlove[1] === c;
+    cells.push(h("button", { class: `lc z-${cellZone([r, c])}${on ? " on" : ""}`, "aria-pressed": String(!!on), "aria-label": `Catcher set up at row ${r + 1}, column ${c + 1}`,
+      on: { click: () => { pendingGlove = on ? null : [r, c]; render(); } } }));
+  }
+  return h("div", { class: "locpick" },
+    h("div", { class: "lg-head" }, h("span", { class: "t" }, "Where the catcher set up"), h("span", { class: "muted" }, pendingGlove ? "set" : "catcher's view, optional")),
+    h("div", { class: "lg-body" }, h("div", { class: "lgrid", role: "group", "aria-label": "Where the catcher set up, catcher's view" }, cells)));
 }
 
 function atBatList() {
@@ -8208,14 +8256,22 @@ function fixEditor(l) {
   const set = async (k, v) => {
     const nv = l[k] === v ? undefined : v;
     l[k] = nv;
-    if (k === "loc") l.locCell = undefined;
-    if (l.evId) await editEvent(l.evId, k === "loc" ? { loc: nv ?? null, locCell: null } : { [k]: nv ?? null });
+    // v1.2: a corrected location keeps its cell when the cell agrees with it (a cell that contradicts it is cleared)
+    if (k === "loc") l.locCell = l.locCell && nv && cellZone(l.locCell) === nv ? l.locCell : undefined;
+    if (l.evId) await editEvent(l.evId, k === "loc" ? { loc: nv ?? null, locCell: l.locCell || null } : { [k]: nv ?? null });
+    save(); render();
+  };
+  // v1.2: or correct the cell itself (its zone follows; the same cell again clears both)
+  const setCell = async (cell) => {
+    l.locCell = cell || undefined; l.loc = cell ? cellZone(cell) : undefined;
+    if (l.evId) await editEvent(l.evId, { loc: l.loc ?? null, locCell: cell || null });
     save(); render();
   };
   const seg = (label, k, opts) => h("div", { class: "fixrow" }, h("span", { class: "t" }, label), h("div", { class: "seg" },
     opts.map(([v, t]) => h("button", { "aria-pressed": String(l[k] === v), on: { click: () => set(k, v) } }, t))));
   return h("tr", { class: "fix" }, h("td", { colspan: "8" }, h("div", { class: "fixbox" },
     seg("Where it ended up", "loc", [["heart", "Middle"], ["edge", "Edge"], ["off", "Just off"], ["noncomp", "Way off"]]),
+    S.setup.logLoc || l.locCell ? cellGrid("Or tap the cell", l.locCell || null, (c) => { setCell(c); }, true) : null,
     l.res === "play" ? seg("Contact", "contact", [["weak", "Weak"], ["solid", "Solid"], ["hard", "Hard"]]) : null,
     others.length ? seg("Crossed up? He threw", "thrown", others.map((d) => [d.name, d.name])) : null,
     ["ball", "whiff", "cstrike"].includes(l.res) && l.on !== false ? seg("Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]) : null,
@@ -8470,6 +8526,7 @@ var PORTAL = { msg: null, today: [] };
 const FATIGUE = { hs: 60, travel: 60, college_d3: 75, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
 const LOCZ = ["heart", "edge", "off", "noncomp"];
 let pendingLoc = null;
+let pendingGlove = null;   // v1.2: where the catcher set up (a 5x5 cell), when that's logged
 let saveWarned = false;
 
 function dbErr(e) { console.error(e); if (!saveWarned) { saveWarned = true; toast("Couldn't save to the database on this device"); } }
@@ -8596,6 +8653,72 @@ function learnCall(msg) {
 }
 const levelOf = () => S.setup.level;
 // learn from every pitch he's thrown, then serve one step toward it (spec 11). Serving steps once per new game only.
+// v1.2: what his logged cells say about a pitch's miss lean (a flag: the coach's setting is what the engine uses)
+function leanNote(pid, name) {
+  const m = pModel(pid), lm = m && m.leans && m.leans[name];
+  return lm && lm.flag && lm.flag.length ? h("small", { class: "muted", style: { display: "block" } }, lm.flag.join("; ")) : null;
+}
+
+// ------------------------------------------------------------------ v1.2 Step 4: bullpen charting (plan 2.6, L8)
+// Three taps a pitch: which pitch, where the catcher set up, where it ended up (a grid cell, or a way-off arrow). Saved as
+// a sessions doc (type "charted") next to TrackMan / Rapsodo sessions; it feeds only the miss-lean estimate (no game
+// state, no landing-today, no confidence). It carries source / n / byType so an older app lists it without trouble.
+let pen = { pid: null, pitch: null, glove: null, landed: null, radar: "", log: [] };
+function cellGrid(label, sel, pick, withWay) {   // a 5x5 catcher's-view grid (+ way-off arrows); bullpen mode and the fix editors
+  const cells = [];
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+    const on = sel && sel[0] === r && sel[1] === c;
+    cells.push(h("button", { class: `lc z-${cellZone([r, c])}${on ? " on" : ""}`, "aria-pressed": String(!!on), "aria-label": `${label}: row ${r + 1}, column ${c + 1}`,
+      on: { click: () => { pick(on ? null : [r, c]); render(); } } }));
+  }
+  const ways = withWay ? h("div", { class: "lways", role: "group", "aria-label": `${label}: way off, which way` }, WAY_DIRS.map(([wc, arrow, name]) => {
+    const on = sel && sel[0] === wc[0] && sel[1] === wc[1];
+    return h("button", { class: `btn pill lwild${on ? " on" : ""}`, "aria-pressed": String(!!on), "aria-label": `Way off, ${name}`, on: { click: () => { pick(on ? null : wc.slice()); render(); } } }, `Way off ${arrow}`);
+  })) : null;
+  return h("div", { class: "locpick" }, h("div", { class: "lg-head" }, h("span", { class: "t" }, label), h("span", { class: "muted" }, sel ? (inGrid(sel) ? cellZone(sel) : "way off") : "catcher's view")),
+    h("div", { class: "lg-body" }, h("div", { class: "lgrid", role: "group", "aria-label": label }, cells), ways));
+}
+function bullpenView() {
+  const ps = DB.ready ? rosterPitchers() : [];
+  const p = ps.find((x) => x.id === pen.pid) || null;
+  const logIt = () => {
+    if (!p || !pen.pitch || !pen.glove || !pen.landed) return;
+    const d = p.pitches.find((x) => x.name === pen.pitch);
+    pen.log.push({ pitch: pen.pitch, kind: d ? d.kind : "FB", glove: pen.glove, landed: pen.landed, radar: pen.radar === "" ? undefined : +pen.radar });
+    pen.landed = null; pen.radar = ""; render();
+  };
+  const save = async () => {
+    if (!p || !pen.log.length) return;
+    const by = {};
+    for (const x of pen.log) { const b = (by[x.pitch] = by[x.pitch] || { type: x.pitch, kind: x.kind, n: 0, velo: null, _v: [] }); b.n++; if (x.radar) b._v.push(x.radar); }
+    const byType = Object.values(by).map((b) => ({ type: b.type, kind: b.kind, n: b.n, velo: b._v.length ? Math.round(b._v.reduce((a, v) => a + v, 0) / b._v.length * 10) / 10 : null }));
+    const sess = await dbPut("sessions", { pitcherId: p.id, date: todayT(), type: "charted", source: "Charted bullpen", n: pen.log.length, byType, pitches: pen.log.slice() });
+    DB.sessions.set(p.id, [sess].concat(DB.sessions.get(p.id) || []));
+    pen.log = []; await relearnPitcher(p.id); render(); toast(`Saved ${sess.n} bullpen pitches for ${p.name}`);
+  };
+  if (!DB.ready) return h("main", {}, h("section", { class: "panel glass" }, h("h2", {}, "Bullpen"),
+    h("p", { class: "note" }, "Bullpen charting saves to your roster, so it needs the database. Set up your roster (Roster screen), then chart here.")));
+  const lm = p ? (pModel(p.id) || {}).leans || {} : {};
+  return h("main", {}, h("section", { class: "panel glass", "aria-label": "Bullpen charting" },
+    h("div", { class: "panel-head" }, h("h2", {}, "Bullpen"), h("span", { class: "meta" }, "Three taps a pitch: the pitch, where the catcher set up, where it ended up")),
+    h("div", { class: "seg", role: "group", "aria-label": "Pitcher" }, ps.map((x) => h("button", { "aria-pressed": String(pen.pid === x.id), on: { click: () => { if (pen.log.length && pen.pid !== x.id) { toast("Save or clear this session first"); return; } pen.pid = x.id; pen.pitch = null; render(); } } }, x.name))),
+    p ? [
+      h("div", { class: "seg", role: "group", "aria-label": "Pitch" }, (p.pitches || []).filter((d) => d.active !== false).map((d) =>
+        h("button", { "aria-pressed": String(pen.pitch === d.name), on: { click: () => { pen.pitch = d.name; render(); } } }, chip(d.kind, d.sign), d.name))),
+      h("div", { class: "lg-body" }, cellGrid("Where the catcher set up", pen.glove, (v) => { pen.glove = v; }, false),
+        cellGrid("Where it ended up", pen.landed, (v) => { pen.landed = v; }, true)),
+      h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: pen.radar, style: { width: "90px" },
+        on: { change: (e) => { pen.radar = e.target.value; } } })),
+      h("div", { class: "row-acts" },
+        h("button", { class: "btn primary", disabled: !(pen.pitch && pen.glove && pen.landed), on: { click: logIt } }, "Log pitch"),
+        h("button", { class: "btn", disabled: !pen.log.length, on: { click: () => { pen.log.pop(); render(); } } }, "Undo last"),
+        h("button", { class: "btn", disabled: !pen.log.length, on: { click: save } }, `Save session (${pen.log.length})`)),
+      h("p", { class: "note" }, "The catcher's spot stays set between pitches; tap a new one when he moves. Set up on both sides of the plate: each pitch's lean needs targets on both sides."),
+      pen.log.length ? h("div", { class: "pen-log" }, pen.log.slice(-12).map((x) => h("span", {}, `${x.pitch}: ${inGrid(x.landed) ? cellZone(x.landed) : "way off"}`))) : null,
+      Object.keys(lm).length ? h("div", {}, h("h3", {}, "What his logs say about his misses"), Object.entries(lm).map(([nm, x]) =>
+        h("p", { class: "note" }, `${nm}: ${x.flag.length ? x.flag.join("; ") : "no clear lean yet"} (side ${x.x.sides.join(" arm / ")} glove targets)`))) : null] : null));
+}
+
 async function relearnPitcher(pid) {
   const p0 = DB.pitchers.get(pid); if (!p0 || !DB.D) return null;
   const p = JSON.parse(JSON.stringify(p0));   // the record as it was when learning started (D3 compares against it)
@@ -8607,6 +8730,13 @@ async function relearnPitcher(pid) {
   try { r = await learnCall({ type: "pitcher", pitcher: p, events: evs, level: levelOf(), prev: was ? was.served : null }); }
   catch (e) { console.error(e); toast("Couldn't learn from his games just now; the calls keep using what they had"); return was || null; }
   const m = { id: "v2:" + pid, pitcherId: pid, profile: r.profile, served: r.served, at: Date.now() };
+  // v1.2 Step 3 / 4: each pitch's miss lean from his logged cells, games and charted bullpens (a flag until the gate admits it)
+  try {
+    const pens = (await DB.D.byIndex("sessions", "pitcherId", pid)).filter((x) => x.type === "charted" && !x.deletedAt);
+    const penEvs = pens.flatMap((x) => (x.pitches || []).map((y) => ({ pitchName: y.pitch, quad: null, glove: y.glove, locCell: y.landed,
+      ph: p.hand || "R", loc: cellZone(y.landed) })));
+    m.leans = PCLearner.leanModel(evs.concat(penEvs), { hand: p.hand || "R" });
+  } catch (e) { console.error(e); }
   // D3: the coach may have re-graded, answered a flag or switched learning off while the worker ran. The worker served
   // from the record as it was; serve again from the record as it is now (same games, same step), so his change stands.
   const now = DB.pitchers.get(pid);
@@ -8936,6 +9066,7 @@ function arsenalEditor(p) {
         FB_CLASS.includes(d.kind) ? lab("Main FB", h("input", { type: "radio", name: `main-${p.id}`, "aria-label": `${d.name} is his main fastball`, checked: mainFbName(p) === d.name ? true : null,
           title: "Every pitch's speed and shape is measured against his main fastball; if none is marked, the one he throws most",
           on: { change: () => { for (const x of p.pitches) delete x.main; d.main = true; savePitcher(p); } } }), "a-n") : null,
+        lab("Misses", h("div", {}, missFields(d, () => savePitcher(p)), leanNote(p.id, d.name)), "a-miss"),   // v1.2
         h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (p.pitches.length > 1) { if (!confirmTwice("rmp:" + p.id + ":" + d.id)) { toast(`Tap × again to remove ${d.name}`); return; } p.pitches.splice(i, 1); savePitcher(p); } } } }, "×")),
       h("div", { class: "ameas" },
         lab("Velo", num(d, "velo", 0.5, 40, 105, "mph", "Velocity, mph", "100%")), lab("V break", num(d, "ivb", 0.5, -30, 30, "in", "Induced vertical break, inches", "100%")),
@@ -9243,7 +9374,12 @@ function pastFixPanel() {
   const set = async (ev, k, v) => {
     const changes = k === "thrown" ? { thrown: ev.thrown === v ? null : v, thrownId: ev.thrown === v ? null : (((DB.pitchers.get(ev.pitcherId) || {}).pitches || []).find((d) => d.name === v) || {}).id || null }
       : { [k]: ev[k] === v ? null : v };
-    if (k === "loc") changes.locCell = null;
+    if (k === "loc") changes.locCell = ev.locCell && changes.loc && cellZone(ev.locCell) === changes.loc ? ev.locCell : null;   // v1.2: keep a cell that agrees
+    await editEvent(ev.id, changes); Object.assign(ev, changes); pastFix.touched.add(ev.pitcherId); render();
+  };
+  // v1.2: correct where it landed at cell resolution (the cell and its zone move together; tapping the same cell clears both)
+  const setCell = async (ev, cell) => {
+    const changes = cell ? { loc: cellZone(cell), locCell: cell } : { loc: null, locCell: null };
     await editEvent(ev.id, changes); Object.assign(ev, changes); pastFix.touched.add(ev.pitcherId); render();
   };
   const seg = (ev, label, k, opts) => h("div", { class: "fixrow" }, h("span", { class: "t" }, label), h("div", { class: "seg" },
@@ -9254,6 +9390,7 @@ function pastFixPanel() {
     return h("tr", { class: "fix" }, h("td", { colspan: "6" }, h("div", { class: "fixbox" },
       ok ? null : h("p", { class: "pstat change" }, "Learning couldn't read this pitch (its saved situation or arsenal is broken), so it's skipped. Fix what you can below, or leave it out."),
       seg(ev, "Where it ended up", "loc", [["heart", "Middle"], ["edge", "Edge"], ["off", "Just off"], ["noncomp", "Way off"]]),
+      cellGrid("Or tap the cell", ev.locCell || null, (c) => { setCell(ev, c); }, true),
       ev.res === "play" ? seg(ev, "Contact", "contact", [["weak", "Weak"], ["solid", "Solid"], ["hard", "Hard"]]) : null,
       others.length ? seg(ev, "Crossed up? He threw", "thrown", others.map((d) => [d.name, d.name])) : null,
       ["ball", "whiff", "cstrike"].includes(ev.res) ? seg(ev, "Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]) : null,
@@ -9993,6 +10130,7 @@ function setupView() {
           checked: mainFbName(pd) === d.name ? true : null, title: d.main ? "His main fastball (marked)" : "Mark as his main fastball (every pitch's shape is measured against it)",
           on: { change: () => { for (const x of pd.pitches) delete x.main; d.main = true; changed(true); } } }) : null),
         h("td", {}, num(d, "velo", i, 1, 50, 105, "mph", "Velocity in mph")),
+        h("td", {}, missFields(d, () => changed())),   // v1.2: where his misses go
         measured ? [h("td", {}, num(d, "ivb", i, 0.5, -25, 25, "in", "Induced vertical break, inches")), h("td", {}, num(d, "hb", i, 0.5, -25, 25, "in", "Horizontal break, inches"))] : null,
         h("td", {}, h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (pd.pitches.length > 1) { if (typeof confirmTwice === "function" && !confirmTwice("rmsp:" + pi + ":" + i)) { toast(`Tap × again to remove ${d.name}`); return; } pd.pitches.splice(i, 1); changed(true); } } } }, "×")));
     });
@@ -10007,7 +10145,7 @@ function setupView() {
         h("label", { class: "f", style: { width: "110px" } }, "Pitch cap", h("input", { id: `pcap${pi}`, type: "number", inputmode: "numeric", min: 30, max: 150, value: pd.pitchCap || "", placeholder: "105", on: { change: (e) => { pd.pitchCap = e.target.value === "" ? null : +e.target.value; changed(); } } })),
         h("label", { class: "f", style: { width: "130px" } }, "Time to plate, s", h("input", { id: `pttp${pi}`, type: "number", inputmode: "decimal", step: 0.05, min: 0.9, max: 2.5, value: pd.ttp || "", placeholder: "optional", on: { change: (e) => { pd.ttp = e.target.value === "" ? null : +e.target.value; changed(); } } }))),
       h("div", { class: "tbl-wrap" }, h("table", { class: "ptable" },
-        h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Main FB", "Velo"].map((t) => h("th", t === "Stuff" ? { title: "Compared with other pitches of this profile: a 3 sweeper is an average sweeper" } : {}, t)),
+        h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Main FB", "Velo", "Misses"].map((t) => h("th", t === "Stuff" ? { title: "Compared with other pitches of this profile: a 3 sweeper is an average sweeper" } : {}, t)),
           measured ? [h("th", {}, "V break"), h("th", {}, "H break")] : null, h("th", {}, ""))),
         h("tbody", {}, rows))),
       h("p", { class: "muted", style: { fontSize: "13px", margin: "6px 0" } }, "Stuff is compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper, a 5 is a plus one. Main FB is the fastball every pitch's speed and shape is measured against; if none is marked, the one he throws most."),
@@ -10036,7 +10174,9 @@ function setupView() {
         h("label", { class: "check" }, h("input", { type: "checkbox", checked: st.radar ? true : null, on: { change: (e) => { st.radar = e.target.checked; changed(); } } }), "Log radar readings (optional, per pitch)"))),
     row("What you'll log", "Pick what your charter can keep up with. Every option calls the game; more detail mostly helps it learn each hitter.", tierChoices,
       h("button", { class: "choice", "aria-pressed": String(!!st.logLoc), on: { click: () => { st.logLoc = !st.logLoc; changed(true); } } },
-        h("b", {}, "Also log where each pitch ended up"), h("span", {}, "One more tap on a small zone grid. It's what lets the app learn each pitcher's real command; results alone barely show it."))),
+        h("b", {}, "Also log where each pitch ended up"), h("span", {}, "One more tap on a small zone grid. It's what lets the app learn each pitcher's real command; results alone barely show it.")),
+      h("button", { class: "choice", "aria-pressed": String(!!st.logGlove), on: { click: () => { st.logGlove = !st.logGlove; changed(true); } } },
+        h("b", {}, "Also log where the catcher set up"), h("span", {}, "One more tap before the pitch, when his glove isn't on the called spot. It's what each pitcher's miss lean is measured from."))),
     DB.ready ? row("Game day", "On Wi-Fi before the game: syncs, checks the app opens with no signal and today's staff and opponent are on this iPad. Then call the game anywhere; it syncs once there's a signal.", prepPanel()) : null,
     DB.ready ? row("Pitch counts", "Your league's pitch-count rule: each pitcher's rest, the day he can pitch again, and a warning on the Game screen as he nears the limit.", pitchRulePanel()) : null,
     DB.ready ? row("Today's staff", "Who's available today. Pitchers, their arsenals, check-ins and what's been learned live on the Roster screen.", staffPick()) :

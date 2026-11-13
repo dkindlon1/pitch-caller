@@ -50,7 +50,7 @@ const server = http.createServer((req, res) => {
   const rowsAll = await page.locator(".log-tbl tbody tr").count();
   check(rows14 === 14 && rowsAll === 30, `the log shows the last 14, then all 30 (${rows14} -> ${rowsAll})`);
   await page.locator(".log-tbl tbody tr").nth(29).getByRole("button", { name: "Fix" }).click(); await wait();
-  await page.getByRole("button", { name: "Edge" }).click(); await wait(200);
+  await page.getByRole("button", { name: "Edge", exact: true }).click(); await wait(200);
   const first = await page.evaluate(async () => { const l = G().log[G().log.length - 1]; const ev = await DB.D.get("events", l.evId); return { n: l.n, loc: ev.loc, edits: (ev.edits || []).length }; });
   check(first.n === 1 && first.loc === "edge" && first.edits === 1, `the first pitch of the game (#${first.n}) is fixed in place, original kept (loc ${first.loc}, ${first.edits} edit)`);
 
@@ -159,7 +159,7 @@ const server = http.createServer((req, res) => {
   console.log("D11. A pitch of an earlier game, from the Data screen");
   await page.evaluate(({ g2 }) => pastFixLoad(g2), { g2 }); await wait(300);
   await page.locator(".log-tbl").last().locator("tbody tr").first().getByRole("button", { name: "Fix" }).click(); await wait();
-  await page.getByRole("button", { name: "Way off" }).click(); await wait(200);
+  await page.getByRole("button", { name: "Way off", exact: true }).click(); await wait(200);
   const fixed = await page.evaluate(async ({ g2 }) => { const ev = (await DB.D.byIndex("events", "gameId", g2)).filter(PCDB.isPitch).sort((a, b) => a.n - b.n)[0]; return { loc: ev.loc, edits: (ev.edits || []).length }; }, { g2 });
   check(fixed.loc === "noncomp" && fixed.edits >= 1, `fixed in place in the saved game, original kept (${fixed.loc}, ${fixed.edits} edit)`);
   await page.getByRole("button", { name: "Done: learn again" }).click(); await wait(1500);
