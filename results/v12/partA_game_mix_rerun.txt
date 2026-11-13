@@ -1,0 +1,48 @@
+1. Whole games through the app keep a mix (sample staff: fastball, slider, changeup; college D3)
+  ok   tier 2, seed 7: 82 pitches charted, no page errors
+  ok   tier 2, seed 7: 2+ pitches, none over 85% (Fastball 36, Slider 38, Changeup 8; top 46%)
+  ok   tier 2, seed 11: 82 pitches charted, no page errors
+  ok   tier 2, seed 11: 2+ pitches, none over 85% (Fastball 19, Changeup 31, Slider 32; top 39%)
+  ok   tier 2, seed 21: 82 pitches charted, no page errors
+  ok   tier 2, seed 21: 2+ pitches, none over 85% (Slider 25, Changeup 26, Fastball 31; top 38%)
+  ok   tier 2, seed 33: 82 pitches charted, no page errors
+  ok   tier 2, seed 33: 2+ pitches, none over 85% (Fastball 47, Slider 32, Changeup 3; top 57%)
+  ok   tier 2, seed 45: 82 pitches charted, no page errors
+  ok   tier 2, seed 45: 2+ pitches, none over 85% (Fastball 58, Changeup 9, Slider 15; top 71%)
+  ok   tier 2, seed 57: 82 pitches charted, no page errors
+  ok   tier 2, seed 57: 2+ pitches, none over 85% (Slider 52, Changeup 5, Fastball 25; top 63%)
+  ok   tier 2, seed 69: 82 pitches charted, no page errors
+  ok   tier 2, seed 69: 2+ pitches, none over 85% (Slider 30, Changeup 30, Fastball 22; top 37%)
+  ok   tier 2, seed 81: 82 pitches charted, no page errors
+  ok   tier 2, seed 81: 2+ pitches, none over 85% (Slider 26, Fastball 29, Changeup 27; top 35%)
+  ok   tier 2, seed 93: 82 pitches charted, no page errors
+  ok   tier 2, seed 93: 2+ pitches, none over 85% (Slider 46, Changeup 21, Fastball 15; top 56%)
+  ok   tier 2, seed 105: 82 pitches charted, no page errors
+  ok   tier 2, seed 105: 2+ pitches, none over 85% (Fastball 37, Slider 36, Changeup 9; top 45%)
+  ok   tier 3, seed 7: 82 pitches charted, no page errors
+  ok   tier 3, seed 7: 2+ pitches, none over 85% (Fastball 56, Slider 11, Changeup 15; top 68%)
+  ok   tier 3, seed 11: 82 pitches charted, no page errors
+  ok   tier 3, seed 11: 2+ pitches, none over 85% (Slider 20, Fastball 44, Changeup 18; top 54%)
+  ok   tier 3, seed 31337: 82 pitches charted, no page errors
+  ok   tier 3, seed 31337: 2+ pitches, none over 85% (Changeup 30, Fastball 40, Slider 12; top 49%)
+  ok   tier 3, seed 21: 82 pitches charted, no page errors
+  ok   tier 3, seed 21: 2+ pitches, none over 85% (Slider 42, Fastball 30, Changeup 10; top 51%)
+  ok   tier 3, seed 33: 82 pitches charted, no page errors
+  ok   tier 3, seed 33: 2+ pitches, none over 85% (Fastball 59, Slider 22, Changeup 1; top 72%)
+  ok   tier 3, seed 45: 82 pitches charted, no page errors
+  ok   tier 3, seed 45: 2+ pitches, none over 85% (Fastball 48, Slider 31, Changeup 3; top 59%)
+  ok   tier 3, seed 57: 82 pitches charted, no page errors
+  ok   tier 3, seed 57: 2+ pitches, none over 85% (Changeup 15, Slider 54, Fastball 13; top 66%)
+  ok   tier 3, seed 69: 82 pitches charted, no page errors
+  ok   tier 3, seed 69: 2+ pitches, none over 85% (Fastball 32, Changeup 29, Slider 21; top 39%)
+  ok   tier 3, seed 81: 82 pitches charted, no page errors
+  ok   tier 3, seed 81: 2+ pitches, none over 85% (Fastball 28, Slider 45, Changeup 9; top 55%)
+  ok   tier 3, seed 93: 82 pitches charted, no page errors
+  ok   tier 3, seed 93: 2+ pitches, none over 85% (Changeup 26, Fastball 25, Slider 31; top 38%)
+  ok   tier 3, every whiff 'Fooled' and every foul 'Straight back', seed 7: 82 pitches charted, no page errors
+  ok   tier 3, every whiff 'Fooled' and every foul 'Straight back', seed 7: 2+ pitches, none over 85% (Fastball 31, Changeup 22, Slider 29; top 38%)
+2. Over the 21 games
+  ok   average top pitch 51.2% (at most 60%)
+  FAIL 2 game(s) over 70% (at most 1)
+
+1 game-mix check(s) FAILED

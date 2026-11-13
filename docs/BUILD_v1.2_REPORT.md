@@ -132,7 +132,7 @@ Against Drew's D3 20-35%, Single-A's 34% (four-seam) / 41% (sinker) and MLB's 28
 
 | Check | Result |
 |---|---|
-| `app/v12_step4_e2e.js` | **34/34**: 40 charted pitches save, carry id + numeric updatedAt + byType, give an arm-side lean (3.27 in.) flagged and not served, survive a reload and a relearn, list on the roster; events carry ph / bs / glove / a [2,-1] cell; the at-bat log reads it as "way"; fixes at cell resolution; no page errors |
+| `app/v12_step4_e2e.js` | **35/35**: 40 charted pitches save, carry id + numeric updatedAt + byType, give an arm-side lean (3.27 in.) flagged and not served, survive a reload and a relearn, list on the roster; events carry ph / bs / glove / a [2,-1] cell; the at-bat log reads it as "way"; fixes at cell resolution; no page errors |
 | `app/v12_oldapp_test.js` (the v1.1 build, `git show 14e0ad2`, on the same IndexedDB) | **all pass**: opens without errors; keeps the lean fields; calls as v1.1; lists the charted session; shows the way-off pitch as way off; keeps calling a game in progress whose at-bat log holds "way". **Drops:** a v1.1 event has no ph / bs and its arsenal snapshot drops the lean; a v1.1 relearn rewrites the learned doc without the lean estimate (the next v1.2 relearn rebuilds it, checked) |
 | `supabase/test/v12_sessions_test.js` | **11/11**: the charted session (40 pitches, way-off cells), the event (ph / bs / glove / way-off cell) and the pitcher's lean fields push and pull back unchanged; a caller and the pitcher himself can save a charted session, a viewer can't; a doc without a numeric updatedAt is refused. No migration |
 | `scripts/test-sql.sh` | **exit 0** on local Postgres 16 with `PC_MIGRATIONS` pointing at a copy without Postgres 17's `MAINTAIN` revokes (the CI database is 17). app_sync_e2e 37 with the v1.2 build |
@@ -148,7 +148,7 @@ Against Drew's D3 20-35%, Single-A's 34% (four-seam) / 41% (sinker) and MLB's 28
 | **S2 / S4 / S5 resized** (`research_v12/step5_setups.py`) | smallest size lifting each fire row 5+ points: S2 0.004 (+9.8), S4 0.005 (+8.8), S5 0.004 (+6.7) |
 | **Change band** (`setup_game_check.py`, 10 games per staff, credits alone) | with all three: **17.2% / 22.2% / 18.0%**, outside 2-10% (S4 and S2 drove it). **S2 and S4 dropped** (size 0, code kept). With S5 alone: **4.9% / 3.5% / 10.0%** (default / sink_sweep / sink_sweep_cmd4; the last is at the edge, N2 is its main source) |
 | **S5's lean gate** | on S5's fire row the front-door sinker goes 6.7% to **0%** leaning toward the hitter, 13.7% leaning away |
-| `game_mix_e2e.js` | **21 games pass**; average top pitch 50.6%; one game over 70%. **Seed 31337: top pitch 46%** (83% at v1.1) |
+| `game_mix_e2e.js` | First run on the Step 5 engine: 21 games passed (average top pitch 50.6%, one game over 70%, seed 31337 46%, was 83%). **Later runs on the same frozen build fail the gate: 2 games over 70%** (see the Part A freeze) |
 | Read-through (v11 suite, 98 rows) | **92/98** (v1.1: 93/98). P1, P2, P3, P5, P7 failed before and still do. **New fail: S1f** (S1's payoff 38.9% against its 40% floor) |
 
 **Rows whose calls moved, for your regrading** (all pass except S1f):
@@ -159,9 +159,26 @@ Against Drew's D3 20-35%, Single-A's 34% (four-seam) / 41% (sinker) and MLB's 28
 - Under 1 point: B8, G4, J3. About 2 points: D10, N2f.
 
 ## Part A freeze (Nov 13)
-- `golden_v12a` frozen from the Step 5 engine (same 500 inputs as golden_v11). Against the old `golden_v11`, the Step 5
-  engine differs on 3,606 values, as expected from the ride-up, fade and setup changes.
-- Part A can ship alone from here (Q8). Open: S1f, the miss model's width (Step 2), and the proposed rows.
+- `golden_v12a` frozen from the Step 5 engine (same 500 inputs as golden_v11; Python made it, JS reproduces it). Against
+  the old `golden_v11`, the Step 5 engine differs on 3,606 values, as expected from the ride-up, fade and setup changes.
+- **`scripts/test-app.sh` on the freeze (`5a8efa9`): exit 1. Every suite passes except `game_mix_e2e` (43/44).**
+  - Passing: tests.py 45, explain 7, tests_v11 41, fast parity, tests_v12 21, lean parity, golden_v12a (JS), build,
+    web copies, web demo 2, learn 27, db 18, import 14, rails 31, schema 24, stage2 21, worlds 31, pitch_rules 41,
+    kinds 23, v11_fixture 8, lean 8, smoke, rules 20, v10 step 1/3/5 e2e 6/7/10, v11_step5 14, v12_step4 35, v12_oldapp 14.
+  - **game_mix_e2e: 2 games over 70% (the gate allows 1).** Average top pitch 51.0% (limit 60%), none over 85%.
+    Seed 31337: 46%.
+- **What the game-mix failure is:**
+  - Tier 2 seed 45 throws 71-72% fastballs in every run on the freeze. On the Step 4 build the same seed threw 46%.
+  - Zeroing S5 gives 50%, and zeroing the ride-up credit gives 39%. Putting the old fade end back does nothing (72%).
+  - So it's a knife-edge game: any small change re-routes it, which is the path-dependence v1.1 named.
+  - The second game over 70% (tier 3 seed 33, 72%) depends on the games before it in the same run (learning carries
+    across games). Run alone it's 59%, and it was 59% in my first full run.
+  - **With S5 also at 0, the full 21 games pass:** average 48.8%, one game over 70%
+    (`results/v12/partA_game_mix_S5_zero.txt`; run alongside another job, and the games are load-sensitive).
+  - I didn't change anything to pass it. Your call: drop S5 (then S2 / S4 / S5 are all off), accept 2 games over 70%,
+    or loosen the gate.
+- Part A can ship alone from here (Q8) once you decide the game-mix gate and S1f. Also open: the miss model's width
+  (Step 2) and the proposed rows.
 
 ## Part B: hitter tags (Nov 13; branch `v1.2-partb` on top of Part A)
 
