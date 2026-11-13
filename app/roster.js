@@ -454,7 +454,7 @@ function arsenalEditor(p) {
     return h("div", { class: `acard k-${d.kind}` },
       h("div", { class: "arow" },
         lab("Type", h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { "aria-label": "Pitch type", on: { change: (e) => {
-          const t = PCDB.PITCH_TYPES[e.target.value]; d.type = e.target.value; d.kind = t.kind; d.shape = t.shape; delete d.sign; savePitcher(p); } } },
+          const t = PCDB.PITCH_TYPES[e.target.value]; d.type = e.target.value; d.kind = t.kind; d.shape = t.shape; delete d.sign; if (!FB_CLASS.includes(d.kind)) delete d.main; savePitcher(p); } } },
           PTYPES.map((t) => h("option", { value: t, selected: t === (d.type || PCDB.DEFAULT_TYPE[d.kind]) ? true : null }, t)))), "a-type"),
         lab("His name for it", h("input", { value: d.name, on: { change: (e) => {
           const nn = e.target.value.trim() || d.type || KINDS[d.kind];
@@ -462,10 +462,14 @@ function arsenalEditor(p) {
           const si = S.setup.staff.indexOf(p); if (si >= 0) renamePitch(si, d.name, nn);
           d.name = nn; savePitcher(p); } } }), "a-name"),
         // D8: a blank grade is "not graded": the calls use the level average (3), nothing is flagged until it's set
-        lab("Stuff", h("div", {}, num(d, "grade", 0.5, 1, 5, "3", "Stuff, 1 to 5", "100%"), PCLearner.graded(d, "grade") ? null : h("small", { class: "muted" }, "not graded: calls use 3")), "a-n"),
+        lab("Stuff", h("div", {}, num(d, "grade", 0.5, 1, 5, "3", "Stuff, 1 to 5, compared with other pitches of this profile", "100%"), PCLearner.graded(d, "grade") ? null : h("small", { class: "muted" }, "not graded: calls use 3")), "a-n"),
         lab("Command", h("div", {}, num(d, "command", 0.5, 1, 5, "3", "Command, 1 to 5", "100%"), PCLearner.graded(d, "command") ? null : h("small", { class: "muted" }, "not graded: calls use 3")), "a-n"),
         lab("Usual feel", h("div", { class: "feel" }, h("input", { type: "range", min: 0.3, max: 0.95, step: 0.05, value: d.feel, "aria-label": "Usual bullpen feel",
           on: { input: (e) => { d.feel = +e.target.value; out.textContent = (+d.feel).toFixed(2); }, change: () => savePitcher(p, false) } }), out), "a-feel"),
+        // v1.1 Step 5 (plan 2.1): the main fastball mark, fastball-class pitches only, one per pitcher
+        FB_CLASS.includes(d.kind) ? lab("Main FB", h("input", { type: "radio", name: `main-${p.id}`, "aria-label": `${d.name} is his main fastball`, checked: mainFbName(p) === d.name ? true : null,
+          title: "Every pitch's speed and shape is measured against his main fastball; if none is marked, the one he throws most",
+          on: { change: () => { for (const x of p.pitches) delete x.main; d.main = true; savePitcher(p); } } }), "a-n") : null,
         h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (p.pitches.length > 1) { p.pitches.splice(i, 1); savePitcher(p); } } } }, "×")),
       h("div", { class: "ameas" },
         lab("Velo", num(d, "velo", 0.5, 40, 105, "mph", "Velocity, mph", "100%")), lab("V break", num(d, "ivb", 0.5, -30, 30, "in", "Induced vertical break, inches", "100%")),
@@ -480,7 +484,7 @@ function arsenalEditor(p) {
         while (p.pitches.some((x) => x.name === nm)) nm = `${t} ${k++}`;
         p.pitches.push(PCDB.newPitch(t, { name: nm })); savePitcher(p); } } },
         h("option", { value: "" }, "Add a pitch…"), PTYPES.map((t) => h("option", { value: t }, t)))),
-    h("p", { class: "note" }, "Horizontal break is positive toward his arm side. The engine models four families (fastball, slider, curve, change); cutters and sinkers are fastballs with their own shape, sweepers are sliders, splitters are changeups."));
+    h("p", { class: "note" }, "Horizontal break is positive toward his arm side. The engine models six kinds (four-seam, sinker, cutter, slider, curve, changeup), each with its shapes: sweepers are sliders, splitters are changeups. Stuff is compared with other pitches of the same type: a 3 sweeper is an average sweeper. Every pitch's speed and shape is measured against his main fastball."));
 }
 
 function checkinPanel(p) {
@@ -607,6 +611,7 @@ function importPanel(p) {
       if (!d) { d = PCDB.newPitch(t.type, { name: t.type === "Four-seam" ? "Fastball" : t.type }); if (p.pitches.some((x) => x.name === d.name)) d.name = `${t.type} ${p.pitches.length + 1}`; p.pitches.push(d); }
       d.type = t.type;
       for (const [k, v] of [["velo", t.velo], ["ivb", t.ivb], ["hb", t.hb], ["spin", t.spin]]) if (v !== null) d[k] = v;
+      if (t.tag !== null && t.tag !== undefined && E.SHAPE_TAGS[d.kind] && E.SHAPE_TAGS[d.kind].includes(t.tag)) d.shape = t.tag;   // v1.1 Step 5: measured -> its tag
       if (t.releaseOffset) d.relOff = t.releaseOffset;
     }
     savePitcher(p, false);
@@ -618,20 +623,21 @@ function importPanel(p) {
     h("div", { class: "panel-head" }, h("h2", {}, "TrackMan or Rapsodo"),
       h("label", { class: "btn pill file" }, "Load a session file", h("input", { type: "file", accept: ".csv,text/csv,.txt", on: { change: (e) => {
         const f = e.target.files[0]; if (!f) return;
-        f.text().then((txt) => { try { importPreview = { pid: p.id, file: f.name, r: PCImport.parse(txt, { hand: p.hand, pitcherName: p.name }) }; } catch (err) { importPreview = { pid: p.id, file: f.name, error: err.message }; } render(); });
+        f.text().then((txt) => { try { importPreview = { pid: p.id, file: f.name, r: PCImport.parse(txt, { hand: p.hand, pitcherName: p.name, tagFor: E.tagFor, level: S.setup.level }) }; } catch (err) { importPreview = { pid: p.id, file: f.name, error: err.message }; } render(); });
       } } }))),
     P && P.error ? h("p", { class: "pstat change" }, P.error) : null,
     P && P.r ? h("div", { class: "imp" },
       h("p", { class: "note" }, `${P.file}: ${P.r.n} pitches, read as ${P.r.source}.`),
       h("div", { class: "tbl-wrap" }, h("table", {},
-        h("thead", {}, h("tr", {}, ["Pitch", "Thrown", "Velo", "Top", "V break", "H break", "Spin", "In zone", "Command hint"].map((t, i) => h("th", { class: i ? "num" : "" }, t)))),
+        h("thead", {}, h("tr", {}, ["Pitch", "Thrown", "Velo", "Top", "V break", "H break", "Spin", "Shape", "In zone", "Command hint"].map((t, i) => h("th", { class: i && t !== "Shape" ? "num" : "" }, t)))),
         h("tbody", {}, P.r.byType.map((t) => h("tr", { class: `k-${t.kind}` },
           h("td", {}, h("span", { class: "pname" }, chip(t.kind), t.type)), h("td", { class: "num" }, String(t.n)), h("td", { class: "num" }, fmt(t.velo)), h("td", { class: "num" }, fmt(t.veloMax)),
           h("td", { class: "num" }, fmt(t.ivb)), h("td", { class: "num" }, fmt(t.hb)), h("td", { class: "num" }, t.spin ?? "–"),
+          h("td", {}, t.tag === null || t.tag === undefined ? "–" : profileLabel(t.kind, t.tag)),
           h("td", { class: "num" }, t.zonePct === null ? "–" : pct(t.zonePct)), h("td", { class: "num" }, t.commandHint ?? "–")))))),
       P.r.warnings.length ? h("ul", { class: "warns" }, P.r.warnings.map((w) => h("li", {}, w))) : null,
       P.r.unused.length ? h("p", { class: "note" }, `Columns not used: ${P.r.unused.slice(0, 12).join(", ")}${P.r.unused.length > 12 ? "…" : ""}`) : null,
-      h("div", { class: "row-acts" }, h("button", { class: "btn primary", on: { click: apply } }, "Apply velo, break and spin to his arsenal"), h("button", { class: "btn", on: { click: () => { importPreview = null; render(); } } }, "Cancel")),
+      h("div", { class: "row-acts" }, h("button", { class: "btn primary", on: { click: apply } }, "Apply velo, break, spin and shape to his arsenal"), h("button", { class: "btn", on: { click: () => { importPreview = null; render(); } } }, "Cancel")),
       h("p", { class: "note" }, "Command hint is a rough read of his bullpen zone rate (15+ located pitches); it isn't applied. Set command yourself, or let the games teach it.")) : null,
     !P ? h("p", { class: "note" }, "A CSV export from either system. His pitches are pulled out by name, averaged by pitch type, and fill in velo, break, spin and release point. Release points feed the engine's tunneling once you log measured break (Setup).") : null,
     sessions && sessions.length ? h("div", { class: "sess" }, h("span", { class: "t" }, "Sessions"),

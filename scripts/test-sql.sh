@@ -14,3 +14,4 @@ $run sync_auth_test     node app/sync_auth_test.js
 $run app_sync_e2e       node supabase/test/app_sync_e2e.js
 $run rls_matrix_test    node supabase/test/rls_matrix_test.js
 $run waitlist_test      node supabase/test/waitlist_test.js
+$run v11_kinds_test     node supabase/test/v11_kinds_test.js   # v1.1 Step 5: six kinds and v1.1 tags in the uploads tables

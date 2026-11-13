@@ -65,5 +65,27 @@ console.log("5. Opponent hitters sheet");
   check(hs2[0].stats.k_pct === 22 && hs2[0].stats.bb_pct === 9, "rates left alone");
 }
 
+console.log("v1.1 Step 5. Measured pitch types get their profile tag from the thresholds (the engine's tagFor)");
+{
+  const E = require("./engine.js"); E.init(require("./engine_data.json"));
+  const r0 = I.parse(trackman(1), { hand: "R" });
+  check(r0.byType.every((t) => t.tag === null), "without the engine's tagFor, no tag (import.js stays engine-free)");
+  const r = I.parse(trackman(1), { hand: "R", tagFor: E.tagFor, level: "college_d3" });
+  const tg = Object.fromEntries(r.byType.map((t) => [t.type, t.tag]));
+  // each tag must be the one the engine gives for those averages against his most-thrown fastball-class pitch
+  const fb = r.byType.find((t) => t.type === "Four-seam");
+  const want = Object.fromEntries(r.byType.map((t) => [t.type, E.tagFor(t.kind, t.ivb, t.hb, t.velo, fb.velo, fb.ivb, fb.hb, "college_d3", t.type)]));
+  check(JSON.stringify(tg) === JSON.stringify(want) && r.byType.every((t) => E.SHAPE_TAGS[t.kind].includes(t.tag)),
+    `tags are the engine's and valid for their kind (${Object.entries(tg).map(([k, v]) => `${k} ${v || "typical"}`).join(", ")})`);
+  // a sweeper and a splitter keep their names; a hard, short cutter 2 mph off reads as hard
+  const head = "Pitcher,PitcherThrows,TaggedPitchType,RelSpeed,InducedVertBreak,HorzBreak";
+  const rows = [head];
+  const add = (t, v, ivb, hb, n) => { for (let i = 0; i < n; i++) rows.push(["Kindlon", "Right", t, v + (i % 3) * 0.2, ivb, hb].join(",")); };
+  add("Fastball", 90, 16, 9, 20); add("Sweeper", 79, 1, -15, 10); add("Splitter", 82, 2, 10, 8); add("Cutter", 88, 13, -2, 8);
+  const r2 = I.parse(rows.join("\n"), { hand: "R", tagFor: E.tagFor, level: "college_d1" });
+  const t2 = Object.fromEntries(r2.byType.map((t) => [t.type, t.tag]));
+  check(t2.Sweeper === "sweeper" && t2.Splitter === "split" && t2.Cutter === "hard", `named types keep their profile; the short cutter reads hard (${JSON.stringify(t2)})`);
+}
+
 console.log(fails ? `\n${fails} check(s) failed` : "\nall import checks passed");
 process.exit(fails ? 1 : 0);

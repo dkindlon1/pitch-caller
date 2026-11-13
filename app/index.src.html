@@ -594,6 +594,29 @@ const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };
 const KCOLOR = { FB: "var(--fb)", SI: "var(--si)", FC: "var(--fc)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
 const SHAPE_OPTS = { FB: ["rides", "runs", "cuts", "straight", ""], SI: ["run", "drop", "two-seam", ""], FC: ["hard", "big", "ride", ""],
   SL: ["gyro", "tight", "sweeper", "slurve", ""], CB: ["12-6", "sweeping", "power", "slow", ""], CH: ["fade", "drop", "split", "firm", ""] };
+// v1.1 Step 5: the profile names the coach sees (the stored value stays the engine's tag; plan 2.2 / research section 1)
+const PROFILE_LABEL = {
+  FB: { rides: "Rides (high ride)", runs: "Runs (ride + run)", cuts: "Cuts (natural cut)", straight: "Straight (dead zone)", "": "Typical" },
+  SI: { run: "Run (heavy run)", drop: "Drop (heavy sink)", "two-seam": "Two-seam (some ride)", "": "Typical" },
+  FC: { hard: "Hard / short", big: "Big (slutter)", ride: "Ride", "": "Typical" },
+  SL: { gyro: "Gyro (little sweep)", tight: "Tight", sweeper: "Sweeper", slurve: "Slurve", "": "Typical" },
+  CB: { "12-6": "12-6", sweeping: "Sweeping", power: "Power / knuckle", slow: "Slow / loopy", "": "Typical" },
+  CH: { fade: "Fade", drop: "Drop", split: "Split", firm: "Firm (little speed off)", "": "Typical" } };
+const profileLabel = (kind, tag) => (PROFILE_LABEL[kind] || {})[tag || ""] || tag || "Typical";
+const FB_CLASS = ["FB", "SI", "FC"];
+// v1.1 Step 5 (plan 2.1): his main fastball, which every pitch's shape is measured against. The coach's mark; else the
+// fastball-class pitch he has thrown most in his records (the learner's counts); else none, and the engine takes the
+// first fastball-class pitch.
+function mainFbName(pd) {
+  const act = pd.pitches.filter((d) => d.active !== false && FB_CLASS.includes(d.kind));
+  const marked = act.find((d) => d.main);
+  if (marked) return marked.name;
+  const m = DB.ready && pd.id ? pModel(pd.id) : null, prof = m && m.profile && m.profile.pitches;
+  if (!prof || act.length < 2) return null;
+  let best = null, bn = 0;
+  for (const d of act) { const L = prof[d.id || d.name], n = L ? +L.n || 0 : 0; if (n > bn) { bn = n; best = d.name; } }
+  return best;
+}
 const SLOT_OPTS = ["over the top", "high three-quarter", "three-quarter", "low three-quarter", "sidearm", "submarine"];
 const LOC = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
 const GLYPH = { ball: "•", cstrike: "✓", whiff: "✓", foul: "F", play: "X", hbp: "H" };
@@ -666,6 +689,7 @@ function arsenal() {
   // what's been learned (learner v2), as served: one step a game toward it, never more than 1.0 from his grade
   const model = DB.ready && pd.id && pd.useLearned !== false ? pModel(pd.id) : null;
   const ctx = { same_side: sameSide(), balls: g.balls, strikes: g.strikes };
+  const mainName = mainFbName(pd);
   return pd.pitches.filter((d) => d.active !== false).map((d) => {
     const c = g.conf[pKey()][d.name];
     const feel = (ci && PCLearn.checkinFeel(ci, d.id)) ?? +d.feel;
@@ -677,13 +701,14 @@ function arsenal() {
     // v1.0 Step 3: the strike rate is always recomputed on the engine's own scale (a stored served value may predate it),
     // with the average pitcher's rate beside it for the confidence scaling
     const adj = sv && sv.learned ? { grade: fin.grade, command: fin.command, traits: sv.traits && Object.keys(sv.traits).length ? sv.traits : null,
-      strike_rate: PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level),
-      strike_ref: PCLearner.strikeRef(E, { name: d.name, kind: d.kind, shape: d.shape, velo: d.velo }, S.setup.level) }
+      strike_rate: PCLearner.strikeRate(E, { name: d.name, kind: d.kind, shape: d.shape, type: d.type, velo: d.velo, command: fin.command, grade: fin.grade, traits: sv.traits }, S.setup.level),
+      strike_ref: PCLearner.strikeRef(E, { name: d.name, kind: d.kind, shape: d.shape, type: d.type, velo: d.velo }, S.setup.level) }
       : { grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), traits: null, strike_rate: null, strike_ref: null };
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
     return E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
-      ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0] });
+      ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0],
+      ...(d.name === mainName ? { main: true } : {}) });   // v1.1 Step 5: set only when true, so unmarked snapshots don't change
   });
 }
 // pitches to add to his count so the engine's fatigue point lands on his own: his set limit, then today's check-in
@@ -1517,9 +1542,10 @@ function dataRows() {
 }
 
 function arsenalFor(idx) {
-  const pd = S.setup.staff[idx], g = G(), conf = (g.conf || {})[keyOf(idx)] || {};
+  const pd = S.setup.staff[idx], g = G(), conf = (g.conf || {})[keyOf(idx)] || {}, mainName = mainFbName(pd);
   return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
-    base_conf: +d.feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1, ivb: null, hb: null }));
+    base_conf: +d.feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1, ivb: null, hb: null,
+    ...(d.name === mainName ? { main: true } : {}) }));
 }
 
 function dataView() {
@@ -1700,15 +1726,19 @@ function setupView() {
       return h("tr", {},
         h("td", {}, h("input", { id: `p${pi}-${i}-name`, name: `p${pi}-${i}-name`, autocomplete: "off", value: d.name, "aria-label": "Pitch name", style: { minWidth: "120px" },
           on: { change: (e) => { const nn = e.target.value.trim() || KINDS[d.kind]; renamePitch(pi, d.name, nn); d.name = nn; changed(true); } } })),
-        h("td", {}, h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; delete d.sign; changed(true); } } },
+        h("td", {}, h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; delete d.sign; if (!FB_CLASS.includes(d.kind)) delete d.main; changed(true); } } },
           Object.entries(KINDS).map(([k, v]) => h("option", { value: k, selected: k === d.kind ? true : null }, `${SIGN[k]}  ${v}`))))),
         // D8: a blank grade is "not graded": the calls use the level average (3) and nothing is flagged until he sets it
-        ...["grade", "command"].map((k) => h("td", {}, num(d, k, i, 1, 1, 5, "3", k === "grade" ? "Stuff, 1 to 5" : "Command, 1 to 5"),
+        ...["grade", "command"].map((k) => h("td", {}, num(d, k, i, 1, 1, 5, "3", k === "grade" ? "Stuff, 1 to 5, compared with other pitches of this profile" : "Command, 1 to 5"),
           PCLearner.graded(d, k) ? null : h("small", { class: "muted", style: { display: "block" } }, "not graded: calls use 3"))),
         h("td", {}, h("div", { class: "feel" }, h("input", { id: `p${pi}-${i}-feel`, type: "range", min: 0.3, max: 0.95, step: 0.05, value: d.feel, "aria-label": "Bullpen feel",
           on: { input: (e) => { d.feel = +e.target.value; out.textContent = (+d.feel).toFixed(2); }, change: () => changed() } }), out)),
         h("td", {}, h("select", { id: `p${pi}-${i}-shape`, "aria-label": "Shape", style: { minWidth: "110px" }, on: { change: (e) => { d.shape = e.target.value; changed(); } } },
-          SHAPE_OPTS[d.kind].map((s) => h("option", { value: s, selected: s === (d.shape || "") ? true : null }, s || "typical")))),
+          SHAPE_OPTS[d.kind].map((s) => h("option", { value: s, selected: s === (d.shape || "") ? true : null }, profileLabel(d.kind, s))))),
+        // v1.1 Step 5: the main fastball mark (fastball-class pitches only; one per pitcher)
+        h("td", {}, FB_CLASS.includes(d.kind) ? h("input", { id: `p${pi}-${i}-main`, type: "radio", name: `p${pi}-main`, "aria-label": `${d.name} is his main fastball`,
+          checked: mainFbName(pd) === d.name ? true : null, title: d.main ? "His main fastball (marked)" : "Mark as his main fastball (every pitch's shape is measured against it)",
+          on: { change: () => { for (const x of pd.pitches) delete x.main; d.main = true; changed(true); } } }) : null),
         h("td", {}, num(d, "velo", i, 1, 50, 105, "mph", "Velocity in mph")),
         measured ? [h("td", {}, num(d, "ivb", i, 0.5, -25, 25, "in", "Induced vertical break, inches")), h("td", {}, num(d, "hb", i, 0.5, -25, 25, "in", "Horizontal break, inches"))] : null,
         h("td", {}, h("button", { class: "x", "aria-label": `Remove ${d.name}`, on: { click: () => { if (pd.pitches.length > 1) { pd.pitches.splice(i, 1); changed(true); } } } }, "×")));
@@ -1724,9 +1754,10 @@ function setupView() {
         h("label", { class: "f", style: { width: "110px" } }, "Pitch cap", h("input", { id: `pcap${pi}`, type: "number", inputmode: "numeric", min: 30, max: 150, value: pd.pitchCap || "", placeholder: "105", on: { change: (e) => { pd.pitchCap = e.target.value === "" ? null : +e.target.value; changed(); } } })),
         h("label", { class: "f", style: { width: "130px" } }, "Time to plate, s", h("input", { id: `pttp${pi}`, type: "number", inputmode: "decimal", step: 0.05, min: 0.9, max: 2.5, value: pd.ttp || "", placeholder: "optional", on: { change: (e) => { pd.ttp = e.target.value === "" ? null : +e.target.value; changed(); } } }))),
       h("div", { class: "tbl-wrap" }, h("table", { class: "ptable" },
-        h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Velo"].map((t) => h("th", {}, t)),
+        h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Main FB", "Velo"].map((t) => h("th", t === "Stuff" ? { title: "Compared with other pitches of this profile: a 3 sweeper is an average sweeper" } : {}, t)),
           measured ? [h("th", {}, "V break"), h("th", {}, "H break")] : null, h("th", {}, ""))),
         h("tbody", {}, rows))),
+      h("p", { class: "muted", style: { fontSize: "13px", margin: "6px 0" } }, "Stuff is compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper, a 5 is a plus one. Main FB is the fastball every pitch's speed and shape is measured against; if none is marked, the one he throws most."),
       h("div", {}, h("button", { class: "btn", on: { click: () => { pd.pitches.push({ name: uniqueName(pd, "Changeup"), kind: "CH", grade: 3, command: 3, feel: 0.6, shape: "fade", velo: "" }); changed(true); } } }, "Add a pitch")));
   });
 

@@ -77,6 +77,9 @@ same = (J["kinds"] == list(e.KINDS) and {k: tuple(v) for k, v in J["byType"].ite
         and {k: tuple(v) for k, v in J["tags"].items()} == e.SHAPE_TAGS
         and {k: (v["kind"], v["shape"]) for k, v in J["types"].items()} == e.MIGRATE_BY_TYPE)
 check("one table: engine.py, app/engine.js and the app's PITCH_TYPES (db.js) hold the same migration table and tags", same)
+# v1.1 Step 5: and the database's copy (supabase/migrations/20261115000000_v11_kinds.sql, generated from engine.py)
+sq = subprocess.run([sys.executable, "supabase/gen_v11_kinds_sql.py", "--check"], cwd=HERE, capture_output=True, text=True)
+check("one table: the Supabase migration's pc_migrate_pitch / pc_shape_ok are generated from engine.py and match it", sq.returncode == 0, sq.stdout.strip())
 
 # ------------------------------------------------------------------ 2. exactly v1.0's calls
 LEVELS = ["hs", "college_d3", "college_d1", "mlb"]

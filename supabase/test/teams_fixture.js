@@ -7,7 +7,8 @@ const fs = require("fs"), path = require("path");
 
 async function applyAll(su) {
   await su.query(fs.readFileSync(path.join(__dirname, "auth_stub.sql"), "utf8"));
-  const dir = path.join(__dirname, "../migrations");
+  // PC_MIGRATIONS: a local copy of the migrations (e.g. without Postgres 17's MAINTAIN grants, to run on 16); CI unset
+  const dir = process.env.PC_MIGRATIONS || path.join(__dirname, "../migrations");
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".sql")).sort()) await su.query(fs.readFileSync(path.join(dir, f), "utf8"));
 }
 

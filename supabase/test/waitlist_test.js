@@ -21,7 +21,7 @@ const dbUrl = (name) => { const u = new URL(BASE); u.pathname = "/" + name; retu
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
     alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
     alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;`);
-  const dir = path.join(__dirname, "../migrations");
+  const dir = process.env.PC_MIGRATIONS || path.join(__dirname, "../migrations");   // PC_MIGRATIONS: a local copy (see teams_fixture.js)
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".sql")).sort()) await su.query(fs.readFileSync(path.join(dir, f), "utf8"));
 
   const as = async (role, sql, args = []) => {

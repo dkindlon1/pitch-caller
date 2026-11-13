@@ -178,6 +178,14 @@
       t.releaseOffset = fb && t.relH !== null && t.relS !== null ? [Math.round((t.relS - fb.relS) * 12 * 10) / 10, Math.round((t.relH - fb.relH) * 12 * 10) / 10] : null;
       t.relH = t.relH === null ? null : Math.round(t.relH * 100) / 100; t.relS = t.relS === null ? null : Math.round(t.relS * 100) / 100;
     }
+    // v1.1 Step 5 (plan 2.2): each measured pitch type's profile tag from the thresholds (opts.tagFor = the engine's tagFor;
+    // this file stays engine-free), measured against his most-thrown fastball-class pitch in the file. A type with a
+    // profile name (Sweeper, Splitter, ...) keeps it. null when the numbers aren't there.
+    const mfb = byType.find((t) => ["FB", "SI", "FC"].includes(t.kind) && t.velo !== null && t.ivb !== null && t.hb !== null);
+    for (const t of byType) {
+      t.tag = typeof opts.tagFor === "function" && t.velo !== null && t.ivb !== null && t.hb !== null
+        ? opts.tagFor(t.kind, t.ivb, t.hb, t.velo, mfb ? mfb.velo : t.velo, mfb ? mfb.ivb : t.ivb, mfb ? mfb.hb : t.hb, opts.level, t.type) : null;
+    }
     return { source, n: rows.length, byType, warnings, columns: Object.fromEntries(Object.entries(map).map(([k, i]) => [k, header[i]])), unused, rows,
       hand: hand || null, flipped: !!flip, header, pitchers };
   }

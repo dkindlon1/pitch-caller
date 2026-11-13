@@ -178,7 +178,8 @@
   // can't move anything; strikeRateFast is checked against strikeRate in worlds_test.js (check 13).
   const SR_TABLE = new Map(), SR_STEP = 0.25, SR_LO = 0, SR_N = 25, SL_STEP = 0.5, SL_N = 13;   // 0..6 in steps of 0.25 (slopes: 0.5)
   function srTable(E, spec, level) {
-    const key = spec.kind + "|" + (spec.shape || "") + "|" + (+spec.velo || 0) + "|" + level;
+    const [mk, ms] = E.migratePitch(spec.kind, spec.shape || "", spec.type);   // v1.1 Step 5: keyed in v1.1 terms (by type)
+    const key = mk + "|" + ms + "|" + (+spec.velo || 0) + "|" + level;
     if (SR_TABLE.has(key)) return SR_TABLE.get(key);
     const T = [];
     for (let i = 0; i < SR_N; i++) { T.push([]); for (let j = 0; j < SR_N; j++) T[i].push(strikeRate(E, Object.assign({}, spec, { command: SR_LO + i * SR_STEP, grade: SR_LO + j * SR_STEP, traits: null }), level)); }
@@ -207,15 +208,17 @@
   // LAND_CENTER (served rates drop ~0.1, to what the model actually expects). strikeRef is the same rate for an average
   // (3/3) pitch of the kind at his level; the engine scales confidence news by the two (engine.py update_confidence).
   function strikeRef(E, spec, level) {
-    const key = spec.kind + "|" + (spec.shape || "") + "|" + level;
+    const [mk, ms] = E.migratePitch(spec.kind, spec.shape || "", spec.type);   // v1.1 Step 5: keyed in v1.1 terms (by type)
+    const key = mk + "|" + ms + "|" + level;
     if (!SR_REF.has(key)) {
-      const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
+      const base = { name: spec.name || "x", kind: mk, shape: ms, velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
       SR_REF.set(key, gridStrike(E, E.Pitch(Object.assign({}, base, { grade: 3, command: 3 })), level));
     }
     return Math.min(0.9, Math.max(0.2, SR_REF.get(key)));
   }
   function strikeRate(E, spec, level) {
-    const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6 };
+    const base = { name: spec.name || "x", kind: spec.kind, shape: spec.shape || "", velo: +spec.velo || 0, conf: 0.6, base_conf: 0.6,
+      ...(spec.type ? { type: spec.type } : {}) };   // v1.1 Step 5: a record still in v1.0 terms migrates by its type
     const mine = gridStrike(E, E.Pitch(Object.assign({}, base, { grade: spec.grade, command: spec.command, traits: spec.traits || null })), level);
     return Math.min(0.9, Math.max(0.2, mine));
   }
@@ -584,7 +587,7 @@
         for (const g of games) g._game = gamesAll.find((x) => x.id === g.id);
         L.score = scoreboard(E, pd, games, level, Object.assign({}, opts, { changes, coachEdits: edits, evidence: evAll }));
       }
-      L.strike_rate = r2(strikeRate(E, { name: pd.name, kind: pd.kind, shape: pd.shape, velo: pd.velo, command: L.talent.command, grade: L.talent.grade, traits: L.traits }, level) * 100) / 100;
+      L.strike_rate = r2(strikeRate(E, { name: pd.name, kind: pd.kind, shape: pd.shape, type: pd.type, velo: pd.velo, command: L.talent.command, grade: L.talent.grade, traits: L.traits }, level) * 100) / 100;
       prof.pitches[pd.id || pd.name] = L;
       prof.flags.push(...flagsFor(pd, L, total, gamesAll.length, pitcher));
     }
@@ -685,7 +688,7 @@
   function finishServe(E, served, pitcher, level) {
     for (const pd of pitcher.pitches || []) {
       const s = served.pitches[pd.id || pd.name]; if (!s || !s.learned) continue;
-      s.strike_rate = r2(strikeRate(E, { name: pd.name, kind: pd.kind, shape: pd.shape, velo: pd.velo, command: s.command, grade: s.grade, traits: s.traits }, level) * 100) / 100;
+      s.strike_rate = r2(strikeRate(E, { name: pd.name, kind: pd.kind, shape: pd.shape, type: pd.type, velo: pd.velo, command: s.command, grade: s.grade, traits: s.traits }, level) * 100) / 100;
     }
     return served;
   }

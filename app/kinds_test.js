@@ -66,5 +66,17 @@ check(new2.kind === "SI" && new2.shape === "drop", "a v1.1 snapshot is never cha
 check(E.profile("SL", "sweeper", "hs")[2] < E.profile("SL", "gyro", "hs")[2] && E.defaultMph("FC", "") < E.defaultMph("FB", "") && E.mph(E.Pitch({ name: "c", kind: "CB", shape: "slow", grade: 3, command: 3, conf: 0.7 })) === E.defaultMph("CB", "slow"),
   "the app's engine has the profile table: a sweeper sweeps more than a gyro slider, a cutter's default speed is under the fastball's, a pitch with no speed gets its profile's default");
 
+console.log("v1.1 Step 5. The learner's specs read in v1.1 terms (a record still in v1.0 terms migrates by its type)");
+{
+  const lv = "college_d3";
+  const v10 = { name: "Two-seam", kind: "FB", shape: "run", type: "Two-seam", velo: 87, command: 3, grade: 3 };
+  const v11 = { name: "Two-seam", kind: "SI", shape: "two-seam", velo: 87, command: 3, grade: 3 };
+  const noType = { name: "Two-seam", kind: "FB", shape: "run", velo: 87, command: 3, grade: 3 };
+  const a = [L.strikeRate(E, v10, lv), L.strikeRef(E, v10, lv), L.strikeRateFast(E, v10, lv)];
+  const b = [L.strikeRate(E, v11, lv), L.strikeRef(E, v11, lv), L.strikeRateFast(E, v11, lv)];
+  check(a.every((x, i) => Math.abs(x - b[i]) < 1e-12) && Math.abs(L.strikeRate(E, noType, lv) - b[0]) > 1e-3,
+    `a v1.0-stored two-seamer (FB/run, type Two-seam) has the v1.1 sinker's strike rate, reference and fast rate (${b.map((x) => x.toFixed(4)).join(", ")}); without its type it would read as a four-seam "runs" (${L.strikeRate(E, noType, lv).toFixed(4)})`);
+}
+
 console.log(fails ? `\n${fails} kinds check(s) FAILED` : `\nall ${n} kinds checks passed`);
 process.exit(fails ? 1 : 0);

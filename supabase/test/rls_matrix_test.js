@@ -20,7 +20,7 @@ const now = () => Date.now();
   await su.query(fs.readFileSync(path.join(__dirname, "auth_stub.sql"), "utf8"));
   // Supabase grants new functions in public to the client roles too; the migration must hold against that
   await su.query("alter default privileges in schema public grant all on functions to anon, authenticated, service_role");
-  const dir = path.join(__dirname, "../migrations");
+  const dir = process.env.PC_MIGRATIONS || path.join(__dirname, "../migrations");   // PC_MIGRATIONS: a local copy (see teams_fixture.js)
   for (const f of fs.readdirSync(dir).filter((x) => x.endsWith(".sql")).sort()) await su.query(fs.readFileSync(path.join(dir, f), "utf8"));
 
   const U = {};
@@ -67,7 +67,7 @@ const now = () => Date.now();
   }
   await su.query("insert into public.members (program_id, user_id, role) values ($1, $2, 'caller')", [tB, U.head]);
   for (const id of ["p1", "p2", "p3", "p4", "p5"]) {
-    const doc = { id, updatedAt: 1000, teamId: "ours", name: "Pitcher " + id, number: "1" + id.slice(1), hand: "R", role: "SP", notes: "coach note", pitchLimit: 80, pitches: [{ id: "pt1", name: "Fastball", grade: 3 }] };
+    const doc = { id, updatedAt: 1000, teamId: "ours", name: "Pitcher " + id, number: "1" + id.slice(1), hand: "R", role: "SP", notes: "coach note", pitchLimit: 80, pitches: [{ id: "pt1", name: "Fastball", kind: "FB", type: "Four-seam", shape: "rides", grade: 3 }] };   // v1.1 kinds and tags
     await su.query("insert into public.pitchers (program_id, id, doc) values ($1, $2, $3)", [tA, id, doc]);
   }
   await su.query("insert into public.player_links (program_id, user_id, pitcher_id) values ($1, $2, 'p1'), ($1, $3, 'p2'), ($1, $4, 'p3'), ($1, $4, 'p4')", [tA, U.pl1, U.pl2, U.parent]);
@@ -168,12 +168,12 @@ const now = () => Date.now();
   check(r.applied === 2, "the head coach adds a roster spot and removes one");
   r = await push("pl1", tA, "pitchers", [{ id: "p1", updatedAt: now(), deletedAt: now() }]);
   check(r.rejected[0].reason === "not allowed", "a player can't remove his own roster spot");
-  r = await push("pl1", tA, "pitchers", [{ id: "p1", updatedAt: now() + 10, name: "Pitcher p1", role: "Closer", notes: "I'm the ace", pitchLimit: 200, pitches: [{ id: "pt1", name: "Fastball", grade: 5 }] }]);
+  r = await push("pl1", tA, "pitchers", [{ id: "p1", updatedAt: now() + 10, name: "Pitcher p1", role: "Closer", notes: "I'm the ace", pitchLimit: 200, pitches: [{ id: "pt1", name: "Fastball", kind: "FB", type: "Four-seam", shape: "rides", grade: 5 }] }]);   // v1.1: a real pitch has a kind
   let p1 = (await su.query("select doc from public.pitchers where id = 'p1'")).rows[0].doc;
   check(r.applied === 1 && p1.pitches[0].grade === 5 && p1.role === "SP" && p1.notes === "coach note" && p1.pitchLimit === 80,
     "a player's edit keeps his grade change and drops coach-only fields (role, notes, fatigue point)");
   check(r.server.length === 1 && r.server[0].doc.role === "SP", "and the server's merged copy goes back so his iPad shows the truth");
-  r = await push("pl1", tA, "pitchers", [{ id: "p1", updatedAt: 4102444800000, name: "Pitcher p1", pitches: [{ id: "pt1", name: "Fastball", grade: 5 }] }]);
+  r = await push("pl1", tA, "pitchers", [{ id: "p1", updatedAt: 4102444800000, name: "Pitcher p1", pitches: [{ id: "pt1", name: "Fastball", kind: "FB", type: "Four-seam", shape: "rides", grade: 5 }] }]);
   p1 = (await su.query("select doc from public.pitchers where id = 'p1'")).rows[0].doc;
   check(p1.updatedAt <= now() + 120000 && r.server.length === 1, `a timestamp from the year 2100 is pulled back to now (${p1.updatedAt})`);
   await new Promise((res) => setTimeout(res, 20));
@@ -696,7 +696,7 @@ const now = () => Date.now();
     };
     const hist = async (id) => (await su.query("select * from public.grade_history where program_id = $1 and pitcher_id = $2 order by id", [tA, id])).rows;
     await su.query("delete from public.grade_history where program_id = $1", [tA]);   // earlier sections' edits
-    await su.query("update public.pitchers set doc = jsonb_set(doc, '{pitches}', '[{\"id\":\"pt1\",\"name\":\"Fastball\",\"grade\":3,\"command\":3},{\"id\":\"pt2\",\"name\":\"Slider\",\"grade\":2,\"command\":2}]') where program_id = $1", [tA]);
+    await su.query("update public.pitchers set doc = jsonb_set(doc, '{pitches}', '[{\"id\":\"pt1\",\"name\":\"Fastball\",\"kind\":\"FB\",\"type\":\"Four-seam\",\"shape\":\"rides\",\"grade\":3,\"command\":3},{\"id\":\"pt2\",\"name\":\"Slider\",\"kind\":\"SL\",\"type\":\"Slider\",\"shape\":\"tight\",\"grade\":2,\"command\":2}]') where program_id = $1", [tA]);
     check((await hist("p1")).length === 0, "(setting up as the database owner writes no history: only people's changes count)");
     r = await push("pl1", tA, "pitchers", [await withGrade("p1", "pt1", "grade", 4)]);
     let h = await hist("p1");
@@ -842,7 +842,7 @@ const now = () => Date.now();
 
     // proposals
     const props = JSON.stringify([
-      { field: "velo", pitch_id: "pt1", value: 89.24, basis: { n: 10 } }, { field: "shape", pitch_id: "pt1", value: { shape: "ride", ivb: 17.04, hb: 9.2 } },
+      { field: "velo", pitch_id: "pt1", value: 89.24, basis: { n: 10 } }, { field: "shape", pitch_id: "pt1", value: { shape: "runs", ivb: 17.04, hb: 9.2 } },
       { field: "slot", value: "sidearm" }, { field: "velo", pitch_id: "nope", value: 80 }, { field: "shape", pitch_id: "pt2", value: { shape: "zoom", ivb: 1, hb: 1 } },
       { field: "velo", pitch_id: "pt2", value: 300 }, { field: "grade", pitch_id: "pt1", value: 5 }]);
     check(await one("pl1", "select public.pc_proposals_set($1, 'p1', $2::jsonb) r", [tA, props]) === 3, "proposals: three valid ones kept (a pitch he doesn't throw, a made-up shape, 300 mph and a grade are dropped)");
@@ -863,8 +863,8 @@ const now = () => Date.now();
     await as("pl1", "select public.pc_proposal_decide($1, false)", [pslot]);
     const doc = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'p1'", [tA])).rows[0].doc;
     const pt1 = doc.pitches.find((x) => x.id === "pt1");
-    check(pt1.velo === 89.2 && pt1.shape === "ride" && pt1.ivb === 17 && pt1.hb === 9.2 && doc.slot === before.slot && doc.updatedAt > before.updatedAt,
-      `accepted: his fastball reads 89.2 mph, ride, 17/9.2; the slot he rejected is unchanged; the record is newer, so every iPad gets it (${JSON.stringify({ velo: pt1.velo, shape: pt1.shape, slot: doc.slot })})`);
+    check(pt1.velo === 89.2 && pt1.shape === "runs" && pt1.kind === "FB" && pt1.ivb === 17 && pt1.hb === 9.2 && doc.slot === before.slot && doc.updatedAt > before.updatedAt,
+      `accepted: his fastball reads 89.2 mph, runs, 17/9.2; the slot he rejected is unchanged; the record is newer, so every iPad gets it (${JSON.stringify({ velo: pt1.velo, shape: pt1.shape, slot: doc.slot })})`);
     const st = (await su.query("select status, decided_by from public.proposals where id = any($1) order by id", [[pv, ps, pslot]])).rows;
     check(st[0].status === "accepted" && st[0].decided_by === U.pl1 && st[1].decided_by === U.pitching && st[2].status === "rejected", "each says who decided");
     check(!!(await as("pl1", "select public.pc_proposal_decide($1, true)", [pv])).error, "and can't be decided twice");
