@@ -11,7 +11,7 @@ $run tests_v11     python3 tests_v11.py              # v1.1: six kinds, one migr
 $run fast_parity   python3 golden/fast.py 40      # live Python vs JS on 40 golden inputs, plus confidence and grading (v1.0 #18)
 $run tests_v12     python3 tests_v12.py              # v1.2 Step 1: miss lean / spread, exactly v1.1 at lean 0 (vs git 14e0ad2), Python = JS
 FAST_LEANS=1 $run fast_parity_leans python3 golden/fast.py 40   # v1.2: the same 40 golden inputs with a lean and spread on every pitch
-$run golden_v11   node golden/golden_v11.js v11   # v1.1 Step 2: the one engine against its frozen reference (JS); golden_v10 and golden_v11a (Step 1b) stay as history
+$run golden_v12a  node golden/golden_v11.js v12a  # v1.2 Part A freeze (after Step 5): the one engine against its frozen reference (JS); golden_v10, v11a and v11 stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1
