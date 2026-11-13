@@ -560,3 +560,135 @@ changes get small.
 3. **Bands to confirm:** the Step 2 call-change bands (6 of 10 pass), the setup band, and the proposed grades on the 18
    setup rows and 9 profile rows.
 4. **Regrade** the 53 changed v1.0 rows (ranked list above), C5 and F2 first.
+
+## Step 5: app, portal and data (Nov 13, overnight)
+
+### First: main had moved (merge, commit 396d966)
+`main` got 42 commits while v1.1 was built: the website, the restyled portal (live on production) and the game app
+in the portal's look, plus `20261114000000_game_plans.sql`, already applied on production. Doing Step 5's portal work on
+v1.1-work's old `web/` would have thrown it away at merge time, so I merged `main` into v1.1-work first (pre-merge
+commit f835dc5, so it can be undone). Only two files conflicted:
+- `app/index.src.html`: the palette takes main's, plus the portal's sinker / cutter colours; the pitcher chip keeps
+  v1.1's own sign with main's "1 pitch" wording;
+- `app/roster.js`: the main-fastball mark sits next to main's tap-twice remove.
+
+v1.1's migration was renamed so it sorts after `game_plans`. The game app plays whole games through the restyled
+screens (game_mix_e2e, smoke, v11_step5_e2e).
+
+### App
+- **Profile names** in the shape list ("Rides (high ride)", "Straight (dead zone)", "Sweeper", "Firm (little speed
+  off)", ...). The stored value stays the engine's tag.
+- **Stuff grade hint:** "compared with other pitches of this profile: a 3 sweeper is an average sweeper", on the grade
+  field, the column header and a line under each pitcher, and on the Roster screen.
+- **Main fastball mark** (plan 2.1), in both pitch editors (Setup and Roster):
+  - fastball-class pitches only, one per pitcher; changing the marked pitch to off-speed clears it;
+  - the coach's mark wins, else his most-thrown fastball-class pitch in the learner's counts, else none (the engine takes
+    the first fastball-class pitch);
+  - it reaches the engine (`primaryFb`), and event snapshots carry it only when set, so unmarked snapshots don't change.
+- The Roster note said "the engine models four families"; it now says six kinds.
+- `app/v11_step5_e2e.js` (new, in the suite): 13 checks.
+
+### Importer
+Measured pitch types get their tag from the engine's thresholds (`tagFor`, passed in, so `import.js` stays engine-free),
+measured against his most-thrown fastball-class pitch in the file. Named types keep their profile (Sweeper → sweeper,
+Splitter → split). The tag shows in the preview and is applied ("Apply velo, break, spin and shape"). import_test: 3
+new checks.
+
+### Learner
+The strike-rate specs now carry the pitch's type, and their caches are keyed in v1.1 terms. Before this, a record still
+stored in v1.0 terms read a two-seamer as a four-seam "runs" (strike rate 0.511 instead of the sinker's 0.525). kinds_test
+has 1 new check.
+
+### Supabase (`supabase/migrations/20261115000000_v11_kinds.sql`): written and tested, **not applied anywhere remote**
+1. `upload_pitches.kind` takes the six kinds. Stored rows are remapped by `pitch_type` (Two-seam and Sinker → SI,
+   Cutter → FC).
+2. `pc_proposals_set`: a shape proposal carries the pitch's own kind, read through the engine's migration table, and a
+   v1.1 tag that kind has. A proposal can't change the kind; one without a shape is refused.
+3. Pending v1.0 shape proposals are remapped through the table, or superseded when they'd change the kind or the tag
+   doesn't exist for it.
+
+The SQL copy of the migration table (`private.pc_migrate_pitch`, `pc_shape_ok`) is generated from engine.py
+(`supabase/gen_v11_kinds_sql.py`). tests_v11 checks it, so the database, both engines and db.js hold one table.
+
+`supabase/test/v11_kinds_test.js` (12 checks) seeds v1.0 data, then runs the migration. The RLS matrix test's fixtures
+got real kinds (its pitches had none, so the new kind check refused their shape proposals), and its proposal uses the
+v1.1 tag "runs".
+
+**Proof:**
+- CI's Postgres 17 job passed on the merge commit (all SQL tests, the new one included).
+- Locally on Postgres 16 (17-only `MAINTAIN` grants stripped from a copy; the sandbox wouldn't run a downloaded
+  Postgres 17), the whole SQL suite on the merged tree **exits 0**: sync 38, review 29, client review 37, sync auth 9,
+  app sync e2e 37, RLS matrix **347** (main's game-plan section included), waitlist 22, v1.1 kinds **12**.
+
+### Portal (on main's restyled portal)
+- **`lib/docs.ts`:** six kinds, six signs, the engine's type table, profile names (docs.test checks them against the app),
+  and `signOf` (a migrated pitch keeps its v1.0 sign).
+- **`lib/uploads.ts`:**
+  - six kinds;
+  - the shape proposer drops its v1.0 rules for the engine's `tagFor`, passed in by the server callers through
+    `lib/engine_server.ts` (server-only, so the upload form's browser bundle carries no engine);
+  - proposals are `{kind, shape, ivb, hb}` in the pitch's own kind, at the team's level;
+  - a record still in v1.0 terms is read through the table.
+- **Bug fixed (it predates v1.1, but now matters):** saving the arsenal page (coach or player) reset every pitch's kind and
+  shape to its type's default. That wiped any shape accepted from uploads whenever a grade was saved. Now the type sets
+  kind and shape only when it changes. Otherwise the pitch is read in v1.1 terms the way the app reads it (`v11Pitch`),
+  keeping its sign and main mark.
+- **Pages:**
+  - roster, pitcher and player-arsenal chips show the v1.1 kind and the kept sign;
+  - the stuff hint;
+  - proposals show profile names.
+- **Six kinds in:** `engine.d.ts`, `pc_import.d.ts`, `demo.ts` signs, stats colours, and the marketing types (the
+  marketing types change type only; their demo data is unchanged).
+- **Copies:** `pc_import.js` synced; `engine_data_d3.json` regenerated.
+- **Checks:** web typecheck clean; web unit tests **51/51**. `uploads_e2e` expects the engine's tag; it needs a local
+  Supabase stack, so CI runs it.
+
+### Replay and migration proof (`app/fixtures/v10_kinds_backup.json`, `app/v11_fixture_test.js`, 8 checks)
+A backup made by the **real v1.0 app** (`git archive b318098`, `sim_backup.js` new `kinds` scenario):
+- one pitcher with a four-seam, two-seam, sinker, cutter, 12-6 curve and splitter in v1.0's four kinds;
+- 3 games, 287 pitches, every pitch type called, with kind-keyed matchup memory.
+
+It replays exactly under v1.0 itself. Results:
+- **Migration log:** all six changes, kind changes keeping sign 1 (Fastball FB/ride→FB/rides; Two-seam FB/run→SI/two-seam;
+  Sinker FB/sink→SI/run; Cutter FB/cut→FC/typical; Curve CB/sharp→CB/12-6; Splitter CH/drop→CH/split). Running it again
+  changes nothing.
+- **Exact replay through Step 1's code** (commit 9e2f41e): confidence, landing today and pitch counts all identical.
+- **Through this build:** confidence and pitch counts exact; landing-today keys and strike / pitch counts exact. Only the
+  expected-strike sums move, by at most 1.08 strikes over a game (Step 1b on, sinkers and cutters have their own movement
+  and location model).
+- Kind-keyed matchup memory (FB, CB, CH keys) is read by a sinker or cutter through `keyKind`.
+- No real roster backup from Drew yet; if one comes, it runs the same way.
+
+### CI
+- **tests_v11 has never run in CI:** it reads the v1.0 commit with `git archive`, and CI's checkout was shallow. The engine
+  job now fetches full history.
+- **Time limit:** the job had 30 minutes for a suite that runs about 50, so it's now 90.
+- **Web jobs:** red since Step 1 (the portal was still v1.0, as the Step 1 report said). Step 5 part 2 is the fix; its CI
+  run is pending at the time of writing.
+
+### A fix CI found: an unknown stored tag (commit f034624)
+CI's `gameplan_e2e` (main's portal test) stores a curveball with the shape "typical". That was never a real tag:
+v1.0's app showed "" as "typical". v1.0's engine read any unknown tag exactly like "" (same calls, checked against
+`git archive b318098`), but v1.1's engine rejects it, so the game app errored. The stored-record migration now maps a tag
+that isn't one of its v1.1 kind's to "" (typical) and logs it; the engine's own validation stays strict. kinds_test has 2
+new checks.
+
+### Proof (this session)
+| Check | Result |
+|---|---|
+| `scripts/test-app.sh` (worktree, commit e71c1b4, about 50 min) | **exit 1, only `game_mix_e2e`** (1 of 6 seeds, tier 3 seed 31337 at 76%: the held Step 3 setup-size issue). Everything else passes: the build and dist check, the web copies and the website demo, tests.py 45, explain 7, tests_v11 **37** (+ the SQL table check), fast_parity, golden_v11, learn 27, db 18, import **14**, rails 31, schema 24, stage2 21, worlds 31, pitch_rules 41, kinds 21 (23 after f034624), **v11_fixture_test 8**, rules_e2e 20, v10 step 1 / 3 / 5 e2e 6 / 7 / 10, **v11_step5_e2e 14** |
+| `scripts/test-sql.sh`, local Postgres 16 (copy without `MAINTAIN`) | **exit 0**: RLS matrix 347, v11 kinds 12, all others |
+| CI, commit 396d966 (merge) | Postgres 17 SQL **pass**; web jobs fail (the portal still v1.0 at that commit) |
+| CI, commit e71c1b4 | Postgres 17 SQL **pass**; web app (typecheck, 51 unit tests, build, landing e2e) **pass**; portal e2e: `gameplan_e2e` fails on the unknown tag above (fixed in f034624) |
+| CI, commit f034624 | Postgres 17 SQL **pass**; portal e2e (gameplan, uploads, offline game, portal, billing...) **pass**; web app: `site_e2e`'s scroll-driven at-bat scene failed 3 timing checks. This commit changed nothing the site uses, and the same job passed on e71c1b4. Locally on this tree, after a fresh `npm run build`, `site_e2e` passed **twice**, so I treat it as flaky and reran the job; see below |
+| Web typecheck / unit tests (local) | clean / **51/51** |
+
+### For Drew (Step 5)
+- **Main was merged into v1.1-work** (not the other way round), to build the portal work on the live portal. `main` is
+  untouched. When v1.1 ships, merging v1.1-work into main is a fast-forward of what's here.
+- **The Supabase migration hasn't been applied anywhere.** It's `20261115000000_v11_kinds.sql`, after production's
+  `game_plans`. Apply it with the release (plan Step 6), on the same day every iPad updates.
+- **No real roster backup yet:** the replay proof uses a v1.0 backup made by the v1.0 app. If you send a real one, it
+  runs the same way (`node app/v11_fixture_test.js` reads the fixture; `node app/replay_check.js <backup>` reads any).
+- **Portal plan P3** ("six pitch kinds if v1.1 Step 5 has landed"): it has landed on v1.1-work, so new and restyled
+  screens can use `lib/docs.ts` KINDS / SIGN / PROFILE_LABEL and `lib/engine_server.ts`.
