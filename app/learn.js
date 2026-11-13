@@ -39,7 +39,7 @@
   }
 
   // the pitch's arsenal entry and situation, small enough to keep with every logged pitch
-  const PITCH_KEYS = ["name", "kind", "grade", "command", "conf", "base_conf", "shape", "velo", "slot", "height_ft", "ivb", "hb", "release_offset_in", "strike_rate", "strike_ref", "traits", "main"];   // v1.1 Step 5: the main fastball mark (rel_shape reads it)
+  const PITCH_KEYS = ["name", "kind", "grade", "command", "conf", "base_conf", "shape", "velo", "slot", "height_ft", "ivb", "hb", "release_offset_in", "strike_rate", "strike_ref", "traits", "main", "lean_x", "lean_z", "spread"];   // v1.2: lean fields (only present when set)   // v1.1 Step 5: the main fastball mark (rel_shape reads it)
   function snapArsenal(arsenal) { return arsenal.map((p) => { const o = {}; for (const k of PITCH_KEYS) if (p[k] !== undefined) o[k] = p[k]; return o; }); }
   function snapSituation(s) { const o = Object.assign({}, s); delete o.wild_true; return JSON.parse(JSON.stringify(o)); }
 

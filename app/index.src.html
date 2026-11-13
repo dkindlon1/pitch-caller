@@ -593,6 +593,15 @@ const E = PitchEngine;
 
 // ------------------------------------------------------------------ vocabulary
 const LEVELS = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
+// v1.2: a stored pitch's miss lean (inches, + = arm side / up) and spread, passed to the engine only when set, so a
+// pitch without them is exactly v1.1's
+function leanOf(d) {
+  const o = {};
+  if (+d.lean_x) o.lean_x = +d.lean_x;
+  if (+d.lean_z) o.lean_z = +d.lean_z;
+  if (d.spread !== undefined && d.spread !== null && d.spread !== "" && +d.spread !== 1) o.spread = +d.spread;
+  return o;
+}
 const TIERS = [
   { n: 1, t: "Results only", d: "Ball, strike, foul, in play, hit or out. The minimum a coach can keep up with." },
   { n: 2, t: "Plus contact", d: "Weak, solid or hard on every ball in play." },
@@ -720,6 +729,7 @@ function arsenal() {
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
     return E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
+      ...leanOf(d),   // v1.2: miss lean and spread, only when the coach set them (else the engine's even default)
       ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0],
       ...(d.name === mainName ? { main: true } : {}) });   // v1.1 Step 5: set only when true, so unmarked snapshots don't change
   });
@@ -1560,6 +1570,7 @@ function arsenalFor(idx) {
   const pd = S.setup.staff[idx], g = G(), conf = (g.conf || {})[keyOf(idx)] || {}, mainName = mainFbName(pd);
   return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
     base_conf: +d.feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1, ivb: null, hb: null,
+    ...leanOf(d),
     ...(d.name === mainName ? { main: true } : {}) }));
 }
 

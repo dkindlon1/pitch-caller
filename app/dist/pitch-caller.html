@@ -785,7 +785,85 @@ td.wrapcell .line { display: block; }
     return [cmd, p.grade + side * g("side_grade")];
   }
 
+  // ---------------------------------------------------------------- v1.2 location model (engine.py, plan 2.2-2.3)
+  // At lean 0 / spread 1 nothing here runs. Otherwise a 2-D normal miss model (inches, batter frame) gives the difference
+  // the lean makes; its size is solved per call from landing()'s own pre-floor shares.
+  const LEAN_MAX = 6.0, SPREAD_MIN = 0.5, SPREAD_MAX = 2.0;
+  const GEO_HEART = [6.7, 8.04], GEO_ZONE = [13.3, 15.96], GEO_EXT = [20.0, 24.0];   // Savant attack zones (engine.py)
+  const GEO_Q = { "up-in": [20.0 / 3.0, 8.0], "up-away": [-20.0 / 3.0, 8.0], "down-in": [20.0 / 3.0, -8.0],
+    "down-away": [-20.0 / 3.0, -8.0], middle: [0.0, 0.0], "down-middle": [0.0, -8.0] };
+  const GEO_DOWN = ["down-in", "down-away", "down-middle"];
+  const GEO_HBP_BANDS = [[12.0, 0.003], [15.0, 0.0165], [18.0, 0.041], [21.0, 0.104], [24.0, 0.20], [27.0, 0.345], [30.0, 0.57]];
+  function geoNcdf(x) {   // Abramowitz & Stegun 7.1.26, written as in engine.py
+    const z = Math.abs(x) / 1.4142135623730951;
+    const t = 1.0 / (1.0 + 0.3275911 * z);
+    const y = 1.0 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z);
+    return x >= 0 ? 0.5 * (1.0 + y) : 0.5 * (1.0 - y);
+  }
+  const geoIn = (m, sd, a) => geoNcdf((a - m) / sd) - geoNcdf((-a - m) / sd);
+  function geoShares(mx, mz, sx, sz) {
+    const h = geoIn(mx, sx, GEO_HEART[0]) * geoIn(mz, sz, GEO_HEART[1]);
+    const zn = geoIn(mx, sx, GEO_ZONE[0]) * geoIn(mz, sz, GEO_ZONE[1]);
+    const e = geoIn(mx, sx, GEO_EXT[0]) * geoIn(mz, sz, GEO_EXT[1]);
+    return { heart: h, edge: zn - h, off: e - zn, noncomp: 1.0 - e };
+  }
+  const geoTarget = (p, q) => (q === "chase" ? [0.0, isOffspeed(p.kind) ? -18.0 : 18.0] : GEO_Q[q]);
+  function geoSigma(mx, mz, ext) {
+    ext = Math.min(0.999, Math.max(0.05, ext));
+    let lo = 0.25, hi = 120.0;
+    for (let i = 0; i < 48; i++) {
+      const mid = 0.5 * (lo + hi);
+      if (geoIn(mx, mid, GEO_EXT[0]) * geoIn(mz, mid, GEO_EXT[1]) > ext) lo = mid; else hi = mid;
+    }
+    return 0.5 * (lo + hi);
+  }
+  const hasLean = (p) => !!(p.lean_x || p.lean_z) || (p.spread !== undefined && p.spread !== null && p.spread !== 1.0);
+  const spreadOf = (p) => (p.spread === undefined || p.spread === null ? 1.0 : p.spread);
+  function leanGeometry(p, q, s, zPre) {
+    const [mx, mz] = geoTarget(p, q);
+    const lx = s.same_side ? (p.lean_x || 0.0) : -(p.lean_x || 0.0);
+    return [mx, mz, lx, p.lean_z || 0.0, geoSigma(mx, mz, 1.0 - zPre.noncomp), spreadOf(p)];
+  }
+  function leanDelta(p, q, s, zPre) {
+    const [mx, mz, lx, lz, sd, sp] = leanGeometry(p, q, s, zPre);
+    const a = geoShares(mx + lx, mz + lz, sd * sp, sd * sp), b = geoShares(mx, mz, sd, sd);
+    const out = {}; for (const k of ZONES) out[k] = a[k] - b[k];
+    return out;
+  }
+  function geoHbpWeight(mx, sd) {
+    let w = 0.0;
+    for (let i = 0; i < GEO_HBP_BANDS.length; i++) {
+      const [x0, h] = GEO_HBP_BANDS[i];
+      const top = i + 1 < GEO_HBP_BANDS.length ? geoNcdf((GEO_HBP_BANDS[i + 1][0] - mx) / sd) : 1.0;
+      w += h * (top - geoNcdf((x0 - mx) / sd));
+    }
+    return w;
+  }
+  function leanHbpWp(p, q, s) {
+    if (!hasLean(p)) return [1.0, 1.0];
+    const [mx, mz, lx, lz, sd, sp] = leanGeometry(p, q, s, landingPre(p, q, s));
+    const s1 = sd * sp;
+    const n0 = geoShares(mx, mz, sd, sd).noncomp, n1 = geoShares(mx + lx, mz + lz, s1, s1).noncomp;
+    const b0 = geoHbpWeight(mx, sd), b1 = geoHbpWeight(mx + lx, s1);
+    const rh = (b0 > 1e-12 && n0 > 1e-9 && n1 > 1e-9) ? (b1 / n1) / (b0 / n0) : 1.0;
+    let rw = 1.0;
+    if ((GEO_DOWN.includes(q) || (q === "chase" && isOffspeed(p.kind))) && lz < 0) {
+      const d0 = geoNcdf((-GEO_EXT[1] - mz) / sd), d1 = geoNcdf((-GEO_EXT[1] - mz - lz) / s1);
+      rw = (d0 > 1e-12 && n0 > 1e-9 && n1 > 1e-9) ? (d1 / n1) / (d0 / n0) : 1.0;
+    }
+    return [rh, rw];
+  }
+
   function landing(p, q, s) {
+    let z = landingPre(p, q, s);
+    if (hasLean(p)) { const dz = leanDelta(p, q, s, z); const z2 = {}; for (const k of ZONES) z2[k] = z[k] + dz[k]; z = z2; }
+    for (const k of ZONES) z[k] = Math.max(z[k], 0.01);
+    let t = 0; for (const k of ZONES) t += z[k];
+    const out = {}; for (const k of ZONES) out[k] = z[k] / t;
+    return out;
+  }
+
+  function landingPre(p, q, s) {   // landing()'s shares before its final floor and divide (v1.2 split; v1.1's arithmetic)
     const A = D.OUTCOME_ADJ[s.level];
     const [command] = effective(p, s);
     const sc = D.LEVEL[s.level].cmd_scale ?? 1.0;   // v0.7 spread calibration (engine.py)
@@ -823,10 +901,7 @@ td.wrapcell .line { display: block; }
     }
     const over = s.pitch_count - D.LEVEL[s.level].fatigue;
     if (over > 0) { const shift = Math.min(z.edge - 0.05, 0.02 * over / 10); z.edge -= shift; z.heart += shift; }
-    for (const k of ZONES) z[k] = Math.max(z[k], 0.01);
-    let t = 0; for (const k of ZONES) t += z[k];
-    const out = {}; for (const k of ZONES) out[k] = z[k] / t;
-    return out;
+    return z;
   }
 
 
@@ -1047,6 +1122,7 @@ td.wrapcell .line { display: block; }
     const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
+    const [leanH, leanW] = leanHbpWp(p, q, s);   // v1.2: [1, 1] without a lean
     let [command, grade] = effective(p, s);
     grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
     const gs = 0.25 * (L.stuff_scale ?? 1.0);
@@ -1091,6 +1167,8 @@ td.wrapcell .line { display: block; }
       Z.hlPost.push(pt.hard);
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
+      if (leanH !== 1.0 && Z.hb) Z.hb = Math.min(0.9, Z.hb * leanH);   // v1.2 (engine.py)
+      if (leanW !== 1.0 && Z.wp) Z.wp = Math.min(0.9, Z.wp * leanW);
       zones.push(Z);
     }
     return { zones, hL, tauEff, big };
@@ -1186,6 +1264,8 @@ td.wrapcell .line { display: block; }
     if (new Set(names).size !== names.length) throw new Error(`two pitches share a name: ${names.join(", ")}`);
     for (const x of arsenal) if (!KINDS.includes(x.kind)) throw new Error(`unknown pitch kind "${x.kind}" for ${x.name}`);
     for (const x of arsenal) if (!SHAPE_TAGS[x.kind].includes(x.shape || "")) throw new Error(`unknown shape "${x.shape}" for ${x.name} (${x.kind})`);   // v1.1: after migration
+    for (const x of arsenal) if (!(Math.abs(x.lean_x || 0) <= LEAN_MAX && Math.abs(x.lean_z || 0) <= LEAN_MAX && spreadOf(x) >= SPREAD_MIN && spreadOf(x) <= SPREAD_MAX))
+      throw new Error(`miss lean / spread out of range for ${x.name}: lean ${x.lean_x || 0}, ${x.lean_z || 0} in. (limit ${LEAN_MAX}), spread ${spreadOf(x)} (${SPREAD_MIN}-${SPREAD_MAX})`);   // v1.2
     if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
@@ -2025,10 +2105,13 @@ td.wrapcell .line { display: block; }
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
     return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
-      infield_in: !!s.infield_in };
+      infield_in: !!s.infield_in, lean: leanKey(arsenal) };
   }
+  // v1.2: each pitch's lean and spread; a change re-solves the table (a frozen table from before leans = all at lean 0)
+  const leanKey = (arsenal) => arsenal.map((x) => [x.lean_x || 0, x.lean_z || 0, spreadOf(x)].join(",")).join("|");
   function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
+    if ((frozen.lean ?? arsenal.map(() => "0,0,1").join("|")) !== leanKey(arsenal)) return true;   // v1.2
     if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
@@ -2280,7 +2363,9 @@ td.wrapcell .line { display: block; }
     PROFILES, PROFILE_T, MOVE_RATIO, PROFILE_NAMES, profile, defaultMph, primaryFb, relShape, tagFor, mph, resolveSpeeds, isFastball, pclass, keyKind,
     v11profileTerms: profileTerms, ptKey, gbRate,   // v1.1 Step 2
     v11terms: { PT_C, PT_B, PT_FBZ_W, PT_FBZ_H, PT_FBL_H, PT_PLAT, PT_CHASE_OPP, PT_CHASE_MEAN, GB_PROFILE, SLOT_ANGLE, PT_FB_IVB, SLOT_MOVE },
-    classTerms };
+    classTerms,
+    v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
+      LEAN_MAX, SPREAD_MIN, SPREAD_MAX } };   // v1.2 location model
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);
@@ -2663,7 +2748,7 @@ td.wrapcell .line { display: block; }
   }
 
   // the pitch's arsenal entry and situation, small enough to keep with every logged pitch
-  const PITCH_KEYS = ["name", "kind", "grade", "command", "conf", "base_conf", "shape", "velo", "slot", "height_ft", "ivb", "hb", "release_offset_in", "strike_rate", "strike_ref", "traits", "main"];   // v1.1 Step 5: the main fastball mark (rel_shape reads it)
+  const PITCH_KEYS = ["name", "kind", "grade", "command", "conf", "base_conf", "shape", "velo", "slot", "height_ft", "ivb", "hb", "release_offset_in", "strike_rate", "strike_ref", "traits", "main", "lean_x", "lean_z", "spread"];   // v1.2: lean fields (only present when set)   // v1.1 Step 5: the main fastball mark (rel_shape reads it)
   function snapArsenal(arsenal) { return arsenal.map((p) => { const o = {}; for (const k of PITCH_KEYS) if (p[k] !== undefined) o[k] = p[k]; return o; }); }
   function snapSituation(s) { const o = Object.assign({}, s); delete o.wild_true; return JSON.parse(JSON.stringify(o)); }
 
@@ -4706,7 +4791,85 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return [cmd, p.grade + side * g("side_grade")];
   }
 
+  // ---------------------------------------------------------------- v1.2 location model (engine.py, plan 2.2-2.3)
+  // At lean 0 / spread 1 nothing here runs. Otherwise a 2-D normal miss model (inches, batter frame) gives the difference
+  // the lean makes; its size is solved per call from landing()'s own pre-floor shares.
+  const LEAN_MAX = 6.0, SPREAD_MIN = 0.5, SPREAD_MAX = 2.0;
+  const GEO_HEART = [6.7, 8.04], GEO_ZONE = [13.3, 15.96], GEO_EXT = [20.0, 24.0];   // Savant attack zones (engine.py)
+  const GEO_Q = { "up-in": [20.0 / 3.0, 8.0], "up-away": [-20.0 / 3.0, 8.0], "down-in": [20.0 / 3.0, -8.0],
+    "down-away": [-20.0 / 3.0, -8.0], middle: [0.0, 0.0], "down-middle": [0.0, -8.0] };
+  const GEO_DOWN = ["down-in", "down-away", "down-middle"];
+  const GEO_HBP_BANDS = [[12.0, 0.003], [15.0, 0.0165], [18.0, 0.041], [21.0, 0.104], [24.0, 0.20], [27.0, 0.345], [30.0, 0.57]];
+  function geoNcdf(x) {   // Abramowitz & Stegun 7.1.26, written as in engine.py
+    const z = Math.abs(x) / 1.4142135623730951;
+    const t = 1.0 / (1.0 + 0.3275911 * z);
+    const y = 1.0 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z);
+    return x >= 0 ? 0.5 * (1.0 + y) : 0.5 * (1.0 - y);
+  }
+  const geoIn = (m, sd, a) => geoNcdf((a - m) / sd) - geoNcdf((-a - m) / sd);
+  function geoShares(mx, mz, sx, sz) {
+    const h = geoIn(mx, sx, GEO_HEART[0]) * geoIn(mz, sz, GEO_HEART[1]);
+    const zn = geoIn(mx, sx, GEO_ZONE[0]) * geoIn(mz, sz, GEO_ZONE[1]);
+    const e = geoIn(mx, sx, GEO_EXT[0]) * geoIn(mz, sz, GEO_EXT[1]);
+    return { heart: h, edge: zn - h, off: e - zn, noncomp: 1.0 - e };
+  }
+  const geoTarget = (p, q) => (q === "chase" ? [0.0, isOffspeed(p.kind) ? -18.0 : 18.0] : GEO_Q[q]);
+  function geoSigma(mx, mz, ext) {
+    ext = Math.min(0.999, Math.max(0.05, ext));
+    let lo = 0.25, hi = 120.0;
+    for (let i = 0; i < 48; i++) {
+      const mid = 0.5 * (lo + hi);
+      if (geoIn(mx, mid, GEO_EXT[0]) * geoIn(mz, mid, GEO_EXT[1]) > ext) lo = mid; else hi = mid;
+    }
+    return 0.5 * (lo + hi);
+  }
+  const hasLean = (p) => !!(p.lean_x || p.lean_z) || (p.spread !== undefined && p.spread !== null && p.spread !== 1.0);
+  const spreadOf = (p) => (p.spread === undefined || p.spread === null ? 1.0 : p.spread);
+  function leanGeometry(p, q, s, zPre) {
+    const [mx, mz] = geoTarget(p, q);
+    const lx = s.same_side ? (p.lean_x || 0.0) : -(p.lean_x || 0.0);
+    return [mx, mz, lx, p.lean_z || 0.0, geoSigma(mx, mz, 1.0 - zPre.noncomp), spreadOf(p)];
+  }
+  function leanDelta(p, q, s, zPre) {
+    const [mx, mz, lx, lz, sd, sp] = leanGeometry(p, q, s, zPre);
+    const a = geoShares(mx + lx, mz + lz, sd * sp, sd * sp), b = geoShares(mx, mz, sd, sd);
+    const out = {}; for (const k of ZONES) out[k] = a[k] - b[k];
+    return out;
+  }
+  function geoHbpWeight(mx, sd) {
+    let w = 0.0;
+    for (let i = 0; i < GEO_HBP_BANDS.length; i++) {
+      const [x0, h] = GEO_HBP_BANDS[i];
+      const top = i + 1 < GEO_HBP_BANDS.length ? geoNcdf((GEO_HBP_BANDS[i + 1][0] - mx) / sd) : 1.0;
+      w += h * (top - geoNcdf((x0 - mx) / sd));
+    }
+    return w;
+  }
+  function leanHbpWp(p, q, s) {
+    if (!hasLean(p)) return [1.0, 1.0];
+    const [mx, mz, lx, lz, sd, sp] = leanGeometry(p, q, s, landingPre(p, q, s));
+    const s1 = sd * sp;
+    const n0 = geoShares(mx, mz, sd, sd).noncomp, n1 = geoShares(mx + lx, mz + lz, s1, s1).noncomp;
+    const b0 = geoHbpWeight(mx, sd), b1 = geoHbpWeight(mx + lx, s1);
+    const rh = (b0 > 1e-12 && n0 > 1e-9 && n1 > 1e-9) ? (b1 / n1) / (b0 / n0) : 1.0;
+    let rw = 1.0;
+    if ((GEO_DOWN.includes(q) || (q === "chase" && isOffspeed(p.kind))) && lz < 0) {
+      const d0 = geoNcdf((-GEO_EXT[1] - mz) / sd), d1 = geoNcdf((-GEO_EXT[1] - mz - lz) / s1);
+      rw = (d0 > 1e-12 && n0 > 1e-9 && n1 > 1e-9) ? (d1 / n1) / (d0 / n0) : 1.0;
+    }
+    return [rh, rw];
+  }
+
   function landing(p, q, s) {
+    let z = landingPre(p, q, s);
+    if (hasLean(p)) { const dz = leanDelta(p, q, s, z); const z2 = {}; for (const k of ZONES) z2[k] = z[k] + dz[k]; z = z2; }
+    for (const k of ZONES) z[k] = Math.max(z[k], 0.01);
+    let t = 0; for (const k of ZONES) t += z[k];
+    const out = {}; for (const k of ZONES) out[k] = z[k] / t;
+    return out;
+  }
+
+  function landingPre(p, q, s) {   // landing()'s shares before its final floor and divide (v1.2 split; v1.1's arithmetic)
     const A = D.OUTCOME_ADJ[s.level];
     const [command] = effective(p, s);
     const sc = D.LEVEL[s.level].cmd_scale ?? 1.0;   // v0.7 spread calibration (engine.py)
@@ -4744,10 +4907,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     }
     const over = s.pitch_count - D.LEVEL[s.level].fatigue;
     if (over > 0) { const shift = Math.min(z.edge - 0.05, 0.02 * over / 10); z.edge -= shift; z.heart += shift; }
-    for (const k of ZONES) z[k] = Math.max(z[k], 0.01);
-    let t = 0; for (const k of ZONES) t += z[k];
-    const out = {}; for (const k of ZONES) out[k] = z[k] / t;
-    return out;
+    return z;
   }
 
 
@@ -4968,6 +5128,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
     const land = landing(p, q, s);
+    const [leanH, leanW] = leanHbpWp(p, q, s);   // v1.2: [1, 1] without a lean
     let [command, grade] = effective(p, s);
     grade = grade - Math.min(P08.kg_cap, P08.kg * Math.max(0, s.pitch_count - L.fatigue) / 20);
     const gs = 0.25 * (L.stuff_scale ?? 1.0);
@@ -5012,6 +5173,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       Z.hlPost.push(pt.hard);
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
+      if (leanH !== 1.0 && Z.hb) Z.hb = Math.min(0.9, Z.hb * leanH);   // v1.2 (engine.py)
+      if (leanW !== 1.0 && Z.wp) Z.wp = Math.min(0.9, Z.wp * leanW);
       zones.push(Z);
     }
     return { zones, hL, tauEff, big };
@@ -5107,6 +5270,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (new Set(names).size !== names.length) throw new Error(`two pitches share a name: ${names.join(", ")}`);
     for (const x of arsenal) if (!KINDS.includes(x.kind)) throw new Error(`unknown pitch kind "${x.kind}" for ${x.name}`);
     for (const x of arsenal) if (!SHAPE_TAGS[x.kind].includes(x.shape || "")) throw new Error(`unknown shape "${x.shape}" for ${x.name} (${x.kind})`);   // v1.1: after migration
+    for (const x of arsenal) if (!(Math.abs(x.lean_x || 0) <= LEAN_MAX && Math.abs(x.lean_z || 0) <= LEAN_MAX && spreadOf(x) >= SPREAD_MIN && spreadOf(x) <= SPREAD_MAX))
+      throw new Error(`miss lean / spread out of range for ${x.name}: lean ${x.lean_x || 0}, ${x.lean_z || 0} in. (limit ${LEAN_MAX}), spread ${spreadOf(x)} (${SPREAD_MIN}-${SPREAD_MAX})`);   // v1.2
     if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
@@ -5946,10 +6111,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
     return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
-      infield_in: !!s.infield_in };
+      infield_in: !!s.infield_in, lean: leanKey(arsenal) };
   }
+  // v1.2: each pitch's lean and spread; a change re-solves the table (a frozen table from before leans = all at lean 0)
+  const leanKey = (arsenal) => arsenal.map((x) => [x.lean_x || 0, x.lean_z || 0, spreadOf(x)].join(",")).join("|");
   function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
+    if ((frozen.lean ?? arsenal.map(() => "0,0,1").join("|")) !== leanKey(arsenal)) return true;   // v1.2
     if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
@@ -6201,7 +6369,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     PROFILES, PROFILE_T, MOVE_RATIO, PROFILE_NAMES, profile, defaultMph, primaryFb, relShape, tagFor, mph, resolveSpeeds, isFastball, pclass, keyKind,
     v11profileTerms: profileTerms, ptKey, gbRate,   // v1.1 Step 2
     v11terms: { PT_C, PT_B, PT_FBZ_W, PT_FBZ_H, PT_FBL_H, PT_PLAT, PT_CHASE_OPP, PT_CHASE_MEAN, GB_PROFILE, SLOT_ANGLE, PT_FB_IVB, SLOT_MOVE },
-    classTerms };
+    classTerms,
+    v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
+      LEAN_MAX, SPREAD_MIN, SPREAD_MAX } };   // v1.2 location model
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);
@@ -7027,6 +7197,15 @@ const E = PitchEngine;
 
 // ------------------------------------------------------------------ vocabulary
 const LEVELS = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
+// v1.2: a stored pitch's miss lean (inches, + = arm side / up) and spread, passed to the engine only when set, so a
+// pitch without them is exactly v1.1's
+function leanOf(d) {
+  const o = {};
+  if (+d.lean_x) o.lean_x = +d.lean_x;
+  if (+d.lean_z) o.lean_z = +d.lean_z;
+  if (d.spread !== undefined && d.spread !== null && d.spread !== "" && +d.spread !== 1) o.spread = +d.spread;
+  return o;
+}
 const TIERS = [
   { n: 1, t: "Results only", d: "Ball, strike, foul, in play, hit or out. The minimum a coach can keep up with." },
   { n: 2, t: "Plus contact", d: "Weak, solid or hard on every ball in play." },
@@ -7154,6 +7333,7 @@ function arsenal() {
     const measured = S.setup.inputs >= 4 && has(d.ivb) && has(d.hb);
     return E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: adj.grade, command: adj.command, traits: adj.traits, strike_rate: adj.strike_rate, strike_ref: adj.strike_ref, conf: c === undefined ? feel : c,
       base_conf: feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1,
+      ...leanOf(d),   // v1.2: miss lean and spread, only when the coach set them (else the engine's even default)
       ivb: measured ? +d.ivb : null, hb: measured ? +d.hb : null, release_offset_in: measured && Array.isArray(d.relOff) ? d.relOff.slice() : [0, 0],
       ...(d.name === mainName ? { main: true } : {}) });   // v1.1 Step 5: set only when true, so unmarked snapshots don't change
   });
@@ -7994,6 +8174,7 @@ function arsenalFor(idx) {
   const pd = S.setup.staff[idx], g = G(), conf = (g.conf || {})[keyOf(idx)] || {}, mainName = mainFbName(pd);
   return pd.pitches.map((d) => E.Pitch({ name: d.name, kind: d.kind, sign: d.sign, grade: PCLearner.coachValue(d, "grade"), command: PCLearner.coachValue(d, "command"), conf: conf[d.name] === undefined ? +d.feel : conf[d.name],
     base_conf: +d.feel, shape: d.shape || "", velo: +d.velo || 0, slot: pd.slot, height_ft: +pd.height_ft || 6.1, ivb: null, hb: null,
+    ...leanOf(d),
     ...(d.name === mainName ? { main: true } : {}) }));
 }
 

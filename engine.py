@@ -548,6 +548,9 @@ class Pitch:
     type: str = None           # v1.1: the pitch's real name from the app ("Cutter", "12-6 curve"); used only to migrate
     main: bool = False         # v1.1: the coach's "main fastball" mark (primary_fb)
     fb_mph: float = None       # v1.1 Step 1b: his main fastball's entered speed in this arsenal (resolve_speeds); None = not set
+    lean_x: float = 0.0        # v1.2: miss lean, inches, + = his arm side (- glove side); 0 = even (plan 2.1)
+    lean_z: float = 0.0        # v1.2: miss lean, inches, + = up
+    spread: float = 1.0        # v1.2: miss size vs what his command says (1 = as command says)
 
     def __post_init__(self):
         if self.base_conf < 0:
@@ -816,7 +819,134 @@ def effective(p: Pitch, s: Situation):
     return cmd, p.grade + side * t.get("side_grade", 0.0)
 
 
+# ---------------------------------------------------------------------------
+# v1.2 location model (plan 2.2-2.3): a miss lean (side, height) and spread per pitch. At lean 0 / spread 1 nothing
+# here runs, so landing() and the HBP / wild-pitch terms are v1.1's floats exactly. Otherwise a 2-D normal miss model
+# (inches, batter frame: x + = toward the batter, z + = up from the zone's middle) gives the *difference* the lean makes,
+# added to landing()'s own shares. Its sigma is solved per call from landing()'s own pre-floor shares, so it carries
+# command, confidence, traits, level wildness, wild-today and fatigue.
+LEAN_MAX, SPREAD_MIN, SPREAD_MAX = 6.0, 0.5, 2.0
+# The engine's four landing zones are Baseball Savant's attack zones (heart, shadow, chase, waste), set relative to the
+# strike zone (half-width 10 in. with the ball, half-height 12 in.): heart inside 67% of it, the edge (shadow) to 133%,
+# off (chase) to 200%, non-competitive (waste) beyond. Checked Nov 13 against landing()'s own shares: a corner target fits
+# within about 0.08 of each share; a middle target's heart doesn't (landing() is more peaked there than any normal), so
+# the lean's effect on a middle target's heart share is approximate (BUILD_v1.2_REPORT Step 1).
+GEO_HEART, GEO_ZONE, GEO_EXT = (6.7, 8.04), (13.3, 15.96), (20.0, 24.0)
+GEO_Q = {"up-in": (20.0 / 3.0, 8.0), "up-away": (-20.0 / 3.0, 8.0), "down-in": (20.0 / 3.0, -8.0),
+         "down-away": (-20.0 / 3.0, -8.0), "middle": (0.0, 0.0), "down-middle": (0.0, -8.0)}   # target, batter frame
+GEO_DOWN = ("down-in", "down-away", "down-middle")
+# MLB 2024-25 HBP rate by where the pitch crossed, inches toward the batter from plate centre (research doc section 3,
+# results/v12/proxies_mlb_2024.txt and _2025.txt, the two seasons averaged). Only its shape matters here: it enters as
+# a ratio, so the level's own HBP price is untouched.
+GEO_HBP_BANDS = ((12.0, 0.003), (15.0, 0.0165), (18.0, 0.041), (21.0, 0.104), (24.0, 0.20), (27.0, 0.345), (30.0, 0.57))
+
+
+def geo_ncdf(x):
+    """Standard normal CDF by Abramowitz & Stegun 7.1.26 (|error| < 1.5e-7), written the same way in engine.js so
+    Python and JS agree (JS has no erf)."""
+    z = abs(x) / 1.4142135623730951
+    t = 1.0 / (1.0 + 0.3275911 * z)
+    y = 1.0 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * exp(-z * z)
+    return 0.5 * (1.0 + y) if x >= 0 else 0.5 * (1.0 - y)
+
+
+def _geo_in(m, sd, a):
+    return geo_ncdf((a - m) / sd) - geo_ncdf((-a - m) / sd)
+
+
+def geo_shares(mx, mz, sx, sz):
+    """heart / edge / off / noncomp shares of a 2-D normal miss around (mx, mz), inches."""
+    h = _geo_in(mx, sx, GEO_HEART[0]) * _geo_in(mz, sz, GEO_HEART[1])
+    zn = _geo_in(mx, sx, GEO_ZONE[0]) * _geo_in(mz, sz, GEO_ZONE[1])
+    e = _geo_in(mx, sx, GEO_EXT[0]) * _geo_in(mz, sz, GEO_EXT[1])
+    return {"heart": h, "edge": zn - h, "off": e - zn, "noncomp": 1.0 - e}
+
+
+def geo_target(p, q):
+    """The target's position, batter frame. A chase is above the zone for a fastball, below it for off-speed."""
+    if q == "chase":
+        return (0.0, -18.0 if is_offspeed(p.kind) else 18.0)    # in the chase band (150% of the half-height)
+    return GEO_Q[q]
+
+
+def geo_sigma(mx, mz, ext):
+    """The miss size (inches, same both ways) at which the normal model keeps `ext` of the mass out of the waste band:
+    landing()'s own 1 - noncomp, so the tail that drives hit batters and wild pitches is matched exactly. That share
+    falls as the size grows (the target is inside the band), so bisection finds it. A labeled assumption: the same size
+    side to side and up and down."""
+    ext = min(0.999, max(0.05, ext))
+    lo, hi = 0.25, 120.0
+    for _ in range(48):
+        mid = 0.5 * (lo + hi)
+        if _geo_in(mx, mid, GEO_EXT[0]) * _geo_in(mz, mid, GEO_EXT[1]) > ext:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
+def has_lean(p):
+    return bool(p.lean_x) or bool(p.lean_z) or p.spread != 1.0
+
+
+def lean_geometry(p, q, s, z_pre):
+    """(target, lean, sigma, spread) in the batter frame. lean_x is in the pitcher's frame: his arm side is toward a
+    same-side hitter and away from an opposite-side hitter (a switch hitter bats opposite: same_side False)."""
+    mx, mz = geo_target(p, q)
+    lx = p.lean_x if s.same_side else -p.lean_x
+    sd = geo_sigma(mx, mz, 1.0 - z_pre["noncomp"])
+    return mx, mz, lx, p.lean_z, sd, p.spread
+
+
+def lean_delta(p, q, s, z_pre):
+    mx, mz, lx, lz, sd, sp = lean_geometry(p, q, s, z_pre)
+    a = geo_shares(mx + lx, mz + lz, sd * sp, sd * sp)
+    b = geo_shares(mx, mz, sd, sd)
+    return {k: a[k] - b[k] for k in ZONES}
+
+
+def _geo_hbp_weight(mx, sd):
+    """Expected HBP weight of a lateral miss ~ Normal(mx, sd) under the MLB curve (piecewise constant, exact)."""
+    w = 0.0
+    for i, (x0, h) in enumerate(GEO_HBP_BANDS):
+        x1 = GEO_HBP_BANDS[i + 1][0] if i + 1 < len(GEO_HBP_BANDS) else None
+        top = 1.0 if x1 is None else geo_ncdf((x1 - mx) / sd)
+        w += h * (top - geo_ncdf((x0 - mx) / sd))
+    return w
+
+
+def lean_hbp_wp(p, q, s):
+    """(HBP factor, wild-pitch factor) for a lean: per unit of way-off mass, how much more of it is at the batter's body
+    (or in the dirt). The landing delta already moves the mass, so this scales the hit rate per unit of it and never
+    counts the lean twice (plan 2.3, review finding 3). (1.0, 1.0) without a lean."""
+    if not has_lean(p):
+        return 1.0, 1.0
+    mx, mz, lx, lz, sd, sp = lean_geometry(p, q, s, landing_pre(p, q, s))
+    s1 = sd * sp
+    n0 = geo_shares(mx, mz, sd, sd)["noncomp"]
+    n1 = geo_shares(mx + lx, mz + lz, s1, s1)["noncomp"]
+    b0, b1 = _geo_hbp_weight(mx, sd), _geo_hbp_weight(mx + lx, s1)
+    rh = (b1 / n1) / (b0 / n0) if (b0 > 1e-12 and n0 > 1e-9 and n1 > 1e-9) else 1.0
+    rw = 1.0
+    if (q in GEO_DOWN or (q == "chase" and is_offspeed(p.kind))) and lz < 0:
+        d0 = geo_ncdf((-GEO_EXT[1] - mz) / sd)
+        d1 = geo_ncdf((-GEO_EXT[1] - mz - lz) / s1)
+        rw = (d1 / n1) / (d0 / n0) if (d0 > 1e-12 and n0 > 1e-9 and n1 > 1e-9) else 1.0
+    return rh, rw
+
+
 def landing(p: Pitch, q: str, s: Situation):
+    z = landing_pre(p, q, s)
+    if has_lean(p):                          # v1.2 (plan 2.2): the lean's difference, before the one floor and divide
+        dz = lean_delta(p, q, s, z)
+        z = {k: z[k] + dz[k] for k in ZONES}
+    z = {k: max(v, 0.01) for k, v in z.items()}
+    t = sum(z.values())
+    return {k: v / t for k, v in z.items()}
+
+
+def landing_pre(p: Pitch, q: str, s: Situation):
+    """landing()'s shares before its final floor and divide (v1.2 split them out; the arithmetic is v1.1's)."""
     command, _ = effective(p, s)
     # v0.7 spread calibration: one grade point of command = one SD of real pitchers at this level (talent_spread.py,
     # fit_spread.py). cmd_scale 1 = the v0.6 engine. The level offset and confidence keep their own (unscaled) effect.
@@ -883,9 +1013,7 @@ def landing(p: Pitch, q: str, s: Situation):
         shift = min(z["edge"] - 0.05, 0.02 * over / 10)
         z["edge"] -= shift
         z["heart"] += shift
-    z = {k: max(v, 0.01) for k, v in z.items()}
-    t = sum(z.values())
-    return {k: v / t for k, v in z.items()}
+    return z
 
 
 # ---------------------------------------------------------------------------
@@ -1478,6 +1606,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
 
     hitters_count = s.balls > s.strikes and s.strikes < 2
     land = landing(p, q, s)
+    lean_h, lean_w = lean_hbp_wp(p, q, s)     # v1.2: (1.0, 1.0) without a lean
     command, grade = effective(p, s)
     grade = grade - min(P08["kg_cap"], P08["kg"] * max(0, s.pitch_count - LEVEL[s.level]["fatigue"]) / 20)
     gs = 0.25 * L.get("stuff_scale", 1.0)        # v0.7: one grade point of stuff = one SD of real pitchers (fit_spread.py)
@@ -1558,10 +1687,14 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         ball_p = pz * take * (1 - C)
         if z in ("noncomp", "off") and A["hbp"] > 0:   # v0.6: hit by pitch
             hb = min(0.9, A["hbp"] * hbp_loc(p, q) * (1.0 if z == "noncomp" else 0.1))
+            if lean_h != 1.0:
+                hb = min(0.9, hb * lean_h)
             out["hbp"] += ball_p * hb
             ball_p *= (1 - hb)
         if z == "noncomp" and any(s.bases):   # wild pitch risk with runners on
             wp = (0.12 if is_offspeed(p.kind) else 0.04) * (1 - 0.15 * (s.catcher_block - 3))
+            if lean_w != 1.0:
+                wp = min(0.9, wp * lean_w)
             out["wp_ball"] += ball_p * wp
             ball_p *= (1 - wp)
         out["ball"] += ball_p
@@ -1833,6 +1966,9 @@ def check_inputs(arsenal, s: Situation):
             raise ValueError(f"unknown pitch kind {x.kind!r} for {x.name} (expected one of {KINDS})")
         if x.shape not in SHAPE_TAGS[x.kind]:   # v1.1: checked after migration, so v1.0 tags arrive already mapped
             raise ValueError(f"unknown shape {x.shape!r} for {x.name} ({x.kind}: expected one of {SHAPE_TAGS[x.kind]})")
+        if not (abs(x.lean_x) <= LEAN_MAX and abs(x.lean_z) <= LEAN_MAX and SPREAD_MIN <= x.spread <= SPREAD_MAX):
+            raise ValueError(f"miss lean / spread out of range for {x.name}: lean {x.lean_x}, {x.lean_z} in. (limit "
+                             f"{LEAN_MAX}), spread {x.spread} ({SPREAD_MIN}-{SPREAD_MAX})")
     if s.level not in LEVEL or s.level not in RE_BY_LEVEL:
         raise ValueError(f"unknown level {s.level!r}")
     if not (0 <= s.balls <= 3 and 0 <= s.strikes <= 2):
@@ -2377,7 +2513,12 @@ def frozen_inputs(arsenal, s):
     """6.2 the inputs a plate-appearance table is solved with, for the re-solve triggers."""
     return dict(conf={x.name: x.conf for x in arsenal}, wild={x.name: wild_today(x, s) for x in arsenal}, ump=s.ump_u,
                 names=tuple(x.name for x in arsenal), outs=s.outs, bases=tuple(bool(b) for b in s.bases),
-                infield_in=bool(s.infield_in))
+                infield_in=bool(s.infield_in), lean=lean_key(arsenal))
+
+
+def lean_key(arsenal):
+    """v1.2: each pitch's (lean_x, lean_z, spread); a change re-solves the table (a lean changes landing and HBP)."""
+    return tuple((x.lean_x, x.lean_z, x.spread) for x in arsenal)
 
 
 def needs_resolve(frozen, arsenal, s):
@@ -2386,6 +2527,9 @@ def needs_resolve(frozen, arsenal, s):
     > 0.10, or the umpire shift moves by > 0.20 logits."""
     if frozen is None or frozen["names"] != tuple(x.name for x in arsenal):
         return True
+    fl = frozen.get("lean") or tuple((0.0, 0.0, 1.0) for _ in arsenal)
+    if tuple(tuple(v) for v in fl) != lean_key(arsenal):
+        return True    # v1.2: a frozen table from before leans existed counts as every pitch at lean 0
     if (frozen.get("outs") != s.outs or frozen.get("bases") != tuple(bool(b) for b in s.bases)
             or frozen.get("infield_in") != bool(s.infield_in)):
         return True

@@ -7,6 +7,7 @@ platform libm drift that makes bit-exact comparison against a glibc-generated re
 platform. Tolerance 1e-9 on numbers; exact on everything else.
 
 usage: python3 golden/fast.py N          -> compute both sides, diff, exit non-zero on any mismatch
+       FAST_LEANS=1 python3 golden/fast.py N  -> the same with a miss lean and spread on every pitch (v1.2)
        python3 golden/fast.py --emit N   -> print this side's results as JSON (used by golden/fast.js)
 """
 import json, os, subprocess, sys
@@ -26,7 +27,19 @@ def load(n):
     cs = json.load(open(GOLD))
     if n > len(cs):
         sys.exit(f"only {len(cs)} golden cases available, asked for {n}")
-    return cs[:n]
+    cs = cs[:n]
+    if os.environ.get("FAST_LEANS") == "1":     # v1.2: the same inputs with a miss lean and spread on every pitch
+        for i, c in enumerate(cs):
+            for j, d in enumerate(c["arsenal"]):
+                d.update(lean_leans(i, j))
+    return cs
+
+
+def lean_leans(i, j):
+    """v1.2: a deterministic lean / spread per (case, pitch), written the same way in fast.js (no RNG to keep in step)."""
+    k = (i * 7 + j * 13) % 11
+    return {"lean_x": round((k - 5) * 0.6, 2), "lean_z": round(((k * 3) % 11 - 5) * 0.5, 2),
+            "spread": [1.0, 0.8, 1.25][(i + j) % 3]}
 
 
 def compute(c):

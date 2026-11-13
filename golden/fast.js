@@ -100,6 +100,12 @@ function main() {
   const all = JSON.parse(fs.readFileSync(path.join(HERE, "golden_v10.json")));
   if (n > all.length) { console.error(`only ${all.length} golden cases available, asked for ${n}`); process.exit(1); }
   const cases = all.slice(0, n);
+  if (process.env.FAST_LEANS === "1")   // v1.2: fast.py's lean_leans(i, j), written the same way
+    cases.forEach((c, i) => c.arsenal.forEach((d, j) => {
+      const k = (i * 7 + j * 13) % 11;
+      Object.assign(d, { lean_x: Math.round((k - 5) * 0.6 * 100) / 100, lean_z: Math.round((((k * 3) % 11) - 5) * 0.5 * 100) / 100,
+        spread: [1.0, 0.8, 1.25][(i + j) % 3] });
+    }));
   if (emit) { process.stdout.write(JSON.stringify(cases.map(compute))); return; }
   let t0 = Date.now(); const js = cases.map(compute); const tJs = (Date.now() - t0) / 1000;
   t0 = Date.now(); const py = pySide(n); const tPy = (Date.now() - t0) / 1000;

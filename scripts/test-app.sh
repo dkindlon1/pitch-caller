@@ -9,6 +9,8 @@ $run tests.py      python3 tests.py
 $run explain       python3 tests_v11_explain.py 60   # v1.1 Step 3 (was tests_v10_explain.py): why line and intent tell the truth, setups included
 $run tests_v11     python3 tests_v11.py              # v1.1: six kinds, one migration table, exactly v1.0's calls (Step 1)
 $run fast_parity   python3 golden/fast.py 40      # live Python vs JS on 40 golden inputs, plus confidence and grading (v1.0 #18)
+$run tests_v12     python3 tests_v12.py              # v1.2 Step 1: miss lean / spread, exactly v1.1 at lean 0 (vs git 14e0ad2), Python = JS
+FAST_LEANS=1 $run fast_parity_leans python3 golden/fast.py 40   # v1.2: the same 40 golden inputs with a lean and spread on every pitch
 $run golden_v11   node golden/golden_v11.js v11   # v1.1 Step 2: the one engine against its frozen reference (JS); golden_v10 and golden_v11a (Step 1b) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
