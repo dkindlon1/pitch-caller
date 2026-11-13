@@ -1,0 +1,563 @@
+{
+ "S1": {
+  "what": "riding fastball top of the zone (strike, foul or whiff) -> 12-6 / power curve or drop / split change at the bottom, 0-1 to 2-2",
+  "n_payoff": 13598,
+  "n_after_setup": 828,
+  "fits": {
+   "whiff": {
+    "beta": 0.20720526319360494,
+    "se": 0.12104156461326399,
+    "lo": -0.030036203448392473,
+    "hi": 0.44444672983560235,
+    "n": 7030,
+    "n_setup": 406,
+    "verdict": "interval includes 0",
+    "raw_after": 0.3817733990147783,
+    "raw_else": 0.3990036231884058
+   },
+   "chase": {
+    "beta": -0.1990791385715372,
+    "se": 0.09910449695056014,
+    "lo": -0.39332395259463504,
+    "hi": -0.004834324548439323,
+    "n": 9861,
+    "n_setup": 608,
+    "verdict": "WRONG WAY",
+    "raw_after": 0.3536184210526316,
+    "raw_else": 0.38646925321517345
+   },
+   "cstrike": {
+    "beta": -0.8020681745774513,
+    "se": 0.3682901405673224,
+    "lo": -1.5239168500894031,
+    "hi": -0.08021949906549941,
+    "n": 6553,
+    "n_setup": 421,
+    "verdict": "reported",
+    "raw_after": 0.052256532066508314,
+    "raw_else": 0.06784083496412263
+   },
+   "hard": {
+    "beta": -0.07617895781933678,
+    "se": 0.2148712760911855,
+    "lo": -0.4973266589580604,
+    "hi": 0.34496874331938676,
+    "n": 2062,
+    "n_setup": 122,
+    "verdict": "interval includes 0",
+    "raw_after": 0.30327868852459017,
+    "raw_else": 0.3247422680412371
+   }
+  },
+  "decision": "dropped unless Drew keeps it"
+ },
+ "S2": {
+  "what": "sinker / running fastball inside (not fouled or put in play) -> slider down-away, same-side hitter",
+  "n_payoff": 25522,
+  "n_after_setup": 3747,
+  "fits": {
+   "whiff": {
+    "beta": 0.006546635378599616,
+    "se": 0.07398245590757943,
+    "lo": -0.13845897820025607,
+    "hi": 0.1515522489574553,
+    "n": 10835,
+    "n_setup": 1683,
+    "verdict": "interval includes 0",
+    "raw_after": 0.4474153297682709,
+    "raw_else": 0.49027534965034963
+   },
+   "chase": {
+    "beta": -0.0414400378067524,
+    "se": 0.05578931743472501,
+    "lo": -0.1507870999788134,
+    "hi": 0.06790702436530861,
+    "n": 18991,
+    "n_setup": 2853,
+    "verdict": "interval includes 0",
+    "raw_after": 0.3357868909919383,
+    "raw_else": 0.3126781509480729
+   },
+   "cstrike": {
+    "beta": -0.4650757979979588,
+    "se": 0.2018524982085598,
+    "lo": -0.860706694486736,
+    "hi": -0.06944490150918159,
+    "n": 14687,
+    "n_setup": 2064,
+    "verdict": "reported",
+    "raw_after": 0.08236434108527131,
+    "raw_else": 0.12802028044046582
+   },
+   "hard": {
+    "beta": -0.07337248872315952,
+    "se": 0.13533908379650833,
+    "lo": -0.3386370929643159,
+    "hi": 0.19189211551799681,
+    "n": 3184,
+    "n_setup": 537,
+    "verdict": "interval includes 0",
+    "raw_after": 0.22905027932960895,
+    "raw_else": 0.23007177937287496
+   }
+  },
+  "decision": "smallest size that passes its rows"
+ },
+ "S3": {
+  "what": "hard cutter / fastball inside (not fouled or put in play) -> fade / split change down-away, opposite-side hitter",
+  "n_payoff": 11103,
+  "n_after_setup": 1930,
+  "fits": {
+   "whiff": {
+    "beta": -0.11825274625038258,
+    "se": 0.08576136316478229,
+    "lo": -0.2863450180533559,
+    "hi": 0.049839525552590705,
+    "n": 6348,
+    "n_setup": 1143,
+    "verdict": "interval includes 0",
+    "raw_after": 0.3123359580052493,
+    "raw_else": 0.36349663784822284
+   },
+   "chase": {
+    "beta": -0.04620709331588403,
+    "se": 0.0854822907637221,
+    "lo": -0.21375238321277934,
+    "hi": 0.12133819658101129,
+    "n": 7203,
+    "n_setup": 1269,
+    "verdict": "interval includes 0",
+    "raw_after": 0.44129235618597323,
+    "raw_else": 0.42264914054600605
+   },
+   "cstrike": {
+    "beta": -0.29682168285969496,
+    "se": 0.2986456101324339,
+    "lo": -0.8821670787192655,
+    "hi": 0.2885237129998755,
+    "n": 4755,
+    "n_setup": 787,
+    "verdict": "reported",
+    "raw_after": 0.0940279542566709,
+    "raw_else": 0.14264112903225806
+   },
+   "hard": {
+    "beta": 0.18208365838791762,
+    "se": 0.13648175092439463,
+    "lo": -0.08542057342389586,
+    "hi": 0.4495878901997311,
+    "n": 2392,
+    "n_setup": 459,
+    "verdict": "interval includes 0",
+    "raw_after": 0.28540305010893247,
+    "raw_else": 0.2591826176927056
+   }
+  },
+  "decision": "smallest size that passes its rows"
+ },
+ "S4": {
+  "what": "fastball on the outer third -> changeup (not firm) / curve away and lower, next pitch",
+  "n_payoff": 26694,
+  "n_after_setup": 2858,
+  "fits": {
+   "whiff": {
+    "beta": -0.005084169800414308,
+    "se": 0.09087221629393348,
+    "lo": -0.18319371373652393,
+    "hi": 0.1730253741356953,
+    "n": 13458,
+    "n_setup": 1471,
+    "verdict": "interval includes 0",
+    "raw_after": 0.3263086335825969,
+    "raw_else": 0.3722365896387753
+   },
+   "chase": {
+    "beta": -0.07484508346587242,
+    "se": 0.07226388185144826,
+    "lo": -0.21648229189471102,
+    "hi": 0.06679212496296617,
+    "n": 17718,
+    "n_setup": 1994,
+    "verdict": "interval includes 0",
+    "raw_after": 0.3691073219658977,
+    "raw_else": 0.37350546934622236
+   },
+   "cstrike": {
+    "beta": -0.731234312704707,
+    "se": 0.25298154126266614,
+    "lo": -1.2270781335795327,
+    "hi": -0.2353904918298813,
+    "n": 13236,
+    "n_setup": 1387,
+    "verdict": "reported",
+    "raw_after": 0.0829127613554434,
+    "raw_else": 0.16895940585703434
+   },
+   "hard": {
+    "beta": 0.25634515700664046,
+    "se": 0.14446227564681194,
+    "lo": -0.026800903261110953,
+    "hi": 0.5394912172743919,
+    "n": 4851,
+    "n_setup": 572,
+    "verdict": "interval includes 0",
+    "raw_after": 0.2972027972027972,
+    "raw_else": 0.2776349614395887
+   }
+  },
+  "decision": "smallest size that passes its rows"
+ },
+ "S6": {
+  "what": "first-pitch curve / gyro slider called strike -> fastball at 0-1",
+  "n_payoff": 22357,
+  "n_after_setup": 1860,
+  "fits": {
+   "whiff": {
+    "beta": 0.16447782044211662,
+    "se": 0.11070371384927427,
+    "lo": -0.05250145870246095,
+    "hi": 0.38145709958669416,
+    "n": 11039,
+    "n_setup": 958,
+    "verdict": "interval includes 0",
+    "raw_after": 0.1826722338204593,
+    "raw_else": 0.18490229143934134
+   },
+   "chase": {
+    "beta": 0.14191623959138616,
+    "se": 0.10400219230678723,
+    "lo": -0.0619280573299168,
+    "hi": 0.3457605365126891,
+    "n": 10974,
+    "n_setup": 936,
+    "verdict": "reported",
+    "raw_after": 0.2670940170940171,
+    "raw_else": 0.24158198844391313
+   },
+   "cstrike": {
+    "beta": -0.20934817647943021,
+    "se": 0.1912051130660487,
+    "lo": -0.5841101980888856,
+    "hi": 0.16541384513002522,
+    "n": 11227,
+    "n_setup": 889,
+    "verdict": "reported",
+    "raw_after": 0.2125984251968504,
+    "raw_else": 0.2444379957438576
+   },
+   "hard": {
+    "beta": 0.28835058825149434,
+    "se": 0.14789121926971474,
+    "lo": -0.0015162015171465426,
+    "hi": 0.5782173780201352,
+    "n": 3797,
+    "n_setup": 338,
+    "verdict": "interval includes 0",
+    "raw_after": 0.47041420118343197,
+    "raw_else": 0.3923099161607401
+   }
+  },
+  "decision": "smallest size that passes its rows"
+ },
+ "S7": {
+  "what": "riding fastball top of the zone, whiff -> riding fastball above the zone, two strikes",
+  "n_payoff": 2463,
+  "n_after_setup": 141,
+  "fits": {
+   "whiff": {
+    "beta": 0.618997612241132,
+    "se": 0.2805457421193265,
+    "lo": 0.0691279576872521,
+    "hi": 1.168867266795012,
+    "n": 1207,
+    "n_setup": 59,
+    "verdict": "right way",
+    "raw_after": 0.4406779661016949,
+    "raw_else": 0.31010452961672474
+   },
+   "chase": {
+    "beta": -0.680618226768453,
+    "se": 0.225057411424574,
+    "lo": -1.121730753160618,
+    "hi": -0.23950570037628793,
+    "n": 2197,
+    "n_setup": 127,
+    "verdict": "WRONG WAY",
+    "raw_after": 0.36220472440944884,
+    "raw_else": 0.4439613526570048
+   },
+   "cstrike": {
+    "beta": -12.099585424907211,
+    "se": 0.8674112768030576,
+    "lo": -13.799711527441204,
+    "hi": -10.399459322373218,
+    "n": 1243,
+    "n_setup": 81,
+    "verdict": "reported",
+    "raw_after": 0.0,
+    "raw_else": 0.004302925989672977
+   }
+  },
+  "decision": "mixed: smallest size, flagged"
+ },
+ "S8": {
+  "what": "slider / curve strike at the bottom edge -> the same pitch below the zone, two strikes",
+  "n_payoff": 16896,
+  "n_after_setup": 1908,
+  "fits": {
+   "whiff": {
+    "beta": -0.07371036095567006,
+    "se": 0.08991739807015979,
+    "lo": -0.24994846117318326,
+    "hi": 0.10252773926184312,
+    "n": 6693,
+    "n_setup": 750,
+    "verdict": "interval includes 0",
+    "raw_after": 0.512,
+    "raw_else": 0.5214538112064614
+   },
+   "chase": {
+    "beta": -0.13346009819597388,
+    "se": 0.06094789355049412,
+    "lo": -0.25291796955494233,
+    "hi": -0.014002226837005402,
+    "n": 15838,
+    "n_setup": 1770,
+    "verdict": "WRONG WAY",
+    "raw_after": 0.3559322033898305,
+    "raw_else": 0.3667898777367074
+   },
+   "cstrike": {
+    "beta": 0.2604344085805664,
+    "se": 0.359540459031582,
+    "lo": -0.4442648911213343,
+    "hi": 0.9651337082824671,
+    "n": 10102,
+    "n_setup": 1147,
+    "verdict": "reported",
+    "raw_after": 0.013077593722755012,
+    "raw_else": 0.010720268006700168
+   },
+   "hard": {
+    "beta": -0.010127205217353847,
+    "se": 0.22130298568270232,
+    "lo": -0.44388105715545034,
+    "hi": 0.4236266467207427,
+    "n": 1394,
+    "n_setup": 169,
+    "verdict": "reported",
+    "raw_after": 0.20710059171597633,
+    "raw_else": 0.22938775510204082
+   }
+  },
+  "decision": "dropped unless Drew keeps it"
+ },
+ "S9": {
+  "what": "early fastball / cutter on an edge -> two-strike pitch off that same edge",
+  "n_payoff": 31272,
+  "n_after_setup": 3534,
+  "fits": {
+   "whiff": {
+    "beta": -0.13877324824217932,
+    "se": 0.07428674254922972,
+    "lo": -0.2843752636386696,
+    "hi": 0.0068287671543109385,
+    "n": 10586,
+    "n_setup": 1216,
+    "verdict": "interval includes 0",
+    "raw_after": 0.32319078947368424,
+    "raw_else": 0.3607257203842049
+   },
+   "chase": {
+    "beta": 0.03153159694223996,
+    "se": 0.045611289757604125,
+    "lo": -0.057866530982664116,
+    "hi": 0.12092972486714404,
+    "n": 31272,
+    "n_setup": 3534,
+    "verdict": "interval includes 0",
+    "raw_after": 0.34408602150537637,
+    "raw_else": 0.3378037349484462
+   },
+   "cstrike": {
+    "beta": 0.28846562988013974,
+    "se": 0.1851022992089997,
+    "lo": -0.07433487656949966,
+    "hi": 0.6512661363297791,
+    "n": 20406,
+    "n_setup": 2298,
+    "verdict": "reported",
+    "raw_after": 0.02610966057441253,
+    "raw_else": 0.01833443781753921
+   },
+   "hard": {
+    "beta": -0.1241419851535436,
+    "se": 0.17837672379748928,
+    "lo": -0.47376036379662256,
+    "hi": 0.22547639348953538,
+    "n": 2908,
+    "n_setup": 342,
+    "verdict": "reported",
+    "raw_after": 0.13742690058479531,
+    "raw_else": 0.1383476227591582
+   }
+  },
+  "decision": "smallest size that passes its rows"
+ },
+ "S10": {
+  "what": "sinker -> hard cutter",
+  "n_payoff": 12679,
+  "n_after_setup": 2780,
+  "fits": {
+   "whiff": {
+    "beta": 0.0840708439694683,
+    "se": 0.09280329077623911,
+    "lo": -0.09782360595196034,
+    "hi": 0.26596529389089696,
+    "n": 6182,
+    "n_setup": 1559,
+    "verdict": "interval includes 0",
+    "raw_after": 0.18216805644644002,
+    "raw_else": 0.17694138005624055
+   },
+   "chase": {
+    "beta": 0.084203603610813,
+    "se": 0.08721488750210643,
+    "lo": -0.0867375758933156,
+    "hi": 0.2551447831149416,
+    "n": 5843,
+    "n_setup": 1291,
+    "verdict": "interval includes 0",
+    "raw_after": 0.31138652207591017,
+    "raw_else": 0.23769771528998243
+   },
+   "cstrike": {
+    "beta": -0.21276868262073476,
+    "se": 0.1600871140375652,
+    "lo": -0.5265394261343626,
+    "hi": 0.10100206089289301,
+    "n": 6459,
+    "n_setup": 1216,
+    "verdict": "reported",
+    "raw_after": 0.25493421052631576,
+    "raw_else": 0.3404539385847797
+   },
+   "hard": {
+    "beta": 0.34120173715545166,
+    "se": 0.10948206578201135,
+    "lo": 0.12661688822270942,
+    "hi": 0.5557865860881939,
+    "n": 2360,
+    "n_setup": 556,
+    "verdict": "WRONG WAY",
+    "raw_after": 0.41906474820143885,
+    "raw_else": 0.3669623059866962
+   }
+  },
+  "decision": "dropped unless Drew keeps it"
+ },
+ "N1": {
+  "what": "slider right after a curve, or curve right after a slider (vs the same pitch after anything else)",
+  "n_payoff": 103773,
+  "n_after_setup": 4302,
+  "fits": {
+   "whiff": {
+    "beta": 0.1625744867241251,
+    "se": 0.05956201712627618,
+    "lo": 0.045832933156623804,
+    "hi": 0.27931604029162643,
+    "n": 47703,
+    "n_setup": 2298,
+    "verdict": "WRONG WAY",
+    "raw_after": 0.30809399477806787,
+    "raw_else": 0.30800572624160333
+   },
+   "chase": {
+    "beta": 0.05226464858533665,
+    "se": 0.05149372590199197,
+    "lo": -0.04866305418256761,
+    "hi": 0.1531923513532409,
+    "n": 57271,
+    "n_setup": 2480,
+    "verdict": "interval includes 0",
+    "raw_after": 0.3625,
+    "raw_else": 0.30464857367085835
+   },
+   "cstrike": {
+    "beta": 0.10080129490297189,
+    "se": 0.13705292401238703,
+    "lo": -0.16782243616130665,
+    "hi": 0.36942502596725046,
+    "n": 55792,
+    "n_setup": 1996,
+    "verdict": "reported",
+    "raw_after": 0.21342685370741482,
+    "raw_else": 0.3010075098520336
+   },
+   "hard": {
+    "beta": -0.01807274672080722,
+    "se": 0.0814539382447209,
+    "lo": -0.17772246568046018,
+    "hi": 0.14157697223884574,
+    "n": 16579,
+    "n_setup": 817,
+    "verdict": "interval includes 0",
+    "raw_after": 0.3402692778457772,
+    "raw_else": 0.3471006217485091
+   }
+  },
+  "decision": "dropped unless Drew keeps it"
+ },
+ "N2": {
+  "what": "sinker right after a changeup",
+  "n_payoff": 53117,
+  "n_after_setup": 3430,
+  "fits": {
+   "whiff": {
+    "beta": -0.23558569225018636,
+    "se": 0.09492622415468915,
+    "lo": -0.4216410915933771,
+    "hi": -0.04953029290699562,
+    "n": 24270,
+    "n_setup": 1834,
+    "verdict": "right way",
+    "raw_after": 0.10087241003271538,
+    "raw_else": 0.11851488678908896
+   },
+   "chase": {
+    "beta": -0.09249404167944461,
+    "se": 0.07632181940908908,
+    "lo": -0.2420848077212592,
+    "hi": 0.05709672436236998,
+    "n": 22809,
+    "n_setup": 1506,
+    "verdict": "interval includes 0",
+    "raw_after": 0.2775564409030544,
+    "raw_else": 0.24653804628456086
+   },
+   "cstrike": {
+    "beta": 0.2734260879223511,
+    "se": 0.1118123750997476,
+    "lo": 0.05427383272684583,
+    "hi": 0.4925783431178564,
+    "n": 28608,
+    "n_setup": 1586,
+    "verdict": "reported",
+    "raw_after": 0.33417402269861285,
+    "raw_else": 0.41344090000740136
+   },
+   "hard": {
+    "beta": 0.1708326164432714,
+    "se": 0.08509447741927531,
+    "lo": 0.004047440701491795,
+    "hi": 0.33761779218505106,
+    "n": 11299,
+    "n_setup": 895,
+    "verdict": "right way",
+    "raw_after": 0.47374301675977654,
+    "raw_else": 0.4315647827758554
+   }
+  },
+  "decision": "sized normally"
+ }
+}

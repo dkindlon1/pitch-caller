@@ -1,7 +1,8 @@
 """v1.1 checks (docs/PLAN_v1.1_2026-11-12.md). Step 1: six kinds, one migration table, nothing about the calls changes.
 Step 1b: the profile table and tag thresholds; with measured numbers on every pitch the calls are still exactly v1.0's.
 Step 2: the profile terms (fitted and priors) — the tables, both engines' parity, the typical pitch, HS scaling, grounders;
-outside Step 2's three functions the calls are still exactly v1.0's.
+outside Step 2's three functions the calls are still exactly v1.0's. Step 3: the setup rules fire and stay silent as written,
+the cap, root only, the tie-break, both engines.
 
   python3 tests_v11.py            -> runs every check, exits non-zero on a failure
 
@@ -139,7 +140,7 @@ for an, spec in arsenals.items():
                 else:
                     worst = max(worst, max(abs(d0[x] - d1[x]) for x in d0))
 check(f"exactly v1.0 ({ref}) with measured numbers and Step 2's changes set back (profile_terms, class_terms, gb_rate, the slot "
-      f"movement, the refit level shifts): FB/sink, FB/run, FB/cut, CB/loopy, CB/sharp, CH/drop, SL/'' as stored (typed and "
+      f"movement, the refit level shifts, Step 3's setup credits and tie-break): FB/sink, FB/run, FB/cut, CB/loopy, CB/sharp, CH/drop, SL/'' as stored (typed and "
       f"untyped), every pitch's speed and movement entered: the same call mix (Step 1b changed only the defaults; Step 2 changes "
       f"only those)",
       worst < 1e-12, f"{n} situations, largest difference {worst:.1e}")
@@ -385,6 +386,137 @@ g_ok = all(e.gb_rate(e.Pitch("x", k, grade=3, command=3, conf=0.7, shape=t)) == 
 small = [p for p, v in fit2["2e"].items() if v["n"] < 200]
 check("Step 2e: gb_rate is the 2024 grounder rate by kind and profile; a profile with under 200 balls in play uses its kind's rate "
       f"({', '.join(small)})", g_ok and all(T2["GB_PROFILE"][p] != round(fit2["2e"][p]["gb"], 4) for p in small))
+
+# ------------------------------------------------------------------ Step 3: setup and payoff rules (plan 2.4)
+_P3 = lambda n, k, sh, cmd=3, v=None: e.Pitch(n, k, 3, cmd, 0.75, shape=sh, velo=v)
+_E0 = (False, False, False)
+_ent = lambda n, q, r, landed=None, contact=None, read=None: (n, q, r, landed, contact, read)
+A_si = [_P3("Sinker", "SI", "run", v=89), _P3("Slider", "SL", "sweeper"), _P3("Changeup", "CH", "fade")]
+A_rf = [_P3("Fastball", "FB", "rides", v=91), _P3("Slider", "SL", "tight"), _P3("Changeup", "CH", "fade")]
+A_ed = [_P3("Fastball", "FB", "", v=90), _P3("Cutter", "FC", "hard"), _P3("Slider", "SL", "tight")]
+A_fd = [_P3("Sinker", "SI", "run", cmd=4, v=88), _P3("Curve", "CB", ""), _P3("Changeup", "CH", "fade")]
+sp = lambda ars, nm, q, s_: e.setup_payoff(next(x for x in ars if x.name == nm), q, s_, ars)
+S = lambda b, k, log, same=True, **kw: e.Situation(b, k, 1, _E0, level="college_d3", same_side=same, pa_log=tuple(log), **kw)
+rows3 = [  # (label, arsenal, situation, payoff call, rule expected or None)
+    ("S2 fires after a sinker in taken for a strike", A_si, S(0, 1, [_ent("Sinker", "up-in", "cstrike")]), ("Slider", "down-away"), "S2"),
+    ("S2 no read on a foul in: unknown, no fire", A_si, S(0, 1, [_ent("Sinker", "up-in", "foul")]), ("Slider", "down-away"), None),
+    ("S2 opposite-way foul in (late): fires", A_si, S(0, 1, [_ent("Sinker", "up-in", "foul", read="opposite")]), ("Slider", "down-away"), "S2"),
+    ("S2 pulled foul in (on time): no fire", A_si, S(0, 1, [_ent("Sinker", "up-in", "foul", read="pull")]), ("Slider", "down-away"), None),
+    ("S2 opposite-side hitter: no fire (S3's job)", A_si, S(0, 1, [_ent("Sinker", "up-in", "cstrike")], same=False), ("Slider", "down-away"), None),
+    ("S2 a ball in that landed way off: no fire", A_si, S(1, 0, [_ent("Sinker", "up-in", "ball", "way")]), ("Slider", "down-away"), None),
+    ("S2 a ball in, no cell logged: no fire (may have been wild)", A_si, S(1, 0, [_ent("Sinker", "up-in", "ball")]), ("Slider", "down-away"), None),
+    ("S2 a ball in logged next to the target: fires", A_si, S(1, 0, [_ent("Sinker", "down-in", "ball", (3, 0, True))]), ("Slider", "down-away"), "S2"),
+    ("S7 whiff up, no read: fires at two strikes", A_rf, S(0, 2, [_ent("Fastball", "up-in", "cstrike"), _ent("Fastball", "up-away", "whiff")]), ("Fastball", "chase"), "S7"),
+    ("S7 out-in-front whiff: no fire", A_rf, S(0, 2, [_ent("Fastball", "up-in", "cstrike"), _ent("Fastball", "up-away", "whiff", read="front")]), ("Fastball", "chase"), None),
+    ("S7 fouled straight back: no fire (squared up)", A_rf, S(0, 2, [_ent("Fastball", "up-in", "cstrike"), _ent("Fastball", "up-away", "foul", read="back")]), ("Fastball", "chase"), None),
+    ("S7 under two strikes: no fire", A_rf, S(0, 1, [_ent("Fastball", "up-away", "whiff")]), ("Fastball", "chase"), None),
+    ("S9 early outside-edge fastball, two-strike slider away: fires", A_ed, S(1, 2, [_ent("Fastball", "down-away", "cstrike"), _ent("Slider", "middle", "foul"), _ent("Cutter", "up-in", "ball", (0, 0, True))]), ("Slider", "chase"), "S9"),
+    ("S5 back door: worked away soft earlier, two strikes, command 4 curve? (curve command 3): no fire", A_fd, S(1, 2, [_ent("Changeup", "down-away", "whiff"), _ent("Curve", "down-away", "cstrike"), _ent("Sinker", "up-in", "ball", (1, 4, False))], same=False), ("Curve", "down-away"), None),
+    ("S5 front door: run sinker (command 4) in to an opposite-side hitter after soft away, two strikes: fires", A_fd, S(1, 2, [_ent("Changeup", "down-away", "whiff"), _ent("Curve", "down-away", "cstrike"), _ent("Sinker", "up-away", "ball", (1, 4, False))], same=False), ("Sinker", "down-in"), "S5"),
+    ("N2 sinker right after a changeup: a cost", A_fd, S(0, 1, [_ent("Changeup", "down-away", "cstrike")]), ("Sinker", "down-in"), "N2"),
+    ("no credit at three balls (S2's pattern at 3-1)", A_si, S(3, 1, [_ent("Sinker", "up-in", "cstrike"), _ent("Slider", "chase", "ball"), _ent("Slider", "chase", "ball"), _ent("Slider", "chase", "ball")]), ("Slider", "down-away"), None),
+    ("no chase payoff where the count has no chase target (2-2)", A_rf, S(2, 2, [_ent("Fastball", "up-in", "whiff"), _ent("Fastball", "up-away", "whiff"), _ent("Slider", "chase", "ball"), _ent("Slider", "chase", "ball")]), ("Fastball", "chase"), None),
+]
+bad3 = []
+for lab, ars, s_, call, want in rows3:
+    v, rule, ent = sp(ars, call[0], call[1], s_)
+    got = rule if (v != 0) else None
+    if got != want or (want == "N2" and v >= 0) or (want not in (None, "N2") and v <= 0):
+        bad3.append(f"{lab}: got {rule} {v:+.4f}")
+check(f"Step 3 rules: each fires on its pattern and stays silent on its 'doesn't fire' cases, the no-read cases included "
+      f"({len(rows3)} cases: S2, S5, S7, S9, N2, three balls, no chase at 2-2; S1, S3, S4, S6 in tests_v11_explain)", not bad3, "; ".join(bad3[:4]))
+
+# the cap: setup <= 0.02 x run scale; coach + setup <= max(coach, 0.02 x run scale)
+saved_sr = dict(e.SETUP_RULE)
+try:
+    for k_ in e.SETUP_RULE:
+        e.SETUP_RULE[k_] = 0.05
+    cap_v = sp(A_si, "Slider", "down-away", S(0, 1, [_ent("Sinker", "up-in", "cstrike")]))[0]
+finally:
+    e.SETUP_RULE.update(saved_sr)
+s_cap = S(0, 1, [_ent("Sinker", "up-in", "cstrike")], matchup={"succ|SL|down-away": 1})
+tab_c = e.solve_table(A_si, replace(s_cap, pa_log=()))
+c_with = e.cost08(A_si[1], "down-away", s_cap, A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
+c_none = e.cost08(A_si[1], "down-away", replace(s_cap, pa_log=()), A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
+cc_ = e.coach_credit(A_si[1], "down-away", s_cap, A_si)
+moved_ = (c_none - c_with) / e.run_scale("college_d3")
+s_nc = replace(s_cap, matchup={})                                         # no coach read: the setup credit applies
+c_with2 = e.cost08(A_si[1], "down-away", s_nc, A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
+c_none2 = e.cost08(A_si[1], "down-away", replace(s_nc, pa_log=()), A_si, tab_c, tab_c.h0, ("mix", tab_c.sigma[(0, 1)]))[0]
+moved2 = (c_none2 - c_with2) / e.run_scale("college_d3")
+check("Step 3 cap: a setup credit is at most 0.02 x run scale, and coach + setup at most max(coach, 0.02): with the "
+      "went-back read (0.03) on, the setup adds nothing; without it, the setup credit applies in full",
+      abs(cap_v - e.SETUP_CAP) < 1e-12 and abs(moved_) < 1e-12 and cc_ >= e.SETUP_CAP
+      and abs(moved2 - e.SETUP_RULE["S2"]) < 1e-12,
+      f"credit with every size at 0.05: {cap_v}; coach {cc_:.3f} -> setup adds {moved_:.4f}; no coach read -> {moved2:.4f}")
+
+# root only: pa_log is empty in every table solve
+seen_pa = []
+_orig_cost08 = e.cost08
+def _spy(p, q, s_, *a, **k):
+    seen_pa.append(len(s_.pa_log))
+    return _orig_cost08(p, q, s_, *a, **k)
+e.cost08 = _spy
+try:
+    e.solve_table(A_si, S(0, 1, [_ent("Sinker", "up-in", "cstrike")]))
+finally:
+    e.cost08 = _orig_cost08
+check("Step 3 root only: every cost inside a table solve sees an empty pa_log, even when the live situation has one",
+      seen_pa and max(seen_pa) == 0, f"{len(seen_pa)} cost evaluations")
+
+# tie-break: exact ties only, at most 5 points, never at three balls
+pi_t = {("Fastball", "up-in"): 0.5, ("Slider", "down-away"): 0.5}
+full_t = {("Fastball", "up-in"): 1.0, ("Slider", "down-away"): 1.0}
+_orig_en = e.enables_payoff
+e.enables_payoff = lambda a, ars, s_, ex=None: a == ("Fastball", "up-in")
+try:
+    tb_tie = e.tie_break(pi_t, full_t, A_rf, S(0, 0, []))
+    tb_far = e.tie_break(pi_t, {**full_t, ("Fastball", "up-in"): 1.0 + 0.01}, A_rf, S(0, 0, []))
+    tb_three = e.tie_break(pi_t, full_t, A_rf, S(3, 0, []))
+finally:
+    e.enables_payoff = _orig_en
+check("Step 3 tie-break: an exact tie moves 5 points to the setup-enabling call (the cap); outside the noise margin nothing "
+      "moves; nothing at three balls", abs(tb_tie[("Fastball", "up-in")] - 0.55) < 1e-12 and tb_far == pi_t and tb_three == pi_t,
+      f"tie {tb_tie}")
+
+# both engines: setup_payoff on these cases and on random at-bats
+rng3 = random.Random(31)
+cases3 = []
+for lab, ars, s_, call, want in rows3:
+    cases3.append(dict(ars=[dict(name=x.name, kind=x.kind, shape=x.shape, grade=x.grade, command=x.command, conf=x.conf, velo=x.velo) for x in ars],
+                       b=s_.balls, k=s_.strikes, same=s_.same_side, log=[list(z) for z in s_.pa_log], call=list(call)))
+for _ in range(400):
+    ars = rng3.choice([A_si, A_rf, A_ed, A_fd])
+    log = []
+    for _j in range(rng3.randrange(1, 5)):
+        x = rng3.choice(ars)
+        res = rng3.choice(["ball", "cstrike", "whiff", "foul", "foul"])
+        u = rng3.random()
+        landed = None if u < 0.5 else ("way" if u < 0.6 else [rng3.randrange(5), rng3.randrange(5), rng3.random() < 0.5])
+        rd = rng3.choice([None, "front", "late", "fooled"]) if res == "whiff" else (rng3.choice([None, "pull", "opposite", "back"]) if res == "foul" else None)
+        log.append([x.name, rng3.choice(e.QUADS), res, landed, None, rd])
+    cases3.append(dict(ars=[dict(name=x.name, kind=x.kind, shape=x.shape, grade=x.grade, command=x.command, conf=x.conf, velo=x.velo) for x in ars],
+                       b=rng3.randrange(4), k=rng3.randrange(3), same=rng3.random() < 0.5, log=log,
+                       call=[rng3.choice(ars).name, rng3.choice(e.QUADS)]))
+def _py3(c):
+    A = [e.Pitch(**d) for d in c["ars"]]
+    e.resolve_speeds(A)
+    log = tuple(tuple(tuple(v) if isinstance(v, list) else v for v in z) for z in c["log"])
+    s_ = e.Situation(c["b"], c["k"], 1, _E0, level="college_d3", same_side=c["same"], pa_log=log)
+    v, r, _x = e.setup_payoff(next(x for x in A if x.name == c["call"][0]), c["call"][1], s_, A)
+    return [round(v, 12), r]
+py3 = [_py3(c) for c in cases3]
+js3 = json.loads(subprocess.run(["node", "-e", """
+const E=require('./app/engine.js'); E.init(require('./app/engine_data.json'));
+const C=JSON.parse(require('fs').readFileSync(0,'utf8'));
+console.log(JSON.stringify(C.map((c)=>{ const A=c.ars.map((d)=>E.Pitch(d)); E.resolveSpeeds(A);
+  const s=E.Situation({balls:c.b,strikes:c.k,outs:1,bases:[false,false,false],level:'college_d3',same_side:c.same,pa_log:c.log});
+  const r=E.v08.setupPayoff(A.find((x)=>x.name===c.call[0]), c.call[1], s, A); return [Math.round(r[0]*1e12)/1e12, r[1]]; })))"""],
+    input=json.dumps(cases3), cwd=HERE, capture_output=True, text=True, check=True).stdout)
+diff3 = [i for i, (a, b) in enumerate(zip(py3, js3)) if a != b]
+fired3 = sum(1 for v in py3 if v[0] != 0)
+check("Step 3 parity: setup_payoff in Python and JS agree on the rule cases and 400 random at-bats",
+      not diff3, f"{len(diff3)} differ; {fired3} of {len(py3)} credited")
 
 # ------------------------------------------------------------------ 4. no class logic left on the bare string "FB"
 CMP = re.compile(r"""kind\s*(==|===|!=|!==)\s*['"]FB['"]|['"]FB['"]\s*(==|===|!=|!==)\s*\w*kind""")

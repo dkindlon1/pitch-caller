@@ -2,7 +2,8 @@
   python3 golden/golden_v11.py make [--tag v11a] [--force]   -> writes golden/golden_<tag>.json from the current engine
   python3 golden/golden_v11.py check [--tag v11a]            -> recomputes every case and requires agreement to TOL (1e-9)
 
-golden_v11a: frozen after Step 1b (the profile table). golden_v11: frozen after Step 2 and at release (plan section 4).
+golden_v11a: frozen after Step 1b (the profile table). golden_v11: frozen after Step 2, again after Step 3 (setup rules:
+about 40% of the cases past 0-0 carry an at-bat so far, pa_log) and at release (plan section 4).
 The inputs are golden_v10's 500 cases (v1.0 kinds and tags, migrated on the way in) with about 45% of them rewritten into
 v1.1 terms: the fastball becomes a four-seam, sinker or cutter, every pitch gets a random v1.1 tag, some get measured
 movement, and some arsenals get a coach's main-fastball mark. Outputs are the same as golden_v10's (golden_v10.compute)."""
@@ -34,6 +35,33 @@ def inputs():
                 fbs = [d for d in c["arsenal"] if d["kind"] in e.FASTBALL_KINDS]
                 rng.choice(fbs or c["arsenal"])["main"] = True
             c["v11"] = True
+    # v1.1 Step 3: an at-bat so far (pa_log) on about 40% of the cases past 0-0, consistent with the count, drawn so the
+    # setup rules' patterns come up (fastballs up and in, breaking balls down, reads and landing cells, way-off misses)
+    rng3 = random.Random(G8.SEED + 333)          # own stream again: the earlier inputs are unchanged
+    for c in cs:
+        b, k = c["s"]["balls"], c["s"]["strikes"]
+        if b + k == 0 or rng3.random() >= 0.4:
+            continue
+        evs = ["ball"] * b + ["k"] * k
+        rng3.shuffle(evs)
+        if k == 2 and rng3.random() < 0.3:
+            evs.append("foul2")
+        log = []
+        for ev in evs:
+            d = rng3.choice(c["arsenal"])
+            q = rng3.choice(["up-in", "up-away", "down-in", "down-away", "middle", "down-middle", "chase"])
+            res = "ball" if ev == "ball" else ("foul" if ev == "foul2" else rng3.choice(["cstrike", "whiff", "foul"]))
+            u = rng3.random()
+            landed = None if u < 0.5 else ("way" if u < 0.6 else [rng3.randrange(5), rng3.randrange(5), rng3.random() < 0.5])
+            read = None
+            if res == "whiff" and rng3.random() < 0.5:
+                read = rng3.choice(["front", "late", "fooled"])
+            if res == "foul" and rng3.random() < 0.6:
+                read = rng3.choice(["pull", "opposite", "back"])
+            log.append([d["name"], q, res, landed, None, read])
+        c["s"]["pa_log"] = log
+        if log:
+            c["s"]["last"] = [log[-1][0], log[-1][1], log[-1][2]]
     return cs
 
 

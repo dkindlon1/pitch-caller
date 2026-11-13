@@ -371,3 +371,95 @@ patches 1.8 (largest 16).
 | Call-change bands | **6 of 10** (Step 1b 3): the 12-6 early-count band now misses (25.1 vs 25.8; it passed by 0.1 before) |
 | Grid | every check passes; 179 of 540 cells change their top call |
 | Read-through | **69/71** (C5, F2 as before) |
+| `scripts/test-app.sh` (commit 9f33798, run in a separate worktree) | **exit 0**, 364 counted checks, no errors; whole app games top pitch 45–61% |
+
+## Step 3: setup and payoff rules (Nov 12–13, overnight; Drew asleep, grades pending)
+
+**Unattended calls, all marked for Drew.** He asked me to keep going through Steps 3–5 overnight. The plan has Drew
+grade the rule rows before the sizes are set; I wrote the rows myself (proposed grades, marked `"status": "proposed"`),
+sized each rule on them, and list every judgment below so he can overrule it at Step 4.
+
+### Statcast direction checks first (`setup_checks.py` → `results/v11/step3_checks.txt`)
+The payoff pitch after the rule's setup earlier in the at-bat vs the same payoff pitch after anything else, on the
+Step 2 controls plus the previous pitch's class × height × side (a stand-in for the pair terms), 2024 + 2025, random
+intercepts, game-clustered 95% intervals. The plan's decision rule, applied as written:
+
+| Rule | What the data say | Decision |
+|---|---|---|
+| S1 up, then down | whiff +0.21 (−0.03 to +0.44); **chase −0.20 (−0.39 to −0.01)** | O2 keeps it: built at its smallest passing size |
+| S2 in, then away (same side) | all intervals include 0 | built, smallest passing size |
+| S3 hard in, soft away (opposite side) | all include 0 | built, smallest passing size |
+| S4 same lane, slower | all include 0 | built, smallest passing size |
+| S5 front / back door | no Statcast check (needs called-strike door detection) | built at the smallest size, gated (command 4+, landing, two strikes) |
+| S6 steal strike one | all include 0 | built, smallest passing size |
+| S7 climb the ladder | **whiff +0.62 (+0.07 to +1.17), chase −0.68 (−1.12 to −0.24)**: they disagree | built, smallest passing size, flagged |
+| S8 strike, then bury | **chase −0.13 (−0.25 to −0.01)** | **not built** (dropped unless Drew keeps it) |
+| S9 work the edge, expand | all include 0 | built, smallest passing size |
+| S10 sinker, then cutter | **hard +0.34 (+0.13 to +0.56)** | **not built** (dropped unless Drew keeps it) |
+| N1 two different breaking balls back to back | **whiff +0.16 (+0.05 to +0.28)**: the penalty points the wrong way | **not built** |
+| N2 sinker right after a changeup | whiff −0.24 (−0.42 to −0.05), hard +0.17 (+0.00 to +0.34): right way | built (a cost) |
+
+### What was built (both engines)
+- `Situation.pa_log`: this at-bat's pitches, `(pitch, target, result, landed, contact, read)`. Landed is the app's grid cell
+  with the hitter's side, `"way"` or nothing; reads are kept only at logging level 3+ (the app stores `None` below),
+  contact at level 2+. The app keeps it on `g.pa.log` (undo, reload and event snapshots carry it; a new hitter or a
+  pitching change clears it); the simulator keeps it; the golden inputs carry it.
+- **Root only:** `solve_table` sets `pa_log = ()` in every count it solves (a test spies on 18,000 cost evaluations).
+- `setup_payoff(p, q, s, arsenal)` → `(credit, rule, setup entry)`, with the five checks: landed near the target (a logged
+  cell in or next to the target's area; way off fails; nothing logged: a strike passes, a ball fails); not squared up (no
+  "straight back" foul, no hard contact); the payoff pitch live (trusted, not shaken off, not "not landing"); the count
+  allows it (no credit at three balls; a chase payoff only where the count has a chase target); the profiles the rule
+  names. The read rule for S2 / S3 / S7 as the plan writes it (a foul with no read is unknown: no fire; a whiff with no
+  read passes).
+- `SETUP_RULE` in `cost08` next to the coach reads, with the cap on the setup part only (setup ≤ 0.02 × run scale; coach +
+  setup ≤ max(coach, 0.02)).
+- **Tie-break (E5):** after the solve, a share `1 − gap / TIE_EPS` of a non-enabling call's probability moves to a
+  setup-enabling call when their costs are within `INTENT_E × run scale`, at most 5 points; never at three balls (or two
+  strikes, where no later payoff exists in the at-bat). **Added:** the shift is scaled back so the hitter's best response
+  against the shifted mix gains no more than that same noise margin; the first version exceeded it in 4 of 123 grid cells
+  (by up to 26%), and the plan says the gain should be within the solver's noise.
+- **Explanations:** a "setup" term in the why-line deltas (it zeroes `SETUP_RULE`); a credited call's why line is "Set up by
+  the X spot: Y spot"; its intent is "Payoff" under two strikes (Finish / Expand keep theirs at two strikes, with the setup
+  in the why line). The dead look-value "Setup" label, the "Sets up" lines and `next_count_top` are gone (look value stays in
+  the costs). `tests_v10_explain.py` → `tests_v11_explain.py` (moved the old one to `readthrough/history_tests_v10_explain.py`);
+  `golden/explain_twin.js` updated.
+
+### Sizes (`readthrough/setup_sizes.py` on the rule rows → `results/v11/step3_sizes.json`)
+Rows (`readthrough/make_scenarios_v11.py` → `scenarios_v11.json`, its own sha256): v1.0's 71 graded rows plus one fire and
+one no-fire row per built rule, **proposed**, in Drew's second-pass style (row F2): any strike and the chase acceptable,
+and a fire row's floor keeps the payoff on the table. Each size is the smallest grid value that lifts the payoff 5+ points
+on its fire row (N2: the sinker down 3+) with both rows passing; the floors were then set to what that size buys.
+
+| Rule | Size (runs × run scale) | Payoff share without → with |
+|---|---|---|
+| S1 | 0.004 | curve / split low 37.5% → 44.2% |
+| S2 | 0.004 | slider down-away / chase 0 → 14.8% |
+| S3 | 0.006 | changeup away 8.2% → 13.8% |
+| S4 | 0.006 | changeup away 0 → 7.7% |
+| S5 | 0.004 | sinker in 0 → 8.1% |
+| S6 | 0.008 | fastball strike 39.7% → 47.2% |
+| S7 | 0.010 | fastball above the zone 0 → 6.4% |
+| S9 | 0.002 | slider away / chase 7.7% → 16.1% |
+| N2 | 0.002 (a cost) | sinker 48.6% → 45.4% |
+
+### Proof (this session, final code)
+
+| Check | Result |
+|---|---|
+| `tests_v11.py` | **36/36**. New for Step 3: 18 fire / no-fire cases (S2, S5, S7, S9, N2, the no-read cases, three balls, no chase at 2-2); the cap (with the went-back read on, a setup adds nothing; without it, the full credit); root only (every one of 18,225 table costs sees an empty `pa_log`); the tie-break (an exact tie moves 5 points, outside the margin nothing, nothing at three balls); Python = JS `setup_payoff` on the cases and 400 random at-bats. The v1.0 exactness check now also sets the setup credits and the tie-break off: still exactly v1.0 |
+| `tests_v11_explain.py` | **7/7** on 60 golden cases + 6 setup cases: named term smallest eligible; comparator; three balls; "Set up by" exactly when a rule credits the call and "Payoff" exactly then under two strikes, no "Setup" left; eye level; each rule (S1, S2, S3, S4, S6, S7) fires on its case, names its setup, is silent without it or after hard contact; Python = JS |
+| `tests.py` | **45/45**. R5 (holes) now holds the tie-break off while it measures the hitter-damage term: the tie-break fired on the thin-hole spot only and added its 5 points there |
+| Read-through (`scenarios_v11.json`, 89 rows) | **87/89**: all 18 setup rows pass (proposed grades); C5 and F2 as after Step 2 |
+| Tie-break report (`readthrough/tie_break_report.py`, 540 grid cells) | fires in **123 (23%)**; moves 4.2 points on average when it fires, at most 5.0; hitter's best-response gain at most **7.3e-4 runs**, at the noise margin (7.3e-4 to 1.1e-3 by level) |
+| Simulated games (`readthrough/setup_game_check.py`, 10 games, 1,300 pitches) | a setup credit or the tie-break changed the top call on **38 of 159** pitches after a qualifying setup = **23.9%, OUTSIDE the proposed 2–10% band**. By rule: S4 15, tie-break 9, S7 8, S3 3, S9 2, S6 1. The tie-break moved probability on 34 of the 159 |
+
+### For Drew (Step 4)
+- **The rows and the game band disagree.** Sized so each rule lifts its payoff 5+ points on its own row, the rules change the
+  top call on 24% of qualifying pitches in simulated games, against the proposed 2–10%. S4 (fastball away, then a changeup
+  or curve away and low) does most of it: its pattern (any fastball aimed away, the very next pitch) comes up a lot. Lower
+  the sizes to the band, narrow S4, or widen the band?
+- **Grades to confirm:** the 18 setup rows are my proposals (any strike and the chase acceptable; a floor on the payoff).
+- **Not built, per the decision rule:** S8 and S10 (the data point the wrong way), N1 (the penalty points the wrong way).
+  Each comes back if you keep it.
+- **S1 and S7** are built at their smallest sizes although part of their checks point the wrong way (S1 kept by O2; S7's
+  whiff and chase checks disagree).

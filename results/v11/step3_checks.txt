@@ -1,0 +1,78 @@
+v1.1 Step 3 setup checks: 336,751 pitches, 2024 + 2025; controls 75 columns (Step 2 controls + previous pitch class x height x side)
+
+S1: riding fastball top of the zone (strike, foul or whiff) -> 12-6 / power curve or drop / split change at the bottom, 0-1 to 2-2. Payoff pitches 13,598, after the setup 828
+  whiff   +0.207 (95% -0.030 to +0.444; n 7,030, 406 after the setup; raw 0.382 vs 0.399) -> interval includes 0
+  chase   -0.199 (95% -0.393 to -0.005; n 9,861, 608 after the setup; raw 0.354 vs 0.386) -> WRONG WAY
+  cstrike -0.802 (95% -1.524 to -0.080; n 6,553, 421 after the setup; raw 0.052 vs 0.068) -> reported
+  hard    -0.076 (95% -0.497 to +0.345; n 2,062, 122 after the setup; raw 0.303 vs 0.325) -> interval includes 0
+  -> dropped unless Drew keeps it
+
+S2: sinker / running fastball inside (not fouled or put in play) -> slider down-away, same-side hitter. Payoff pitches 25,522, after the setup 3,747
+  whiff   +0.007 (95% -0.138 to +0.152; n 10,835, 1,683 after the setup; raw 0.447 vs 0.490) -> interval includes 0
+  chase   -0.041 (95% -0.151 to +0.068; n 18,991, 2,853 after the setup; raw 0.336 vs 0.313) -> interval includes 0
+  cstrike -0.465 (95% -0.861 to -0.069; n 14,687, 2,064 after the setup; raw 0.082 vs 0.128) -> reported
+  hard    -0.073 (95% -0.339 to +0.192; n 3,184, 537 after the setup; raw 0.229 vs 0.230) -> interval includes 0
+  -> smallest size that passes its rows
+
+S3: hard cutter / fastball inside (not fouled or put in play) -> fade / split change down-away, opposite-side hitter. Payoff pitches 11,103, after the setup 1,930
+  whiff   -0.118 (95% -0.286 to +0.050; n 6,348, 1,143 after the setup; raw 0.312 vs 0.363) -> interval includes 0
+  chase   -0.046 (95% -0.214 to +0.121; n 7,203, 1,269 after the setup; raw 0.441 vs 0.423) -> interval includes 0
+  cstrike -0.297 (95% -0.882 to +0.289; n 4,755, 787 after the setup; raw 0.094 vs 0.143) -> reported
+  hard    +0.182 (95% -0.085 to +0.450; n 2,392, 459 after the setup; raw 0.285 vs 0.259) -> interval includes 0
+  -> smallest size that passes its rows
+
+S4: fastball on the outer third -> changeup (not firm) / curve away and lower, next pitch. Payoff pitches 26,694, after the setup 2,858
+  whiff   -0.005 (95% -0.183 to +0.173; n 13,458, 1,471 after the setup; raw 0.326 vs 0.372) -> interval includes 0
+  chase   -0.075 (95% -0.216 to +0.067; n 17,718, 1,994 after the setup; raw 0.369 vs 0.374) -> interval includes 0
+  cstrike -0.731 (95% -1.227 to -0.235; n 13,236, 1,387 after the setup; raw 0.083 vs 0.169) -> reported
+  hard    +0.256 (95% -0.027 to +0.539; n 4,851, 572 after the setup; raw 0.297 vs 0.278) -> interval includes 0
+  -> smallest size that passes its rows
+
+S6: first-pitch curve / gyro slider called strike -> fastball at 0-1. Payoff pitches 22,357, after the setup 1,860
+  whiff   +0.164 (95% -0.053 to +0.381; n 11,039, 958 after the setup; raw 0.183 vs 0.185) -> interval includes 0
+  chase   +0.142 (95% -0.062 to +0.346; n 10,974, 936 after the setup; raw 0.267 vs 0.242) -> reported
+  cstrike -0.209 (95% -0.584 to +0.165; n 11,227, 889 after the setup; raw 0.213 vs 0.244) -> reported
+  hard    +0.288 (95% -0.002 to +0.578; n 3,797, 338 after the setup; raw 0.470 vs 0.392) -> interval includes 0
+  -> smallest size that passes its rows
+
+S7: riding fastball top of the zone, whiff -> riding fastball above the zone, two strikes. Payoff pitches 2,463, after the setup 141
+  whiff   +0.619 (95% +0.069 to +1.169; n 1,207, 59 after the setup; raw 0.441 vs 0.310) -> right way
+  chase   -0.681 (95% -1.122 to -0.240; n 2,197, 127 after the setup; raw 0.362 vs 0.444) -> WRONG WAY
+  cstrike -12.100 (95% -13.800 to -10.399; n 1,243, 81 after the setup; raw 0.000 vs 0.004) -> reported
+  hard    too few (9 after the setup)
+  -> mixed: smallest size, flagged
+
+S8: slider / curve strike at the bottom edge -> the same pitch below the zone, two strikes. Payoff pitches 16,896, after the setup 1,908
+  whiff   -0.074 (95% -0.250 to +0.103; n 6,693, 750 after the setup; raw 0.512 vs 0.521) -> interval includes 0
+  chase   -0.133 (95% -0.253 to -0.014; n 15,838, 1,770 after the setup; raw 0.356 vs 0.367) -> WRONG WAY
+  cstrike +0.260 (95% -0.444 to +0.965; n 10,102, 1,147 after the setup; raw 0.013 vs 0.011) -> reported
+  hard    -0.010 (95% -0.444 to +0.424; n 1,394, 169 after the setup; raw 0.207 vs 0.229) -> reported
+  -> dropped unless Drew keeps it
+
+S9: early fastball / cutter on an edge -> two-strike pitch off that same edge. Payoff pitches 31,272, after the setup 3,534
+  whiff   -0.139 (95% -0.284 to +0.007; n 10,586, 1,216 after the setup; raw 0.323 vs 0.361) -> interval includes 0
+  chase   +0.032 (95% -0.058 to +0.121; n 31,272, 3,534 after the setup; raw 0.344 vs 0.338) -> interval includes 0
+  cstrike +0.288 (95% -0.074 to +0.651; n 20,406, 2,298 after the setup; raw 0.026 vs 0.018) -> reported
+  hard    -0.124 (95% -0.474 to +0.225; n 2,908, 342 after the setup; raw 0.137 vs 0.138) -> reported
+  -> smallest size that passes its rows
+
+S10: sinker -> hard cutter. Payoff pitches 12,679, after the setup 2,780
+  whiff   +0.084 (95% -0.098 to +0.266; n 6,182, 1,559 after the setup; raw 0.182 vs 0.177) -> interval includes 0
+  chase   +0.084 (95% -0.087 to +0.255; n 5,843, 1,291 after the setup; raw 0.311 vs 0.238) -> interval includes 0
+  cstrike -0.213 (95% -0.527 to +0.101; n 6,459, 1,216 after the setup; raw 0.255 vs 0.340) -> reported
+  hard    +0.341 (95% +0.127 to +0.556; n 2,360, 556 after the setup; raw 0.419 vs 0.367) -> WRONG WAY
+  -> dropped unless Drew keeps it
+
+N1: slider right after a curve, or curve right after a slider (vs the same pitch after anything else). Payoff pitches 103,773, after the setup 4,302
+  whiff   +0.163 (95% +0.046 to +0.279; n 47,703, 2,298 after the setup; raw 0.308 vs 0.308) -> WRONG WAY
+  chase   +0.052 (95% -0.049 to +0.153; n 57,271, 2,480 after the setup; raw 0.362 vs 0.305) -> interval includes 0
+  cstrike +0.101 (95% -0.168 to +0.369; n 55,792, 1,996 after the setup; raw 0.213 vs 0.301) -> reported
+  hard    -0.018 (95% -0.178 to +0.142; n 16,579, 817 after the setup; raw 0.340 vs 0.347) -> interval includes 0
+  -> dropped unless Drew keeps it
+
+N2: sinker right after a changeup. Payoff pitches 53,117, after the setup 3,430
+  whiff   -0.236 (95% -0.422 to -0.050; n 24,270, 1,834 after the setup; raw 0.101 vs 0.119) -> right way
+  chase   -0.092 (95% -0.242 to +0.057; n 22,809, 1,506 after the setup; raw 0.278 vs 0.247) -> interval includes 0
+  cstrike +0.273 (95% +0.054 to +0.493; n 28,608, 1,586 after the setup; raw 0.334 vs 0.413) -> reported
+  hard    +0.171 (95% +0.004 to +0.338; n 11,299, 895 after the setup; raw 0.474 vs 0.432) -> right way
+  -> sized normally

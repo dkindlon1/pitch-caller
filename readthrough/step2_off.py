@@ -1,4 +1,5 @@
-"""v1.1 Step 2 changes the calls on purpose in five engine places: profile_terms (new), class_terms (replaces v1.0's
+"""v1.1 Steps 2 and 3 change the calls on purpose in these engine places (Step 3: the setup credits and the tie-break, both
+set off here too): profile_terms (new), class_terms (replaces v1.0's
 KIND_W class weights, the off-speed and fastball lines of shape_fit, the slider / changeup same-side patches, the
 "off-speed aimed up or middle" hard line and the off-speed chase +0.2), gb_rate (by profile), movement (the slot
 adjustment of default movement), the level shifts the realism gate refit (outcome_params.py) and the "away" coach
@@ -68,7 +69,7 @@ def params_at(ref="7b5ebbb"):
 
 
 class step2_off:
-    NAMES = ("profile_terms", "class_terms", "gb_rate", "movement")
+    NAMES = ("profile_terms", "class_terms", "gb_rate", "movement", "tie_break", "setup_payoff")
 
     def __init__(self, e, params=None):
         self.e, self.params = e, params
@@ -79,6 +80,8 @@ class step2_off:
         self.saved = {n: getattr(e, n) for n in self.NAMES}
         e.profile_terms = lambda p, q, s, a: {"whiff": 0.0, "chase": 0.0, "cstrike": 0.0, "hard": 0.0}
         e.class_terms, e.gb_rate, e.movement = _ct_1b(e), _gb_1b(e), _mv_1b(e)
+        e.tie_break = lambda pi, *a, **k: pi                   # Step 3: the setup tie-break and credits off
+        e.setup_payoff = lambda *a, **k: (0.0, None, None)
         self.saved_away = e.COACH_RULE["away"]
         e.COACH_RULE["away"] = 0.01                       # Step 2 resized it to 0.012 (engine.py COACH_RULE)
         if self.params is not None:

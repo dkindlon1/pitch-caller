@@ -44,6 +44,8 @@ def from_dicts(c):
     d["landing_today"] = {k: tuple(v) for k, v in d["landing_today"].items()}
     d["usage_by_call"] = {tuple(k.split("|")): v for k, v in d["usage_by_call"].items()}
     d["b_h"] = {tuple(k.split("|")): v for k, v in d["b_h"].items()}
+    if "pa_log" in d:     # v1.1 Step 3
+        d["pa_log"] = tuple(tuple(tuple(v) if isinstance(v, list) else v for v in x) for x in d["pa_log"])
     return ars, e.Situation(**d)
 
 

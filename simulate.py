@@ -473,6 +473,7 @@ def play_game(log_path):
             new_batter_conf(pitcher["arsenal"])
             balls = strikes = 0
             last = None
+            pal = []                        # v1.1 Step 3: this at-bat's pitches (Situation.pa_log)
             pa_done = False
             fam_prev = dict(fam[(pitcher["name"], h)])
             mm_prev = dict(mm[(pitcher["name"], h)])     # earlier trips only: this PA's pitches count from his next PA
@@ -506,6 +507,7 @@ def play_game(log_path):
                               familiar=fam_prev, matchup=mm_prev,
                               **({"since_thrown": {x.name: since[(pitcher["name"], x.name)] for x in pitcher["arsenal"]}}
                                  if "since_thrown" in Situation.__dataclass_fields__ else {}),
+                              **({"pa_log": tuple(pal)} if "pa_log" in Situation.__dataclass_fields__ else {}),
                               ump_u=CALLER.ump_estimate(takes, LEVEL_NAME),
                               home=True, sched_innings=9,
                               grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None))
@@ -707,6 +709,9 @@ def play_game(log_path):
                     **rw, **({"true_w": round(hitter["w"], 2)} if TRUE_POWER else {}),
                 })
                 last = (p.name, q, "whiff" if ev == "whiff" else result)
+                # v1.1 Step 3: no landing cell or read in the simulator (a logged-nothing coach); contact on balls in play
+                pal.append((p.name, q, {"wp_ball": "ball", "weak": "play", "solid": "play", "hard": "play"}.get(ev, ev), None,
+                            ev if ev in ("weak", "solid", "hard") else None, None))
                 if outs >= 3:
                     pa_done = True
         line_them.append(runs_inn)

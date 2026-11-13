@@ -739,7 +739,7 @@ function situation() {
     same_side: sameSide(), last: g.last, hitter_seen: Object.assign({}, kn.seen),
     usage_this_count: Object.assign({}, g.usage[g.balls + "-" + g.strikes] || {}),
     timing: S.setup.inputs >= 3 ? Object.assign({}, kn.timing) : {}, hitter_damage: Object.assign({}, kn.seed || {}),   // v1.0 #7: cross-game seed only
-    landing_today: landToday(g), since_thrown: sinceThrown(g),
+    landing_today: landToday(g), since_thrown: sinceThrown(g), pa_log: (g.pa && g.pa.log) ? g.pa.log.map((x) => x.slice()) : [],   // v1.1 Step 3
     catcher_block: (DB.ready && S.setup.catcherId && DB.catchers.get(S.setup.catcherId)) ? +DB.catchers.get(S.setup.catcherId).block || 3 : 3,
     ...v08Inputs() });
 }
@@ -923,6 +923,12 @@ function record(res) {
       const mk = (res.result === "whiff" || res.result === "cstrike") ? "succ|" + E.keyKind(p.kind) : hardHit ? "hard|" + E.keyKind(p.kind) + "|" + spot : null;   // v1.1: by fastball class
       if (mk) { const m = (g.pa.mm = g.pa.mm || {}); m[mk] = (m[mk] || 0) + 1;
         if (mk.startsWith("succ|")) { const k2 = mk + "|" + spot; m[k2] = (m[k2] || 0) + 1; } }   // v1.0 Step 7: and where (the went-back rule)
+      // v1.1 Step 3: this at-bat's pitches for the setup rules (engine Situation.pa_log): the pitch thrown, its target, the
+      // result, where it landed (grid cell with the hitter's side, "way" for way off, null if not logged), contact (logging
+      // level 2+) and the coach's read (level 3+, like the squared-up read)
+      const landed = res.locCell ? [res.locCell[0], res.locCell[1], bRight] : (res.loc === "noncomp" ? "way" : null);
+      (g.pa.log = g.pa.log || []).push([p.name, call.quad, res.result, landed, S.setup.inputs >= 2 ? (res.contact || null) : null,
+        S.setup.inputs >= 3 ? (res.read || null) : null]);
     }
     if (res.radar && +res.radar > 40) { const rr = (g.radar[pk] = g.radar[pk] || {}); (rr[p.name] = rr[p.name] || []).push(+res.radar); }
   }

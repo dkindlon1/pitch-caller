@@ -123,7 +123,7 @@
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {}, since_thrown: {} }, o);   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
+      matchup: {}, since_thrown: {}, pa_log: [] }, o);   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
   }
   const replace = (s, o) => Object.assign({}, s, o);
   // v1.1 Step 1b: a pitch with no speed is his main fastball's entered speed less the profile's gap (resolveSpeeds sets
@@ -1022,6 +1022,120 @@
     const inside = batterRight ? c <= 1 : c >= 3;
     return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
   }
+  // ---------------------------------------------------------------- v1.1 Step 3: setup and payoff rules (mirror of engine.py)
+  const SETUP_RULE = { S1: 0.004, S2: 0.004, S3: 0.006, S4: 0.006, S5: 0.004, S6: 0.008, S7: 0.01, S9: 0.002, N2: 0.002 };   // sized by readthrough/setup_sizes.py (engine.py SETUP_RULE)
+  const SETUP_CAP = 0.02, TIE_CAP = 0.05;
+  const UPS = ["up-in", "up-away"], INS = ["up-in", "down-in"], AWAYS = ["up-away", "down-away"], STRIKE_RES = ["cstrike", "whiff", "foul"];
+  function landedNear(e, kind) {
+    const [, q, res, landed] = e;
+    if (landed === "way") return false;
+    if (landed === null || landed === undefined) return STRIKE_RES.includes(res);
+    const [r, c, br] = landed;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      const rr = r + dr, cc = c + dc;
+      if (rr >= 0 && rr <= 4 && cc >= 0 && cc <= 4 && locQuad([rr, cc], kind, br) === q) return true;
+    }
+    return false;
+  }
+  const squaredUpEntry = (e) => (e[2] === "foul" && e[5] === "back") || e[4] === "hard";
+  function onTimeOrEarly(e) {
+    const res = e[2], rd = e[5];
+    if (res === "foul") return rd !== "opposite";
+    if (res === "whiff") return rd === "front";
+    return res === "play";
+  }
+  function paCounts(log) {
+    let b = 0, k = 0; const out = [];
+    for (const e of log) {
+      out.push([b, k]);
+      if (e[2] === "ball") b++;
+      else if (e[2] === "cstrike" || e[2] === "whiff" || (e[2] === "foul" && k < 2)) k++;
+    }
+    return out;
+  }
+  const fbRides = (x) => !!x && ((x.kind === "FB" && x.shape === "rides") || (x.kind === "FC" && x.shape === "ride"));
+  function setupPayoff(p, q, s, arsenal) {   // [credit, rule, setup entry] (mirror of engine.py setup_payoff)
+    const log = s.pa_log || [];
+    if (!log.length || s.balls >= 3 || !targets(s.balls, s.strikes).includes(q)) return [0.0, null, null];
+    if (!candidates(arsenal, s).includes(p) || notLanding(p, s)) return [0.0, null, null];
+    const counts = paCounts(log), same = s.same_side, twoK = s.strikes === 2;
+    let best = [0.0, null, null];
+    const osLow = ["down-in", "down-away", "down-middle", "chase"].includes(q);
+    const offer = (rule, e) => { const v = SETUP_RULE[rule] ?? 0.0; if (v > best[0]) best = [v, rule, e]; };
+    for (let i = 0; i < log.length; i++) {
+      const e = log[i], x = arsenal.find((y) => y.name === e[0]);
+      if (!x || squaredUpEntry(e) || !landedNear(e, x.kind)) continue;
+      const last = i === log.length - 1, bk = s.balls + "-" + s.strikes;
+      if (fbRides(x) && UPS.includes(e[1]) && STRIKE_RES.includes(e[2]) && ["0-1", "1-1", "0-2", "1-2", "2-2"].includes(bk) && osLow
+          && ((p.kind === "CB" && (p.shape === "12-6" || p.shape === "power")) || (p.kind === "CH" && (p.shape === "drop" || p.shape === "split"))))
+        offer("S1", e);
+      if (same && (x.kind === "SI" || (x.kind === "FB" && x.shape === "runs")) && INS.includes(e[1]) && !onTimeOrEarly(e)
+          && p.kind === "SL" && (q === "down-away" || q === "chase"))
+        offer("S2", e);
+      if (!same && ((x.kind === "FC" && x.shape === "hard") || x.kind === "FB") && INS.includes(e[1]) && !onTimeOrEarly(e)
+          && p.kind === "CH" && ["fade", "split", ""].includes(p.shape || "") && (q === "down-away" || q === "chase"))
+        offer("S3", e);
+      if (last && isFastball(x.kind) && x.kind !== "FC" && AWAYS.includes(e[1]) && (q === "down-away" || q === "chase")
+          && ((p.kind === "CH" && p.shape !== "firm" && mph(x) - mph(p) >= 6) || p.kind === "CB") && ((s.timing || {}).OS ?? 0.0) > -READ_T)
+        offer("S4", e);
+      if (last && i === 0 && e[2] === "cstrike" && (x.kind === "CB" || (x.kind === "SL" && x.shape === "gyro")) && bk === "0-1"
+          && isFastball(p.kind) && q !== "chase")
+        offer("S6", e);
+      if (twoK && fbRides(x) && UPS.includes(e[1]) && (e[2] === "whiff" || e[2] === "foul") && !onTimeOrEarly(e) && fbRides(p) && q === "chase")
+        offer("S7", e);
+      if (twoK && counts[i][1] < 2 && isFastball(x.kind) && x.kind !== "SI" && (INS.includes(e[1]) || AWAYS.includes(e[1]))) {
+        const sideIn = INS.includes(e[1]);
+        if ((sideIn && p.kind === "FC" && INS.includes(q)) || (!sideIn && (p.kind === "SL" || p.kind === "FC") && (AWAYS.includes(q) || q === "chase")))
+          offer("S9", e);
+      }
+      if (twoK && p.command >= 4 && !same && isOffspeed(x.kind) && (AWAYS.includes(e[1]) || e[1] === "chase")
+          && ((p.kind === "SI" && INS.includes(q)) || (["SL", "CB", "FC"].includes(p.kind) && AWAYS.includes(q))))
+        offer("S5", e);
+    }
+    let [credit, rule, ent] = best;
+    const prev = arsenal.find((y) => y.name === log[log.length - 1][0]) || p;
+    if (p.kind === "SI" && log[log.length - 1][0] && prev.kind === "CH") {
+      const n2 = SETUP_RULE.N2 ?? 0.0;
+      if (n2) { credit = credit - n2; if (!rule) { rule = "N2"; ent = log[log.length - 1]; } }
+    }
+    return [Math.min(credit, SETUP_CAP), rule, ent];
+  }
+  function enablesPayoff(a, arsenal, s, exclude) {
+    const p = skName(a), q = skH(a);
+    if (q === "chase" || s.strikes >= 2 || s.balls >= 3) return false;
+    const ent = [p, q, "cstrike", null, null, null];
+    const s2 = replace(s, { strikes: s.strikes + 1, pa_log: (s.pa_log || []).concat([ent]) });
+    for (const b of allowedCalls(arsenal, s2, exclude)) {
+      const [v, , e] = setupPayoff(byName(arsenal, skName(b)), skH(b), s2, arsenal);
+      if (v > 0 && e === ent) return true;
+    }
+    return false;
+  }
+  function tieBreak(pi, full, arsenal, s, exclude, M) {   // mirror of engine.py tie_break
+    if (s.balls >= 3 || s.strikes >= 2) return pi;
+    const eps = INTENT_E * runScale(s.level);
+    const keys = Object.keys(pi), live = keys.filter((a) => pi[a] > 0);
+    const en = new Set(keys.filter((a) => enablesPayoff(a, arsenal, s, exclude)));
+    if (!en.size || en.size === keys.length) return pi;
+    const out = Object.assign({}, pi);
+    let left = TIE_CAP;
+    for (const A of [...en].sort((x, y) => full[x] - full[y])) {
+      const Bs = live.filter((b) => !en.has(b)).sort((x, y) => Math.abs(full[x] - full[A]) - Math.abs(full[y] - full[A]));
+      for (const B of Bs) {
+        const gap = Math.abs(full[A] - full[B]);
+        if (gap >= eps || left <= 0) continue;
+        const mv = Math.min(out[B] * (1 - gap / eps), left);
+        out[B] -= mv; out[A] += mv; left -= mv;
+      }
+    }
+    if (M) {
+      const ks = Object.keys(M[Object.keys(M)[0]]);
+      const brv = (p_) => Math.max(...ks.map((k) => psum(Object.keys(M).map((a) => (p_[a] ?? 0.0) * M[a][k]))));
+      const g = brv(out) - brv(pi);
+      if (g > eps) { const t = eps / g; const o2 = {}; for (const a of keys) o2[a] = pi[a] + t * (out[a] - pi[a]); return o2; }
+    }
+    return out;
+  }
   function lookUpdate(look, p, q, s, y) {
     const lam = P08.lam, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
     return [lam * look[0] + (1 - lam) * vp, lam * look[1] + (1 - lam) * (y === undefined || y === null ? yTarget(q, p.kind) : y)];
@@ -1173,8 +1287,10 @@
     if (s.steal && (s.steal.a || 0) > 0) v += stealCost(p, q, s, tab, nl);
     if (s.matchup && mashed(p, q, s)) v += MASHED_PENALTY * runScale(s.level);   // v1.0 D3: mashed twice at this height today
     if (GB_RULE_TARGETS.includes(q) && groundBallSpot(s)) v -= GB_RULE_BONUS * runScale(s.level);   // v1.0 Step 7: ground-ball rule
-    const cc = coachCredit(p, q, s, tab.ars);
-    if (cc) v -= cc * runScale(s.level);      // v1.0 Step 7: the coaching reads
+    let cc = coachCredit(p, q, s, tab.ars);
+    const sp = (s.pa_log && s.pa_log.length) ? setupPayoff(p, q, s, tab.ars)[0] : 0.0;   // v1.1 Step 3 (root only)
+    if (sp) cc = sp > 0 ? Math.min(cc + sp, Math.max(cc, SETUP_CAP)) : cc + sp;
+    if (cc) v -= cc * runScale(s.level);      // v1.0 Step 7: the coaching reads; v1.1: + setup credits
     if (s.level === "hs" || s.level === "travel") {
       const w_ = Math.min(1.0, Math.max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20));
       if (w_ > 0) {
@@ -1243,12 +1359,12 @@
       tab.V[cntKey(b, k)] = {}; tab.N[cntKey(b, k)] = {};
       for (const bn of tab.bins) { tab.V[cntKey(b, k)][bn] = v0; tab.N[cntKey(b, k)][bn] = 2.0; }
     }
-    const prior = sitPrior(arsenal, replace(s, { balls: 0, strikes: 0 }));
+    const prior = sitPrior(arsenal, replace(s, { balls: 0, strikes: 0, pa_log: [] }));
     tab.h0 = [psum(Object.keys(prior).map((key) => prior[key] * speedToday(byName(arsenal, skName(key)), s))), 2.5];
     for (let sw = 0; sw < sweeps; sw++) {
       let delta = 0.0;
       for (const [b, k] of order) {
-        const sc = replace(s, { balls: b, strikes: k, last: null, usage_this_count: {}, usage_by_call: {}, b_h: Object.assign({}, s.b_h) });
+        const sc = replace(s, { balls: b, strikes: k, last: null, pa_log: [], usage_this_count: {}, usage_by_call: {}, b_h: Object.assign({}, s.b_h) });
         const temp = temperature(arsenal, sc);
         const calls = allowedCalls(arsenal, sc);
         const scH = replace(sc, { look: tab.h0 });
@@ -1284,8 +1400,9 @@
     // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)
     let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
     if (s.balls === 3 || !lookValue) M = Mmy;   // three-ball counts rank by myopic cost (no setups)
-    const [pi, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
+    const [pi0, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
+    const pi = tieBreak(pi0, full, arsenal, s, exclude, M);   // v1.1 Step 3 (E5)
     return [pi, sg, full, res, M];
   }
   function callV08(arsenal, s, opts = {}) {
@@ -1426,26 +1543,11 @@
   // ---------------------------------------------------------------- 9 "why" line
   const WHY_PARAMS = { sit: ["sit_tW", "sit_hW", "sit_tH", "sit_hH", "sit_tS", "sit_hS"], timing: ["beta_T", "gamma_T"],
     "eye level": ["beta_E", "beta_E_S"], tunneling: ["beta_tun_whiff", "beta_tun_chase"], repeat: ["rep_whiff_same", "rep_whiff_other", "rep_same_spot"],
-    familiarity: ["phi_FB", "phi_OS"] };
+    familiarity: ["phi_FB", "phi_OS"], setup: [] };   // v1.1 Step 3: "setup" zeroes SETUP_RULE (not P08)
   function rootCostPair(arsenal, s, tab, a, b, sigma, myopic) {
     const look = s.look || tab.h0, ks = sitOptions(arsenal);
     const c = (x) => psum(ks.filter((k) => sigma[k] > 1e-4).map((k) => sigma[k] * cost08(byName(arsenal, skName(x)), skH(x), s, arsenal, tab, look, pureSit(k), myopic)[0]));
     return [c(a), c(b)];
-  }
-  // v1.0 Step 4 (#3): mirror of engine.py next_count_top: the engine's own top call at the count a strike leads to
-  function nextCountTop(arsenal, s, tab, pick, info, exclude) {
-    const p = pick.pitch, q = pick.quad, look = s.look || tab.h0;
-    const P = outcomeProbs(p, q, replace(s, { look }), arsenal, null, null, ["mix", info.sigma]);
-    let res = "cstrike";
-    for (const r of ["whiff", "foul"]) if (P[r] > P[res]) res = r;
-    const seen = Object.assign({}, s.hitter_seen || {}); seen[p.name] = (seen[p.name] || 0) + 1;
-    const land = Object.assign({}, s.landing_today || {});
-    if (q !== "chase") land[p.name] = landingRecord(landingTriple(p, land[p.name]), true, expectedStrike(p, q, s, arsenal));
-    const sn = replace(s, { strikes: Math.min(2, s.strikes + 1), look: lookUpdate(look, p, q, s), last: [p.name, q, res],
-      hitter_seen: seen, landing_today: land, usage_this_count: {}, usage_by_call: {} });
-    const pi = rootCall(arsenal, sn, tab, exclude)[0];
-    let top = null; for (const x in pi) if (top === null || pi[x] > pi[top]) top = x;
-    return top;
   }
   // v1.0 Step 4 (#3): mirror of engine.py _explain: one comparison for the why line and the intent label
   function explain(arsenal, s, tab, pick, info, exclude) {
@@ -1462,14 +1564,19 @@
     let comp = null;
     if (bstar !== a) comp = bstar;
     else for (const x of others) if (comp === null || cmy[x] < cmy[comp]) comp = x;
-    const label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cful[a], cful[bstar], INTENT_E * runScale(s.level));
+    let label = intentFromCosts(s.balls, s.strikes, q, cmy[a], cmy[bstar], cful[a], cful[bstar], INTENT_E * runScale(s.level));
     const deltas = {};
     if (comp !== null) {
       const base = cful[a] - cful[comp];
       for (const term in WHY_PARAMS) {
         const saved = {}; for (const n of WHY_PARAMS[term]) saved[n] = P08[n];
+        const savedSR = term === "setup" ? Object.assign({}, SETUP_RULE) : null;
         let ca, cb;
-        try { for (const n of WHY_PARAMS[term]) P08[n] = 0.0; [ca, cb] = rootCostPair(arsenal, s, tab, a, comp, sigma, my); } finally { Object.assign(P08, saved); }
+        try {
+          for (const n of WHY_PARAMS[term]) P08[n] = 0.0;
+          if (savedSR) for (const n in SETUP_RULE) SETUP_RULE[n] = 0.0;
+          [ca, cb] = rootCostPair(arsenal, s, tab, a, comp, sigma, my);
+        } finally { Object.assign(P08, saved); if (savedSR) Object.assign(SETUP_RULE, savedSR); }
         deltas[term] = base - (ca - cb);
       }
       if (!my) deltas["look value"] = base - (cmy[a] - cmy[comp]);
@@ -1479,28 +1586,26 @@
         deltas[term] = base - (ca - cb);
       }
     }
-    const nxt = label === "Setup" ? nextCountTop(arsenal, s, tab, pick, info, exclude) : null;
-    const out = { a, bstar, comp, cmy, cful, label, deltas, next: nxt };
+    const sp = (s.pa_log && s.pa_log.length) ? setupPayoff(p, q, s, arsenal) : [0.0, null, null];
+    const live = sp[0] > 0 && sp[1] !== "N2";
+    if (live && s.balls < 3 && s.strikes < 2) label = "Payoff";   // v1.1 Step 3 (mirror of engine.py _explain)
+    const out = { a, bstar, comp, cmy, cful, label, deltas, setup: live ? sp : null };
     info.explain[key] = out;
     return out;
   }
   function whyLine(arsenal, s, tab, pick, info, exclude) {
     const X = explain(arsenal, s, tab, pick, info, exclude), deltas = X.deltas, b = X.comp;
-    if (b === null) return ["Only call allowed here", {}, null];
-    let term;
-    if (X.label === "Setup") term = "look value";
-    else {
-      term = null; for (const t in deltas) if (t !== "look value" && (term === null || deltas[t] < deltas[term])) term = t;
-      if (deltas[term] >= -1e-6) return [X.cful[X.a] <= X.cful[b] + 1e-9 ? "Best call on its own merits" : "Mixed in so he can't sit on one pitch", deltas, b];
-    }
     const p = pick.pitch, q = pick.quad, look = s.look || tab.h0, sigma = info.sigma;
+    if (X.setup) { const e = X.setup[2]; return [`Set up by the ${e[0].toLowerCase()} ${e[1]}: ${p.name.toLowerCase()} ${q}`, deltas, b]; }
+    if (b === null) return ["Only call allowed here", {}, null];
+    let term = null; for (const t in deltas) if (t !== "look value" && t !== "setup" && (term === null || deltas[t] < deltas[term])) term = t;
+    if (deltas[term] >= -1e-6) return [X.cful[X.a] <= X.cful[b] + 1e-9 ? "Best call on its own merits" : "Mixed in so he can't sit on one pitch", deltas, b];
     let line;
     if (term === "timing") {
       const vs = psum(Object.keys(sigma).map((k) => sigma[k] * speedToday(byName(arsenal, skName(k)), s)));
       const vt = (1 - P08.alpha) * look[0] + P08.alpha * vs, vp = speedToday(p, s) + 0.5 * evAdj(p, q);
       line = `He's timed for ${vt.toFixed(0)} mph; this plays ${Math.abs(vt - vp).toFixed(0)} mph ${vt > vp ? "slower" : "faster"}`;
-    } else if (term === "look value") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}`;
-    else if (term === "eye level") line = P08.beta_E < 0 ? "Stays at his eye level — a change costs here" : "Changes his eye level";
+    } else if (term === "eye level") line = P08.beta_E < 0 ? "Stays at his eye level — a change costs here" : "Changes his eye level";
     else if (term === "familiarity") {
       const c_ = isOffspeed(byName(arsenal, skName(b)).kind) ? "OS" : "FB";
       line = `He's seen the ${skName(b).toLowerCase()} ${(s.familiar || {})[c_] || 0} times today`;
@@ -1534,7 +1639,6 @@
   function intentFromCosts(balls, strikes, quad, cMyA, cMyBest, cA, cBest, e) {
     if (balls === 3 && strikes < 2) return "Get it over";
     if (strikes === 2) return quad === "chase" ? "Expand" : "Finish";
-    if (cMyA > cMyBest + e && cA < cBest) return "Setup";
     return quad === "chase" ? "Early off-zone" : "Get ahead";
   }
   function rootCostOne(arsenal, s, tab, x, sigma, myopic) {
@@ -1544,7 +1648,7 @@
   function intentLabel(arsenal, s, tab, pick, info, exclude) {
     const X = explain(arsenal, s, tab, pick, info, exclude), p = pick.pitch, q = pick.quad, label = X.label;
     let mech = null;
-    if ((label === "Setup" || label === "Early off-zone") && X.bstar !== X.a) {
+    if (label === "Early off-zone" && X.bstar !== X.a) {
       let bestD = -1e-9;
       for (const term of INTENT_TERMS) if (X.deltas[term] < bestD) { bestD = X.deltas[term]; mech = term; }
     }
@@ -1552,7 +1656,7 @@
     let line;
     if (label === "Get ahead") line = `Best strike here: ${pl} ${q}`;
     else if (label === "Get it over") line = `Need a strike: ${pl} ${q} is the safest one`;
-    else if (label === "Setup") line = `Sets up the ${skName(X.next).toLowerCase()} ${skH(X.next)}, because ${intentMechText(mech)}`;
+    else if (label === "Payoff") { const e = X.setup[2]; line = `Payoff: ${pl} ${q}, set up by the ${e[0].toLowerCase()} ${e[1]}`; }
     else if (label === "Expand") line = `Two strikes: ${pl} ${q}, off the zone`;
     else if (label === "Finish") line = `Put-away: ${pl} ${q}`;
     else line = `Off the zone early: ${pl} ${q}` + (mech ? `, because ${intentMechText(mech)}` : "");
@@ -1575,7 +1679,7 @@
   const v08 = { psum, gradeCall: gradeCallV08, sitOptions, sitPrior, sitShift, speedToday, timingB, pairTerms, yTarget, countKappa, vEnd, typeMix, inPlayValueTyped,
     sitPayoff, sitResponse, exploitability, temperature, windows, policyFromCosts, solveSitGame, allowedCalls, lookUpdate,
     solveTable, tabValue, rootCall, callV08, coachCredit, COACH_RULE, hotFade, HOT_FADE, COMEBACK_N, comeback, allowedCalls, rootCosts, cost08, LOC_ROW_Y, locQuad, frozenInputs, needsResolve, leanBh, winConstants, wePitch, walkSuggestion,
-    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, nextCountTop,
+    takeStats, umpEstimate, gradeStats, gradeEstimate, mapLogitShift, whyLine, intentLabel, intentFromCosts, setupPayoff, SETUP_RULE, tieBreak, enablesPayoff,
     get P08() { return P08; }, get SIM() { return SIM; }, setGradesOverride: (g) => { GRADES_OVERRIDE = g; } };
 
   const api = { VERSION, dataVersion, init, Pitch, Situation, QUADS, targets, COUNTS, landing, movement, tunnelScore,

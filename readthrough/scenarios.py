@@ -1,5 +1,5 @@
-"""Grade the engine against a frozen coaching read-through: readthrough/scenarios_v10.json (v1.0, the default) or the
-historical v0.9 suite (--suite v09).
+"""Grade the engine against a frozen coaching read-through: readthrough/scenarios_v10.json (v1.0, the default),
+scenarios_v11.json (--suite v11: v1.0's rows plus the v1.1 setup rows) or the historical v0.9 suite (--suite v09).
 usage (repo root): python3 readthrough/scenarios.py [--suite v10|v09] [--out results/scenarios_<tag>.json]
 Every row's full call spread is sorted into Acceptable / Arguable / Not acceptable (see make_scenarios_v09.py) and
 graded by the frozen pass rule. Refuses to run if the scenario file no longer matches its recorded sha256."""
@@ -59,6 +59,10 @@ def build(doc, row):
     sd["bases"] = tuple(sd["bases"])
     if sd.get("last"):
         sd["last"] = tuple(sd["last"])
+    if sd.get("pa_log"):     # v1.1 Step 3: this at-bat so far
+        sd["pa_log"] = tuple(tuple(tuple(v) if isinstance(v, list) else v for v in x) for x in sd["pa_log"])
+        if not sd.get("last"):
+            sd["last"] = sd["pa_log"][-1][:3] + ((sd["pa_log"][-1][5],) if sd["pa_log"][-1][5] == "back" else ())
     for k in ("hitter_damage", "landing_today"):
         if k in sd:
             sd[k] = {a: tuple(v) for a, v in sd[k].items()}
@@ -108,6 +112,11 @@ def grade(doc, row, mode):
         fl = sum(pr for pr, _, kind, q in dist if any(matches(x, kind, q) for x in pats))
         if fl < mn - 1e-9:
             fails.append(f"{'/'.join(pats)} {fl:.1%} < floor {mn:.0%}")
+    if row.get("ceiling"):        # v1.1 Step 3 (N2, an anti-setup): a share of calls that must stay under a cap
+        pats, mx = row["ceiling"]
+        cl = sum(pr for pr, _, kind, q in dist if any(matches(x, kind, q) for x in pats))
+        if cl > mx + 1e-9:
+            fails.append(f"{'/'.join(pats)} {cl:.1%} > ceiling {mx:.0%}")
     return dict(id=row["id"], hard=row["hard"], shares={k: round(v, 4) for k, v in sh.items()}, passed=not fails,
                 fails=fails, calls=sorted(calls, key=lambda c: -c[2]))
 

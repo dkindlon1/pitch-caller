@@ -194,6 +194,153 @@ def landing_hot(p, s):
     return (st - ex) / (LAND_BLOCK_K + n) >= HOT_EST
 
 
+# ---------------------------------------------------------------------------
+# v1.1 Step 3: at-bat setup and payoff rules (plan 2.4; research doc Part 3). Only the payoff pitch gets credit, only after
+# the setup pitch was actually thrown in this at-bat, and only at the root (s.pa_log is empty in every table solve), so a
+# setup pitch never gains from a credit (E5). Each rule needs its setup pattern in pa_log and five checks: the setup landed
+# near its target; he didn't square it up; the payoff pitch is live (trusted, not shaken off, not "not landing"); the
+# count allows it (no credit at three balls; chase payoffs only where targets() has a chase); the arsenal has the
+# profiles the rule names. Sizes in runs before run_scale (like COACH_RULE): the smallest round value that passes the
+# rule's rows on top of what the engine already gives the call (Step 3 rows; Drew grades them at Step 4). The Statcast
+# direction checks (setup_checks.py, results/v11/step3_checks.txt) and the plan's decision rule: S8, S10 and N1 point the
+# wrong way with intervals excluding 0 and are not built unless Drew keeps them; N2 points the right way (sized from its
+# fitted effect); the rest have intervals that include 0 and get the smallest size that passes their rows; S1 is kept
+# by O2 at its smallest size although its chase check points the wrong way; S7's whiff and chase checks disagree.
+# ---------------------------------------------------------------------------
+# sized by readthrough/setup_sizes.py on the Step 3 rows (results/v11/step3_sizes.json): the smallest grid size that lifts
+# the payoff 5+ points on its fire row (N2: the sinker down 3+) with the fire and no-fire rows passing. PROVISIONAL until
+# Drew grades the rows (they are Claude's proposals, Nov 12).
+SETUP_RULE = {"S1": 0.004, "S2": 0.004, "S3": 0.006, "S4": 0.006, "S5": 0.004, "S6": 0.008, "S7": 0.01, "S9": 0.002, "N2": 0.002}
+SETUP_CAP = 0.02            # setup credit <= 0.02 x run scale; coach + setup <= max(coach, 0.02 x run scale)
+UPS, DOWNS, INS, AWAYS = ("up-in", "up-away"), ("down-in", "down-away", "down-middle"), ("up-in", "down-in"), ("up-away", "down-away")
+STRIKE_RES = ("cstrike", "whiff", "foul")
+SETUP_TEXT = {"S1": "up, then down", "S2": "in, then away", "S3": "hard in, soft away", "S4": "same lane, slower",
+              "S5": "front door / back door", "S6": "stole strike one", "S7": "climb the ladder", "S9": "expand off the edge"}
+
+
+def _pitch_by(arsenal, name):
+    return next((x for x in arsenal if x.name == name), None)
+
+
+def landed_near(e, kind):
+    """check 1: a logged cell in or next to the target's area; way off fails; nothing logged: a called strike, whiff or
+    foul passes and a ball fails (a ball of unknown location may have been a wild miss)"""
+    name, q, res, landed = e[0], e[1], e[2], e[3]
+    if landed == "way":
+        return False
+    if landed is None:
+        return res in STRIKE_RES
+    r, c, br = landed
+    for dr in (-1, 0, 1):
+        for dc in (-1, 0, 1):
+            rr, cc = r + dr, c + dc
+            if 0 <= rr <= 4 and 0 <= cc <= 4 and loc_quad((rr, cc), kind, br) == q:
+                return True
+    return False
+
+
+def squared_up_entry(e):
+    """check 2: he was on it: fouled straight back, or hit hard"""
+    return (e[2] == "foul" and e[5] == "back") or e[4] == "hard"
+
+
+def on_time_or_early(e):
+    """the read rule for S2, S3 and S7 (plan 2.4): a pulled foul, a straight-back foul or an out-in-front whiff means on
+    time or early (no fire); a foul with no read is unknown (no fire); a called strike, a whiff with no read or a late /
+    fooled whiff passes; a ball passes on its landing (check 1)"""
+    res, rd = e[2], e[5]
+    if res == "foul":
+        return rd != "opposite"
+    if res == "whiff":
+        return rd == "front"
+    return res == "play"
+
+
+def pa_counts(pa_log):
+    """the count before each logged pitch of this at-bat"""
+    b = k = 0
+    out = []
+    for e in pa_log:
+        out.append((b, k))
+        if e[2] == "ball":
+            b += 1
+        elif e[2] in ("cstrike", "whiff") or (e[2] == "foul" and k < 2):
+            k += 1
+    return out
+
+
+def _fb_rides(x):
+    return x is not None and ((x.kind == "FB" and x.shape == "rides") or (x.kind == "FC" and x.shape == "ride"))
+
+
+def setup_payoff(p, q, s, arsenal):
+    """(credit, rule, setup entry) for the call (p, q): the rule with the largest credit whose setup is in this at-bat and
+    whose checks pass (N2 is a cost: negative credit). (0.0, None, None) when none applies."""
+    if not s.pa_log or s.balls >= 3 or q not in targets(s.balls, s.strikes):
+        return 0.0, None, None
+    if p not in candidates(arsenal, s) or not_landing(p, s):          # check 3 (a shaken-off pitch is never a candidate call)
+        return 0.0, None, None
+    log, counts = s.pa_log, pa_counts(s.pa_log)
+    same, two_k = s.same_side, s.strikes == 2
+    best = (0.0, None, None)
+    os_low = q in ("down-in", "down-away", "down-middle", "chase")
+
+    def offer(rule, e):
+        nonlocal best
+        v = SETUP_RULE.get(rule, 0.0)
+        if v > best[0]:
+            best = (v, rule, e)
+    for i, e in enumerate(log):
+        x = _pitch_by(arsenal, e[0])
+        if x is None or squared_up_entry(e) or not landed_near(e, x.kind):       # checks 1, 2 (and 5 for the setup pitch)
+            continue
+        last = i == len(log) - 1
+        # S1 up, then down: riding fastball (or ride cutter) up for a strike -> 12-6 / power curve or drop / split change low
+        if (_fb_rides(x) and e[1] in UPS and e[2] in STRIKE_RES and (s.balls, s.strikes) in ((0, 1), (1, 1), (0, 2), (1, 2), (2, 2))
+                and os_low and ((p.kind == "CB" and p.shape in ("12-6", "power")) or (p.kind == "CH" and p.shape in ("drop", "split")))):
+            offer("S1", e)
+        # S2 in, then away, same-side hitter: sinker / running fastball inside -> slider down-away
+        if (same and ((x.kind == "SI") or (x.kind == "FB" and x.shape == "runs")) and e[1] in INS and not on_time_or_early(e)
+                and p.kind == "SL" and q in ("down-away", "chase")):
+            offer("S2", e)
+        # S3 hard in, soft away, opposite-side hitter: hard cutter / fastball inside -> fade / split / typical change away
+        if (not same and ((x.kind == "FC" and x.shape == "hard") or x.kind == "FB") and e[1] in INS and not on_time_or_early(e)
+                and p.kind == "CH" and p.shape in ("fade", "split", "") and q in ("down-away", "chase")):
+            offer("S3", e)
+        # S4 same lane, slower: fastball away, the previous pitch -> changeup (6+ mph slower, not firm) / curve away and low
+        if (last and is_fastball(x.kind) and x.kind != "FC" and e[1] in AWAYS and q in ("down-away", "chase")
+                and ((p.kind == "CH" and p.shape != "firm" and x.mph() - p.mph() >= 6) or p.kind == "CB")
+                and s.timing.get("OS", 0.0) > -READ_T):
+            offer("S4", e)
+        # S6 steal strike one: a first-pitch curve / gyro slider called strike -> fastball at 0-1, any strike target
+        if (last and i == 0 and e[2] == "cstrike" and (x.kind == "CB" or (x.kind == "SL" and x.shape == "gyro"))
+                and (s.balls, s.strikes) == (0, 1) and is_fastball(p.kind) and q != "chase"):
+            offer("S6", e)
+        # S7 climb the ladder: riding fastball up, a late swing (whiff not out in front, or an opposite-way foul) -> the
+        # riding fastball above the zone (its chase target), two strikes
+        if (two_k and _fb_rides(x) and e[1] in UPS and e[2] in ("whiff", "foul") and not on_time_or_early(e)
+                and _fb_rides(p) and q == "chase"):
+            offer("S7", e)
+        # S9 work the edge, then expand off it: an early-count fastball / cutter on an edge -> with two strikes, a cutter or
+        # slider to the same side (a cutter in after the inside edge; a slider away / chase after the outside edge)
+        if (two_k and counts[i][1] < 2 and is_fastball(x.kind) and x.kind != "SI" and e[1] in INS + AWAYS):
+            side_in = e[1] in INS
+            if (side_in and p.kind == "FC" and q in INS) or (not side_in and p.kind in ("SL", "FC") and q in AWAYS + ("chase",)):
+                offer("S9", e)
+        # S5 front door / back door, two strikes only: command 4+, the payoff landing, and he was worked away / expanded with
+        # soft stuff earlier: the run sinker in to an opposite-side hitter, or a breaking ball / cutter back over the outer edge
+        if (two_k and p.command >= 4 and not same and is_offspeed(x.kind) and e[1] in AWAYS + ("chase",)
+                and ((p.kind == "SI" and q in INS) or (p.kind in ("SL", "CB", "FC") and q in AWAYS))):
+            offer("S5", e)
+    credit, rule, ent = best
+    # N2 (anti-setup): a sinker right after a changeup
+    if p.kind == "SI" and log[-1][0] and (_pitch_by(arsenal, log[-1][0]) or p).kind == "CH":
+        n2 = SETUP_RULE.get("N2", 0.0)
+        if n2:
+            credit, rule, ent = (credit - n2, rule or "N2", ent if rule else log[-1])
+    return min(credit, SETUP_CAP), rule, ent
+
+
 def coach_credit(p, q, s, arsenal=None):
     """Sum of the coaching-read credits for call (p, q) in situation s (runs, before run_scale). arsenal: for the hot
     read's fade (without it, the read is at full size)."""
@@ -446,6 +593,11 @@ class Situation:
     # v0.9 inputs (inert at their defaults)
     matchup: dict = field(default_factory=dict)           # item 6: earlier trips today, 'succ|KIND' / 'hard|KIND|target' -> n
     since_thrown: dict = field(default_factory=dict)      # v1.1: pitch name -> his pitches since he last threw it today
+    # v1.1 Step 3: this at-bat's pitches so far, oldest first, each (pitch name, target, result, landed, contact, read):
+    # result ball / cstrike / whiff / foul / play / hbp; landed None (not logged), "way" (way off) or (row, col, batter
+    # right) of the app's 5x5 grid; contact weak / solid / hard or None; read None or the coach's read (whiff: front / late
+    # / fooled; foul: pull / opposite / back), kept only at logging level 3+. Root only: tables never see it.
+    pa_log: tuple = ()
 
 
 # ---------------------------------------------------------------------------
@@ -1976,8 +2128,11 @@ def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
     if q in GB_RULE_TARGETS and ground_ball_spot(s):
         v -= GB_RULE_BONUS * run_scale(s.level)     # v1.0 Step 7: the ground-ball rule
     cc = coach_credit(p, q, s, arsenal)
+    sp = setup_payoff(p, q, s, arsenal)[0] if s.pa_log else 0.0      # v1.1 Step 3 (root only: tables have no pa_log)
+    if sp:
+        cc = min(cc + sp, max(cc, SETUP_CAP)) if sp > 0 else cc + sp  # stacking cap on the setup part only
     if cc:
-        v -= cc * run_scale(s.level)                # v1.0 Step 7: the coaching reads (COACH_RULE)
+        v -= cc * run_scale(s.level)                # v1.0 Step 7: the coaching reads (COACH_RULE); v1.1: + setup credits
     if s.level in ("hs", "travel"):
         w_ = min(1.0, max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20))
         if w_ > 0:
@@ -2048,12 +2203,12 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
         v0 = v_end(s, s.outs, s.bases, 0) + CV_BY_LEVEL[s.level][(b, k)]
         tab.V[(b, k)] = {bn: v0 for bn in tab.bins}
         tab.N[(b, k)] = {bn: 2.0 for bn in tab.bins}
-    prior = sit_prior(arsenal, replace(s, balls=0, strikes=0))
+    prior = sit_prior(arsenal, replace(s, balls=0, strikes=0, pa_log=()))
     tab.h0 = (sum(v * speed_today(by[n], s) for (n, j), v in prior.items()), 2.5)
     for sw in range(sweeps):
         delta = 0.0
         for (b, k) in order:
-            sc = replace(s, balls=b, strikes=k, last=None, usage_this_count={}, usage_by_call={},
+            sc = replace(s, balls=b, strikes=k, last=None, pa_log=(), usage_this_count={}, usage_by_call={},
                          b_h=dict(s.b_h))
             temp = temperature(arsenal, sc)
             calls = allowed_calls(arsenal, sc)
@@ -2102,7 +2257,61 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     usage = s.usage_by_call
     pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
+    pi = tie_break(pi, full, arsenal, s, exclude, M)
     return pi, sg, full, res, M
+
+
+TIE_CAP = 0.05              # v1.1 Step 3 (E5): at most 5 points of probability moved per call by the tie-break
+
+
+def enables_payoff(a, arsenal, s, exclude=None):
+    """v1.1 Step 3: the call a = (pitch, target) is a strike target and, if it goes for a strike, some rule's payoff
+    (with a as its setup) would pass checks 3-5 at the count it leads to"""
+    if a[1] == "chase" or s.strikes >= 2 or s.balls >= 3:
+        return False
+    ent = (a[0], a[1], "cstrike", None, None, None)
+    s2 = replace(s, strikes=s.strikes + 1, pa_log=tuple(s.pa_log) + (ent,))
+    for (n, q2) in allowed_calls(arsenal, s2, exclude):
+        x = _pitch_by(arsenal, n)
+        v, rule, e = setup_payoff(x, q2, s2, arsenal)
+        if v > 0 and e is ent:
+            return True
+    return False
+
+
+def tie_break(pi, full, arsenal, s, exclude=None, M=None):
+    """v1.1 Step 3 (E5, Drew: "if two calls are exactly the same on their own, take the one that sets up a payoff"): a
+    smooth shift after the solve. For a setup-enabling call A and a call B that doesn't enable one, whose full costs differ
+    by gap, a share max(0, 1 - gap / TIE_EPS) of B's probability moves to A; TIE_EPS = INTENT_E x run scale (the engine's
+    numerical-noise margin); at most TIE_CAP moved in total; never at three balls. With the sit-game costs M, the shift
+    is scaled back so the hitter's best-response gain against the shifted mix stays within TIE_EPS (the plan's check)."""
+    if s.balls >= 3 or s.strikes >= 2:
+        return pi
+    eps = INTENT_E * run_scale(s.level)
+    live = [a for a, v in pi.items() if v > 0]
+    en = [a for a in pi if enables_payoff(a, arsenal, s, exclude)]        # pi's own order (JS sorts the same keys stably)
+    if not en or len(en) == len(pi):
+        return pi
+    ens = set(en)
+    out = dict(pi)
+    left = TIE_CAP
+    for A in sorted(en, key=lambda a: full[a]):
+        for B in sorted((b for b in live if b not in ens), key=lambda b: abs(full[b] - full[A])):
+            gap = abs(full[A] - full[B])
+            if gap >= eps or left <= 0:
+                continue
+            mv = min(out[B] * (1 - gap / eps), left)
+            out[B] -= mv
+            out[A] += mv
+            left -= mv
+    if M:
+        ks = list(next(iter(M.values())).keys())
+        brv = lambda p_: max(sum(p_.get(a, 0.0) * M[a][k] for a in M) for k in ks)
+        g = brv(out) - brv(pi)
+        if g > eps:                       # best response is convex in the mix: scaling the shift by t scales the gain <= t
+            t = eps / g
+            out = {a: pi[a] + t * (out[a] - pi[a]) for a in pi}
+    return out
 
 
 def call_v08(arsenal, s, rng=None, exclude=None, tab=None):
@@ -2362,6 +2571,7 @@ _WHY_PARAMS = {
     "tunneling": ("beta_tun_whiff", "beta_tun_chase"),
     "repeat": ("rep_whiff_same", "rep_whiff_other", "rep_same_spot"),
     "familiarity": ("phi_FB", "phi_OS"),
+    "setup": (),            # v1.1 Step 3: SETUP_RULE zeroed (not P08)
 }
 
 
@@ -2374,33 +2584,6 @@ def _root_cost_pair(arsenal, s, tab, a, b, sigma, myopic=False):
         return sum(sigma[k] * cost08(by[x[0]], x[1], s, arsenal, tab, look, ("pure",) + k, myopic=myopic)[0]
                    for k in ks if sigma[k] > 1e-4)
     return c(a), c(b)
-
-
-def next_count_top(arsenal, s, tab, pick, info, exclude=None):
-    """v1.0 Step 4 (#3): the engine's own top call at the count this pitch leads to if it goes for a strike: (b, k+1), the
-    look moved by look_update, this pitch as the last one (its most likely count-keeping strike: taken, missed or fouled),
-    one more sighting of it, and, on a non-chase target, one more strike in its landing record. Per-count usage at the new
-    count is not known here and is left empty. Read by the "Sets up the X" lines only; it changes no call."""
-    p, q = pick[0], pick[1]
-    look = s.look or tab.h0
-    P = outcome_probs(p, q, replace(s, look=look), arsenal, sit=("mix", info["sigma"]))
-    res = "cstrike"
-    for r in ("whiff", "foul"):
-        if P[r] > P[res]:
-            res = r
-    seen = dict(s.hitter_seen or {})
-    seen[p.name] = seen.get(p.name, 0) + 1
-    land = dict(s.landing_today or {})
-    if q != "chase":
-        land[p.name] = landing_record(landing_triple(p, land.get(p.name)), True, expected_strike(p, q, s, arsenal))
-    sn = replace(s, strikes=min(2, s.strikes + 1), look=look_update(look, p, q, s), last=(p.name, q, res),
-                 hitter_seen=seen, landing_today=land, usage_this_count={}, usage_by_call={})
-    pi = root_call(arsenal, sn, tab, exclude)[0]
-    top = None
-    for x, v in pi.items():
-        if top is None or v > pi[top]:
-            top = x
-    return top
 
 
 def _explain(arsenal, s, tab, pick, info, exclude=None):
@@ -2432,12 +2615,18 @@ def _explain(arsenal, s, tab, pick, info, exclude=None):
         base = cful[a] - cful[comp]
         for term, names in _WHY_PARAMS.items():
             saved = {n: P08[n] for n in names}
+            saved_sr = dict(SETUP_RULE) if term == "setup" else None
             try:
                 for n in names:
                     P08[n] = 0.0
+                if saved_sr is not None:
+                    for n in SETUP_RULE:
+                        SETUP_RULE[n] = 0.0
                 ca, cb = _root_cost_pair(arsenal, s, tab, a, comp, sigma, myopic=my)
             finally:
                 P08.update(saved)
+                if saved_sr is not None:
+                    SETUP_RULE.update(saved_sr)
             deltas[term] = base - (ca - cb)
         if not my:      # three-ball counts are ranked without look value, so it explains nothing there
             deltas["look value"] = base - (cmy[a] - cmy[comp])
@@ -2445,30 +2634,33 @@ def _explain(arsenal, s, tab, pick, info, exclude=None):
                             ("running game", replace(s, steal=None)), ("grades", replace(s, grades=None))):
             ca, cb = _root_cost_pair(arsenal, s_off, tab, a, comp, sigma, myopic=my)
             deltas[term] = base - (ca - cb)
-    nxt = next_count_top(arsenal, s, tab, pick, info, exclude) if label == "Setup" else None
-    out = dict(a=a, bstar=bstar, comp=comp, cmy=cmy, cful=cful, label=label, deltas=deltas, next=nxt)
+    sp = setup_payoff(p, q, s, arsenal) if s.pa_log else (0.0, None, None)
+    if sp[0] > 0 and sp[1] != "N2" and s.balls < 3 and s.strikes < 2:
+        label = "Payoff"                  # v1.1 Step 3: a credited call; at two strikes Finish / Expand keep their label
+    out = dict(a=a, bstar=bstar, comp=comp, cmy=cmy, cful=cful, label=label, deltas=deltas,
+               setup=sp if (sp[0] > 0 and sp[1] != "N2") else None)
     cache[key] = out
     return out
 
 
 def why_line(arsenal, s, tab, pick, info, exclude=None):
-    """9 / v1.0 Step 4: the term that most favors the drawn call a over the comparator (see _explain). "Sets up" exactly
-    when the intent label is Setup, naming the engine's top call at the next count; otherwise look value is not eligible.
-    Delta values rank only. Returns (line, {term: Delta}, comparator)."""
+    """9 / v1.0 Step 4: the term that most favors the drawn call a over the comparator (see _explain). v1.1 Step 3: a call
+    credited by a setup rule names it ("Set up by the X spot: Y spot"); look value and the setup term are otherwise not
+    eligible. Delta values rank only. Returns (line, {term: Delta}, comparator)."""
     X = _explain(arsenal, s, tab, pick, info, exclude)
     deltas, b = X["deltas"], X["comp"]
+    p, q = pick[0], pick[1]
+    if X["setup"]:                        # v1.1 Step 3: a payoff call names its setup
+        e = X["setup"][2]
+        return f"Set up by the {e[0].lower()} {e[1]}: {p.name.lower()} {q}", deltas, b
     if b is None:
         return "Only call allowed here", {}, None
-    if X["label"] == "Setup":
-        term = "look value"
-    else:
-        elig = [t for t in deltas if t != "look value"]
-        term = min(elig, key=lambda t: deltas[t])
-        if deltas[term] >= -1e-6:
-            if X["cful"][X["a"]] <= X["cful"][b] + 1e-9:
-                return "Best call on its own merits", deltas, b
-            return "Mixed in so he can't sit on one pitch", deltas, b
-    p, q = pick[0], pick[1]
+    elig = [t for t in deltas if t not in ("look value", "setup")]
+    term = min(elig, key=lambda t: deltas[t])
+    if deltas[term] >= -1e-6:
+        if X["cful"][X["a"]] <= X["cful"][b] + 1e-9:
+            return "Best call on its own merits", deltas, b
+        return "Mixed in so he can't sit on one pitch", deltas, b
     look = s.look or tab.h0
     sigma = info["sigma"]
     if term == "timing":
@@ -2476,9 +2668,6 @@ def why_line(arsenal, s, tab, pick, info, exclude=None):
         vt = (1 - P08["alpha"]) * look[0] + P08["alpha"] * vs
         vp = speed_today(p, s) + 0.5 * ev_adj(p, q)
         line = f"He's timed for {vt:.0f} mph; this plays {abs(vt - vp):.0f} mph {'slower' if vt > vp else 'faster'}"
-    elif term == "look value":
-        nxt = X["next"]
-        line = f"Sets up the {nxt[0].lower()} {nxt[1]}"
     elif term == "eye level":
         line = "Stays at his eye level — a change costs here" if P08["beta_E"] < 0 else "Changes his eye level"
     elif term == "familiarity":
@@ -2528,14 +2717,13 @@ def intent_mech_text(m):
 
 
 def intent_from_costs(balls, strikes, quad, c_my_a, c_my_best, c_a, c_best, e):
-    """The label rule (plan item 4), first match wins. c_my = myopic cost, c = full cost (with look value); *_best are for b*,
-    the allowed call with the lowest myopic cost."""
+    """The label rule (plan item 4), first match wins. v1.1 Step 3: the dead look-value "Setup" label is gone (look value
+    stays in the costs); a call credited by a setup rule is labeled "Payoff" in _explain. The cost arguments are kept so
+    the signature doesn't move."""
     if balls == 3 and strikes < 2:
         return "Get it over"
     if strikes == 2:
         return "Expand" if quad == "chase" else "Finish"
-    if c_my_a > c_my_best + e and c_a < c_best:
-        return "Setup"
     return "Early off-zone" if quad == "chase" else "Get ahead"
 
 
@@ -2554,7 +2742,7 @@ def intent_label(arsenal, s, tab, pick, info, exclude=None):
     p, q = pick[0], pick[1]
     label = X["label"]
     mech = None
-    if label in ("Setup", "Early off-zone") and X["bstar"] != X["a"]:
+    if label == "Early off-zone" and X["bstar"] != X["a"]:
         best_d = -1e-9
         for term in INTENT_TERMS:
             d = X["deltas"][term]
@@ -2565,9 +2753,9 @@ def intent_label(arsenal, s, tab, pick, info, exclude=None):
         line = f"Best strike here: {p.name.lower()} {spot}"
     elif label == "Get it over":
         line = f"Need a strike: {p.name.lower()} {spot} is the safest one"
-    elif label == "Setup":
-        nxt = X["next"]
-        line = f"Sets up the {nxt[0].lower()} {nxt[1]}, because {intent_mech_text(mech)}"
+    elif label == "Payoff":
+        e = X["setup"][2]
+        line = f"Payoff: {p.name.lower()} {spot}, set up by the {e[0].lower()} {e[1]}"
     elif label == "Expand":
         line = f"Two strikes: {p.name.lower()} {spot}, off the zone"
     elif label == "Finish":
