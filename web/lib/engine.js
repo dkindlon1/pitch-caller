@@ -1115,6 +1115,7 @@
     if (landed === "way") return false;
     if (landed === null || landed === undefined) return STRIKE_RES.includes(res);
     const [r, c, br] = landed;
+    if (!(r >= 0 && r <= 4 && c >= 0 && c <= 4)) return false;   // v1.2: a directional "Way off" cell sits outside the grid
     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
       const rr = r + dr, cc = c + dc;
       if (rr >= 0 && rr <= 4 && cc >= 0 && cc <= 4 && locQuad([rr, cc], kind, br) === q) return true;

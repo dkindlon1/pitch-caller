@@ -1695,6 +1695,7 @@ td.wrapcell .line { display: block; }
     if (landed === "way") return false;
     if (landed === null || landed === undefined) return STRIKE_RES.includes(res);
     const [r, c, br] = landed;
+    if (!(r >= 0 && r <= 4 && c >= 0 && c <= 4)) return false;   // v1.2: a directional "Way off" cell sits outside the grid
     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
       const rr = r + dr, cc = c + dc;
       if (rr >= 0 && rr <= 4 && cc >= 0 && cc <= 4 && locQuad([rr, cc], kind, br) === q) return true;
@@ -3780,8 +3781,70 @@ td.wrapcell .line { display: block; }
     return out;
   }
 
+  // ---------------------------------------------------------------- v1.2 Step 3: each pitch's miss lean, from his own log
+  // (plan 2.5). Every logged pitch with a landing cell and a non-chase target gives an offset (landed - target), in inches,
+  // in the pitcher's frame (+x = his arm side, +z = up). The lean is the mean offset averaged over arm-side and
+  // glove-side targets (up and down targets for height), which cancels the pull back toward the middle and a catcher who
+  // sets up middle-ish; it needs LEAN_MIN_SIDE targets on each side, else no estimate. Shrunk toward 0 like the
+  // landing-today record: served value = mean x n / (LEAN_K + n). The trait gate decides whether it's ever served
+  // (ACTIVE_TRAITS); until then it's a flag.
+  const LEAN_K = 30, LEAN_MIN_SIDE = 10, LEAN_FLAG = 1.5;
+  // the app's 5x5 catcher's-view grid: inner 3x3 = the zone in thirds (with the ball: 20 in. wide, 24 in. tall), outer
+  // ring = just off (assumed 6 in. wide); index -1 / 5 = a directional "Way off" (scored 20 in. side, 24 in. up / down).
+  // Row heights match the engine's LOC_ROW_Y (3.8, 3.2, 2.5, 1.8, 1.2 ft around 2.5 ft).
+  const CELL_X = { "-1": -20, 0: -13, 1: -20 / 3, 2: 0, 3: 20 / 3, 4: 13, 5: 20 };
+  const CELL_Z = { "-1": 24, 0: 15.6, 1: 8.4, 2: 0, 3: -8.4, 4: -15.6, 5: -24 };
+  const LEAN_TARGET = { "up-in": [20 / 3, 8], "up-away": [-20 / 3, 8], "down-in": [20 / 3, -8], "down-away": [-20 / 3, -8],
+    middle: [0, 0], "down-middle": [0, -8] };   // batter frame: + x toward the batter (engine GEO_Q)
+  function leanSample(ev, hand) {
+    if (!ev.locCell || ev.quad === "chase" || !LEAN_TARGET[ev.quad] && !ev.glove) return null;
+    const ph = ev.ph || hand || "R";
+    const same = ev.sit && ev.sit.same_side !== undefined ? !!ev.sit.same_side : true;
+    const bRight = ev.bs ? ev.bs === "R" : (same ? ph === "R" : ph === "L");
+    const armOfCv = (xcv) => (ph === "L" ? xcv : -xcv);           // RHP's arm side is the catcher's left
+    const [r, c] = ev.locCell;
+    if (!(String(c) in CELL_X) || !(String(r) in CELL_Z)) return null;
+    const lx = armOfCv(CELL_X[c]), lz = CELL_Z[r];
+    let tx, tz;
+    if (ev.glove) { tx = armOfCv(CELL_X[ev.glove[1]]); tz = CELL_Z[ev.glove[0]]; }   // the catcher's actual setup (Step 4)
+    else { const [xb, zb] = LEAN_TARGET[ev.quad]; tx = armOfCv(bRight ? -xb : xb); tz = zb; }   // the called spot
+    return { name: ev.thrown || ev.pitchName, dx: lx - tx, dz: lz - tz, tx, tz };
+  }
+  function leanModel(events, opts = {}) {
+    const by = {}, noDir = {};
+    for (const ev of events) {
+      if (!isPitch(ev) || ev.deletedAt || ev.legacy) continue;
+      if (opts.pitcherId && ev.pitcherId !== opts.pitcherId) continue;
+      if (!ev.locCell && ev.loc === "noncomp" && ev.quad !== "chase") { const nm = ev.thrown || ev.pitchName; noDir[nm] = (noDir[nm] || 0) + 1; continue; }
+      const sm = leanSample(ev, opts.hand);
+      if (!sm) continue;
+      (by[sm.name] = by[sm.name] || []).push(sm);
+    }
+    const out = {};
+    for (const [nm, ss] of Object.entries(by)) {
+      const side = (key, pos) => ss.filter((x) => (pos ? x[key] > 0.5 : x[key] < -0.5));
+      const half = (arr, k) => (arr.length ? arr.reduce((a, x) => a + x[k], 0) / arr.length : null);
+      const arm = side("tx", true), glove = side("tx", false), up = side("tz", true), down = side("tz", false);
+      const one = (a, b, k) => {
+        const n = a.length + b.length;
+        if (a.length < LEAN_MIN_SIDE || b.length < LEAN_MIN_SIDE) return { mean: null, served: null, n, sides: [a.length, b.length] };
+        const mean = (half(a, k) + half(b, k)) / 2;
+        return { mean, served: mean * n / (LEAN_K + n), n, sides: [a.length, b.length] };
+      };
+      const x = one(arm, glove, "dx"), z = one(up, down, "dz");
+      const flag = [];
+      if (x.mean === null) flag.push("needs targets on both sides (arm " + x.sides[0] + ", glove " + x.sides[1] + ")");
+      else if (Math.abs(x.served) >= LEAN_FLAG) flag.push(`logs say he misses ${x.served > 0 ? "arm" : "glove"} side (${Math.abs(x.served).toFixed(1)} in.)`);
+      if (z.mean !== null && Math.abs(z.served) >= LEAN_FLAG) flag.push(`logs say he misses ${z.served > 0 ? "up" : "down"} (${Math.abs(z.served).toFixed(1)} in.)`);
+      if (noDir[nm]) flag.push(`${noDir[nm]} "Way off" without a direction left out`);
+      out[nm] = { x, z, noDir: noDir[nm] || 0, flag, served: ACTIVE_TRAITS.includes("lean") };
+    }
+    return out;
+  }
+
   const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
-    category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
+    category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame,
+    leanModel, leanSample, LEAN_K, LEAN_MIN_SIDE, CELL_X, CELL_Z };   // v1.2 Step 3
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
 })(typeof window !== "undefined" ? window : this);
@@ -5701,6 +5764,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (landed === "way") return false;
     if (landed === null || landed === undefined) return STRIKE_RES.includes(res);
     const [r, c, br] = landed;
+    if (!(r >= 0 && r <= 4 && c >= 0 && c <= 4)) return false;   // v1.2: a directional "Way off" cell sits outside the grid
     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
       const rr = r + dr, cc = c + dc;
       if (rr >= 0 && rr <= 4 && cc >= 0 && cc <= 4 && locQuad([rr, cc], kind, br) === q) return true;
@@ -7153,8 +7217,70 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return out;
   }
 
+  // ---------------------------------------------------------------- v1.2 Step 3: each pitch's miss lean, from his own log
+  // (plan 2.5). Every logged pitch with a landing cell and a non-chase target gives an offset (landed - target), in inches,
+  // in the pitcher's frame (+x = his arm side, +z = up). The lean is the mean offset averaged over arm-side and
+  // glove-side targets (up and down targets for height), which cancels the pull back toward the middle and a catcher who
+  // sets up middle-ish; it needs LEAN_MIN_SIDE targets on each side, else no estimate. Shrunk toward 0 like the
+  // landing-today record: served value = mean x n / (LEAN_K + n). The trait gate decides whether it's ever served
+  // (ACTIVE_TRAITS); until then it's a flag.
+  const LEAN_K = 30, LEAN_MIN_SIDE = 10, LEAN_FLAG = 1.5;
+  // the app's 5x5 catcher's-view grid: inner 3x3 = the zone in thirds (with the ball: 20 in. wide, 24 in. tall), outer
+  // ring = just off (assumed 6 in. wide); index -1 / 5 = a directional "Way off" (scored 20 in. side, 24 in. up / down).
+  // Row heights match the engine's LOC_ROW_Y (3.8, 3.2, 2.5, 1.8, 1.2 ft around 2.5 ft).
+  const CELL_X = { "-1": -20, 0: -13, 1: -20 / 3, 2: 0, 3: 20 / 3, 4: 13, 5: 20 };
+  const CELL_Z = { "-1": 24, 0: 15.6, 1: 8.4, 2: 0, 3: -8.4, 4: -15.6, 5: -24 };
+  const LEAN_TARGET = { "up-in": [20 / 3, 8], "up-away": [-20 / 3, 8], "down-in": [20 / 3, -8], "down-away": [-20 / 3, -8],
+    middle: [0, 0], "down-middle": [0, -8] };   // batter frame: + x toward the batter (engine GEO_Q)
+  function leanSample(ev, hand) {
+    if (!ev.locCell || ev.quad === "chase" || !LEAN_TARGET[ev.quad] && !ev.glove) return null;
+    const ph = ev.ph || hand || "R";
+    const same = ev.sit && ev.sit.same_side !== undefined ? !!ev.sit.same_side : true;
+    const bRight = ev.bs ? ev.bs === "R" : (same ? ph === "R" : ph === "L");
+    const armOfCv = (xcv) => (ph === "L" ? xcv : -xcv);           // RHP's arm side is the catcher's left
+    const [r, c] = ev.locCell;
+    if (!(String(c) in CELL_X) || !(String(r) in CELL_Z)) return null;
+    const lx = armOfCv(CELL_X[c]), lz = CELL_Z[r];
+    let tx, tz;
+    if (ev.glove) { tx = armOfCv(CELL_X[ev.glove[1]]); tz = CELL_Z[ev.glove[0]]; }   // the catcher's actual setup (Step 4)
+    else { const [xb, zb] = LEAN_TARGET[ev.quad]; tx = armOfCv(bRight ? -xb : xb); tz = zb; }   // the called spot
+    return { name: ev.thrown || ev.pitchName, dx: lx - tx, dz: lz - tz, tx, tz };
+  }
+  function leanModel(events, opts = {}) {
+    const by = {}, noDir = {};
+    for (const ev of events) {
+      if (!isPitch(ev) || ev.deletedAt || ev.legacy) continue;
+      if (opts.pitcherId && ev.pitcherId !== opts.pitcherId) continue;
+      if (!ev.locCell && ev.loc === "noncomp" && ev.quad !== "chase") { const nm = ev.thrown || ev.pitchName; noDir[nm] = (noDir[nm] || 0) + 1; continue; }
+      const sm = leanSample(ev, opts.hand);
+      if (!sm) continue;
+      (by[sm.name] = by[sm.name] || []).push(sm);
+    }
+    const out = {};
+    for (const [nm, ss] of Object.entries(by)) {
+      const side = (key, pos) => ss.filter((x) => (pos ? x[key] > 0.5 : x[key] < -0.5));
+      const half = (arr, k) => (arr.length ? arr.reduce((a, x) => a + x[k], 0) / arr.length : null);
+      const arm = side("tx", true), glove = side("tx", false), up = side("tz", true), down = side("tz", false);
+      const one = (a, b, k) => {
+        const n = a.length + b.length;
+        if (a.length < LEAN_MIN_SIDE || b.length < LEAN_MIN_SIDE) return { mean: null, served: null, n, sides: [a.length, b.length] };
+        const mean = (half(a, k) + half(b, k)) / 2;
+        return { mean, served: mean * n / (LEAN_K + n), n, sides: [a.length, b.length] };
+      };
+      const x = one(arm, glove, "dx"), z = one(up, down, "dz");
+      const flag = [];
+      if (x.mean === null) flag.push("needs targets on both sides (arm " + x.sides[0] + ", glove " + x.sides[1] + ")");
+      else if (Math.abs(x.served) >= LEAN_FLAG) flag.push(`logs say he misses ${x.served > 0 ? "arm" : "glove"} side (${Math.abs(x.served).toFixed(1)} in.)`);
+      if (z.mean !== null && Math.abs(z.served) >= LEAN_FLAG) flag.push(`logs say he misses ${z.served > 0 ? "up" : "down"} (${Math.abs(z.served).toFixed(1)} in.)`);
+      if (noDir[nm]) flag.push(`${noDir[nm]} "Way off" without a direction left out`);
+      out[nm] = { x, z, noDir: noDir[nm] || 0, flag, served: ACTIVE_TRAITS.includes("lean") };
+    }
+    return out;
+  }
+
   const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
-    category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame };
+    category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame,
+    leanModel, leanSample, LEAN_K, LEAN_MIN_SIDE, CELL_X, CELL_Z };   // v1.2 Step 3
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCLearner = api;
 })(typeof window !== "undefined" ? window : this);

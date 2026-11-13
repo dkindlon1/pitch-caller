@@ -21,6 +21,10 @@ const DAY = 864e5;
  *   games, pas (batters per game), level, seed, loc (log location), contact: "all" | "selective" | "none",
  *   charterError (share of logged entries wrong), runnersShare, sameShare, coachCalls ({ name, when(form) }),
  *   formSd (hidden per-game form on stuff, for the coach-calls world)
+ *   cells (v1.2 Step 3): { lean: { [name]: [lean_x, lean_z] }, sd, directional, hand } logs a landing cell per pitch:
+ *     the landed point is Normal(target + lean, sd) in the pitcher's frame (inches), on the app's 5x5 catcher's-view grid;
+ *     past the grid it's a directional "Way off" cell (index -1 / 5) when directional, else "Way off" with no cell. The
+ *     hidden lean is also on the true pitch, so the zone and result draws carry it.
  */
 function season(o) {
   const r = rng(o.seed || 1), level = o.level || "college_d3";
@@ -34,7 +38,9 @@ function season(o) {
     const form = {}; for (const nm of names) form[nm] = o.formSd ? o.formSd * (r() + r() + r() - 1.5) * 2 : 0;
     // the true pitcher tonight, and the app's view of him (coach grades)
     const trueSpec = (nm) => { const p = pitches.find((x) => x.name === nm), t = tr[nm];
-      return { name: nm, kind: p.kind, shape: p.shape, velo: p.velo, command: t.command, grade: t.grade + form[nm], traits: t.traits || null }; };
+      const ln = o.cells && o.cells.lean && o.cells.lean[nm];
+      return Object.assign({ name: nm, kind: p.kind, shape: p.shape, velo: p.velo, command: t.command, grade: t.grade + form[nm], traits: t.traits || null },
+        ln ? { lean_x: ln[0], lean_z: ln[1] } : {}); };
     const srTrue = {}; for (const nm of names) srTrue[nm] = L.strikeRate(E, trueSpec(nm), level);
     const conf = {}, confApp = {}, land = {}, feel = 0.7;
     for (const nm of names) { conf[nm] = feel; confApp[nm] = feel; }
@@ -84,8 +90,24 @@ function season(o) {
         if (logRes === "play" && out === "OUT" || k === 3) outs++;
         n++; pc++;
         const pd = pitches.find((x) => x.name === nm);
+        let locCell, cellLoc;
+        if (o.cells && quad !== "chase") {   // v1.2 Step 3: a landing cell from the hidden lean
+          const hand = o.cells.hand || "R", ln = (o.cells.lean || {})[nm] || [0, 0], sd = o.cells.sd || 8;
+          const T = { "up-in": [20 / 3, 8], "up-away": [-20 / 3, 8], "down-in": [20 / 3, -8], "down-away": [-20 / 3, -8], middle: [0, 0] }[quad];
+          const bRight = same ? hand === "R" : hand === "L";
+          const gauss = () => Math.sqrt(-2 * Math.log(1 - r())) * Math.cos(2 * Math.PI * r());
+          const armOfCv = (x) => (hand === "L" ? x : -x);
+          const tx = armOfCv(bRight ? -T[0] : T[0]), x = tx + ln[0] + sd * gauss(), zz = T[1] + ln[1] + sd * gauss();
+          const xcv = hand === "L" ? x : -x;
+          const col = xcv < -16 ? -1 : xcv < -10 ? 0 : xcv < -10 / 3 ? 1 : xcv < 10 / 3 ? 2 : xcv < 10 ? 3 : xcv < 16 ? 4 : 5;
+          const row = zz > 18 ? -1 : zz > 12 ? 0 : zz > 4 ? 1 : zz > -4 ? 2 : zz > -12 ? 3 : zz > -18 ? 4 : 5;
+          const way = col < 0 || col > 4 || row < 0 || row > 4;
+          if (way && !o.cells.directional) { locCell = null; cellLoc = "noncomp"; }
+          else { locCell = [row, col]; cellLoc = way ? "noncomp" : (row === 0 || row === 4 || col === 0 || col === 4) ? "off" : (row === 2 && col === 2) ? "heart" : "edge"; }
+        }
         events.push({ id: `${gameId}-${n}`, gameId, n, ts: ts + n * 1000, pitcherId: "p1", pitchId: pd.id, pitchName: nm, kind: pd.kind, quad,
-          res: logRes, contact, out, loc: o.loc ? logZone : undefined, end, choice, coach: choice === "coach",
+          res: logRes, contact, out, loc: o.cells && quad !== "chase" ? cellLoc : (o.loc ? logZone : undefined), end, choice, coach: choice === "coach",
+          ...(o.cells ? { locCell, ph: o.cells.hand || "R", bs: (same ? (o.cells.hand || "R") === "R" : (o.cells.hand || "R") === "L") ? "R" : "L" } : {}),
           sit: L.statPrior ? JSON.parse(JSON.stringify(Object.assign({}, sit, { wild_true: undefined }))) : sit, ars: arsApp });
         // in-game updates: the truth uses his real strike rate, the app uses the default (it only knows the grades)
         // v1.0 Step 3: the app's landing record, [strikes, expected strikes, pitches] over non-chase targets, expectation

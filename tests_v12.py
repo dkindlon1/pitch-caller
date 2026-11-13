@@ -189,6 +189,27 @@ jn = json.loads(subprocess.run(["node", "-e", "const E=require('./app/engine.js'
                                check=True).stdout)
 check("one CDF in both engines (Abramowitz & Stegun 7.1.26)", max(abs(e.geo_ncdf(a) - b) for a, b in zip(x, jn)) < 1e-15)
 
+# ------------------------------------------------------------------ 5. a directional "Way off" cell (Step 3/4)
+ars_s = [e.Pitch("Fastball", "FB", grade=3, command=3, conf=0.8, shape="rides", velo=88),
+         e.Pitch("Changeup", "CH", grade=3, command=3, conf=0.7, shape="fade", velo=79)]
+e.resolve_speeds(ars_s)
+cells = [[1, 4, True], [2, 5, True], [-1, 4, True], [5, 3, True]]
+py = []
+for c in cells:
+    S = e.Situation(0, 1, 0, (False,) * 3, level="college_d3", pa_log=(("Fastball", "up-away", "cstrike", tuple(c), None, None),))
+    py.append(e.setup_payoff(ars_s[1], "down-away", S, ars_s)[0])
+jsv = json.loads(subprocess.run(["node", "-e", """
+const E = require('./app/engine.js'); E.init(require('./app/engine_data.json'));
+const ars = [E.Pitch({ name: 'Fastball', kind: 'FB', grade: 3, command: 3, conf: 0.8, shape: 'rides', velo: 88 }),
+  E.Pitch({ name: 'Changeup', kind: 'CH', grade: 3, command: 3, conf: 0.7, shape: 'fade', velo: 79 })];
+E.resolveSpeeds(ars);
+console.log(JSON.stringify(""" + json.dumps(cells) + """.map((c) => E.v08.setupPayoff(ars[1], 'down-away',
+  E.Situation({ balls: 0, strikes: 1, outs: 0, bases: [false, false, false], level: 'college_d3', pa_log: [['Fastball', 'up-away', 'cstrike', c, null, null]] }), ars)[0])));
+"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+check("a directional Way off cell (outside the 5x5 grid) counts as way off: no setup credit, both engines (an in-grid cell "
+      "at the target still credits)", py[0] > 0 and py[1:] == [0.0, 0.0, 0.0] and all(abs(a - b) < 1e-15 for a, b in zip(py, jsv)),
+      f"python {py}, js {jsv}")
+
 fails = [r for r in results if not r[1]]
 print(f"\n{len(results) - len(fails)}/{len(results)} checks passed")
 sys.exit(1 if fails else 0)

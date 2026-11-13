@@ -233,6 +233,8 @@ def landed_near(e, kind):
     if landed is None:
         return res in STRIKE_RES
     r, c, br = landed
+    if not (0 <= r <= 4 and 0 <= c <= 4):      # v1.2: a directional "Way off" cell sits outside the grid: way off
+        return False
     for dr in (-1, 0, 1):
         for dc in (-1, 0, 1):
             rr, cc = r + dr, c + dc

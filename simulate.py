@@ -36,6 +36,7 @@ LEVEL_NAME = os.environ.get("LEVEL", "college")
 INPUTS = int(os.environ.get("INPUTS", "3"))
 NOISE = float(os.environ.get("NOISE", "0"))          # share of optional entries logged wrong
 TRUE_MOVE = os.environ.get("TRUE_MOVE", "0") == "1"  # pitches' real movement differs from their shape tag
+TRUE_MISS = os.environ.get("TRUE_MISS", "0") == "1"  # v1.2: each pitch has a hidden miss lean the engine doesn't know
 # v0.6d test matrix presets
 STAFF = os.environ.get("STAFF", "default")        # default, power, finesse, two_pitch, lefty, four_pitch, shaky
 LINEUP = os.environ.get("LINEUP", "default")      # default, strong, weak, lefty_heavy, switch, fb_mashers, os_killers, late
@@ -430,6 +431,24 @@ def noisy(value, options):
     return rng.choice(options) if NOISE and rng.random() < NOISE else value
 
 
+def miss_cell(p, q, s, r, hand="R"):
+    """v1.2 (TRUE_MISS): where the pitch was logged on the app's 5x5 catcher's-view grid (a directional way-off cell past
+    it), drawn from the miss model around the target with the pitch's hidden lean; and the hidden lean. A chase target
+    logs no cell (a deliberate miss). The draw is its own: it isn't tied to the zone the outcome was drawn from."""
+    if q == "chase":
+        return {"cell": "", "true_lean": f"{p.lean_x:.2f},{p.lean_z:.2f}"}
+    mx, mz = engine.geo_target(p, q)
+    zp = engine.landing_pre(p, q, s)
+    sd = engine.geo_sigma(mx, mz, 1.0 - zp["noncomp"] / sum(zp.values()))
+    lx = p.lean_x if s.same_side else -p.lean_x
+    xb, zz = r.gauss(mx + lx, sd), r.gauss(mz + p.lean_z, sd)
+    b_right = (hand == "R") if s.same_side else (hand == "L")
+    xcv = -xb if b_right else xb               # catcher's view: a right-handed hitter stands on the catcher's left
+    col = -1 if xcv < -16 else 0 if xcv < -10 else 1 if xcv < -10 / 3 else 2 if xcv < 10 / 3 else 3 if xcv < 10 else 4 if xcv < 16 else 5
+    row = -1 if zz > 18 else 0 if zz > 12 else 1 if zz > 4 else 2 if zz > -4 else 3 if zz > -12 else 4 if zz > -18 else 5
+    return {"cell": f"{row},{col}", "true_lean": f"{p.lean_x:.2f},{p.lean_z:.2f}"}
+
+
 def play_game(log_path):
     starter, reliever = our_staff()
     # hidden true movement: shape tag +/- a few inches (own rng so it's the same across input levels)
@@ -441,6 +460,13 @@ def play_game(log_path):
             true_move[(who["name"], x.name)] = ((ivb + mrng.gauss(0, 3), hb + mrng.gauss(0, 3)) if TRUE_MOVE else (ivb, hb))
             if INPUTS >= 4:   # measured: the engine sees the real numbers
                 x.ivb, x.hb = true_move[(who["name"], x.name)]
+    # v1.2 (TRUE_MISS): a hidden miss lean per pitch, inches (side SD 2, height SD 1.5: test assumptions, about the spread
+    # between pitchers in the research doc's MLB check), on its own stream so the main sequence is untouched
+    true_lean, crng = {}, random.Random(SEED_FOR_MOVE[0] * 7 + 3)
+    if TRUE_MISS:
+        for who in (starter, reliever):
+            for x in who["arsenal"]:
+                true_lean[(who["name"], x.name)] = (max(-6.0, min(6.0, crng.gauss(0, 2.0))), max(-6.0, min(6.0, crng.gauss(0, 1.5))))
     pitcher = starter
     lineup = their_lineup()
     if TRUE_POWER:                                   # own stream: the main rng sequence is untouched
@@ -580,7 +606,9 @@ def play_game(log_path):
                 # what actually happens (truth)
                 ts = replace(true_situation(s, hitter), ump_u=ump_true)
                 ars_true = [replace(x, ivb=true_move[(pitcher["name"], x.name)][0],
-                                    hb=true_move[(pitcher["name"], x.name)][1]) for x in ars]
+                                    hb=true_move[(pitcher["name"], x.name)][1],
+                                    **({"lean_x": true_lean[(pitcher["name"], x.name)][0], "lean_z": true_lean[(pitcher["name"], x.name)][1]}
+                                       if TRUE_MISS else {})) for x in ars]
                 p_true = next(x for x in ars_true if x.name == p.name)
                 P = outcome_probs(p_true, q, ts, ars_true)
                 # decision quality: true run cost of the engine's mix vs a caller who knows the hidden truth
@@ -720,6 +748,7 @@ def play_game(log_path):
                     "regret_exp": round(regret_exp, 5), "regret_pick": round(regret_pick, 5),
                     "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(engine.is_big_spot(s)),
                     **rw, **({"true_w": round(hitter["w"], 2)} if TRUE_POWER else {}),
+                    **(miss_cell(p_true, q, ts, crng, pitcher["hand"]) if TRUE_MISS else {}),
                 })
                 last = (p.name, q, "whiff" if ev == "whiff" else result)
                 # v1.1 Step 3: no landing cell or read in the simulator (a logged-nothing coach); contact on balls in play

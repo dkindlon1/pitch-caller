@@ -24,7 +24,7 @@ done
 echo "web/lib: engine.js and engine_data.json match the app's"
 node --test web/lib/demo.test.ts > /tmp/web_demo.txt 2>&1 || { cat /tmp/web_demo.txt; echo "::error::web demo test failed"; exit 1; }
 echo "web_demo: $(grep -E "^# pass" /tmp/web_demo.txt) (the website demo runs the engine with that data)"
-for t in learn_test db_test import_test rails_test schema_test stage2_test worlds_test pitch_rules_test kinds_test v11_fixture_test; do   # v11_fixture_test: v1.1 Step 5, a real v1.0 backup migrates and replays
+for t in learn_test db_test import_test rails_test schema_test stage2_test worlds_test pitch_rules_test kinds_test v11_fixture_test lean_test; do   # lean_test: v1.2 Step 3, the miss-lean estimate   # v11_fixture_test: v1.1 Step 5, a real v1.0 backup migrates and replays
   [ -f "app/$t.js" ] || continue
   (cd app && ../$run "$t" node "$t.js")
 done
