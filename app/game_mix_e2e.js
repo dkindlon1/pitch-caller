@@ -17,7 +17,8 @@
 const { chromium } = require("playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const DIST = process.env.DIST || path.join(__dirname, "dist/pitch-caller.html");
-const PITCHES = 82, TOP_MAX = 0.70;    // v0.9 threw 61% fastballs on this script; the v1.0 collapse was 88-96%
+const PITCHES = 82, TOP_MAX = 0.70;
+const GAME_MAX = 0.85, MEAN_MAX = 0.60, OVER_MAX = 1;   // v1.1 Step 4: the 21-game gate (Drew, Nov 13)    // v0.9 threw 61% fastballs on this script; the v1.0 collapse was 88-96%
 let fails = 0;
 const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if (!ok) fails++; };
 const server = http.createServer((req, res) => {
@@ -64,14 +65,31 @@ async function game(browser, url, { tier, seed, forcedReads }) {
   const url = `http://127.0.0.1:${server.address().port}/`;
   const browser = await chromium.launch();
   console.log("1. Whole games through the app keep a mix (sample staff: fastball, slider, changeup; college D3)");
-  const GAMES = process.env.SCAN ? JSON.parse(process.env.SCAN) : [{ tier: 2, seed: 7 }, { tier: 2, seed: 11 }, { tier: 3, seed: 7 }, { tier: 3, seed: 31337 }, { tier: 3, seed: 7, forcedReads: true }, { tier: 3, seed: 11 }];
+  // v1.1 Step 4 (Drew, Nov 13): one game is path-dependent (one changed call re-routes the rest), so the gate is 21 games, not
+  // 6: the 20 scan seeds plus the forced-reads game. Each game charts cleanly, keeps 2+ pitches and stays at or under 85%;
+  // over all of them the average top pitch is at most 60% and at most one game goes over 70%. v1.0's collapse (75-95% in
+  // every game) fails all three.
+  const T2 = [7, 11, 21, 33, 45, 57, 69, 81, 93, 105], T3 = [7, 11, 31337, 21, 33, 45, 57, 69, 81, 93];
+  const GAMES = process.env.SCAN ? JSON.parse(process.env.SCAN)
+    : [...T2.map((seed) => ({ tier: 2, seed })), ...T3.map((seed) => ({ tier: 3, seed })), { tier: 3, seed: 7, forcedReads: true }];
+  const tops = [];
   for (const g of GAMES) {
     const r = await game(browser, url, g);
     const n = Object.values(r.thrown).reduce((a, b) => a + b, 0);
     const top = Object.entries(r.thrown).sort((a, b) => b[1] - a[1])[0] || ["none", 0];
+    const share = n ? top[1] / n : 1;
+    tops.push(share);
     const label = `tier ${g.tier}${g.forcedReads ? ", every whiff 'Fooled' and every foul 'Straight back'" : ""}, seed ${g.seed}`;
     check(r.pitches >= PITCHES && n >= PITCHES && !r.errs.length, `${label}: ${n} pitches charted, no page errors${r.errs.length ? " (" + r.errs[0] + ")" : ""}`);
-    check(top[1] / n <= TOP_MAX && Object.keys(r.thrown).length >= 2, `${label}: no pitch over ${TOP_MAX * 100}% of the game (${Object.entries(r.thrown).map(([k, v]) => `${k} ${v}`).join(", ")}; top ${(100 * top[1] / n).toFixed(0)}%)`);
+    const mix = `${Object.entries(r.thrown).map(([k, v]) => `${k} ${v}`).join(", ")}; top ${(100 * share).toFixed(0)}%`;
+    if (process.env.SCAN) check(share <= TOP_MAX && Object.keys(r.thrown).length >= 2, `${label}: no pitch over ${TOP_MAX * 100}% of the game (${mix})`);
+    else check(share <= GAME_MAX && Object.keys(r.thrown).length >= 2, `${label}: 2+ pitches, none over ${GAME_MAX * 100}% (${mix})`);
+  }
+  if (!process.env.SCAN) {
+    const mean = tops.reduce((a, b) => a + b, 0) / tops.length, over = tops.filter((x) => x > TOP_MAX).length;
+    console.log(`2. Over the ${tops.length} games`);
+    check(mean <= MEAN_MAX, `average top pitch ${(100 * mean).toFixed(1)}% (at most ${MEAN_MAX * 100}%)`);
+    check(over <= OVER_MAX, `${over} game(s) over ${TOP_MAX * 100}% (at most ${OVER_MAX})`);
   }
   await browser.close(); server.close();
   console.log(fails ? `\n${fails} game-mix check(s) FAILED` : "\nall game-mix checks passed");
