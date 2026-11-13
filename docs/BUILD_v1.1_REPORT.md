@@ -827,3 +827,24 @@ Debug switches for scans: `SCAN=`, `SETUP_OFF=`, `SETUP_ZERO=`, `RIDEUP_OFF=`, `
 | `tests_v11_explain.py` | **7/7** at the new sizes (each built rule still fires and names its setup in the explanation cases) |
 | `golden_v11` | **refrozen** (500 cases, 225 in v1.1 terms); Python check largest difference **0**; **JS reproduces it**; `fast.py 40` **0 mismatches** |
 | `app/game_mix_e2e.js` (21-game gate) | **pass**: average top pitch **53.3%**, **1** game over 70% (tier 3 seed 31337, 83%), every game 35–83% with 2+ pitches |
+| `scripts/test-app.sh` (worktree, commit 370fa97, 45 min) | **exit 0**, 434 counted checks, no failures: tests.py 45, explain 7, tests_v11 41, fast_parity, golden_v11, learn 27, db 18, import 14, rails 31, schema 24, stage2 21, worlds 31, pitch_rules 41, kinds 23, v11_fixture 8, rules_e2e 20, v10 step 1 / 3 / 5 e2e 6 / 7 / 10, v11_step5_e2e 14, **game_mix_e2e 44** (21-game gate); build, dist, web copies and website demo |
+| CI, commit 370fa97 | engine job **pass** (52 min, every gate); Postgres 17 SQL **pass**; portal e2e **pass**; web app: `site_e2e` failed its intermittent scroll-scene check ("the result appears once that pitch has landed") |
+| `site_e2e` fix (commit 83e9d10) | the scene and demo checks wait for the state they assert instead of fixed sleeps (same assertions); locally under full CPU load **3 of 3 pass** |
+
+## Step 6: release (Nov 13)
+Done here:
+- `golden_v11` frozen;
+- the full suite exits 0 locally;
+- every CI job has passed on the release candidate except the site flake, which is now fixed;
+- release notes in `docs/RELEASE_v1.1.md`;
+- pull request open to `main`.
+
+**Left for Drew** (each one is live and hard to undo):
+1. Approve the "Promote migrations to prod" run for `20261115000000_v11_kinds.sql`. **Do this before the merge**: the v1.1
+   portal writes sinker / cutter upload rows the old database refuses.
+2. Merge the pull request: a fast-forward of `main @ ad12c46`; Vercel deploys the portal and game app.
+3. Update every iPad the same day.
+4. Tag `v1.1`.
+
+The read-through items (53 changed v1.0 rows, the proposed setup and profile rows) are graded at Drew's pace; nothing
+ships differently because of them.
