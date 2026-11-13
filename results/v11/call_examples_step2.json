@@ -1,0 +1,226 @@
+{
+ "2a shape and profile (PT_C, PT_B)": [
+  {
+   "spot": "finesse / opp / 2-0",
+   "moved": 0.322,
+   "before": "Changeup down-away 33%, Fastball middle 31%, Changeup middle 23%",
+   "after": "Changeup down-away 25%, Changeup middle 19%, Curveball middle 17%"
+  },
+  {
+   "spot": "finesse / opp / 3-2",
+   "moved": 0.32,
+   "before": "Changeup middle 48%, Changeup down-away 31%, Fastball middle 20%",
+   "after": "Fastball middle 43%, Changeup middle 39%, Curveball middle 9%"
+  },
+  {
+   "spot": "finesse / opp / 0-1",
+   "moved": 0.318,
+   "before": "Changeup down-away 39%, Changeup chase 26%, Curveball down-away 16%",
+   "after": "Changeup down-away 61%, Fastball down-away 10%, Curveball down-away 10%"
+  },
+  {
+   "spot": "finesse / same / 2-1",
+   "moved": 0.283,
+   "before": "Fastball middle 18%, Curveball middle 15%, Fastball up-in 14%",
+   "after": "Changeup middle 32%, Curveball middle 19%, Fastball middle 17%"
+  },
+  {
+   "spot": "finesse / opp / 2-1",
+   "moved": 0.276,
+   "before": "Changeup down-away 39%, Fastball middle 25%, Changeup middle 25%",
+   "after": "Changeup down-away 29%, Changeup middle 21%, Curveball middle 16%"
+  }
+ ],
+ "2b fastball zone (PT_FBZ_W)": [
+  {
+   "spot": "cutter four / opp / 3-2",
+   "moved": 0.42,
+   "before": "Cutter middle 42%, Fastball middle 36%, Fastball down-middle 9%",
+   "after": "Fastball middle 41%, Cutter down-middle 25%, Cutter down-away 12%"
+  },
+  {
+   "spot": "cutter four / opp / 1-2",
+   "moved": 0.392,
+   "before": "Fastball down-away 9%, Fastball middle 8%, Changeup down-away 8%",
+   "after": "Cutter down-away 23%, Cutter down-middle 17%, Slider down-away 15%"
+  },
+  {
+   "spot": "cutter four / same / 1-2",
+   "moved": 0.378,
+   "before": "Changeup down-away 10%, Fastball down-away 10%, Slider down-away 9%",
+   "after": "Cutter down-away 22%, Slider down-away 16%, Cutter down-middle 14%"
+  },
+  {
+   "spot": "cutter four / same / 3-2",
+   "moved": 0.374,
+   "before": "Cutter middle 55%, Fastball middle 34%, Slider middle 6%",
+   "after": "Fastball middle 34%, Cutter down-middle 29%, Cutter middle 18%"
+  },
+  {
+   "spot": "cutter four / same / 2-2",
+   "moved": 0.357,
+   "before": "Slider middle 16%, Cutter middle 13%, Fastball middle 12%",
+   "after": "Cutter down-away 26%, Cutter down-middle 21%, Fastball middle 16%"
+  }
+ ],
+ "2c opposite-side chase (PT_CHASE_OPP)": [
+  {
+   "spot": "finesse / opp / 1-2",
+   "moved": 0.283,
+   "before": "Changeup down-away 86%, Curveball down-away 12%, Fastball down-away 3%",
+   "after": "Changeup down-away 61%, Changeup chase 28%, Curveball down-away 9%"
+  },
+  {
+   "spot": "power / opp / 3-2",
+   "moved": 0.168,
+   "before": "Fastball middle 77%, Slider down-in 13%, Fastball down-middle 6%",
+   "after": "Fastball middle 79%, Fastball down-middle 21%"
+  },
+  {
+   "spot": "cutter four / opp / 2-2",
+   "moved": 0.163,
+   "before": "Cutter down-away 27%, Fastball middle 23%, Cutter down-middle 23%",
+   "after": "Cutter down-away 22%, Cutter down-middle 19%, Fastball middle 15%"
+  },
+  {
+   "spot": "sweeper trio / opp / 0-2",
+   "moved": 0.162,
+   "before": "Fastball down-away 12%, Changeup down-away 10%, Slider down-away 9%",
+   "after": "Slider down-away 14%, Fastball down-away 12%, Slider down-middle 10%"
+  },
+  {
+   "spot": "power / opp / 1-1",
+   "moved": 0.161,
+   "before": "Slider down-in 19%, Slider middle 16%, Fastball middle 16%",
+   "after": "Slider down-in 30%, Fastball middle 17%, Changeup middle 14%"
+  }
+ ],
+ "priors (PT_PLAT, PT_FBZ_H)": [
+  {
+   "spot": "finesse / opp / 1-1",
+   "moved": 0.237,
+   "before": "Changeup down-away 38%, Fastball middle 27%, Changeup middle 16%",
+   "after": "Changeup down-away 35%, Changeup middle 20%, Fastball down-middle 8%"
+  },
+  {
+   "spot": "sinker four / opp / 2-0",
+   "moved": 0.227,
+   "before": "Fastball middle 30%, Sinker middle 25%, Sinker down-middle 16%",
+   "after": "Fastball middle 21%, Sinker middle 16%, Slider middle 14%"
+  },
+  {
+   "spot": "AVG3 / same / 1-1",
+   "moved": 0.223,
+   "before": "Changeup middle 27%, Slider middle 15%, Fastball middle 15%",
+   "after": "Changeup middle 14%, Fastball middle 13%, Changeup down-middle 13%"
+  },
+  {
+   "spot": "sinker four / opp / 1-0",
+   "moved": 0.182,
+   "before": "Fastball middle 16%, Sinker middle 16%, Fastball down-middle 11%",
+   "after": "Changeup middle 14%, Fastball middle 13%, Sinker middle 11%"
+  },
+  {
+   "spot": "sweeper trio / same / 1-1",
+   "moved": 0.135,
+   "before": "Changeup middle 23%, Fastball middle 14%, Slider middle 12%",
+   "after": "Changeup middle 14%, Slider middle 12%, Fastball middle 12%"
+  }
+ ],
+ "2e grounders by profile (gb_rate)": [
+  {
+   "spot": "12-6 trio / opp / 1-0",
+   "moved": 0.051,
+   "before": "Fastball middle 24%, Changeup middle 18%, Fastball down-middle 16%",
+   "after": "Fastball middle 24%, Changeup middle 22%, Fastball down-middle 16%"
+  },
+  {
+   "spot": "12-6 trio / same / 1-0",
+   "moved": 0.047,
+   "before": "Fastball middle 23%, Changeup middle 21%, Curve middle 16%",
+   "after": "Changeup middle 24%, Fastball middle 22%, Curve middle 18%"
+  },
+  {
+   "spot": "cutter four / same / 1-2",
+   "moved": 0.043,
+   "before": "Cutter down-away 22%, Slider down-away 16%, Cutter down-middle 14%",
+   "after": "Cutter down-away 22%, Slider down-away 16%, Cutter down-middle 14%"
+  },
+  {
+   "spot": "four_pitch / same / 3-1",
+   "moved": 0.042,
+   "before": "Fastball middle 52%, Fastball up-in 19%, Slider middle 13%",
+   "after": "Fastball middle 48%, Fastball up-in 23%, Slider middle 13%"
+  },
+  {
+   "spot": "sweeper trio / opp / 1-2",
+   "moved": 0.041,
+   "before": "Fastball down-away 15%, Fastball middle 13%, Fastball down-middle 12%",
+   "after": "Fastball down-away 15%, Slider down-away 13%, Fastball middle 13%"
+  }
+ ],
+ "slot adjustment (movement)": [
+  {
+   "spot": "two_pitch / same / 1-1",
+   "moved": 0.048,
+   "before": "Fastball middle 19%, Curveball middle 17%, Curveball down-away 16%",
+   "after": "Fastball middle 19%, Curveball middle 19%, Curveball down-away 18%"
+  },
+  {
+   "spot": "12-6 trio / opp / 2-2",
+   "moved": 0.037,
+   "before": "Fastball middle 20%, Changeup middle 20%, Curve middle 16%",
+   "after": "Fastball middle 20%, Changeup middle 19%, Curve middle 17%"
+  },
+  {
+   "spot": "12-6 trio / same / 2-2",
+   "moved": 0.027,
+   "before": "Curve middle 22%, Fastball middle 19%, Changeup middle 14%",
+   "after": "Curve middle 24%, Fastball middle 19%, Changeup middle 14%"
+  },
+  {
+   "spot": "12-6 trio / same / 1-1",
+   "moved": 0.017,
+   "before": "Fastball middle 13%, Curve middle 12%, Changeup middle 11%",
+   "after": "Fastball middle 13%, Curve middle 13%, Curve down-middle 12%"
+  },
+  {
+   "spot": "sweeper trio / opp / 2-2",
+   "moved": 0.015,
+   "before": "Changeup middle 29%, Fastball middle 20%, Fastball down-middle 17%",
+   "after": "Changeup middle 28%, Fastball middle 20%, Fastball down-middle 17%"
+  }
+ ],
+ "v1.0 fastball lines and SL / CH same-side patches removed (class_terms)": [
+  {
+   "spot": "sinker four / same / 2-2",
+   "moved": 0.164,
+   "before": "Sinker down-away 12%, Fastball middle 12%, Sinker middle 12%",
+   "after": "Slider middle 19%, Fastball middle 14%, Changeup middle 14%"
+  },
+  {
+   "spot": "power / same / 0-2",
+   "moved": 0.139,
+   "before": "Slider down-away 29%, Fastball down-away 20%, Fastball middle 15%",
+   "after": "Fastball down-away 22%, Slider down-away 17%, Fastball middle 16%"
+  },
+  {
+   "spot": "AVG3 / same / 2-2",
+   "moved": 0.139,
+   "before": "Changeup middle 21%, Fastball middle 17%, Fastball down-away 15%",
+   "after": "Changeup middle 22%, Slider middle 21%, Fastball middle 18%"
+  },
+  {
+   "spot": "sinker four / same / 0-2",
+   "moved": 0.134,
+   "before": "Changeup down-away 10%, Fastball down-away 9%, Sinker down-away 8%",
+   "after": "Fastball down-away 10%, Slider down-away 9%, Changeup down-away 9%"
+  },
+  {
+   "spot": "finesse / same / 3-1",
+   "moved": 0.132,
+   "before": "Fastball middle 54%, Changeup middle 22%, Curveball middle 13%",
+   "after": "Fastball middle 41%, Changeup middle 23%, Fastball up-in 22%"
+  }
+ ]
+}

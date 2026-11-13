@@ -69,26 +69,34 @@ def build(fit, chase_means):
                 v = m.get(kind, 0.0) + m.get(f"{kind}|{t2}", 0.0)
                 tab[key] = r4(v)
         pb[tgt] = tab
-    # 2b whiff (shipped): differences from the typical four-seam's own height / inside lines
+    # 2b whiff (shipped): differences from the typical four-seam's own lines: (up, down, inside vs same-side, inside vs
+    # opposite-side). The riding cutter has lines only if its own test shipped; otherwise it uses the typical cutter's.
     assert fit["2b"]["whiff"]["ship"]
     m = {k[3:]: v for k, v in fin["whiff"].items() if k.startswith("2b:")}
+    m_fbz = dict(m)
+    H4 = ("up", "down", "in_same", "in_opp")
     fbz_w = {}
     for kind in E.FASTBALL_KINDS:
         for t in E.SHAPE_TAGS[kind]:
             key = f"{kind}|{t}"
-            fbz_w[key] = tuple(r4(m.get(f"{key}@{h}", m[f"{kind}|@{h}"]) - m[f"FB|@{h}"]) for h in ("up", "down", "in"))
-    # priors
+            fbz_w[key] = tuple(r4(m.get(f"{key}@{h}", m[f"{kind}|@{h}"]) - m[f"FB|@{h}"]) for h in H4)
+    # priors: by side and early / two-strike (plan 2.3), at their no-harm scale
     pr = fit["priors"]
+    SS = [(sd, st) for sd in ("same", "opp") for st in ("early", "2k")]
     fbz_h = {}
     if "fbzone_hard" in pr:
         tb, sc = pr["fbzone_hard"]["table"], pr["fbzone_hard"]["scale"]
         for kind in E.FASTBALL_KINDS:
             for t in E.SHAPE_TAGS[kind]:
                 key = f"{kind}|{t}"
-                fbz_h[key] = tuple(r4(sc * (tb.get(f"{key}@{h}", tb.get(f"{kind}|@{h}", 0.0)) - tb.get(f"FB|@{h}", 0.0)))
-                                   for h in ("up", "mid", "down"))
+                row = []
+                for h in ("up", "mid", "down"):
+                    for sd, st in SS:
+                        v = tb.get(f"{key}@{h}|{sd}|{st}", tb.get(f"{kind}|@{h}|{sd}|{st}", 0.0)) - tb.get(f"FB|@{h}|{sd}|{st}", 0.0)
+                        row.append(r4(sc * v))
+                fbz_h[key] = tuple(row)                    # (up: same-early, same-2k, opp-early, opp-2k; mid ...; down ...)
     plat = {}
-    for tgt in ("whiff", "hard"):
+    for tgt in ("whiff", "hard", "chase", "cstrike"):
         k = f"platoon_{tgt}"
         if k not in pr:
             continue
@@ -98,8 +106,7 @@ def build(fit, chase_means):
             for t in tags:
                 key = f"{kind}|{t}"
                 t2 = "tight" if (kind, t) == ("SL", "") else t
-                k2 = f"{kind}|{t2}"
-                tab[key] = tuple(r4(sc * tb.get(f"{k2}|{sd}", 0.0)) for sd in ("same", "opp"))
+                tab[key] = tuple(r4(sc * tb.get(f"{kind}|{t2}|{sd}|{st}", 0.0)) for sd, st in SS)
         plat[tgt] = tab
     # 2c chase (shipped, full model): per class (class term, per HB inch, per vertical inch), and the group means
     c2 = fit["2c"]["chase"]
@@ -118,9 +125,43 @@ def build(fit, chase_means):
             t2 = "tight" if (kind, t) == ("SL", "") else t
             v = g.get(f"{kind}|{t2}")
             gbp[f"{kind}|{t}"] = r4(v["gb"] if v and v["n"] >= 200 else kind_rate[kind])
+    # 2a's class terms, taken from the same joint fits: what an off-speed class adds over the typical four-seam at the
+    # spot it's aimed at, both at their typical pitch (class dummy + class x location + C at the class's typical shape,
+    # less the four-seam's own C at its typical shape and, on whiff, its own 2b lines). Aimed spots are read on a median
+    # zone (bottom 1.6 ft, top 3.42 ft) at the engine's target points (target_xy).
+    SPOTS = {"up-in": (7, 38), "up-away": (-7, 38), "down-in": (7, 22), "down-away": (-7, 22), "middle": (0, 30),
+             "down-middle": (0, 22), "chase": (-10, 14)}
+    ZB, ZT = 1.6, 3.42
+    cls_t = {}
+    for tgt in ("whiff", "chase", "cstrike", "hard"):
+        cb = dict(zip(fit["final"][tgt]["class_names"], fit["final"][tgt]["class_beta"]))
+        # C at a typical shape, in the fit's own units (arm angle centered at 40 degrees, as in profile_terms_fit)
+        cx = lambda c_: sum(b * x for b, x in zip(pc[tgt][c_], (ref[c_][0], ref[c_][1], ref[c_][2], ref[c_][3] - 40.0)))
+        fbC = cx("FB")
+        out = {}
+        for c in ("SL", "CB", "CH"):
+            cC = cx(c)
+            out[c] = {}
+            for q, (xin, zin) in SPOTS.items():
+                xs_, zn_ = xin / 12.0, (zin / 12.0 - ZB) / (ZT - ZB)
+                base = cb[f"cls:{c}"] + cb[f"loc:{c}:xs"] * xs_ + cb[f"loc:{c}:zn"] * zn_ + cb[f"loc:{c}:zn2"] * zn_ * zn_ + cC - fbC
+                vals = []
+                for sd in ("same", "opp"):
+                    v = base
+                    if tgt == "whiff":
+                        h = "up" if zn_ > 0.67 else ("down" if zn_ < 0.33 else None)
+                        if h:
+                            v -= m_fbz.get(f"FB|@{h}", 0.0)
+                        if xin > 0:
+                            v -= m_fbz.get(f"FB|@in_{sd}", 0.0)
+                    vals.append(r4(v))
+                out[c][q] = tuple(vals)
+        cls_t[tgt] = out
+    # slot adjustment of default movement (E10; plan 2.2): inches per degree of arm angle from the kind's median
+    slot_mv = {k: (v["ivb"], v["hb"], v["ref_angle"]) for k, v in fit["slot"].items()}
     return dict(PT_C=pc, PT_REF=ref, PT_B=pb, PT_FBZ_W=fbz_w, PT_FBZ_H=fbz_h, PT_PLAT=plat, PT_CHASE_OPP=copp,
                 PT_CHASE_MEAN={k: r4(v) for k, v in chase_means.items()}, GB_PROFILE=gbp, SLOT_ANGLE=slot,
-                PT_FB_IVB=r4(fbi))
+                PT_FB_IVB=r4(fbi), CLASS_TERMS=cls_t, SLOT_MOVE=slot_mv)
 
 
 def chase_group_means(fit):
@@ -142,7 +183,8 @@ def chase_group_means(fit):
 def report(T):
     """offsets (logit) the engine gives each MLB profile, in an arsenal with a typical four-seam, three-quarter slot"""
     lines = ["Profile terms at MLB (logit, vs the typical pitch of its class; typical four-seam as his main fastball, 3/4 slot)",
-             f"{'profile':14s} {'whiff':>6s} {'chase':>6s} {'cstr':>6s} {'hard':>6s} | {'W up':>5s} {'W dn':>5s} {'W in':>5s} | "
+             "zone lines: whiff up / down / inside vs same-side / inside vs opposite-side; platoon priors: early counts, same / opposite",
+             f"{'profile':14s} {'whiff':>6s} {'chase':>6s} {'cstr':>6s} {'hard':>6s} | {'W up':>5s} {'W dn':>5s} {'Wins':>5s} {'Wino':>5s} | "
              f"{'Wsame':>5s} {'Wopp':>5s} {'Hsame':>5s} {'Hopp':>5s} | {'GB':>5s}"]
     fbi = T["PT_FB_IVB"]
     for kind, tags in E.SHAPE_TAGS.items():
@@ -156,19 +198,29 @@ def report(T):
                 v = sum(b * (xi - ri) for b, xi, ri in zip(T["PT_C"][tgt][c], x, T["PT_REF"][c]))
                 v += T["PT_B"].get(tgt, {}).get(key, 0.0)
                 row.append(v)
-            z = T["PT_FBZ_W"].get(key, (0, 0, 0))
-            pw = T["PT_PLAT"].get("whiff", {}).get(key, (0, 0))
-            ph = T["PT_PLAT"].get("hard", {}).get(key, (0, 0))
+            z = T["PT_FBZ_W"].get(key, (0, 0, 0, 0))
+            pw = T["PT_PLAT"].get("whiff", {}).get(key, (0, 0, 0, 0))
+            ph = T["PT_PLAT"].get("hard", {}).get(key, (0, 0, 0, 0))
             lines.append(f"{key:14s} " + " ".join(f"{v:+6.2f}" for v in row) + " | " + " ".join(f"{v:+5.2f}" for v in z) +
-                         " | " + " ".join(f"{v:+5.2f}" for v in (*pw, *ph)) + f" | {T['GB_PROFILE'][key]:5.3f}")
+                         " | " + " ".join(f"{v:+5.2f}" for v in (pw[0], pw[2], ph[0], ph[2])) + f" | {T['GB_PROFILE'][key]:5.3f}")
+    lines += ["", "Class terms (2a's fitted class values; NOT in the engines: held for Drew, see BUILD_v1.1_REPORT): off-speed "
+              "class vs the typical four-seam at the aimed spot, same-side hitter", f"{'class spot':16s} {'whiff':>6s} {'chase':>6s} {'cstr':>6s} {'hard':>6s}"]
+    for c in ("SL", "CB", "CH"):
+        for q in ("up-in", "up-away", "middle", "down-in", "down-away", "down-middle", "chase"):
+            lines.append(f"{c + ' ' + q:16s} " + " ".join(f"{T['CLASS_TERMS'][g][c][q][0]:+6.2f}" for g in ("whiff", "chase", "cstrike", "hard")))
+    lines += ["", "Slot adjustment of an untagged pitch's default movement (in. per degree of arm angle, from the kind's median)"]
+    for k, (si, sh, ref) in T["SLOT_MOVE"].items():
+        lines.append(f"  {k}: IVB {si:+.3f}, HB {sh:+.3f} (median {ref})")
     return lines
 
 
 def py_block(T):
     o = ["# --- PROFILE_TERMS: generated by profile_terms_tables.py --write-engines from the Step 2 fits (results/v11/step2_fit.json,",
          "# step2_terms.json); do not edit. Fitted: PT_C (2a model C), PT_B (2a model B over C), PT_FBZ_W (2b), PT_CHASE_OPP (2c).",
-         "# Priors (plan 2.3, at their 2025 no-harm scale): PT_FBZ_H, PT_PLAT. Descriptive: GB_PROFILE (2e), SLOT_ANGLE. ---"]
-    for k in ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB"):
+         "# Priors (plan 2.3, at their 2025 no-harm scale): PT_FBZ_H, PT_PLAT. Descriptive: GB_PROFILE (2e), SLOT_ANGLE,",
+         "# SLOT_MOVE (slot adjustment, E10). The fitted class values (CLASS_TERMS) are held for Drew and not written here. ---"]
+    for k in ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB",
+              "SLOT_MOVE"):         # CLASS_TERMS stays in step2_terms.json: held for Drew (BUILD_v1.1_REPORT)
         o.append(f"{k} = {json.dumps(T[k], separators=(', ', ': '))}".replace("[", "(").replace("]", ")"))
     o.append("# --- end PROFILE_TERMS ---")
     return o
@@ -176,7 +228,8 @@ def py_block(T):
 
 def js_block(T):
     o = ["  // --- PROFILE_TERMS: generated by profile_terms_tables.py --write-engines from the Step 2 fits; do not edit ---"]
-    for k in ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB"):
+    for k in ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB",
+              "SLOT_MOVE"):         # CLASS_TERMS stays in step2_terms.json: held for Drew (BUILD_v1.1_REPORT)
         o.append(f"  const {k} = {json.dumps(T[k], separators=(', ', ': '))};")
     o.append("  // --- end PROFILE_TERMS ---")
     return o

@@ -91,7 +91,9 @@ Settled (Drew, Nov 12):
   An estimate.
 - `hs` / travel: college movement shrunk 15%, same speed gaps. An assumption until we have HS data.
 - Slot adjustment (higher slot: more ride and curve drop; lower: more run and sweep) only if 2a ships (E10); otherwise
-  slot feeds only the tunnel model (`SLOTS`, `:658`) as today.
+  slot feeds only the tunnel model (`SLOTS`, `:658`) as today. **Built in Step 2** (2a shipped): 2024 slopes of IVB and HB
+  per degree of arm angle within each kind and tag, applied to an untagged pitch's default movement only; a tag already
+  says how the pitch moves, and measured numbers win over both.
 
 **Tag thresholds** (MLB inches and mph; movement thresholds scale by each level's movement ratio, 0.85 at HS). Fastball-
 class pitches are compared with the level's typical pitch of the same kind; off-speed with his main fastball. First
@@ -197,9 +199,10 @@ Descriptive tables (2e grounder rates, 2f level defaults) aren't held-out tested
 
 ### 2.5 Statcast mapping for the fits
 
-`seq_fit.py` `CLASS` (`:19`) becomes a kind map: FF → FB, SI → SI, FC → FC, SL / ST / SV → SL, CU / KC / CS → CB, CH /
-FS / FO → CH. Profiles come from the 2.2 thresholds on measured movement, not from the label (Statcast labels are used
-only to check the thresholds). The loader keeps speed, `pfx_x` / `pfx_z`, release position and extension, plate
+The Step 2 fits (`profile_terms_fit.py`, reusing `seq_fit.py`'s loader hygiene, `Fit` and `boot_gain`) use a kind map:
+FF → FB, SI → SI, FC → FC, SL / ST / SV → SL, CU / KC / CS → CB, CH / FS / FO → CH. Profiles come from the 2.2
+thresholds on measured movement, except that a Statcast label that names a profile (ST, SV, FS, FO) sets the tag, as
+Step 1b settled (2.2). `seq_fit.py` itself is unchanged, so the v0.8 fits still reproduce. The loader keeps speed, `pfx_x` / `pfx_z`, release position and extension, plate
 location, `stand`, `p_throws`, `pitch_type` (`seq_fit.py:52-64`) and adds `arm_angle` (present in the CSVs for 2024 and
 2026; the second reviewer pulled one day of each on Nov 12). v1.1 uses the same seasons and sampling as v1.0: 2024
 (train) and 2025 (held out), every 4th day (`fetch_statcast.py`). The CSVs aren't on disk (`data/statcast/` is not
@@ -272,7 +275,7 @@ and a 95% interval excluding 0 where a coefficient is tested.
 
 | Item | Fit | Fallback if it doesn't ship | Replaces |
 |---|---|---|---|
-| 2a (H1) pitch model | A: v1.0 class model; B: + kind / profile dummies; C: + continuous `rel_shape` and slot. Targets: whiff given swing, chase given out of zone, called strike given take, hard given contact. | profile priors (2.3) | `KIND_W` (`:642`), the off-speed lines of `shape_fit` (`:727`) |
+| 2a (H1) pitch model | A: v1.0 class model; B: + kind / profile dummies; C: + continuous shape and slot (speed off his main fastball; vertical: fastball class IVB vs the typical four-seam, off-speed ΔIVB off his main fastball; HB arm side +; arm angle). Targets: whiff given swing, chase given out of zone, called strike given take, hard given contact. | profile priors (2.3) | `KIND_W` (`:642`), the off-speed lines of `shape_fit` (`:727`). **Step 2 result:** the fitted class values move the calls past Drew's v1.0 floors (hitter's-count fastball share 36%), so v1.0's hand values stay until Drew decides (BUILD_v1.1_REPORT) |
 | 2b (H2) fastball zone | Fastball-class profile × height × inside / away by batter side, on whiff, hard and called strike; the sinker line keys on kind SI (every tag); FC/ride gets a line only if the fit supports it. Checks the high-sinker finding (in-zone up fine, off the plate up bad). | priors by fastball profile and height | `shape_fit` fastball lines |
 | 2c (H3) platoon | Signed horizontal break relative to the batter and drop size, by same / opposite side. **`SIDE` stays**, keyed on `pclass`. | per-profile platoon priors | the SL same-side +0.3 and CH same-side −0.3 patches (`:737-740`) |
 | 2d (H4) familiarity | **Only if 2a ships.** Per pitch with carry-over by `rel_shape` distance vs v1.0's class count; starter games, both samples. If it ships, `familiar` moves from class keys to per pitch in `Situation`, the app's `fam` (`index.src.html:739`), the simulator's `fam` (`simulate.py:448`) and golden inputs. | v1.0 term stays | `familiar` (`:397`, `:935`) |

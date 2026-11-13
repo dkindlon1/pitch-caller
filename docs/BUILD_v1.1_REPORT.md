@@ -339,3 +339,35 @@ edge).
 - Noted, not acted on: on this data the class-count coefficients come out at about half of v1.0's (FB +0.033 / OS +0.069
   per pitch vs the engine's +0.058 / +0.116, which came from v0.8's fit with the pitch-quality controls). No step of the
   plan refits them; I can if you want.
+
+### Plan vs build audit and gap fixes (Nov 12, night; Drew asked for no gaps)
+Read the plan's Step 2, 2.2, 2.3 and 2.5 line by line against the commit (7e46bca). Found and fixed:
+
+| Gap | Fix | Result |
+|---|---|---|
+| 2a "replaces `KIND_W` and the off-speed lines of `shape_fit`": not done | Fitted the class values (class dummy + class × location, from the same joint fits) and built them in | **Held back for Drew.** They're much bigger than v1.0's: a changeup aimed down-away +1.02 whiff vs the four-seam (v1.0 +0.55); off-speed aimed up −0.56 hard (v1.0's hanger line gives +0.70). With them in, MLB K went 20% → 33% before the refit, and after it five of Drew's v1.0 checks failed (hitter's-count fastball share 36% vs his 50% floor; the 3-1 band; 3-2 at HS 89–98% one call; the repeat and coach-read checks). Likely cause: MLB data already carry the surprise value off-speed gets from being mixed, and the engine adds its own sit-and-mix game on top. `class_terms()` now holds v1.0's hand values in one place; the fitted table is in `results/v11/step2_terms.txt` ("Class terms") |
+| E10 / 2.2 slot adjustment (built if 2a ships) missing | 2024 slopes of IVB and HB per degree of arm angle, within each kind and tag (four-seam +0.081 / −0.078 in. per degree; curve −0.073 IVB; changeup +0.190 / −0.111; …), applied to an **untagged** pitch's default movement in `movement()`, both engines | Over the top vs sidearm, an untagged four-seam: more ride, less run; a curve more drop. A tagged pitch keeps its profile (a "rides" fastball rides at any slot); measured numbers win |
+| 2b inside / away by batter side; FC/ride line ungated; high-sinker finding unchecked | Inside lines split by same / opposite side; the ride cutter's lines tested on their own | 2b whiff ships 5.5 SD. Ride cutter +1.0 SD → no own lines, uses the cutter's. **High sinker:** hard contact up in the zone −0.08 (95% −0.24 to +0.07), up above the zone +0.25 (−0.20 to +0.70) vs a four-seam there: the finding's direction, not significant at 95% |
+| 2.3 priors split by side **and** early / two-strike; called-strike platoon prior missing | All priors by side × early / two-strike; called-strike platoon prior added | Whiff platoon prior at full scale (−0.5 SD), hard at full (−0.3 SD), fastball-zone hard at ½ (+0.1 SD). Both called-strike priors cost 36–39 SD on 2025 and stay at 0 |
+| Report: 5 example calls per item; coefficient intervals | `readthrough/v11_call_changes.py --examples` (each item turned back to Step 1b alone, the 5 spots that move most) → `results/v11/call_examples_step2.json`; intervals in `step2_fit.json` | Below |
+| Plan text stale (2.5 "labels never set tags"; 2a "rel_shape") | Plan updated: 2.2 slot built, 2.5 labels that name a profile set the tag, 2a's C as built and the class-values decision | — |
+
+Also: the coach read "away" (hit hard on one side → the other side) moved its calls 19.9 points under the new fastball inside / away lines, just short of Drew's 20; resized 0.01 → 0.012 (23 points).
+
+**Per-item effect** (median call-mix move over 216 spots, D3, 9 arsenals × 12 counts × both sides; the 5 largest are in the json):
+2a shape and profile 9.0 points (largest 32: finesse vs opposite-side 2-0, changeup 33% → 25% down-away, curve up);
+2b fastball zone 0.4 (largest 42: the cutter arsenal, cutter goes down-away / down-middle instead of middle);
+2c opposite-side chase 0.0 (largest 28: finesse 1-2 vs opposite-side, changeup chase 0 → 28%);
+priors 3.1 (largest 24); 2e grounders 0.5; slot adjustment 0.2; removing v1.0's fastball lines and SL / CH same-side
+patches 1.8 (largest 16).
+
+**After the fixes** (this session, final code):
+
+| Check | Result |
+|---|---|
+| `tests_v11.py` | **31/31** (adds the slot-adjustment check; the exactness check now also sets the slot movement and the "away" size back, still exactly v1.0) |
+| `tests.py` | **45/45** |
+| Realism | no refit needed: MLB K 20.1 / BB 8.0 / HBP 0.9; D3 16.4 / 11.5 / 4.2; HS 21.1 / 14.1 / 4.1 |
+| Call-change bands | **6 of 10** (Step 1b 3): the 12-6 early-count band now misses (25.1 vs 25.8; it passed by 0.1 before) |
+| Grid | every check passes; 179 of 540 cells change their top call |
+| Read-through | **69/71** (C5, F2 as before) |

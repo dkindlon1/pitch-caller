@@ -1,12 +1,17 @@
-"""v1.1 Step 2 changes the calls on purpose in exactly three engine functions: profile_terms (new), shape_fit (the v1.0
-fastball lines and the slider / changeup same-side patches removed) and gb_rate (by profile). step2_off(engine) sets those
-three back to their Step 1b versions (copied from engine.py at commit 7b5ebbb) inside a with-block, and with params
-(params_at()) also the level shifts the realism gate refit, for tests_v11.py's
-exactness check and readthrough/v11_call_changes.py's "before" column. The engine itself has no switch."""
+"""v1.1 Step 2 changes the calls on purpose in five engine places: profile_terms (new), class_terms (replaces v1.0's
+KIND_W class weights, the off-speed and fastball lines of shape_fit, the slider / changeup same-side patches, the
+"off-speed aimed up or middle" hard line and the off-speed chase +0.2), gb_rate (by profile), movement (the slot
+adjustment of default movement), the level shifts the realism gate refit (outcome_params.py) and the "away" coach
+read's size. step2_off(engine,
+params) sets them back to their Step 1b versions (written out below from engine.py at commit 7b5ebbb) inside a
+with-block, for tests_v11.py's exactness check and readthrough/v11_call_changes.py's "before" column. The engine itself
+has no switch."""
+
+KIND_W_1B = {"FB": -0.20, "SI": -0.20, "FC": -0.20, "SL": 0.25, "CB": 0.20, "CH": 0.25}
 
 
-def _sf_1b(e):
-    def shape_fit(p, q, s):
+def _ct_1b(e):
+    def class_terms(p, q, s):
         f = 0.0
         up = q.startswith("up")
         if e.is_fastball(p.kind):
@@ -20,8 +25,12 @@ def _sf_1b(e):
                 f += 0.3
         if p.kind == "CH" and s.same_side:
             f -= 0.3
-        return f
-    return shape_fit
+        os_ = e.is_offspeed(p.kind)
+        return {"whiff": (KIND_W_1B[p.kind] - e.W_FB) + 0.25 * f,
+                "chase": {"off": 0.2 if os_ else 0.0, "noncomp": 0.0},
+                "cstrike": 0.0,
+                "hard": -0.3 * f + (0.4 if os_ and (up or q == "middle") else 0.0)}
+    return class_terms
 
 
 def _gb_1b(e):
@@ -37,9 +46,19 @@ def _gb_1b(e):
     return gb_rate
 
 
+def _mv_1b(e):
+    def movement(p, level=None):
+        _, ivb, hb = e.profile(p.kind, p.shape, level)
+        if p.ivb is not None:
+            ivb = p.ivb
+        if p.hb is not None:
+            hb = p.hb
+        return ivb, hb
+    return movement
+
+
 def params_at(ref="7b5ebbb"):
-    """the fitted level shifts (OUTCOME_FIT) and in-play tables (IN_PLAY_FIT) of outcome_params.py at a git ref: Step 2's
-    realism gate refit them (fit_all.py, refit_mlb.py), so the Step 1b engine is those three functions plus these"""
+    """the fitted level shifts (OUTCOME_FIT) and in-play tables (IN_PLAY_FIT) of outcome_params.py at a git ref"""
     import os, subprocess
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     src = subprocess.run(["git", "show", f"{ref}:outcome_params.py"], cwd=here, capture_output=True, text=True, check=True).stdout
@@ -49,15 +68,19 @@ def params_at(ref="7b5ebbb"):
 
 
 class step2_off:
+    NAMES = ("profile_terms", "class_terms", "gb_rate", "movement")
+
     def __init__(self, e, params=None):
         self.e, self.params = e, params
 
     def __enter__(self):
         import copy
         e = self.e
-        self.saved = (e.profile_terms, e.shape_fit, e.gb_rate)
+        self.saved = {n: getattr(e, n) for n in self.NAMES}
         e.profile_terms = lambda p, q, s, a: {"whiff": 0.0, "chase": 0.0, "cstrike": 0.0, "hard": 0.0}
-        e.shape_fit, e.gb_rate = _sf_1b(e), _gb_1b(e)
+        e.class_terms, e.gb_rate, e.movement = _ct_1b(e), _gb_1b(e), _mv_1b(e)
+        self.saved_away = e.COACH_RULE["away"]
+        e.COACH_RULE["away"] = 0.01                       # Step 2 resized it to 0.012 (engine.py COACH_RULE)
         if self.params is not None:
             self.saved_p = (copy.deepcopy(e.OUTCOME_ADJ), copy.deepcopy(e.IN_PLAY_BY_LEVEL))
             fit, inp = self.params
@@ -67,7 +90,9 @@ class step2_off:
 
     def __exit__(self, *a):
         e = self.e
-        e.profile_terms, e.shape_fit, e.gb_rate = self.saved
+        for n, f in self.saved.items():
+            setattr(e, n, f)
+        e.COACH_RULE["away"] = self.saved_away
         if self.params is not None:
             adj, inp = self.saved_p
             for lvl, d in adj.items():

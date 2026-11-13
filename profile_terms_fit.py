@@ -212,13 +212,20 @@ def main():
         return np.hstack(parts), (tgt, "ACB" if ship_b[tgt] else "AC") + tuple(str(m.shape[1]) for m in more)
     fbp = sorted(p for p in set(d.prof) if p.split("|")[0] in ("FB", "SI", "FC"))
     up, down, inside = (zn > 0.67).astype(float), (zn < 0.33).astype(float), (xs > 0).astype(float)
-    cols, names = [], []
-    for p in fbp:
-        on = (d.prof.values == p).astype(float)
-        for hn, h in (("up", up), ("down", down)):
-            cols.append(on * h); names.append(f"{p}@{hn}")
-        cols.append(on * inside); names.append(f"{p}@in")
-    Z2b = np.column_stack(cols)
+    opp_ = (d.stand.values != d.p_throws.values).astype(float)
+
+    def zcols(plist):
+        cols, names = [], []
+        for p in plist:
+            on = (d.prof.values == p).astype(float)
+            for hn, h in (("up", up), ("down", down)):
+                cols.append(on * h); names.append(f"{p}@{hn}")
+            cols.append(on * inside * (1 - opp_)); names.append(f"{p}@in_same")      # inside vs away, by batter side
+            cols.append(on * inside * opp_); names.append(f"{p}@in_opp")
+        return np.column_stack(cols), names
+    # the riding cutter gets its own lines only if they add on their own (plan 2b); without them it uses the cutter's
+    gated = ["FC|ride"]
+    Z2b, names = zcols([p for p in fbp if p not in gated])
     res["2b"] = {"names": names}
     for tgt in ("whiff", "hard", "cstrike"):
         mask, y = TARGETS[tgt]
@@ -228,6 +235,33 @@ def main():
         r["names"] = names
         res["2b"][tgt] = r
         say(f"  {tgt:7s} gain {r['gain']:.2e} ({r['gain'] / r['sd']:.1f} SD) -> {'SHIP' if r['ship'] else 'no ship'}")
+    for p in gated:
+        Zg, ng = zcols([p])
+        on = (d.prof.values == p).astype(float)
+        fcon = (d.prof.values == "FC|").astype(float)
+        for tgt in ("whiff",):
+            if not res["2b"][tgt]["ship"]:
+                continue
+            mask, y = TARGETS[tgt]
+            be, bk = base2a(tgt)
+            r = fit(mask, y, Zg, base_extra=np.hstack([be, Z2b]), key=bk + ("2b",))
+            res["2b"][f"gate:{p}:{tgt}"] = dict(r, names=ng)
+            say(f"  {p} lines on {tgt}, on top of the rest: gain {r['gain']:.2e} ({r['gain'] / r['sd']:.1f} SD) -> "
+                f"{'own lines' if r['ship'] else 'uses the typical cutter lines'}")
+    # the high-sinker finding: up in the zone fine, up off the plate bad (check only; reported)
+    up_in = ((zn > 0.67) & (zn <= 1.0)).astype(float)
+    up_out = (zn > 1.0).astype(float)
+    si = (d.kind.values == "SI").astype(float)
+    Zs = np.column_stack([si * up_in, si * up_out])
+    res["2b"]["high_sinker"] = {}
+    for tgt in ("whiff", "hard"):
+        mask, y = TARGETS[tgt]
+        be, bk = base2a(tgt)
+        r = fit(mask, y, Zs, base_extra=be, key=bk)
+        res["2b"]["high_sinker"][tgt] = dict(r, names=["SI:up_in_zone", "SI:up_above_zone"])
+        b_, se_ = r["beta"], r["se"]
+        say(f"  high sinker, {tgt}: up in the zone {b_[0]:+.3f} (95% {b_[0] - 1.96 * se_[0]:+.3f} to {b_[0] + 1.96 * se_[0]:+.3f}), "
+            f"up above the zone {b_[1]:+.3f} ({b_[1] - 1.96 * se_[1]:+.3f} to {b_[1] + 1.96 * se_[1]:+.3f}), vs a four-seam there")
     # ---------------------------------------------------------------- 2c
     say("\n2c. Platoon, on top of the shipped 2a model and the engine's SIDE split (fastball / off-speed x opposite side):")
     say("    class: slider / changeup x opposite (the v1.0 SL and CH same-side patches); full: class + signed break and")
@@ -310,20 +344,22 @@ def main():
         res["priors"]["cstrike_profile"] = prior("cstrike", ("cstrike", "A"),
                                                  np.char.add(np.char.add(prof, "|"), np.char.add(np.char.add(side, "|"), stage)),
                                                  np.char.add(np.char.add(cls, "|"), np.char.add(np.char.add(side, "|"), stage)))
-    for tgt in ("whiff", "hard", "chase"):
+    J = lambda *xs: __import__("functools").reduce(lambda a_, b_: np.char.add(np.char.add(a_, "|"), b_), xs)
+    grp = np.where(cls == "FB", "FB", "OS")
+    for tgt in ("whiff", "hard", "chase", "cstrike"):
         if not res["2c"][tgt]["ship"]:
-            say(f"  platoon {tgt}: profile x side, beyond the class's side gap (2c didn't ship):")
-            grp = np.where(cls == "FB", "FB", "OS")
-            res["priors"][f"platoon_{tgt}"] = prior(tgt, res["_bk2c"][tgt],
-                                                    np.char.add(np.char.add(prof, "|"), side), np.char.add(np.char.add(grp, "|"), side),
-                                                    prof, grp)
+            say(f"  platoon {tgt}: profile x side x early / two-strike, beyond its group's side gap (2c didn't ship):")
+            res["priors"][f"platoon_{tgt}"] = prior(tgt, res["_bk2c"][tgt], J(prof, side, stage), J(grp, side, stage),
+                                                    J(prof, stage), J(grp, stage))
     for tgt in ("whiff", "hard", "cstrike"):
         if not res["2b"][tgt]["ship"]:
             fbm = cls == "FB"
-            say(f"  fastball zone {tgt}: fastball profile x height, beyond the profile's overall difference (2b didn't ship):")
-            kp = np.where(fbm, np.char.add(np.char.add(prof, "@"), hgt), "x")
-            kc = np.where(fbm, np.char.add("FB@", hgt), "x")
-            res["priors"][f"fbzone_{tgt}"] = prior(tgt, base2a(tgt)[1], kp, kc, np.where(fbm, prof, "x"), np.where(fbm, "FB", "x"))
+            say(f"  fastball zone {tgt}: fastball profile x height x side x early / two-strike, beyond the profile's overall "
+                f"difference (2b didn't ship):")
+            kp = np.where(fbm, J(np.char.add(np.char.add(prof, "@"), hgt), side, stage), "x")
+            kc = np.where(fbm, J(np.char.add("FB@", hgt), side, stage), "x")
+            res["priors"][f"fbzone_{tgt}"] = prior(tgt, base2a(tgt)[1], kp, kc, np.where(fbm, J(prof, side, stage), "x"),
+                                                   np.where(fbm, J(np.full(len(prof), "FB"), side, stage), "x"))
     # ---------------------------------------------------------------- final joint fits (the engine's coefficients)
     say("\nFinal: one joint fit per target with every shipped block (A + C [+ B] [+ 2b] [+ SIDE split + 2c]);")
     say("the engine takes its coefficients from these, so blocks that were tested one on top of another are not added twice")
@@ -334,6 +370,10 @@ def main():
             blocks.append(Dprof); names += [f"B:{n}" for n in prof_names]
         if tgt in res["2b"] and res["2b"][tgt]["ship"]:
             blocks.append(Z2b); names += [f"2b:{n}" for n in res["2b"]["names"]]
+            for p in gated:
+                g_ = res["2b"].get(f"gate:{p}:{tgt}")
+                if g_ and g_["ship"]:
+                    blocks.append(zcols([p])[0]); names += [f"2b:{n}" for n in g_["names"]]
         if res["2c"][tgt]["ship"]:
             zc = Z2c if res["2c"][tgt]["model"] == "full" else cls_side
             nc = res["2c"]["names"] if res["2c"][tgt]["model"] == "full" else ["SL:opp", "CH:opp"]
@@ -343,8 +383,34 @@ def main():
         ex = np.hstack(blocks)
         m1 = F.run(ex[tr])
         k = ex.shape[1]
-        res["final"][tgt] = dict(names=names, beta=m1["b_raw"][-k:].tolist(), se=m1["se_raw"][-k:].tolist())
+        nb = Xc.shape[1]
+        cls_names = [f"loc:{c}:{v}" for c in ("SL", "CB", "CH") for v in ("xs", "zn", "zn2")] + ["cls:SL", "cls:CB", "cls:CH"]
+        cb = m1["b_raw"][nb - 9:nb + 3].tolist(); cse = m1["se_raw"][nb - 9:nb + 3].tolist()
+        res["final"][tgt] = dict(names=names, beta=m1["b_raw"][-k:].tolist(), se=m1["se_raw"][-k:].tolist(),
+                                 class_names=cls_names, class_beta=cb, class_se=cse)
+        say("    class terms (vs the four-seam class): " + ", ".join(f"{n} {v:+.3f} ({e:.3f})" for n, v, e in zip(cls_names, cb, cse)))
         say(f"  {tgt:7s} {k} terms")
+
+    # ---------------------------------------------------------------- slot adjustment (E10: built because 2a shipped)
+    say("\nSlot adjustment (plan 2.2): IVB and HB per degree of arm angle within kind, tag fixed effects, 2024 (descriptive)")
+    t24 = (yr == 2024) & ~np.isnan(pd.to_numeric(d.arm_angle, errors="coerce").values)
+    am24 = pd.to_numeric(d.arm_angle, errors="coerce").values
+    res["slot"] = {}
+    for kind in ("FB", "SI", "FC", "SL", "CB", "CH"):
+        sel = t24 & (d.kind.values == kind)
+        if sel.sum() < 500:
+            continue
+        tags_k = sorted(set(d.tag.values[sel]))
+        X = np.column_stack([np.ones(sel.sum()), am24[sel]] + [(d.tag.values[sel] == t).astype(float) for t in tags_k[1:]])
+        out = {}
+        for col in ("ivb", "hb"):
+            yv = d[col].values[sel]
+            bcoef, *_ = np.linalg.lstsq(X, yv, rcond=None)
+            out[col] = round(float(bcoef[1]), 4)
+        out["ref_angle"] = round(float(np.median(am24[sel])), 1)
+        out["n"] = int(sel.sum())
+        res["slot"][kind] = out
+        say(f"  {kind}: IVB {out['ivb']:+.3f} in. and HB {out['hb']:+.3f} in. per degree (median arm angle {out['ref_angle']}, n {out['n']:,})")
 
     # ---------------------------------------------------------------- 2e
     say("\n2e. Ground balls | ball in play by kind and profile (2024; descriptive)")

@@ -81,7 +81,7 @@ check("one table: engine.py, app/engine.js and the app's PITCH_TYPES (db.js) hol
 LEVELS = ["hs", "college_d3", "college_d1", "mlb"]
 
 
-# v1.1 Step 2 changes the calls on purpose in exactly three functions; readthrough/step2_off.py sets them back to Step 1b
+# v1.1 Step 2 changes the calls on purpose in a few named places; readthrough/step2_off.py sets them back to Step 1b
 sys.path.insert(0, os.path.join(HERE, "readthrough"))
 from step2_off import step2_off as _s2off, params_at as _params_at
 _P1B = _params_at("7b5ebbb")
@@ -138,9 +138,10 @@ for an, spec in arsenals.items():
                     worst = float("inf")
                 else:
                     worst = max(worst, max(abs(d0[x] - d1[x]) for x in d0))
-check(f"exactly v1.0 ({ref}) with measured numbers and Step 2's three functions (profile_terms, shape_fit, gb_rate) set back: "
-      f"FB/sink, FB/run, FB/cut, CB/loopy, CB/sharp, CH/drop, SL/'' as stored (typed and untyped), every pitch's speed and "
-      f"movement entered: the same call mix (Step 1b changed only the defaults; Step 2 changes only those three)",
+check(f"exactly v1.0 ({ref}) with measured numbers and Step 2's changes set back (profile_terms, class_terms, gb_rate, the slot "
+      f"movement, the refit level shifts): FB/sink, FB/run, FB/cut, CB/loopy, CB/sharp, CH/drop, SL/'' as stored (typed and "
+      f"untyped), every pitch's speed and movement entered: the same call mix (Step 1b changed only the defaults; Step 2 changes "
+      f"only those)",
       worst < 1e-12, f"{n} situations, largest difference {worst:.1e}")
 
 # ------------------------------------------------------------------ 3. new kinds run and validate
@@ -279,7 +280,8 @@ check(f"a pitch not landing (fastball 5-for-12) is held at 0-0 and still called 
 import profile_terms_tables as PTT
 T2 = json.load(open(os.path.join(HERE, "results", "v11", "step2_terms.json")))
 fit2 = json.load(open(os.path.join(HERE, "results", "v11", "step2_fit.json")))
-names2 = ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB")
+names2 = ("PT_C", "PT_B", "PT_FBZ_W", "PT_FBZ_H", "PT_PLAT", "PT_CHASE_OPP", "PT_CHASE_MEAN", "GB_PROFILE", "SLOT_ANGLE", "PT_FB_IVB",
+          "SLOT_MOVE")
 norm = lambda x: json.loads(json.dumps(x))
 py_tab = {k: norm(getattr(e, k)) for k in names2}
 js_tab = json.loads(subprocess.run(["node", "-e", "const E=require('./app/engine.js');console.log(JSON.stringify(E.v11terms))"],
@@ -289,10 +291,12 @@ check("Step 2 tables: engine.py and app/engine.js hold the same profile terms, e
       "fresh build from the fit file (step2_fit.json)", py_tab == js_tab == {k: T2[k] for k in names2} == {k: rebuilt[k] for k in names2})
 ships = {t: (fit2["2a"][t]["C_over_A"]["ship"], fit2["2a"][t]["B_over_C"]["ship"]) for t in ("whiff", "chase", "cstrike", "hard")}
 check("Step 2 shipping as fitted: shape (C) on all four targets; profile beyond shape (B) on whiff and chase; fastball zone (2b) "
-      "on whiff; opposite-side chase (2c); every other term a prior at its no-harm scale (called-strike zone prior at 0)",
+      "on whiff, the riding cutter on the cutter's lines (its own didn't ship); opposite-side chase (2c); every other term a prior "
+      "at its no-harm scale (the called-strike zone and platoon priors at 0)",
       ships == {"whiff": (True, True), "chase": (True, True), "cstrike": (True, False), "hard": (True, False)}
       and fit2["2b"]["whiff"]["ship"] and fit2["2c"]["chase"]["ship"] and fit2["priors"]["fbzone_cstrike"]["scale"] == 0.0
-      and set(e.PT_B) == {"whiff", "chase"}, f"{ships}")
+      and fit2["priors"]["platoon_cstrike"]["scale"] == 0.0 and not fit2["2b"]["gate:FC|ride:whiff"]["ship"]
+      and e.PT_FBZ_W["FC|ride"] == e.PT_FBZ_W["FC|"] and set(e.PT_B) == {"whiff", "chase"}, f"{ships}")
 
 # parity: random pitches, arsenals and spots, both engines
 rng2 = random.Random(7)
@@ -312,22 +316,26 @@ for _ in range(600):
     if rng2.random() < 0.3:
         ars[2]["main"] = True
     cases2.append(dict(ars=ars, i=rng2.randrange(3), q=rng2.choice(["up-in", "up-away", "down-in", "down-away", "middle", "down-middle", "chase"]),
-                       same=rng2.random() < 0.5, level=lv))
+                       same=rng2.random() < 0.5, level=lv, k=rng2.randrange(3)))
 def py_pt(c):
     A = [e.Pitch(**{k: v for k, v in d.items()}) for d in c["ars"]]
     e.resolve_speeds(A)
-    s = e.Situation(0, 0, 0, (False, False, False), level=c["level"], same_side=c["same"])
-    return e.profile_terms(A[c["i"]], c["q"], s, A)
+    s = e.Situation(0, c["k"], 0, (False, False, False), level=c["level"], same_side=c["same"])
+    t = dict(e.profile_terms(A[c["i"]], c["q"], s, A))
+    ct = e.class_terms(A[c["i"]], c["q"], s)
+    t.update(cw=ct["whiff"], cc=ct["chase"]["off"], cs=ct["cstrike"], ch=ct["hard"])
+    return t
 py_r = [py_pt(c) for c in cases2]
 js_r = json.loads(subprocess.run(["node", "-e", """
 const E=require('./app/engine.js'); E.init(require('./app/engine_data.json'));
 const C=JSON.parse(require('fs').readFileSync(0,'utf8'));
 console.log(JSON.stringify(C.map((c)=>{ const A=c.ars.map((d)=>E.Pitch(d)); E.resolveSpeeds(A);
-  const s=E.Situation({balls:0,strikes:0,outs:0,bases:[false,false,false],level:c.level,same_side:c.same});
-  return E.v11profileTerms(A[c.i], c.q, s, A); })))"""], input=json.dumps(cases2), cwd=HERE, capture_output=True, text=True, check=True).stdout)
+  const s=E.Situation({balls:0,strikes:c.k,outs:0,bases:[false,false,false],level:c.level,same_side:c.same});
+  const t=E.v11profileTerms(A[c.i], c.q, s, A), ct=E.classTerms(A[c.i], c.q, s);
+  return Object.assign(t, {cw: ct.whiff, cc: ct.chase.off, cs: ct.cstrike, ch: ct.hard}); })))"""], input=json.dumps(cases2), cwd=HERE, capture_output=True, text=True, check=True).stdout)
 worst2 = max(abs(a[k] - b[k]) for a, b in zip(py_r, js_r) for k in a)
-check("Step 2 parity: profile_terms in Python and JS agree on 600 random pitches (every kind and tag, measured or not, every slot "
-      "and level, sinker / cutter main fastballs, the coach's mark)", worst2 < 1e-12, f"largest difference {worst2:.1e}")
+check("Step 2 parity: profile_terms and class_terms in Python and JS agree on 600 random pitches (every kind and tag, measured or "
+      "not, every slot, level and strike count, sinker / cutter main fastballs, the coach's mark)", worst2 < 1e-12, f"largest difference {worst2:.1e}")
 
 # the typical pitch of each class keeps its v1.0 value at every level: only the platoon priors touch it (same side: no
 # chase-opp term). Speeds entered at the level's own gaps (default speeds use the college gaps at every level, Step 1b).
@@ -340,10 +348,23 @@ for lv in ("mlb", "college_d1", "college_d3", "hs", "travel"):
     for p in typ:
         t = e.profile_terms(p, "down-away", s_m, typ)
         k = e.pt_key(p)
-        dev = max(dev, abs(t["whiff"] - rho * e.PT_PLAT["whiff"][k][0]), abs(t["hard"] - rho * e.PT_PLAT["hard"][k][0]),
-                  abs(t["chase"]), abs(t["cstrike"]))
+        dev = max(dev, *(abs(t[g] - rho * (e.PT_PLAT[g][k][0] if g in e.PT_PLAT else 0.0)) for g in t))
 check("Step 2: the typical four-seam, slider, curve and changeup (3/4 slot) keep their v1.0 class values at every level; only "
       "the platoon priors move them", dev < 1e-9, f"largest other term {dev:.1e}")
+
+# slot adjustment of default movement (E10): an untagged pitch only; a tag or measured numbers win; both engines
+_mv = lambda k, sh, slot, **kw: e.movement(e.Pitch("x", k, 3, 3, 0.7, shape=sh, slot=slot, **kw), "college_d3")
+mv_py = [_mv("FB", "", "over the top"), _mv("FB", "", "sidearm"), _mv("FB", "rides", "over the top"), _mv("FB", "rides", "sidearm"),
+         _mv("CB", "", "over the top"), _mv("CB", "", "sidearm"), _mv("FB", "", "sidearm", ivb=17.0, hb=9.0)]
+mv_js = json.loads(subprocess.run(["node", "-e", """
+const E=require('./app/engine.js'); const m=(k,sh,slot,o)=>E.movement(E.Pitch(Object.assign({name:'x',kind:k,shape:sh,grade:3,command:3,conf:.7,slot:slot},o||{})),'college_d3');
+console.log(JSON.stringify([m('FB','','over the top'),m('FB','','sidearm'),m('FB','rides','over the top'),m('FB','rides','sidearm'),
+  m('CB','','over the top'),m('CB','','sidearm'),m('FB','','sidearm',{ivb:17,hb:9})]));"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+same_mv = all(abs(a - b) < 1e-12 for x, y in zip(mv_py, mv_js) for a, b in zip(x, y))
+check("Step 2 slot adjustment: an untagged four-seam rides more and runs less from over the top than from the side, a curve drops "
+      "more; a tagged pitch (rides) and measured numbers don't move; both engines", same_mv and mv_py[0][0] > mv_py[1][0]
+      and mv_py[0][1] < mv_py[1][1] and mv_py[4][0] < mv_py[5][0] and mv_py[2] == mv_py[3] and mv_py[6] == (17.0, 9.0),
+      f"FB over the top {mv_py[0][0]:.1f}/{mv_py[0][1]:.1f}, sidearm {mv_py[1][0]:.1f}/{mv_py[1][1]:.1f}; CB {mv_py[4][0]:.1f} vs {mv_py[5][0]:.1f}")
 
 # HS: every term is RHO_L (0.6) times college (movement read on the MLB scale, so the HS ratio doesn't shrink it again)
 worst_hs = 0.0

@@ -118,7 +118,7 @@ BANDS = [
 ]
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and "--examples" not in sys.argv:
     sys.path.insert(0, os.path.join(HERE, "readthrough"))
     import step2_off as S
     now = measure()
@@ -132,3 +132,83 @@ if __name__ == "__main__":
         print(f"{name:86s} {'pass' if b else 'FAIL':>4s} {'pass' if n else 'FAIL':>4s}  {det(now)}   [1b: {det(before)}]")
     print(f"\n{sum(x['now'] for x in out['bands'])}/{len(BANDS)} bands pass now (Step 1b: {sum(x['step1b'] for x in out['bands'])}/{len(BANDS)})")
     json.dump(out, open(os.path.join(HERE, "results", "v11", "call_changes_step2.json"), "w"), indent=1)
+
+
+# ---------------------------------------------------------------- 5 example calls before / after, per Step 2 item
+def example_calls(n=5):
+    """For each Step 2 item, turn that item alone back to Step 1b and show the 5 spots whose call mix moves most."""
+    import copy
+    import grid_v10 as G
+    sys.path.insert(0, os.path.join(HERE, "readthrough"))
+    import step2_off as S
+    ars = dict(G.ARSENALS)
+    ars["sweeper trio"] = base3(sl="sweeper")
+    ars["sinker four"] = [P("Fastball", "FB", "rides", cf=0.8, v=90), P("Sinker", "SI", "run", cf=0.75), P("Slider", "SL", "tight"), P("Changeup", "CH", "fade", cf=0.65)]
+    ars["cutter four"] = [P("Fastball", "FB", "rides", cf=0.8, v=90), P("Cutter", "FC", "hard", cf=0.75), P("Slider", "SL", "tight"), P("Changeup", "CH", "fade", cf=0.65)]
+    ars["12-6 trio"] = [P("Fastball", "FB", "", cf=0.8, v=88), P("Curve", "CB", "12-6"), P("Changeup", "CH", "split", cf=0.65)]
+
+    def mixes():
+        out = {}
+        for an, a in ars.items():
+            for same in (True, False):
+                cs = calls(a, same)
+                for c, d in cs.items():
+                    out[(an, "same" if same else "opp", f"{c[0]}-{c[1]}")] = d
+        return out
+
+    def zero(tab):
+        if isinstance(tab, dict):
+            return {k: zero(v) for k, v in tab.items()}
+        if isinstance(tab, (tuple, list)):
+            return type(tab)(zero(v) for v in tab)
+        return 0.0
+    items = {
+        "2a shape and profile (PT_C, PT_B)": ("PT_C", "PT_B"),
+        "2b fastball zone (PT_FBZ_W)": ("PT_FBZ_W",),
+        "2c opposite-side chase (PT_CHASE_OPP)": ("PT_CHASE_OPP", "PT_CHASE_MEAN"),
+        "priors (PT_PLAT, PT_FBZ_H)": ("PT_PLAT", "PT_FBZ_H"),
+    }
+    now = mixes()
+    res = {}
+
+    def top3(d):
+        return ", ".join(f"{p} {q} {v:.0%}" for (p, q), v in sorted(d.items(), key=lambda kv: -kv[1])[:3])
+
+    def report(name, off):
+        mv = []
+        for k in now:
+            a, b = now[k], off[k]
+            tv = 0.5 * sum(abs(a.get(x, 0) - b.get(x, 0)) for x in set(a) | set(b))
+            mv.append((tv, k))
+        mv.sort(reverse=True)
+        res[name] = [dict(spot=" / ".join(k), moved=round(tv, 3), before=top3(off[k]), after=top3(now[k])) for tv, k in mv[:n]]
+        print(f"\n{name}: median move {sorted(m[0] for m in mv)[len(mv) // 2]:.3f} over {len(mv)} spots")
+        for r_ in res[name]:
+            print(f"  {r_['spot']:34s} moved {r_['moved']:.2f} | 1b: {r_['before']} | now: {r_['after']}")
+    for name, tabs in items.items():
+        saved = {t: getattr(e, t) for t in tabs}
+        try:
+            for t in tabs:
+                setattr(e, t, zero(copy.deepcopy(saved[t])))
+            off = mixes()
+        finally:
+            for t, v in saved.items():
+                setattr(e, t, v)
+        report(name, off)
+    for name, attr, maker in (("2e grounders by profile (gb_rate)", "gb_rate", S._gb_1b), ("slot adjustment (movement)", "movement", S._mv_1b),
+                              ("v1.0 fastball lines and SL / CH same-side patches removed (class_terms)", "class_terms", S._ct_1b)):
+        saved = getattr(e, attr)
+        try:
+            setattr(e, attr, maker(e))
+            e._PT_REF.clear()                      # pt_ref is cached through movement()
+            off = mixes()
+        finally:
+            setattr(e, attr, saved)
+            e._PT_REF.clear()
+        report(name, off)
+    return res
+
+
+if __name__ == "__main__" and "--examples" in sys.argv:
+    ex = example_calls()
+    json.dump(ex, open(os.path.join(HERE, "results", "v11", "call_examples_step2.json"), "w"), indent=1)
