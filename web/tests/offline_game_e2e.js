@@ -67,6 +67,8 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     const ctl = await page.evaluate(() => !!(navigator.serviceWorker && navigator.serviceWorker.controller));
     const man = await (await fetch(SITE + "/app/game/manifest.webmanifest")).json();
     check(ctl && man.start_url === "/app/game/" && man.display === "standalone", `the service worker controls the page, and the manifest makes it installable (controller: ${ctl})`);
+    // syncSetup fetches the site's config after the database opens; wait for it rather than racing it
+    await page.waitForFunction(() => typeof SYNC !== "undefined" && SYNC.cfg && SYNC.cfg.managed, null, { timeout: 10000 }).catch(() => {});
     const cfg = await page.evaluate(() => SYNC.cfg && { url: SYNC.cfg.url, managed: SYNC.cfg.managed });
     check(cfg && cfg.url === API && cfg.managed, "the project's URL and key came from the site: nothing to type");
 
