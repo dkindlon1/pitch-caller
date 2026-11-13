@@ -416,9 +416,8 @@ page. Unknown = average. They map to the top / bottom third of each trait at the
 - Merge, any migration, the `v1.2` tag: **only on Drew's go.**
 
 Rough total: Part A about 13½ working days by step (Step 1 is 3, bullpen mode is a new screen and store), call it
-13–15; Part B 8; about
-21–23 in all, **plus Drew's decision points**: the four-seam diagnosis (Step 2), any calibration stop (Step 2), the
-grades (Step 6).
+13–15; Part B 8; about 21–23 in all, **plus Drew's decision points**: the four-seam diagnosis (Step 2), any
+calibration stop (Step 2), the schema bump (Step 4), the grades (Step 6).
 
 ## 4. Evaluation suite
 
