@@ -79,7 +79,7 @@ lean (no targets), amateur levels, or off-speed (3-0 is almost all fastballs).
   location (deeper inside within the zone). That supports Drew's answer that college's excess is "both, about equally".
 - **Lower pro levels still pitch inside.** Single-A four-seams cross the inside third to same-side hitters *more* often
   than MLB, despite twice the hit batters. Drew's D3 estimate (Nov 13): "often, 20–35%".
-- **Same-side pitches that reach the body hit the batter 2.5–3.5× as often** as opposite-side ones (arm-side run into the
+- **Same-side pitches that reach the body hit the batter 2.4–3.8× as often** as opposite-side ones (arm-side run into the
   hitter vs glove-side break away from him).
 - **College rule:** the NCAA rule awards first base when the pitch is in the batter's box and he makes no move into it,
   without the pro requirement to try to avoid it, and college hitters are coached to "wear it". So college's
