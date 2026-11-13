@@ -22,13 +22,13 @@ Branch `v1.1-work` → `main`. Build report: `docs/BUILD_v1.1_REPORT.md`. Plan: 
   portal no longer wipes a shape accepted from uploads.
 
 ## Release order (each step needs Drew)
-1. **Apply the database migration** `supabase/migrations/20261115000000_v11_kinds.sql`: Actions → "Promote migrations to
-   prod", run from `v1.1-work` (or from `main` after step 2), approve on the production environment. It widens
-   `upload_pitches.kind` to six kinds, moves shape proposals to v1.1 tags, and remaps pending proposals.
-   - **Do this first.** The v1.1 portal writes SI / FC upload rows, which the old database refuses, so a portal that
-     ships before the migration would fail uploads of sinkers and cutters. The reverse gap is harmless: until the portal
-     deploys, the old portal's shape proposals with v1.0 tags are refused (only proposals are lost; uploads still save).
-2. **Merge `v1.1-work` into `main`** (a fast-forward of `main @ ad12c46`). Vercel deploys the portal and the game app.
+1. **Merge `v1.1-work` into `main`** (a fast-forward of `main @ ad12c46`). Vercel deploys the portal and the game app.
+2. **Straight away, apply the database migration** `supabase/migrations/20261115000000_v11_kinds.sql`: Actions →
+   "Promote migrations to prod" on `main` (the workflow runs only from `main`, so it can't go first), type PROMOTE,
+   approve on the production environment. It widens `upload_pitches.kind` to six kinds, moves shape proposals to v1.1
+   tags, and remaps pending proposals.
+   - Until it's applied, the v1.1 portal's sinker / cutter upload rows are refused by the old database, so keep the gap
+     to minutes.
 3. **Every iPad updates the same day.** A v1.0 game app can't read a pitcher stored with a sinker or cutter (the v1.0
    engine refuses the kind). The game app picks up the update after the current game; open it once on each device and
    check the version.
