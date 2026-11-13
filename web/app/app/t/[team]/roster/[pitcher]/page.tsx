@@ -5,7 +5,8 @@ import { Suspense } from "react";
 import { pitchersOf, teamFor, ROLE } from "@/lib/team";
 import { gradeHistory } from "@/lib/player";
 import { Tabs } from "../../../../_uploads/panels";
-import { KINDS, PITCH_TYPES, SIGN, type Kind } from "@/lib/docs";
+import { KINDS, PITCH_TYPES, signOf } from "@/lib/docs";
+import { v11Pitch } from "@/lib/engine_server";
 import { revertGrade, savePitcher } from "../../actions";
 import { Notice, type Search } from "../../ui";
 
@@ -43,12 +44,12 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
           <label className="w-sel">Role<select name="role" defaultValue={p.role === "RP" ? "RP" : "SP"} disabled={ro}><option value="SP">Starter</option><option value="RP">Reliever</option></select></label>
         </div>
         <fieldset>
-          <legend>Arsenal (stuff and command, 1 to 5; 3 is average)</legend>
+          <legend>Arsenal (stuff and command, 1 to 5; 3 is average; stuff is compared with other pitches of the same type)</legend>
           <div className="tbl-scroll"><table className="data-tbl arsenal" aria-label="Arsenal">
-            <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th>Stuff</th><th>Command</th><th>In use</th></tr></thead>
+            <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th title="Compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper">Stuff</th><th>Command</th><th>In use</th></tr></thead>
             <tbody>{(p.pitches || []).map((d, i) => (
               <tr key={d.id}>
-                <td><span className={`chip k-${d.kind}`}>{SIGN[d.kind as Kind]}</span></td>
+                <td><span className={`chip k-${v11Pitch(d).kind}`}>{signOf(v11Pitch(d))}</span></td>
                 <td><input name={`name_${i}`} defaultValue={d.name} aria-label={`Pitch ${i + 1} name`} disabled={!grades} maxLength={40} /></td>
                 <td><select name={`type_${i}`} defaultValue={d.type} aria-label={`Pitch ${i + 1} type`} disabled={!grades}>
                   {Object.keys(PITCH_TYPES).map((tp) => <option key={tp} value={tp}>{tp === KINDS[PITCH_TYPES[tp].kind] ? tp : `${tp} (${KINDS[PITCH_TYPES[tp].kind].toLowerCase()})`}</option>)}</select></td>

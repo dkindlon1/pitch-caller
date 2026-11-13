@@ -6,6 +6,8 @@
  *   scenario: wrong  (fastball command entered 4, truly 2.5; slider stuff entered 3, truly 4; changeup right)
  *             right  (every grade right)
  *             change (grades right until game 8, then fastball command drops to 1.8; the coach marks it)
+ *             kinds  (v1.1 Step 5's backup fixture: a v1.0 arsenal with a four-seam, two-seam, sinker, cutter, 12-6 curve
+ *                     and splitter, every grade right; run under the v1.0 app it makes app/fixtures/v10_kinds_backup.json)
  * The game flow, calls, confidence and logging are the app's own code (record(), shakeOff(), endGame()); only the
  * result and location of each pitch are drawn here, from the engine with the true grades.
  */
@@ -14,13 +16,20 @@ const http = require("http"), fs = require("fs"), path = require("path");
 const [out, scenario = "wrong", G_ = "14", SEED = "1"] = process.argv.slice(2);
 const DIST = path.join(__dirname, "dist/pitch-caller.html");
 
-const ENTERED = [{ type: "Four-seam", name: "Fastball", kind: "FB", shape: "ride", velo: 87, grade: 3, command: 4, feel: 0.75 },
+const KINDS_ARS = [{ type: "Four-seam", name: "Fastball", kind: "FB", shape: "ride", velo: 88, grade: 3, command: 3, feel: 0.75 },
+  { type: "Two-seam", name: "Two-seam", kind: "FB", shape: "run", velo: 87, grade: 3, command: 3, feel: 0.7 },
+  { type: "Sinker", name: "Sinker", kind: "FB", shape: "sink", velo: 86, grade: 3, command: 3, feel: 0.7 },
+  { type: "Cutter", name: "Cutter", kind: "FB", shape: "cut", velo: 84, grade: 3, command: 3, feel: 0.65 },
+  { type: "12-6 curve", name: "Curve", kind: "CB", shape: "sharp", velo: 73, grade: 3, command: 3, feel: 0.6 },
+  { type: "Splitter", name: "Splitter", kind: "CH", shape: "drop", velo: 80, grade: 3, command: 3, feel: 0.6 }];
+const ENTERED = scenario === "kinds" ? KINDS_ARS : [{ type: "Four-seam", name: "Fastball", kind: "FB", shape: "ride", velo: 87, grade: 3, command: 4, feel: 0.75 },
   { type: "Slider", name: "Slider", kind: "SL", shape: "tight", velo: 79, grade: 3, command: 3, feel: 0.7 },
   { type: "Changeup", name: "Changeup", kind: "CH", shape: "fade", velo: 79, grade: 3, command: 3, feel: 0.6 }];
 const TRUTH = {
   wrong: () => ({ Fastball: { grade: 3, command: 2.5 }, Slider: { grade: 4, command: 3 }, Changeup: { grade: 3, command: 3 } }),
   right: () => ({ Fastball: { grade: 3, command: 4 }, Slider: { grade: 3, command: 3 }, Changeup: { grade: 3, command: 3 } }),
   change: (g) => ({ Fastball: { grade: 3, command: g >= 8 ? 1.8 : 4 }, Slider: { grade: 3, command: 3 }, Changeup: { grade: 3, command: 3 } }),
+  kinds: () => ({}),
 }[scenario];
 if (!out || !TRUTH) { console.error("usage: node sim_backup.js <out.json> wrong|right|change [games] [seed]"); process.exit(2); }
 

@@ -8,7 +8,7 @@ import type { UploadAccess } from "./access";
 // A pitcher's stats (spec: "Player stats"): game pitches called in PitchIQ plus TrackMan game files, labeled by source,
 // every rate with its sample, and nothing on fewer than 10. Velocity and movement come from every upload.
 type SP = Record<string, string | string[] | undefined>;
-const KIND_COLOR: Record<string, string> = { FB: "#ff5a4e", SL: "#ffd43b", CB: "#52a9ff", CH: "#3fe08c" };
+const KIND_COLOR: Record<string, string> = { FB: "#ff5a4e", SI: "#ff8a5c", FC: "#c98bff", SL: "#ffd43b", CB: "#52a9ff", CH: "#3fe08c" };   // v1.1: + sinker, cutter
 const day = (iso: string) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const SIDE = { same: "Same-side hitters", opp: "Opposite-side hitters" } as const;
 

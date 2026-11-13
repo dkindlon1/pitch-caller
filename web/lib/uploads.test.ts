@@ -3,10 +3,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { armAngle, contactOf, dateOf, looksLikeGame, normalize, propose, resOf, shapeOf, slotOf, sourceOf, summarize, weightOf, type SessionPitch } from "./uploads.ts";
+import { armAngle, contactOf, dateOf, looksLikeGame, normalize, propose, resOf, slotOf, sourceOf, summarize, weightOf, type SessionPitch } from "./uploads.ts";
 import type { Pitcher } from "./docs.ts";
 
 const PCImport = createRequire(import.meta.url)("./pc_import.js");
+const E = createRequire(import.meta.url)("./engine.js");   // v1.1 Step 5: the shape proposer uses the engine's tagFor / migratePitch
+const OPTS = { tagFor: E.tagFor, migrate: E.migratePitch, level: "college_d3" };
 const HEAD = "PitchNo,Date,Time,Pitcher,PitcherThrows,Batter,BatterSide,Inning,Balls,Strikes,TaggedPitchType,AutoPitchType,PitchCall,KorBB,PlayResult,RelSpeed,SpinRate,RelHeight,RelSide,Extension,InducedVertBreak,HorzBreak,PlateLocHeight,PlateLocSide,ExitSpeed";
 // one TrackMan row; hb and side as TrackMan writes them for this pitcher (the parser decides which way is arm side)
 const row = (n: number, o: { name?: string; throws?: string; type: string; velo: number; ivb: number; hb: number; relS?: number; call?: string; balls?: number; strikes?: number; side?: string; exit?: number | "" }) =>
@@ -73,16 +75,7 @@ test("excluded pitches count nowhere; developing ones are kept apart and feed no
 });
 
 test("shape and slot rules", () => {
-  assert.equal(shapeOf("FB", "Four-seam", 17, 9, null), "ride");
-  assert.equal(shapeOf("FB", "Two-seam", 12, 15, null), "run");
-  assert.equal(shapeOf("FB", "Sinker", 6, 15, null), "sink");
-  assert.equal(shapeOf("FB", "Cutter", 11, 1, null), "cut");
-  assert.equal(shapeOf("SL", "Slider", 2, -5, null), "tight");
-  assert.equal(shapeOf("SL", "Sweeper", 1, -15, null), "sweeper");
-  assert.equal(shapeOf("CB", "Curveball", -14, -8, 16), "loopy");
-  assert.equal(shapeOf("CB", "Curveball", -9, -4, 11), "sharp");
-  assert.equal(shapeOf("CH", "Changeup", 8, 14, null), "fade");
-  assert.equal(shapeOf("CH", "Splitter", 3, 9, null), "drop");
+  // v1.1: shape tags are the engine's (tagFor, plan 2.2); propose() is checked with them below
   // release 5.8 ft up, 1.9 ft out; a 6'1" pitcher's shoulder at 4.27 ft: atan2(1.53, 1.9) = 38.8 degrees
   assert.equal(Math.round(armAngle(5.8, 1.9, 6.1) * 10) / 10, 38.8);
   assert.equal(slotOf(38.8), "three-quarter"); assert.equal(slotOf(65), "over the top"); assert.equal(slotOf(50), "high three-quarter");
@@ -97,17 +90,36 @@ test("proposals: only with 10+ pitches, only what differs, matched to his arsena
     pitches: [{ id: "pf", type: "Four-seam", name: "Fastball", kind: "FB", shape: "ride", grade: 3, command: 3, feel: 0.7, velo: "", ivb: "", hb: "", spin: "", active: true },
       { id: "ps", type: "Slider", name: "Slider", kind: "SL", shape: "tight", grade: 3, command: 3, feel: 0.7, velo: 82, ivb: 2, hb: -6, spin: "", active: true },
       { id: "pc", type: "Changeup", name: "Change", kind: "CH", shape: "fade", grade: 3, command: 3, feel: 0.7, velo: "", ivb: "", hb: "", spin: "", active: true }] } as unknown as Pitcher;
-  const { proposals, unmatched, notes } = propose(p, summarize(pitches, "2026-11-01"));
+  const { proposals, unmatched, notes } = propose(p, summarize(pitches, "2026-11-01"), OPTS);
   const key = (x: { field: string; pitch_id?: string }) => `${x.field}:${x.pitch_id || ""}`;
   assert.deepEqual(proposals.map(key).sort(), ["shape:pf", "velo:pf"], "fastball velo and shape; the slider already matches; three-quarter already his slot");
   assert.equal(proposals.find((x) => x.field === "velo")!.value, 91);
-  assert.deepEqual(proposals.find((x) => x.field === "shape")!.value, { shape: "ride", ivb: 17, hb: 9 });
+  // his four-seam (17 up, 9 arm side, 91) against itself: the engine's tag at D3, with the kind it keeps
+  assert.deepEqual(proposals.find((x) => x.field === "shape")!.value, { kind: "FB", shape: E.tagFor("FB", 17, 9, 91, 91, 17, 9, "college_d3", "Four-seam"), ivb: 17, hb: 9 });
+  assert.equal(propose(p, summarize(pitches, "2026-11-01")).proposals.filter((x) => x.field === "shape").length, 0, "no engine tagFor, no shape proposal (never a v1.0 tag)");
   assert.deepEqual(proposals.find((x) => x.field === "velo")!.basis, { n: 12, weight: 4.8, uploads: ["u1"], type: "Four-seam" });
   assert.deepEqual(unmatched, [{ type: "Curveball", n: 11 }], "a pitch he doesn't have is reported, not added");
   assert.ok(notes.some((n) => /Changeup: 4 pitches, not enough yet/.test(n)));
-  const taller = propose({ ...p, height_ft: 6.5 } as Pitcher, summarize(pitches, "2026-11-01")).proposals.find((x) => x.field === "slot");
+  const taller = propose({ ...p, height_ft: 6.5 } as Pitcher, summarize(pitches, "2026-11-01"), OPTS).proposals.find((x) => x.field === "slot");
   assert.ok(taller && taller.value === "low three-quarter" && taller.basis.angle === 33, "a 6'5\" pitcher releasing at the same spot is lower: low three-quarter");
   assert.ok(propose({ ...p, height_ft: undefined } as Pitcher, summarize(pitches, "2026-11-01")).notes.some((n) => /Set his height/.test(n)));
+});
+
+test("v1.1 Step 5: proposals in six kinds and v1.1 tags; a record still in v1.0 terms is read through the table", () => {
+  const mk = (type: string, kind: string, velo: number, ivb: number, hb: number, n: number) => Array.from({ length: n }, () => ({ pitch_type: type, kind, velo_mph: velo, ivb_in: ivb, hb_in: hb,
+    spin_rpm: null, rel_height_ft: 5.8, rel_side_ft: 1.9, extension_ft: 6.1, plate_x_ft: null, plate_z_ft: null, balls: null, strikes: null, res: null, contact: null, batter_side: null,
+    excluded: false, reason: null, developing: false, session_type: "bullpen", session_date: "2026-11-01", upload_id: "u1" }));
+  const pitches = [...mk("Sinker", "SI", 89, 7, 16, 14), ...mk("Sweeper", "SL", 78, 1, -15, 12), ...mk("Cutter", "FC", 86, 12, -3, 11)] as unknown as SessionPitch[];
+  const p = { id: "pit2", teamId: "t", name: "Low slot", number: "", hand: "R", role: "SP", height_ft: 6.1, slot: "three-quarter", updatedAt: 1, createdAt: 1,
+    pitches: [{ id: "si", type: "Sinker", name: "Sinker", kind: "FB", shape: "sink", grade: 3, command: 3, feel: 0.7, velo: 89, ivb: "", hb: "", spin: "", active: true },   // v1.0-stored
+      { id: "sw", type: "Sweeper", name: "Sweeper", kind: "SL", shape: "sweeper", grade: 3, command: 3, feel: 0.7, velo: 78, ivb: 1, hb: -15, spin: "", active: true },
+      { id: "fc", type: "Cutter", name: "Cutter", kind: "FC", shape: "", grade: 3, command: 3, feel: 0.7, velo: 86, ivb: "", hb: "", spin: "", active: true }] } as unknown as Pitcher;
+  const { proposals } = propose(p, summarize(pitches, "2026-11-01"), OPTS);
+  const shapes = Object.fromEntries(proposals.filter((x) => x.field === "shape").map((x) => [x.pitch_id, x.value as { kind: string; shape: string }]));
+  assert.equal(shapes.si.kind, "SI", "the v1.0-stored sinker is proposed as a sinker (its kind through the table)");
+  assert.ok(E.SHAPE_TAGS.SI.includes(shapes.si.shape) && E.SHAPE_TAGS.FC.includes(shapes.fc.shape), `v1.1 tags (${shapes.si.shape}, ${shapes.fc.shape})`);
+  assert.equal(shapes.sw, undefined, "the sweeper already matches: nothing proposed");
+  assert.equal(shapes.fc.kind, "FC");
 });
 
 test("game files: TrackMan's PitchCall, count, batter side and exit speed", () => {

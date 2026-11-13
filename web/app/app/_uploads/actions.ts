@@ -39,7 +39,7 @@ export async function addUpload(f: FormData) {
   }
   const { data: id, error } = await sb.rpc("pc_upload_add", { p: a.team.team_id, pitcher: a.pitcher.id, meta, pitches: rows });
   if (error || !id) go(a.base, "/uploads", `error=${/50 uploads/.test(error?.message || "") ? "daily" : /date/.test(error?.message || "") ? "date" : /locked|can't upload/.test(error?.message || "") ? "not_allowed" : "upload"}`);
-  await refreshProposals(a.team.team_id, a.pitcher, await teamToday(a.team.timezone));
+  await refreshProposals(a.team.team_id, a.pitcher, await teamToday(a.team.timezone), a.team.level);
   go(a.base, `/uploads/${id}`, "ok=uploaded");
 }
 
@@ -58,7 +58,7 @@ export async function reviewUpload(f: FormData) {
   const sb = await getServerSupabase();
   const { error } = await sb.rpc("pc_upload_review", { upload, changes });
   if (error) go(a.base, `/uploads/${upload}`, "error=review");
-  await refreshProposals(a.team.team_id, a.pitcher, await teamToday(a.team.timezone));
+  await refreshProposals(a.team.team_id, a.pitcher, await teamToday(a.team.timezone), a.team.level);
   go(a.base, `/uploads/${upload}`, "ok=reviewed");
 }
 
@@ -68,7 +68,7 @@ export async function deleteUpload(f: FormData) {
   const sb = await getServerSupabase();
   const { error } = await sb.rpc("pc_upload_delete", { upload: str(f, "upload") });
   if (error) go(a.base, "/uploads", "error=delete");
-  await refreshProposals(a.team.team_id, a.pitcher, await teamToday(a.team.timezone));
+  await refreshProposals(a.team.team_id, a.pitcher, await teamToday(a.team.timezone), a.team.level);
   go(a.base, "/uploads", "ok=deleted");
 }
 

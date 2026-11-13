@@ -5,7 +5,7 @@
 // release point and the called spot. Loaded only after the page is up, and only with WebGL and without reduced motion.
 import * as THREE from "three";
 
-export type StagePitch = { kind: "FB" | "SL" | "CB" | "CH"; velo: number; cell: [number, number] | "chase"; color: string };
+export type StagePitch = { kind: "FB" | "SI" | "FC" | "SL" | "CB" | "CH"; velo: number; cell: [number, number] | "chase"; color: string };
 
 const FT = 1;                                    // world units are feet
 const PLATE_HALF = 17 / 24;                      // half the plate: 8.5 in
@@ -13,7 +13,7 @@ const ZONE = { lo: 1.6, hi: 3.4 };
 // Worked out in screen terms (x to the catcher's right) and mirrored into the world at the end, since a camera looking
 // toward the mound has world +x on its left. A right-hander's arm is on the catcher's left.
 const RELEASE = { x: -1.9, y: 5.8, z: 54 };
-const MOVE: Record<StagePitch["kind"], [number, number]> = { FB: [18, 8], SL: [3, -5], CB: [-10, -7], CH: [7, 15] };   // inches: up, arm side
+const MOVE: Record<StagePitch["kind"], [number, number]> = { FB: [18, 8], SI: [9, 15], FC: [12, -3], SL: [3, -5], CB: [-10, -7], CH: [7, 15] };   // inches: up, arm side
 const G = 32.17;
 const W = (2 * PLATE_HALF) / 3, H = (ZONE.hi - ZONE.lo) / 3;
 

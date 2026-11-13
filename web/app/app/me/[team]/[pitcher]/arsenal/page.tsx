@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { gradeHistory, myPitchers, playerTeam } from "@/lib/player";
-import { KINDS, PITCH_TYPES, SIGN, type Kind } from "@/lib/docs";
+import { KINDS, PITCH_TYPES, signOf } from "@/lib/docs";
+import { v11Pitch } from "@/lib/engine_server";
 import { ROLE } from "@/lib/team";
 import { saveArsenal } from "../../actions";
 import { Notice, when, type Search } from "../ui";
@@ -26,14 +27,14 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
     <>
       <h1 className="shell-h1">Arsenal</h1>
       <Notice sp={sp} />
-      <p className="shell-note">Grade your pitches 1 to 5 (3 is average). Stuff is how good the pitch is when it&apos;s where you want it; command is how often it is. A change applies at once, and your coaches see it.</p>
+      <p className="shell-note">Grade your pitches 1 to 5 (3 is average). Stuff is how good the pitch is when it&apos;s where you want it, compared with other pitches of the same type (a 3 sweeper is an average sweeper); command is how often it is. A change applies at once, and your coaches see it.</p>
       <form action={saveArsenal} className="shell-form" aria-label="Arsenal">
         <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={pitcher} />
         <div className="tbl-scroll"><table className="data-tbl arsenal" aria-label="Your pitches">
-          <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th>Stuff</th><th>Command</th><th>In use</th></tr></thead>
+          <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th title="Compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper">Stuff</th><th>Command</th><th>In use</th></tr></thead>
           <tbody>{(p.pitches || []).map((d, i) => (
             <tr key={d.id}>
-              <td><span className={`chip k-${d.kind}`}>{SIGN[d.kind as Kind]}</span></td>
+              <td><span className={`chip k-${v11Pitch(d).kind}`}>{signOf(v11Pitch(d))}</span></td>
               <td><input name={`name_${i}`} defaultValue={d.name} aria-label={`Pitch ${i + 1} name`} maxLength={40} disabled={off} /></td>
               <td><select name={`type_${i}`} defaultValue={d.type} aria-label={`Pitch ${i + 1} type`} disabled={off}>
                 {Object.keys(PITCH_TYPES).map((tp) => <option key={tp} value={tp}>{tp === KINDS[PITCH_TYPES[tp].kind] ? tp : `${tp} (${KINDS[PITCH_TYPES[tp].kind].toLowerCase()})`}</option>)}</select></td>

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { pitchesOf, proposalsOf, teamToday, uploadsOf, type ProposalRow } from "@/lib/upload_data";
 import { propose, REASONS, SESSION_LABEL, summarize } from "@/lib/uploads";
+import { proposeOpts } from "@/lib/engine_server";
+import { profileLabel } from "@/lib/docs";
 import { decideProposal, deleteUpload, reviewUpload } from "./actions";
 import { UploadForm, type Template } from "./upload-form";
 import type { UploadAccess } from "./access";
@@ -34,7 +36,9 @@ function what(p: ProposalRow) {
   if (p.field === "velo") return { label: `${p.pitch_name} velocity`, now: p.current === null || p.current === "" ? "not set" : `${p.current} mph`, next: `${v} mph` };
   if (p.field === "shape") {
     const c = (p.current || {}) as Record<string, unknown>, n = v as Record<string, unknown>;
-    const s = (x: Record<string, unknown>) => (x.ivb === null || x.ivb === undefined || x.ivb === "" ? `${x.shape || "no shape"}` : `${x.shape || "?"}, ${x.ivb} in up / ${x.hb} in arm side`);
+    // v1.1: the profile's name (a proposal carries the pitch's kind)
+    const nm = (x: Record<string, unknown>) => (x.shape === undefined || x.shape === null ? "no shape" : profileLabel(String(x.kind ?? n.kind ?? ""), String(x.shape)));
+    const s = (x: Record<string, unknown>) => (x.ivb === null || x.ivb === undefined || x.ivb === "" ? nm(x) : `${nm(x)}, ${x.ivb} in up / ${x.hb} in arm side`);
     return { label: `${p.pitch_name} shape`, now: s(c), next: s(n) };
   }
   return { label: "Arm slot", now: String(p.current || "not set"), next: String(v) };
@@ -45,7 +49,7 @@ export async function UploadsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
   const sb = await getServerSupabase();
   const [ups, pend, all, { data: tpl }] = await Promise.all([uploadsOf(t, a.pitcher.id), proposalsOf(t, a.pitcher.id, "pending"), pitchesOf(t, a.pitcher.id),
     sb.from("upload_templates").select("name, header_sig, mapping").eq("program_id", t).limit(50)]);
-  const sum = summarize(all, today), { unmatched, notes } = propose(a.pitcher, sum);
+  const sum = summarize(all, today), { unmatched, notes } = propose(a.pitcher, sum, proposeOpts(a.team.level));
   const dev = sum.filter((s) => s.developing > 0);
   return (
     <>

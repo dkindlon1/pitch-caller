@@ -4,15 +4,16 @@
 // right-hander's release point and the called spot.
 import * as THREE from "three";
 
-export type FieldPitch = { kind: "FB" | "SL" | "CB" | "CH"; velo: number; cell: [number, number] | "chase" };
+export type FieldPitch = { kind: "FB" | "SI" | "FC" | "SL" | "CB" | "CH";   // v1.1: six kinds
+  velo: number; cell: [number, number] | "chase" };
 // pitch colors, the way broadcasts and pitch-tracking apps color them; the same values are --mk-fb and friends in
 // marketing.css, so the 3D flights, the cards and the charts agree
-export const PITCH_COLOR: Record<FieldPitch["kind"], string> = { FB: "#F04A3E", SL: "#F2B33D", CH: "#3FCB8C", CB: "#4D8DFF" };
+export const PITCH_COLOR: Record<FieldPitch["kind"], string> = { FB: "#F04A3E", SI: "#FF8A5C", FC: "#C98BFF", SL: "#F2B33D", CH: "#3FCB8C", CB: "#4D8DFF" };
 
 export const PLATE_HALF = 17 / 24;
 export const ZONE = { lo: 1.6, hi: 3.4 };
 export const RELEASE = { x: -1.9, y: 5.8, z: 54 };
-const MOVE: Record<FieldPitch["kind"], [number, number]> = { FB: [18, 8], SL: [3, -5], CB: [-10, -7], CH: [7, 15] }; // in: up, arm side
+const MOVE: Record<FieldPitch["kind"], [number, number]> = { FB: [18, 8], SI: [9, 15], FC: [12, -3], SL: [3, -5], CB: [-10, -7], CH: [7, 15] }; // in: up, arm side
 const G = 32.17;
 export const CW = (2 * PLATE_HALF) / 3, CH = (ZONE.hi - ZONE.lo) / 3;
 

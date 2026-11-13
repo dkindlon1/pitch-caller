@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
-import { KINDS, PITCH_TYPES, SIGN, SLOTS, newHitter, newPitch, newPitcher, parseHitters, parseRoster, stamp, uid } from "./docs.ts";
+import { KINDS, PITCH_TYPES, PROFILE_LABEL, SIGN, SLOTS, newHitter, newPitch, newPitcher, parseHitters, parseRoster, stamp, uid } from "./docs.ts";
 
 const require = createRequire(import.meta.url);
 const PCDB = require("../../app/db.js");
@@ -18,7 +18,10 @@ test("records have the iPad's shapes", () => {
   const src = readFileSync(new URL("../../app/index.src.html", import.meta.url), "utf8");
   assert.ok(src.includes(`const KINDS = ${JSON.stringify(KINDS).replace(/"(\w+)":/g, "$1: ").replace(/,/g, ", ").replace(/\{/, "{ ").replace(/\}$/, " }")}`), "same pitch kinds as the app");
   assert.ok(src.includes(`const SLOT_OPTS = ${JSON.stringify(SLOTS).replace(/,/g, ", ")};`), "same arm slots as the app");
-  assert.ok(src.includes(`const SIGN = { FB: ${SIGN.FB}, CB: ${SIGN.CB}, SL: ${SIGN.SL}, CH: ${SIGN.CH} }`), "same signs as the app");
+  // v1.1 Step 5: the same profile names as the app
+  const pl = src.slice(src.indexOf("const PROFILE_LABEL = {") + "const PROFILE_LABEL = ".length, src.indexOf("};", src.indexOf("const PROFILE_LABEL = {")) + 1);
+  assert.deepEqual(new Function(`return ${pl}`)(), PROFILE_LABEL, "same profile names as the app");
+  assert.ok(src.includes(`const SIGN = { FB: ${SIGN.FB}, CB: ${SIGN.CB}, SL: ${SIGN.SL}, CH: ${SIGN.CH}, SI: ${SIGN.SI}, FC: ${SIGN.FC} }`), "same signs as the app (six kinds)");
 });
 
 test("a record going up is always newer than the one it replaces", () => {

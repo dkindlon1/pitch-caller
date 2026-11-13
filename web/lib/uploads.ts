@@ -11,7 +11,7 @@ export type SessionType = "game" | "live_bp" | "bullpen";
 export type Source = "trackman" | "rapsodo" | "mapped";
 export type Res = "ball" | "cstrike" | "whiff" | "foul" | "play" | "hbp";
 export type UploadPitch = {
-  pitch_type: string; kind: "FB" | "SL" | "CB" | "CH";
+  pitch_type: string; kind: "FB" | "SI" | "FC" | "SL" | "CB" | "CH";   // v1.1: six kinds
   velo_mph: number | null; ivb_in: number | null; hb_in: number | null; spin_rpm: number | null;
   rel_height_ft: number | null; rel_side_ft: number | null; extension_ft: number | null; plate_x_ft: number | null; plate_z_ft: number | null;
   balls: number | null; strikes: number | null; res: Res | null; contact: "weak" | "solid" | "hard" | null; batter_side: "R" | "L" | null;
@@ -119,13 +119,13 @@ export function summarize(pitches: SessionPitch[], today: string): TypeSummary[]
 }
 
 // ---------------------------------------------------------------- shape and slot rules
-// The engine's shape words from break (inches, arm side positive). Starting rules, kept here to tune.
-export function shapeOf(kind: UploadPitch["kind"], type: string, ivb: number, hb: number, veloGap: number | null): string {
-  if (kind === "FB") return type === "Cutter" || hb < 4 ? "cut" : ivb < 10 ? "sink" : ivb >= 15 ? "ride" : "run";
-  if (kind === "SL") return hb <= -10 ? "sweeper" : "tight";
-  if (kind === "CB") return veloGap !== null ? (veloGap >= 14 ? "loopy" : "sharp") : Math.abs(hb) >= 8 ? "loopy" : "sharp";
-  return ivb < 6 ? "drop" : "fade";
-}
+// v1.1 Step 5: shape tags come from the engine's own thresholds (plan 2.2, lib/engine.js tagFor), passed in by the server
+// callers so this file stays out of the browser bundle's engine. A measured pitch is tagged against his main fastball
+// (his most-thrown fastball-class pitch in the files).
+export type TagFor = (kind: string, ivb: number, hb: number, velo: number, fbMph: number, fbIvb: number, fbHb: number, level?: string, type?: string) => string;
+export type Migrate = (kind: string, shape: string, type?: string | null) => [string, string];
+export type ProposeOpts = { tagFor?: TagFor; migrate?: Migrate; level?: string };
+export const FB_CLASS = ["FB", "SI", "FC"];
 // arm angle from release height and side against his shoulder height, in degrees (90 is straight over the top)
 export function armAngle(relH: number, relS: number, heightFt: number): number {
   return (Math.atan2(relH - SHOULDER * heightFt, Math.abs(relS)) * 180) / Math.PI;
@@ -141,32 +141,39 @@ export type Unmatched = { type: string; n: number };
 
 const num = (v: unknown) => (v === "" || v === null || v === undefined || !Number.isFinite(+v) ? null : +v);
 
-// which arsenal pitch a file's pitch type is: the same type, else the only pitch of that kind on both sides
-export function matchPitch(p: Pitcher, s: TypeSummary, all: TypeSummary[]) {
+// which arsenal pitch a file's pitch type is: the same type, else the only pitch of that kind on both sides (a record still
+// in v1.0 terms is read in v1.1 terms through the engine's table, when the caller passes it)
+export function matchPitch(p: Pitcher, s: TypeSummary, all: TypeSummary[], migrate?: Migrate) {
   const ars = (p.pitches || []).filter((x) => x.active !== false);
   const same = ars.find((x) => x.type === s.type);
   if (same) return same;
-  const kindHere = ars.filter((x) => x.kind === s.kind), kindThere = all.filter((t) => t.kind === s.kind);
+  const kindOf = (x: { kind: string; shape?: string; type?: string }) => (migrate ? migrate(x.kind, x.shape || "", x.type || null)[0] : x.kind);
+  const kindHere = ars.filter((x) => kindOf(x) === s.kind), kindThere = all.filter((t) => t.kind === s.kind);
   return kindHere.length === 1 && kindThere.length === 1 && !ars.some((x) => x.type === kindThere[0].type) ? kindHere[0] : null;
 }
 
-export function propose(p: Pitcher, summary: TypeSummary[]): { proposals: Proposal[]; unmatched: Unmatched[]; notes: string[] } {
+export function propose(p: Pitcher, summary: TypeSummary[], opts: ProposeOpts = {}): { proposals: Proposal[]; unmatched: Unmatched[]; notes: string[] } {
   const proposals: Proposal[] = [], unmatched: Unmatched[] = [], notes: string[] = [];
-  const fb = summary.filter((s) => s.kind === "FB" && s.type !== "Cutter" && s.n >= MIN_PITCHES).sort((a, b) => b.n - a.n)[0];
+  // his main fastball in the files: the most-thrown fastball-class pitch (v1.1: sinkers and cutters are their own kinds)
+  const fb = summary.filter((s) => FB_CLASS.includes(s.kind) && s.n >= MIN_PITCHES).sort((a, b) => b.n - a.n)[0];
   for (const s of summary) {
     if (s.n < MIN_PITCHES) { if (s.n) notes.push(`${s.type}: ${s.n} pitches, not enough yet (${MIN_PITCHES} needed).`); continue; }
-    const d = matchPitch(p, s, summary);
+    const d = matchPitch(p, s, summary, opts.migrate);
     if (!d) { unmatched.push({ type: s.type, n: s.n }); continue; }
     const basis = { n: s.n, weight: s.weight, uploads: s.uploads.slice(0, 20), type: s.type };
     const cur = num(d.velo);
     if (s.velo !== null && (cur === null || Math.abs(s.velo - cur) >= VELO_STEP)) proposals.push({ field: "velo", pitch_id: d.id, pitch_name: d.name, value: s.velo, current: cur, basis });
-    if (s.ivb !== null && s.hb !== null) {
-      const gap = fb && fb.velo !== null && s.velo !== null && s.kind === "CB" ? fb.velo - s.velo : null;
-      const shape = shapeOf(s.kind, s.type, s.ivb, s.hb, gap);
-      const ci = num(d.ivb), ch = num(d.hb);
-      if (d.shape !== shape || ci === null || ch === null || Math.abs(ci - s.ivb) >= BREAK_STEP || Math.abs(ch - s.hb) >= BREAK_STEP) {
-        proposals.push({ field: "shape", pitch_id: d.id, pitch_name: d.name, value: { shape, ivb: s.ivb, hb: s.hb }, current: { shape: d.shape, ivb: ci, hb: ch }, basis });
-      }
+    if (s.ivb !== null && s.hb !== null && s.velo !== null && opts.tagFor) {
+      // the pitch's kind is its own (a proposal never changes it); its v1.1 tag from the engine's thresholds
+      const [dk, ds] = opts.migrate ? opts.migrate(d.kind, d.shape || "", d.type || null) : [d.kind, d.shape || ""];
+      if (dk === s.kind) {
+        const ref = fb && fb.velo !== null && fb.ivb !== null && fb.hb !== null ? fb : s;
+        const shape = opts.tagFor(dk, s.ivb, s.hb, s.velo, ref.velo!, ref.ivb!, ref.hb!, opts.level, s.type);
+        const ci = num(d.ivb), ch = num(d.hb);
+        if (ds !== shape || ci === null || ch === null || Math.abs(ci - s.ivb) >= BREAK_STEP || Math.abs(ch - s.hb) >= BREAK_STEP) {
+          proposals.push({ field: "shape", pitch_id: d.id, pitch_name: d.name, value: { kind: dk, shape, ivb: s.ivb, hb: s.hb }, current: { kind: dk, shape: ds, ivb: ci, hb: ch }, basis });
+        }
+      } else notes.push(`${s.type}: the file reads it as a ${s.kind} pitch but ${d.name} is ${dk}; change its type on his arsenal to update its shape.`);
     }
   }
   const h = num(p.height_ft);

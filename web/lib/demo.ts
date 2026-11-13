@@ -7,7 +7,7 @@ type Engine = typeof import("./engine").default;
 export type Result = "ball" | "cstrike" | "whiff" | "foul" | "out" | "hit" | "hbp";
 export type Spot = "Up and in" | "Up and away" | "Down and in" | "Down and away" | "Get it over" | "Chase" | "Keep it down";
 export const SPOT: Record<string, Spot> = { "up-in": "Up and in", "up-away": "Up and away", "down-in": "Down and in", "down-away": "Down and away", middle: "Get it over", chase: "Chase", "down-middle": "Keep it down" };
-export const SIGN: Record<string, number> = { FB: 1, CB: 2, SL: 3, CH: 4 };
+export const SIGN: Record<string, number> = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };   // v1.1: six kinds, as the app
 export const RESULT_LABEL: Record<Result, string> = { ball: "Ball", cstrike: "Called strike", whiff: "Swing and miss", foul: "Foul", out: "In play, out", hit: "Base hit", hbp: "Hit by pitch" };
 
 export const STARTER = [

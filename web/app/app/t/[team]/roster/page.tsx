@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { pitchersOf, teamFor } from "@/lib/team";
-import { SIGN, type Kind } from "@/lib/docs";
+import { signOf } from "@/lib/docs";
+import { v11Pitch } from "@/lib/engine_server";
 import { addPitchers, cancelInvite, invitePlayer, removePitcher } from "../actions";
 import { Notice, one, type Search } from "../ui";
 
@@ -42,7 +43,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
               <tr key={p.id}>
                 <td><Link href={`/app/t/${team}/roster/${p.id}`}>{p.number ? `#${p.number} ` : ""}{p.name || "Unnamed"}</Link></td>
                 <td>{p.hand === "L" ? "Left" : "Right"}</td>
-                <td><span className="chips">{(p.pitches || []).filter((d) => d.active !== false).map((d) => <span key={d.id} className={`chip k-${d.kind}`} title={d.name}>{SIGN[d.kind as Kind]}</span>)}</span></td>
+                <td><span className="chips">{(p.pitches || []).filter((d) => d.active !== false).map((d) => <span key={d.id} className={`chip k-${v11Pitch(d).kind}`} title={d.name}>{signOf(v11Pitch(d))}</span>)}</span></td>
                 {roster ? <td>{acc ? <span className="pill-ok">{acc.email}</span> : inv ? (
                   <form action={cancelInvite} className="inline-form"><input type="hidden" name="team" value={team} /><input type="hidden" name="from" value="roster" /><input type="hidden" name="token" value={inv.token || ""} />
                     <span className="shell-note small">{inv.needs_approval ? "Parent's email waiting for approval (Staff)" : `Invited${inv.email ? ` (${inv.email})` : ""}`}</span> <button className="shell-btn text" type="submit">Cancel</button></form>

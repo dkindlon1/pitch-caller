@@ -1,7 +1,7 @@
 // Sample data for the uploads section: a made-up 120-pitch bullpen shaped like the app's sample starter (fastball 86
 // with ride, slider 78 tight, changeup 77 with fade). It is not anyone's real file and the page says so. A fixed seed
 // keeps the server's static plot and the browser's 3D cloud the same points.
-export type MovePoint = { kind: "FB" | "SL" | "CH"; velo: number; hb: number; ivb: number };   // hb: inches, arm side positive
+export type MovePoint = { kind: "FB" | "SI" | "FC" | "SL" | "CB" | "CH"; velo: number; hb: number; ivb: number };   // hb: inches, arm side positive
 
 export const MOVE_TYPES = [
   { kind: "FB" as const, name: "Fastball", n: 60, velo: [86, 1.1], hb: [8, 2.2], ivb: [18, 2.0], color: "#FF5A4E" },

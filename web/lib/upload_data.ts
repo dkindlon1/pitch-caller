@@ -1,6 +1,7 @@
 import "server-only";
 import { getServerSupabase } from "./supabase/server";
 import { propose, summarize, type SessionPitch, type SessionType, type Proposal } from "./uploads";
+import { proposeOpts } from "./engine_server";
 import type { Pitcher } from "./docs";
 
 // The upload pages' reads (row level security decides: the pitcher, his parent, the team's coaches) and the one
@@ -67,9 +68,9 @@ export async function teamToday(tz: string | null) {
 }
 
 // after any upload change: his summary from every upload, and a fresh set of pending proposals
-export async function refreshProposals(team: string, p: Pitcher, today: string): Promise<{ proposals: Proposal[]; error?: string }> {
+export async function refreshProposals(team: string, p: Pitcher, today: string, level?: string | null): Promise<{ proposals: Proposal[]; error?: string }> {
   const all = await pitchesOf(team, p.id);
-  const { proposals } = propose(p, summarize(all, today));
+  const { proposals } = propose(p, summarize(all, today), proposeOpts(level));   // v1.1: the engine's tags, at his team's level
   const sb = await getServerSupabase();
   const { error } = await sb.rpc("pc_proposals_set", { p: team, pitcher: p.id, list: proposals });
   return { proposals, error: error?.message };

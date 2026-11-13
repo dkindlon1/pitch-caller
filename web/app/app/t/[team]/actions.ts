@@ -1,5 +1,6 @@
 "use server";
 import { headers } from "next/headers";
+import { v11Pitch } from "@/lib/engine_server";
 import { redirect } from "next/navigation";
 import { inviteMail, sendMail } from "@/lib/email";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -57,10 +58,14 @@ export async function savePitcher(f: FormData) {
     next.role = str(f, "role") === "RP" ? "RP" : "SP";
   }
   const grade = (v: string): number | "" => (v === "" ? "" : Math.max(1, Math.min(5, Math.round(+v) || 3)));
-  next.pitches = (p!.pitches || []).map((d: Pitch, i: number) => {
-    const type = str(f, `type_${i}`) in PITCH_TYPES ? str(f, `type_${i}`) : d.type;
-    const t = PITCH_TYPES[type];
-    return { ...d, type, kind: t.kind, shape: t.shape, name: str(f, `name_${i}`).slice(0, 40) || d.name, grade: grade(str(f, `grade_${i}`)),
+  next.pitches = (p!.pitches || []).map((d0: Pitch, i: number) => {
+    // v1.1: the type sets kind and shape only when it changes (a shape accepted from his uploads stays); otherwise the
+    // pitch is read in v1.1 terms, as the app does (lib/engine_server.ts v11Pitch)
+    const d = v11Pitch(d0), type = str(f, `type_${i}`) in PITCH_TYPES ? str(f, `type_${i}`) : d.type;
+    const ch = type !== d.type && type in PITCH_TYPES, t = ch ? PITCH_TYPES[type] : { kind: d.kind, shape: d.shape };
+    const { sign, main, ...rest } = d as Pitch & { sign?: number; main?: boolean };
+    const kept = { ...(ch || sign == null ? {} : { sign }), ...(main && ["FB", "SI", "FC"].includes(t.kind) ? { main } : {}) };
+    return { ...rest, ...kept, type, kind: t.kind, shape: t.shape, name: str(f, `name_${i}`).slice(0, 40) || d.name, grade: grade(str(f, `grade_${i}`)),
       command: grade(str(f, `command_${i}`)), active: f.get(`active_${i}`) === "on" };
   });
   const add = str(f, "add_type");

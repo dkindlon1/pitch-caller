@@ -162,7 +162,10 @@ const ODD = "Throw,MPH,Up,Over,When\n" + Array.from({ length: 10 }, (_, i) => `F
     await click(asst, asst.getByRole("region", { name: "Needs you" }).getByRole("link", { name: "Avery Brooks" }).first(), /\/uploads$/);
     await click(asst, asst.getByRole("form", { name: "Accept Fastball shape" }).getByRole("button", { name: "Accept" }), /ok=accepted/);
     d1 = await doc(P1);
-    check(d1.pitches[0].shape === "ride" && d1.pitches[0].ivb === 17 && d1.pitches[0].hb === 9 && d1.pitches[0].velo === 91, "the fastball's shape is in: ride, 17 up, 9 arm side (and the velo stays)");
+    // v1.1: the engine's tag for his four-seam (91 mph, 17 up, 9 arm side, against itself) at the team's level, and its kind
+    const want = require("../lib/engine.js").tagFor("FB", 17, 9, 91, 91, 17, 9, "college_d3", "Four-seam");
+    check(d1.pitches[0].kind === "FB" && d1.pitches[0].shape === want && d1.pitches[0].ivb === 17 && d1.pitches[0].hb === 9 && d1.pitches[0].velo === 91,
+      `the fastball's shape is in: FB/${want || "typical"} (the engine's tag), 17 up, 9 arm side (and the velo stays) (${d1.pitches[0].kind}/${d1.pitches[0].shape})`);
     const callerP = await fresh();
     await signIn(callerP, "caller");
     await goto(callerP, `/app/t/${team}/roster/${P1}/uploads`);

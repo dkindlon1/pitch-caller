@@ -1,15 +1,29 @@
 // The team's records as the iPad keeps them (app/db.js): the portal makes new ones in the same shapes, so either side
 // can edit what the other made. docs.test.ts checks these against app/db.js.
-export type Kind = "FB" | "SL" | "CB" | "CH";
-export const KINDS: Record<Kind, string> = { FB: "Fastball", SL: "Slider", CB: "Curveball", CH: "Changeup" };
-export const SIGN: Record<Kind, number> = { FB: 1, CB: 2, SL: 3, CH: 4 };
+// v1.1: six kinds (sinkers and cutters have their own), the same as the app's (app/index.src.html KINDS / SIGN) and the
+// engine's one migration table (app/db.js PITCH_TYPES); 5 and 6 are card numbers on the sign card.
+export type Kind = "FB" | "SI" | "FC" | "SL" | "CB" | "CH";
+export const KINDS: Record<Kind, string> = { FB: "Fastball", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
+export const SIGN: Record<Kind, number> = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };
 export const PITCH_TYPES: Record<string, { kind: Kind; shape: string }> = {
-  "Four-seam": { kind: "FB", shape: "ride" }, "Two-seam": { kind: "FB", shape: "run" }, Sinker: { kind: "FB", shape: "sink" },
-  Cutter: { kind: "FB", shape: "cut" }, Slider: { kind: "SL", shape: "tight" }, Sweeper: { kind: "SL", shape: "sweeper" },
-  Slurve: { kind: "SL", shape: "" }, Curveball: { kind: "CB", shape: "loopy" }, "Knuckle curve": { kind: "CB", shape: "sharp" },
-  "12-6 curve": { kind: "CB", shape: "sharp" }, Changeup: { kind: "CH", shape: "fade" }, Splitter: { kind: "CH", shape: "drop" },
-  Forkball: { kind: "CH", shape: "drop" },
+  "Four-seam": { kind: "FB", shape: "rides" }, "Two-seam": { kind: "SI", shape: "two-seam" }, Sinker: { kind: "SI", shape: "run" },
+  Cutter: { kind: "FC", shape: "" }, Slider: { kind: "SL", shape: "tight" }, Sweeper: { kind: "SL", shape: "sweeper" },
+  Slurve: { kind: "SL", shape: "slurve" }, Curveball: { kind: "CB", shape: "" }, "Knuckle curve": { kind: "CB", shape: "" },
+  "12-6 curve": { kind: "CB", shape: "12-6" }, Changeup: { kind: "CH", shape: "fade" }, Splitter: { kind: "CH", shape: "split" },
+  Forkball: { kind: "CH", shape: "split" },
 };
+// v1.1 Step 5: the profile names the coach sees for the engine's tags (the same as app/index.src.html PROFILE_LABEL;
+// docs.test.ts checks it). A v1.0 tag (a record or proposal not yet migrated) shows as itself.
+export const PROFILE_LABEL: Record<string, Record<string, string>> = {
+  FB: { rides: "Rides (high ride)", runs: "Runs (ride + run)", cuts: "Cuts (natural cut)", straight: "Straight (dead zone)", "": "Typical" },
+  SI: { run: "Run (heavy run)", drop: "Drop (heavy sink)", "two-seam": "Two-seam (some ride)", "": "Typical" },
+  FC: { hard: "Hard / short", big: "Big (slutter)", ride: "Ride", "": "Typical" },
+  SL: { gyro: "Gyro (little sweep)", tight: "Tight", sweeper: "Sweeper", slurve: "Slurve", "": "Typical" },
+  CB: { "12-6": "12-6", sweeping: "Sweeping", power: "Power / knuckle", slow: "Slow / loopy", "": "Typical" },
+  CH: { fade: "Fade", drop: "Drop", split: "Split", firm: "Firm (little speed off)", "": "Typical" } };
+export const profileLabel = (kind: string, tag: string | null | undefined) => (PROFILE_LABEL[kind] || {})[tag || ""] || tag || "Typical";
+// a pitch's sign: its own (a migrated sinker or cutter keeps its v1.0 sign until the coach changes its type), else its kind's
+export const signOf = (d: { kind: string; sign?: number | string }) => +(d.sign || 0) || SIGN[d.kind as Kind] || 0;
 
 export type Pitch = { id: string; type: string; name: string; kind: Kind; shape: string; grade: number | ""; command: number | ""; feel: number;
   velo: number | ""; ivb: number | ""; hb: number | ""; spin: number | ""; active: boolean };

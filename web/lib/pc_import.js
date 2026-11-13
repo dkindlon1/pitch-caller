@@ -99,7 +99,8 @@
     changeup: "Changeup", change: "Changeup", ch: "Changeup", splitter: "Splitter", split: "Splitter", fs: "Splitter", splitfinger: "Splitter", forkball: "Forkball",
   };
   const typeOf = (s) => TYPE_ALIASES[norm(s)] || null;
-  const KIND = { "Four-seam": "FB", "Two-seam": "FB", Sinker: "FB", Cutter: "FB", Slider: "SL", Sweeper: "SL", Slurve: "SL",
+  // v1.1: six kinds, the same as the migration table's types (sinkers and two-seamers are SI, cutters FC)
+  const KIND = { "Four-seam": "FB", "Two-seam": "SI", Sinker: "SI", Cutter: "FC", Slider: "SL", Sweeper: "SL", Slurve: "SL",
     Curveball: "CB", "Knuckle curve": "CB", Changeup: "CH", Splitter: "CH", Forkball: "CH" };
 
   const num = (s) => { if (s === undefined || s === null) return null; const t = String(s).trim(); if (t === "" || t === "-" || /^n\/?a$/i.test(t)) return null; const v = +t; return Number.isFinite(v) ? v : null; };
@@ -152,7 +153,7 @@
     const fileHand = rows.map((r) => String(r.throws || "").trim().toUpperCase()[0]).find((c) => c === "L" || c === "R");
     const hand = fileHand || opts.hand;
     // arm side positive: decided by his fastballs, else by his hand (assuming the catcher's-view convention)
-    const fbHb = rows.filter((r) => r.kind === "FB" && r.type !== "Cutter" && r.hb !== null).map((r) => r.hb);
+    const fbHb = rows.filter((r) => (r.kind === "FB" || r.kind === "SI") && r.hb !== null).map((r) => r.hb);   // fastballs, not cutters
     let flip;
     if (fbHb.length >= 3) flip = median(fbHb) < 0;
     else { flip = hand === "L"; if (rows.some((r) => r.hb !== null)) warnings.push("No fastballs in the file to tell which way is arm side; went by his throwing hand. Check the break numbers."); }
@@ -172,10 +173,18 @@
     }).sort((a, b) => b.n - a.n);
 
     // release point of each pitch relative to his fastball, in inches: what the engine's tunneling uses
-    const fb = byType.find((t) => t.kind === "FB" && t.relH !== null && t.relS !== null);
+    const fb = byType.find((t) => ["FB", "SI", "FC"].includes(t.kind) && t.relH !== null && t.relS !== null);   // his most-thrown fastball-class pitch
     for (const t of byType) {
       t.releaseOffset = fb && t.relH !== null && t.relS !== null ? [Math.round((t.relS - fb.relS) * 12 * 10) / 10, Math.round((t.relH - fb.relH) * 12 * 10) / 10] : null;
       t.relH = t.relH === null ? null : Math.round(t.relH * 100) / 100; t.relS = t.relS === null ? null : Math.round(t.relS * 100) / 100;
+    }
+    // v1.1 Step 5 (plan 2.2): each measured pitch type's profile tag from the thresholds (opts.tagFor = the engine's tagFor;
+    // this file stays engine-free), measured against his most-thrown fastball-class pitch in the file. A type with a
+    // profile name (Sweeper, Splitter, ...) keeps it. null when the numbers aren't there.
+    const mfb = byType.find((t) => ["FB", "SI", "FC"].includes(t.kind) && t.velo !== null && t.ivb !== null && t.hb !== null);
+    for (const t of byType) {
+      t.tag = typeof opts.tagFor === "function" && t.velo !== null && t.ivb !== null && t.hb !== null
+        ? opts.tagFor(t.kind, t.ivb, t.hb, t.velo, mfb ? mfb.velo : t.velo, mfb ? mfb.ivb : t.ivb, mfb ? mfb.hb : t.hb, opts.level, t.type) : null;
     }
     return { source, n: rows.length, byType, warnings, columns: Object.fromEntries(Object.entries(map).map(([k, i]) => [k, header[i]])), unused, rows,
       hand: hand || null, flipped: !!flip, header, pitchers };
