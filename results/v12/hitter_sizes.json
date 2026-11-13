@@ -1,0 +1,50 @@
+{
+ "grid": [
+  0.002,
+  0.003,
+  0.004,
+  0.005,
+  0.006,
+  0.008,
+  0.01,
+  0.012,
+  0.015,
+  0.02
+ ],
+ "path": 0.003,
+ "rows": {
+  "H1": {
+   "base": 0.1761,
+   "moved": 0.0707
+  },
+  "H2": {
+   "base": 0.2868,
+   "moved": 0.1956
+  },
+  "H3": {
+   "what": "aggressive early: fewer grooved first pitches (0-0, middle / down-middle)",
+   "untagged": 0.6149,
+   "tagged": 0.6054,
+   "moved": -0.0095
+  },
+  "H4": {
+   "what": "patient early: more first-pitch strikes over the plate (0-0, middle / down-middle)",
+   "untagged": 0.6149,
+   "tagged": 0.6248,
+   "moved": 0.0098
+  },
+  "H5": {
+   "what": "hits off-speed hard: fewer hittable off-speed pitches (1-1, OS in the zone)",
+   "untagged": 0.5169,
+   "tagged": 0.5143,
+   "moved": -0.0026
+  },
+  "H6": {
+   "what": "pull-heavy: away (1-1, any pitch away)",
+   "untagged": 0.2329,
+   "tagged": 0.1981,
+   "moved": -0.0349
+  }
+ },
+ "H2_fastball_up_change": 0.008
+}

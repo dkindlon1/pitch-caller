@@ -1,0 +1,8 @@
+  path 0.002: H1 flat / level swing 17.6% -> moved +4.5%, H2 uppercut / lift swing 28.7% -> moved +7.2%
+  path 0.003: H1 flat / level swing 17.6% -> moved +7.1%, H2 uppercut / lift swing 28.7% -> moved +19.6%
+path rule size: 0.003
+H2: riding fastball up against a lift swing moves +0.8% (should hold or rise)
+  H3 aggressive early: fewer grooved first pitches (0-0, middle / down-middle): 61.5% -> 60.5% (-0.9%)
+  H4 patient early: more first-pitch strikes over the plate (0-0, middle / down-middle): 61.5% -> 62.5% (+1.0%)
+  H5 hits off-speed hard: fewer hittable off-speed pitches (1-1, OS in the zone): 51.7% -> 51.4% (-0.3%)
+  H6 pull-heavy: away (1-1, any pitch away): 23.3% -> 19.8% (-3.5%)

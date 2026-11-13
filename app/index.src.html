@@ -829,6 +829,16 @@ function hitterGrades(bd) {   // coach's grades, then what's been learned (serve
   const out = {}; for (const g of ["c", "w", "d"]) if (coach[g] !== undefined && coach[g] !== "" && +coach[g] !== 3) out[g] = +coach[g];
   return Object.keys(out).length ? out : null;
 }
+// v1.2 Part B: the coach's hitter tags (plan 2.8), from his roster record or the lineup slot; null when none is set
+const TAG_ROWS = [["approach", "Early counts", [["aggressive", "Aggressive (swings early)"], ["patient", "Patient (takes early)"]]],
+  ["spray", "Spray", [["pull", "Pull-heavy"], ["oppo", "Uses the whole field"]]],
+  ["path", "Swing path", [["lift", "Lift / uppercut"], ["flat", "Flat / level"]]],
+  ["offspeed", "Off-speed", [["hits", "Hits it hard"]]]];
+function hitterTags(bd) {
+  const b = bd || batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null, t = (x && x.scoutTags) || b.scoutTags || {};   // stored as scoutTags (the hitter doc's old tags: [] is unused)
+  const out = {}; for (const [k, , opts] of TAG_ROWS) if (opts.some(([v]) => v === t[k])) out[k] = t[k];
+  return Object.keys(out).length ? out : null;
+}
 const UMP_SEED = { tight: -0.4, normal: 0, wide: 0.4 };
 const umpSeed = () => UMP_SEED[S.setup.umpSeed || "normal"] ?? 0;
 function radarFor(pk) {   // 8.1: with at least 3 readings today, (5 v_base + sum of the last 8) / (5 + n)
@@ -848,7 +858,8 @@ function stealFor() {   // 7.4: the lead runner who can go (1st with 2nd open, o
 }
 function v08Inputs() {
   const g = G(), pd = pitcherDef(), b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
-  return { familiar: famFor(), matchup: mmFor(), crowding: !!((x && x.crowd) || b.crowd), grades: hitterGrades(),
+  const tags = hitterTags();   // v1.2 Part B: passed only when set
+  return { ...(tags ? { hitter_tags: tags } : {}), familiar: famFor(), matchup: mmFor(), crowding: !!((x && x.crowd) || b.crowd), grades: hitterGrades(),
     ump_u: E.v08.umpEstimate(g.takes || [], S.setup.level, umpSeed()), radar: radarFor(pKey()), infield_in: !!g.infieldIn,
     usage_by_call: Object.assign({}, ((g.usageCall || {})[pKey()] || {})[g.balls + "-" + g.strikes] || {}), steal: stealFor(),
     pitch_cap: +pd.pitchCap || 105, home: S.setup.home === undefined ? null : S.setup.home, sched_innings: +S.setup.innings || null,
@@ -1895,7 +1906,17 @@ function hitterGradeInputs(b, i, changed) {
     [["c", "Contact"], ["w", "Power"], ["d", "Eye"]].map(([k, l]) => h("label", { class: "g" }, l,
       h("select", { "aria-label": `Hitter ${i + 1} ${l.toLowerCase()} grade`, on: { change: (e) => { rec.grades[k] = +e.target.value; put(); } } },
         [1, 2, 3, 4, 5].map((v) => h("option", { value: v, selected: (+rec.grades[k] || 3) === v ? true : null }, String(v)))))),
-    h("label", { class: "check" }, h("input", { type: "checkbox", checked: rec.crowd ? true : null, on: { change: (e) => { rec.crowd = e.target.checked; put(); } } }), "Crowds the plate"));
+    h("label", { class: "check" }, h("input", { type: "checkbox", checked: rec.crowd ? true : null, on: { change: (e) => { rec.crowd = e.target.checked; put(); } } }), "Crowds the plate"),
+    tagInputs(rec, `Hitter ${i + 1}`, put));
+}
+// v1.2 Part B: four tag rows, unknown by default; only set tags are stored
+function tagInputs(rec, who, put) {
+  return h("div", { class: "htags" }, TAG_ROWS.map(([k, label, opts]) => h("label", { class: "g" }, label,
+    h("select", { "aria-label": `${who} ${label.toLowerCase()}`, on: { change: (e) => {
+      const t = Object.assign({}, rec.scoutTags); if (e.target.value) t[k] = e.target.value; else delete t[k];
+      if (Object.keys(t).length) rec.scoutTags = t; else delete rec.scoutTags; put(); } } },
+      [h("option", { value: "", selected: !(rec.scoutTags && rec.scoutTags[k]) ? true : null }, "Unknown")].concat(opts.map(([v, t]) =>
+        h("option", { value: v, selected: rec.scoutTags && rec.scoutTags[k] === v ? true : null }, t)))))));
 }
 function staffPick() {
   const list = rosterPitchers();

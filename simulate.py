@@ -37,6 +37,8 @@ INPUTS = int(os.environ.get("INPUTS", "3"))
 NOISE = float(os.environ.get("NOISE", "0"))          # share of optional entries logged wrong
 TRUE_MOVE = os.environ.get("TRUE_MOVE", "0") == "1"  # pitches' real movement differs from their shape tag
 TRUE_MISS = os.environ.get("TRUE_MISS", "0") == "1"  # v1.2: each pitch has a hidden miss lean the engine doesn't know
+TRUE_TAGS = os.environ.get("TRUE_TAGS", "0") == "1"  # v1.2 Part B: each hitter has hidden approach / spray tags (the world's truth)
+SEE_TAGS = os.environ.get("SEE_TAGS", "0") == "1"    # v1.2 Part B: ... and the coach has tagged them correctly (the caller sees them)
 # v0.6d test matrix presets
 STAFF = os.environ.get("STAFF", "default")        # default, power, finesse, two_pitch, lefty, four_pitch, shaky
 LINEUP = os.environ.get("LINEUP", "default")      # default, strong, weak, lefty_heavy, switch, fb_mashers, os_killers, late
@@ -226,6 +228,8 @@ def draw_off(r, arsenal):
 def true_situation(s, hitter):
     ts = replace(s, landing_today={}, wild_true=dict(CURRENT_OFF) or {"__none__": 0.0}, hitter_damage={"FB": (hitter["fb"], 10_000), "OS": (hitter["os"], 10_000)},
                  timing={"FB": hitter["timing"], "OS": hitter["timing"]})
+    if hitter.get("tags"):                                                         # v1.2 Part B (TRUE_TAGS): his real tags
+        ts = replace(ts, hitter_tags=dict(hitter["tags"]))
     return replace(ts, grades={"w": hitter["w"]}) if "w" in hitter else ts      # TRUE_POWER: the hidden true power grade
 
 
@@ -469,6 +473,11 @@ def play_game(log_path):
                 true_lean[(who["name"], x.name)] = (max(-6.0, min(6.0, crng.gauss(0, 2.0))), max(-6.0, min(6.0, crng.gauss(0, 1.5))))
     pitcher = starter
     lineup = their_lineup()
+    if TRUE_TAGS:                                    # v1.2 Part B: own stream, so the main sequence is untouched
+        trng = random.Random(SEED_FOR_MOVE[0] * 11 + 5)
+        for hh in lineup:
+            t = {"approach": trng.choice(["aggressive", None, "patient"]), "spray": trng.choice(["pull", None, "oppo"])}
+            hh["tags"] = {k: v for k, v in t.items() if v}
     if TRUE_POWER:                                   # own stream: the main rng sequence is untouched
         prng = random.Random(SEED_FOR_MOVE[0] * 1_000_003 + 17)
         for hh in lineup:
@@ -549,7 +558,8 @@ def play_game(log_path):
                               **({"pa_log": tuple(pal)} if "pa_log" in Situation.__dataclass_fields__ else {}),
                               ump_u=CALLER.ump_estimate(takes, LEVEL_NAME),
                               home=True, sched_innings=9,
-                              grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None))
+                              grades=({"w": max(1, min(5, round(hitter["w"])))} if SEE_POWER else None),
+                              **({"hitter_tags": dict(hitter["tags"])} if SEE_TAGS and hitter.get("tags") else {}))
                 if win_pa is None:
                     win_pa = CALLER.win_constants(s)
                 s = replace(s, win=win_pa)

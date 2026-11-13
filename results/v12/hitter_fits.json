@@ -1,0 +1,196 @@
+{
+ "persistence": {
+  "tilt": {
+   "2024-2025": {
+    "r": 0.917,
+    "n": 402,
+    "full_season_est": null
+   },
+   "2025-2026": {
+    "r": 0.925,
+    "n": 405,
+    "full_season_est": null
+   }
+  },
+  "tilt_adj": {
+   "2024-2025": {
+    "r": 0.91,
+    "n": 402,
+    "full_season_est": null
+   },
+   "2025-2026": {
+    "r": 0.896,
+    "n": 405,
+    "full_season_est": null
+   }
+  },
+  "pull": {
+   "2024-2025": {
+    "r": 0.686,
+    "n": 305,
+    "full_season_est": null
+   },
+   "2025-2026": {
+    "r": 0.692,
+    "n": 298,
+    "full_season_est": null
+   }
+  },
+  "approach": {
+   "2024-2025": {
+    "r": 0.523,
+    "n": 216,
+    "full_season_est": 0.814
+   },
+   "2025-2026": {
+    "r": 0.576,
+    "n": 202,
+    "full_season_est": 0.844
+   }
+  },
+  "offspeed": {
+   "2024-2025": {
+    "r": 0.034,
+    "n": 205,
+    "full_season_est": 0.125
+   },
+   "2025-2026": {
+    "r": 0.105,
+    "n": 200,
+    "full_season_est": 0.319
+   }
+  }
+ },
+ "channels": {
+  "path_fb_whiff": {
+   "name": "path: fastball whiff | swing",
+   "n_train": 39207,
+   "n_test": 38980,
+   "gain": -1.31,
+   "boot_sd": 0.8,
+   "ships": false,
+   "coefs": {
+    "one": -1.341,
+    "hz": 0.3342,
+    "hz2": 2.4347,
+    "ride": 0.0353,
+    "hz_ride": 0.1068,
+    "izf": -0.4385,
+    "Lg_whiff": 0.2508,
+    "path_hz": -0.0178,
+    "path_hz_ride": 0.0252
+   },
+   "base_rate_test": 0.1695
+  },
+  "path_fb_hard": {
+   "name": "path: fastball hard | in play",
+   "n_train": 14835,
+   "n_test": 14711,
+   "gain": -0.26,
+   "boot_sd": 2.58,
+   "ships": false,
+   "coefs": {
+    "one": -1.23,
+    "hz": -0.716,
+    "hz2": 0.4703,
+    "ride": -0.0139,
+    "hz_ride": -0.0359,
+    "izf": 1.2075,
+    "Lg_hard": 0.0884,
+    "path_hz": -0.1474,
+    "path_hz_ride": 0.0419
+   },
+   "base_rate_test": 0.4266
+  },
+  "path_os_whiff": {
+   "name": "path: off-speed whiff | swing (down)",
+   "n_train": 31902,
+   "n_test": 30831,
+   "gain": 0.34,
+   "boot_sd": 0.64,
+   "ships": false,
+   "coefs": {
+    "one": -0.8388,
+    "hz": -0.502,
+    "hz2": 2.2947,
+    "down": 0.1653,
+    "izf": -0.7297,
+    "Lg_whiff": 0.3226,
+    "path_down": 0.0119
+   },
+   "base_rate_test": 0.3085
+  },
+  "approach_swing": {
+   "name": "approach: early in-zone swing",
+   "n_train": 38036,
+   "n_test": 35310,
+   "gain": 91.67,
+   "boot_sd": 14.0,
+   "ships": true,
+   "coefs": {
+    "one": -0.2243,
+    "c10": 0.5897,
+    "c01": 1.2906,
+    "hz2": -2.7383,
+    "Lg_zsw": 0.3164,
+    "appr": 0.2077
+   },
+   "base_rate_test": 0.5508
+  },
+  "offspeed_hard": {
+   "name": "offspeed: off-speed hard | in play",
+   "n_train": 11467,
+   "n_test": 10752,
+   "gain": -0.05,
+   "boot_sd": 0.05,
+   "ships": false,
+   "coefs": {
+    "one": -1.5291,
+    "hz": -0.1002,
+    "hz2": -0.4523,
+    "izf": 1.2458,
+    "Lg_hard": 0.0782,
+    "osh": 0.0014
+   },
+   "base_rate_test": 0.344
+  },
+  "spray_hard": {
+   "name": "spray: hard | in play, in / away",
+   "n_train": 26302,
+   "n_test": 25463,
+   "gain": 8.48,
+   "boot_sd": 4.12,
+   "ships": true,
+   "coefs": {
+    "one": 0.2789,
+    "insf": -0.8684,
+    "awf": -0.5996,
+    "hz": -0.1674,
+    "hz2": -2.0503,
+    "Lg_hard": 0.0825,
+    "pull_in": -0.0958,
+    "pull_aw": 0.0943
+   },
+   "base_rate_test": 0.3917
+  },
+  "spray_gb": {
+   "name": "spray: ground ball | in play, in / away",
+   "n_train": 26302,
+   "n_test": 25463,
+   "gain": 21.62,
+   "boot_sd": 5.22,
+   "ships": true,
+   "coefs": {
+    "one": -0.5858,
+    "insf": 0.0739,
+    "awf": 0.3129,
+    "hz": -1.0966,
+    "hz2": 0.4401,
+    "Lg_gb": 0.0405,
+    "pull_in": -0.1268,
+    "pull_aw": -0.1035
+   },
+   "base_rate_test": 0.4186
+  }
+ }
+}

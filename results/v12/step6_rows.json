@@ -1,0 +1,122 @@
+{
+ "L1": {
+  "text": "arm-leaning sinker (+3) to a same-side hitter: inside less",
+  "base": 0.1054,
+  "changed": 0,
+  "moved": -0.1054,
+  "want": -1,
+  "passes": true
+ },
+ "L2": {
+  "text": "that sinker away to a same-side hitter: called less",
+  "base": 0.1537,
+  "changed": 0.2014,
+  "moved": 0.0477,
+  "want": -1,
+  "passes": false
+ },
+ "L3": {
+  "text": "glove-leaning slider (-3) to an opposite-side hitter: the back-foot slider holds or rises",
+  "base": 0,
+  "changed": 0,
+  "moved": 0,
+  "want": 0,
+  "passes": true,
+  "note": "untestable as written: the engine calls no slider down-in to an opposite-side hitter at 1-2 or 0-2, with or without the lean"
+ },
+ "L4": {
+  "text": "down-leaning curve (-3), runner on 3rd, 0-2, two outs: fewer dirt chases",
+  "base": 0.0694,
+  "changed": 0,
+  "moved": -0.0694,
+  "want": -1,
+  "passes": true
+ },
+ "L5a": {
+  "text": "up-leaning riding four-seam (+3), two strikes: the up target holds",
+  "base": 0.2664,
+  "changed": 0.1989,
+  "moved": -0.0675,
+  "want": 0,
+  "passes": false
+ },
+ "L5b": {
+  "text": "... and its down target falls",
+  "base": 0.1813,
+  "changed": 0.2167,
+  "moved": 0.0354,
+  "want": -1,
+  "passes": false
+ },
+ "L6": {
+  "text": "glove-leaning cutter (-3) in on an opposite-side hitter's hands: holds",
+  "base": 0.0761,
+  "changed": 0,
+  "moved": -0.0761,
+  "want": 0,
+  "passes": false
+ },
+ "H1": {
+  "text": "flat / level swing: fewer riding fastballs up",
+  "base": 0.1761,
+  "changed": 0.1054,
+  "moved": -0.0707,
+  "want": -1,
+  "passes": true,
+  "unknown_moves": 0.0
+ },
+ "H2a": {
+  "text": "uppercut / lift swing: the riding fastball up holds",
+  "base": 0.1761,
+  "changed": 0.184,
+  "moved": 0.008,
+  "want": 0,
+  "passes": true,
+  "unknown_moves": 0.0
+ },
+ "H2b": {
+  "text": "... and the curve down gets riskier (called less)",
+  "base": 0.1123,
+  "changed": 0.043,
+  "moved": -0.0693,
+  "want": -1,
+  "passes": true,
+  "unknown_moves": 0.0
+ },
+ "H3": {
+  "text": "aggressive early: fewer grooved first pitches",
+  "base": 0.6149,
+  "changed": 0.6054,
+  "moved": -0.0095,
+  "want": -1,
+  "passes": true,
+  "unknown_moves": 0.0
+ },
+ "H4": {
+  "text": "patient early: more first-pitch strikes over the plate",
+  "base": 0.6149,
+  "changed": 0.6248,
+  "moved": 0.0098,
+  "want": 1,
+  "passes": true,
+  "unknown_moves": 0.0
+ },
+ "H5": {
+  "text": "hits off-speed hard: fewer hittable off-speed pitches",
+  "base": 0.5169,
+  "changed": 0.5143,
+  "moved": -0.0026,
+  "want": -1,
+  "passes": false,
+  "unknown_moves": 0.0
+ },
+ "H6": {
+  "text": "pull-heavy: more away (the plan's guess; the MLB fit says pull hitters hit away pitches harder)",
+  "base": 0.2329,
+  "changed": 0.1981,
+  "moved": -0.0349,
+  "want": 1,
+  "passes": false,
+  "unknown_moves": 0.0
+ }
+}

@@ -106,6 +106,13 @@ function main() {
       Object.assign(d, { lean_x: Math.round((k - 5) * 0.6 * 100) / 100, lean_z: Math.round((((k * 3) % 11) - 5) * 0.5 * 100) / 100,
         spread: [1.0, 0.8, 1.25][(i + j) % 3] });
     }));
+  if (process.env.FAST_TAGS === "1")   // v1.2 Part B: fast.py's tag_tags(i), written the same way
+    cases.forEach((c, i) => {
+      const out = {};
+      [["approach", [null, "aggressive", "patient"]], ["spray", [null, "pull", "oppo"]], ["path", [null, "lift", "flat"]], ["offspeed", [null, "hits"]]]
+        .forEach(([k, vals], j) => { const v = vals[(i * (j + 2) + j) % vals.length]; if (v) out[k] = v; });
+      c.s.hitter_tags = out;
+    });
   if (emit) { process.stdout.write(JSON.stringify(cases.map(compute))); return; }
   let t0 = Date.now(); const js = cases.map(compute); const tJs = (Date.now() - t0) / 1000;
   t0 = Date.now(); const py = pySide(n); const tPy = (Date.now() - t0) / 1000;

@@ -8,6 +8,7 @@ platform. Tolerance 1e-9 on numbers; exact on everything else.
 
 usage: python3 golden/fast.py N          -> compute both sides, diff, exit non-zero on any mismatch
        FAST_LEANS=1 python3 golden/fast.py N  -> the same with a miss lean and spread on every pitch (v1.2)
+       FAST_TAGS=1 python3 golden/fast.py N   -> the same with hitter tags on every case (v1.2 Part B)
        python3 golden/fast.py --emit N   -> print this side's results as JSON (used by golden/fast.js)
 """
 import json, os, subprocess, sys
@@ -32,7 +33,21 @@ def load(n):
         for i, c in enumerate(cs):
             for j, d in enumerate(c["arsenal"]):
                 d.update(lean_leans(i, j))
+    if os.environ.get("FAST_TAGS") == "1":      # v1.2 Part B: the same inputs with hitter tags on every case
+        for i, c in enumerate(cs):
+            c["s"]["hitter_tags"] = tag_tags(i)
     return cs
+
+
+def tag_tags(i):
+    """v1.2 Part B: deterministic hitter tags per case, written the same way in fast.js"""
+    out = {}
+    for j, (k, vals) in enumerate((("approach", [None, "aggressive", "patient"]), ("spray", [None, "pull", "oppo"]),
+                                   ("path", [None, "lift", "flat"]), ("offspeed", [None, "hits"]))):
+        v = vals[(i * (j + 2) + j) % len(vals)]
+        if v:
+            out[k] = v
+    return out
 
 
 def lean_leans(i, j):

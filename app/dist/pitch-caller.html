@@ -707,7 +707,7 @@ td.wrapcell .line { display: block; }
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {}, since_thrown: {}, pa_log: [] }, o);   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
+      matchup: {}, since_thrown: {}, pa_log: [] }, o);   // v1.2 Part B: hitter_tags stays absent unless set (engine.py), so snapshots don't change   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
   }
   const replace = (s, o) => Object.assign({}, s, o);
   // v1.1 Step 1b: a pitch with no speed is his main fastball's entered speed less the profile's gap (resolveSpeeds sets
@@ -1078,17 +1078,38 @@ td.wrapcell .line { display: block; }
     return t;
   }
 
+  // v1.2 Part B: hitter tags (mirror of engine.py HIT_FIT / HIT_PATH_RULE / HIT_OS_PRIOR; see the fits there)
+  const HIT_FIT = { approach: 0.2077, spray_hard_in: -0.0958, spray_hard_away: 0.0943, spray_gb_in: -0.1268, spray_gb_away: -0.1035 };
+  const HIT_PATH_RULE = 0.003, HIT_OS_PRIOR = 0.3, HIT_OS_N0 = 3.0;
+  const HIT_TAG_VALUES = { approach: { aggressive: 1, patient: -1 }, spray: { pull: 1, oppo: -1 }, path: { lift: 1, flat: -1 }, offspeed: { hits: 1 } };
+  const hitTag = (s, key) => (s && s.hitter_tags ? (HIT_TAG_VALUES[key][s.hitter_tags[key]] || 0) : 0);
+  const spraySide = (q) => (q === "up-in" || q === "down-in" ? "in" : q === "up-away" || q === "down-away" ? "away" : null);
+  const isEarly = (s) => (s.balls === 0 && s.strikes === 0) || (s.balls === 1 && s.strikes === 0) || (s.balls === 0 && s.strikes === 1);
   function damage(p, q, s) {
     let total = 0.0;
+    const osp = hitTag(s, "offspeed") > 0 && isOffspeed(p.kind);   // v1.2 Part B: the coach's "hits off-speed hard" prior
     for (const key of [pclass(p.kind), keyKind(p.kind) + "|" + q]) {   // v1.0 #21: spot read per pitch kind (v1.1: keyKind)
-      if (key in s.hitter_damage) {
-        const [score, n] = s.hitter_damage[key];
-        let eff = score * n / (n + 10.0);
-        if (eff < 0 && n < 20) eff *= 0.5;
-        total += eff;
-      }
+      let score, n;
+      if (osp && key === "OS") {
+        const d = s.hitter_damage.OS || [0.0, 0];
+        const n2 = d[1] + HIT_OS_N0;
+        score = (d[0] * d[1] + HIT_OS_PRIOR * HIT_OS_N0) / n2; n = n2;
+      } else if (key in s.hitter_damage) [score, n] = s.hitter_damage[key];
+      else continue;
+      let eff = score * n / (n + 10.0);
+      if (eff < 0 && n < 20) eff *= 0.5;
+      total += eff;
     }
     return total;
+  }
+  function pathCost(p, q, s) {   // v1.2 Part B swing-path coach rule (engine.py path_cost)
+    const t = hitTag(s, "path");
+    if (!t) return 0.0;
+    const ok = (t < 0 && isFastball(p.kind) && (q === "up-in" || q === "up-away")) ||
+      (t > 0 && isOffspeed(p.kind) && ["down-in", "down-away", "down-middle", "chase"].includes(q));
+    if (!ok) return 0.0;
+    const n = (s.hitter_damage[keyKind(p.kind) + "|" + q] || [0, 0])[1];
+    return HIT_PATH_RULE * (RHO_L[s.level] ?? 1.0) * 10.0 / (n + 10.0);
   }
 
   // v0.9 item 6: earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
@@ -1125,6 +1146,7 @@ td.wrapcell .line { display: block; }
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
     const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
+    const tAppr = hitTag(s, "approach"), tPull = hitTag(s, "spray"), rhoH = RHO_L[s.level] ?? 1.0, spSide = spraySide(q);   // v1.2 Part B
     const land = landing(p, q, s);
     const [leanH, leanW] = leanHbpWp(p, q, s);   // v1.2: [1, 1] without a lean
     let [command, grade] = effective(p, s);
@@ -1148,6 +1170,7 @@ td.wrapcell .line { display: block; }
       if (offz) Z.slPost.push(ps);
       if (gr && offz) Z.slPost.push(-(gval("g_d", s.level) * ((gr.d ?? 3) - 3)));
       Z.slPost.push(sideShift(p, q, s, z, "swing"));
+      if (tAppr && isEarly(s)) Z.slPost.push(rhoH * HIT_FIT.approach * tAppr * wz);   // v1.2 Part B: early-count approach
       if (offz) Z.slPost.push(pt.chase);
       Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u + ct.cstrike + pt.cstrike) : C0[z];
       const wl = logit(W0[z]) + W_FB + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
@@ -1168,6 +1191,7 @@ td.wrapcell .line { display: block; }
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
+      if (tPull && spSide) Z.hlPost.push(rhoH * tPull * HIT_FIT["spray_hard_" + spSide]);   // v1.2 Part B: spray
       Z.hlPost.push(pt.hard);
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
@@ -1271,6 +1295,8 @@ td.wrapcell .line { display: block; }
     for (const x of arsenal) if (!(Math.abs(x.lean_x || 0) <= LEAN_MAX && Math.abs(x.lean_z || 0) <= LEAN_MAX && spreadOf(x) >= SPREAD_MIN && spreadOf(x) <= SPREAD_MAX))
       throw new Error(`miss lean / spread out of range for ${x.name}: lean ${x.lean_x || 0}, ${x.lean_z || 0} in. (limit ${LEAN_MAX}), spread ${spreadOf(x)} (${SPREAD_MIN}-${SPREAD_MAX})`);   // v1.2
     if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
+    for (const [k, v] of Object.entries(s.hitter_tags || {}))   // v1.2 Part B
+      if (!HIT_TAG_VALUES[k] || (v !== null && v !== undefined && !(v in HIT_TAG_VALUES[k]))) throw new Error(`unknown hitter tag ${k}=${v}`);
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
     if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
@@ -1424,8 +1450,11 @@ td.wrapcell .line { display: block; }
   function gbRate(p) {   // v1.1 Step 2e: grounder rate | ball in play by kind and profile (mirror of engine.py gb_rate)
     return GB_PROFILE[ptKey(p)];
   }
-  function typeMix(p, q, c) {
-    const g = sig(logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c]);
+  function typeMix(p, q, c, s) {
+    let gl = logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c];
+    const t = s ? hitTag(s, "spray") : 0;   // v1.2 Part B: a pull-heavy hitter hits fewer grounders
+    if (t && spraySide(q)) gl += (RHO_L[s.level] ?? 1.0) * t * HIT_FIT["spray_gb_" + spraySide(q)];
+    const g = sig(gl);
     const l = TYPED.nongb[c];
     return { GB: g, LD: (1 - g) * l[0], FB: (1 - g) * l[1], PU: (1 - g) * l[2] };
   }
@@ -1433,7 +1462,7 @@ td.wrapcell .line { display: block; }
     const o = s.outs, [b1, b2, b3] = s.bases, L = s.level;
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
-    const tm = typeMix(p, q, c);
+    const tm = typeMix(p, q, c, s);
     const gr = c === "hard" ? (s.grades || GRADES_OVERRIDE) : null;
     const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
@@ -1946,6 +1975,7 @@ td.wrapcell .line { display: block; }
     if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot * hotFade(p, s, arsenal);
     if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
     if (rideUp2k(p, q, s)) c += R.ride_up_2k * (RHO_L[s.level] ?? 1.0);   // v1.2 Step 5 (Q5): x RHO_L at HS / travel (engine.py)
+    c -= pathCost(p, q, s);   // v1.2 Part B
     return c;
   }
   function costFromP(p, q, s, tab, look, P, myopic) {
@@ -1987,7 +2017,7 @@ td.wrapcell .line { display: block; }
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
         (w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" +
-        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3);
+        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) + "|" + hitTag(s, "spray");   // v1.2 Part B: spray moves grounders
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
@@ -2111,14 +2141,18 @@ td.wrapcell .line { display: block; }
   function frozenInputs(arsenal, s) {
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
-    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
+    const out = { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
       infield_in: !!s.infield_in, lean: leanKey(arsenal) };
+    if (tagKey(s) !== "0,0,0,0") out.tags = tagKey(s);   // v1.2 Part B: only when a tag is set (engine.py)
+    return out;
   }
+  const tagKey = (s) => ["approach", "spray", "path", "offspeed"].map((k) => hitTag(s, k)).join(",");
   // v1.2: each pitch's lean and spread; a change re-solves the table (a frozen table from before leans = all at lean 0)
   const leanKey = (arsenal) => arsenal.map((x) => [x.lean_x || 0, x.lean_z || 0, spreadOf(x)].join(",")).join("|");
   function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
     if ((frozen.lean ?? arsenal.map(() => "0,0,1").join("|")) !== leanKey(arsenal)) return true;   // v1.2
+    if ((frozen.tags ?? "0,0,0,0") !== tagKey(s)) return true;   // v1.2 Part B
     if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
@@ -2372,7 +2406,7 @@ td.wrapcell .line { display: block; }
     v11terms: { PT_C, PT_B, PT_FBZ_W, PT_FBZ_H, PT_FBL_H, PT_PLAT, PT_CHASE_OPP, PT_CHASE_MEAN, GB_PROFILE, SLOT_ANGLE, PT_FB_IVB, SLOT_MOVE },
     classTerms,
     v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
-      LEAN_MAX, SPREAD_MIN, SPREAD_MAX } };   // v1.2 location model
+      LEAN_MAX, SPREAD_MIN, SPREAD_MAX, HIT_FIT, HIT_PATH_RULE, HIT_OS_PRIOR, HIT_OS_N0, HIT_TAG_VALUES, hitTag, pathCost, damage, typeMix } };   // v1.2 location model, Part B hitter tags
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);
@@ -3848,7 +3882,35 @@ td.wrapcell .line { display: block; }
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  // ---------------------------------------------------------------- v1.2 Part B: a hitter's early-count approach, from his own
+  // pitches (plan 2.8, "approach first"). Each early-count pitch (0-0, 1-0, 0-1) at a target in or around the zone: did he
+  // swing, against the engine's own chance that an untagged hitter swings there (same pitch, spot and situation). The
+  // standardized sum says aggressive (+) or patient (-). Needs APPR_MIN such pitches; flagged at |z| >= APPR_Z. Served only
+  // through the trait gate ("approach" isn't in ACTIVE_TRAITS: a flag). Swing path isn't learned: the public data show no
+  // outcome effect to learn it from (research_v12/hitter_fits.py). Spray stays coach-set (no ball-in-play direction is logged).
+  const APPR_MIN = 25, APPR_Z = 2.0;
+  const SWINGS = new Set(["whiff", "foul", "play"]);
+  function approachModel(E, events) {
+    let sum = 0, vr = 0, n = 0;
+    for (const ev of events) {
+      if (!isPitch(ev) || ev.deletedAt || ev.legacy || !ev.sit || !ev.ars || !ev.quad || ev.quad === "chase") continue;
+      const b = ev.sit.balls, k = ev.sit.strikes;
+      if (!((b === 0 && k === 0) || (b === 1 && k === 0) || (b === 0 && k === 1))) continue;
+      const nm = ev.thrown || ev.pitchName, ars = ev.ars.map((d) => E.Pitch(d)), p = ars.find((x) => x.name === nm);
+      if (!p || !["ball", "cstrike", "whiff", "foul", "play", "hbp"].includes(ev.res)) continue;
+      let P;
+      try { const st = Object.assign({}, ev.sit); delete st.hitter_tags; P = E.outcomeProbs(p, ev.quad, E.Situation(st), ars); } catch (e) { continue; }
+      const sw = P.whiff + P.foul + P.weak + P.solid + P.hard;
+      sum += (SWINGS.has(ev.res) ? 1 : 0) - sw; vr += sw * (1 - sw); n++;
+    }
+    const z = vr > 0 ? sum / Math.sqrt(vr) : 0;
+    const flag = n < APPR_MIN ? null : z >= APPR_Z ? "aggressive" : z <= -APPR_Z ? "patient" : null;
+    return { n, z: Math.round(z * 100) / 100, excess: n ? Math.round((sum / n) * 1000) / 1000 : 0, flag,
+      text: n < APPR_MIN ? `needs ${APPR_MIN} early-count pitches (has ${n})` : flag ? `logs say he's ${flag} early (${n} early-count pitches)` : `no clear early-count lean (${n} pitches)`,
+      served: ACTIVE_TRAITS.includes("approach") };
+  }
+
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, approachModel, APPR_MIN, APPR_Z, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame,
     leanModel, leanSample, LEAN_K, LEAN_MIN_SIDE, CELL_X, CELL_Z };   // v1.2 Step 3
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -4077,7 +4139,8 @@ td.wrapcell .line { display: block; }
     const col = (names) => head.findIndex((c) => names.includes(c));
     const ix = { name: col(["name", "player", "hitter", "playername"]), first: col(["first", "firstname"]), last: col(["last", "lastname"]), number: col(["number", "no", "num", "jersey"]),
       bats: col(["bats", "b", "hand", "bat"]), pos: col(["pos", "position"]), pa: col(["pa", "plateappearances"]), ab: col(["ab"]), avg: col(["avg", "ba"]), obp: col(["obp"]), slg: col(["slg"]),
-      k: col(["k", "so", "kpct", "k%", "sopct"]), bb: col(["bb", "bbpct", "walks"]) };
+      k: col(["k", "so", "kpct", "k%", "sopct"]), bb: col(["bb", "bbpct", "walks"]),
+      approach: col(["approach", "early"]), spray: col(["spray", "pull"]), path: col(["path", "swingpath", "swing"]), offspeed: col(["offspeed", "os"]) };   // v1.2 Part B tags
     if (ix.name < 0 && ix.last < 0) throw new Error("Needs a Name column (or First and Last).");
     const out = [];
     for (const r of all.slice(1)) {
@@ -4093,8 +4156,14 @@ td.wrapcell .line { display: block; }
       };
       const k = ix.k >= 0 ? rate(ix.k)(num(String(r[ix.k] ?? "").replace("%", ""))) : null;
       const bb = ix.bb >= 0 ? rate(ix.bb)(num(String(r[ix.bb] ?? "").replace("%", ""))) : null;
+      // v1.2 Part B: tag columns (loose words; anything else, or blank, is unknown)
+      const TAGW = { approach: { aggressive: "aggressive", aggr: "aggressive", patient: "patient" }, spray: { pull: "pull", pullheavy: "pull", oppo: "oppo", opposite: "oppo", wholefield: "oppo" },
+        path: { lift: "lift", uppercut: "lift", flat: "flat", level: "flat" }, offspeed: { hits: "hits", hitshard: "hits", yes: "hits" } };
+      const tags = {};
+      for (const k of Object.keys(TAGW)) { const v = ix[k] >= 0 ? norm(r[ix[k]] || "") : ""; if (TAGW[k][v]) tags[k] = TAGW[k][v]; }
       out.push({ name: name.trim(), number: ix.number >= 0 ? (r[ix.number] || "").trim() : "", bats: ["R", "L", "S", "B"].includes(b) ? (b === "B" ? "S" : b) : "R", pos: ix.pos >= 0 ? (r[ix.pos] || "").trim() : "",
-        stats: { pa: pa ?? "", avg: num(r[ix.avg]) ?? "", obp: num(r[ix.obp]) ?? "", slg: num(r[ix.slg]) ?? "", k_pct: k ?? "", bb_pct: bb ?? "" } });
+        stats: { pa: pa ?? "", avg: num(r[ix.avg]) ?? "", obp: num(r[ix.obp]) ?? "", slg: num(r[ix.slg]) ?? "", k_pct: k ?? "", bb_pct: bb ?? "" },
+        ...(Object.keys(tags).length ? { scoutTags: tags } : {}) });
     }
     return out;
   }
@@ -4779,7 +4848,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {}, since_thrown: {}, pa_log: [] }, o);   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
+      matchup: {}, since_thrown: {}, pa_log: [] }, o);   // v1.2 Part B: hitter_tags stays absent unless set (engine.py), so snapshots don't change   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
   }
   const replace = (s, o) => Object.assign({}, s, o);
   // v1.1 Step 1b: a pitch with no speed is his main fastball's entered speed less the profile's gap (resolveSpeeds sets
@@ -5150,17 +5219,38 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return t;
   }
 
+  // v1.2 Part B: hitter tags (mirror of engine.py HIT_FIT / HIT_PATH_RULE / HIT_OS_PRIOR; see the fits there)
+  const HIT_FIT = { approach: 0.2077, spray_hard_in: -0.0958, spray_hard_away: 0.0943, spray_gb_in: -0.1268, spray_gb_away: -0.1035 };
+  const HIT_PATH_RULE = 0.003, HIT_OS_PRIOR = 0.3, HIT_OS_N0 = 3.0;
+  const HIT_TAG_VALUES = { approach: { aggressive: 1, patient: -1 }, spray: { pull: 1, oppo: -1 }, path: { lift: 1, flat: -1 }, offspeed: { hits: 1 } };
+  const hitTag = (s, key) => (s && s.hitter_tags ? (HIT_TAG_VALUES[key][s.hitter_tags[key]] || 0) : 0);
+  const spraySide = (q) => (q === "up-in" || q === "down-in" ? "in" : q === "up-away" || q === "down-away" ? "away" : null);
+  const isEarly = (s) => (s.balls === 0 && s.strikes === 0) || (s.balls === 1 && s.strikes === 0) || (s.balls === 0 && s.strikes === 1);
   function damage(p, q, s) {
     let total = 0.0;
+    const osp = hitTag(s, "offspeed") > 0 && isOffspeed(p.kind);   // v1.2 Part B: the coach's "hits off-speed hard" prior
     for (const key of [pclass(p.kind), keyKind(p.kind) + "|" + q]) {   // v1.0 #21: spot read per pitch kind (v1.1: keyKind)
-      if (key in s.hitter_damage) {
-        const [score, n] = s.hitter_damage[key];
-        let eff = score * n / (n + 10.0);
-        if (eff < 0 && n < 20) eff *= 0.5;
-        total += eff;
-      }
+      let score, n;
+      if (osp && key === "OS") {
+        const d = s.hitter_damage.OS || [0.0, 0];
+        const n2 = d[1] + HIT_OS_N0;
+        score = (d[0] * d[1] + HIT_OS_PRIOR * HIT_OS_N0) / n2; n = n2;
+      } else if (key in s.hitter_damage) [score, n] = s.hitter_damage[key];
+      else continue;
+      let eff = score * n / (n + 10.0);
+      if (eff < 0 && n < 20) eff *= 0.5;
+      total += eff;
     }
     return total;
+  }
+  function pathCost(p, q, s) {   // v1.2 Part B swing-path coach rule (engine.py path_cost)
+    const t = hitTag(s, "path");
+    if (!t) return 0.0;
+    const ok = (t < 0 && isFastball(p.kind) && (q === "up-in" || q === "up-away")) ||
+      (t > 0 && isOffspeed(p.kind) && ["down-in", "down-away", "down-middle", "chase"].includes(q));
+    if (!ok) return 0.0;
+    const n = (s.hitter_damage[keyKind(p.kind) + "|" + q] || [0, 0])[1];
+    return HIT_PATH_RULE * (RHO_L[s.level] ?? 1.0) * 10.0 / (n + 10.0);
   }
 
   // v0.9 item 6: earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
@@ -5197,6 +5287,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
     const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
+    const tAppr = hitTag(s, "approach"), tPull = hitTag(s, "spray"), rhoH = RHO_L[s.level] ?? 1.0, spSide = spraySide(q);   // v1.2 Part B
     const land = landing(p, q, s);
     const [leanH, leanW] = leanHbpWp(p, q, s);   // v1.2: [1, 1] without a lean
     let [command, grade] = effective(p, s);
@@ -5220,6 +5311,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       if (offz) Z.slPost.push(ps);
       if (gr && offz) Z.slPost.push(-(gval("g_d", s.level) * ((gr.d ?? 3) - 3)));
       Z.slPost.push(sideShift(p, q, s, z, "swing"));
+      if (tAppr && isEarly(s)) Z.slPost.push(rhoH * HIT_FIT.approach * tAppr * wz);   // v1.2 Part B: early-count approach
       if (offz) Z.slPost.push(pt.chase);
       Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u + ct.cstrike + pt.cstrike) : C0[z];
       const wl = logit(W0[z]) + W_FB + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
@@ -5240,6 +5332,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
+      if (tPull && spSide) Z.hlPost.push(rhoH * tPull * HIT_FIT["spray_hard_" + spSide]);   // v1.2 Part B: spray
       Z.hlPost.push(pt.hard);
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
@@ -5343,6 +5436,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     for (const x of arsenal) if (!(Math.abs(x.lean_x || 0) <= LEAN_MAX && Math.abs(x.lean_z || 0) <= LEAN_MAX && spreadOf(x) >= SPREAD_MIN && spreadOf(x) <= SPREAD_MAX))
       throw new Error(`miss lean / spread out of range for ${x.name}: lean ${x.lean_x || 0}, ${x.lean_z || 0} in. (limit ${LEAN_MAX}), spread ${spreadOf(x)} (${SPREAD_MIN}-${SPREAD_MAX})`);   // v1.2
     if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
+    for (const [k, v] of Object.entries(s.hitter_tags || {}))   // v1.2 Part B
+      if (!HIT_TAG_VALUES[k] || (v !== null && v !== undefined && !(v in HIT_TAG_VALUES[k]))) throw new Error(`unknown hitter tag ${k}=${v}`);
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
     if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
@@ -5496,8 +5591,11 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function gbRate(p) {   // v1.1 Step 2e: grounder rate | ball in play by kind and profile (mirror of engine.py gb_rate)
     return GB_PROFILE[ptKey(p)];
   }
-  function typeMix(p, q, c) {
-    const g = sig(logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c]);
+  function typeMix(p, q, c, s) {
+    let gl = logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c];
+    const t = s ? hitTag(s, "spray") : 0;   // v1.2 Part B: a pull-heavy hitter hits fewer grounders
+    if (t && spraySide(q)) gl += (RHO_L[s.level] ?? 1.0) * t * HIT_FIT["spray_gb_" + spraySide(q)];
+    const g = sig(gl);
     const l = TYPED.nongb[c];
     return { GB: g, LD: (1 - g) * l[0], FB: (1 - g) * l[1], PU: (1 - g) * l[2] };
   }
@@ -5505,7 +5603,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const o = s.outs, [b1, b2, b3] = s.bases, L = s.level;
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
-    const tm = typeMix(p, q, c);
+    const tm = typeMix(p, q, c, s);
     const gr = c === "hard" ? (s.grades || GRADES_OVERRIDE) : null;
     const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
@@ -6018,6 +6116,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot * hotFade(p, s, arsenal);
     if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
     if (rideUp2k(p, q, s)) c += R.ride_up_2k * (RHO_L[s.level] ?? 1.0);   // v1.2 Step 5 (Q5): x RHO_L at HS / travel (engine.py)
+    c -= pathCost(p, q, s);   // v1.2 Part B
     return c;
   }
   function costFromP(p, q, s, tab, look, P, myopic) {
@@ -6059,7 +6158,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
         (w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" +
-        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3);
+        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) + "|" + hitTag(s, "spray");   // v1.2 Part B: spray moves grounders
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
@@ -6183,14 +6282,18 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   function frozenInputs(arsenal, s) {
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
-    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
+    const out = { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
       infield_in: !!s.infield_in, lean: leanKey(arsenal) };
+    if (tagKey(s) !== "0,0,0,0") out.tags = tagKey(s);   // v1.2 Part B: only when a tag is set (engine.py)
+    return out;
   }
+  const tagKey = (s) => ["approach", "spray", "path", "offspeed"].map((k) => hitTag(s, k)).join(",");
   // v1.2: each pitch's lean and spread; a change re-solves the table (a frozen table from before leans = all at lean 0)
   const leanKey = (arsenal) => arsenal.map((x) => [x.lean_x || 0, x.lean_z || 0, spreadOf(x)].join(",")).join("|");
   function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
     if ((frozen.lean ?? arsenal.map(() => "0,0,1").join("|")) !== leanKey(arsenal)) return true;   // v1.2
+    if ((frozen.tags ?? "0,0,0,0") !== tagKey(s)) return true;   // v1.2 Part B
     if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
@@ -6444,7 +6547,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     v11terms: { PT_C, PT_B, PT_FBZ_W, PT_FBZ_H, PT_FBL_H, PT_PLAT, PT_CHASE_OPP, PT_CHASE_MEAN, GB_PROFILE, SLOT_ANGLE, PT_FB_IVB, SLOT_MOVE },
     classTerms,
     v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
-      LEAN_MAX, SPREAD_MIN, SPREAD_MAX } };   // v1.2 location model
+      LEAN_MAX, SPREAD_MIN, SPREAD_MAX, HIT_FIT, HIT_PATH_RULE, HIT_OS_PRIOR, HIT_OS_N0, HIT_TAG_VALUES, hitTag, pathCost, damage, typeMix } };   // v1.2 location model, Part B hitter tags
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);
@@ -7287,7 +7390,35 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  // ---------------------------------------------------------------- v1.2 Part B: a hitter's early-count approach, from his own
+  // pitches (plan 2.8, "approach first"). Each early-count pitch (0-0, 1-0, 0-1) at a target in or around the zone: did he
+  // swing, against the engine's own chance that an untagged hitter swings there (same pitch, spot and situation). The
+  // standardized sum says aggressive (+) or patient (-). Needs APPR_MIN such pitches; flagged at |z| >= APPR_Z. Served only
+  // through the trait gate ("approach" isn't in ACTIVE_TRAITS: a flag). Swing path isn't learned: the public data show no
+  // outcome effect to learn it from (research_v12/hitter_fits.py). Spray stays coach-set (no ball-in-play direction is logged).
+  const APPR_MIN = 25, APPR_Z = 2.0;
+  const SWINGS = new Set(["whiff", "foul", "play"]);
+  function approachModel(E, events) {
+    let sum = 0, vr = 0, n = 0;
+    for (const ev of events) {
+      if (!isPitch(ev) || ev.deletedAt || ev.legacy || !ev.sit || !ev.ars || !ev.quad || ev.quad === "chase") continue;
+      const b = ev.sit.balls, k = ev.sit.strikes;
+      if (!((b === 0 && k === 0) || (b === 1 && k === 0) || (b === 0 && k === 1))) continue;
+      const nm = ev.thrown || ev.pitchName, ars = ev.ars.map((d) => E.Pitch(d)), p = ars.find((x) => x.name === nm);
+      if (!p || !["ball", "cstrike", "whiff", "foul", "play", "hbp"].includes(ev.res)) continue;
+      let P;
+      try { const st = Object.assign({}, ev.sit); delete st.hitter_tags; P = E.outcomeProbs(p, ev.quad, E.Situation(st), ars); } catch (e) { continue; }
+      const sw = P.whiff + P.foul + P.weak + P.solid + P.hard;
+      sum += (SWINGS.has(ev.res) ? 1 : 0) - sw; vr += sw * (1 - sw); n++;
+    }
+    const z = vr > 0 ? sum / Math.sqrt(vr) : 0;
+    const flag = n < APPR_MIN ? null : z >= APPR_Z ? "aggressive" : z <= -APPR_Z ? "patient" : null;
+    return { n, z: Math.round(z * 100) / 100, excess: n ? Math.round((sum / n) * 1000) / 1000 : 0, flag,
+      text: n < APPR_MIN ? `needs ${APPR_MIN} early-count pitches (has ${n})` : flag ? `logs say he's ${flag} early (${n} early-count pitches)` : `no clear early-count lean (${n} pitches)`,
+      served: ACTIVE_TRAITS.includes("approach") };
+  }
+
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, approachModel, APPR_MIN, APPR_Z, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame,
     leanModel, leanSample, LEAN_K, LEAN_MIN_SIDE, CELL_X, CELL_Z };   // v1.2 Step 3
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -7565,6 +7696,16 @@ function hitterGrades(bd) {   // coach's grades, then what's been learned (serve
   const out = {}; for (const g of ["c", "w", "d"]) if (coach[g] !== undefined && coach[g] !== "" && +coach[g] !== 3) out[g] = +coach[g];
   return Object.keys(out).length ? out : null;
 }
+// v1.2 Part B: the coach's hitter tags (plan 2.8), from his roster record or the lineup slot; null when none is set
+const TAG_ROWS = [["approach", "Early counts", [["aggressive", "Aggressive (swings early)"], ["patient", "Patient (takes early)"]]],
+  ["spray", "Spray", [["pull", "Pull-heavy"], ["oppo", "Uses the whole field"]]],
+  ["path", "Swing path", [["lift", "Lift / uppercut"], ["flat", "Flat / level"]]],
+  ["offspeed", "Off-speed", [["hits", "Hits it hard"]]]];
+function hitterTags(bd) {
+  const b = bd || batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null, t = (x && x.scoutTags) || b.scoutTags || {};   // stored as scoutTags (the hitter doc's old tags: [] is unused)
+  const out = {}; for (const [k, , opts] of TAG_ROWS) if (opts.some(([v]) => v === t[k])) out[k] = t[k];
+  return Object.keys(out).length ? out : null;
+}
 const UMP_SEED = { tight: -0.4, normal: 0, wide: 0.4 };
 const umpSeed = () => UMP_SEED[S.setup.umpSeed || "normal"] ?? 0;
 function radarFor(pk) {   // 8.1: with at least 3 readings today, (5 v_base + sum of the last 8) / (5 + n)
@@ -7584,7 +7725,8 @@ function stealFor() {   // 7.4: the lead runner who can go (1st with 2nd open, o
 }
 function v08Inputs() {
   const g = G(), pd = pitcherDef(), b = batterDef() || {}, x = DB.ready && b.hitterId ? DB.hitters.get(b.hitterId) : null;
-  return { familiar: famFor(), matchup: mmFor(), crowding: !!((x && x.crowd) || b.crowd), grades: hitterGrades(),
+  const tags = hitterTags();   // v1.2 Part B: passed only when set
+  return { ...(tags ? { hitter_tags: tags } : {}), familiar: famFor(), matchup: mmFor(), crowding: !!((x && x.crowd) || b.crowd), grades: hitterGrades(),
     ump_u: E.v08.umpEstimate(g.takes || [], S.setup.level, umpSeed()), radar: radarFor(pKey()), infield_in: !!g.infieldIn,
     usage_by_call: Object.assign({}, ((g.usageCall || {})[pKey()] || {})[g.balls + "-" + g.strikes] || {}), steal: stealFor(),
     pitch_cap: +pd.pitchCap || 105, home: S.setup.home === undefined ? null : S.setup.home, sched_innings: +S.setup.innings || null,
@@ -8814,7 +8956,8 @@ function packContents() {
   const tid = S.setup.opponentId, roster = tid ? teamHitters(tid) : [];
   const hitters = {};
   for (const x of roster) { const m = hModel(x.id); hitters[x.id] = { name: x.name, bats: x.bats, damage: m ? JSON.parse(JSON.stringify(m.damage)) : null,
-    grades: x.grades ? Object.assign({}, x.grades) : null, crowd: !!x.crowd, learnedGrades: m && m.grades ? JSON.parse(JSON.stringify(m.grades)) : null }; }
+    grades: x.grades ? Object.assign({}, x.grades) : null, crowd: !!x.crowd, learnedGrades: m && m.grades ? JSON.parse(JSON.stringify(m.grades)) : null,
+    ...(x.scoutTags ? { scoutTags: Object.assign({}, x.scoutTags) } : {}) }; }   // v1.2 Part B: only when set
   const c = S.setup.catcherId && DB.catchers.get(S.setup.catcherId);
   return { staff, catcher: c ? { id: c.id, block: +c.block || 3 } : null, opponentId: tid || null, hitters,
     lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
@@ -9298,7 +9441,9 @@ function teamPanel(t) {
           let added = 0, updated = 0;
           for (const x of list) {
             const ex = teamHitters(t.id).find((y) => y.name.toLowerCase() === x.name.toLowerCase());
-            if (ex) { Object.assign(ex, { number: x.number || ex.number, bats: x.bats, pos: x.pos || ex.pos, stats: Object.assign({}, ex.stats, x.stats) }); await dbPut("hitters", ex); updated++; }
+            if (ex) { Object.assign(ex, { number: x.number || ex.number, bats: x.bats, pos: x.pos || ex.pos, stats: Object.assign({}, ex.stats, x.stats) });
+              if (x.scoutTags) ex.scoutTags = Object.assign({}, ex.scoutTags, x.scoutTags);   // v1.2 Part B: a sheet's tag columns fill in (blank cells keep his tags)
+              await dbPut("hitters", ex); updated++; }
             else { const nh = await dbPut("hitters", PCDB.newHitter(t.id, x)); DB.hitters.set(nh.id, nh); added++; }
           }
           render(); toast(`${added} hitter${added === 1 ? "" : "s"} added, ${updated} updated`);
@@ -9308,7 +9453,7 @@ function teamPanel(t) {
         if (!confirmTwice(t.id)) { toast(`Tap again to remove ${t.name}. Charted pitches against them stay.`); return; }
         await DB.D.del("teams", t.id); DB.teams.delete(t.id); if (S.setup.opponentId === t.id) useOpponent(null); teamSel = null; render();
       } } }, "Remove opponent")),
-    h("p", { class: "note" }, "Import a sheet with Name, #, Bats, PA, AVG, OBP, SLG, K or K%, BB or BB% columns (any order). Hitters already here are updated by name."));
+    h("p", { class: "note" }, "Import a sheet with Name, #, Bats, PA, AVG, OBP, SLG, K or K%, BB or BB% columns (any order), and optional tag columns: Approach (aggressive / patient), Spray (pull / oppo), Path (lift / flat), Offspeed (hits). Hitters already here are updated by name."));
 }
 
 function hittersEditor(t) {
@@ -9333,7 +9478,7 @@ function hittersEditor(t) {
         h("td", {}, h("div", { class: "hands", role: "group", "aria-label": "Bats" }, ["R", "L", "S"].map((v) => h("button", { "aria-pressed": String(x.bats === v), on: { click: () => { x.bats = v; dbPut("hitters", x); syncLineupHands(); render(); } } }, v)))),
         h("td", {}, stat(x, "pa", 1, "", "68px")), h("td", {}, stat(x, "avg", 0.001, ".280", "76px")), h("td", {}, stat(x, "obp", 0.001, ".380", "76px")), h("td", {}, stat(x, "slg", 0.001, ".420", "76px")),
         h("td", {}, stat(x, "k_pct", 0.1, "18", "68px")), h("td", {}, stat(x, "bb_pct", 0.1, "10", "68px")),
-        h("td", { class: "wrapcell" }, know(x)),
+        h("td", { class: "wrapcell" }, know(x), tagInputs(x, x.name || "Hitter", () => dbPut("hitters", x))),   // v1.2 Part B: the coach's tags
         h("td", {}, h("button", { class: "x", "aria-label": `Remove ${x.name}`, on: { click: async () => { if (!confirmTwice("rmh:" + x.id)) { toast(`Tap × again to remove ${x.name}`); return; } await DB.D.del("hitters", x.id); DB.hitters.delete(x.id); render(); } } }, "×"))))
         : h("tr", { class: "empty-row" }, h("td", { colspan: "11" }, "No hitters yet. Add them here, import a sheet, or type names into the lineup in Setup."))))),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => { const nh = await dbPut("hitters", PCDB.newHitter(t.id, { name: `Hitter ${hs.length + 1}` })); DB.hitters.set(nh.id, nh); render(); } } }, "Add a hitter")),
@@ -10211,7 +10356,17 @@ function hitterGradeInputs(b, i, changed) {
     [["c", "Contact"], ["w", "Power"], ["d", "Eye"]].map(([k, l]) => h("label", { class: "g" }, l,
       h("select", { "aria-label": `Hitter ${i + 1} ${l.toLowerCase()} grade`, on: { change: (e) => { rec.grades[k] = +e.target.value; put(); } } },
         [1, 2, 3, 4, 5].map((v) => h("option", { value: v, selected: (+rec.grades[k] || 3) === v ? true : null }, String(v)))))),
-    h("label", { class: "check" }, h("input", { type: "checkbox", checked: rec.crowd ? true : null, on: { change: (e) => { rec.crowd = e.target.checked; put(); } } }), "Crowds the plate"));
+    h("label", { class: "check" }, h("input", { type: "checkbox", checked: rec.crowd ? true : null, on: { change: (e) => { rec.crowd = e.target.checked; put(); } } }), "Crowds the plate"),
+    tagInputs(rec, `Hitter ${i + 1}`, put));
+}
+// v1.2 Part B: four tag rows, unknown by default; only set tags are stored
+function tagInputs(rec, who, put) {
+  return h("div", { class: "htags" }, TAG_ROWS.map(([k, label, opts]) => h("label", { class: "g" }, label,
+    h("select", { "aria-label": `${who} ${label.toLowerCase()}`, on: { change: (e) => {
+      const t = Object.assign({}, rec.scoutTags); if (e.target.value) t[k] = e.target.value; else delete t[k];
+      if (Object.keys(t).length) rec.scoutTags = t; else delete rec.scoutTags; put(); } } },
+      [h("option", { value: "", selected: !(rec.scoutTags && rec.scoutTags[k]) ? true : null }, "Unknown")].concat(opts.map(([v, t]) =>
+        h("option", { value: v, selected: rec.scoutTags && rec.scoutTags[k] === v ? true : null }, t)))))));
 }
 function staffPick() {
   const list = rosterPitchers();

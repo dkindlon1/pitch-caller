@@ -124,7 +124,7 @@
       // v0.8 inputs (inert at their defaults, so v0.7c callers are unchanged)
       sit_sigma: null, look: null, familiar: {}, crowding: false, grades: null, ump_u: 0.0, radar: {}, infield_in: false,
       win: null, usage_by_call: {}, b_h: {}, steal: null, pitch_cap: 105, home: null, sched_innings: null, extras_runner: false,
-      matchup: {}, since_thrown: {}, pa_log: [] }, o);   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
+      matchup: {}, since_thrown: {}, pa_log: [], hitter_tags: null }, o);   // v1.2 Part B: hitter_tags (engine.py)   // v0.9 item 6; v1.1 since_thrown: his pitches since he last threw each pitch today
   }
   const replace = (s, o) => Object.assign({}, s, o);
   // v1.1 Step 1b: a pitch with no speed is his main fastball's entered speed less the profile's gap (resolveSpeeds sets
@@ -495,17 +495,38 @@
     return t;
   }
 
+  // v1.2 Part B: hitter tags (mirror of engine.py HIT_FIT / HIT_PATH_RULE / HIT_OS_PRIOR; see the fits there)
+  const HIT_FIT = { approach: 0.2077, spray_hard_in: -0.0958, spray_hard_away: 0.0943, spray_gb_in: -0.1268, spray_gb_away: -0.1035 };
+  const HIT_PATH_RULE = 0.003, HIT_OS_PRIOR = 0.3, HIT_OS_N0 = 3.0;
+  const HIT_TAG_VALUES = { approach: { aggressive: 1, patient: -1 }, spray: { pull: 1, oppo: -1 }, path: { lift: 1, flat: -1 }, offspeed: { hits: 1 } };
+  const hitTag = (s, key) => (s && s.hitter_tags ? (HIT_TAG_VALUES[key][s.hitter_tags[key]] || 0) : 0);
+  const spraySide = (q) => (q === "up-in" || q === "down-in" ? "in" : q === "up-away" || q === "down-away" ? "away" : null);
+  const isEarly = (s) => (s.balls === 0 && s.strikes === 0) || (s.balls === 1 && s.strikes === 0) || (s.balls === 0 && s.strikes === 1);
   function damage(p, q, s) {
     let total = 0.0;
+    const osp = hitTag(s, "offspeed") > 0 && isOffspeed(p.kind);   // v1.2 Part B: the coach's "hits off-speed hard" prior
     for (const key of [pclass(p.kind), keyKind(p.kind) + "|" + q]) {   // v1.0 #21: spot read per pitch kind (v1.1: keyKind)
-      if (key in s.hitter_damage) {
-        const [score, n] = s.hitter_damage[key];
-        let eff = score * n / (n + 10.0);
-        if (eff < 0 && n < 20) eff *= 0.5;
-        total += eff;
-      }
+      let score, n;
+      if (osp && key === "OS") {
+        const d = s.hitter_damage.OS || [0.0, 0];
+        const n2 = d[1] + HIT_OS_N0;
+        score = (d[0] * d[1] + HIT_OS_PRIOR * HIT_OS_N0) / n2; n = n2;
+      } else if (key in s.hitter_damage) [score, n] = s.hitter_damage[key];
+      else continue;
+      let eff = score * n / (n + 10.0);
+      if (eff < 0 && n < 20) eff *= 0.5;
+      total += eff;
     }
     return total;
+  }
+  function pathCost(p, q, s) {   // v1.2 Part B swing-path coach rule (engine.py path_cost)
+    const t = hitTag(s, "path");
+    if (!t) return 0.0;
+    const ok = (t < 0 && isFastball(p.kind) && (q === "up-in" || q === "up-away")) ||
+      (t > 0 && isOffspeed(p.kind) && ["down-in", "down-away", "down-middle", "chase"].includes(q));
+    if (!ok) return 0.0;
+    const n = (s.hitter_damage[keyKind(p.kind) + "|" + q] || [0, 0])[1];
+    return HIT_PATH_RULE * (RHO_L[s.level] ?? 1.0) * 10.0 / (n + 10.0);
   }
 
   // v0.9 item 6: earlier trips today move whiff | swing (engine.py matchup_whiff; Step 3 fits M1, M2)
@@ -542,6 +563,7 @@
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
     const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
+    const tAppr = hitTag(s, "approach"), tPull = hitTag(s, "spray"), rhoH = RHO_L[s.level] ?? 1.0, spSide = spraySide(q);   // v1.2 Part B
     const land = landing(p, q, s);
     const [leanH, leanW] = leanHbpWp(p, q, s);   // v1.2: [1, 1] without a lean
     let [command, grade] = effective(p, s);
@@ -565,6 +587,7 @@
       if (offz) Z.slPost.push(ps);
       if (gr && offz) Z.slPost.push(-(gval("g_d", s.level) * ((gr.d ?? 3) - 3)));
       Z.slPost.push(sideShift(p, q, s, z, "swing"));
+      if (tAppr && isEarly(s)) Z.slPost.push(rhoH * HIT_FIT.approach * tAppr * wz);   // v1.2 Part B: early-count approach
       if (offz) Z.slPost.push(pt.chase);
       Z.C = (z === "edge" || z === "off") ? sig(logit(C0[z]) + A.cs + countKappa(s.balls, s.strikes, s.level) + s.ump_u + ct.cstrike + pt.cstrike) : C0[z];
       const wl = logit(W0[z]) + W_FB + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6);
@@ -585,6 +608,7 @@
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
+      if (tPull && spSide) Z.hlPost.push(rhoH * tPull * HIT_FIT["spray_hard_" + spSide]);   // v1.2 Part B: spray
       Z.hlPost.push(pt.hard);
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
@@ -688,6 +712,8 @@
     for (const x of arsenal) if (!(Math.abs(x.lean_x || 0) <= LEAN_MAX && Math.abs(x.lean_z || 0) <= LEAN_MAX && spreadOf(x) >= SPREAD_MIN && spreadOf(x) <= SPREAD_MAX))
       throw new Error(`miss lean / spread out of range for ${x.name}: lean ${x.lean_x || 0}, ${x.lean_z || 0} in. (limit ${LEAN_MAX}), spread ${spreadOf(x)} (${SPREAD_MIN}-${SPREAD_MAX})`);   // v1.2
     if (!D.LEVEL[s.level] || !D.RE[s.level]) throw new Error(`unknown level "${s.level}"`);
+    for (const [k, v] of Object.entries(s.hitter_tags || {}))   // v1.2 Part B
+      if (!HIT_TAG_VALUES[k] || (v !== null && v !== undefined && !(v in HIT_TAG_VALUES[k]))) throw new Error(`unknown hitter tag ${k}=${v}`);
     if (!(s.balls >= 0 && s.balls <= 3 && s.strikes >= 0 && s.strikes <= 2)) throw new Error(`impossible count ${s.balls}-${s.strikes}`);
     if (!(s.outs >= 0 && s.outs <= 2)) throw new Error(`impossible number of outs ${s.outs}`);
     if (!s.bases || s.bases.length !== 3) throw new Error("bases must be three flags (1st, 2nd, 3rd)");
@@ -841,8 +867,11 @@
   function gbRate(p) {   // v1.1 Step 2e: grounder rate | ball in play by kind and profile (mirror of engine.py gb_rate)
     return GB_PROFILE[ptKey(p)];
   }
-  function typeMix(p, q, c) {
-    const g = sig(logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c]);
+  function typeMix(p, q, c, s) {
+    let gl = logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c];
+    const t = s ? hitTag(s, "spray") : 0;   // v1.2 Part B: a pull-heavy hitter hits fewer grounders
+    if (t && spraySide(q)) gl += (RHO_L[s.level] ?? 1.0) * t * HIT_FIT["spray_gb_" + spraySide(q)];
+    const g = sig(gl);
     const l = TYPED.nongb[c];
     return { GB: g, LD: (1 - g) * l[0], FB: (1 - g) * l[1], PU: (1 - g) * l[2] };
   }
@@ -850,7 +879,7 @@
     const o = s.outs, [b1, b2, b3] = s.bases, L = s.level;
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
-    const tm = typeMix(p, q, c);
+    const tm = typeMix(p, q, c, s);
     const gr = c === "hard" ? (s.grades || GRADES_OVERRIDE) : null;
     const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
@@ -1363,6 +1392,7 @@
     if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot * hotFade(p, s, arsenal);
     if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
     if (rideUp2k(p, q, s)) c += R.ride_up_2k * (RHO_L[s.level] ?? 1.0);   // v1.2 Step 5 (Q5): x RHO_L at HS / travel (engine.py)
+    c -= pathCost(p, q, s);   // v1.2 Part B
     return c;
   }
   function costFromP(p, q, s, tab, look, P, myopic) {
@@ -1404,7 +1434,7 @@
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
         (w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" +
-        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3);
+        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) + "|" + hitTag(s, "spray");   // v1.2 Part B: spray moves grounders
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
@@ -1528,14 +1558,18 @@
   function frozenInputs(arsenal, s) {
     const conf = {}, wild = {};
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
-    return { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
+    const out = { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
       infield_in: !!s.infield_in, lean: leanKey(arsenal) };
+    if (tagKey(s) !== "0,0,0,0") out.tags = tagKey(s);   // v1.2 Part B: only when a tag is set (engine.py)
+    return out;
   }
+  const tagKey = (s) => ["approach", "spray", "path", "offspeed"].map((k) => hitTag(s, k)).join(",");
   // v1.2: each pitch's lean and spread; a change re-solves the table (a frozen table from before leans = all at lean 0)
   const leanKey = (arsenal) => arsenal.map((x) => [x.lean_x || 0, x.lean_z || 0, spreadOf(x)].join(",")).join("|");
   function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
     if ((frozen.lean ?? arsenal.map(() => "0,0,1").join("|")) !== leanKey(arsenal)) return true;   // v1.2
+    if ((frozen.tags ?? "0,0,0,0") !== tagKey(s)) return true;   // v1.2 Part B
     if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;
@@ -1789,7 +1823,7 @@
     v11terms: { PT_C, PT_B, PT_FBZ_W, PT_FBZ_H, PT_FBL_H, PT_PLAT, PT_CHASE_OPP, PT_CHASE_MEAN, GB_PROFILE, SLOT_ANGLE, PT_FB_IVB, SLOT_MOVE },
     classTerms,
     v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
-      LEAN_MAX, SPREAD_MIN, SPREAD_MAX } };   // v1.2 location model
+      LEAN_MAX, SPREAD_MIN, SPREAD_MAX, HIT_FIT, HIT_PATH_RULE, HIT_OS_PRIOR, HIT_OS_N0, HIT_TAG_VALUES, hitTag, pathCost, damage, typeMix } };   // v1.2 location model, Part B hitter tags
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);

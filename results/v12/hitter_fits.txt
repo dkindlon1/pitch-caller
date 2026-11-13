@@ -1,0 +1,25 @@
+== v1.2 Step B1: hitter channels (plan 2.8)
+  2024: 172,531 pitches, 44 days, 593 games
+  2025: 165,376 pitches, 44 days, 572 games
+  2026: 165,469 pitches, 44 days, 564 games
+
+== persistence on the pitch sample (hitters in both seasons; r, n; full season by Spearman-Brown x4, an estimate)
+  tilt       2024-2025 r 0.92 (n 402) | 2025-2026 r 0.93 (n 405)
+  tilt_adj   2024-2025 r 0.91 (n 402) | 2025-2026 r 0.90 (n 405)
+  pull       2024-2025 r 0.69 (n 305) | 2025-2026 r 0.69 (n 298)
+  approach   2024-2025 r 0.52 (n 216), full-season est 0.81 | 2025-2026 r 0.58 (n 202), full-season est 0.84
+  offspeed   2024-2025 r 0.03 (n 205), full-season est 0.12 | 2025-2026 r 0.10 (n 200), full-season est 0.32
+
+== channels: fitted on 2024 traits -> 2025 pitches, held out on 2025 traits -> 2026 pitches
+  path: fastball whiff | swing       train n  39,207  test n  38,980  held-out gain     -1.3 (boot SD    0.8) no; channel coef path_hz -0.018, path_hz_ride +0.025
+  path: fastball hard | in play      train n  14,835  test n  14,711  held-out gain     -0.3 (boot SD    2.6) no; channel coef path_hz -0.147, path_hz_ride +0.042
+  path: off-speed whiff | swing (down) train n  31,902  test n  30,831  held-out gain      0.3 (boot SD    0.6) no; channel coef path_down +0.012
+  approach: early in-zone swing      train n  38,036  test n  35,310  held-out gain     91.7 (boot SD   14.0) SHIPS; channel coef appr +0.208
+  offspeed: off-speed hard | in play train n  11,467  test n  10,752  held-out gain     -0.1 (boot SD    0.0) no; channel coef osh +0.001
+  spray: hard | in play, in / away   train n  26,302  test n  25,463  held-out gain      8.5 (boot SD    4.1) SHIPS; channel coef pull_in -0.096, pull_aw +0.094
+  spray: ground ball | in play, in / away train n  26,302  test n  25,463  held-out gain     21.6 (boot SD    5.2) SHIPS; channel coef pull_in -0.127, pull_aw -0.103
+
+== what one tag step means on the test season (top third vs unknown), for the channels that ship
+  approach_swing: appr +0.208
+  spray_hard: pull_in -0.096, pull_aw +0.094
+  spray_gb: pull_in -0.127, pull_aw -0.103

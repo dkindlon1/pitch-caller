@@ -290,7 +290,8 @@ function packContents() {
   const tid = S.setup.opponentId, roster = tid ? teamHitters(tid) : [];
   const hitters = {};
   for (const x of roster) { const m = hModel(x.id); hitters[x.id] = { name: x.name, bats: x.bats, damage: m ? JSON.parse(JSON.stringify(m.damage)) : null,
-    grades: x.grades ? Object.assign({}, x.grades) : null, crowd: !!x.crowd, learnedGrades: m && m.grades ? JSON.parse(JSON.stringify(m.grades)) : null }; }
+    grades: x.grades ? Object.assign({}, x.grades) : null, crowd: !!x.crowd, learnedGrades: m && m.grades ? JSON.parse(JSON.stringify(m.grades)) : null,
+    ...(x.scoutTags ? { scoutTags: Object.assign({}, x.scoutTags) } : {}) }; }   // v1.2 Part B: only when set
   const c = S.setup.catcherId && DB.catchers.get(S.setup.catcherId);
   return { staff, catcher: c ? { id: c.id, block: +c.block || 3 } : null, opponentId: tid || null, hitters,
     lineup: S.setup.lineup.map((b) => ({ hitterId: b.hitterId || null, name: b.name, hand: b.hand })),
@@ -774,7 +775,9 @@ function teamPanel(t) {
           let added = 0, updated = 0;
           for (const x of list) {
             const ex = teamHitters(t.id).find((y) => y.name.toLowerCase() === x.name.toLowerCase());
-            if (ex) { Object.assign(ex, { number: x.number || ex.number, bats: x.bats, pos: x.pos || ex.pos, stats: Object.assign({}, ex.stats, x.stats) }); await dbPut("hitters", ex); updated++; }
+            if (ex) { Object.assign(ex, { number: x.number || ex.number, bats: x.bats, pos: x.pos || ex.pos, stats: Object.assign({}, ex.stats, x.stats) });
+              if (x.scoutTags) ex.scoutTags = Object.assign({}, ex.scoutTags, x.scoutTags);   // v1.2 Part B: a sheet's tag columns fill in (blank cells keep his tags)
+              await dbPut("hitters", ex); updated++; }
             else { const nh = await dbPut("hitters", PCDB.newHitter(t.id, x)); DB.hitters.set(nh.id, nh); added++; }
           }
           render(); toast(`${added} hitter${added === 1 ? "" : "s"} added, ${updated} updated`);
@@ -784,7 +787,7 @@ function teamPanel(t) {
         if (!confirmTwice(t.id)) { toast(`Tap again to remove ${t.name}. Charted pitches against them stay.`); return; }
         await DB.D.del("teams", t.id); DB.teams.delete(t.id); if (S.setup.opponentId === t.id) useOpponent(null); teamSel = null; render();
       } } }, "Remove opponent")),
-    h("p", { class: "note" }, "Import a sheet with Name, #, Bats, PA, AVG, OBP, SLG, K or K%, BB or BB% columns (any order). Hitters already here are updated by name."));
+    h("p", { class: "note" }, "Import a sheet with Name, #, Bats, PA, AVG, OBP, SLG, K or K%, BB or BB% columns (any order), and optional tag columns: Approach (aggressive / patient), Spray (pull / oppo), Path (lift / flat), Offspeed (hits). Hitters already here are updated by name."));
 }
 
 function hittersEditor(t) {
@@ -809,7 +812,7 @@ function hittersEditor(t) {
         h("td", {}, h("div", { class: "hands", role: "group", "aria-label": "Bats" }, ["R", "L", "S"].map((v) => h("button", { "aria-pressed": String(x.bats === v), on: { click: () => { x.bats = v; dbPut("hitters", x); syncLineupHands(); render(); } } }, v)))),
         h("td", {}, stat(x, "pa", 1, "", "68px")), h("td", {}, stat(x, "avg", 0.001, ".280", "76px")), h("td", {}, stat(x, "obp", 0.001, ".380", "76px")), h("td", {}, stat(x, "slg", 0.001, ".420", "76px")),
         h("td", {}, stat(x, "k_pct", 0.1, "18", "68px")), h("td", {}, stat(x, "bb_pct", 0.1, "10", "68px")),
-        h("td", { class: "wrapcell" }, know(x)),
+        h("td", { class: "wrapcell" }, know(x), tagInputs(x, x.name || "Hitter", () => dbPut("hitters", x))),   // v1.2 Part B: the coach's tags
         h("td", {}, h("button", { class: "x", "aria-label": `Remove ${x.name}`, on: { click: async () => { if (!confirmTwice("rmh:" + x.id)) { toast(`Tap × again to remove ${x.name}`); return; } await DB.D.del("hitters", x.id); DB.hitters.delete(x.id); render(); } } }, "×"))))
         : h("tr", { class: "empty-row" }, h("td", { colspan: "11" }, "No hitters yet. Add them here, import a sheet, or type names into the lineup in Setup."))))),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: async () => { const nh = await dbPut("hitters", PCDB.newHitter(t.id, { name: `Hitter ${hs.length + 1}` })); DB.hitters.set(nh.id, nh); render(); } } }, "Add a hitter")),

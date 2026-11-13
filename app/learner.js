@@ -836,7 +836,35 @@
     return out;
   }
 
-  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
+  // ---------------------------------------------------------------- v1.2 Part B: a hitter's early-count approach, from his own
+  // pitches (plan 2.8, "approach first"). Each early-count pitch (0-0, 1-0, 0-1) at a target in or around the zone: did he
+  // swing, against the engine's own chance that an untagged hitter swings there (same pitch, spot and situation). The
+  // standardized sum says aggressive (+) or patient (-). Needs APPR_MIN such pitches; flagged at |z| >= APPR_Z. Served only
+  // through the trait gate ("approach" isn't in ACTIVE_TRAITS: a flag). Swing path isn't learned: the public data show no
+  // outcome effect to learn it from (research_v12/hitter_fits.py). Spray stays coach-set (no ball-in-play direction is logged).
+  const APPR_MIN = 25, APPR_Z = 2.0;
+  const SWINGS = new Set(["whiff", "foul", "play"]);
+  function approachModel(E, events) {
+    let sum = 0, vr = 0, n = 0;
+    for (const ev of events) {
+      if (!isPitch(ev) || ev.deletedAt || ev.legacy || !ev.sit || !ev.ars || !ev.quad || ev.quad === "chase") continue;
+      const b = ev.sit.balls, k = ev.sit.strikes;
+      if (!((b === 0 && k === 0) || (b === 1 && k === 0) || (b === 0 && k === 1))) continue;
+      const nm = ev.thrown || ev.pitchName, ars = ev.ars.map((d) => E.Pitch(d)), p = ars.find((x) => x.name === nm);
+      if (!p || !["ball", "cstrike", "whiff", "foul", "play", "hbp"].includes(ev.res)) continue;
+      let P;
+      try { const st = Object.assign({}, ev.sit); delete st.hitter_tags; P = E.outcomeProbs(p, ev.quad, E.Situation(st), ars); } catch (e) { continue; }
+      const sw = P.whiff + P.foul + P.weak + P.solid + P.hard;
+      sum += (SWINGS.has(ev.res) ? 1 : 0) - sw; vr += sw * (1 - sw); n++;
+    }
+    const z = vr > 0 ? sum / Math.sqrt(vr) : 0;
+    const flag = n < APPR_MIN ? null : z >= APPR_Z ? "aggressive" : z <= -APPR_Z ? "patient" : null;
+    return { n, z: Math.round(z * 100) / 100, excess: n ? Math.round((sum / n) * 1000) / 1000 : 0, flag,
+      text: n < APPR_MIN ? `needs ${APPR_MIN} early-count pitches (has ${n})` : flag ? `logs say he's ${flag} early (${n} early-count pitches)` : `no clear early-count lean (${n} pitches)`,
+      served: ACTIVE_TRAITS.includes("approach") };
+  }
+
+  const api = { VERSION, CFG, ACTIVE_TRAITS, ALL_TRAITS, approachModel, APPR_MIN, APPR_Z, snapPitch, typesOf, learnPitcher, learnPitch, serve, finishServe, clampServed, railsFor, coachValue, graded, readable, strikeRate, strikeRateFast, strikeRef, hitterModel, statPrior, seedDamage, LEVEL_AVG,
     category, usable, gamesOf, isPitch, loglikGames, _maximize: maximize, _confPath: confPath, _pitchGame: pitchGame,
     leanModel, leanSample, LEAN_K, LEAN_MIN_SIDE, CELL_X, CELL_Z };   // v1.2 Step 3
   if (typeof module !== "undefined" && module.exports) module.exports = api;

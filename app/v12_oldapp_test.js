@@ -4,7 +4,7 @@
  * The v1.2 app writes: a pitcher whose fastball has a miss lean and spread, a charted bullpen session (40 pitches), a
  * learned miss lean, a game with a way-off pitch stored one ring outside the grid and a glove spot, logGlove on, and a
  * game in progress whose at-bat log holds that pitch. Then the v1.1 build opens it, and this reports what it drops.
- * (Hitter tags are Part B; this check is extended when they exist.)
+ * Part B: an opponent hitter with the coach's tags (scoutTags) survives a v1.1 edit.
  * Run from app/ after a build: V11=/path/to/v1.1/pitch-caller.html node v12_oldapp_test.js
  *   (default: git show 14e0ad2:app/dist/pitch-caller.html, written to a temp file)
  */
@@ -53,8 +53,12 @@ const server = http.createServer((req, res) => {
     save();
     await new Promise((r) => setTimeout(r, 400));
     const m = await relearnPitcher(pid);
+    // v1.2 Part B: an opponent hitter with the coach's tags
+    const t = await dbPut("teams", { name: "Rivals", isOurs: false, level: S.setup.level, notes: "" }); DB.teams.set(t.id, t);
+    const hx = await dbPut("hitters", PCDB.newHitter(t.id, { name: "Tagged Hitter", bats: "L", scoutTags: { approach: "aggressive", spray: "pull" } })); DB.hitters.set(hx.id, hx);
+    window.__hid = hx.id;
     const evs = (await DB.D.byIndex("events", "gameId", G().dbId)).filter(PCDB.isPitch);
-    return { pid, gameId: G().dbId, lean: !!(m.leans && m.leans.Fastball), way: evs.some((e) => e.locCell && e.locCell[1] === -1 && e.glove), paLog: JSON.stringify(G().pa && G().pa.log) };
+    return { hid: hx.id, pid, gameId: G().dbId, lean: !!(m.leans && m.leans.Fastball), way: evs.some((e) => e.locCell && e.locCell[1] === -1 && e.glove), paLog: JSON.stringify(G().pa && G().pa.log) };
   });
   check(w.lean && w.way && /"way"/.test(w.paLog), `written: a learned lean, a way-off event with a glove spot, an at-bat log with "way" (${w.paLog})`);
 
@@ -109,6 +113,8 @@ const server = http.createServer((req, res) => {
   }, w.pid);
   check(JSON.stringify(b.kept) === "[4,1.5,-1.5,1.25]", `a v1.1 roster edit writes the pitcher back with the lean fields intact (${JSON.stringify(b.kept)})`);
   check(b.sess === 1, "the charted session is untouched");
+  const ht = await page.evaluate(async (hid) => { const x = DB.hitters.get(hid); x.number = "7"; await dbPut("hitters", x); return (await DB.D.get("hitters", hid)).scoutTags; }, w.hid);
+  check(JSON.stringify(ht) === '{"approach":"aggressive","spray":"pull"}', `a v1.1 hitter edit writes him back with his tags intact (${JSON.stringify(ht)})`);
   report(`a v1.1 pitch event has no ph / bs (${b.newEv.ph}, ${b.newEv.bs}) and its arsenal snapshot drops the lean (${b.newEv.snapLean}); the v1.2 learner falls back to the pitcher's hand and the event's situation`);
   report(`a v1.1 relearn rewrites the learned doc ${b.leans ? "keeping" : "without"} the lean estimate; the next v1.2 relearn rebuilds it from the events and charted sessions`);
 
