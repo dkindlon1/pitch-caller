@@ -1,0 +1,48 @@
+// Questions coaches ask, the product ones first and the rules question after them. Native details/summary, so it works without script and with the keyboard.
+const FAQ = [
+  {
+    q: "Is it just going to call fastballs?",
+    a: "No. It draws every call from a mix of the reasonable options, so the same count doesn't always get the same pitch, and it follows what each pitcher actually has working that day.",
+  },
+  {
+    q: "Does it work without a signal?",
+    a: "Yes. Download the game plan on Wi-Fi and the iPad calls the whole game on its own. Everything syncs when you're back online.",
+  },
+  {
+    q: "Do my players need accounts?",
+    a: "No. A coach can enter the staff and call a game alone. Players and parents can join later to see their own numbers, and only their own: teammates never see each other's. Players under 13 join through a parent, who gives consent first.",
+  },
+  {
+    q: "Do I need a TrackMan or Rapsodo?",
+    a: "No. Your own grades for each pitch are enough to start. When you have them, files from either one (or any pitch file with a header row) sharpen its read of velocity, pitch shape and arm slot. Files are read on your device, a game counts more than a bullpen, older files count less, and nothing changes until the pitcher or his coach accepts it.",
+  },
+  {
+    q: "Can I use it during games?",
+    a: "Rules differ by level. High school follows the NFHS and your state association; college follows NCAA Rule 5-16 on electronic devices. Check with your state association or compliance office before using a tablet in the dugout. Game prep, bullpens and scrimmages are fine anywhere.",
+  },
+  {
+    q: "Who builds PitchIQ?",
+    a: "A college pitcher studying mechanical engineering, who checks every call against how a pitching coach would think about it.",
+  },
+];
+
+export function Faq() {
+  return (
+    <section className="mk-fq" id="faq" aria-labelledby="fq-h">
+      <div className="mk-wrap mk-fq-grid">
+        <div className="mk-sec-head">
+          <h2 id="fq-h">Questions from coaches</h2>
+          <p>Anything else? <a className="mk-link" href="#contact">Ask us directly</a> and we'll write back.</p>
+        </div>
+        <div className="mk-fq-list">
+          {FAQ.map((f, n) => (
+            <details key={f.q} className="mk-fq-item" open={n === 0}>
+              <summary><span>{f.q}</span><i aria-hidden="true" /></summary>
+              <p>{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

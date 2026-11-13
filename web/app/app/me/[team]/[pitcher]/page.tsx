@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { daysOf, myOutings, myPitchers, playerTeam } from "@/lib/player";
 import { dayName, teamToday } from "@/lib/team";
 import PCRules from "@/lib/pitch_rules";
+import { playerNav } from "@/lib/nav";
+import { Tiles } from "../../../_frame/Tiles";
+import { NumberBlock } from "../../../_frame/DateBlock";
+import { Num } from "../../../_frame/Num";
+import { LauncherSkeleton } from "../../../_frame/Skeleton";
 
 export const metadata: Metadata = { title: "Me · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string; pitcher: string }>;
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "");
 
 export default function PlayerHome({ params }: { params: Params }) {
-  return <Suspense fallback={<p className="shell-note">Loading…</p>}><Body params={params} /></Suspense>;
+  return <Suspense fallback={<LauncherSkeleton />}><Body params={params} /></Suspense>;
 }
 
 async function Body({ params }: { params: Params }) {
@@ -28,23 +32,21 @@ async function Body({ params }: { params: Params }) {
   const season = mine.reduce((a, o) => ({ n: a.n + o.pitches, s: a.s + o.strikes }), { n: 0, s: 0 });
   return (
     <>
-      <h1 className="shell-h1">{me.number ? `#${me.number} ` : ""}{me.name || "Unnamed"}</h1>
-      <div className="dash">
-        <section className="dash-card" aria-labelledby="elig-h">
-          <h2 id="elig-h" className="lbl">Can pitch</h2>
-          {elig ? <p className="big-num">{elig.today ? "Today" : dayName(elig.date)}</p> : <p className="shell-note">Your team hasn&apos;t set a pitch-count rule.</p>}
-          {rule ? <p className="shell-note small">Under {rule.name}.</p> : null}
-        </section>
-        <section className="dash-card" aria-labelledby="last-h">
-          <h2 id="last-h" className="lbl">Last outing</h2>
-          {last ? <p className="big-num mono">{last.pitches}<small> pitches, {dayName(last.date)}</small></p> : <p className="shell-note">None in the last year.</p>}
-          <p className="shell-note small">{week} in the last 7 days.</p>
-        </section>
-        <section className="dash-card" aria-labelledby="season-h">
-          <h2 id="season-h" className="lbl">Strikes, last 12 months</h2>
-          <p className="big-num mono">{season.n ? pct(season.s, season.n) : "–"}<small> of {season.n} pitches</small></p>
-        </section>
-      </div>
+      <section className="pq-game pq-white" aria-labelledby="me-h">
+        <NumberBlock number={me.number} sub={me.hand === "L" ? "Lefty" : "Righty"} />
+        <div className="pq-game-body">
+        <div className="pq-game-top">{t.team_name}</div>
+        <h1 id="me-h" className="pq-h1" style={{ margin: 0 }}>{me.name || "Unnamed"}</h1>
+        <dl className="pq-game-facts">
+          <div><dt>Can pitch</dt><dd>{elig ? (elig.today ? "Today" : dayName(elig.date)) : "No pitch-count rule set"}</dd></div>
+          <div><dt>Last outing</dt><dd>{last ? `${last.pitches} pitches, ${dayName(last.date)}` : "None in the last year"}</dd></div>
+          <div><dt>Last 7 days</dt><dd><Num value={week} delay={250} /> pitches</dd></div>
+          <div><dt>Strikes, last 12 months</dt><dd className="num">{season.n ? `${pct(season.s, season.n)} of ${season.n}` : "–"}</dd></div>
+        </dl>
+        {rule ? <p className="shell-note small">Rest days under {rule.name}.</p> : null}
+        </div>
+      </section>
+      <Tiles items={playerNav(team, pitcher).filter((x) => x.key !== "home")} label="Your screens" />
 
       <section aria-labelledby="out-h">
         <h2 id="out-h" className="shell-h2">Outings</h2>
@@ -59,9 +61,8 @@ async function Body({ params }: { params: Params }) {
                 <td>{Object.entries(o.by_pitch).sort((a, b) => b[1].n - a[1].n).map(([name, x]) => `${name} ${x.n}`).join(" · ")}</td>
               </tr>))}</tbody>
           </table></div>
-        ) : <p className="shell-note">Your game pitches show up here once your coach&apos;s iPad syncs a game you pitched in.</p>}
+        ) : <p className="shell-note">Your game pitches show up here once your coach’s iPad syncs a game you pitched in.</p>}
       </section>
-      <p className="shell-note small">Your grades and arsenal: <Link href={`/app/me/${team}/${pitcher}/arsenal`}>Arsenal</Link>. Your TrackMan and Rapsodo sessions: <Link href={`/app/me/${team}/${pitcher}/uploads`}>Uploads</Link>. Counts, rates and charts: <Link href={`/app/me/${team}/${pitcher}/stats`}>Stats</Link>.</p>
-    </>
+          </>
   );
 }

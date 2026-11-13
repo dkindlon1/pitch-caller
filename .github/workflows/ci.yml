@@ -48,7 +48,7 @@ jobs:
       - run: scripts/test-app.sh
 
   web:
-    name: Web app (landing page and waitlist)
+    name: Web app (public site)
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     services:
@@ -76,8 +76,8 @@ jobs:
         run: npm test
       - working-directory: web
         run: npm run build
-      - name: Landing page end to end (built site + real waitlist function)
-        run: scripts/run-check.sh landing_e2e node web/tests/landing_e2e.js
+      - name: Public site end to end (3D hero, live call, contact form)
+        run: scripts/run-check.sh site_e2e node web/tests/site_e2e.js
 
   web-shell:
     name: Web shell, offline game and coach portal on a real local Supabase
@@ -109,5 +109,7 @@ jobs:
         run: scripts/run-check.sh uploads_e2e node web/tests/uploads_e2e.js
       - name: Retention sweep end to end (12 months after a lapse; deletes only when turned on)
         run: scripts/run-check.sh retention_e2e node web/tests/retention_e2e.js
+      - name: Game Day (set up on the website, start on a device)
+        run: scripts/run-check.sh gameplan_e2e node web/tests/gameplan_e2e.js
       - if: always()
         run: npx -y supabase@2.122.1 stop --no-backup

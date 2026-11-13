@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CELL, PITCH_COLOR, type Pitch } from "@/content/at-bat";
-import { can3d, whenIdle } from "./can3d";
+import { can3d, whenStill } from "./can3d";
 import { Zone } from "./Zone";
 import type { Scene, StagePitch } from "./pitch3d";
 
@@ -21,7 +21,7 @@ export function PitchStage({ pitches, current }: { pitches: Pitch[]; current: nu
   useEffect(() => {
     if (!can3d()) return;
     let dead = false;
-    const cancel = whenIdle(() => {
+    const cancel = whenStill(() => {
       import("./pitch3d").then(({ mount }) => {
         if (dead || !box.current) return;
         scene.current = mount(box.current);

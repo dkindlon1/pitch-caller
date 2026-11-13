@@ -15,7 +15,8 @@ const CENTER = new THREE.Vector3((BOX.x[0] + BOX.x[1]) / 2, (BOX.y[0] + BOX.y[1]
 const ANGLE: Record<View, number> = { break: 0, velo: -Math.PI / 2 };
 const DIST = 9.5, TILT = 0.16;
 
-export function mount(el: HTMLElement, points: MovePoint[], colors: Record<MovePoint["kind"], string>): Cloud | null {
+// opts.zoom frames the cloud tighter (the marketing page shows it big, on a wide stage, not in a card)
+export function mount(el: HTMLElement, points: MovePoint[], colors: Record<MovePoint["kind"], string>, opts: { zoom?: number } = {}): Cloud | null {
   let renderer: THREE.WebGLRenderer;
   try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" }); } catch { return null; }
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
@@ -25,6 +26,7 @@ export function mount(el: HTMLElement, points: MovePoint[], colors: Record<MoveP
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+  camera.zoom = opts.zoom ?? 1;
   scene.add(new THREE.HemisphereLight(0xffffff, 0x1a2129, 1.4));
   const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(3, 6, 8); scene.add(sun);
 

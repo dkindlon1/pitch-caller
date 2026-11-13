@@ -12,7 +12,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["800"], display: "swa
 export const metadata: Metadata = {
   title: "PitchIQ Baseball: pitch calling for high school, travel and college coaches",
   description:
-    "PitchIQ calls each pitch from the count, the hitter and your pitcher's stuff today, plans the whole at-bat, and tells you why. Join the spring waitlist.",
+    "PitchIQ calls each pitch from your pitcher's stuff today, the hitter and the count, and tells you why.",
   other: { "page-type": "software", "site-kind": "software" },
 };
 

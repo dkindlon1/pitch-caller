@@ -338,11 +338,12 @@
     const fx = f || (typeof fetch !== "undefined" ? fetch.bind(root) : null);
     const clock = now || (() => Date.now());
     const key = "auth";
-    async function call(grant, body) {
-      const res = await fx(`${url.replace(/\/$/, "")}/auth/v1/token?grant_type=${grant}`, {
+    async function call(grant, body, path) {
+      const res = await fx(`${url.replace(/\/$/, "")}/auth/v1/${path || `token?grant_type=${grant}`}`, {
         method: "POST", headers: { "content-type": "application/json", apikey: apiKey }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error_description || json.msg || json.error || `sign-in failed (HTTP ${res.status})`);
+      if (!json.access_token) throw new Error("sign-in failed: no session came back");
       const s = { id: key, access: json.access_token, refresh: json.refresh_token, expiresAt: clock() + (json.expires_in || 3600) * 1000,
         userId: json.user && json.user.id, email: json.user && json.user.email };
       await db.put("meta", s);
@@ -353,6 +354,9 @@
     let refreshing = null;
     return {
       signIn: (email, password) => call("password", { email, password }),
+      // the website's hand-off (Start on this device): a single-use sign-in link made for this account, exchanged here
+      // for this device's own session (never a copy of the website's)
+      handoff: (tokenHash) => call("magiclink", { type: "magiclink", token_hash: tokenHash }, "verify"),
       async token() {
         const s = await db.get("meta", key);
         if (!s) return null;

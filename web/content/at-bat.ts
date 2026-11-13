@@ -1,7 +1,7 @@
-// One real at-bat from the PitchIQ engine (v0.8, branch v0.8-build, commit 2caaa23).
-// Captured Nov 5, 2026 by driving app/dist/pitch-caller.html in a headless browser with the app's own default
-// setup: college D3, the right-handed starter (fastball 86, slider 78, changeup 77) against a right-handed hitter.
-// The calls and reasons are the engine's own output; the results were chosen by hand to play out the at-bat.
+// One real at-bat from the PitchIQ engine (v1.0), captured Nov 12, 2026 by scripts/capture-at-bat.cjs (SEED=11): it drives
+// app/dist/pitch-caller.html in a headless browser with the app's own default setup: college D3, the right-handed
+// starter (fastball 86, slider 78, changeup 77) against a right-handed hitter. The calls and reasons are the engine's
+// own output (seeded draws from its mix); the results were chosen by hand to play out the at-bat.
 // Regenerate by re-running the capture rather than editing these lines.
 
 export type Spot = "Up and in" | "Up and away" | "Down and in" | "Down and away" | "Get it over" | "Chase" | "Keep it down";   // "Keep it down": v1.0 knee-high target
@@ -18,9 +18,9 @@ export type Pitch = {
 
 export const AT_BAT: Pitch[] = [
   { balls: 0, strikes: 0, sign: 1, pitch: "Fastball", spot: "Get it over", why: "He's timed for 81 mph; this plays 5 mph faster.", result: "Called strike" },
-  { balls: 0, strikes: 1, sign: 3, pitch: "Slider", spot: "Get it over", why: "Changes his eye level after the fastball.", result: "Ball" },
-  { balls: 1, strikes: 1, sign: 1, pitch: "Fastball", spot: "Down and away", why: "Today's umpire is calling more strikes than usual.", result: "Foul" },
-  { balls: 1, strikes: 2, sign: 3, pitch: "Slider", spot: "Down and away", why: "He's looking middle (35%).", result: "Swing and miss" },
+  { balls: 0, strikes: 1, sign: 3, pitch: "Slider", spot: "Get it over", why: "He's sitting fastball (34%).", result: "Ball" },
+  { balls: 1, strikes: 1, sign: 1, pitch: "Fastball", spot: "Get it over", why: "He's timed for 81 mph; this plays 5 mph faster.", result: "Foul" },
+  { balls: 1, strikes: 2, sign: 3, pitch: "Slider", spot: "Down and away", why: "Tunnels off the last pitch.", result: "Swing and miss" },
 ];
 
 // Zone cells in the catcher's view for a right-handed hitter, who stands on the left: [column, row], 0..2.

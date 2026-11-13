@@ -17,5 +17,5 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const a = await uploadAccess(team, pitcher);
   return (<><p><Link href={`/app/t/${team}/roster`}>Roster</Link></p>
     <h1 className="shell-h1">{a.pitcher.number ? `#${a.pitcher.number} ` : ""}{a.pitcher.name || "Unnamed"}</h1>
-    <Tabs base={a.base} at="stats" label="Profile and arsenal" /><StatsPanel a={a} sp={await searchParams} /></>);
+    <Tabs base={a.base} at="stats" label="Profile and arsenal" /><div className="pq-flow"><StatsPanel a={a} sp={await searchParams} /></div></>);
 }

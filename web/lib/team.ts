@@ -13,8 +13,10 @@ export type TeamRow = {
 };
 export const ROLE: Record<string, string> = { head: "Head coach", pitching: "Pitching coach", caller: "Pitch caller", viewer: "Viewer", player: "Player" };
 export const TOGGLES: [string, string][] = [["call_games", "Call games"], ["edit_grades", "Edit grades"], ["review_uploads", "Review uploads"],
-  ["manage_opponents", "Opponents"], ["manage_roster", "Roster"], ["manage_staff", "Staff"]];
-export const PRESET_PERMS: Record<string, string[]> = { head: TOGGLES.map((t) => t[0]), pitching: ["call_games", "edit_grades", "review_uploads", "manage_opponents"],
+  ["manage_opponents", "Opponents"], ["manage_roster", "Roster"], ["manage_staff", "Staff"], ["view_plan", "See the game plan"]];
+// view_plan is in no preset: calling games already shows the plan, and only the organization's owner gives it to others
+export const OWNER_ONLY = new Set(["view_plan"]);
+export const PRESET_PERMS: Record<string, string[]> = { head: ["call_games", "edit_grades", "review_uploads", "manage_opponents", "manage_roster", "manage_staff"], pitching: ["call_games", "edit_grades", "review_uploads", "manage_opponents"],
   caller: ["call_games", "manage_opponents"], viewer: [], player: [] };
 
 export async function myTeams(): Promise<TeamRow[]> {
@@ -97,3 +99,24 @@ export async function availability(t: TeamRow, pitchers: Pitcher[], rule: Rule |
 
 export const dayName = (d: string) => (d ? new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "");
 export const teamRule = (ours: Team | null): Rule | null => (ours && ours.pitchRule ? PCRules.resolve(ours.pitchRule) : null);
+
+// The schedule every coach may see (pc_game_list): dates, opponents, home/away and status, never the plan itself.
+export type GameListRow = { id: string; date: string | null; status: string; opponent_id: string | null; home: boolean | null; starts: string | null };
+export async function gameList(teamId: string): Promise<GameListRow[]> {
+  const sb = await getServerSupabase();
+  const { data, error } = await sb.rpc("pc_game_list", { p: teamId });
+  return error ? [] : ((data || []) as GameListRow[]);
+}
+// the next game: one in progress first, then the soonest set up for today or later
+export function nextGame(rows: GameListRow[], today: string): GameListRow | null {
+  const live = rows.find((g) => g.status === "live" || g.status === "suspended");
+  if (live) return live;
+  return rows.filter((g) => g.status === "planned" && (g.date || "") >= today).sort((a, b) => ((a.date || "") + (a.starts || "")).localeCompare((b.date || "") + (b.starts || "")))[0] || null;
+}
+// "18:30" -> "6:30 pm"
+export const timeName = (s: string | null | undefined) => {
+  if (!s || !/^\d{2}:\d{2}$/.test(s)) return "";
+  const [h, m] = s.split(":").map(Number);
+  return new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(Date.UTC(2000, 0, 1, h, m)).replace(" ", "\u00a0");
+};
+export const catchersOf = (teamId: string) => rows<Doc & { name: string; block?: number | string }>("catchers", teamId);
