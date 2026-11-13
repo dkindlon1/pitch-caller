@@ -59,7 +59,6 @@ Settled:
 | L6 (Nov 13) | **Hot fade by ratio:** "lean on it" fades from 1.2× the pitch's normal share and is gone at 1.6×. |
 | L7 (Nov 13) | **Setups:** narrow S4, then resize S2 / S4 / S5 after the location model; drop any that still can't move its row inside the 2–10% change band. |
 | L8 (Nov 13) | **Bullpen mode, three taps per pitch:** pitch, where the catcher set up (5×5), where it ended up (5×5 or a way-off arrow). |
-
 | Q1 (Nov 13) | **Coach-set lean sizes: "a little" 1.5 in., "a lot" 3 in.** (MLB average leans by pitch type run 1–3.5 in. in the research check; labeled assumption.) |
 | Q2 (Nov 13) | **Show a pitch-type hint** when a coach sets a lean ("sinkers usually miss arm side"), text only; the value stays even until he picks. |
 | Q3 (Nov 13) | **Location logging on by default** for new setups. |
@@ -67,7 +66,6 @@ Settled:
 | Q5 (Nov 13) | **HS ride-up: scale the rule by 0.6 at HS**, like every MLB-fitted term at HS. |
 | Q6 (Nov 13) | **The hitter model is in v1.2** (Part B). |
 | O4 (Nov 12, carried) | **Hitter tags:** swing path (uppercut / lift · average · flat / level), early-count approach (aggressive · average · patient), off-speed hitter (struggles · average · hits it hard), spray (pull · all fields · oppo). Height preference and bat speed dropped. Unknown = average; measured numbers override. |
-
 | Q7 (Nov 13) | **Off-speed hitter tag: keep it, small, coach-set only.** A small prior on the existing off-speed damage seed; no learned version unless the logs pass the gate. (Its own-skill part barely persists in MLB data, r 0.06; 2.8.) |
 | Q8 (Nov 13) | **One release, but Part A can ship alone** from its frozen checkpoint if Part B slips. |
 
@@ -111,7 +109,7 @@ v1.1's four-zone shares stay the **lean-0 baseline, exactly**. A lean adds a geo
   - **At lean_x = lean_z = 0 and spread = 1 the delta block is skipped entirely**: no extra floor, no extra
     renormalise, so `landing()` returns v1.1's floats bit for bit.
   - Otherwise the delta is added to the shares **before** `landing()`'s existing 0.01 floor and its single final
-    divide-by-sum (`engine.py:~886-888`), after `miss_heart`, level `wild`, `wild_today` and fatigue, so it moves the
+    divide-by-sum (`engine.py:886-888`), after `miss_heart`, level `wild`, `wild_today` and fatigue, so it moves the
     pitch's final miss pattern once.
 - **One CDF in both engines:** JS has no `erf`, so both engines use the same rational approximation (Abramowitz &
   Stegun 7.1.26), written identically, with Python = JS parity checked to 1e-12.
@@ -315,10 +313,10 @@ page. Unknown = average. They map to the top / bottom third of each trait at the
   - a cached solve changes when only a lean changes;
   - Python = JS on 600 random pitches with leans (CDF parity 1e-12).
 - **Sensitivity report** (no gate): the call mix with every pitch at the research-check leans by type (sinker
-  +2.7, changeup +3.5, four-seam +1.1, cutter −1.0, slider −2.2, curve −0.8 in.; research doc §1) vs even, on the grid arsenals. How far the inside share moves,
-  each way.
+  +2.7, changeup +3.5, four-seam +1.1, cutter −1.0, slider −2.2, curve −0.8 in.; research doc §1) vs even, on the
+  grid arsenals. How far the inside share moves, each way.
 
-### Step 2: Level HBP calibration (2 days)
+### Step 2: Level HBP calibration (2½ days)
 - `calib.py`: the reference mix inside `evaluate`, converted from crossing to aimed share (2.4); refit HBP at D1 / D3 /
   HS with `wild` held, then `wild` on BB only if BB / K drift (at most 3 rounds, else stop for Drew); MLB checked;
   `fit_all.py` refit; realism gate.
@@ -338,7 +336,7 @@ page. Unknown = average. They map to the top / bottom third of each trait at the
   fewer than 10 targets on a side gives no estimate; and with today's log (way-off dropped, one side) it reports the
   bias the research doc predicts. Gate outcome recorded (likely flag-only).
 
-### Step 4: Logging and bullpen mode (2 days)
+### Step 4: Logging and bullpen mode (3 days)
 - The 2.6 changes; bullpen mode; `db.js` and sync; `scripts/test-sql.sh` (no migration expected).
 - **Proof:** new e2e:
   - a charted bullpen of 40 pitches saves, reloads, syncs and feeds the estimator;
@@ -356,15 +354,15 @@ page. Unknown = average. They map to the top / bottom third of each trait at the
   - ride-up ≤ 36% of two-strike calls at every level (`tests_v11`);
   - C5 still passes;
   - the fade's sizes identical in both engines;
-  - the 15 landing-record rows unchanged;
+  - the landing-record rows (15 at v1.1; recounted after Step 2) unchanged, or each mover listed for regrading;
   - `game_mix_e2e` 21 games pass;
   - seed 31337 reported;
   - setup fire rows and change rates per rule;
   - dropped rules listed.
 
 ### Part A freeze (after Step 5, no extra time)
-- Freeze `golden_v12a` (it includes Step 5's ride-up, fade and setup changes); `scripts/test-app.sh` exit 0; Part A's report section complete. Part A can ship alone from here
-  if Part B slips (Q8).
+- Freeze `golden_v12a` (it includes Step 5's ride-up, fade and setup changes); `scripts/test-app.sh` exit 0; Part A's
+  report section complete. Part A can ship alone from here if Part B slips (Q8).
 
 ### Step B1: Hitter data and fits (3 days)
 - Pull 2026 pitches and the 2024–2026 leaderboards; loader additions; a height-adjusted tilt.
@@ -417,7 +415,8 @@ page. Unknown = average. They map to the top / bottom third of each trait at the
   instead of a silent mismatch.
 - Merge, any migration, the `v1.2` tag: **only on Drew's go.**
 
-Rough total: Part A 13–15 working days (Step 1 is 3 days, bullpen mode is a new screen and store), Part B 8; about
+Rough total: Part A about 13½ working days by step (Step 1 is 3, bullpen mode is a new screen and store), call it
+13–15; Part B 8; about
 21–23 in all, **plus Drew's decision points**: the four-seam diagnosis (Step 2), any calibration stop (Step 2), the
 grades (Step 6).
 
@@ -488,7 +487,9 @@ claim in the code before applying it.
 | 15 | "Open: none" vs build-time decisions; charted docs need numeric `updatedAt` | Section 1 lists the build-time decisions; 2.6 states the doc constraints (`:137-138`) |
 
 A cheaper read-only pass also checked every shorthand line reference: 11 matched; 3 pointed at the wrong lines (the
-learner's completeness check, the worlds generator, `TRUE_MOVE`) and are corrected in 2.5.
+learner's completeness check, the worlds generator, `TRUE_MOVE`) and are corrected in 2.5. A second pass on the edited
+plan matched all 15. `research_v12/check_plan.py` checks the explicit references, the numbers against `results/v12/`,
+the decisions and this record.
 
 ## Research run this session (`research_v12/`, `results/v12/`)
 

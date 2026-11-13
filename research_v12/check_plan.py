@@ -65,7 +65,11 @@ for claim, f, rx in NUM:
 # C. decisions
 for d in ["S2", "O3", "O4"] + [f"L{i}" for i in range(1, 9)] + [f"Q{i}" for i in range(1, 9)]:
     ok(re.search(rf"^\| {d} \(Nov 1[23]", PLAN, re.M) is not None, f"C decision {d} recorded")
-ok("Open: none" in PLAN, "C no open questions")
+ok(re.search(r"^Open now: none", PLAN, re.M) is not None, "C no open questions now")
+sec1 = PLAN.split("## 1. Decisions", 1)[1].split("\n## ", 1)[0]
+tbl = re.search(r"^\| # \| Decision \|\n(?:^\|.*\|\n)+", sec1, re.M)
+ok(tbl is not None and all(re.search(rf"^\| {d} \(", tbl.group(0), re.M) for d in ["S2", "L8", "Q1", "Q8", "O4"]),
+   "C every decision is in one unbroken table (no blank line splitting it)")
 # D. structure and review
 for h in ["## 0. What v1.2 is", "## 1. Decisions", "## 2. Design", "### 2.8 Hitter model", "## 3. Steps", "### Part A freeze",
           "### Step B1", "### Step B4", "## 4. Evaluation suite", "## 5. Risks", "## 6. Not in v1.2", "## 7. Reviews"]:
