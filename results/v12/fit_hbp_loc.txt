@@ -1,0 +1,26 @@
+Single-A 2024-25 (86,534 pitches): HBP per pitch 0.0053 overall, 0.0161 crossing the inside third or further in (32.8% of pitches): ratio 3.05
+engine D3 now: HBP per pitch 0.0121 overall, 0.0369 aimed inside: ratio 3.06 (inside multiplier 1.6)
+  inside 0.60: ratio 1.36
+  inside 0.65: ratio 1.46
+  inside 0.70: ratio 1.56
+  inside 0.75: ratio 1.65
+  inside 0.80: ratio 1.75
+  inside 0.85: ratio 1.84
+  inside 0.90: ratio 1.93
+  inside 0.95: ratio 2.02
+  inside 1.00: ratio 2.11
+  inside 1.05: ratio 2.19
+  inside 1.10: ratio 2.28
+  inside 1.15: ratio 2.36
+  inside 1.20: ratio 2.45
+  inside 1.25: ratio 2.53
+  inside 1.30: ratio 2.61
+  inside 1.35: ratio 2.68
+  inside 1.40: ratio 2.76
+  inside 1.45: ratio 2.84
+  inside 1.50: ratio 2.91
+  inside 1.55: ratio 2.98
+  inside 1.60: ratio 3.06
+fit: inside 1.60 before scaling; scale x1.000 -> HBP_LOC {'up-in': 1.6, 'down-in': 1.6, 'chase': 0.8, 'middle': 0.5, 'up-away': 0.3, 'down-away': 0.3, 'down-middle': 0.5}
+check D3: overall 0.0121 -> 0.0121; aimed inside 0.0369 -> 0.0369; ratio 3.06 (Single-A 3.05)
+check hs: overall 0.0112 -> 0.0112
