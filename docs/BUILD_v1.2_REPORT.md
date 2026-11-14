@@ -215,7 +215,11 @@ Persistence (pitch sample, about a quarter season): tilt 0.92 / 0.93, pull 0.69 
   - **Python = JS on 600 random tagged hitters, largest difference 2.2e-16**;
   - the sizes are the fits' own coefficients.
 - `FAST_TAGS=1 golden/fast.py 40`: **0 mismatches** (full calls with tags).
-- `app/v12_tags_e2e.js`: **9/9**.
+- `app/v12_tags_e2e.js`: **9/9**. The old-app check now also gives a v1.1 build a tagged hitter; a v1.1 edit keeps his tags (v12_oldapp_test 15/15 on Part B).
+- Every tag unknown: **golden_v12a largest difference 0** (Python, 500 cases) and the JS engine reproduces it.
+- **`scripts/test-app.sh` on Part B (`fd758bc`): exit 1, the same single failure as Part A** (game_mix_e2e: 2 games over 70%,
+  average 51.7%). Everything else passes, including tests_v12b 13, tag parity, hitter_tags_test 3, v12_tags_e2e 9 and
+  v12_oldapp 15 (`results/v12/partB_suite.log`). One fix on the way: `web/lib/engine.js` hadn't been recopied.
 
 ### B3: learner and simulator
 - `learner.js` `approachModel`: early-count swings against the engine's own untagged swing chance. It's a z score, 25-pitch
