@@ -11,5 +11,4 @@
   H3   pass   61.5% ->  60.5% (-0.9%)  aggressive early: fewer grooved first pitches
   H4   pass   61.5% ->  62.5% (+1.0%)  patient early: more first-pitch strikes over the plate
   H5   FAIL   51.7% ->  51.4% (-0.3%)  hits off-speed hard: fewer hittable off-speed pitches
-  H6   FAIL   23.3% ->  19.8% (-3.5%)  pull-heavy: more away (the plan's guess; the MLB fit says pull hitters hit away pitches harder)
-8/14 rows go the stated way (PROPOSED: Drew grades)
+8/13 rows go the stated way (PROPOSED: Drew grades)

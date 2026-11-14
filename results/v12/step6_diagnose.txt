@@ -1,0 +1,43 @@
+== L2: arm-leaning sinker (+3), same-side hitter, 1-1, the AWAY target (plan: called less)
+  L2: Sinker down-away
+    lands     heart 0.213->0.236  edge 0.319->0.342  off 0.309->0.296  noncomp 0.160->0.126
+    outcomes  ball 0.468->0.431  cstrike 0.145->0.158  whiff 0.045->0.046  foul 0.155->0.162  weak 0.075->0.077  solid 0.057->0.061  hard 0.048->0.051  hbp 0.007->0.015
+    strikes (called + whiff + foul) 0.345->0.365; hard 0.048->0.051; chase swings off the zone n/a; root cost 0.4862->0.4882 runs (worse by 0.0020)
+    reading: the away sinker itself gets WORSE with the lean (its cost rises; heart +0.024, and hit batters double because arm side is inside to him). It's called more only because the inside sinker got much worse (row L1, -10.5 points) and the mix shifts toward away. So the engine already sees the leak; L2 fails on the relative move.
+
+== L5: up-leaning riding four-seam (+3), 1-2, the UP target (plan: holds)
+  L5 up-away: Fastball up-away
+    lands     heart 0.213->0.178  edge 0.319->0.290  off 0.309->0.334  noncomp 0.160->0.198
+    outcomes  ball 0.423->0.460  cstrike 0.084->0.073  whiff 0.085->0.085  foul 0.216->0.203  weak 0.077->0.074  solid 0.059->0.054  hard 0.051->0.044  hbp 0.006->0.006
+    strikes (called + whiff + foul) 0.384->0.361; hard 0.051->0.044; chase swings off the zone n/a; root cost 0.3903->0.3915 runs (worse by 0.0012)
+  L5 chase: Fastball chase
+    lands     heart 0.042->0.015  edge 0.191->0.061  off 0.596->0.605  noncomp 0.171->0.318
+    outcomes  ball 0.529->0.632  cstrike 0.024->0.012  whiff 0.096->0.091  foul 0.194->0.146  weak 0.080->0.065  solid 0.048->0.034  hard 0.022->0.013  hbp 0.007->0.007
+    strikes (called + whiff + foul) 0.314->0.249; hard 0.022->0.013; chase swings off the zone n/a; root cost 0.3980->0.4045 runs (worse by 0.0065)
+  L5 down-away: Fastball down-away
+    lands     heart 0.213->0.241  edge 0.319->0.337  off 0.309->0.287  noncomp 0.160->0.136
+    outcomes  ball 0.391->0.365  cstrike 0.070->0.077  whiff 0.137->0.137  foul 0.212->0.221  weak 0.081->0.083  solid 0.064->0.068  hard 0.039->0.043  hbp 0.006->0.006
+    strikes (called + whiff + foul) 0.419->0.435; hard 0.039->0.043; chase swings off the zone n/a; root cost 0.3948->0.3913 runs (better by 0.0035)
+    reading: the up lean moves the up target's misses from 'off' to 'way off' (noncomp). The engine's swing rate on way-off pitches is low even with two strikes, so they become balls, not chases; the down target's misses move up into the zone (more strikes). A riding fastball just above the zone with two strikes is a chase pitch in coaching terms.
+
+== L6: glove-leaning cutter (-3), opposite-side hitter, 1-1, IN (plan: holds)
+  L6 up-in: Cutter up-in
+    lands     heart 0.215->0.183  edge 0.312->0.277  off 0.312->0.325  noncomp 0.161->0.215
+    outcomes  ball 0.439->0.463  cstrike 0.110->0.096  whiff 0.040->0.040  foul 0.172->0.157  weak 0.099->0.091  solid 0.083->0.074  hard 0.021->0.019  hbp 0.037->0.060
+    strikes (called + whiff + foul) 0.322->0.293; hard 0.021->0.019; chase swings off the zone n/a; root cost 0.4831->0.4992 runs (worse by 0.0160)
+  L6 down-in: Cutter down-in
+    lands     heart 0.215->0.183  edge 0.312->0.277  off 0.312->0.325  noncomp 0.161->0.215
+    outcomes  ball 0.446->0.467  cstrike 0.133->0.116  whiff 0.071->0.071  foul 0.144->0.132  weak 0.079->0.073  solid 0.066->0.059  hard 0.026->0.023  hbp 0.036->0.060
+    strikes (called + whiff + foul) 0.347->0.318; hard 0.026->0.023; chase swings off the zone n/a; root cost 0.4852->0.5005 runs (worse by 0.0154)
+    lean +0.0: HBP / wild factors (1.0, 1.0)
+    lean -1.5: HBP / wild factors (1.141, 1.0)
+    lean -3.0: HBP / wild factors (1.275, 1.0)
+    reading: the lean moves mass off the plate toward his body (way off 0.161 -> 0.215) and hit batters go 3.7% -> 6.0%; strikes fall. The conditional HBP factor is small (1.28 at -3 in.); most of the cost is the landing shift plus a high starting hit-batter rate for a cutter in at D3 (3.7%). The plan's read: a cutter in on the hands is a weapon.
+
+== Proposals (none built; Drew picks)
+  L2 option A: regrade L2 as 'the away sinker's own cost rises' (true now: +0.002 runs) instead of 'called less'; the share moves the other way only because inside got worse.
+  L2 option B: price a lean-induced heart pitch as a 'leaker' (the hanger-style +0.5 hard logit on the heart mass the lean adds, fastballs too) so away falls in absolute share. Moves only pitches with a lean.
+  L5 option A: misses within ~6 in. above the zone with two strikes swing like 'off' (chase), not 'way off': split the noncomp band by distance for up targets. Moves only leaned pitches and the chase target. Expected: L5a holds, L5b falls.
+  L5 option B: narrow the vertical miss (the model is one size both ways; Step 2 already flagged it as wide).
+  L6 option A: lower the starting hit-batter rate for a cutter in on an opposite-side hitter at college (3.7% per pitch aimed there is high; check against Single-A by crossing), then rerun.
+  L6 option B: option C from Step 2 (narrow the side-to-side miss to MLB's crossing rates), which shrinks how much mass a lean puts on the body. Also lowers every crossing share (P1 would need regrading).

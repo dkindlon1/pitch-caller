@@ -109,7 +109,7 @@ function main() {
   if (process.env.FAST_TAGS === "1")   // v1.2 Part B: fast.py's tag_tags(i), written the same way
     cases.forEach((c, i) => {
       const out = {};
-      [["approach", [null, "aggressive", "patient"]], ["spray", [null, "pull", "oppo"]], ["path", [null, "lift", "flat"]], ["offspeed", [null, "hits"]]]
+      [["approach", [null, "aggressive", "patient"]], ["path", [null, "lift", "flat"]], ["offspeed", [null, "hits"]]]
         .forEach(([k, vals], j) => { const v = vals[(i * (j + 2) + j) % vals.length]; if (v) out[k] = v; });
       c.s.hitter_tags = out;
     });

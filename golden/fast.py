@@ -42,8 +42,7 @@ def load(n):
 def tag_tags(i):
     """v1.2 Part B: deterministic hitter tags per case, written the same way in fast.js"""
     out = {}
-    for j, (k, vals) in enumerate((("approach", [None, "aggressive", "patient"]), ("spray", [None, "pull", "oppo"]),
-                                   ("path", [None, "lift", "flat"]), ("offspeed", [None, "hits"]))):
+    for j, (k, vals) in enumerate((("approach", [None, "aggressive", "patient"]), ("path", [None, "lift", "flat"]), ("offspeed", [None, "hits"]))):
         v = vals[(i * (j + 2) + j) % len(vals)]
         if v:
             out[k] = v

@@ -1,4 +1,4 @@
-"""v1.2 Step 6 (plan): the location rows L1-L6 and the hitter rows H1-H6, PROPOSED (Claude, Nov 13; Drew grades). Each row
+"""v1.2 Step 6 (plan): the location rows L1-L6 and the hitter rows H1-H5 (H6 went with spray, dropped by Drew), PROPOSED (Claude, Nov 13; Drew grades). Each row
 compares the same situation with and without the lean or tag and checks the direction the plan wrote down before running
 (L: "directions are from the geometry"; H: Step B4's list). A row passes when its share moves the stated way by more than
 0.5 points (or "holds": moves less than 2 points the wrong way). P1 (the inside sinker, graded by crossing) is in
@@ -57,8 +57,6 @@ TAGROWS = [
     ("H3", "aggressive early: fewer grooved first pitches", THREE, dict(b=0, k=0), {"approach": "aggressive"}, lambda x, q: q in ("middle", "down-middle"), -1),
     ("H4", "patient early: more first-pitch strikes over the plate", THREE, dict(b=0, k=0), {"approach": "patient"}, lambda x, q: q in ("middle", "down-middle"), 1),
     ("H5", "hits off-speed hard: fewer hittable off-speed pitches", THREE, dict(b=1, k=1), {"offspeed": "hits"}, lambda x, q: e.is_offspeed(x.kind) and q != "chase", -1),
-    ("H6", "pull-heavy: more away (the plan's guess; the MLB fit says pull hitters hit away pitches harder)", THREE, dict(b=1, k=1), {"spray": "pull"},
-     lambda x, q: q in ("up-away", "down-away"), 1),
 ]
 
 

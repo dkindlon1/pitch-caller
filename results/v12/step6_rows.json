@@ -109,14 +109,5 @@
   "want": -1,
   "passes": false,
   "unknown_moves": 0.0
- },
- "H6": {
-  "text": "pull-heavy: more away (the plan's guess; the MLB fit says pull hitters hit away pitches harder)",
-  "base": 0.2329,
-  "changed": 0.1981,
-  "moved": -0.0349,
-  "want": 1,
-  "passes": false,
-  "unknown_moves": 0.0
  }
 }

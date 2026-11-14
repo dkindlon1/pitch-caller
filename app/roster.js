@@ -787,7 +787,7 @@ function teamPanel(t) {
         if (!confirmTwice(t.id)) { toast(`Tap again to remove ${t.name}. Charted pitches against them stay.`); return; }
         await DB.D.del("teams", t.id); DB.teams.delete(t.id); if (S.setup.opponentId === t.id) useOpponent(null); teamSel = null; render();
       } } }, "Remove opponent")),
-    h("p", { class: "note" }, "Import a sheet with Name, #, Bats, PA, AVG, OBP, SLG, K or K%, BB or BB% columns (any order), and optional tag columns: Approach (aggressive / patient), Spray (pull / oppo), Path (lift / flat), Offspeed (hits). Hitters already here are updated by name."));
+    h("p", { class: "note" }, "Import a sheet with Name, #, Bats, PA, AVG, OBP, SLG, K or K%, BB or BB% columns (any order), and optional tag columns: Approach (aggressive / patient), Path (lift / flat), Offspeed (hits). Hitters already here are updated by name."));
 }
 
 function hittersEditor(t) {

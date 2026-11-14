@@ -496,11 +496,10 @@
   }
 
   // v1.2 Part B: hitter tags (mirror of engine.py HIT_FIT / HIT_PATH_RULE / HIT_OS_PRIOR; see the fits there)
-  const HIT_FIT = { approach: 0.2077, spray_hard_in: -0.0958, spray_hard_away: 0.0943, spray_gb_in: -0.1268, spray_gb_away: -0.1035 };
+  const HIT_FIT = { approach: 0.2077 };   // spray dropped (Drew, Nov 13; engine.py)
   const HIT_PATH_RULE = 0.003, HIT_OS_PRIOR = 0.3, HIT_OS_N0 = 3.0;
-  const HIT_TAG_VALUES = { approach: { aggressive: 1, patient: -1 }, spray: { pull: 1, oppo: -1 }, path: { lift: 1, flat: -1 }, offspeed: { hits: 1 } };
+  const HIT_TAG_VALUES = { approach: { aggressive: 1, patient: -1 }, path: { lift: 1, flat: -1 }, offspeed: { hits: 1 } };
   const hitTag = (s, key) => (s && s.hitter_tags ? (HIT_TAG_VALUES[key][s.hitter_tags[key]] || 0) : 0);
-  const spraySide = (q) => (q === "up-in" || q === "down-in" ? "in" : q === "up-away" || q === "down-away" ? "away" : null);
   const isEarly = (s) => (s.balls === 0 && s.strikes === 0) || (s.balls === 1 && s.strikes === 0) || (s.balls === 0 && s.strikes === 1);
   function damage(p, q, s) {
     let total = 0.0;
@@ -563,7 +562,7 @@
     const tau = (isOffspeed(p.kind) ? s.timing.OS : s.timing.FB) || 0.0;
     const tauEff = isFastball(p.kind) ? tau : -tau;
     const hittersCount = s.balls > s.strikes && s.strikes < 2;
-    const tAppr = hitTag(s, "approach"), tPull = hitTag(s, "spray"), rhoH = RHO_L[s.level] ?? 1.0, spSide = spraySide(q);   // v1.2 Part B
+    const tAppr = hitTag(s, "approach"), rhoH = RHO_L[s.level] ?? 1.0;   // v1.2 Part B
     const land = landing(p, q, s);
     const [leanH, leanW] = leanHbpWp(p, q, s);   // v1.2: [1, 1] without a lean
     let [command, grade] = effective(p, s);
@@ -608,7 +607,6 @@
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
       if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(0.5);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
-      if (tPull && spSide) Z.hlPost.push(rhoH * tPull * HIT_FIT["spray_hard_" + spSide]);   // v1.2 Part B: spray
       Z.hlPost.push(pt.hard);
       Z.hb = ((z === "noncomp" || z === "off") && A.hbp > 0) ? Math.min(0.9, A.hbp * hbpLoc(p, q) * (z === "noncomp" ? 1.0 : 0.1)) : 0;
       Z.wp = (z === "noncomp" && anyBase(s.bases)) ? (isOffspeed(p.kind) ? 0.12 : 0.04) * (1 - 0.15 * (s.catcher_block - 3)) : 0;
@@ -867,11 +865,8 @@
   function gbRate(p) {   // v1.1 Step 2e: grounder rate | ball in play by kind and profile (mirror of engine.py gb_rate)
     return GB_PROFILE[ptKey(p)];
   }
-  function typeMix(p, q, c, s) {
-    let gl = logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c];
-    const t = s ? hitTag(s, "spray") : 0;   // v1.2 Part B: a pull-heavy hitter hits fewer grounders
-    if (t && spraySide(q)) gl += (RHO_L[s.level] ?? 1.0) * t * HIT_FIT["spray_gb_" + spraySide(q)];
-    const g = sig(gl);
+  function typeMix(p, q, c) {
+    const g = sig(logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c]);
     const l = TYPED.nongb[c];
     return { GB: g, LD: (1 - g) * l[0], FB: (1 - g) * l[1], PU: (1 - g) * l[2] };
   }
@@ -879,7 +874,7 @@
     const o = s.outs, [b1, b2, b3] = s.bases, L = s.level;
     const tab = OUT_TABLE[L][c], rf = RUNNER_FIT[L];
     const ev = (o_, b_, r_) => vEnd(s, o_, b_, r_);
-    const tm = typeMix(p, q, c, s);
+    const tm = typeMix(p, q, c);
     const gr = c === "hard" ? (s.grades || GRADES_OVERRIDE) : null;
     const dh = gr ? powerHrShift(s, gr) : 0.0;
     let total = 0.0;
@@ -1434,7 +1429,7 @@
       const w = s.win;
       key = s.outs + "|" + bitsOf(s.bases) + "|" + (s.infield_in ? 1 : 0) + "|" + s.level + "|" +
         (w && w.omega > 0 ? w.omega + "," + w.WE0 + "," + w.m0 + "," + w.margin0 : "0") + "|" +
-        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3) + "|" + hitTag(s, "spray");   // v1.2 Part B: spray moves grounders
+        (((s.grades || GRADES_OVERRIDE) || {}).w ?? 3);
       CTX_KEY.set(s, key);
     }
     if (!tab.ctx) tab.ctx = new Map();
@@ -1560,16 +1555,16 @@
     for (const x of arsenal) { conf[x.name] = x.conf; wild[x.name] = wildToday(x, s); }
     const out = { conf, wild, ump: s.ump_u, names: arsenal.map((x) => x.name).join("|"), outs: s.outs, bases: basesKey(s.bases),
       infield_in: !!s.infield_in, lean: leanKey(arsenal) };
-    if (tagKey(s) !== "0,0,0,0") out.tags = tagKey(s);   // v1.2 Part B: only when a tag is set (engine.py)
+    if (tagKey(s) !== "0,0,0") out.tags = tagKey(s);   // v1.2 Part B: only when a tag is set (engine.py)
     return out;
   }
-  const tagKey = (s) => ["approach", "spray", "path", "offspeed"].map((k) => hitTag(s, k)).join(",");
+  const tagKey = (s) => ["approach", "path", "offspeed"].map((k) => hitTag(s, k)).join(",");
   // v1.2: each pitch's lean and spread; a change re-solves the table (a frozen table from before leans = all at lean 0)
   const leanKey = (arsenal) => arsenal.map((x) => [x.lean_x || 0, x.lean_z || 0, spreadOf(x)].join(",")).join("|");
   function needsResolve(frozen, arsenal, s) {   // v1.0 #2: outs, bases and infield-in also force a re-solve
     if (!frozen || frozen.names !== arsenal.map((x) => x.name).join("|")) return true;
     if ((frozen.lean ?? arsenal.map(() => "0,0,1").join("|")) !== leanKey(arsenal)) return true;   // v1.2
-    if ((frozen.tags ?? "0,0,0,0") !== tagKey(s)) return true;   // v1.2 Part B
+    if ((frozen.tags ?? "0,0,0") !== tagKey(s)) return true;   // v1.2 Part B
     if (frozen.outs !== s.outs || frozen.bases !== basesKey(s.bases) || frozen.infield_in !== !!s.infield_in) return true;
     if (arsenal.some((x) => Math.abs(x.conf - frozen.conf[x.name]) > 0.10)) return true;
     if (arsenal.some((x) => Math.abs(wildToday(x, s) - frozen.wild[x.name]) > 0.10)) return true;

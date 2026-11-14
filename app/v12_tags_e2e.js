@@ -1,6 +1,6 @@
 /*
  * v1.2 Part B (plan 2.8, Step B2 "App") in the real page: the coach's hitter tags.
- *   1. four tag rows on the hitter card, unknown by default; setting one stores it on his roster record (scoutTags)
+ *   1. three tag rows on the hitter card (spray dropped), unknown by default; setting one stores it on his roster record (scoutTags)
  *   2. the engine gets hitter_tags only when one is set, and the event snapshot carries them only then
  *   3. the importer reads tag columns; blank cells keep what he has
  *   4. no page errors
@@ -47,13 +47,13 @@ const server = http.createServer((req, res) => {
   await page.waitForTimeout(300);
   const name = await page.evaluate((id) => DB.hitters.get(id).name, hid);
   const sel = (label) => page.locator(`select[aria-label="${name} ${label}"]`);
-  check(await sel("early counts").count() === 1 && await sel("spray").count() === 1 && await sel("swing path").count() === 1 && await sel("off-speed").count() === 1,
-    "the hitter row has four tag rows");
+  check(await sel("early counts").count() === 1 && await sel("swing path").count() === 1 && await sel("off-speed").count() === 1 && await sel("spray").count() === 0,
+    "the hitter row has three tag rows (spray dropped)");
   check(await sel("early counts").inputValue() === "", "each starts as Unknown");
   await sel("early counts").selectOption("aggressive"); await page.waitForTimeout(200);
-  await sel("spray").selectOption("pull"); await page.waitForTimeout(300);
+  await sel("swing path").selectOption("flat"); await page.waitForTimeout(300);
   const stored = await page.evaluate(async (id) => (await DB.D.get("hitters", id)).scoutTags, hid);
-  check(JSON.stringify(stored) === '{"approach":"aggressive","spray":"pull"}', `stored on his roster record (${JSON.stringify(stored)})`);
+  check(JSON.stringify(stored) === '{"approach":"aggressive","path":"flat"}', `stored on his roster record (${JSON.stringify(stored)})`);
   const t1 = await page.evaluate(async () => {
     S.view = "live"; G().call = null; makeCall();
     const s = situation(); record({ result: "ball" });
@@ -61,18 +61,18 @@ const server = http.createServer((req, res) => {
     const evs = (await DB.D.byIndex("events", "gameId", G().dbId)).filter(PCDB.isPitch).sort((a, b) => a.n - b.n);
     return { tags: s.hitter_tags, snap: (evs[evs.length - 1].sit || {}).hitter_tags };
   });
-  check(JSON.stringify(t1.tags) === '{"approach":"aggressive","spray":"pull"}', `the engine gets them (${JSON.stringify(t1.tags)})`);
+  check(JSON.stringify(t1.tags) === '{"approach":"aggressive","path":"flat"}', `the engine gets them (${JSON.stringify(t1.tags)})`);
   check(JSON.stringify(t1.snap) === JSON.stringify(t1.tags), "the event snapshot carries them");
   await page.evaluate(() => { S.view = "roster"; render(); }); await page.waitForTimeout(300);
-  await sel("early counts").selectOption(""); await sel("spray").selectOption(""); await page.waitForTimeout(300);
+  await sel("early counts").selectOption(""); await sel("swing path").selectOption(""); await page.waitForTimeout(300);
   const cleared = await page.evaluate(async (id) => ({ rec: "scoutTags" in (await DB.D.get("hitters", id)), sit: "hitter_tags" in situation() }), hid);
   check(!cleared.rec && !cleared.sit, "back to Unknown: removed from the record, and the engine gets none");
 
   console.log("3. The importer reads tag columns");
   const imp = await page.evaluate(() => PCImport.parseHitters("Name,Bats,Approach,Spray,Path,Offspeed\nAl Able,R,Aggressive,pull-heavy,level,\nBo Bee,L,,,uppercut,hits hard\nCy Sea,S,maybe,,,\n")
     .map((x) => [x.name, x.scoutTags || null]));
-  check(JSON.stringify(imp) === '[["Al Able",{"approach":"aggressive","spray":"pull","path":"flat"}],["Bo Bee",{"path":"lift","offspeed":"hits"}],["Cy Sea",null]]',
-    `tag words read loosely; blank or unknown words are Unknown (${JSON.stringify(imp)})`);
+  check(JSON.stringify(imp) === '[["Al Able",{"approach":"aggressive","path":"flat"}],["Bo Bee",{"path":"lift","offspeed":"hits"}],["Cy Sea",null]]',
+    `tag words read loosely; blank or unknown words are Unknown; a Spray column is ignored (${JSON.stringify(imp)})`);
 
   console.log("4. Page errors");
   check(errs.length === 0, `none (${errs.slice(0, 3).join(" | ")})`);

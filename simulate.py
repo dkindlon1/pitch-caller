@@ -37,7 +37,7 @@ INPUTS = int(os.environ.get("INPUTS", "3"))
 NOISE = float(os.environ.get("NOISE", "0"))          # share of optional entries logged wrong
 TRUE_MOVE = os.environ.get("TRUE_MOVE", "0") == "1"  # pitches' real movement differs from their shape tag
 TRUE_MISS = os.environ.get("TRUE_MISS", "0") == "1"  # v1.2: each pitch has a hidden miss lean the engine doesn't know
-TRUE_TAGS = os.environ.get("TRUE_TAGS", "0") == "1"  # v1.2 Part B: each hitter has hidden approach / spray tags (the world's truth)
+TRUE_TAGS = os.environ.get("TRUE_TAGS", "0") == "1"  # v1.2 Part B: each hitter has a hidden approach tag (the world's truth)
 SEE_TAGS = os.environ.get("SEE_TAGS", "0") == "1"    # v1.2 Part B: ... and the coach has tagged them correctly (the caller sees them)
 # v0.6d test matrix presets
 STAFF = os.environ.get("STAFF", "default")        # default, power, finesse, two_pitch, lefty, four_pitch, shaky
@@ -476,7 +476,7 @@ def play_game(log_path):
     if TRUE_TAGS:                                    # v1.2 Part B: own stream, so the main sequence is untouched
         trng = random.Random(SEED_FOR_MOVE[0] * 11 + 5)
         for hh in lineup:
-            t = {"approach": trng.choice(["aggressive", None, "patient"]), "spray": trng.choice(["pull", None, "oppo"])}
+            t = {"approach": trng.choice(["aggressive", None, "patient"])}   # (spray dropped, Drew Nov 13)
             hh["tags"] = {k: v for k, v in t.items() if v}
     if TRUE_POWER:                                   # own stream: the main rng sequence is untouched
         prng = random.Random(SEED_FOR_MOVE[0] * 1_000_003 + 17)

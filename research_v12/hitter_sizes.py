@@ -1,6 +1,6 @@
 """v1.2 Step B2: size the swing-path coach rule (the data didn't ship the channel: research_v12/hitter_fits.py), the way
 v1.0's reads were sized: the smallest grid size that moves its proposed rows 5+ points (rows H1 / H2, Claude's proposal,
-Drew grades at Step 6). Also prints what the fitted channels (approach, spray) and the off-speed prior do on rows H3-H6.
+Drew grades at Step 6). Also prints what the fitted approach channel and the off-speed prior do on rows H3-H5 (H6, spray, dropped by Drew).
 usage (repo root): python3 research_v12/hitter_sizes.py  -> results/v12/hitter_sizes.json"""
 import json, os, sys
 from dataclasses import replace
@@ -59,8 +59,7 @@ def main():
             ("H4", "patient early: more first-pitch strikes over the plate (0-0, middle / down-middle)", THREE, (0, 0), {"approach": "patient"},
              lambda x, q: q in ("middle", "down-middle")),
             ("H5", "hits off-speed hard: fewer hittable off-speed pitches (1-1, OS in the zone)", THREE, (1, 1), {"offspeed": "hits"},
-             lambda x, q: e.is_offspeed(x.kind) and q != "chase"),
-            ("H6", "pull-heavy: away (1-1, any pitch away)", THREE, (1, 1), {"spray": "pull"}, lambda x, q: q in ("up-away", "down-away"))):
+             lambda x, q: e.is_offspeed(x.kind) and q != "chase"),):
         b0 = share(dist(ars, *cnt, None), f)
         b1 = share(dist(ars, *cnt, tags), f)
         out["rows"][rid] = dict(what=what, untagged=round(b0, 4), tagged=round(b1, 4), moved=round(b1 - b0, 4))

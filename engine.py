@@ -168,19 +168,18 @@ SIDE_TARGETS = {"in": ("up-in", "down-in"), "away": ("up-away", "down-away")}
 # 2024 -> 2025 pitches to fit, 2025 traits -> 2026 pitches held out, shipped where the held-out gain beat 2 bootstrap SD,
 # each net of the hitter's own general rate (the grades / damage memory carry that) and the pitch's height / zone / count.
 #   approach (ships, gain 91.7 vs SD 14.0): in-zone swing at 0-0, 1-0 and 0-1, logit per tag step
-#   spray    (ships: hard 8.5 vs 4.1, grounders 21.6 vs 5.2): a pull-heavy hitter hits pitches away harder and inside
-#            softer, and hits fewer grounders both sides (MLB; the opposite of the plan's guess "more away", reported)
+#   spray    shipped narrowly (hard 8.5 vs 4.1, grounders 21.6 vs 5.2) but the opposite way to the coaching read (a
+#            pull-heavy hitter hit pitches away harder); Drew (Nov 13): dropped, not in the engine or the tags.
 # Behavioral, so x RHO_L at HS / travel like every MLB-fitted term.
 #   path     (doesn't ship: held-out gains -1.3 / -0.3 / +0.3 against SD 0.8 / 2.6 / 0.6): a named COACH RULE instead, in
 #            coach_credit: a flat swing makes the fastball up costlier; a lift swing makes the off-speed pitch down costlier.
 #            Sized on proposed rows H1 / H2 (research_v12/hitter_sizes.py); shrinks as his spot memory builds (10 / (n + 10)).
 #   offspeed (doesn't ship, persistence 0.03-0.10; Q7): a small coach-set prior on his off-speed damage seed, N0
 #            pseudo-pitches at score HIT_OS_PRIOR, which real off-speed evidence outweighs.
-HIT_FIT = {"approach": 0.2077, "spray_hard_in": -0.0958, "spray_hard_away": 0.0943, "spray_gb_in": -0.1268, "spray_gb_away": -0.1035}
+HIT_FIT = {"approach": 0.2077}
 HIT_PATH_RULE = 0.003
 HIT_OS_PRIOR, HIT_OS_N0 = 0.3, 3.0
-HIT_TAG_VALUES = {"approach": {"aggressive": 1, "patient": -1}, "spray": {"pull": 1, "oppo": -1}, "path": {"lift": 1, "flat": -1},
-                  "offspeed": {"hits": 1}}
+HIT_TAG_VALUES = {"approach": {"aggressive": 1, "patient": -1}, "path": {"lift": 1, "flat": -1}, "offspeed": {"hits": 1}}
 EARLY_COUNTS = ((0, 0), (1, 0), (0, 1))
 
 
@@ -189,9 +188,6 @@ def hit_tag(s, key):
     t = s.hitter_tags
     return HIT_TAG_VALUES[key].get(t.get(key), 0) if t else 0
 
-
-def spray_side(q):
-    return "in" if q in SIDE_TARGETS["in"] else "away" if q in SIDE_TARGETS["away"] else None
 
 
 # v1.1 (FINDING_v1.0_game_mix_collapse, Nov 12): "lean on it" wears off once he has leaned. In a game, a hot pitch gets
@@ -673,7 +669,7 @@ class Situation:
     # right) of the app's 5x5 grid; contact weak / solid / hard or None; read None or the coach's read (whiff: front / late
     # / fooled; foul: pull / opposite / back), kept only at logging level 3+. Root only: tables never see it.
     pa_log: tuple = ()
-    # v1.2 Part B: the coach's hitter tags {"approach": "aggressive"|"patient", "spray": "pull"|"oppo", "path": "lift"|"flat",
+    # v1.2 Part B: the coach's hitter tags {"approach": "aggressive"|"patient", "path": "lift"|"flat",
     # "offspeed": "hits"}; a missing key or None = unknown = average (no effect)
     hitter_tags: dict = None
 
@@ -1681,8 +1677,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     tau_eff = tau if is_fastball(p.kind) else -tau        # late (+) helps fastballs, early (-) helps off-speed
 
     hitters_count = s.balls > s.strikes and s.strikes < 2
-    t_appr, t_pull = hit_tag(s, "approach"), hit_tag(s, "spray")      # v1.2 Part B (0 = unknown: no effect)
-    rho_h, sp_side = RHO_L.get(s.level, 1.0), spray_side(q)
+    t_appr, rho_h = hit_tag(s, "approach"), RHO_L.get(s.level, 1.0)      # v1.2 Part B (0 = unknown: no effect)
     land = landing(p, q, s)
     lean_h, lean_w = lean_hbp_wp(p, q, s)     # v1.2: (1.0, 1.0) without a lean
     command, grade = effective(p, s)
@@ -1755,8 +1750,6 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         if z == "heart" and is_offspeed(p.kind):
             hl += 0.5          # hanger: off-speed over the middle gets hit hard
         hl += side_shift(p, q, s, z, "hard")
-        if t_pull and sp_side:                                     # v1.2 Part B: spray (pull-heavy +1 / opposite-field -1)
-            hl += rho_h * t_pull * HIT_FIT["spray_hard_" + sp_side]
         hl += pt["hard"]
         weak, solid, hard = Q0[z]
         hard2 = sig(logit(hard) + hl)
@@ -1819,12 +1812,8 @@ def gb_rate(p):
     return GB_PROFILE[pt_key(p)]
 
 
-def type_mix(p, q, c, s=None):
-    gl = logit(gb_rate(p)) + TYPED["beta_y"] * (y_target(q, p.kind) - 2.5) + TYPED["gamma"][c]
-    t = hit_tag(s, "spray") if s is not None else 0         # v1.2 Part B: a pull-heavy hitter hits fewer grounders
-    if t and spray_side(q):
-        gl += RHO_L.get(s.level, 1.0) * t * HIT_FIT["spray_gb_" + spray_side(q)]
-    g = sig(gl)
+def type_mix(p, q, c):
+    g = sig(logit(gb_rate(p)) + TYPED["beta_y"] * (y_target(q, p.kind) - 2.5) + TYPED["gamma"][c])
     lfp = TYPED["nongb"][c]
     return {"GB": g, "LD": (1 - g) * lfp[0], "FB": (1 - g) * lfp[1], "PU": (1 - g) * lfp[2]}
 
@@ -1844,7 +1833,7 @@ def in_play_value_typed(c, p, q, s):
     o, (b1, b2, b3), L = s.outs, s.bases, s.level
     tab, rf = OUT_TABLE[L][c], RUNNER_FIT[L]
     ev = lambda o_, b_, r_: v_end(s, o_, b_, r_)
-    tm = type_mix(p, q, c, s)
+    tm = type_mix(p, q, c)
     gr = (s.grades or GRADES_OVERRIDE) if c == "hard" else None
     dh = power_hr_shift(s, gr) if gr else 0.0
     total = 0.0
@@ -2392,7 +2381,7 @@ def _ipv_cached(tab, p, q, s):
     w = s.win
     key = (p.name, q, s.outs, s.bases, s.infield_in, s.level,
            (w["omega"], w["WE0"], w["m0"], w["margin0"]) if (w and w["omega"] > 0) else None,
-           ((s.grades or GRADES_OVERRIDE) or {}).get("w", 3), hit_tag(s, "spray"))      # v1.2 Part B: spray moves grounders
+           ((s.grades or GRADES_OVERRIDE) or {}).get("w", 3))
     cache = tab.__dict__.setdefault("ipv", {})
     v = cache.get(key)
     if v is None:
@@ -2609,8 +2598,8 @@ def frozen_inputs(arsenal, s):
 
 
 def tag_key(s):
-    """v1.2 Part B: the hitter's tags as numbers (approach, spray, path, offspeed); a change re-solves the table"""
-    return tuple(hit_tag(s, k) for k in ("approach", "spray", "path", "offspeed"))
+    """v1.2 Part B: the hitter's tags as numbers (approach, path, offspeed); a change re-solves the table"""
+    return tuple(hit_tag(s, k) for k in ("approach", "path", "offspeed"))
 
 
 def lean_key(arsenal):
@@ -2627,7 +2616,7 @@ def needs_resolve(frozen, arsenal, s):
     fl = frozen.get("lean") or tuple((0.0, 0.0, 1.0) for _ in arsenal)
     if tuple(tuple(v) for v in fl) != lean_key(arsenal):
         return True    # v1.2: a frozen table from before leans existed counts as every pitch at lean 0
-    if tuple(frozen.get("tags") or (0, 0, 0, 0)) != tag_key(s):
+    if tuple(frozen.get("tags") or (0, 0, 0)) != tag_key(s):
         return True    # v1.2 Part B: a tag changed (no "tags" key = untagged)
     if (frozen.get("outs") != s.outs or frozen.get("bases") != tuple(bool(b) for b in s.bases)
             or frozen.get("infield_in") != bool(s.infield_in)):

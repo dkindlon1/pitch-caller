@@ -56,16 +56,13 @@ check("approach: an aggressive early hitter swings more at in-zone pitches at 0-
       ag > un > pa and ag2 == un2, f"0-0 in-zone swing {pa:.3f} / {un:.3f} / {ag:.3f}; 2-2 {un2:.3f} vs {ag2:.3f}")
 hs_ag, hs_un = swing_iz({"approach": "aggressive"}, 0, 0, "hs"), swing_iz(None, 0, 0, "hs")
 check("approach x RHO_L: smaller at HS than at D3", 0 < hs_ag - hs_un < ag - un, f"HS +{hs_ag - hs_un:.4f}, D3 +{ag - un:.4f}")
-hard = lambda tags, q: (lambda o: o["hard"] / (o["weak"] + o["solid"] + o["hard"]))(e.outcome_probs(A[0], q, SIT(1, 1, tags), A))
-hp_in, hu_in, hp_aw, hu_aw = hard({"spray": "pull"}, "down-in"), hard(None, "down-in"), hard({"spray": "pull"}, "down-away"), hard(None, "down-away")
-check("spray (fitted, MLB): a pull-heavy hitter hits pitches away harder and inside softer; middle unchanged",
-      hp_aw > hu_aw and hp_in < hu_in and hard({"spray": "pull"}, "middle") == hard(None, "middle"),
-      f"hard share in {hu_in:.4f} -> {hp_in:.4f}, away {hu_aw:.4f} -> {hp_aw:.4f}")
-gb = lambda tags, q: e.type_mix(A[0], q, "solid", SIT(1, 1, tags))["GB"]
-check("spray: a pull-heavy hitter hits fewer grounders both sides (fitted), an opposite-field one more",
-      gb({"spray": "pull"}, "down-in") < gb(None, "down-in") < gb({"spray": "oppo"}, "down-in") and gb({"spray": "pull"}, "down-away") < gb(None, "down-away")
-      and e.type_mix(A[0], "middle", "solid", SIT(1, 1, {"spray": "pull"})) == e.type_mix(A[0], "middle", "solid"),
-      f"GB in {gb(None, 'down-in'):.4f} -> pull {gb({'spray': 'pull'}, 'down-in'):.4f}")
+bad_sp = []
+try:
+    e.check_inputs(A, SIT(0, 0, {"spray": "pull"})); bad_sp.append("accepted")
+except ValueError:
+    pass
+check("spray is dropped (Drew, Nov 13): not a tag the engine takes; hard contact and grounders don't depend on tags",
+      "spray" not in e.HIT_TAG_VALUES and not bad_sp and e.HIT_FIT == {"approach": e.HIT_FIT["approach"]})
 pc_f = e.path_cost(A[0], "up-away", SIT(1, 2, {"path": "flat"}))
 pc_l = e.path_cost(A[2], "down-away", SIT(1, 2, {"path": "lift"}))
 pc_n = [e.path_cost(A[0], "up-away", SIT(1, 2, {"path": "lift"})), e.path_cost(A[2], "down-away", SIT(1, 2, {"path": "flat"})),
@@ -88,10 +85,10 @@ check("off-speed (Q7, coach-set prior): a small positive damage prior on off-spe
 fz = e.frozen_inputs(A, SIT(0, 0))
 fzt = e.frozen_inputs(A, SIT(0, 0, {"approach": "aggressive"}))
 check("re-solve: an untagged table's inputs carry no tags key (unchanged); a tag change re-solves; an old table counts as untagged",
-      "tags" not in fz and not e.needs_resolve(fz, A, SIT(0, 0)) and e.needs_resolve(fz, A, SIT(0, 0, {"spray": "pull"}))
+      "tags" not in fz and not e.needs_resolve(fz, A, SIT(0, 0)) and e.needs_resolve(fz, A, SIT(0, 0, {"path": "flat"}))
       and not e.needs_resolve(fzt, A, SIT(0, 0, {"approach": "aggressive"})) and e.needs_resolve(fzt, A, SIT(0, 0)))
 bad = []
-for t in ({"approach": "wild"}, {"swing": "lift"}, {"offspeed": "misses"}):
+for t in ({"approach": "wild"}, {"swing": "lift"}, {"offspeed": "misses"}, {"spray": "pull"}):
     try:
         e.check_inputs(A, SIT(0, 0, t)); bad.append(t)
     except ValueError:
@@ -120,19 +117,17 @@ for c, j in zip(cases, J):
     S = e.Situation(c["b"], c["k"], 1, (False,) * 3, level=c["lv"], same_side=c["same"], hitter_tags=c["tags"],
                     hitter_damage={k: tuple(v) for k, v in c["hd"].items()})
     p = A[c["i"]]
-    op, cc, dm, tm = e.outcome_probs(p, c["q"], S, A), e.coach_credit(p, c["q"], S, A), e.damage(p, c["q"], S), e.type_mix(p, c["q"], "solid", S)
+    op, cc, dm, tm = e.outcome_probs(p, c["q"], S, A), e.coach_credit(p, c["q"], S, A), e.damage(p, c["q"], S), e.type_mix(p, c["q"], "solid")
     worst = max([worst, abs(cc - j["cc"]), abs(dm - j["dm"])] + [abs(op[k] - j["op"][k]) for k in op] + [abs(tm[k] - j["tm"][k]) for k in tm])
 check("Python = JS on 600 random hitters with tags (outcome_probs, coach credit, damage, batted-ball mix)", worst < 1e-12, f"largest difference {worst:.1e}")
 jc = js("console.log(JSON.stringify({fit:E.v12.HIT_FIT,path:E.v12.HIT_PATH_RULE,os:[E.v12.HIT_OS_PRIOR,E.v12.HIT_OS_N0],vals:E.v12.HIT_TAG_VALUES}))")
 check("the same sizes in both engines", jc["fit"] == e.HIT_FIT and jc["path"] == e.HIT_PATH_RULE and jc["os"] == [e.HIT_OS_PRIOR, e.HIT_OS_N0]
       and jc["vals"] == e.HIT_TAG_VALUES)
 fit = json.load(open(os.path.join(HERE, "results", "v12", "hitter_fits.json")))["channels"]
-check("the fitted sizes are the held-out fits' own coefficients (results/v12/hitter_fits.json), and only channels that shipped",
-      fit["approach_swing"]["ships"] and fit["spray_hard"]["ships"] and fit["spray_gb"]["ships"]
-      and not fit["path_fb_whiff"]["ships"] and not fit["offspeed_hard"]["ships"]
-      and abs(fit["approach_swing"]["coefs"]["appr"] - e.HIT_FIT["approach"]) < 1e-12
-      and abs(fit["spray_hard"]["coefs"]["pull_in"] - e.HIT_FIT["spray_hard_in"]) < 1e-12 and abs(fit["spray_hard"]["coefs"]["pull_aw"] - e.HIT_FIT["spray_hard_away"]) < 1e-12
-      and abs(fit["spray_gb"]["coefs"]["pull_in"] - e.HIT_FIT["spray_gb_in"]) < 1e-12 and abs(fit["spray_gb"]["coefs"]["pull_aw"] - e.HIT_FIT["spray_gb_away"]) < 1e-12)
+check("the fitted size is the held-out fit's own coefficient (results/v12/hitter_fits.json): approach shipped; path and "
+      "off-speed didn't (coach rule / prior); spray shipped but was dropped (Drew)",
+      fit["approach_swing"]["ships"] and not fit["path_fb_whiff"]["ships"] and not fit["offspeed_hard"]["ships"]
+      and abs(fit["approach_swing"]["coefs"]["appr"] - e.HIT_FIT["approach"]) < 1e-12)
 
 fails = [r for r in results if not r[1]]
 print(f"\n{len(results) - len(fails)}/{len(results)} checks passed")
