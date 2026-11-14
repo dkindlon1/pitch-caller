@@ -34,6 +34,10 @@ async function game(browser, url, { tier, seed, forcedReads }) {
   const page = await ctx.newPage();
   const errs = []; page.on("pageerror", (e) => errs.push(String(e)));
   await page.goto(url); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 15000 });
+  // v1.2 (Drew, Nov 13): the start-of-game learning (hitter memory for the lineup, any unfinished learning) finishes before
+  // the first pitch, as it would before a real game, so a game doesn't depend on how fast the machine is. Nothing waits
+  // during the game.
+  await page.waitForFunction(() => DB.warm !== false, null, { timeout: 60000 });
   await page.evaluate(({ tier, appSeed, off, rideOff, zero, coachZero, hotEnd }) => { let a = appSeed; Math.random = () => (a = (a * 16807) % 2147483647) / 2147483647; S.setup.inputs = tier; S.view = "live"; if (off) for (const k of Object.keys(E.v08.SETUP_RULE)) E.v08.SETUP_RULE[k] = 0; if (rideOff) (E.v08.COACH_RULE || E.COACH_RULE).ride_up_2k = 0; for (const k of zero) E.v08.SETUP_RULE[k] = 0; for (const k of (coachZero || "").split(",").filter(Boolean)) E.v08.COACH_RULE[k] = 0; if (hotEnd) E.v08.HOT_FADE[1] = hotEnd; G().call = null; makeCall(); save(); render(); }, { tier, appSeed: seed + 4, off: !!process.env.SETUP_OFF, rideOff: !!process.env.RIDEUP_OFF, zero: (process.env.SETUP_ZERO || "").split(",").filter(Boolean), coachZero: process.env.COACH_ZERO || "", hotEnd: +(process.env.HOT_END || 0) });
   const visible = (re) => page.evaluate((src) => { const r = new RegExp(src); return [...document.querySelectorAll("button")].some((b) => b.offsetParent && r.test(b.textContent.trim())); }, re.source);
   const click = (re) => page.evaluate((src) => { const r = new RegExp(src); const b = [...document.querySelectorAll("button")].find((x) => x.offsetParent && r.test(x.textContent.trim().replace(/\s+/g, " "))); if (b) b.click(); return !!b; }, re.source);

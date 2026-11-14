@@ -54,8 +54,10 @@ async function boot() {
     await openFromPortal().catch((e) => { PORTAL.msg = syncMessage(e); console.warn("open from the website", e); });
     await loadPlanned().catch(() => {});
     save(); render();
-    // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen
-    setTimeout(async () => {
+    // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen.
+    // DB.warm says when that start-of-game learning is done (v1.2: game_mix_e2e waits for it before the first pitch)
+    DB.warm = false;
+    setTimeout(async () => { try {
       // D9: learning that a closed page never finished (one job per game; "toLearn" alone is the older single slot)
       for (const job of (await D.all("meta")).filter((m) => m.id === "toLearn" || /^toLearn:/.test(m.id))) await learnAfterGame(job);
       if (await D.get("meta", "checkDups")) { await checkDuplicates().catch((e) => console.warn("duplicate check", e)); await D.del("meta", "checkDups"); }
@@ -64,7 +66,7 @@ async function boot() {
       for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
       await refreshLineupMemory();
       if (S.view === "roster") render();
-    }, 50);
+    } finally { DB.warm = true; } }, 50);
   } catch (e) {
     DB.failed = e; console.warn("Database unavailable, running without it:", e && e.message);
     toast(e && e.code === "blocked" ? e.message : "The database couldn't open, so pitches are kept on this page only. Reload to try again.");
