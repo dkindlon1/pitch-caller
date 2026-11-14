@@ -244,9 +244,9 @@ e.SETUP_RULE["S4"] = _S4_SAVED
 check("Step 5 (L7): S4 fires only after a fastball away for a strike (called, foul or whiff) with a payoff 8+ mph slower "
       "(changeup not firm, or curve); not after a ball, not at 7 mph, not a firm changeup; both engines",
       _s4p == [x[4] for x in _S4] and _s4j == _s4p, f"python {_s4p}, js {_s4j}")
-check("Step 5 (L7): S5 resized to the smallest size that lifts its fire row 5+ points (0.004); S2 and S4 dropped to 0 (their "
-      "lifting sizes, 0.004 and 0.005, put the credit-only change rate at 17-22% on the three staffs, outside 2-10%); both engines",
-      e.SETUP_RULE["S2"] == 0.0 and e.SETUP_RULE["S4"] == 0.0 and e.SETUP_RULE["S5"] == 0.004 and json.loads(subprocess.run(
+check("Step 5 (L7): S2, S4 and S5 dropped to 0: S2 / S4's lifting sizes (0.004, 0.005) put the credit-only change rate at "
+      "17-22% on the three staffs; S5 (0.004) kept the band but put 2 of game_mix_e2e's 21 games over 70% (Drew: drop it); both engines",
+      e.SETUP_RULE["S2"] == 0.0 and e.SETUP_RULE["S4"] == 0.0 and e.SETUP_RULE["S5"] == 0.0 and json.loads(subprocess.run(
           ["node", "-e", "const E=require('./app/engine.js');console.log(JSON.stringify(E.v08.SETUP_RULE))"], cwd=HERE, capture_output=True,
           text=True, check=True).stdout) == e.SETUP_RULE, str({k: e.SETUP_RULE[k] for k in ("S2", "S4", "S5")}))
 # S5's lean gate: a sinker leaning toward an opposite-side hitter (glove side for a righty against a lefty) pays the HBP cost
@@ -258,7 +258,9 @@ def _s5(lean):
     ars, S, ex = _SC.build(_doc, _fr)
     ars = [replace(x, lean_x=lean) if x.kind == "SI" else x for x in ars]
     return sum(pr for pr, _, k, q in _SC.call_dist("v09", ars, S, ex) if k == "SI" and q in ("up-in", "down-in"))
+_S5_SAVED = e.SETUP_RULE["S5"]; e.SETUP_RULE["S5"] = _S5_SAVED or 0.004   # dropped (0): the gate's logic is checked at a test size
 _g0, _gt, _ga = _s5(0.0), _s5(-3.0), _s5(3.0)
+e.SETUP_RULE["S5"] = _S5_SAVED
 check("Step 5 (L7): S5 re-gated by the lean: on its fire row the front-door sinker drops when it leans toward the opposite-side "
       "hitter (the HBP cost) and rises when it leans away", _gt < _g0 - 0.03 and _ga > _g0, f"sinker in {_g0:.1%}; leaning toward him {_gt:.1%}; away {_ga:.1%}")
 

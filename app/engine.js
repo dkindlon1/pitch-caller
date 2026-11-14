@@ -1107,7 +1107,7 @@
     return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
   }
   // ---------------------------------------------------------------- v1.1 Step 3: setup and payoff rules (mirror of engine.py)
-  const SETUP_RULE = { S1: 0.002, S2: 0.0, S3: 0.003, S4: 0.0, S5: 0.004, S6: 0.004, S7: 0.005, S9: 0.001, N2: 0.001 };   // v1.2 Step 5: S5 resized, S2 / S4 dropped (engine.py)   // v1.1 Step 4: halved (Drew: lower all sizes; engine.py SETUP_RULE)
+  const SETUP_RULE = { S1: 0.002, S2: 0.0, S3: 0.003, S4: 0.0, S5: 0.0, S6: 0.004, S7: 0.005, S9: 0.001, N2: 0.001 };   // v1.2 Step 5: S2 / S4 / S5 dropped (engine.py)   // v1.1 Step 4: halved (Drew: lower all sizes; engine.py SETUP_RULE)
   const SETUP_CAP = 0.02, TIE_CAP = 0.05;
   const S4_GAP = 8.0;   // v1.2 Step 5 (L7): engine.py S4_GAP
   const UPS = ["up-in", "up-away"], INS = ["up-in", "down-in"], AWAYS = ["up-away", "down-away"], STRIKE_RES = ["cstrike", "whiff", "foul"];

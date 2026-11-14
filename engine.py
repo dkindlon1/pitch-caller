@@ -217,8 +217,9 @@ def landing_hot(p, s):
 # one's fire row 5+ points (research_v12/step5_setups.py -> results/v12/step5_setups.json: S2 0.004, S4 0.005, S5 0.004),
 # checked against the 2-10% credit-only change band on three staffs (readthrough/setup_game_check.py, 10 games each). With
 # all three at those sizes the rate was 17-22% (S4 and S2 drove it); S2 and S4 can't lift their rows and stay in the band,
-# so they're dropped (size 0; their code stays). S5 kept at 0.004: 4.9% / 3.5% / 10.0% (results/v12/step5_sgc_final_*).
-SETUP_RULE = {"S1": 0.002, "S2": 0.0, "S3": 0.003, "S4": 0.0, "S5": 0.004, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}
+# so they're dropped (size 0; their code stays). S5 at 0.004 kept the band (4.9% / 3.5% / 10.0%) but 2 of game_mix_e2e's 21
+# games went over 70% of one pitch; Drew (Nov 13): drop S5 too (size 0; code and its lean gate stay).
+SETUP_RULE = {"S1": 0.002, "S2": 0.0, "S3": 0.003, "S4": 0.0, "S5": 0.0, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}
 SETUP_CAP = 0.02            # setup credit <= 0.02 x run scale; coach + setup <= max(coach, 0.02 x run scale)
 UPS, DOWNS, INS, AWAYS = ("up-in", "up-away"), ("down-in", "down-away", "down-middle"), ("up-in", "down-in"), ("up-away", "down-away")
 STRIKE_RES = ("cstrike", "whiff", "foul")

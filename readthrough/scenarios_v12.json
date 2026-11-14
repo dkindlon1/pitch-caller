@@ -1,0 +1,3807 @@
+{
+ "approved": "2026-11-05 by Drew; v1.0 regrades and new rows Drew, 2026-11-11 (v1.0 Step 7); v1.1 Step 3 setup rows and Step 4 profile rows PROPOSED (Claude, 2026-11-12/13), Drew grades at Step 4; v1.2 (Nov 13): S1f floor 0.38 (Drew); P1 graded by crossing (SI:inx, Drew Q9)",
+ "arsenals": {
+  "cut_ch": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "",
+    "velo": 88
+   },
+   {
+    "command": 3,
+    "conf": 0.66,
+    "grade": 3,
+    "kind": "FC",
+    "name": "Cutter",
+    "shape": "hard",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 80
+   }
+  ],
+  "deadzone": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "straight",
+    "velo": 87
+   },
+   {
+    "command": 3,
+    "conf": 0.66,
+    "grade": 3,
+    "kind": "SI",
+    "name": "Sinker",
+    "shape": "run",
+    "velo": 86
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 79
+   }
+  ],
+  "fd": [
+   {
+    "command": 4,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "SI",
+    "name": "Sinker",
+    "shape": "run",
+    "velo": 87
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curve",
+    "shape": "",
+    "velo": 74
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 79
+   }
+  ],
+  "four": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 77
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curveball",
+    "shape": "loopy",
+    "velo": 71
+   },
+   {
+    "command": 3,
+    "conf": 0.6,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 77
+   }
+  ],
+  "four_cut": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "",
+    "velo": 88
+   },
+   {
+    "command": 3,
+    "conf": 0.66,
+    "grade": 3,
+    "kind": "FC",
+    "name": "Cutter",
+    "shape": "hard",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "gyro",
+    "velo": 80
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curve",
+    "shape": "",
+    "velo": 74
+   }
+  ],
+  "hs_two": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 82
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curveball",
+    "shape": "loopy",
+    "velo": 70
+   }
+  ],
+  "ride126": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "rides",
+    "slot": "over the top",
+    "velo": 88
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curve",
+    "shape": "12-6",
+    "slot": "over the top",
+    "velo": 74
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "split",
+    "slot": "over the top",
+    "velo": 80
+   }
+  ],
+  "sink_sweep": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "SI",
+    "name": "Sinker",
+    "shape": "run",
+    "slot": "low three-quarter",
+    "velo": 87
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "sweeper",
+    "slot": "low three-quarter",
+    "velo": 76
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "slot": "low three-quarter",
+    "velo": 79
+   }
+  ],
+  "three": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 77
+   },
+   {
+    "command": 3,
+    "conf": 0.6,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 77
+   }
+  ],
+  "two": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 77
+   }
+  ]
+ },
+ "changes": [
+  {
+   "approved": "Drew, 2026-11-05 (Step 4b)",
+   "change": "grades {\"d\": 5} -> {\"w\": 5}: the row is about a power hitter, and the engine's power grade is w (spec 8.2: contact c, power w, discipline d); d is discipline",
+   "date": "2026-11-05",
+   "row": "H1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['ANY:chase', 'ANY:corners'] + ANY:down-middle: a knee-high strike is a fine call at 0-2",
+   "date": "2026-11-11",
+   "row": "C1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['FB:zone'] -> ['FB:zone', 'OS:zone']; arguable ['OS:zone'] -> []; not ['ANY:chase'] -> ['ANY:chase']: off-speed strikes in a hitter's count are acceptable (if the off-speed gets it over, get it over)",
+   "date": "2026-11-11",
+   "row": "D5"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['ANY:corners'] + ANY:down-middle: a knee-high strike is a fine call in the biggest pitch of the game",
+   "date": "2026-11-11",
+   "row": "D7"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['FB:zone'] -> ['FB:zone', 'OS:zone']; arguable ['OS:zone'] -> []; not ['ANY:chase'] -> ['ANY:chase']: off-speed strikes at 3-1 are acceptable; no chase stays a hard rule",
+   "date": "2026-11-11",
+   "row": "D8"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['FB:zone'] -> ['FB:zone', 'OS:zone']; arguable ['OS:zone'] -> []; not ['ANY:chase'] -> ['ANY:chase']: after two balls, any strike is acceptable, off-speed included",
+   "date": "2026-11-11",
+   "row": "F3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['FB:zone'] -> ['FB:zone', 'OS:zone']; arguable ['OS:zone'] -> []; not [] -> []: mixing off-speed strikes keeps even a dominant fastball from being sat on",
+   "date": "2026-11-11",
+   "row": "G4"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['FB:down', 'OS:zone'] -> ['FB:down', 'FB:middle', 'OS:zone']; arguable ['FB:up'] -> ['FB:up']; not ['FB:middle'] -> []: a fastball down the middle at 2-0 is a good call even to a power hitter: you need a strike (also Drew, Nov 6)",
+   "date": "2026-11-11",
+   "row": "H1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['ANY:chase', 'ANY:corners'] + ANY:down-middle: a knee-high strike is a fine call at 0-2, even to a contact hitter",
+   "date": "2026-11-11",
+   "row": "H2"
+  },
+  {
+   "approved": "v1.0 #7 (mechanical)",
+   "change": "hitter_damage {'up-in': [0.8, 4]} dropped: it described this game's earlier at-bats, which v1.0 reads through the matchup memory (the row's matchup events) only",
+   "date": "2026-11-11",
+   "row": "H3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "acceptable ['FB:corners', 'OS:any'] -> ['FB:corners', 'FB:middle', 'OS:any']; arguable ['FB:middle', 'FB:chase'] -> ['FB:chase']; not [] -> []: one hard-hit at-bat isn't enough to stay off the middle",
+   "date": "2026-11-11",
+   "row": "I1"
+  },
+  {
+   "approved": "v1.0 #7 (mechanical)",
+   "change": "hitter_damage {'middle': [0.8, 4]} dropped: it described this game's earlier at-bats, which v1.0 reads through the matchup memory (the row's matchup events) only",
+   "date": "2026-11-11",
+   "row": "I1"
+  },
+  {
+   "approved": "v1.0 #7 (mechanical)",
+   "change": "hitter_damage {'middle': [0.9, 8]} dropped: it described this game's earlier at-bats, which v1.0 reads through the matchup memory (the row's matchup events) only",
+   "date": "2026-11-11",
+   "row": "I4"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: Runner on third, one out: a ground ball or a strikeout; a fly ball scores him",
+   "date": "2026-11-11",
+   "row": "J1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: A chase that's taken is what was asked for: keep expanding or finish",
+   "date": "2026-11-11",
+   "row": "J2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: Late and close in a seven-inning game: the biggest pitch so far",
+   "date": "2026-11-11",
+   "row": "J3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: A taken pitch is no reason to move off it",
+   "date": "2026-11-11",
+   "row": "J4"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: 3-1: the pitch he's landing today",
+   "date": "2026-11-11",
+   "row": "J5"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: Plus changeup: away. A plus slider to an opposite-side hitter is a back-foot slider (starts middle, breaks in at his back foot)",
+   "date": "2026-11-11",
+   "row": "J7"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7)",
+   "change": "new v1.0 row: 3-1: a strike, mixed moderately among the pitches he can land",
+   "date": "2026-11-11",
+   "row": "J6"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: middle means anywhere in the zone: acceptable at 0-0",
+   "date": "2026-11-11",
+   "row": "B1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:corners', 'SL:corners'] + ['ANY:middle', 'ANY:down-middle']: the engine leans on command enough; middle strikes acceptable",
+   "date": "2026-11-11",
+   "row": "B2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable at 1-1",
+   "date": "2026-11-11",
+   "row": "B5"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable at 1-1, even in a big spot",
+   "date": "2026-11-11",
+   "row": "B6"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:zone'] + ['FB:zone', 'SL:chase']: the engine leans on confidence enough",
+   "date": "2026-11-11",
+   "row": "B9"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:up-in', 'FB:chase', 'SL:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: edges are acceptable at 0-2 after a whiff; middle too (same rule as C3)",
+   "date": "2026-11-11",
+   "row": "C2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:chase', 'ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: middle is acceptable at 1-2",
+   "date": "2026-11-11",
+   "row": "C3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:away', 'FB:up-in', 'FB:chase', 'CH:down'] + ['SL:zone']: the slider for a strike is what you'd want with the runner on 3rd (not in the dirt)",
+   "date": "2026-11-11",
+   "row": "C4"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:chase', 'CH:chase', 'SL:down', 'CH:down'] + ['FB:any']: a third fastball is fine",
+   "date": "2026-11-11",
+   "row": "C9"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['CH:down-away', 'CH:chase', 'FB:corners', 'SL:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: with an average changeup and slider the edge calls are acceptable; middle at 1-2 as in C3 (the plus-pitch version is J7)",
+   "date": "2026-11-11",
+   "row": "C10"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:corners', 'CH:zone'] + ['SL:zone']: after the landing rule changed (a pitch not landing is held back only when behind or at 0-0): the slider for a strike is OK here",
+   "date": "2026-11-11",
+   "row": "D3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable at 0-0 with 2 outs",
+   "date": "2026-11-11",
+   "row": "D10"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:zone', 'SL:chase'] + ['FB:zone', 'CH:zone']: the engine leans on today's landing enough; the changeup strikes are fine",
+   "date": "2026-11-11",
+   "row": "E4"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:zone', 'CH:zone'] + ['FB:zone']: the shake-off moves the mix enough",
+   "date": "2026-11-11",
+   "row": "E5"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:chase', 'CH:chase', 'SL:down', 'CH:down'] + ['FB:chase', 'ANY:middle', 'ANY:down-middle']: the engine leans off a tired fastball enough",
+   "date": "2026-11-11",
+   "row": "E7"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:corners', 'FB:chase'] + ['CB:any']: call the curveball, for a strike or a chase (and a curveball corner is no longer not acceptable)",
+   "date": "2026-11-11",
+   "row": "E8"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "not acceptable ['CB:corners'] - ['CB:corners']",
+   "date": "2026-11-11",
+   "row": "E8"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:down-away', 'SL:chase', 'FB:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: edges and middle are acceptable as long as the chase and the repeat stay on the table (floor)",
+   "date": "2026-11-11",
+   "row": "F2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "floor ['SL:down-away', 'ANY:chase'] >= 15%: the repeat (slider down-away) and chase stay at least 15% of calls",
+   "date": "2026-11-11",
+   "row": "F2"
+  },
+  {
+   "approved": "v1.0 Step 7 (mechanical)",
+   "change": "inputs {'last': ['Changeup', 'down-away', 'foul']} -> {'last': ['Changeup', 'down-away', 'foul', 'back']}",
+   "date": "2026-11-11",
+   "row": "F5"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:zone'] + ['SL:any']: a fourth slider is fine",
+   "date": "2026-11-11",
+   "row": "F8"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['SL:chase', 'SL:down-away', 'FB:chase'] + ['ANY:corners', 'ANY:middle', 'ANY:down-middle']: edges are acceptable at 1-2 against a same-side hitter; middle too (same rule as C3)",
+   "date": "2026-11-11",
+   "row": "G1"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['CB:zone', 'FB:zone'] + ['SL:zone', 'CH:zone']: the engine leans on the best pitch enough",
+   "date": "2026-11-11",
+   "row": "G2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['FB:chase', 'FB:corners', 'SL:chase'] + ['SL:down-away', 'ANY:middle', 'ANY:down-middle']: a weak slider down-away is acceptable; middle too (same rule as C3)",
+   "date": "2026-11-11",
+   "row": "G3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable on the third trip",
+   "date": "2026-11-11",
+   "row": "I3"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:chase', 'ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: middle is acceptable after a taken chase",
+   "date": "2026-11-11",
+   "row": "J2"
+  },
+  {
+   "approved": "Drew, 2026-11-11 (v1.0 Step 7), second pass",
+   "change": "acceptable ['ANY:corners'] + ['ANY:middle', 'ANY:down-middle']: acceptable in the HS 5th-inning spot",
+   "date": "2026-11-11",
+   "row": "J3"
+  },
+  {
+   "approved": "Drew, 2026-11-13",
+   "change": "floor 0.40 -> 0.38 (Drew: what S1 at 0.002 buys once S4 is dropped)",
+   "date": "2026-11-13",
+   "row": "S1f"
+  },
+  {
+   "approved": "Drew, 2026-11-13",
+   "change": "floor pattern SI:in -> SI:inx (inside judged by where the pitch crosses; Drew Q9)",
+   "date": "2026-11-13",
+   "row": "P1"
+  }
+ ],
+ "defaults": {
+  "arsenal": "three",
+  "balls": 0,
+  "bases": [
+   false,
+   false,
+   false
+  ],
+  "batters_faced": 4,
+  "catcher_block": 3,
+  "home": true,
+  "inning": 4,
+  "level": "college_d3",
+  "margin": 0,
+  "outs": 0,
+  "pitch_count": 50,
+  "same_side": true,
+  "strikes": 0
+ },
+ "defaults_text": "College D3. Three-pitch arsenal: fastball 85 (ride), slider 77, changeup 77, all grade 3 and command 3, all landing normally. Hitter grades 3 (no scouting), same-side hitter. Bases empty, no outs, 4th inning, tied, pitch count 50, first time through, catcher blocks at 3.",
+ "pass_rule": {
+  "acc_min": 0.7,
+  "not_max": 0.05,
+  "not_max_hard": 0.0
+ },
+ "rows": [
+  {
+   "acceptable": [
+    "FB:zone"
+   ],
+   "arguable": [
+    "OS:zone"
+   ],
+   "exclude": [],
+   "hard": true,
+   "id": "A1",
+   "inputs": {
+    "balls": 3
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-0",
+   "status": "graded (Drew, v1.0)",
+   "why": "No chase at 3-0"
+  },
+  {
+   "acceptable": [
+    "FB:zone"
+   ],
+   "arguable": [
+    "OS:zone"
+   ],
+   "exclude": [],
+   "hard": true,
+   "id": "A2",
+   "inputs": {
+    "balls": 3,
+    "bases": [
+     true,
+     false,
+     false
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-1, runner on 1st",
+   "status": "graded (Drew, v1.0)",
+   "why": "No chase at 3-1"
+  },
+  {
+   "acceptable": [
+    "ANY:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": true,
+   "id": "A3",
+   "inputs": {
+    "balls": 2,
+    "bases": [
+     true,
+     true,
+     true
+    ],
+    "outs": 2,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-2, bases loaded, 2 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "Attack the zone at 2-2"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:zone"
+   ],
+   "arguable": [
+    "CH:zone"
+   ],
+   "exclude": [],
+   "hard": true,
+   "id": "A4",
+   "inputs": {
+    "balls": 2,
+    "landing_today": {
+     "Slider": [
+      8,
+      10
+     ]
+    },
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-2, slider landing 8 of 10 today",
+   "status": "graded (Drew, v1.0)",
+   "why": "Attack the zone at 2-2"
+  },
+  {
+   "acceptable": [
+    "FB:zone"
+   ],
+   "arguable": [
+    "SL:zone"
+   ],
+   "exclude": [],
+   "hard": true,
+   "id": "A5",
+   "inputs": {
+    "balls": 3,
+    "landing_today": {
+     "Changeup": [
+      1,
+      8
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase",
+    "CH:any"
+   ],
+   "pitch_edits": {},
+   "situation": "3-0, changeup landing 1 of 8 today",
+   "status": "graded (Drew, v1.0)",
+   "why": "No chase at 3-0; don't call a pitch that isn't landing"
+  },
+  {
+   "acceptable": [
+    "FB:zone"
+   ],
+   "arguable": [
+    "CB:zone"
+   ],
+   "exclude": [],
+   "hard": true,
+   "id": "A6",
+   "inputs": {
+    "arsenal": "hs_two",
+    "balls": 3,
+    "level": "hs",
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-1, high school, two-pitch (FB, CB)",
+   "status": "graded (Drew, v1.0)",
+   "why": "No chase at 3-1 at every level"
+  },
+  {
+   "acceptable": [
+    "FB:any",
+    "CH:any"
+   ],
+   "arguable": [
+    "SL:any"
+   ],
+   "exclude": [
+    [
+     "Slider",
+     "down-away"
+    ]
+   ],
+   "hard": true,
+   "id": "A7",
+   "inputs": {
+    "balls": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "SL:down-away"
+   ],
+   "pitch_edits": {},
+   "situation": "1-1, the coach just shook off SL down-away",
+   "status": "graded (Drew, v1.0)",
+   "why": "A shaken-off call is not called again"
+  },
+  {
+   "acceptable": [
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "B1",
+   "inputs": {},
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "0-0",
+   "status": "graded (Drew, v1.0)",
+   "why": "Get ahead with a good strike"
+  },
+  {
+   "acceptable": [
+    "FB:corners",
+    "SL:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "B2",
+   "inputs": {},
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {
+    "Fastball": {
+     "command": 2
+    },
+    "Slider": {
+     "command": 4
+    }
+   },
+   "situation": "0-0, FB command 2, SL command 4",
+   "status": "graded (Drew, v1.0)",
+   "why": "Get ahead with the pitch he commands"
+  },
+  {
+   "acceptable": [
+    "ANY:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "B3",
+   "inputs": {
+    "balls": 1,
+    "last": [
+     "Fastball",
+     "chase",
+     "ball"
+    ]
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "1-0, first pitch was FB chase (ball)",
+   "status": "graded (Drew, v1.0)",
+   "why": "Two off-zone calls to start is waste"
+  },
+  {
+   "acceptable": [
+    "SL:any",
+    "CH:any",
+    "FB:away"
+   ],
+   "arguable": [
+    "FB:up-in",
+    "ANY:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "B4",
+   "inputs": {
+    "last": [
+     "Fastball",
+     "up-in",
+     "cstrike"
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-1, last pitch FB up-in, called strike",
+   "status": "graded (Drew, v1.0)",
+   "why": "Change something after a called strike"
+  },
+  {
+   "acceptable": [
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "SL:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "B5",
+   "inputs": {
+    "balls": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1",
+   "status": "graded (Drew, v1.0)",
+   "why": "1-1 is the pivotal pitch"
+  },
+  {
+   "acceptable": [
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "SL:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "B6",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     false,
+     true,
+     false
+    ],
+    "inning": 8,
+    "margin": -1,
+    "outs": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, 8th inning, down 1, runner on 2nd, 1 out",
+   "status": "graded (Drew, v1.0)",
+   "why": "Pivotal pitch in a big spot"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:zone"
+   ],
+   "arguable": [
+    "ANY:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "B7",
+   "inputs": {
+    "balls": 2,
+    "landing_today": {
+     "Changeup": [
+      2,
+      8
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "CH:any"
+   ],
+   "pitch_edits": {},
+   "situation": "2-0, changeup landing 2 of 8",
+   "status": "graded (Drew, v1.0)",
+   "why": "Don't fall to 3-0 with a pitch that isn't landing"
+  },
+  {
+   "acceptable": [
+    "FB:zone"
+   ],
+   "arguable": [
+    "CB:zone"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "B8",
+   "inputs": {
+    "arsenal": "hs_two",
+    "landing_today": {
+     "Curveball": [
+      3,
+      10
+     ]
+    },
+    "level": "hs"
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "0-0, high school, two-pitch (FB, CB), curveball landing 3 of 10",
+   "status": "graded (Drew, v1.0)",
+   "why": "Get ahead with the pitch that's landing"
+  },
+  {
+   "acceptable": [
+    "SL:zone",
+    "FB:zone",
+    "SL:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "B9",
+   "inputs": {
+    "balls": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "FB:chase"
+   ],
+   "pitch_edits": {
+    "Fastball": {
+     "conf": 0.5
+    },
+    "Slider": {
+     "conf": 0.85
+    }
+   },
+   "situation": "1-1, FB confidence 0.50, SL confidence 0.85",
+   "status": "graded (Drew, v1.0)",
+   "why": "Pitch confidence counts more than reading the hitter"
+  },
+  {
+   "acceptable": [
+    "ANY:chase",
+    "ANY:corners",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "C1",
+   "inputs": {
+    "outs": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-2, 1 out",
+   "status": "graded (Drew, v1.0)",
+   "why": "Expand or finish"
+  },
+  {
+   "acceptable": [
+    "FB:up-in",
+    "FB:chase",
+    "SL:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "CH:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "C2",
+   "inputs": {
+    "last": [
+     "Fastball",
+     "up-in",
+     "whiff"
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-2, last pitch FB up-in, swinging strike",
+   "status": "graded (Drew, v1.0)",
+   "why": "Go back to a pitch he just missed"
+  },
+  {
+   "acceptable": [
+    "ANY:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "C3",
+   "inputs": {
+    "balls": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2",
+   "status": "graded (Drew, v1.0)",
+   "why": "Expand or finish"
+  },
+  {
+   "acceptable": [
+    "FB:away",
+    "FB:up-in",
+    "FB:chase",
+    "CH:down",
+    "SL:zone"
+   ],
+   "arguable": [
+    "SL:down",
+    "SL:chase",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "C4",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     false,
+     false,
+     true
+    ],
+    "landing_today": {
+     "Slider": [
+      2,
+      9
+     ]
+    },
+    "outs": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, runner on 3rd, 1 out, slider landing 2 of 9",
+   "status": "graded (Drew, v1.0)",
+   "why": "A high fastball is a strikeout pitch with two strikes; a wild slider is defensible"
+  },
+  {
+   "acceptable": [
+    "CB:chase",
+    "CB:down",
+    "CH:down",
+    "FB:chase",
+    "FB:up"
+   ],
+   "arguable": [
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "C5",
+   "inputs": {
+    "arsenal": "four",
+    "balls": 1,
+    "bases": [
+     false,
+     false,
+     true
+    ],
+    "catcher_block": 4,
+    "landing_today": {
+     "Curveball": [
+      8,
+      10
+     ]
+    },
+    "outs": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, runner on 3rd, 1 out, four-pitch, curveball landing 8 of 10, catcher blocks 4",
+   "status": "graded (Drew, v1.0)",
+   "why": "With two strikes the high fastball is a strikeout pitch"
+  },
+  {
+   "acceptable": [
+    "ANY:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": true,
+   "id": "C6",
+   "inputs": {
+    "balls": 2,
+    "bases": [
+     false,
+     true,
+     false
+    ],
+    "outs": 2,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-2, runner on 2nd, 2 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "Attack the zone at 2-2"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "C7",
+   "inputs": {
+    "balls": 3,
+    "landing_today": {
+     "Changeup": [
+      2,
+      8
+     ]
+    },
+    "outs": 2,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase",
+    "CH:any"
+   ],
+   "pitch_edits": {},
+   "situation": "3-2, 2 outs, changeup landing 2 of 8",
+   "status": "graded (Drew, v1.0)",
+   "why": "Full count: throw a strike with a pitch that's landing"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:zone"
+   ],
+   "arguable": [
+    "CH:zone"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "C8",
+   "inputs": {
+    "balls": 3,
+    "bases": [
+     true,
+     true,
+     true
+    ],
+    "outs": 2,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-2, bases loaded, 2 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "A walk forces in a run"
+  },
+  {
+   "acceptable": [
+    "SL:chase",
+    "CH:chase",
+    "SL:down",
+    "CH:down",
+    "FB:any"
+   ],
+   "arguable": [
+    "FB:chase",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "C9",
+   "inputs": {
+    "last": [
+     "Fastball",
+     "up-away",
+     "foul"
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-2, last two pitches FB, FB",
+   "status": "graded (Drew, v1.0)",
+   "why": "Change speeds after two fastballs"
+  },
+  {
+   "acceptable": [
+    "CH:down-away",
+    "CH:chase",
+    "FB:corners",
+    "SL:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "SL:down-in"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "C10",
+   "inputs": {
+    "balls": 1,
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, opposite-side hitter",
+   "status": "graded (Drew, v1.0)",
+   "why": "The changeup is the weapon against opposite-side hitters"
+  },
+  {
+   "acceptable": [
+    "ANY:down",
+    "SL:chase",
+    "CH:chase"
+   ],
+   "arguable": [
+    "ANY:middle",
+    "FB:up"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "D1",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     false,
+     false,
+     true
+    ],
+    "home": false,
+    "infield_in": true,
+    "inning": 9,
+    "outs": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, bottom 9th, tied, runner on 3rd, 1 out, infield in",
+   "status": "graded (Drew, v1.0)",
+   "why": "A grounder holds him; a fly ball scores him"
+  },
+  {
+   "acceptable": [
+    "ANY:down"
+   ],
+   "arguable": [
+    "ANY:middle",
+    "FB:up"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "D2",
+   "inputs": {
+    "bases": [
+     false,
+     false,
+     true
+    ]
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-0, runner on 3rd, 0 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "Keep the ball down with the run on third"
+  },
+  {
+   "acceptable": [
+    "FB:corners",
+    "CH:zone",
+    "SL:zone"
+   ],
+   "arguable": [
+    "SL:down",
+    "SL:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "D3",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     false,
+     false,
+     true
+    ],
+    "catcher_block": 2,
+    "landing_today": {
+     "Slider": [
+      2,
+      9
+     ]
+    },
+    "outs": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, runner on 3rd, 1 out, slider landing 2 of 9, catcher blocks 2",
+   "status": "graded (Drew, v1.0)",
+   "why": "A wild pitch scores the run"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:zone"
+   ],
+   "arguable": [
+    "CH:zone",
+    "SL:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "D4",
+   "inputs": {
+    "balls": 2,
+    "bases": [
+     true,
+     true,
+     true
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "FB:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-1, bases loaded, 0 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "Can't fall behind with the bases loaded"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "OS:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "D5",
+   "inputs": {
+    "balls": 2,
+    "inning": 7,
+    "margin": 6
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-0, 7th inning, up 6",
+   "status": "graded (Drew, v1.0)",
+   "why": "Big lead: throw strikes"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:zone"
+   ],
+   "arguable": [
+    "CH:zone"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "D6",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     true,
+     false,
+     false
+    ],
+    "inning": 9,
+    "margin": -1,
+    "outs": 2,
+    "steal": {
+     "a": 0.1,
+     "runner": 1,
+     "t": null
+    },
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "SL:chase",
+    "CH:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "1-1, 9th, down 1, runner on 1st, 2 outs, high steal threat",
+   "status": "graded (Drew, v1.0)",
+   "why": "A ball in the dirt moves him into scoring position"
+  },
+  {
+   "acceptable": [
+    "ANY:corners",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "SL:chase",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "D7",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     false,
+     true,
+     true
+    ],
+    "inning": 8,
+    "outs": 2,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, 8th, tied, runners on 2nd and 3rd, 2 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "The biggest pitch of the game"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "OS:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": true,
+   "id": "D8",
+   "inputs": {
+    "balls": 3,
+    "inning": 9,
+    "margin": 7,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-1, 9th, up 7",
+   "status": "graded (Drew, v1.0)",
+   "why": "No chase at 3-1; big lead"
+  },
+  {
+   "acceptable": [
+    "ANY:down"
+   ],
+   "arguable": [
+    "ANY:up",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "D9",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     true,
+     false,
+     false
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, runner on 1st, 0 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "Double-play ball"
+  },
+  {
+   "acceptable": [
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "D10",
+   "inputs": {
+    "bases": [
+     false,
+     false,
+     true
+    ],
+    "level": "hs",
+    "outs": 2
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "0-0, high school, runner on 3rd, 2 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "With 2 outs a fly ball doesn't score him"
+  },
+  {
+   "acceptable": [
+    "SL:zone",
+    "FB:zone"
+   ],
+   "arguable": [
+    "CH:zone"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "E1",
+   "inputs": {
+    "balls": 2,
+    "landing_today": {
+     "Slider": [
+      7,
+      9
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-0, slider landing 7 of 9",
+   "status": "graded (Drew, v1.0)",
+   "why": "If the off-speed gets it over, get it over"
+  },
+  {
+   "acceptable": [
+    "FB:zone"
+   ],
+   "arguable": [
+    "CH:zone"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "E2",
+   "inputs": {
+    "balls": 2,
+    "landing_today": {
+     "Slider": [
+      2,
+      9
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "SL:any",
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-0, slider landing 2 of 9",
+   "status": "graded (Drew, v1.0)",
+   "why": "Not the pitch that isn't landing in a hitter's count"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "CH:zone"
+   ],
+   "arguable": [
+    "SL:zone"
+   ],
+   "exclude": [],
+   "hard": true,
+   "id": "E3",
+   "inputs": {
+    "balls": 3,
+    "landing_today": {
+     "Changeup": [
+      6,
+      8
+     ]
+    },
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-1, changeup landing 6 of 8",
+   "status": "graded (Drew, v1.0)",
+   "why": "Get it over with the off-speed that's landing"
+  },
+  {
+   "acceptable": [
+    "SL:zone",
+    "SL:chase",
+    "FB:zone",
+    "CH:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "E4",
+   "inputs": {
+    "balls": 1,
+    "landing_today": {
+     "Fastball": [
+      3,
+      10
+     ],
+     "Slider": [
+      8,
+      10
+     ]
+    },
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "FB:chase"
+   ],
+   "pitch_edits": {
+    "Fastball": {
+     "command": 2
+    }
+   },
+   "situation": "1-1, FB command 2 and landing 3 of 10; SL landing 8 of 10",
+   "status": "graded (Drew, v1.0)",
+   "why": "Lean on what's working today"
+  },
+  {
+   "acceptable": [
+    "SL:zone",
+    "CH:zone",
+    "FB:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "E5",
+   "inputs": {},
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {
+    "Fastball": {
+     "conf": 0.5
+    }
+   },
+   "situation": "0-0, coach just shook off a fastball (FB confidence down 0.20 to 0.50)",
+   "status": "graded (Drew, v1.0)",
+   "why": "Respect the shake-off"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:zone"
+   ],
+   "arguable": [
+    "CH:zone"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "E6",
+   "inputs": {
+    "arsenal": "four",
+    "balls": 3,
+    "landing_today": {
+     "Curveball": [
+      1,
+      6
+     ]
+    },
+    "outs": 2,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "CB:any",
+    "ANY:chase"
+   ],
+   "pitch_edits": {
+    "Curveball": {
+     "grade": 4
+    }
+   },
+   "situation": "3-2, 2 outs, four-pitch, curveball (grade 4) landing 1 of 6",
+   "status": "graded (Drew, v1.0)",
+   "why": "The best pitch is no good if it isn't landing"
+  },
+  {
+   "acceptable": [
+    "SL:chase",
+    "CH:chase",
+    "SL:down",
+    "CH:down",
+    "FB:chase",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "E7",
+   "inputs": {
+    "batters_faced": 24,
+    "pitch_count": 100,
+    "radar": {
+     "Fastball": 82.0
+    },
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-2, pitch count 100, fastball 3 mph below normal",
+   "status": "graded (Drew, v1.0)",
+   "why": "Tired arm: lean on the off-speed"
+  },
+  {
+   "acceptable": [
+    "FB:corners",
+    "FB:chase",
+    "CB:any"
+   ],
+   "arguable": [
+    "CB:chase",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "E8",
+   "inputs": {
+    "arsenal": "hs_two",
+    "balls": 1,
+    "landing_today": {
+     "Curveball": [
+      0,
+      4
+     ]
+    },
+    "level": "hs",
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, high school, two-pitch (FB, CB), curveball landing 0 of 4",
+   "status": "graded (Drew, v1.0)",
+   "why": "Off the zone a bad curveball can still get a chase; in it, it hangs"
+  },
+  {
+   "acceptable": [
+    "FB:away",
+    "SL:any",
+    "CH:any"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "F1",
+   "inputs": {
+    "last": [
+     "Fastball",
+     "up-in",
+     "foul"
+    ],
+    "strikes": 1,
+    "timing": {
+     "FB": -0.5
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "FB:up-in"
+   ],
+   "pitch_edits": {},
+   "situation": "0-1, last pitch FB up-in, pulled foul (out front)",
+   "status": "graded (Drew, v1.0)",
+   "why": "He's early after the inside fastball"
+  },
+  {
+   "acceptable": [
+    "SL:down-away",
+    "SL:chase",
+    "FB:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "CH:chase"
+   ],
+   "exclude": [],
+   "floor": [
+    [
+     "SL:down-away",
+     "ANY:chase"
+    ],
+    0.15
+   ],
+   "hard": false,
+   "id": "F2",
+   "inputs": {
+    "balls": 1,
+    "last": [
+     "Slider",
+     "down-away",
+     "whiff"
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, last pitch SL down-away, swinging strike",
+   "status": "graded (Drew, v1.0)",
+   "why": "Repeat a pitch after a whiff"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "OS:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "F3",
+   "inputs": {
+    "balls": 2,
+    "last": [
+     "Fastball",
+     "down-away",
+     "ball"
+    ]
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "2-0, last two pitches FB away, both balls",
+   "status": "graded (Drew, v1.0)",
+   "why": "A third off-zone call in a row is waste"
+  },
+  {
+   "acceptable": [
+    "ANY:any"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "F4",
+   "inputs": {
+    "balls": 1,
+    "last": [
+     "Fastball",
+     "up-away",
+     "foul"
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, last three pitches all FB",
+   "status": "graded (Drew, v1.0)",
+   "why": "A fourth fastball is fine if it's the best call"
+  },
+  {
+   "acceptable": [
+    "FB:any",
+    "SL:any"
+   ],
+   "arguable": [
+    "CH:any"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "F5",
+   "inputs": {
+    "last": [
+     "Changeup",
+     "down-away",
+     "foul",
+     "back"
+    ],
+    "strikes": 1,
+    "timing": {
+     "OS": 0.0
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "CH:down-away"
+   ],
+   "pitch_edits": {},
+   "situation": "0-1, last pitch CH down-away, hit hard foul",
+   "status": "graded (Drew, v1.0)",
+   "why": "He squared it up"
+  },
+  {
+   "acceptable": [
+    "FB:up",
+    "FB:in"
+   ],
+   "arguable": [
+    "OS:any",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "F6",
+   "inputs": {
+    "balls": 1,
+    "strikes": 1,
+    "timing": {
+     "FB": 0.6
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, hitter late on the fastball twice (fouled late)",
+   "status": "graded (Drew, v1.0)",
+   "why": "He can't catch up to the fastball"
+  },
+  {
+   "acceptable": [
+    "SL:down",
+    "SL:chase",
+    "CH:any"
+   ],
+   "arguable": [
+    "FB:corners",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "F7",
+   "inputs": {
+    "balls": 1,
+    "strikes": 1,
+    "timing": {
+     "OS": -0.6
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, hitter out front on the slider",
+   "status": "graded (Drew, v1.0)",
+   "why": "He's early on soft stuff: stay soft"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "SL:any"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "F8",
+   "inputs": {
+    "arsenal": "two",
+    "balls": 1,
+    "last": [
+     "Slider",
+     "down-away",
+     "foul"
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, two-pitch (FB, SL), last three pitches all SL",
+   "status": "graded (Drew, v1.0)",
+   "why": "A fourth slider is fine if it's the best call"
+  },
+  {
+   "acceptable": [
+    "SL:chase",
+    "SL:down-away",
+    "FB:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "CH:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "G1",
+   "inputs": {
+    "balls": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, same-side hitter",
+   "status": "graded (Drew, v1.0)",
+   "why": "The slider away is the same-side weapon"
+  },
+  {
+   "acceptable": [
+    "CB:zone",
+    "FB:zone",
+    "SL:zone",
+    "CH:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "G2",
+   "inputs": {
+    "arsenal": "four"
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {
+    "Curveball": {
+     "grade": 4
+    }
+   },
+   "situation": "0-0, four-pitch, curveball grade 4 (his best)",
+   "status": "graded (Drew, v1.0)",
+   "why": "Get ahead with the best pitch"
+  },
+  {
+   "acceptable": [
+    "FB:chase",
+    "FB:corners",
+    "SL:chase",
+    "SL:down-away",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "SL:corners"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "G3",
+   "inputs": {
+    "arsenal": "two",
+    "balls": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Slider": {
+     "grade": 2
+    }
+   },
+   "situation": "1-2, two-pitch (FB, SL), slider grade 2",
+   "status": "graded (Drew, v1.0)",
+   "why": "A weak slider still works off the zone"
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "OS:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "G4",
+   "inputs": {
+    "balls": 1,
+    "level": "hs",
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Fastball": {
+     "grade": 5,
+     "velo": 92
+    }
+   },
+   "situation": "1-1, high school, FB 92 grade 5",
+   "status": "graded (Drew, v1.0)",
+   "why": "Ride a dominant fastball"
+  },
+  {
+   "acceptable": [
+    "FB:down",
+    "FB:middle",
+    "OS:zone"
+   ],
+   "arguable": [
+    "FB:up"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "H1",
+   "inputs": {
+    "balls": 2,
+    "grades": {
+     "w": 5
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "2-0, power hitter (power grade 5)",
+   "status": "graded (Drew, v1.0)",
+   "why": "Don't feed a power hitter his pitch"
+  },
+  {
+   "acceptable": [
+    "ANY:chase",
+    "ANY:corners",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "H2",
+   "inputs": {
+    "grades": {
+     "c": 5
+    },
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-2, contact hitter (contact grade 5)",
+   "status": "graded (Drew, v1.0)",
+   "why": "He'll put the middle in play"
+  },
+  {
+   "acceptable": [
+    "FB:away",
+    "OS:any"
+   ],
+   "arguable": [
+    "FB:up-in",
+    "FB:down-in",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "H3",
+   "inputs": {
+    "balls": 1,
+    "batters_faced": 10,
+    "strikes": 1
+   },
+   "matchup": [
+    {
+     "pitch": "Fastball",
+     "result": "hard",
+     "target": "up-in",
+     "trip": 1
+    }
+   ],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, he hit FB up-in hard once earlier this game",
+   "status": "graded (Drew, v1.0)",
+   "why": "One hard-hit ball: avoid it, but it's not banned"
+  },
+  {
+   "acceptable": [
+    "FB:in"
+   ],
+   "arguable": [
+    "FB:away",
+    "OS:any",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "H4",
+   "inputs": {
+    "balls": 1,
+    "crowding": true,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, hitter crowds the plate",
+   "status": "graded (Drew, v1.0)",
+   "why": "Pitch inside to a hitter who crowds"
+  },
+  {
+   "acceptable": [
+    "FB:corners",
+    "FB:middle",
+    "OS:any"
+   ],
+   "arguable": [
+    "FB:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "I1",
+   "inputs": {
+    "batters_faced": 10,
+    "familiar": {
+     "FB": 3,
+     "OS": 2
+    }
+   },
+   "matchup": [
+    {
+     "pitch": "Fastball",
+     "result": "hard",
+     "target": "middle",
+     "trip": 1
+    }
+   ],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-0, second trip, last trip FB middle was hit hard",
+   "status": "graded (Drew, v1.0)",
+   "why": "One at-bat isn't enough to ban it"
+  },
+  {
+   "acceptable": [
+    "CH:down-away",
+    "CH:chase",
+    "SL:chase",
+    "FB:chase"
+   ],
+   "arguable": [
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "I2",
+   "inputs": {
+    "balls": 1,
+    "batters_faced": 10,
+    "familiar": {
+     "FB": 2,
+     "OS": 3
+    },
+    "strikes": 2
+   },
+   "matchup": [
+    {
+     "pitch": "Changeup",
+     "result": "whiff",
+     "target": "down-away",
+     "trip": 1
+    },
+    {
+     "pitch": "Changeup",
+     "result": "whiff",
+     "target": "down-away",
+     "trip": 1
+    }
+   ],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, second trip, last trip CH down-away got 2 swinging strikes",
+   "status": "graded (Drew, v1.0)",
+   "why": "It worked; still a good pitch"
+  },
+  {
+   "acceptable": [
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "I3",
+   "inputs": {
+    "batters_faced": 19,
+    "familiar": {
+     "FB": 6,
+     "OS": 4
+    },
+    "pitch_count": 85
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "0-0, third trip, pitch count 85",
+   "status": "graded (Drew, v1.0)",
+   "why": "No third-time cliff: same logic as the first trip"
+  },
+  {
+   "acceptable": [
+    "FB:corners",
+    "OS:zone"
+   ],
+   "arguable": [
+    "ANY:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "I4",
+   "inputs": {
+    "batters_faced": 19,
+    "familiar": {
+     "FB": 6,
+     "OS": 4
+    },
+    "pitch_count": 85
+   },
+   "matchup": [
+    {
+     "pitch": "Fastball",
+     "result": "hard",
+     "target": "middle",
+     "trip": 1
+    },
+    {
+     "pitch": "Fastball",
+     "result": "hard",
+     "target": "middle",
+     "trip": 2
+    }
+   ],
+   "not_acceptable": [
+    "FB:middle"
+   ],
+   "pitch_edits": {},
+   "situation": "0-0, third trip, he hit FB middle hard on both earlier trips",
+   "status": "graded (Drew, v1.0)",
+   "why": "Mashed it twice: don't go back"
+  },
+  {
+   "acceptable": [
+    "ANY:down",
+    "OS:chase"
+   ],
+   "arguable": [
+    "ANY:middle",
+    "FB:up"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "J1",
+   "inputs": {
+    "balls": 1,
+    "bases": [
+     false,
+     false,
+     true
+    ],
+    "last": [
+     "Slider",
+     "chase",
+     "ball"
+    ],
+    "outs": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, runner just moved to 3rd on a wild pitch, 1 out (the at-bat re-solves for the new bases)",
+   "status": "graded (Drew, v1.0)",
+   "why": "Runner on third, one out: a ground ball or a strikeout; a fly ball scores him"
+  },
+  {
+   "acceptable": [
+    "ANY:chase",
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "J2",
+   "inputs": {
+    "balls": 1,
+    "last": [
+     "Slider",
+     "chase",
+     "ball"
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-2, he just took a slider in the dirt (chase target) for a ball",
+   "status": "graded (Drew, v1.0)",
+   "why": "A chase that's taken is what was asked for: keep expanding or finish"
+  },
+  {
+   "acceptable": [
+    "ANY:corners",
+    "ANY:middle",
+    "ANY:down-middle"
+   ],
+   "arguable": [
+    "CB:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "J3",
+   "inputs": {
+    "arsenal": "hs_two",
+    "balls": 1,
+    "bases": [
+     false,
+     true,
+     false
+    ],
+    "inning": 5,
+    "level": "hs",
+    "outs": 2,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, high school, 5th inning of 7, tied, runner on 2nd, 2 outs",
+   "status": "graded (Drew, v1.0)",
+   "why": "Late and close in a seven-inning game: the biggest pitch so far"
+  },
+  {
+   "acceptable": [
+    "ANY:zone"
+   ],
+   "arguable": [
+    "ANY:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "J4",
+   "inputs": {
+    "balls": 1,
+    "last": [
+     "Fastball",
+     "up-away",
+     "ball"
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, last pitch FB up-away, taken for a ball",
+   "status": "graded (Drew, v1.0)",
+   "why": "A taken pitch is no reason to move off it"
+  },
+  {
+   "acceptable": [
+    "SL:zone",
+    "CH:zone"
+   ],
+   "arguable": [
+    "FB:zone"
+   ],
+   "exclude": [],
+   "hard": true,
+   "id": "J5",
+   "inputs": {
+    "balls": 3,
+    "landing_today": {
+     "Fastball": [
+      2,
+      10
+     ],
+     "Slider": [
+      9,
+      10
+     ]
+    },
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-1, slider landing 9 of 10 today, fastball 2 of 10",
+   "status": "graded (Drew, v1.0)",
+   "why": "3-1: the pitch he's landing today"
+  },
+  {
+   "acceptable": [
+    "CH:down-away",
+    "CH:chase",
+    "SL:down-in",
+    "FB:corners"
+   ],
+   "arguable": [
+    "SL:chase",
+    "ANY:middle"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "J7",
+   "inputs": {
+    "balls": 1,
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Changeup": {
+     "grade": 4
+    },
+    "Slider": {
+     "grade": 4
+    }
+   },
+   "situation": "1-2, opposite-side hitter, plus changeup and plus slider (grade 4)",
+   "status": "graded (Drew, v1.0)",
+   "why": "Plus changeup: away. A plus slider to an opposite-side hitter is a back-foot slider (starts middle, breaks in at his back foot)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": true,
+   "id": "J6",
+   "inputs": {
+    "balls": 3,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "ANY:chase"
+   ],
+   "pitch_edits": {},
+   "situation": "3-1, everything landing normally",
+   "status": "graded (Drew, v1.0)",
+   "why": "3-1: a strike, mixed moderately among the pitches he can land"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "CB:down",
+     "CH:down",
+     "OS:chase"
+    ],
+    0.38
+   ],
+   "hard": false,
+   "id": "S1f",
+   "inputs": {
+    "arsenal": "ride126",
+    "pa_log": [
+     [
+      "Fastball",
+      "up-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S1",
+   "situation": "0-1, riding fastball up-away taken for a strike; ride fastball, 12-6 curve, split change",
+   "status": "floor 0.38 (Drew, 2026-11-13, v1.2: S1 lifts 2.6 points at 0.002 once S4 is dropped)",
+   "why": "Up, then down: the curve or split low after the fastball up"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S1n",
+   "inputs": {
+    "arsenal": "ride126",
+    "pa_log": [
+     [
+      "Fastball",
+      "up-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Fastball": {
+     "shape": "straight"
+    }
+   },
+   "rule": "S1",
+   "situation": "Same, but the fastball is a dead-zone (straight) fastball",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "No vertical contrast: no setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "S2f",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Sinker",
+      "down-away",
+      "ball",
+      [
+       3,
+       4,
+       true
+      ],
+      null,
+      null
+     ],
+     [
+      "Sinker",
+      "up-in",
+      "cstrike",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S2",
+   "situation": "1-1, same-side hitter, sinker in taken for a strike; sinker, sweeper, changeup",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "In, then away: slider down and away after the sinker in"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S2n",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Sinker",
+      "down-away",
+      "ball",
+      [
+       3,
+       4,
+       true
+      ],
+      null,
+      null
+     ],
+     [
+      "Sinker",
+      "up-in",
+      "foul",
+      null,
+      null,
+      "pull"
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S2",
+   "situation": "Same, but he pulled the sinker in foul (on time)",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "He was on the inside pitch: no setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "CH:down-away",
+     "CH:chase"
+    ],
+    0.1
+   ],
+   "hard": false,
+   "id": "S3f",
+   "inputs": {
+    "arsenal": "cut_ch",
+    "pa_log": [
+     [
+      "Cutter",
+      "down-in",
+      "cstrike",
+      null,
+      null,
+      null
+     ]
+    ],
+    "same_side": false,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S3",
+   "situation": "0-1, opposite-side hitter, hard cutter in taken for a strike; fastball, cutter, changeup",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Hard in, soft away: changeup down and away"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S3n",
+   "inputs": {
+    "arsenal": "cut_ch",
+    "pa_log": [
+     [
+      "Cutter",
+      "down-in",
+      "foul",
+      null,
+      null,
+      "pull"
+     ]
+    ],
+    "same_side": false,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S3",
+   "situation": "Same, but he pulled the cutter foul (on time)",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "He was on the inside pitch: no setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "S4f",
+   "inputs": {
+    "arsenal": "three",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Fastball",
+      "down-away",
+      "ball",
+      [
+       3,
+       4,
+       true
+      ],
+      null,
+      null
+     ],
+     [
+      "Fastball",
+      "up-away",
+      "foul",
+      null,
+      null,
+      "opposite"
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S4",
+   "situation": "1-1, fastball on the outer third, fouled the opposite way; three-pitch arsenal (changeup 8 mph slower)",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Same lane, slower: changeup away and down"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S4n",
+   "inputs": {
+    "arsenal": "three",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Fastball",
+      "down-away",
+      "ball",
+      [
+       3,
+       4,
+       true
+      ],
+      null,
+      null
+     ],
+     [
+      "Fastball",
+      "up-away",
+      "foul",
+      null,
+      null,
+      "opposite"
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Changeup": {
+     "shape": "firm",
+     "velo": 82
+    }
+   },
+   "rule": "S4",
+   "situation": "Same, but a firm changeup (82, 3 mph off)",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "No speed gap: no setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "S5f",
+   "inputs": {
+    "arsenal": "fd",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Changeup",
+      "down-away",
+      "whiff",
+      null,
+      null,
+      null
+     ],
+     [
+      "Curve",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Sinker",
+      "up-away",
+      "ball",
+      [
+       1,
+       4,
+       false
+      ],
+      null,
+      null
+     ]
+    ],
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S5",
+   "situation": "1-2, opposite-side hitter, worked away with soft stuff; sinker (command 4), curve, changeup",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Front door: the run sinker starting at his hip, back over the inner edge"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S5n",
+   "inputs": {
+    "arsenal": "fd",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Changeup",
+      "down-away",
+      "whiff",
+      null,
+      null,
+      null
+     ],
+     [
+      "Curve",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Sinker",
+      "up-away",
+      "ball",
+      [
+       1,
+       4,
+       false
+      ],
+      null,
+      null
+     ]
+    ],
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Sinker": {
+     "command": 3
+    }
+   },
+   "rule": "S5",
+   "situation": "Same, but sinker command 3",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Command below 4: no front door"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "FB:zone"
+    ],
+    0.41
+   ],
+   "hard": false,
+   "id": "S6f",
+   "inputs": {
+    "arsenal": "four",
+    "pa_log": [
+     [
+      "Curveball",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S6",
+   "situation": "0-1, first-pitch curve taken for a strike; four-pitch arsenal",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Stole strike one with the curve: attack with the fastball"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S6n",
+   "inputs": {
+    "arsenal": "four",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Curveball",
+      "down-away",
+      "ball",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S6",
+   "situation": "1-0, the first-pitch curve missed for a ball",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "No stolen strike: no setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "FB:chase"
+    ],
+    0.05
+   ],
+   "hard": false,
+   "id": "S7f",
+   "inputs": {
+    "arsenal": "ride126",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Fastball",
+      "up-in",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Fastball",
+      "up-away",
+      "whiff",
+      null,
+      null,
+      "late"
+     ],
+     [
+      "Curve",
+      "chase",
+      "ball",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S7",
+   "situation": "1-2, riding fastball up got a late swing-and-miss; ride fastball, 12-6 curve, split change",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Climb the ladder: the ride fastball just above the zone"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S7n",
+   "inputs": {
+    "arsenal": "ride126",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Fastball",
+      "up-in",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Fastball",
+      "up-away",
+      "whiff",
+      null,
+      null,
+      "front"
+     ],
+     [
+      "Curve",
+      "chase",
+      "ball",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S7",
+   "situation": "Same, but he was out in front of the fastball up",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "He was early: no ladder"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "SL:chase",
+     "SL:down-away"
+    ],
+    0.12
+   ],
+   "hard": false,
+   "id": "S9f",
+   "inputs": {
+    "arsenal": "four_cut",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Fastball",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Slider",
+      "middle",
+      "foul",
+      null,
+      null,
+      null
+     ],
+     [
+      "Cutter",
+      "up-in",
+      "ball",
+      [
+       0,
+       0,
+       true
+      ],
+      null,
+      null
+     ]
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S9",
+   "situation": "1-2, early fastball on the outside edge; fastball, hard cutter, gyro slider, curve",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Work the edge, then expand off it: the slider away / chase"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "S9n",
+   "inputs": {
+    "arsenal": "four_cut",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Fastball",
+      "down-away",
+      "foul",
+      null,
+      null,
+      "back"
+     ],
+     [
+      "Slider",
+      "middle",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Cutter",
+      "up-in",
+      "ball",
+      [
+       0,
+       0,
+       true
+      ],
+      null,
+      null
+     ]
+    ],
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "S9",
+   "situation": "Same, but the edge fastball was fouled straight back",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "He was on the edge pitch: no setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "SI:any"
+    ],
+    0.47
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "N2f",
+   "inputs": {
+    "arsenal": "fd",
+    "pa_log": [
+     [
+      "Changeup",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "N2",
+   "situation": "0-1, changeup down-away taken for a strike; sinker (command 4), curve, changeup",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Don't follow a changeup with a sinker (both move arm side)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": false,
+   "hard": false,
+   "id": "N2n",
+   "inputs": {
+    "arsenal": "fd",
+    "pa_log": [
+     [
+      "Curve",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ]
+    ],
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "N2",
+   "situation": "0-1, the curve down-away taken for a strike",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "No changeup before it: no anti-setup"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "SI:inx"
+    ],
+    0.25
+   ],
+   "hard": false,
+   "id": "P1",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "same_side": true
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-0, same-side hitter; sinker (run), sweeper, changeup, low three-quarter",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Sinker in to same-side hitters (70% of MLB righty sinkers go to righties; its best spot is in)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "SL:any"
+    ],
+    0.2
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P2",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "same_side": false,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-1, opposite-side hitter; same arsenal, an average (3) sweeper",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Sweeper rare vs opposite-side hitters (largest platoon gap after the sinker)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "SL:any"
+    ],
+    0.1
+   ],
+   "hard": false,
+   "id": "P2p",
+   "inputs": {
+    "arsenal": "sink_sweep",
+    "balls": 1,
+    "same_side": false,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Slider": {
+     "grade": 5
+    }
+   },
+   "rule": "profile",
+   "situation": "Same, but a plus (5) sweeper",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Unless it's plus: a plus sweeper still earns a share"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "SL:chase"
+    ],
+    0.05
+   ],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "SL:zone"
+    ],
+    0.1
+   ],
+   "hard": false,
+   "id": "P3",
+   "inputs": {
+    "arsenal": "four_cut",
+    "balls": 1,
+    "same_side": true
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-0, same-side hitter; fastball, hard cutter, gyro slider, curve",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Gyro slider is a strike pitch: in the zone when behind, not chased"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "CB:zone"
+    ],
+    0.1
+   ],
+   "hard": false,
+   "id": "P4",
+   "inputs": {
+    "arsenal": "ride126",
+    "same_side": false
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "0-0, opposite-side hitter; ride fastball, 12-6 curve, split change (over the top)",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "12-6 curve steals an early strike vs opposite-side hitters (no platoon penalty for a vertical curve)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "fires": true,
+   "floor": [
+    [
+     "CH:down",
+     "CH:chase"
+    ],
+    0.2
+   ],
+   "hard": false,
+   "id": "P5",
+   "inputs": {
+    "arsenal": "ride126",
+    "balls": 1,
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-2, opposite-side hitter; same arsenal",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Split is the two-strike pitch vs opposite-side hitters: down or chase"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "CH:chase"
+    ],
+    0.08
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P6",
+   "inputs": {
+    "arsenal": "three",
+    "balls": 1,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {
+    "Changeup": {
+     "shape": "firm",
+     "velo": 82
+    }
+   },
+   "rule": "profile",
+   "situation": "1-2, same-side hitter; fastball 85, slider, firm changeup 82",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "A firm changeup is not a whiff pitch: rarely the chase call"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "FF:down"
+    ],
+    0.12
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P7",
+   "inputs": {
+    "arsenal": "deadzone",
+    "balls": 1,
+    "strikes": 1
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "1-1, same-side hitter; dead-zone (straight) fastball, sinker, slider",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "Dead-zone fastball works the edges, not low (the sinker takes the low lane)"
+  },
+  {
+   "acceptable": [
+    "ANY:zone",
+    "ANY:chase"
+   ],
+   "arguable": [],
+   "ceiling": [
+    [
+     "SI:in"
+    ],
+    0.3
+   ],
+   "exclude": [],
+   "fires": true,
+   "hard": false,
+   "id": "P8",
+   "inputs": {
+    "arsenal": "fd",
+    "balls": 1,
+    "pa_log": [
+     [
+      "Changeup",
+      "down-away",
+      "whiff",
+      null,
+      null,
+      null
+     ],
+     [
+      "Curve",
+      "down-away",
+      "cstrike",
+      null,
+      null,
+      null
+     ],
+     [
+      "Sinker",
+      "up-away",
+      "ball",
+      [
+       1,
+       4,
+       false
+      ],
+      null,
+      null
+     ]
+    ],
+    "same_side": false,
+    "strikes": 2
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "rule": "profile",
+   "situation": "S5's setup (1-2, opposite side, worked away), sinker command 4",
+   "status": "proposed (Claude, 2026-11-12, overnight); Drew grades at Step 4",
+   "why": "S5 not over-relied: the front door stays one option, not the call"
+  }
+ ],
+ "version": "v1.2"
+}

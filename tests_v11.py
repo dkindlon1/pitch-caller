@@ -425,8 +425,8 @@ rows3 = [  # (label, arsenal, situation, payoff call, rule expected or None)
     ("no chase payoff where the count has no chase target (2-2)", A_rf, S(2, 2, [_ent("Fastball", "up-in", "whiff"), _ent("Fastball", "up-away", "whiff"), _ent("Slider", "chase", "ball"), _ent("Slider", "chase", "ball")]), ("Fastball", "chase"), None),
 ]
 bad3 = []
-# v1.2 Step 5 (L7) dropped S2 and S4 to size 0; their patterns are still checked here, at a test size (the code stays)
-TEST_SIZE = {"S2": 0.004, "S4": 0.005}
+# v1.2 Step 5 (L7) dropped S2, S4 and S5 to size 0; their patterns are still checked here, at a test size (the code stays)
+TEST_SIZE = {"S2": 0.004, "S4": 0.005, "S5": 0.004}   # (S5 also dropped, Drew Nov 13)
 saved_sr = dict(e.SETUP_RULE)
 for k_, v_ in TEST_SIZE.items():
     if e.SETUP_RULE[k_] == 0.0:
@@ -581,8 +581,8 @@ _r = e.PT_FBL_H.get("SI|run")
 check("Step 4 Q2: the hard-contact lane prior is on sinkers only, and a same-side run sinker is hit softer inside than away",
       set(k.split("|")[0] for k in e.PT_FBL_H) == {"SI"} and _r is not None and _r[0] < _r[2], f"SI|run {_r}")
 # Q1: every setup size halved from Step 3's; v1.2 Step 5 (L7) resized S2 / S4 / S5 after the location model (tests_v12.py)
-check("Step 4 Q1: every setup size is half of Step 3's (v1.2 Step 5: S5 0.004; S2 and S4 dropped to 0)", e.SETUP_RULE == {"S1": 0.002, "S2": 0.0,
-      "S3": 0.003, "S4": 0.0, "S5": 0.004, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}, str(e.SETUP_RULE))
+check("Step 4 Q1: every setup size is half of Step 3's (v1.2 Step 5: S2, S4 and S5 dropped to 0)", e.SETUP_RULE == {"S1": 0.002, "S2": 0.0,
+      "S3": 0.003, "S4": 0.0, "S5": 0.0, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}, str(e.SETUP_RULE))
 
 # ------------------------------------------------------------------ 4. no class logic left on the bare string "FB"
 CMP = re.compile(r"""kind\s*(==|===|!=|!==)\s*['"]FB['"]|['"]FB['"]\s*(==|===|!=|!==)\s*\w*kind""")
