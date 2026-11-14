@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
-import { resendConfirm, signIn, signUp } from "./actions";
+import { resendConfirm, sendReset, signIn, signUp } from "./actions";
 import { AGE_COOKIE, MONTHS, birthYears, safeNext } from "@/lib/age";
 import { Shell } from "../shell";
 
@@ -45,19 +45,29 @@ async function LoginForms({ searchParams }: { searchParams: Search }) {
   const next = safeNext(one(sp.next));
   const error = ERRORS[one(sp.error)];
   const signup = one(sp.mode) === "signup";
-  const resend = ["unconfirmed", "missing_email", "resend_wait"].includes(one(sp.error)) || one(sp.notice) === "check_email";
+  const reset = one(sp.mode) === "reset";
+  const resend = !reset && (["unconfirmed", "missing_email", "resend_wait"].includes(one(sp.error)) || one(sp.notice) === "check_email");
   const asked = (await cookies()).get(AGE_COOKIE)?.value;
   return (
     <>
       {error ? <p className="shell-alert" role="alert">{error}</p> : null}
       {one(sp.notice) === "check_email" ? <p className="shell-note" role="status">Check your email for a link to finish making your account. It can take a minute, and it may land in spam.</p> : null}
       {one(sp.notice) === "confirm_failed" ? <p className="shell-alert" role="alert">That link didn&apos;t work (it may have been used already). Sign in, or make the account again to get a new link.</p> : null}
-      <form action={signIn} className="shell-form" aria-label="Sign in">
+      {one(sp.notice) === "reset_sent" ? <p className="shell-note" role="status">If that email has an account, a link to set a new password is on its way. It can take a minute, and it may land in spam.</p> : null}
+      {reset ? (
+        <form action={sendReset} className="shell-form" aria-label="Reset your password">
+          <label>Email you sign in with<input name="email" type="email" autoComplete="username" required /></label>
+          <button type="submit" className="shell-btn primary">Email me a reset link</button>
+          <p className="shell-note"><Link href={`/login?next=${encodeURIComponent(next)}`}>Back to sign in</Link></p>
+        </form>
+      ) : null}
+      {reset ? null : <form action={signIn} className="shell-form" aria-label="Sign in">
         <input type="hidden" name="next" value={next} />
         <label>Email<input name="email" type="email" autoComplete="username" required /></label>
         <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
         <button type="submit" className="shell-btn primary">Sign in</button>
-      </form>
+        <p className="shell-note"><Link href="/login?mode=reset">Forgot your password?</Link></p>
+      </form>}
       {resend ? (
         <form action={resendConfirm} className="shell-form" aria-label="Send the confirmation email again">
           <input type="hidden" name="next" value={next} />

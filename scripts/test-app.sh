@@ -15,7 +15,8 @@ $run tests_v12b    python3 tests_v12b.py             # v1.2 Part B: hitter tags 
 FAST_TAGS=1 $run fast_parity_tags python3 golden/fast.py 40   # v1.2 Part B: the same 40 golden inputs with hitter tags
 $run tests_v121   python3 tests_v121.py             # v1.2.1: the second shake-off is a hard switch, a shake costs 0.05; exactly v1.2 otherwise (vs git 504aaa8), Python = JS
 $run tests_v122   python3 tests_v122.py             # v1.2.2: the confidence band under the cutoff (blend), exactly v1.2.1 with no pitch in the band (vs git cb64db1), smooth, Python = JS, speed
-$run golden_v122  node golden/golden_v11.js v122  # v1.2.2 release reference (JS); golden_v10, v11a, v11, v12a and v12 (v1.2; differs only in the 54 band cases) stay as history
+$run tests_v123   python3 tests_v123.py             # v1.2.3: the umpire prior (200 takes): one take moves u under 0.1, exactly v1.2.2 with ump_u given (vs git ca6905e), Python = JS
+$run golden_v123  node golden/golden_v11.js v123  # v1.2.3 release reference (JS); golden_v10, v11a, v11, v12a, v12 and v122 (v1.2.2; differs only in the umpire estimate) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1
@@ -43,4 +44,5 @@ echo "smoke: passed"
 (cd app && ../$run v12_oldapp_test node v12_oldapp_test.js)   # v1.2 Step 4: a v1.1 build (14e0ad2) opens a v1.2 database
 (cd app && ../$run v12_tags_e2e node v12_tags_e2e.js)   # v1.2 Part B: hitter tags on the card, the engine, snapshots and the importer
 (cd app && ../$run v121_shake_e2e node v121_shake_e2e.js)   # v1.2.1: back after one shake, out after the second, toasts, version line
+(cd app && ../$run v123_fixes_e2e node v123_fixes_e2e.js)   # v1.2.3: umpire after one strike, radar box, bullpen faced, bases at the third out, coach call after a shake-off, version line
 (cd app && ../$run game_mix_e2e node game_mix_e2e.js)    # v1.1: whole games through the app keep a mix (FINDING_v1.0_game_mix_collapse)   # v1.0 Step 5: look from logged spot (#24), one owner of hitter memory (#7), seed centering (#20)

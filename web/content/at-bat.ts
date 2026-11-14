@@ -1,4 +1,4 @@
-// One real at-bat from the PitchIQ engine (v1.0), captured Nov 12, 2026 by scripts/capture-at-bat.cjs (SEED=11): it drives
+// One real at-bat from the PitchIQ engine (v1.2.3), captured Nov 14, 2026 by scripts/capture-at-bat.cjs (SEED=11): it drives
 // app/dist/pitch-caller.html in a headless browser with the app's own default setup: college D3, the right-handed
 // starter (fastball 86, slider 78, changeup 77) against a right-handed hitter. The calls and reasons are the engine's
 // own output (seeded draws from its mix); the results were chosen by hand to play out the at-bat.
@@ -18,7 +18,7 @@ export type Pitch = {
 
 export const AT_BAT: Pitch[] = [
   { balls: 0, strikes: 0, sign: 1, pitch: "Fastball", spot: "Get it over", why: "He's timed for 81 mph; this plays 5 mph faster.", result: "Called strike" },
-  { balls: 0, strikes: 1, sign: 3, pitch: "Slider", spot: "Get it over", why: "He's sitting fastball (34%).", result: "Ball" },
+  { balls: 0, strikes: 1, sign: 3, pitch: "Slider", spot: "Get it over", why: "He's sitting fastball (35%).", result: "Ball" },
   { balls: 1, strikes: 1, sign: 1, pitch: "Fastball", spot: "Get it over", why: "He's timed for 81 mph; this plays 5 mph faster.", result: "Foul" },
   { balls: 1, strikes: 2, sign: 3, pitch: "Slider", spot: "Down and away", why: "Tunnels off the last pitch.", result: "Swing and miss" },
 ];

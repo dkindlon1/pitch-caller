@@ -45,8 +45,9 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         </div>
         <fieldset>
           <legend>Arsenal (stuff and command, 1 to 5; 3 is average; stuff is compared with other pitches of the same type)</legend>
+          <p className="shell-note">Velo is his usual speed in mph. Leave it blank and the engine uses a typical speed for the level; the call reasons quote speeds, so enter it when you know it.</p>
           <div className="tbl-scroll"><table className="data-tbl arsenal" aria-label="Arsenal">
-            <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th title="Compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper">Stuff</th><th>Command</th><th>In use</th></tr></thead>
+            <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th title="Compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper">Stuff</th><th>Command</th><th>Velo</th><th>In use</th></tr></thead>
             <tbody>{(p.pitches || []).map((d, i) => (
               <tr key={d.id}>
                 <td><span className={`chip k-${v11Pitch(d).kind}`}>{signOf(v11Pitch(d))}</span></td>
@@ -55,6 +56,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
                   {Object.keys(PITCH_TYPES).map((tp) => <option key={tp} value={tp}>{tp === KINDS[PITCH_TYPES[tp].kind] ? tp : `${tp} (${KINDS[PITCH_TYPES[tp].kind].toLowerCase()})`}</option>)}</select></td>
                 <td><input name={`grade_${i}`} type="number" min={1} max={5} defaultValue={d.grade === "" ? "" : d.grade} placeholder="3" aria-label={`Pitch ${i + 1} stuff`} disabled={!grades} /></td>
                 <td><input name={`command_${i}`} type="number" min={1} max={5} defaultValue={d.command === "" ? "" : d.command} placeholder="3" aria-label={`Pitch ${i + 1} command`} disabled={!grades} /></td>
+                <td><input name={`velo_${i}`} type="number" min={40} max={105} step={0.5} inputMode="decimal" defaultValue={d.velo === "" || d.velo == null ? "" : d.velo} placeholder="mph" aria-label={`Pitch ${i + 1} velocity, mph`} disabled={!grades} /></td>
                 <td><input name={`active_${i}`} type="checkbox" defaultChecked={d.active !== false} aria-label={`Pitch ${i + 1} in use`} disabled={!grades} /></td>
               </tr>))}</tbody>
           </table></div>

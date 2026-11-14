@@ -1,43 +1,53 @@
-// One real call mix from the PitchIQ engine (lib/engine.js, version 1.0), captured by scripts/capture-mix.cjs.
+// One real call mix from the PitchIQ engine (lib/engine.js, version 1.2.3), captured by scripts/capture-mix.cjs.
 // The app's sample right-hander (fastball 86, slider 78, changeup 77) at college D3: 1-2 count, runner on second, one out,
 // fifth inning, tie game, the hitter has seen two fastballs and a slider, the last pitch was a fastball up and away.
 // Regenerate with the script rather than editing these numbers.
-export const MIX_ENGINE = "1.0";
+export const MIX_ENGINE = "1.2.3";
 export const MIX_SITUATION = "1-2 count, runner on second, one out, fifth inning, tie game";
 export const MIX: { pitch: "Fastball" | "Slider" | "Changeup"; spot: string; prob: number }[] = [
   {
     "pitch": "Slider",
     "spot": "Down and away",
-    "prob": 0.344
+    "prob": 0.185
   },
   {
     "pitch": "Fastball",
     "spot": "Down and away",
-    "prob": 0.206
+    "prob": 0.184
+  },
+  {
+    "pitch": "Fastball",
+    "spot": "Chase",
+    "prob": 0.131
   },
   {
     "pitch": "Slider",
     "spot": "Get it over",
-    "prob": 0.15
+    "prob": 0.122
   },
   {
     "pitch": "Fastball",
     "spot": "Up and away",
-    "prob": 0.14
+    "prob": 0.101
   },
   {
     "pitch": "Changeup",
     "spot": "Get it over",
-    "prob": 0.071
+    "prob": 0.101
+  },
+  {
+    "pitch": "Slider",
+    "spot": "Keep it down",
+    "prob": 0.094
   },
   {
     "pitch": "Changeup",
     "spot": "Down and away",
-    "prob": 0.069
+    "prob": 0.064
   },
   {
-    "pitch": "Slider",
-    "spot": "Up and away",
-    "prob": 0.02
+    "pitch": "Fastball",
+    "spot": "Up and in",
+    "prob": 0.018
   }
 ];

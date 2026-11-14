@@ -58,6 +58,8 @@ export async function savePitcher(f: FormData) {
     next.role = str(f, "role") === "RP" ? "RP" : "SP";
   }
   const grade = (v: string): number | "" => (v === "" ? "" : Math.max(1, Math.min(5, Math.round(+v) || 3)));
+  // velocity, mph: blank keeps it unset (the engine uses a typical speed); out-of-range or junk keeps what was there
+  const velo = (v: string, was: number | ""): number | "" => (v === "" ? "" : Number.isFinite(+v) && +v >= 40 && +v <= 105 ? Math.round(+v * 2) / 2 : was);
   next.pitches = (p!.pitches || []).map((d0: Pitch, i: number) => {
     // v1.1: the type sets kind and shape only when it changes (a shape accepted from his uploads stays); otherwise the
     // pitch is read in v1.1 terms, as the app does (lib/engine_server.ts v11Pitch)
@@ -66,7 +68,7 @@ export async function savePitcher(f: FormData) {
     const { sign, main, ...rest } = d as Pitch & { sign?: number; main?: boolean };
     const kept = { ...(ch || sign == null ? {} : { sign }), ...(main && ["FB", "SI", "FC"].includes(t.kind) ? { main } : {}) };
     return { ...rest, ...kept, type, kind: t.kind, shape: t.shape, name: str(f, `name_${i}`).slice(0, 40) || d.name, grade: grade(str(f, `grade_${i}`)),
-      command: grade(str(f, `command_${i}`)), active: f.get(`active_${i}`) === "on" };
+      command: grade(str(f, `command_${i}`)), velo: f.has(`velo_${i}`) ? velo(str(f, `velo_${i}`), d.velo ?? "") : (d.velo ?? ""), active: f.get(`active_${i}`) === "on" };
   });
   const add = str(f, "add_type");
   if (add && add in PITCH_TYPES) next.pitches = next.pitches.concat(newPitch(add));

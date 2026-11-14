@@ -683,7 +683,7 @@ td.wrapcell .line { display: block; }
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.2.2";    // engine logic version (v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2.3";    // engine logic version (v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -2276,7 +2276,8 @@ td.wrapcell .line { display: block; }
     }
     return x;
   }
-  function umpEstimate(takes, level, u0 = 0.0, a0 = 20.0) {
+  const UMP_A0 = 200.0;   // v1.2.3: the umpire prior is worth 200 typical takes (was 20), as engine.py UMP_A0: one take moves u by at most ~0.1
+  function umpEstimate(takes, level, u0 = 0.0, a0 = UMP_A0) {
     const ib = (SIM.I_BAR_UMP || {})[level] ?? 0.05;
     if (!takes.length) return u0;
     return mapLogitShift(takes, u0, u0, a0 * ib, -1.5, 1.5);
@@ -4879,7 +4880,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.2.2";    // engine logic version (v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2.3";    // engine logic version (v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -6472,7 +6473,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     }
     return x;
   }
-  function umpEstimate(takes, level, u0 = 0.0, a0 = 20.0) {
+  const UMP_A0 = 200.0;   // v1.2.3: the umpire prior is worth 200 typical takes (was 20), as engine.py UMP_A0: one take moves u by at most ~0.1
+  function umpEstimate(takes, level, u0 = 0.0, a0 = UMP_A0) {
     const ib = (SIM.I_BAR_UMP || {})[level] ?? 0.05;
     if (!takes.length) return u0;
     return mapLogitShift(takes, u0, u0, a0 * ib, -1.5, 1.5);
@@ -7688,7 +7690,7 @@ function load() { try { const s = localStorage.getItem("pitchcaller.v2"); return
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400); }
 
 const G = () => S.game;
-const APP_VERSION = "1.2.2";   // logged with every pitch and shown under Game on the setup screen (1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
+const APP_VERSION = "1.2.3";   // logged with every pitch and shown under Game on the setup screen (1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -8072,7 +8074,7 @@ function record(res) {
       g.pa = null;
     }
     g.balls = 0; g.strikes = 0; g.last = null;
-    if (g.outs >= 3) { g.inningOver = true; g.batter++; }
+    if (g.outs >= 3) { g.inningOver = true; g.batter++; g.bases = [false, false, false]; }   // stranded runners leave the screen with the third out
     else nextBatter();
   }
   pending = null; pickMode = false;
@@ -8297,7 +8299,7 @@ function callPanel() {
   const kind = kindOf(c.pitch);
   const ck = `${g.pitchNo}|${g.balls}${g.strikes}|${c.pitch}|${c.quad}|${!!c.coach}`, fresh = ck !== lastZoneKey; lastZoneKey = ck;
   const why = c.coach
-    ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs more than the engine's best call here.` : "."]
+    ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs worse than the engine's best call here.` : "."]
     : [c.v08 && c.why ? h("b", { class: "whyline" }, c.why + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
        c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "down-middle" ? " Knee-high, over the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
@@ -8397,7 +8399,7 @@ function pickBox() {
     {
       const tab = paTable(ars, situation());
       const s = Object.assign({}, situation(), { look: g.pa.look }); s.b_h = E.v08.leanBh(ars, s, g.pa.fooled);
-      gr = E.v08.gradeCall(ars, s, pickSel.pitch, pickSel.quad, tab);
+      gr = E.v08.gradeCall(ars, s, pickSel.pitch, pickSel.quad, tab, { exclude: g.pa.shaken || [] });   // graded against the mix on screen: pitches shaken off this at-bat aren't in it
     }
     g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
       verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
@@ -8433,7 +8435,8 @@ function entryPanel() {
     if (g.bases.some(Boolean) && ["ball", "whiff", "cstrike"].includes(P.result)) extra.push(seg("Got away?", "wp", [["wp", "Wild pitch"], ["pb", "Passed ball"]]));
     if (extra.length) rows.push(h("details", { class: "more", open: P.thrown || P.wp ? true : null }, h("summary", { class: "t" }, "Cross-up or wild pitch"), extra,
       P.wp ? h("p", { class: "note" }, "Move the runners with Correct after you log it.") : null));
-    rows.push(h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: P.radar ?? "",
+    // the radar box only when "Log radar readings" is on
+    if (S.setup.radar) rows.push(h("label", { class: "f radar" }, "Radar, mph (optional)", h("input", { type: "number", inputmode: "decimal", min: 40, max: 105, step: 0.5, value: P.radar ?? "",
       "aria-label": "Radar reading, mph", style: { width: "90px" }, on: { change: (e) => { P.radar = e.target.value === "" ? undefined : +e.target.value; } } })));
     detail = h("div", { class: "detail" }, rows, h("div", { class: "go" },
       h("button", { class: "btn primary", disabled: !(P.result !== "play" || P.out), on: { click: () => record(P) } }, "Log pitch"),
@@ -8674,7 +8677,7 @@ function bullpenPanel() {
         h("div", { class: "pen-who" }, h("b", {}, pd.name), h("span", {}, `${pd.hand === "L" ? "Lefty" : "Righty"}, ${pd.pitches.length} pitches`)),
         h("span", { class: `pill ${state[0]}` }, state[1]),
         h("div", { class: "pen-load" }, h("div", { class: "load", title: `${pc} of about ${maxPc} pitches` }, h("i", { style: { width: `${Math.min(100, (100 * pc) / maxPc)}%` } })),
-          h("span", {}, `${pc} ${pc === 1 ? "pitch" : "pitches"}, ${g.bf[String(i)] || 0} faced`)),
+          h("span", {}, `${pc} ${pc === 1 ? "pitch" : "pitches"}, ${(g.bf[keyOf(i)] || 0) + (inNow && g.inningOver ? 1 : 0)} faced`)),   // bf counts finished batters; at the third out the last one isn't counted until the next inning starts
         h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind, p.sign), p.conf.toFixed(2)))),
         inNow ? h("span", { class: "pen-act muted" }, "On the mound")
           : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); const out = pitcherDef().id || null; g.pitcher = i; g.last = null; if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pd.id || null }); makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));

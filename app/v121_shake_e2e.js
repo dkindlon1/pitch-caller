@@ -3,7 +3,7 @@
  *   - his only trusted pitch, shaken once: it can come back (a strong pitch may be re-called);
  *   - shaken a second time in the at-bat: it stays out until the next batter, and the toast says so;
  *   - each shake costs 0.05 confidence (was 0.20); the next hitter starts with a clean shake list;
- *   - the setup screen shows the current version line ("PitchIQ 1.2.2 · engine 1.2.2" since v1.2.2).
+ *   - the setup screen shows the current version line ("PitchIQ 1.2.3 · engine 1.2.3" since v1.2.2).
  * Run from app/ after a build: node v121_shake_e2e.js
  */
 const { chromium } = require("playwright");
@@ -26,7 +26,7 @@ const server = http.createServer((req, res) => {
   await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 10000 });
 
   const ver = await page.evaluate(() => { S.view = "setup"; render(); const el = document.getElementById("app-version"); return el ? el.textContent : null; });
-  check(ver === "PitchIQ 1.2.2 · engine 1.2.2", `setup screen version line: ${JSON.stringify(ver)}`);
+  check(ver === "PitchIQ 1.2.3 · engine 1.2.3", `setup screen version line: ${JSON.stringify(ver)}`);
 
   console.log("1. Only trusted pitch: back after one shake, out after the second, back in for the next hitter");
   const r = await page.evaluate(() => {

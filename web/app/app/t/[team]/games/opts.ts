@@ -29,7 +29,7 @@ export async function planOptions(t: TeamRow, game: string | null): Promise<Opts
 export function blankPlan(t: TeamRow, today: string): PlanInput {
   return { date: today, time: "", home: null, innings: null, extrasRunner: false, level: t.level && t.level in LEVELS ? t.level : "hs", opponentId: null, newOpponent: "",
     staffIds: [], starterId: null, catcherId: null, lineup: Array.from({ length: 9 }, () => ({ hitterId: null, name: "", hand: "R" as const })),
-    inputs: 2, logLoc: false, radar: false, umpSeed: "normal" };
+    inputs: 2, logLoc: true, radar: false, umpSeed: "normal" };   // location logging on by default (Drew, Nov 13; matches the game app)
 }
 
 export function planOf(g: GameDoc): PlanInput {

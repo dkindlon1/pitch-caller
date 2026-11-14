@@ -309,7 +309,7 @@
 .pq-pick b { font-weight: 600; } .pq-pick small { color: var(--text-2); font-size: 0.8125rem; } .pq-pick .warn { color: var(--warn); }
 .pq-pick .tag { position: absolute; top: 10px; right: 10px; font-size: 0.75rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--chalk); color: #000; }
 .pq-lineup { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: slot; }
-.pq-lineup li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; }
+.pq-lineup li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 7.25rem; gap: 10px; align-items: center; }   /* fixed last column: the "New" / "On their roster" note never moves R L S */
 .pq-lineup li::before { counter-increment: slot; content: counter(slot); width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, 0.08); font-weight: 640; font-size: 0.875rem; }
 .pq-lineup .hands { display: inline-flex; gap: 4px; }
 .pq-lineup .hands button { width: 38px; min-height: 38px; border-radius: 10px; border: 1px solid var(--line); background: none; color: var(--text-2); font: 600 0.875rem/1 var(--f-body); cursor: pointer; }

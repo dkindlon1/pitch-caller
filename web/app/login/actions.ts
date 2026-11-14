@@ -39,6 +39,28 @@ export async function resendConfirm(form: FormData) {
   back(next, "notice=check_email");
 }
 
+// Forgot password: email a reset link. Same answer whether or not the address has an account; only the email service's
+// rate limit is reported. The link comes back through /auth/confirm (which signs him in) to /app/password.
+export async function sendReset(form: FormData) {
+  const email = str(form, "email");
+  if (!email) redirect("/login?mode=reset&error=missing_email");
+  const sb = await getServerSupabase();
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: await confirmUrl("/app/password") });
+  if (error && (error.status === 429 || error.code === "over_email_send_rate_limit")) redirect("/login?mode=reset&error=resend_wait");
+  redirect("/login?mode=reset&notice=reset_sent");
+}
+
+// The new password, from /app/password (signed in by the reset link, or from the account menu)
+export async function setPassword(form: FormData) {
+  const password = String(form.get("password") ?? ""), again = String(form.get("password2") ?? "");
+  if (password.length < 8) redirect("/app/password?error=short");
+  if (password !== again) redirect("/app/password?error=mismatch");
+  const sb = await getServerSupabase();
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) redirect("/app/password?error=failed");
+  redirect("/app/password?ok=saved");
+}
+
 // A new account: the age question first (unless the join page already asked it today). Under 13, no account is made
 // and nothing typed is kept; a parent sets it up from the invite.
 export async function signUp(form: FormData) {

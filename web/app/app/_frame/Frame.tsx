@@ -48,6 +48,7 @@ export function Frame({ children, org, current, switchTo = [], dock, home, email
                     <span style={{ padding: "8px 12px", color: "var(--text-2)", fontSize: ".875rem" }}>{email}</span>
                     <Link href="/app">Your teams</Link>
                     <Link href="/app/exports">Data downloads</Link>
+                    <Link href="/app/password">Change password</Link>
                     <hr />
                     <form action={signOut}><button type="submit">Sign out</button></form>
                   </div>

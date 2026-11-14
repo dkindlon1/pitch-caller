@@ -2126,7 +2126,13 @@ def take_stats(p, q, s, arsenal, sit=None):
     return pi, d
 
 
-def ump_estimate(takes, level, u0=0.0, a0=20.0):
+# v1.2.3 (Drew, Nov 14): the umpire prior is worth UMP_A0 typical takes (was 20, SPEC v0.8 7.5). At 20 the prior was almost
+# flat (D3 prior info 0.32, sd ~1.8 logits), so one called strike on a "get it over" fastball moved u to +0.82. At 200 one take
+# moves u by at most ~0.1; the coach's wide / tight seed (+-0.4) stays the main way to set the zone.
+UMP_A0 = 200.0
+
+
+def ump_estimate(takes, level, u0=0.0, a0=UMP_A0):
     """7.5 today's umpire from takes [(s_i, p_i, d_i)] stored at u = u0, prior a0 typical takes at u0 (A4: Newton
     iterated to the posterior mode; the first step is the spec's one-step formula). Clamped to [-1.5, 1.5]."""
     ib = I_BAR_UMP.get(level, 0.05)
