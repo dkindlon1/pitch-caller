@@ -46,7 +46,13 @@ finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 console.log("4. Replay through this build: only the expected-strike sums move");
 const L2 = require("./learner.js");
 const TYPES = new Map(st.pitchers.map((x) => [x.id, Object.fromEntries((x.pitches || []).filter((d) => d.type).map((d) => [d.name, d.type]))]));
-let confWorst = 0, pcBad = 0, keyBad = 0, cntBad = 0, expWorst = 0, pitches = 0;
+let confWorst = 0, confNow = 0, pcBad = 0, keyBad = 0, cntBad = 0, expWorst = 0, pitches = 0;
+// v1.2.1: a shake-off now costs 0.05 confidence; these games were logged when it cost 0.20 (20 shake-offs in the
+// fixture). Confidence is replayed with the cost they were logged under (must be exact), and with today's (reported).
+const E_LOGGED = Object.assign({}, E, { updateConfidence: (p, ev) => {
+  if (ev !== "shakeoff") return E.updateConfidence(p, ev);
+  p.conf = Math.max(0.0, Math.min(p.base_conf + 0.10, 1.0, p.conf - 0.20));   // v1.0-v1.2's shake-off (CONF_CAP_ABOVE 0.10)
+} });
 for (const g of st.games) {
   const evs = st.events.filter((e) => e.gameId === g.id && !e.deletedAt && !e.legacy && e.type !== "play").sort((a, b) => a.n - b.n);
   for (const pid of new Set(evs.map((e) => e.pitcherId))) {
@@ -56,8 +62,10 @@ for (const g of st.games) {
       if (!thrown.length) continue;
       const { script, base } = L2._pitchGame(G, pd, () => pd.name);
       const snap0 = mine.map((e) => e.ars.find((x) => x.name === pd.name)).find(Boolean);
-      const cp = L2._confPath(E, pd.kind, base, script, snap0 && snap0.strike_rate != null ? snap0.strike_rate : null, snap0 && snap0.strike_ref != null ? snap0.strike_ref : null);
-      thrown.forEach((e, k) => { confWorst = Math.max(confWorst, Math.abs(cp[k] - e.ars.find((x) => x.name === pd.name).conf)); });
+      const sr = snap0 && snap0.strike_rate != null ? snap0.strike_rate : null, rf = snap0 && snap0.strike_ref != null ? snap0.strike_ref : null;
+      const cp = L2._confPath(E_LOGGED, pd.kind, base, script, sr, rf), cn = L2._confPath(E, pd.kind, base, script, sr, rf);
+      thrown.forEach((e, k) => { const c = e.ars.find((x) => x.name === pd.name).conf;
+        confWorst = Math.max(confWorst, Math.abs(cp[k] - c)); confNow = Math.max(confNow, Math.abs(cn[k] - c)); });
     }
     const land = {};
     mine.forEach((e, i) => {
@@ -74,7 +82,7 @@ for (const g of st.games) {
     });
   }
 }
-check(pitches === 287 && confWorst === 0 && pcBad === 0, `${pitches} pitches: confidence largest difference ${confWorst}, pitch-count mismatches ${pcBad}`);
+check(pitches === 287 && confWorst === 0 && pcBad === 0, `${pitches} pitches: confidence largest difference ${confWorst} at the logged shake-off cost (0.20; at today's 0.05 it moves by up to ${confNow.toFixed(3)}, from the shake-offs alone), pitch-count mismatches ${pcBad}`);
 check(keyBad === 0 && cntBad === 0, `landing today: keys and strike / pitch counts exact (${keyBad} key, ${cntBad} count mismatches)`);
 check(expWorst > 0 && expWorst < 2, `expected-strike sums move by at most ${expWorst.toFixed(3)} over a game (the v1.1 model's strike expectation; exact at Step 1, check 3)`);
 
