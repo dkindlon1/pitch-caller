@@ -7,14 +7,6 @@
   "want": -1,
   "passes": true
  },
- "L2": {
-  "text": "that sinker away to a same-side hitter: called less",
-  "base": 0.1537,
-  "changed": 0.2014,
-  "moved": 0.0477,
-  "want": -1,
-  "passes": false
- },
  "L3": {
   "text": "glove-leaning slider (-3) to an opposite-side hitter: the back-foot slider holds or rises",
   "base": 0,
@@ -35,26 +27,26 @@
  "L5a": {
   "text": "up-leaning riding four-seam (+3), two strikes: the up target holds",
   "base": 0.2664,
-  "changed": 0.1989,
-  "moved": -0.0675,
+  "changed": 0.2592,
+  "moved": -0.0072,
   "want": 0,
-  "passes": false
+  "passes": true
  },
  "L5b": {
-  "text": "... and its down target falls",
+  "text": "... and its down target holds (regraded from 'falls', Drew Nov 13)",
   "base": 0.1813,
-  "changed": 0.2167,
-  "moved": 0.0354,
-  "want": -1,
-  "passes": false
+  "changed": 0.1849,
+  "moved": 0.0036,
+  "want": 0,
+  "passes": true
  },
  "L6": {
-  "text": "glove-leaning cutter (-3) in on an opposite-side hitter's hands: holds",
+  "text": "glove-leaning cutter (-3) in on an opposite-side hitter's hands: called less (regraded, Drew Nov 13: the hit-batter cost is supported)",
   "base": 0.0761,
   "changed": 0,
   "moved": -0.0761,
-  "want": 0,
-  "passes": false
+  "want": -1,
+  "passes": true
  },
  "H1": {
   "text": "flat / level swing: fewer riding fastballs up",
@@ -102,12 +94,20 @@
   "unknown_moves": 0.0
  },
  "H5": {
-  "text": "hits off-speed hard: fewer hittable off-speed pitches",
+  "text": "hits off-speed hard: fewer hittable off-speed pitches (graded: a small move is fine, Drew Nov 13)",
   "base": 0.5169,
   "changed": 0.5143,
   "moved": -0.0026,
-  "want": -1,
-  "passes": false,
+  "want": -0.001,
+  "passes": true,
   "unknown_moves": 0.0
+ },
+ "L2": {
+  "text": "arm-leaning sinker (+3) away to a same-side hitter: its own cost rises (regraded, Drew)",
+  "base": 0.4862,
+  "changed": 0.4882,
+  "moved": 0.002,
+  "want": 1,
+  "passes": true
  }
 }

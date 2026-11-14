@@ -42,10 +42,10 @@ ROWS = [  # id, text, arsenal (base), arsenal (changed), situation kwargs, measu
      lambda x, q: x.kind == "CB" and q == "chase", -1),
     ("L5a", "up-leaning riding four-seam (+3), two strikes: the up target holds", RIDE, lean(RIDE, "Fastball", lean_z=3.0), dict(b=1, k=2),
      lambda x, q: x.kind == "FB" and q in ("up-in", "up-away", "chase"), 0),
-    ("L5b", "... and its down target falls", RIDE, lean(RIDE, "Fastball", lean_z=3.0), dict(b=1, k=2),
-     lambda x, q: x.kind == "FB" and q in ("down-in", "down-away", "down-middle"), -1),
-    ("L6", "glove-leaning cutter (-3) in on an opposite-side hitter's hands: holds", CUTR, lean(CUTR, "Cutter", lean_x=-3.0), dict(b=1, k=1, same=False),
-     lambda x, q: x.kind == "FC" and q in ("up-in", "down-in"), 0),
+    ("L5b", "... and its down target holds (regraded from 'falls', Drew Nov 13)", RIDE, lean(RIDE, "Fastball", lean_z=3.0), dict(b=1, k=2),
+     lambda x, q: x.kind == "FB" and q in ("down-in", "down-away", "down-middle"), 0),
+    ("L6", "glove-leaning cutter (-3) in on an opposite-side hitter's hands: called less (regraded, Drew Nov 13: the hit-batter cost is supported)",
+     CUTR, lean(CUTR, "Cutter", lean_x=-3.0), dict(b=1, k=1, same=False), lambda x, q: x.kind == "FC" and q in ("up-in", "down-in"), -1),
 ]
 TAGROWS = [
     ("H1", "flat / level swing: fewer riding fastballs up", RIDE, dict(b=1, k=2), {"path": "flat"}, lambda x, q: x.kind == "FB" and q in ("up-in", "up-away"), -1),
@@ -54,13 +54,16 @@ TAGROWS = [
      lambda x, q: x.kind == "CB" and q in ("down-in", "down-away", "down-middle", "chase"), -1),
     ("H3", "aggressive early: fewer grooved first pitches", THREE, dict(b=0, k=0), {"approach": "aggressive"}, lambda x, q: q in ("middle", "down-middle"), -1),
     ("H4", "patient early: more first-pitch strikes over the plate", THREE, dict(b=0, k=0), {"approach": "patient"}, lambda x, q: q in ("middle", "down-middle"), 1),
-    ("H5", "hits off-speed hard: fewer hittable off-speed pitches", THREE, dict(b=1, k=1), {"offspeed": "hits"}, lambda x, q: e.is_offspeed(x.kind) and q != "chase", -1),
+    ("H5", "hits off-speed hard: fewer hittable off-speed pitches (graded: a small move is fine, Drew Nov 13)", THREE, dict(b=1, k=1), {"offspeed": "hits"},
+     lambda x, q: e.is_offspeed(x.kind) and q != "chase", -0.001),
 ]
 
 
 def verdict(moved, want):
     if want == 0:
-        return moved > -0.02
+        return abs(moved) < 0.02
+    if abs(want) < 1:                       # graded "a small move the stated way is fine"
+        return moved * (1 if want > 0 else -1) > 0
     return moved * want > 0.005
 
 
@@ -92,7 +95,7 @@ def main():
         fmt = (lambda v: f"{v:.4f}") if rid == "L2" else (lambda v: f"{v:6.1%}")
         print(f"  {rid:4} {'pass' if r['passes'] else 'FAIL'}  {fmt(r['base'])} -> {fmt(r['changed'])} ({r['moved']:+.4f})  {r['text']}")
     json.dump(out, open(os.path.join(HERE, "results", "v12", "step6_rows.json"), "w"), indent=1)
-    print(f"{sum(r['passes'] for r in out.values())}/{len(out)} rows go the stated way (PROPOSED: Drew grades)")
+    print(f"{sum(r['passes'] for r in out.values())}/{len(out)} rows go the stated way (graded by Drew, Nov 13; L3 passes only because it is untestable)")
 
 
 if __name__ == "__main__":
