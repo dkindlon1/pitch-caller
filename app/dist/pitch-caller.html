@@ -683,7 +683,7 @@ td.wrapcell .line { display: block; }
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.0";      // engine logic version (v1.0, Nov 11; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2";      // engine logic version (v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -4819,7 +4819,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.0";      // engine logic version (v1.0, Nov 11; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2";      // engine logic version (v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -7568,7 +7568,7 @@ function load() { try { const s = localStorage.getItem("pitchcaller.v2"); return
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400); }
 
 const G = () => S.game;
-const APP_VERSION = "2026.11.05";   // logged with every pitch
+const APP_VERSION = "1.2";   // logged with every pitch and shown under Game on the setup screen (was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -10333,7 +10333,8 @@ function setupView() {
     row("Game", "Your staff, lineup and the game in progress are saved on this device. Starting a new game files this one under Data.",
       h("div", { class: "fields" },
         h("button", { class: "btn primary", on: { click: () => endGame() } }, "Start a new game"),
-        DB.ready ? null : h("button", { class: "btn", on: { click: () => { undo = []; const th = S.theme; S = { setup: sampleSetup(), game: newGame(), view: "setup", sample: true, theme: th }; save(); render(); toast("Sample staff and lineup loaded"); } } }, "Load the sample staff"))));
+        DB.ready ? null : h("button", { class: "btn", on: { click: () => { undo = []; const th = S.theme; S = { setup: sampleSetup(), game: newGame(), view: "setup", sample: true, theme: th }; save(); render(); toast("Sample staff and lineup loaded"); } } }, "Load the sample staff")),
+      h("p", { class: "note", id: "app-version" }, `PitchIQ ${APP_VERSION} · engine ${E.VERSION}`)));
 }
 // v0.8 hitter scouting (spec 8.2): contact, power, eye (discipline), 1 to 5 with 3 = average, and a crowds-the-plate flag.
 // Kept on his roster record when he has one, so they carry from game to game.

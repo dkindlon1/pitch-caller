@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
 
   console.log("1. v0.9 is the default engine (v0.8 planning plus the v0.9 terms), and the call carries a why line");
   const r1 = await page.evaluate(() => ({ eng: S.setup.engine, ver: E.VERSION, noFlags: !("FLAGS" in E) && !("setFlags" in E), v08: !!G().call.v08 }));
-  check(r1.eng === "v09" && r1.ver === "1.0" && r1.noFlags && r1.v08, `engine ${r1.eng} ${r1.ver}, no flags in the engine ${r1.noFlags}, planned call ${r1.v08}`);
+  check(r1.eng === "v09" && r1.ver === "1.2" && r1.noFlags && r1.v08, `engine ${r1.eng} ${r1.ver}, no flags in the engine ${r1.noFlags}, planned call ${r1.v08}`);
   await page.waitForFunction(() => G().call && G().call.why, null, { timeout: 5000 }).catch(() => {});
   const why = await page.evaluate(() => G().call.why);
   const shown = await page.locator(".whyline").count();

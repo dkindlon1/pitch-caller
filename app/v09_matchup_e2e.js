@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
 
   console.log("1. v0.9 is the default engine");
   const f = await page.evaluate(() => ({ eng: S.setup.engine, same: !("FLAGS" in E), v: E.VERSION }));
-  check(f.eng === "v09" && f.same && f.v === "1.0", `engine ${f.eng}, single flag-free engine ${f.same}, engine version ${f.v}`);
+  check(f.eng === "v09" && f.same && f.v === "1.2", `engine ${f.eng}, single flag-free engine ${f.same}, engine version ${f.v}`);
 
   console.log("2. A strikeout on three swinging strikes is kept for that hitter's next trip, not this one");
   const r2 = await page.evaluate(() => {
