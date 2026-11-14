@@ -319,3 +319,31 @@ Persistence (pitch sample, about a quarter season): tilt 0.92 / 0.93, pull 0.69 
   - the grid check at the research-check leans (Step 6);
   - Step 7, the release, which waits for your go. Nothing is pushed, merged or tagged, and nothing touched production.
 
+## Close-out (Nov 14): the release candidate
+Drew (Nov 13): "make whatever decision you have to close out version 1.2". Decisions taken:
+- **The release is `v1.2-partb`** (Part B on top of Part A; Part B is green, and with no tags set it calls exactly like Part A).
+  The local branch `v1.2` points at it.
+- **No database migration** (the new data lives in the existing jsonb record tables).
+- **Step 6's last bullet, the grid at the research-check leans** (`research_v12/grid_leans.py`). v1.1's grid checks on all
+  10 arsenals at three levels pass **5/5 hard at lean 0 and 5/5 with every pitch at its MLB average lateral lean**
+  (four-seam +1.1, sinker +2.7, cutter -1.0, slider -2.2, curve -0.8, changeup +3.5 in.). The largest top-call change is
+  +0.27 (finesse arsenal, 3-1, D1).
+- **`golden_v12`** frozen as the release reference. It's byte-identical to `golden_v12a`, because these inputs carry no tags.
+- **Release notes:** `docs/RELEASE_v1.2.md`.
+
+| Final check on the release candidate | Result |
+|---|---|
+| `scripts/test-app.sh` | **exit 0**: tests.py 45, explain 7, tests_v11 41, fast parity, tests_v12 22, lean parity, tests_v12b 12, tag parity, golden_v12 (JS), build, web copies, web demo, learn 27, db 18, import 14, rails 31, schema 24, stage2 21, worlds 31, pitch_rules 41, kinds 23, v11_fixture 8, lean 8, hitter_tags 3, smoke, rules 20, v10 step 1/3/5 e2e 6/7/10, v11_step5 14, v12_step4 35, v12_oldapp 15, v12_tags 9, game_mix 44 (average 49.5%, one game over 70%) |
+| `scripts/test-sql.sh` | **exit 0**: sync 38, review 29, client_review 37, sync_auth 9, app_sync_e2e 37, rls_matrix 347, waitlist 22, v11_kinds 12, v12_sessions 11 (local Postgres 16, `MAINTAIN` revokes stubbed) |
+| Read-through, v12 suite | 94/98 (P2, P3, P5, P7, as at v1.1) |
+| Rows L1-L6, H1-H5 | 13/13 by Drew's grades (L3 untestable) |
+| Grid | 5/5 hard at lean 0 and at the research leans |
+
+**Not done from here, and why:**
+- **Push, CI, merge to `main`, the tag, the deploy.** This workspace can read the repo but can't push; the request for push
+  access was refused. Remote `main` is still `14e0ad2`, so the merge is a fast-forward.
+- To finish from Drew's PC:
+  `git fetch pitch-caller-v1.2.bundle v1.2:v1.2`, push `v1.2` and let CI run, then fast-forward `main`, then tag `v1.2`
+  (the release order is in `docs/RELEASE_v1.2.md`).
+- CI's database is Postgres 17; locally I ran 16 with the 17-only grants stubbed, so CI's SQL job is the first run on 17.
+
