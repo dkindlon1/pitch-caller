@@ -220,7 +220,8 @@
     const col = (names) => head.findIndex((c) => names.includes(c));
     const ix = { name: col(["name", "player", "hitter", "playername"]), first: col(["first", "firstname"]), last: col(["last", "lastname"]), number: col(["number", "no", "num", "jersey"]),
       bats: col(["bats", "b", "hand", "bat"]), pos: col(["pos", "position"]), pa: col(["pa", "plateappearances"]), ab: col(["ab"]), avg: col(["avg", "ba"]), obp: col(["obp"]), slg: col(["slg"]),
-      k: col(["k", "so", "kpct", "k%", "sopct"]), bb: col(["bb", "bbpct", "walks"]) };
+      k: col(["k", "so", "kpct", "k%", "sopct"]), bb: col(["bb", "bbpct", "walks"]),
+      approach: col(["approach", "early"]), path: col(["path", "swingpath", "swing"]), offspeed: col(["offspeed", "os"]) };   // v1.2 Part B tags
     if (ix.name < 0 && ix.last < 0) throw new Error("Needs a Name column (or First and Last).");
     const out = [];
     for (const r of all.slice(1)) {
@@ -236,8 +237,14 @@
       };
       const k = ix.k >= 0 ? rate(ix.k)(num(String(r[ix.k] ?? "").replace("%", ""))) : null;
       const bb = ix.bb >= 0 ? rate(ix.bb)(num(String(r[ix.bb] ?? "").replace("%", ""))) : null;
+      // v1.2 Part B: tag columns (loose words; anything else, or blank, is unknown)
+      const TAGW = { approach: { aggressive: "aggressive", aggr: "aggressive", patient: "patient" },
+        path: { lift: "lift", uppercut: "lift", flat: "flat", level: "flat" }, offspeed: { hits: "hits", hitshard: "hits", yes: "hits" } };
+      const tags = {};
+      for (const k of Object.keys(TAGW)) { const v = ix[k] >= 0 ? norm(r[ix[k]] || "") : ""; if (TAGW[k][v]) tags[k] = TAGW[k][v]; }
       out.push({ name: name.trim(), number: ix.number >= 0 ? (r[ix.number] || "").trim() : "", bats: ["R", "L", "S", "B"].includes(b) ? (b === "B" ? "S" : b) : "R", pos: ix.pos >= 0 ? (r[ix.pos] || "").trim() : "",
-        stats: { pa: pa ?? "", avg: num(r[ix.avg]) ?? "", obp: num(r[ix.obp]) ?? "", slg: num(r[ix.slg]) ?? "", k_pct: k ?? "", bb_pct: bb ?? "" } });
+        stats: { pa: pa ?? "", avg: num(r[ix.avg]) ?? "", obp: num(r[ix.obp]) ?? "", slg: num(r[ix.slg]) ?? "", k_pct: k ?? "", bb_pct: bb ?? "" },
+        ...(Object.keys(tags).length ? { scoutTags: tags } : {}) });
     }
     return out;
   }
