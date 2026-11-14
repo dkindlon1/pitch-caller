@@ -1,0 +1,8 @@
+scenario suite v12, sha256 be03f8849870fdcbe6ea70ec2f1991d8c2021d4106a7b3dc551e2b2e2adee84f (98 rows)
+== v09: 94/98 scenarios pass; hard-rule rows with any Not-acceptable share: none
+  FAIL P2   SL:any 23.7% > ceiling 20% | top: CH middle 25% (acc), SL middle 24% (acc), SI middle 15% (acc), SI down-middle 14% (acc)
+  FAIL P3   SL:zone 8.0% < floor 10% | top: CU middle 35% (acc), FA middle 26% (acc), CU down-middle 19% (acc), CU middle 12% (acc)
+  FAIL P5   CH:down/CH:chase 19.3% < floor 20% | top: CH middle 11% (acc), CH down-away 11% (acc), FA up-away 11% (acc), CH down-middle 9% (acc)
+  FAIL P7   FF:down 14.6% > ceiling 12% | top: SL middle 21% (acc), SI middle 20% (acc), FA middle 20% (acc), FA down-middle 15% (acc)
+wrote results/v12/rt_v12_partA.json
+EXIT 0

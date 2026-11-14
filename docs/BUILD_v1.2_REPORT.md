@@ -247,3 +247,37 @@ Persistence (pitch sample, about a quarter season): tilt 0.92 / 0.93, pull 0.69 
 - `scenarios_v12.json` as a graded suite: the rows above are a script until you grade them.
 - Step 7 (release): no merge, tag, migration or production change. Those wait for your go.
 
+## Drew's answers (Nov 13, evening) and the final runs
+**Applied:**
+- **S5 dropped** (S2, S4 and S5 are all size 0; their code stays). golden_v12a is unchanged: S5 never fires in its 500 cases.
+- **`readthrough/scenarios_v12.json`** (own sha256): S1f floor 0.38; P1 graded by crossing (`SI:inx`).
+- **Spray dropped** from both engines, the tag rows, the importer, the simulator and the parity harness. The fit stays in
+  `results/v12/hitter_fits.txt` as a record.
+- **H1-H4 graded passing, H5 small is fine.**
+- **L2 / L5 / L6:** you said the plan is right, diagnose first. `research_v12/step6_diagnose.py` -> `results/v12/step6_diagnose.txt`.
+  No engine change yet:
+  - **L2:** the away sinker's own cost does rise with the arm-side lean (+0.002 runs, hit batters 0.7% to 1.5%). It's called
+    more only because the inside sinker got much worse (L1). Options: regrade to "its own cost rises", or a "leaker"
+    damage term on the heart mass the lean adds.
+  - **L5:** the up target's misses move from "off" to "way off" (0.160 to 0.198) and become balls, not chases.
+    Options: misses just above the zone with two strikes swing like chases, or narrow the vertical miss.
+  - **L6:** the lean moves mass toward his body (way off 0.161 to 0.215; hit batters 3.7% to 6.0%). The HBP factor itself is
+    small (1.28). Options: lower the starting hit-batter rate for a cutter in at college, or option C (narrow side to side).
+
+**Final runs:**
+
+| Check | Part A (`v1.2-work` @ `00f5a88`) | Part B (`v1.2-partb` @ `0172d06`) |
+|---|---|---|
+| `scripts/test-app.sh` | **exit 1**: everything passes except game_mix_e2e (2 games over 70%: tier 2 seed 45 71%, tier 3 seed 33 76%; average 49.7%) | **exit 0**: every suite, game_mix_e2e included (1 game over 70%: seed 45 72%; average 49.1%) |
+| Read-through, v12 suite (98 rows) | **94/98**. P1 (by crossing) and S1f (floor 0.38) pass. P2, P3, P5, P7 fail, as at v1.1 | (same engine when no tag is set) |
+| tests_v12b / tags e2e / old-app | n/a | 12/12, passing in the suite |
+
+**The game-mix gate is flaky, and dropping S5 didn't settle it.**
+- With no tags set, Part A and Part B run the same engine, yet one run failed and the other passed.
+- Tier 2 seed 45 is over 70% in every full run (71-74%), with S5 on or off.
+- Tier 3 seed 33 swings between 59% and 76% from run to run.
+- The test learns between games (end-of-game learning runs in a background worker), so how a game goes depends on how
+  much learning finished before the next one started. The earlier "S5 at 0, all 21 pass" was one lucky run.
+- I'd make the test wait for learning to finish between games, so each run is repeatable, then re-measure. That changes the
+  test's timing, not its limits. Your call.
+

@@ -1,0 +1,992 @@
+[PASS] R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider within 6 points of the top pitch, nothing scripted (< 95%)
+       Fastball 41%, Slider 35%, Changeup 24%
+[PASS] R2 at-bat values: a strikeout pitcher's 0-2 is worth more to him than a contact pitcher's
+       0-2 value (hitter runs vs 0-0): strikeout pitcher -0.200, contact pitcher -0.140, MLB average -0.106  (solve took 1.2s)
+       Full solved table, strikeout pitcher vs MLB average:
+         0-0: +0.000  (MLB +0.000)
+         1-0: +0.057  (MLB +0.038)
+         2-0: +0.165  (MLB +0.104)
+         3-0: +0.385  (MLB +0.214)
+         0-1: -0.080  (MLB -0.044)
+         1-1: -0.025  (MLB -0.011)
+         2-1: +0.072  (MLB +0.049)
+         3-1: +0.255  (MLB +0.162)
+         0-2: -0.200  (MLB -0.106)
+         1-2: -0.155  (MLB -0.077)
+         2-2: -0.063  (MLB -0.039)
+         3-2: +0.128  (MLB +0.059)
+[PASS] R4 expand, don't waste: a chase slider lands just off the plate far more than way off
+       just off 65%, way off 21%, edge 10%
+[PASS] R5 strengths: a hitter who crushes fastballs (30 pitches of evidence) sees fewer
+       fastball share 54% -> 38%
+[PASS] R5 holes: a thin fastball hole (5 pitches) barely moves the call; a proven one (40) does
+       fastball share 54% -> 56% (thin evidence) vs 66% (proven)
+[PASS] R6 repeat after a whiff: same slider, same spot is called more after a whiff than after a foul
+       slider down-away 13% after a whiff vs 8% after a foul
+[PASS] R7 perceived speed: after fastball up-in, changeup down-away looks slower than changeup down-in
+       perceived speed gap 15 mph (down-away) vs 12 mph (down-in)
+[PASS] Tunnel: riding fastball up + 12-6 curve down is a strong tunnel
+       score +0.43: 4.4 in apart at the decision point, 22.3 in of break difference after it
+[PASS] Tunnel: the same curve from a different slot loses the tunnel
+       score -0.20 vs +0.43
+[PASS] Tunnel: sinker + sweeper separate early and rank below the classic pair
+       score +0.04: 5.3 in apart at the decision point
+[PASS] R8 no third-time cliff: the 19th fastball he sees is barely worse than the 18th
+       fastball up-in hard contact by fastballs seen: 0: 3.42%, 6: 3.96%, 12: 4.56%, 18: 5.10%, 19: 5.10%, 27: 5.10%
+[PASS] Learning mode: a grooved 0-2 fastball is rarely picked (under 5%) and clearly worse; slider chase is in the mix
+       Fastball middle: close (+0.020 runs); Slider chase: in the engine's mix (picked 6% of the time)
+[PASS] v0.6 hit by pitch: inside pitches hit batters more than away pitches (HS)
+       HBP per pitch: down-in 2.30%, down-away 0.43%
+[PASS] v0.6 realism (mlb): strikeouts, walks and HBP within 1 point of real
+       K 19.8% vs 20.0%, BB 8.0% vs 7.9%, HBP 0.9% vs 0.9%
+[PASS] v0.6 realism (college_d3): strikeouts, walks and HBP within 1 point of real
+       K 16.2% vs 16.2%, BB 11.6% vs 11.4%, HBP 4.3% vs 4.2%
+[PASS] v0.6 realism (hs): strikeouts, walks and HBP within 1 point of real
+       K 21.0% vs 21.0%, BB 14.2% vs 14.1%, HBP 4.1% vs 4.1%
+[PASS] v0.6d get it over only when it's landing: a slider 3-for-9 today loses about half its get-it-over calls or more; 7-for-9 doesn't lose any
+       slider get-it-over at 2-1: 26% fresh, 0% at 3 of 9 strikes, 30% at 7 of 9 (expected 5.1 of 9)
+[PASS] v1.0 grid: AVG3, every count but 3-0: top call <= 85% and >= 2 calls survive the window
+       0 of 99 cells fail
+[PASS] v1.0 grid: D1 3-1, AVG3: top pitch type inside 50-80% in all 9 situations (target 55-70%), two pitch types > 10%
+       7 of 9 in 55-70%; college_d1/R1 71.2%, college_d1/R3 70.4%, college_d1/empty 58.1%, college_d3/R1 64.3%, college_d3/R3 67.4%, college_d3/empty 57.1%, hs/R1 66.0%, hs/R3 62.8%, hs/empty 55.3%
+[PASS] v1.0 grid: floor: AVG3's top pitch type >= 50% at 2-0, 2-1, 3-1 (Drew: by pitch, not exact spot)
+       lowest 50%
+[PASS] v1.0 grid: race to two strikes: AVG3 first-pitch strike-target share >= 85%
+       lowest 100%
+[PASS] v1.0 grid: no chase as the top call at 3-0, 3-1, 2-2 (every arsenal)
+       0 cells
+[INFO] v1.0 grid: 3-0, AVG3 fastball share (v0.7c asked 60%+; measured on the retired path only, the live engine read 58.9% at HS bases empty before Step 2 too)
+       college_d1/R1 79%, college_d1/R3 78%, college_d1/empty 63%, college_d3/R1 69%, college_d3/R3 72%, college_d3/empty 60%, hs/R1 71%, hs/R3 68%, hs/empty 58%
+[INFO] v1.0 grid: all arsenals: cells where the window leaves a call over 85% or one call
+       10 of 990; e.g. hs/two_pitch/R1/3-1 1.00/1; hs/four_pitch/R1/3-1 1.00/1; hs/power/empty/3-2 0.87/2
+[INFO] v1.0 grid: Medium variety: cells with a pitch type over 85% (3-0 exempt)
+       22 cells
+[INFO] v1.0 grid: Medium variety: trusted secondaries under 5% (3-0 exempt)
+       132 pitch-cells: power Changeup 55, four_pitch Changeup 19, sink_sweep Changeup 18, cut4 Slider 9, finesse Fastball 7, four_pitch Curveball 5, deadzone Slider 4, two_pitch Curveball 3, four_pitch Slider 3, ride126 Curve 3, finesse Curveball 2, sink_sweep Sweeper 2, finesse Changeup 1, cut4 Curve 1
+[PASS] v0.9 calls: no chase at 3-0, 3-1 or 2-2; every count has a top call
+       3-0 Fastball middle 60%; 3-1 Fastball middle 37%; 2-2 Slider middle 26%; 0-0 Fastball middle 13%
+[PASS] v1.0 #2 re-solve: a runner moving R1 -> R2 (or an out) forces a re-solve; the stale table's call differs
+       needs_resolve R1->R2 True, outs 1->2 True, unchanged False; stale vs fresh 1-1 mix differ by 29% (total variation)
+[PASS] v1.0 #9 input check: call_v08 and solve_table reject 3 outs and a 4-ball count with ValueError
+       impossible number of outs 3; impossible number of outs 3; impossible count 4-0
+[PASS] v1.0 #6 shake-off = the pitch: after shaking off the fastball at 2-2 it gets 0% at every spot
+       fastball share 52% fresh, 0.000 after a shake by name, 0.000 after a (pitch, spot) shake
+[PASS] v1.0 #10 chase by class: a fastball chase (up) plays fast and hits batters no more than a middle fastball at every level; an off-speed chase (low) plays slow
+       P(HBP) FB chase / FB middle at 0-2: hs 0.0064/0.0081, college_d3 0.0074/0.0087, college_d1 0.0059/0.0065; EV adj FB chase +3, CH chase -3
+[PASS] v1.0 #8 big spot: HS 5th of 7, tie, R2 is late and close; HS 4th and college 6th of 9 are not
+       hs inning 4: False, hs inning 5: True, college_d3 inning 6: False, college_d3 inning 7: True
+[PASS] v1.1 Step 2e ground-ball rates by profile; each kind's average matches v1.0's fit (fit_v08.json results.gb_types) within 0.001
+       FB| 0.332, FB|rides 0.264, SI| 0.530, SI|drop 0.672, FC| 0.422, FC|big 0.412, SL| 0.415, SL|sweeper 0.353, CB| 0.531, CB|12-6 0.467, CH| 0.461, CH|drop 0.501, CH|split 0.541
+[PASS] v1.0 #4 landing: at his own expected strike rate after 12 pitches, wild-today < 0.03 at every level
+       hs -0.000, college_d3 -0.000, college_d1 -0.000; HS fastball 6/12 with 6.3 expected reads 0.019 (the old fixed center read 0.45)
+[PASS] v1.0 #4 chase takes: a ball on a chase target is no confidence debit (just off, or no location logged); way off is
+       chase/none None, chase/off None, chase/noncomp ball, down-away ball
+[PASS] v1.0 #4 landing filter: a 0.30-strike-rate pitch going 2/4 is not blocked or wild; a 0.72 pitch going 2/4 is read as wild but not blocked
+       0.30 pitch 2/4: wild -0.07, blocked False; 0.72 pitch 2/4: wild +0.07, blocked False
+[PASS] v1.0 D8 repeat: fastball up-away again after a take whiffs within 0.002 of fresh; after a foul the penalty applies
+       fresh 0.0410, ball 0.0410, cstrike 0.0410, foul 0.0313
+[PASS] v1.0 D1 3-1: slider 8-for-10 and fastball 4-for-10 today: the slider gains 8+ points over a neutral day at every level; slider 9-for-10 and the fastball 3+ strikes under his expectation: the slider is the top 3-1 pitch
+       hs: slider 24% -> 34% (fastball 46%), fastball clearly off: slider 64%; college_d3: slider 23% -> 34% (fastball 46%), fastball clearly off: slider 66%; college_d1: slider 23% -> 35% (fastball 46%), fastball clearly off: slider 67%
+[PASS] v1.0 review: a slider landing better than expected (9 of 10, 4.5 expected) sharpens its zone targets, not its chase
+       wild -0.30; chase off 0.647 -> 0.647, edge 0.095 -> 0.095; down-away off 0.367 -> 0.322
+[PASS] v1.0 #22 same-side changeup: one term (no duplicate); at 2-1 its share is >= 60% of the opposite-side share
+       hs 21% vs 17%, college_d3 21% vs 22%, college_d1 21% vs 22%
+[PASS] v1.0 D3 mashed twice: fastball middle after two hard hits there (earlier trips) keeps <= half its share at every count but 3-0; a soft cost (MASHED_PENALTY), separate from the fitted memory
+       66 cells; least cut college_d1/AVG3 2-0 24% -> 7%; at 3-0 hs/AVG3 58%->0%, hs/power 20%->0%, college_d3/AVG3 60%->0%, college_d3/power 24%->0%
+[PASS] v1.0 #7 / #21: matchup memory = M1 (cap 4) + M2 (cap 2) with no shared clip; spot damage is read per pitch kind
+       3 hard hits -0.692 (2 x -0.346; the old shared clip was +/-0.5), 6 successes +0.428; FB middle damage 0.000, SL middle 0.675
+[PASS] v1.0 #12 infield in: ground balls get through more (+0.08 hit rate, the plan's fallback: Statcast has no infield-in alignment); the pull toward low targets shrinks (Drew, Nov 11: some pull is right)
+       D3 AVG3 1-1 R3: low targets 85.8% -> 89.0% with the infield in (no hit cost: 90.2%)
+[PASS] v1.0 #19 RHO_L: eye level and tunneling (pair terms) at HS are 0.6x the college values
+       college whiff -0.1423 swing -0.2218; hs -0.0854 -0.1331
+[PASS] v1.0 #24 look: a fastball called down-away but logged in the top row moves his eye level up, not down
+       look height after target 2.36, after logged top row 2.76
+[PASS] v1.0 Step 5 landing fit: LAND_K and LAND_GAIN are the Statcast fit (shipped only on held-out gain > 2 boot SD)
+       K 20.0 (fit 20.0), GAIN 2.0 (fit 2.02), held-out +5.6 SD; block keeps K 5.0
+[PASS] v1.0 Step 7 down-middle (knee-high over the plate): lands in the zone between a corner and middle, as low as the down corners, allowed in every count, the low center cell of the logging grid
+       zone share corner 0.372 < down-middle 0.441 < middle 0.511
+[PASS] v1.0 Step 7 ground-ball rule (Drew): double play on, 1-1: most calls go down (a coach rule on top of the run math); off with 2 outs, 3 balls, 2 strikes or nobody on
+       1-1, runner on 1st, 0 outs: down targets 27% on the run math alone -> 82% with the rule
+[PASS] v1.0 Step 7 coaching reads (Drew): late on the fastball -> up/in, out front on soft -> soft and down, crowds -> fastball in, fouled straight back -> not that pitch there again, hit hard on one side -> the other side, worked earlier -> go back, landing better than normal -> lean on it, plus pitches to an opposite-side hitter -> changeup away and back-foot slider; each moves its calls by 20+ points, and nothing fires on a weak read or a plain foul
+       late_fb 0%->85%; early_os 0%->77%; crowd 0%->89%; squared_up 8%->0%; away 5%->28%; went_back 12%->80%; hot 25%->56%; plus_opp 9%->70%
+
+45/45 checks passed
+::group::summary
+tests.py: exit=0 passed=45 failed=0
+::endgroup::
+tests.py: 45 checks passed
+60 golden cases + 6 setup cases
+[PASS] 1. named term has the smallest eligible Delta (look value and setup not eligible)  (66 lines)
+[PASS] 2. comparator is b* (or the next-lowest myopic cost when the call is b*)
+[PASS] 3. three-ball counts: no look value, terms re-priced myopically  (12 three-ball cases)
+[PASS] 4. 'Set up by' exactly when a rule credits the call; 'Payoff' exactly then under two strikes; no 'Setup' left  (0 Payoff labels)
+[PASS] 5. eye-level line agrees with sign(beta_E)  (beta_E = -0.142, 14 eye-level lines)
+[PASS] 6. each built rule fires on its setup case, names that setup and is labeled Payoff (Finish / Expand at two strikes); silent without it or when it was squared up (v1.2: a rule dropped to size 0 names no setup)  (rules ['S1', 'S3', 'S6', 'S7'], dropped ['S2', 'S4'])
+[PASS] 7. Python and JS agree (why, intent; shaken-off path), golden and setup cases  (20 golden + 6 setup cases x 2)
+7/7 checks pass
+::group::summary
+explain: exit=0 passed=7 failed=0
+::endgroup::
+explain: 7 checks passed
+[PASS] migration: every row of the plan's table (13 stored types, 14 v1.0 kind/tags, 6 old fastball tags on a sinker or cutter) maps as listed  (33 rows)
+[PASS] migration is idempotent: every v1.1 kind/tag passes through, with or without a type  ([])
+[PASS] a type never undoes a coach's edit: a Four-seam the coach set to 'runs' stays FB/runs  (('FB', 'runs'))
+[PASS] the one migration point: Pitch(kind='FB', shape='sink') is a sinker (SI/run) the moment it exists
+[PASS] replace() on a migrated pitch keeps it migrated
+[PASS] one table: engine.py, app/engine.js and the app's PITCH_TYPES (db.js) hold the same migration table and tags
+[PASS] one table: the Supabase migration's pc_migrate_pitch / pc_shape_ok are generated from engine.py and match it  (SQL migration table matches engine.py)
+[PASS] exactly v1.0 (v1.0) with measured numbers and Step 2's changes set back (profile_terms, class_terms, gb_rate, the slot movement, the refit level shifts, Step 3's setup credits and tie-break): FB/sink, FB/run, FB/cut, CB/loopy, CB/sharp, CH/drop, SL/'' as stored (typed and untyped), every pitch's speed and movement entered: the same call mix (Step 1b changed only the defaults; Step 2 changes only those)  (96 situations, largest difference 6.6e-14)
+[PASS] new kinds run: sinker only, every count at hs / D3 / D1 / MLB gives a call mix that sums to 1
+[PASS] new kinds run: cutter + four-seam + curve, every count at hs / D3 / D1 / MLB gives a call mix that sums to 1
+[PASS] new kinds run: all six, every count at hs / D3 / D1 / MLB gives a call mix that sums to 1
+[PASS] validation after migration: an unknown kind and a tag from another kind (SI/rides) are rejected; v1.0 tags pass
+[PASS] one table: the profile table, thresholds, movement ratios, profile names and default speeds are the same in both engines
+[PASS] every kind and tag has its own row at every level; D1 = D3 (college); HS and travel = college movement x 0.85, same speed gaps  (140 rows)
+[PASS] the MLB rows are the Statcast medians in results/v11/profiles.json (2024, 172k pitches), all 28
+[PASS] sweeper threshold matches Statcast's sweeper label on its own: >= 80% in 2024 (fit) and 2025 (held out)  (2024 84.1%, 2025 81.6%, threshold -10 in.)
+[PASS] one definition: on 4,200 real 2024 pitches (700 per kind) both engines' tag_for give exactly the fit script's tags  (Python misses 0, JS misses 0)
+[PASS] tag_for: Python and JS agree on 3,000 random pitches at every level, with and without a pitch name  (0 differ)
+[PASS] a pitch name that names a profile sets the tag (Sweeper, Splitter); a plain name (Slider) or a grip (Knuckle curve) is tagged by movement
+[PASS] default speeds follow the profiles: cutter about 5 mph under the fastball (MLB 2024: 5.0), sweeper slower than gyro, power curve faster than slow, firm changeup faster than typical  (FB/typ 85.0, SI/typ 84.7, FC/typ 80.0, SL/typ 76.0, SL/sweeper 73.9, SL/gyro 77.5, CB/power 78.8, CB/slow 69.5, CH/firm 81.8, CH/typ 78.0)
+[PASS] main fastball and relative shape: a sinker-only pitcher's main fastball is the sinker; the coach's mark wins; no fastball -> the fastest pitch; a sweeper's shape is read off that main fastball  (sweeper off the sinker: (14.1, -6.4, -13.8))
+[PASS] a pitch with no speed is read off his main fastball's entered speed (94 mph: changeup 87, hard cutter 91); with none entered, off the default fastball (85); both engines  ([94, 87.0, 91.0], no FB speed: changeup 78.0)
+[PASS] v1.2 (L6): the hot read keeps its full size until his share of today's pitches is 1.2x its normal share (slider 25% here: 30%) and is gone at 1.6x (40%); a lone fastball 60% -> 80%; both engines  (10/50 -> 1.00, 15/50 -> 1.00, 17/50 -> 0.60, 20/50 -> 0.00, 33/39 -> 0.00, 10/10 -> 0.00; fastball 30/35/40 of 50 -> 1.00/0.50/0.00)
+[PASS] a pitch not landing (fastball 5-for-12) is held at 0-0 and still called ahead in the count; after 8 pitches without it the hold lifts; both engines  ([['Changeup', 'Slider'], ['Changeup', 'Slider'], ['Changeup', 'Fastball', 'Slider'], ['Changeup', 'Fastball', 'Slider']])
+[PASS] Step 2 tables: engine.py and app/engine.js hold the same profile terms, equal to results/v11/step2_terms.json and to a fresh build from the fit file (step2_fit.json)
+[PASS] Step 2 shipping as fitted: shape (C) on all four targets; profile beyond shape (B) on whiff and chase; fastball zone (2b) on whiff, the riding cutter on the cutter's lines (its own didn't ship); opposite-side chase (2c); every other term a prior at its no-harm scale (the called-strike zone and platoon priors at 0)  ({'whiff': (True, True), 'chase': (True, True), 'cstrike': (True, False), 'hard': (True, False)})
+[PASS] Step 2 parity: profile_terms and class_terms in Python and JS agree on 600 random pitches (every kind and tag, measured or not, every slot, level and strike count, sinker / cutter main fastballs, the coach's mark)  (largest difference 0.0e+00)
+[PASS] Step 2: the typical four-seam, slider, curve and changeup (3/4 slot) keep their v1.0 class values at every level; only the platoon priors move them  (largest other term 3.9e-16)
+[PASS] Step 2 slot adjustment: an untagged four-seam rides more and runs less from over the top than from the side, a curve drops more; a tagged pitch (rides) and measured numbers don't move; both engines  (FB over the top 17.4/6.7, sidearm 13.8/10.1; CB -2.0 vs 1.2)
+[PASS] Step 2 at HS: every profile term is 0.6 x its college value (same speeds), for every kind and tag, both sides (to 0.005 logit: the HS rows are the college rows x 0.85 rounded to 0.1 in.)  (largest difference 3.0e-03)
+[PASS] Step 2e: gb_rate is the 2024 grounder rate by kind and profile; a profile with under 200 balls in play uses its kind's rate (CB|power, FC|ride)
+[PASS] Step 3 rules: each fires on its pattern and stays silent on its 'doesn't fire' cases, the no-read cases included (18 cases: S2, S5, S7, S9, N2, three balls, no chase at 2-2; S1, S3, S4, S6 in tests_v11_explain)
+[PASS] Step 3 cap: a setup credit is at most 0.02 x run scale, and coach + setup at most max(coach, 0.02): with the went-back read (0.03) on, the setup adds nothing; without it, the setup credit applies in full  (credit with every size at 0.05: 0.02; coach 0.030 -> setup adds 0.0000; no coach read -> 0.0040)
+[PASS] Step 3 root only: every cost inside a table solve sees an empty pa_log, even when the live situation has one  (18225 cost evaluations)
+[PASS] Step 3 tie-break: an exact tie moves 5 points to the setup-enabling call (the cap); outside the noise margin nothing moves; nothing at three balls  (tie {('Fastball', 'up-in'): 0.55, ('Slider', 'down-away'): 0.45})
+[PASS] Step 3 parity: setup_payoff in Python and JS agree on the rule cases and 400 random at-bats  (0 differ; 30 of 418 credited)
+[PASS] Step 4 Q4: the riding-fastball-up rule fires on a riding four-seam aimed up with two strikes (never at three balls, never below two strikes, never a dead-zone or sinker), the same in both engines, at 0.008  (py [True, True, True, False, False, False, False, False, False] js [True, True, True, False, False, False, False, False, False])
+[PASS] Step 4 Q4 (v1.2 Step 5, Q5): not leaned on: the riding four-seam up is at most 36% of two-strike calls at every level on every grid arsenal with a riding four-seam  (hs 34.7%, college_d3 35.1%, college_d1 28.4%)
+[PASS] Step 4 Q2: the hard-contact lane prior is on sinkers only, and a same-side run sinker is hit softer inside than away  (SI|run (-0.0852, 0.0, 0.2335, -0.1876, 0.0229, 0.093))
+[PASS] Step 4 Q1: every setup size is half of Step 3's (v1.2 Step 5: S2, S4 and S5 dropped to 0)  ({'S1': 0.002, 'S2': 0.0, 'S3': 0.003, 'S4': 0.0, 'S5': 0.0, 'S6': 0.004, 'S7': 0.005, 'S9': 0.001, 'N2': 0.001})
+[PASS] no 'fastball' decision on the bare kind string: every kind-to-'FB' comparison left in either engine is a four-seam profile line (shape or grounder rate)
+
+41/41 checks passed
+::group::summary
+tests_v11: exit=0 passed=41 failed=0
+::endgroup::
+tests_v11: 41 checks passed
+40 cases (20 with full solves), 20696 values compared, tolerance 1e-09
+  python 118.90s   js 4.32s
+Largest Python-vs-JS differences:
+  table       2.84e-14
+  call        1.63e-14
+  shaken      1.63e-14
+  gradecall   7.05e-15
+  why         8.88e-16
+  walk        4.44e-16
+  ump         4.44e-16
+  probs       3.33e-16
+  grade       1.11e-16
+  take        8.33e-17
+PASS: 0 mismatches
+::group::summary
+fast_parity: exit=0 passed=1 failed=0
+::endgroup::
+fast_parity: 1 checks passed
+[PASS] exact at lean 0: landing() equals v1.1's (14e0ad2) bit for bit on 2000 random pitches / situations / targets  (0 differ)
+[PASS] exact at lean 0: outcome_probs() equals v1.1's bit for bit on the same 2000  (0 differ)
+[PASS] a pitch with no lean has lean 0 / 0 and spread 1 and runs none of the v1.2 code
+[PASS] a lean toward the side the target is on moves misses off the plate (off + non-competitive up)  (0.477 -> 0.536)
+[PASS] a lean toward the plate pulls misses over the heart  (0.217 -> 0.239)
+[PASS] lean_x is in the pitcher's frame: the same arm-side lean on an inside target to an opposite-side hitter (his glove side) pulls toward the plate
+[PASS] height works the same way: an up lean on an up target moves misses off the top
+[PASS] a wider spread puts more mass way off; a tighter one less
+[PASS] the engine's HBP curve reproduces the research doc: a +2.7 in. lean on an inside target x1.94 at sigma 8, x1.56 at 11  (x1.944, x1.559)
+[PASS] HBP counted once: the engine's HBP change with a lean matches the geometry's at the solved miss size, within 10% (4 levels x both sides x 3 leans, inside target)  (worst 3.0%)
+[PASS] REPORTED: the 2-parameter miss model vs landing()'s heart / edge / off split at lean 0 (plan tolerance 0.03; exactness never depends on it, only the difference is used)  (largest share error 0.343 (OVER 0.03); by target {'corner': 0.292, 'chase': 0.234, 'middle': 0.343, 'down-middle': 0.263}; solved miss size, average fastball up-in: {'hs': 10.7, 'college_d3': 10.4, 'college_d1': 10.2, 'mlb': 9.1})
+[PASS] re-solve: an unchanged arsenal doesn't re-solve; changing only a lean does
+[PASS] re-solve: a frozen table from before leans existed counts as lean 0 (no needless re-solve; a lean re-solves)
+[PASS] validation rejects a lean past 6 in. or a spread outside 0.5-2  (accepted [])
+[PASS] Python = JS on 600 random pitches with leans and spreads: landing, the HBP / wild-pitch factors, outcome_probs  (largest difference 6.9e-15)
+[PASS] one CDF in both engines (Abramowitz & Stegun 7.1.26)
+[PASS] a directional Way off cell (outside the 5x5 grid) counts as way off: no setup credit, both engines (an in-grid cell at the target still credits)  (python [0.005, 0.0, 0.0, 0.0], js [0.005, 0, 0, 0])
+[PASS] Step 5 (Q5): the riding four-seam up with two strikes gets 0.008 x RHO_L: 0.0048 at HS and travel, 0.008 at college and MLB; both engines  ({'hs': 0.0048, 'travel': 0.0048, 'college_d3': 0.008, 'college_d1': 0.008, 'mlb': 0.008})
+[PASS] Step 5 (L7): S4 fires only after a fastball away for a strike (called, foul or whiff) with a payoff 8+ mph slower (changeup not firm, or curve); not after a ball, not at 7 mph, not a firm changeup; both engines  (python [True, True, True, False, False, False, False], js [True, True, True, False, False, False, False])
+[PASS] Step 5 (L7): S2, S4 and S5 dropped to 0: S2 / S4's lifting sizes (0.004, 0.005) put the credit-only change rate at 17-22% on the three staffs; S5 (0.004) kept the band but put 2 of game_mix_e2e's 21 games over 70% (Drew: drop it); both engines  ({'S2': 0.0, 'S4': 0.0, 'S5': 0.0})
+[PASS] Step 5 (L7): S5 re-gated by the lean: on its fire row the front-door sinker drops when it leans toward the opposite-side hitter (the HBP cost) and rises when it leans away  (sinker in 6.7%; leaning toward him 0.0%; away 13.7%)
+
+21/21 checks passed
+::group::summary
+tests_v12: exit=0 passed=21 failed=0
+::endgroup::
+tests_v12: 21 checks passed
+40 cases (20 with full solves), 20684 values compared, tolerance 1e-09
+  python 261.33s   js 5.80s
+Largest Python-vs-JS differences:
+  call        7.52e-14
+  table       4.26e-14
+  gradecall   3.34e-14
+  shaken      1.29e-14
+  probs       1.72e-15
+  walk        1.55e-15
+  why         4.44e-16
+  ump         4.44e-16
+  grade       1.11e-16
+  take        5.55e-17
+PASS: 0 mismatches
+::group::summary
+fast_parity_leans: exit=0 passed=1 failed=0
+::endgroup::
+fast_parity_leans: 1 checks passed
+[PASS] every tag unknown (no tags, an empty dict, every key None): outcome_probs and coach credit bitwise identical to untagged  (720 comparisons)
+[PASS] a full call with no tags set is bitwise the untagged call
+[PASS] approach: an aggressive early hitter swings more at in-zone pitches at 0-0, a patient one less; nothing at 2-2  (0-0 in-zone swing 0.488 / 0.532 / 0.576; 2-2 0.794 vs 0.794)
+[PASS] approach x RHO_L: smaller at HS than at D3  (HS +0.0264, D3 +0.0436)
+[PASS] spray is dropped (Drew, Nov 13): not a tag the engine takes; hard contact and grounders don't depend on tags
+[PASS] path (coach rule, 0.003): a flat swing costs the fastball up, a lift swing the off-speed pitch down; nothing else; halves once he's shown 10 pitches at that class and spot; x RHO_L at HS  (flat FB up 0.003, lift OS down 0.003, others [0.0, 0.0, 0.0], after 10 seen 0.0015, HS 0.0018)
+[PASS] off-speed (Q7, coach-set prior): a small positive damage prior on off-speed only (about 0.07 with no evidence); 30 pitches of real evidence outweigh it  (no evidence 0.0692; with 30 pitches at -0.4: -0.3000 -> -0.2581)
+[PASS] re-solve: an untagged table's inputs carry no tags key (unchanged); a tag change re-solves; an old table counts as untagged
+[PASS] validation rejects an unknown tag or value  (accepted [])
+[PASS] Python = JS on 600 random hitters with tags (outcome_probs, coach credit, damage, batted-ball mix)  (largest difference 2.2e-16)
+[PASS] the same sizes in both engines
+[PASS] the fitted size is the held-out fit's own coefficient (results/v12/hitter_fits.json): approach shipped; path and off-speed didn't (coach rule / prior); spray shipped but was dropped (Drew)
+
+12/12 checks passed
+::group::summary
+tests_v12b: exit=0 passed=12 failed=0
+::endgroup::
+tests_v12b: 12 checks passed
+40 cases (20 with full solves), 20692 values compared, tolerance 1e-09
+  python 117.67s   js 4.33s
+Largest Python-vs-JS differences:
+  table       2.84e-14
+  call        2.74e-14
+  gradecall   2.74e-14
+  shaken      5.95e-15
+  why         8.88e-16
+  walk        6.66e-16
+  ump         4.44e-16
+  probs       3.33e-16
+  grade       1.11e-16
+  take        8.33e-17
+PASS: 0 mismatches
+::group::summary
+fast_parity_tags: exit=0 passed=1 failed=0
+::endgroup::
+fast_parity_tags: 1 checks passed
+500 v12a golden cases (250 with full solves). Largest JS-vs-golden differences:
+  probs       3.89e-16
+  h0          7.11e-14
+  tableV      4.44e-15
+  tableN      4.11e-14
+  tableSigma  2.23e-14
+  pick        3.95e-14
+  dist        1.23e-13
+  distCost    2.66e-15
+  rootSigma   1.03e-14
+  residual    8.44e-14
+  whyDelta    1.33e-15
+  grade       2.22e-16
+  shaken      4.78e-14
+  take        1.11e-16
+  ump         3.33e-16
+  walk        1.78e-15
+  gradeEst    4.44e-16
+PASS: JS engine reproduces v12a
+::group::summary
+golden_v12a: exit=0 passed=1 failed=0
+::endgroup::
+golden_v12a: 1 checks passed
+built 3580 KB
+build: app/dist matches the source
+web/lib: engine.js and engine_data.json match the app's
+web_demo: # pass 2 (the website demo runs the engine with that data)
+1. Stuff from results alone, averaged over 8 simulated seasons (D3)
+     Slider: true stuff 4.5, entered 3 | 500 pitches: mean 4.36, avg error 0.24 | 1500: mean 4.36, avg error 0.18
+  ok   Slider: 500 pitches cut the stuff error by a quarter or more
+  ok   Slider: 1500 pitches cut it by 60% or more
+     Changeup: true stuff 2, entered 3.5 | 500 pitches: mean 2.19, avg error 0.19 | 1500: mean 2.13, avg error 0.13
+  ok   Changeup: 500 pitches cut the stuff error by a quarter or more
+  ok   Changeup: 1500 pitches cut it by 60% or more
+     (28.2s)
+2. Command: results alone are weak evidence; with location logged it's recovered
+     fastball true command 2, entered 4, 500 pitches: results only mean 2.45 (avg error 0.45); with location mean 2.01 (avg error 0.09)
+  ok   results only doesn't drift the wrong way (it mostly holds still: command needs location)
+  ok   with location, average error under 0.5 (from 2.0)
+  ok   location beats results only clearly
+3. Learned inputs predict new pitches better than the entered ones (held-out data)
+     results only: surprise per pitch entered 1.5979, learned 1.5863, truth 1.5901
+  ok   results only: learned is no worse than entered on new pitches
+     with location: surprise per pitch entered 3.2748, learned 2.9569, truth 2.9566
+  ok   with location: learned is no worse than entered on new pitches
+  ok   with location: learned closes most of the gap to the truth
+4. Doesn't overreact: 15 pitches barely move a correct entry; a right entry stays put with lots of data
+  ok   15 pitches moved a correct slider by 0.18 on average in the calls (raw fit 0.46, limited to 0.15 per game)
+     correct slider (3 / 4.5), 700 pitches, mean over 8 seasons: 2.99 / 4.49
+  ok   no systematic drift on a correct entry
+5. Slices: finds a fastball he can't command against opposite-side hitters (location logged); measured, not served
+     overall 2.65; same side 3.51 (true 3.5), opposite 1.45 (true 1.5)
+  ok   the slice fit finds same-side command clearly above opposite-side
+  ok   slices aren't served to the calls (spec 18: no trait passes the gate): same side 2.65, opposite 2.65
+6. Recent games count more: he fixed his changeup command (2 -> 4) two months ago
+     500 pitches at command 2 from 400 days ago + 250 at command 4 from 20 days ago: learned 3.55; same pitches with no fading 2.93
+  ok   fading old games moves it toward the recent changeup
+7. High school, results plus location, no contact quality
+     HS fastball, true cmd 2 entered 4, 800 pitches: mean 2.09, avg error 0.09
+  ok   command recovered at high school (from 2.0; HS pitchers are wilder, so each pitch says less)
+8. Hitter memory: a fastball masher across two games makes the engine throw him fewer fastballs
+     fastball share at 1-1: unknown hitter 36%, known masher 26%  (FB score 0.767, OS -0.6)
+  ok   fewer fastballs to the masher
+9. Season stats lean the right way and stay small
+     .480/.620 hitter {"FB":0.408,"OS":0.396} | .300/.300 with 30% K {"FB":-0.342,"OS":-0.504} | 8 PA hot streak {"FB":0.116,"OS":0.077}
+  ok   good hitter leans up, weak hitter leans down, high K rate hurts vs off-speed
+  ok   eight plate appearances count for less than 150
+10. Check-in maps to feel and today's limit
+  ok   confidence 1..10 -> feel 0.30..0.95, blank stays blank
+  ok   sore arm and short sleep take pitches off his limit
+11. Limits on what the calls get (spec 11): one step a game, never more than 1.0 from his grade, coach calls ignored
+     fit 1.32 (truth about 1.2); served 3
+  ok   never more than 1.0 from his grade in any spot (largest 1.00)
+  ok   at most 0.15 per game (largest 0.15)
+  ok   after enough games it reaches the cap (3.0) and stops there
+  ok   20 games loaded at once: served 3.85 (one step from 4)
+  ok   relearning with no new game changes nothing
+  ok   coach calls and re-calls are left out (1200 pitches used of 1500)
+
+all learning checks passed
+::group::summary
+learn_test: exit=0 passed=27 failed=0
+::endgroup::
+learn_test: 27 checks passed
+1. Records: create, read, update, soft delete
+  ok   ids and timestamps are stamped
+  ok   read back a pitcher
+  ok   find pitchers by team
+  ok   update keeps createdAt, moves updatedAt
+  ok   deleted pitcher is gone from reads
+  ok   but kept as a tombstone so a sync can carry the delete
+2. Events in bulk, found by game, pitcher and hitter
+  ok   2000 pitches written in one go (130 ms)
+  ok   indexed by pitcher and hitter
+3. Backup and restore
+  ok   export carries every store (377 KB for 2000 pitches)
+  ok   restores onto an empty device
+  ok   an older backup never overwrites newer edits
+  ok   refuses a file that isn't a backup
+  ok   changedSince lists only what a sync would push
+4. Moving the prototype's saved state into the database
+  ok   staff and arsenals carried over
+  ok   named hitters become an opponent roster
+  ok   saved games become events credited to the right pitcher
+  ok   runs once only
+5. Pitch types map onto the engine's six kinds (v1.1)
+  ok   cutter, sinker, two-seam, sweeper, splitter, knuckle curve
+
+all database checks passed
+::group::summary
+db_test: exit=0 passed=18 failed=0
+::endgroup::
+db_test: 18 checks passed
+1. TrackMan file
+     TrackMan: 75 pitches; FB 85.9 mph 17/8.9 in, SL 1.9/-8.2, CH 7.2/13.8; zone FB 1 -> command hint 5
+  ok   recognised TrackMan; kept his 75 pitches, dropped the other pitcher and the untagged row
+  ok   averages land where they should, arm side positive
+  ok   slider released 1.8 in. wider than his fastball (true 1.8)
+  ok   says what it left out
+2. Same pitcher, file with the opposite sign convention
+  ok   flipped to arm side positive (FB 9.2, SL -7.9)
+3. Rapsodo-style file: info lines on top, different names, locations in inches
+     columns read: type=Pitch Type, velo=Velocity, ivb=VB (trajectory), hb=HB (trajectory), spin=Total Spin, ext=Release Extension (ft), relH=Release Height, relS=Release Side, px=Strike Zone Side, pz=Strike Zone Height, call=Is Strike, date=Date
+  ok   found the header under the info lines and read the pitches
+  ok   plate location converted from inches (FB zone rate 1)
+4. Junk in, clear message out
+  ok   "Couldn't find the pitch columns in that file. It needs at least a pitch type and velocity or break columns."
+5. Opponent hitters sheet
+  ok   names (with commas), numbers from a # column, and bats
+  ok   strikeout and walk counts turned into rates (11.7%, 7.5%)
+  ok   rates left alone
+v1.1 Step 5. Measured pitch types get their profile tag from the thresholds (the engine's tagFor)
+  ok   without the engine's tagFor, no tag (import.js stays engine-free)
+  ok   tags are the engine's and valid for their kind (Four-seam typical, Slider tight, Changeup fade)
+  ok   named types keep their profile; the short cutter reads hard ({"Four-seam":"","Sweeper":"sweeper","Splitter":"split","Cutter":"hard"})
+
+all import checks passed
+::group::summary
+import_test: exit=0 passed=14 failed=0
+::endgroup::
+import_test: 14 checks passed
+D1. Keep mine holds his number
+  ok   without an answer the calls move to the ±1.0 limit (3)
+  ok   Keep mine: right away the calls use his 4, not 3 (same games, no new step)
+  ok   and through 10 more games while the learned value keeps moving (4)
+  ok   the final clamp gives his number too, whatever the served value says
+  ok   stuff, which he didn't answer, still learns
+D2. Accept: the value at that moment, over 3 games, then the limit around it
+  ok   phases in from 3 to 1.6 over 3 games (2.53, 2.06, 1.6)
+  ok   not permanent: if what it learns later swings to 3.9, the calls stop 1.0 from the accepted 1.6 (2.6)
+  ok   and the other way, never under 1 on the scale (1)
+  ok   later flags are measured against the accepted 1.6, not his old 4
+  ok   a re-grade after he accepted replaces it: his new number is the centre again
+  ok   a re-grade of stuff only leaves an accepted command alone
+D2 (review). Accept: no jump between games, steps not games, phases end, old accepts, Keep mine retires it
+  ok   tapping Accept between games moves nothing yet (3, clamp 3)
+  ok   then a third of the way at the next game (2.53)
+  ok   two games arriving at once take two steps: at the accepted 1.6 after three games' worth (1.6)
+  ok   without a game list the phase ends too: learned swings to 4.5, the calls stop at 2.6 (2.6)
+  ok   an accept saved before this change still holds (served 1.6, was 3)
+  ok   Keep mine, then "ask me in 5 games" on a later flag: still his 4, no jump to the old accept (4)
+D8 (review). A blank grade in the grade history isn't a 0
+  ok   a 0 or blank is not a grade (level average 3, not graded)
+  ok   only 1 to 5 counts as a grade
+D4. The final clamp where the calls build his arsenal
+  ok   served 3 from the old grade is still within 1.0 of the new 2 (3)
+  ok   re-graded to 1: the calls use at most 2, not the stale 3 (2)
+  ok   and from above: re-graded to 5, a stale 2.2 is lifted to 4
+D6. Evidence-weighted steps (switched off by default after d6_test.js; the mechanism is checked here switched on)
+  ok   an outing that barely moved the estimate (0.01) barely moves the calls (3.99)
+  ok   a long, clearly disagreeing outing moves the full cap (3.85)
+  ok   in between, in proportion (0.075 -> 3.93)
+  ok   a game he didn't throw the pitch in moves nothing (3.85)
+  ok   switched off, the flat step comes back
+  ok   and off is the default in use
+D8. A blank grade is the level average, marked not graded
+  ok   blank command -> 3, not graded; stuff still graded
+  ok   with nothing learned the calls use 3, not 0 (3)
+  ok   and the final clamp agrees
+
+all rails checks passed
+::group::summary
+rails_test: exit=0 passed=31 failed=0
+::endgroup::
+rails_test: 31 checks passed
+1. A version 1 database on the device upgrades in place
+  ok   all 300 old events kept and marked as pitches (300)
+  ok   the new type index finds them
+  ok   the old game is kept and the new status index finds it
+  ok   packs and readings stores made with their indexes
+  ok   database is at version 2
+  ok   opening it again changes nothing
+2. Backups: version 1 and version 2 restore; a newer one is refused
+  ok   a version 1 backup restores, its events marked as pitches
+  ok   the backup itself isn't changed
+  ok   a new backup is version 2 and carries packs
+  ok   a version 2 backup restores, plays and packs included
+  ok   a version 3 backup is refused: "That backup is from a newer version of the app (database version 3; th…"
+  ok   a backup with a store this app doesn't know is refused
+  ok   and a refused backup writes nothing
+3. Game statuses
+  ok   planned > live > suspended > live > final, each logged
+  ok   final can't reopen, planned can't be suspended, live can't go back to planned
+  ok   an unknown status is refused
+4. Rows merged from a sync keep their timestamps; only newer ones replace
+  ok   an older row from elsewhere doesn't replace a newer one here
+  ok   a merged row keeps its own timestamps (not restamped)
+  ok   a newer row replaces ours
+5. Plays between pitches change nothing the learner computes
+  ok   learner v2: the same profile, flags and scoreboard with 86 plays mixed in
+  ok   hitter memory is the same (203 swings)
+  ok   learner v1 (check-ins and logging helpers) is the same too
+  ok   and v1 hitter memory
+  ok   an event with no type (version 1) is a pitch; a play is not
+
+all schema checks passed
+::group::summary
+schema_test: exit=0 passed=24 failed=0
+::endgroup::
+schema_test: 24 checks passed
+D5. The safety switch trips on a learner that chases noise
+     right grades, 40 seasons: noise-chasing learner switched off in 34 | the real learner in 1
+  ok   the noise-chasing learner is switched off in at least 80% of seasons (34 of 40)
+  ok   the real learner on the same seasons is switched off at most once (1 of 40)
+D7. A bad logged row is skipped, not fatal
+     the learner before this change on the same rows: crashed (Cannot read properties of null (reading 'name'))
+  ok   (the setup: these rows crashed the learner before)
+  ok   learning finishes
+  ok   and reports the 4 skipped pitches (4)
+  ok   the result is exactly learning without those rows
+  ok   a clean season skips nothing
+D7 (review). The rows that still crashed, and rows with no id
+  ok   a coach call saved without its arsenal: skipped, not fatal (skipped 1)
+  ok   a shake-off list with a hole in it: skipped, not fatal (skipped 1)
+  ok   a shake-off list of numbers: skipped, not fatal (skipped 1)
+  ok   one bad row with no id doesn't drop every row without an id (fastball rows learned: 116)
+D8 (review). A blank grade in the grade history doesn't pull the fit to 0
+  ok   a logged 0 for a blank command isn't a re-grade to 0 (learned 3.02 with it, 3.02 without)
+D10. The starved flag counts the engine's calls only
+     changeup: 14.0% of the engine's calls, 4.0% of all pitches once the coach's own calls are counted
+  ok   (the setup: under 5% of all pitches, over 5% of the engine's calls)
+  ok   no starved flag: the engine does call it
+  ok   when only the coach calls it, it is flagged starved
+D12. Duplicates
+  ok   the same pitches arriving twice (same ids) count once
+  ok   the twin is found, the fuller game kept ([{"keep":"g1","drop":"g1b","match":0.92}])
+  ok   a second game the same day (a doubleheader) isn't a duplicate
+  ok   two games from one iPad are never duplicates of each other
+  ok   once the coach says they're different games, they stay different
+  ok   different dates are never duplicates
+
+417s
+all stage 2 checks passed
+::group::summary
+stage2_test: exit=0 passed=21 failed=0
+::endgroup::
+stage2_test: 21 checks passed
+1. Steady pitcher, right grades: holds still, no false flags
+     average learned minus truth -0.077, average size 0.20; grade flags 0,0,0,0,0; change suggestions 0,0,0,0,0
+  ok   no drift on average (within ±0.15)
+  ok   no grade flags
+  ok   change suggestions in at most 1 in 10 seasons
+2. Wrong grades: moves toward the truth and flags it
+     fastball command: entered 4, truth 2, learned 2.06 | slider stuff: entered 3, truth 4.2, learned 4.15 | fastball flagged 5/5
+  ok   fastball command error cut by half or more
+  ok   slider stuff error cut by half or more
+  ok   the fastball command disagreement is flagged in most seasons
+3. The in-game leak: a low-command pitcher, in-game state live (v1 learner vs v2 on the same seasons)
+     truth 2: v1 learned 2.06, v2 learned 2.03
+  ok   v2 within 0.2 of the truth
+  ok   v2 at least as close as v1
+4. Sudden change (injury at game 12: command 3 -> 1.8): with the coach's mark vs without
+     3 games after: with the mark 1.84, without 2.45 (truth 1.8) | suggested by game 20 without a mark: 5/5
+  ok   with the mark, within 0.5 three games later
+  ok   the mark makes it faster
+     (results-only suggestion is low-power by design; reported, not required: 5/5)
+5. Charter mistakes (10% of results and locations wrong), right grades: stays put, no false grade flags
+     fastball learned minus truth 0.11 on average; grade flags 0,0,0,0,0
+  ok   stays within 0.6 of the truth on average
+  ok   no false grade flags
+6. Selective logging (hard contact always logged, the rest 40%): the 90% rule keeps stuff honest
+     fastball stuff, truth 3: with the rule 2.86, without it 2.18
+  ok   with the rule, within 0.25
+  ok   the rule removes the bias
+7. Coach calls driven by unlogged feel: excluding them keeps stuff honest
+     changeup stuff, truth 3 on average: excluding coach calls 3.02, including them 3.24
+  ok   excluded: within 0.3
+8. Population honesty: grades off by coach-typical amounts; truth inside ±1 sd how often?
+     truth within ±1 sd: 184 of 240 (77%)
+  ok   between 60% and 90% (68% is exact)
+9. Replay determinism, renames and cross-ups
+  ok   same events in any order give the identical profile
+  ok   a renamed pitch keeps its history (182 vs 182 pitches)
+  ok   a cross-up counts as the pitch actually thrown
+  ok   an undone pitch is skipped
+10. What the engine gets: caps, steps, phase-in, learning off
+  ok   first game moves at most 0.15 (command 3.85, stuff 3.15)
+  ok   never more than 1.0 from his grade without his OK (command 3)
+  ok   traits capped at ±0.5
+  ok   after he accepts, it phases in over 3 games (2.53, 2.06, 1.6)
+  ok   one step per game: same games served three times 3.85, 3.85, 3.85; a new game 3.7; re-graded 4 -> 3.5 with no new game 3.2
+  ok   learning off: back to his grades
+  ok   the coach's off switch: his grades
+11. Hitter memory: a hitter who only faced an ace isn't marked as weak
+     an average hitter facing an ace: v1 fastball score -0.116, v2 0.028 (0 = average)
+  ok   v2 within 0.1 of average
+12. Scoreboard (scored before each game): learning beats wrong grades, and doesn't switch itself off on right ones
+     wrong grades: surprise per pitch learned 2.5398 vs his grades 2.8247 over 310 | right grades: 2.5773 vs 2.5739
+  ok   beats wrong grades
+  ok   no false switch-off on right grades
+13. The learner's fast strike-rate table matches the exact calculation
+  ok   largest difference 0.0088 (must be under 0.01)
+
+1031s, 5 seasons per world
+all worlds checks passed
+::group::summary
+worlds_test: exit=0 passed=31 failed=0
+::endgroup::
+worlds_test: 31 checks passed
+1. Every tier boundary, from the sources' tables
+  ok   Pitch Smart, ages 7-8: 6 boundaries
+  ok   Pitch Smart, ages 9-10: 9 boundaries
+  ok   Pitch Smart, ages 11-12: 3 boundaries
+  ok   Pitch Smart, ages 13-14: 4 boundaries
+  ok   Pitch Smart, ages 15-16: 9 boundaries
+  ok   Pitch Smart, ages 17-18: 7 boundaries
+  ok   Pitch Smart, ages 19-22: 5 boundaries
+  ok   Little League, ages 11-12: 9 boundaries
+  ok   Little League, ages 15-16: 9 boundaries
+  ok   New York JV and freshman: 8 boundaries
+  ok   New York modified: 7 boundaries
+  ok   New Jersey: 9 boundaries
+  ok   Georgia varsity: 7 boundaries
+  ok   Georgia sub-varsity: 7 boundaries
+  ok   daily limits match the sources
+  ok   no pitches, no rest
+2. New York varsity changes with the month
+  ok   March: 85 a day, 76-85 is 4 nights
+  ok   April: 105, 31-65 is 2 nights, 66-95 is 3, 96-105 is 4
+  ok   May and June: 125, 1-40 is 1 night, 103-125 is 4
+  ok   a February scrimmage counts as March
+3. The day he can pitch again
+  ok   66 pitches Tuesday under Pitch Smart 13-14 (4 days off): eligible Sunday (2026-11-08)
+  ok   20 pitches yesterday (no rest needed): eligible today
+  ok   already pitched today: not again today
+  ok   New York: 1 night of rest means he can pitch the next day
+  ok   New York April: 100 pitches Monday is 4 nights, so Friday
+  ok   two days in a row: not a third (eligible 2026-11-06)
+  ok   with a day between, he's fine
+  ok   two games on one day count as one day (55 pitches: 3 days off)
+  ok   New Jersey: not three days in a row (2026-04-04)
+  ok   New Jersey: 50 three times, a day apart: his rest says Tuesday (2026-04-07)
+  ok   and that day the 150-in-5-days cap leaves him 50, not 110 (50)
+  ok   Georgia varsity: 110 pitches is 3 days off
+4. During the game
+  ok   33 pitches: 1 day's rest now, 3 more is 2 days ({"count":33,"max":95,"left":62,"rest":1,"unit":"days","level":"ok","capped":null,"nextAt":36,"nextRest":2,"finishBatter":null})
+  ok   86 of 95: near the limit, no tier left before it
+  ok   Little League at 85: the limit, and he may finish the batter
+  ok   before his first pitch: the next tier starts at 21
+  ok   Georgia: 35 pitches yesterday leave 75 today (110 over two days) (75)
+  ok   New Jersey: 120 in the last four days leaves 30 of the 150 (30)
+5. The coach's own numbers
+  ok   a preset with the coach's own limit says it's edited
+  ok   no or unknown preset: custom
+  ok   every preset but custom names its source and when it was checked
+
+all 41 rules checks passed
+::group::summary
+pitch_rules_test: exit=0 passed=41 failed=0
+::endgroup::
+pitch_rules_test: 41 checks passed
+1. The engine migrates a pitch the moment it exists
+  ok   Pitch(FB/sink) is SI/run
+  ok   Pitch(FB/ride) is FB/rides
+  ok   Pitch(CB/loopy) is CB/slow
+  ok   a stored Cutter (FB/cut) is FC
+  ok   a type never undoes a coach's edit (Four-seam set to 'runs' stays FB/runs)
+  ok   every v1.1 kind and tag passes through unchanged
+  ok   an old portal proposal's fastball tag on a sinker or cutter maps to that kind's tag (SI/sink -> run, FC/cut -> typical)
+  ok   stored keys and classes: sinker and cutter use the fastball's keys
+2. The app's pitch types are the engine's table
+  ok   PITCH_TYPES (db.js) = MIGRATE_BY_TYPE (engine.js), 13 types
+  ok   every pitch type is a valid v1.1 kind and tag
+  ok   a default type for each of the six kinds
+3. A stored v1.0 pitcher moves to the six kinds once, logged, signs kept
+  ok   kinds and tags as the table says; the sinker, two-seamer and cutter keep sign 1 (FB/rides, SI/run#1, SI/two-seam#1, FC/#1, CB/12-6, CH/split, CH/fade, FB/runs)
+  ok   every change logged with pitch, from and to (7 changes; the changeup didn't change)
+  ok   marked as migrated; a second pass changes nothing
+  ok   a pitcher already on v1.1 is left alone (a coach's 'drop' on a Splitter stays)
+4. Calls for migrated arsenals
+  ok   a seven-pitch arsenal with a sinker and a cutter gets a call mix that sums to 1, sinker and cutter in it
+  ok   a tag from another kind (SI/rides) is rejected with a clear message
+5. Step 1b: the profile table in the app, and old games read through the roster's type
+  ok   a v1.0 snapshot of a two-seamer (FB/run) and a splitter (CH/drop) read as SI/two-seam and CH/split through the roster's type
+  ok   a v1.1 snapshot is never changed by the type (a sinker logged as SI/drop stays SI/drop)
+  ok   the app's engine has the profile table: a sweeper sweeps more than a gyro slider, a cutter's default speed is under the fastball's, a pitch with no speed gets its profile's default
+v1.1 Step 5. A stored tag that isn't its kind's reads as typical, as v1.0's engine read it (no crash)
+  ok   CB/"typical" -> CB/"" (logged), and the arsenal calls (Fastball FB/ride -> FB/rides; Curveball CB/typical -> CB/)
+  ok   without the engine's tags the migration leaves it (the engine's own check still rejects it)
+v1.1 Step 5. The learner's specs read in v1.1 terms (a record still in v1.0 terms migrates by its type)
+  ok   a v1.0-stored two-seamer (FB/run, type Two-seam) has the v1.1 sinker's strike rate, reference and fast rate (0.5254, 0.5254, 0.5254); without its type it would read as a four-seam "runs" (0.5112)
+
+all 23 kinds checks passed
+::group::summary
+kinds_test: exit=0 passed=23 failed=0
+::endgroup::
+kinds_test: 23 checks passed
+1. A v1.0 backup
+  ok   made by v1.0's app: Four-seam FB/ride, Two-seam FB/run, Sinker FB/sink, Cutter FB/cut, 12-6 curve CB/sharp, Splitter CH/drop
+2. The migration changes every one of the six and logs it
+  ok   the log: Fastball: FB/ride -> FB/rides; Two-seam: FB/run -> SI/two-seam (sign 1); Sinker: FB/sink -> SI/run (sign 1); Cutter: FB/cut -> FC/ (sign 1); Curve: CB/sharp -> CB/12-6; Splitter: CH/drop -> CH/split
+  ok   marked migrated; running it again changes nothing
+3. Exact replay through Step 1's code (commit 9e2f41e)
+  ok   3 games, 287 pitches: confidence largest difference 0, landing-today mismatches 0, pitch-count mismatches 0, games with holes 0, unversioned pitches 0 -> PASS
+4. Replay through this build: only the expected-strike sums move
+  ok   287 pitches: confidence largest difference 0, pitch-count mismatches 0
+  ok   landing today: keys and strike / pitch counts exact (0 key, 0 count mismatches)
+  ok   expected-strike sums move by at most 1.080 over a game (the v1.1 model's strike expectation; exact at Step 1, check 3)
+5. Kind-keyed hitter memory still reads
+  ok   matchup keys by CB, CH, FB; a sinker or cutter reads the fastball's (keyKind)
+
+all 8 v1.0 fixture checks passed
+::group::summary
+v11_fixture_test: exit=0 passed=8 failed=0
+::endgroup::
+v11_fixture_test: 8 checks passed
+[PASS] recovery is unbiased: mean error over 20 seasons x 2 pitches within 0.3 in. on each axis (hidden fastball +3 / +1.5, slider -1.5 / -3)  (side -0.013, height -0.080 in.; seed 1 fastball side: true +3, mean 2.38 (SE 0.49, n 332))
+[PASS] its standard error is honest: at least 85% of the 80 estimates fall within 2 SE (95% expected)  (75/80 = 94%)
+[PASS] shrinkage: served value = mean x n / (30 + n)  (mean 3.31, n 343, served 3.04)
+[PASS] fewer than 10 targets on a side: no estimate, flagged  (sides 5 / 7; flag: needs targets on both sides (arm 5, glove 7))
+[PASS] today's log (no direction on Way off): those pitches are left out and counted, and the lean reads closer to 0 than with a direction  (mean bias -1.85 in. without a direction vs -0.37 with; 446 way-off pitches left out over 3 seasons)
+[PASS] a clear lean is flagged in the coach's words  (logs say he misses arm side (3.6 in.))
+[PASS] served to the engine only when the trait gate admits it (ACTIVE_TRAITS has no lean: flag only)
+[PASS] a left-hander's arm-side lean reads arm side (pitcher's frame, not the catcher's)  (mean 3.27)
+
+8/8 checks passed
+::group::summary
+lean_test: exit=0 passed=8 failed=0
+::endgroup::
+lean_test: 8 checks passed
+college_d3: share flagged (right tag / wrong tag), 150 hitters per tag
+   15 early pitches: aggressive 0% / 0%, patient 0% / 0%, untagged flagged 0% (under the 25-pitch minimum: never flags)
+   30 early pitches: aggressive 3% / 0%, patient 4% / 2%, untagged flagged 6%
+   60 early pitches: aggressive 6% / 1%, patient 3% / 3%, untagged flagged 2%
+  120 early pitches: aggressive 5% / 1%, patient 5% / 1%, untagged flagged 5%
+  400 early pitches: aggressive 13% / 1%, patient 14% / 0%, untagged flagged 8%
+hs: share flagged (right tag / wrong tag), 150 hitters per tag
+   15 early pitches: aggressive 0% / 0%, patient 0% / 0%, untagged flagged 0% (under the 25-pitch minimum: never flags)
+   30 early pitches: aggressive 3% / 2%, patient 3% / 3%, untagged flagged 5%
+   60 early pitches: aggressive 5% / 1%, patient 1% / 2%, untagged flagged 3%
+  120 early pitches: aggressive 9% / 4%, patient 2% / 1%, untagged flagged 6%
+  400 early pitches: aggressive 4% / 0%, patient 5% / 1%, untagged flagged 4%
+  ok   honest: untagged hitters flagged 4.9% pooled (by design 4.6%)
+  ok   nothing is flagged under the 25-pitch minimum
+  ok   a flag only: approach isn't served (not in the trait gate)
+  at a realistic season (15-30 early-count pitches) the logs find the right tag at most 4% of the time: approach stays the coach's tag (the learner's read is a flag he can check)
+all checks passed
+::group::summary
+hitter_tags_test: exit=0 passed=3 failed=0
+::endgroup::
+hitter_tags_test: 3 checks passed
+first call: Changeup / Get it over
+at-bat rows: 2 | log rows: 6 | count: 1–1
+B
+S
+coach call: SliderYour call / Chase it | Costly. About 0.064 runs more than the engine's best call here.
+runners text: Runners
+2nd and 3rd
+inning over after 8
+phone scrollWidth: 441
+Instrument Sans loaded: true | errors: none
+smoke: passed
+1. Picking the team's rule
+  ok   Setup asks for the league's rule
+  ok   Pitch Smart 13-14 is saved on our team, with its table (20,0,35,1,50,2,65,3,95,4) and where it came from
+  ok   the coach can change the limit, and the page says it's been changed
+  ok   and go back to the preset
+2. The live count
+  ok   before his first pitch: "95 left of 95 · 21 more: 1 day's rest"
+  ok   at 33: "62 left of 95 · 3 more: 2 days' rest"
+  ok   the last 10 before the limit are amber: "9 left of 95 · 4 days' rest after today"
+  ok   at 95: "At his limit of 95."
+3. Eligible on
+  ok   95 pitches today (4 days off): eligible 2026-11-18 (2026-11-18)
+  ok   his roster card says when: "Eligible Wed, Nov 18 (95 pitches Fri)"
+  ok   and so does the staff picker
+  ok   a pitcher who hasn't thrown is eligible today
+4. The pitching log
+  ok   his line: 95 pitches, 16 batters, 4 days' rest, eligible 2026-11-18
+  ok   the CSV has a header and one row per pitcher
+  ok   Print puts the log on the page and opens the print dialog
+  ok   the Data screen lists games to print or download
+5. The sign card
+  ok   each of today's pitchers with his signs (Starter, Reliever)
+6. Picking a pitcher who isn't eligible
+  ok   adding him to today's staff warns: "Starter isn't eligible until Wed, Nov 18 (95 pitches Fri) under Pitch Smart, ages 13-14"
+7. The team's time zone
+  ok   dates follow the zone given (UTC 2026-11-14, Kiritimati 2026-11-14), and a bad zone falls back to the device
+  ok   no page errors
+
+all game-day checks passed
+::group::summary
+rules_e2e: exit=0 passed=20 failed=0
+::endgroup::
+rules_e2e: 20 checks passed
+1. A shake-off keeps that pitch out at every spot for the rest of the at-bat (#6, D2)
+  ok   shook off the Slider; the next three calls in the at-bat never include it (calls: Changeup, Fastball, Fastball)
+  ok   the at-bat remembers the shake-off: ["Slider"]
+  ok   the next hitter starts with no shake-offs (his call list: Fastball, Slider)
+2. A runner moving or an out mid at-bat re-solves the at-bat table; nothing else does (#2)
+  ok   no change: same table (solve #1 -> #1)
+  ok   runner on 1st -> solve #2, runner to 2nd -> #3, an out -> #4
+  ok   no page errors
+all v1.0 Step 1 browser checks passed
+::group::summary
+v10_step1_e2e: exit=0 passed=6 failed=0
+::endgroup::
+v10_step1_e2e: 6 checks passed
+1. Chase balls and an HBP leave his confidence and the landing record alone; a zone ball counts
+  ok   chase ball, no location: confidence 0.000, landing record unchanged true
+  ok   chase ball just off: confidence 0.000, landing record unchanged true
+  ok   zone ball: confidence -0.020, record [0,0,0] -> [0, 0.452, 1] (one pitch, no strike, his expectation added)
+  ok   HBP: confidence +0.0030, exactly the between-hitters drift 0.0030 (no "ball" debit; a debit would add -0.020)
+2. An open game saved before v1.0 ([strikes, pitches] pairs) still calls and keeps counting
+  ok   the engine calls with an old-format record in the game
+  ok   the next pitch converts it and counts on: [4, 3.32, 6] (was [3, 5])
+  ok   no page errors
+all v1.0 Step 3 browser checks passed
+::group::summary
+v10_step3_e2e: exit=0 passed=7 failed=0
+::endgroup::
+v10_step3_e2e: 7 checks passed
+1. #24: the look follows the logged landing row
+  ok   called down-away, nothing logged: look height 2.50 -> 2.36 (down)
+  ok   called down-away, caught in the top row: look height 2.36 -> 2.65 (up)
+2. #7: a hard hit is keyed on the logged spot; without a logged spot, on the called target
+  ok   hard hit caught up and in, called down-away: memory {"g:gam_mwfrvb010i031r644q3s39502a3m|0|":{"hard|FB|up-in":1}}
+  ok   hard hit with no spot logged: keyed on the called target ({"g:gam_mwfrvb010i031r644q3s39502a3m|0|":{"hard|FB|up-in":1},"g:gam_mwfrvb010i031r644q3s39502a3m|1|":{"hard|FB|down-away":1}})
+3. #7: the engine reads only the cross-game seed; tonight's swings update the card, not hitter_damage
+  ok   hitter_damage stays the seed {} after a whiff (was {}, now {})
+  ok   the hitter card's running read still moves: {"OS":[-0.5282760073307452,1]}
+4. #20: the cross-game seed is centered only when the hitter has grades on
+  ok   no grades: seed kept as learned (FB [0.6,8])
+  ok   grades on: seed centered (FB [0.2,8]; mean 0.4 taken out)
+  ok   no page errors
+PASS: v1.0 Step 5 app checks
+::group::summary
+v10_step5_e2e: exit=0 passed=10 failed=0
+::endgroup::
+v10_step5_e2e: 10 checks passed
+1. Profile names and the stuff hint in the pitch editor
+  ok   four-seam shapes show profile names, values stay tags (Rides (high ride), Runs (ride + run), Cuts (natural cut), Straight (dead zone), Typical)
+  ok   slider's stored tag "sweeper" is selected under its name
+  ok   stuff grade says it is relative to the profile ("Stuff, 1 to 5, compared with other pitches of this profile")
+2. The main fastball mark: fastball-class only, one per pitcher, reaches the engine
+  ok   a mark for the four-seam and sinker, none for the slider ([true,true,false])
+  ok   no mark and no records: nothing marked; the engine takes the first fastball-class pitch (Fastball)
+  ok   marking the sinker: stored on the sinker only, the engine's main fastball is the sinker (Sinker)
+  ok   the event snapshot carries the mark on the sinker only (1 pitch with the key)
+  ok   moving the mark to the four-seam moves it in the arsenal (Fastball)
+  ok   no mark: the fastball-class pitch he has thrown most in his records (sinker 340 vs four-seam 120) is his main (Sinker)
+  ok   changing the marked sinker to a changeup clears the mark ([false,false,false])
+3. The Roster screen's arsenal editor (where pitches live with a database)
+  ok   two marks (four-seam, cutter), the cutter checked (Cutter is his main fastball)
+  ok   stuff hint on the grade; the note says six kinds, not four families
+  ok   no page errors
+
+PASS: v1.1 Step 5 app checks
+::group::summary
+v11_step5_e2e: exit=0 passed=14 failed=0
+::endgroup::
+v11_step5_e2e: 14 checks passed
+1. Bullpen mode: 40 charted pitches save, feed the lean estimate, reload, list on the roster
+  ok   a new setup logs locations by default (Q3)
+  ok   Log pitch waits for all three taps
+  ok   one pitch logged through the buttons ({"pitch":"Fastball","kind":"FB","glove":[2,3],"landed":[2,2]})
+  ok   the catcher's spot stays set; the landed tap clears for the next pitch
+  ok   a way-off arrow stores a cell one ring outside the grid ([2,-1])
+  ok   tapping the arrow again clears it
+  ok   one charted session, 40 pitches (1 doc, n 40)
+  ok   it carries an id and a numeric updatedAt (the sync table's constraints)
+  ok   byType lists the fastball with its radar average, so an older app's session list can show it ([{"type":"Fastball","kind":"FB","n":40,"velo":86}])
+  ok   the estimator read both target sides ([20,20] arm / glove)
+  ok   it reads an arm-side lean and flags it (3.27 in.; "logs say he misses arm side (3.3 in.)")
+  ok   a flag only: the engine keeps the coach's setting (the gate hasn't admitted leans)
+  ok   nothing written into his arsenal or the calls
+  ok   after a reload: the session and the lean are still there (1 doc, est 3.27)
+  ok   relearning after the reload reads the charted session again (3.27)
+  ok   the roster's session list shows it ("2026-11-13Charted bullpen, 40 pitches186.0")
+  ok   the arsenal card shows what his logs say about his fastball's misses
+2. Game events: pitcher hand, batter side, a directional way-off cell, the glove spot when on
+  ok   with the setup option on, the glove grid shows (25 cells)
+  ok   Way off has four arrows
+  ok   the grid header says which way
+  ok   the event carries ph R and bs R (batter R)
+  ok   a way-off arrow: loc noncomp, cell [2,-1] ([2,-1])
+  ok   the glove spot is on the event ([2,3])
+  ok   the at-bat log reads the out-of-grid cell as "way" ("way")
+  ok   both taps clear for the next pitch
+  ok   with the option off, no glove spot; the grid cell and ph still saved
+  ok   the estimator reads a game pitch from the catcher's spot, not the called one (target -6.67, miss 26.67 arm side)
+3. Correcting a location keeps it at cell resolution
+  ok   the game log row keeps the cell it was logged with
+  ok   the fix editor offers the cell grid
+  ok   re-picking the cell moves the cell and its zone together, original kept (["off",[0,1],1])
+  ok   a zone that contradicts the cell clears the cell (["heart",null])
+  ok   the same cell tapped twice: set, then cleared ([null,null,true,true])
+  ok   the earlier-game fixer offers the cell grid too
+  ok   it moves cell and zone together and marks him to learn again (["off",[2,0],true])
+4. Page errors
+  ok   none ()
+all checks passed
+::group::summary
+v12_step4_e2e: exit=0 passed=35 failed=0
+::endgroup::
+v12_step4_e2e: 35 checks passed
+1. The v1.2 app writes leans, a charted session, a way-off cell and a glove spot
+  ok   this is the v1.2 build
+  ok   written: a learned lean, a way-off event with a glove spot, an at-bat log with "way" ([["Changeup","down-away","ball","way",null,null],["Slider","down-middle","ball",[1,1,true],null,null]])
+2. The v1.1 build opens the same database and saved state
+  ok   this is the v1.1 build
+  ok   it opens without errors ()
+  ok   the stored pitcher still has the lean and spread ([1.5,-1.5,1.25])
+  ok   its calls don't use them (v1.1 builds each pitch from named fields): it calls as v1.1
+  note saved setup keeps logGlove (true); v1.1 has no glove grid, so a v1.1 iPad logs no glove spots
+3. v1.1 screens over v1.2 data
+  ok   the roster lists the charted session among the sessions ("2026-11-13Charted bullpen, 40 pitches1–")
+  ok   the earlier-game fixer lists the way-off pitch as way off
+  ok   roster, data and the fixer render without errors ()
+4. v1.1 keeps calling the game in progress (its at-bat log holds the way-off pitch)
+  ok   it makes calls and logs pitches after the "way" entry (Fastball, Slider; )
+5. What a v1.1 iPad writes back
+  ok   a v1.1 roster edit writes the pitcher back with the lean fields intact ([4,1.5,-1.5,1.25])
+  ok   the charted session is untouched
+  ok   a v1.1 hitter edit writes him back with his tags intact ({"approach":"aggressive","path":"flat"})
+  note a v1.1 pitch event has no ph / bs (undefined, undefined) and its arsenal snapshot drops the lean (undefined); the v1.2 learner falls back to the pitcher's hand and the event's situation
+  note a v1.1 relearn rewrites the learned doc without the lean estimate; the next v1.2 relearn rebuilds it from the events and charted sessions
+6. Back on v1.2: the lean estimate comes back from the same data
+  ok   the estimate is rebuilt (3.58 in.) and the coach's lean reaches the engine again (1.5)
+  ok   no errors ()
+all checks passed
+::group::summary
+v12_oldapp_test: exit=0 passed=15 failed=0
+::endgroup::
+v12_oldapp_test: 15 checks passed
+1. Untagged: nothing changes
+  ok   no tags set: the engine's situation and the event snapshot have no hitter_tags key
+2. Tag the batter up through the hitter card
+  ok   the hitter row has three tag rows (spray dropped)
+  ok   each starts as Unknown
+  ok   stored on his roster record ({"approach":"aggressive","path":"flat"})
+  ok   the engine gets them ({"approach":"aggressive","path":"flat"})
+  ok   the event snapshot carries them
+  ok   back to Unknown: removed from the record, and the engine gets none
+3. The importer reads tag columns
+  ok   tag words read loosely; blank or unknown words are Unknown; a Spray column is ignored ([["Al Able",{"approach":"aggressive","path":"flat"}],["Bo Bee",{"path":"lift","offspeed":"hits"}],["Cy Sea",null]])
+4. Page errors
+  ok   none ()
+all checks passed
+::group::summary
+v12_tags_e2e: exit=0 passed=9 failed=0
+::endgroup::
+v12_tags_e2e: 9 checks passed
+1. Whole games through the app keep a mix (sample staff: fastball, slider, changeup; college D3)
+  ok   tier 2, seed 7: 82 pitches charted, no page errors
+  ok   tier 2, seed 7: 2+ pitches, none over 85% (Slider 40, Fastball 35, Changeup 7; top 49%)
+  ok   tier 2, seed 11: 82 pitches charted, no page errors
+  ok   tier 2, seed 11: 2+ pitches, none over 85% (Fastball 19, Changeup 31, Slider 32; top 39%)
+  ok   tier 2, seed 21: 82 pitches charted, no page errors
+  ok   tier 2, seed 21: 2+ pitches, none over 85% (Slider 25, Changeup 25, Fastball 32; top 39%)
+  ok   tier 2, seed 33: 82 pitches charted, no page errors
+  ok   tier 2, seed 33: 2+ pitches, none over 85% (Fastball 46, Slider 33, Changeup 3; top 56%)
+  ok   tier 2, seed 45: 82 pitches charted, no page errors
+  ok   tier 2, seed 45: 2+ pitches, none over 85% (Fastball 59, Slider 15, Changeup 8; top 72%)
+  ok   tier 2, seed 57: 82 pitches charted, no page errors
+  ok   tier 2, seed 57: 2+ pitches, none over 85% (Slider 32, Fastball 39, Changeup 11; top 48%)
+  ok   tier 2, seed 69: 82 pitches charted, no page errors
+  ok   tier 2, seed 69: 2+ pitches, none over 85% (Changeup 32, Slider 32, Fastball 18; top 39%)
+  ok   tier 2, seed 81: 82 pitches charted, no page errors
+  ok   tier 2, seed 81: 2+ pitches, none over 85% (Fastball 26, Slider 31, Changeup 25; top 38%)
+  ok   tier 2, seed 93: 82 pitches charted, no page errors
+  ok   tier 2, seed 93: 2+ pitches, none over 85% (Slider 43, Fastball 19, Changeup 20; top 52%)
+  ok   tier 2, seed 105: 82 pitches charted, no page errors
+  ok   tier 2, seed 105: 2+ pitches, none over 85% (Slider 38, Fastball 36, Changeup 8; top 46%)
+  ok   tier 3, seed 7: 82 pitches charted, no page errors
+  ok   tier 3, seed 7: 2+ pitches, none over 85% (Fastball 54, Slider 13, Changeup 15; top 66%)
+  ok   tier 3, seed 11: 82 pitches charted, no page errors
+  ok   tier 3, seed 11: 2+ pitches, none over 85% (Slider 21, Fastball 44, Changeup 17; top 54%)
+  ok   tier 3, seed 31337: 82 pitches charted, no page errors
+  ok   tier 3, seed 31337: 2+ pitches, none over 85% (Changeup 30, Fastball 40, Slider 12; top 49%)
+  ok   tier 3, seed 21: 82 pitches charted, no page errors
+  ok   tier 3, seed 21: 2+ pitches, none over 85% (Slider 40, Fastball 35, Changeup 7; top 49%)
+  ok   tier 3, seed 33: 82 pitches charted, no page errors
+  ok   tier 3, seed 33: 2+ pitches, none over 85% (Slider 32, Fastball 48, Changeup 2; top 59%)
+  ok   tier 3, seed 45: 82 pitches charted, no page errors
+  ok   tier 3, seed 45: 2+ pitches, none over 85% (Changeup 11, Slider 33, Fastball 38; top 46%)
+  ok   tier 3, seed 57: 82 pitches charted, no page errors
+  ok   tier 3, seed 57: 2+ pitches, none over 85% (Changeup 22, Fastball 12, Slider 48; top 59%)
+  ok   tier 3, seed 69: 82 pitches charted, no page errors
+  ok   tier 3, seed 69: 2+ pitches, none over 85% (Fastball 32, Changeup 29, Slider 21; top 39%)
+  ok   tier 3, seed 81: 82 pitches charted, no page errors
+  ok   tier 3, seed 81: 2+ pitches, none over 85% (Fastball 25, Slider 49, Changeup 8; top 60%)
+  ok   tier 3, seed 93: 82 pitches charted, no page errors
+  ok   tier 3, seed 93: 2+ pitches, none over 85% (Slider 29, Fastball 27, Changeup 26; top 35%)
+  ok   tier 3, every whiff 'Fooled' and every foul 'Straight back', seed 7: 82 pitches charted, no page errors
+  ok   tier 3, every whiff 'Fooled' and every foul 'Straight back', seed 7: 2+ pitches, none over 85% (Fastball 31, Changeup 22, Slider 29; top 38%)
+2. Over the 21 games
+  ok   average top pitch 49.1% (at most 60%)
+  ok   1 game(s) over 70% (at most 1)
+
+all game-mix checks passed
+::group::summary
+game_mix_e2e: exit=0 passed=44 failed=0
+::endgroup::
+game_mix_e2e: 44 checks passed
+EXIT 0
