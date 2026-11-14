@@ -14,6 +14,7 @@ FAST_LEANS=1 $run fast_parity_leans python3 golden/fast.py 40   # v1.2: the same
 $run tests_v12b    python3 tests_v12b.py             # v1.2 Part B: hitter tags (unknown = untagged, directions, Python = JS)
 FAST_TAGS=1 $run fast_parity_tags python3 golden/fast.py 40   # v1.2 Part B: the same 40 golden inputs with hitter tags
 $run tests_v121   python3 tests_v121.py             # v1.2.1: the second shake-off is a hard switch, a shake costs 0.05; exactly v1.2 otherwise (vs git 504aaa8), Python = JS
+$run tests_v122   python3 tests_v122.py             # v1.2.2: the confidence band under the cutoff (blend), exactly v1.2.1 with no pitch in the band (vs git cb64db1), smooth, Python = JS, speed
 $run golden_v12   node golden/golden_v11.js v12   # v1.2 release reference (JS); golden_v10, v11a, v11 and v12a (the Part A freeze, identical inputs and outputs) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then

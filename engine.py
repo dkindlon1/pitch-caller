@@ -22,6 +22,7 @@ from dataclasses import dataclass, field, replace
 import json as _json, os as _os
 from math import exp, log
 import random as _random
+from itertools import combinations   # v1.2.2: the confidence band blend
 from run_tables import RE_BY_LEVEL, CV_BY_LEVEL, IN_PLAY_BY_LEVEL   # v0.5: run values by level
 try:   # v0.6: in-play tables refit to each level's real hit mix (calib.py)
     from outcome_params import IN_PLAY_FIT
@@ -1906,9 +1907,34 @@ def advance_all(bases):
 # Decision rule: [R1] weighted random pick at a game-theory balance point
 # ---------------------------------------------------------------------------
 
-def candidates(arsenal, s, forced=None):
+# v1.2.2 (Drew, Nov 14): the confidence band. A pitch under the cutoff but within RAMP_W of it is neither in nor out: the
+# root call blends the call with it allowed and the call without it, weighted by how far up the band it sits
+# (band_weight: 0 at the bottom, 1 at the cutoff). So one called strike or ball near the cutoff moves its share a few
+# points instead of switching it between none and its full share (game-readiness review, problem 2). When nothing clears
+# the cutoff the same blend mixes his band pitches (Drew D2: mix), and the band applies in every count (D3). The PA table,
+# setup payoffs (check 3) and the shake-off rules keep the trusted set as before.
+RAMP_W = 0.10
+RAMP_MIN_W = 1e-3          # blend combinations under this weight are skipped
+
+
+def band_weight(p, s):
+    """v1.2.2: 1 at or over the level's cutoff, 0 at or under cutoff - RAMP_W, linear in between"""
     cutoff = LEVEL[s.level]["cutoff"]
-    c = [x for x in arsenal if x.conf >= cutoff or (forced and x.name == forced)]
+    if p.conf >= cutoff:
+        return 1.0
+    return max(0.0, (p.conf - (cutoff - RAMP_W)) / RAMP_W)
+
+
+def band_pitches(arsenal, s, exclude=None):
+    """v1.2.2: names of the pitches inside the band (not shaken off this at-bat), in arsenal order"""
+    ex = shaken_names(exclude)
+    return [x.name for x in arsenal if 0.0 < band_weight(x, s) < 1.0 and x.name not in ex]
+
+
+def candidates(arsenal, s, forced=None, extra=()):
+    """the pitches he trusts now (conf at or over the level's cutoff); extra: band pitches the root call allows (v1.2.2)"""
+    cutoff = LEVEL[s.level]["cutoff"]
+    c = [x for x in arsenal if x.conf >= cutoff or x.name in extra or (forced and x.name == forced)]
     if not c:
         # v0.4: he trusts nothing right now. Fall back to his most-trusted pitch;
         # the app should flag this to the coach as a sign it may be time for a change.
@@ -2326,10 +2352,10 @@ def hard_shaken(exclude):
     return {k for k, v in n.items() if v >= 2}
 
 
-def allowed_calls(arsenal, s, exclude=None):
+def allowed_calls(arsenal, s, exclude=None, extra=()):
     tq = targets(s.balls, s.strikes)
     ex = shaken_names(exclude)
-    out = [(p.name, q) for p in candidates(arsenal, s) if p.name not in ex for q in tq]
+    out = [(p.name, q) for p in candidates(arsenal, s, extra=extra) if p.name not in ex for q in tq]
     if s.landing_today and out and land_block_count(s):      # behind in the count or 0-0 (v1.0 Step 7, Drew)
         names = {a[0] for a in out}
         bad = {p.name for p in arsenal if p.name in names and not_landing(p, s) and not comeback(p, s)}
@@ -2486,13 +2512,48 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
     """6.3/6.4 the pitch being called now: live look, last pitch and lean; sit game re-solved. v1.0 Step 2 (#1, #25): no
     separate guardrail cut. The stakes-scaled never-pick window inside policy_from_costs is the only rule that removes a
-    call, so the root and the table (solve_table) use one operator. Three-ball counts rank by myopic cost (no setups)."""
+    call, so the root and the table (solve_table) use one operator. Three-ball counts rank by myopic cost (no setups).
+    v1.2.2: with pitches in the confidence band, the call is the blend over each with / without combination of them,
+    weighted by the product of band_weight (with) and 1 - band_weight (without). No band pitch: exactly one solve, as
+    v1.2.1. Returned sit mix, residual: the heaviest combination's; M: every combination's calls (a call's sit costs don't
+    depend on which pitches are allowed); full: M at that sit mix."""
+    band = band_pitches(arsenal, s, exclude)
+    if not band:
+        return _root_solve(arsenal, s, tab, exclude, look_value)
+    w = {x.name: band_weight(x, s) for x in arsenal if x.name in band}
+    acc, M, best, bw, cache = {}, {}, None, -1.0, {}
+    for k in range(len(band) + 1):
+        for S in combinations(band, k):
+            wt = 1.0
+            for n in band:
+                wt *= w[n] if n in S else 1.0 - w[n]
+            if wt < RAMP_MIN_W:
+                continue
+            pi_, sg_, full_, res_, M_ = _root_solve(arsenal, s, tab, exclude, look_value, extra=S, cache=cache)
+            for a, v in pi_.items():
+                acc[a] = acc.get(a, 0.0) + wt * v
+            for a, v in M_.items():
+                if a not in M:
+                    M[a] = v
+            if wt > bw:
+                best, bw = (sg_, res_), wt
+    t = sum(acc.values())
+    pi = {a: v / t for a, v in acc.items()}
+    sg, res = best
+    ks = sit_options(arsenal)
+    full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
+    return pi, sg, full, res, M
+
+
+def _root_solve(arsenal, s, tab, exclude=None, look_value=True, extra=(), cache=None):
+    """one root solve with the trusted pitches plus extra (band pitches); the v1.2.1 root_call body. cache: the blend's
+    shared {call: sit costs}"""
     resolve_speeds(arsenal)       # v1.1 Step 1b
     by = {x.name: x for x in arsenal}
     ks = sit_options(arsenal)
     look = s.look or tab.h0
     temp = temperature(arsenal, s)
-    calls = allowed_calls(arsenal, s, exclude)
+    calls = allowed_calls(arsenal, s, exclude, extra)
     if not calls:
         # every trusted pitch is shaken off. v1.2.1 (Drew, Nov 14): a pitch shaken once may come back (a strong pitch
         # can be re-called); a pitch shaken twice this at-bat stays out, and the call goes to the rest of his pitches,
@@ -2503,7 +2564,13 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
         calls = allowed_calls(rest, s) if hard and rest else allowed_calls(arsenal, s)
     sL = replace(s, look=look)
     my = s.balls == 3 or not look_value     # three-ball counts rank by myopic cost (no setups); test switch
-    M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks} for a in calls}
+    if cache is None:
+        M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks} for a in calls}
+    else:       # v1.2.2: the blend's combinations share one cost per call (a call's sit costs don't depend on the allowed set)
+        for a in calls:
+            if a not in cache:
+                cache[a] = {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks}
+        M = {a: cache[a] for a in calls}
     usage = s.usage_by_call
     pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}

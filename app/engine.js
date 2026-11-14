@@ -100,7 +100,7 @@
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.2.1";    // engine logic version (v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2.2";    // engine logic version (v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -675,9 +675,21 @@
   // ---------------------------------------------------------------- situation terms
 
   // ---------------------------------------------------------------- decision rule
-  function candidates(arsenal, s, forced) {
+  // v1.2.2 (Drew, Nov 14): the confidence band, as engine.py. A pitch within RAMP_W under the cutoff is blended in by
+  // bandWeight (0 at the bottom, 1 at the cutoff); mix when nothing clears the cutoff (D2); every count (D3).
+  const RAMP_W = 0.10, RAMP_MIN_W = 1e-3;
+  function bandWeight(p, s) {
     const cutoff = D.LEVEL[s.level].cutoff;
-    let c = arsenal.filter((x) => x.conf >= cutoff || (forced && x.name === forced));
+    if (p.conf >= cutoff) return 1.0;
+    return Math.max(0.0, (p.conf - (cutoff - RAMP_W)) / RAMP_W);
+  }
+  function bandPitches(arsenal, s, exclude) {
+    const ex = shakenNames(exclude);
+    return arsenal.filter((x) => { const w = bandWeight(x, s); return w > 0.0 && w < 1.0 && !ex.has(x.name); }).map((x) => x.name);
+  }
+  function candidates(arsenal, s, forced, extra) {
+    const cutoff = D.LEVEL[s.level].cutoff, ext = extra || [];
+    let c = arsenal.filter((x) => x.conf >= cutoff || ext.includes(x.name) || (forced && x.name === forced));
     if (!c.length) c = [arsenal.reduce((a, x) => (x.conf > a.conf ? x : a), arsenal[0])];
     return c;
   }
@@ -1108,10 +1120,10 @@
     for (const e of exclude || []) { const k = typeof e === "string" ? e : e[0]; n[k] = (n[k] || 0) + 1; }
     return new Set(Object.keys(n).filter((k) => n[k] >= 2));
   }
-  function allowedCalls(arsenal, s, exclude) {
+  function allowedCalls(arsenal, s, exclude, extra) {
     const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
-    for (const p of candidates(arsenal, s)) if (!ex.has(p.name)) for (const q of tq) out.push(ck(p.name, q));
+    for (const p of candidates(arsenal, s, undefined, extra)) if (!ex.has(p.name)) for (const q of tq) out.push(ck(p.name, q));
     if (s.landing_today && Object.keys(s.landing_today).length && out.length && landBlockCount(s)) {
       const names = new Set(out.map(skName));
       const bad = new Set(arsenal.filter((p) => names.has(p.name) && notLanding(p, s) && !comeback(p, s)).map((p) => p.name));
@@ -1513,19 +1525,58 @@
     }
     return tab;
   }
+  // v1.2.2: with band pitches, the blend over each with / without combination (engine.py root_call); none: one solve
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {
+    const band = bandPitches(arsenal, s, exclude);
+    if (!band.length) return rootSolve(arsenal, s, tab, exclude, lookValue, []);
+    const w = {}; for (const x of arsenal) if (band.includes(x.name)) w[x.name] = bandWeight(x, s);
+    const acc = {}, M = {}, cache = {};
+    let best = null, bw = -1.0;
+    for (let k = 0; k <= band.length; k++) {
+      for (const S of combos(band, k)) {
+        let wt = 1.0;
+        for (const n of band) wt *= S.includes(n) ? w[n] : 1.0 - w[n];
+        if (wt < RAMP_MIN_W) continue;
+        const [pi_, sg_, , res_, M_] = rootSolve(arsenal, s, tab, exclude, lookValue, S, cache);
+        for (const a in pi_) acc[a] = (acc[a] ?? 0.0) + wt * pi_[a];
+        for (const a in M_) if (!(a in M)) M[a] = M_[a];
+        if (wt > bw) { best = [sg_, res_]; bw = wt; }
+      }
+    }
+    const t = psum(Object.values(acc));   // Python sum() (compensated), as everywhere in the parity code
+    const pi = {}; for (const a in acc) pi[a] = acc[a] / t;
+    const [sg, res] = best, ks = sitOptions(arsenal), full = {};
+    for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
+    return [pi, sg, full, res, M];
+  }
+  function combos(xs, k) {   // itertools.combinations order
+    const out = [];
+    const rec = (start, cur) => {
+      if (cur.length === k) { out.push(cur.slice()); return; }
+      for (let i = start; i < xs.length; i++) { cur.push(xs[i]); rec(i + 1, cur); cur.pop(); }
+    };
+    rec(0, []);
+    return out;
+  }
+  function rootSolve(arsenal, s, tab, exclude, lookValue, extra, cache) {   // one root solve, trusted pitches plus extra (the v1.2.1 rootCall); cache: the blend's shared costs
     resolveSpeeds(arsenal);    // v1.1 Step 1b
     const ks = sitOptions(arsenal);
     const look = s.look || tab.h0;
     const temp = temperature(arsenal, s);
-    let calls = allowedCalls(arsenal, s, exclude);
+    let calls = allowedCalls(arsenal, s, exclude, extra);
     if (!calls.length) {   // v1.2.1: shaken once may come back; shaken twice this at-bat stays out while any pitch is left (engine.py)
       const hard = hardShaken(exclude), rest = arsenal.filter((x) => !hard.has(x.name));
       calls = hard.size && rest.length ? allowedCalls(rest, s) : allowedCalls(arsenal, s);
     }
     const sL = replace(s, { look });
     // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)
-    let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
+    let M, Mmy;
+    if (!cache) [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
+    else {   // v1.2.2: the blend's combinations share one cost per call (engine.py)
+      const need = calls.filter((a) => !(a in cache));
+      if (need.length) { const [M1, My1] = buildM(arsenal, sL, tab, look, need, ks, true); for (const a of need) cache[a] = [M1[a], My1[a]]; }
+      M = {}; Mmy = {}; for (const a of calls) { M[a] = cache[a][0]; Mmy[a] = cache[a][1]; }
+    }
     if (s.balls === 3 || !lookValue) M = Mmy;   // three-ball counts rank by myopic cost (no setups)
     const [pi0, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));

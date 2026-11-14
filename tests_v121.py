@@ -61,13 +61,16 @@ rng = random.Random(121)
 KINDS = ["FB", "SI", "FC", "SL", "CB", "CH"]
 NAMES = {"FB": "Fastball", "SI": "Sinker", "FC": "Cutter", "SL": "Slider", "CB": "Curveball", "CH": "Changeup"}
 diffs, n_cases = 0, 0
-for i in range(40):
+while n_cases < 40:
     kinds = ["FB"] + rng.sample(KINDS[1:], rng.randint(1, 3))
     spec = [dict(name=NAMES[k], kind=k, grade=rng.randint(1, 5), command=rng.randint(1, 5),
                  conf=round(rng.uniform(0.25, 0.95), 2), shape=rng.choice(e.SHAPE_TAGS[k])) for k in kinds]
     sd = dict(balls=rng.randint(0, 3), strikes=rng.randint(0, 2), outs=rng.randint(0, 2),
               bases=[rng.random() < 0.3 for _ in range(3)], level=rng.choice(["hs", "college_d3", "college_d1", "mlb"]),
               same_side=rng.random() < 0.5)
+    cut = e.LEVEL[sd["level"]]["cutoff"]
+    if any(cut - e.RAMP_W < d["conf"] < cut for d in spec):
+        continue        # v1.2.2: a pitch in the confidence band blends in (tests_v122.py); this check is the v1.2.1 rule only
     ex = rng.sample([d["name"] for d in spec], rng.randint(0, len(spec)))   # 0 to every pitch, each once
     if rng.random() < 0.3:
         ex = [(n, rng.choice(e.QUADS)) for n in ex]                         # the older pair form
@@ -83,7 +86,8 @@ check("no pitch shaken twice: calls identical to v1.2 (504aaa8), dist and pick, 
       f"{n_cases} random cases, 0-all pitches shaken once, names and pairs; {diffs} differ")
 
 # --- 2. the rule ---------------------------------------------------------------------------------------------------
-strong = [FB(0.85), SL(0.40), CH(0.38)]
+# v1.2.2: the other pitches sit under the confidence band (D3: 0.35-0.45), so they are out, as the v1.2.1 rule assumes
+strong = [FB(0.85), SL(0.30), CH(0.28)]
 m0 = mix(call(e, strong, D3, [])[3])
 m1 = mix(call(e, strong, D3, ["Fastball"])[3])
 m2 = mix(call(e, strong, D3, ["Fastball", "Fastball"])[3])
@@ -93,7 +97,7 @@ check("shaken twice: out, and the call goes to his most-trusted other pitch",
       "Fastball" not in m2 and abs(m2.get("Slider", 0) - 1) < 1e-12, f"after two shakes {m2}")
 mp = mix(call(e, strong, D3, [("Fastball", "middle"), ("Fastball", "up-in")])[3])
 check("older (pitch, spot) pairs count by pitch: two pairs of one pitch = shaken twice", "Fastball" not in mp, f"{mp}")
-two_trusted = [FB(0.85), SL(0.60), CH(0.38)]
+two_trusted = [FB(0.85), SL(0.60), CH(0.28)]
 mt = mix(call(e, two_trusted, D3, ["Fastball", "Slider", "Fastball"])[3])
 check("fastball shaken twice, slider (trusted) once: the slider, still trusted, is called (once-shaken can come back)",
       abs(mt.get("Slider", 0) - 1) < 1e-12, f"{mt}")
