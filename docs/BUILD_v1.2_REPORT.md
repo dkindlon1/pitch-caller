@@ -266,7 +266,7 @@ Persistence (pitch sample, about a quarter season): tilt 0.92 / 0.93, pull 0.69 
 
 **Final runs:**
 
-| Check | Part A (`v1.2-work` @ `00f5a88`) | Part B (`v1.2-partb` @ `0172d06`) |
+| Check | Part A (`v1.2-work` @ `00f5a88`) | Part B (`v1.2-partb`, code as run) |
 |---|---|---|
 | `scripts/test-app.sh` | **exit 1**: everything passes except game_mix_e2e (2 games over 70%: tier 2 seed 45 71%, tier 3 seed 33 76%; average 49.7%) | **exit 0**: every suite, game_mix_e2e included (1 game over 70%: seed 45 72%; average 49.1%) |
 | Read-through, v12 suite (98 rows) | **94/98**. P1 (by crossing) and S1f (floor 0.38) pass. P2, P3, P5, P7 fail, as at v1.1 | (same engine when no tag is set) |
