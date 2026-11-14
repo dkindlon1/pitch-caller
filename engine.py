@@ -850,6 +850,8 @@ GEO_DOWN = ("down-in", "down-away", "down-middle")
 # results/v12/proxies_mlb_2024.txt and _2025.txt, the two seasons averaged). Only its shape matters here: it enters as
 # a ratio, so the level's own HBP price is untouched.
 GEO_HBP_BANDS = ((12.0, 0.003), (15.0, 0.0165), (18.0, 0.041), (21.0, 0.104), (24.0, 0.20), (27.0, 0.345), (30.0, 0.57))
+# v1.2 Step 6 (Drew, option A for row L5): with two strikes, the extra way-off mass an UP lean adds to an up target swings
+# like the chase band (a riding fastball missing high with two strikes is a chase pitch), not like waste
 
 
 def geo_ncdf(x):
@@ -913,7 +915,11 @@ def lean_delta(p, q, s, z_pre):
     mx, mz, lx, lz, sd, sp = lean_geometry(p, q, s, z_pre)
     a = geo_shares(mx + lx, mz + lz, sd * sp, sd * sp)
     b = geo_shares(mx, mz, sd, sd)
-    return {k: a[k] - b[k] for k in ZONES}
+    d = {k: a[k] - b[k] for k in ZONES}
+    if s.strikes == 2 and lz > 0 and mz > 0 and d["noncomp"] > 0:    # L5: high misses with two strikes are chases
+        d["off"] += d["noncomp"]
+        d["noncomp"] = 0.0
+    return d
 
 
 def _geo_hbp_weight(mx, sd):

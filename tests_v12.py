@@ -264,6 +264,24 @@ e.SETUP_RULE["S5"] = _S5_SAVED
 check("Step 5 (L7): S5 re-gated by the lean: on its fire row the front-door sinker drops when it leans toward the opposite-side "
       "hitter (the HBP cost) and rises when it leans away", _gt < _g0 - 0.03 and _ga > _g0, f"sinker in {_g0:.1%}; leaning toward him {_gt:.1%}; away {_ga:.1%}")
 
+# ------------------------------------------------------------------ 7. Step 6 (Drew, L5): high misses with two strikes are chases
+_rf = e.Pitch("Fastball", "FB", grade=3, command=3, conf=0.8, shape="rides", velo=90, lean_z=3.0)
+_rf0 = replace(_rf, lean_z=0.0)
+_L = lambda st, q, p: e.landing(p, q, e.Situation(1, st, 0, (False,) * 3, level="college_d3"))
+_two, _one = _L(2, "up-away", _rf), _L(1, "up-away", _rf)
+_base2 = _L(2, "up-away", _rf0)
+_dn = _L(2, "down-away", _rf)
+_jl = js_land = json.loads(subprocess.run(["node", "-e", """
+const E = require('./app/engine.js'); E.init(require('./app/engine_data.json'));
+const p = E.Pitch({ name: 'Fastball', kind: 'FB', grade: 3, command: 3, conf: 0.8, shape: 'rides', velo: 90, lean_z: 3.0 });
+const L = (st, q) => E.landing(p, q, E.Situation({ balls: 1, strikes: st, outs: 0, bases: [false, false, false], level: 'college_d3' }));
+console.log(JSON.stringify([L(2, 'up-away'), L(1, 'up-away'), L(2, 'down-away')]));"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
+check("Step 6 (Drew, L5): with two strikes, the way-off share an up lean adds to an up target lands in the chase band instead "
+      "(not before two strikes, not on a down target); both engines",
+      abs(_two["noncomp"] - _base2["noncomp"]) < 0.02 and _one["noncomp"] > _L(1, "up-away", _rf0)["noncomp"] + 0.01
+      and all(abs(a[k] - b[k]) < 1e-12 for a, b in zip([_two, _one, _dn], _jl) for k in a),
+      f"2 strikes way off {_base2['noncomp']:.3f} -> {_two['noncomp']:.3f}; 1 strike {_L(1, 'up-away', _rf0)['noncomp']:.3f} -> {_one['noncomp']:.3f}")
+
 fails = [r for r in results if not r[1]]
 print(f"\n{len(results) - len(fails)}/{len(results)} checks passed")
 sys.exit(1 if fails else 0)

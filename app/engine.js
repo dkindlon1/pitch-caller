@@ -248,6 +248,7 @@
     const [mx, mz, lx, lz, sd, sp] = leanGeometry(p, q, s, zPre);
     const a = geoShares(mx + lx, mz + lz, sd * sp, sd * sp), b = geoShares(mx, mz, sd, sd);
     const out = {}; for (const k of ZONES) out[k] = a[k] - b[k];
+    if (s.strikes === 2 && lz > 0 && mz > 0 && out.noncomp > 0) { out.off += out.noncomp; out.noncomp = 0.0; }   // v1.2 L5 (engine.py)
     return out;
   }
   function geoHbpWeight(mx, sd) {
