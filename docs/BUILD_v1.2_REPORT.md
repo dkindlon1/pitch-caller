@@ -276,8 +276,9 @@ Persistence (pitch sample, about a quarter season): tilt 0.92 / 0.93, pull 0.69 
 - With no tags set, Part A and Part B run the same engine, yet one run failed and the other passed.
 - Tier 2 seed 45 is over 70% in every full run (71-74%), with S5 on or off.
 - Tier 3 seed 33 swings between 59% and 76% from run to run.
-- The test learns between games (end-of-game learning runs in a background worker), so how a game goes depends on how
-  much learning finished before the next one started. The earlier "S5 at 0, all 21 pass" was one lucky run.
+- Likely cause (not proven): the test learns between games, and end-of-game learning runs in a background worker, so a
+  game may depend on how much learning finished before the next one started. A game run alone gives the same result every
+  time. The earlier "S5 at 0, all 21 pass" was one lucky run.
 - I'd make the test wait for learning to finish between games, so each run is repeatable, then re-measure. That changes the
   test's timing, not its limits. Your call.
 
