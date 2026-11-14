@@ -538,7 +538,7 @@ def play_game(log_path):
                     batter_idx -= 1          # inning over before he batted; he leads off next inning
                     batters_faced -= 1
                     break
-            shaken = set()                  # v1.0 #6 / D2: pitches he shook off stay out for the rest of the at-bat
+            shaken = []                     # v1.0 #6 / D2; v1.2.1: one entry per shake, as the app (a second shake of a pitch is a hard switch)
             while not pa_done:
                 pitch_no += 1
                 pitch_count += 1
@@ -581,7 +581,7 @@ def play_game(log_path):
                     p_shake = min(0.9, SHAKE * max(0.0, 0.35 * (0.75 - p.conf))) if attempt < 2 else 0.0
                     if rng.random() < p_shake:
                         shakes.append(f"{p.name} {q}")
-                        shaken.add(p.name)
+                        shaken.append(p.name)
                         shaken_pairs.add((p.name, q))
                         conf_event(p, "shakeoff")
                         continue

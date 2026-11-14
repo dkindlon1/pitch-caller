@@ -13,6 +13,7 @@ $run tests_v12     python3 tests_v12.py              # v1.2 Step 1: miss lean / 
 FAST_LEANS=1 $run fast_parity_leans python3 golden/fast.py 40   # v1.2: the same 40 golden inputs with a lean and spread on every pitch
 $run tests_v12b    python3 tests_v12b.py             # v1.2 Part B: hitter tags (unknown = untagged, directions, Python = JS)
 FAST_TAGS=1 $run fast_parity_tags python3 golden/fast.py 40   # v1.2 Part B: the same 40 golden inputs with hitter tags
+$run tests_v121   python3 tests_v121.py             # v1.2.1: the second shake-off is a hard switch, a shake costs 0.05; exactly v1.2 otherwise (vs git 504aaa8), Python = JS
 $run golden_v12   node golden/golden_v11.js v12   # v1.2 release reference (JS); golden_v10, v11a, v11 and v12a (the Part A freeze, identical inputs and outputs) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
@@ -40,4 +41,5 @@ echo "smoke: passed"
 (cd app && ../$run v12_step4_e2e node v12_step4_e2e.js)   # v1.2 Step 4: bullpen mode, way-off direction, ph / bs / glove, fixes at cell resolution
 (cd app && ../$run v12_oldapp_test node v12_oldapp_test.js)   # v1.2 Step 4: a v1.1 build (14e0ad2) opens a v1.2 database
 (cd app && ../$run v12_tags_e2e node v12_tags_e2e.js)   # v1.2 Part B: hitter tags on the card, the engine, snapshots and the importer
+(cd app && ../$run v121_shake_e2e node v121_shake_e2e.js)   # v1.2.1: back after one shake, out after the second, toasts, version line
 (cd app && ../$run game_mix_e2e node game_mix_e2e.js)    # v1.1: whole games through the app keep a mix (FINDING_v1.0_game_mix_collapse)   # v1.0 Step 5: look from logged spot (#24), one owner of hitter memory (#7), seed centering (#20)

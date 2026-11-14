@@ -711,7 +711,7 @@ function load() { try { const s = localStorage.getItem("pitchcaller.v2"); return
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400); }
 
 const G = () => S.game;
-const APP_VERSION = "1.2";   // logged with every pitch and shown under Game on the setup screen (was "2026.11.05" through v1.1)
+const APP_VERSION = "1.2.1";   // logged with every pitch and shown under Game on the setup screen (1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -1137,8 +1137,12 @@ function shakeOff() {
   const g = G(), ars = arsenal(); snapshot();
   confEvent(ars, g.call.pitch, "shakeoff"); storeConf(ars);
   shakenNow.push([g.call.pitch, g.call.quad]);
-  if (g.pa) { g.pa.shaken = g.pa.shaken || []; if (!g.pa.shaken.includes(g.call.pitch)) g.pa.shaken.push(g.call.pitch); }
-  toast(`Shook off the ${g.call.pitch.toLowerCase()}. His confidence in it drops.`);
+  // v1.2.1 (Drew, Nov 14): one entry per shake. Shaken once, the pitch can still come back if nothing else he trusts is
+  // left; shaken twice this at-bat, the engine keeps it out until the next batter.
+  let twice = false;
+  if (g.pa) { g.pa.shaken = g.pa.shaken || []; twice = g.pa.shaken.includes(g.call.pitch); g.pa.shaken.push(g.call.pitch); }
+  toast(twice ? `Shook off the ${g.call.pitch.toLowerCase()} again. It's out until the next batter.`
+              : `Shook off the ${g.call.pitch.toLowerCase()}.`);
   pickMode = false; recall();
 }
 function undoLast() {

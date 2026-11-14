@@ -678,7 +678,9 @@ class Situation:
 # Confidence model (v0.3): good results can't run a pitch away from its bullpen feel
 # ---------------------------------------------------------------------------
 
-CONF_DELTA = {"ball": -0.02, "cstrike": 0.03, "whiff": 0.05, "hard": -0.08, "shakeoff": -0.20}
+CONF_DELTA = {"ball": -0.02, "cstrike": 0.03, "whiff": 0.05, "hard": -0.08, "shakeoff": -0.05}
+# v1.2.1 (Drew, Nov 14): a shake-off costs 0.05 (was 0.20). A shake is mostly about this hitter, count or sequence, not
+# his feel for the pitch all game; the at-bat itself is handled by the shake list (a second shake is a hard switch).
 CONF_CAP_ABOVE = 0.10      # at most +0.10 above bullpen feel
 CONF_REGRESS = 0.15        # 15% back toward bullpen feel each new batter
 
@@ -2314,6 +2316,16 @@ def shaken_names(exclude):
     return {e if isinstance(e, str) else e[0] for e in (exclude or ())}
 
 
+def hard_shaken(exclude):
+    """v1.2.1 (Drew, Nov 14): pitches shaken off twice or more this at-bat. The exclude list carries one entry per shake
+    (names or older (pitch, spot) pairs), so a name that appears twice was shaken twice."""
+    n = {}
+    for e_ in (exclude or ()):
+        k = e_ if isinstance(e_, str) else e_[0]
+        n[k] = n.get(k, 0) + 1
+    return {k for k, v in n.items() if v >= 2}
+
+
 def allowed_calls(arsenal, s, exclude=None):
     tq = targets(s.balls, s.strikes)
     ex = shaken_names(exclude)
@@ -2482,7 +2494,13 @@ def root_call(arsenal, s, tab, exclude=None, look_value=True):
     temp = temperature(arsenal, s)
     calls = allowed_calls(arsenal, s, exclude)
     if not calls:
-        calls = allowed_calls(arsenal, s)
+        # every trusted pitch is shaken off. v1.2.1 (Drew, Nov 14): a pitch shaken once may come back (a strong pitch
+        # can be re-called); a pitch shaken twice this at-bat stays out, and the call goes to the rest of his pitches,
+        # trusted first, else his most-trusted of them (candidates' own fallback). Only if every pitch is shaken twice
+        # are the shake-offs set aside, so there is always a call.
+        hard = hard_shaken(exclude)
+        rest = [x for x in arsenal if x.name not in hard]
+        calls = allowed_calls(rest, s) if hard and rest else allowed_calls(arsenal, s)
     sL = replace(s, look=look)
     my = s.balls == 3 or not look_value     # three-ball counts rank by myopic cost (no setups); test switch
     M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks} for a in calls}

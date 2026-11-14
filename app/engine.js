@@ -19,7 +19,7 @@
   // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
   const evAdj = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? -3.0 : 3.0) : EV_ADJ[q]);
   const hbpLoc = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? 0.8 : 0.3) : HBP_LOC[q]);   // FB chase 0.3: Drew, Nov 10
-  const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.20 };
+  const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.05 };   // v1.2.1: shake-off 0.05 (was 0.20), as engine.py
   const CONF_CAP_ABOVE = 0.10, CONF_REGRESS = 0.15, LOC_WINDOW = 0.010;
   const S0 = { heart: 0.72, edge: 0.50, off: 0.28, noncomp: 0.05 };
   const C0 = { heart: 0.98, edge: 0.55, off: 0.08, noncomp: 0.0 };
@@ -100,7 +100,7 @@
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.2";      // engine logic version (v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2.1";    // engine logic version (v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -1102,6 +1102,12 @@
   }
   // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
   const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
+  // v1.2.1 (Drew, Nov 14): pitches shaken off twice or more this at-bat (one exclude entry per shake), as engine.py
+  function hardShaken(exclude) {
+    const n = {};
+    for (const e of exclude || []) { const k = typeof e === "string" ? e : e[0]; n[k] = (n[k] || 0) + 1; }
+    return new Set(Object.keys(n).filter((k) => n[k] >= 2));
+  }
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
@@ -1513,7 +1519,10 @@
     const look = s.look || tab.h0;
     const temp = temperature(arsenal, s);
     let calls = allowedCalls(arsenal, s, exclude);
-    if (!calls.length) calls = allowedCalls(arsenal, s);
+    if (!calls.length) {   // v1.2.1: shaken once may come back; shaken twice this at-bat stays out while any pitch is left (engine.py)
+      const hard = hardShaken(exclude), rest = arsenal.filter((x) => !hard.has(x.name));
+      calls = hard.size && rest.length ? allowedCalls(rest, s) : allowedCalls(arsenal, s);
+    }
     const sL = replace(s, { look });
     // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)
     let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);

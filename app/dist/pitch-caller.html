@@ -602,7 +602,7 @@ td.wrapcell .line { display: block; }
   // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
   const evAdj = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? -3.0 : 3.0) : EV_ADJ[q]);
   const hbpLoc = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? 0.8 : 0.3) : HBP_LOC[q]);   // FB chase 0.3: Drew, Nov 10
-  const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.20 };
+  const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.05 };   // v1.2.1: shake-off 0.05 (was 0.20), as engine.py
   const CONF_CAP_ABOVE = 0.10, CONF_REGRESS = 0.15, LOC_WINDOW = 0.010;
   const S0 = { heart: 0.72, edge: 0.50, off: 0.28, noncomp: 0.05 };
   const C0 = { heart: 0.98, edge: 0.55, off: 0.08, noncomp: 0.0 };
@@ -683,7 +683,7 @@ td.wrapcell .line { display: block; }
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.2";      // engine logic version (v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2.1";    // engine logic version (v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -1685,6 +1685,12 @@ td.wrapcell .line { display: block; }
   }
   // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
   const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
+  // v1.2.1 (Drew, Nov 14): pitches shaken off twice or more this at-bat (one exclude entry per shake), as engine.py
+  function hardShaken(exclude) {
+    const n = {};
+    for (const e of exclude || []) { const k = typeof e === "string" ? e : e[0]; n[k] = (n[k] || 0) + 1; }
+    return new Set(Object.keys(n).filter((k) => n[k] >= 2));
+  }
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
@@ -2096,7 +2102,10 @@ td.wrapcell .line { display: block; }
     const look = s.look || tab.h0;
     const temp = temperature(arsenal, s);
     let calls = allowedCalls(arsenal, s, exclude);
-    if (!calls.length) calls = allowedCalls(arsenal, s);
+    if (!calls.length) {   // v1.2.1: shaken once may come back; shaken twice this at-bat stays out while any pitch is left (engine.py)
+      const hard = hardShaken(exclude), rest = arsenal.filter((x) => !hard.has(x.name));
+      calls = hard.size && rest.length ? allowedCalls(rest, s) : allowedCalls(arsenal, s);
+    }
     const sL = replace(s, { look });
     // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)
     let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
@@ -4738,7 +4747,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // v1.0 #10: chase is class-aware (fastball chase is up: plays fast, hits batters like an away spot)
   const evAdj = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? -3.0 : 3.0) : EV_ADJ[q]);
   const hbpLoc = (p, q) => (q === "chase" ? (isOffspeed(p.kind) ? 0.8 : 0.3) : HBP_LOC[q]);   // FB chase 0.3: Drew, Nov 10
-  const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.20 };
+  const CONF_DELTA = { ball: -0.02, cstrike: 0.03, whiff: 0.05, hard: -0.08, shakeoff: -0.05 };   // v1.2.1: shake-off 0.05 (was 0.20), as engine.py
   const CONF_CAP_ABOVE = 0.10, CONF_REGRESS = 0.15, LOC_WINDOW = 0.010;
   const S0 = { heart: 0.72, edge: 0.50, off: 0.28, noncomp: 0.05 };
   const C0 = { heart: 0.98, edge: 0.55, off: 0.08, noncomp: 0.0 };
@@ -4819,7 +4828,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.2";      // engine logic version (v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.2.1";    // engine logic version (v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -5821,6 +5830,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   }
   // v1.0 #6 / D2: a shake-off means "not that pitch" at any spot; entries may be names or older [pitch, spot] pairs
   const shakenNames = (exclude) => new Set((exclude || []).map((e) => (typeof e === "string" ? e : e[0])));
+  // v1.2.1 (Drew, Nov 14): pitches shaken off twice or more this at-bat (one exclude entry per shake), as engine.py
+  function hardShaken(exclude) {
+    const n = {};
+    for (const e of exclude || []) { const k = typeof e === "string" ? e : e[0]; n[k] = (n[k] || 0) + 1; }
+    return new Set(Object.keys(n).filter((k) => n[k] >= 2));
+  }
   function allowedCalls(arsenal, s, exclude) {
     const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
@@ -6232,7 +6247,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const look = s.look || tab.h0;
     const temp = temperature(arsenal, s);
     let calls = allowedCalls(arsenal, s, exclude);
-    if (!calls.length) calls = allowedCalls(arsenal, s);
+    if (!calls.length) {   // v1.2.1: shaken once may come back; shaken twice this at-bat stays out while any pitch is left (engine.py)
+      const hard = hardShaken(exclude), rest = arsenal.filter((x) => !hard.has(x.name));
+      calls = hard.size && rest.length ? allowedCalls(rest, s) : allowedCalls(arsenal, s);
+    }
     const sL = replace(s, { look });
     // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)
     let [M, Mmy] = buildM(arsenal, sL, tab, look, calls, ks, true);
@@ -7568,7 +7586,7 @@ function load() { try { const s = localStorage.getItem("pitchcaller.v2"); return
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400); }
 
 const G = () => S.game;
-const APP_VERSION = "1.2";   // logged with every pitch and shown under Game on the setup screen (was "2026.11.05" through v1.1)
+const APP_VERSION = "1.2.1";   // logged with every pitch and shown under Game on the setup screen (1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -7994,8 +8012,12 @@ function shakeOff() {
   const g = G(), ars = arsenal(); snapshot();
   confEvent(ars, g.call.pitch, "shakeoff"); storeConf(ars);
   shakenNow.push([g.call.pitch, g.call.quad]);
-  if (g.pa) { g.pa.shaken = g.pa.shaken || []; if (!g.pa.shaken.includes(g.call.pitch)) g.pa.shaken.push(g.call.pitch); }
-  toast(`Shook off the ${g.call.pitch.toLowerCase()}. His confidence in it drops.`);
+  // v1.2.1 (Drew, Nov 14): one entry per shake. Shaken once, the pitch can still come back if nothing else he trusts is
+  // left; shaken twice this at-bat, the engine keeps it out until the next batter.
+  let twice = false;
+  if (g.pa) { g.pa.shaken = g.pa.shaken || []; twice = g.pa.shaken.includes(g.call.pitch); g.pa.shaken.push(g.call.pitch); }
+  toast(twice ? `Shook off the ${g.call.pitch.toLowerCase()} again. It's out until the next batter.`
+              : `Shook off the ${g.call.pitch.toLowerCase()}.`);
   pickMode = false; recall();
 }
 function undoLast() {
