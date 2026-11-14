@@ -6,6 +6,7 @@ golden_v11a: frozen after Step 1b (the profile table). golden_v11: frozen after 
 about 40% of the cases past 0-0 carry an at-bat so far, pa_log) and at release (plan section 4).
 golden_v12a: v1.2 Part A, frozen after Step 5 (HS ride-up x RHO_L, the hot fade by ratio, S4 narrowed, S5 resized, S2 / S4
 dropped); same inputs (no leans, no out-of-grid cells, no hitter tags).
+golden_v12: the v1.2 release (Part B on Part A), frozen Nov 13; byte-identical to golden_v12a (these inputs carry no tags).
 The inputs are golden_v10's 500 cases (v1.0 kinds and tags, migrated on the way in) with about 45% of them rewritten into
 v1.1 terms: the fastball becomes a four-seam, sinker or cutter, every pitch gets a random v1.1 tag, some get measured
 movement, and some arsenals get a coach's main-fastball mark. Outputs are the same as golden_v10's (golden_v10.compute)."""

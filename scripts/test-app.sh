@@ -13,7 +13,7 @@ $run tests_v12     python3 tests_v12.py              # v1.2 Step 1: miss lean / 
 FAST_LEANS=1 $run fast_parity_leans python3 golden/fast.py 40   # v1.2: the same 40 golden inputs with a lean and spread on every pitch
 $run tests_v12b    python3 tests_v12b.py             # v1.2 Part B: hitter tags (unknown = untagged, directions, Python = JS)
 FAST_TAGS=1 $run fast_parity_tags python3 golden/fast.py 40   # v1.2 Part B: the same 40 golden inputs with hitter tags
-$run golden_v12a  node golden/golden_v11.js v12a  # v1.2 Part A freeze (after Step 5): the one engine against its frozen reference (JS); golden_v10, v11a and v11 stay as history
+$run golden_v12   node golden/golden_v11.js v12   # v1.2 release reference (JS); golden_v10, v11a, v11 and v12a (the Part A freeze, identical inputs and outputs) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
   echo "::error::app/dist is out of date: run 'cd app && python3 build.py' and commit the result"; git diff --stat -- app/dist; exit 1

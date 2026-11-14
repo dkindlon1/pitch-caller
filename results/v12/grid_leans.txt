@@ -1,0 +1,21 @@
+== lean 0: 5/5 hard checks pass
+  [PASS] AVG3, every count but 3-0: top call <= 85% and >= 2 calls survive the window  (0 of 99 cells fail)
+  [PASS] D1 3-1, AVG3: top pitch type inside 50-80% in all 9 situations (target 55-70%), two pitch types > 10%  (7 of 9 in 55-70%; college_d1/R1 71.2%, college_d1/R3 70.4%, college_d1/empty 58.1%, college_d3/R1 64.3%, college_d3/R3 67.4%, college_d3/empty 57.1%, hs/R1 66.0%, hs/R3 62.8%, hs/empty 55.3%)
+  [PASS] floor: AVG3's top pitch type >= 50% at 2-0, 2-1, 3-1 (Drew: by pitch, not exact spot)  (lowest 50%)
+  [PASS] race to two strikes: AVG3 first-pitch strike-target share >= 85%  (lowest 100%)
+  [PASS] no chase as the top call at 3-0, 3-1, 2-2 (every arsenal)  (0 cells)
+  [PASS, reported] 3-0, AVG3 fastball share (v0.7c asked 60%+; measured on the retired path only, the live engine read 58.9% at HS bases empty before Step 2 too)  (college_d1/R1 79%, college_d1/R3 78%, college_d1/empty 63%, college_d3/R1 69%, college_d3/R3 72%, college_d3/empty 60%, hs/R1 71%, hs/R3 68%, hs/empty 58%)
+  [PASS, reported] all arsenals: cells where the window leaves a call over 85% or one call  (10 of 990; e.g. hs/two_pitch/R1/3-1 1.00/1; hs/four_pitch/R1/3-1 1.00/1; hs/power/empty/3-2 0.87/2)
+  [PASS, reported] Medium variety: cells with a pitch type over 85% (3-0 exempt)  (22 cells)
+  [PASS, reported] Medium variety: trusted secondaries under 5% (3-0 exempt)  (132 pitch-cells: power Changeup 55, four_pitch Changeup 19, sink_sweep Changeup 18, cut4 Slider 9, finesse Fastball 7, four_pitch Curveball 5, deadzone Slider 4, two_pitch Curveball 3, four_pitch Slider 3, ride126 Curve 3, finesse Curveball 2, sink_sweep Sweeper 2, finesse Changeup 1, cut4 Curve 1)
+== research-check leans: 5/5 hard checks pass
+  [PASS] AVG3, every count but 3-0: top call <= 85% and >= 2 calls survive the window  (0 of 99 cells fail)
+  [PASS] D1 3-1, AVG3: top pitch type inside 50-80% in all 9 situations (target 55-70%), two pitch types > 10%  (7 of 9 in 55-70%; college_d1/R1 75.6%, college_d1/R3 72.0%, college_d1/empty 60.1%, college_d3/R1 66.5%, college_d3/R3 69.1%, college_d3/empty 58.9%, hs/R1 68.2%, hs/R3 64.6%, hs/empty 56.9%)
+  [PASS] floor: AVG3's top pitch type >= 50% at 2-0, 2-1, 3-1 (Drew: by pitch, not exact spot)  (lowest 52%)
+  [PASS] race to two strikes: AVG3 first-pitch strike-target share >= 85%  (lowest 100%)
+  [PASS] no chase as the top call at 3-0, 3-1, 2-2 (every arsenal)  (0 cells)
+  [PASS, reported] 3-0, AVG3 fastball share (v0.7c asked 60%+; measured on the retired path only, the live engine read 58.9% at HS bases empty before Step 2 too)  (college_d1/R1 83%, college_d1/R3 81%, college_d1/empty 66%, college_d3/R1 72%, college_d3/R3 75%, college_d3/empty 63%, hs/R1 73%, hs/R3 71%, hs/empty 60%)
+  [PASS, reported] all arsenals: cells where the window leaves a call over 85% or one call  (11 of 990; e.g. hs/two_pitch/R1/3-1 1.00/1; hs/four_pitch/R1/3-1 1.00/1; hs/power/empty/3-2 0.88/2)
+  [PASS, reported] Medium variety: cells with a pitch type over 85% (3-0 exempt)  (22 cells)
+  [PASS, reported] Medium variety: trusted secondaries under 5% (3-0 exempt)  (135 pitch-cells: power Changeup 55, sink_sweep Changeup 21, four_pitch Changeup 20, cut4 Slider 10, finesse Fastball 8, four_pitch Curveball 4, deadzone Slider 4, two_pitch Curveball 3, four_pitch Slider 3, ride126 Curve 2, sink_sweep Sweeper 2, finesse Curveball 1, finesse Changeup 1, cut4 Curve 1)
+largest top-call share changes with the leans: college_d1/finesse/R3/3-1 +0.27; college_d3/finesse/R3/3-1 +0.26; college_d3/finesse/R1/3-1 +0.25; college_d3/four_pitch/empty/3-1 +0.25; hs/finesse/empty/3-2 +0.23

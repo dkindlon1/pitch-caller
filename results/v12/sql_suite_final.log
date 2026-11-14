@@ -1,0 +1,675 @@
+1. Who sees and writes what
+  ok   the creator owns the organization and is head coach of its team
+  ok   head coach writes pitchers
+  ok   a charter can't write pitchers (reported, not applied)
+  ok   a charter writes pitches
+  ok   a pitcher writes his own check-in, not someone else's
+  ok   a pitcher sees only his own record and check-in (pit_me, ci_me), no game events
+  ok   a charter reads pitchers
+  ok   another program's coach can't pull this program's rows
+  ok   or push into it
+  ok   reading the table directly shows another program nothing
+  ok   the same record id in two programs stays two separate records
+  ok   nothing can be deleted from the server, even by the head coach (soft deletes sync as edits)
+  ok   a charter can't promote himself by editing members directly
+  ok   anon (the public key alone) can't read the tables
+  ok   or call the sync functions
+  ok   a stranger can't invite anyone
+  ok   a charter can't promote himself through pc_set_member
+2. Push keeps the newer record
+  ok   an older version is skipped, not applied
+  ok   a malformed record is refused and the rest go in ({"server":[],"applied":2,"skipped":0,"rejected":[{"id":"bad","reason":"bad record: fields"}]})
+  ok   a push is capped at 500 records
+  ok   only the synced tables can be pushed to
+3. Pull never skips a row that commits late
+  ok   while an earlier transaction is still open, the later one's row waits
+  ok   after it commits, both arrive (slow,fast)
+  ok   and the cursor doesn't hand them out twice
+  ok   23 rows in pages of 10: 3 pages, 23 rows, no repeats
+4. Two iPads sync a charted game
+  ok   iPad A has 42 events, 1 game, 1 pack waiting
+  ok   iPad A pushed all 46 records (team, pitcher, game, pack, 42 events)
+  ok   nothing left waiting on A after a push
+  ok   iPad B pulled the game: 42 events, plays and status intact
+  ok   pulled records keep their own timestamps
+  ok   what iPad B pulled isn't queued to go back up
+  ok   an edit on each iPad: both end up with the later one
+  ok   the charter's pitcher edit is refused and reported; his new pitch still goes up
+  ok   with no signal the push fails and both new pitches stay waiting
+  ok   back online, they go up and reach iPad B (45 events)
+5. The REST transport, through a stand-in for Supabase's /rest/v1
+  ok   a third device pulls everything over REST (82 records)
+  ok   and pushes over REST
+  ok   a refused call surfaces as an error with its status (403)
+
+all Supabase checks passed
+::group::summary
+sync_test: exit=0 passed=38 failed=0
+::endgroup::
+sync_test: 38 checks passed
+1. Staff join by invitation only
+  ok   an invite adds nobody: the stranger isn't a member until he accepts
+  ok   he sees the invitation (matched on his email, any case)
+  ok   inviting an email with no account answers the same way (no way to probe who's signed up)
+  ok   an account whose email isn't confirmed can't accept
+  ok   declining removes the invite
+  ok   and a declined invite can't be accepted
+  ok   accepted invites made them members (charter:caller coach2:head coach:head pitcher:player)
+  ok   a charter can't invite anyone
+2. Members and staff list
+  ok   a pitcher sees only his own membership (1 row)
+  ok   the head coach's staff list has members and pending invites
+  ok   a charter can't read the staff list
+3. No writing around pc_push
+  ok   direct UPDATE and INSERT through the API are refused (name still "Real")
+4. A refused caller learns nothing about a record he can't read
+  ok   older and newer probes get the same answer, with no copy of the record ([{"id":"c1","reason":"not allowed"}])
+5. One bad record never fails the batch
+  ok   good rows go in, each bad one is refused with a reason (applied 3, rejected bad record: id; bad record: fields; bad record: fields; bad record: fields; bad record: id; bad record: id)
+  ok   a record stamped a year ahead goes in with its time pulled back to now, and that copy comes back to the iPad
+6. What wasn't applied comes back with the server's copy
+  ok   an older record: skipped, and the server's newer copy comes back
+  ok   a charter's refused pitcher edit comes back with the server's copy, so his iPad can take it
+7. Pull signals
+  ok   the pull says who's asking (player:{}:pit1)
+  ok   linked to a second pitcher: the access changes, which tells the iPad to start its cursors over
+  ok   and from the start he gets the check-in he couldn't see before
+  ok   a cursor from the future (a restored database) is told to start over
+  ok   while another transaction is open, the pull says rows are held back; then they come
+8. Removing staff
+  ok   a head coach removes a charter
+  ok   a removed charter can't pull anything from then on
+  ok   a head coach can leave, and the owner can remove the last one
+  ok   the owner still manages the team with no coaches left on it
+9. A player's pull doesn't scan the team
+  ok   events he can't see: 20 ms; his check-ins among 100k events: 12 ms (was 5.6 s)
+  ok   a coach's first page of 100k: 16 ms
+10. After a restore into a new project
+  ok   rows stamped by the old cluster show as held (0 rows), and pc_restamp brings them back (4)
+
+all review checks passed
+::group::summary
+review_test: exit=0 passed=29 failed=0
+::endgroup::
+review_test: 29 checks passed
+1. An iPad whose clock runs fast doesn't make later edits elsewhere lose
+  ok   the later edit wins everywhere (server "Rivals (renamed later)", this iPad "Rivals (renamed later)", the fast one "Rivals (renamed later)")
+2. A record the server didn't take because its copy is newer: the server's copy replaces this one
+  ok   the server skipped it and B now has the server's copy ("A's version"), not a copy only B has
+3. A change refused for one account isn't written off
+  ok   a charter signed in on the same iPad: the coach's pitcher edit is refused for him
+  ok   when the coach syncs again it goes up (server "Ace (regraded offline)", pushed 1)
+4. Records restored from a backup after the iPad synced still go up
+  ok   the restored team is on the server
+5. One bad character doesn't stop the iPad syncing
+  ok   the sync goes through and the record goes up cleaned ("Broken  name �")
+6. A batch the server can't take whole is split, and the good records still go
+  ok   good records went up, the bad one is reported (1 refused)
+7. A change in what he may see brings what was hidden
+  ok   (the setup: he has his own check-in)
+  ok   linked to a second pitcher record, his iPad gets the check-in it couldn't see before (true)
+8. One iPad holds one program
+  ok   syncing it with another program is refused, and nothing of RIT's goes there (This iPad holds the data for another program. To use it for this program, back it up and start this iPad fresh.)
+9. Rows held back by an unfinished transaction are reported
+  ok   the sync says some rows are still on their way
+10. A removed coach's iPad keeps what it couldn't send
+  ok   the server refuses him and all 5 pitches stay on the iPad, still waiting (5)
+11. A locked team keeps the work and sends it once it's paid up
+  ok   while locked, the sync says so and none of the 5 pitches go up
+  ok   paid up again, the next sync sends all 5 and nothing is left waiting
+12. A shared iPad
+  ok   (the setup: the coach's iPad holds the team's data)
+  ok   a player signing in on the coach's iPad can't send the coach's 3 unsent pitches as his own (3 changes from coach@x.org are still waiting to go up from this iPad. coach@x.org signs in here and syncs first.)
+  ok   the coach signs back in and they go up as his
+  ok   then the player takes over: the coach's cached team data is cleared and he gets only his own (pitchers pit1, games 0, hitters 0, events 0)
+13. A child's data a parent had deleted leaves the coaches' iPads too
+  ok   iPad A, with nothing to send, deletes his record and check-in when the pull lists him (2 deleted)
+  ok   iPad B's offline bullpen for him is refused for good and deleted, not left waiting
+  ok   and nothing of his came back to the server
+14. A held under-13 player: the coach's iPad keeps him, and sends him again at every release
+  ok   held: the server keeps only the placeholder, and the coach's iPad keeps its full record of him
+  ok   the parent agrees: the next sync sends his record and check-in again (Young, 1 check-in)
+  ok   once per release
+  ok   consent gone: held again on the server, kept whole on the iPad
+  ok   a second consent is a second release: everything goes up again
+  ok   a wrong mark taken off: his record and check-in go back up from the iPad
+15. Several coaches' iPads after a release: nobody's newer work is undone
+  ok   (held: A and B keep v1, the new iPad C has only the placeholder)
+  ok   P2/P3: the server keeps A's correction and the full record (v2 corrected on A)
+  ok   and every iPad ends up with it, the one that had only the placeholder too
+  ok   P4: a delete made while he was held stands (deletedAt set)
+  ok   P5: agreeing again goes through but isn't another release (ok, 1 -> 1)
+  ok   P6: the parent's edit and the coach's notes, limit and grades all survive, on the server and the iPad ({"id":"q6","name":"Parent typed name","notes":"coach-only note","number":"16","pitches":[{"id":"f","name":"Fastball","grade":4}],"createdAt")
+  ok   P6b: answered with the thinner copy, the iPad merges it in and sends the merge ({"id":"q7","name":"Parent seven","notes":"coach-only 7","number":"17","pitches":[{"id":"f","name":"Fastball","grade":3}])
+  ok   (the setup: the new iPad has only his placeholder)
+  ok   (the setup: the full record is back on the server)
+  ok   R4: his new number goes in, nothing else of the record is lost, and both iPads end up with all of it ({"id":"q8","name":"Eight","notes":"coach-only 8","number":"21","pitches":[{"id":"f","name":"Fastball","grade":5}],"createdAt":1794629756142,)
+
+all client checks passed
+::group::summary
+client_review_test: exit=0 passed=37 failed=0
+::endgroup::
+client_review_test: 37 checks passed
+1. Sign in
+  ok   a wrong password shows Supabase's message and keeps no session
+  ok   asks /auth/v1/token with the anon key (no doubled slash)
+  ok   keeps the session on the device
+2. The token
+  ok   a fresh token is used as is, with no request
+  ok   within a minute of expiry it's refreshed with the refresh token
+  ok   and the new refresh token is kept
+  ok   a refresh the server refuses (R2 unknown here) is an error, not a silent anonymous call
+3. Several calls needing a token at once
+  ok   three at once near expiry: one refresh, the same token for all (1 refresh)
+4. Sign out
+  ok   sign out forgets the session; no token after
+
+all auth checks passed
+::group::summary
+sync_auth_test: exit=0 passed=9 failed=0
+::endgroup::
+sync_auth_test: 9 checks passed
+1. The head coach signs in and starts a team; it syncs once billing switches it on
+  ok   signed in, asked to pick or start a team
+  ok   the team is made but not switched on: the screen says so and the roster waits on the iPad
+  ok   switched on (as billing would), the next sync sends the roster ("RIT Tigers as head coach, signed in as coach@test.local. Nothing waiting to go up. Last synced 11:16 PM.")
+2. The coach charts a game; End game syncs it in the background
+  ok   the game is on the server without tapping Sync: 8 pitches, 1 play
+  ok   the game record went up final (final, 1 pack)
+3. The charter signs in on another iPad and gets everything
+  ok   inviting an email with no account looks like any invite (nothing says who has signed up)
+  ok   the invite's code is shown to send
+  ok   the invited charter isn't a member until he accepts
+  ok   he signs in on his iPad, accepts, and joins as pitch caller
+  ok   the charter's iPad has the coach's game (8 pitches)
+  ok   the new iPad's placeholder team gave way to the program's (our teams on it: RIT Tigers)
+  ok   his staff is the program's pitchers (Reliever, Starter)
+  ok   the server still has one team of ours (1)
+  ok   and shows his role, with nothing refused (the placeholders never went up)
+  ok   a pitch caller isn't offered the staff list
+3b. Presets, toggles, and joining with a code
+  ok   the advanced toggle adds one permission on top of his preset ({"edit_grades":true})
+  ok   a new preset starts with no toggles on top
+  ok   a player's invite isn't taken on a team iPad (players join on their own phone, where the age question is asked)
+  ok   a coach pastes the code he was sent and joins as pitching coach
+  ok   and gets the team's game
+4. The charter charts a pitch; the coach's Sync now brings it back
+     (charter logged a pitch: true; his sync pushed 3)
+  ok   the coach's iPad now has the charter's pitch too (9 pitches)
+5. No signal: the button says so and nothing is lost
+  ok   offline sync says so ("No signal: everything stays on this iPad and goes up next time")
+  ok   back online, the pitch charted with no signal is on the server (10 pitches)
+6. Mid-game, the coach re-grades and renames the pitch the charter's screen is calling
+  ok   the charter's game logged a new pack version for it (v1 -> v2, reason "sync")
+  ok   the call for "Fastball" (no longer on his arsenal) was replaced ("Curveball")
+  ok   the next pitch records normally, under the new pack (11 pitches)
+  ok   the charter has nothing refused after pulling the coach's pitcher edit (0)
+7. The sign-in runs out
+  ok   a refused refresh says to sign in again and shows the sign-in form
+  ok   signing in again goes straight back to the program and syncs
+8. Both iPads chart the same game (D12): it counts once
+  ok   the two records of one game: one marked as charted twice, pointing at the other (kept, dup)
+  ok   the short games from the sections above aren't marked (1 marked in all)
+  ok   the coach's iPad learns from it once (the learned record came down with the duplicate left out)
+  ok   Data, Fix a pitch says so, with a way to say they're different games
+9. One iPad holds one team; a join with no signal saves nothing
+  ok   the coach's iPad can't take Summer ball: the choice is greyed out, joining says why, nothing of RIT's went there ("This iPad holds the data for RIT Tigers. To use it for Summe...", 0 pitches)
+  ok   and it offers to back up and start this iPad fresh
+  ok   joining with no signal leaves the iPad unjoined and its placeholder team off the server (program saved: null, placeholder teams up: 0)
+  ok   no page errors
+
+all app sync checks passed
+::group::summary
+app_sync_e2e: exit=0 passed=37 failed=0
+::endgroup::
+app_sync_e2e: 37 checks passed
+1. Organizations, teams and presets
+  ok   an owner creates an organization and its teams
+  ok   a new team starts pending (billing turns it on)
+  ok   the owner can't switch a team on himself
+  ok   nor mark his organization paid
+  ok   only the owner can add a team
+  ok   the caller preset is exactly call games and manage opponents ({"call_games":true,"manage_opponents":true})
+  ok   the head coach preset has every toggle but view_plan (calling games already shows the plan)
+  ok   the owner sees both of his teams, as owner, with no role on them
+  ok   a coach on two teams sees two; a stranger sees none
+  ok   a parent linked to two siblings sees both pitcher records on one team
+2. Who sees what
+  ok   every coach preset sees all of its own team's rows in every table, except a viewer, who doesn't see games or packs (the game plans)
+  ok   reading the tables, a player sees only his own check-ins, sessions and readings: no pitcher records, events, games, hitters, packs or learned values
+  ok   his own pitcher record comes through pc_pull, without the coaches' notes
+  ok   the owner without membership, a stranger, another team's coach and anon see nothing of the team
+  ok   a coach on team A sees nothing of team C
+  ok   the parent's pull has both siblings' records
+  ok   a viewer sees only his own membership, not the staff list
+  ok   members see their own organization; strangers see none
+  ok   no client can read invites directly
+  ok   no client can read player_links directly
+  ok   no client can read minors directly
+  ok   no client can read guardian_consents directly
+  ok   no client can read deletion_log directly
+  ok   no client can read waitlist directly
+3. No direct writes
+  ok   inserts, updates and deletes outside pc_push are refused for every table and role, and nothing changed
+  ok   nobody can edit his own membership directly
+4. Helpers aren't part of the API
+  ok   no permission helper lives in the public schema (the API's)
+  ok   row level security is on for every public table
+  ok   anon can execute no pc_ function
+  ok   every security definer function pins an empty search_path
+5. Writes through pc_push
+  ok   a player can't write a session for a teammate
+  ok   nor take over a teammate's existing session by claiming it as his
+  ok   a player writes his own session, and one bad record doesn't fail the batch
+  ok   another team's coach can't push into this team at all
+  ok   nor can the owner without membership
+  ok   a pitching coach can't add a roster spot (manage_roster)
+  ok   but can change a pitcher's grades (edit_grades)
+  ok   the head coach adds a roster spot and removes one
+  ok   a player can't remove his own roster spot
+  ok   a player's edit keeps his grade change and drops coach-only fields (role, notes, fatigue point)
+  ok   and the server's merged copy goes back so his iPad shows the truth
+  ok   a timestamp from the year 2100 is pulled back to now (1794629867362)
+  ok   so a coach's later edit still wins
+6. Locked teams and pulls
+  ok   a player's pull of events returns nothing
+  ok   his pull of sessions returns only his own
+  ok   a coach on two teams pulls each team's rows separately
+2b. Game plans
+  ok   a viewer's pull of games and packs returns nothing
+  ok   a pitch caller pulls the game plans
+  ok   every coach gets the schedule from pc_game_list: date, status, opponent, home and start only, no lineup or staff
+  ok   a player and a stranger get no schedule
+  ok   a head coach can't give "see the game plan" (only the organization's owner decides who sees the game plan)
+  ok   the owner gives a viewer "see the game plan", and he reads games and packs ()
+  ok   his pull returns them, and its access string changed so his device starts over
+  ok   seeing the plan doesn't let him change it
+  ok   a head coach saving that viewer's preset keeps the owner's choice
+  ok   and can't take it away either
+  ok   sending the value it already has is fine
+  ok   the owner takes it away again
+  ok   off is stored as no toggle at all ({})
+  ok   the pull's access string changes when a coach's toggles change, so his iPad starts its cursors over
+  ok   a viewer given the call_games toggle can log pitches
+  ok   on a locked organization every pushed row comes back team_locked
+  ok   and a pull says locked and returns nothing
+  ok   direct reads see nothing either
+  ok   while locked, even the owner can't manage staff
+  ok   a team that is pending doesn't work
+  ok   a team that is removed doesn't work
+  ok   a team that is ending since a minute ago doesn't work
+  ok   a team that is ending until tomorrow still works
+  ok   unlocking the organization doesn't bring back a removed team
+7. Invites
+  ok   a head coach creates a coach invite (a 64-character token)
+  ok   a caller can't invite coaches
+  ok   a pitching coach can't invite players
+  ok   the owner can, without being on the team
+  ok   an invite tied to an email can't be used from another account
+  ok   the right account joins as the invited preset
+  ok   the same link can't be used twice
+  ok   a cancelled link can't be used
+  ok   a link older than 14 days can't be used
+  ok   an unconfirmed email can't accept an invite sent to it
+  ok   a player invite must name a pitcher on this roster
+  ok   and one that nobody has claimed yet
+8. Members
+  ok   an unknown toggle is refused
+  ok   a player can't be turned into a coach
+  ok   a coach can't change another team's staff
+  ok   a pitching coach can't remove a coach
+  ok   a head coach gives a coach the manage_staff toggle
+  ok   a player can leave on his own
+  ok   a removed coach can't read or push anything
+9. Players under 13
+  ok   an under-13 invite needs a parent's email
+  ok   flagging a child under 13 strips his record to a placeholder (no name, no grad year)
+  ok   before consent a coach can't put his name back
+  ok   the child's own account can't give consent
+  ok   or accept the invite
+  ok   even the parent can't accept before consenting
+  ok   the parent the invite was sent to gives consent
+  ok   then accepts, and the child's record is linked to the parent's account
+  ok   after consent the coach can fill in the record
+  ok   a child who says he is under 13 on an open link isn't linked; he's asked for a parent's email
+  ok   then a new under-13 invite goes to that parent
+  ok   the open link is used up; his record is untouched until a coach approves the parent's email
+  ok   a coach can't hard-delete a child's data
+  ok   the consenting parent can
+  ok   every row about the child is gone, and the log keeps only a hash
+  ok   the parent keeps his other children's links
+10. Ownership
+  ok   a coach can't take the organization
+  ok   the owner can't hand it to someone outside its teams
+  ok   or to a player
+  ok   he hands it to a coach on one of its teams
+  ok   the coach is now the owner, and the old owner has nothing
+11. The age question comes before an account
+  ok   a visitor can't call the website-only function
+  ok   a signed-in account can't call the website-only function
+  ok   a coach can't call the website-only function
+  ok   the website's server needs a real parent email
+  ok   a coach invite can't be moved to a parent
+  ok   an under-13 answer moves the invite to the parent's email, marked under 13
+  ok   nothing about him changes on the say-so of whoever opened the link
+  ok   (a coach approves the parent's email)
+  ok   then his record is held to the placeholder until the parent consents (id,number,updatedAt)
+  ok   the link the child opened no longer works
+  ok   the parent's own link can't be moved again
+12. The independent review's findings stay fixed
+  ok   H1: a new invite for a pitcher cancels the last one (one open link per pitcher)
+  ok   H1: the old link can't claim to be a child's and send an invite to an 'atk' parent
+  ok   H1: even a link made some other way can't flag a linked pitcher as a minor or strip his record
+  ok   M1: a child can't give his own email as the parent's
+  ok   the parent invite a player asked for waits for a coach
+  ok   M1: before a coach approves it, nobody can consent with it
+  ok   a coach without the roster can't approve it
+  ok   the staff list shows it waiting for approval
+  ok   the head coach approves it
+  ok   then the parent consents and joins
+  ok   H1: a second 'parent' can't replace the one who consented
+  ok   H1: and so can't delete the child's data
+  ok   H3: flagging a child removes his check-ins from the server too
+  ok   H3: the placeholder can't carry a name in the number
+  ok   H3: the placeholder can't carry an object in createdAt
+  ok   H3: the placeholder can't carry a school in teamId
+  ok   H3: his checkins wait on the iPad until a parent agrees
+  ok   H3: his sessions wait on the iPad until a parent agrees
+  ok   H3: his readings wait on the iPad until a parent agrees
+  ok   H3: his events wait on the iPad until a parent agrees
+  ok   H3: his learned wait on the iPad until a parent agrees
+  ok   H3: and so does a game pack that names him
+  ok   (the parent deletes the child's data)
+  ok   H2: the game keeps the pitch under a stand-in, and the pack no longer names him
+  ok   H2: an iPad sending his record again is refused, for good
+  ok   H2: so are his check-ins
+  ok   H2: a pitch charted offline before the deletion goes in under the stand-in, and the iPad gets that copy back
+  ok   H2: a coach's pull lists him so his iPad deletes its copies
+  ok   and a player's pull lists nothing
+  ok   M3: two accepts of one link at once (the second blocked on the first: true): one joins, the other is told it's used (this invite link has expired or was already used)
+  ok   M5: a coach with the staff toggle can't make himself head
+  ok   M5: or demote the head coach
+  ok   M5: or remove him
+  ok   M5: or invite a head coach
+  ok   but can invite a pitch caller (within what he has)
+  ok   M5: the last head coach can't leave the team headless
+  ok   nor demote himself
+  ok   M4: an account on no team reads 20011 member rows' table in 3 ms and programs in 1 ms
+  ok   L1: nobody signed in can read the Stripe ids; the name is fine
+  ok   L3: the helpers that change data can't be called directly
+  ok   L3: nor can a signed-in user lock a table (Postgres 17's MAINTAIN)
+  ok   L5: a player's copy of his record leaves out the coaches' notes
+  ok   L6: deletedAt: null is no delete, and his edit keeps the notes on the server without sending them to him
+14. The second review's findings stay fixed
+  ok   N1: someone saying a pitcher is under 13 strips, deletes and moves nothing until a coach approves
+  ok   N1: the website path can't redirect an invite sent to someone's email
+  ok   a coach marking him under 13 holds his record to the placeholder and his game pitches under a random id
+  ok   a coach's pull lists him as held, so coaches' iPads keep their full record of him
+  ok   N1: a coach can take a wrong mark off: the game pitches come back on the server and the parent invite is cancelled
+  ok   and the pull lists the release, so coaches' iPads send what they kept of him (record, check-ins, bullpens)
+  ok   but not a coach without the roster
+  ok   a parent agreeing brings the pitches back and is a release of its own (each release is listed once, so iPads send again)
+  ok   once a parent has agreed, a coach can't take the mark off
+  ok   N3: an expired head-coach invite can't be brought back by approving it
+  ok   N3: only an invite waiting for approval can be approved
+  ok   a consented player can be re-invited to the parent who agreed, and nobody else
+  ok   (the setup: after consent the coach fills his record in again)
+  ok   L2: deleting a parent's account takes the consent with it, and the child's record goes back to held
+  ok   L2: an owner's account can't be deleted while it owns an organization (ownership is transferred first)
+  ok   N4: the only head coach accepting a lesser invite himself is refused
+  ok   N5: a player's pushes about a held, a deleted and a teammate's record all just say not allowed (not allowed | not allowed | not allowed)
+  ok   N6: free text can't ride in the placeholder's teamId
+  ok   N7: a learned model can't dodge the checks with a different pitcherId
+  ok   N8: his pitches carry a random stand-in that can't be worked out from his id
+  ok   N8: the game's staff list no longer has his id
+  ok   and an old game sent again from an iPad goes in with the stand-in, and nothing else added
+  ok   A: a pack naming him, made offline before the deletion, goes in with the stand-in, and the rest of the batch with it (2)
+  ok   A: a newer copy of such a pack replaces the older one
+  ok   C: not even through a team record named that way
+  ok   a real team id is fine
+15. A missing pitcherId is a no, not a maybe
+  ok   a player's check-in with no pitcher is refused ([{"id":"ck-nopit","reason":"not allowed"},{"id":"ck-nullpit","reason":"not allowed"}], 0 stored)
+  ok   (a coach's check-in with no pitcher is fine: coaches may write the team's check-ins)
+16. The coach portal (Plan 3a)
+  ok   workload: each pitcher's game pitches per day, the last 30 days, a game charted twice once, plays not counted ([{"pitcher_id":"p1","day":"2026-11-11","game_id":"wg2","pitches":1},{"pitcher_id":"p1","day":"2026-11-13","game_id":"wg1","pitches":2}])
+  ok   a player gets none of it (he can't read events)
+  ok   nor another team's coach
+  ok   a pitch caller can't change the team's settings
+  ok   an unknown time zone is refused
+  ok   the head coach changes the name and time zone
+  ok   a time zone the database doesn't know doesn't break the workload
+17. Billing (Plan 2): Stripe events, lockout, adding and removing teams
+  ok   owner3 can't send a billing event himself
+  ok   head can't send a billing event himself
+  ok   anon can't send a billing event himself
+  ok   nor read the organization's Stripe ids
+  ok   nor the event log
+  ok   checkout paid: the organization is active and keeps its Stripe ids (applied)
+  ok   two teams paid for: the two oldest switch on, the third waits (Varsity:active JV:active Freshman:pending)
+  ok   the paid team syncs, the unpaid one doesn't
+  ok   the same event sent again changes nothing (D5)
+  ok   an older subscription snapshot arriving late is ignored (stale)
+  ok   a newer one sets the paid year's end
+  ok   only the owner sees the billing page's data (not another org, not his own head coach)
+  ok   the owner sees the state and teams, never the Stripe ids
+  ok   the quantity goes up: the waiting team switches on
+  ok   a head coach can't remove a team (only the owner)
+  ok   the owner removes JV
+  ok   it stays usable until the paid year ends (D6)
+  ok   the lower quantity in Stripe doesn't take anything else away
+  ok   the owner can keep it again before the year ends
+  ok   once its year is over, it locks
+  ok   a team never paid for is removed at once
+  ok   the last active team can't be removed (cancel the subscription instead) (that's the last team: cancel the subscription instead)
+  ok   a payment failure older than the last change is ignored (A5)
+  ok   a failed payment locks every team (found by its subscription)
+  ok   and the iPad's writes are refused
+  ok   the owner still sees the billing page
+  ok   but can't remove teams while locked
+  ok   an older payment arriving after the failure doesn't unlock
+  ok   a newer payment unlocks
+  ok   and the team removed last year stays removed (A5) (Varsity:active JV:removed Freshman:active Summer:removed)
+  ok   an event from some other subscription is ignored
+  ok   a second Checkout while the first is live doesn't take over (logged for a refund)
+  ok   the subscription cancelled: locked
+  ok   coming back: a new subscription after the old one ended takes over
+  ok   and the old one's late events no longer count
+  ok   an event for no organization we know is logged and otherwise ignored
+  ok   an event id that isn't Stripe's is refused
+  ok   the website's server reads the ids it needs ({"seats":2,"active":2,"customer":"cus_R3","quantity":2,"sub_status":null,"owner_email":"owner3@x.org","subscription":"sub_NEW"})
+18. Player portal (Plan 3b): grade history, his own outings and what the engine learned
+  ok   (setting up as the database owner writes no history: only people's changes count)
+  ok   a player raises his fastball's stuff: it applies at once and the history says who, what, old and new (D9) ([["grade","3","4","player"]])
+  ok   a coach's change is in the history too
+  ok   a change that touches no grade writes nothing
+  ok   he sees his own history
+  ok   a teammate sees none of it
+  ok   the team's coaches see it (even a viewer); another team's coach doesn't
+  ok   nobody writes the history by hand
+  ok   a teammate, a viewer and a pitch caller can't revert
+  ok   a pitching coach reverts it in one tap
+  ok   his fastball is back to 3, the edit is marked reverted, and the revert is in the history
+  ok   a change can't be reverted twice
+  ok   a change that's been changed again since isn't put back over the newer one
+  ok   his outing: 3 pitches, 2 strikes, by pitch; a teammate's pitches and a play aren't counted ({"date":"2026-11-14","game_id":"og1","pitches":3,"strikes":2,"by_pitch":{"Slider":{"n":1,"strikes":1},"Fastball":{"n":2,"strikes":1}},"pitcher_id":"p1"})
+  ok   no opponent, hitter or game plan in it; the team's pitch-count rule is
+  ok   a parent gets his children's only
+  ok   a coach (not a player here) and another team's coach get nothing from it
+  ok   what the engine learned about him, without the evidence ({"at":123,"learner":"2.0","pitches":{"pt1":{"n":40,"talent":3.4}}})
+  ok   not a teammate's
+  ok   (p30 has a history row)
+  ok   when a parent deletes a child, his grade history goes too
+19. Super admin (D13)
+  ok   owner: pc_admin_orgs denied
+  ok   head: pc_admin_orgs denied
+  ok   nonmember: pc_admin_orgs denied
+  ok   anon: pc_admin_orgs denied
+  ok   pc_is_admin tells the website who is one
+  ok   the admin sees organizations, owners, billing state, counts and sign-ups ({"id":"e0e4bdcd-21da-426b-ab0d-ae1ec5030fb5","name":"Lakeside Baseball","level":null,"teams":1,"status":"active","coaches":6,"players":4,"quantity":null,"created_at":"2026-11-14T04:17:47.055795+00:00","sub_status":null,"owner_email":"head@x.org","period_ends_at":null})
+  ok   search by name or owner email (a % is just a character)
+  ok   one organization: its teams, head counts, staff and billing events
+  ok   no pitch data, pitcher or player record in any of it
+  ok   the admin can't read events (he's on no team)
+  ok   the admin can't read pitchers (he's on no team)
+  ok   the admin can't read games (he's on no team)
+  ok   the admin can't read grade_history (he's on no team)
+  ok   the audit log and admin list aren't readable directly
+  ok   nor can anyone add an admin through the API
+  ok   support transfer: not to a player
+  ok   not without a reason
+  ok   to a coach on one of its teams, with a reason
+  ok   every admin call wrote to the audit log, and failed ones didn't (view_audit, transfer_owner, view_org, list_orgs, list_orgs, list_orgs)
+  ok   the transfer's row says who, which organization, to whom and why
+20. Uploads, proposals and stats rows (Plan 4)
+  ok   a player uploads his bullpen: 12 pitches stored; an impossible velo or result is blank, not clamped (ok)
+  ok   not for a teammate
+  ok   a coach without review_uploads can't upload for him
+  ok   a pitching coach (review_uploads) can
+  ok   no empty file, no date, no unknown source
+  ok   he sees his uploads and their pitches
+  ok   a teammate sees none
+  ok   his coaches see them (a viewer too); another team's don't
+  ok   nobody writes the tables directly
+  ok   exclude with a reason, mark developing; a reason on an included pitch means nothing ([{"idx":0,"excluded":true,"reason":"warmup","developing":false},{"idx":1,"excluded":false,"reason":null,"developing":true},{"idx":2,"excluded":false,"reason":null,"developing":false}])
+  ok   a teammate and a pitch caller can't review it
+  ok   a coach with review_uploads can
+  ok   proposals: three valid ones kept (a pitch he doesn't throw, a made-up shape, 300 mph and a grade are dropped)
+  ok   values rounded and stored, with what the record held ([89.2,{"hb":9.2,"ivb":17,"kind":"FB","shape":"runs"},"sidearm"])
+  ok   a fresh set supersedes the old pending ones
+  ok   a teammate, a pitch caller and a viewer can't accept one
+  ok   (nothing changed)
+  ok   the pitcher accepts the velo, a pitching coach the shape ()
+  ok   accepted: his fastball reads 89.2 mph, runs, 17/9.2; the slot he rejected is unchanged; the record is newer, so every iPad gets it ({"velo":89.2,"shape":"runs"})
+  ok   each says who decided
+  ok   and can't be decided twice
+  ok   a teammate sees none of his proposals
+  ok   a player saves a column mapping for his team
+  ok   not without a pitch type, not with unknown fields, not on another team
+  ok   the team's players and coaches can use it
+  ok   his game pitches for stats: count, result, contact, hitter as same/opposite side and nothing else ({"out":"2B","res":"play","date":"2026-11-14","kind":"FB","side":"opp","count":"1-1","pitch":"Fastball","pa_end":"hard","contact":"hard"})
+  ok   his coaches get them; a teammate and another team's coach get nothing
+  ok   a locked team: no uploads, and nothing readable
+  ok   a teammate can't delete his upload
+  ok   he deletes it: its pitches go with it
+  ok   a child's uploads and proposals go when he's deleted by a parent (2 -> 0)
+  ok   a child's uploads and proposals go when he's held (under 13, no consent) (2 -> 0)
+  ok   a child's uploads and proposals go when he's held again when consent is withdrawn (2 -> 0)
+  ok   and nothing new is taken while he's held
+  ok   a pitcher taken off the roster: his proposal can't be accepted, and his record is left as it was
+21. Lapse exports (Plan 2b, D7): who gets what, only his rows, and only the server
+  ok   an organization that isn't locked has nothing to export
+  ok   locked: each team's staff and the owner get the team export (caller@x.org, head@x.org, pc2@x.org, pitching@x.org, viewer@x.org)
+  ok   each linked player gets his own
+  ok   a player's export has only his rows (0 others; pitchers 1, catchers 1, hitters 1, teams 1, games 5, events 13, checkins 1, sessions 2, packs 1, readings 1, learned 2, uploads 1, upload_pitches 12, grade_history 5)
+  ok   its row count equals his rows in the database (47 = 47)
+  ok   the coach export has the whole team, less every under-13 player's rows (6 held back, 0 leaked)
+  ok   head can't ask for the plan or the rows (server only)
+  ok   pl1 can't ask for the plan or the rows (server only)
+  ok   owner can't ask for the plan or the rows (server only)
+  ok   anon can't ask for the plan or the rows (server only)
+  ok   recorded once per person per lapse (a second run adds nothing)
+  ok   only the server records them
+  ok   while locked, each person still sees his own export and nobody else's
+  ok   anon sees none
+  ok   nobody changes them
+  ok   the admin sees each lapse's files and emails, and can ask to send again; both are in the audit log (view_exports,resend_exports)
+  ok   owner can't
+  ok   head can't
+  ok   pl1 can't
+  ok   anon can't
+  ok   the email is recorded as sent
+  ok   not once it's paid up again
+22. Terms and Privacy acceptance (D15)
+  ok   only the server records a sign-up's agreement
+  ok   both documents, once each, marked as sign-up (an unknown account is skipped)
+  ok   a signed-in account agrees for itself; anon can't
+  ok   the version has to look like one
+  ok   each account reads only its own
+  ok   nobody writes or deletes them directly
+23. Retention: 12 months after a lapse, the organization's data goes
+  ok   only the server runs it
+  ok   a dry run reports only the organization locked over 12 months ago, and deletes nothing (1 org, 1 team)
+  ok   then for real: the organization, its team, its records and its exports are gone ({"o":"0","t":"0","p":"0","e":"0"})
+  ok   an organization locked only a month is untouched
+  ok   each run is logged
+13. The migration refuses a database that already has programs
+  ok   M2: it stops before changing anything (pitchiq_teams: programs, members or invites already hold rows; migrate them first)
+
+all 347 team checks passed
+::group::summary
+rls_matrix_test: exit=0 passed=347 failed=0
+::endgroup::
+rls_matrix_test: 347 checks passed
+1. Sign-ups through the server key
+  ok   a new sign-up is stored
+  ok   the same email in other case and spaces is a duplicate
+  ok   stored lowercased, the first sign-up kept
+  ok   an empty level is stored as none
+2. Bad input never reaches the table
+  ok   invalid: email without @
+  ok   invalid: unknown role
+  ok   invalid: unknown level
+  ok   invalid: ip hash too short
+  ok   invalid: no email
+  ok   still 2 rows
+3. At most 5 new sign-ups per network per hour
+  ok   the 6th new email from one network is refused
+  ok   a repeat sign-up still says duplicate while limited
+  ok   another network is not affected
+  ok   an hour later the network can sign up again
+4. No client role can touch it
+  ok   anon cannot call pc_join_waitlist
+  ok   anon cannot read the table
+  ok   anon cannot insert
+  ok   authenticated cannot call pc_join_waitlist
+  ok   authenticated cannot read the table
+  ok   authenticated cannot insert
+  ok   row level security is on
+  ok   the function pins an empty search_path
+
+all waitlist checks passed
+::group::summary
+waitlist_test: exit=0 passed=22 failed=0
+::endgroup::
+waitlist_test: 22 checks passed
+  ok   the v1.1 migration runs last (20261115000000_v11_kinds.sql)
+  ok   before: an SI row is refused (v1.0's four kinds)
+1. upload_pitches: six kinds, stored rows remapped by pitch type
+  ok   remapped (Four-seam:FB, Two-seam:SI, Sinker:SI, Cutter:FC, Slider:SL, Splitter:CH)
+  ok   after: SI is taken, an unknown kind is still refused
+2. The SQL migration table is the engine's (engine.py)
+  ok   pc_migrate_pitch = engine.py migrate_pitch on 18 cases
+  ok   pc_shape_ok: a kind's own tags (typical included), nothing else
+  ok   the helpers aren't callable by a signed-in user (42501: permission denied for function pc_migrate_pitch)
+3. Pending v1.0 shape proposals: remapped through the table, or superseded
+  ok   remapped in the pitch's v1.1 kind (four-seam run -> runs; sinker sink -> run, ride -> two-seam; cutter cut -> typical; curve sharp -> power)
+  ok   superseded: "sink" on the four-seam (would make it a sinker) and "loopy" on the slider (no such slider tag) (superseded:-/sink, superseded:-/loopy)
+  ok   a decided proposal is left alone; the numbers are kept
+4. New proposals in v1.1 terms
+  ok   three kept, each with the pitch's kind (b:SI/two-seam, c:FC/hard, e:CH/split)
+  ok   accepting it leaves the v1.0-stored sinker a consistent v1.1 pitch ({"kind":"SI","shape":"two-seam","type":"Sinker"})
+
+all 12 v1.1 kinds checks passed
+::group::summary
+v11_kinds_test: exit=0 passed=12 failed=0
+::endgroup::
+v11_kinds_test: 12 checks passed
+1. Pushed by the roles that write them
+  ok   the head coach writes the pitcher with his lean and spread
+  ok   a caller writes the charted bullpen session ([])
+  ok   a caller writes the game event with ph / bs / glove and a way-off cell
+  ok   the pitcher himself can save a charted bullpen of his own
+  ok   a viewer can't
+  ok   a doc without a numeric updatedAt is refused ([{"id":"s4","reason":"bad record: fields"}])
+2. Pulled back unchanged
+  ok   the pitcher's lean_x / lean_z / spread come back ({"id":"a","kind":"FB","name":"Fastball","grade":3,"lean_x":1.5,"lean_z":-1.5,"spread":1.25,"command":3})
+  ok   the charted session comes back whole: 40 pitches, the way-off cells ([2,-1], [5,2]), byType
+  ok   the event's cell, glove spot, ph and bs come back
+  ok   the pitcher sees his own charted sessions (s1,s2)
+  ok   the caller reads them
+all checks passed
+::group::summary
+v12_sessions_test: exit=0 passed=11 failed=0
+::endgroup::
+v12_sessions_test: 11 checks passed
+EXIT 0
