@@ -282,3 +282,40 @@ Persistence (pitch sample, about a quarter season): tilt 0.92 / 0.93, pull 0.69 
 - I'd make the test wait for learning to finish between games, so each run is repeatable, then re-measure. That changes the
   test's timing, not its limits. Your call.
 
+## Second round of answers (Nov 13, night)
+- **Game-mix check made repeatable** (Drew: wait for learning between games, not in game). The app's start-of-game learning
+  (lineup hitter memory, any unfinished learning) ran in a background timer while the test was already pitching. `DB.warm`
+  now marks it done, and `game_mix_e2e` waits for it before the first pitch. Nothing waits during a game.
+  - Two full 21-game runs came out **identical game by game** and passed: average 49.5%, one game over 70% (tier 2 seed 45, 71%).
+  - Seed 33 is 59% every time now (it was 59-76%).
+- **L2 regraded** (Drew): graded on its own cost rising (0.4862 to 0.4882 runs with the lean). **Passes.**
+- **L5: the chase band is built** (Drew). With two strikes, the extra way-off share an up lean adds to an up target is
+  counted in the chase band. Both engines; `tests_v12` 22/22.
+  - **L5a (the up target holds) passes:** 26.6% to 25.9%.
+  - **L5b regraded to "holds"** (Drew): 18.1% to 18.5%.
+- **L6: option C tried, not built.** One side-to-side ratio can't match MLB's crossing rates (`research_v12/fit_geo_rx.py`).
+  The best fit needs a side miss at 30% of the vertical and gives four-seam 31.6% / sinker 40.1% (real 28% / 48%). L6 stays at
+  0% even then.
+- **L6: hit-batter check.** On all Single-A pitches, pitches crossing the inside third hit batters at 3.05x the overall
+  rate; the engine's ratio is 3.06x (`research_v12/fit_hbp_loc.py`).
+  - My earlier "2x too steep" came from 10 hit batters in 2,359 cutter pitches. That was wrong, and I said so.
+  - HBP_LOC is unchanged.
+  - The engine's D3 total (1.09% per pitch) matches real D3 (4.3% of batters, about 1.1% per pitch, 2026 lines).
+  - **L6 regraded** (Drew) to "called less": the cutter at his hands pays a supported hit-batter cost.
+- **Rows now:** L1, L2, L4, L5a, L5b, L6 and H1-H5 pass by your grades; L3 is untestable (no back-foot slider is ever called).
+
+## Where it stands (Nov 13, night): both branches green
+
+| Check | Part A (`v1.2-work`) | Part B (`v1.2-partb`, on top of Part A) |
+|---|---|---|
+| `scripts/test-app.sh` | **exit 0**: every suite, game_mix_e2e included (average 49.6%, one game over 70%) | **exit 0**: every suite (average 49.5%, one game over 70%), tests_v12b 12, tag parity, hitter_tags_test 3, v12_tags_e2e 9, v12_oldapp 15 |
+| Read-through, v12 suite (98 rows) | **94/98** (P2, P3, P5, P7 fail, as at v1.1) | same engine when no tag is set |
+| Location and hitter rows (`step6_rows.py`) | | **13/13 by your grades** (L3 is untestable) |
+
+- Both suites ran side by side (under load). Part A's game mix matched the two quiet runs on 20 of 21 games; tier 3 seed 69
+  moved by one pitch (43% to 44%). So repeatable when quiet, within a pitch under load. The gate passes with room.
+- `scripts/test-sql.sh` last ran green at Step 4. Nothing since touches the database code or the sync.
+- **Still open:**
+  - the grid check at the research-check leans (Step 6);
+  - Step 7, the release, which waits for your go. Nothing is pushed, merged or tagged, and nothing touched production.
+

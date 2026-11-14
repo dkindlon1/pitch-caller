@@ -176,7 +176,7 @@ tests_v11: exit=0 passed=41 failed=0
 ::endgroup::
 tests_v11: 41 checks passed
 40 cases (20 with full solves), 20696 values compared, tolerance 1e-09
-  python 118.90s   js 4.32s
+  python 115.49s   js 4.48s
 Largest Python-vs-JS differences:
   table       2.84e-14
   call        1.63e-14
@@ -214,22 +214,23 @@ fast_parity: 1 checks passed
 [PASS] Step 5 (L7): S4 fires only after a fastball away for a strike (called, foul or whiff) with a payoff 8+ mph slower (changeup not firm, or curve); not after a ball, not at 7 mph, not a firm changeup; both engines  (python [True, True, True, False, False, False, False], js [True, True, True, False, False, False, False])
 [PASS] Step 5 (L7): S2, S4 and S5 dropped to 0: S2 / S4's lifting sizes (0.004, 0.005) put the credit-only change rate at 17-22% on the three staffs; S5 (0.004) kept the band but put 2 of game_mix_e2e's 21 games over 70% (Drew: drop it); both engines  ({'S2': 0.0, 'S4': 0.0, 'S5': 0.0})
 [PASS] Step 5 (L7): S5 re-gated by the lean: on its fire row the front-door sinker drops when it leans toward the opposite-side hitter (the HBP cost) and rises when it leans away  (sinker in 6.7%; leaning toward him 0.0%; away 13.7%)
+[PASS] Step 6 (Drew, L5): with two strikes, the way-off share an up lean adds to an up target lands in the chase band instead (not before two strikes, not on a down target); both engines  (2 strikes way off 0.160 -> 0.160; 1 strike 0.160 -> 0.198)
 
-21/21 checks passed
+22/22 checks passed
 ::group::summary
-tests_v12: exit=0 passed=21 failed=0
+tests_v12: exit=0 passed=22 failed=0
 ::endgroup::
-tests_v12: 21 checks passed
-40 cases (20 with full solves), 20684 values compared, tolerance 1e-09
-  python 261.33s   js 5.80s
+tests_v12: 22 checks passed
+40 cases (20 with full solves), 20676 values compared, tolerance 1e-09
+  python 268.29s   js 5.99s
 Largest Python-vs-JS differences:
-  call        7.52e-14
-  table       4.26e-14
-  gradecall   3.34e-14
-  shaken      1.29e-14
+  table       7.11e-14
+  call        5.11e-14
+  gradecall   5.11e-14
+  shaken      9.58e-15
   probs       1.72e-15
   walk        1.55e-15
-  why         4.44e-16
+  why         1.11e-15
   ump         4.44e-16
   grade       1.11e-16
   take        5.55e-17
@@ -257,7 +258,7 @@ tests_v12b: exit=0 passed=12 failed=0
 ::endgroup::
 tests_v12b: 12 checks passed
 40 cases (20 with full solves), 20692 values compared, tolerance 1e-09
-  python 117.67s   js 4.33s
+  python 117.84s   js 4.32s
 Largest Python-vs-JS differences:
   table       2.84e-14
   call        2.74e-14
@@ -308,7 +309,7 @@ web_demo: # pass 2 (the website demo runs the engine with that data)
      Changeup: true stuff 2, entered 3.5 | 500 pitches: mean 2.19, avg error 0.19 | 1500: mean 2.13, avg error 0.13
   ok   Changeup: 500 pitches cut the stuff error by a quarter or more
   ok   Changeup: 1500 pitches cut it by 60% or more
-     (28.2s)
+     (26.3s)
 2. Command: results alone are weak evidence; with location logged it's recovered
      fastball true command 2, entered 4, 500 pitches: results only mean 2.45 (avg error 0.45); with location mean 2.01 (avg error 0.09)
   ok   results only doesn't drift the wrong way (it mostly holds still: command needs location)
@@ -366,7 +367,7 @@ learn_test: 27 checks passed
   ok   deleted pitcher is gone from reads
   ok   but kept as a tombstone so a sync can carry the delete
 2. Events in bulk, found by game, pitcher and hitter
-  ok   2000 pitches written in one go (130 ms)
+  ok   2000 pitches written in one go (114 ms)
   ok   indexed by pitcher and hitter
 3. Backup and restore
   ok   export carries every store (377 KB for 2000 pitches)
@@ -525,7 +526,7 @@ D12. Duplicates
   ok   once the coach says they're different games, they stay different
   ok   different dates are never duplicates
 
-417s
+409s
 all stage 2 checks passed
 ::group::summary
 stage2_test: exit=0 passed=21 failed=0
@@ -587,7 +588,7 @@ stage2_test: 21 checks passed
 13. The learner's fast strike-rate table matches the exact calculation
   ok   largest difference 0.0088 (must be under 0.01)
 
-1031s, 5 seasons per world
+998s, 5 seasons per world
 all worlds checks passed
 ::group::summary
 worlds_test: exit=0 passed=31 failed=0
@@ -700,7 +701,7 @@ all 8 v1.0 fixture checks passed
 v11_fixture_test: exit=0 passed=8 failed=0
 ::endgroup::
 v11_fixture_test: 8 checks passed
-[PASS] recovery is unbiased: mean error over 20 seasons x 2 pitches within 0.3 in. on each axis (hidden fastball +3 / +1.5, slider -1.5 / -3)  (side -0.013, height -0.080 in.; seed 1 fastball side: true +3, mean 2.38 (SE 0.49, n 332))
+[PASS] recovery is unbiased: mean error over 20 seasons x 2 pitches within 0.3 in. on each axis (hidden fastball +3 / +1.5, slider -1.5 / -3)  (side -0.015, height -0.066 in.; seed 1 fastball side: true +3, mean 2.38 (SE 0.49, n 332))
 [PASS] its standard error is honest: at least 85% of the 80 estimates fall within 2 SE (95% expected)  (75/80 = 94%)
 [PASS] shrinkage: served value = mean x n / (30 + n)  (mean 3.31, n 343, served 3.04)
 [PASS] fewer than 10 targets on a side: no estimate, flagged  (sides 5 / 7; flag: needs targets on both sides (arm 5, glove 7))
@@ -735,11 +736,11 @@ all checks passed
 hitter_tags_test: exit=0 passed=3 failed=0
 ::endgroup::
 hitter_tags_test: 3 checks passed
-first call: Changeup / Get it over
+first call: Fastball / Up and in
 at-bat rows: 2 | log rows: 6 | count: 1–1
 B
 S
-coach call: SliderYour call / Chase it | Costly. About 0.064 runs more than the engine's best call here.
+coach call: SliderYour call / Chase it | Costly. About 0.060 runs more than the engine's best call here.
 runners text: Runners
 2nd and 3rd
 inning over after 8
@@ -780,8 +781,8 @@ rules_e2e: exit=0 passed=20 failed=0
 ::endgroup::
 rules_e2e: 20 checks passed
 1. A shake-off keeps that pitch out at every spot for the rest of the at-bat (#6, D2)
-  ok   shook off the Slider; the next three calls in the at-bat never include it (calls: Changeup, Fastball, Fastball)
-  ok   the at-bat remembers the shake-off: ["Slider"]
+  ok   shook off the Fastball; the next three calls in the at-bat never include it (calls: Changeup, Slider, Slider)
+  ok   the at-bat remembers the shake-off: ["Fastball"]
   ok   the next hitter starts with no shake-offs (his call list: Fastball, Slider)
 2. A runner moving or an out mid at-bat re-solves the at-bat table; nothing else does (#2)
   ok   no change: same table (solve #1 -> #1)
@@ -799,7 +800,7 @@ v10_step1_e2e: 6 checks passed
   ok   HBP: confidence +0.0030, exactly the between-hitters drift 0.0030 (no "ball" debit; a debit would add -0.020)
 2. An open game saved before v1.0 ([strikes, pitches] pairs) still calls and keeps counting
   ok   the engine calls with an old-format record in the game
-  ok   the next pitch converts it and counts on: [4, 3.32, 6] (was [3, 5])
+  ok   the next pitch converts it and counts on: [4, 3.93, 6] (was [3, 5])
   ok   no page errors
 all v1.0 Step 3 browser checks passed
 ::group::summary
@@ -810,11 +811,11 @@ v10_step3_e2e: 7 checks passed
   ok   called down-away, nothing logged: look height 2.50 -> 2.36 (down)
   ok   called down-away, caught in the top row: look height 2.36 -> 2.65 (up)
 2. #7: a hard hit is keyed on the logged spot; without a logged spot, on the called target
-  ok   hard hit caught up and in, called down-away: memory {"g:gam_mwfrvb010i031r644q3s39502a3m|0|":{"hard|FB|up-in":1}}
-  ok   hard hit with no spot logged: keyed on the called target ({"g:gam_mwfrvb010i031r644q3s39502a3m|0|":{"hard|FB|up-in":1},"g:gam_mwfrvb010i031r644q3s39502a3m|1|":{"hard|FB|down-away":1}})
+  ok   hard hit caught up and in, called down-away: memory {"g:gam_mwfvh8jw3n652t6u4r0j6n6y1a1m|0|":{"hard|FB|up-in":1}}
+  ok   hard hit with no spot logged: keyed on the called target ({"g:gam_mwfvh8jw3n652t6u4r0j6n6y1a1m|0|":{"hard|FB|up-in":1},"g:gam_mwfvh8jw3n652t6u4r0j6n6y1a1m|1|":{"hard|FB|down-away":1}})
 3. #7: the engine reads only the cross-game seed; tonight's swings update the card, not hitter_damage
   ok   hitter_damage stays the seed {} after a whiff (was {}, now {})
-  ok   the hitter card's running read still moves: {"OS":[-0.5282760073307452,1]}
+  ok   the hitter card's running read still moves: {"OS":[-0.5282261370697845,1]}
 4. #20: the cross-game seed is centered only when the hitter has grades on
   ok   no grades: seed kept as learned (FB [0.6,8])
   ok   grades on: seed centered (FB [0.2,8]; mean 0.4 taken out)
@@ -892,7 +893,7 @@ v12_step4_e2e: exit=0 passed=35 failed=0
 v12_step4_e2e: 35 checks passed
 1. The v1.2 app writes leans, a charted session, a way-off cell and a glove spot
   ok   this is the v1.2 build
-  ok   written: a learned lean, a way-off event with a glove spot, an at-bat log with "way" ([["Changeup","down-away","ball","way",null,null],["Slider","down-middle","ball",[1,1,true],null,null]])
+  ok   written: a learned lean, a way-off event with a glove spot, an at-bat log with "way" ([["Fastball","middle","ball","way",null,null],["Slider","middle","ball",[1,1,true],null,null]])
 2. The v1.1 build opens the same database and saved state
   ok   this is the v1.1 build
   ok   it opens without errors ()
@@ -904,7 +905,7 @@ v12_step4_e2e: 35 checks passed
   ok   the earlier-game fixer lists the way-off pitch as way off
   ok   roster, data and the fixer render without errors ()
 4. v1.1 keeps calling the game in progress (its at-bat log holds the way-off pitch)
-  ok   it makes calls and logs pitches after the "way" entry (Fastball, Slider; )
+  ok   it makes calls and logs pitches after the "way" entry (Fastball, Fastball; )
 5. What a v1.1 iPad writes back
   ok   a v1.1 roster edit writes the pitcher back with the lean fields intact ([4,1.5,-1.5,1.25])
   ok   the charted session is untouched
@@ -912,7 +913,7 @@ v12_step4_e2e: 35 checks passed
   note a v1.1 pitch event has no ph / bs (undefined, undefined) and its arsenal snapshot drops the lean (undefined); the v1.2 learner falls back to the pitcher's hand and the event's situation
   note a v1.1 relearn rewrites the learned doc without the lean estimate; the next v1.2 relearn rebuilds it from the events and charted sessions
 6. Back on v1.2: the lean estimate comes back from the same data
-  ok   the estimate is rebuilt (3.58 in.) and the coach's lean reaches the engine again (1.5)
+  ok   the estimate is rebuilt (3.89 in.) and the coach's lean reaches the engine again (1.5)
   ok   no errors ()
 all checks passed
 ::group::summary
@@ -945,43 +946,43 @@ v12_tags_e2e: 9 checks passed
   ok   tier 2, seed 21: 82 pitches charted, no page errors
   ok   tier 2, seed 21: 2+ pitches, none over 85% (Slider 25, Changeup 25, Fastball 32; top 39%)
   ok   tier 2, seed 33: 82 pitches charted, no page errors
-  ok   tier 2, seed 33: 2+ pitches, none over 85% (Fastball 46, Slider 33, Changeup 3; top 56%)
+  ok   tier 2, seed 33: 2+ pitches, none over 85% (Fastball 45, Changeup 6, Slider 31; top 55%)
   ok   tier 2, seed 45: 82 pitches charted, no page errors
-  ok   tier 2, seed 45: 2+ pitches, none over 85% (Fastball 59, Slider 15, Changeup 8; top 72%)
+  ok   tier 2, seed 45: 2+ pitches, none over 85% (Fastball 58, Slider 15, Changeup 9; top 71%)
   ok   tier 2, seed 57: 82 pitches charted, no page errors
   ok   tier 2, seed 57: 2+ pitches, none over 85% (Slider 32, Fastball 39, Changeup 11; top 48%)
   ok   tier 2, seed 69: 82 pitches charted, no page errors
-  ok   tier 2, seed 69: 2+ pitches, none over 85% (Changeup 32, Slider 32, Fastball 18; top 39%)
+  ok   tier 2, seed 69: 2+ pitches, none over 85% (Fastball 32, Slider 32, Changeup 18; top 39%)
   ok   tier 2, seed 81: 82 pitches charted, no page errors
-  ok   tier 2, seed 81: 2+ pitches, none over 85% (Fastball 26, Slider 31, Changeup 25; top 38%)
+  ok   tier 2, seed 81: 2+ pitches, none over 85% (Fastball 37, Slider 29, Changeup 16; top 45%)
   ok   tier 2, seed 93: 82 pitches charted, no page errors
   ok   tier 2, seed 93: 2+ pitches, none over 85% (Slider 43, Fastball 19, Changeup 20; top 52%)
   ok   tier 2, seed 105: 82 pitches charted, no page errors
-  ok   tier 2, seed 105: 2+ pitches, none over 85% (Slider 38, Fastball 36, Changeup 8; top 46%)
+  ok   tier 2, seed 105: 2+ pitches, none over 85% (Slider 39, Fastball 36, Changeup 7; top 48%)
   ok   tier 3, seed 7: 82 pitches charted, no page errors
   ok   tier 3, seed 7: 2+ pitches, none over 85% (Fastball 54, Slider 13, Changeup 15; top 66%)
   ok   tier 3, seed 11: 82 pitches charted, no page errors
-  ok   tier 3, seed 11: 2+ pitches, none over 85% (Slider 21, Fastball 44, Changeup 17; top 54%)
+  ok   tier 3, seed 11: 2+ pitches, none over 85% (Slider 20, Fastball 44, Changeup 18; top 54%)
   ok   tier 3, seed 31337: 82 pitches charted, no page errors
-  ok   tier 3, seed 31337: 2+ pitches, none over 85% (Changeup 30, Fastball 40, Slider 12; top 49%)
+  ok   tier 3, seed 31337: 2+ pitches, none over 85% (Fastball 38, Changeup 29, Slider 15; top 46%)
   ok   tier 3, seed 21: 82 pitches charted, no page errors
   ok   tier 3, seed 21: 2+ pitches, none over 85% (Slider 40, Fastball 35, Changeup 7; top 49%)
   ok   tier 3, seed 33: 82 pitches charted, no page errors
   ok   tier 3, seed 33: 2+ pitches, none over 85% (Slider 32, Fastball 48, Changeup 2; top 59%)
   ok   tier 3, seed 45: 82 pitches charted, no page errors
-  ok   tier 3, seed 45: 2+ pitches, none over 85% (Changeup 11, Slider 33, Fastball 38; top 46%)
+  ok   tier 3, seed 45: 2+ pitches, none over 85% (Changeup 9, Slider 37, Fastball 36; top 45%)
   ok   tier 3, seed 57: 82 pitches charted, no page errors
-  ok   tier 3, seed 57: 2+ pitches, none over 85% (Changeup 22, Fastball 12, Slider 48; top 59%)
+  ok   tier 3, seed 57: 2+ pitches, none over 85% (Changeup 15, Slider 54, Fastball 13; top 66%)
   ok   tier 3, seed 69: 82 pitches charted, no page errors
-  ok   tier 3, seed 69: 2+ pitches, none over 85% (Fastball 32, Changeup 29, Slider 21; top 39%)
+  ok   tier 3, seed 69: 2+ pitches, none over 85% (Fastball 35, Changeup 29, Slider 18; top 43%)
   ok   tier 3, seed 81: 82 pitches charted, no page errors
-  ok   tier 3, seed 81: 2+ pitches, none over 85% (Fastball 25, Slider 49, Changeup 8; top 60%)
+  ok   tier 3, seed 81: 2+ pitches, none over 85% (Fastball 22, Slider 45, Changeup 15; top 55%)
   ok   tier 3, seed 93: 82 pitches charted, no page errors
   ok   tier 3, seed 93: 2+ pitches, none over 85% (Slider 29, Fastball 27, Changeup 26; top 35%)
   ok   tier 3, every whiff 'Fooled' and every foul 'Straight back', seed 7: 82 pitches charted, no page errors
   ok   tier 3, every whiff 'Fooled' and every foul 'Straight back', seed 7: 2+ pitches, none over 85% (Fastball 31, Changeup 22, Slider 29; top 38%)
 2. Over the 21 games
-  ok   average top pitch 49.1% (at most 60%)
+  ok   average top pitch 49.5% (at most 60%)
   ok   1 game(s) over 70% (at most 1)
 
 all game-mix checks passed
