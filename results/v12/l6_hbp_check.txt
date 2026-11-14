@@ -1,0 +1,19 @@
+== Single-A 2024-25 sample: 86,534 pitches, 88 days
+  all pitches                        n  86,534  HBP per pitch 0.0053
+  cutters, any hitter                n   5,883  HBP per pitch 0.0029
+  cutters, opposite-hand hitter      n   2,359  HBP per pitch 0.0042
+  four-seams, opposite-hand hitter   n  14,334  HBP per pitch 0.0021
+  cutters to opposite-hand hitters, by crossing point (in. toward the batter): HBP per pitch
+      -99 to 2.8   n  1,244  share 52.7%  HBP 0.0000
+      2.8 to 8.5   n    492  share 20.9%  HBP 0.0000
+      8.5 to 12    n    248  share 10.5%  HBP 0.0000
+       12 to 99    n    375  share 15.9%  HBP 0.0267
+  crossing the inside third or further in: 47.3% of them; HBP per such pitch 0.0090
+
+== The engine, lean 0, opposite-side hitter, 1-1 (the L6 setup)
+  hs          cutter HBP per pitch by target: up-in 0.0330, down-in 0.0328, middle 0.0088, up-away 0.0062, down-away 0.0061, chase 0.0071; over its call mix 0.0129
+  college_d3  cutter HBP per pitch by target: up-in 0.0365, down-in 0.0360, middle 0.0095, up-away 0.0068, down-away 0.0067, chase 0.0082; over its call mix 0.0139
+  college_d1  cutter HBP per pitch by target: up-in 0.0280, down-in 0.0276, middle 0.0071, up-away 0.0052, down-away 0.0052, chase 0.0065; over its call mix 0.0121
+  mlb         cutter HBP per pitch by target: up-in 0.0050, down-in 0.0049, middle 0.0010, up-away 0.0009, down-away 0.0009, chase 0.0014; over its call mix 0.0022
+
+Reading: compare the engine's per-pitch rate aimed in (up-in / down-in) with Single-A's per-pitch rate for cutters that crossed the inside third, and its call-mix rate with Single-A's overall cutter-to-opposite rate.
