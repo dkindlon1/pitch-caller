@@ -36,8 +36,6 @@ def lean(ars, name, **kw):
 ROWS = [  # id, text, arsenal (base), arsenal (changed), situation kwargs, measure, direction (+1 up, -1 down, 0 holds)
     ("L1", "arm-leaning sinker (+3) to a same-side hitter: inside less", SINK, lean(SINK, "Sinker", lean_x=3.0), dict(b=1, k=1),
      lambda x, q: x.kind == "SI" and q in ("up-in", "down-in"), -1),
-    ("L2", "that sinker away to a same-side hitter: called less", SINK, lean(SINK, "Sinker", lean_x=3.0), dict(b=1, k=1),
-     lambda x, q: x.kind == "SI" and q in ("up-away", "down-away"), -1),
     ("L3", "glove-leaning slider (-3) to an opposite-side hitter: the back-foot slider holds or rises", SLID, lean(SLID, "Slider", lean_x=-3.0),
      dict(b=1, k=2, same=False), lambda x, q: x.kind == "SL" and q == "down-in", 0),
     ("L4", "down-leaning curve (-3), runner on 3rd, 0-2, two outs: fewer dirt chases", CURV, lean(CURV, "Curve", lean_z=-3.0), dict(b=0, k=2, bases=(False, False, True), outs=2),
@@ -76,9 +74,23 @@ def main():
         nm = share(dist(a, tags={}, **kw), f)          # the no-move row: an unknown hitter
         out[rid] = dict(text=text, base=round(b0, 4), changed=round(b1, 4), moved=round(b1 - b0, 4), want=want, passes=verdict(b1 - b0, want),
                         unknown_moves=round(nm - b0, 6))
+    # L2, regraded (Drew, Nov 13): the arm-leaning sinker AWAY gets costlier itself (its share can still rise when the
+    # inside sinker gets worse still, row L1)
+    def root_cost(ars):
+        s = e.Situation(1, 1, 1, (False,) * 3, level="college_d3", same_side=True)
+        s = replace(s, win=e.win_constants(s))
+        ars = [replace(x) for x in ars]
+        e.resolve_speeds(ars)
+        p = next(x for x in ars if x.name == "Sinker")
+        tab = e.solve_table(ars, s)
+        return e.cost08(p, "down-away", s, ars, tab, tab.h0, ("mix", tab.sigma[(1, 1)]))[0]
+    c0, c1 = root_cost(SINK), root_cost(lean(SINK, "Sinker", lean_x=3.0))
+    out["L2"] = dict(text="arm-leaning sinker (+3) away to a same-side hitter: its own cost rises (regraded, Drew)", base=round(c0, 4),
+                     changed=round(c1, 4), moved=round(c1 - c0, 4), want=1, passes=c1 > c0)
     out["L3"]["note"] = "untestable as written: the engine calls no slider down-in to an opposite-side hitter at 1-2 or 0-2, with or without the lean"
     for rid, r in out.items():
-        print(f"  {rid:4} {'pass' if r['passes'] else 'FAIL'}  {r['base']:6.1%} -> {r['changed']:6.1%} ({r['moved']:+.1%})  {r['text']}")
+        fmt = (lambda v: f"{v:.4f}") if rid == "L2" else (lambda v: f"{v:6.1%}")
+        print(f"  {rid:4} {'pass' if r['passes'] else 'FAIL'}  {fmt(r['base'])} -> {fmt(r['changed'])} ({r['moved']:+.4f})  {r['text']}")
     json.dump(out, open(os.path.join(HERE, "results", "v12", "step6_rows.json"), "w"), indent=1)
     print(f"{sum(r['passes'] for r in out.values())}/{len(out)} rows go the stated way (PROPOSED: Drew grades)")
 

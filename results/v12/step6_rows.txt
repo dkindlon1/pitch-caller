@@ -1,14 +1,14 @@
-  L1   pass   10.5% ->   0.0% (-10.5%)  arm-leaning sinker (+3) to a same-side hitter: inside less
-  L2   FAIL   15.4% ->  20.1% (+4.8%)  that sinker away to a same-side hitter: called less
-  L3   pass    0.0% ->   0.0% (+0.0%)  glove-leaning slider (-3) to an opposite-side hitter: the back-foot slider holds or rises
-  L4   pass    6.9% ->   0.0% (-6.9%)  down-leaning curve (-3), runner on 3rd, 0-2, two outs: fewer dirt chases
-  L5a  FAIL   26.6% ->  19.9% (-6.8%)  up-leaning riding four-seam (+3), two strikes: the up target holds
-  L5b  FAIL   18.1% ->  21.7% (+3.5%)  ... and its down target falls
-  L6   FAIL    7.6% ->   0.0% (-7.6%)  glove-leaning cutter (-3) in on an opposite-side hitter's hands: holds
-  H1   pass   17.6% ->  10.5% (-7.1%)  flat / level swing: fewer riding fastballs up
-  H2a  pass   17.6% ->  18.4% (+0.8%)  uppercut / lift swing: the riding fastball up holds
-  H2b  pass   11.2% ->   4.3% (-6.9%)  ... and the curve down gets riskier (called less)
-  H3   pass   61.5% ->  60.5% (-0.9%)  aggressive early: fewer grooved first pitches
-  H4   pass   61.5% ->  62.5% (+1.0%)  patient early: more first-pitch strikes over the plate
-  H5   FAIL   51.7% ->  51.4% (-0.3%)  hits off-speed hard: fewer hittable off-speed pitches
-8/13 rows go the stated way (PROPOSED: Drew grades)
+  L1   pass   10.5% ->   0.0% (-0.1054)  arm-leaning sinker (+3) to a same-side hitter: inside less
+  L3   pass    0.0% ->   0.0% (+0.0000)  glove-leaning slider (-3) to an opposite-side hitter: the back-foot slider holds or rises
+  L4   pass    6.9% ->   0.0% (-0.0694)  down-leaning curve (-3), runner on 3rd, 0-2, two outs: fewer dirt chases
+  L5a  pass   26.6% ->  25.9% (-0.0072)  up-leaning riding four-seam (+3), two strikes: the up target holds
+  L5b  FAIL   18.1% ->  18.5% (+0.0036)  ... and its down target falls
+  L6   FAIL    7.6% ->   0.0% (-0.0761)  glove-leaning cutter (-3) in on an opposite-side hitter's hands: holds
+  H1   pass   17.6% ->  10.5% (-0.0707)  flat / level swing: fewer riding fastballs up
+  H2a  pass   17.6% ->  18.4% (+0.0080)  uppercut / lift swing: the riding fastball up holds
+  H2b  pass   11.2% ->   4.3% (-0.0693)  ... and the curve down gets riskier (called less)
+  H3   pass   61.5% ->  60.5% (-0.0095)  aggressive early: fewer grooved first pitches
+  H4   pass   61.5% ->  62.5% (+0.0098)  patient early: more first-pitch strikes over the plate
+  H5   FAIL   51.7% ->  51.4% (-0.0026)  hits off-speed hard: fewer hittable off-speed pitches
+  L2   pass  0.4862 -> 0.4882 (+0.0020)  arm-leaning sinker (+3) away to a same-side hitter: its own cost rises (regraded, Drew)
+10/13 rows go the stated way (PROPOSED: Drew grades)
