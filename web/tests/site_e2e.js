@@ -111,7 +111,12 @@ const filmPrint = (page) => page.locator(".mk-film-canvas").first().evaluate((c)
     const inRun = await page.evaluate(() => { const r = document.querySelector(".mk-in-run").getBoundingClientRect(); return { y: r.top + scrollY, hh: r.height - innerHeight }; });
     await page.evaluate(({ y, hh }) => scrollTo(0, y + hh * 0.68), inRun); await wait(2800);
     const pickTag = page.locator('.mk-in-pick[data-show="1"]');
-    check((await pickTag.count()) === 1 && /34%/.test(await pickTag.innerText()) && /Slider, down and away/.test(await pickTag.innerText()), "inside the call, the draw lands on slider, down and away, 34% of the mix");
+    // the share comes from the capture (content/candidates.ts), so a re-capture on a new engine doesn't need this test edited
+    const candSrc = fs.readFileSync(path.join(__dirname, "../content/candidates.ts"), "utf8");
+    const cands = JSON.parse(candSrc.slice(candSrc.indexOf("= [", candSrc.indexOf("export const CANDIDATES")) + 2).trim().replace(/;$/, ""));
+    const pk = JSON.parse(candSrc.match(/export const CAND_PICK = (\{.*\});/)[1]);
+    const pct = Math.round(cands.find((c) => c.pitch === pk.pitch && c.quad === pk.quad).share * 100);
+    check((await pickTag.count()) === 1 && new RegExp(`\\b${pct}%`).test(await pickTag.innerText()) && /Slider, down and away/.test(await pickTag.innerText()), `inside the call, the draw lands on slider, down and away, ${pct}% of the mix (content/candidates.ts)`);
     check((await page.locator('.mk-in-tag[data-show="1"]').count()) === 1, "only the drawn call is labelled once the draw lands");
     // the 3D is rendered offline: this screen's frame set loads and actually paints the stage
     const lit = await page.locator(".mk-in-stage").evaluate((c) => {
