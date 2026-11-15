@@ -43,6 +43,7 @@ const zoneShot = async (page, file, whyH = 0) => {
   await page.evaluate(() => {
     const g = G(); S.view = "live";
     S.setup.lineup[8].hand = "R";
+    S.setup.logLoc = false;   // the film taps Foul: without the "Where it ended up" grid the result buttons sit where the shot expects them
     Object.assign(g, { inning: 5, outs: 1, balls: 0, strikes: 0, bases: [false, true, false], us: 2, them: 2, batter: 17 });
     g.pc[pKey()] = 58; g.bf[pKey()] = 17;
     g.call = null; makeCall(); save(); render();

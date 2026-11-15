@@ -13,7 +13,7 @@ const OUT = process.env.OUT || path.join(__dirname, "../public/marketing");
 const server = http.createServer((q, r) => { r.writeHead(200, { "content-type": "text/html; charset=utf-8" });
   r.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${fs.readFileSync(DIST, "utf8")}</body></html>`); });
 
-let seed = 7;
+let seed = +(process.env.SEED || 7);   // SEED: the results' random (7 until v1.2.3; the site's screens use SEED=21, a game near the average mix)
 const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
 const pick = (pairs) => { let x = rnd(), acc = 0; for (const [v, w] of pairs) { acc += w; if (x <= acc) return v; } return pairs[pairs.length - 1][0]; };
 
@@ -56,7 +56,7 @@ const pick = (pairs) => { let x = rnd(), acc = 0; for (const [v, w] of pairs) { 
     pitches = await page.evaluate(() => Object.values(G().pc || {}).reduce((a, n) => a + n, 0));
     if (process.env.DEBUG && pitches === was && guard % 20 === 5) console.log("stuck at", pitches, await page.evaluate(() => [...document.querySelectorAll("button")].filter((b) => b.offsetParent).map((b) => b.textContent.trim().replace(/\s+/g, " ")).join(" | ")));
   }
-  console.log("pitches charted:", pitches);
+  console.log("pitches charted:", pitches, "thrown:", JSON.stringify(await page.evaluate(() => { const c = {}; for (const r of (G().log || [])) c[r.pitch] = (c[r.pitch] || 0) + 1; return c; })));
 
   await page.evaluate(() => { S.view = "roster"; render(); }); await page.waitForTimeout(600);
   await page.screenshot({ path: path.join(OUT, "app-roster.png") });

@@ -25,7 +25,7 @@ const STEPS = [
     t: "After the game",
     d: "Every pitch is charted: strikes, whiffs and hard contact for each pitch, and who needs a rest. It learns a little more about each pitcher every outing.",
     img: "/marketing/game-after.webp",
-    alt: "The app's Data screen after 82 pitches: 66% strikes, 30% whiffs per swing, seven strikeouts, and the starter flagged as needing a change.",
+    alt: "The app's Data screen after 82 pitches: 62% strikes, 24% whiffs per swing, five strikeouts, and the starter flagged to watch.",
   },
 ];
 

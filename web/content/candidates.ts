@@ -1,155 +1,155 @@
-// Every call the PitchIQ engine (lib/engine.js, version 1.0) could make in one situation, captured by
+// Every call the PitchIQ engine (lib/engine.js, version 1.2.3) could make in one situation, captured by
 // scripts/capture-candidates.cjs: the app's sample right-hander at college D3, 1-2 count, runner on second, one out, fifth
 // inning, tie game (the same spot as content/mix.ts). cost is the expected runs the rest of the inning after that call
 // (lower is better); share is its part of the final mix (0 = left out). Regenerate with the script; don't edit by hand.
-export const CAND_ENGINE = "1.0";
+export const CAND_ENGINE = "1.2.3";
 export const CAND_PICK = {"pitch":"Slider","quad":"down-away","spot":"Down and away"};
 export const CANDIDATES: { pitch: "Fastball" | "Slider" | "Changeup"; quad: string; spot: string; cost: number; share: number }[] = [
   {
+    "pitch": "Fastball",
+    "quad": "down-away",
+    "spot": "Down and away",
+    "cost": 0.7975,
+    "share": 0.184
+  },
+  {
     "pitch": "Slider",
     "quad": "down-away",
     "spot": "Down and away",
-    "cost": 0.7893,
-    "share": 0.344
+    "cost": 0.7987,
+    "share": 0.185
   },
   {
     "pitch": "Fastball",
-    "quad": "down-away",
-    "spot": "Down and away",
-    "cost": 0.7956,
-    "share": 0.206
-  },
-  {
-    "pitch": "Fastball",
-    "quad": "up-away",
-    "spot": "Up and away",
-    "cost": 0.8018,
-    "share": 0.14
+    "quad": "chase",
+    "spot": "Chase",
+    "cost": 0.8029,
+    "share": 0.131
   },
   {
     "pitch": "Slider",
     "quad": "middle",
     "spot": "Get it over",
-    "cost": 0.8021,
-    "share": 0.15
+    "cost": 0.8053,
+    "share": 0.122
   },
   {
-    "pitch": "Slider",
+    "pitch": "Fastball",
     "quad": "up-away",
     "spot": "Up and away",
-    "cost": 0.8047,
-    "share": 0.02
+    "cost": 0.8069,
+    "share": 0.101
   },
   {
     "pitch": "Slider",
     "quad": "down-middle",
     "spot": "Keep it down",
-    "cost": 0.8057,
-    "share": 0
-  },
-  {
-    "pitch": "Slider",
-    "quad": "chase",
-    "spot": "Chase",
-    "cost": 0.8062,
-    "share": 0
-  },
-  {
-    "pitch": "Changeup",
-    "quad": "middle",
-    "spot": "Get it over",
-    "cost": 0.81,
-    "share": 0.071
-  },
-  {
-    "pitch": "Changeup",
-    "quad": "down-away",
-    "spot": "Down and away",
-    "cost": 0.8106,
-    "share": 0.069
+    "cost": 0.8094,
+    "share": 0.094
   },
   {
     "pitch": "Fastball",
     "quad": "up-in",
     "spot": "Up and in",
-    "cost": 0.8108,
+    "cost": 0.8125,
+    "share": 0.018
+  },
+  {
+    "pitch": "Changeup",
+    "quad": "middle",
+    "spot": "Get it over",
+    "cost": 0.8128,
+    "share": 0.101
+  },
+  {
+    "pitch": "Fastball",
+    "quad": "down-middle",
+    "spot": "Keep it down",
+    "cost": 0.815,
+    "share": 0
+  },
+  {
+    "pitch": "Changeup",
+    "quad": "down-away",
+    "spot": "Down and away",
+    "cost": 0.8155,
+    "share": 0.064
+  },
+  {
+    "pitch": "Slider",
+    "quad": "chase",
+    "spot": "Chase",
+    "cost": 0.8162,
+    "share": 0
+  },
+  {
+    "pitch": "Slider",
+    "quad": "up-away",
+    "spot": "Up and away",
+    "cost": 0.8163,
     "share": 0
   },
   {
     "pitch": "Fastball",
     "quad": "middle",
     "spot": "Get it over",
-    "cost": 0.8113,
-    "share": 0
-  },
-  {
-    "pitch": "Fastball",
-    "quad": "down-middle",
-    "spot": "Keep it down",
-    "cost": 0.8119,
-    "share": 0
-  },
-  {
-    "pitch": "Fastball",
-    "quad": "chase",
-    "spot": "Chase",
-    "cost": 0.8124,
+    "cost": 0.8166,
     "share": 0
   },
   {
     "pitch": "Changeup",
     "quad": "down-middle",
     "spot": "Keep it down",
-    "cost": 0.8206,
+    "cost": 0.8243,
     "share": 0
   },
   {
     "pitch": "Fastball",
     "quad": "down-in",
     "spot": "Down and in",
-    "cost": 0.8263,
+    "cost": 0.8285,
     "share": 0
   },
   {
     "pitch": "Slider",
     "quad": "down-in",
     "spot": "Down and in",
-    "cost": 0.8271,
+    "cost": 0.8303,
     "share": 0
   },
   {
     "pitch": "Changeup",
     "quad": "up-away",
     "spot": "Up and away",
-    "cost": 0.8319,
+    "cost": 0.8356,
     "share": 0
   },
   {
     "pitch": "Slider",
     "quad": "up-in",
     "spot": "Up and in",
-    "cost": 0.8343,
+    "cost": 0.8373,
     "share": 0
   },
   {
     "pitch": "Changeup",
     "quad": "chase",
     "spot": "Chase",
-    "cost": 0.8411,
+    "cost": 0.8486,
     "share": 0
   },
   {
     "pitch": "Changeup",
     "quad": "down-in",
     "spot": "Down and in",
-    "cost": 0.8499,
+    "cost": 0.8518,
     "share": 0
   },
   {
     "pitch": "Changeup",
     "quad": "up-in",
     "spot": "Up and in",
-    "cost": 0.8535,
+    "cost": 0.8556,
     "share": 0
   }
 ];
