@@ -1,6 +1,6 @@
 """Put the real app on the iPad in the dugout push-in.
 
-  python3 scripts/screen-composite.py <push.mp4> <out_dir> [hold_end_frame]   (found from the clip if left out)
+  python3 scripts/screen-composite.py <push.mp4> <out_dir> [hold_end_frame]   (found from the clip if left out; the clip is media-src/inside/push.mp4)
 
 Finds the iPad's screen in every frame (the brightest large pale area: the clip is generated with a plain glowing
 screen and nothing crossing it), fits its four corners from the four edges, smooths them over time, and warps an app
