@@ -34,7 +34,7 @@ jobs:
   engine-and-app:
     name: Engine, parity, build and app checks
     runs-on: ubuntu-24.04
-    timeout-minutes: 90        # v1.1: the full suite runs about 50 minutes (read-through, goldens, whole app games)
+    timeout-minutes: 150       # v1.1: the full suite ran about 50 minutes; v1.2.3: about 72 minutes on a 2-core box and past 90 on CI (read-through, goldens, whole app games)
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }   # v1.1: tests_v11.py compares against the real v1.0 engine (git archive of its commit)
