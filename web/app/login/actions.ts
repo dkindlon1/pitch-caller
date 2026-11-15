@@ -43,11 +43,11 @@ export async function resendConfirm(form: FormData) {
 // rate limit is reported. The link comes back through /auth/confirm (which signs him in) to /app/password.
 export async function sendReset(form: FormData) {
   const email = str(form, "email");
-  if (!email) redirect("/login?mode=reset&error=missing_email");
+  if (!email) redirect("/login/reset?error=missing_email");
   const sb = await getServerSupabase();
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: await confirmUrl("/app/password") });
-  if (error && (error.status === 429 || error.code === "over_email_send_rate_limit")) redirect("/login?mode=reset&error=resend_wait");
-  redirect("/login?mode=reset&notice=reset_sent");
+  if (error && (error.status === 429 || error.code === "over_email_send_rate_limit")) redirect("/login/reset?error=resend_wait");
+  redirect("/login/reset?notice=reset_sent");
 }
 
 // The new password, from /app/password (signed in by the reset link, or from the account menu)

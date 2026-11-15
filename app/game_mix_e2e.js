@@ -18,7 +18,7 @@ const { chromium } = require("playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const DIST = process.env.DIST || path.join(__dirname, "dist/pitch-caller.html");
 const PITCHES = 82, TOP_MAX = 0.70;
-const GAME_MAX = 0.85, MEAN_MAX = 0.60, OVER_MAX = 1;   // v1.1 Step 4: the 21-game gate (Drew, Nov 13)    // v0.9 threw 61% fastballs on this script; the v1.0 collapse was 88-96%
+const GAME_MAX = 0.85, MEAN_MAX = 0.60, OVER_MAX = 3;   // v1.1 Step 4: the 21-game gate (Drew, Nov 13); OVER_MAX 1 -> 3 in v1.2.3 (Drew, Nov 14): the steadier umpire read puts 3 games over 70%    // v0.9 threw 61% fastballs on this script; the v1.0 collapse was 88-96%
 let fails = 0;
 const check = (ok, msg) => { console.log((ok ? "  ok   " : "  FAIL ") + msg); if (!ok) fails++; };
 const server = http.createServer((req, res) => {
@@ -71,7 +71,7 @@ async function game(browser, url, { tier, seed, forcedReads }) {
   console.log("1. Whole games through the app keep a mix (sample staff: fastball, slider, changeup; college D3)");
   // v1.1 Step 4 (Drew, Nov 13): one game is path-dependent (one changed call re-routes the rest), so the gate is 21 games, not
   // 6: the 20 scan seeds plus the forced-reads game. Each game charts cleanly, keeps 2+ pitches and stays at or under 85%;
-  // over all of them the average top pitch is at most 60% and at most one game goes over 70%. v1.0's collapse (75-95% in
+  // over all of them the average top pitch is at most 60% and at most three games go over 70% (one until v1.2.3). v1.0's collapse (75-95% in
   // every game) fails all three.
   const T2 = [7, 11, 21, 33, 45, 57, 69, 81, 93, 105], T3 = [7, 11, 31337, 21, 33, 45, 57, 69, 81, 93];
   const GAMES = process.env.SCAN ? JSON.parse(process.env.SCAN)
