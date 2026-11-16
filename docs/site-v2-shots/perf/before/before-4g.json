@@ -1,0 +1,211 @@
+{
+ "name": "before-4g",
+ "variant": "base",
+ "net": "4g",
+ "cpu": 1,
+ "url": "http://127.0.0.1:3197/",
+ "viewport": "1440x900@2x",
+ "dpr": 2.0000000596046448,
+ "canvas": [
+  2138,
+  1350,
+  1425,
+  900
+ ],
+ "seconds": 5.01,
+ "fcpMs": 612,
+ "scrollStartMs": 623,
+ "scrolledPx": 3332,
+ "lenis": true,
+ "frames": {
+  "rafCount": 787,
+  "fps": 157,
+  "p50": 4.2,
+  "p95": 8.4,
+  "p99": 20.8,
+  "max": 100,
+  "over20ms": 8,
+  "over34ms": 3,
+  "over50ms": 2,
+  "compositor": {
+   "presented": 929,
+   "partial": 337,
+   "droppedAffectingSmoothness": 561,
+   "states": {
+    "STATE_PRESENTED_ALL": 624,
+    "STATE_NO_UPDATE_DESIRED": 305,
+    "STATE_DROPPED": 561,
+    "STATE_PRESENTED_PARTIAL": 337
+   }
+  },
+  "swaps": {
+   "n": 529,
+   "p50": 8.2,
+   "p95": 30.3,
+   "p99": 34,
+   "max": 237.8,
+   "gapsOver12ms": 52,
+   "gapsOver20ms": 42,
+   "gapsOver34ms": 6,
+   "gapsOver50ms": 2,
+   "worstAt": "18ms:31 49ms:31 80ms:31 112ms:31 148ms:24 175ms:29 204ms:31 235ms:34 299ms:43 342ms:34 391ms:27 418ms:31 449ms:31 480ms:30 511ms:30 541ms:31 572ms:31 603ms:30 637ms:27 664ms:30 694ms:31 725ms:31 757ms:29 786ms:30 817ms:31 848ms:31 882ms:27 910ms:46 956ms:30 1017ms:31 1048ms:31 1079ms:30 1109ms:31 1144ms:27 1171ms:31 1202ms:33 1830ms:65 1895ms:238 2133ms:21 4116ms:22 4162ms:25 4321ms:39"
+  }
+ },
+ "gpu": {
+  "mainBusyMs": 1085,
+  "tasksOver8ms": 16,
+  "tasksOver16ms": 5,
+  "maxMs": 48.5,
+  "longAt": "266ms:12 1990ms:19 2062ms:49 2113ms:12 2133ms:11 2628ms:8 4082ms:16 4117ms:20 4163ms:24 4213ms:14 4263ms:15 4297ms:16 4322ms:37 4483ms:10 4501ms:11 4538ms:9"
+ },
+ "mainThread": {
+  "tasksOver16ms": 4,
+  "tasksOver50ms": 1,
+  "longest": [
+   {
+    "at": 1955,
+    "ms": 97,
+    "what": "EvaluateScript 96ms 3e3hzl6xcssvp.js; v8.run 96ms; v8.callFunction 32ms"
+   },
+   {
+    "at": 240,
+    "ms": 22,
+    "what": "FireAnimationFrame 20ms; v8.callFunction 20ms; FunctionCall 20ms loop"
+   },
+   {
+    "at": 1217,
+    "ms": 20,
+    "what": "EvaluateScript 19ms 02mryk7pbbvte.js; v8.run 19ms; EventDispatch 1ms"
+   },
+   {
+    "at": 359,
+    "ms": 16,
+    "what": "Layout 16ms; UpdateLayoutTree 0ms"
+   }
+  ]
+ },
+ "busyMs": {
+  "GPU Process / GpuVSyncThread": 10020,
+  "Renderer / ThreadPoolForegroundWorker": 3881,
+  "Renderer / Compositor": 2881,
+  "Renderer / CrRendererMain": 2301,
+  "GPU Process / CrGpuMain": 2165,
+  "GPU Process / VizCompositorThread": 1819,
+  "GPU Process / ThreadPoolForegroundWorker": 378,
+  "Browser / CrBrowserMain": 273,
+  "Renderer / Chrome_ChildIOThread": 29,
+  "Browser / CacheThread_BlockFile": 27,
+  "Browser / Chrome_IOThread": 24,
+  "Browser / DevToolsPipeHandlerWriteThread": 20
+ },
+ "workMs": {
+  "SkiaOutputSurfaceImplOnGpu::FinishPaintRenderPass [CrGpuMain]": "511 ms in 4190 (max 37.4)",
+  "GPUTask [CrGpuMain]": "472 ms in 847 (max 48.5)",
+  "FunctionCall [main]": "346 ms in 3654 (max 31.8)",
+  "Display::DrawAndSwap [VizCompositorThread]": "289 ms in 529 (max 1.3)",
+  "FireAnimationFrame [main]": "251 ms in 1634 (max 20.1)",
+  "DirectRenderer::DrawFrame [VizCompositorThread]": "230 ms in 529 (max 1.0)",
+  "Commit [main]": "194 ms in 787 (max 6.4)",
+  "EvaluateScript [main]": "129 ms in 30 (max 96.2)",
+  "UpdateLayoutTree [main]": "110 ms in 1093 (max 0.8)",
+  "HitTest [main]": "97 ms in 522 (max 0.5)",
+  "Layerize [main]": "94 ms in 649 (max 0.6)",
+  "Layout [main]": "70 ms in 238 (max 19.7)",
+  "EventDispatch [main]": "67 ms in 795 (max 1.4)",
+  "RasterTask [ThreadPoolForegroundWorker]": "60 ms in 1269 (max 1.8)",
+  "PrePaint [main]": "60 ms in 1316 (max 1.3)",
+  "Paint [main]": "45 ms in 527 (max 1.0)",
+  "Decode LazyPixelRef [main]": "20 ms in 6 (max 4.0)",
+  "MajorGC [main]": "6 ms in 4 (max 1.9)",
+  "V8.GC_MARK_COMPACTOR [main]": "6 ms in 4 (max 1.9)",
+  "Commit [CrBrowserMain]": "5 ms in 101 (max 0.2)",
+  "MinorGC [main]": "3 ms in 5 (max 1.0)",
+  "RasterTask [CompositorTileWorker]": "3 ms in 104 (max 0.1)",
+  "V8.GC_SCAVENGER [main]": "2 ms in 5 (max 0.7)",
+  "TimerFire [main]": "2 ms in 19 (max 1.1)",
+  "Decode LazyPixelRef [Compositor]": "2 ms in 3 (max 0.7)",
+  "Decode Image [Compositor]": "1 ms in 3 (max 0.7)",
+  "ParseHTML [main]": "1 ms in 14 (max 0.4)",
+  "v8.compile [main]": "1 ms in 30 (max 0.1)",
+  "FunctionCall [CrRendererMain]": "0 ms in 9 (max 0.1)",
+  "ParseHTML [CrRendererMain]": "0 ms in 11 (max 0.0)",
+  "ImageUploadTask [CompositorTileWorker]": "0 ms in 1 (max 0.0)",
+  "EventDispatch [CrRendererMain]": "0 ms in 2 (max 0.0)"
+ },
+ "imageDecode": {
+  "decodeImage": {
+   "n": 3,
+   "totalMs": 1,
+   "maxMs": 0.7
+  },
+  "lazyPixelRef": {
+   "n": 9,
+   "totalMs": 22,
+   "maxMs": 4
+  }
+ },
+ "film": {
+  "samples": 787,
+  "blankSamples": 511,
+  "firstFrameAtMs": 2627,
+  "distinctFramesShown": 7,
+  "steps": 6,
+  "biggestStep": 150,
+  "stepsOver2": 6,
+  "framesFromScrollPosition": {
+   "mean": 10.9,
+   "p95": 41,
+   "max": 97.4
+  },
+  "framesFromWanted": "not reported by this build",
+  "sharpShare": "not reported by this build"
+ },
+ "loafs": [
+  {
+   "start": 2576,
+   "dur": 104,
+   "block": 51,
+   "render": 5,
+   "style": 0,
+   "scripts": [
+    {
+     "dur": 96,
+     "src": "3e3hzl6xcssvp.js",
+     "fn": "",
+     "inv": "http://127.0.0.1:3197/_next/static/chunks/3e3hzl6xcssvp.js"
+    }
+   ]
+  },
+  {
+   "start": 2682,
+   "dur": 81,
+   "block": 0,
+   "render": 1,
+   "style": 0,
+   "scripts": []
+  }
+ ],
+ "network": {
+  "duringScroll": 48,
+  "frames": 24,
+  "kb": 896,
+  "scripts": [
+   "2juognto4kljr.js 8KB @-374ms",
+   "turbopack-2u1d16houkiyo.js 4KB @-374ms",
+   "0cwl6fqupq8fk.js 46KB @-374ms",
+   "02mryk7pbbvte.js 70KB @-374ms",
+   "1uurqp6d3e2_9.js 4KB @-374ms",
+   "0uto8as5cv_d0.js 3KB @-374ms",
+   "3c6qg37r83upu.js 4KB @-374ms",
+   "0x6fju6pm5jec.js 16KB @-374ms",
+   "3e3hzl6xcssvp.js 27KB @1312ms",
+   "3qg8u4g5-64sf.js 17KB @1312ms",
+   "00tt7ey-kz-n5.js 4KB @1312ms",
+   "3nv1d2_wz8agr.js 9KB @1312ms",
+   "019uoq2zefwwl.js 6KB @1312ms",
+   "112i6ysn4g5lq.js 5KB @1909ms",
+   "3ll90_ken_xrk.js 25KB @3900ms"
+  ]
+ },
+ "errors": []
+}

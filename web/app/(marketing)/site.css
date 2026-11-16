@@ -95,6 +95,8 @@ html.lenis, html.lenis body { height: auto; }
 .pq-glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1; opacity: var(--hl, 0); transition: opacity var(--t-med);
   background: radial-gradient(220px 160px at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.22), transparent 70%); }
 .pq-glass.is-won { box-shadow: var(--glass-shadow-won); }
+/* a panel that is not showing does no backdrop work (Film.tsx marks them; a backdrop filter is paid for even at opacity 0) */
+.pq-glass.is-off { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .pq-glass { background: rgba(26, 28, 40, 0.94); } }
 
 /* ---------- buttons ---------- */

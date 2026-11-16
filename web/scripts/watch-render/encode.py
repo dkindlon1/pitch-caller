@@ -1,7 +1,10 @@
 # Encode the rendered film for the site and check it.
 #   python encode.py [--quality 80]
+#   python encode.py --lo-only     only rebuild the small sheets, from the encoded frames (no rendered masters needed)
 # Reads frames/{wide,tall}/f_0000.png ... and frames/cut-{wide,tall}/f_0149.png (rendered with --alpha), writes
 #   public/media/film/watch/{wide,tall}/0001.webp ...   the film
+#   public/media/film/watch/{wide,tall}-lo-{1,2,3}.webp  every frame at an eighth of the size, 50 to a sheet (what the
+#                                                        scrub shows until a sharp frame is in: _components/filmFrames.ts)
 #   public/media/film/watch/poster.jpg, tall-poster.jpg  the last frame (reduced motion)
 #   public/media/film/watch/first.jpg, tall-first.jpg    the first frame (what the canvas shows until its frames load)
 #   public/media/film/watch/cut-{wide,tall}.webp         the watch lifted off the last frame (transparent ground)
@@ -30,6 +33,25 @@ def flatten(im):
     a[near] = g
     return Image.fromarray(a.astype(np.uint8), "RGB"), float(near.mean())
 
+LO_PER, LO_COLS, LO_DIV = 50, 10, 8      # as in _components/filmFrames.ts
+
+def lo_sheets(name):
+    files = sorted(glob.glob(os.path.join(OUT, name, "[0-9]*.webp")))
+    for old in glob.glob(os.path.join(OUT, f"{name}-lo-*.webp")): os.remove(old)
+    w, h = Image.open(files[0]).size; cw, ch = w // LO_DIV, h // LO_DIV; total = 0
+    for s in range(0, len(files), LO_PER):
+        part = files[s:s + LO_PER]
+        sheet = Image.new("RGB", (LO_COLS * cw, -(-len(part) // LO_COLS) * ch), GROUND)
+        for i, f in enumerate(part):
+            sheet.paste(Image.open(f).convert("RGB").resize((cw, ch), Image.LANCZOS), ((i % LO_COLS) * cw, (i // LO_COLS) * ch))
+        p = os.path.join(OUT, f"{name}-lo-{s // LO_PER + 1}.webp")
+        sheet.save(p, "WEBP", quality=55, method=6); total += os.path.getsize(p)
+    print(f"{name}: small copies {cw}x{ch}, {-(-len(files) // LO_PER)} sheets, {total / 1e3:.0f} KB")
+
+if "--lo-only" in sys.argv:
+    for name in ("wide", "tall"): lo_sheets(name)
+    sys.exit(0)
+
 for name in ("wide", "tall"):
     files = sorted(glob.glob(os.path.join(HERE, "frames", name, "f_*.png")))
     dst = os.path.join(OUT, name); os.makedirs(dst, exist_ok=True)
@@ -50,6 +72,7 @@ for name in ("wide", "tall"):
     last.save(os.path.join(OUT, "poster.jpg" if name == "wide" else "tall-poster.jpg"), "JPEG", quality=88, optimize=True, progressive=True)
     flatten(Image.open(files[0]).convert("RGB"))[0].save(os.path.join(OUT, "first.jpg" if name == "wide" else "tall-first.jpg"), "JPEG", quality=86, optimize=True, progressive=True)
     print(f"{name}: {len(files)} frames {last.size}, {total / 1e6:.2f} MB, avg {total / len(files) / 1e3:.0f} KB; ground is {flat / len(files):.0%} of the picture; edge points that are ground in the master decode from WebP as {dict(seen)} (worst channel difference from #0c0b0e: {worst}); screen {screen_rect(last)}")
+    lo_sheets(name)
     cut = Image.open(os.path.join(HERE, "frames", f"cut-{name}", f"f_{len(files) - 1:04d}.png")).convert("RGBA")
     cut.save(os.path.join(OUT, f"cut-{name}.webp"), "WEBP", quality=86, method=6)
     if name == "wide":

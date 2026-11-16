@@ -1,0 +1,184 @@
+{
+ "name": "before-nofilter",
+ "variant": "nofilter",
+ "net": "none",
+ "cpu": 1,
+ "url": "http://127.0.0.1:3197/",
+ "viewport": "1440x900@2x",
+ "dpr": 2.0000000596046448,
+ "canvas": [
+  2138,
+  1350,
+  1425,
+  900
+ ],
+ "seconds": 5.01,
+ "fcpMs": 316,
+ "scrollStartMs": 330,
+ "scrolledPx": 2959,
+ "lenis": true,
+ "frames": {
+  "rafCount": 609,
+  "fps": 121.6,
+  "p50": 8.3,
+  "p95": 8.4,
+  "p99": 12.6,
+  "max": 96,
+  "over20ms": 3,
+  "over34ms": 3,
+  "over50ms": 2,
+  "compositor": {
+   "presented": 611,
+   "partial": 590,
+   "droppedAffectingSmoothness": 873,
+   "states": {
+    "STATE_PRESENTED_ALL": 596,
+    "STATE_NO_UPDATE_DESIRED": 15,
+    "STATE_DROPPED": 873,
+    "STATE_PRESENTED_PARTIAL": 590
+   }
+  },
+  "swaps": {
+   "n": 600,
+   "p50": 8.2,
+   "p95": 8.9,
+   "p99": 10.1,
+   "max": 194.7,
+   "gapsOver12ms": 3,
+   "gapsOver20ms": 2,
+   "gapsOver34ms": 2,
+   "gapsOver50ms": 1,
+   "worstAt": "36ms:195 4911ms:35"
+  }
+ },
+ "gpu": {
+  "mainBusyMs": 1110,
+  "tasksOver8ms": 8,
+  "tasksOver16ms": 3,
+  "maxMs": 35.7,
+  "longAt": "104ms:16 173ms:36 212ms:10 940ms:11 3523ms:12 4690ms:16 4912ms:34 4998ms:9"
+ },
+ "mainThread": {
+  "tasksOver16ms": 1,
+  "tasksOver50ms": 1,
+  "longest": [
+   {
+    "at": 68,
+    "ms": 93,
+    "what": "EvaluateScript 93ms 3e3hzl6xcssvp.js; v8.run 93ms; v8.callFunction 28ms"
+   }
+  ]
+ },
+ "busyMs": {
+  "GPU Process / GpuVSyncThread": 10013,
+  "Renderer / Compositor": 4669,
+  "Renderer / CrRendererMain": 3237,
+  "GPU Process / VizCompositorThread": 2360,
+  "GPU Process / CrGpuMain": 2214,
+  "GPU Process / ThreadPoolForegroundWorker": 215,
+  "Renderer / ThreadPoolForegroundWorker": 214,
+  "Browser / CrBrowserMain": 134,
+  "Browser / CacheThread_BlockFile": 58,
+  "Renderer / Chrome_ChildIOThread": 33,
+  "Browser / ThreadPoolForegroundWorker": 20,
+  "Browser / DevToolsPipeHandlerWriteThread": 13
+ },
+ "workMs": {
+  "GPUTask [CrGpuMain]": "697 ms in 1170 (max 35.7)",
+  "Commit [main]": "580 ms in 609 (max 5.9)",
+  "FunctionCall [main]": "381 ms in 5522 (max 28.4)",
+  "Decode LazyPixelRef [main]": "322 ms in 82 (max 5.2)",
+  "SkiaOutputSurfaceImplOnGpu::FinishPaintRenderPass [CrGpuMain]": "307 ms in 2445 (max 34.3)",
+  "Display::DrawAndSwap [VizCompositorThread]": "264 ms in 600 (max 0.8)",
+  "FireAnimationFrame [main]": "255 ms in 2101 (max 1.3)",
+  "DirectRenderer::DrawFrame [VizCompositorThread]": "198 ms in 600 (max 0.6)",
+  "EventDispatch [main]": "140 ms in 1393 (max 1.1)",
+  "HitTest [main]": "136 ms in 621 (max 0.7)",
+  "UpdateLayoutTree [main]": "113 ms in 1229 (max 0.9)",
+  "EvaluateScript [main]": "107 ms in 7 (max 93.0)",
+  "Layerize [main]": "106 ms in 604 (max 0.4)",
+  "RasterTask [ThreadPoolForegroundWorker]": "77 ms in 1824 (max 1.4)",
+  "PrePaint [main]": "67 ms in 1242 (max 0.9)",
+  "Paint [main]": "31 ms in 448 (max 0.8)",
+  "Layout [main]": "26 ms in 160 (max 1.9)",
+  "MinorGC [main]": "3 ms in 4 (max 0.8)",
+  "V8.GC_SCAVENGER [main]": "2 ms in 4 (max 0.8)",
+  "MajorGC [main]": "2 ms in 1 (max 2.2)",
+  "V8.GC_MARK_COMPACTOR [main]": "2 ms in 1 (max 2.2)",
+  "TimerFire [main]": "2 ms in 25 (max 1.1)",
+  "Decode LazyPixelRef [Compositor]": "1 ms in 3 (max 0.5)",
+  "Decode Image [Compositor]": "1 ms in 3 (max 0.4)",
+  "Commit [CrBrowserMain]": "1 ms in 10 (max 0.1)",
+  "RasterTask [CompositorTileWorker]": "0 ms in 9 (max 0.1)",
+  "ParseHTML [main]": "0 ms in 6 (max 0.1)",
+  "v8.compile [main]": "0 ms in 7 (max 0.1)"
+ },
+ "imageDecode": {
+  "decodeImage": {
+   "n": 3,
+   "totalMs": 1,
+   "maxMs": 0.4
+  },
+  "lazyPixelRef": {
+   "n": 85,
+   "totalMs": 323,
+   "maxMs": 5.2
+  }
+ },
+ "film": {
+  "samples": 609,
+  "blankSamples": 18,
+  "firstFrameAtMs": 240,
+  "distinctFramesShown": 82,
+  "steps": 82,
+  "biggestStep": 4,
+  "stepsOver2": 1,
+  "framesFromScrollPosition": {
+   "mean": 0.6,
+   "p95": 1.1,
+   "max": 3
+  },
+  "framesFromWanted": "not reported by this build",
+  "sharpShare": "not reported by this build"
+ },
+ "loafs": [
+  {
+   "start": 394,
+   "dur": 100,
+   "block": 46,
+   "render": 3,
+   "style": 1,
+   "scripts": [
+    {
+     "dur": 93,
+     "src": "3e3hzl6xcssvp.js",
+     "fn": "",
+     "inv": "http://127.0.0.1:3197/_next/static/chunks/3e3hzl6xcssvp.js"
+    }
+   ]
+  },
+  {
+   "start": 503,
+   "dur": 70,
+   "block": 0,
+   "render": 0,
+   "style": 0,
+   "scripts": []
+  }
+ ],
+ "network": {
+  "duringScroll": 157,
+  "frames": 150,
+  "kb": 3411,
+  "scripts": [
+   "3e3hzl6xcssvp.js 27KB @55ms",
+   "3qg8u4g5-64sf.js 17KB @55ms",
+   "00tt7ey-kz-n5.js 4KB @55ms",
+   "019uoq2zefwwl.js 6KB @56ms",
+   "3nv1d2_wz8agr.js 9KB @56ms",
+   "3ll90_ken_xrk.js 25KB @2004ms",
+   "2o1x5ulv1myva.js 186KB @2005ms"
+  ]
+ },
+ "errors": []
+}

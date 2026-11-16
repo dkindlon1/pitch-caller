@@ -1,0 +1,152 @@
+{
+ "name": "before-cold",
+ "variant": "base",
+ "url": "http://127.0.0.1:3197/",
+ "viewport": "1440x900@2x",
+ "dpr": 2.0000000596046448,
+ "canvas": [
+  2138,
+  1350,
+  1425,
+  900
+ ],
+ "seconds": 5.01,
+ "fcpMs": 424,
+ "scrollStartMs": 439,
+ "scrolledPx": 2959,
+ "lenis": true,
+ "frames": {
+  "rafCount": 596,
+  "fps": 119,
+  "p50": 8.3,
+  "p95": 8.5,
+  "p99": 16.7,
+  "max": 95.9,
+  "over20ms": 5,
+  "over34ms": 3,
+  "over50ms": 2,
+  "compositor": {
+   "presented": 0,
+   "partial": 0,
+   "dropped": 0,
+   "states": {},
+   "droppedFrameEvents": 710,
+   "drawFrameEvents": 579
+  }
+ },
+ "mainThread": {
+  "tasksOver16ms": 1,
+  "tasksOver50ms": 1,
+  "longest": [
+   {
+    "at": 63,
+    "ms": 92,
+    "what": "EvaluateScript 92ms 3e3hzl6xcssvp.js; v8.run 92ms; v8.callFunction 29ms"
+   }
+  ]
+ },
+ "busyMs": {
+  "GPU Process / GpuVSyncThread": 10014,
+  "Renderer / Compositor": 4823,
+  "Renderer / CrRendererMain": 3280,
+  "GPU Process / CrGpuMain": 2755,
+  "GPU Process / VizCompositorThread": 2541,
+  "GPU Process / ThreadPoolForegroundWorker": 341,
+  "Renderer / ThreadPoolForegroundWorker": 217,
+  "Browser / CrBrowserMain": 130,
+  "Browser / CacheThread_BlockFile": 50,
+  "Renderer / Chrome_ChildIOThread": 33,
+  "Browser / ThreadPoolForegroundWorker": 18,
+  "Browser / DevToolsPipeHandlerWriteThread": 14
+ },
+ "workMs": {
+  "GPUTask [CrGpuMain]": "697 ms in 1191 (max 35.9)",
+  "Commit [main]": "584 ms in 596 (max 6.4)",
+  "SkiaOutputSurfaceImplOnGpu::FinishPaintRenderPass [CrGpuMain]": "558 ms in 5601 (max 35.1)",
+  "FunctionCall [main]": "365 ms in 5446 (max 28.6)",
+  "Display::DrawAndSwap [VizCompositorThread]": "365 ms in 588 (max 1.0)",
+  "Decode LazyPixelRef [main]": "311 ms in 81 (max 5.1)",
+  "DirectRenderer::DrawFrame [VizCompositorThread]": "292 ms in 588 (max 0.8)",
+  "FireAnimationFrame [main]": "247 ms in 2056 (max 1.3)",
+  "HitTest [main]": "136 ms in 614 (max 0.5)",
+  "EventDispatch [main]": "130 ms in 1369 (max 0.9)",
+  "Layerize [main]": "126 ms in 591 (max 0.4)",
+  "UpdateLayoutTree [main]": "107 ms in 1212 (max 0.8)",
+  "EvaluateScript [main]": "106 ms in 8 (max 91.6)",
+  "RasterTask [ThreadPoolForegroundWorker]": "83 ms in 1791 (max 1.9)",
+  "PrePaint [main]": "74 ms in 1217 (max 0.9)",
+  "Paint [main]": "35 ms in 423 (max 0.8)",
+  "Layout [main]": "25 ms in 158 (max 2.0)",
+  "MajorGC [main]": "2 ms in 1 (max 2.5)",
+  "V8.GC_MARK_COMPACTOR [main]": "2 ms in 1 (max 2.4)",
+  "MinorGC [main]": "2 ms in 4 (max 0.7)",
+  "V8.GC_SCAVENGER [main]": "2 ms in 4 (max 0.6)",
+  "TimerFire [main]": "2 ms in 25 (max 1.1)",
+  "Decode LazyPixelRef [Compositor]": "1 ms in 3 (max 0.5)",
+  "Decode Image [Compositor]": "1 ms in 3 (max 0.4)",
+  "Commit [CrBrowserMain]": "1 ms in 11 (max 0.2)",
+  "v8.compile [main]": "0 ms in 8 (max 0.2)",
+  "RasterTask [CompositorTileWorker]": "0 ms in 10 (max 0.1)",
+  "ParseHTML [main]": "0 ms in 6 (max 0.1)"
+ },
+ "imageDecode": {
+  "decodeImage": {
+   "n": 3,
+   "totalMs": 1,
+   "maxMs": 0.4
+  },
+  "lazyPixelRef": {
+   "n": 84,
+   "totalMs": 312,
+   "maxMs": 5.1
+  }
+ },
+ "film": {
+  "samples": 596,
+  "distinctFramesShown": 81,
+  "heldFrames": 514,
+  "lagFrames": "not reported by this build",
+  "sharpShare": "not reported by this build"
+ },
+ "loafs": [
+  {
+   "start": 502,
+   "dur": 95,
+   "block": 44,
+   "render": 3,
+   "style": 0,
+   "scripts": [
+    {
+     "dur": 92,
+     "src": "3e3hzl6xcssvp.js",
+     "fn": "",
+     "inv": "http://127.0.0.1:3197/_next/static/chunks/3e3hzl6xcssvp.js"
+    }
+   ]
+  },
+  {
+   "start": 607,
+   "dur": 93,
+   "block": 0,
+   "render": 1,
+   "style": 0,
+   "scripts": []
+  }
+ ],
+ "network": {
+  "duringScroll": 161,
+  "frames": 150,
+  "kb": 3484,
+  "scripts": [
+   "112i6ysn4g5lq.js 5KB @13ms",
+   "3e3hzl6xcssvp.js 27KB @49ms",
+   "3qg8u4g5-64sf.js 17KB @50ms",
+   "00tt7ey-kz-n5.js 4KB @50ms",
+   "3nv1d2_wz8agr.js 9KB @50ms",
+   "019uoq2zefwwl.js 6KB @50ms",
+   "3ll90_ken_xrk.js 25KB @2010ms",
+   "2o1x5ulv1myva.js 186KB @2011ms"
+  ]
+ },
+ "errors": []
+}

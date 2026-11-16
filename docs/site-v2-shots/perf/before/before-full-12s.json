@@ -1,0 +1,143 @@
+{
+ "name": "before-full-12s",
+ "variant": "base",
+ "net": "none",
+ "cpu": 1,
+ "url": "http://127.0.0.1:3197/",
+ "viewport": "1440x900@2x",
+ "dpr": 2.0000000596046448,
+ "canvas": [
+  2138,
+  1350,
+  1425,
+  900
+ ],
+ "seconds": 12.02,
+ "fcpMs": 312,
+ "scrollStartMs": 4335,
+ "scrolledPx": 7137,
+ "lenis": true,
+ "frames": {
+  "rafCount": 1455,
+  "fps": 121.1,
+  "p50": 8.3,
+  "p95": 8.4,
+  "p99": 12.5,
+  "max": 37.4,
+  "over20ms": 6,
+  "over34ms": 1,
+  "over50ms": 0,
+  "compositor": {
+   "presented": 1455,
+   "partial": 1451,
+   "droppedAffectingSmoothness": 2134,
+   "states": {
+    "STATE_NO_UPDATE_DESIRED": 1,
+    "STATE_PRESENTED_ALL": 1454,
+    "STATE_DROPPED": 2134,
+    "STATE_PRESENTED_PARTIAL": 1451
+   }
+  },
+  "swaps": {
+   "n": 1451,
+   "p50": 8.3,
+   "p95": 9.2,
+   "p99": 11.8,
+   "max": 37.7,
+   "gapsOver12ms": 13,
+   "gapsOver20ms": 6,
+   "gapsOver34ms": 1,
+   "gapsOver50ms": 0,
+   "worstAt": "1737ms:26 1779ms:21 4949ms:38 7347ms:21 10878ms:23 11007ms:31"
+  }
+ },
+ "gpu": {
+  "mainBusyMs": 3276,
+  "tasksOver8ms": 28,
+  "tasksOver16ms": 7,
+  "maxMs": 35.1,
+  "longAt": "28ms:10 985ms:11 1609ms:11 1622ms:15 1654ms:14 1708ms:13 1737ms:24 1779ms:20 4730ms:16 4951ms:35 5031ms:8 5145ms:10 5183ms:9 7305ms:11 7348ms:20 7403ms:12 7790ms:13 8475ms:17 8602ms:11 8996ms:11 9041ms:10 9835ms:12 10402ms:12 10878ms:22 10960ms:8 11008ms:30 11043ms:10 11161ms:14"
+ },
+ "mainThread": {
+  "tasksOver16ms": 0,
+  "tasksOver50ms": 0,
+  "longest": []
+ },
+ "busyMs": {
+  "GPU Process / GpuVSyncThread": 24023,
+  "Renderer / Compositor": 11277,
+  "Renderer / CrRendererMain": 6756,
+  "GPU Process / VizCompositorThread": 6549,
+  "GPU Process / CrGpuMain": 6534,
+  "GPU Process / ThreadPoolForegroundWorker": 645,
+  "Renderer / ThreadPoolForegroundWorker": 531,
+  "Browser / CacheThread_BlockFile": 166,
+  "Browser / CrBrowserMain": 121,
+  "Renderer / Chrome_ChildIOThread": 52,
+  "Browser / ThreadPoolForegroundWorker": 23,
+  "Renderer / PerfettoTrace": 10
+ },
+ "workMs": {
+  "SkiaOutputSurfaceImplOnGpu::FinishPaintRenderPass [CrGpuMain]": "1535 ms in 14508 (max 35.1)",
+  "GPUTask [CrGpuMain]": "1310 ms in 2411 (max 15.7)",
+  "Commit [main]": "1156 ms in 1455 (max 5.9)",
+  "Display::DrawAndSwap [VizCompositorThread]": "1058 ms in 1451 (max 1.6)",
+  "FunctionCall [main]": "890 ms in 13044 (max 2.0)",
+  "DirectRenderer::DrawFrame [VizCompositorThread]": "875 ms in 1451 (max 1.5)",
+  "FireAnimationFrame [main]": "768 ms in 5092 (max 2.0)",
+  "Decode LazyPixelRef [main]": "524 ms in 149 (max 5.1)",
+  "UpdateLayoutTree [main]": "381 ms in 1687 (max 1.8)",
+  "Layerize [main]": "307 ms in 1444 (max 0.5)",
+  "HitTest [main]": "301 ms in 1517 (max 1.0)",
+  "RasterTask [ThreadPoolForegroundWorker]": "272 ms in 3455 (max 2.4)",
+  "EventDispatch [main]": "208 ms in 3027 (max 0.8)",
+  "PrePaint [main]": "168 ms in 3004 (max 0.4)",
+  "Paint [main]": "75 ms in 1135 (max 0.4)",
+  "ImageDecodeTask [ThreadPoolForegroundWorker]": "21 ms in 1 (max 21.2)",
+  "Decode LazyPixelRef [ThreadPoolForegroundWorker]": "21 ms in 1 (max 21.0)",
+  "Decode Image [ThreadPoolForegroundWorker]": "21 ms in 1 (max 21.0)",
+  "Layout [main]": "14 ms in 95 (max 0.3)",
+  "MajorGC [main]": "8 ms in 6 (max 2.2)",
+  "V8.GC_MARK_COMPACTOR [main]": "8 ms in 6 (max 2.1)",
+  "ImageUploadTask [ThreadPoolForegroundWorker]": "3 ms in 1 (max 2.8)",
+  "TimerFire [main]": "1 ms in 48 (max 0.1)",
+  "MinorGC [main]": "1 ms in 1 (max 0.7)",
+  "V8.GC_SCAVENGER [main]": "1 ms in 1 (max 0.7)"
+ },
+ "imageDecode": {
+  "decodeImage": {
+   "n": 1,
+   "totalMs": 21,
+   "maxMs": 21
+  },
+  "lazyPixelRef": {
+   "n": 150,
+   "totalMs": 545,
+   "maxMs": 21
+  }
+ },
+ "film": {
+  "samples": 1455,
+  "blankSamples": 0,
+  "firstFrameAtMs": 2,
+  "distinctFramesShown": 150,
+  "steps": 149,
+  "biggestStep": 1,
+  "stepsOver2": 0,
+  "framesFromScrollPosition": {
+   "mean": 0.4,
+   "p95": 1,
+   "max": 1.3
+  },
+  "framesFromWanted": "not reported by this build",
+  "sharpShare": "not reported by this build"
+ },
+ "loafs": [],
+ "network": {
+  "duringScroll": 1,
+  "frames": 1,
+  "kb": 15,
+  "scripts": []
+ },
+ "errors": []
+}

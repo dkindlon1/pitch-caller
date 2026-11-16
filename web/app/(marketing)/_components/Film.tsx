@@ -1,8 +1,10 @@
 "use client";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { STORY_SIT, ledger, pct, type Weighed } from "@/lib/story";
 import { Playground } from "./Playground";
-import { motion, reducedMotion, tallScreen, useKit } from "./motion";
+import { afterPaint, loadKit, motion, reducedMotion, tallScreen, useKit } from "./motion";
+import { filmFrames, type FilmSet, type Frames } from "./filmFrames";
+import { glassMoving } from "./GlassFx";
 
 // The opening film tells one call. The watch assembles from its parts as you scroll (frames drawn to a canvas, exactly
 // as rendered: scripts/watch-render) while the page shows the call being made over it, in six stops:
@@ -12,12 +14,23 @@ import { motion, reducedMotion, tallScreen, useKit } from "./motion";
 // then the words part to the sides and the playground's panels come out from behind the same watch.
 // Every number is from the page's build-time engine run (the `story` prop, lib/story_server.ts).
 // One scrubbed GSAP timeline; P below is the section's scroll progress, 0 to 1.
+// The frames do not wait for GSAP: they are fetched, decoded and drawn by filmFrames.ts from the first paint, and follow
+// the scroll position on their own until the timeline is in (then the timeline's scroll update draws them).
 // Under reduced motion none of this runs: site.css lays the same elements out as a still frame and a plain list.
 
 const A = 0.36, B = 0.65;                         // P where stop 4 starts, and where the film reaches its last frame
 const T4 = 0.507;                                 // the film's own time at the start of stop 4 (the watch closing up)
 const filmTime = (p: number) => (p < A ? (p / A) * T4 : Math.min(1, T4 + ((p - A) / (B - A)) * (1 - T4)));
 const pp = (x: number) => A + x * 0.58, dd = (x: number) => x * 0.58;     // the approved prototype's timeline, placed after stop 3
+// The hybrid opening, behind a flag (?hybrid=1, or HYBRID_DEFAULT): on load the film plays its first frames by itself,
+// calmly, for AUTO.secs (the loose parts drift and the case starts in), then the scroll takes the story on from the frame
+// it stopped at. Scrolling during it stops it where it is. `lead` is that frame, as film time: with a lead the scroll
+// maps stops 1 to 3 onto what is left of the assembly, and from stop 4 on nothing changes. Not under reduced motion,
+// and not when the page opens already scrolled.
+const HYBRID_DEFAULT = false;
+const AUTO = { secs: 2.5, to: 22 / 149 };      // (it stops as the case starts in, while the headline is still over dark ground)
+const hybridOn = () => { const q = new URLSearchParams(window.location.search).get("hybrid"); return q === null ? HYBRID_DEFAULT : q !== "0"; };
+const timeAt = (p: number, lead: number) => (p < A ? lead + (p / A) * (T4 - lead) : filmTime(p));
 export const PLAYGROUND_AT = pp(0.9);             // where "Set the situation" is fully up (nav links land here)
 // where the watch's screen sits in the last frame, as fractions of the frame (measured from the render), per frame set
 const SCREEN = { wide: [0.4286, 0.3858, 0.5714, 0.6142, 1920, 1200], tall: [0.3704, 0.4167, 0.6296, 0.5833, 1080, 1680] } as const;
@@ -25,61 +38,59 @@ const SCREEN = { wide: [0.4286, 0.3858, 0.5714, 0.6142, 1920, 1200], tall: [0.37
 export function Film({ story, frames }: { story: Weighed; frames: { wide: number; tall: number } }) {
   const sec = useRef<HTMLElement>(null);
   const faceOn = useRef(false);
+  const film = useRef<Frames | null>(null);
+  const lead = useRef(0);
   const cands = story.groups.slice(0, 5), top = cands[0].p;
   const led = ledger(STORY_SIT);
+
+  // ---------- the frames: from the first paint, whether or not the animation kit has arrived ----------
+  useEffect(() => {
+    const el = sec.current, canvas = el?.querySelector<HTMLCanvasElement>(".pq-cv");
+    if (!el || !canvas || reducedMotion()) return;
+    let dead = false, set: FilmSet = tallScreen() ? "tall" : "wide", top = 0, span = 1, rt = 0, eagerT = 0, auto = 0, playing = false;
+    const measure = () => { top = el.offsetTop; span = Math.max(1, el.offsetHeight - window.innerHeight); };
+    const want = () => timeAt(Math.max(0, Math.min(1, (window.scrollY - top) / span)), lead.current) * (frames[set] - 1);
+    // the hybrid opening: from the first picture on the canvas, the film runs to AUTO.to by the clock, easing to a stop
+    const play = () => {
+      if (dead || window.scrollY > top + 4) return;
+      const t0 = performance.now(); playing = true; el.dataset.auto = "playing"; film.current?.eager();
+      const tick = (now: number) => {
+        if (!playing) return;
+        const x = Math.min(1, (now - t0) / (AUTO.secs * 1000));
+        lead.current = AUTO.to * (1 - Math.pow(1 - x, 2));
+        film.current?.seek(lead.current * (frames[set] - 1), true);
+        if (x < 1) auto = requestAnimationFrame(tick); else stop();
+      };
+      auto = requestAnimationFrame(tick);
+    };
+    const stop = () => { if (!playing) return; playing = false; cancelAnimationFrame(auto); el.dataset.auto = "done"; };
+    let first = hybridOn();
+    const start = () => { film.current?.destroy(); film.current = filmFrames(canvas, set, frames[set], loadKit().catch(() => {}), first ? play : undefined); first = false; film.current.seek(want()); };
+    // the opening comes with the page; the rest of the film once the page has loaded, or as soon as the visitor scrolls
+    const goEager = () => film.current?.eager();
+    const onScroll = () => { if (playing && window.scrollY > top + 2) stop(); goEager(); film.current?.seek(want()); };
+    const afterLoad = () => { eagerT = window.setTimeout(goEager, 1200); };
+    const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { measure(); const d: FilmSet = tallScreen() ? "tall" : "wide"; if (d !== set) { set = d; start(); goEager(); } else film.current?.resize(); }, 150); };
+    afterPaint().then(() => {
+      if (dead) return;
+      measure(); start();
+      if (window.scrollY > top + 4) goEager();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onResize);
+      if (document.readyState === "complete") afterLoad(); else window.addEventListener("load", afterLoad, { once: true });
+    });
+    return () => {
+      dead = true; stop(); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize); window.removeEventListener("load", afterLoad); window.clearTimeout(rt); window.clearTimeout(eagerT);
+      film.current?.destroy(); film.current = null; lead.current = 0;
+    };
+  }, [frames.wide, frames.tall]);
 
   useKit(({ gsap, SplitText }) => {
     const el = sec.current;
     if (!el || reducedMotion()) return;
     const M = motion();
     const $ = <T extends Element = HTMLElement>(s: string) => el.querySelector(s) as unknown as T, $$ = <T extends Element = HTMLElement>(s: string) => Array.from(el.querySelectorAll(s)) as unknown as T[];
-    const canvas = $<HTMLCanvasElement>(".pq-cv"), ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // ---------- the frames: coarse to fine, nearest one drawn until its neighbours arrive ----------
-    let dead = false, dir: "wide" | "tall" = tallScreen() ? "tall" : "wide", count = frames[dir], imgs: HTMLImageElement[] = [], ok: boolean[] = [], fwant = 0, fshown = -1, raf = 0;
-    let eager = false, coarse = 0, pumpAll = () => {};
-    const goEager = () => { if (eager) return; eager = true; pumpAll(); };
-    function load() {
-      imgs.forEach((im) => { im.onload = null; im.src = ""; });
-      imgs = []; ok = []; count = frames[dir]; fshown = -1;
-      const order: number[] = [0, count - 1], seen = new Set<number>(order);      // the first frame first: it is the hero
-      for (const step of [16, 8, 4, 2, 1]) { for (let i = 0; i < count; i += step) if (!seen.has(i)) { seen.add(i); order.push(i); } if (step === 8) coarse = order.length; }
-      let next = 0, active = 0;
-      const pump = () => {
-        // every 8th frame comes with the page; the rest wait until the page has loaded or the visitor starts scrolling
-        while (!dead && active < 6 && next < (eager ? order.length : coarse)) {
-          const i = order[next++], im = new Image();
-          active++; im.decoding = "async";
-          im.onload = () => { ok[i] = true; active--; queue(); pump(); };
-          im.onerror = () => { active--; pump(); };
-          im.src = `/media/film/watch/${dir}/${String(i + 1).padStart(4, "0")}.webp`;
-          imgs[i] = im;
-        }
-      };
-      pumpAll = pump;
-      pump();
-    }
-    const near = (i: number) => { for (let d = 0; d < count; d++) { if (ok[i - d]) return i - d; if (ok[i + d]) return i + d; } return -1; };
-    function paint() {
-      raf = 0;
-      const dpr = Math.min(dir === "tall" ? 2 : 1.5, window.devicePixelRatio || 1), W = Math.round(canvas.clientWidth * dpr), H = Math.round(canvas.clientHeight * dpr);
-      if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; fshown = -1; }
-      const lo = Math.floor(fwant), hi = Math.min(count - 1, lo + 1), frac = fwant - lo, a = near(lo);
-      if (a < 0) return;
-      const both = a === lo && ok[hi] && hi !== lo && frac > 0.02, key = both ? fwant : a;
-      if (key === fshown) return;
-      const draw = (im: HTMLImageElement, alpha: number) => {
-        const s = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * s, h = im.naturalHeight * s;
-        ctx!.globalAlpha = alpha; ctx!.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
-      };
-      draw(imgs[a], 1);
-      if (both) draw(imgs[hi], frac);       // the scroll lands between frames: fade the next one over by the fraction
-      ctx!.globalAlpha = 1; fshown = key;
-      canvas.dataset.frame = String(a + 1);
-      canvas.classList.add("is-on");
-    }
-    const queue = () => { if (!raf) raf = requestAnimationFrame(paint); };
+    let dead = false, dir: FilmSet = tallScreen() ? "tall" : "wide", count = frames[dir];
 
     // ---------- measured layout ----------
     const pin = $(".pq-pin");
@@ -138,7 +149,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       const inn = { ease: M.out }, out = { ease: M.inn };
       gsap.set(wordEls, { visibility: "visible" });
       gsap.set([s2, s3, s4, s5], { opacity: 0 });
-      tl = gsap.timeline({ defaults: { ease: M.soft }, scrollTrigger: { trigger: el, start: "top top", end: "bottom bottom", scrub: M.scrub, onUpdate: (st) => frame(st.progress) } });
+      tl = gsap.timeline({ defaults: { ease: M.soft }, onUpdate: stage, scrollTrigger: { trigger: el, start: "top top", end: "bottom bottom", scrub: M.scrub, onUpdate: (st) => frame(st.progress) } });
       const msgOut = (m: Element, at: number) => tl!.to(m, { opacity: 0, y: tall ? -14 : -24, duration: 0.016, ...out }, at);
       const msgIn = (m: Element, at: number) => tl!.fromTo(m, { opacity: 0, y: tall ? 24 : 40 }, { opacity: 1, y: 0, duration: 0.034, ...inn }, at);
       const rowIn = (r: Element, at: number, older: Element[], ghost = 0.13) => {
@@ -149,9 +160,11 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
 
       tl.fromTo(".pq-rail .track b", { scaleX: 0 }, { scaleX: 1, duration: B, ease: "none" }, 0)
         .fromTo(lb, { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "none" }, 0.06);
+      // (the glass panels move, scale and fade but are never blurred: a blur on a panel that also blurs its backdrop made
+      // the GPU redo both for every frame of the move, and showed as 20 to 35 ms gaps as the ledger and the chips arrived)
       // stop 1 -> 2: the situation arrives, one row at a time
       msgOut(s1, 0.07); msgIn(s2, 0.092);
-      tl.fromTo(led, { opacity: 0, x: tall ? 0 : 60, y: tall ? 40 : 0, scale: 0.96, filter: "blur(10px)" }, { opacity: 1, x: 0, y: 0, scale: 1, filter: "blur(0px)", duration: 0.04, ...inn }, 0.1);
+      tl.fromTo(led, { opacity: 0, x: tall ? 0 : 60, y: tall ? 40 : 0, scale: 0.94 }, { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.04, ...inn }, 0.1);
       const liA = rowsA.filter((r) => r.tagName === "LI");
       tl.fromTo(rowsA.filter((r) => r.tagName !== "LI"), { opacity: 0 }, { opacity: 1, duration: 0.02 }, 0.115);
       liA.forEach((r, i) => rowIn(r, 0.13 + i * 0.022, liA.slice(0, i)));
@@ -163,23 +176,23 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       tl.fromTo($$(".pq-feel i"), { scaleX: 0 }, { scaleX: (i: number) => led_feel[i], duration: 0.03, stagger: 0.0105, ...inn }, 0.262);
       // stop 4: the ledger opens up and the candidate calls leave it
       msgOut(s3, 0.336); msgIn(s4, 0.366);
-      tl.to(led, { opacity: 0, scale: 0.94, filter: "blur(8px)", duration: 0.026, ...out }, 0.348);
+      tl.to(led, { opacity: 0, scale: 0.92, duration: 0.026, ...out }, 0.348);
       const lr = { x: led.offsetLeft + led.offsetWidth / 2, y: led.offsetTop };   // (centred with a transform on wide screens: offsetTop is its middle)
       chips.forEach((c, i) => {
         const fx = tall ? 0 : (lr.x - (c.offsetLeft + c.offsetWidth / 2)) * 0.8, fy = tall ? 40 : (lr.y - (c.offsetTop + c.offsetHeight / 2)) * 0.6;
-        tl!.fromTo(c, { opacity: 0, x: fx, y: fy, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, x: 0, y: 0, scale: 1, filter: "blur(0px)", duration: dd(0.06), ...inn }, pp(0.012) + i * dd(0.016));
+        tl!.fromTo(c, { opacity: 0, x: fx, y: fy, scale: 0.84 }, { opacity: 1, x: 0, y: 0, scale: 1, duration: dd(0.06), ...inn }, pp(0.012) + i * dd(0.016));
       });
       tl.fromTo($$(".pq-chip .pq-bar b:first-child"), { scaleX: 0 }, { scaleX: (i: number) => cands[i].p / top, duration: dd(0.07), stagger: dd(0.016), ...inn }, pp(0.04));
       // stop 5: the four losing calls fall away across the screen; the winner stays, grows and turns green
       msgOut(s4, pp(0.195)); msgIn(s5, pp(0.23));
-      chips.slice(1).forEach((c, i) => tl!.to(c, { x: tall ? -vw * [0.9, 1.1, 1.0, 1.2][i] : -vw * [0.52, 0.78, 0.64, 0.9][i], y: vh * [0.5, 0.34, 0.62, 0.3][i], rotation: [-34, -22, -48, -18][i], opacity: 0, filter: "blur(7px)", duration: dd(0.13), ...out }, pp(0.25 + i * 0.016)));
+      chips.slice(1).forEach((c, i) => tl!.to(c, { x: tall ? -vw * [0.9, 1.1, 1.0, 1.2][i] : -vw * [0.52, 0.78, 0.64, 0.9][i], y: vh * [0.5, 0.34, 0.62, 0.3][i], rotation: [-34, -22, -48, -18][i], opacity: 0, duration: dd(0.13), ...out }, pp(0.25 + i * 0.016)));
       tl.to(win, tall ? { y: vh * 0.14, scale: 1.08, duration: dd(0.1), ease: M.move } : { x: -vw * 0.035, y: vh * 0.24, scale: 1.22, duration: dd(0.1), ease: M.move }, pp(0.28))
         .to(win.querySelector(".pq-bar b.g"), { opacity: 1, duration: dd(0.06) }, pp(0.34))
         .to(lg, { opacity: 0.5, duration: dd(0.1), ease: "none" }, pp(0.32)).to(lb, { opacity: 0.5, duration: dd(0.1), ease: "none" }, pp(0.32));
       // stop 6: the call words fill the width as the film's screen shows them; everything else gets out of the way
       msgOut(s5, pp(0.425));
       tl.to(".pq-shade", { opacity: 0, duration: dd(0.05) }, pp(0.43))
-        .to(win, { opacity: 0, scale: 0.7, filter: "blur(8px)", duration: dd(0.045), ...out }, pp(0.44))
+        .to(win, { opacity: 0, scale: 0.7, duration: dd(0.045), ...out }, pp(0.44))
         .to(lg, { opacity: 1, duration: dd(0.06), ease: "none" }, pp(0.46)).to(lb, { opacity: 0, duration: dd(0.06), ease: "none" }, pp(0.46))
         .from(splits[0].chars, { opacity: 0, yPercent: 46, filter: "blur(12px)", duration: dd(0.07), stagger: { each: dd(0.008), from: "end" }, ...inn }, pp(0.49))
         .from(splits[1].chars, { opacity: 0, yPercent: 46, filter: "blur(12px)", duration: dd(0.07), stagger: { each: dd(0.008), from: "start" }, ...inn }, pp(0.49))
@@ -216,12 +229,20 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       tl.fromTo(".pq-pgtitle", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: dd(0.06), ...inn }, pp(0.845))
         .fromTo(".pq-flow", { opacity: 0 }, { opacity: 1, duration: dd(0.05) }, pp(0.9))
         .to({}, { duration: 0.001 }, 0.999);
-      frame(tl.scrollTrigger!.progress);
+      frame(tl.scrollTrigger!.progress); stage();
+    }
+    // Glass costs the compositor a backdrop pass for every frame the film moves under it, even at opacity 0. So a
+    // panel that is not showing carries no backdrop filter at all (.is-off), and while the timeline moves the lens
+    // panels are plain glass (GlassFx puts their refraction back once the page rests).
+    const glass = $$(".pq-glass");
+    function stage() {
+      glassMoving();
+      for (const g of glass) { const off = !(parseFloat(g.style.opacity) > 0.01); if (off !== g.classList.contains("is-off")) g.classList.toggle("is-off", off); }
     }
     const led_feel = led.pitcher.map((p) => p.feel);
     const railEls = $$(".pq-rail .lab span"), pg = $(".pq-pg");
     function frame(p: number) {
-      fwant = filmTime(p) * (count - 1); queue();
+      film.current?.seek(timeAt(p, lead.current) * (count - 1), true);
       chips[0].classList.toggle("is-won", p > pp(0.35));
       railEls[0].className = p > 0.09 ? "is-on" : ""; railEls[1].className = p > A ? "is-on" : ""; railEls[2].className = p > pp(0.49) ? "is-on is-g" : "";
       const live = p > pp(0.86);
@@ -230,19 +251,15 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       el!.dataset.stop = String(p < 0.08 ? 1 : p < 0.23 ? 2 : p < 0.35 ? 3 : p < pp(0.21) ? 4 : p < pp(0.44) ? 5 : p < pp(0.7) ? 6 : 7);
     }
 
-    load();
-    let eagerT = 0;
-    const afterLoad = () => { eagerT = window.setTimeout(goEager, 1200); };
-    if (document.readyState === "complete") afterLoad(); else window.addEventListener("load", afterLoad, { once: true });
-    window.addEventListener("scroll", goEager, { once: true, passive: true });
+    const fontsIn = !document.fonts || document.fonts.status === "loaded";
     layout();
     let rt = 0;
-    const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { const d = tallScreen() ? "tall" : "wide"; if (d !== dir) { dir = d; load(); } layout(); queue(); }, 150); };
+    const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { dir = tallScreen() ? "tall" : "wide"; count = frames[dir]; layout(); }, 160); };
     window.addEventListener("resize", onResize);
-    document.fonts?.ready.then(() => { if (!dead) layout(); });
+    if (!fontsIn) document.fonts.ready.then(() => { if (!dead) layout(); });      // measured again only if the type changed under it
     return () => {
-      dead = true; window.removeEventListener("resize", onResize); window.removeEventListener("load", afterLoad); window.removeEventListener("scroll", goEager); window.clearTimeout(eagerT); window.clearTimeout(rt); cancelAnimationFrame(raf);
-      tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); imgs.forEach((im) => { im.onload = null; im.src = ""; });
+      dead = true; window.removeEventListener("resize", onResize); window.clearTimeout(rt);
+      tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); glass.forEach((g) => g.classList.remove("is-off"));
     };
   }, [frames.wide, frames.tall], sec);
 

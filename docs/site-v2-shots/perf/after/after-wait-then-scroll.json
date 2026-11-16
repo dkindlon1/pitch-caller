@@ -1,0 +1,167 @@
+{
+ "name": "after-wait-then-scroll",
+ "variant": "base",
+ "idleMs": 2600,
+ "net": "none",
+ "cpu": 1,
+ "url": "http://127.0.0.1:3197/",
+ "viewport": "1440x900@2x",
+ "dpr": 2.0000000596046448,
+ "canvas": [
+  1900,
+  1200,
+  1425,
+  900
+ ],
+ "seconds": 5.01,
+ "fcpMs": 308,
+ "scrollStartMs": 324,
+ "scrolledPx": 1361,
+ "lenis": true,
+ "frames": {
+  "rafCount": 1168,
+  "fps": 233.3,
+  "p50": 4.2,
+  "p95": 4.3,
+  "p99": 8.4,
+  "max": 33.3,
+  "over20ms": 2,
+  "over34ms": 0,
+  "over50ms": 0,
+  "compositor": {
+   "presented": 1182,
+   "partial": 201,
+   "droppedAffectingSmoothness": 31,
+   "states": {
+    "STATE_NO_UPDATE_DESIRED": 456,
+    "STATE_PRESENTED_ALL": 726,
+    "STATE_DROPPED": 31,
+    "STATE_PRESENTED_PARTIAL": 201
+   }
+  },
+  "swaps": {
+   "n": 731,
+   "p50": 4.2,
+   "p95": 5.1,
+   "p99": 14,
+   "max": 1760.5,
+   "gapsOver12ms": 8,
+   "gapsOver20ms": 4,
+   "gapsOver34ms": 3,
+   "gapsOver50ms": 1,
+   "worstAt": "39ms:36 76ms:34 110ms:45 856ms:1760"
+  }
+ },
+ "gpu": {
+  "mainBusyMs": 1080,
+  "tasksOver8ms": 3,
+  "tasksOver16ms": 0,
+  "maxMs": 14.5,
+  "longAt": "2623ms:10 3599ms:12 4108ms:14"
+ },
+ "mainThread": {
+  "tasksOver16ms": 2,
+  "tasksOver50ms": 0,
+  "longest": [
+   {
+    "at": 75,
+    "ms": 30,
+    "what": "TimerFire 30ms; v8.callFunction 30ms; Layout 2ms"
+   },
+   {
+    "at": 120,
+    "ms": 23,
+    "what": "TimerFire 23ms; v8.callFunction 23ms; UpdateLayoutTree 0ms"
+   }
+  ]
+ },
+ "busyMs": {
+  "GPU Process / GpuVSyncThread": 10009,
+  "GPU Process / CrGpuMain": 2154,
+  "Renderer / CrRendererMain": 2060,
+  "GPU Process / VizCompositorThread": 631,
+  "Renderer / Compositor": 611,
+  "Renderer / ThreadPoolForegroundWorker": 534,
+  "Browser / ThreadPoolForegroundWorker": 419,
+  "Browser / ThreadPoolBackgroundWorker": 165,
+  "Browser / ThreadPoolSingleThreadCOMSTASharedBackgroundBlocking": 145,
+  "Browser / CrBrowserMain": 127,
+  "GPU Process / ThreadPoolForegroundWorker": 77,
+  "Browser / CacheThread_BlockFile": 56
+ },
+ "workMs": {
+  "GPUTask [CrGpuMain]": "488 ms in 1387 (max 14.5)",
+  "Decode Image [ThreadPoolForegroundWorker]": "329 ms in 49 (max 8.2)",
+  "FunctionCall [main]": "326 ms in 7566 (max 1.3)",
+  "FireAnimationFrame [main]": "247 ms in 3498 (max 1.3)",
+  "SkiaOutputSurfaceImplOnGpu::FinishPaintRenderPass [CrGpuMain]": "217 ms in 1983 (max 4.7)",
+  "Display::DrawAndSwap [VizCompositorThread]": "216 ms in 731 (max 0.6)",
+  "DirectRenderer::DrawFrame [VizCompositorThread]": "162 ms in 731 (max 0.5)",
+  "Commit [main]": "124 ms in 1168 (max 3.0)",
+  "EventDispatch [main]": "113 ms in 1144 (max 0.8)",
+  "UpdateLayoutTree [main]": "93 ms in 1420 (max 0.5)",
+  "HitTest [main]": "88 ms in 578 (max 0.4)",
+  "Layerize [main]": "85 ms in 946 (max 0.3)",
+  "TimerFire [main]": "69 ms in 38 (max 29.7)",
+  "RasterTask [ThreadPoolForegroundWorker]": "55 ms in 1247 (max 1.1)",
+  "PrePaint [main]": "51 ms in 1749 (max 0.4)",
+  "Layout [main]": "35 ms in 317 (max 1.8)",
+  "Paint [main]": "31 ms in 496 (max 0.9)",
+  "EvaluateScript [main]": "21 ms in 7 (max 7.3)",
+  "MajorGC [main]": "6 ms in 3 (max 2.1)",
+  "V8.GC_MARK_COMPACTOR [main]": "5 ms in 3 (max 2.0)",
+  "MinorGC [main]": "2 ms in 2 (max 1.0)",
+  "V8.GC_SCAVENGER [main]": "1 ms in 2 (max 0.9)",
+  "Commit [CrBrowserMain]": "1 ms in 11 (max 0.1)",
+  "RasterTask [CompositorTileWorker]": "0 ms in 10 (max 0.1)",
+  "v8.compile [main]": "0 ms in 7 (max 0.1)"
+ },
+ "imageDecode": {
+  "decodeImage": {
+   "n": 49,
+   "totalMs": 329,
+   "maxMs": 8.2
+  },
+  "lazyPixelRef": {
+   "n": 0,
+   "totalMs": 0,
+   "maxMs": 0
+  }
+ },
+ "film": {
+  "samples": 1168,
+  "blankSamples": 21,
+  "firstFrameAtMs": 151,
+  "distinctFramesShown": 38,
+  "steps": 37,
+  "biggestStep": 1,
+  "stepsOver2": 0,
+  "framesFromScrollPosition": {
+   "mean": 0.2,
+   "p95": 0.9,
+   "max": 1
+  },
+  "framesFromWanted": {
+   "mean": 0.24,
+   "max": 1,
+   "samplesOff": 281
+  },
+  "sharpShare": 0.98
+ },
+ "loafs": [],
+ "network": {
+  "duringScroll": 160,
+  "frames": 153,
+  "kb": 3567,
+  "scripts": [
+   "3e3hzl6xcssvp.js 27KB @52ms",
+   "3qg8u4g5-64sf.js 17KB @52ms",
+   "00tt7ey-kz-n5.js 4KB @52ms",
+   "3nv1d2_wz8agr.js 9KB @52ms",
+   "019uoq2zefwwl.js 6KB @52ms",
+   "3ll90_ken_xrk.js 25KB @158ms",
+   "2o1x5ulv1myva.js 186KB @158ms"
+  ]
+ },
+ "errors": []
+}

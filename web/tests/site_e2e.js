@@ -5,6 +5,8 @@
  * strip, two wrists and programs each doing their one thing; reduced motion as a still, plain version; the phone
  * layout; keyboard reach; the content rules; and the "Talk to us" form and its API (validation, the honeypot, and the
  * honest "can't send yet" answer while no email provider is set).
+ * Also the film's loading (small copies of every frame, sharp frames at rest), its glass (no backdrop work while hidden,
+ * refraction only at rest) and the hybrid opening behind ?hybrid=1.
  * Run from the repo root after `npm run build` in web/:
  *   node web/tests/site_e2e.js          (or `npm run e2e` in web/)
  */
@@ -45,7 +47,7 @@ const num = (s) => parseInt(String(s).replace(/[^0-9]/g, ""), 10);
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await ctx.newPage();
     const errors = []; page.on("pageerror", (e) => errors.push(String(e)));
-    const frames = []; page.on("request", (r) => { const m = /\/media\/film\/watch\/(wide|tall)\/(\d{4})\.webp/.exec(r.url()); if (m) frames.push(m[1]); });
+    const frames = [], sheets = []; page.on("request", (r) => { const m = /\/media\/film\/watch\/(wide|tall)\/(\d{4})\.webp/.exec(r.url()); if (m) frames.push(m[1]); const l = /\/media\/film\/watch\/(wide|tall)-lo-\d\.webp/.exec(r.url()); if (l) sheets.push(l[1]); });
     await page.goto(URL_, { waitUntil: "networkidle" }); await wait(1500);
     check(await page.evaluate(() => !!window.__lenis), "Lenis is the smooth-scroll engine");
     check((await page.locator("h1").innerText()).replace(/\s+/g, " ") === "Every pitch called. Every call explained.", "the headline is the promise");
@@ -55,12 +57,47 @@ const num = (s) => parseInt(String(s).replace(/[^0-9]/g, ""), 10);
     check(seen[0] <= 6 && seen[1] > seen[0] && seen[2] > seen[1] && seen[3] > seen[2], `the film scrubs with the scroll (frames ${seen.join(", ")})`);
     check(seen[4] === 150 && seen[5] === 150, "and rests on its last frame while the call and the playground are up");
     check(count && frames.length >= 150 && frames.every((f) => f === "wide"), `a wide screen loads the whole wide film (${frames.length} frames asked for)`);
+    // loading and drawing: the small copies of every frame, sharp frames at rest, a canvas no larger than the frames
+    const cv = await page.locator(".pq-cv").evaluate((c) => ({ sharp: c.dataset.sharp, w: c.width, h: c.height }));
+    check(sheets.length === 3 && sheets.every((f) => f === "wide"), "the small copy of every frame is asked for (three sheets)");
+    check(cv.sharp === "1" && cv.w <= 1920 && cv.h <= 1200, `at rest the frame is the sharp one, on a canvas no bigger than the film (${cv.w}x${cv.h})`);
+    // glass: a panel that is not showing does no backdrop work; refraction only once the page rests
+    await filmTo(page, 0.02);
+    const hidden = await page.locator("#top .pq-glass").evaluateAll((els) => els.map((e) => ({ off: e.classList.contains("is-off"), bf: getComputedStyle(e).backdropFilter })));
+    check(hidden.length >= 8 && hidden.every((g) => g.off && g.bf === "none"), "at the top, the film's hidden glass panels carry no backdrop filter");
+    await filmTo(page, 0.93);
+    const lensOk = await page.evaluate(() => CSS.supports("backdrop-filter", "url(#x)") && matchMedia("(min-width: 900px) and (pointer: fine)").matches);
+    const rest = await page.locator(".pq-ctl").evaluate((e) => ({ off: e.classList.contains("is-off"), bf: e.style.backdropFilter }));
+    await page.mouse.move(720, 450); await page.mouse.wheel(0, -200); await wait(60);
+    const moving = await page.locator(".pq-ctl").evaluate((e) => ({ bf: e.style.backdropFilter, css: getComputedStyle(e).backdropFilter, flag: document.documentElement.dataset.glass }));
+    await wait(3200);      // the scroll eases out and the scrubbed timeline settles behind it
+    const lensBack = await page.locator(".pq-ctl").evaluate((e) => e.style.backdropFilter);
+    check(!rest.off && moving.bf === "" && /blur/.test(moving.css) && moving.flag === "moving" && (!lensOk || (/url\(/.test(rest.bf) && /url\(/.test(lensBack))), `the playground's glass is plain while the page moves and refracts once it rests (${lensOk ? "refraction on" : "this browser has no refraction"})`);
     await filmTo(page, 0.2);
     check((await page.locator("#top").getAttribute("data-stop")) === "2" && (await page.locator(".pq-ledger .pq-lg.is-a li").count()) === 4, "stop 2 lists the situation in the ledger");
     await filmTo(page, 0.46);
     const chips = await page.locator(".pq-chip").evaluateAll((els) => els.map((e) => ({ name: e.dataset.group, pct: +e.dataset.pct, o: +getComputedStyle(e).opacity, x: e.getBoundingClientRect().left })));
     check(chips.length === 5 && chips.every((c) => c.o > 0.9), "stop 4 puts five candidate calls around the watch");
     check(chips.every((c, i) => i === 0 || c.x >= chips[i - 1].x - 1) && chips[4].x > chips[0].x + 40, "the likelier a call, the closer it sits to the watch");
+
+    // the hybrid opening, behind its flag
+    const hyb = await ctx.newPage();
+    await hyb.goto(URL_ + "?hybrid=1", { waitUntil: "domcontentloaded" });
+    await hyb.waitForFunction(() => document.getElementById("top").dataset.auto === "done", null, { timeout: 15000 });
+    const hyA = await hyb.evaluate(() => ({ frame: +document.querySelector(".pq-cv").dataset.frame, y: scrollY }));
+    check(hyA.y === 0 && hyA.frame >= 21 && hyA.frame <= 24, `with ?hybrid=1 the opening plays by itself and stops (frame ${hyA.frame}, page not scrolled)`);
+    await wait(1200); await filmTo(hyb, 0.4);
+    const hyB = num(await hyb.locator(".pq-cv").getAttribute("data-frame"));
+    check(hyB === seen[2], `then the scroll takes over, and from stop 4 the film is where it always was (frame ${hyB})`);
+    await hyb.close();
+    const hyb2 = await ctx.newPage();
+    await hyb2.goto(URL_ + "?hybrid=1", { waitUntil: "domcontentloaded" });
+    await hyb2.waitForFunction(() => document.getElementById("top").dataset.auto === "playing", null, { timeout: 15000 });
+    await wait(500); await hyb2.mouse.move(720, 450); await hyb2.mouse.wheel(0, 300); await wait(900);
+    const hyC = await hyb2.evaluate(() => ({ auto: document.getElementById("top").dataset.auto, y: scrollY }));
+    check(hyC.auto === "done" && hyC.y > 0, "scrolling during the opening stops it and hands over to the scroll");
+    await hyb2.close();
+    check(!(await page.locator("#top").getAttribute("data-auto")), "without the flag nothing plays by itself");
 
     console.log("2. The story and the playground agree");
     const storyPct = num(await page.locator("[data-story-pct]").innerText());

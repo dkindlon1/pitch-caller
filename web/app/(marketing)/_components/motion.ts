@@ -31,7 +31,7 @@ let loading: Promise<Kit> | null = null;
 let ready: Kit | null = null;
 export const kit = () => ready;          // the kit if it has loaded (event handlers use this and skip the motion if not)
 // resolved a moment after the browser reports its first contentful paint (never before it), or after two seconds
-const afterPaint = () => new Promise<void>((r) => {
+export const afterPaint = () => new Promise<void>((r) => {
   let done = false;
   const go = () => { if (!done) { done = true; window.setTimeout(r, 60); } };
   try {
@@ -50,12 +50,18 @@ export function loadKit(): Promise<Kit> {
     });
   return loading;
 }
+// Each section's setup runs in a task of its own, one after another, so the kit's arrival is a run of short tasks with
+// room for a frame between them, not one long one (it can land while the visitor is already scrolling).
+let line: Promise<unknown> = Promise.resolve();
+const breath = () => new Promise<void>((r) => { requestAnimationFrame(() => window.setTimeout(r, 0)); window.setTimeout(r, 120); });      // (the timer: a hidden tab has no frames)
 export function useKit(setup: (k: Kit) => void | (() => void), deps: DependencyList = [], scope?: RefObject<Element | null>) {
   useEffect(() => {
     let dead = false, off: void | (() => void), ctx: { revert(): void } | null = null;
     loadKit().then((k) => {
-      if (dead) return;
-      ctx = k.gsap.context(() => { off = setup(k); }, scope?.current || undefined);
+      line = line.then(breath).then(() => {
+        if (dead) return;
+        ctx = k.gsap.context(() => { off = setup(k); }, scope?.current || undefined);
+      }).catch(() => {});
     }).catch(() => { /* no motion: the page is complete without it */ });
     return () => { dead = true; if (off) off(); ctx?.revert(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -2,6 +2,8 @@
 
 Branch `site/v2-alive`. Nothing was pushed to `main`, deployed, or changed in Supabase. Decisions and readings taken along the way are in `docs/SITE_V2_PROGRESS.md`.
 
+Scroll performance was measured and fixed after this report: see `docs/PERF_site_v2.md` (it supersedes the loading notes and the Lighthouse table below).
+
 ## What was built
 - **The film**, re-rendered three times (the last to put the strap back to rubber). 150 frames per set at 1920x1200 and 1080x1680, same keyframes, camera path and timing as the original 72-frame film.
 - **The film's story, stops 1 to 6**, the hand-off (words slide off, panels come out from behind the watch) and the **playground**, all fed by one build-time engine run.

@@ -51,3 +51,12 @@ Readings taken without asking:
 - Programs dropped the usage-by-count grid, velocity trend, hitter-side split and the staff list's roles. The numbers that remain are unchanged from before.
 - A third "No link" fact was added under two wrists; it matches the watch app's own no-link screen.
 - Correction from Drew: the strap is rubber, not metal. The render script now has a `rubber()` material and no bracelet detail; do not turn the strap back into links. The film was re-rendered with it.
+
+## Scroll performance pass (Nov 16)
+Trace findings, changes and before/after numbers: `docs/PERF_site_v2.md`. Tool: `web/tests/perf_trace.js`.
+- Refraction is on only at rest; hidden glass has no backdrop filter; glass panels are never blur-tweened. Keep it that way: the refraction alone halved the frame rate while the film moved.
+- Frames load and draw through `_components/filmFrames.ts` (small sheets first, sharp frames near the scroll, decoded ahead). `encode.py` writes the sheets; `python encode.py --lo-only` rebuilds them from the shipped frames.
+- The hybrid opening is behind `?hybrid=1` (`HYBRID_DEFAULT` in `Film.tsx`), off by default, waiting on Drew's choice.
+Readings taken without asking:
+- "The assembly autoplays" was read as the film's first 22 frames (parts drifting, the case starting in) over 2.5 s, not the whole assembly: all 150 frames in 2.5 s would not be calm, and stops 2 to 6 need the rest.
+- The ledger and chips lost their blur-in (cause 2 in the perf doc).
