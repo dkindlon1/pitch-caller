@@ -43,7 +43,7 @@ export function Smooth() {
       if (dead) return;
       const tick = (time: number) => lenis?.raf(time * 1000);
       if (!reducedMotion()) {
-        lenis = new Lenis({ lerp: motion().lerp }) as unknown as LenisLike;
+        lenis = new Lenis({ lerp: motion().lerp, wheelMultiplier: motion().wheel }) as unknown as LenisLike;
         lenis.on("scroll", ScrollTrigger.update);
         gsap.ticker.add(tick);
         gsap.ticker.lagSmoothing(0);

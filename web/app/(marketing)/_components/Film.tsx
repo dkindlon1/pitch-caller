@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { STORY_SIT, ledger, pct, type Weighed } from "@/lib/story";
 import { Playground } from "./Playground";
-import { afterPaint, loadKit, motion, reducedMotion, tallScreen, useKit } from "./motion";
+import { afterPaint, filmLength, loadKit, motion, reducedMotion, tallScreen, useKit } from "./motion";
 import { filmFrames, type FilmSet, type Frames } from "./filmFrames";
 import { glassMoving } from "./GlassFx";
 
@@ -47,6 +47,8 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
   useEffect(() => {
     const el = sec.current, canvas = el?.querySelector<HTMLCanvasElement>(".pq-cv");
     if (!el || !canvas || reducedMotion()) return;
+    const len = filmLength();
+    if (len !== null) el.style.height = `${len}vh`;   // a pacing switch (motion.ts); measured below and by ScrollTrigger
     let dead = false, set: FilmSet = tallScreen() ? "tall" : "wide", top = 0, span = 1, rt = 0, eagerT = 0, auto = 0, playing = false;
     const measure = () => { top = el.offsetTop; span = Math.max(1, el.offsetHeight - window.innerHeight); };
     const want = () => timeAt(Math.max(0, Math.min(1, (window.scrollY - top) / span)), lead.current) * (frames[set] - 1);

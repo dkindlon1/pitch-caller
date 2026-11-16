@@ -7,16 +7,31 @@ import { useEffect, type DependencyList, type RefObject } from "react";
 //    them after the first paint, so the headline and the first frame are on screen before any animation code runs.
 //    useKit() is the hook the sections use: its setup runs once the kit is in, inside a GSAP context scoped to the
 //    section, and everything it made is reverted when the component unmounts.
-type Tokens = { out: string; soft: string; inn: string; move: string; durIn: number; durFlip: number; durLand: number; stagger: number; scrub: number; lerp: number };
+type Tokens = { out: string; soft: string; inn: string; move: string; durIn: number; durFlip: number; durLand: number; stagger: number; scrub: number | true; lerp: number; wheel: number };
 let cached: Tokens | null = null;
 export function motion(): Tokens {
   if (cached) return cached;
   const el = document.querySelector(".pq") || document.documentElement, cs = getComputedStyle(el);
   const s = (n: string, d: string) => cs.getPropertyValue(n).trim() || d, n = (k: string, d: number) => parseFloat(cs.getPropertyValue(k)) || d;
   cached = { out: s("--m-ease-out", "expo.out"), soft: s("--m-ease-soft", "power4.out"), inn: s("--m-ease-in", "power2.in"), move: s("--m-ease-move", "power3.inOut"),
-    durIn: n("--m-dur-in", 0.9), durFlip: n("--m-dur-flip", 0.55), durLand: n("--m-dur-land", 0.5), stagger: n("--m-stagger", 0.07), scrub: n("--m-scrub", 0.6), lerp: n("--m-lerp", 0.11) };
+    durIn: n("--m-dur-in", 0.9), durFlip: n("--m-dur-flip", 0.55), durLand: n("--m-dur-land", 0.5), stagger: n("--m-stagger", 0.07), scrub: n("--m-scrub", 0.6), lerp: n("--m-lerp", 0.11), wheel: 1 };
+  // Pacing switches for trying the scroll feel on a preview, e.g. ?film=700&scrub=0.2&lerp=0.15&wheel=1.2
+  // (no switch: the tokens above). scrub=0 means the scene follows the scroll directly.
+  const scrub = tune("scrub", 0, 3), lerp = tune("lerp", 0.02, 1), wheel = tune("wheel", 0.5, 3);
+  if (scrub !== null) cached.scrub = scrub === 0 ? true : scrub;
+  if (lerp !== null) cached.lerp = lerp;
+  if (wheel !== null) cached.wheel = wheel;
   return cached;
 }
+function tune(key: string, lo: number, hi: number): number | null {
+  if (typeof window === "undefined") return null;
+  const v = new URLSearchParams(window.location.search).get(key);
+  if (v === null || v.trim() === "") return null;
+  const x = parseFloat(v);
+  return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : null;
+}
+// the film section's scroll length in vh, when ?film= is set (300 to 1400); null keeps the stylesheet's length
+export const filmLength = () => tune("film", 300, 1400);
 export const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 export const tallScreen = () => typeof window !== "undefined" && window.matchMedia("(max-aspect-ratio: 9/10)").matches;
 
