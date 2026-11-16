@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction A: Night Game (static mock)</title>
+<style>
+@font-face { font-family: "Big Shoulders"; src: url(fonts/big-shoulders-display-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "Hanken"; src: url(fonts/hanken-grotesk-latin-wght-normal.woff2) format("woff2"); font-weight: 100 900; }
+:root {
+  --night: #0c0b0e;      /* sampled from the film's frame corners */
+  --chalk: #f1efe6;
+  --grass: #1f6b45;
+  --grass-deep: #0f2a1e;
+  --dirt: #6b4a34;
+  --bulb: #ffb22e;
+  --bulb-off: #2a2420;
+  --dim: #8d8a82;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--night); color: var(--chalk); font: 400 17px/1.5 "Hanken", sans-serif; overflow-x: hidden; }
+.screen { position: relative; height: 900px; overflow: hidden; }
+.grain { position: absolute; inset: 0; pointer-events: none; opacity: .16; mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+h1, h2 { font-family: "Big Shoulders", sans-serif; font-weight: 900; text-transform: uppercase; line-height: .84; letter-spacing: -.005em; }
+
+/* ---------- screen 1: the camera pulls back from the wrist into the park ---------- */
+.s1 .watch { position: absolute; left: -150px; top: 70px; width: 1060px; height: 662px; background: url(film-last-wide.webp) center/cover;
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%); mask-image: radial-gradient(closest-side, #000 62%, transparent 100%); }
+.tower { position: absolute; right: -40px; top: -30px; width: 330px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 13px; transform: perspective(900px) rotateY(-28deg) rotateX(14deg); }
+.tower i { aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #fff 0 38%, #dff5e8 60%, transparent 72%); filter: drop-shadow(0 0 14px #eafff2); }
+.haze { position: absolute; inset: 0; background:
+  radial-gradient(900px 560px at 96% 2%, rgba(214, 255, 232, .30), rgba(120, 210, 160, .08) 45%, transparent 70%),
+  linear-gradient(180deg, transparent 62%, rgba(31, 107, 69, .30) 100%); }
+.s1 .copy { position: absolute; left: 640px; top: 196px; width: 740px; }
+.s1 h1 { font-size: 150px; white-space: nowrap; }
+.s1 h1 span { display: block; color: var(--bulb); text-shadow: 0 0 46px rgba(255, 178, 46, .35); }
+.s1 p { margin-top: 30px; max-width: 30em; font-size: 19px; color: #cfccc2; }
+.board { position: absolute; left: 72px; right: 72px; bottom: 54px; display: flex; align-items: flex-end; gap: 46px;
+  padding: 22px 30px; border-radius: 10px; background: linear-gradient(180deg, #17150f, #100e0b); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 30px 60px rgba(0,0,0,.6); }
+.cell b { display: block; margin-bottom: 10px; font: 700 15px/1 "Big Shoulders", sans-serif; letter-spacing: .12em; color: var(--dim); }
+.dm { display: inline-grid; grid-template-columns: repeat(5, 9px); gap: 3px; margin-right: 12px; vertical-align: bottom; }
+.dm i { width: 9px; height: 9px; border-radius: 50%; background: var(--bulb-off); }
+.dm i.on { background: radial-gradient(circle, #fff3c9, var(--bulb) 55%); box-shadow: 0 0 9px rgba(255, 178, 46, .8); }
+.pips { display: flex; gap: 10px; height: 81px; align-items: center; }
+.pips i { width: 26px; height: 26px; border-radius: 50%; background: var(--bulb-off); }
+.pips i.on { background: radial-gradient(circle, #fff3c9, var(--bulb) 55%); box-shadow: 0 0 16px rgba(255, 178, 46, .8); }
+.board .note { margin-left: auto; max-width: 21em; font-size: 14px; color: var(--dim); }
+
+/* ---------- screen 2: set the situation ---------- */
+.s2 { background: linear-gradient(180deg, var(--night) 0%, #0b1712 40%, #0c1f17 100%); }
+.s2 h2 { position: absolute; left: 72px; top: 60px; font-size: 112px; }
+.s2 .lede { position: absolute; left: 76px; top: 268px; width: 400px; color: #cfccc2; }
+.field { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; }
+.tag { position: absolute; font: 800 26px/1 "Big Shoulders", sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+.tag small { display: block; margin-top: 6px; font: 400 14px/1.35 "Hanken", sans-serif; text-transform: none; letter-spacing: 0; color: #c6d6cc; max-width: 13em; }
+.tag[style*="right"] small { margin-left: auto; }
+.call { position: absolute; right: 72px; top: 64px; width: 380px; padding: 26px; border-radius: 14px;
+  background: linear-gradient(180deg, rgba(20, 26, 22, .92), rgba(12, 14, 13, .96)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 40px 80px rgba(0,0,0,.55); }
+.face { display: grid; place-items: center; width: 190px; height: 190px; margin: 0 auto 22px; border-radius: 34px; background: #1b1b1e; box-shadow: inset 0 0 0 2px #3a3a3f, 0 18px 36px rgba(0,0,0,.6); }
+.face div { position: relative; display: grid; place-content: center; gap: 9px; width: 146px; height: 146px; border-radius: 14px; background: #f2f2f2; color: #111; text-align: center; font: 800 25px/1 "Big Shoulders", sans-serif; letter-spacing: .04em; }
+.face div::after { content: ""; position: absolute; right: 9px; top: 9px; width: 7px; height: 7px; border-radius: 50%; background: #7fd67a; }
+.face hr { width: 40px; margin: 0 auto; border: 0; border-top: 2px solid #111; }
+.mix { display: grid; gap: 11px; }
+.mix div { display: grid; grid-template-columns: 1fr 44px; align-items: center; gap: 4px 12px; font-size: 15px; }
+.mix em { grid-column: 1 / -1; height: 9px; border-radius: 5px; background: var(--bulb-off); font-style: normal; overflow: hidden; }
+.mix em i { display: block; height: 100%; border-radius: 5px; background: var(--chalk); }
+.mix .top em i { background: linear-gradient(90deg, var(--bulb), #ffd98a); box-shadow: 0 0 14px rgba(255,178,46,.6); }
+.mix span:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; color: var(--dim); }
+.why { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(241,239,230,.14); font-size: 15px; }
+.fine { margin-top: 12px; font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+.ctl { position: absolute; left: 72px; top: 372px; display: flex; gap: 10px; flex-wrap: wrap; width: 470px; }
+.ctl button { font: 800 19px/1 "Big Shoulders", sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--chalk); padding: 11px 14px; border-radius: 8px; border: 1px solid rgba(241,239,230,.28); background: rgba(12,11,14,.6); }
+.ctl button.on { background: var(--bulb); border-color: var(--bulb); color: #1a1205; box-shadow: 0 0 26px rgba(255,178,46,.35); }
+.ctl span { width: 100%; font-size: 13px; color: var(--dim); }
+
+@media (max-width: 700px) {
+  .screen { height: auto; min-height: 844px; }
+  .s1 .watch { left: -30px; top: 40px; width: 450px; height: 700px; background-image: url(film-last-tall.webp); -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent 80%); mask-image: linear-gradient(180deg, #000 55%, transparent 80%); }
+  .tower { width: 150px; gap: 6px; right: -20px; }
+  .s1 .copy { position: relative; left: 0; top: 0; width: auto; padding: 470px 22px 0; }
+  .s1 h1 { font-size: 70px; }
+  .s1 p { font-size: 17px; margin-top: 18px; }
+  .board { position: relative; left: 0; right: 0; bottom: 0; margin: 26px 16px 30px; gap: 22px; padding: 16px; flex-wrap: wrap; }
+  .dm { grid-template-columns: repeat(5, 6px); gap: 2px; } .dm i { width: 6px; height: 6px; }
+  .pips { height: 54px; } .pips i { width: 18px; height: 18px; }
+  .board .note { margin: 0; }
+  .s2 { padding: 40px 0 30px; }
+  .s2 h2 { position: static; font-size: 76px; padding: 0 22px; }
+  .s2 .lede { position: static; width: auto; padding: 14px 22px 0; }
+  .fieldwrap { position: relative; height: 330px; overflow: hidden; }
+  .field { left: -505px; top: -530px; }
+  .tag { display: none; }
+  .ctl { position: static; width: auto; padding: 0 16px; }
+  .call { position: static; width: auto; margin: 22px 16px 0; }
+}
+</style>
+</head>
+<body>
+
+<section class="screen s1">
+  <div class="haze"></div>
+  <div class="watch" role="img" aria-label="The film's last frame: the watch showing FASTBALL / OUTSIDE"></div>
+  <div class="tower" aria-hidden="true"></div>
+  <div class="copy">
+    <h1>Five reads <span>put it there.</span></h1>
+    <p>Fastball, outside wasn't a guess. The count, the hitter, your guy's stuff today, the game, and what this hitter has already seen. Keep scrolling and watch them get weighed.</p>
+  </div>
+  <div class="board">
+    <div class="cell"><b>BALL</b><span data-dm="1"></span></div>
+    <div class="cell"><b>STRIKE</b><span data-dm="2"></span></div>
+    <div class="cell"><b>OUT</b><div class="pips"><i class="on"></i><i></i></div></div>
+    <div class="cell"><b>INNING</b><span data-dm="7"></span></div>
+    <div class="cell"><b>GUEST</b><span data-dm="3"></span></div>
+    <div class="cell"><b>HOME</b><span data-dm="3"></span></div>
+    <p class="note">An example situation, not a real game. You get to change it on the next screen.</p>
+  </div>
+  <div class="grain"></div>
+</section>
+
+<section class="screen s2">
+  <h2>Set the<br>situation.</h2>
+  <p class="lede">Move the count. Put a runner on. The engine re-weighs all five reads and both watches get the new call.</p>
+  <div class="fieldwrap">
+  <svg class="field" viewBox="0 0 1440 900" aria-hidden="true">
+    <defs>
+      <radialGradient id="lit" cx="50%" cy="60%" r="60%"><stop offset="0" stop-color="#2f8f5d"/><stop offset=".55" stop-color="#1f6b45"/><stop offset="1" stop-color="#0f2a1e"/></radialGradient>
+      <radialGradient id="dirt" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="#8a6247"/><stop offset="1" stop-color="#553a29"/></radialGradient>
+      <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+    </defs>
+    <ellipse cx="700" cy="702" rx="400" ry="110" fill="#000" opacity=".5" filter="url(#soft)"/>
+    <g transform="translate(700 812) scale(1.7 .85) rotate(45)">
+      <path d="M0 0 L-300 0 A300 300 0 0 1 0 -300 Z" fill="url(#lit)"/>
+      <path d="M0 0 L-300 0 M0 0 L0 -300" stroke="#f1efe6" stroke-width="1.6" opacity=".9"/>
+      <path d="M8 8 L-150 8 A158 158 0 0 1 8 -150 Z" fill="url(#dirt)"/>
+      <rect x="-118" y="-118" width="106" height="106" fill="#267a50"/>
+      <circle cx="-65" cy="-65" r="15" fill="#8a6247"/>
+      <rect x="-69" y="-67" width="8" height="3" fill="#f1efe6"/>
+      <rect x="-8" y="-138" width="13" height="13" fill="#f1efe6"/>
+      <rect x="-138" y="-138" width="13" height="13" fill="#ffb22e"/>
+      <rect x="-138" y="-8" width="13" height="13" fill="#f1efe6"/>
+      <path d="M-6 -6 h12 v8 l-6 6 l-6 -6 z" fill="#f1efe6"/>
+      <path d="M-63 -63 Q-40 -50 -6 -2" fill="none" stroke="#f1efe6" stroke-width="1.2" stroke-dasharray="2 5" opacity=".9"/>
+    </g>
+    <ellipse cx="700" cy="656" rx="44" ry="20" fill="#ffb22e" opacity=".35" filter="url(#soft)"/>
+    <g stroke="#f1efe6" stroke-width="1" opacity=".55" fill="none">
+      <path d="M690 824 V836 H600"/><path d="M722 734 H920"/><path d="M700 642 V522 H790"/>
+    </g>
+  </svg>
+  <div class="tag" style="left:360px; top:808px; width:230px; text-align:right;">The hitter<small>Sitting soft, a touch late on the heater.</small></div>
+  <div class="tag" style="left:932px; top:722px;">Your pitcher today<small>Slider is landing. Changeup isn't yet.</small></div>
+  <div class="tag" style="left:802px; top:510px; color: var(--bulb);">The game<small>Runner on second, one out, tied in the 7th.</small></div>
+  </div>
+  <div class="ctl" role="group" aria-label="Situation">
+    <button>0-0</button><button>1-0</button><button>0-1</button><button class="on">1-2</button><button>2-2</button><button>3-1</button><button>3-2</button>
+    <button>Bases empty</button><button class="on">Runner on 2nd</button><button>Runner on 3rd</button><button class="on">1 out</button><button>2 outs</button>
+    <span>Static mock. In the build these drive the real engine in your browser.</span>
+  </div>
+  <aside class="call">
+    <div class="face"><div>SLIDER<hr>DOWN AND<br>AWAY</div></div>
+    <div class="mix">
+      <div class="top"><span>Slider, down and away</span><span>22%</span><em><i style="width:100%"></i></em></div>
+      <div><span>Fastball, chase</span><span>18%</span><em><i style="width:82%"></i></em></div>
+      <div><span>Fastball, up and away</span><span>15%</span><em><i style="width:68%"></i></em></div>
+      <div><span>Fastball, down and away</span><span>12%</span><em><i style="width:55%"></i></em></div>
+      <div><span>Slider, get it over</span><span>10%</span><em><i style="width:45%"></i></em></div>
+    </div>
+    <p class="why">Why: stays at his eye level. A change costs here.</p>
+    <p class="fine">Real engine output (PitchIQ engine 1.2.3): sample right-handed starter with a fastball, slider and changeup, same-side hitter, college tables, 1-2, runner on second, one out, tied in the 7th. The notes on the field are illustrations. The watch is an illustration and a prototype.</p>
+  </aside>
+  <div class="grain"></div>
+</section>
+
+<script>
+const G = { 1:"00100,01100,00100,00100,00100,00100,01110", 2:"01110,10001,00001,00010,00100,01000,11111", 3:"11110,00001,00001,01110,00001,00001,11110", 7:"11111,00001,00010,00100,01000,01000,01000" };
+document.querySelectorAll("[data-dm]").forEach(el => { const d = document.createElement("span"); d.className = "dm";
+  d.innerHTML = G[el.dataset.dm].replace(/,/g, "").split("").map(c => `<i class="${c === "1" ? "on" : ""}"></i>`).join(""); el.appendChild(d); });
+document.querySelector(".tower").innerHTML = "<i></i>".repeat(35);
+</script>
+</body>
+</html>

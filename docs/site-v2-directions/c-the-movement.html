@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction C: The Movement (static mock)</title>
+<style>
+@font-face { font-family: "Bodoni Moda"; src: url(fonts/bodoni-moda-latin-opsz-normal.woff2) format("woff2"); font-weight: 400 900; font-style: normal; }
+@font-face { font-family: "Bodoni Moda"; src: url(fonts/bodoni-moda-latin-opsz-italic.woff2) format("woff2"); font-weight: 400 900; font-style: italic; }
+@font-face { font-family: "Instrument Sans"; src: url(fonts/InstrumentSans-Variable.woff2) format("woff2"); font-weight: 400 700; }
+:root {
+  --black: #0c0b0e;     /* film frame corners */
+  --case: #2b2b30;      /* the watch body */
+  --bone: #eae6e3;      /* brightest part highlight mid-film */
+  --brass: #b89a66;     /* strap pins, lifted from the film's #806749 */
+  --brass-hi: #ecdcb4;
+  --brass-lo: #5d4a2c;
+  --seam: #c8322b;      /* the stitch */
+  --dim: #8f8b85;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--black); color: var(--bone); font: 400 16px/1.5 "Instrument Sans", sans-serif; overflow-x: hidden; }
+.screen { position: relative; height: 900px; overflow: hidden; }
+h1, h2 { font-family: "Bodoni Moda", serif; font-weight: 400; line-height: .92; letter-spacing: -.02em; font-optical-sizing: auto; }
+.grain { position: absolute; inset: 0; pointer-events: none; opacity: .12; mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+/* ---------- screen 1: the film's last frame holds; the call comes apart around it ---------- */
+.s1 { background: var(--black) url(film-last-wide.webp) center/cover; }
+.s1 svg.over { position: absolute; inset: 0; width: 1440px; height: 900px; }
+.read { position: absolute; width: 270px; }
+.read h3 { font: 400 32px/1.05 "Bodoni Moda", serif; letter-spacing: -.01em; }
+.read p { margin-top: 7px; font-size: 15px; line-height: 1.4; color: #b9b5ae; }
+.read.r { text-align: left; } .read.l { text-align: right; }
+.s1 h1 { position: absolute; left: 72px; bottom: 58px; font-size: 112px; font-style: italic; }
+.s1 h1 b { font-weight: 400; font-style: normal; }
+.s1 .fine { position: absolute; right: 72px; bottom: 62px; width: 280px; font-size: 13px; color: var(--dim); text-align: right; }
+
+/* ---------- screen 2: turn the dials ---------- */
+.s2 { background: radial-gradient(1100px 620px at 36% 62%, #1a181b 0%, var(--black) 70%); }
+.s2 h2 { position: absolute; left: 72px; top: 60px; font-size: 104px; }
+.s2 h2 i { color: var(--brass-hi); }
+.s2 .lede { position: absolute; left: 76px; top: 190px; width: 520px; color: #b9b5ae; font-size: 17px; }
+.dials { position: absolute; left: 72px; top: 330px; display: flex; gap: 34px; --d: 280px; }
+.dialwrap { width: var(--d); }
+.dial { position: relative; width: var(--d); height: var(--d); border-radius: 50%;
+  background: conic-gradient(from 210deg, var(--brass-lo), var(--brass-hi) 12%, var(--brass) 22%, var(--brass-lo) 38%, #d8c08e 52%, var(--brass-lo) 66%, var(--brass-hi) 80%, var(--brass) 90%, var(--brass-lo));
+  box-shadow: 0 30px 60px rgba(0,0,0,.7), 0 2px 0 rgba(255,255,255,.12) inset; }
+.dial::before { content: ""; position: absolute; inset: 5.2%; border-radius: 50%; background: radial-gradient(circle at 38% 30%, #232226, #0e0d10 68%); box-shadow: inset 0 6px 22px rgba(0,0,0,.9), 0 0 0 1px #000; }
+.dial .ticks { position: absolute; inset: 9%; border-radius: 50%; background: repeating-conic-gradient(from -.6deg, var(--bone) 0 1.2deg, transparent 1.2deg 30deg), repeating-conic-gradient(from -.25deg, rgba(234,230,227,.45) 0 .5deg, transparent .5deg 6deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 86%, #000 87%); mask-image: radial-gradient(closest-side, transparent 86%, #000 87%); }
+.dial .hand { position: absolute; left: 50%; bottom: 50%; width: 3px; height: 39%; margin-left: -1.5px; border-radius: 2px; background: var(--seam); transform-origin: 50% 100%; box-shadow: 0 0 10px rgba(200,50,43,.6); }
+.dial .hub { position: absolute; left: 50%; top: 50%; width: 7%; height: 7%; margin: -3.5% 0 0 -3.5%; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass-lo)); }
+.dial .val { position: absolute; left: 0; right: 0; top: 60%; text-align: center; font: 400 calc(var(--d) * .17)/1 "Bodoni Moda", serif; font-variant-numeric: lining-nums; }
+.dial svg { position: absolute; inset: 18%; width: 64%; height: 64%; }
+.dialwrap h3 { margin-top: 24px; font: 400 28px/1.05 "Bodoni Moda", serif; }
+.dialwrap p { margin-top: 6px; font-size: 14.5px; line-height: 1.4; color: #b9b5ae; max-width: 17em; }
+.call { position: absolute; right: 72px; top: 130px; width: 330px; }
+.face { display: grid; place-items: center; width: 208px; height: 208px; margin: 0 auto 26px; border-radius: 40px; background: linear-gradient(160deg, #3a3a40, #1b1b1e 40%, #101012); box-shadow: inset 0 1px 0 rgba(255,255,255,.2), 0 30px 60px rgba(0,0,0,.7); position: relative; }
+.face::after { content: ""; position: absolute; right: -7px; top: 78px; width: 8px; height: 22px; border-radius: 3px; background: linear-gradient(var(--brass-hi), var(--brass-lo)); }
+.face div { position: relative; display: grid; place-content: center; gap: 9px; width: 156px; height: 156px; border-radius: 14px; background: #f2f2f2; color: #55555a; text-align: center; font: 600 19px/1.1 "Instrument Sans", sans-serif; letter-spacing: .05em; }
+.face div::after { content: ""; position: absolute; right: 9px; top: 9px; width: 6px; height: 6px; border-radius: 50%; background: #9fe096; }
+.face hr { width: 34px; margin: 0 auto; border: 0; border-top: 2px solid #55555a; }
+.mix { display: grid; gap: 12px; }
+.mix div { display: grid; grid-template-columns: 1fr auto; gap: 5px 12px; font-size: 15px; }
+.mix em { grid-column: 1 / -1; height: 3px; background: rgba(234,230,227,.12); }
+.mix em i { display: block; height: 100%; background: var(--bone); }
+.mix .top em i { background: linear-gradient(90deg, var(--brass-lo), var(--brass-hi)); height: 5px; margin-top: -1px; }
+.mix span:nth-child(2) { font-variant-numeric: tabular-nums; color: var(--dim); }
+.why { margin-top: 22px; font: italic 400 21px/1.25 "Bodoni Moda", serif; }
+.fine { margin-top: 14px; font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+
+@media (max-width: 700px) {
+  .screen { height: auto; min-height: 844px; }
+  .s1 { background: var(--black) url(film-last-tall.webp) center top/100% auto no-repeat; padding: 560px 22px 34px; }
+  .s1 svg.over { display: none; }
+  .s1 { display: flex; flex-direction: column; } .s1 h1 { order: -1; }
+  .read { position: static !important; width: auto; text-align: left !important; padding: 14px 0; border-top: 1px solid rgba(184,154,102,.35); }
+  .read h3 { font-size: 26px; }
+  .s1 h1 { position: static; font-size: 62px; margin-bottom: 26px; }
+  .s1 .fine { position: static; width: auto; text-align: left; margin-top: 14px; }
+  .s2 { padding: 44px 22px 34px; }
+  .s2 h2, .s2 .lede, .dials, .call { position: static; width: auto; }
+  .s2 h2 { font-size: 64px; } .s2 .lede { margin-top: 14px; }
+  .dials { --d: 104px; gap: 17px; margin-top: 30px; }
+  .dialwrap h3 { font-size: 19px; margin-top: 14px; } .dialwrap p { display: none; }
+  .call { margin-top: 40px; }
+}
+</style>
+</head>
+<body>
+
+<section class="screen s1">
+  <svg class="over" viewBox="0 0 1440 900" aria-hidden="true">
+    <g fill="none" stroke="#b89a66">
+      <circle cx="720" cy="450" r="286" stroke-width="1" opacity=".55"/>
+      <circle cx="720" cy="450" r="300" stroke-width="12" stroke-dasharray="1.5 14.2" opacity=".8"/>
+      <circle cx="720" cy="450" r="304" stroke-width="20" stroke-dasharray="3 154.08" opacity="1"/>
+      <g stroke-width="1" opacity=".8">
+        <path d="M455 300 H392"/><path d="M430 520 H392"/><path d="M968 262 H1050"/><path d="M1020 450 H1070"/><path d="M972 640 H1050"/>
+      </g>
+    </g>
+    <g fill="#ecdcb4"><circle cx="455" cy="300" r="4"/><circle cx="430" cy="520" r="4"/><circle cx="968" cy="262" r="4"/><circle cx="1020" cy="450" r="4"/><circle cx="972" cy="640" r="4"/></g>
+    <path d="M455 300 C520 270 570 290 606 322 M430 520 C490 545 550 530 592 500 M968 262 C910 252 868 280 836 318 M1020 450 C960 444 900 448 856 450 M972 640 C920 648 870 620 838 580" fill="none" stroke="#c8322b" stroke-width="2.2" stroke-dasharray="9 6" stroke-linecap="round" opacity=".9"/>
+  </svg>
+  <div class="read l" style="left:112px; top:262px;"><h3>The count</h3><p>Every count changes what a pitch is worth.</p></div>
+  <div class="read l" style="left:112px; top:482px;"><h3>The hitter</h3><p>What he&rsquo;s sitting on, his timing, what he&rsquo;s done today.</p></div>
+  <div class="read r" style="left:1064px; top:206px;"><h3>Your pitcher today</h3><p>His confidence in each pitch, and whether it&rsquo;s landing.</p></div>
+  <div class="read r" style="left:1084px; top:412px;"><h3>The game</h3><p>Runners, outs, inning, score. Late and close weighs more.</p></div>
+  <div class="read r" style="left:1064px; top:602px;"><h3>This at-bat</h3><p>The speeds and heights he has already seen.</p></div>
+  <h1><b>One call,</b><br>taken apart.</h1>
+  <p class="fine">Illustration: the PitchIQ watch app on a generic smartwatch. The watch is a prototype.</p>
+  <div class="grain"></div>
+</section>
+
+<section class="screen s2">
+  <h2>Turn <i>the dials.</i></h2>
+  <p class="lede">Each dial is one read. Turn one and the engine re-weighs the rest in your browser. The watch gets what comes out.</p>
+  <div class="dials">
+    <div class="dialwrap">
+      <div class="dial" role="img" aria-label="Count: 1 and 2"><span class="ticks"></span><span class="hand" style="transform: rotate(48deg)"></span><span class="hub"></span><span class="val">1&ndash;2</span></div>
+      <h3>The count</h3><p>Twelve stops, 0-0 to 3-2.</p>
+    </div>
+    <div class="dialwrap">
+      <div class="dial" role="img" aria-label="Runner on second, one out"><span class="ticks"></span>
+        <svg viewBox="0 0 100 100"><path d="M50 14 L86 50 L50 86 L14 50 Z" fill="none" stroke="#eae6e3" stroke-width="1"/><rect x="43" y="7" width="14" height="14" transform="rotate(45 50 14)" fill="#ecdcb4"/><rect x="79" y="43" width="14" height="14" transform="rotate(45 86 50)" fill="#0e0d10" stroke="#eae6e3"/><rect x="7" y="43" width="14" height="14" transform="rotate(45 14 50)" fill="#0e0d10" stroke="#eae6e3"/><circle cx="44" cy="52" r="3.4" fill="#c8322b"/><circle cx="56" cy="52" r="3.4" fill="none" stroke="#eae6e3"/></svg>
+      </div>
+      <h3>The game</h3><p>Runner on second, one out, tied in the 7th.</p>
+    </div>
+    <div class="dialwrap">
+      <div class="dial" role="img" aria-label="Pitcher's feel today: fastball 0.80, slider 0.75, changeup 0.60"><span class="ticks"></span>
+        <svg viewBox="0 0 100 100" fill="none" stroke-linecap="round" transform="rotate(-90)"><circle cx="50" cy="50" r="42" stroke="#eae6e3" stroke-width="4" pathLength="100" stroke-dasharray="80 100"/><circle cx="50" cy="50" r="32" stroke="#ecdcb4" stroke-width="4" pathLength="100" stroke-dasharray="75 100"/><circle cx="50" cy="50" r="22" stroke="#8f8b85" stroke-width="4" pathLength="100" stroke-dasharray="60 100"/></svg>
+      </div>
+      <h3>Your pitcher today</h3><p>Feel for the fastball, slider and changeup (the demo starter&rsquo;s settings).</p>
+    </div>
+  </div>
+  <aside class="call">
+    <div class="face"><div>SLIDER<hr>DOWN AND<br>AWAY</div></div>
+    <div class="mix">
+      <div class="top"><span>Slider, down and away</span><span>22%</span><em><i style="width:100%"></i></em></div>
+      <div><span>Fastball, chase</span><span>18%</span><em><i style="width:82%"></i></em></div>
+      <div><span>Fastball, up and away</span><span>15%</span><em><i style="width:68%"></i></em></div>
+      <div><span>Fastball, down and away</span><span>12%</span><em><i style="width:55%"></i></em></div>
+      <div><span>Slider, get it over</span><span>10%</span><em><i style="width:45%"></i></em></div>
+    </div>
+    <p class="why">Stays at his eye level. A change costs here.</p>
+    <p class="fine">Static mock. Real engine output (PitchIQ engine 1.2.3): sample right-handed starter, same-side hitter, college tables, 1-2, runner on second, one out, tied in the 7th. The watch is an illustration and a prototype.</p>
+  </aside>
+  <div class="grain"></div>
+</section>
+</body>
+</html>

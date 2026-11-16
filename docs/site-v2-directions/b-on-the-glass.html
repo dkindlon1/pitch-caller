@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction B: On the Glass (static mock)</title>
+<style>
+@font-face { font-family: "Archivo"; src: url(fonts/archivo-latin-wdth-normal.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+:root {
+  --glass: #f2f2f2;     /* the watch screen's white, sampled from the last frame */
+  --ink: #101012;
+  --bezel: #1c1c1f;     /* the watch case */
+  --seam: #d2232a;
+  --link: #2fa84f;      /* the film's link dot, darkened to read on white */
+  --mute: #6d6d72;
+  --rule: #c9c9cc;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bezel); color: var(--ink); font: 400 17px/1.5 "Archivo", sans-serif; overflow-x: hidden; }
+.screen { position: relative; height: 900px; overflow: hidden; background: var(--bezel); }
+.glass { position: absolute; inset: 18px; border-radius: 54px; background-color: var(--glass); overflow: hidden;
+  background-image: linear-gradient(rgba(16,16,18,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(16,16,18,.035) 1px, transparent 1px); background-size: 4px 4px;
+  box-shadow: inset 0 0 0 2px #000, inset 0 0 90px rgba(0, 0, 0, .10); }
+.s2 .glass { border-radius: 0 0 54px 54px; top: 0; } .s1 .glass { border-radius: 54px 54px 0 0; bottom: 0; }
+.sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255,255,255,.75) 0%, rgba(255,255,255,0) 24%, rgba(255,255,255,0) 70%, rgba(255,255,255,.35) 100%); mix-blend-mode: soft-light; }
+.dot { position: absolute; right: 54px; top: 46px; width: 22px; height: 22px; border-radius: 50%; background: var(--link); box-shadow: 0 0 0 7px rgba(47,168,79,.16); }
+.dotlabel { position: absolute; right: 92px; top: 45px; font-size: 14px; font-stretch: 110%; font-weight: 600; color: var(--mute); }
+
+/* ---------- screen 1: you land inside the watch face ---------- */
+.words { position: absolute; left: 64px; top: 52px; font-weight: 900; font-stretch: 62%; text-transform: uppercase; line-height: .8; letter-spacing: -.012em; font-size: 270px; }
+.words hr { width: 230px; margin: 28px 0 24px 5px; border: 0; border-top: 16px solid var(--ink); }
+.s1 .say { position: absolute; left: 70px; bottom: 54px; width: 1000px; display: grid; grid-template-columns: 430px 1fr; gap: 40px; align-items: end; }
+.s1 .say h1 { font-size: 40px; line-height: 1.02; font-weight: 800; font-stretch: 118%; letter-spacing: -.02em; }
+.s1 .say p { color: #3b3b40; max-width: 30em; }
+.reads { position: absolute; right: 64px; top: 128px; width: 236px; list-style: none; padding: 0; border-top: 3px solid var(--ink); }
+.reads li { display: grid; gap: 2px; padding: 15px 0 17px; border-bottom: 1px solid var(--rule); font-size: 19px; font-weight: 600; font-stretch: 112%; }
+.reads li span { font-weight: 800; font-stretch: 70%; font-size: 34px; line-height: 1; text-transform: uppercase; }
+.reads li.hot span { color: var(--seam); }
+
+/* ---------- screen 2: set the situation, drawn like the watch face ---------- */
+.s2 h2 { position: absolute; left: 70px; top: 44px; font-size: 40px; font-weight: 800; font-stretch: 118%; letter-spacing: -.02em; }
+.s2 .sub { position: absolute; left: 470px; top: 54px; width: 430px; color: #3b3b40; font-size: 16px; line-height: 1.4; }
+.lbl { font-size: 16px; font-weight: 700; font-stretch: 112%; }
+.count { position: absolute; left: 64px; top: 128px; }
+.count .num { font-size: 430px; font-weight: 900; font-stretch: 62%; line-height: .82; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.count .num i { font-style: normal; color: var(--seam); }
+.step { display: flex; gap: 10px; margin-top: 22px; }
+button { font: 700 16px/1 "Archivo", sans-serif; font-stretch: 108%; color: var(--ink); background: transparent; border: 2px solid var(--ink); border-radius: 999px; padding: 13px 20px; }
+button.on { background: var(--ink); color: var(--glass); }
+.game { position: absolute; left: 560px; top: 150px; width: 330px; }
+.game svg { display: block; width: 300px; height: 232px; margin: 18px 0 14px; }
+.outs { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; }
+.outs i { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--ink); } .outs i.on { background: var(--ink); }
+.outs span { margin-left: 8px; font-weight: 600; }
+.hit { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.callcol { position: absolute; left: 950px; top: 150px; right: 70px; }
+.mix { margin-top: 16px; display: grid; gap: 7px; }
+.mix div { position: relative; height: 46px; border-radius: 6px; background: #e2e2e4; overflow: hidden; }
+.mix i { position: absolute; inset: 0 auto 0 0; background: var(--ink); border-radius: 6px; }
+.mix .top i { background: var(--seam); }
+.mix .top span { mix-blend-mode: normal; }
+.mix span { position: absolute; left: 14px; top: 0; line-height: 46px; font-weight: 700; font-size: 16px; color: #fff; mix-blend-mode: difference; white-space: nowrap; }
+.mix b { position: absolute; right: 14px; top: 0; line-height: 46px; font-weight: 800; font-stretch: 75%; font-size: 22px; font-variant-numeric: tabular-nums; }
+.result { margin-top: 26px; font-weight: 900; font-stretch: 62%; font-size: 62px; line-height: .86; text-transform: uppercase; letter-spacing: -.01em; white-space: nowrap; }
+.result hr { width: 70px; margin: 12px 0 10px 2px; border: 0; border-top: 7px solid var(--ink); }
+.why { margin-top: 18px; font-weight: 600; }
+.fine { position: absolute; left: 70px; right: 70px; bottom: 40px; font-size: 13px; line-height: 1.45; color: var(--mute); }
+
+@media (max-width: 700px) {
+  .screen { height: auto; min-height: 844px; }
+  .glass { position: relative; inset: auto; margin: 10px; min-height: 824px; border-radius: 40px 40px 0 0 !important; padding: 0 22px 30px; }
+  .s2 .glass { border-radius: 0 0 40px 40px !important; margin-top: 0; }
+  .s1 .glass { margin-bottom: 0; }
+  .dot { right: 26px; top: 26px; width: 14px; height: 14px; } .dotlabel { display: none; }
+  .words { position: static; padding-top: 70px; font-size: 94px; }
+  .words hr { width: 96px; border-top-width: 8px; margin: 14px 0 12px 2px; }
+  .reads, .s1 .say { position: static; width: auto; display: block; }
+  .s1 .say p { margin-top: 12px; }
+  .reads { margin-top: 34px; } .reads li { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; padding: 10px 0; } .reads li span { font-size: 21px; }
+  .s1 .say { margin-top: 28px; } .s1 .say h1 { font-size: 30px; }
+  .s2 h2, .s2 .sub, .count, .game, .callcol, .fine { position: static; width: auto; }
+  .s2 h2 { padding-top: 34px; font-size: 30px; } .s2 .sub { margin-top: 10px; }
+  .count { margin-top: 26px; } .count .num { font-size: 250px; }
+  .game { margin-top: 34px; } .callcol { margin-top: 34px; } .result { font-size: 50px; }
+  .fine { margin-top: 26px; }
+  button { padding: 12px 16px; }
+}
+</style>
+</head>
+<body>
+
+<section class="screen s1">
+  <div class="glass">
+    <div class="words" aria-label="Fastball, outside">Fastball<hr>Outside</div>
+    <span class="dotlabel">Linked</span><span class="dot" aria-hidden="true"></span>
+    <ul class="reads" aria-label="The five reads, with example values">
+      <li>The count <span>1&ndash;1</span></li>
+      <li>The hitter <span>Early on soft</span></li>
+      <li>Your pitcher today <span>Fastball landing</span></li>
+      <li>The game <span>Bases empty, 3rd</span></li>
+      <li class="hot">This at-bat <span>Slider, slider</span></li>
+    </ul>
+    <div class="say">
+      <h1>You&rsquo;re inside the screen now.</h1>
+      <p>Two words reached the wrist. Five reads chose them. The values listed here are an example. On the next screen you set them yourself.</p>
+    </div>
+    <div class="sheen"></div>
+  </div>
+</section>
+
+<section class="screen s2">
+  <div class="glass">
+    <h2>Set the situation.</h2>
+    <p class="sub">Change anything. The engine re-weighs the reads in your browser and the face redraws with the new call.</p>
+
+    <div class="count">
+      <div class="lbl">The count</div>
+      <div class="num">1<i>&ndash;</i>2</div>
+      <div class="step"><button>Ball +</button><button class="on">Strike +</button><button>Reset</button></div>
+    </div>
+
+    <div class="game">
+      <div class="lbl">The game</div>
+      <svg viewBox="0 0 300 232" aria-label="Runner on second">
+        <path d="M150 20 L262 116 L150 212 L38 116 Z" fill="none" stroke="#101012" stroke-width="3"/>
+        <rect x="132" y="2" width="36" height="36" transform="rotate(45 150 20)" fill="#d2232a"/>
+        <rect x="244" y="98" width="36" height="36" transform="rotate(45 262 116)" fill="#f2f2f2" stroke="#101012" stroke-width="3"/>
+        <rect x="20" y="98" width="36" height="36" transform="rotate(45 38 116)" fill="#f2f2f2" stroke="#101012" stroke-width="3"/>
+        <path d="M134 200 h32 v14 l-16 14 l-16 -14 z" fill="#101012"/>
+      </svg>
+      <div class="outs"><i class="on"></i><i></i><i></i><span>One out, tied in the 7th</span></div>
+      <div class="lbl">The hitter is</div>
+      <div class="hit"><button>On time</button><button class="on">Late on the fastball</button><button>Out front</button></div>
+    </div>
+
+    <div class="callcol">
+      <div class="lbl">What the engine would throw here</div>
+      <div class="mix">
+        <div class="top"><i style="width:100%"></i><span>Slider, down and away</span><b style="color:#fff">22%</b></div>
+        <div><i style="width:82%"></i><span>Fastball, chase</span><b>18%</b></div>
+        <div><i style="width:68%"></i><span>Fastball, up and away</span><b>15%</b></div>
+        <div><i style="width:55%"></i><span>Fastball, down and away</span><b>12%</b></div>
+        <div><i style="width:45%"></i><span>Slider, get it over</span><b>10%</b></div>
+      </div>
+      <div class="result" aria-label="Slider, down and away">Slider<hr>Down and away</div>
+      <p class="why">Stays at his eye level. A change costs here.</p>
+    </div>
+    <span class="dot" aria-hidden="true"></span>
+    <p class="fine">Static mock. The mix, the call and the reason are real engine output (PitchIQ engine 1.2.3): sample right-handed starter with a fastball, slider and changeup, same-side hitter, college tables, 1-2, runner on second, one out, tied in the 7th. The hitter chips are not wired in this mock. The watch is an illustration and a prototype.</p>
+    <div class="sheen"></div>
+  </div>
+</section>
+</body>
+</html>
