@@ -29,8 +29,10 @@ Shows the call the coach accepts: the catcher's sign, big, with the location in 
 To leave the app, **hold the button 3 seconds**. A short press (a glove) does nothing.
 
 ## Connect from the game app
-1. Open the PitchIQ game app at `/app/game/` (or `localhost` when developing) in **Chrome on a PC, laptop or Android
-   device**. Not by opening the built file from disk: `file://` has no Bluetooth. Not the iPad: Safari has no Web Bluetooth.
+1. Open the game app in **Chrome on a PC, laptop or Android device**, over `https` or `localhost`. For the prototype
+   (not deployed), from the repo on the `watch-proto` branch: `cd app && python3 -m http.server 8000`, then open
+   `http://localhost:8000/dist/pitch-caller.html`. Not by double-clicking the file: `file://` has no Bluetooth. Not
+   the iPad: Safari has no Web Bluetooth.
 2. Setup → **Watches** → **Connect a watch**, pick the Bangle. Up to two (pitcher and catcher).
 3. Test games: a local practice game, signed out or on the dev project, **never pitchiq-prod**.
 
