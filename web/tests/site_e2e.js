@@ -183,7 +183,7 @@ const num = (s) => parseInt(String(s).replace(/[^0-9]/g, ""), 10);
     await filmTo(pp, 0.72);
     const words = await pp.locator(".pq-word").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
     const scr = await pp.evaluate(() => innerHeight / 2);
-    check(words[0] < scr && words[1] > scr, "FASTBALL sits above the watch and OUTSIDE below it");
+    check(words[0] < scr && words[1] > scr, "PERFECT sits above the watch and PITCH below it");
     await pp.evaluate(() => document.querySelector(".pq-nav-menu").click()); await wait(300);
     check(await pp.locator("#pq-sheet a:visible").count() >= 5, "the menu opens a sheet of links");
     await ph.close();

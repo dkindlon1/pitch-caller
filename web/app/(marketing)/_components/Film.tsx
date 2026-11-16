@@ -10,7 +10,7 @@ import { glassMoving } from "./GlassFx";
 // as rendered: scripts/watch-render) while the page shows the call being made over it, in six stops:
 //   1 the promise  2 the situation arrives in a ledger  3 the pitcher and the hitter join it
 //   4 the ledger opens into the candidate calls, loose around the watch  5 four fall away, one stays and turns green
-//   6 FASTBALL / OUTSIDE fills the width as the watch's own screen shows it
+//   6 PERFECT / PITCH fills the width while the watch's screen shows the call itself
 // then the words part to the sides and the playground's panels come out from behind the same watch.
 // Every number is from the page's build-time engine run (the `story` prop, lib/story_server.ts).
 // One scrubbed GSAP timeline; P below is the section's scroll progress, 0 to 1.
@@ -110,7 +110,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       R = screenRect();
       const vw = pin.clientWidth, vh = pin.clientHeight, tall = dir === "tall", cy = R.y + R.h / 2;
       tl?.scrollTrigger?.kill(); tl?.kill(); tl = null;
-      gsap.set([chips, ".pq-word .ch", ".pq-msg", ".pq-ledger", ".pq-ledger li", ".pq-ledger h3", ".pq-lg", ".pq-landed", ".pq-explain", ".pq-rail", ".pq-illus", ".pq-pgtitle", ".pq-ctl", ".pq-mix", ".pq-flow", ".pq-shade", ".pq-pglight", ".pq-foot-fade", ".pq-light", ".pq-cut", ".pq-feel i", ".pq-chip .pq-bar b"], { clearProps: "opacity,transform,filter,visibility" });
+      gsap.set([chips, ".pq-word .ch", ".pq-msg", ".pq-ledger", ".pq-ledger li", ".pq-ledger h3", ".pq-lg", ".pq-landed", ".pq-explain", ".pq-rail", ".pq-illus", ".pq-pgtitle", ".pq-ctl", ".pq-mix", ".pq-flow", ".pq-shade", ".pq-pglight", ".pq-foot-fade", ".pq-light", ".pq-haze", ".pq-beam", ".pq-floor", ".pq-cut", ".pq-feel i", ".pq-chip .pq-bar b"], { clearProps: "opacity,transform,filter,visibility" });
       // chips: on a wide screen, a column right of the watch where distance from the watch tracks share, so the
       // likeliest call sits closest; on a phone, a stack under it in the same order
       chips.forEach((c, i) => {
@@ -119,10 +119,14 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       });
       // call words: either side of the watch (wide) or above and below it (phone), sized to fill what is free
       const gap = R.w * 0.23 + vw * 0.014, m = vw * 0.022;
-      wordEls.forEach((w, k) => {
+      // one size for both words (the size the longer one fits), so the pair reads as one line
+      const fit = wordEls.map((w, k) => {
         w.style.fontSize = "100px"; w.style.left = "0px";
         const avail = tall ? vw * 0.9 : (k === 0 ? R.x - gap - m : vw - m - (R.x + R.w + gap));
-        const fs = Math.min((100 * avail) / w.offsetWidth, tall ? 140 : vh * 0.42);
+        return Math.min((100 * avail) / w.offsetWidth, tall ? 140 : vh * 0.42);
+      });
+      const fs = Math.min(...fit);
+      wordEls.forEach((w, k) => {
         w.style.fontSize = `${fs}px`;
         const ww = w.offsetWidth;
         w.style.left = `${tall ? (vw - ww) / 2 : (k === 0 ? R.x - gap - ww : R.x + R.w + gap)}px`;
@@ -162,6 +166,11 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
 
       tl.fromTo(".pq-rail .track b", { scaleX: 0 }, { scaleX: 1, duration: B, ease: "none" }, 0)
         .fromTo(lb, { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "none" }, 0.06);
+      // depth: a far haze that drifts slower than the film (parallax), a floodlight from above that comes up as the
+      // case comes in, and a green floor of light that rises only when the call lands (transforms and opacity only)
+      const haze = $(".pq-haze"), beam = $(".pq-beam"), floor = $(".pq-floor");
+      tl.fromTo(haze, { opacity: 0, yPercent: 5, scale: 1.08 }, { opacity: 1, yPercent: -7, scale: 1, duration: 1, ease: "none" }, 0)
+        .fromTo(beam, { opacity: 0, rotation: -4, scaleY: 0.85 }, { opacity: 1, rotation: 3, scaleY: 1, duration: 0.6, ease: "none" }, 0.08);
       // (the glass panels move, scale and fade but are never blurred: a blur on a panel that also blurs its backdrop made
       // the GPU redo both for every frame of the move, and showed as 20 to 35 ms gaps as the ledger and the chips arrived)
       // stop 1 -> 2: the situation arrives, one row at a time
@@ -190,12 +199,16 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       chips.slice(1).forEach((c, i) => tl!.to(c, { x: tall ? -vw * [0.9, 1.1, 1.0, 1.2][i] : -vw * [0.52, 0.78, 0.64, 0.9][i], y: vh * [0.5, 0.34, 0.62, 0.3][i], rotation: [-34, -22, -48, -18][i], opacity: 0, duration: dd(0.13), ...out }, pp(0.25 + i * 0.016)));
       tl.to(win, tall ? { y: vh * 0.14, scale: 1.08, duration: dd(0.1), ease: M.move } : { x: -vw * 0.035, y: vh * 0.24, scale: 1.22, duration: dd(0.1), ease: M.move }, pp(0.28))
         .to(win.querySelector(".pq-bar b.g"), { opacity: 1, duration: dd(0.06) }, pp(0.34))
-        .to(lg, { opacity: 0.5, duration: dd(0.1), ease: "none" }, pp(0.32)).to(lb, { opacity: 0.5, duration: dd(0.1), ease: "none" }, pp(0.32));
+        .fromTo(lg, { opacity: 0, scale: 0.6 }, { opacity: 0.5, scale: 0.7, duration: dd(0.1), ease: "none" }, pp(0.32)).to(lb, { opacity: 0.5, duration: dd(0.1), ease: "none" }, pp(0.32));
       // stop 6: the call words fill the width as the film's screen shows them; everything else gets out of the way
       msgOut(s5, pp(0.425));
       tl.to(".pq-shade", { opacity: 0, duration: dd(0.05) }, pp(0.43))
         .to(win, { opacity: 0, scale: 0.7, duration: dd(0.045), ...out }, pp(0.44))
         .to(lg, { opacity: 1, duration: dd(0.06), ease: "none" }, pp(0.46)).to(lb, { opacity: 0, duration: dd(0.06), ease: "none" }, pp(0.46))
+        .to(lg, { scale: 1.14, duration: dd(0.14), ease: M.out }, pp(0.46))   // the call pushes the light out
+        .to(lb, { scale: 1.3, duration: dd(0.1), ease: "none" }, pp(0.46))                                                   // and the blue recedes past it
+        .fromTo(floor, { opacity: 0, yPercent: 26 }, { opacity: 1, yPercent: 0, duration: dd(0.1), ease: M.out, immediateRender: false }, pp(0.47))
+        .to(beam, { opacity: 0.45, duration: dd(0.08), ease: "none" }, pp(0.46))
         .from(splits[0].chars, { opacity: 0, yPercent: 46, filter: "blur(12px)", duration: dd(0.07), stagger: { each: dd(0.008), from: "end" }, ...inn }, pp(0.49))
         .from(splits[1].chars, { opacity: 0, yPercent: 46, filter: "blur(12px)", duration: dd(0.07), stagger: { each: dd(0.008), from: "start" }, ...inn }, pp(0.49))
         .fromTo(".pq-landed", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: dd(0.04), ease: "back.out(2)" }, pp(0.54))
@@ -211,7 +224,8 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       else tl.to(splits[0].chars, { x: exit1, duration: dd(0.07), stagger: { each: dd(0.004), from: "start" }, ease: "power3.in" }, pp(0.695))
         .to(splits[1].chars, { x: exit2, duration: dd(0.07), stagger: { each: dd(0.004), from: "end" }, ease: "power3.in" }, pp(0.695));
       tl.set(wordEls, { visibility: "hidden" }, pp(0.8))
-        .to(lg, { opacity: 0.18, duration: dd(0.08), ease: "none" }, pp(0.7)).to(lb, { opacity: 0.82, duration: dd(0.08), ease: "none" }, pp(0.7))
+        .to(lg, { opacity: 0.18, duration: dd(0.08), ease: "none" }, pp(0.7)).to(lb, { opacity: 0.82, scale: 1, duration: dd(0.08), ease: "none" }, pp(0.7))
+        .to(floor, { opacity: 0.3, duration: dd(0.08), ease: "none" }, pp(0.7)).to(beam, { opacity: 0.25, duration: dd(0.08), ease: "none" }, pp(0.7))
         // the watch itself, lifted off the last frame, sits above the panels so they can come out from behind it
         .set(".pq-cut", { opacity: 1 }, pp(0.79))
         .fromTo(".pq-pglight", { opacity: 0 }, { opacity: 1, duration: dd(0.1), ease: "none" }, pp(0.8))
@@ -270,7 +284,9 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       <div className="pq-pin">
         <canvas className="pq-cv" aria-hidden="true" />
         <picture><source media="(max-aspect-ratio: 9/10)" srcSet="/media/film/watch/cut-tall.webp" /><img className="pq-cut" src="/media/film/watch/cut-wide.webp" alt="" aria-hidden="true" loading="lazy" decoding="async" /></picture>
+        <div className="pq-atmos" aria-hidden="true"><div className="pq-haze" /><div className="pq-beam" /><div className="pq-floor" /></div>
         <div className="pq-light is-b" aria-hidden="true" /><div className="pq-light is-g" aria-hidden="true" />
+        <div className="pq-grain" aria-hidden="true" />
         <div className="pq-shade" aria-hidden="true" />
 
         <div className="pq-msg is-1">
@@ -305,8 +321,8 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
           ))}
         </ol>
 
-        <div className="pq-word is-1" aria-hidden="true">FASTBALL</div>
-        <div className="pq-word is-2" aria-hidden="true">OUTSIDE</div>
+        <div className="pq-word is-1" aria-hidden="true">PERFECT</div>
+        <div className="pq-word is-2" aria-hidden="true">PITCH</div>
         <div className="pq-callname"><h2>Fastball, outside.</h2></div>
         <div className="pq-landed pq-glass is-won" aria-hidden="true"><i />Call landed</div>
         <div className="pq-explain">
