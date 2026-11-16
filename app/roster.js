@@ -536,7 +536,7 @@ function arsenalEditor(p) {
       h("div", { class: "arow" },
         lab("Type", h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { "aria-label": "Pitch type", on: { change: (e) => {
           const t = PCDB.PITCH_TYPES[e.target.value]; d.type = e.target.value; d.kind = t.kind; d.shape = t.shape; delete d.sign; if (!FB_CLASS.includes(d.kind)) delete d.main; savePitcher(p); } } },
-          PTYPES.map((t) => h("option", { value: t, selected: t === (d.type || PCDB.DEFAULT_TYPE[d.kind]) ? true : null }, t)))), "a-type"),
+          PTYPES.map((t) => h("option", { value: t, selected: t === (d.type || PCDB.DEFAULT_TYPE[d.kind]) ? true : null }, t))), signPick(p, d, () => savePitcher(p))), "a-type"),
         lab("His name for it", h("input", { value: d.name, on: { change: (e) => {
           const nn = e.target.value.trim() || d.type || KINDS[d.kind];
           if (p.pitches.some((x) => x !== d && x.name === nn)) { toast("He already has a pitch with that name"); render(); return; }
@@ -559,6 +559,7 @@ function arsenalEditor(p) {
   });
   return h("section", { class: "panel glass", "aria-label": "Arsenal" },
     h("div", { class: "panel-head" }, h("h2", {}, "Arsenal"), h("span", { class: "meta" }, "Stuff and command 1 to 5; break from TrackMan or Rapsodo")),
+    signNote(p),
     h("div", { class: "acards" }, cards),
     h("div", { class: "row-acts" },
       h("select", { "aria-label": "Add a pitch", style: { width: "auto" }, on: { change: (e) => {

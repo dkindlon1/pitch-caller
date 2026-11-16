@@ -62,6 +62,20 @@ Build report (v0.8): `docs/BUILD_v0.8_REPORT.md`.
 - **Familiarity (#26, dropped):** the within-game familiarity term stays as fitted; the claim that it "erases the pitch"
   did not reproduce, and in-game hitter memory has one owner (#7).
 
+## Watch prototype (branch `watch-proto`)
+
+Pitcher and catcher wristbands on Bangle.js 2 (plan: `docs/plans/PLAN_watch_prototype_2026-11-15.md`, review:
+`docs/REVIEW_watch_prototype_plan_2026-11-15.md`). The coach taps **Accept** under the call (or Enter) and both watches show
+the sign and the spot in words; a recorded pitch, a shake-off, his own call, undo or the third out clears them. Only where
+the browser has Web Bluetooth (Chrome on a computer or Android); on the iPad nothing changes.
+
+| File | What it is |
+| --- | --- |
+| `app/watch.js` | The link: up to two watches, one write queue each, message numbers, receipts and retries, reconnect, soak mode |
+| `watch/bangle/pitchiq.app.js` | The watch app (its own Bluetooth service, data not code); install steps in `watch/bangle/README.md` |
+| `app/watch_test.js`, `watch/bangle/test.js`, `app/watch_e2e.js` | The link against fake watches running the real watch core; the watch app against stand-in firmware; the page |
+
+
 ## Files
 
 | File | What it is |

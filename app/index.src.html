@@ -179,7 +179,18 @@ p { margin: 0; }
 .zone { padding: 10px; border-radius: var(--r-tile); background: var(--well); border: 1px solid var(--rule); }
 .zone svg { display: block; width: 100%; height: auto; overflow: visible; }
 .zone .lock { transform-box: fill-box; transform-origin: center; }
-.call-acts { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 18px; }
+.call-acts { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 18px; align-items: center; }
+/* watches (prototype): Accept is the biggest thing in the row; once sent it settles back */
+.btn.accept { height: 46px; padding: 0 26px; font-size: 16px; font-weight: 650; border-radius: 999px; }
+.btn.accept.sent { background: var(--glass-2); color: var(--ink); border-color: var(--stroke-2); opacity: 1; }
+.call-acts .wpill { align-self: center; justify-self: auto; font-size: 13px; padding: 6px 12px; margin-right: 6px; }
+.signpick { min-width: 0; width: auto; margin-left: 6px; }
+.wcard { display: grid; gap: 12px; }
+.wlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wlist li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wlist .row-acts { margin-left: auto; display: flex; gap: 6px; }
+.wreceipt { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.wsoak ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
 .options { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--rule); }
 .options .t { font-size: 13px; color: var(--muted); margin-bottom: 6px; cursor: pointer; list-style: none; }
 .options .t::-webkit-details-marker { display: none; }
@@ -639,6 +650,22 @@ const TIERS = [
 // changes its type.
 const KINDS = { FB: "Fastball", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
 const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };
+// watch prototype (docs/PLAN_watch_prototype_2026-11-15.md rev 3): two active pitches of one pitcher with the same sign
+// (two sliders, both 3) can't be told apart on the watch, which shows no pitch type, or by a hand sign. The coach gives
+// one its own number, 1 to 9, kept in the pitch's own sign as a migrated pitch's is (the portal keeps it too).
+const signConflicts = (pd) => PCWatch.sharedSigns((pd && pd.pitches) || [], signOf);
+function signPick(pd, d, onChange) {
+  const own = d.sign != null && d.sign !== "" && String(d.sign) !== String(SIGN[d.kind]);
+  if (!own && !signConflicts(pd).some((x) => x.names.includes(d.name))) return null;
+  return h("select", { class: "signpick", "aria-label": `Sign for ${d.name}`, title: "The sign the catcher and the watch use for this pitch",
+    on: { change: (e) => { const v = +e.target.value; if (v === SIGN[d.kind]) delete d.sign; else d.sign = v; onChange(); } } },
+    [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => h("option", { value: n, selected: String(signOf(d.kind, d.sign)) === String(n) ? true : null }, `Sign ${n}`)));
+}
+function signNote(pd) {
+  const c = signConflicts(pd);
+  return c.length ? h("p", { class: "pstat watch", role: "alert" }, c.map((x) => `${x.names.join(" and ")} share sign ${x.sign}. `),
+    "Give one its own number so the catcher, and the watch, can tell them apart.") : null;
+}
 const KCOLOR = { FB: "var(--fb)", SI: "var(--si)", FC: "var(--fc)", SL: "var(--sl)", CB: "var(--cb)", CH: "var(--ch)" };
 const SHAPE_OPTS = { FB: ["rides", "runs", "cuts", "straight", ""], SI: ["run", "drop", "two-seam", ""], FC: ["hard", "big", "ride", ""],
   SL: ["gyro", "tight", "sweeper", "slurve", ""], CB: ["12-6", "sweeping", "power", "slow", ""], CH: ["fade", "drop", "split", "firm", ""] };
@@ -711,6 +738,8 @@ function load() { try { const s = localStorage.getItem("pitchcaller.v2"); return
 function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => (t.hidden = true), 2400); }
 
 const G = () => S.game;
+// every call gets its own id (the watch is sent the call on screen by id: the same pitch and spot twice in a row are two calls)
+const nextCallId = () => (G().callSeq = (G().callSeq || 0) + 1);
 const APP_VERSION = "1.2.3";   // logged with every pitch and shown under Game on the setup screen (1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
@@ -906,7 +935,7 @@ function makeCall() {
   const shakenPA = G().pa.shaken || [];   // v1.0 #6 / D2: pitches shaken off this at-bat, any spot
   const r = E.callV08(ars, s, { exclude: shakenPA, tab });
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
-  const c = G().call = { pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
+  const c = G().call = { id: nextCallId(), pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
     sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
     dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
   // spec 9: the "why" line runs after the call is shown, off the critical path
@@ -1201,6 +1230,76 @@ function applyTheme() {
   document.documentElement.style.setProperty("--call", c);
 }
 
+// ------------------------------------------------------------------ watches (prototype, docs/PLAN_watch_prototype_2026-11-15.md rev 3)
+// Only where the browser has Web Bluetooth (Chrome on a computer or Android). On the iPad WATCH is null and nothing here
+// shows: the Game screen is exactly as before.
+const WATCH = typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
+const watchOn = () => !!WATCH && WATCH.summary().devices.length > 0;
+// the call on screen as the watch link sees it: this game, this call, this pitch; none once the inning is over
+const watchCur = () => { const g = G(); return g.call && !g.inningOver ? { gid: g.watchGid, id: g.call.id, pitchNo: g.pitchNo } : null; };
+const watchIsAccepted = () => !!WATCH && WATCH.isAccepted(watchCur());
+function watchSync() { if (WATCH) WATCH.sync(watchCur()); }
+function watchAccept() {
+  const g = G(), c = g.call;
+  if (!WATCH || !c || g.inningOver) return;
+  if (!WATCH.summary().devices.some((d) => d.state === "ok")) { toast("No watch is linked. Connect one in Setup, or give the sign by hand."); return; }
+  const clash = signConflicts(pitcherDef());
+  if (clash.length) { toast(`${clash[0].names.join(" and ")} share sign ${clash[0].sign}. Give one its own number in ${DB.ready ? "Roster" : "Setup"} first.`); return; }
+  if (!g.watchGid) g.watchGid = Math.random().toString(36).slice(2, 10);
+  if (!c.id) c.id = nextCallId();   // a call made before this build had no id
+  const kind = kindOf(c.pitch);
+  try { WATCH.accept({ gid: g.watchGid, id: c.id, pitchNo: g.pitchNo, sign: signFor(kind, c.pitch), quad: c.quad, kind }); }
+  catch (e) { toast(e.message); return; }
+  save(); render();
+}
+function watchAcceptButton() {
+  if (!watchOn()) return null;
+  const done = watchIsAccepted();
+  return h("button", { class: `btn accept${done ? " sent" : " primary"}`, disabled: done ? true : null, on: { click: watchAccept }, title: done ? "Sent. A new call needs Accept again." : "Accept the call and send it to the watch (Enter)" },
+    done ? "Accepted" : "Accept");
+}
+function watchPill() {
+  const l = WATCH && WATCH.line();
+  return l ? h("span", { id: "watch-pill", class: `pill wpill${l.tone ? " " + l.tone : ""}`, role: "status" }, l.text) : null;
+}
+// a receipt, a battery reading or a lost link changes only these two pieces, in place (a full render would take the
+// focus out of a field the coach is typing in)
+function watchRefresh() {
+  const p = document.getElementById("watch-pill"), np = watchPill();
+  if (p && np) p.replaceWith(np);
+  else if (p) p.remove();
+  else if (np && S.view === "live") { const acts = document.querySelector(".call-acts"); if (acts) render(); }
+  const card = document.getElementById("watch-card");
+  if (card) card.replaceWith(watchCard());
+}
+const WSTATE = { ok: "Connected", connecting: "Connecting…", lost: "No link, trying again", noapp: "PitchIQ app isn't open on the watch", new: "Connecting…" };
+function watchCard() {
+  const s = WATCH.summary();
+  const soakOn = /[?&]watchsoak\b/.test(location.search);
+  const act = (fn) => async () => { try { await fn(); } catch (e) { if (!/cancel/i.test(e.message || "")) toast(e.message); } render(); };
+  return h("div", { id: "watch-card", class: "wcard" },
+    s.devices.length ? h("ul", { class: "wlist" }, s.devices.map((d) => h("li", {},
+      h("span", { class: "dot", style: { background: d.state === "ok" ? "var(--pos, #3ccf7e)" : d.state === "connecting" || d.state === "new" ? "var(--warn)" : "var(--neg)" } }),
+      h("b", {}, d.name), h("span", { class: "muted" }, WSTATE[d.state] || d.state, d.battery !== null ? ` · ${d.battery}%` : ""),
+      h("span", { class: "row-acts" },
+        d.state !== "ok" ? h("button", { class: "btn pill", on: { click: act(() => WATCH.reconnect(d.name)) } }, "Reconnect") : null,
+        h("button", { class: "btn text", on: { click: () => { WATCH.forget(d.name); render(); } } }, "Forget"))))) :
+      h("p", { class: "muted" }, "No watch yet. Open the PitchIQ app on the watch, then connect it here."),
+    s.devices.length < 2 ? h("div", { class: "row-acts" }, h("button", { class: "btn primary pill", on: { click: act(() => WATCH.connect()) } }, s.devices.length ? "Connect a second watch" : "Connect a watch")) : null,
+    h("div", { class: "choices wreceipt", role: "group", "aria-label": "Delivery receipt" },
+      [[true, "Delivery receipt on", "Each watch confirms every call, and the Game screen says which one missed it. For bullpens and practice."],
+       [false, "Receipt off (one-way)", "For games under one-way rules: each call is sent three times and nothing comes back, so a missed call can't be shown."]]
+        .map(([v, t, d]) => h("button", { class: "choice", "aria-pressed": String(s.receipt === v), on: { click: () => { WATCH.setReceipt(v); render(); } } }, h("b", {}, t), h("span", {}, d)))),
+    S.setup.staff.map((pd) => { const n = signNote(pd); return n ? h("div", {}, h("b", {}, pd.name), n) : null; }),
+    soakOn ? watchSoakPanel() : null);
+}
+function watchSoakPanel() {
+  const st = WATCH.soakStats(), on = !!watchSoakPanel.on;
+  return h("div", { class: "wsoak" }, h("b", {}, "Soak test"), " A new call every 5 s, counted per watch. ",
+    h("button", { class: "btn pill", on: { click: () => { if (on) WATCH.soakStop(); else WATCH.soakStart(5000); watchSoakPanel.on = !on; render(); } } }, on ? "Stop" : "Start"),
+    h("ul", {}, Object.entries(st).map(([k, v]) => h("li", {}, `${k}: ${v.sent} sent, ${v.ok} confirmed within 1 s, ${v.late} late, ${v.missing} missing, slowest ${v.max} ms`))));
+}
+
 function render() {
   applyTheme();
   const app = document.getElementById("app");
@@ -1209,6 +1308,7 @@ function render() {
     DB.failed.code === "blocked" || /another tab/.test(DB.failed.message || "") ? DB.failed.message : "The database didn't open, so this game is kept on this page only. Reload to try again.") : null;
   app.replaceChildren(...[topBar(), dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : S.view === "bullpen" ? bullpenView() : liveView()].filter(Boolean));
   applyTheme();
+  watchSync();
 }
 
 const MARK = `<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="#f4f4f1" stroke="var(--stroke-2)" stroke-width=".6"/><path d="M6.2 4.6c2.3 2 3.4 4.4 3.4 7.4s-1.1 5.4-3.4 7.4M17.8 4.6c-2.3 2-3.4 4.4-3.4 7.4s1.1 5.4 3.4 7.4" fill="none" stroke="#f04a3e" stroke-width="1.6" stroke-linecap="round"/></svg>`;
@@ -1334,6 +1434,7 @@ function callPanel() {
       readout(c.pitch)),
     h("div", { class: `zone${fresh ? " fresh" : ""}`, html: zoneSVG(c) }));
   const acts = h("div", { class: "call-acts" },
+    watchAcceptButton(), watchPill(),
     h("button", { class: "btn", on: { click: shakeOff }, title: "Shake-off (K)" }, "He shook it off"),
     h("button", { class: "btn", "aria-expanded": String(pickMode), on: { click: () => { pickMode = !pickMode; pickSel = { pitch: null, quad: null }; render(); } } }, pickMode ? "Cancel my call" : "Call my own"),
     c.coach ? h("button", { class: "btn text", on: { click: recall } }, "Go back to the engine's call") : null);
@@ -1422,7 +1523,7 @@ function pickBox() {
       const s = Object.assign({}, situation(), { look: g.pa.look }); s.b_h = E.v08.leanBh(ars, s, g.pa.fooled);
       gr = E.v08.gradeCall(ars, s, pickSel.pitch, pickSel.quad, tab, { exclude: g.pa.shaken || [] });   // graded against the mix on screen: pitches shaken off this at-bat aren't in it
     }
-    g.call = Object.assign({}, g.call, { pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
+    g.call = Object.assign({}, g.call, { id: nextCallId(), pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
       verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
   };
@@ -1824,7 +1925,7 @@ function setupView() {
         h("td", {}, h("input", { id: `p${pi}-${i}-name`, name: `p${pi}-${i}-name`, autocomplete: "off", value: d.name, "aria-label": "Pitch name", style: { minWidth: "120px" },
           on: { change: (e) => { const nn = e.target.value.trim() || KINDS[d.kind]; renamePitch(pi, d.name, nn); d.name = nn; changed(true); } } })),
         h("td", {}, h("div", { class: "typ" }, chip(d.kind, d.sign), h("select", { id: `p${pi}-${i}-kind`, "aria-label": "Pitch type, sets the sign", style: { minWidth: "130px" }, on: { change: (e) => { d.kind = e.target.value; d.shape = SHAPE_OPTS[d.kind][0]; delete d.sign; if (!FB_CLASS.includes(d.kind)) delete d.main; changed(true); } } },
-          Object.entries(KINDS).map(([k, v]) => h("option", { value: k, selected: k === d.kind ? true : null }, `${SIGN[k]}  ${v}`))))),
+          Object.entries(KINDS).map(([k, v]) => h("option", { value: k, selected: k === d.kind ? true : null }, `${SIGN[k]}  ${v}`))), signPick(pd, d, () => changed(true)))),
         // D8: a blank grade is "not graded": the calls use the level average (3) and nothing is flagged until he sets it
         ...["grade", "command"].map((k) => h("td", {}, num(d, k, i, 1, 1, 5, "3", k === "grade" ? "Stuff, 1 to 5, compared with other pitches of this profile" : "Command, 1 to 5"),
           PCLearner.graded(d, k) ? null : h("small", { class: "muted", style: { display: "block" } }, "not graded: calls use 3"))),
@@ -1851,6 +1952,7 @@ function setupView() {
         h("label", { class: "f", style: { width: "100px" } }, "Height, ft", h("input", { id: `pht${pi}`, type: "number", inputmode: "decimal", step: 0.1, min: 4.5, max: 7.5, value: pd.height_ft, on: { change: (e) => { pd.height_ft = +e.target.value; changed(); } } })),
         h("label", { class: "f", style: { width: "110px" } }, "Pitch cap", h("input", { id: `pcap${pi}`, type: "number", inputmode: "numeric", min: 30, max: 150, value: pd.pitchCap || "", placeholder: "105", on: { change: (e) => { pd.pitchCap = e.target.value === "" ? null : +e.target.value; changed(); } } })),
         h("label", { class: "f", style: { width: "130px" } }, "Time to plate, s", h("input", { id: `pttp${pi}`, type: "number", inputmode: "decimal", step: 0.05, min: 0.9, max: 2.5, value: pd.ttp || "", placeholder: "optional", on: { change: (e) => { pd.ttp = e.target.value === "" ? null : +e.target.value; changed(); } } }))),
+      signNote(pd),
       h("div", { class: "tbl-wrap" }, h("table", { class: "ptable" },
         h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Main FB", "Velo", "Misses"].map((t) => h("th", t === "Stuff" ? { title: "Compared with other pitches of this profile: a 3 sweeper is an average sweeper" } : {}, t)),
           measured ? [h("th", {}, "V break"), h("th", {}, "H break")] : null, h("th", {}, ""))),
@@ -1885,6 +1987,7 @@ function setupView() {
       h("button", { class: "choice", "aria-pressed": String(!!st.logGlove), on: { click: () => { st.logGlove = !st.logGlove; changed(true); } } },
         h("b", {}, "Also log where the catcher set up"), h("span", {}, "One more tap before the pitch, when his glove isn't on the called spot. It's what each pitcher's miss lean is measured from."))),
     DB.ready ? row("Game day", "On Wi-Fi before the game: syncs, checks the app opens with no signal and today's staff and opponent are on this iPad. Then call the game anywhere; it syncs once there's a signal.", prepPanel()) : null,
+    WATCH ? row("Watches", "Wristbands for the pitcher and the catcher (Bangle.js 2, prototype). Accept on the Game screen sends the call: the sign, and where in words. Works in Chrome on a computer or an Android device.", watchCard()) : null,
     DB.ready ? row("Pitch counts", "Your league's pitch-count rule: each pitcher's rest, the day he can pitch again, and a warning on the Game screen as he nears the limit.", pitchRulePanel()) : null,
     DB.ready ? row("Today's staff", "Who's available today. Pitchers, their arsenals, check-ins and what's been learned live on the Roster screen.", staffPick()) :
     row("Staff", "Bullpen feel is how much he trusts each pitch warming up. It moves with every result once the game starts.", staff,
@@ -1977,9 +2080,11 @@ document.addEventListener("keydown", (e) => {
   else if (k === "U") { e.preventDefault(); undoLast(); }
   else if (k === "K" && G().call) { e.preventDefault(); shakeOff(); }
   else if (k === "ENTER" && pending && (pending.result !== "play" || pending.out)) { e.preventDefault(); record(pending); }
+  else if (k === "ENTER" && !pending && watchOn() && G().call && !G().inningOver && !watchIsAccepted()) { e.preventDefault(); watchAccept(); }
   else if (k === "ESCAPE" && (pending || pickMode)) { pending = null; pickMode = false; render(); }
 });
 
 render();
 boot();
+if (WATCH) WATCH.restore().then((n) => { if (n) render(); }).catch(() => {});
 </script>
