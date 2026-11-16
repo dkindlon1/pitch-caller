@@ -12,11 +12,12 @@ let cached: Tokens | null = null;
 export function motion(): Tokens {
   if (cached) return cached;
   const el = document.querySelector(".pq") || document.documentElement, cs = getComputedStyle(el);
-  const s = (n: string, d: string) => cs.getPropertyValue(n).trim() || d, n = (k: string, d: number) => parseFloat(cs.getPropertyValue(k)) || d;
+  const s = (n: string, d: string) => cs.getPropertyValue(n).trim() || d, n = (k: string, d: number) => { const x = parseFloat(cs.getPropertyValue(k)); return Number.isFinite(x) ? x : d; };   // (0 is a real value)
   cached = { out: s("--m-ease-out", "expo.out"), soft: s("--m-ease-soft", "power4.out"), inn: s("--m-ease-in", "power2.in"), move: s("--m-ease-move", "power3.inOut"),
-    durIn: n("--m-dur-in", 0.9), durFlip: n("--m-dur-flip", 0.55), durLand: n("--m-dur-land", 0.5), stagger: n("--m-stagger", 0.07), scrub: n("--m-scrub", 0.6), lerp: n("--m-lerp", 0.11), wheel: 1 };
+    durIn: n("--m-dur-in", 0.9), durFlip: n("--m-dur-flip", 0.55), durLand: n("--m-dur-land", 0.5), stagger: n("--m-stagger", 0.07), scrub: n("--m-scrub", 0.12), lerp: n("--m-lerp", 0.18), wheel: n("--m-wheel", 1.1) };
+  if (cached.scrub === 0) cached.scrub = true;      // a scrub of 0: the scenes follow the scroll directly
   // Pacing switches for trying the scroll feel on a preview, e.g. ?film=700&scrub=0.2&lerp=0.15&wheel=1.2
-  // (no switch: the tokens above). scrub=0 means the scene follows the scroll directly.
+  // (no switch: the tokens above; Drew's pick on Nov 16 is film 575vh, scrub 0.12, lerp 0.18, wheel 1.1). scrub=0 means the scene follows the scroll directly.
   const scrub = tune("scrub", 0, 3), lerp = tune("lerp", 0.02, 1), wheel = tune("wheel", 0.5, 3);
   if (scrub !== null) cached.scrub = scrub === 0 ? true : scrub;
   if (lerp !== null) cached.lerp = lerp;
