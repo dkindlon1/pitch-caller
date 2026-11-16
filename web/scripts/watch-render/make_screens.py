@@ -1,8 +1,10 @@
 # The watch's three screen states, drawn to match watch/bangle/pitchiq.app.js: black on white, the link dot top right,
 # the sign filling the space above the words, "—" as a short bar. 176 x 176 screen, drawn at 4x.
+import os
 from PIL import Image, ImageDraw, ImageFont
-S = 4; W = 176 * S
-F = "/usr/share/fonts/opentype/inter/Inter-Bold.otf"
+HERE = os.path.dirname(os.path.abspath(__file__)); os.chdir(HERE); os.makedirs("tex", exist_ok=True)
+S = 12; W = 176 * S                      # v2 re-render: 2112 px, so the words stay crisp in the 1920-wide close-ups
+F = os.path.join(HERE, "fonts", "Inter-Bold.ttf")   # Inter Bold (SIL OFL), from Fontsource
 def base():
     im = Image.new("RGB", (W, W), "#ffffff"); d = ImageDraw.Draw(im)
     d.ellipse([W - 15*S, 5*S, W - 5*S, 15*S], fill="#00ee00")   # link up: green dot (pqDraw: fillCircle(W-10, 10, 5))

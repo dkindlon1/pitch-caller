@@ -1,4 +1,5 @@
-// Questions coaches ask, the product ones first and the rules question after them. Native details/summary, so it works without script and with the keyboard.
+// Questions coaches ask, the product ones first and the rules question after them. Native details/summary, so it works
+// without script and with the keyboard.
 const FAQ = [
   {
     q: "Is it just going to call fastballs?",
@@ -24,15 +25,15 @@ const FAQ = [
 
 export function Faq() {
   return (
-    <section className="mk-fq" id="faq" aria-labelledby="fq-h">
-      <div className="mk-wrap mk-fq-grid">
-        <div className="mk-sec-head">
-          <h2 id="fq-h">Questions from coaches</h2>
-          <p>Anything else? <a className="mk-link" href="#contact">Ask us directly</a> and we'll write back.</p>
+    <section className="pq-sec pq-fq" id="faq" aria-labelledby="fq-h" tabIndex={-1}>
+      <div className="pq-wrap pq-fq-grid">
+        <div className="pq-sec-head">
+          <h2 id="fq-h">Questions from coaches.</h2>
+          <p>Anything else? <a className="pq-link" href="#contact">Ask us directly</a> and we&rsquo;ll write back.</p>
         </div>
-        <div className="mk-fq-list">
+        <div className="pq-fq-list">
           {FAQ.map((f, n) => (
-            <details key={f.q} className="mk-fq-item" open={n === 0}>
+            <details key={f.q} className="pq-fq-item" open={n === 0}>
               <summary><span>{f.q}</span><i aria-hidden="true" /></summary>
               <p>{f.a}</p>
             </details>

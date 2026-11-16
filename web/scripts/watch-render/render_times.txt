@@ -1,0 +1,3 @@
+wide seconds 367
+tall seconds 451
+wide (resumed from frame 56) seconds 819

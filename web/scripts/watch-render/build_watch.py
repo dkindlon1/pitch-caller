@@ -15,13 +15,22 @@ def arg(name, default=None):
     return argv[argv.index(name) + 1] if name in argv else default
 SET = arg("--set", "wide")                      # wide (16:10) or tall (9:16, used for tablets and phones)
 OUT = arg("--out", f"frames/{SET}")
+SKIP = "--skip-existing" in argv           # resume a stopped render: leave frames that are already on disk
 SCALE = float(arg("--scale", "1"))
-SAMPLES = int(arg("--samples", "40"))
-N = int(arg("--frames", "96"))
+SAMPLES = int(arg("--samples", "768"))
+N = int(arg("--frames", "150"))
+DEVICE = arg("--device", "GPU")                 # GPU (OptiX, then CUDA) or CPU
+HDRI = arg("--hdri", "studio_small_09_2k.exr")  # in hdri/ next to this script (Poly Haven, CC0)
+HDRI_STR = float(arg("--hdri-strength", "1.0"))
+HDRI_ROT = float(arg("--hdri-rot", "0"))
+EXPOSURE = float(arg("--exposure", "-0.15"))
+LOOK = arg("--look", "AgX - Medium High Contrast")
+GROUND = (0x0c, 0x0b, 0x0e)                     # the page's ground: the frame edges must be exactly this
 REST = int(arg("--rest", "0"))
 ONLY = [int(x) for x in arg("--only", "").split(",") if x != ""]
 HERE = os.path.dirname(os.path.abspath(__file__))
-RES = {"wide": (1600, 1000), "tall": (900, 1400)}[SET]
+OUT = os.path.abspath(OUT)                 # Blender reads a relative render path from the drive root on Windows
+RES = {"wide": (1920, 1200), "tall": (1080, 1680)}[SET]   # v2: was 1600x1000 / 900x1400 at --scale 0.8
 
 # ---------------------------------------------------------------- scene
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -29,22 +38,82 @@ scene = bpy.context.scene
 scene.unit_settings.system = "METRIC"; scene.unit_settings.scale_length = 0.001
 scene.render.engine = "CYCLES"
 cy = scene.cycles
-cy.device = "CPU"; cy.samples = SAMPLES; cy.use_adaptive_sampling = True; cy.adaptive_threshold = 0.04; cy.adaptive_min_samples = 8
+cy.samples = SAMPLES; cy.use_adaptive_sampling = True; cy.adaptive_threshold = 0.008; cy.adaptive_min_samples = 64
 cy.use_denoising = True; cy.denoiser = "OPENIMAGEDENOISE"
-cy.max_bounces = 8; cy.glossy_bounces = 6; cy.transmission_bounces = 4; cy.transparent_max_bounces = 12; cy.diffuse_bounces = 2
-cy.sample_clamp_indirect = 8
+try: cy.denoising_input_passes = "RGB_ALBEDO_NORMAL"; cy.denoising_prefilter = "ACCURATE"
+except Exception: pass
+cy.max_bounces = 12; cy.glossy_bounces = 8; cy.transmission_bounces = 8; cy.transparent_max_bounces = 16; cy.diffuse_bounces = 3
+cy.sample_clamp_indirect = 6; cy.caustics_reflective = False; cy.caustics_refractive = False
+cy.device = "CPU"
+if DEVICE == "GPU":
+    try:
+        prefs = bpy.context.preferences.addons["cycles"].preferences
+        for kind in ("OPTIX", "CUDA"):
+            try:
+                prefs.compute_device_type = kind; prefs.get_devices()
+                gpus = [d for d in prefs.devices if d.type == kind]
+                if gpus:
+                    for d in prefs.devices: d.use = d.type == kind
+                    cy.device = "GPU"; print("render device:", kind, [d.name for d in gpus], flush=True); break
+            except Exception: continue
+    except Exception as e:
+        print("GPU not available, rendering on the CPU:", e, flush=True)
+    try: cy.denoising_use_gpu = cy.device == "GPU"
+    except Exception: pass
 scene.render.resolution_x = int(RES[0] * SCALE); scene.render.resolution_y = int(RES[1] * SCALE); scene.render.resolution_percentage = 100
 scene.render.image_settings.file_format = "PNG"; scene.render.image_settings.color_depth = "16"
-scene.render.use_motion_blur = True; scene.render.motion_blur_shutter = 0.45
+scene.render.use_motion_blur = True; scene.render.motion_blur_shutter = 0.45 * (N - 1) / 71.0   # the same blur length as the 72-frame film
+scene.render.dither_intensity = 0.0                # no dither: the ground has to stay one flat color
 try:
     scene.view_settings.view_transform = "AgX"
 except Exception:
     scene.view_settings.view_transform = "Standard"
-scene.view_settings.exposure = 0.0
+try: scene.view_settings.look = LOOK
+except Exception: pass
+scene.view_settings.exposure = EXPOSURE
 bpy.context.preferences.edit.keyframe_new_interpolation_type = "LINEAR"
 scene.frame_start = 0; scene.frame_end = N - 1
+# The world: a studio HDRI lights and reflects in the watch, but the camera itself sees one flat color, calibrated
+# below so every empty pixel comes out exactly GROUND after the view transform.
 w = bpy.data.worlds.new("W"); scene.world = w; w.use_nodes = True
-w.node_tree.nodes["Background"].inputs[0].default_value = (0.006, 0.006, 0.007, 1)
+wn = w.node_tree
+for n in list(wn.nodes): wn.nodes.remove(n)
+w_out = wn.nodes.new("ShaderNodeOutputWorld"); w_mix = wn.nodes.new("ShaderNodeMixShader"); w_lp = wn.nodes.new("ShaderNodeLightPath")
+w_env = wn.nodes.new("ShaderNodeBackground"); w_flat = wn.nodes.new("ShaderNodeBackground")
+w_tex = wn.nodes.new("ShaderNodeTexEnvironment"); w_map = wn.nodes.new("ShaderNodeMapping"); w_co = wn.nodes.new("ShaderNodeTexCoord")
+w_tex.image = bpy.data.images.load(os.path.join(HERE, "hdri", HDRI))
+w_map.inputs["Rotation"].default_value = (0, 0, math.radians(HDRI_ROT))
+w_env.inputs["Strength"].default_value = HDRI_STR; w_flat.inputs["Strength"].default_value = 1.0
+wn.links.new(w_co.outputs["Generated"], w_map.inputs["Vector"]); wn.links.new(w_map.outputs["Vector"], w_tex.inputs["Vector"])
+wn.links.new(w_tex.outputs["Color"], w_env.inputs["Color"])
+wn.links.new(w_lp.outputs["Is Camera Ray"], w_mix.inputs[0]); wn.links.new(w_env.outputs[0], w_mix.inputs[1]); wn.links.new(w_flat.outputs[0], w_mix.inputs[2])
+wn.links.new(w_mix.outputs[0], w_out.inputs[0])
+
+def calibrate_ground():
+    """Find the scene-linear color the camera must see so the saved pixel is exactly GROUND (the view transform is not
+    the plain sRGB curve). Renders an empty 8x8 frame a few times; the scene has no objects yet."""
+    import tempfile
+    cd = bpy.data.cameras.new("calcam"); co = bpy.data.objects.new("calcam", cd); scene.collection.objects.link(co); scene.camera = co
+    keep = (scene.render.resolution_x, scene.render.resolution_y, cy.samples, cy.use_denoising, scene.render.use_motion_blur, scene.render.filepath)
+    scene.render.resolution_x = scene.render.resolution_y = 8; cy.samples = 1; cy.use_denoising = False; scene.render.use_motion_blur = False
+    tmp = os.path.join(tempfile.gettempdir(), "pq_ground_cal.png")
+    want = [c / 255.0 for c in GROUND]
+    lo = [1e-5] * 3; hi = [0.2] * 3; lin = [0.006] * 3; got = want
+    for it in range(40):                       # bisection per channel (the transform is steep and not quite per-channel)
+        lin = [math.sqrt(a * b) for a, b in zip(lo, hi)]
+        w_flat.inputs["Color"].default_value = (*lin, 1)
+        scene.render.filepath = tmp; bpy.ops.render.render(write_still=True)
+        im = bpy.data.images.load(tmp); im.colorspace_settings.name = "Non-Color"; got = list(im.pixels[:3]); bpy.data.images.remove(im)
+        if max(abs(g - t) for g, t in zip(got, want)) < 0.0003: break
+        for i in range(3):
+            if got[i] > want[i]: hi[i] = lin[i]
+            else: lo[i] = lin[i]
+            if hi[i] / lo[i] < 1.0005: lo[i] /= 1.3; hi[i] *= 1.3     # another channel moved this one: reopen the bracket
+    assert max(abs(g - t) for g, t in zip(got, want)) < 0.0015, "the ground color did not calibrate"
+    print("ground calibrated:", [round(g * 255, 3) for g in got], "from linear", [round(l, 6) for l in lin], flush=True)
+    (scene.render.resolution_x, scene.render.resolution_y, cy.samples, cy.use_denoising, scene.render.use_motion_blur, scene.render.filepath) = keep
+    bpy.data.objects.remove(co); bpy.data.cameras.remove(cd)
+calibrate_ground()
 
 # ---------------------------------------------------------------- helpers
 def setin(node, name, value):
@@ -112,10 +181,29 @@ def cyl(name, r, h, loc, mat, axis="Z", bevel=0.0, seg=40):
     return to_obj(name, bm, mat, bevel, 2)
 
 # ---------------------------------------------------------------- materials
-M_CASE = material("case", (0.30, 0.30, 0.32), 1.0, 0.24, Anisotropic=0.55)          # dark titanium, brushed
-M_BACK = material("back", (0.22, 0.22, 0.24), 1.0, 0.30)
-M_GOLD = material("champagne", (0.86, 0.68, 0.40), 1.0, 0.20)
-M_STRAP = material("strap", (0.035, 0.035, 0.04), 0.0, 0.42, Sheen_Weight=0.4)
+def brushed(name, color, rough, aniso=0.6, grain=(1.0, 90.0, 90.0), bump=0.035, vary=0.07, tangent="Z", coat=0.0):
+    """Brushed metal: stretched noise drives a fine bump (the brushing lines) and a little roughness variation, with
+    anisotropic highlights along the grain. Not perfect CG: the variation and a larger, faint smudge layer break it up."""
+    m = material(name, color, 1.0, rough, Anisotropic=aniso, Coat_Weight=coat, Coat_Roughness=0.08)
+    nt = m.node_tree; p = nt.nodes["Principled BSDF"]
+    co = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = grain
+    nz = nt.nodes.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 1.6; nz.inputs["Detail"].default_value = 6.0
+    sm = nt.nodes.new("ShaderNodeTexNoise"); sm.inputs["Scale"].default_value = 0.11; sm.inputs["Detail"].default_value = 3.0
+    nt.links.new(co.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs["Vector"], nz.inputs["Vector"]); nt.links.new(co.outputs["Object"], sm.inputs["Vector"])
+    add = nt.nodes.new("ShaderNodeMath"); add.operation = "MULTIPLY_ADD"; add.inputs[1].default_value = vary; add.inputs[2].default_value = rough - vary * 0.5
+    nt.links.new(nz.outputs["Fac"], add.inputs[0])
+    add2 = nt.nodes.new("ShaderNodeMath"); add2.operation = "MULTIPLY_ADD"; add2.inputs[1].default_value = 0.06; nt.links.new(sm.outputs["Fac"], add2.inputs[0]); nt.links.new(add.outputs[0], add2.inputs[2])
+    nt.links.new(add2.outputs[0], p.inputs["Roughness"])
+    bp = nt.nodes.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = bump; bp.inputs["Distance"].default_value = 0.02
+    nt.links.new(nz.outputs["Fac"], bp.inputs["Height"]); nt.links.new(bp.outputs["Normal"], p.inputs["Normal"])
+    tg = nt.nodes.new("ShaderNodeTangent"); tg.direction_type = "RADIAL"; tg.axis = tangent
+    nt.links.new(tg.outputs["Tangent"], p.inputs["Tangent"])
+    return m
+M_CASE = brushed("case", (0.20, 0.20, 0.215), 0.27, aniso=0.65)                      # dark titanium, brushed
+M_BACK = brushed("back", (0.24, 0.24, 0.26), 0.30, aniso=0.5, grain=(60.0, 60.0, 1.0), tangent="Z")
+M_GOLD = brushed("champagne", (0.88, 0.70, 0.42), 0.17, aniso=0.3, bump=0.012, vary=0.04)
+M_STRAP = brushed("strap", (0.085, 0.085, 0.095), 0.30, aniso=0.6, grain=(1.0, 80.0, 80.0), bump=0.03, tangent="Y")   # dark coated steel links
+M_STRAP_POL = brushed("strap_polished", (0.14, 0.14, 0.155), 0.12, aniso=0.0, bump=0.004, vary=0.03)                  # the polished centre of each link
 M_PCB = material("pcb", (0.012, 0.02, 0.03), 0.0, 0.35)
 M_CHIP = material("chip", (0.015, 0.015, 0.017), 0.0, 0.28)
 M_PAD = material("pads", (0.9, 0.68, 0.28), 1.0, 0.25)
@@ -130,10 +218,15 @@ M_INK = material("ink", (0.002, 0.002, 0.003), 0.0, 0.35)
 def glass_material():
     m = bpy.data.materials.new("glass"); m.use_nodes = True; nt = m.node_tree
     for n in list(nt.nodes): nt.nodes.remove(n)
+    # real glass: the slab has thickness and refracts (IOR 1.52), with a faint smudge in its roughness. Shadow rays
+    # pass straight through, so the parts under the crystal are still lit without caustics.
     out = nt.nodes.new("ShaderNodeOutputMaterial"); mix = nt.nodes.new("ShaderNodeMixShader")
-    tr = nt.nodes.new("ShaderNodeBsdfTransparent"); gl = nt.nodes.new("ShaderNodeBsdfGlossy"); fr = nt.nodes.new("ShaderNodeFresnel")
-    gl.inputs["Roughness"].default_value = 0.02; fr.inputs["IOR"].default_value = 1.5
-    nt.links.new(fr.outputs[0], mix.inputs[0]); nt.links.new(tr.outputs[0], mix.inputs[1]); nt.links.new(gl.outputs[0], mix.inputs[2])
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent"); gl = nt.nodes.new("ShaderNodeBsdfGlass"); lp = nt.nodes.new("ShaderNodeLightPath")
+    gl.inputs["IOR"].default_value = 1.52; gl.inputs["Color"].default_value = (0.985, 0.99, 1.0, 1)
+    co = nt.nodes.new("ShaderNodeTexCoord"); sm = nt.nodes.new("ShaderNodeTexNoise"); sm.inputs["Scale"].default_value = 0.16; sm.inputs["Detail"].default_value = 4.0
+    ramp = nt.nodes.new("ShaderNodeMath"); ramp.operation = "MULTIPLY_ADD"; ramp.inputs[1].default_value = 0.035; ramp.inputs[2].default_value = 0.0
+    nt.links.new(co.outputs["Object"], sm.inputs["Vector"]); nt.links.new(sm.outputs["Fac"], ramp.inputs[0]); nt.links.new(ramp.outputs[0], gl.inputs["Roughness"])
+    nt.links.new(lp.outputs["Is Shadow Ray"], mix.inputs[0]); nt.links.new(gl.outputs[0], mix.inputs[1]); nt.links.new(tr.outputs[0], mix.inputs[2])
     nt.links.new(mix.outputs[0], out.inputs[0]); return m
 M_GLASS = glass_material()
 
@@ -348,10 +441,17 @@ def segmented(prefix, y0, direction, length, n, holes, group):
         ob = box(f"{prefix}{i}", (19.6, ln - 0.5, 2.3), (0, 0, 0), M_STRAP, bevel=0.55)
         ob.location = (0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2); ob.rotation_euler = (math.atan2(dz, dy), 0, 0)
         ob["seg"] = i; add(f"{prefix}{i}", ob, group)
+        # link detail (children of the link, so they ride its animation): a polished centre piece between two shut lines
+        inl = box(f"{prefix}{i}_in", (7.4, ln - 1.5, 0.16), (0, 0, 1.19), M_STRAP_POL, bevel=0.07); inl.parent = ob
+        for sg in (-1, 1):
+            gr = box(f"{prefix}{i}_gr{sg}", (0.2, ln - 1.0, 0.05), (sg * 4.5, 0, 1.155), M_INK); gr.parent = ob
         if holes and i >= 2:
             h = cyl(f"hole{prefix}{i}", 1.3, 0.06, (0, 0, 1.18), M_INK, seg=20); h.parent = ob
         pin = cyl(f"pin_{prefix}{i}", 0.75, 20.6, (0, 0, 0), M_GOLD, axis="X", seg=14)
         pin.location = (0, p0[0], p0[1]); pin["seg"] = i; add(f"pin_{prefix}{i}", pin, group)
+        for sg in (-1, 1):                                              # pin heads, with a screwdriver slot
+            cp = cyl(f"cap_{prefix}{i}_{sg}", 1.0, 0.5, (sg * 10.35, 0, 0), M_GOLD, axis="X", bevel=0.12, seg=24); cp.parent = pin
+            sl = box(f"slot_{prefix}{i}_{sg}", (0.06, 1.5, 0.22), (sg * 10.6, 0, 0), M_INK); sl.parent = pin
 segmented("sTop", 25.0, 1, 48.0, 9, False, "strap_top")
 segmented("sBot", 25.0, -1, 66.0, 12, True, "strap_bot")
 kp = centre(0.85, 25.0, 1, 48.0)
@@ -376,7 +476,7 @@ strip("rim_left", (60, 330), (-300, 190, 90), (0, 0, 0), (0.82, 0.9, 1.0), 22.0)
 strip("rim_right", (45, 330), (310, 150, 30), (0, 0, 0), (1.0, 0.86, 0.66), 20.0)
 strip("top_soft", (260, 160), (0, -60, 330), (0, 0, 0), (1.0, 1.0, 1.0), 4.5)
 strip("kick_low", (200, 40), (0, 260, -60), (0, 0, 0), (0.9, 0.95, 1.0), 6.0)
-strip("front_fill", (360, 220), (0, -520, -20), (0, 0, 0), (1.0, 1.0, 1.0), 0.7)
+ff = strip("front_fill", (360, 220), (0, -520, -20), (0, 0, 0), (1.0, 1.0, 1.0), 0.7); ff.visible_glossy = False; ff.visible_transmission = False   # fill only: no veil in the crystal
 
 # ---------------------------------------------------------------- camera
 target = bpy.data.objects.new("target", None); scene.collection.objects.link(target)
@@ -478,6 +578,7 @@ for f in range(N):
 os.makedirs(OUT, exist_ok=True)
 frames = ONLY or list(range(N))
 for f in frames:
+    if SKIP and os.path.exists(os.path.join(OUT, f"f_{f:04d}.png")): continue
     scene.frame_set(f)
     scene.render.filepath = os.path.join(OUT, f"f_{f:04d}.png")
     bpy.ops.render.render(write_still=True)

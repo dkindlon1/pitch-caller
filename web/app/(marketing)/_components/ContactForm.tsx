@@ -29,9 +29,9 @@ export function ContactForm() {
 
   if (state === "sent") {
     return (
-      <div className="mk-form-done" role="status">
+      <div className="pq-form-done" role="status">
         <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="20" /><path d="M13 22.5l6 6 12-13" /></svg>
-        <p className="mk-form-done-h">Message sent</p>
+        <p className="pq-form-done-h">Message sent</p>
         <p>Thanks. You&apos;ll get a reply at the email you gave, usually within a day or two.</p>
       </div>
     );
@@ -44,15 +44,15 @@ export function ContactForm() {
     "aria-describedby": errors[k] ? `c-${k}-err` : undefined,
     onChange: () => errors[k] && setErrors((x) => ({ ...x, [k]: undefined })),
   });
-  const err = (k: keyof Contact) => (errors[k] ? <span className="mk-form-err" id={`c-${k}-err`}>{errors[k]}</span> : null);
+  const err = (k: keyof Contact) => (errors[k] ? <span className="pq-form-err" id={`c-${k}-err`}>{errors[k]}</span> : null);
 
   return (
-    <form className="mk-form" onSubmit={submit} noValidate>
-      <div className="mk-form-row">
+    <form className="pq-form" onSubmit={submit} noValidate>
+      <div className="pq-form-row">
         <label htmlFor="c-name">Name<input {...field("name")} autoComplete="name" placeholder="Alex Rivera" required />{err("name")}</label>
         <label htmlFor="c-email">Email<input {...field("email")} type="email" autoComplete="email" placeholder="coach@school.edu" required />{err("email")}</label>
       </div>
-      <div className="mk-form-row">
+      <div className="pq-form-row">
         <label htmlFor="c-role">You are
           <select {...field("role")} defaultValue="" required>
             <option value="" disabled>Choose one</option>
@@ -66,12 +66,12 @@ export function ContactForm() {
           </select>{err("level")}
         </label>
       </div>
-      <label htmlFor="c-org"><span className="mk-form-label">Team or school <span className="mk-form-opt">(optional)</span></span><input {...field("org")} autoComplete="organization" placeholder="Lincoln High School" /></label>
+      <label htmlFor="c-org"><span className="pq-form-label">Team or school <span className="pq-form-opt">(optional)</span></span><input {...field("org")} autoComplete="organization" placeholder="Lincoln High School" /></label>
       <label htmlFor="c-message">What would you like to know?<textarea {...field("message")} rows={4} placeholder="How many pitchers you have, what level, what you'd want it to help with." required />{err("message")}</label>
-      <div className="mk-form-hp" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
-      <div className="mk-form-foot">
-        <button className="mk-btn" type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending…" : "Send message"}</button>
-        {problem ? <p className="mk-form-problem" role="alert">{problem}</p> : null}
+      <div className="pq-form-hp" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
+      <div className="pq-form-foot">
+        <button className="pq-cta" type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending…" : "Send message"}</button>
+        {problem ? <p className="pq-form-problem" role="alert">{problem}</p> : null}
       </div>
     </form>
   );
