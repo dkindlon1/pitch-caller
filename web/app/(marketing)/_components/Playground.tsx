@@ -1,9 +1,7 @@
 "use client";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
-import gsap from "gsap";
-import { Flip } from "gsap/Flip";
 import { STORY_SIT, pct, sameSit, weigh, type Sit, type Weighed } from "@/lib/story";
-import { motion, reducedMotion } from "./motion";
+import { kit, motion, reducedMotion } from "./motion";
 
 // "Set the situation": the film's last frame stays where it is and two glass panels rise around it. The left one sets
 // the count, runners, outs, inning and which side the hitter stands on; the right one shows what the engine would
@@ -19,8 +17,8 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
   const root = useRef<HTMLDivElement>(null);
   const eng = useRef<Engine | null>(null);
   const loading = useRef<Promise<Engine> | null>(null);
-  const flip = useRef<Flip.FlipState | null>(null);
-  const landTl = useRef<gsap.core.Timeline | null>(null);
+  const flip = useRef<ReturnType<NonNullable<ReturnType<typeof kit>>["Flip"]["getState"]> | null>(null);
+  const landTl = useRef<{ kill(): unknown } | null>(null);
   const shown = useRef<Weighed>(story);
   const [sit, setSit] = useState<Sit>(STORY_SIT);
   const [res, setRes] = useState<Weighed>(story);
@@ -41,7 +39,6 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
   }, []);
   // the engine and its tables load once the page is idle, well before anyone can reach the controls
   useEffect(() => {
-    gsap.registerPlugin(Flip);
     const idle = window.requestIdleCallback || ((f: () => void) => window.setTimeout(f, 1800));
     const id = idle(() => { load().catch(() => {}); });
     return () => { (window.cancelIdleCallback || window.clearTimeout)(id as number); landTl.current?.kill(); };
@@ -51,7 +48,8 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
     setSit(next);
     load().then((E) => {
       const r = sameSit(next, STORY_SIT) ? story : weigh(E, next);
-      if (root.current && !reducedMotion()) flip.current = Flip.getState(root.current.querySelectorAll(".pq-rowwrap"));
+      const k = kit();
+      if (root.current && k && !reducedMotion()) flip.current = k.Flip.getState(root.current.querySelectorAll(".pq-rowwrap"));
       setRes(r); setOpen(r.groups[0].key);
       const t = r.groups[0];
       setSay(`${t.name}, ${pct(t.p)}% of the mix.`);
@@ -67,7 +65,9 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
     const top = res.groups[0].spots[0], words = top.words, face = q<HTMLElement>(".pq-face"), f1 = q<HTMLElement>(".pq-f1"), f2 = q<HTMLElement>(".pq-f2"), hr = face.querySelector("hr") as HTMLElement;
     const draw = () => { f1.textContent = top.pitch.toUpperCase(); f2.innerHTML = words.map((w) => `<span>${w}</span>`).join(""); hr.style.display = words.length ? "" : "none"; };
     faceOn.current = true;
-    if (reducedMotion()) { draw(); return; }
+    const k = kit();
+    if (!k || reducedMotion()) { draw(); face.style.opacity = "1"; return; }
+    const { gsap, Flip } = k;
     if (flip.current) {
       Flip.from(flip.current, { targets: el.querySelectorAll(".pq-rowwrap"), duration: M.durFlip, ease: M.out, absolute: false,
         onEnter: (els) => gsap.fromTo(els, { opacity: 0, x: 24 }, { opacity: 1, x: 0, duration: 0.4, ease: M.out }) });

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { STORY_SIT, STORY_TOP, groupMix, ledger, pct, sameSit, weigh } from "./story.ts";
+import { STORY_SIT, STORY_TOP, groupMix, ledger, pct, plainWhy, sameSit, weigh } from "./story.ts";
 
 const req = createRequire(import.meta.url);
 const E = req("./engine.js");
@@ -35,4 +35,8 @@ test("changing the situation changes the call, and the ledger reads the same sit
   const l = ledger(STORY_SIT);
   assert.deepEqual(l.situation.map((r) => r.v), ["2-2", "One out", "On third", "3rd, tied"]);
   assert.equal(groupMix([]).length, 0);
+  // the reason line can't be read as the pitch's own share
+  assert.equal(plainWhy("He's sitting slider (47%)"), "He's probably looking for a slider. The engine's read of him: 47% likely.");
+  assert.equal(plainWhy("Tunnels off the last pitch."), "Tunnels off the last pitch.");
+  assert.ok(!/sitting \w+ \(\d+%\)/.test(weigh(E, STORY_SIT).why), "the page never shows the bare 'sitting slider (47%)' form");
 });

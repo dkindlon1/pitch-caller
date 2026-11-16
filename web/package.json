@@ -12,7 +12,6 @@
     "e2e": "node tests/site_e2e.js"
   },
   "dependencies": {
-    "@gsap/react": "^2.1.2",
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.118.0",
     "fflate": "0.8.2",

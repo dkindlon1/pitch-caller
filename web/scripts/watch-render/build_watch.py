@@ -24,8 +24,10 @@ DEVICE = arg("--device", "GPU")                 # GPU (OptiX, then CUDA) or CPU
 HDRI = arg("--hdri", "studio_small_09_2k.exr")  # in hdri/ next to this script (Poly Haven, CC0)
 HDRI_STR = float(arg("--hdri-strength", "1.0"))
 HDRI_ROT = float(arg("--hdri-rot", "0"))
-EXPOSURE = float(arg("--exposure", "-0.15"))
+EXPOSURE = float(arg("--exposure", "-0.3"))
 LOOK = arg("--look", "AgX - Medium High Contrast")
+FINISH = arg("--finish", "graphite")            # the metal: graphite (dark titanium) or natural (light titanium)
+RIM = float(arg("--rim", "1.05")); SHEEN = float(arg("--sheen", "1.0"))
 GROUND = (0x0c, 0x0b, 0x0e)                     # the page's ground: the frame edges must be exactly this
 REST = int(arg("--rest", "0"))
 ONLY = [int(x) for x in arg("--only", "").split(",") if x != ""]
@@ -202,16 +204,17 @@ def brushed(name, color, rough, aniso=0.6, grain=(1.0, 90.0, 90.0), bump=0.035, 
     tg = nt.nodes.new("ShaderNodeTangent"); tg.direction_type = "RADIAL"; tg.axis = tangent
     nt.links.new(tg.outputs["Tangent"], p.inputs["Tangent"])
     return m
-M_CASE = brushed("case", (0.20, 0.20, 0.215), 0.27, aniso=0.65)                      # dark titanium, brushed
+TI = {"graphite": ((0.27, 0.262, 0.257), (0.19, 0.185, 0.18), (0.36, 0.35, 0.34)), "natural": ((0.50, 0.47, 0.43), (0.36, 0.34, 0.31), (0.58, 0.55, 0.50))}[FINISH]
+M_CASE = brushed("case", TI[0], 0.30, aniso=0.7, bump=0.05)                          # titanium, brushed
 M_BACK = brushed("back", (0.24, 0.24, 0.26), 0.30, aniso=0.5, grain=(60.0, 60.0, 1.0), tangent="Z")
-M_GOLD = brushed("champagne", (0.88, 0.70, 0.42), 0.17, aniso=0.3, bump=0.012, vary=0.04)
-M_STRAP = brushed("strap", (0.085, 0.085, 0.095), 0.30, aniso=0.6, grain=(1.0, 80.0, 80.0), bump=0.03, tangent="Y")   # dark coated steel links
-M_STRAP_POL = brushed("strap_polished", (0.14, 0.14, 0.155), 0.12, aniso=0.0, bump=0.004, vary=0.03)                  # the polished centre of each link
+M_GOLD = brushed("champagne", (0.86, 0.70, 0.46), 0.14, aniso=0.3, bump=0.012, vary=0.04)
+M_STRAP = brushed("strap", TI[1], 0.28, aniso=0.7, grain=(1.0, 80.0, 80.0), bump=0.045, tangent="Y")   # dark coated steel links
+M_STRAP_POL = brushed("strap_polished", TI[2], 0.09, aniso=0.0, bump=0.004, vary=0.03)                  # the polished centre of each link
 M_PCB = material("pcb", (0.012, 0.02, 0.03), 0.0, 0.35)
 M_CHIP = material("chip", (0.015, 0.015, 0.017), 0.0, 0.28)
 M_PAD = material("pads", (0.9, 0.68, 0.28), 1.0, 0.25)
 M_PASS = material("passive", (0.22, 0.17, 0.10), 0.0, 0.5)
-M_FOIL = material("foil", (0.34, 0.35, 0.37), 1.0, 0.38)
+M_FOIL = material("foil", (0.24, 0.245, 0.26), 1.0, 0.48)
 M_LABEL = material("label", (0.03, 0.03, 0.035), 0.0, 0.5)
 M_MOTOR = material("motor", (0.62, 0.62, 0.64), 1.0, 0.34)
 M_LCD = material("lcd", (0.015, 0.016, 0.02), 0.0, 0.18)
@@ -263,10 +266,10 @@ for i, (sx, sy) in enumerate(((1, 1), (-1, 1), (1, -1), (-1, -1))):
 add("backplate", back, "back")
 
 # frame: the mid case with lugs and a button
-frame = prism("frame", rrect(CW, CH, CR), 1.0, Z_TOP, M_CASE, inner=rrect(36.0, 40.0, 8.0), bevel=0.55, bevel_seg=4)
+frame = prism("frame", rrect(CW, CH, CR), 1.0, Z_TOP, M_CASE, inner=rrect(36.0, 40.0, 8.0), bevel=0.95, bevel_seg=7)
 add("frame", frame, "frame")
 for sgn in (1, -1):
-    lug = box(f"lug{sgn}", (27.0, 7.0, 6.4), (0, sgn * 24.0, 5.4), M_CASE, bevel=1.2); lug.parent = frame
+    lug = box(f"lug{sgn}", (27.0, 7.0, 6.4), (0, sgn * 24.0, 5.4), M_CASE, bevel=1.5); lug.parent = frame
     pin = cyl(f"pin{sgn}", 0.9, 25.0, (0, sgn * 24.6, 5.4), M_GOLD, axis="X", seg=16); pin.parent = frame
 btn = cyl("button", 1.9, 2.4, (20.8, 6.0, 5.6), M_GOLD, axis="X", bevel=0.3, seg=48); btn.parent = frame
 btn2 = box("button_pad", (0.8, 9.0, 5.0), (19.6, 6.0, 5.6), M_CASE, bevel=0.3); btn2.parent = frame
@@ -416,7 +419,7 @@ lcd_flex_tail = box("flex_tail", (9.0, 4.0, 0.14), (0, -21.6, 3.2), M_FLEX); lcd
 add("display", lcd, "display")
 
 # cover glass with its black ink border
-gl = prism("glass", rrect(CW - 0.3, CH - 0.3, CR - 0.15), Z_TOP, Z_TOP + 1.25, M_GLASS, bevel=0.35)
+gl = prism("glass", rrect(CW - 0.3, CH - 0.3, CR - 0.15), Z_TOP, Z_TOP + 1.25, M_GLASS, bevel=0.5, bevel_seg=6)
 inkring = prism("ink", rrect(CW - 1.2, CH - 1.2, CR - 0.6), Z_TOP + 0.02, Z_TOP + 0.06, M_INK, inner=rrect(31.6, 31.6, 3.0)); inkring.parent = gl
 add("glass", gl, "glass")
 
@@ -441,7 +444,7 @@ def segmented(prefix, y0, direction, length, n, holes, group):
     for i in range(n):
         p0 = centre(i / n, y0, direction, length); p1 = centre((i + 1) / n, y0, direction, length)
         dy, dz = p1[0] - p0[0], p1[1] - p0[1]; ln = math.hypot(dy, dz)
-        ob = box(f"{prefix}{i}", (19.6, ln - 0.5, 2.3), (0, 0, 0), M_STRAP, bevel=0.55)
+        ob = box(f"{prefix}{i}", (19.6, ln - 0.5, 2.3), (0, 0, 0), M_STRAP, bevel=0.7)
         ob.location = (0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2); ob.rotation_euler = (math.atan2(dz, dy), 0, 0)
         ob["seg"] = i; add(f"{prefix}{i}", ob, group)
         # link detail (children of the link, so they ride its animation): a polished centre piece between two shut lines
@@ -462,7 +465,7 @@ keep = box("keeper", (21.0, 5.0, 3.2), (0, 0, 0), M_STRAP, bevel=0.6); keep.loca
 buckle = box("buckle", (22.5, 1.4, 2.2), (0, 0, 0), M_GOLD, bevel=0.35); buckle.location = (0, 25.0 + 8.0, 5.4 + 1.6); buckle["seg"] = 1; add("buckle", buckle, "strap_top")
 
 # ---------------------------------------------------------------- stage: floor and lights
-def strip(name, size, loc, aim, color, strength):
+def strip(name, size, loc, aim, color, strength, soft=False):
     bm = bmesh.new(); bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=0.5)
     bmesh.ops.scale(bm, vec=(size[0] * 2, size[1] * 2, 1), verts=bm.verts)
     me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
@@ -471,15 +474,32 @@ def strip(name, size, loc, aim, color, strength):
     for n in list(nt.nodes): nt.nodes.remove(n)
     em = nt.nodes.new("ShaderNodeEmission"); o = nt.nodes.new("ShaderNodeOutputMaterial")
     em.inputs["Color"].default_value = (*color, 1); em.inputs["Strength"].default_value = strength; nt.links.new(em.outputs[0], o.inputs[0])
+    if soft:
+        # a softbox, not a bare panel: brightest in the middle and falling to nothing at its edges, so its reflection
+        # in flat metal is a gradient with no hard outline
+        tc = nt.nodes.new("ShaderNodeTexCoord"); sep = nt.nodes.new("ShaderNodeSeparateXYZ"); nt.links.new(tc.outputs["Generated"], sep.inputs[0])
+        def hump(sock):
+            a = nt.nodes.new("ShaderNodeMath"); a.operation = "SUBTRACT"; a.inputs[0].default_value = 1.0; nt.links.new(sock, a.inputs[1])
+            b = nt.nodes.new("ShaderNodeMath"); b.operation = "MULTIPLY"; nt.links.new(sock, b.inputs[0]); nt.links.new(a.outputs[0], b.inputs[1])
+            c = nt.nodes.new("ShaderNodeMath"); c.operation = "MULTIPLY"; c.inputs[1].default_value = 4.0; nt.links.new(b.outputs[0], c.inputs[0])
+            d = nt.nodes.new("ShaderNodeMath"); d.operation = "POWER"; d.inputs[1].default_value = 1.6; nt.links.new(c.outputs[0], d.inputs[0]); return d.outputs[0]
+        m2 = nt.nodes.new("ShaderNodeMath"); m2.operation = "MULTIPLY"; nt.links.new(hump(sep.outputs["X"]), m2.inputs[0]); nt.links.new(hump(sep.outputs["Y"]), m2.inputs[1])
+        m3 = nt.nodes.new("ShaderNodeMath"); m3.operation = "MULTIPLY"; m3.inputs[1].default_value = strength; nt.links.new(m2.outputs[0], m3.inputs[0])
+        nt.links.new(m3.outputs[0], em.inputs["Strength"])
     ob.data.materials.append(m)
     d = Vector(aim) - Vector(loc); ob.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
     ob.visible_camera = False
     return ob
-strip("rim_left", (60, 330), (-300, 190, 90), (0, 0, 0), (0.82, 0.9, 1.0), 22.0)
-strip("rim_right", (45, 330), (310, 150, 30), (0, 0, 0), (1.0, 0.86, 0.66), 20.0)
+strip("rim_left", (60, 330), (-300, 190, 90), (0, 0, 0), (0.82, 0.9, 1.0), 22.0 * RIM)
+strip("rim_right", (45, 330), (310, 150, 30), (0, 0, 0), (1.0, 0.86, 0.66), 20.0 * RIM)
 strip("top_soft", (260, 160), (0, -60, 330), (0, 0, 0), (1.0, 1.0, 1.0), 4.5)
 strip("kick_low", (200, 40), (0, 260, -60), (0, 0, 0), (0.9, 0.95, 1.0), 6.0)
 ff = strip("front_fill", (360, 220), (0, -520, -20), (0, 0, 0), (1.0, 1.0, 1.0), 0.7); ff.visible_glossy = False; ff.visible_transmission = False   # fill only: no veil in the crystal
+
+# sheen cards: seen only in reflections, above and below the lens, so flat metal facing the camera (the strap links, the
+# lugs) carries a soft gradient instead of mirroring a black room. The crystal over the screen looks between them.
+for nm, sz, loc, st in (("sheen_top", (300, 150), (0, -380, 380), 9.0), ("sheen_low", (300, 130), (0, -420, -340), 5.0), ("sheen_side", (90, 260), (-440, -260, 40), 5.0), ("sheen_mid", (420, 420), (0, -560, 0), 0.6)):
+    sc = strip(nm, sz, loc, (0, 0, 0), (1.0, 0.98, 0.95), st * SHEEN, soft=True); sc.visible_diffuse = False; sc.visible_transmission = False
 
 # ---------------------------------------------------------------- camera
 target = bpy.data.objects.new("target", None); scene.collection.objects.link(target)

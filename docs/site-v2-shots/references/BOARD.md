@@ -52,3 +52,34 @@ Reel takeaway: the pattern commenters respond to is restraint (two neutrals plus
 ## Recheck needed
 
 Once a Chrome browser is selected, re-run: screenshots for the Awwwards and Codrops entries above, and computed fonts/colors (body background, h1 fontFamily, fontSize, fontWeight, letterSpacing). The move-2, 3 and 5 searches returned no verified premium examples; they need a targeted Awwwards or Codrops pass.
+
+
+# Round 2 (Nov 16): seen in Chrome, logged in
+
+The seven reels were watched in the Windows browser (it was logged into Instagram), a few frames each, with their captions and the first screen of comments. Live sites were opened and their headline styles read with JavaScript. Screenshots are in this folder.
+
+## The reels
+| Reel | What it shows | What to take | What the comments flag |
+|---|---|---|---|
+| DZrcGVFNhgG (docmo.agency) | A villa tour: about 200 frames scrubbed by scroll, numbered chapters ("01 Above everything") in a serif over full-bleed frames | One idea per stop, the frame fills the screen, the words sit on it | Comments are only keyword replies |
+| DfUvC-GhLSI (thedzianis) | Dark heroes with a glowing orb; two quiet colors and one loud accent, the accent only on the button | Accent only where you want a press | "Why do you all copy each other" (the look is common now) |
+| DfK9uklOWJ_ | 3D heroes re-shot for phones | Recompose for the tall frame: camera closer, text in its own zone | none useful |
+| DfGEE7DIvjU | One accent color over black and blue | Keep it to one accent | Contrast fails (3.48:1 called out), "a lot going on, I don't know where to look", "the orange makes it look bad", "it's AI and it shows" |
+| DfScZgPSqc1 | 60/30/10 color split | Two colors do 90% of the work | "That 10% color makes it look 100% AI", "lime green is overused", "remove the last color" |
+| DfuhfgpRQxa | Accent from the color wheel | Match saturation, not just hue | The saturated orange fights the green and cream |
+| DfXTi-Yoveg | Sand and green plus one touch | One surprise | "You need to know where to add it or it is a mess" |
+
+## Live sites
+| Site | Screenshot | The one thing worth learning | Type and color read off the page |
+|---|---|---|---|
+| apple.com/apple-watch-ultra-4 | apple-ultra-hero.jpg, apple-ultra-closer-look.jpg, apple-ultra-accent-headline.jpg | Product lit low and from the side on black: rim light draws the case edge, the screen is the brightest thing. One heavy uppercase line over it. One colored headline per page (green). | Background rgb(0,0,0); SF Pro |
+| apple.com/watch | apple-watch-overview-1.jpg, apple-watch-made-for-each-other.jpg | Pacing: one statement, lots of air, then the product. "Made for each other" shows two devices with one short paragraph. | White and rgb(245,245,247) |
+| linear.app | linear-hero.jpg, linear-three-up.jpg | Near-black ground, one weight of type, tight tracking; second headline in grey; three plain facts in a row with a thin line above. | Background rgb(8,9,10); Inter 64px weight 510, tracking -1.4px; grey rgb(138,143,152) |
+
+## What changed on the site because of this
+- Film: lighting pushed toward the Apple Ultra look (rim light on wider bevels, soft cards reflected in the strap, the screen as the brightest thing).
+- Programs: cut from seven cards to three big numbers and three lanes, after "a lot going on, I don't know where to look".
+- Two wrists: three plain facts in a row under the watches (the Linear three-up).
+- Color: nothing added. Ground and chalk carry the page, blue is the mood, green is only the call and the two buttons you press.
+
+Not seen: Awwwards and Codrops were not opened this round. The reels were sampled (a few frames each), not watched with sound.

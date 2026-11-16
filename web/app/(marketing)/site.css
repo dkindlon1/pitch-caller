@@ -148,13 +148,15 @@ html.lenis, html.lenis body { height: auto; }
 .pq-film { position: relative; height: 960vh; }
 .pq-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--ground); }
 .pq-cv, .pq-cut { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.pq-cv { background: var(--ground) url(/media/film/watch/first.jpg) center / cover no-repeat; }
+.pq-cv { background: var(--ground) center / cover no-repeat; opacity: 0; transition: opacity 0.7s var(--e-out); }
+.pq-cv.is-on { opacity: 1; }
 .pq-cut { opacity: 0; pointer-events: none; z-index: 3; }
 /* the light behind the watch: a blue layer and a green one, crossfaded (opacity only) as the call lands */
 .pq-light { position: absolute; inset: 0; mix-blend-mode: screen; pointer-events: none; }
 .pq-light.is-b { background: radial-gradient(36vw 48vh at 50% 52%, color-mix(in oklab, var(--glow) 38%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 76%); opacity: 0; }
 .pq-light.is-g { background: radial-gradient(36vw 48vh at 50% 52%, color-mix(in oklab, var(--call) 34%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 76%); opacity: 0; }
 .pq-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(12, 11, 14, 0.86) 0%, rgba(12, 11, 14, 0.5) 26%, transparent 44%); }
+.pq-foot-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 30vh; opacity: 0; pointer-events: none; z-index: 3; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--ground) 70%, transparent) 45%, var(--ground) 86%); }
 .pq-pglight { position: absolute; inset: 0; opacity: 0; pointer-events: none; mix-blend-mode: screen; background: radial-gradient(34vw 46vh at 16% 62%, rgba(20, 34, 79, 0.5), transparent 70%), radial-gradient(30vw 44vh at 86% 44%, rgba(20, 34, 79, 0.45), transparent 70%), radial-gradient(9vw 12vh at 30% 27%, rgba(47, 91, 255, 0.22), transparent 70%), radial-gradient(8vw 11vh at 71% 80%, rgba(47, 91, 255, 0.2), transparent 70%); }
 
 .pq-msg { position: absolute; left: 6.6vw; top: 50%; width: min(36vw, 540px); transform: translateY(-50%); z-index: 4; }
@@ -281,8 +283,8 @@ html.lenis, html.lenis body { height: auto; }
   .pq-light.is-b { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--glow) 40%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
   .pq-light.is-g { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--call) 36%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
   .pq-msg, .pq-msg.is-low { left: 22px; right: 22px; top: 11vh; bottom: auto; width: auto; transform: none; }
-  .pq-cv { background-image: url(/media/film/watch/tall-first.jpg); }
   .pq-explain { text-shadow: 0 1px 14px var(--ground), 0 0 4px var(--ground); }
+  .pq-foot-fade { z-index: 1; height: 22vh; }
   .pq-cut { display: none; }   /* on a phone the panels sit above and below the watch, over the strap */
   .pq-msg.is-1 { width: auto; }
   .pq-msg h1 { font-size: clamp(1.9rem, 8.7vw, 2.6rem); }
@@ -314,7 +316,7 @@ html.lenis, html.lenis body { height: auto; }
   .pq-gamerow { margin-top: 6px; gap: 12px; } .pq-dia { width: 112px; height: 96px; transform: scale(0.9); transform-origin: 0 50%; }
   .pq-side .pq-lbl { display: none !important; } .pq-seg { margin-top: 5px; gap: 5px; } .pq-seg .pq-btn { height: 38px; min-width: 42px; padding: 0 11px; font-size: 0.86rem; }
   .pq-hit { margin-top: 6px; } .pq-hit .pq-lbl { font-size: 0.8rem; }
-  .pq-reset { position: absolute; right: 14px; top: -44px; margin: 0; }
+  .pq-reset { position: absolute; left: 4px; top: -46px; margin: 0; height: 38px; }
   .pq-flow { display: none; }
 }
 
@@ -331,8 +333,8 @@ html.lenis, html.lenis body { height: auto; }
   .pq *, .pq *::before, .pq *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   .pq-film { height: auto; }
   .pq-pin { position: relative; height: auto; overflow: visible; display: grid; gap: 28px; padding: 0 var(--pad) 72px; max-width: var(--wrap); margin: 0 auto; }
-  .pq-cv { position: relative; inset: auto; width: calc(100% + 2 * var(--pad)); max-width: none; margin: 0 calc(-1 * var(--pad)); height: auto; aspect-ratio: 16 / 10; max-height: 86vh; background-image: url(/media/film/watch/poster.jpg); }
-  .pq-cut, .pq-light, .pq-shade, .pq-pglight, .pq-word, .pq-landed, .pq-rail, .pq-flow { display: none; }
+  .pq-cv { position: relative; inset: auto; width: calc(100% + 2 * var(--pad)); max-width: none; margin: 0 calc(-1 * var(--pad)); height: auto; aspect-ratio: 16 / 10; max-height: 86vh; background-image: url(/media/film/watch/poster.jpg); opacity: 1; }
+  .pq-cut, .pq-light, .pq-shade, .pq-pglight, .pq-foot-fade, .pq-word, .pq-landed, .pq-rail, .pq-flow { display: none; }
   .pq-msg, .pq-msg.is-low, .pq-ledger, .pq-chips, .pq-explain, .pq-pgtitle, .pq-ctl, .pq-mix, .pq-pg, .pq-illus, .pq-callname { position: static; inset: auto; transform: none; width: auto; opacity: 1; max-width: 44rem; }
   .pq-msg.is-big h2 { font-size: var(--fs-h2); }
   .pq-chips { display: grid; gap: 10px; max-width: 26rem; }

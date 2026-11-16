@@ -1,5 +1,12 @@
-// Motion tokens for the GSAP code. The values live with every other token in site.css (.pq { --m-* }); this reads them
-// once, so timing and easing are changed in one place.
+import { useEffect, type DependencyList, type RefObject } from "react";
+
+// Motion for the public site, in one place.
+// 1. Tokens: the timing and easing values live with every other token in site.css (.pq { --m-* }); motion() reads
+//    them once, so they are changed in one place.
+// 2. The kit: GSAP (with ScrollTrigger, SplitText, Flip) and Lenis are not in the page's first bundle. loadKit() fetches
+//    them after the first paint, so the headline and the first frame are on screen before any animation code runs.
+//    useKit() is the hook the sections use: its setup runs once the kit is in, inside a GSAP context scoped to the
+//    section, and everything it made is reverted when the component unmounts.
 type Tokens = { out: string; soft: string; inn: string; move: string; durIn: number; durFlip: number; durLand: number; stagger: number; scrub: number; lerp: number };
 let cached: Tokens | null = null;
 export function motion(): Tokens {
@@ -12,3 +19,36 @@ export function motion(): Tokens {
 }
 export const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 export const tallScreen = () => typeof window !== "undefined" && window.matchMedia("(max-aspect-ratio: 9/10)").matches;
+
+export type Kit = {
+  gsap: typeof import("gsap").gsap;
+  ScrollTrigger: typeof import("gsap/ScrollTrigger").ScrollTrigger;
+  SplitText: typeof import("gsap/SplitText").SplitText;
+  Flip: typeof import("gsap/Flip").Flip;
+  Lenis: typeof import("lenis").default;
+};
+let loading: Promise<Kit> | null = null;
+let ready: Kit | null = null;
+export const kit = () => ready;          // the kit if it has loaded (event handlers use this and skip the motion if not)
+const afterPaint = () => new Promise<void>((r) => requestAnimationFrame(() => window.setTimeout(r, 0)));
+export function loadKit(): Promise<Kit> {
+  loading ||= afterPaint()
+    .then(() => Promise.all([import("gsap"), import("gsap/ScrollTrigger"), import("gsap/SplitText"), import("gsap/Flip"), import("lenis")]))
+    .then(([g, st, sp, fl, le]) => {
+      g.gsap.registerPlugin(st.ScrollTrigger, sp.SplitText, fl.Flip);
+      ready = { gsap: g.gsap, ScrollTrigger: st.ScrollTrigger, SplitText: sp.SplitText, Flip: fl.Flip, Lenis: le.default };
+      return ready;
+    });
+  return loading;
+}
+export function useKit(setup: (k: Kit) => void | (() => void), deps: DependencyList = [], scope?: RefObject<Element | null>) {
+  useEffect(() => {
+    let dead = false, off: void | (() => void), ctx: { revert(): void } | null = null;
+    loadKit().then((k) => {
+      if (dead) return;
+      ctx = k.gsap.context(() => { off = setup(k); }, scope?.current || undefined);
+    }).catch(() => { /* no motion: the page is complete without it */ });
+    return () => { dead = true; if (off) off(); ctx?.revert(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+}

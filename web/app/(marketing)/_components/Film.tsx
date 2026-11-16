@@ -1,12 +1,8 @@
 "use client";
 import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SplitText } from "gsap/SplitText";
-import { useGSAP } from "@gsap/react";
 import { STORY_SIT, ledger, pct, type Weighed } from "@/lib/story";
 import { Playground } from "./Playground";
-import { motion, reducedMotion, tallScreen } from "./motion";
+import { motion, reducedMotion, tallScreen, useKit } from "./motion";
 
 // The opening film tells one call. The watch assembles from its parts as you scroll (frames drawn to a canvas, exactly
 // as rendered: scripts/watch-render) while the page shows the call being made over it, in six stops:
@@ -32,10 +28,9 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
   const cands = story.groups.slice(0, 5), top = cands[0].p;
   const led = ledger(STORY_SIT);
 
-  useGSAP(() => {
+  useKit(({ gsap, SplitText }) => {
     const el = sec.current;
     if (!el || reducedMotion()) return;
-    gsap.registerPlugin(ScrollTrigger, SplitText);
     const M = motion();
     const $ = <T extends Element = HTMLElement>(s: string) => el.querySelector(s) as unknown as T, $$ = <T extends Element = HTMLElement>(s: string) => Array.from(el.querySelectorAll(s)) as unknown as T[];
     const canvas = $<HTMLCanvasElement>(".pq-cv"), ctx = canvas.getContext("2d");
@@ -48,8 +43,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
     function load() {
       imgs.forEach((im) => { im.onload = null; im.src = ""; });
       imgs = []; ok = []; count = frames[dir]; fshown = -1;
-      const order: number[] = [], seen = new Set<number>([count - 1]);
-      order.push(count - 1);
+      const order: number[] = [0, count - 1], seen = new Set<number>(order);      // the first frame first: it is the hero
       for (const step of [16, 8, 4, 2, 1]) { for (let i = 0; i < count; i += step) if (!seen.has(i)) { seen.add(i); order.push(i); } if (step === 8) coarse = order.length; }
       let next = 0, active = 0;
       const pump = () => {
@@ -83,6 +77,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       if (both) draw(imgs[hi], frac);       // the scroll lands between frames: fade the next one over by the fraction
       ctx!.globalAlpha = 1; fshown = key;
       canvas.dataset.frame = String(a + 1);
+      canvas.classList.add("is-on");
     }
     const queue = () => { if (!raf) raf = requestAnimationFrame(paint); };
 
@@ -95,14 +90,14 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
     const chips = $$(".pq-chip"), wordEls = [$(".pq-word.is-1"), $(".pq-word.is-2")];
     // the call words, split into letters that keep one continuous gradient
     const splits = wordEls.map((w) => new SplitText(w, { type: "chars", charsClass: "ch" }));
-    let tl: gsap.core.Timeline | null = null, R = screenRect();
+    let tl: ReturnType<typeof gsap.timeline> | null = null, R = screenRect();
 
     function layout() {
       if (dead) return;
       R = screenRect();
       const vw = pin.clientWidth, vh = pin.clientHeight, tall = dir === "tall", cy = R.y + R.h / 2;
       tl?.scrollTrigger?.kill(); tl?.kill(); tl = null;
-      gsap.set([chips, ".pq-word .ch", ".pq-msg", ".pq-ledger", ".pq-ledger li", ".pq-ledger h3", ".pq-lg", ".pq-landed", ".pq-explain", ".pq-rail", ".pq-illus", ".pq-pgtitle", ".pq-ctl", ".pq-mix", ".pq-flow", ".pq-shade", ".pq-pglight", ".pq-light", ".pq-cut", ".pq-feel i", ".pq-chip .pq-bar b"], { clearProps: "opacity,transform,filter,visibility" });
+      gsap.set([chips, ".pq-word .ch", ".pq-msg", ".pq-ledger", ".pq-ledger li", ".pq-ledger h3", ".pq-lg", ".pq-landed", ".pq-explain", ".pq-rail", ".pq-illus", ".pq-pgtitle", ".pq-ctl", ".pq-mix", ".pq-flow", ".pq-shade", ".pq-pglight", ".pq-foot-fade", ".pq-light", ".pq-cut", ".pq-feel i", ".pq-chip .pq-bar b"], { clearProps: "opacity,transform,filter,visibility" });
       // chips: on a wide screen, a column right of the watch where distance from the watch tracks share, so the
       // likeliest call sits closest; on a phone, a stack under it in the same order
       chips.forEach((c, i) => {
@@ -204,7 +199,9 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
         .to(lg, { opacity: 0.18, duration: dd(0.08), ease: "none" }, pp(0.7)).to(lb, { opacity: 0.82, duration: dd(0.08), ease: "none" }, pp(0.7))
         // the watch itself, lifted off the last frame, sits above the panels so they can come out from behind it
         .set(".pq-cut", { opacity: 1 }, pp(0.79))
-        .fromTo(".pq-pglight", { opacity: 0 }, { opacity: 1, duration: dd(0.1), ease: "none" }, pp(0.8));
+        .fromTo(".pq-pglight", { opacity: 0 }, { opacity: 1, duration: dd(0.1), ease: "none" }, pp(0.8))
+        // the strap fades into the ground at the bottom of the frame, so the scene has no hard edge when it scrolls away
+        .fromTo(".pq-foot-fade", { opacity: 0 }, { opacity: 1, duration: dd(0.1), ease: "none" }, pp(0.74));
       const from = (p: HTMLElement, origin: string, dx: number, dy: number) => ({ transformOrigin: origin, x: dx, y: dy, scale: 0.32 });
       const cR = ctl.offsetLeft + ctl.offsetWidth, cM = ctl.offsetTop + ctl.offsetHeight / 2, mM = mix.offsetTop + mix.offsetHeight / 2;
       if (tall) {
@@ -247,7 +244,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       dead = true; window.removeEventListener("resize", onResize); window.removeEventListener("load", afterLoad); window.removeEventListener("scroll", goEager); window.clearTimeout(eagerT); window.clearTimeout(rt); cancelAnimationFrame(raf);
       tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); imgs.forEach((im) => { im.onload = null; im.src = ""; });
     };
-  }, { scope: sec, dependencies: [frames.wide, frames.tall] });
+  }, [frames.wide, frames.tall], sec);
 
   return (
     <section ref={sec} id="top" className="pq-film" aria-labelledby="hero-h" data-anchor={PLAYGROUND_AT}>
@@ -278,7 +275,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
         </div>
 
         <div className="pq-msg is-4"><h2>Every pitch, every spot, weighed.</h2><p>The engine prices each call against all of it. The closer a call sits to the watch, the more of the mix it holds.</p></div>
-        <div className="pq-msg is-5 is-big"><h2>Down to one.</h2><p>He&rsquo;s sitting slider. So the screen wakes up with something hard.</p></div>
+        <div className="pq-msg is-5 is-big"><h2>Down to one.</h2><p>He&rsquo;s looking for the slider. So the screen wakes up with something hard.</p></div>
 
         <ol className="pq-chips" aria-label="What the engine could throw here">
           {cands.map((c, i) => (
@@ -302,6 +299,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
         <p className="pq-illus pq-fine">Illustration: the PitchIQ watch app on a generic smartwatch. The watch is a prototype.</p>
 
         <div className="pq-pglight" aria-hidden="true" />
+        <div className="pq-foot-fade" aria-hidden="true" />
         <Playground story={story} faceOn={faceOn} />
       </div>
     </section>

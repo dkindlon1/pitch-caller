@@ -1,7 +1,7 @@
 import "server-only";
 import E from "./engine.js";
 import data from "./engine_data_d3.json";
-import { STORY_SIT, STORY_TOP, weigh, weighAtBat, watchWords, type Group, type Weighed } from "./story";
+import { STORY_SIT, STORY_TOP, plainWhy, weigh, weighAtBat, watchWords, type Group, type Weighed } from "./story";
 import { AT_BAT } from "@/content/at-bat";
 import { STARTER } from "./demo";
 
@@ -33,7 +33,7 @@ export function atBat(): AtBatPitch[] {
     const quad = QUAD[p.spot], kind = STARTER.find((x) => x.name === p.pitch)!.kind;
     const mix = weighAtBat(E, { balls: p.balls, strikes: p.strikes, last, seen, n });
     const hit = mix.flatMap((g) => g.spots).find((s) => s.pitch === p.pitch && s.quad === quad);
-    const out: AtBatPitch = { n: n + 1, count: `${p.balls}-${p.strikes}`, pitch: p.pitch, words: watchWords(quad, kind), why: p.why, result: p.result,
+    const out: AtBatPitch = { n: n + 1, count: `${p.balls}-${p.strikes}`, pitch: p.pitch, words: watchWords(quad, kind), why: plainWhy(p.why), result: p.result,
       velo: STARTER.find((x) => x.name === p.pitch)!.velo, height: HEIGHT[quad][0], h: HEIGHT[quad][1], mix: mix.slice(0, 3), share: hit ? hit.p : null };
     seen[p.pitch] = (seen[p.pitch] || 0) + 1; last = [p.pitch, quad];
     return out;

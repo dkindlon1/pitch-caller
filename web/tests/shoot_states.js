@@ -34,9 +34,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await y(".pq-tw-stage", 0.3); await shot("wrists-2-splitting");
     await y(".pq-tw-stage", 0.08); await wait(250); await shot("wrists-3-sent");
     await click(/Change the call/); await wait(520); await shot("wrists-4-changed-buzz"); await wait(900); await shot("wrists-5-changed");
-    await y(".pq-pp", 0.12); await wait(3200); await shot("programs-coach");
+    await y(".pq-pr", 0.2); await wait(1500); await shot("programs-filling"); await wait(2600); await shot("programs-coach");
     await click("Player"); await wait(280); await shot("programs-switching"); await wait(1200); await shot("programs-player");
-    if (!v.mobile) { await page.locator(".pq-pp-pitch").nth(1).hover(); await wait(500); await shot("programs-hover-slider"); }
+    if (!v.mobile) { await page.locator(".pq-pr-lane").nth(1).hover(); await wait(500); await shot("programs-hover-slider"); }
     if (v.mobile) { await page.evaluate(() => document.querySelector(".pq-nav-menu").click()); await wait(400); await shot("menu-open"); }
     await ctx.close();
   }

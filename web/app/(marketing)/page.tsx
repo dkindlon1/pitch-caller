@@ -1,4 +1,3 @@
-import { preload } from "react-dom";
 import { readdirSync } from "node:fs";
 import path from "node:path";
 import Link from "next/link";
@@ -31,9 +30,6 @@ function frameCount(set: string) {
 export default function Home() {
   const s = story();     // one real engine run, made while the page is built (it throws, and the build fails, if the film's call stops being true)
   const frames = { wide: frameCount("wide"), tall: frameCount("tall") };
-  // the first thing the film paints, fetched with the page
-  preload("/media/film/watch/first.jpg", { as: "image", media: "(min-aspect-ratio: 9/10)", fetchPriority: "high" });
-  preload("/media/film/watch/tall-first.jpg", { as: "image", media: "(max-aspect-ratio: 9/10)", fetchPriority: "high" });
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LD) }} />

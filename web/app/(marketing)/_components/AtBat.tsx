@@ -1,12 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 import type { AtBatPitch } from "@/lib/story_server";
 import { pct } from "@/lib/story";
 import { Watch } from "./Watch";
-import { motion } from "./motion";
+import { motion, useKit } from "./motion";
 
 // The at-bat: one real at-bat as a strip of watch faces, one per pitch, with the result under each. The film showed
 // one call; this shows how each call depends on the last. As you scroll, a blue thread leaves the face that was just
@@ -20,9 +17,8 @@ export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
   const [open, setOpen] = useState<number | null>(null);
   const last = pitches.length - 1;
 
-  useGSAP(() => {
+  useKit(({ gsap }) => {
     const el = sec.current; if (!el) return;
-    gsap.registerPlugin(ScrollTrigger);
     const M = motion(), mm = gsap.matchMedia();
     const q = <T extends Element = HTMLElement>(s: string) => Array.from(el.querySelectorAll(s)) as unknown as T[];
     mm.add("(prefers-reduced-motion: no-preference) and (min-width: 861px)", () => {
@@ -67,7 +63,7 @@ export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
       q(".pq-ab-item").forEach((it) => gsap.from(it, { opacity: 0, y: 34, duration: M.durIn, ease: M.out, scrollTrigger: { trigger: it, start: "top 82%", once: true } }));
     });
     return () => mm.revert();
-  }, { scope: sec });
+  }, [], sec);
 
   return (
     <section ref={sec} id="at-bat" className="pq-ab" aria-labelledby="ab-h" tabIndex={-1}>

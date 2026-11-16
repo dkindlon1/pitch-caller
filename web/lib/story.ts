@@ -30,6 +30,12 @@ export function watchWords(quad: string, kind: string): string[] {
   return m[quad] || [];
 }
 const spotPhrase = (w: string[]) => (w.length ? w.join(" ").toLowerCase() : "get it over");
+// The engine's reason line, made unambiguous for a reader who hasn't seen it before. "He's sitting slider (47%)" is the
+// engine's read of the HITTER (how likely he is looking for that pitch), not how often the pitch gets thrown.
+export function plainWhy(why: string): string {
+  const m = /^He's sitting (\w+) \((\d+)%\)\.?$/.exec(why.trim());
+  return m ? `He's probably looking for a ${m[1]}. The engine's read of him: ${m[2]}% likely.` : why;
+}
 export const sideOf = (quad: string) => (/away/.test(quad) ? "outside" : /-in$/.test(quad) ? "inside" : quad === "chase" ? "chase" : "over the plate");
 export const pct = (p: number) => Math.round(p * 100);
 
@@ -63,7 +69,7 @@ export function weigh(E: Engine, sit: Sit): Weighed {
   let why = "";
   try { const w = E.whyLine(ars, r.info.s, r.tab, dist[0], r.info); why = Array.isArray(w) && typeof w[0] === "string" ? w[0] : ""; } catch { why = ""; }
   const t = dist[0], words = watchWords(t.quad, t.pitch.kind);
-  return { groups: groupMix(dist), top: { pitch: t.pitch.name, kind: t.pitch.kind, quad: t.quad, p: t.prob, words, phrase: spotPhrase(words) }, why, version: E.VERSION };
+  return { groups: groupMix(dist), top: { pitch: t.pitch.name, kind: t.pitch.kind, quad: t.quad, p: t.prob, words, phrase: spotPhrase(words) }, why: plainWhy(why), version: E.VERSION };
 }
 
 export const sameSit = (a: Sit, b: Sit) => a.b === b.b && a.s === b.s && a.outs === b.outs && a.inn === b.inn && a.sameSide === b.sameSide && a.bases.every((x, i) => x === b.bases[i]);
