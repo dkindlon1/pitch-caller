@@ -179,9 +179,9 @@ p { margin: 0; }
 .zone { padding: 10px; border-radius: var(--r-tile); background: var(--well); border: 1px solid var(--rule); }
 .zone svg { display: block; width: 100%; height: auto; overflow: visible; }
 .zone .lock { transform-box: fill-box; transform-origin: center; }
-.call-acts { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 18px; align-items: center; }
+.call-acts { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 18px; }
 /* watches (prototype): Accept is the biggest thing in the row; once sent it settles back */
-.btn.accept { height: 46px; padding: 0 26px; font-size: 16px; font-weight: 650; border-radius: 999px; }
+.btn.accept { align-self: center; height: 46px; padding: 0 26px; font-size: 16px; font-weight: 650; border-radius: 999px; }
 .btn.accept.sent { background: var(--glass-2); color: var(--ink); border-color: var(--stroke-2); opacity: 1; }
 .call-acts .wpill { align-self: center; justify-self: auto; font-size: 13px; padding: 6px 12px; margin-right: 6px; }
 .signpick { min-width: 0; width: auto; margin-left: 6px; }
@@ -4758,7 +4758,7 @@ td.wrapcell .line { display: block; }
 })(typeof self !== "undefined" ? self : this);
 
 /*
- * Watch link (prototype, docs/PLAN_watch_prototype_2026-11-15.md rev 3): the call the coach accepts goes to up to two
+ * Watch link (prototype, docs/plans/PLAN_watch_prototype_2026-11-15.md rev 3): the call the coach accepts goes to up to two
  * Bangle.js 2 watches running watch/bangle/pitchiq.app.js, over Web Bluetooth (Chrome on a PC, laptop or Android; iPad
  * Safari has none, so nothing here runs there).
  *
@@ -4766,7 +4766,9 @@ td.wrapcell .line { display: block; }
  *   C<n>,<sign>,<loc>,<chg>   a call: message number, the catcher's sign, the location code, 1 if it replaces a call
  *                             already on the watch before a pitch was recorded (two short buzzes) else 0 (one long buzz)
  *   X<n>                      clear: the watch shows "—"
- *   H                         heartbeat (no number), every 3 s
+ *   S                         a new session: the watch restarts its message count (first write on every connection)
+ *   H                         heartbeat every 3 s when there's no message yet; otherwise the heartbeat re-sends the
+ *                             newest message (a repeat: no second buzz), so a watch that missed or dropped it gets it back
  * and back from the watch (notifications, only while "Delivery receipt" is on):
  *   A<n>                      receipt for message n        B<pct>   battery
  *
@@ -4840,13 +4842,15 @@ td.wrapcell .line { display: block; }
     const devs = [];
     let target = null;      // what every watch should show now: { kind: "call", sign, loc, chg } or { kind: "clear" }
     let accepted = null;    // the accepted call: { gid, id, pitchNo }
-    let lastAcc = null;     // the last accepted call, for the changed flag
+    let lastAcc = null;     // the last accepted call and the at-bat moment it was for (the changed flag)
     let hbTimer = null;
     let lastSig = "";
     const soak = { on: false, timer: null, seq: 0, stats: {} };
 
     const changed = () => { const s = JSON.stringify(summary()); if (s !== lastSig) { lastSig = s; onChange(); } };
 
+    // the heartbeat repeats the newest numbered message (the watch drops a repeat without buzzing): a watch that missed
+    // it, or dropped it after a quiet spell (NO LINK), gets it back with no round trip; a plain H only when there's none
     function startHeartbeat() {
       if (hbTimer) return;
       hbTimer = T.setInterval(() => { for (const d of devs) if (d.state === "ok") { d.hbDue = true; pump(d); } }, HB_MS);
@@ -4857,8 +4861,8 @@ td.wrapcell .line { display: block; }
       if (!tgt) return;
       d.n += 1;
       if (d.want) clearWantTimers(d.want);
-      d.want = { n: d.n, text: encode(tgt, d.n), kind: tgt.kind, writes: 0, needWrite: true, firstAt: null, acked: false,
-        missing: false, ackT: null, retryT: null, repeatT: null, latency: null };
+      d.want = { n: d.n, text: encode(tgt, d.n), kind: tgt.kind, soak: !!tgt.soak, writes: 0, done: 0, needWrite: true, firstAt: null, acked: false,
+        missing: false, ackArmed: false, ackT: null, retryT: null, repeatT: null, latency: null };
       pump(d);
       changed();
     }
@@ -4868,48 +4872,59 @@ td.wrapcell .line { display: block; }
     function pump(d) {
       if (d.writing || d.state !== "ok") return;
       if (d.ops.length) {
-        const op = d.ops.shift();
+        const op = d.ops.shift(), conn = d.conn;
         d.writing = true;
-        Promise.resolve().then(op).catch((e) => log("watch op", e)).then(() => { d.writing = false; pump(d); });
+        Promise.resolve().then(op).catch((e) => log("watch op", e)).then(() => { if (d.conn !== conn) return; d.writing = false; pump(d); });
         return;
       }
       const w = d.want;
       if (w && w.needWrite) { write(d, w.text, w); return; }
-      if (d.hbDue) { d.hbDue = false; write(d, "H", null); }
+      if (d.hbDue) { d.hbDue = false; write(d, w ? w.text : "H", null); }
     }
     function write(d, text, w) {
       d.writing = true;
-      if (w) { w.needWrite = false; w.writes++; if (w.firstAt === null) w.firstAt = T.now(); }
+      const conn = d.conn;
+      if (w) {
+        w.needWrite = false; w.writes++;
+        if (w.firstAt === null) w.firstAt = T.now();
+        if (settings.receipt) armReceipt(d, w);   // from the first attempt, so a write that keeps failing still shows as missing
+      }
       const bytes = enc.encode(text);
       const chr = d.rx;
-      const go = chr.writeValueWithResponse ? chr.writeValueWithResponse(bytes) : chr.writeValue(bytes);
+      let go;
+      try { go = chr.writeValueWithResponse ? chr.writeValueWithResponse(bytes) : chr.writeValue(bytes); }
+      catch (e) { go = Promise.reject(e); }
       Promise.resolve(go).then(() => {
+        if (d.conn !== conn) return;   // settled after the link was replaced: the new connection has its own queue
         d.writing = false;
-        if (w && d.want === w) afterWrite(d, w);
+        if (w && d.want === w) { w.done++; afterWrite(d, w); }
         pump(d);
       }, (e) => {
+        if (d.conn !== conn) return;
         d.writing = false;
         log("watch write", e && e.message);
         // a failed write: try the message again shortly (a dropped link is handled by the disconnect event)
-        if (w && d.want === w && !w.acked) { w.retryT = T.setTimeout(() => { w.retryT = null; if (d.want === w && !w.acked) { w.needWrite = true; pump(d); } }, 200); }
+        if (w && d.want === w && !w.acked && !w.retryT) w.retryT = T.setTimeout(() => { w.retryT = null; if (d.want === w && !w.acked) { w.needWrite = true; pump(d); } }, 200);
         pump(d);
       });
     }
+    // one receipt timer per message, however many times it's re-sent
+    function armReceipt(d, w) {
+      if (w.ackArmed || w.acked) return;
+      w.ackArmed = true;
+      w.ackT = T.setTimeout(() => {
+        w.ackT = null;
+        if (d.want !== w || w.acked) return;
+        w.missing = true; changed();
+        const again = () => { w.retryT = null; if (d.want !== w || w.acked) return; w.needWrite = true; pump(d); w.retryT = T.setTimeout(again, RETRY_MS); };
+        if (w.retryT) T.clearTimeout(w.retryT);
+        again();
+      }, ACK_MS);
+    }
     function afterWrite(d, w) {
-      if (settings.receipt) {
-        if (!w.ackArmed && !w.acked) {
-          w.ackArmed = true;   // one receipt timer per message, however many times it's re-sent
-          w.ackT = T.setTimeout(() => {
-            w.ackT = null;
-            if (d.want !== w || w.acked) return;
-            w.missing = true; changed();
-            const again = () => { w.retryT = null; if (d.want !== w || w.acked) return; w.needWrite = true; pump(d); w.retryT = T.setTimeout(again, RETRY_MS); };
-            again();
-          }, ACK_MS);
-        }
-      } else if (w.writes < REPEATS) {
-        w.repeatT = T.setTimeout(() => { w.repeatT = null; if (d.want === w) { w.needWrite = true; pump(d); } }, REPEAT_GAP_MS);
-      } else changed();
+      if (settings.receipt) return;
+      if (w.writes < REPEATS) w.repeatT = T.setTimeout(() => { w.repeatT = null; if (d.want === w) { w.needWrite = true; pump(d); } }, REPEAT_GAP_MS);
+      changed();
     }
     function onNotify(d, text) {
       if (text[0] === "A") {
@@ -4917,7 +4932,7 @@ td.wrapcell .line { display: block; }
         const w = d.want;
         if (w && n === w.n && !w.acked) {
           w.acked = true; w.missing = false; w.latency = T.now() - w.firstAt; clearWantTimers(w);
-          if (soak.on && w.kind === "call") soakAck(d, w);
+          if (soak.on && w.soak) soakAck(d, w);
           changed();
         }
       } else if (text[0] === "B") {
@@ -4928,28 +4943,34 @@ td.wrapcell .line { display: block; }
 
     // ---------------------------------------------------------------- connecting
     async function link(d) {
-      d.state = "connecting"; changed();
+      d.conn = (d.conn || 0) + 1;
+      const conn = d.conn;
+      if (d.want) clearWantTimers(d.want);
+      d.state = "connecting"; d.writing = false; d.ops = []; d.want = null; changed();
       const server = await d.device.gatt.connect();
       let svc;
       try { svc = await server.getPrimaryService(SVC); }
       catch (e) { try { d.device.gatt.disconnect(); } catch (e2) {} d.state = "noapp"; changed(); throw new Error("Open the PitchIQ app on the watch, then connect again."); }
       d.rx = await svc.getCharacteristic(RX);
       d.tx = await svc.getCharacteristic(TX);
-      if (!d.txListen) {
-        d.txListen = (ev) => { try { onNotify(d, dec.decode(ev.target.value)); } catch (e) {} };
-        d.tx.addEventListener("characteristicvaluechanged", d.txListen);
-      } else d.tx.addEventListener("characteristicvaluechanged", d.txListen);
+      if (!d.txListen) d.txListen = (ev) => { try { onNotify(d, dec.decode(ev.target.value)); } catch (e) {} };
+      d.tx.addEventListener("characteristicvaluechanged", d.txListen);
       if (settings.receipt) await d.tx.startNotifications();
+      if (d.conn !== conn) return;
       d.notifying = !!settings.receipt;
-      d.n = 0; d.want = null; d.writing = false; d.ops = []; d.backoff = 0;
+      d.n = 0; d.backoff = 0;
       d.state = "ok";
       startHeartbeat();
-      send(d, target || { kind: "clear" });
+      // a new session starts with S: the watch resets its message count even if it never saw the old link drop (a
+      // reload where the browser reconnects before the radio link goes down)
+      d.ops.push(() => d.rx.writeValueWithResponse ? d.rx.writeValueWithResponse(enc.encode("S")) : d.rx.writeValue(enc.encode("S")));
+      // what it should show now; a watch joining or coming back gets the call as new (one long buzz), never as a change
+      send(d, target && target.kind === "call" ? Object.assign({}, target, { chg: false }) : (target || { kind: "clear" }));
       changed();
     }
     function onDisconnect(d) {
-      if (d.state === "closed") return;
-      d.state = "lost"; d.writing = false; d.ops = [];
+      if (d.state === "closed" || d.reT) return;   // closed, or a reconnect is already scheduled
+      d.state = "lost"; d.writing = false; d.ops = []; d.conn = (d.conn || 0) + 1;
       if (d.want) clearWantTimers(d.want);
       changed();
       const ms = BACKOFF_MS[Math.min(d.backoff, BACKOFF_MS.length - 1)];
@@ -4964,11 +4985,15 @@ td.wrapcell .line { display: block; }
       let d = devs.find((x) => x.device === device || (device.id && x.device.id === device.id));
       if (d) return d;
       if (devs.length >= MAX_WATCHES) throw new Error(`Up to ${MAX_WATCHES} watches.`);
-      d = { device, name: device.name || "Watch", state: "new", battery: null, n: 0, want: null, writing: false, hbDue: false, ops: [], backoff: 0, reT: null };
+      d = { device, name: device.name || "Watch", state: "new", battery: null, n: 0, want: null, writing: false, hbDue: false, ops: [], backoff: 0, reT: null, conn: 0 };
       device.addEventListener("gattserverdisconnected", () => onDisconnect(d));
       devs.push(d);
       if (device.id && !settings.ids.includes(device.id)) { settings.ids.push(device.id); saveSettings(); }
       return d;
+    }
+    async function linkOrRetry(d) {
+      try { await link(d); }
+      catch (e) { if (d.state !== "closed" && d.state !== "noapp") { d.state = "ok"; onDisconnect(d); } throw e; }
     }
     async function connect() {
       if (!bt) throw new Error("This browser has no Bluetooth. Use Chrome on a computer or an Android device.");
@@ -4976,7 +5001,8 @@ td.wrapcell .line { display: block; }
       const device = await bt.requestDevice({ filters: [{ namePrefix: "Bangle" }], optionalServices: [SVC] });
       const d = addDevice(device);
       if (d.state === "ok") return d;
-      await link(d);
+      if (d.reT) { T.clearTimeout(d.reT); d.reT = null; }
+      await linkOrRetry(d);
       return d;
     }
     // after a reload: watches this browser was already allowed to use, without a tap where Chrome offers getDevices()
@@ -4986,7 +5012,7 @@ td.wrapcell .line { display: block; }
       for (const device of await bt.getDevices()) {
         if (!settings.ids.includes(device.id) || devs.length >= MAX_WATCHES) continue;
         const d = addDevice(device);
-        try { await link(d); n++; } catch (e) { onDisconnect(d); }
+        try { await linkOrRetry(d); n++; } catch (e) {}
       }
       return n;
     }
@@ -4995,7 +5021,7 @@ td.wrapcell .line { display: block; }
       if (!d) return connect();
       if (d.reT) { T.clearTimeout(d.reT); d.reT = null; }
       d.backoff = 0;
-      await link(d);
+      await linkOrRetry(d);
       return d;
     }
     function forget(name) {
@@ -5013,31 +5039,37 @@ td.wrapcell .line { display: block; }
     function setReceipt(on) {
       settings.receipt = !!on; saveSettings();
       for (const d of devs) {
-        if (d.state !== "ok" || d.notifying === settings.receipt) continue;
-        d.ops.push(() => (settings.receipt ? d.tx.startNotifications() : d.tx.stopNotifications()).then(() => { d.notifying = settings.receipt; }));
+        if (d.state !== "ok") continue;
+        if (d.notifying !== settings.receipt) d.ops.push(() => (settings.receipt ? d.tx.startNotifications() : d.tx.stopNotifications()).then(() => { d.notifying = settings.receipt; }));
+        // the message on the watch now is sent again under the new rule (same number: no second buzz)
+        const w = d.want;
+        if (w) { clearWantTimers(w); Object.assign(w, { writes: 0, done: 0, needWrite: true, acked: false, missing: false, ackArmed: false, firstAt: null }); }
         pump(d);
       }
       changed();
     }
 
     // ---------------------------------------------------------------- the call
-    // accept the call on screen: { gid, id, pitchNo, sign, quad, kind }
+    // accept the call on screen: { gid, id, pitchNo, ab, sign, quad, kind } (ab: the moment in the game, e.g. inning and
+    // batter, so the first call of a new inning isn't taken for a change)
     function accept(c) {
       const loc = locCode(c.quad, c.kind);
       if (!signOk(c.sign)) throw new Error(`sign ${c.sign} can't go to the watch (1 to 9)`);
       if (!loc) throw new Error(`unknown spot ${c.quad}`);
-      const chg = !!(lastAcc && lastAcc.gid === c.gid && lastAcc.pitchNo === c.pitchNo && lastAcc.id !== c.id);
+      const at = `${c.pitchNo}|${c.ab || ""}`;
+      const chg = !!(lastAcc && lastAcc.gid === c.gid && lastAcc.at === at && lastAcc.id !== c.id);
       accepted = { gid: c.gid, id: c.id, pitchNo: c.pitchNo };
-      lastAcc = accepted;
-      target = { kind: "call", sign: String(c.sign), loc, chg };
+      lastAcc = { gid: c.gid, id: c.id, at };
+      target = { kind: "call", sign: String(c.sign), loc, chg, soak: !!c.soak };
       for (const d of devs) if (d.state === "ok") send(d, target);
       changed();
       return target;
     }
     // run on every render: the watches keep the accepted call only while it's still the call on screen at the same
-    // pitch of the same game; anything else (a recorded pitch, a shake-off, a new call, undo, the third out) clears them
+    // pitch of the same game; anything else (a recorded pitch, a shake-off, a new call, undo, the third out) clears them.
+    // A soak test owns the watches while it runs.
     function sync(cur) {
-      if (!accepted) return false;
+      if (!accepted || soak.on) return false;
       if (cur && cur.gid === accepted.gid && cur.id === accepted.id && cur.pitchNo === accepted.pitchNo) return false;
       accepted = null;
       target = { kind: "clear" };
@@ -5051,11 +5083,11 @@ td.wrapcell .line { display: block; }
     function summary() {
       const list = devs.map((d) => {
         const w = d.want, isCall = !!(accepted && w && w.kind === "call");
-        const delivered = d.state === "ok" && !!w && (settings.receipt ? w.acked : (!w.needWrite && w.writes >= 1));
+        const delivered = d.state === "ok" && !!w && (settings.receipt ? w.acked : w.done >= 1);
         return { name: d.name, state: d.state, battery: d.battery, delivered: isCall && delivered, missing: isCall && d.state === "ok" && !!w.missing,
           latency: isCall && w.latency !== null ? w.latency : null };
       });
-      return { supported: !!bt, receipt: settings.receipt, accepted: !!accepted, devices: list };
+      return { supported: !!bt, receipt: settings.receipt, accepted: !!accepted, used: settings.ids.length > 0 || devs.length > 0, devices: list };
     }
     // one line for the Game screen's pill: { tone: "ok" | "watch" | "change" | "", text }
     function line() {
@@ -5071,8 +5103,9 @@ td.wrapcell .line { display: block; }
     }
 
     // ---------------------------------------------------------------- soak test (dev only)
+    const soakRow = (name) => soak.stats[name] || (soak.stats[name] = { sent: 0, ok: 0, late: 0, max: 0 });
     function soakAck(d, w) {
-      const st = soak.stats[d.name] || (soak.stats[d.name] = { sent: 0, ok: 0, late: 0, max: 0 });
+      const st = soakRow(d.name);
       if (w.latency <= ACK_MS) st.ok++; else st.late++;
       st.max = Math.max(st.max, w.latency);
     }
@@ -5083,13 +5116,20 @@ td.wrapcell .line { display: block; }
       const tick = () => {
         soak.seq++;
         const k = kinds[Math.floor(Math.random() * kinds.length)];
-        accept({ gid: "soak", id: soak.seq, pitchNo: soak.seq, sign: 1 + Math.floor(Math.random() * 6), quad: quads[Math.floor(Math.random() * quads.length)], kind: k });
-        for (const d of devs) if (d.state === "ok") { const st = soak.stats[d.name] || (soak.stats[d.name] = { sent: 0, ok: 0, late: 0, max: 0 }); st.sent++; }
+        accept({ gid: "soak", id: soak.seq, pitchNo: soak.seq, soak: true, sign: 1 + Math.floor(Math.random() * 6), quad: quads[Math.floor(Math.random() * quads.length)], kind: k });
+        for (const d of devs) if (d.state === "ok") soakRow(d.name).sent++;
       };
       tick();
       soak.timer = T.setInterval(tick, everyMs || 5000);
     }
-    function soakStop() { if (soak.timer) T.clearInterval(soak.timer); soak.timer = null; soak.on = false; return soakStats(); }
+    function soakStop() {
+      if (soak.timer) T.clearInterval(soak.timer);
+      soak.timer = null; soak.on = false;
+      accepted = null; target = { kind: "clear" };
+      for (const d of devs) if (d.state === "ok") send(d, target);
+      changed();
+      return soakStats();
+    }
     function soakStats() {
       const out = {};
       for (const [k, v] of Object.entries(soak.stats)) out[k] = Object.assign({}, v, { missing: Math.max(0, v.sent - v.ok - v.late) });
@@ -5097,10 +5137,10 @@ td.wrapcell .line { display: block; }
     }
 
     return { connect, restore, reconnect, forget, setReceipt, accept, sync, isAccepted, summary, line,
-      soakStart, soakStop, soakStats, get receipt() { return settings.receipt; }, _devs: devs };
+      soakStart, soakStop, soakStats, get soaking() { return soak.on; }, get receipt() { return settings.receipt; }, _devs: devs };
   }
 
-  const PCWatch = { VERSION: "0.1.0", SVC, RX, TX, MAX_LEN, LOC, WORDS, locCode, sharedSigns, encode, create,
+  const PCWatch = { VERSION: "0.2.0", SVC, RX, TX, MAX_LEN, LOC, WORDS, locCode, sharedSigns, encode, create,
     supported: () => typeof navigator !== "undefined" && !!navigator.bluetooth };
   root.PCWatch = PCWatch;
   if (typeof module !== "undefined" && module.exports) module.exports = PCWatch;
@@ -7978,11 +8018,13 @@ const TIERS = [
 // changes its type.
 const KINDS = { FB: "Fastball", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
 const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };
-// watch prototype (docs/PLAN_watch_prototype_2026-11-15.md rev 3): two active pitches of one pitcher with the same sign
+// watch prototype (docs/plans/PLAN_watch_prototype_2026-11-15.md rev 3): two active pitches of one pitcher with the same sign
 // (two sliders, both 3) can't be told apart on the watch, which shows no pitch type, or by a hand sign. The coach gives
 // one its own number, 1 to 9, kept in the pitch's own sign as a migrated pitch's is (the portal keeps it too).
-const signConflicts = (pd) => PCWatch.sharedSigns((pd && pd.pitches) || [], signOf);
+const signConflicts = (pd) => (typeof PCWatch !== "undefined" ? PCWatch.sharedSigns((pd && pd.pitches) || [], signOf) : []);
+// the note and the picker show only on a device using watches (WATCH: opted in, with Web Bluetooth); the iPad is unchanged
 function signPick(pd, d, onChange) {
+  if (!WATCH) return null;
   const own = d.sign != null && d.sign !== "" && String(d.sign) !== String(SIGN[d.kind]);
   if (!own && !signConflicts(pd).some((x) => x.names.includes(d.name))) return null;
   return h("select", { class: "signpick", "aria-label": `Sign for ${d.name}`, title: "The sign the catcher and the watch use for this pitch",
@@ -7990,6 +8032,7 @@ function signPick(pd, d, onChange) {
     [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => h("option", { value: n, selected: String(signOf(d.kind, d.sign)) === String(n) ? true : null }, `Sign ${n}`)));
 }
 function signNote(pd) {
+  if (!WATCH) return null;
   const c = signConflicts(pd);
   return c.length ? h("p", { class: "pstat watch", role: "alert" }, c.map((x) => `${x.names.join(" and ")} share sign ${x.sign}. `),
     "Give one its own number so the catcher, and the watch, can tell them apart.") : null;
@@ -8068,7 +8111,7 @@ function toast(msg) { const t = document.getElementById("toast"); t.textContent 
 const G = () => S.game;
 // every call gets its own id (the watch is sent the call on screen by id: the same pitch and spot twice in a row are two calls)
 const nextCallId = () => (G().callSeq = (G().callSeq || 0) + 1);
-const APP_VERSION = "1.2.3";   // logged with every pitch and shown under Game on the setup screen (1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
+const APP_VERSION = "1.3.0";   // logged with every pitch and shown under Game on the setup screen (1.3.0: watch prototype, opt-in; 1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -8277,6 +8320,7 @@ function makeCall() {
   }, 0);
 }
 function recall() {
+  watchSync();   // the call on screen is about to change (a recorded pitch, a shake-off): the watches clear now, not after the engine
   document.body.classList.add("thinking");
   setTimeout(() => { makeCall(); document.body.classList.remove("thinking"); save(); render(); }, 15);
 }
@@ -8558,30 +8602,50 @@ function applyTheme() {
   document.documentElement.style.setProperty("--call", c);
 }
 
-// ------------------------------------------------------------------ watches (prototype, docs/PLAN_watch_prototype_2026-11-15.md rev 3)
-// Only where the browser has Web Bluetooth (Chrome on a computer or Android). On the iPad WATCH is null and nothing here
-// shows: the Game screen is exactly as before.
-const WATCH = typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
+// ------------------------------------------------------------------ watches (prototype, docs/plans/PLAN_watch_prototype_2026-11-15.md rev 3)
+// Only where the browser has Web Bluetooth (Chrome on a computer or Android) AND this device opted in: open the game app
+// once with ?watch=1 (?watch=0 turns it off again; kept on this device only). Everywhere else, the iPad included, WATCH is
+// null and nothing here shows: the app is exactly as before.
+const WATCH_OPT_IN = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get("watch");
+    if (q === "1") localStorage.setItem("pitchiq.watch.on", "1");
+    if (q === "0") localStorage.removeItem("pitchiq.watch.on");
+    return localStorage.getItem("pitchiq.watch.on") === "1";
+  } catch (e) { return false; }
+})();
+const WATCH = WATCH_OPT_IN && typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
 const watchOn = () => !!WATCH && WATCH.summary().devices.length > 0;
 // the call on screen as the watch link sees it: this game, this call, this pitch; none once the inning is over
 const watchCur = () => { const g = G(); return g.call && !g.inningOver ? { gid: g.watchGid, id: g.call.id, pitchNo: g.pitchNo } : null; };
 const watchIsAccepted = () => !!WATCH && WATCH.isAccepted(watchCur());
-function watchSync() { if (WATCH) WATCH.sync(watchCur()); }
+// when the call on screen last changed: Enter can't accept a call the coach hasn't had a moment to see (a second Enter
+// right after recording a pitch used to do nothing, and still does)
+let watchSeen = { id: null, at: 0 };
+function watchSync() {
+  if (!WATCH) return;
+  try {
+    const cur = watchCur(), id = cur ? `${cur.gid}|${cur.id}|${cur.pitchNo}` : null;
+    if (id !== watchSeen.id) watchSeen = { id, at: Date.now() };
+    WATCH.sync(cur);
+  } catch (e) { console.warn("watch sync", e); }   // render() is the app's loop: the watch link never breaks it
+}
+const watchEnterOk = () => !pickMode && Date.now() - watchSeen.at > 600;
 function watchAccept() {
   const g = G(), c = g.call;
-  if (!WATCH || !c || g.inningOver) return;
+  if (!WATCH || !c || g.inningOver || pickMode) return;
   if (!WATCH.summary().devices.some((d) => d.state === "ok")) { toast("No watch is linked. Connect one in Setup, or give the sign by hand."); return; }
   const clash = signConflicts(pitcherDef());
   if (clash.length) { toast(`${clash[0].names.join(" and ")} share sign ${clash[0].sign}. Give one its own number in ${DB.ready ? "Roster" : "Setup"} first.`); return; }
   if (!g.watchGid) g.watchGid = Math.random().toString(36).slice(2, 10);
   if (!c.id) c.id = nextCallId();   // a call made before this build had no id
   const kind = kindOf(c.pitch);
-  try { WATCH.accept({ gid: g.watchGid, id: c.id, pitchNo: g.pitchNo, sign: signFor(kind, c.pitch), quad: c.quad, kind }); }
+  try { WATCH.accept({ gid: g.watchGid, id: c.id, pitchNo: g.pitchNo, ab: `${g.inning}|${g.batter}`, sign: signFor(kind, c.pitch), quad: c.quad, kind }); }
   catch (e) { toast(e.message); return; }
   save(); render();
 }
 function watchAcceptButton() {
-  if (!watchOn()) return null;
+  if (!watchOn() || pickMode) return null;   // the coach is making his own call: there's nothing to accept yet
   const done = watchIsAccepted();
   return h("button", { class: `btn accept${done ? " sent" : " primary"}`, disabled: done ? true : null, on: { click: watchAccept }, title: done ? "Sent. A new call needs Accept again." : "Accept the call and send it to the watch (Enter)" },
     done ? "Accepted" : "Accept");
@@ -8603,7 +8667,7 @@ function watchRefresh() {
 const WSTATE = { ok: "Connected", connecting: "Connecting…", lost: "No link, trying again", noapp: "PitchIQ app isn't open on the watch", new: "Connecting…" };
 function watchCard() {
   const s = WATCH.summary();
-  const soakOn = /[?&]watchsoak\b/.test(location.search);
+  const soakOn = /[?&]watchsoak\b/.test(location.search);   // dev only, and only on a device already opted in
   const act = (fn) => async () => { try { await fn(); } catch (e) { if (!/cancel/i.test(e.message || "")) toast(e.message); } render(); };
   return h("div", { id: "watch-card", class: "wcard" },
     s.devices.length ? h("ul", { class: "wlist" }, s.devices.map((d) => h("li", {},
@@ -8622,9 +8686,9 @@ function watchCard() {
     soakOn ? watchSoakPanel() : null);
 }
 function watchSoakPanel() {
-  const st = WATCH.soakStats(), on = !!watchSoakPanel.on;
+  const st = WATCH.soakStats(), on = WATCH.soaking;
   return h("div", { class: "wsoak" }, h("b", {}, "Soak test"), " A new call every 5 s, counted per watch. ",
-    h("button", { class: "btn pill", on: { click: () => { if (on) WATCH.soakStop(); else WATCH.soakStart(5000); watchSoakPanel.on = !on; render(); } } }, on ? "Stop" : "Start"),
+    h("button", { class: "btn pill", on: { click: () => { if (on) WATCH.soakStop(); else WATCH.soakStart(5000); render(); } } }, on ? "Stop" : "Start"),
     h("ul", {}, Object.entries(st).map(([k, v]) => h("li", {}, `${k}: ${v.sent} sent, ${v.ok} confirmed within 1 s, ${v.late} late, ${v.missing} missing, slowest ${v.max} ms`))));
 }
 
@@ -10992,7 +11056,7 @@ document.addEventListener("keydown", (e) => {
   else if (k === "U") { e.preventDefault(); undoLast(); }
   else if (k === "K" && G().call) { e.preventDefault(); shakeOff(); }
   else if (k === "ENTER" && pending && (pending.result !== "play" || pending.out)) { e.preventDefault(); record(pending); }
-  else if (k === "ENTER" && !pending && watchOn() && G().call && !G().inningOver && !watchIsAccepted()) { e.preventDefault(); watchAccept(); }
+  else if (k === "ENTER" && !pending && watchOn() && G().call && !G().inningOver && !watchIsAccepted() && watchEnterOk()) { e.preventDefault(); watchAccept(); }
   else if (k === "ESCAPE" && (pending || pickMode)) { pending = null; pickMode = false; render(); }
 });
 

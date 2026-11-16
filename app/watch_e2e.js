@@ -1,5 +1,5 @@
 /*
- * Watch prototype in the real page (docs/PLAN_watch_prototype_2026-11-15.md rev 3). A stand-in navigator.bluetooth whose
+ * Watch prototype in the real page (docs/plans/PLAN_watch_prototype_2026-11-15.md rev 3). A stand-in navigator.bluetooth whose
  * "watches" run the real watch app's core (watch/bangle/pitchiq.app.js PQCore):
  *   - without Web Bluetooth (the iPad) there's no Accept button and no Watches card: the Game screen is as before;
  *   - connect from Setup; nothing reaches the watch until Accept; Accept and Enter send the call on screen;
@@ -54,12 +54,12 @@ const FAKE_BT = `
   const url = `http://127.0.0.1:${server.address().port}/`;
   const browser = await chromium.launch();
   const errs = [];
-  const open = async (fake) => {
+  const open = async (fake, optIn = fake) => {
     const ctx = await browser.newContext({ viewport: { width: 1180, height: 900 } });
     if (fake) await ctx.addInitScript(FAKE_BT);
     const page = await ctx.newPage();
     page.on("pageerror", (e) => errs.push(String(e)));
-    await page.goto(url); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 8000 });
+    await page.goto(url + (optIn ? "?watch=1" : "")); await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 8000 });
     await page.waitForTimeout(300);
     return page;
   };
@@ -72,11 +72,31 @@ const FAKE_BT = `
     check(await page.evaluate(() => WATCH === null && !document.getElementById("watch-pill")), "no watch link, no pill");
     await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
     check(!(await page.evaluate(() => document.body.innerText.includes("Watches"))), "no Watches card in Setup");
+    // review C1: a roster with two pitches on one sign (common after the v1.1 migration) shows no warning or picker here
+    const quiet = await page.evaluate(() => {
+      const pd = pitcherDef(); pd.pitches.push(Object.assign({}, pd.pitches.find((d) => d.kind === "FB"), { id: "tmp-fb2", name: "Two-seam test" }));
+      const out = { clash: signConflicts(pd).length, note: signNote(pd), pick: signPick(pd, pd.pitches[pd.pitches.length - 1], () => {}) };
+      S.view = "setup"; render(); const a = document.body.innerText;
+      S.view = "roster"; render(); const b = document.body.innerText;
+      pd.pitches.pop(); S.view = "live"; render();
+      return Object.assign(out, { text: /share sign/.test(a + b), pickers: document.querySelectorAll(".signpick").length });
+    });
+    check(quiet.clash === 1 && !quiet.note && !quiet.pick && !quiet.text && !quiet.pickers, "two pitches on one sign: no warning, no sign picker on a device without watches");
+    await page.close();
+  }
+
+  console.log("1b. Chrome with Bluetooth but not opted in: nothing changes either");
+  {
+    const page = await open(true, false);
+    check(await page.evaluate(() => WATCH === null && !document.querySelector(".btn.accept")), "no watch link, no Accept");
+    await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
+    check(!(await page.evaluate(() => document.body.innerText.includes("Watches"))), "no Watches card until it's opened once with ?watch=1");
     await page.close();
   }
 
   const page = await open(true);
   const key = async (k) => { await page.keyboard.press(k); await page.waitForTimeout(150); };
+  const settle = () => page.waitForTimeout(700);   // Enter accepts only a call that's been on screen 0.6 s
   const watch = (i = 0) => page.evaluate((i) => { const w = window.__watches[i]; return w ? { view: w.view, buzzes: w.buzzes.slice(), overlaps: w.overlaps, writes: w.writes.slice() } : null; }, i);
   const screen = () => page.evaluate(() => { const c = G().call, k = c && kindOf(c.pitch); return c ? { sign: signFor(k, c.pitch), quad: c.quad, kind: k, id: c.id, pitch: c.pitch } : null; });
   const words = (quad, kind) => PCW.WORDS[PCW.locCode(quad, kind)].join(" ");
@@ -102,9 +122,12 @@ const FAKE_BT = `
   check(w.buzzes.join() === "new" && (await acceptBtn()).text === "Accepted" && (await acceptBtn()).disabled, "one long buzz; the button reads Accepted");
   check(/On the watch ✓/.test(await pill()), `pill: "${await pill()}"`);
 
-  console.log("4. A recorded pitch clears it; Enter accepts the next call");
-  await key("b"); await page.waitForTimeout(250);
+  console.log("4. A recorded pitch clears it; Enter accepts the next call (not a second Enter right away)");
+  await page.keyboard.press("b"); await page.waitForTimeout(60);
   check(!(await watch()).view.sign && (await acceptBtn()).text === "Accept", "ball recorded: the watch shows —, the next call needs Accept");
+  await key("Enter"); await page.waitForTimeout(200);
+  check(!(await watch()).view.sign, "a second Enter right after the pitch doesn't accept a call the coach hasn't seen");
+  await settle();
   s0 = await screen();
   await key("Enter"); await page.waitForTimeout(300);
   w = await watch();
@@ -113,6 +136,7 @@ const FAKE_BT = `
   console.log("5. Shake-off, then Accept: a changed call");
   await key("k"); await page.waitForTimeout(250);
   check(!(await watch()).view.sign, "shake-off: the watch is cleared at once");
+  await settle();
   s0 = await screen();
   await key("Enter"); await page.waitForTimeout(300);
   w = await watch();
@@ -121,6 +145,12 @@ const FAKE_BT = `
   console.log("6. The coach's own call");
   await page.getByRole("button", { name: "Call my own" }).click(); await page.waitForTimeout(150);
   check((await watch()).view.sign === s0.sign, "opening Call my own doesn't touch the watch");
+  // review I2: with his own-call panel open, Enter and the Accept button can't send the engine's call
+  await page.evaluate(() => { G().call = null; render(); });   // a fresh engine call while the panel is open
+  await page.evaluate(() => { pickMode = true; render(); }); await settle();
+  const wBefore = (await watch()).writes.filter((t) => t[0] === "C").length;
+  await key("Enter"); await page.waitForTimeout(250);
+  check((await watch()).writes.filter((t) => t[0] === "C").length === wBefore && !(await acceptBtn()), "panel open: Enter sends nothing, no Accept button");
   await page.locator(".pick .seg").first().getByRole("button").first().click();
   await page.locator(".pick .seg").nth(1).getByRole("button", { name: "Down and away" }).click();
   await page.getByRole("button", { name: "Grade and use my call" }).click(); await page.waitForTimeout(250);
@@ -153,6 +183,7 @@ const FAKE_BT = `
 
   console.log("9. Third out");
   await page.evaluate(() => { G().outs = 2; G().strikes = 2; G().balls = 0; G().call = null; render(); });
+  await settle();
   await key("Enter"); await page.waitForTimeout(250);
   check(!!(await watch()).view.sign, "a call on the watch with two outs, two strikes");
   await key("c"); await page.waitForTimeout(300);
@@ -164,6 +195,7 @@ const FAKE_BT = `
   check(!(await page.evaluate(() => [...document.querySelectorAll("#watch-card button")].some((b) => /Connect/.test(b.textContent)))), "two connected: no third Connect button");
   await page.getByRole("button", { name: "Game" }).first().click(); await page.waitForTimeout(200);
   const take = page.getByRole("button", { name: /^Take the field/ }); if (await take.count()) { await take.click(); await page.waitForTimeout(250); }
+  await settle();
   await key("Enter"); await page.waitForTimeout(350);
   const a = await watch(0), b = await watch(1);
   check(a.view.sign && JSON.stringify(a.view) === JSON.stringify(b.view), `both watches show the same: ${a.view.sign} / ${(a.view.words || []).join(" ") || "(sign alone)"}`);
@@ -171,7 +203,18 @@ const FAKE_BT = `
   check(a.overlaps === 0 && b.overlaps === 0, `overlapping writes: ${a.overlaps}, ${b.overlaps}`);
   check(a.writes.every((t) => t.length <= 20) && !a.writes.some((t) => /[a-z]{3}/i.test(t.replace(/^[CXH]/, "").replace(/HI|HO|LI|LO|CH|CL/, ""))), "only codes over the air, never a name");
 
-  console.log("11. Receipt off");
+  console.log("11. Soak test while the app renders");
+  const soak = await page.evaluate(async () => {
+    WATCH.soakStart(1000);
+    for (let i = 0; i < 12; i++) { await new Promise((r) => setTimeout(r, 500)); render(); }
+    return WATCH.soakStop();
+  });
+  const sk = Object.values(soak);
+  check(sk.length === 2 && sk.every((v) => v.sent >= 5 && v.missing === 0 && v.late === 0), `renders don't clear soak calls (review I4): ${JSON.stringify(soak)}`);
+  await page.waitForTimeout(200);
+  check(!(await watch()).view.sign, "stopping the soak clears the watches");
+
+  console.log("12. Receipt off");
   await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
   await page.locator('#watch-card [aria-label="Delivery receipt"]').getByRole("button", { name: /Receipt off/ }).click(); await page.waitForTimeout(300);
   check(await page.evaluate(() => !window.__watches[0].notifying && JSON.parse(localStorage.getItem("pitchiq.watch")).receipt === false), "receipt off: notifications stopped; the setting is kept on this device only");

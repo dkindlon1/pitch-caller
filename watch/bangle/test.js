@@ -27,7 +27,8 @@ function firmware() {
     clearInterval: () => {},
     E: { toString: (b) => Buffer.from(b).toString("latin1"), getBattery: () => 87 },
     Bangle: { buzz: (ms, s) => { fw.buzz.push(ms); return Promise.resolve(); }, setLCDPower: (v) => { fw.lcd += v; }, setUI: (o) => { fw.ui = o; }, setOptions: (o) => { fw.options = o; } },
-    NRF: { setServices: (s, o) => { fw.services = s; fw.serviceOpts = o; }, updateServices: (s) => { fw.updates.push(s); }, on: (ev, f) => { fw.handlers[ev] = f; } },
+    NRF: { setServices: (s, o) => { fw.services = s; fw.serviceOpts = o; }, updateServices: (s) => { fw.updates.push(s); }, on: (ev, f) => { fw.handlers[ev] = f; },
+      setConnectionInterval: (v) => { fw.interval = v; } },
   };
   ctx.global = ctx;
   vm.createContext(ctx);
@@ -89,7 +90,7 @@ function firmware() {
     fw.handlers.connect();
     fw.write("C1,5,LO,0");
     check(fw.buzz.join() === "450" && fw.lcd === 1, "new call: one long buzz, backlight on");
-    check(fw.notifies().slice(-1)[0] === "A1", "receipt A1");
+    check(fw.notifies()[0] === "A1" && fw.notifies()[1] === "B87", "receipt A1, then the battery (first message of the connection)");
     fw.write("C1,5,LO,0");
     check(fw.buzz.length === 1 && fw.notifies().slice(-1)[0] === "A1", "the same message again: receipt only, no buzz");
     fw.write("C2,1,HI,1"); await fw.advance(300);
@@ -102,10 +103,15 @@ function firmware() {
     // reconnect: numbers restart
     fw.handlers.disconnect();
     check(fw.texts().includes("NO LINK") && !fw.texts().includes("1"), "disconnect: NO LINK, call taken off");
-    fw.handlers.connect(); fw.write("C1,2,L,0");
+    fw.handlers.connect();
+    check(fw.interval === 20, "on connect it asks for a steady 20 ms link");
+    fw.write("C1,2,L,0");
     check(fw.texts()[0] === "2", "reconnected: message 1 is shown again (the watch reset its count)");
-    await fw.advance(1000);
-    check(fw.notifies().includes("B87"), "battery sent after connecting (B87)");
+    check(fw.notifies().includes("B87"), "battery sent with the first message after connecting (B87), once the coach's app is listening");
+    fw.write("C5,3,HI,0"); fw.write("S");
+    check(!fw.texts().length && fw.rects === 1, "S: a new session, the call is taken off and the count starts again");
+    fw.write("C1,4,LO,0");
+    check(fw.texts()[0] === "4", "after S, message 1 shows even though the watch had seen 5 (no disconnect needed)");
   }
 
   console.log("4. NO LINK without heartbeats");
@@ -117,7 +123,15 @@ function firmware() {
     await fw.advance(7000);
     check(fw.texts().includes("NO LINK") && !fw.texts().includes("4"), "7 s without a message: NO LINK, call taken off");
     fw.write("H");
-    check(!fw.texts().includes("NO LINK") && !fw.texts().includes("4"), "a heartbeat again: link back, — (the old call doesn't come back)");
+    check(!fw.texts().includes("NO LINK") && !fw.texts().includes("4"), "a plain heartbeat: link back, — (the old call doesn't come back on its own)");
+    const nb = fw.buzz.length;
+    fw.write("C1,4,LI,0");
+    check(fw.texts()[0] === "4" && fw.buzz.length === nb, "the coach's app repeats the same message: the call goes back up, no buzz");
+    await fw.advance(7000);
+    fw.write("C2,6,CL,0");
+    check(fw.texts()[0] === "6" && fw.buzz.length === nb + 1, "after another quiet spell a newer message shows and buzzes as usual");
+    fw.handlers.disconnect(); fw.handlers.connect(); fw.write("C1,4,LI,0");
+    check(fw.texts()[0] === "4" && fw.buzz.length === nb + 2, "after a real disconnect nothing is held: message 1 of the new session is new (it buzzes)");
   }
 
   console.log(fails ? `\n${fails} FAILED` : "\nall passed");

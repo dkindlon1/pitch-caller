@@ -26,7 +26,7 @@ const server = http.createServer((req, res) => {
   await page.waitForFunction(() => typeof DB !== "undefined" && DB.ready, null, { timeout: 10000 });
 
   const ver = await page.evaluate(() => { S.view = "setup"; render(); const el = document.getElementById("app-version"); return el ? el.textContent : null; });
-  check(ver === "PitchIQ 1.2.3 · engine 1.2.3", `setup screen version line: ${JSON.stringify(ver)}`);
+  check(ver === "PitchIQ 1.3.0 · engine 1.2.3", `setup screen version line: ${JSON.stringify(ver)}`);
 
   console.log("1. Only trusted pitch: back after one shake, out after the second, back in for the next hitter");
   const r = await page.evaluate(() => {

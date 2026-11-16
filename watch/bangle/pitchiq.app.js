@@ -1,5 +1,5 @@
 /*
- * PitchIQ watch (prototype, docs/PLAN_watch_prototype_2026-11-15.md rev 3), for Bangle.js 2.
+ * PitchIQ watch (prototype, docs/plans/PLAN_watch_prototype_2026-11-15.md rev 3), for Bangle.js 2.
  *
  * Shows only the call the coach accepted: the catcher's sign, large, and the location in words under it ("get it over"
  * shows the sign alone). Both watches, pitcher's and catcher's, look the same: inside and outside are the hitter's.
@@ -7,10 +7,14 @@
  *
  * The coach's app (app/watch.js) writes codes to this app's own Bluetooth service. It takes data, never code, so the
  * watch's "Programmable" setting can stay off except while uploading this file.
- *   C<n>,<sign>,<loc>,<chg>   a call            X<n>   clear            H   heartbeat (every 3 s)
+ *   S   a new session: message numbers start again       C<n>,<sign>,<loc>,<chg>   a call       X<n>   clear
+ *   H   heartbeat (every 3 s while there's no message yet; after that the heartbeat is the newest message repeated)
  * Back to the coach, by notification (only while the coach has "Delivery receipt" on): A<n> receipt, B<pct> battery.
- * Message numbers restart at 1 on every connection; an older number is dropped, the same number again only gets its
- * receipt again (no second buzz). No message for 6 s, or a disconnect: NO LINK, and the call is taken off the screen.
+ * Message numbers restart at 1 on every connection (on S, and on the connect event); an older number is dropped; the
+ * same number again only gets its receipt again, no second buzz. No message for 6 s, or a disconnect: NO LINK, and the
+ * call is taken off the screen. If the link comes back and the coach's app repeats that same message (it's still the
+ * call), it goes back up without a buzz; a newer message shows and buzzes as usual.
+ * Plan: docs/plans/PLAN_watch_prototype_2026-11-15.md (rev 3).
  */
 var PQ_SVC = "7a1d0001-5c3e-4b8f-9a62-2f0c8e4d1b70";
 var PQ_RX = "7a1d0002-5c3e-4b8f-9a62-2f0c8e4d1b70";
@@ -22,21 +26,31 @@ var PQ_LINK_MS = 6000;
 // ------------------------------------------------------------------ core: no Bangle calls (watch/bangle/test.js runs it)
 // io: { draw(view), buzz("new" | "changed"), light(), notify(text), now() }
 function PQCore(io) {
-  var st = { lastN: 0, show: null, link: false, lastRx: 0 };
+  // held: the call taken off the screen by a quiet spell (NO LINK), with its message number, kept only so the same
+  // message repeated can put it back; any other message, or a disconnect, forgets it
+  var st = { lastN: 0, show: null, held: null, link: false, lastRx: 0 };
   function view() { return { link: st.link, sign: st.show ? st.show.sign : null, words: st.show ? PQ_WORDS[st.show.loc] : null }; }
-  function onConnect() { st.lastN = 0; st.link = true; st.lastRx = io.now(); st.show = null; io.draw(view()); }
-  function onDisconnect() { st.link = false; st.show = null; io.draw(view()); }
+  function reset() { st.lastN = 0; st.show = null; st.held = null; }
+  function onConnect() { reset(); st.link = true; st.lastRx = io.now(); io.draw(view()); }
+  function onDisconnect() { st.link = false; reset(); io.draw(view()); }
   function onWrite(text) {
     st.lastRx = io.now();
     var redraw = false;
     if (!st.link) { st.link = true; redraw = true; }
     var c = text.charAt(0);
+    if (c === "S") { reset(); io.draw(view()); return; }
     if (c === "C" || c === "X") {
       var parts = text.slice(1).split(",");
       var n = parseInt(parts[0], 10);
       if (!(n > 0)) { if (redraw) io.draw(view()); return; }
       if (n < st.lastN) { if (redraw) io.draw(view()); return; }            // older than what's shown: dropped
-      if (n === st.lastN) { if (redraw) io.draw(view()); io.notify("A" + n); return; }   // a repeat: receipt only
+      if (n === st.lastN) {                                                 // a repeat: receipt only, no buzz
+        if (!st.show && st.held && st.held.n === n) { st.show = st.held.show; st.held = null; redraw = true; }
+        if (redraw) io.draw(view());
+        io.notify("A" + n);
+        return;
+      }
+      st.held = null;
       if (c === "C") {
         var sign = parts[1], loc = parts[2];
         if (!/^[1-9]$/.test(sign) || !PQ_WORDS.hasOwnProperty(loc)) { if (redraw) io.draw(view()); return; }   // not shown, not acknowledged
@@ -56,7 +70,7 @@ function PQCore(io) {
     if (redraw) io.draw(view());   // a heartbeat after NO LINK
   }
   function tick() {
-    if (st.link && io.now() - st.lastRx > PQ_LINK_MS) { st.link = false; st.show = null; io.draw(view()); }
+    if (st.link && io.now() - st.lastRx > PQ_LINK_MS) { st.link = false; st.held = st.show ? { n: st.lastN, show: st.show } : null; st.show = null; io.draw(view()); }
   }
   return { onConnect: onConnect, onDisconnect: onDisconnect, onWrite: onWrite, tick: tick, view: view, st: st };
 }
@@ -104,13 +118,18 @@ if (typeof Bangle !== "undefined") {
   global.PQ_CORE = PQ;
   var svc = {};
   svc[PQ_SVC] = {};
-  svc[PQ_SVC][PQ_RX] = { value: "", maxLen: 20, writable: true, onWrite: function (evt) { PQ.onWrite(E.toString(evt.data)); } };
+  var pqNeedBattery = false;
+  svc[PQ_SVC][PQ_RX] = { value: "", maxLen: 20, writable: true, onWrite: function (evt) {
+    PQ.onWrite(E.toString(evt.data));
+    if (pqNeedBattery) { pqNeedBattery = false; pqNotify("B" + E.getBattery()); }   // the coach's app is subscribed by its first write
+  } };
   svc[PQ_SVC][PQ_TX] = { value: "", maxLen: 20, readable: true, notify: true };
   NRF.setServices(svc, {});
   var pqBattery = null;
   NRF.on("connect", function () {
     PQ.onConnect();
-    setTimeout(function () { pqNotify("B" + E.getBattery()); }, 800);   // after the coach's app has subscribed
+    pqNeedBattery = true;
+    try { NRF.setConnectionInterval(20); } catch (e) {}   // a steady 20 ms link instead of the slow idle rate: calls arrive fast
     if (pqBattery) clearInterval(pqBattery);
     pqBattery = setInterval(function () { pqNotify("B" + E.getBattery()); }, 60000);
   });

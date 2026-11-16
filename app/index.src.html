@@ -179,9 +179,9 @@ p { margin: 0; }
 .zone { padding: 10px; border-radius: var(--r-tile); background: var(--well); border: 1px solid var(--rule); }
 .zone svg { display: block; width: 100%; height: auto; overflow: visible; }
 .zone .lock { transform-box: fill-box; transform-origin: center; }
-.call-acts { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 18px; align-items: center; }
+.call-acts { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 18px; }
 /* watches (prototype): Accept is the biggest thing in the row; once sent it settles back */
-.btn.accept { height: 46px; padding: 0 26px; font-size: 16px; font-weight: 650; border-radius: 999px; }
+.btn.accept { align-self: center; height: 46px; padding: 0 26px; font-size: 16px; font-weight: 650; border-radius: 999px; }
 .btn.accept.sent { background: var(--glass-2); color: var(--ink); border-color: var(--stroke-2); opacity: 1; }
 .call-acts .wpill { align-self: center; justify-self: auto; font-size: 13px; padding: 6px 12px; margin-right: 6px; }
 .signpick { min-width: 0; width: auto; margin-left: 6px; }
@@ -650,11 +650,13 @@ const TIERS = [
 // changes its type.
 const KINDS = { FB: "Fastball", SI: "Sinker", FC: "Cutter", SL: "Slider", CB: "Curveball", CH: "Changeup" };
 const SIGN = { FB: 1, CB: 2, SL: 3, CH: 4, SI: 5, FC: 6 };
-// watch prototype (docs/PLAN_watch_prototype_2026-11-15.md rev 3): two active pitches of one pitcher with the same sign
+// watch prototype (docs/plans/PLAN_watch_prototype_2026-11-15.md rev 3): two active pitches of one pitcher with the same sign
 // (two sliders, both 3) can't be told apart on the watch, which shows no pitch type, or by a hand sign. The coach gives
 // one its own number, 1 to 9, kept in the pitch's own sign as a migrated pitch's is (the portal keeps it too).
-const signConflicts = (pd) => PCWatch.sharedSigns((pd && pd.pitches) || [], signOf);
+const signConflicts = (pd) => (typeof PCWatch !== "undefined" ? PCWatch.sharedSigns((pd && pd.pitches) || [], signOf) : []);
+// the note and the picker show only on a device using watches (WATCH: opted in, with Web Bluetooth); the iPad is unchanged
 function signPick(pd, d, onChange) {
+  if (!WATCH) return null;
   const own = d.sign != null && d.sign !== "" && String(d.sign) !== String(SIGN[d.kind]);
   if (!own && !signConflicts(pd).some((x) => x.names.includes(d.name))) return null;
   return h("select", { class: "signpick", "aria-label": `Sign for ${d.name}`, title: "The sign the catcher and the watch use for this pitch",
@@ -662,6 +664,7 @@ function signPick(pd, d, onChange) {
     [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => h("option", { value: n, selected: String(signOf(d.kind, d.sign)) === String(n) ? true : null }, `Sign ${n}`)));
 }
 function signNote(pd) {
+  if (!WATCH) return null;
   const c = signConflicts(pd);
   return c.length ? h("p", { class: "pstat watch", role: "alert" }, c.map((x) => `${x.names.join(" and ")} share sign ${x.sign}. `),
     "Give one its own number so the catcher, and the watch, can tell them apart.") : null;
@@ -740,7 +743,7 @@ function toast(msg) { const t = document.getElementById("toast"); t.textContent 
 const G = () => S.game;
 // every call gets its own id (the watch is sent the call on screen by id: the same pitch and spot twice in a row are two calls)
 const nextCallId = () => (G().callSeq = (G().callSeq || 0) + 1);
-const APP_VERSION = "1.2.3";   // logged with every pitch and shown under Game on the setup screen (1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
+const APP_VERSION = "1.3.0";   // logged with every pitch and shown under Game on the setup screen (1.3.0: watch prototype, opt-in; 1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -949,6 +952,7 @@ function makeCall() {
   }, 0);
 }
 function recall() {
+  watchSync();   // the call on screen is about to change (a recorded pitch, a shake-off): the watches clear now, not after the engine
   document.body.classList.add("thinking");
   setTimeout(() => { makeCall(); document.body.classList.remove("thinking"); save(); render(); }, 15);
 }
@@ -1230,30 +1234,50 @@ function applyTheme() {
   document.documentElement.style.setProperty("--call", c);
 }
 
-// ------------------------------------------------------------------ watches (prototype, docs/PLAN_watch_prototype_2026-11-15.md rev 3)
-// Only where the browser has Web Bluetooth (Chrome on a computer or Android). On the iPad WATCH is null and nothing here
-// shows: the Game screen is exactly as before.
-const WATCH = typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
+// ------------------------------------------------------------------ watches (prototype, docs/plans/PLAN_watch_prototype_2026-11-15.md rev 3)
+// Only where the browser has Web Bluetooth (Chrome on a computer or Android) AND this device opted in: open the game app
+// once with ?watch=1 (?watch=0 turns it off again; kept on this device only). Everywhere else, the iPad included, WATCH is
+// null and nothing here shows: the app is exactly as before.
+const WATCH_OPT_IN = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get("watch");
+    if (q === "1") localStorage.setItem("pitchiq.watch.on", "1");
+    if (q === "0") localStorage.removeItem("pitchiq.watch.on");
+    return localStorage.getItem("pitchiq.watch.on") === "1";
+  } catch (e) { return false; }
+})();
+const WATCH = WATCH_OPT_IN && typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
 const watchOn = () => !!WATCH && WATCH.summary().devices.length > 0;
 // the call on screen as the watch link sees it: this game, this call, this pitch; none once the inning is over
 const watchCur = () => { const g = G(); return g.call && !g.inningOver ? { gid: g.watchGid, id: g.call.id, pitchNo: g.pitchNo } : null; };
 const watchIsAccepted = () => !!WATCH && WATCH.isAccepted(watchCur());
-function watchSync() { if (WATCH) WATCH.sync(watchCur()); }
+// when the call on screen last changed: Enter can't accept a call the coach hasn't had a moment to see (a second Enter
+// right after recording a pitch used to do nothing, and still does)
+let watchSeen = { id: null, at: 0 };
+function watchSync() {
+  if (!WATCH) return;
+  try {
+    const cur = watchCur(), id = cur ? `${cur.gid}|${cur.id}|${cur.pitchNo}` : null;
+    if (id !== watchSeen.id) watchSeen = { id, at: Date.now() };
+    WATCH.sync(cur);
+  } catch (e) { console.warn("watch sync", e); }   // render() is the app's loop: the watch link never breaks it
+}
+const watchEnterOk = () => !pickMode && Date.now() - watchSeen.at > 600;
 function watchAccept() {
   const g = G(), c = g.call;
-  if (!WATCH || !c || g.inningOver) return;
+  if (!WATCH || !c || g.inningOver || pickMode) return;
   if (!WATCH.summary().devices.some((d) => d.state === "ok")) { toast("No watch is linked. Connect one in Setup, or give the sign by hand."); return; }
   const clash = signConflicts(pitcherDef());
   if (clash.length) { toast(`${clash[0].names.join(" and ")} share sign ${clash[0].sign}. Give one its own number in ${DB.ready ? "Roster" : "Setup"} first.`); return; }
   if (!g.watchGid) g.watchGid = Math.random().toString(36).slice(2, 10);
   if (!c.id) c.id = nextCallId();   // a call made before this build had no id
   const kind = kindOf(c.pitch);
-  try { WATCH.accept({ gid: g.watchGid, id: c.id, pitchNo: g.pitchNo, sign: signFor(kind, c.pitch), quad: c.quad, kind }); }
+  try { WATCH.accept({ gid: g.watchGid, id: c.id, pitchNo: g.pitchNo, ab: `${g.inning}|${g.batter}`, sign: signFor(kind, c.pitch), quad: c.quad, kind }); }
   catch (e) { toast(e.message); return; }
   save(); render();
 }
 function watchAcceptButton() {
-  if (!watchOn()) return null;
+  if (!watchOn() || pickMode) return null;   // the coach is making his own call: there's nothing to accept yet
   const done = watchIsAccepted();
   return h("button", { class: `btn accept${done ? " sent" : " primary"}`, disabled: done ? true : null, on: { click: watchAccept }, title: done ? "Sent. A new call needs Accept again." : "Accept the call and send it to the watch (Enter)" },
     done ? "Accepted" : "Accept");
@@ -1275,7 +1299,7 @@ function watchRefresh() {
 const WSTATE = { ok: "Connected", connecting: "Connecting…", lost: "No link, trying again", noapp: "PitchIQ app isn't open on the watch", new: "Connecting…" };
 function watchCard() {
   const s = WATCH.summary();
-  const soakOn = /[?&]watchsoak\b/.test(location.search);
+  const soakOn = /[?&]watchsoak\b/.test(location.search);   // dev only, and only on a device already opted in
   const act = (fn) => async () => { try { await fn(); } catch (e) { if (!/cancel/i.test(e.message || "")) toast(e.message); } render(); };
   return h("div", { id: "watch-card", class: "wcard" },
     s.devices.length ? h("ul", { class: "wlist" }, s.devices.map((d) => h("li", {},
@@ -1294,9 +1318,9 @@ function watchCard() {
     soakOn ? watchSoakPanel() : null);
 }
 function watchSoakPanel() {
-  const st = WATCH.soakStats(), on = !!watchSoakPanel.on;
+  const st = WATCH.soakStats(), on = WATCH.soaking;
   return h("div", { class: "wsoak" }, h("b", {}, "Soak test"), " A new call every 5 s, counted per watch. ",
-    h("button", { class: "btn pill", on: { click: () => { if (on) WATCH.soakStop(); else WATCH.soakStart(5000); watchSoakPanel.on = !on; render(); } } }, on ? "Stop" : "Start"),
+    h("button", { class: "btn pill", on: { click: () => { if (on) WATCH.soakStop(); else WATCH.soakStart(5000); render(); } } }, on ? "Stop" : "Start"),
     h("ul", {}, Object.entries(st).map(([k, v]) => h("li", {}, `${k}: ${v.sent} sent, ${v.ok} confirmed within 1 s, ${v.late} late, ${v.missing} missing, slowest ${v.max} ms`))));
 }
 
@@ -2080,7 +2104,7 @@ document.addEventListener("keydown", (e) => {
   else if (k === "U") { e.preventDefault(); undoLast(); }
   else if (k === "K" && G().call) { e.preventDefault(); shakeOff(); }
   else if (k === "ENTER" && pending && (pending.result !== "play" || pending.out)) { e.preventDefault(); record(pending); }
-  else if (k === "ENTER" && !pending && watchOn() && G().call && !G().inningOver && !watchIsAccepted()) { e.preventDefault(); watchAccept(); }
+  else if (k === "ENTER" && !pending && watchOn() && G().call && !G().inningOver && !watchIsAccepted() && watchEnterOk()) { e.preventDefault(); watchAccept(); }
   else if (k === "ESCAPE" && (pending || pickMode)) { pending = null; pickMode = false; render(); }
 });
 

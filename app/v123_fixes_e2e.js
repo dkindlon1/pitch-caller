@@ -75,7 +75,7 @@ const server = http.createServer((req, res) => {
   // 6. version line
   await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
   const ver = await page.evaluate(() => (document.body.innerText.match(/PitchIQ [\d.]+ · engine [\d.]+/) || [""])[0]);
-  check(ver === "PitchIQ 1.2.3 · engine 1.2.3", `setup screen version line: ${JSON.stringify(ver)}`);
+  check(ver === "PitchIQ 1.3.0 · engine 1.2.3", `setup screen version line: ${JSON.stringify(ver)}`);
 
   check(!errs.length, `no page errors${errs.length ? ": " + errs.join(" | ") : ""}`);
   await browser.close(); server.close();

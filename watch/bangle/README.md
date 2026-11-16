@@ -1,8 +1,8 @@
 # PitchIQ watch app (prototype), Bangle.js 2
 
 Shows the call the coach accepts: the catcher's sign, big, with the location in words under it ("3 / LOW AND OUTSIDE").
-"Get it over" shows the sign alone. Pitcher and catcher wear the same thing. Plan: `docs/PLAN_watch_prototype_2026-11-15.md`
-(rev 3) in the project.
+"Get it over" shows the sign alone. Pitcher and catcher wear the same thing. Plan: `docs/plans/PLAN_watch_prototype_2026-11-15.md`
+(rev 3), in the repo at `docs/plans/` and in the project.
 
 | On the watch | Means |
 |---|---|
@@ -31,8 +31,9 @@ To leave the app, **hold the button 3 seconds**. A short press (a glove) does no
 ## Connect from the game app
 1. Open the game app in **Chrome on a PC, laptop or Android device**, over `https` or `localhost`. For the prototype
    (not deployed), from the repo on the `watch-proto` branch: `cd app && python3 -m http.server 8000`, then open
-   `http://localhost:8000/dist/pitch-caller.html`. Not by double-clicking the file: `file://` has no Bluetooth. Not
-   the iPad: Safari has no Web Bluetooth.
+   `http://localhost:8000/dist/pitch-caller.html?watch=1`. Once deployed: `/app/game/?watch=1`. The `?watch=1` turns
+   the watch features on for this browser only (they stay on; `?watch=0` turns them off). Not by double-clicking the
+   file: `file://` has no Bluetooth. Not the iPad: Safari has no Web Bluetooth.
 2. Setup → **Watches** → **Connect a watch**, pick the Bangle. Up to two (pitcher and catcher).
 3. Test games: a local practice game, signed out or on the dev project, **never pitchiq-prod**.
 

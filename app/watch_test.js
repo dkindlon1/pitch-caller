@@ -1,7 +1,7 @@
 /*
  * The watch link (app/watch.js) against fake Bluetooth watches that run the real watch app's core
  * (watch/bangle/pitchiq.app.js, PQCore), on a fake clock. Chrome's rule is copied: a write while another GATT operation
- * is in progress is rejected. Plan: docs/PLAN_watch_prototype_2026-11-15.md (rev 3). Run: node watch_test.js
+ * is in progress is rejected. Plan: docs/plans/PLAN_watch_prototype_2026-11-15.md (rev 3). Run: node watch_test.js
  */
 const W = require("./watch.js");
 const fs = require("fs"), path = require("path"), vm = require("vm");
@@ -45,7 +45,10 @@ function clock() {
 // ---------------------------------------------------------------- fake watch + Web Bluetooth
 const enc = new TextEncoder(), dec = new TextDecoder();
 function fakeWatch(T, name, o = {}) {
-  const w = { name, writes: [], shown: [], buzzes: [], overlaps: 0, dropAcks: 0, inRange: true, hasApp: o.hasApp !== false, connected: false, notifying: false };
+  const w = { name, writes: [], shown: [], buzzes: [], overlaps: 0, dropAcks: 0, inRange: true, hasApp: o.hasApp !== false, connected: false, notifying: false,
+    silentConnect: false,   // the watch doesn't notice the reconnect (a reload where the radio link never dropped)
+    blackhole: false,       // writes "succeed" but never arrive (a stalled link with no disconnect)
+    failWrites: false };    // writes are refused
   const listeners = { disc: [] };
   w.core = PQCore({ draw: (v) => { w.view = v; }, buzz: (k) => w.buzzes.push(k), light: () => {}, now: T.now,
     notify: (t) => {
@@ -59,7 +62,9 @@ function fakeWatch(T, name, o = {}) {
     busy = true;
     return new Promise((res, rej) => T.setTimeout(() => { busy = false; if (!w.connected) return rej(new Error("GATT Server is disconnected.")); fn(); res(); }, ms));
   };
-  const rx = { writeValueWithResponse: (bytes) => op(() => { const t = dec.decode(bytes); w.writes.push(t); if (bytes.length > 20) w.tooLong = true; w.core.onWrite(t); if (w.core.view().sign) w.shown.push(w.core.st.lastN + ":" + w.core.view().sign); }, o.writeMs || 20) };
+  const rx = { writeValueWithResponse: (bytes) => {
+    if (w.failWrites) return Promise.reject(new Error("GATT Error: write failed"));
+    return op(() => { const t = dec.decode(bytes); w.writes.push(t); if (bytes.length > 20) w.tooLong = true; if (w.blackhole) return; w.core.onWrite(t); if (w.core.view().sign) w.shown.push(w.core.st.lastN + ":" + w.core.view().sign); }, o.writeMs || 20); } };
   const tx = { listener: null, addEventListener: (ev, f) => { tx.listener = f; },
     startNotifications: () => op(() => { w.notifying = true; }), stopNotifications: () => op(() => { w.notifying = false; }) };
   const svc = { getCharacteristic: async (u) => (u === W.RX ? rx : u === W.TX ? tx : Promise.reject(new Error("no such characteristic"))) };
@@ -68,7 +73,7 @@ function fakeWatch(T, name, o = {}) {
     id: "id-" + name, name,
     addEventListener: (ev, f) => { if (ev === "gattserverdisconnected") listeners.disc.push(f); },
     gatt: {
-      connect: () => new Promise((res, rej) => T.setTimeout(() => { if (!w.inRange) return rej(new Error("out of range")); w.connected = true; busy = false; w.core.onConnect(); res(server); }, 30)),
+      connect: () => new Promise((res, rej) => T.setTimeout(() => { if (!w.inRange) return rej(new Error("out of range")); w.connected = true; busy = false; if (!w.silentConnect) w.core.onConnect(); res(server); }, 30)),
       disconnect: () => { if (w.connected) { w.connected = false; w.notifying = false; w.core.onDisconnect(); listeners.disc.forEach((f) => f()); } },
     },
   };
@@ -110,7 +115,7 @@ const mem = () => { const m = {}; return { getItem: (k) => m[k] || null, setItem
     const a = fakeWatch(T, "Bangle.js a1"), bt = fakeBluetooth([a]);
     const L = W.create({ bluetooth: bt, timers: T, storage: mem() });
     const p = L.connect(); await advance(200); await p;
-    check(L.summary().devices[0].state === "ok" && a.writes[0] === "X1" && a.view.link && !a.view.sign, "connected: the watch gets a clear (X1) and shows —");
+    check(L.summary().devices[0].state === "ok" && a.writes[0] === "S" && a.writes[1] === "X1" && a.view.link && !a.view.sign, "connected: a new session (S), then a clear (X1); the watch shows —");
     check(L.line().text === "Watch ready", `line before a call: "${L.line().text}"`);
     const cur = { gid: "g", id: 1, pitchNo: 0 };
     L.accept(Object.assign({ sign: 3, quad: "down-away", kind: "SL" }, cur)); await advance(300);
@@ -160,7 +165,9 @@ const mem = () => { const m = {}; return { getItem: (k) => m[k] || null, setItem
     check(a.overlaps === 0, `overlapping writes under rapid calls and heartbeats: ${a.overlaps}`);
     check(ns.length > 0 && ns.every((n, i) => i === 0 || n >= ns[i - 1]), `the watch never shows an older call after a newer one (${[...new Set(ns)].join(" ")})`);
     check(a.view.sign === String(1 + (8 % 6)) && L.line().text === "On the watch ✓", `ends on the newest call (${a.view.sign})`);
-    check(a.writes.filter((t) => t === "H").length > 0, "heartbeats went out between calls");
+    const lastMsg = a.writes.filter((t) => t[0] === "C").slice(-1)[0];
+    check(a.writes.filter((t) => t === lastMsg).length >= 2 && a.buzzes.length === 1 + new Set(a.writes.filter((t) => t[0] === "C").map((t) => t.split(",")[0])).size - 1,
+      "heartbeats repeat the newest message, and a repeat never buzzes again");
   }
 
   console.log("4. Dropped link, reconnect, reload");
@@ -202,7 +209,7 @@ const mem = () => { const m = {}; return { getItem: (k) => m[k] || null, setItem
     const p = L.connect(); await advance(200); await p;
     check(!a.notifying, "no notifications subscribed: nothing comes back from the watch");
     L.accept({ gid: "g", id: 1, pitchNo: 0, sign: 3, quad: "up-in", kind: "SL" }); await advance(800);
-    check(a.writes.filter((t) => t === "C2,3,HI,0").length === 3 && a.buzzes.length === 1, "written 3 times, buzzed once");
+    check(a.writes.filter((t) => t === "C2,3,HI,0").length >= 3 && a.buzzes.length === 1, "written 3 times (plus heartbeat repeats), buzzed once");
     check(L.line().text === "Sent (no receipt)", `line: "${L.line().text}"`);
     L.setReceipt(true); await advance(300);
     check(a.notifying && a.overlaps === 0, "turned back on: notifications start through the same queue");
@@ -227,13 +234,72 @@ const mem = () => { const m = {}; return { getItem: (k) => m[k] || null, setItem
     check(/No link to Bangle\.js b2/.test(L.line().text), `one watch lost: "${L.line().text}"`);
   }
 
-  console.log("7. Soak mode");
+  console.log("7. A quiet link, a silent reconnect, failures");
   {
     const { T, advance } = clock();
     const a = fakeWatch(T, "Bangle.js a1"), bt = fakeBluetooth([a]);
     const L = W.create({ bluetooth: bt, timers: T, storage: mem() });
     const p = L.connect(); await advance(200); await p;
-    L.soakStart(5000); await advance(5000 * 60 - 1, 20);
+    L.accept({ gid: "g", id: 1, pitchNo: 0, ab: "1|0", sign: 2, quad: "up-in", kind: "CB" }); await advance(300);
+    // review I3: a stalled link with no disconnect: the watch goes NO LINK and takes the call off, the coach's screen
+    // still says delivered; when the link comes back the heartbeat repeats the message and the call goes back up
+    a.blackhole = true;
+    for (let t = 0; t < 8; t++) { await advance(1000); a.core.tick(); }
+    check(!a.view.link && !a.view.sign, "8 s with nothing arriving: the watch shows NO LINK, call off");
+    a.blackhole = false; await advance(3500);
+    check(a.view.link && a.view.sign === "2" && a.buzzes.length === 1, "link back: the heartbeat repeats the message and the call goes back up, no second buzz");
+    // review I5: a reload where the watch never noticed the link drop: S resets its count
+    a.core.st.lastN = 40;
+    L._devs[0].state = "closed";   // the old page is gone (no disconnect reaches the watch)
+    const L2 = W.create({ bluetooth: fakeBluetooth([a]), timers: T, storage: mem() });
+    a.silentConnect = true;
+    const p2 = L2.connect(); await advance(300); await p2;
+    L2.accept({ gid: "g2", id: 1, pitchNo: 0, ab: "1|0", sign: 5, quad: "down-away", kind: "SI" }); await advance(300);
+    check(a.view.sign === "5" && a.view.words.join(" ") === "LOW AND OUTSIDE", "the watch never saw a disconnect: S reset it, the new session's call shows");
+    a.silentConnect = false;
+    // a reconnect re-sends the call as new (one long buzz), never as a change
+    L2.sync({ gid: "g2", id: 2, pitchNo: 0 }); await advance(200);
+    L2.accept({ gid: "g2", id: 2, pitchNo: 0, ab: "1|0", sign: 1, quad: "up-away", kind: "FB" }); await advance(300);
+    check(a.buzzes.slice(-1)[0] === "changed", "a changed call before the pitch: two short buzzes");
+    a.inRange = false; a.drop(); a.inRange = true; await advance(3000);
+    check(a.view.sign === "1" && a.buzzes.slice(-1)[0] === "new" && a.writes.some((t) => /^C\d+,1,HO,0$/.test(t)), "after a reconnect the same call comes back as new (chg 0), not as a change");
+    // the first call of a new inning after a third out with no pitch (same pitch number) isn't a change
+    L2.sync(null); await advance(200);
+    L2.accept({ gid: "g2", id: 3, pitchNo: 0, ab: "2|0", sign: 3, quad: "middle", kind: "SL" }); await advance(300);
+    check(a.buzzes.slice(-1)[0] === "new", "a new inning at the same pitch number: one long buzz");
+    // a write that keeps failing still shows as missing after 1 s
+    a.failWrites = true;
+    L2.sync({ gid: "g2", id: 4, pitchNo: 1 }); L2.accept({ gid: "g2", id: 4, pitchNo: 1, ab: "2|0", sign: 4, quad: "down-in", kind: "CH" }); await advance(1300);
+    check(/Not on Bangle\.js a1/.test(L2.line().text), `writes refused: "${L2.line().text}"`);
+    a.failWrites = false; await advance(1500);
+    check(L2.line().text === "On the watch ✓" && a.view.sign === "4", "writes accepted again: delivered");
+    // turning the receipt off while a call is unconfirmed doesn't leave "Not on" behind
+    a.dropAcks = 99;
+    L2.sync({ gid: "g2", id: 5, pitchNo: 2 }); L2.accept({ gid: "g2", id: 5, pitchNo: 2, ab: "2|1", sign: 6, quad: "chase", kind: "FC" }); await advance(1300);
+    check(/Not on/.test(L2.line().text), "receipts lost: Not on…");
+    L2.setReceipt(false); await advance(800);
+    check(L2.line().text === "Sent (no receipt)", `receipt switched off: "${L2.line().text}"`);
+    a.dropAcks = 0; L2.setReceipt(true); await advance(1500);
+    check(L2.line().text === "On the watch ✓" && a.overlaps === 0, `receipt back on: the call is sent again and confirmed ("${L2.line().text}"); overlaps ${a.overlaps}`);
+    // a reconnect tap that fails keeps retrying by itself, and one disconnect schedules one retry
+    a.inRange = false; a.drop(); a.drop();
+    const pending = L2._devs[0].reT;
+    check(!!pending, "two disconnect events: one retry scheduled");
+    let err = ""; const rp = L2.reconnect("Bangle.js a1").catch((e) => { err = e.message; });
+    await advance(100); await rp;
+    check(err && L2.summary().devices[0].state === "lost" && !!L2._devs[0].reT, `Reconnect while out of range fails ("${err}") and automatic retries carry on`);
+    a.inRange = true; await advance(12000);
+    check(L2.summary().devices[0].state === "ok", "back in range: reconnected");
+  }
+
+  console.log("8. Soak mode");
+  {
+    const { T, advance } = clock();
+    const a = fakeWatch(T, "Bangle.js a1"), bt = fakeBluetooth([a]);
+    const L = W.create({ bluetooth: bt, timers: T, storage: mem() });
+    const p = L.connect(); await advance(200); await p;
+    L.soakStart(5000);
+    for (let i = 0; i < 60; i++) { await advance(5000 - (i === 59 ? 1 : 0), 20); L.sync({ gid: "g", id: i, pitchNo: i }); }   // renders during the soak don't clear its calls (review I4)
     const st = L.soakStop()["Bangle.js a1"];
     check(st && st.sent === 60 && st.ok === 60 && st.missing === 0 && a.overlaps === 0, `60 calls in 5 minutes: ${JSON.stringify(st)}`);
   }
