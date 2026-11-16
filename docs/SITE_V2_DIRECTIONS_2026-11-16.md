@@ -61,3 +61,13 @@ Drew asked for a glassmorphic, liquid glass theme on scheme A (Floodlight) from 
 - **Playground:** a glass control panel (count, runners, outs, inning, hitter), a glass panel with the engine's mix, and the watch taking the call. Same real engine output as the other mocks.
 - **Glass in the mock:** backdrop blur and saturation, a bright top rim, an inner bloom and a blue caustic along the bottom edge. True lens refraction (an SVG displacement filter on the backdrop) is Chrome-only today and was not tried.
 - Mock: `docs/site-v2-directions/d-floodlight-glass.html`, shots `d-floodlight-glass-*.jpg`. Chrome headless only, static, no motion built.
+
+## E. The film tells the call (added Nov 16, Drew's idea)
+Drew: as the watch comes together, show the inputs and the decisions, building to the final outcome, fastball outside. Think of a premium Apple product page where the product carries one message at a time. A little more green.
+- **What changes:** only the words and glass over the film. Frames, timing, scroll length and loading stay as they are.
+- **Layout rule:** one statement on the left, the watch in the middle, one glass ledger on the right that fills as you scroll, and a three-part rail (Inputs, Decision, Call) at the bottom. On the phone the statement sits on top and the ledger becomes a tray at the bottom.
+- **Six stops:** title; the situation (2-2, one out, runner on third, tied in the 3rd); the pitcher's feel and the hitter (same side, just saw a slider away); the mix being weighed; down to one; "Fastball, outside." with the call landed and a button into the playground.
+- **Green:** the rail fills blue to green, the winning row turns green at "Down to one", and the final headline, glass rim, call chip and buttons are green. Blue stays the color of inputs.
+- **Truth:** the story is one real engine run (engine 1.2.3, sample starter, college tables). Top of the mix is fastball down and away at 26%, reason line "He's sitting slider". The watch shows it as FASTBALL / OUTSIDE. The engine draws from the mix, so the page says "top of the mix", not "the only call".
+- Type in this mock: Hanken Grotesk only.
+- Mock: `docs/site-v2-directions/e-film-story.html`, shots `e-film-story-desktop.jpg` and `e-film-story-phone.jpg`. Static, Chrome headless only.
