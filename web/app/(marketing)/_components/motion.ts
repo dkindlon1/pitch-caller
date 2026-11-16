@@ -30,7 +30,16 @@ export type Kit = {
 let loading: Promise<Kit> | null = null;
 let ready: Kit | null = null;
 export const kit = () => ready;          // the kit if it has loaded (event handlers use this and skip the motion if not)
-const afterPaint = () => new Promise<void>((r) => requestAnimationFrame(() => window.setTimeout(r, 0)));
+// resolved a moment after the browser reports its first contentful paint (never before it), or after two seconds
+const afterPaint = () => new Promise<void>((r) => {
+  let done = false;
+  const go = () => { if (!done) { done = true; window.setTimeout(r, 60); } };
+  try {
+    const po = new PerformanceObserver((list) => { if (list.getEntries().some((e) => e.name === "first-contentful-paint")) { po.disconnect(); go(); } });
+    po.observe({ type: "paint", buffered: true });
+  } catch { requestAnimationFrame(() => requestAnimationFrame(go)); }
+  window.setTimeout(go, 2000);
+});
 export function loadKit(): Promise<Kit> {
   loading ||= afterPaint()
     .then(() => Promise.all([import("gsap"), import("gsap/ScrollTrigger"), import("gsap/SplitText"), import("gsap/Flip"), import("lenis")]))

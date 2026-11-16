@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { STORY_SIT, pct, sameSit, weigh, type Sit, type Weighed } from "@/lib/story";
-import { kit, motion, reducedMotion } from "./motion";
+import { kit, loadKit, motion, reducedMotion } from "./motion";
 
 // "Set the situation": the film's last frame stays where it is and two glass panels rise around it. The left one sets
 // the count, runners, outs, inning and which side the hitter stands on; the right one shows what the engine would
@@ -39,9 +39,11 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
   }, []);
   // the engine and its tables load once the page is idle, well before anyone can reach the controls
   useEffect(() => {
+    // (after the first paint and the animation kit, then when the browser is idle: it is the largest script on the page)
+    let dead = false, id = 0;
     const idle = window.requestIdleCallback || ((f: () => void) => window.setTimeout(f, 1800));
-    const id = idle(() => { load().catch(() => {}); });
-    return () => { (window.cancelIdleCallback || window.clearTimeout)(id as number); landTl.current?.kill(); };
+    loadKit().catch(() => null).then(() => { if (!dead) id = idle(() => { load().catch(() => {}); }) as number; });
+    return () => { dead = true; (window.cancelIdleCallback || window.clearTimeout)(id); landTl.current?.kill(); };
   }, [load]);
 
   const change = useCallback((next: Sit) => {

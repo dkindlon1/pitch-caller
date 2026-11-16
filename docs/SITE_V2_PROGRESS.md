@@ -38,3 +38,15 @@ References: `docs/site-v2-shots/references/BOARD.md`. Chrome had two browsers co
 
 ## Not in the repo
 `docs/RESEARCH_color_schemes_2026-11-16.md`, `docs/WEBSITE_DIRECTION_watch_2026-11-15.md` and `docs/BUILD_site_watch_REPORT.md` were never committed on any branch. The plan and the prototype were the working spec.
+
+## Round 2 (Nov 16)
+Drew's seven items, all done; details and numbers in `docs/BUILD_site_v2_REPORT.md`.
+- Film re-rendered again (titanium finish, wider bevels, soft sheen cards). Comparisons: `docs/site-v2-shots/rerender/v3-*.jpg`.
+- Playground strap fades out; two wrists always show a call; the hitter-read line reworded; programs rebuilt around three numbers and three lanes; mobile LCP 2.8 s.
+- GSAP and Lenis are no longer in the first bundle: `_components/motion.ts` loads them after first paint (`loadKit`, `useKit`). Sections must use `useKit`, not a static gsap import.
+- Fonts are subset files (`fonts/archivo-site.woff2`, `fonts/hanken-site.woff2`): Archivo keeps weight 600 to 900 and width 62 to 110, basic Latin only. A heading weight under 600 or a new character outside that set needs the font re-cut.
+- References were seen in Chrome in the Windows browser (Browser 2), which Drew picked and which was logged into Instagram.
+Readings taken without asking:
+- Two wrists starts on the film's call and Accept sends the next one, so the faces are never empty. The call alternates between the situation's two leading calls.
+- Programs dropped the usage-by-count grid, velocity trend, hitter-side split and the staff list's roles. The numbers that remain are unchanged from before.
+- A third "No link" fact was added under two wrists; it matches the watch app's own no-link screen.

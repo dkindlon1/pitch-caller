@@ -283,7 +283,8 @@ html.lenis, html.lenis body { height: auto; }
   .pq-light.is-b { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--glow) 40%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
   .pq-light.is-g { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--call) 36%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
   .pq-msg, .pq-msg.is-low { left: 22px; right: 22px; top: 11vh; bottom: auto; width: auto; transform: none; }
-  .pq-explain { text-shadow: 0 1px 14px var(--ground), 0 0 4px var(--ground); }
+  .pq-explain { isolation: isolate; }
+  .pq-explain::before { content: ""; position: absolute; inset: -22px -14px -16px; z-index: -1; border-radius: 28px; background: radial-gradient(closest-side, rgba(12, 11, 14, 0.9), rgba(12, 11, 14, 0.72) 62%, transparent); }   /* the strap is bright metal behind this copy */
   .pq-foot-fade { z-index: 1; height: 22vh; }
   .pq-cut { display: none; }   /* on a phone the panels sit above and below the watch, over the strap */
   .pq-msg.is-1 { width: auto; }
@@ -342,7 +343,8 @@ html.lenis, html.lenis body { height: auto; }
   .pq-callname { height: auto; overflow: visible; clip-path: none; white-space: normal; }
   .pq-ledger { display: block; } .pq-lg { grid-area: auto; } .pq-lg.is-b { margin-top: 14px; }
   .pq-reset { position: static; margin: 12px 0 0; }
-  .pq-explain { text-align: left; text-shadow: none; }
+  .pq-explain { text-align: left; }
+  .pq-explain::before { display: none; }
   .pq-mix > .pq-lbl, .pq-mix .pq-fine, .pq-ctl > .pq-lbl, .pq-ctl .pq-fixed, .pq-pgtitle p { display: block; }
   .pq-callname h2 { font-size: var(--fs-h2-big); background: var(--blend); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 0.08em; }
   .pq-illus { text-align: left; }
