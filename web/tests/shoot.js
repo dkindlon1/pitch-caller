@@ -35,6 +35,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       for (let y = 0; y <= total; y += step) { await page.mouse.wheel(0, step); await wait(40); }
       await wait(1500);
     } else if (has("--reduced") || has("--full")) {
+      // walk the page once so lazy images are in before the long screenshot
+      const total = await page.evaluate(() => document.documentElement.scrollHeight);
+      for (let y = 0; y < total; y += v.height) { await page.evaluate((yy) => scrollTo(0, yy), y); await wait(120); }
+      await page.evaluate(() => scrollTo(0, 0)); await wait(300);
       await page.screenshot({ path: path.join(OUT, `${tag}-full.jpg`), fullPage: true, type: "jpeg", quality: 82 });
     } else {
       const film = await page.evaluate(() => { const f = document.getElementById("top"); return f ? { top: f.offsetTop, h: f.offsetHeight - innerHeight } : null; });

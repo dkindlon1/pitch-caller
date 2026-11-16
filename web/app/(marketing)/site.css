@@ -148,7 +148,7 @@ html.lenis, html.lenis body { height: auto; }
 .pq-film { position: relative; height: 960vh; }
 .pq-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--ground); }
 .pq-cv, .pq-cut { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.pq-cv { background: var(--ground) center / cover no-repeat; }
+.pq-cv { background: var(--ground) url(/media/film/watch/first.jpg) center / cover no-repeat; }
 .pq-cut { opacity: 0; pointer-events: none; z-index: 3; }
 /* the light behind the watch: a blue layer and a green one, crossfaded (opacity only) as the call lands */
 .pq-light { position: absolute; inset: 0; mix-blend-mode: screen; pointer-events: none; }
@@ -270,12 +270,19 @@ html.lenis, html.lenis body { height: auto; }
 .pq-face::after { content: ""; position: absolute; right: 5%; top: 5%; width: 4.6%; height: 4.6%; border-radius: 50%; background: #58e06c; }
 .pq-face-ring { position: absolute; inset: -2px; border-radius: inherit; box-shadow: 0 0 0 2px rgba(98, 240, 122, 0.9), 0 0 60px 6px rgba(98, 240, 122, 0.55); opacity: 0; pointer-events: none; }
 
+/* before the timeline takes over (first paint, slow script): only the first stop shows, as it will once it runs */
+@media (prefers-reduced-motion: no-preference) {
+  .pq-msg:not(.is-1), .pq-ledger, .pq-chip, .pq-pgtitle, .pq-ctl, .pq-mix { opacity: 0; }
+}
+
 /* ---------- phone and tablet portrait: the film recomposed, not shrunk ---------- */
 @media (max-aspect-ratio: 9/10) {
   .pq-shade { background: linear-gradient(180deg, rgba(12, 11, 14, 0.9) 0%, rgba(12, 11, 14, 0.55) 24%, transparent 38%, transparent 66%, rgba(12, 11, 14, 0.7) 100%); }
   .pq-light.is-b { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--glow) 40%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
   .pq-light.is-g { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--call) 36%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
   .pq-msg, .pq-msg.is-low { left: 22px; right: 22px; top: 11vh; bottom: auto; width: auto; transform: none; }
+  .pq-cv { background-image: url(/media/film/watch/tall-first.jpg); }
+  .pq-explain { text-shadow: 0 1px 14px var(--ground), 0 0 4px var(--ground); }
   .pq-cut { display: none; }   /* on a phone the panels sit above and below the watch, over the strap */
   .pq-msg.is-1 { width: auto; }
   .pq-msg h1 { font-size: clamp(1.9rem, 8.7vw, 2.6rem); }
@@ -312,7 +319,7 @@ html.lenis, html.lenis body { height: auto; }
 }
 
 /* ---------- sections on the plain ground ---------- */
-.pq-sec { position: relative; padding: clamp(96px, 14vh, 168px) 0; }
+.pq-sec { position: relative; padding: clamp(72px, 11vh, 132px) 0; }
 .pq-sec-head { max-width: 46rem; }
 .pq-sec-head h2 { font-size: var(--fs-h2); }
 .pq-sec-head p { margin-top: 18px; font-size: clamp(1.06rem, 1.4vw, 1.25rem); line-height: 1.42; color: var(--soft); max-width: 34em; }
@@ -324,21 +331,25 @@ html.lenis, html.lenis body { height: auto; }
   .pq *, .pq *::before, .pq *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   .pq-film { height: auto; }
   .pq-pin { position: relative; height: auto; overflow: visible; display: grid; gap: 28px; padding: 0 var(--pad) 72px; max-width: var(--wrap); margin: 0 auto; }
-  .pq-cv { position: relative; inset: auto; width: calc(100% + 2 * var(--pad)); max-width: none; margin: 0 calc(-1 * var(--pad)); height: auto; aspect-ratio: 16 / 10; max-height: 86vh; }
+  .pq-cv { position: relative; inset: auto; width: calc(100% + 2 * var(--pad)); max-width: none; margin: 0 calc(-1 * var(--pad)); height: auto; aspect-ratio: 16 / 10; max-height: 86vh; background-image: url(/media/film/watch/poster.jpg); }
   .pq-cut, .pq-light, .pq-shade, .pq-pglight, .pq-word, .pq-landed, .pq-rail, .pq-flow { display: none; }
   .pq-msg, .pq-msg.is-low, .pq-ledger, .pq-chips, .pq-explain, .pq-pgtitle, .pq-ctl, .pq-mix, .pq-pg, .pq-illus, .pq-callname { position: static; inset: auto; transform: none; width: auto; opacity: 1; max-width: 44rem; }
   .pq-msg.is-big h2 { font-size: var(--fs-h2); }
   .pq-chips { display: grid; gap: 10px; max-width: 26rem; }
   .pq-chip { position: static; width: auto; }
   .pq-callname { height: auto; overflow: visible; clip-path: none; white-space: normal; }
+  .pq-ledger { display: block; } .pq-lg { grid-area: auto; } .pq-lg.is-b { margin-top: 14px; }
+  .pq-reset { position: static; margin: 12px 0 0; }
+  .pq-explain { text-align: left; text-shadow: none; }
+  .pq-mix > .pq-lbl, .pq-mix .pq-fine, .pq-ctl > .pq-lbl, .pq-ctl .pq-fixed, .pq-pgtitle p { display: block; }
   .pq-callname h2 { font-size: var(--fs-h2-big); background: var(--blend); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 0.08em; }
   .pq-illus { text-align: left; }
-  .pq-pg { display: grid; gap: 22px; pointer-events: auto; max-width: none; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; margin-top: 40px; }
-  .pq-pgtitle { grid-column: 1 / -1; }
+  .pq-pg { display: grid; gap: 22px; pointer-events: auto; max-width: none; grid-template-columns: minmax(0, 1fr) minmax(180px, 0.6fr) minmax(0, 1fr); grid-template-areas: "t t t" "c h m"; align-items: center; margin-top: 40px; }
+  .pq-pgtitle { grid-area: t; } .pq-ctl { grid-area: c; } .pq-mix { grid-area: m; }
   .pq-ctl, .pq-mix { max-width: none; }
   .pq-reset { visibility: visible; }
-  .pq-head { position: relative; inset: auto; grid-column: 1 / -1; width: min(280px, 70%); margin: 0 auto; aspect-ratio: 538 / 672; }
+  .pq-head { position: relative; inset: auto; grid-area: h; width: min(280px, 100%); margin: 0 auto; aspect-ratio: 538 / 672; }
   .pq-head img { width: 100%; height: 100%; display: block; }
   .pq-face { opacity: 1; left: 24.5%; top: 29.6%; width: 51%; height: 40.8%; }
-  @media (max-width: 760px) { .pq-pg { grid-template-columns: minmax(0, 1fr); } .pq-rowwrap:nth-child(n + 3) { display: block; } }
+  @media (max-width: 860px) { .pq-pg { grid-template-columns: minmax(0, 1fr); grid-template-areas: "t" "h" "c" "m"; } .pq-rowwrap:nth-child(n + 3) { display: block; } .pq-cv { aspect-ratio: 9 / 14; background-image: url(/media/film/watch/tall-poster.jpg); } }
 }

@@ -65,7 +65,7 @@ export function Programs() {
     const el = sec.current, st = flip.current; if (!el || !st) return;
     flip.current = null;
     const M = motion();
-    Flip.from(st, { targets: el.querySelectorAll(".pq-pp-card"), duration: M.durFlip + 0.1, ease: M.out, absolute: true, nested: true, stagger: 0.025,
+    Flip.from(st, { targets: el.querySelectorAll(".pq-pp-card"), duration: M.durFlip + 0.1, ease: M.out, absolute: false, stagger: 0.025,
       onEnter: (els) => gsap.fromTo(els, { opacity: 0, scale: 0.94 }, { opacity: 1, scale: 1, duration: 0.45, delay: 0.12, ease: M.out }),
       onLeave: (els) => gsap.to(els, { opacity: 0, scale: 0.94, duration: 0.25, ease: M.inn }) });
   }, [role]);
@@ -83,7 +83,8 @@ export function Programs() {
       .from(q(".pq-pp-meter b"), { scaleX: 0, duration: 0.9, stagger: 0.085, ease: "power2.out" }, 0.45)
       .from(q(".pq-pp-counts i"), { scaleY: 0, duration: 0.5, stagger: { each: 0.03, from: "start" }, ease: "power2.out" }, 0.6)
       .from(q(".pq-pp-velo .in"), { xPercent: -101, duration: 1.3, ease: "power2.inOut" }, 0.7).from(q(".pq-pp-velo svg"), { xPercent: 101, duration: 1.3, ease: "power2.inOut" }, 0.7)
-      .from(q(".pq-pp-side, .pq-pp-learned tbody tr, .pq-pp-staff li"), { opacity: 0, x: -12, duration: 0.5, stagger: 0.06 }, 0.9);
+      // (explicit end values: the table rows carry a CSS opacity transition, which a from() tween would read mid-flight)
+      .fromTo(q(".pq-pp-side, .pq-pp-learned tbody tr, .pq-pp-staff li"), { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.06, clearProps: "opacity,transform" }, 0.9);
     window.dispatchEvent(new Event("pq:lens"));
   }, { scope: sec });
 

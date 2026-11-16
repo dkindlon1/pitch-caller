@@ -44,17 +44,18 @@
 .pq-ab-seg .lab { position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap; padding: 3px 9px; border-radius: 999px; background: rgba(236, 235, 230, 0.08); font-size: 0.75rem; font-weight: 600; color: var(--soft); }
 .pq-ab-fine { margin-top: clamp(40px, 7vh, 72px); max-width: 46rem; }
 /* wide screens with motion: the row is pinned and scrubbed; one line of copy above it changes per pitch */
-.pq-ab.is-scrub { height: 420vh; }
-.pq-ab.is-scrub .pq-ab-pin { position: sticky; top: 0; height: 100vh; padding: 0; display: grid; align-items: center; overflow: hidden; }
-.pq-ab.is-scrub .pq-sec-head h2 { font-size: clamp(2rem, 3.4vw, 3.1rem); }
-.pq-ab.is-scrub .pq-sec-head p { margin-top: 10px; font-size: 1.03rem; }
-.pq-ab.is-scrub .pq-ab-line { display: grid; margin-top: clamp(18px, 3.4vh, 36px); min-height: 2.5em; font: 650 clamp(1.3rem, 2.1vw, 1.9rem) / 1.2 var(--head); font-stretch: 108%; letter-spacing: -0.03em; }
-.pq-ab.is-scrub .pq-ab-line span { grid-area: 1 / 1; }
-.pq-ab.is-scrub .pq-ab-line b { color: var(--dim); font-weight: 650; margin-right: 6px; }
-.pq-ab.is-scrub .pq-ab-row { margin-top: clamp(4px, 1.4vh, 18px); --fw: min(33vh, 20vw, 290px); }
-.pq-ab.is-scrub .pq-ab-meta .why { display: none; }
-.pq-ab.is-scrub .pq-ab-fine { margin-top: clamp(14px, 3vh, 30px); }
-.pq-ab.is-scrub .pq-ab-mix { top: auto; bottom: calc(100% - 30px); }
+@media (prefers-reduced-motion: no-preference) and (min-width: 861px) {
+  .pq-ab { height: 420vh; }
+  .pq-ab .pq-ab-pin { position: sticky; top: 0; height: 100vh; padding: 0; display: grid; align-items: center; overflow: hidden; }
+  .pq-ab .pq-sec-head h2 { font-size: clamp(2rem, 3.4vw, 3.1rem); }
+  .pq-ab .pq-sec-head p { margin-top: 10px; font-size: 1.03rem; }
+  .pq-ab .pq-ab-line { display: grid; margin-top: clamp(18px, 3.4vh, 36px); min-height: 2.5em; font: 650 clamp(1.3rem, 2.1vw, 1.9rem) / 1.2 var(--head); font-stretch: 108%; letter-spacing: -0.03em; }
+  .pq-ab .pq-ab-line span { grid-area: 1 / 1; }
+  .pq-ab .pq-ab-line b { color: var(--dim); font-weight: 650; margin-right: 6px; }
+  .pq-ab .pq-ab-row { margin-top: clamp(4px, 1.4vh, 18px); --fw: min(30vh, 17vw, 260px); }
+  .pq-ab .pq-ab-meta .why { display: none; }
+  .pq-ab .pq-ab-fine { margin-top: clamp(14px, 3vh, 30px); }
+}
 @media (max-width: 860px) {
   .pq-ab-row { grid-template-columns: minmax(0, 1fr); gap: 26px; padding-left: 26px; --fw: 124px; }
   .pq-ab-rail { display: block; position: absolute; left: 4px; top: 20px; bottom: 20px; width: 3px; border-radius: 3px; background: rgba(236, 235, 230, 0.12); }
@@ -67,7 +68,7 @@
 
 /* ---------- two wrists ---------- */
 .pq-tw-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; justify-items: center; gap: clamp(8px, 2vw, 32px); margin-top: clamp(40px, 7vh, 80px); }
-.pq-tw-watch { display: grid; justify-items: center; width: min(100%, 300px); will-change: transform; }
+.pq-tw-watch { display: grid; justify-items: center; width: min(100%, 340px); will-change: transform; }
 .pq-tw-watch .pq-w { width: 100%; }
 .pq-tw-watch .who { margin-top: 8px; font: 650 1.15rem/1 var(--head); font-stretch: 108%; letter-spacing: -0.02em; }
 .pq-tw-mid { position: relative; display: flex; align-items: center; z-index: 2; }
@@ -113,11 +114,11 @@
 .pq-pp-grid { display: grid; gap: 12px; grid-template-columns: 200px repeat(6, minmax(0, 1fr)); }
 .pq-pp-card { position: relative; padding: 18px 20px; border-radius: 20px; background: rgba(12, 11, 14, 0.52); box-shadow: inset 0 0 0 1px rgba(236, 235, 230, 0.09); min-width: 0; }
 .pq-pp-card h3 { font: 500 var(--fs-small) / 1.2 var(--body); letter-spacing: 0; color: #c9cad3; margin-bottom: 12px; }
-.pq-pp.is-coach .pq-pp-staff { grid-column: 1; grid-row: 1 / span 4; }
+.pq-pp.is-coach .pq-pp-staff { grid-column: 1; grid-row: 1 / span 2; }
 .pq-pp.is-coach .pq-pp-who, .pq-pp.is-coach .pq-pp-top { grid-column: 2 / -1; }
-.pq-pp.is-coach .pq-pp-pitches { grid-column: 2 / span 3; }
+.pq-pp.is-coach .pq-pp-pitches { grid-column: 1 / span 4; }
 .pq-pp.is-coach .pq-pp-usage { grid-column: 5 / -1; }
-.pq-pp.is-coach .pq-pp-learned { grid-column: 2 / -1; }
+.pq-pp.is-coach .pq-pp-learned { grid-column: 1 / -1; }
 .pq-pp.is-player .pq-pp-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .pq-pp.is-player .pq-pp-who, .pq-pp.is-player .pq-pp-top { grid-column: 1 / -1; }
 .pq-pp.is-player .pq-pp-pitches { grid-column: 1 / span 3; grid-row: span 2; }

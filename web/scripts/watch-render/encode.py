@@ -2,7 +2,8 @@
 #   python encode.py [--quality 80]
 # Reads frames/{wide,tall}/f_0000.png ... and frames/cut-{wide,tall}/f_0149.png (rendered with --alpha), writes
 #   public/media/film/watch/{wide,tall}/0001.webp ...   the film
-#   public/media/film/watch/poster.jpg, tall-poster.jpg  the last frame (first paint, reduced motion)
+#   public/media/film/watch/poster.jpg, tall-poster.jpg  the last frame (reduced motion)
+#   public/media/film/watch/first.jpg, tall-first.jpg    the first frame (what the canvas shows until its frames load)
 #   public/media/film/watch/cut-{wide,tall}.webp         the watch lifted off the last frame (transparent ground)
 #   public/media/film/watch/head.webp                    the watch head, cropped from the wide cut-out
 # and prints: the four corner colors of every encoded frame (they must be the page's ground, #0c0b0e), where the
@@ -47,6 +48,7 @@ for name in ("wide", "tall"):
                 worst = max(worst, d); bad += d > 0; seen[c] += 1
     last = flatten(Image.open(files[-1]).convert("RGB"))[0]
     last.save(os.path.join(OUT, "poster.jpg" if name == "wide" else "tall-poster.jpg"), "JPEG", quality=88, optimize=True, progressive=True)
+    flatten(Image.open(files[0]).convert("RGB"))[0].save(os.path.join(OUT, "first.jpg" if name == "wide" else "tall-first.jpg"), "JPEG", quality=86, optimize=True, progressive=True)
     print(f"{name}: {len(files)} frames {last.size}, {total / 1e6:.2f} MB, avg {total / len(files) / 1e3:.0f} KB; ground is {flat / len(files):.0%} of the picture; edge points that are ground in the master decode from WebP as {dict(seen)} (worst channel difference from #0c0b0e: {worst}); screen {screen_rect(last)}")
     cut = Image.open(os.path.join(HERE, "frames", f"cut-{name}", f"f_{len(files) - 1:04d}.png")).convert("RGBA")
     cut.save(os.path.join(OUT, f"cut-{name}.webp"), "WEBP", quality=86, method=6)

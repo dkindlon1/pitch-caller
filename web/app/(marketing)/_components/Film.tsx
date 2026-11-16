@@ -43,15 +43,18 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
 
     // ---------- the frames: coarse to fine, nearest one drawn until its neighbours arrive ----------
     let dead = false, dir: "wide" | "tall" = tallScreen() ? "tall" : "wide", count = frames[dir], imgs: HTMLImageElement[] = [], ok: boolean[] = [], fwant = 0, fshown = -1, raf = 0;
+    let eager = false, coarse = 0, pumpAll = () => {};
+    const goEager = () => { if (eager) return; eager = true; pumpAll(); };
     function load() {
       imgs.forEach((im) => { im.onload = null; im.src = ""; });
       imgs = []; ok = []; count = frames[dir]; fshown = -1;
       const order: number[] = [], seen = new Set<number>([count - 1]);
       order.push(count - 1);
-      for (const step of [16, 8, 4, 2, 1]) for (let i = 0; i < count; i += step) if (!seen.has(i)) { seen.add(i); order.push(i); }
+      for (const step of [16, 8, 4, 2, 1]) { for (let i = 0; i < count; i += step) if (!seen.has(i)) { seen.add(i); order.push(i); } if (step === 8) coarse = order.length; }
       let next = 0, active = 0;
       const pump = () => {
-        while (!dead && active < 6 && next < order.length) {
+        // every 8th frame comes with the page; the rest wait until the page has loaded or the visitor starts scrolling
+        while (!dead && active < 6 && next < (eager ? order.length : coarse)) {
           const i = order[next++], im = new Image();
           active++; im.decoding = "async";
           im.onload = () => { ok[i] = true; active--; queue(); pump(); };
@@ -60,6 +63,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
           imgs[i] = im;
         }
       };
+      pumpAll = pump;
       pump();
     }
     const near = (i: number) => { for (let d = 0; d < count; d++) { if (ok[i - d]) return i - d; if (ok[i + d]) return i + d; } return -1; };
@@ -230,13 +234,17 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
     }
 
     load();
+    let eagerT = 0;
+    const afterLoad = () => { eagerT = window.setTimeout(goEager, 1200); };
+    if (document.readyState === "complete") afterLoad(); else window.addEventListener("load", afterLoad, { once: true });
+    window.addEventListener("scroll", goEager, { once: true, passive: true });
     layout();
     let rt = 0;
     const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { const d = tallScreen() ? "tall" : "wide"; if (d !== dir) { dir = d; load(); } layout(); queue(); }, 150); };
     window.addEventListener("resize", onResize);
     document.fonts?.ready.then(() => { if (!dead) layout(); });
     return () => {
-      dead = true; window.removeEventListener("resize", onResize); window.clearTimeout(rt); cancelAnimationFrame(raf);
+      dead = true; window.removeEventListener("resize", onResize); window.removeEventListener("load", afterLoad); window.removeEventListener("scroll", goEager); window.clearTimeout(eagerT); window.clearTimeout(rt); cancelAnimationFrame(raf);
       tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); imgs.forEach((im) => { im.onload = null; im.src = ""; });
     };
   }, { scope: sec, dependencies: [frames.wide, frames.tall] });

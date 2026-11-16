@@ -49,15 +49,17 @@ export function TwoWrists({ calls }: { calls: Spot[] }) {
       const wide = window.matchMedia("(min-width: 861px)").matches;
       const a = el.querySelector(".pq-tw-watch.is-p"), b = el.querySelector(".pq-tw-watch.is-c"), labels = el.querySelectorAll(".pq-tw-watch .who"), mid = el.querySelector(".pq-tw-mid");
       // the split: both start on the same spot (one watch) and slide apart
-      const off = (w: Element | null, dir: number) => { if (!w) return 0; const r = (w as HTMLElement).getBoundingClientRect(), s = el.querySelector(".pq-tw-stage")!.getBoundingClientRect(); return wide ? (s.left + s.width / 2) - (r.left + r.width / 2) : 0 * dir; };
-      const offY = (w: Element | null) => { if (!w || wide) return 0; const r = (w as HTMLElement).getBoundingClientRect(), s = el.querySelector(".pq-tw-stage")!.getBoundingClientRect(); return (s.top + s.height / 2) - (r.top + r.height / 2); };
-      const split = gsap.timeline({ defaults: { ease: "power2.inOut" }, scrollTrigger: { trigger: el.querySelector(".pq-tw-stage"), start: "top 78%", end: "center 52%", scrub: M.scrub, invalidateOnRefresh: true } });
-      split.fromTo(a, { x: () => off(a, 1), y: () => offY(a) }, { x: 0, y: 0, duration: 1 }, 0)
-        .fromTo(b, { x: () => off(b, -1), y: () => offY(b) }, { x: 0, y: 0, duration: 1 }, 0)
+      // (measured from layout, not from the screen: a refresh can ask again while the watches are already moved)
+      const stage = el.querySelector<HTMLElement>(".pq-tw-stage")!;
+      const off = (w: Element | null) => (w && wide ? stage.offsetWidth / 2 - ((w as HTMLElement).offsetLeft + (w as HTMLElement).offsetWidth / 2) : 0);
+      const offY = (w: Element | null) => (w && !wide ? stage.offsetHeight / 2 - ((w as HTMLElement).offsetTop + (w as HTMLElement).offsetHeight / 2) : 0);
+      const split = gsap.timeline({ defaults: { ease: "power2.inOut" }, scrollTrigger: { trigger: el.querySelector(".pq-tw-stage"), start: "top 64%", end: "top 20%", scrub: M.scrub, invalidateOnRefresh: true } });
+      split.fromTo(a, { x: () => off(a), y: () => offY(a) }, { x: 0, y: 0, duration: 1 }, 0)
+        .fromTo(b, { x: () => off(b), y: () => offY(b) }, { x: 0, y: 0, duration: 1 }, 0)
         .fromTo(labels, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: M.out }, 0.72)
         .fromTo(mid, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, ease: M.out }, 0.7);
       // scrolling past sends the first call once, if nobody pressed
-      const st = ScrollTrigger.create({ trigger: el.querySelector(".pq-tw-stage"), start: "center 46%", once: true, onEnter: () => { if (count.current === 0) send(false); } });
+      const st = ScrollTrigger.create({ trigger: el.querySelector(".pq-tw-stage"), start: "top 14%", once: true, onEnter: () => { if (count.current === 0) send(false); } });
       return () => { st.kill(); };
     });
     return () => { mm.revert(); tl.current?.kill(); };
