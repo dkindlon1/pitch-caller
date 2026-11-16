@@ -24,7 +24,7 @@ const filmTime = (p: number) => (p < A ? (p / A) * T4 : Math.min(1, T4 + ((p - A
 const pp = (x: number) => A + x * 0.58, dd = (x: number) => x * 0.58;     // the approved prototype's timeline, placed after stop 3
 export const PLAYGROUND_AT = pp(0.9);             // where "Set the situation" is fully up (nav links land here)
 // where the watch's screen sits in the last frame, as fractions of the frame (measured from the render), per frame set
-const SCREEN = { wide: [0.4289, 0.3862, 0.5711, 0.6125, 1920, 1200], tall: [0.3708, 0.417, 0.6292, 0.5821, 1080, 1680] } as const;
+const SCREEN = { wide: [0.4286, 0.3858, 0.5714, 0.6142, 1920, 1200], tall: [0.3704, 0.4167, 0.6296, 0.5833, 1080, 1680] } as const;
 
 export function Film({ story, frames }: { story: Weighed; frames: { wide: number; tall: number } }) {
   const sec = useRef<HTMLElement>(null);
@@ -142,9 +142,9 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       tl = gsap.timeline({ defaults: { ease: M.soft }, scrollTrigger: { trigger: el, start: "top top", end: "bottom bottom", scrub: M.scrub, onUpdate: (st) => frame(st.progress) } });
       const msgOut = (m: Element, at: number) => tl!.to(m, { opacity: 0, y: tall ? -14 : -24, duration: 0.016, ...out }, at);
       const msgIn = (m: Element, at: number) => tl!.fromTo(m, { opacity: 0, y: tall ? 24 : 40 }, { opacity: 1, y: 0, duration: 0.034, ...inn }, at);
-      const rowIn = (r: Element, at: number, older: Element[]) => {
+      const rowIn = (r: Element, at: number, older: Element[], ghost = 0.13) => {
         // a row waits as a faint slot, then lights up as its input arrives
-        tl!.fromTo(r, { opacity: 0.13, y: 10 }, { opacity: 1, y: 0, duration: 0.02, ...inn }, at);
+        tl!.fromTo(r, { opacity: ghost, y: 10 }, { opacity: 1, y: 0, duration: 0.02, ...inn }, at);
         if (older.length) tl!.to(older[older.length - 1], { opacity: 0.42, duration: 0.02, ease: "none" }, at);   // the row before it dims
       };
 
@@ -160,7 +160,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       msgOut(s2, 0.222); msgIn(s3, 0.242);
       if (tall) tl.to(ga, { opacity: 0, y: -10, duration: 0.018, ...out }, 0.226); else tl.to(liA[liA.length - 1], { opacity: 0.42, duration: 0.02, ease: "none" }, 0.25);
       const liB = rowsB.filter((r) => r.tagName === "LI");
-      rowsB.forEach((r, i) => { if (r.tagName === "LI") rowIn(r, 0.25 + i * 0.0105, liB.slice(0, liB.indexOf(r))); else tl!.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.02 }, 0.25 + i * 0.0105); });
+      rowsB.forEach((r, i) => { if (r.tagName === "LI") rowIn(r, 0.25 + i * 0.0105, liB.slice(0, liB.indexOf(r)), tall ? 0 : 0.13); else tl!.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.02 }, 0.25 + i * 0.0105); });
       tl.fromTo($$(".pq-feel i"), { scaleX: 0 }, { scaleX: (i: number) => led_feel[i], duration: 0.03, stagger: 0.0105, ...inn }, 0.262);
       // stop 4: the ledger opens up and the candidate calls leave it
       msgOut(s3, 0.336); msgIn(s4, 0.366);
@@ -168,9 +168,9 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       const lr = { x: led.offsetLeft + led.offsetWidth / 2, y: led.offsetTop };   // (centred with a transform on wide screens: offsetTop is its middle)
       chips.forEach((c, i) => {
         const fx = tall ? 0 : (lr.x - (c.offsetLeft + c.offsetWidth / 2)) * 0.8, fy = tall ? 40 : (lr.y - (c.offsetTop + c.offsetHeight / 2)) * 0.6;
-        tl!.fromTo(c, { opacity: 0, x: fx, y: fy, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, x: 0, y: 0, scale: 1, filter: "blur(0px)", duration: dd(0.075), ...inn }, pp(0.012) + i * dd(0.022));
+        tl!.fromTo(c, { opacity: 0, x: fx, y: fy, scale: 0.86, filter: "blur(10px)" }, { opacity: 1, x: 0, y: 0, scale: 1, filter: "blur(0px)", duration: dd(0.06), ...inn }, pp(0.012) + i * dd(0.016));
       });
-      tl.fromTo($$(".pq-chip .pq-bar b:first-child"), { scaleX: 0 }, { scaleX: (i: number) => cands[i].p / top, duration: dd(0.08), stagger: dd(0.022), ...inn }, pp(0.045));
+      tl.fromTo($$(".pq-chip .pq-bar b:first-child"), { scaleX: 0 }, { scaleX: (i: number) => cands[i].p / top, duration: dd(0.07), stagger: dd(0.016), ...inn }, pp(0.04));
       // stop 5: the four losing calls fall away across the screen; the winner stays, grows and turns green
       msgOut(s4, pp(0.195)); msgIn(s5, pp(0.23));
       chips.slice(1).forEach((c, i) => tl!.to(c, { x: tall ? -vw * [0.9, 1.1, 1.0, 1.2][i] : -vw * [0.52, 0.78, 0.64, 0.9][i], y: vh * [0.5, 0.34, 0.62, 0.3][i], rotation: [-34, -22, -48, -18][i], opacity: 0, filter: "blur(7px)", duration: dd(0.13), ...out }, pp(0.25 + i * 0.016)));

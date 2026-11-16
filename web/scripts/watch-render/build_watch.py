@@ -15,6 +15,7 @@ def arg(name, default=None):
     return argv[argv.index(name) + 1] if name in argv else default
 SET = arg("--set", "wide")                      # wide (16:10) or tall (9:16, used for tablets and phones)
 OUT = arg("--out", f"frames/{SET}")
+ALPHA = "--alpha" in argv                  # a transparent ground: the watch cut out of a frame (the page lifts the last frame this way)
 SKIP = "--skip-existing" in argv           # resume a stopped render: leave frames that are already on disk
 SCALE = float(arg("--scale", "1"))
 SAMPLES = int(arg("--samples", "768"))
@@ -114,6 +115,8 @@ def calibrate_ground():
     (scene.render.resolution_x, scene.render.resolution_y, cy.samples, cy.use_denoising, scene.render.use_motion_blur, scene.render.filepath) = keep
     bpy.data.objects.remove(co); bpy.data.cameras.remove(cd)
 calibrate_ground()
+scene.render.film_transparent = ALPHA
+if ALPHA: scene.render.image_settings.color_mode = "RGBA"
 
 # ---------------------------------------------------------------- helpers
 def setin(node, name, value):

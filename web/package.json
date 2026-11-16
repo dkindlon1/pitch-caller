@@ -9,7 +9,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "node --test lib/*.test.ts",
-    "e2e": "playwright test"
+    "e2e": "node tests/site_e2e.js"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

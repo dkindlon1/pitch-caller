@@ -3,7 +3,7 @@
 /* ---------- a watch with a live face (the last frame of the film, cut out) ---------- */
 .pq-w { position: relative; display: block; aspect-ratio: 538 / 672; }
 .pq-w img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
-.pq-wface { position: absolute; left: 24.6%; top: 29.7%; width: 50.8%; height: 40.4%; border-radius: 9%; background: #f4f4f3; color: #121214; container-type: size; font-family: var(--body); font-weight: 700; letter-spacing: 0.02em; line-height: 1.06; text-align: center; }
+.pq-wface { position: absolute; left: 24.5%; top: 29.6%; width: 51%; height: 40.8%; border-radius: 9%; background: #f4f4f3; color: #121214; container-type: size; font-family: var(--body); font-weight: 700; letter-spacing: 0.02em; line-height: 1.06; text-align: center; }
 .pq-wface::after { content: ""; position: absolute; right: 5%; top: 5%; width: 4.6%; height: 4.6%; border-radius: 50%; background: #58e06c; }
 .pq-wwords { position: absolute; inset: 0; display: grid; place-content: center; gap: 4cqw; }
 .pq-wwords span { display: block; font-size: 12.8cqw; }
@@ -24,7 +24,7 @@
 .pq-ab-face { position: relative; z-index: 1; width: var(--fw); max-width: 100%; padding: 0; border: 0; background: none; border-radius: 22%; transition: transform var(--t-med) var(--e-out); }
 .pq-ab-face:hover, .pq-ab-item.is-open .pq-ab-face { transform: translateY(-6px) scale(1.03); }
 .pq-ab-face:active { transform: scale(0.98); }
-.pq-ab-meta { display: grid; justify-items: center; gap: 3px; text-align: center; margin-top: -14px; }
+.pq-ab-meta { display: grid; justify-items: center; gap: 3px; text-align: center; margin-top: 4px; }
 .pq-ab-meta .n { font-size: var(--fs-small); color: var(--dim); font-weight: 500; }
 .pq-ab-meta .n i { font-style: normal; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(236, 235, 230, 0.1); color: var(--chalk); font-variant-numeric: tabular-nums; }
 .pq-ab-meta b { font: 650 1.15rem/1.2 var(--head); font-stretch: 108%; letter-spacing: -0.02em; }
@@ -51,7 +51,7 @@
 .pq-ab.is-scrub .pq-ab-line { display: grid; margin-top: clamp(18px, 3.4vh, 36px); min-height: 2.5em; font: 650 clamp(1.3rem, 2.1vw, 1.9rem) / 1.2 var(--head); font-stretch: 108%; letter-spacing: -0.03em; }
 .pq-ab.is-scrub .pq-ab-line span { grid-area: 1 / 1; }
 .pq-ab.is-scrub .pq-ab-line b { color: var(--dim); font-weight: 650; margin-right: 6px; }
-.pq-ab.is-scrub .pq-ab-row { margin-top: clamp(4px, 1.4vh, 18px); --fw: min(24vh, 210px); }
+.pq-ab.is-scrub .pq-ab-row { margin-top: clamp(4px, 1.4vh, 18px); --fw: min(33vh, 20vw, 290px); }
 .pq-ab.is-scrub .pq-ab-meta .why { display: none; }
 .pq-ab.is-scrub .pq-ab-fine { margin-top: clamp(14px, 3vh, 30px); }
 .pq-ab.is-scrub .pq-ab-mix { top: auto; bottom: calc(100% - 30px); }
@@ -69,7 +69,7 @@
 .pq-tw-stage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; justify-items: center; gap: clamp(8px, 2vw, 32px); margin-top: clamp(40px, 7vh, 80px); }
 .pq-tw-watch { display: grid; justify-items: center; width: min(100%, 300px); will-change: transform; }
 .pq-tw-watch .pq-w { width: 100%; }
-.pq-tw-watch .who { margin-top: -18px; font: 650 1.15rem/1 var(--head); font-stretch: 108%; letter-spacing: -0.02em; }
+.pq-tw-watch .who { margin-top: 8px; font: 650 1.15rem/1 var(--head); font-stretch: 108%; letter-spacing: -0.02em; }
 .pq-tw-mid { position: relative; display: flex; align-items: center; z-index: 2; }
 .pq-tw-accept { display: grid; gap: 3px; justify-items: center; min-width: 168px; padding: 16px 24px 15px; border: 0; border-radius: 26px; transition: transform var(--t-press) var(--e-press), box-shadow var(--t-med) var(--e-out); }
 .pq-tw-accept .k { font: 700 1.2rem/1 var(--head); font-stretch: 108%; letter-spacing: -0.02em; }
@@ -180,7 +180,7 @@
   .pq-pp { padding: 12px 0 12px; border-radius: 26px; --glass-blur: 12px; }
   .pq-pp .pq-pp-grid, .pq-pp.is-player .pq-pp-grid { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 12px 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .pq-pp-grid::-webkit-scrollbar { display: none; }
-  .pq-pp-card { flex: 0 0 82%; scroll-snap-align: center; }
+  .pq-pp-card { flex: 0 0 82%; scroll-snap-align: center; align-self: flex-start; }
   .pq-pp-who { flex-wrap: wrap; } .pq-pp-who .meta { margin-left: 0; width: 100%; }
   .pq-pp-top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
   .pq-pp-learned table { font-size: 0.84rem; }
