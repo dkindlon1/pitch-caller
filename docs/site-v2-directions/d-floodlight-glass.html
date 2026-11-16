@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Direction D: Floodlight, liquid glass (static mock)</title>
+<style>
+@font-face { font-family: "Archivo"; src: url(fonts/archivo-latin-wdth-normal.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+:root {
+  --ground: #0c0b0e;      /* film frame corners */
+  --midnight: #14224f;
+  --glow: #2f5bff;        /* read glow */
+  --chalk: #ecebe6;
+  --call: #62f07a;        /* only when a call lands */
+  --dim: #9c9ea8;
+  --blend: linear-gradient(90deg in oklab, var(--glow), var(--call));
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--ground); color: var(--chalk); font: 400 16px/1.5 "Archivo", sans-serif; overflow-x: hidden; }
+.screen { position: relative; height: 900px; overflow: hidden; }
+h1, h2 { font-weight: 700; font-stretch: 116%; letter-spacing: -.035em; line-height: .98; }
+
+/* liquid glass: blurred, saturated backdrop; a bright top rim, a soft inner bloom and a blue caustic along the bottom */
+.glass { position: relative; border-radius: 30px; isolation: isolate;
+  background: linear-gradient(170deg, rgba(236,235,230,.13) 0%, rgba(236,235,230,.04) 38%, rgba(47,91,255,.07) 100%);
+  -webkit-backdrop-filter: blur(26px) saturate(190%) brightness(1.12); backdrop-filter: blur(26px) saturate(190%) brightness(1.12);
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.42), inset 1px 0 0 rgba(255,255,255,.10), inset -1px 0 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(120,150,255,.28),
+    inset 0 22px 34px -22px rgba(255,255,255,.22), inset 0 -26px 40px -26px rgba(47,91,255,.40), 0 34px 70px -24px rgba(0,0,0,.75), 0 0 0 1px rgba(0,0,0,.35); }
+.glass::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  background: radial-gradient(120% 70% at 12% -10%, rgba(255,255,255,.26), transparent 46%), radial-gradient(70% 50% at 96% 108%, rgba(47,91,255,.30), transparent 60%); }
+
+/* ---------- screen 1: the film's last frame holds, the floodlight comes up, the reads surface as glass ---------- */
+.s1 { background: var(--ground) url(film-last-wide.webp) center/cover; }
+.light { position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen; background:
+  radial-gradient(520px 430px at 50% 54%, rgba(47,91,255,.50), rgba(20,34,79,.40) 55%, transparent 76%),
+  radial-gradient(900px 520px at 50% -8%, rgba(20,34,79,.95), transparent 70%),
+  radial-gradient(700px 300px at 8% 100%, rgba(20,34,79,.8), transparent 70%); }
+.nav { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); display: flex; align-items: center; gap: 30px; padding: 12px 14px 12px 24px; border-radius: 999px; font-size: 14.5px; font-weight: 500; white-space: nowrap; }
+.nav b { font-weight: 800; font-stretch: 112%; letter-spacing: -.02em; font-size: 17px; margin-right: 8px; }
+.nav span { color: #c9cad3; }
+.nav a { color: var(--ground); background: var(--chalk); border-radius: 999px; padding: 9px 18px; font-weight: 700; text-decoration: none; }
+.s1 svg { position: absolute; inset: 0; width: 1440px; height: 900px; }
+.pill { position: absolute; width: 292px; padding: 17px 22px 19px; border-radius: 26px; }
+.pill h3 { font-size: 13.5px; font-weight: 500; color: #c9cad3; }
+.pill p { margin-top: 2px; font-size: 22px; font-weight: 700; font-stretch: 108%; letter-spacing: -.025em; line-height: 1.12; }
+.pill i { position: absolute; top: 20px; right: 20px; width: 9px; height: 9px; border-radius: 50%; background: var(--glow); box-shadow: 0 0 14px 3px rgba(47,91,255,.9); }
+.landed { position: absolute; left: 50%; top: 632px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 10px 18px 10px 14px; border-radius: 999px; font-weight: 600; font-size: 14.5px; white-space: nowrap; }
+.landed i { width: 10px; height: 10px; border-radius: 50%; background: var(--call); box-shadow: 0 0 16px 4px rgba(98,240,122,.75); }
+.s1 .copy { position: absolute; left: 72px; bottom: 60px; width: 470px; }
+.s1 h1 { font-size: 68px; }
+.s1 .copy p { margin-top: 16px; color: #c9cad3; max-width: 26em; }
+.s1 .fine { position: absolute; right: 72px; bottom: 62px; width: 300px; text-align: right; font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+
+/* ---------- screen 2: set the situation ---------- */
+.s2 { background:
+  radial-gradient(560px 460px at 82% 56%, rgba(47,91,255,.42), transparent 70%),
+  radial-gradient(760px 520px at 24% 70%, rgba(20,34,79,.95), transparent 72%),
+  radial-gradient(900px 420px at 60% -6%, rgba(20,34,79,.8), transparent 70%), var(--ground); }
+.orb { position: absolute; border-radius: 50%; filter: blur(2px); background: radial-gradient(circle at 35% 30%, #7d9bff, var(--glow) 45%, var(--midnight) 78%); opacity: .9; }
+.s2 h2 { position: absolute; left: 72px; top: 70px; font-size: 68px; }
+.s2 .lede { position: absolute; left: 76px; top: 156px; width: 520px; color: #c9cad3; font-size: 17px; }
+.ctl { position: absolute; left: 72px; top: 262px; width: 440px; padding: 28px 28px 32px; }
+.lbl { font-size: 13.5px; font-weight: 500; color: #c9cad3; }
+.countrow { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 2px; }
+.num { font-size: 132px; font-weight: 800; font-stretch: 66%; line-height: .86; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.steps { display: grid; gap: 10px; padding-bottom: 6px; }
+.steps div { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 500; }
+.steps span { width: 54px; color: #c9cad3; }
+.dotc { width: 15px; height: 15px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(236,235,230,.45); }
+.dotc.on { background: var(--glow); box-shadow: 0 0 14px 2px rgba(47,91,255,.8), inset 0 1px 0 rgba(255,255,255,.5); }
+.btn { display: inline-grid; place-items: center; min-width: 38px; height: 38px; padding: 0 15px; border: 0; border-radius: 999px; font: 600 14.5px/1 "Archivo", sans-serif; color: var(--chalk);
+  background: linear-gradient(180deg, rgba(236,235,230,.18), rgba(236,235,230,.05)); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(120,150,255,.25), 0 6px 14px -6px rgba(0,0,0,.7); }
+.btn.on { background: linear-gradient(180deg, #5c7fff, var(--glow)); box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 0 22px -2px rgba(47,91,255,.85); }
+.sep { height: 1px; margin: 22px 0 18px; background: linear-gradient(90deg, transparent, rgba(236,235,230,.22), transparent); }
+.gamerow { display: flex; gap: 24px; align-items: center; margin-top: 8px; }
+.gamerow svg { width: 150px; height: 118px; flex: none; }
+.gamerow .side { display: grid; gap: 12px; }
+.outs { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.mix { position: absolute; left: 548px; top: 262px; width: 392px; padding: 26px 26px 24px; }
+.rows { display: grid; gap: 13px; margin-top: 14px; }
+.rows div { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; font-size: 15px; font-weight: 500; }
+.rows em { grid-column: 1 / -1; height: 10px; border-radius: 6px; background: rgba(236,235,230,.09); box-shadow: inset 0 1px 2px rgba(0,0,0,.6); }
+.rows em i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(180deg, #6f8dff, var(--glow)); box-shadow: 0 0 14px -1px rgba(47,91,255,.8), inset 0 1px 0 rgba(255,255,255,.45); }
+.rows .top em i { background: var(--blend); box-shadow: 0 0 18px -1px rgba(98,240,122,.6), inset 0 1px 0 rgba(255,255,255,.5); }
+.rows b { font-weight: 600; font-variant-numeric: tabular-nums; color: #c9cad3; }
+.rows .top b { color: var(--chalk); }
+.why { margin-top: 20px; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.s2 svg.flow { position: absolute; inset: 0; width: 1440px; height: 900px; pointer-events: none; }
+.watch { position: absolute; left: 1036px; top: 318px; width: 316px; height: 316px; border-radius: 74px; display: grid; place-items: center;
+  background: linear-gradient(150deg, #4a4b55, #1d1d22 38%, #0e0e11); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 0 0 2px rgba(0,0,0,.6), 0 0 0 1px rgba(98,240,122,.55), 0 0 60px -6px rgba(98,240,122,.55), 0 50px 90px -30px rgba(0,0,0,.9); }
+.strap { position: absolute; left: 1110px; width: 168px; height: 300px; background: repeating-linear-gradient(180deg, #232329 0 34px, #0d0d10 34px 37px, #3a3324 37px 39px, #0d0d10 39px 42px); box-shadow: inset 12px 0 18px -8px rgba(0,0,0,.9), inset -12px 0 18px -8px rgba(0,0,0,.9); }
+.face { position: relative; display: grid; place-content: center; gap: 13px; width: 236px; height: 236px; border-radius: 24px; background: #f2f2f2; color: #4c4c52; text-align: center; font-size: 29px; font-weight: 600; letter-spacing: .04em; line-height: 1.12; box-shadow: inset 0 0 30px rgba(0,0,0,.12); }
+.face hr { width: 46px; margin: 0 auto; border: 0; border-top: 2.5px solid #4c4c52; }
+.face::after { content: ""; position: absolute; right: 13px; top: 13px; width: 10px; height: 10px; border-radius: 50%; background: var(--call); box-shadow: 0 0 12px 3px rgba(98,240,122,.8); }
+.s2 .landed { left: 1194px; top: 664px; }
+.s2 .fine { position: absolute; left: 548px; right: 72px; bottom: 44px; font-size: 12.5px; line-height: 1.45; color: var(--dim); }
+
+@media (max-width: 700px) {
+  .screen { height: auto; min-height: 844px; }
+  .s1 { background: var(--ground) url(film-last-tall.webp) center top/100% auto no-repeat; padding: 548px 16px 34px; }
+  .light { background: radial-gradient(300px 300px at 50% 300px, rgba(47,91,255,.5), rgba(20,34,79,.4) 55%, transparent 78%), radial-gradient(500px 300px at 50% 0, rgba(20,34,79,.95), transparent 70%), linear-gradient(180deg, transparent 520px, rgba(20,34,79,.55) 100%); }
+  .nav { gap: 0; padding: 8px 8px 8px 18px; top: 14px; width: calc(100% - 32px); justify-content: space-between; } .nav span { display: none; }
+  .s1 svg { display: none; }
+  .landed { top: 474px; }
+  .pills { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pill { position: relative; left: auto !important; top: auto !important; width: auto; padding: 14px 16px 15px; border-radius: 22px; }
+  .pill:last-child { grid-column: 1 / -1; }
+  .pill p { font-size: 17px; } .pill i { top: 16px; right: 16px; }
+  .s1 .copy, .s1 .fine { position: relative; left: auto; right: auto; bottom: auto; width: auto; text-align: left; }
+  .s1 .copy { margin: 0 6px 26px; } .s1 h1 { font-size: 44px; }
+  .s1 .fine { margin: 18px 6px 0; }
+  .s2 { padding: 46px 16px 34px; }
+  .s2 h2, .s2 .lede, .ctl, .mix, .watch, .s2 .fine { position: relative; left: auto; top: auto; right: auto; bottom: auto; width: auto; height: auto; }
+  .s2 h2 { font-size: 42px; margin: 0 6px; } .s2 .lede { margin: 12px 6px 0; font-size: 16px; }
+  .s2 svg.flow, .strap, .orb { display: none; }
+  .watchwrap { display: grid; justify-items: center; gap: 16px; margin: 34px 0 30px; }
+  .watch { width: 250px; height: 250px; border-radius: 60px; } .face { width: 186px; height: 186px; font-size: 23px; }
+  .s2 .landed { position: relative; left: auto; top: auto; transform: none; }
+  .ctl { padding: 22px; } .num { font-size: 112px; }
+  .mix { margin-top: 14px; padding: 22px; }
+  .s2 .fine { margin: 20px 6px 0; }
+}
+</style>
+</head>
+<body>
+
+<section class="screen s1">
+  <div class="light"></div>
+  <svg viewBox="0 0 1440 900" aria-hidden="true" fill="none" stroke-width="2.5" stroke-linecap="round">
+    <defs>
+      <linearGradient id="toR" x1="0" x2="1"><stop offset="0" stop-color="#2f5bff"/><stop offset=".25" stop-color="#238be8"/><stop offset=".5" stop-color="#2cb0cd"/><stop offset=".75" stop-color="#45d1ab"/><stop offset="1" stop-color="#62f07a"/></linearGradient>
+      <linearGradient id="toL" x1="1" x2="0"><stop offset="0" stop-color="#2f5bff"/><stop offset=".25" stop-color="#238be8"/><stop offset=".5" stop-color="#2cb0cd"/><stop offset=".75" stop-color="#45d1ab"/><stop offset="1" stop-color="#62f07a"/></linearGradient>
+      <filter id="g"><feGaussianBlur stdDeviation="3"/></filter>
+    </defs>
+    <g id="lines">
+      <path d="M452 262 C520 262 560 330 606 372" stroke="url(#toR)"/>
+      <path d="M412 500 C480 500 540 490 596 470" stroke="url(#toR)"/>
+      <path d="M1000 232 C930 232 880 320 836 368" stroke="url(#toL)"/>
+      <path d="M1040 458 C980 458 910 446 852 450" stroke="url(#toL)"/>
+      <path d="M1000 672 C930 672 880 600 838 540" stroke="url(#toL)"/>
+    </g>
+    <use href="#lines" filter="url(#g)" opacity=".9"/>
+  </svg>
+  <nav class="nav glass" aria-label="Site"><b>PitchIQ</b><span>The reads</span><span>Set the situation</span><span>The at-bat</span><span>Questions</span><a href="#">Talk to us</a></nav>
+  <div class="copy">
+    <h1>Five reads.<br>One call.</h1>
+    <p>Fastball, outside wasn&rsquo;t a guess. Each read lights up blue while it&rsquo;s being weighed. Green means the call has landed on the wrist.</p>
+  </div>
+  <div class="pills">
+    <div class="pill glass" style="left:160px; top:214px;"><i></i><h3>The count</h3><p>1&ndash;1</p></div>
+    <div class="pill glass" style="left:120px; top:440px;"><i></i><h3>The hitter</h3><p>Early on soft stuff</p></div>
+    <div class="pill glass" style="left:1000px; top:184px;"><i></i><h3>Your pitcher today</h3><p>Fastball is landing</p></div>
+    <div class="pill glass" style="left:1040px; top:404px;"><i></i><h3>The game</h3><p>Bases empty, 3rd inning</p></div>
+    <div class="pill glass" style="left:1000px; top:624px;"><i></i><h3>This at-bat</h3><p>Two sliders so far</p></div>
+  </div>
+  <div class="landed glass"><i></i>Call landed</div>
+  <p class="fine">The read values are an example, not engine output. Illustration: the PitchIQ watch app on a generic smartwatch. The watch is a prototype.</p>
+</section>
+
+<section class="screen s2">
+  <span class="orb" style="left:470px; top:196px; width:150px; height:150px;"></span>
+  <span class="orb" style="left:10px; top:640px; width:200px; height:200px; opacity:.7;"></span>
+  <span class="orb" style="left:880px; top:590px; width:120px; height:120px; opacity:.8;"></span>
+  <h2>Set the situation.</h2>
+  <p class="lede">Change the count, the runners, the outs. The engine re-weighs the reads in your browser and the watch gets the new call.</p>
+
+  <div class="ctl glass">
+    <div class="lbl">The count</div>
+    <div class="countrow">
+      <div class="num">1&ndash;2</div>
+      <div class="steps">
+        <div><span>Balls</span><i class="dotc on"></i><i class="dotc"></i><i class="dotc"></i><button class="btn" aria-label="Add a ball">+</button></div>
+        <div><span>Strikes</span><i class="dotc on"></i><i class="dotc on"></i><button class="btn" aria-label="Add a strike" style="margin-left:24px">+</button></div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="lbl">The game</div>
+    <div class="gamerow">
+      <svg viewBox="0 0 150 118" aria-label="Runner on second">
+        <defs><linearGradient id="bz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(236,235,230,.30)"/><stop offset="1" stop-color="rgba(236,235,230,.06)"/></linearGradient><linearGradient id="bo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7d9bff"/><stop offset="1" stop-color="#2f5bff"/></linearGradient><filter id="bg"><feGaussianBlur stdDeviation="5"/></filter></defs>
+        <path d="M75 16 L128 60 L75 104 L22 60 Z" fill="none" stroke="rgba(236,235,230,.28)" stroke-width="1.5"/>
+        <rect x="60" y="1" width="30" height="30" rx="6" transform="rotate(45 75 16)" fill="#2f5bff" filter="url(#bg)"/>
+        <rect x="62" y="3" width="26" height="26" rx="6" transform="rotate(45 75 16)" fill="url(#bo)" stroke="rgba(255,255,255,.6)"/>
+        <rect x="115" y="47" width="26" height="26" rx="6" transform="rotate(45 128 60)" fill="url(#bz)" stroke="rgba(255,255,255,.35)"/>
+        <rect x="9" y="47" width="26" height="26" rx="6" transform="rotate(45 22 60)" fill="url(#bz)" stroke="rgba(255,255,255,.35)"/>
+        <path d="M66 98 h18 v8 l-9 8 l-9 -8 z" fill="rgba(236,235,230,.8)"/>
+      </svg>
+      <div class="side">
+        <div class="outs"><i class="dotc on"></i><i class="dotc"></i><span style="margin-left:6px">One out</span></div>
+        <div style="display:flex; gap:8px"><button class="btn on">7th</button><button class="btn">Tied</button></div>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <div class="lbl">The hitter is</div>
+    <div class="chips"><button class="btn">On time</button><button class="btn on">Late on the fastball</button><button class="btn">Out front</button></div>
+  </div>
+
+  <div class="mix glass">
+    <div class="lbl">What the engine would throw here</div>
+    <div class="rows">
+      <div class="top"><span>Slider, down and away</span><b>22%</b><em><i style="width:100%"></i></em></div>
+      <div><span>Fastball, chase</span><b>18%</b><em><i style="width:82%"></i></em></div>
+      <div><span>Fastball, up and away</span><b>15%</b><em><i style="width:68%"></i></em></div>
+      <div><span>Fastball, down and away</span><b>12%</b><em><i style="width:55%"></i></em></div>
+      <div><span>Slider, get it over</span><b>10%</b><em><i style="width:45%"></i></em></div>
+    </div>
+    <p class="why">Stays at his eye level. A change costs here.</p>
+  </div>
+
+  <svg class="flow" viewBox="0 0 1440 900" aria-hidden="true" fill="none" stroke-linecap="round">
+    <defs><linearGradient id="fl" gradientUnits="userSpaceOnUse" x1="940" x2="1040"><stop offset="0" stop-color="#2f5bff"/><stop offset=".25" stop-color="#238be8"/><stop offset=".5" stop-color="#2cb0cd"/><stop offset=".75" stop-color="#45d1ab"/><stop offset="1" stop-color="#62f07a"/></linearGradient><filter id="g2"><feGaussianBlur stdDeviation="4"/></filter></defs>
+    <g id="fw"><path d="M940 344 C990 344 990 476 1038 476" stroke="url(#fl)" stroke-width="4"/>
+    <g stroke="#2f5bff" stroke-width="1.5" opacity=".55"><path d="M940 394 C985 394 985 470 1010 474"/><path d="M940 444 C980 444 985 472 1010 476"/><path d="M940 494 C980 494 985 480 1010 478"/><path d="M940 544 C985 544 985 484 1010 480"/></g></g>
+    <use href="#fw" filter="url(#g2)"/>
+  </svg>
+
+  <div class="watchwrap">
+    <span class="strap" style="top:150px; height:190px; -webkit-mask-image:linear-gradient(0deg,#000 30%,transparent); mask-image:linear-gradient(0deg,#000 30%,transparent)"></span><span class="strap" style="top:612px; height:150px; -webkit-mask-image:linear-gradient(180deg,#000 30%,transparent); mask-image:linear-gradient(180deg,#000 30%,transparent)"></span>
+    <div class="watch" role="img" aria-label="Watch face: slider, down and away"><div class="face">SLIDER<hr>DOWN AND<br>AWAY</div></div>
+    <div class="landed glass"><i></i>Call landed</div>
+  </div>
+  <p class="fine">Static mock. The mix, the call and the reason are real engine output (PitchIQ engine 1.2.3): sample right-handed starter with a fastball, slider and changeup, same-side hitter, college tables, 1-2, runner on second, one out, tied in the 7th. The hitter chips are an illustration in this mock. The watch is an illustration and a prototype.</p>
+</section>
+</body>
+</html>

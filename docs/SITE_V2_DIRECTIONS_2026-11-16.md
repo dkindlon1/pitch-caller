@@ -52,3 +52,12 @@ A is the one I would build. It is the only one that looks like baseball before y
 - Mocks were shot in Chrome headless only, at 1440x900 and 390x844. No Safari, no real phone.
 - The mocks are static. No motion was built, so the motion moments are plans, not tested work.
 - `tsc`, tests, build, e2e and Lighthouse were not run in this phase (no app code changed).
+
+## D. Floodlight, liquid glass (added Nov 16 after Drew passed on A, B and C)
+Drew asked for a glassmorphic, liquid glass theme on scheme A (Floodlight) from `RESEARCH_color_schemes_2026-11-16.md`.
+- **Palette:** ground `#0c0b0e`, midnight `#14224f`, read glow `#2f5bff`, chalk `#ecebe6`, link green `#62f07a` only where a call lands (the watch's link dot, the watch rim, the "Call landed" chip, and the end of the reads-to-call blend). The blend runs `#2f5bff` to `#62f07a` in OKLab.
+- **Type:** Archivo only (116% width bold for headlines, 66% width for the count numerals).
+- **Hand-off:** the last frame holds, a blue floodlight comes up behind the watch, and the five reads surface as glass pills with lines that turn green where they reach the watch.
+- **Playground:** a glass control panel (count, runners, outs, inning, hitter), a glass panel with the engine's mix, and the watch taking the call. Same real engine output as the other mocks.
+- **Glass in the mock:** backdrop blur and saturation, a bright top rim, an inner bloom and a blue caustic along the bottom edge. True lens refraction (an SVG displacement filter on the backdrop) is Chrome-only today and was not tried.
+- Mock: `docs/site-v2-directions/d-floodlight-glass.html`, shots `d-floodlight-glass-*.jpg`. Chrome headless only, static, no motion built.
