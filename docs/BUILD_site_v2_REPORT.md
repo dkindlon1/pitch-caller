@@ -3,14 +3,14 @@
 Branch `site/v2-alive`. Nothing was pushed to `main`, deployed, or changed in Supabase. Decisions and readings taken along the way are in `docs/SITE_V2_PROGRESS.md`.
 
 ## What was built
-- **The film**, re-rendered twice. 150 frames per set at 1920x1200 and 1080x1680, same keyframes, camera path and timing as the original 72-frame film.
+- **The film**, re-rendered three times (the last to put the strap back to rubber). 150 frames per set at 1920x1200 and 1080x1680, same keyframes, camera path and timing as the original 72-frame film.
 - **The film's story, stops 1 to 6**, the hand-off (words slide off, panels come out from behind the watch) and the **playground**, all fed by one build-time engine run.
 - **The at-bat** (four watch faces joined by a thread), **two wrists** (the split, Accept, one long or two short buzzes), **for programs** (three big numbers and three lanes that fill pitch by pitch).
 - **Questions, contact, nav, footer.** Five reads, Inside the call, the old demo and the 3D field are removed.
 - **Reduced motion** is a still, stacked version of every section. **Phone** (390 wide) is recomposed, not shrunk.
 
 ## Round 2 (the seven items)
-1. **Film quality pass.** Titanium finish instead of near-black, wider case and crystal bevels to catch the rim lights, soft gradient cards reflected in the strap links and lugs, stronger rim light, cleaner foil and screen. Test frames were tuned over four passes before the full render. Old vs new at the same moments: `docs/site-v2-shots/rerender/v3-*.jpg`.
+1. **Film quality pass.** Titanium case instead of near-black, wider case and crystal bevels to catch the rim lights, soft gradient cards for reflections, stronger rim light, cleaner foil and screen. Test frames were tuned over four passes. **The strap is rubber**: my first pass of this round turned it into a metal bracelet, which was wrong; Drew corrected it and the film was rendered again with a matte dark rubber band (no polished links, gold pins or pin heads). It still flies in as segments and closes into one ribbed band. Old vs new at the same moments: `docs/site-v2-shots/rerender/rubber-*.jpg` (final) and `v3-*.jpg` (the metal-strap pass, superseded).
 2. **Playground strap.** The strap now fades into the ground over the bottom of the frame as the playground comes up, so there is no hard edge when the scene scrolls away.
 3. **Two wrists.** Both faces carry the film's call from the start. The old call stays up until the pulse arrives, then the new one replaces it; the e2e checks the faces are never blank. Three plain facts fill the space under the watches (one long buzz, two short, no link).
 4. **Wording.** "He's sitting slider (47%)" now reads "He's probably looking for a slider. The engine's read of him: 47% likely." (`plainWhy` in `lib/story.ts`, tested). The same rewrite applies to the at-bat lines.
@@ -30,9 +30,10 @@ Branch `site/v2-alive`. Nothing was pushed to `main`, deployed, or changed in Su
 | Run | Performance | Accessibility | LCP | TBT | CLS |
 |---|---|---|---|---|---|
 | Mobile 1 to 5 | 95, 96, 95, 96, 95 | 100 | 2.8 s each | 60 to 80 ms | 0 |
+| Mobile, final build (3 runs) | 95, 96, 96 | 100 | 2.8 s each | 60 to 70 ms | 0 |
 | Desktop | 100 | 100 | 0.6 s | | 0 |
 
-- These five runs were on the build one CSS-only change before the final commit (a scrim behind the call copy on phones).
+- The last row is the final build with the rubber-strap film.
 - Before the last two fixes, one run in eight spiked to 4.1 s or 6.3 s when a script download landed just ahead of the recorded first paint. Both causes were fixed, and the five runs above came after. Five clean runs is the evidence; I would not promise it never recurs.
 - LCP here is Lighthouse's simulated slow-4G figure. The observed first paint in those runs was about 0.33 s.
 
@@ -46,11 +47,11 @@ blender -b -P build_watch.py -- --set tall --out frames/tall --frames 150 --samp
 blender -b -P build_watch.py -- --set tall --out frames/cut-tall --frames 150 --samples 768 --only 149 --alpha
 python encode.py --quality 84
 ```
-- **Time** on this PC's RTX 5070 Ti (OptiX): 974 s for the wide set and 979 s for the tall set, about 6.5 s a frame. Encoding takes about a minute.
-- **Weight:** wide 4.1 MB, tall 4.4 MB. Only every 8th frame loads with the page; the rest wait for load or the first scroll.
+- **Time** on this PC's RTX 5070 Ti (OptiX): 946 s for the wide set and 982 s for the tall set (final, rubber strap), about 6.5 s a frame. Encoding takes about a minute.
+- **Weight:** wide 3.2 MB, tall 3.4 MB. Only every 8th frame loads with the page; the rest wait for load or the first scroll.
 - **Ground color: still not exact in the shipped files.** The master frames are exactly `#0c0b0e` wherever nothing is drawn. Lossy WebP cannot hold that everywhere: of the edge points sampled on every frame, about 86% decode as exactly `#0c0b0e`, about 13% as `#0c0c0c`, and a handful next to a passing part are further off. The film fills the viewport, so no seam shows.
 - Blender's pip module (`bpy`) is blocked by this PC's app-control policy, so the renders used the official Blender 5.3 portable build in `C:\Users\kindl\tools\blender`.
-- How far it got: it reads as a lit metal watch now, with gradients across the bracelet and bright bevels. It is not yet at Apple's level. The model is still simple shapes (flat links, a plain case), and that, more than light or materials, is what separates it from product photography.
+- How far it got: a titanium case with bright bevels on a matte rubber strap, with crisp screen text. It is not yet at Apple's level. The model is still simple shapes (a plain case, a strap made of flat segments), and that, more than light or materials, is what separates it from product photography.
 
 ## Scores after round 2 (my own, against the references)
 | Section | Type | Color | Motion | Interactivity | Craft | Story | Phone |
@@ -79,7 +80,7 @@ Still under 9, so the "9 on every axis" bar is not fully met:
 
 ## Look at these first
 1. `docs/site-v2-shots/final/site-v2-desktop-scroll.mp4` and `site-v2-phone-scroll.mp4` (full scroll, new film)
-2. `docs/site-v2-shots/rerender/v3-wide-t71-old-vs-new.jpg` and `v3-wide-t39-old-vs-new.jpg` (the film against the original)
+2. `docs/site-v2-shots/rerender/rubber-wide-t71-old-vs-new.jpg` and `rubber-wide-t39-old-vs-new.jpg` (the film against the original)
 3. `docs/site-v2-shots/build/round2/desktop-film-074.jpg` and `desktop-film-100.jpg` (the call; the playground with the strap fading out)
 4. `docs/site-v2-shots/build/round2-states/desktop-wrists-1-one-watch.jpg`, `desktop-wrists-3-sent.jpg`, `desktop-wrists-4-changed-buzz.jpg`
 5. `docs/site-v2-shots/build/round2-states/desktop-programs-filling.jpg` and `desktop-programs-player.jpg`
@@ -88,6 +89,6 @@ Still under 9, so the "9 on every axis" bar is not fully met:
 8. `docs/site-v2-shots/references/BOARD.md` (round 2 section)
 
 ## Left on this PC, not in the repo
-- Rendered PNG masters: `web/scripts/watch-render/frames/` (this round) and `frames_v2/` (the previous round). Both gitignored.
+- Rendered PNG masters: `web/scripts/watch-render/frames/` (final, rubber strap), `frames_metal/` (the superseded metal-strap pass) and `frames_v2/` (round 1). All gitignored; the last two can be deleted.
 - An empty `C:\frames` folder from a mis-pathed render in round 1. Safe to delete.
 - Blender portable in `C:\Users\kindl\tools\blender` and an Inter font copy in `C:\Users\kindl\tools\fonts`. The `fonttools` and `brotli` Python packages were installed to subset the fonts.

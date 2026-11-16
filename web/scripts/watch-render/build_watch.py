@@ -208,8 +208,19 @@ TI = {"graphite": ((0.27, 0.262, 0.257), (0.19, 0.185, 0.18), (0.36, 0.35, 0.34)
 M_CASE = brushed("case", TI[0], 0.30, aniso=0.7, bump=0.05)                          # titanium, brushed
 M_BACK = brushed("back", (0.24, 0.24, 0.26), 0.30, aniso=0.5, grain=(60.0, 60.0, 1.0), tangent="Z")
 M_GOLD = brushed("champagne", (0.86, 0.70, 0.46), 0.14, aniso=0.3, bump=0.012, vary=0.04)
-M_STRAP = brushed("strap", TI[1], 0.28, aniso=0.7, grain=(1.0, 80.0, 80.0), bump=0.045, tangent="Y")   # dark coated steel links
-M_STRAP_POL = brushed("strap_polished", TI[2], 0.09, aniso=0.0, bump=0.004, vary=0.03)                  # the polished centre of each link
+def rubber(name, color):
+    """The strap is rubber (a fluoroelastomer sport band): matte, not metal, with a soft sheen at grazing angles and
+    a very fine grain so it never reads as plastic."""
+    m = material(name, color, 0.0, 0.52, Sheen_Weight=0.35, Sheen_Roughness=0.4, Specular_IOR_Level=0.45)
+    nt = m.node_tree; p = nt.nodes["Principled BSDF"]
+    co = nt.nodes.new("ShaderNodeTexCoord"); nz = nt.nodes.new("ShaderNodeTexNoise"); nz.inputs["Scale"].default_value = 9.0; nz.inputs["Detail"].default_value = 5.0
+    nt.links.new(co.outputs["Object"], nz.inputs["Vector"])
+    ro = nt.nodes.new("ShaderNodeMath"); ro.operation = "MULTIPLY_ADD"; ro.inputs[1].default_value = 0.10; ro.inputs[2].default_value = 0.47; nt.links.new(nz.outputs["Fac"], ro.inputs[0]); nt.links.new(ro.outputs[0], p.inputs["Roughness"])
+    bp = nt.nodes.new("ShaderNodeBump"); bp.inputs["Strength"].default_value = 0.06; bp.inputs["Distance"].default_value = 0.02
+    nt.links.new(nz.outputs["Fac"], bp.inputs["Height"]); nt.links.new(bp.outputs["Normal"], p.inputs["Normal"])
+    return m
+STRAP_COLOR = tuple(float(x) for x in arg("--strap", "0.035,0.037,0.043").split(","))
+M_STRAP = rubber("strap", STRAP_COLOR)                                                # rubber, not a metal bracelet
 M_PCB = material("pcb", (0.012, 0.02, 0.03), 0.0, 0.35)
 M_CHIP = material("chip", (0.015, 0.015, 0.017), 0.0, 0.28)
 M_PAD = material("pads", (0.9, 0.68, 0.28), 1.0, 0.25)
@@ -444,25 +455,18 @@ def segmented(prefix, y0, direction, length, n, holes, group):
     for i in range(n):
         p0 = centre(i / n, y0, direction, length); p1 = centre((i + 1) / n, y0, direction, length)
         dy, dz = p1[0] - p0[0], p1[1] - p0[1]; ln = math.hypot(dy, dz)
-        ob = box(f"{prefix}{i}", (19.6, ln - 0.5, 2.3), (0, 0, 0), M_STRAP, bevel=0.7)
+        ob = box(f"{prefix}{i}", (19.6, ln - 0.06, 2.3), (0, 0, 0), M_STRAP, bevel=0.42)   # segments of one rubber band: they fly in separately and close into a ribbed strap
         ob.location = (0, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2); ob.rotation_euler = (math.atan2(dz, dy), 0, 0)
         ob["seg"] = i; add(f"{prefix}{i}", ob, group)
-        # link detail (children of the link, so they ride its animation): a polished centre piece between two shut lines
-        inl = box(f"{prefix}{i}_in", (7.4, ln - 1.5, 0.16), (0, 0, 1.19), M_STRAP_POL, bevel=0.07); inl.parent = ob
-        for sg in (-1, 1):
-            gr = box(f"{prefix}{i}_gr{sg}", (0.2, ln - 1.0, 0.05), (sg * 4.5, 0, 1.155), M_INK); gr.parent = ob
         if holes and i >= 2:
             h = cyl(f"hole{prefix}{i}", 1.3, 0.06, (0, 0, 1.18), M_INK, seg=20); h.parent = ob
-        pin = cyl(f"pin_{prefix}{i}", 0.75, 20.6, (0, 0, 0), M_GOLD, axis="X", seg=14)
+        pin = cyl(f"pin_{prefix}{i}", 0.75, 18.8, (0, 0, 0), M_STRAP, axis="X", seg=14)     # the core each segment closes on: rubber, hidden once the strap is whole
         pin.location = (0, p0[0], p0[1]); pin["seg"] = i; add(f"pin_{prefix}{i}", pin, group)
-        for sg in (-1, 1):                                              # pin heads, with a screwdriver slot
-            cp = cyl(f"cap_{prefix}{i}_{sg}", 1.0, 0.5, (sg * 10.35, 0, 0), M_GOLD, axis="X", bevel=0.12, seg=24); cp.parent = pin
-            sl = box(f"slot_{prefix}{i}_{sg}", (0.06, 1.5, 0.22), (sg * 10.6, 0, 0), M_INK); sl.parent = pin
 segmented("sTop", 25.0, 1, 48.0, 9, False, "strap_top")
 segmented("sBot", 25.0, -1, 66.0, 12, True, "strap_bot")
 kp = centre(0.85, 25.0, 1, 48.0)
 keep = box("keeper", (21.0, 5.0, 3.2), (0, 0, 0), M_STRAP, bevel=0.6); keep.location = (0, kp[0], kp[1]); keep["seg"] = 8; add("keeper", keep, "strap_top")
-buckle = box("buckle", (22.5, 1.4, 2.2), (0, 0, 0), M_GOLD, bevel=0.35); buckle.location = (0, 25.0 + 8.0, 5.4 + 1.6); buckle["seg"] = 1; add("buckle", buckle, "strap_top")
+buckle = box("buckle", (22.5, 1.4, 2.2), (0, 0, 0), M_CASE, bevel=0.35); buckle.location = (0, 25.0 + 8.0, 5.4 + 1.6); buckle["seg"] = 1; add("buckle", buckle, "strap_top")
 
 # ---------------------------------------------------------------- stage: floor and lights
 def strip(name, size, loc, aim, color, strength, soft=False):

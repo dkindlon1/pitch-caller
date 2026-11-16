@@ -50,3 +50,4 @@ Readings taken without asking:
 - Two wrists starts on the film's call and Accept sends the next one, so the faces are never empty. The call alternates between the situation's two leading calls.
 - Programs dropped the usage-by-count grid, velocity trend, hitter-side split and the staff list's roles. The numbers that remain are unchanged from before.
 - A third "No link" fact was added under two wrists; it matches the watch app's own no-link screen.
+- Correction from Drew: the strap is rubber, not metal. The render script now has a `rubber()` material and no bracelet detail; do not turn the strap back into links. The film was re-rendered with it.

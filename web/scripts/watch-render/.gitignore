@@ -1,5 +1,6 @@
 frames/
 frames_v2/
+frames_metal/
 tex/
 __pycache__/
 render_*.log
