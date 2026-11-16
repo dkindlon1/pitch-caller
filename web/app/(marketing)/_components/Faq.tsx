@@ -20,10 +20,6 @@ const FAQ = [
     q: "Can I use it during games?",
     a: "Rules differ by level. High school follows the NFHS and your state association; college follows NCAA Rule 5-16 on electronic devices. Check with your state association or compliance office before using a tablet in the dugout. Game prep, bullpens and scrimmages are fine anywhere.",
   },
-  {
-    q: "Who builds PitchIQ?",
-    a: "A college pitcher studying mechanical engineering, who checks every call against how a pitching coach would think about it.",
-  },
 ];
 
 export function Faq() {

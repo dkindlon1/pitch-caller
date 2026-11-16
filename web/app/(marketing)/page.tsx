@@ -1,22 +1,14 @@
 import Link from "next/link";
-import { Haze } from "./_components/Haze";
-import { Seam } from "./_components/Seam";
 import { ContactForm } from "./_components/ContactForm";
-import { Hero } from "./_components/Hero";
 import { AtBat } from "./_components/AtBat";
 import { Demo } from "./_components/Demo";
 import { InsideCall } from "./_components/InsideCall";
 import { Faq } from "./_components/Faq";
-import { GameDay } from "./_components/GameDay";
 import { Program } from "./_components/Program";
-import { Reads } from "./_components/Reads";
-import { GlassLight } from "./_components/GlassLight";
 import { Mark } from "./_components/Mark";
 import { Nav } from "./_components/Nav";
-import { Reveal } from "./_components/Reveal";
-
-const BETWEEN =
-  "Between pitches you get a few seconds. In that time you weigh the count, the runners, what this hitter has already seen and what your pitcher actually has working today. Then you put down a sign.";
+import { WatchFilm } from "./_components/WatchFilm";
+import { FiveReads } from "./_components/FiveReads";
 
 // what search engines read about the product: no price, no ratings, only what's true on this page
 const LD = {
@@ -33,39 +25,23 @@ export default function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LD) }} />
       <a className="mk-skip" href="#main">Skip to content</a>
-      <GlassLight />
-      <div className="mk-grain" aria-hidden="true" />
       <Nav />
 
       <main id="main" tabIndex={-1}>
-        <Hero />
-
-        <section className="mk-between" id="between" tabIndex={-1} aria-labelledby="between-h">
-          <Seam />
-          <div className="mk-wrap">
-            <h2 id="between-h" className="mk-sr">A few seconds between pitches</h2>
-            <Reveal className="mk-between-text" text={BETWEEN} clock />
-            <p className="mk-between-after">PitchIQ does that weighing for every pitch, and shows its work.</p>
-          </div>
-        </section>
-
-        <AtBat />
-        <Reads />
-        <Demo />
+        <WatchFilm />
+        <FiveReads />
         <InsideCall />
-        <GameDay />
+        <AtBat />
+        <Demo />
         <Program />
         <Faq />
 
         <section className="mk-contact" id="contact" tabIndex={-1} aria-labelledby="contact-h">
-          <Haze />
           <div className="mk-wrap mk-contact-grid">
             <div className="mk-contact-copy">
-              <h2 id="contact-h">Talk to us</h2>
-              <p>
-                Tell us about your team and what you&apos;d want help with. The person who builds PitchIQ reads every
-                message and writes back.
-              </p>
+              <p className="pq-eyebrow">Contact</p>
+              <h2 id="contact-h" className="pq-display">Talk <em>to us</em></h2>
+              <p>Tell us about your team and what you&apos;d want help with. We read every message and write back.</p>
             </div>
             <div className="mk-glass mk-contact-panel">
               <ContactForm />
@@ -85,10 +61,10 @@ export default function Home() {
               <div>
                 <h2>Product</h2>
                 <ul>
-                  <li><a href="#at-bat">How it calls</a></li>
+                  <li><a href="#reads">The reads</a></li>
+                  <li><a href="#dugout">The call</a></li>
+                  <li><a href="#at-bat">The sequence</a></li>
                   <li><a href="#demo">Try the engine</a></li>
-                  <li><a href="#dugout">In the dugout</a></li>
-                  <li><a href="#gameday">A game with PitchIQ</a></li>
                 </ul>
               </div>
               <div>

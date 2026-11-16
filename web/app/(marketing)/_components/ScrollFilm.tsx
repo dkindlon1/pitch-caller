@@ -10,8 +10,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 export type Beat = { from: number; to: number; node: ReactNode; className?: string };
 type Set = { dir: string; count: number };
 
-export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, className, label, labelledBy, id, children }: {
-  name: string; wide: number; tall?: number; length?: number; poster: string; beats: Beat[]; className?: string;
+export function ScrollFilm({ name, wide, tall, length = 400, poster, tallPoster, holdEnd = 0, beats, className, label, labelledBy, id, children }: {
+  name: string; wide: number; tall?: number; length?: number; poster: string; tallPoster?: string; holdEnd?: number; beats: Beat[]; className?: string;
   label?: string; labelledBy?: string; id?: string; children?: ReactNode;
 }) {
   const sec = useRef<HTMLElement>(null);
@@ -101,21 +101,21 @@ export function ScrollFilm({ name, wide, tall, length = 400, poster, beats, clas
       gsap.registerPlugin(ScrollTrigger);
       const st = ScrollTrigger.create({
         trigger: sec.current, start: "top top", end: "bottom bottom", scrub: 0.15,
-        onUpdate: (t) => { fwant = t.progress * (set.count - 1); want = Math.round(fwant); queue(); beatsAt(t.progress); },
+        onUpdate: (t) => { fwant = Math.min(1, t.progress / (1 - holdEnd)) * (set.count - 1); want = Math.round(fwant); queue(); beatsAt(t.progress); el.style.setProperty("--p", t.progress.toFixed(4)); },
       });
-      fwant = st.progress * (set.count - 1); want = Math.round(fwant); beatsAt(st.progress); queue();
+      fwant = Math.min(1, st.progress / (1 - holdEnd)) * (set.count - 1); want = Math.round(fwant); beatsAt(st.progress); queue(); el.style.setProperty("--p", st.progress.toFixed(4));
       const onResize = () => { const s = pick(); if (s.dir !== set.dir) { set = s; load(set); } shown = -1; fshown = -1; queue(); };
       window.addEventListener("resize", onResize);
       kill = () => { st.kill(); window.removeEventListener("resize", onResize); };
     });
     return () => { dead = true; kill(); cancelAnimationFrame(raf); imgs.forEach((im) => { if (im) im.src = ""; }); };
-  }, [name, wide, tall, beats]);
+  }, [name, wide, tall, beats, holdEnd]);
 
   return (
     <section ref={sec} id={id} className={`mk-film${still ? " is-still" : ""}${className ? ` ${className}` : ""}`} style={still ? undefined : { height: `${length}vh` }} aria-label={label} aria-labelledby={labelledBy}>
       <div className="mk-film-pin">
         {still
-          ? <img className="mk-film-poster" src={poster} alt="" />
+          ? <picture>{tallPoster ? <source media="(max-aspect-ratio: 9/10)" srcSet={tallPoster} /> : null}<img className="mk-film-poster" src={poster} alt="" /></picture>
           : <canvas ref={cvs} className="mk-film-canvas" aria-hidden="true" style={{ backgroundImage: `url(${poster})` }} />}
         <div className="mk-film-shade" aria-hidden="true" />
         {children}

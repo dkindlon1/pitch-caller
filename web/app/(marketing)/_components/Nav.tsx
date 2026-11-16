@@ -7,11 +7,12 @@ import { Mark } from "./Mark";
 // The glass pill at the top: condenses once the hero is scrolled past and marks the section on screen. On phones the
 // links fold into a glass sheet behind a Menu button (Escape or a tap outside closes it, focus returns to the button).
 const LINKS = [
-  { id: "at-bat", label: "How it calls" },
+  { id: "reads", label: "The reads" },
+  { id: "dugout", label: "The call" },
+  { id: "at-bat", label: "The sequence" },
   { id: "demo", label: "Try it" },
-  { id: "dugout", label: "In the dugout" },
 ];
-const SHEET = [...LINKS, { id: "gameday", label: "A game with PitchIQ" }, { id: "faq", label: "Questions" }];
+const SHEET = [...LINKS, { id: "program", label: "Coaches and players" }, { id: "faq", label: "Questions" }];
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -25,7 +26,7 @@ export function Nav() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) setHere(e.target.id); }, { rootMargin: "-45% 0px -50% 0px" });
-    for (const l of [...SHEET.map((x) => x.id), "contact", "between", "reads", "program"]) { const el = document.getElementById(l); if (el) io.observe(el); }
+    for (const l of [...SHEET.map((x) => x.id), "contact", "top"]) { const el = document.getElementById(l); if (el) io.observe(el); }
     return () => { window.removeEventListener("scroll", onScroll); io.disconnect(); };
   }, []);
 

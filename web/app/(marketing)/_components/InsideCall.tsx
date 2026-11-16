@@ -361,8 +361,8 @@ export function InsideCall() {
           <div className="mk-in-press" ref={press} aria-hidden="true">
             <span ref={pressBtn} style={{ left: `${APP.foul.x * 100}%`, top: `${APP.foul.y * 100}%`, width: `${APP.foul.w * 100}%`, height: `${APP.foul.h * 100}%` }} />
           </div>
-          {crisp(before, beforeZone, "app-call-before.png", "app-zone-before.png")}
-          {crisp(after, afterZone, "app-call-after.png", "app-zone-after.png")}
+          {crisp(before, beforeZone, "app-call-before.webp", "app-zone-before.webp")}
+          {crisp(after, afterZone, "app-call-after.webp", "app-zone-after.webp")}
           <div className="mk-in-dim" ref={dimEl} aria-hidden="true" />
           <canvas className="mk-in-stage" ref={stage} aria-hidden="true" />
           <div className="mk-in-shade" aria-hidden="true" />

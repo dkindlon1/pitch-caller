@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { whenStill } from "@/app/components/can3d";
 
 // Scrolling is the browser's own (no smooth-scroll library): it runs on the compositor thread, so it stays smooth and
 // answers the wheel or finger at once even while the page is busy, and the scroll scenes follow it almost 1:1. This
@@ -26,8 +25,5 @@ export function SmoothScroll() {
     return () => { dead = true; ro.disconnect(); window.clearTimeout(t); window.removeEventListener("load", refresh); };
   }, []);
 
-  // the demo's engine and tables are fetched and evaluated in a quiet moment while the visitor is still up top (the
-  // at-bat and the demo start themselves the same way)
-  useEffect(() => whenStill(() => { Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")]).catch(() => {}); }), []);
   return null;
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AT_BAT, CELL, type Pitch } from "@/content/at-bat";
-import { can3d, whenStill } from "@/app/components/can3d";
+import { can3d } from "@/app/components/can3d";
 import type { AtBatScene } from "./atbatScene";
 import type { FieldPitch } from "./field";
 
@@ -47,8 +47,8 @@ export function AtBat() {
     const reduced = mode === "still";
     let scene: AtBatScene | null = null, dead = false, kill = () => {};
     const webgl = reduced ? (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch { return false; } })() : can3d();
-    // build the scene while the visitor is still up top and not scrolling (whenStill), so the build never lands on a
-    // scroll; or when the chapter comes near first, whichever happens first
+    // the scene builds when the chapter is about a screen and a bit away (not while the visitor is still up top: its frames
+    // are several MB and would compete with the opening film)
     let started = false, cancelStill = () => {};
     const start = () => {
       if (started || dead) return;
@@ -87,9 +87,8 @@ export function AtBat() {
         kill = () => st.kill();
       });
     };
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) start(); }, { rootMargin: "40% 0px" });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) start(); }, { rootMargin: "120% 0px" });
     if (sec.current) io.observe(sec.current);
-    cancelStill = whenStill(start);
     return () => { dead = true; io.disconnect(); cancelStill(); kill(); scene?.dispose(); };
   }, [mode]);
 

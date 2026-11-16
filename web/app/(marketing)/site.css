@@ -1,0 +1,118 @@
+/* PitchIQ public site, the watch-era look. Loaded after marketing.css: it re-tones the tokens the older sections already
+   use (black ground, bone text, one champagne metal instead of seam red) and adds the new opening and reads.
+   Serif headlines with one italic word each; small sans caps for labels; hairlines instead of glass. Pitch colors
+   (FB/SL/CH/CU) stay as they are: they carry meaning in the engine's own output. */
+
+.mk {
+  --mk-ink: #070707;
+  --mk-chalk: #ece8df;
+  --mk-text-2: #aaa59a;
+  --mk-text-3: #7d796f;
+  --mk-line: rgba(236, 232, 223, 0.14);
+  --mk-accent: #c9a96a;
+  --mk-radius: 10px;
+  --pq-metal: #c9a96a;
+  --pq-metal-dim: rgba(201, 169, 106, 0.55);
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* headlines everywhere on the page: serif, regular weight, tight */
+.mk :is(h1, h2) { font-family: var(--mk-serif), "Times New Roman", serif; font-weight: 400; letter-spacing: -0.015em; line-height: 1.04; }
+.mk :is(h1, h2) em { font-style: italic; color: var(--pq-metal); }
+.mk h3 { font-weight: 600; }
+
+/* glass is retired: panels are plain, hairline-bordered, slightly lifted from the ground */
+.mk .mk-glass {
+  background: #0f0f0e; -webkit-backdrop-filter: none; backdrop-filter: none;
+  border: 1px solid var(--mk-line); box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+}
+.mk-btn { border-radius: 4px; background: var(--mk-chalk); letter-spacing: 0.01em; }
+.mk-btn:hover { background: #fff; }
+.mk-link { border-bottom-color: var(--pq-metal-dim); }
+.mk-link:hover { border-color: var(--pq-metal); }
+.mk :focus-visible { outline-color: var(--pq-metal); }
+
+/* navigation: a thin bar of text, not a floating pill */
+.mk-nav-pill { border-radius: 6px; padding: 5px 5px 5px 14px; }
+.mk-nav-link { letter-spacing: 0.04em; font-size: 0.8125rem; text-transform: uppercase; }
+
+/* ---------- shared bits ---------- */
+.pq-eyebrow { font: 600 0.75rem/1 var(--mk-font), sans-serif; letter-spacing: 0.22em; text-transform: uppercase; color: var(--pq-metal); margin: 0 0 18px; }
+.pq-display { font-size: clamp(2.7rem, 6.4vw, 6rem); }
+.pq-title { font-size: clamp(2.1rem, 4.4vw, 4rem); max-width: 16ch; }
+.pq-lede { max-width: 38ch; margin-top: 18px; font-size: clamp(1.0625rem, 1.5vw, 1.25rem); color: var(--mk-text-2); }
+.pq-link { color: var(--mk-chalk); border-bottom: 1px solid var(--pq-metal-dim); padding-bottom: 1px; }
+.pq-link:hover { border-color: var(--pq-metal); }
+.pq-fine { margin-top: 26px; max-width: 46ch; font-size: 0.8125rem; color: var(--mk-text-3); }
+
+/* ---------- the opening film ---------- */
+.pq-film .mk-film-pin { background: #060606; }
+.pq-film .mk-film-shade {
+  background:
+    linear-gradient(0deg, rgba(6, 6, 6, 0.92) 0%, rgba(6, 6, 6, 0.35) 30%, rgba(6, 6, 6, 0) 58%),
+    linear-gradient(180deg, rgba(6, 6, 6, 0.6) 0%, transparent 18%);
+}
+.pq-film .mk-film-beat { align-items: flex-end; padding-bottom: clamp(48px, 9vh, 110px); }
+.pq-beat { max-width: min(92vw, 880px); }
+.pq-film .pq-beat-title .pq-beat { max-width: 1100px; }
+.pq-film .pq-beat-end .pq-beat { max-width: 760px; }
+
+/* viewfinder: four corner marks and a progress bar, the way a lens would frame it */
+.pq-hud { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.pq-corner { position: absolute; width: 22px; height: 22px; border: 0 solid rgba(236, 232, 223, 0.5); }
+.pq-tl { top: 84px; left: 24px; border-top-width: 1px; border-left-width: 1px; }
+.pq-tr { top: 84px; right: 24px; border-top-width: 1px; border-right-width: 1px; }
+.pq-bl { bottom: 24px; left: 24px; border-bottom-width: 1px; border-left-width: 1px; }
+.pq-br { bottom: 24px; right: 24px; border-bottom-width: 1px; border-right-width: 1px; }
+.pq-bar { position: absolute; right: 56px; top: 50%; width: 1px; height: 120px; margin-top: -60px; background: rgba(236, 232, 223, 0.18); }
+.pq-bar i { position: absolute; left: -1px; top: 0; width: 3px; height: calc(var(--p, 0) * 100%); background: var(--pq-metal); }
+@media (max-width: 720px) {
+  .pq-tl, .pq-tr { top: 76px; }
+  .pq-bar { right: 20px; height: 80px; margin-top: -40px; }
+}
+
+/* ---------- the five reads ---------- */
+.pq-reads { padding: clamp(90px, 14vw, 190px) 0 clamp(70px, 10vw, 140px); background: var(--mk-ink); }
+.pq-reads-h { max-width: 12ch; }
+.pq-reads-lede { max-width: 46ch; }
+.pq-reads-list { list-style: none; margin: clamp(48px, 7vw, 96px) 0 0; padding: 0; border-top: 1px solid var(--mk-line); }
+.pq-read { display: grid; grid-template-columns: 70px minmax(0, 1fr) minmax(180px, 280px); gap: clamp(16px, 3vw, 48px); align-items: center; padding: clamp(26px, 4vw, 44px) 0; border-bottom: 1px solid var(--mk-line); }
+.pq-read-n { font: 400 1.0625rem/1 var(--mk-serif), serif; font-style: italic; color: var(--pq-metal); }
+.pq-read-copy h3 { font-family: var(--mk-serif), serif; font-weight: 400; font-size: clamp(1.6rem, 2.8vw, 2.5rem); line-height: 1.08; letter-spacing: -0.01em; }
+.pq-read-copy p { margin-top: 10px; max-width: 52ch; color: var(--mk-text-2); }
+@media (max-width: 760px) {
+  .pq-read { grid-template-columns: 38px minmax(0, 1fr); }
+  .pq-read .pq-pic { grid-column: 2; }
+}
+
+.pq-pic { min-height: 74px; display: flex; flex-direction: column; justify-content: center; gap: 10px; color: var(--mk-chalk); }
+.pq-count { font: 400 2.6rem/1 var(--mk-serif), serif; letter-spacing: 0.02em; }
+.pq-dots { display: flex; gap: 6px; }
+.pq-dots i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--mk-text-3); }
+.pq-dots i.on { background: var(--pq-metal); border-color: var(--pq-metal); }
+.pq-gauge { position: relative; height: 3px; background: linear-gradient(90deg, rgba(236, 232, 223, 0.12), rgba(236, 232, 223, 0.45)); border-radius: 2px; }
+.pq-gauge i { position: absolute; top: -7px; width: 2px; height: 17px; background: var(--pq-metal); }
+.pq-cap { display: flex; justify-content: space-between; font: 600 0.6875rem/1 var(--mk-font), sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mk-text-3); }
+.pq-cap b { font-weight: 600; }
+.pq-pic-pitcher .pq-row { display: grid; grid-template-columns: 26px 1fr; align-items: center; gap: 10px; font: 600 0.75rem/1 var(--mk-font), sans-serif; color: var(--mk-text-2); }
+.pq-track { display: block; height: 4px; background: rgba(236, 232, 223, 0.1); border-radius: 2px; }
+.pq-track i { display: block; height: 100%; background: var(--mk-chalk); border-radius: 2px; }
+.pq-pic-pitcher .pq-row:last-child .pq-track i { background: var(--mk-text-3); }
+.pq-pic-game svg { width: 96px; height: 72px; }
+.pq-pic-game .dia { fill: none; stroke: rgba(236, 232, 223, 0.35); stroke-width: 1; }
+.pq-pic-game .base { fill: #0f0f0e; stroke: rgba(236, 232, 223, 0.5); stroke-width: 1; }
+.pq-pic-game .base.on { fill: var(--pq-metal); stroke: var(--pq-metal); }
+.pq-seq { display: flex; gap: 8px; }
+.pq-seq i { font: 600 0.75rem/1 var(--mk-font), sans-serif; font-style: normal; padding: 9px 10px; border-radius: 4px; color: #000; }
+.pq-seq .fb { background: #ff5a4e; } .pq-seq .sl { background: #ffd43b; }
+.pq-seq .next { background: transparent; color: var(--pq-metal); border: 1px dashed var(--pq-metal-dim); }
+
+/* ---------- the older sections, re-toned ---------- */
+.mk-contact { background: #0b0b0a; border-top: 1px solid var(--mk-line); }
+.mk-contact-copy h2 { font-size: clamp(2.4rem, 5vw, 4.4rem); }
+.mk-foot { border-top: 1px solid var(--mk-line); }
+.mk-in h2, .mk-ab h2, .mk-dm h2, .mk-pg h2, .mk-fq h2 { font-size: clamp(2.2rem, 4.6vw, 4.2rem); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pq-bar i { transition: none; }
+}

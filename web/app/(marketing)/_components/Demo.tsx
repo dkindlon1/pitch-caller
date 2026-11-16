@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { whenStill } from "@/app/components/can3d";
 import { bats, call, CELL_OF, LINEUP, makeArsenal, newGame, record, RESULT_LABEL, type Call, type Game, type Result } from "@/lib/demo";
 import type { EPitch } from "@/lib/engine";
 
@@ -74,7 +73,7 @@ export function Demo() {
     // so that work never lands on a scroll; or when the demo comes near first
     const load = () => {
       if (started) return;
-      started = true; io.disconnect(); cancelStill();
+      started = true; io.disconnect();
       return Promise.all([import("@/lib/engine"), import("@/lib/engine_data_d3.json")])   // college D3 tables only (scripts/trim-engine-data.cjs)
         .then(([m, d]) => {
           if (dead) return;
@@ -89,8 +88,7 @@ export function Demo() {
     };
     const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) load(); }, { rootMargin: "800px 0px" });
     io.observe(el);
-    const cancelStill = whenStill(load);
-    return () => { dead = true; io.disconnect(); cancelStill(); };
+    return () => { dead = true; io.disconnect(); };
   }, []);
 
   // lean toward the pointer
