@@ -8,9 +8,11 @@ Branch `site/v2-alive` (from `site/watch-redesign`, c6cb854). Prompt: `docs/PROM
 
 - Direction chosen (Nov 16): the film tells the call, liquid glass, Floodlight colors. Plan: `docs/PLAN_site_v2_2026-11-16.md`.
 
+- Plan revision 2 (Nov 16): Drew's seven changes. Motion prototype of stops 4 to 6 and the hand-off built and recorded (`docs/site-v2-directions/prototype/`, recordings in `docs/site-v2-shots/prototype/`). Font board made.
+
 ## Next
-- Drew's go to build. Then Phase 2 in the plan's build order, starting with Lenis on the GSAP ticker and a check that the film still scrubs and rests.
+- Drew approves the prototype's feel, picks the headline type and the word-match option. Then the full build in the plan's order.
 
 ## Open questions
-- Headline typeface: Hanken Grotesk only, or something more distinctive.
-- OK to remove the current Five reads and Inside the call sections.
+- Feel of the prototype; headline type (Hanken, Archivo, Bricolage); word match (A, B or C in the plan).
+- OK to remove Five reads and Inside the call; OK to drop the 3D field from the at-bat section.
