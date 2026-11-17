@@ -7,6 +7,10 @@
 // The scroll timeline still drives everything: it keeps tweening the old light elements, which stay in the page as
 // invisible proxies (.pq-pin.has-gl hides them), and every frame the shader reads their opacity, scale and position.
 // No WebGL, or a lost context: the proxies stay visible and the CSS version shows instead.
+//
+// Behind the watch, not over it: the film's ground is one flat colour, so each new film picture is copied (small) into
+// a texture and every pixel that differs from the ground is the watch or one of its parts. The light is drawn only
+// around them; their edges catch it as a backlit rim, and their bright metal picks up a little of its colour.
 
 export type AtmosValues = {
   blue: number; blueScale: number; green: number; greenScale: number;
@@ -18,7 +22,10 @@ const VERT = `attribute vec2 a; varying vec2 v; void main(){ v = a * 0.5 + 0.5; 
 const FRAG = `precision highp float;
 varying vec2 v;
 uniform vec2 uRes; uniform float uT, uAsp;
-uniform float uBlue, uBS, uGreen, uGS, uHaze, uHazeY, uBeam, uBeamRot, uFloor, uFloorY, uPg;
+uniform float uBlue, uBS, uGreen, uGS, uHaze, uHazeY, uBeam, uBeamRot, uFloor, uFloorY, uPg, uHasFilm;
+uniform sampler2D uFilm;
+const vec3 GROUND = vec3(12.0, 11.0, 14.0) / 255.0;
+float solid(vec2 uv){ vec3 d = abs(texture2D(uFilm, uv).rgb - GROUND); return smoothstep(0.022, 0.07, max(d.r, max(d.g, d.b))); }
 float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }
@@ -58,6 +65,17 @@ void main(){
   c += blueHi * beam * uBeam * 0.035;
   c += mix(green, blue, 0.3) * floorL * uFloor * 0.03;
   c += (midnight * pg * 0.2 + blue * pgGlint * 0.008) * uPg * (0.8 + 0.4 * n);
+  // the watch and its parts: no light on them from behind; a rim where their edge meets the light; a little of the
+  // light's colour on their bright metal
+  if (uHasFilm > 0.5) {
+    vec2 px = 1.0 / uRes;
+    float m = solid(uv);
+    float gx = solid(uv + vec2(px.x * 2.0, 0.0)) - solid(uv - vec2(px.x * 2.0, 0.0));
+    float gy = solid(uv + vec2(0.0, px.y * 2.0)) - solid(uv - vec2(0.0, px.y * 2.0));
+    float edge = clamp(length(vec2(gx, gy)) * 2.2, 0.0, 1.0) * m;
+    vec3 f = texture2D(uFilm, uv).rgb; float shine = pow(dot(f, vec3(0.2126, 0.7152, 0.0722)), 2.2);
+    c = c * (1.0 - m) + c * edge * 4.0 + c * m * shine * 1.1;
+  }
   // vignette: the edges of the frame stay dark, so the light reads as being in a room, not painted on the glass
   vec2 vd = (uv - 0.5) * vec2(uAsp * 0.85, 1.0) / max(sm, 0.75); c *= mix(0.3, 1.0, smoothstep(1.0, 0.25, length(vd)));
   c = 1.0 - exp(-c * 1.25);                    // soft shoulder: bright light never clips into a flat patch
@@ -66,10 +84,10 @@ void main(){
   gl_FragColor = vec4(max(c, 0.0), 1.0);
 }`;
 
-const NAMES = ["uRes", "uT", "uAsp", "uBlue", "uBS", "uGreen", "uGS", "uHaze", "uHazeY", "uBeam", "uBeamRot", "uFloor", "uFloorY", "uPg"] as const;
+const NAMES = ["uRes", "uT", "uAsp", "uBlue", "uBS", "uGreen", "uGS", "uHaze", "uHazeY", "uBeam", "uBeamRot", "uFloor", "uFloorY", "uPg", "uHasFilm", "uFilm"] as const;
 
 /** Starts the shader on `canvas`. `read` returns the current light values. Returns a stop function, or null without WebGL. */
-export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: () => AtmosValues, hold: () => boolean = () => false): (() => void) | null {
+export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: () => AtmosValues, hold: () => boolean = () => false, film?: HTMLCanvasElement | null): (() => void) | null {
   if (new URLSearchParams(window.location.search).has("nogl")) return null;     // ?nogl=1: the CSS light, for comparison
   const gl = canvas.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: "low-power" });
   if (!gl) return null;
@@ -88,6 +106,23 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
   const loc = gl.getAttribLocation(prog, "a"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const U = Object.fromEntries(NAMES.map((k) => [k, gl.getUniformLocation(prog, k)])) as Record<(typeof NAMES)[number], WebGLUniformLocation | null>;
 
+  // the film's current picture, small, as a texture (re-read only when the film draws a new picture)
+  const tex = gl.createTexture(); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.uniform1i(U.uFilm, 0);
+  const small = document.createElement("canvas"), sctx = small.getContext("2d", { alpha: false });
+  let filmV = "", hasFilm = false;
+  const readFilm = () => {
+    if (!film || !sctx || !film.width || !film.classList.contains("is-on")) return;
+    const v = `${film.dataset.v}:${canvas.width}x${canvas.height}`;
+    if (v === filmV) return;
+    filmV = v;
+    if (small.width !== canvas.width || small.height !== canvas.height) { small.width = canvas.width; small.height = canvas.height; }
+    sctx.drawImage(film, 0, 0, small.width, small.height);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, small);
+    hasFilm = true;
+  };
   // the light is soft, so it is drawn at 40% of the CSS size and the browser scales it up smoothly
   const size = () => {
     const w = Math.max(2, Math.round(canvas.clientWidth * 0.4)), h = Math.max(2, Math.round(canvas.clientHeight * 0.4));
@@ -104,7 +139,8 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
     const a = read();
     const lit = a.blue + a.green + a.haze + a.beam + a.floor + a.pg > 0.004;
     if (lit || !dark) {
-      size();
+      size(); readFilm();
+      gl.uniform1f(U.uHasFilm, hasFilm ? 1 : 0);
       gl.uniform2f(U.uRes, canvas.width, canvas.height); gl.uniform1f(U.uT, (now - t0) / 1000); gl.uniform1f(U.uAsp, canvas.width / canvas.height);
       gl.uniform1f(U.uBlue, a.blue); gl.uniform1f(U.uBS, Math.max(0.2, a.blueScale)); gl.uniform1f(U.uGreen, a.green); gl.uniform1f(U.uGS, Math.max(0.2, a.greenScale));
       gl.uniform1f(U.uHaze, a.haze); gl.uniform1f(U.uHazeY, a.hazeY); gl.uniform1f(U.uBeam, a.beam); gl.uniform1f(U.uBeamRot, a.beamRot);
