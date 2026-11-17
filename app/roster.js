@@ -676,7 +676,7 @@ function learnedPanel(p) {
     flags.length ? h("div", { class: "lflags" }, flags.map(flagEl)) : null,
     prof && prof.skipped && prof.skipped.n ? h("p", { class: "pstat watch" }, `${prof.skipped.n} logged pitch${prof.skipped.n === 1 ? " was" : "es were"} skipped: learning couldn't read ${prof.skipped.n === 1 ? "it" : "them"}. `,
       h("button", { class: "btn text", on: { click: () => openSkipped(prof) } }, "Fix or leave out")) : null,
-    h("div", { class: "tbl-wrap" }, h("table", { class: "ltable" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "ltable" },
       h("thead", {}, h("tr", {}, h("th", {}, "Pitch"), h("th", {}, "Stuff: yours → learned"), h("th", {}, "Command: yours → learned"), h("th", { class: "num" }, "Pitches"), h("th", {}, "Scoreboard"))),
       h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map(row)))),
     h("p", { class: "note" }, n
@@ -711,7 +711,7 @@ function importPanel(p) {
     P && P.error ? h("p", { class: "pstat change" }, P.error) : null,
     P && P.r ? h("div", { class: "imp" },
       h("p", { class: "note" }, `${P.file}: ${P.r.n} pitches, read as ${P.r.source}.`),
-      h("div", { class: "tbl-wrap" }, h("table", {},
+      h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", {},
         h("thead", {}, h("tr", {}, ["Pitch", "Thrown", "Velo", "Top", "V break", "H break", "Spin", "Shape", "In zone", "Command hint"].map((t, i) => h("th", { class: i && t !== "Shape" ? "num" : "" }, t)))),
         h("tbody", {}, P.r.byType.map((t) => h("tr", { class: `k-${t.kind}` },
           h("td", {}, h("span", { class: "pname" }, chip(t.kind), t.type)), h("td", { class: "num" }, String(t.n)), h("td", { class: "num" }, fmt(t.velo)), h("td", { class: "num" }, fmt(t.veloMax)),
@@ -805,7 +805,7 @@ function hittersEditor(t) {
   };
   return h("section", { class: "panel glass", "aria-label": "Hitters" },
     h("div", { class: "panel-head" }, h("h2", {}, "Hitters"), h("span", { class: "meta" }, `${hs.length}`)),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "htable" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "htable" },
       h("thead", {}, h("tr", {}, ["#", "Name", "Bats", "PA", "AVG", "OBP", "SLG", "K%", "BB%", "What we know", ""].map((c) => h("th", {}, c)))),
       h("tbody", {}, hs.length ? hs.map((x) => h("tr", {},
         h("td", {}, h("input", { value: x.number || "", "aria-label": "Number", inputmode: "numeric", style: { width: "52px" }, on: { change: (e) => { x.number = e.target.value.trim(); dbPut("hitters", x); } } })),
@@ -896,7 +896,7 @@ function pastFixPanel() {
       : h("p", { class: "note" }, "Saved games show up here once you end one."),
     cur && cur.dupOf ? h("p", { class: "pstat watch" }, `This looks like the same game as another iPad's (${Math.round((cur.dupMatch || 0) * 100)}% of pitches line up), so it's left out of learning and the other one counts. `,
       h("button", { class: "btn text", on: { click: () => notDuplicate(cur.id) } }, "They're different games")) : null,
-    rows.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" },
+    rows.length ? h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl" },
       h("thead", {}, h("tr", {}, ["#", "Pitcher", "Count", "Pitch and spot", "Result", ""].map((t) => h("th", {}, t)))),
       h("tbody", {}, rows.flatMap((ev) => {
         const bad = !PCLearner.readable(E, ev);
@@ -1066,7 +1066,7 @@ function pitchingLogPanel() {
   if (!logGames) { logGames = []; DB.D.all("games").then((gs) => { logGames = gs.filter((g) => !g.dupOf && g.date).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12); render(); }); }
   return h("section", { class: "panel glass", "aria-label": "Pitching log" },
     h("div", { class: "panel-head" }, h("h2", {}, "Pitching log"), h("span", { class: "meta" }, teamRule() ? teamRule().name : "No pitch-count rule set (Setup)")),
-    logGames.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" }, h("tbody", {}, logGames.map((g) => h("tr", {},
+    logGames.length ? h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl" }, h("tbody", {}, logGames.map((g) => h("tr", {},
       h("td", {}, fmtDay(g.date)), h("td", {}, (DB.teams.get(g.opponentId) || {}).name || ""), h("td", {}, g.status || ""),
       h("td", {}, h("button", { class: "btn text", on: { click: () => printPitchingLog(g.id) } }, "Print"), h("button", { class: "btn text", on: { click: () => downloadPitchingLog(g.id) } }, "CSV"))))))) : h("p", { class: "note" }, "Games appear here once they're charted."),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: printSignCard } }, "Print the sign card")));
@@ -1345,7 +1345,7 @@ function staffAdder() {
     link ? h("p", { class: "note", id: "sync-invite-code" }, `Invite for ${link.who} as ${roleName(link.role).toLowerCase()}: `,
       h("code", { class: "invite-code" }, SYNC.cfg.siteUrl ? `${SYNC.cfg.siteUrl.replace(/\/$/, "")}/join/${link.token}` : link.token),
       ". It works once and stops working if you cancel it.") : null,
-    SYNC.staff.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl", "aria-label": "Staff" },
+    SYNC.staff.length ? h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl", "aria-label": "Staff" },
       h("tbody", {}, SYNC.staff.map((m) => {
         const who = m.email || "(anyone with the code)";
         const coach = !m.pending && m.role !== "player";

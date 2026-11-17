@@ -82,7 +82,7 @@ async function HomeBody({ params }: { params: Params }) {
               <p className="small">{rule ? `${live.length - resting.length} of ${live.length} available today. Under ${rule.name}${rule.edited ? " (your numbers)" : ""}.` : "No pitch-count rule set, so no rest days are shown."}</p>
             </div>
             {avail.length ? (
-              <div className="tbl-scroll"><table className="data-tbl" aria-label="Pitcher availability">
+              <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Pitcher availability">
                 <thead><tr><th>Pitcher</th><th>Last outing</th><th className="num">Last 7 days</th><th>Eligible</th></tr></thead>
                 <tbody>{avail.map((x) => (
                   <tr key={x.pitcher.id}>

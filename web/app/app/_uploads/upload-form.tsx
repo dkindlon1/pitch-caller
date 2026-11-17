@@ -83,7 +83,7 @@ export function UploadForm({ team, pitcher, hand, pitcherName, templates, today 
 
       {mapping ? (
         <form className="shell-form" aria-label="Match the columns" onSubmit={(e) => { e.preventDefault(); if (!map.type) { setError("Pick the pitch type column."); return; } read(text, map); }}>
-          <div className="tbl-scroll"><table className="data-tbl small" aria-label="The file's first rows">
+          <div className="tbl-scroll" tabIndex={0}><table className="data-tbl small" aria-label="The file's first rows">
             <thead><tr>{mapping.header.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
             <tbody>{mapping.sample.map((r, i) => <tr key={i}>{mapping.header.map((_, j) => <td key={j}>{r[j]}</td>)}</tr>)}</tbody>
           </table></div>

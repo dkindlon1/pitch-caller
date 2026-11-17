@@ -312,11 +312,11 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .call-main > div:nth-child(2) { container-type: inline-size; }
 .pitch { font-family: var(--head); font-size: clamp(48px, 22.5cqw, 128px); line-height: .86; font-weight: 900; font-stretch: 62%; letter-spacing: -0.01em; text-transform: uppercase; color: var(--land); overflow-wrap: break-word; text-wrap: balance; padding-block: 0.04em; }
 .spot { margin-top: 6px; font: 800 clamp(26px, 3vw, 38px)/1.05 var(--head); font-stretch: 75%; letter-spacing: 0; text-transform: uppercase; color: var(--ink); }
-.why { grid-column: 1 / 3; grid-row: 2; margin-top: 16px; color: var(--muted); font-size: 15px; max-width: 48ch; }
+.why { grid-column: 2; grid-row: 2; margin-top: 16px; color: var(--muted); font-size: 15px; max-width: 48ch; }
 .why b { color: var(--ink); font-weight: 650; }
 .whyline { display: block; margin-bottom: 2px; font-size: 16px; }
 .walk-note { display: block; margin-top: 8px; padding: 8px 12px; border-radius: 12px; font-weight: 600; color: var(--alert); background: var(--warn-bg); }
-.readout { grid-column: 1 / 3; grid-row: 3; align-self: start; margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 0; border-radius: var(--r-tile); background: rgb(var(--bg-rgb) / 0.35); border: 1px solid var(--rule); width: max-content; max-width: 100%; }
+.readout { grid-column: 2; grid-row: 3; align-self: start; margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 0; border-radius: var(--r-tile); background: rgb(var(--bg-rgb) / 0.35); border: 1px solid var(--rule); width: max-content; max-width: 100%; }
 :root[data-theme="day"] .readout { background: var(--well); }
 .readout > div { padding: 10px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .readout > div + div { border-left: 1px solid var(--rule); }
@@ -9216,7 +9216,7 @@ function logPanel() {
           if (!confirmTwice("endgame")) { toast("Tap End game again to save it and start a fresh one"); return; }
           endGame();
         } } }, "End game") : null)),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl" },
       h("thead", {}, h("tr", {}, h("th", { class: "num" }, "#"), h("th", {}, "Inning"), h("th", {}, "Hitter"), h("th", { class: "num" }, "Count"), h("th", {}, "Sign"), h("th", {}, "Pitch and spot"), h("th", {}, "Result"), h("th", {}, h("span", { class: "sr" }, "Fix")))),
       h("tbody", {}, rows.length ? rows.flatMap((l) => {
         const extra = [l.loc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[l.loc] : null, l.thrown ? `threw ${l.thrown}` : null, l.wp ? (l.wp === "pb" ? "passed ball" : "wild pitch") : null].filter(Boolean);
@@ -9357,7 +9357,7 @@ function arsenalPanel(rows) {
   const max = Math.max(1, ...list.map(([, r]) => r.length));
   return h("section", { class: "panel glass span-7", "aria-label": "Arsenal" },
     h("div", { class: "panel-head" }, h("h2", {}, "Arsenal"), h("span", { class: "meta" }, "Per pitch, from the log")),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "ars" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "ars" },
       h("thead", {}, h("tr", {}, h("th", {}, "Pitch"), h("th", {}, "Thrown"), h("th", { class: "num" }, "Strikes"), h("th", { class: "num" }, "Whiffs per swing"), h("th", { class: "num" }, "In play"), h("th", { class: "num" }, "Hard"))),
       h("tbody", {}, list.length ? list.map(([key, r]) => {
         const [kind, name] = key.split("|"), sw = r.filter(isSwing), bip = r.filter((e) => resOf(e) === "play");
@@ -9426,7 +9426,7 @@ function hittersPanel(rows) {
   const lineup = S.setup.lineup;
   return h("section", { class: "panel glass span-12", "aria-label": "Their hitters" },
     h("div", { class: "panel-head" }, h("h2", {}, "Their hitters"), h("span", { class: "meta" }, dataScope === "game" ? "This game" : "Reads are from this game only")),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "hit-tbl" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "hit-tbl" },
       h("thead", {}, h("tr", {}, h("th", { class: "num" }, "#"), h("th", {}, "Hitter"), h("th", {}, "Bats"), h("th", {}, "Results"), h("th", { class: "num" }, "Pitches seen"), h("th", { class: "num" }, "Whiffs"), h("th", {}, "What we know"))),
       h("tbody", {}, lineup.map((b, i) => {
         const r = rows.filter((e) => e.slot === i), ends = r.filter((e) => e.end).slice().reverse();
@@ -10123,7 +10123,7 @@ function learnedPanel(p) {
     flags.length ? h("div", { class: "lflags" }, flags.map(flagEl)) : null,
     prof && prof.skipped && prof.skipped.n ? h("p", { class: "pstat watch" }, `${prof.skipped.n} logged pitch${prof.skipped.n === 1 ? " was" : "es were"} skipped: learning couldn't read ${prof.skipped.n === 1 ? "it" : "them"}. `,
       h("button", { class: "btn text", on: { click: () => openSkipped(prof) } }, "Fix or leave out")) : null,
-    h("div", { class: "tbl-wrap" }, h("table", { class: "ltable" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "ltable" },
       h("thead", {}, h("tr", {}, h("th", {}, "Pitch"), h("th", {}, "Stuff: yours → learned"), h("th", {}, "Command: yours → learned"), h("th", { class: "num" }, "Pitches"), h("th", {}, "Scoreboard"))),
       h("tbody", {}, (p.pitches || []).filter((d) => d.active !== false).map(row)))),
     h("p", { class: "note" }, n
@@ -10158,7 +10158,7 @@ function importPanel(p) {
     P && P.error ? h("p", { class: "pstat change" }, P.error) : null,
     P && P.r ? h("div", { class: "imp" },
       h("p", { class: "note" }, `${P.file}: ${P.r.n} pitches, read as ${P.r.source}.`),
-      h("div", { class: "tbl-wrap" }, h("table", {},
+      h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", {},
         h("thead", {}, h("tr", {}, ["Pitch", "Thrown", "Velo", "Top", "V break", "H break", "Spin", "Shape", "In zone", "Command hint"].map((t, i) => h("th", { class: i && t !== "Shape" ? "num" : "" }, t)))),
         h("tbody", {}, P.r.byType.map((t) => h("tr", { class: `k-${t.kind}` },
           h("td", {}, h("span", { class: "pname" }, chip(t.kind), t.type)), h("td", { class: "num" }, String(t.n)), h("td", { class: "num" }, fmt(t.velo)), h("td", { class: "num" }, fmt(t.veloMax)),
@@ -10252,7 +10252,7 @@ function hittersEditor(t) {
   };
   return h("section", { class: "panel glass", "aria-label": "Hitters" },
     h("div", { class: "panel-head" }, h("h2", {}, "Hitters"), h("span", { class: "meta" }, `${hs.length}`)),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "htable" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "htable" },
       h("thead", {}, h("tr", {}, ["#", "Name", "Bats", "PA", "AVG", "OBP", "SLG", "K%", "BB%", "What we know", ""].map((c) => h("th", {}, c)))),
       h("tbody", {}, hs.length ? hs.map((x) => h("tr", {},
         h("td", {}, h("input", { value: x.number || "", "aria-label": "Number", inputmode: "numeric", style: { width: "52px" }, on: { change: (e) => { x.number = e.target.value.trim(); dbPut("hitters", x); } } })),
@@ -10343,7 +10343,7 @@ function pastFixPanel() {
       : h("p", { class: "note" }, "Saved games show up here once you end one."),
     cur && cur.dupOf ? h("p", { class: "pstat watch" }, `This looks like the same game as another iPad's (${Math.round((cur.dupMatch || 0) * 100)}% of pitches line up), so it's left out of learning and the other one counts. `,
       h("button", { class: "btn text", on: { click: () => notDuplicate(cur.id) } }, "They're different games")) : null,
-    rows.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" },
+    rows.length ? h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl" },
       h("thead", {}, h("tr", {}, ["#", "Pitcher", "Count", "Pitch and spot", "Result", ""].map((t) => h("th", {}, t)))),
       h("tbody", {}, rows.flatMap((ev) => {
         const bad = !PCLearner.readable(E, ev);
@@ -10513,7 +10513,7 @@ function pitchingLogPanel() {
   if (!logGames) { logGames = []; DB.D.all("games").then((gs) => { logGames = gs.filter((g) => !g.dupOf && g.date).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 12); render(); }); }
   return h("section", { class: "panel glass", "aria-label": "Pitching log" },
     h("div", { class: "panel-head" }, h("h2", {}, "Pitching log"), h("span", { class: "meta" }, teamRule() ? teamRule().name : "No pitch-count rule set (Setup)")),
-    logGames.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" }, h("tbody", {}, logGames.map((g) => h("tr", {},
+    logGames.length ? h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl" }, h("tbody", {}, logGames.map((g) => h("tr", {},
       h("td", {}, fmtDay(g.date)), h("td", {}, (DB.teams.get(g.opponentId) || {}).name || ""), h("td", {}, g.status || ""),
       h("td", {}, h("button", { class: "btn text", on: { click: () => printPitchingLog(g.id) } }, "Print"), h("button", { class: "btn text", on: { click: () => downloadPitchingLog(g.id) } }, "CSV"))))))) : h("p", { class: "note" }, "Games appear here once they're charted."),
     h("div", { class: "row-acts" }, h("button", { class: "btn", on: { click: printSignCard } }, "Print the sign card")));
@@ -10792,7 +10792,7 @@ function staffAdder() {
     link ? h("p", { class: "note", id: "sync-invite-code" }, `Invite for ${link.who} as ${roleName(link.role).toLowerCase()}: `,
       h("code", { class: "invite-code" }, SYNC.cfg.siteUrl ? `${SYNC.cfg.siteUrl.replace(/\/$/, "")}/join/${link.token}` : link.token),
       ". It works once and stops working if you cancel it.") : null,
-    SYNC.staff.length ? h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl", "aria-label": "Staff" },
+    SYNC.staff.length ? h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl", "aria-label": "Staff" },
       h("tbody", {}, SYNC.staff.map((m) => {
         const who = m.email || "(anyone with the code)";
         const coach = !m.pending && m.role !== "player";
@@ -11080,7 +11080,7 @@ function setupView() {
         h("label", { class: "f", style: { width: "110px" } }, "Pitch cap", h("input", { id: `pcap${pi}`, type: "number", inputmode: "numeric", min: 30, max: 150, value: pd.pitchCap || "", placeholder: "105", on: { change: (e) => { pd.pitchCap = e.target.value === "" ? null : +e.target.value; changed(); } } })),
         h("label", { class: "f", style: { width: "130px" } }, "Time to plate, s", h("input", { id: `pttp${pi}`, type: "number", inputmode: "decimal", step: 0.05, min: 0.9, max: 2.5, value: pd.ttp || "", placeholder: "optional", on: { change: (e) => { pd.ttp = e.target.value === "" ? null : +e.target.value; changed(); } } }))),
       signNote(pd),
-      h("div", { class: "tbl-wrap" }, h("table", { class: "ptable" },
+      h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "ptable" },
         h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Main FB", "Velo", "Misses"].map((t) => h("th", t === "Stuff" ? { title: "Compared with other pitches of this profile: a 3 sweeper is an average sweeper" } : {}, t)),
           measured ? [h("th", {}, "V break"), h("th", {}, "H break")] : null, h("th", {}, ""))),
         h("tbody", {}, rows))),

@@ -17,11 +17,11 @@ async function Body() {
   return (
     <>
       <h1 className="shell-h1">Audit log</h1>
-      <div className="tbl-scroll"><table className="data-tbl" aria-label="Audit log">
+      <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Audit log">
         <thead><tr><th>When</th><th>Admin</th><th>What</th><th>Organization</th><th>Detail</th></tr></thead>
         <tbody>{rows.map((r) => (
           <tr key={r.id}>
-            <td>{when(r.at)}</td><td>{r.admin_email}</td><td>{ACTION[r.action] || r.action}</td>
+            <td className="when">{when(r.at)}</td><td>{r.admin_email}</td><td>{ACTION[r.action] || r.action}</td>
             <td>{r.org_id ? <Link href={`/admin/org/${r.org_id}`}>{r.org_name || r.org_id}</Link> : ""}</td>
             <td className="small">{typeof r.detail.reason === "string" ? r.detail.reason : typeof r.detail.search === "string" ? `search "${r.detail.search}"` : ""}</td>
           </tr>))}</tbody>

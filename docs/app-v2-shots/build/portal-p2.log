@@ -102,3 +102,31 @@
   ok   me-arsenal__phone
   ok   me-uploads__laptop
   ok   me-uploads__phone
+  ok   me-upload-detail__laptop
+  ok   me-upload-detail__phone
+  ok   me-stats__laptop
+  ok   me-stats__phone
+  ok   me-learned__laptop
+  ok   me-learned__phone
+  ok   me-profile__laptop
+  ok   me-profile__phone
+  ok   not-found__laptop  (1 console/page error)
+  ok   not-found__phone  (1 console/page error)
+  ok   not-found-app__laptop  (1 console/page error)
+  ok   not-found-app__phone  (1 console/page error)
+  ok   admin__laptop
+  ok   admin__phone
+  FAIL admin-org__laptop  the Next.js error overlay is showing
+  FAIL admin-org__phone  the Next.js error overlay is showing
+  ok   admin-audit__laptop
+  ok   admin-audit__phone
+console and page errors (grouped):
+  x4  console: Failed to load resource: the server responded with a status of 404 (Not Found)  [not-found__laptop, not-found__phone, not-found-app__laptop, ...]
+shots: 114 written, 8 failed: join__laptop, join__phone, join-signed-in__laptop, join-signed-in__phone, join-bad-token__laptop, join-bad-token__phone, admin-org__laptop, admin-org__phone
+docs/app-v2-shots/build/portal-p2\sheet__laptop__1.png (1970, 1354)
+docs/app-v2-shots/build/portal-p2\sheet__laptop__2.png (1970, 1354)
+docs/app-v2-shots/build/portal-p2\sheet__laptop__3.png (1970, 1354)
+docs/app-v2-shots/build/portal-p2\sheet__laptop__4.png (1970, 1018)
+docs/app-v2-shots/build/portal-p2\sheet__phone__1.png (1250, 3435)
+docs/app-v2-shots/build/portal-p2\sheet__phone__2.png (1250, 3435)
+docs/app-v2-shots/build/portal-p2\sheet__phone__3.png (1250, 2750)

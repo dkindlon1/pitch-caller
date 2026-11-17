@@ -43,7 +43,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <fieldset>
           <legend>Arsenal (stuff and command, 1 to 5; 3 is average; stuff is compared with other pitches of the same type)</legend>
           <p className="shell-note">Velo is his usual speed in mph. Leave it blank and the engine uses a typical speed for the level; the call reasons quote speeds, so enter it when you know it.</p>
-          <div className="tbl-scroll"><table className="data-tbl arsenal" aria-label="Arsenal">
+          <div className="tbl-scroll" tabIndex={0}><table className="data-tbl arsenal" aria-label="Arsenal">
             <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th title="Compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper">Stuff</th><th>Command</th><th>Velo</th><th>In use</th></tr></thead>
             <tbody>{(p.pitches || []).map((d, i) => (
               <tr key={d.id}>

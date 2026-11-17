@@ -51,7 +51,7 @@ async function Body({ params }: { params: Params }) {
       <section aria-labelledby="out-h">
         <h2 id="out-h" className="shell-h2">Outings</h2>
         {mine.length ? (
-          <div className="tbl-scroll"><table className="data-tbl" aria-label="Outings">
+          <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Outings">
             <thead><tr><th>Date</th><th className="num">Pitches</th><th className="num">Strikes</th><th>By pitch</th></tr></thead>
             <tbody>{mine.map((o) => (
               <tr key={o.game_id}>

@@ -38,19 +38,19 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <p className="shell-note small">Owner {o.owner_email} · started {day(o.created_at)}{o.billing_changed_at ? ` · billing last changed ${when(o.billing_changed_at)}` : ""}{o.has_customer ? "" : " · no Stripe customer yet"}</p>
       </section>
       <h2 className="shell-h2">Teams</h2>
-      <div className="tbl-scroll"><table className="data-tbl" aria-label="Teams">
+      <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Teams">
         <thead><tr><th>Team</th><th>Status</th><th className="num">Coaches</th><th className="num">Players</th><th>Started</th></tr></thead>
         <tbody>{o.teams.map((t) => <tr key={t.id}><td>{t.name}</td><td>{t.status}{t.ends_at ? ` (ends ${day(t.ends_at)})` : ""}</td><td className="num mono">{t.coaches}</td><td className="num mono">{t.players}</td><td>{day(t.created_at)}</td></tr>)}</tbody>
       </table></div>
       <h2 className="shell-h2">Staff</h2>
       <ul className="plain-list" aria-label="Staff">{o.staff.map((s, i) => <li key={i}>{s.team}: {s.email} <span className="lbl">{s.role}</span></li>)}</ul>
       <h2 className="shell-h2">Billing events</h2>
-      {o.events.length ? <div className="tbl-scroll"><table className="data-tbl" aria-label="Billing events">
+      {o.events.length ? <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Billing events">
         <thead><tr><th>When</th><th>Event</th><th>Result</th></tr></thead>
         <tbody>{o.events.map((ev, i) => <tr key={i}><td>{when(ev.created_at)}</td><td className="mono">{ev.type}</td><td>{ev.result}</td></tr>)}</tbody>
       </table></div> : <p className="shell-note">None.</p>}
       <h2 className="shell-h2">Lapse exports</h2>
-      {x.lapses.length ? <div className="tbl-scroll"><table className="data-tbl" aria-label="Lapse exports">
+      {x.lapses.length ? <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Lapse exports">
         <thead><tr><th>Lapse</th><th className="num">Files</th><th className="num">People</th><th className="num">Emailed</th><th className="num">Failed</th><th className="num">No email service</th></tr></thead>
         <tbody>{x.lapses.map((l) => <tr key={l.lapse_at}><td>{when(l.lapse_at)}</td><td className="num mono">{l.files}</td><td className="num mono">{l.people}</td><td className="num mono">{l.sent}</td><td className="num mono">{l.failed}</td><td className="num mono">{l.no_provider + l.pending}</td></tr>)}</tbody>
       </table></div> : <p className="shell-note">None.</p>}

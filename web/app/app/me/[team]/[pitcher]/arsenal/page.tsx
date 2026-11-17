@@ -30,7 +30,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <p className="shell-note">Grade your pitches 1 to 5 (3 is average). Stuff is how good the pitch is when it&apos;s where you want it, compared with other pitches of the same type (a 3 sweeper is an average sweeper); command is how often it is. A change applies at once, and your coaches see it.</p>
       <form action={saveArsenal} className="shell-form" aria-label="Arsenal">
         <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={pitcher} />
-        <div className="tbl-scroll"><table className="data-tbl arsenal" aria-label="Your pitches">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl arsenal" aria-label="Your pitches">
           <thead><tr><th>Sign</th><th>Pitch</th><th>Type</th><th title="Compared with other pitches of the same type and shape: a 3 sweeper is an average sweeper">Stuff</th><th>Command</th><th>In use</th></tr></thead>
           <tbody>{(p.pitches || []).map((d, i) => (
             <tr key={d.id}>

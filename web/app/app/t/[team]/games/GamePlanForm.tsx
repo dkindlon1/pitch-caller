@@ -123,12 +123,12 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
               {o.pitchers.map((x) => {
                 const on = p.staffIds.includes(x.id), starter = on && p.starterId === x.id;
                 return (
-                  <button key={x.id} type="button" className="pq-pick" aria-pressed={on} onClick={() => (on && !starter ? set({ starterId: x.id }) : toggle(x.id))}
-                    aria-label={`${x.name}${on ? starter ? ", starting. Tap to take him off today’s staff" : ", on today’s staff. Tap to make him the starter" : ""}`}>
-                    {starter ? <span className="tag">Starter</span> : null}
-                    <b>{x.number ? `#${x.number} ` : ""}{x.name || "Unnamed"}</b>
+                  <button key={x.id} type="button" className="pq-pick" aria-pressed={on} onClick={() => (on && !starter ? set({ starterId: x.id }) : toggle(x.id))}>
+                    <b>{x.name || "Unnamed"}{x.number ? <span className="no"> #{x.number}</span> : null}</b>
                     <small>{x.hand === "L" ? "Lefty" : "Righty"}{x.kinds.length ? `, ${x.kinds.map((k) => KIND[k] || k).join(", ")}` : ""}</small>
                     {x.eligible ? <small className="warn">Eligible {x.eligible}{x.restNote ? ` (${x.restNote})` : ""}</small> : null}
+                    {starter ? <span className="tag">Starter</span> : null}
+                    {on ? <span className="sr">{starter ? ". Tap to take him off today’s staff" : ", on today’s staff. Tap to make him the starter"}</span> : null}
                   </button>
                 );
               })}
@@ -170,7 +170,7 @@ export function GamePlanForm({ o, initial }: { o: Opts; initial: PlanInput }) {
           <p>Pick what your charter can keep up with. Every option calls the game; more detail mostly helps it learn each hitter.</p>
           <div className="pq-picks" role="radiogroup" aria-label="What you’ll log">
             {o.tiers.map(([n, t, d]) => (
-              <button key={n} type="button" role="radio" aria-checked={p.inputs === n} className="pq-pick" aria-pressed={p.inputs === n} onClick={() => set({ inputs: n })}><b>{t}</b><small>{d}</small></button>
+              <button key={n} type="button" role="radio" aria-checked={p.inputs === n} className="pq-pick" onClick={() => set({ inputs: n })}><b>{t}</b><small>{d}</small></button>
             ))}
           </div>
           <label className="check"><input type="checkbox" checked={p.logLoc} onChange={(e) => set({ logLoc: e.target.checked })} /> Also log where each pitch ended up (one more tap; it’s how the app learns real command)</label>

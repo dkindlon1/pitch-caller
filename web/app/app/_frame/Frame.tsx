@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { signOut } from "@/app/login/actions";
 import { Ball, Icon } from "./Icon";
 import { Night } from "./Night";
@@ -20,7 +20,8 @@ export function Frame({ children, org, current, switchTo = [], dock, home, email
     <div className={`pq ${portalFonts}${entry ? " is-entry" : ""}`}>
       <a href="#main" className="pq-skip">Skip to content</a>
       {entry ? <Entry /> : <Night />}
-      <Motion />
+      {/* (it reads the path, which is request-time data on a dynamic route: this Next streams it in under Suspense) */}
+      <Suspense fallback={null}><Motion /></Suspense>
       <div className={`pq-frame${dock && dock.length ? "" : " no-dock"}`}>
         <header className="pq-bar">
           <div className="pq-bar-in glass">

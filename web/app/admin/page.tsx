@@ -29,7 +29,7 @@ async function Body({ searchParams }: { searchParams: Search }) {
         <label>Find by name or owner email<input name="q" defaultValue={q} maxLength={100} /></label>
         <button type="submit" className="shell-btn">Find</button>
       </form>
-      <div className="tbl-scroll"><table className="data-tbl" aria-label="Organizations">
+      <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Organizations">
         <thead><tr><th>Organization</th><th>Owner</th><th>Billing</th><th className="num">Teams</th><th className="num">Coaches</th><th className="num">Players</th><th>Started</th></tr></thead>
         <tbody>{d.orgs.map((o) => (
           <tr key={o.id}>

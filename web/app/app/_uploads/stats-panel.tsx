@@ -71,14 +71,14 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
             <span key={x.pitch} className={kindCls(kindOfName(x.pitch))} style={{ flexGrow: x.line.n }} title={`${x.pitch}: ${x.line.n} of ${all.n} pitches, ${Math.round(share)}%`}>
               {share >= 9 ? <><b>{x.pitch}</b> {Math.round(share)}%</> : null}</span>); })}
         </div>
-        <div className="tbl-scroll"><table className="data-tbl by-pitch" aria-label="By pitch">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl by-pitch" aria-label="By pitch">
           <thead><tr><th>Pitch</th><th className="num">n</th><th className="num">Strike</th><th className="num">Whiff</th><th className="num">K, two strikes</th><th className="num">Hard contact</th></tr></thead>
           <tbody>{bp.map((x) => <tr key={x.pitch} className={kindCls(kindOfName(x.pitch))} style={x.line.strike.pct === null ? undefined : ({ ["--v" as string]: `${x.line.strike.pct}%` } as React.CSSProperties)}>
             <td><span className="pq-pitch"><i className="chip" aria-hidden="true">{kindOfName(x.pitch)}</i>{x.pitch}</span></td><Cells l={x.line} /></tr>)}</tbody>
         </table></div>
 
         <h2 className="shell-h2">Usage by count</h2>
-        <div className="tbl-scroll"><table className="data-tbl usage" aria-label="Usage by count">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl usage" aria-label="Usage by count">
           <thead><tr><th>Count</th><th className="num">n</th>{use.pitches.map((p) => <th key={p} className="num">{p}</th>)}</tr></thead>
           <tbody>{use.counts.map((c) => <tr key={c.count}><td className="mono">{c.count}</td><td className="num mono">{c.n}</td>
             {use.pitches.map((p) => c.by[p].pct === null ? <td key={p} className="num thin">{c.by[p].k ? `${c.by[p].k}` : "–"}</td>
@@ -87,19 +87,19 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
         <p className="shell-note small">Under 10 pitches in a count, the table shows how many, not a share.</p>
 
         <h2 className="shell-h2">Each count and pitch</h2>
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="Each count and pitch">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Each count and pitch">
           <thead><tr><th>Count</th><th>Pitch</th><th className="num">n</th><th className="num">Strike</th><th className="num">Whiff</th><th className="num">K</th><th className="num">Hard contact</th></tr></thead>
           <tbody>{cp.map((x) => <tr key={x.count + x.pitch}><td className="mono">{x.count}</td><td>{x.pitch}</td><Cells l={x.line} /></tr>)}</tbody>
         </table></div>
 
         <h2 className="shell-h2">By hitter side</h2>
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="By hitter side">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="By hitter side">
           <thead><tr><th>Hitters</th><th className="num">n</th><th className="num">Strike</th><th className="num">Whiff</th><th className="num">K, two strikes</th><th className="num">Hard contact</th></tr></thead>
           <tbody>{sides.map((s) => <tr key={s.side}><td>{SIDE[s.side]}</td><Cells l={s.line} /></tr>)}</tbody>
         </table></div>
 
         <h2 className="shell-h2">Outings</h2>
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="Outing log">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Outing log">
           <thead><tr><th>Date</th><th>Source</th><th className="num">Pitches</th><th className="num">Strikes</th><th className="num">K</th><th className="num">BB</th><th className="num">Hard hit</th></tr></thead>
           <tbody>{log.map((o) => <tr key={o.date + o.source}><td>{day(o.date)}</td><td>{o.source === "pitchiq" ? "PitchIQ" : "TrackMan"}</td><td className="num mono">{o.pitches}</td>
             <td className="num mono">{o.strikes}</td><td className="num mono">{o.k}</td><td className="num mono">{o.bb}</td><td className="num mono">{o.hard}</td></tr>)}</tbody>
@@ -115,7 +115,7 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
 
       <h2 className="shell-h2">What the engine learned, next to the grades</h2>
       {Object.keys(lp).length ? (
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="Learned values and grades">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Learned values and grades">
           <thead><tr><th>Pitch</th><th className="num">Pitches</th><th className="num">Stuff: grade → read</th><th className="num">Command: grade → read</th></tr></thead>
           <tbody>{(a.pitcher.pitches || []).filter((d) => lp[d.id] || lp[d.name]).map((d) => {
             const x = lp[d.id] || lp[d.name], r = (x.talent || x.fit || {}) as { grade?: number; command?: number };

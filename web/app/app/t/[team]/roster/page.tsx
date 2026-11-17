@@ -35,7 +35,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <Notice sp={sp} />
       {invite ? <div className="shell-note invite-box" role="status">Invite link for {(pitchers.find((p) => p.id === forPid) || { name: "the player" }).name}: <code>{`${origin}/join/${invite}`}</code>. Send it to him (or his parent). It works once, for 14 days. <MailNote v={one(sp.mailed)} /></div> : null}
       {pitchers.length ? (
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="Pitchers">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Pitchers">
           <thead><tr><th>Pitcher</th><th>Throws</th><th>Arsenal</th>{roster ? <th>Account</th> : null}<th></th></tr></thead>
           <tbody>{pitchers.map((p) => {
             const acc = linked(p.id), inv = pending(p.id);

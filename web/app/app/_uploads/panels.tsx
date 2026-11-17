@@ -79,7 +79,7 @@ export async function UploadsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
       {sum.length ? (
         <section aria-labelledby="sum-h">
           <h2 id="sum-h" className="shell-h2">Summary, weighted</h2>
-          <div className="tbl-scroll"><table className="data-tbl" aria-label="Summary by pitch type">
+          <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Summary by pitch type">
             <thead><tr><th>Pitch</th><th className="num">Pitches</th><th className="num">Velo</th><th className="num">Max</th><th className="num">Up (in)</th><th className="num">Arm side (in)</th><th className="num">Spin</th><th className="num">Left out</th></tr></thead>
             <tbody>{sum.map((s) => (
               <tr key={s.type}><td>{s.type}</td><td className="num mono">{s.n}</td><td className="num mono">{s.velo ?? "–"}</td><td className="num mono">{s.veloMax ?? "–"}</td>
@@ -100,7 +100,7 @@ export async function UploadsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
       <section aria-labelledby="list-h">
         <h2 id="list-h" className="shell-h2">Uploads</h2>
         {ups.length ? (
-          <div className="tbl-scroll"><table className="data-tbl" aria-label="Uploads">
+          <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Uploads">
             <thead><tr><th>Date</th><th>Session</th><th>Source</th><th className="num">Pitches</th><th>File</th></tr></thead>
             <tbody>{ups.map((u) => (
               <tr key={u.id}><td><Link href={`${a.base}/uploads/${u.id}`}>{day(u.session_date)}</Link></td><td>{SESSION_LABEL[u.session_type]}</td><td>{SRC[u.source]}</td>
@@ -128,7 +128,7 @@ export async function ReviewPanel({ a, upload, sp }: { a: UploadAccess; upload: 
       <p className="shell-note">{ps.length - left - dev} counted · {left} left out · {dev} developing. Leave out warmups, grips you were trying and mis-tags; mark a pitch you&apos;re still building as developing.</p>
       <form action={reviewUpload} aria-label="Review pitches" className="shell-form">
         {hidden}<input type="hidden" name="n" value={ps.length} />
-        <div className="tbl-scroll"><table className="data-tbl review" aria-label="Pitches">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl review" aria-label="Pitches">
           <thead><tr><th className="num">#</th><th>Pitch</th><th className="num">Velo</th><th className="num">Up</th><th className="num">Arm side</th><th className="num">Spin</th>
             {u.session_type === "game" ? <><th>Count</th><th>Result</th></> : null}<th>Leave out</th><th>Why</th><th>Developing</th></tr></thead>
           <tbody>{ps.map((p) => (

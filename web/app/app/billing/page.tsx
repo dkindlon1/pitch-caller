@@ -83,7 +83,7 @@ async function Body({ searchParams }: { searchParams: Search }) {
 
       <section aria-labelledby="teams-h">
         <h2 id="teams-h" className="shell-h2">Teams</h2>
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="Teams">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Teams">
           <thead><tr><th>Team</th><th>Status</th><th></th></tr></thead>
           <tbody>{b.teams.map((t) => (
             <tr key={t.id}>

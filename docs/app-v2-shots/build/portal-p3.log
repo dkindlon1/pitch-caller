@@ -1,0 +1,130 @@
+  ok   login__laptop
+  ok   login__phone
+  ok   login-signup__laptop
+  ok   login-signup__phone
+  ok   login-error__laptop
+  ok   login-error__phone
+  ok   login-reset__laptop
+  ok   login-reset__phone
+  FAIL join__laptop  the Next.js error overlay is showing
+  FAIL join__phone  the Next.js error overlay is showing
+  FAIL join-signed-in__laptop  the Next.js error overlay is showing
+  FAIL join-signed-in__phone  the Next.js error overlay is showing
+  FAIL join-bad-token__laptop  the Next.js error overlay is showing
+  FAIL join-bad-token__phone  the Next.js error overlay is showing
+  ok   password__laptop
+  ok   password__phone
+  ok   team-picker__laptop
+  ok   team-picker__phone
+  ok   team-picker-lapsed__laptop
+  ok   team-picker-lapsed__phone
+  ok   team-picker-empty__laptop
+  ok   team-picker-empty__phone
+  ok   new-team__laptop
+  ok   new-team__phone
+  ok   launcher-coach__laptop
+  ok   launcher-coach__phone
+  ok   launcher-asst__laptop
+  ok   launcher-asst__phone
+  ok   launcher-viewer__laptop
+  ok   launcher-viewer__phone
+  ok   launcher-empty__laptop
+  ok   launcher-empty__phone
+  ok   launcher-team-menu-open__laptop
+  ok   launcher-account-menu-open__laptop
+  ok   launcher-focus__laptop
+  ok   launcher-focus__phone
+  ok   games__laptop
+  ok   games__phone
+  ok   game-new-1__laptop
+  ok   game-new-1__phone
+  ok   game-new-2-error__laptop
+  ok   game-new-2-error__phone
+  ok   game-new-2__laptop
+  ok   game-new-2__phone
+  ok   game-new-3__laptop
+  ok   game-new-3__phone
+  ok   game-new-4__laptop
+  ok   game-new-4__phone
+  ok   game-review__laptop
+  ok   game-review__phone
+  ok   game-detail-upcoming__laptop
+  ok   game-detail-upcoming__phone
+  ok   game-detail-noplan__laptop
+  ok   game-detail-noplan__phone
+  ok   game-detail-viewer__laptop
+  ok   game-detail-viewer__phone
+  ok   game-detail-finished__laptop
+  ok   game-detail-finished__phone
+  ok   game-edit__laptop
+  ok   game-edit__phone
+  ok   roster__laptop
+  ok   roster__phone
+  ok   roster-viewer__laptop
+  ok   roster-viewer__phone
+  ok   roster-invite-open__laptop
+  ok   roster-invite-open__phone
+  ok   pitcher__laptop
+  ok   pitcher__phone
+  ok   pitcher-two-pitches__laptop
+  ok   pitcher-two-pitches__phone
+  ok   pitcher-stats__laptop
+  ok   pitcher-stats__phone
+  ok   pitcher-stats-sparse__laptop
+  ok   pitcher-stats-sparse__phone
+  ok   pitcher-uploads__laptop
+  ok   pitcher-uploads__phone
+  ok   pitcher-upload-detail__laptop
+  ok   pitcher-upload-detail__phone
+  ok   opponents__laptop
+  ok   opponents__phone
+  ok   opponent-detail__laptop
+  ok   opponent-detail__phone
+  ok   opponent-empty__laptop
+  ok   opponent-empty__phone
+  ok   staff__laptop
+  ok   staff__phone
+  ok   settings__laptop
+  ok   settings__phone
+  ok   settings-viewer__laptop
+  ok   settings-viewer__phone
+  ok   billing__laptop
+  ok   billing__phone
+  ok   billing-lapsed__laptop
+  ok   billing-lapsed__phone
+  ok   exports__laptop
+  ok   exports__phone
+  ok   me-picker__laptop
+  ok   me-picker__phone
+  ok   me-home__laptop
+  ok   me-home__phone
+  ok   me-arsenal__laptop
+  ok   me-arsenal__phone
+  ok   me-uploads__laptop
+  ok   me-uploads__phone
+  ok   me-upload-detail__laptop
+  ok   me-upload-detail__phone
+  ok   me-stats__laptop
+  ok   me-stats__phone
+  ok   me-learned__laptop
+  ok   me-learned__phone
+  ok   me-profile__laptop
+  ok   me-profile__phone
+  ok   not-found__laptop  (1 console/page error)
+  ok   not-found__phone  (1 console/page error)
+  ok   not-found-app__laptop  (1 console/page error)
+  ok   not-found-app__phone  (1 console/page error)
+  ok   admin__laptop
+  ok   admin__phone
+  FAIL admin-org__laptop  the Next.js error overlay is showing
+  FAIL admin-org__phone  the Next.js error overlay is showing
+  ok   admin-audit__laptop
+  ok   admin-audit__phone
+console and page errors (grouped):
+  x4  console: Failed to load resource: the server responded with a status of 404 (Not Found)  [not-found__laptop, not-found__phone, not-found-app__laptop, ...]
+shots: 114 written, 8 failed: join__laptop, join__phone, join-signed-in__laptop, join-signed-in__phone, join-bad-token__laptop, join-bad-token__phone, admin-org__laptop, admin-org__phone
+axe: 8 serious or critical findings in 4 groups
+  critical aria-allowed-attr x2 [game-new-4__laptop, game-new-4__phone] .pq-pick[role="radio"][type="button"]:nth-child(1) ::  :: <button type="button" role="radio" aria-checked="false" class="pq-pick" aria-pressed="false"><b>Results only</b><small>Ball, strike, foul, in play, hit or out. 
+  serious scrollable-region-focusable x3 [pitcher-stats__phone, pitcher-stats-sparse__phone, me-stats__phone] .tbl-scroll:nth-child(6) :: Element should have focusable content :: <div class="tbl-scroll">
+  serious scrollable-region-focusable x2 [pitcher-uploads__phone, me-uploads__phone] section[aria-labelledby="sum-h"] > .tbl-scroll :: Element should have focusable content :: <div class="tbl-scroll">
+  serious scrollable-region-focusable x1 [me-learned__phone] .tbl-scroll :: Element should have focusable content :: <div class="tbl-scroll">

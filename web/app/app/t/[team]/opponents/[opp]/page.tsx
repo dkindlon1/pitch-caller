@@ -28,7 +28,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <p><Link href={`/app/t/${team}/opponents`}>Opponents</Link></p>
       <h1 className="shell-h1">{o.name}</h1>
       <Notice sp={sp} />
-      {mine.length ? <div className="tbl-scroll"><table className="data-tbl" aria-label="Hitters">
+      {mine.length ? <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Hitters">
         <thead><tr><th className="num">#</th><th>Hitter</th><th>Bats</th></tr></thead>
         <tbody>{mine.map((x) => <tr key={x.id}><td className="num mono">{x.number}</td><td>{x.name}</td><td>{BATS[x.bats] || x.bats}</td></tr>)}</tbody>
       </table></div> : <p className="shell-note">No hitters yet.</p>}

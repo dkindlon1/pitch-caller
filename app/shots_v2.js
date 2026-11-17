@@ -53,7 +53,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const server = http.createServer((req, res) => {
   if (req.url.split("?")[0] !== "/") { res.writeHead(404); return res.end(); }
   res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
-  res.end(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${fs.readFileSync(DIST, "utf8")}</body></html>`);
+  res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${fs.readFileSync(DIST, "utf8")}</body></html>`);
 });
 
 // two fake watches running the real watch core; a watch with .mute set never sends a receipt back
@@ -261,7 +261,7 @@ S["no-bluetooth"] = { watch: "nobt", run: async (page) => { await prepRoster(pag
 
 // --axe: run axe-core on every page or state before its screenshot; a serious or critical finding fails the run
 const AXE_ON = process.argv.includes("--axe");
-const AXE_SRC = AXE_ON ? require("fs").readFileSync(require.resolve("axe-core/axe.min.js", { paths: [__dirname, require("path").join(__dirname, ".."), require("path").join(__dirname, "../..")] }), "utf8") : "";
+const AXE_SRC = AXE_ON ? require("fs").readFileSync(require.resolve("axe-core/axe.min.js", { paths: [__dirname, require("path").join(__dirname, ".."), require("path").join(__dirname, "../.."), require("path").join(__dirname, "../web")] }), "utf8") : "";
 const axeHits = [];
 async function axeCheck(page, label) {
   if (!AXE_ON) return;

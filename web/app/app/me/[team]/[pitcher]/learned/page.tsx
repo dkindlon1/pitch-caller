@@ -31,7 +31,7 @@ async function Body({ params }: { params: Params }) {
       <h1 className="shell-h1">What the engine learned</h1>
       <p className="shell-note">After each game the engine checks your grades against what actually happened: balls, called strikes, whiffs, fouls and contact. Little data moves nothing; a lot moves its read toward your results. It only changes the calls slowly.</p>
       {rows.length ? (
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="What the engine learned">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="What the engine learned">
           <thead><tr><th>Pitch</th><th className="num">Pitches</th><th className="num">Stuff: entered → read</th><th className="num">Command: entered → read</th><th className="num">Expected strikes</th></tr></thead>
           <tbody>{rows.map((r) => (
             <tr key={r.key}>

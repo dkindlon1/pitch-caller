@@ -1122,7 +1122,7 @@ function logPanel() {
           if (!confirmTwice("endgame")) { toast("Tap End game again to save it and start a fresh one"); return; }
           endGame();
         } } }, "End game") : null)),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "log-tbl" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "log-tbl" },
       h("thead", {}, h("tr", {}, h("th", { class: "num" }, "#"), h("th", {}, "Inning"), h("th", {}, "Hitter"), h("th", { class: "num" }, "Count"), h("th", {}, "Sign"), h("th", {}, "Pitch and spot"), h("th", {}, "Result"), h("th", {}, h("span", { class: "sr" }, "Fix")))),
       h("tbody", {}, rows.length ? rows.flatMap((l) => {
         const extra = [l.loc ? { heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[l.loc] : null, l.thrown ? `threw ${l.thrown}` : null, l.wp ? (l.wp === "pb" ? "passed ball" : "wild pitch") : null].filter(Boolean);
@@ -1263,7 +1263,7 @@ function arsenalPanel(rows) {
   const max = Math.max(1, ...list.map(([, r]) => r.length));
   return h("section", { class: "panel glass span-7", "aria-label": "Arsenal" },
     h("div", { class: "panel-head" }, h("h2", {}, "Arsenal"), h("span", { class: "meta" }, "Per pitch, from the log")),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "ars" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "ars" },
       h("thead", {}, h("tr", {}, h("th", {}, "Pitch"), h("th", {}, "Thrown"), h("th", { class: "num" }, "Strikes"), h("th", { class: "num" }, "Whiffs per swing"), h("th", { class: "num" }, "In play"), h("th", { class: "num" }, "Hard"))),
       h("tbody", {}, list.length ? list.map(([key, r]) => {
         const [kind, name] = key.split("|"), sw = r.filter(isSwing), bip = r.filter((e) => resOf(e) === "play");
@@ -1332,7 +1332,7 @@ function hittersPanel(rows) {
   const lineup = S.setup.lineup;
   return h("section", { class: "panel glass span-12", "aria-label": "Their hitters" },
     h("div", { class: "panel-head" }, h("h2", {}, "Their hitters"), h("span", { class: "meta" }, dataScope === "game" ? "This game" : "Reads are from this game only")),
-    h("div", { class: "tbl-wrap" }, h("table", { class: "hit-tbl" },
+    h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "hit-tbl" },
       h("thead", {}, h("tr", {}, h("th", { class: "num" }, "#"), h("th", {}, "Hitter"), h("th", {}, "Bats"), h("th", {}, "Results"), h("th", { class: "num" }, "Pitches seen"), h("th", { class: "num" }, "Whiffs"), h("th", {}, "What we know"))),
       h("tbody", {}, lineup.map((b, i) => {
         const r = rows.filter((e) => e.slot === i), ends = r.filter((e) => e.end).slice().reverse();
@@ -1402,7 +1402,7 @@ function setupView() {
         h("label", { class: "f", style: { width: "110px" } }, "Pitch cap", h("input", { id: `pcap${pi}`, type: "number", inputmode: "numeric", min: 30, max: 150, value: pd.pitchCap || "", placeholder: "105", on: { change: (e) => { pd.pitchCap = e.target.value === "" ? null : +e.target.value; changed(); } } })),
         h("label", { class: "f", style: { width: "130px" } }, "Time to plate, s", h("input", { id: `pttp${pi}`, type: "number", inputmode: "decimal", step: 0.05, min: 0.9, max: 2.5, value: pd.ttp || "", placeholder: "optional", on: { change: (e) => { pd.ttp = e.target.value === "" ? null : +e.target.value; changed(); } } }))),
       signNote(pd),
-      h("div", { class: "tbl-wrap" }, h("table", { class: "ptable" },
+      h("div", { class: "tbl-wrap", tabindex: "0", role: "group", "aria-label": "Table (scrolls sideways when it is wider than the screen)" }, h("table", { class: "ptable" },
         h("thead", {}, h("tr", {}, ["Pitch", "Type and sign", "Stuff", "Command", "Bullpen feel", "Shape", "Main FB", "Velo", "Misses"].map((t) => h("th", t === "Stuff" ? { title: "Compared with other pitches of this profile: a 3 sweeper is an average sweeper" } : {}, t)),
           measured ? [h("th", {}, "V break"), h("th", {}, "H break")] : null, h("th", {}, ""))),
         h("tbody", {}, rows))),
