@@ -36,3 +36,4 @@ docs/site-v2-shots/final-check/**/*.png
 
 # app v2: raw captures stay on disk; contact sheets, picks and recordings are committed
 docs/app-v2-shots/**/raw/
+docs/app-v2-shots/final/frames/*/

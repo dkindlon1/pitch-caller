@@ -138,7 +138,7 @@ const wpick = (items, w) => { let r = rnd() * w.reduce((a, b) => a + b, 0); for 
   const bats = (oi) => hitters[oi].map((h) => ({ hitterId: h.id, name: h.name, hand: h.bats }));
   const gameBase = (id, n, o) => ({ id, date: day(n), level: "hs", inputs: 3, logLoc: false, radar: false, catcherId: CAT[0], deviceId: null, time: "16:00", plannedBy: "coach@test.local", plannedAt: t0,
     setup: { engine: "v09", home: true, innings: 7, extrasRunner: false, umpSeed: "normal" }, ...o });
-  const G = { today: ID("gam_today", 1), noplan: ID("gam_noplan", 2), f1: ID("gam_final", 3), f2: ID("gam_final", 4), f3: ID("gam_final", 5) };
+  const G = { today: ID("gam", "today1"), noplan: ID("gam", "noplan2"), f1: ID("gam", "final3"), f2: ID("gam", "final4"), f3: ID("gam", "final5") };   // one underscore: the open route takes ids shaped like the app's own (gam_ + letters and digits)
   const games = [
     gameBase(G.today, 0, { time: "16:00", opponentId: OPPS[0], staffIds: [P.brooks.id, P.nguyen.id, P.foster.id], starterId: P.brooks.id, lineup: bats(0), status: "planned" }),
     gameBase(G.noplan, 4, { time: null, opponentId: OPPS[1], staffIds: [], starterId: null, lineup: [], catcherId: null, status: "planned", setup: { engine: "v09", home: null, innings: null, extrasRunner: false, umpSeed: "normal" } }),
