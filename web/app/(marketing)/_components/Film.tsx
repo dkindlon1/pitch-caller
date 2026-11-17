@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { STORY_SIT, ledger, pct, type Weighed } from "@/lib/story";
 import { Playground } from "./Playground";
 import { startAtmos } from "./atmosGL";
-import { afterPaint, filmLength, loadKit, motion, reducedMotion, tallScreen, useKit } from "./motion";
+import { afterPaint, calm, filmLength, loadKit, motion, tallScreen, useCalm, useKit } from "./motion";
 import { filmFrames, type FilmSet, type Frames } from "./filmFrames";
 import { glassMoving } from "./GlassFx";
 
@@ -17,7 +17,9 @@ import { glassMoving } from "./GlassFx";
 // One scrubbed GSAP timeline; P below is the section's scroll progress, 0 to 1.
 // The frames do not wait for GSAP: they are fetched, decoded and drawn by filmFrames.ts from the first paint, and follow
 // the scroll position on their own until the timeline is in (then the timeline's scroll update draws them).
-// Under reduced motion none of this runs: site.css lays the same elements out as a still frame and a plain list.
+// In the calm version (reduced motion, or a window too small for the pinned scene: motion.ts) none of this runs:
+// site.css lays the same elements out as a still frame and a plain list. The switch can happen live (a phone turned
+// on its side), so both effects below depend on it and undo everything they did to the page when it flips.
 
 const A = 0.36, B = 0.65;                         // P where stop 4 starts, and where the film reaches its last frame
 const T4 = 0.507;                                 // the film's own time at the start of stop 4 (the watch closing up)
@@ -41,13 +43,14 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
   const faceOn = useRef(false);
   const film = useRef<Frames | null>(null);
   const lead = useRef(0);
+  const still = useCalm();
   const cands = story.groups.slice(0, 5), top = cands[0].p;
   const led = ledger(STORY_SIT);
 
   // ---------- the frames: from the first paint, whether or not the animation kit has arrived ----------
   useEffect(() => {
     const el = sec.current, canvas = el?.querySelector<HTMLCanvasElement>(".pq-cv");
-    if (!el || !canvas || reducedMotion()) return;
+    if (!el || !canvas || calm()) return;
     const len = filmLength();
     if (len !== null) el.style.height = `${len}vh`;   // a pacing switch (motion.ts); measured below and by ScrollTrigger
     let dead = false, set: FilmSet = tallScreen() ? "tall" : "wide", top = 0, span = 1, rt = 0, eagerT = 0, auto = 0, playing = false;
@@ -85,12 +88,16 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
     return () => {
       dead = true; stop(); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onResize); window.removeEventListener("load", afterLoad); window.clearTimeout(rt); window.clearTimeout(eagerT);
       film.current?.destroy(); film.current = null; lead.current = 0;
+      // hand the canvas back as the stylesheet's still (the calm version shows the poster behind an empty canvas)
+      canvas.classList.remove("is-on"); canvas.width = canvas.height = 0; el.style.height = "";
+      for (const k of ["frame", "want", "sharp"]) delete canvas.dataset[k];
+      delete el.dataset.auto;
     };
-  }, [frames.wide, frames.tall]);
+  }, [frames.wide, frames.tall, still]);
 
-  useKit(({ gsap, SplitText }) => {
+  useKit(({ gsap, SplitText }, again) => {
     const el = sec.current;
-    if (!el || reducedMotion()) return;
+    if (!el || calm()) return;
     const M = motion();
     const $ = <T extends Element = HTMLElement>(s: string) => el.querySelector(s) as unknown as T, $$ = <T extends Element = HTMLElement>(s: string) => Array.from(el.querySelectorAll(s)) as unknown as T[];
     let dead = false, dir: FilmSet = tallScreen() ? "tall" : "wide", count = frames[dir];
@@ -112,6 +119,10 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       const vw = pin.clientWidth, vh = pin.clientHeight, tall = dir === "tall", cy = R.y + R.h / 2;
       tl?.scrollTrigger?.kill(); tl?.kill(); tl = null;
       gsap.set([chips, ".pq-word .ch", ".pq-msg", ".pq-ledger", ".pq-ledger li", ".pq-ledger h3", ".pq-lg", ".pq-landed", ".pq-explain", ".pq-rail", ".pq-illus", ".pq-pgtitle", ".pq-ctl", ".pq-mix", ".pq-flow", ".pq-shade", ".pq-pglight", ".pq-foot-fade", ".pq-light", ".pq-haze", ".pq-beam", ".pq-floor", ".pq-cut", ".pq-feel i", ".pq-chip .pq-bar b"], { clearProps: "opacity,transform,filter,visibility" });
+      // Vertical centring is set here, not left to the stylesheet's translateY(-50%). GSAP reads a transform back as
+      // pixels and recognises "-50%" only when the block's height happens to round the same way; a block it missed
+      // lost its centring the moment its y was animated, and sat half its own height too low.
+      gsap.set(".pq-msg:not(.is-low), .pq-ledger", { yPercent: tall ? 0 : -50, y: 0 });
       // chips: on a wide screen, a column right of the watch where distance from the watch tracks share, so the
       // likeliest call sits closest; on a phone, a stack under it in the same order
       chips.forEach((c, i) => {
@@ -184,7 +195,8 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       msgOut(s2, 0.222); msgIn(s3, 0.242);
       if (tall) tl.to(ga, { opacity: 0, y: -10, duration: 0.018, ...out }, 0.226); else tl.to(liA[liA.length - 1], { opacity: 0.42, duration: 0.02, ease: "none" }, 0.25);
       const liB = rowsB.filter((r) => r.tagName === "LI");
-      rowsB.forEach((r, i) => { if (r.tagName === "LI") rowIn(r, 0.25 + i * 0.0105, liB.slice(0, liB.indexOf(r)), tall ? 0 : 0.13); else tl!.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.02 }, 0.25 + i * 0.0105); });
+      const b0 = tall ? 0.236 : 0.25;      // (on a phone the two groups share one space: the second starts as the first leaves, so the glass is never empty)
+      rowsB.forEach((r, i) => { if (r.tagName === "LI") rowIn(r, b0 + i * 0.0105, liB.slice(0, liB.indexOf(r)), tall ? 0 : 0.13); else tl!.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.02 }, b0 + i * 0.0105); });
       tl.fromTo($$(".pq-feel i"), { scaleX: 0 }, { scaleX: (i: number) => led_feel[i], duration: 0.03, stagger: 0.0105, ...inn }, 0.262);
       // stop 4: the ledger opens up and the candidate calls leave it
       msgOut(s3, 0.336); msgIn(s4, 0.366);
@@ -257,14 +269,18 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       for (const g of glass) { const off = !(parseFloat(g.style.opacity) > 0.01); if (off !== g.classList.contains("is-off")) g.classList.toggle("is-off", off); }
     }
     const led_feel = led.pitcher.map((p) => p.feel);
-    const railEls = $$(".pq-rail .lab span"), pg = $(".pq-pg");
+    const railEls = $$(".pq-rail .lab span"), pg = $(".pq-pg"), faceEl = $(".pq-face");
+    let faceUp = faceOn.current && faceEl.style.opacity === "1";
     function frame(p: number) {
       film.current?.seek(timeAt(p, lead.current) * (count - 1), true);
       chips[0].classList.toggle("is-won", p > pp(0.35));
       railEls[0].className = p > 0.09 ? "is-on" : ""; railEls[1].className = p > A ? "is-on" : ""; railEls[2].className = p > pp(0.49) ? "is-on is-g" : "";
       const live = p > pp(0.86);
       pg.classList.toggle("is-live", live);
-      if (p < pp(0.78) && faceOn.current) { faceOn.current = false; gsap.set(".pq-face", { opacity: 0 }); }
+      // a changed call stays on the watch for as long as the playground is up, and comes back with it: above the
+      // playground the film's own screen shows, so its story is never told with the visitor's call on it
+      const show = faceOn.current && p >= pp(0.78);
+      if (show !== faceUp) { faceUp = show; gsap.set(faceEl, { opacity: show ? 1 : 0 }); }
       el!.dataset.stop = String(p < 0.08 ? 1 : p < 0.23 ? 2 : p < 0.35 ? 3 : p < pp(0.21) ? 4 : p < pp(0.44) ? 5 : p < pp(0.7) ? 6 : 7);
     }
 
@@ -279,14 +295,19 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       floor: gp(L.floor, "opacity"), floorY: (gp(L.floor, "yPercent") / 100) * 0.72, pg: gp(L.pg, "opacity"),
     }), () => pg.classList.contains("is-live") && !document.documentElement.hasAttribute("data-glass") && !!$(".pq-ctl")?.style.backdropFilter, { canvas: $<HTMLCanvasElement>(".pq-cv"), set: () => dir });
     let rt = 0;
-    const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { dir = tallScreen() ? "tall" : "wide"; count = frames[dir]; layout(); }, 160); };
+    const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { dir = tallScreen() ? "tall" : "wide"; count = frames[dir]; again(layout); }, 160); };
     window.addEventListener("resize", onResize);
-    if (!fontsIn) document.fonts.ready.then(() => { if (!dead) layout(); });      // measured again only if the type changed under it
+    if (!fontsIn) document.fonts.ready.then(() => { if (!dead) again(layout); });      // measured again only if the type changed under it
     return () => {
       dead = true; window.removeEventListener("resize", onResize); window.clearTimeout(rt); stopAtmos?.();
       tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); glass.forEach((g) => g.classList.remove("is-off"));
+      // everything set by hand goes back to the stylesheet (the calm version places these itself)
+      for (const k of ["left", "top", "width", "height"]) faceEl.style.removeProperty(k);
+      faceEl.style.opacity = faceOn.current ? "1" : "";
+      wordEls.forEach((w) => w.removeAttribute("style")); pg.classList.remove("is-live"); chips[0].classList.remove("is-won");
+      railEls.forEach((r) => { r.className = ""; }); delete el.dataset.stop;
     };
-  }, [frames.wide, frames.tall], sec);
+  }, [frames.wide, frames.tall, still], sec);
 
   return (
     <section ref={sec} id="top" className="pq-film" aria-labelledby="hero-h" data-anchor={PLAYGROUND_AT}>
@@ -303,10 +324,10 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
           <h1 id="hero-h">Every pitch called.<br />Every call explained.</h1>
           <p>PitchIQ weighs your pitcher, the hitter and the count, then sends the call to two wrists.</p>
         </div>
-        <div className="pq-msg is-2"><h2>It starts with the situation.</h2><p>The count, the outs, who&rsquo;s on, and how much the next pitch is worth.</p></div>
-        <div className="pq-msg is-3 is-low"><h2>Then your pitcher. Then the hitter.</h2><p>What each pitch is doing today, which side he hits from, and what he just saw.</p></div>
+        <div className="pq-msg is-2"><h2>It starts with<br className="w" /> the situation.</h2><p>The count, the outs, who&rsquo;s on, and how much the next pitch is worth.</p></div>
+        <div className="pq-msg is-3 is-low"><h2>Then your pitcher.<br className="w" /> Then the hitter.</h2><p>What each pitch is doing today, which side he hits from, and what he just saw.</p></div>
 
-        <div className="pq-ledger pq-glass" aria-label="What the engine is given">
+        <div className="pq-ledger pq-glass" role="group" aria-label="What the engine is given">
           <div className="pq-lg is-a">
             <h3>The situation</h3>
             <ul>{led.situation.map((r) => <li key={r.k}><span><i className="pq-dot" />{r.k}</span><b>{r.v}</b></li>)}</ul>
@@ -319,7 +340,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
           </div>
         </div>
 
-        <div className="pq-msg is-4"><h2>Every pitch, every spot, weighed.</h2><p>The engine prices each call against all of it. The closer a call sits to the watch, the more of the mix it holds.</p></div>
+        <div className="pq-msg is-4"><h2>Every pitch,<br className="w" /> every spot, weighed.</h2><p>The engine prices each call against all of it. The closer a call sits to the watch, the more of the mix it holds.</p></div>
         <div className="pq-msg is-5 is-big"><h2>Down to one.</h2><p>He&rsquo;s looking for the slider. So the screen wakes up with something hard.</p></div>
 
         <ol className="pq-chips" aria-label="What the engine could throw here">

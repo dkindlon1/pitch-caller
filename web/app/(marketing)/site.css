@@ -26,6 +26,7 @@
   --fs-h2: clamp(2.375rem, 4.5vw, 4.125rem);
   --fs-h2-big: clamp(3rem, 6.4vw, 6rem);
   --fs-hero: clamp(2.75rem, 4.9vw, 4.9rem);
+  --fs-stop: clamp(2rem, min(3.3vw, 5.9vh), 3.3rem);   /* the film's stops 2 to 4: one size, two lines each */
   /* glass */
   --glass-blur: 22px;
   --glass-sat: 190%;
@@ -64,7 +65,8 @@
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
 }
-html:has(.pq) { background: #0c0b0e; }
+html:has(.pq) { background: #0c0b0e; color-scheme: dark; scrollbar-color: #3a3c48 #0c0b0e; }
+html:has(.pq) body { background: #0c0b0e; }
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 .lenis.lenis-stopped { overflow: hidden; }
@@ -76,6 +78,7 @@ html.lenis, html.lenis body { height: auto; }
 :where(.pq) :where(p) { text-wrap: pretty; }
 :where(.pq) :where(a) { color: inherit; text-decoration: none; }
 .pq button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+.pq a, .pq button, .pq summary, .pq input, .pq select, .pq textarea { -webkit-tap-highlight-color: rgba(47, 91, 255, 0.22); }
 .pq :focus-visible { outline: 2px solid var(--call); outline-offset: 3px; border-radius: 8px; }
 .pq main:focus, .pq section:focus { outline: none; }
 .pq ::selection { background: rgba(47, 91, 255, 0.55); color: #fff; }
@@ -179,16 +182,21 @@ html.lenis, html.lenis body { height: auto; }
 .pq-msg { position: absolute; left: 6.6vw; top: 50%; width: min(36vw, 540px); transform: translateY(-50%); z-index: 4; }
 .pq-msg.is-1 { width: min(54vw, 820px); }
 .pq-msg h1 { font-size: var(--fs-hero); }
-.pq-msg h2 { font-size: var(--fs-h2); }
+.pq-msg h2 { font-size: var(--fs-stop); }
 .pq-msg p { margin-top: 20px; font-size: clamp(1rem, 1.45vw, 1.3rem); line-height: 1.38; color: var(--soft); max-width: 21em; }
 .pq-msg.is-big h2 { font-size: var(--fs-h2-big); }
+/* stops 2 to 4 stay left of the watch, which comes as far left as a third of the frame while they are up: a narrow
+   block, the headline broken by hand into two lines (the breaks are for wide screens only) */
+.pq-msg.is-2 { width: min(31vw, 560px); }
+.pq-msg.is-4 { width: min(34vw, 600px); }
+.pq-msg.is-2 p { max-width: 17em; }
+.pq-msg.is-2 p, .pq-msg.is-4 p { font-size: clamp(1rem, 1.3vw, 1.2rem); margin-top: 16px; }
 /* stop 3: the watch is large and left of centre in these frames, so the statement drops to the lower left */
-.pq-msg.is-low { top: auto; bottom: 15vh; transform: none; width: min(27vw, 410px); }
-.pq-msg.is-low h2 { font-size: clamp(2rem, 3.4vw, 3.2rem); }
-.pq-msg.is-low p { font-size: clamp(0.95rem, 1.2vw, 1.1rem); margin-top: 14px; }
+.pq-msg.is-low { top: auto; bottom: 15vh; transform: none; width: min(31vw, 560px); }
+.pq-msg.is-low p { font-size: clamp(0.95rem, 1.2vw, 1.1rem); margin-top: 14px; max-width: 19em; }
 
 /* stops 2 and 3: the ledger of what the engine is given */
-.pq-ledger { position: absolute; right: 5vw; top: 50%; width: min(27vw, 380px); padding: 22px 24px 20px; transform: translateY(-50%); z-index: 4; }
+.pq-ledger { position: absolute; right: 5vw; top: 50%; width: clamp(310px, 27vw, 380px); padding: 22px 24px 20px; transform: translateY(-50%); z-index: 4; }
 .pq-lg.is-b { margin-top: 14px; }
 .pq-ledger h3 { font: 500 var(--fs-small) / 1.2 var(--body); letter-spacing: 0; color: #c9cad3; margin: 14px 0 6px; }
 .pq-ledger h3:first-child { margin-top: 0; }
@@ -201,7 +209,8 @@ html.lenis, html.lenis body { height: auto; }
 
 /* stops 4 and 5: the candidates, loose around the watch */
 .pq-chips { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
-.pq-chip { position: absolute; width: clamp(250px, 21vw, 320px); padding: 15px 20px 17px; border-radius: var(--r-chip); will-change: transform, opacity; }
+.pq-chip { position: absolute; width: clamp(268px, 21vw, 320px); padding: 15px 20px 17px; border-radius: var(--r-chip); will-change: transform, opacity; }
+.pq-chip .t span:first-child { white-space: nowrap; }
 .pq-chip .t, .pq-row .t { display: flex; justify-content: space-between; gap: 12px; font-size: 1.06rem; font-weight: 600; letter-spacing: -0.015em; }
 .pq-chip .t span:last-child, .pq-row .t span:last-child { color: var(--dim); font-variant-numeric: tabular-nums; }
 .pq-bar { margin-top: 9px; height: 8px; border-radius: 5px; background: rgba(236, 235, 230, 0.1); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6); position: relative; overflow: hidden; }
@@ -242,7 +251,7 @@ html.lenis, html.lenis body { height: auto; }
 .pq-ctl { position: absolute; left: 5vw; top: 33vh; width: min(30vw, 420px); padding: 22px 26px 20px; }
 .pq-mix { position: absolute; right: 5vw; top: 15vh; width: min(29vw, 400px); padding: 22px 26px 20px; }
 .pq-countrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 2px; }
-.pq-num { font: 900 clamp(5rem, 8vw, 7.4rem) / 0.86 var(--head); font-stretch: 62%; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.pq-num { white-space: nowrap; font: 900 clamp(5rem, 8vw, 7.4rem) / 0.86 var(--head); font-stretch: 62%; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
 .pq-steps { display: grid; gap: 8px; }
 .pq-steps > div { display: flex; align-items: center; gap: 8px; font-size: var(--fs-small); font-weight: 500; }
 .pq-steps > div > span:first-child { width: 50px; color: #c9cad3; }
@@ -289,9 +298,59 @@ html.lenis, html.lenis body { height: auto; }
 .pq-face::after { content: ""; position: absolute; right: 5%; top: 5%; width: 4.6%; height: 4.6%; border-radius: 50%; background: #58e06c; }
 .pq-face-ring { position: absolute; inset: -2px; border-radius: inherit; box-shadow: 0 0 0 2px rgba(98, 240, 122, 0.9), 0 0 60px 6px rgba(98, 240, 122, 0.55); opacity: 0; pointer-events: none; }
 
-/* before the timeline takes over (first paint, slow script): only the first stop shows, as it will once it runs */
-@media (prefers-reduced-motion: no-preference) {
+/* before the timeline takes over (first paint, slow script): only the first stop shows, as it will once it runs.
+   (This query is "the film is moving": the opposite of the calm version's query at the end of this file.) */
+@media (prefers-reduced-motion: no-preference) and (max-aspect-ratio: 9/10), (prefers-reduced-motion: no-preference) and (min-width: 1024px) and (min-height: 600px) {
   .pq-msg:not(.is-1), .pq-ledger, .pq-chip, .pq-pgtitle, .pq-ctl, .pq-mix { opacity: 0; }
+}
+
+/* ---------- wide but short ----------
+   A 1366x768 laptop shows about 625px of page, a 1280x800 one about 700, an iPad on its side 768 by 1024. The same
+   scene, tightened in two steps so that no panel is cut off by the pinned frame. (Under 600px tall, or under 1024px
+   wide, it is the calm version at the end of this file.) */
+@media (min-aspect-ratio: 901/1000) and (max-height: 860px) {
+  .pq-ledger { padding: 16px 22px 14px; }
+  .pq-ledger li { padding: 5px 0; font-size: 0.95rem; }
+  .pq-ledger h3 { margin: 10px 0 4px; }
+  .pq-pgtitle { top: 92px; } .pq-pgtitle h2 { font-size: clamp(1.9rem, 3vw, 2.6rem); } .pq-pgtitle p { margin-top: 8px; font-size: 0.97rem; }
+  .pq-ctl { top: 212px; padding: 16px 22px 14px; }
+  .pq-mix { top: 92px; padding: 18px 22px 16px; }
+  .pq-num { font-size: clamp(4rem, 6.4vw, 5.6rem); }
+  .pq-sep { margin: 10px 0 8px; }
+  .pq-gamerow { margin-top: 4px; gap: 18px; }
+  .pq-hit { margin-top: 10px; } .pq-fixed { margin-top: 6px; } .pq-reset { margin-top: 8px; height: 32px; }
+  .pq-rows { gap: 7px; margin-top: 8px; } .pq-why { margin-top: 10px; padding-top: 10px; }
+}
+@media (min-aspect-ratio: 901/1000) and (max-height: 700px) {
+  .pq-msg.is-low { bottom: 13vh; }
+  .pq-explain { bottom: 12vh; } .pq-explain p + p { margin-top: 8px; font-size: 0.97rem; }
+  .pq-ledger { padding: 12px 20px 10px; --glass-blur: 16px; }
+  .pq-ledger li { padding: 3px 0; font-size: 0.9rem; }
+  .pq-ledger h3 { margin: 7px 0 2px; font-size: 0.8rem; }
+  .pq-chip { padding: 11px 18px 13px; } .pq-chip .t { font-size: 0.98rem; }
+  .pq-pgtitle { top: 82px; } .pq-pgtitle p { display: none; }
+  .pq-ctl { top: 136px; padding: 12px 20px 12px; } .pq-mix { top: 82px; padding: 14px 20px 12px; }
+  .pq-num { font-size: 3.9rem; }
+  .pq-ctl .pq-btn.is-rnd { width: 40px; min-width: 40px; height: 40px; }
+  .pq-steps { gap: 5px; } .pq-sep { margin: 8px 0 6px; }
+  .pq-dia { transform: scale(0.88); transform-origin: 0 50%; margin-right: -12px; }
+  .pq-seg { margin-top: 4px; } .pq-seg .pq-btn { height: 36px; }
+  .pq-side .pq-lbl + .pq-seg + .pq-lbl { margin-top: 6px; }
+  .pq-hit { margin-top: 6px; } .pq-fixed { margin-top: 4px; font-size: 0.8rem; } .pq-reset { margin-top: 6px; height: 30px; }
+  .pq-row .t { font-size: 0.92rem; } .pq-row .pq-bar { margin-top: 6px; height: 6px; } .pq-rows { gap: 4px; }
+  .pq-spots { margin: 4px 0 0; } .pq-spots li { font-size: 0.84rem; }
+  .pq-why { margin-top: 8px; padding-top: 8px; font-size: 0.94rem; min-height: 0; } .pq-mix .pq-fine { margin-top: 6px; font-size: 0.72rem; }
+}
+
+/* wide but narrow (an iPad on its side): the panels are a third of a small width, so the count's row drops its dots
+   (the numerals say the same) and the chips' type comes down a step */
+@media (min-aspect-ratio: 901/1000) and (max-width: 1400px) { .pq-chip .t { font-size: 1rem; } }
+@media (min-aspect-ratio: 901/1000) and (max-width: 1180px) {
+  .pq-ctl .pq-dots { display: none; }
+  .pq-num { font-size: 4rem; }
+  .pq-ctl .pq-btn.is-rnd { width: 40px; min-width: 40px; height: 40px; }
+  .pq-gamerow { gap: 12px; } .pq-dia { transform: scale(0.86); transform-origin: 0 50%; margin-right: -16px; }
+  .pq-seg { gap: 5px; } .pq-seg .pq-btn { padding: 0 12px; }
 }
 
 /* ---------- phone and tablet portrait: the film recomposed, not shrunk ---------- */
@@ -301,16 +360,18 @@ html.lenis, html.lenis body { height: auto; }
   .pq-floor { height: 52vh; bottom: -16vh; }
   .pq-light.is-b { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--glow) 40%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
   .pq-light.is-g { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--call) 36%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
-  .pq-msg, .pq-msg.is-low { left: 22px; right: 22px; top: 11vh; bottom: auto; width: auto; transform: none; }
+  .pq-msg, .pq-msg.is-low, .pq-msg.is-2, .pq-msg.is-4 { left: 22px; right: 22px; top: 11vh; bottom: auto; width: auto; transform: none; }
+  .pq-msg br.w { display: none; }
+  .pq-msg p, .pq-msg.is-2 p, .pq-msg.is-low p { max-width: none; }
   .pq-explain { isolation: isolate; }
-  .pq-explain::before { content: ""; position: absolute; inset: -22px -14px -16px; z-index: -1; border-radius: 28px; background: radial-gradient(closest-side, rgba(12, 11, 14, 0.9), rgba(12, 11, 14, 0.72) 62%, transparent); }   /* the strap is bright metal behind this copy */
+  .pq-explain::before { content: ""; position: absolute; inset: -22px -14px -16px; z-index: -1; border-radius: 28px; background: radial-gradient(closest-side, rgba(12, 11, 14, 0.9), rgba(12, 11, 14, 0.72) 62%, transparent); }   /* the strap's lit ribs run behind this copy */
   .pq-foot-fade { z-index: 1; height: 22vh; }
   .pq-cut { display: none; }   /* on a phone the panels sit above and below the watch, over the strap */
   .pq-msg.is-1 { width: auto; }
   .pq-msg h1 { font-size: clamp(1.9rem, 8.7vw, 2.6rem); }
   .pq-msg h2, .pq-msg.is-low h2 { font-size: clamp(2rem, 9.6vw, 2.5rem); }
   .pq-msg.is-big h2 { font-size: clamp(3rem, 15vw, 3.8rem); }
-  .pq-msg p, .pq-msg.is-low p { font-size: 1.03rem; margin-top: 10px; }
+  .pq-msg p, .pq-msg.is-low p, .pq-msg.is-2 p, .pq-msg.is-4 p { font-size: 1.03rem; margin-top: 10px; }
   .pq-ledger { left: 14px; right: 14px; top: auto; bottom: 9vh; width: auto; transform: none; padding: 14px 18px 12px; border-radius: 22px; --glass-blur: 14px; }
   .pq-ledger { display: grid; } .pq-lg { grid-area: 1 / 1; } .pq-lg.is-b { margin-top: 0; }
   .pq-ledger h3 { margin: 8px 0 2px; font-size: 0.8rem; }
@@ -348,9 +409,14 @@ html.lenis, html.lenis body { height: auto; }
 .pq-glowbg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .pq-glowbg::before { content: ""; position: absolute; width: 70vw; height: 60vh; left: var(--gx, 15%); top: var(--gy, 20%); background: radial-gradient(closest-side, rgba(20, 34, 79, 0.75), transparent); }
 
-/* ---------- reduced motion: a calm second version ---------- */
+/* ---------- the calm second version ----------
+   For anyone who asks for reduced motion, and for any window the pinned scenes cannot fit: wide but under 560px tall
+   or under 960px wide (a phone on its side, a small window, a page zoomed to 200%). The film is one still and its
+   stops a plain list; nothing is pinned. The scripts use the same query (CALM in _components/motion.ts). */
 @media (prefers-reduced-motion: reduce) {
   .pq *, .pq *::before, .pq *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+@media (prefers-reduced-motion: reduce), (min-aspect-ratio: 901/1000) and (max-height: 599px), (min-aspect-ratio: 901/1000) and (max-width: 1023px) {
   .pq-film { height: auto; }
   .pq-pin { position: relative; height: auto; overflow: visible; display: grid; gap: 28px; padding: 0 var(--pad) 72px; max-width: var(--wrap); margin: 0 auto; }
   .pq-cv { position: relative; inset: auto; width: calc(100% + 2 * var(--pad)); max-width: none; margin: 0 calc(-1 * var(--pad)); height: auto; aspect-ratio: 16 / 10; max-height: 86vh; background-image: url(/media/film/watch/poster.jpg); opacity: 1; }

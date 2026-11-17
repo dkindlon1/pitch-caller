@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { motion, reducedMotion, useKit } from "./motion";
+import { calm, motion, useCalm, useKit } from "./motion";
 
 // For programs: what a coach and a pitcher see after the game. One glass panel for a made-up pitcher shaped like the
 // site's sample starter, labelled as a sample; the figures are the ones the portal's pitcher page shows and the
@@ -24,9 +24,10 @@ export function Programs() {
   const [role, setRole] = useState<"coach" | "player">("coach");
   const [hl, setHl] = useState<P | null>(null);
   const coach = role === "coach";
+  const still = useCalm();
 
   useKit(({ gsap }) => {
-    const el = sec.current; if (!el || reducedMotion()) return;
+    const el = sec.current; if (!el || calm()) return;
     const M = motion(), q = (s: string) => Array.from(el.querySelectorAll(s));
     const num = el.querySelector<HTMLElement>(".pq-pr-count b"), c = { v: 0 };
     // the outing plays back, once: pitches fall into the lanes in the order a game would mix them
@@ -41,7 +42,8 @@ export function Programs() {
       .fromTo(q(".pq-pr-rate"), { opacity: 0, x: 14 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.12, clearProps: "opacity,transform" }, 2.5)
       .fromTo(q(".pq-pr-note"), { opacity: 0 }, { opacity: 1, duration: 0.5, stagger: 0.1, clearProps: "opacity" }, 2.75);
     window.dispatchEvent(new Event("pq:lens"));
-  }, [], sec);
+    return () => { if (num) num.textContent = String(TOTAL); };
+  }, [still], sec);
 
   return (
     <section ref={sec} id="programs" className="pq-sec pq-pg2" aria-labelledby="pp-h" tabIndex={-1}>

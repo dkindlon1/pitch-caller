@@ -43,8 +43,9 @@
 .pq-ab-seg path.g { stroke: var(--call); opacity: 0; }
 .pq-ab-seg .lab { position: absolute; left: 50%; bottom: calc(100% + 4px); transform: translateX(-50%); white-space: nowrap; padding: 3px 9px; border-radius: 999px; background: rgba(236, 235, 230, 0.08); font-size: 0.75rem; font-weight: 600; color: var(--soft); }
 .pq-ab-fine { margin-top: clamp(40px, 7vh, 72px); max-width: 46rem; }
-/* wide screens with motion: the row is pinned and scrubbed; one line of copy above it changes per pitch */
-@media (prefers-reduced-motion: no-preference) and (min-width: 861px) {
+/* wide screens with motion: the row is pinned and scrubbed; one line of copy above it changes per pitch
+   (the same query as PINNED in _components/motion.ts) */
+@media (prefers-reduced-motion: no-preference) and (min-width: 861px) and (max-aspect-ratio: 9/10), (prefers-reduced-motion: no-preference) and (min-width: 1024px) and (min-height: 600px) {
   .pq-ab { height: 420vh; }
   .pq-ab .pq-ab-pin { position: sticky; top: 0; height: 100vh; padding: 0; display: grid; align-items: center; overflow: hidden; }
   .pq-ab .pq-sec-head h2 { font-size: clamp(2rem, 3.4vw, 3.1rem); }
@@ -199,6 +200,28 @@
 .pq-form-done-h { font: 650 1.6rem/1.1 var(--head); font-stretch: 108%; letter-spacing: -0.03em; color: var(--chalk); }
 @media (max-width: 860px) { .pq-contact-grid { grid-template-columns: minmax(0, 1fr); } .pq-form-row { grid-template-columns: minmax(0, 1fr); } .pq-contact-panel { --glass-blur: 12px; } }
 
+/* ---------- the legal pages and the not-found page: the site's ground and type, nothing else ---------- */
+.pq-docpage { display: flex; flex-direction: column; }
+.pq-doc-head { padding: 22px 0; border-bottom: 1px solid var(--line); }
+.pq-doc-head .pq-brand { margin: 0; }
+.pq-doc { flex: 1; max-width: 46rem; padding-top: clamp(40px, 8vh, 88px); padding-bottom: clamp(56px, 10vh, 112px); }
+.pq-doc h1 { font-size: var(--fs-h2); margin-bottom: 24px; }
+.pq-doc h2 { font-size: clamp(1.3rem, 2vw, 1.6rem); letter-spacing: -0.03em; line-height: 1.15; margin: 40px 0 10px; }
+.pq-doc p, .pq-doc li { color: var(--soft); line-height: 1.6; max-width: 40em; }
+.pq-doc p + p { margin-top: 14px; }
+.pq-doc ul, .pq-doc ol { margin: 10px 0; padding-left: 1.2em; list-style: disc; }
+.pq-doc li + li { margin-top: 6px; }
+.pq-doc a { color: var(--chalk); text-decoration: underline; text-decoration-color: rgba(236, 235, 230, 0.4); text-underline-offset: 3px; }
+.pq-doc a:hover { text-decoration-color: var(--chalk); }
+.pq-doc .doc-note { margin: 0 0 8px; padding: 10px 16px; border-left: 3px solid var(--glow); border-radius: 0 10px 10px 0; background: rgba(47, 91, 255, 0.1); font-size: 0.95rem; color: var(--chalk); }
+.pq-doc-foot { padding: 22px 0 28px; border-top: 1px solid var(--line); font-size: var(--fs-fine); color: var(--faint); }
+.pq-doc-foot .pq-wrap { display: flex; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; }
+.pq-lost { flex: 1; display: grid; align-content: center; justify-items: start; gap: 14px; padding-top: 48px; padding-bottom: 96px; }
+.pq-lost-n { font: 900 clamp(7rem, 22vw, 15rem) / 0.8 var(--head); font-stretch: 62%; letter-spacing: -0.01em; color: var(--midnight); -webkit-text-stroke: 1.5px rgba(111, 141, 255, 0.55); }
+.pq-lost h1 { font-size: var(--fs-h2); }
+.pq-lost p { color: var(--soft); font-size: clamp(1.06rem, 1.4vw, 1.25rem); max-width: 30em; }
+.pq-lost-go { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-top: 14px; }
+
 /* ---------- footer ---------- */
 .pq-foot { padding: 64px 0 40px; border-top: 1px solid var(--line); }
 .pq-foot-top { display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
@@ -209,7 +232,7 @@
 .pq-foot-cols a:hover { color: var(--chalk); transform: translateX(3px); }
 .pq-foot-row { display: flex; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); font-size: var(--fs-fine); color: var(--faint); }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce), (min-aspect-ratio: 901/1000) and (max-height: 599px), (min-aspect-ratio: 901/1000) and (max-width: 1023px) {
   .pq-ab-face:hover, .pq-ab-item.is-open .pq-ab-face { transform: none; }
   .pq-ab-seg .g { opacity: 1; } .pq-ab-seg .b { display: none; }
   .pq-tw-pulse { display: none; }

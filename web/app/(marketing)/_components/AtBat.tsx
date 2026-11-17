@@ -3,15 +3,16 @@ import { useRef, useState } from "react";
 import type { AtBatPitch } from "@/lib/story_server";
 import { pct } from "@/lib/story";
 import { Watch } from "./Watch";
-import { motion, useKit } from "./motion";
+import { PINNED, STACKED, motion, useKit } from "./motion";
 
 // The at-bat: one real at-bat as a strip of watch faces, one per pitch, with the result under each. The film showed
 // one call; this shows how each call depends on the last. As you scroll, a blue thread leaves the face that was just
 // thrown, carrying that pitch's speed and height, and runs into the next face, which lights as its call lands. On the
 // last pitch the whole thread turns green, so the at-bat reads as one plan. Any face opens the mix the engine was
 // choosing from at that count (replayed through the engine when the page is built: lib/story_server.ts, atBat()).
-// Wide screens pin the row and scrub it; phones stack it and run the thread down the left edge; reduced motion gets
-// the same content as a plain list (the stylesheet's default state is the finished one).
+// Wide screens pin the row and scrub it; phones stack it and run the thread down the left edge; the calm version
+// (reduced motion, or a window too small to pin: motion.ts) gets the same content as a plain list (the stylesheet's
+// default state is the finished one).
 export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
   const sec = useRef<HTMLElement>(null);
   const [open, setOpen] = useState<number | null>(null);
@@ -21,7 +22,7 @@ export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
     const el = sec.current; if (!el) return;
     const M = motion(), mm = gsap.matchMedia();
     const q = <T extends Element = HTMLElement>(s: string) => Array.from(el.querySelectorAll(s)) as unknown as T[];
-    mm.add("(prefers-reduced-motion: no-preference) and (min-width: 861px)", () => {
+    mm.add(PINNED, () => {
       el.classList.add("is-scrub");
       const items = q(".pq-ab-item"), lines = q(".pq-ab-line > span"), segs = q(".pq-ab-seg"), n = items.length, step = 1 / (n + 0.9);
       const tl = gsap.timeline({ defaults: { ease: M.out }, scrollTrigger: { trigger: el, start: "top top", end: "bottom bottom", scrub: M.scrub } });
@@ -57,7 +58,7 @@ export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
         .to({}, { duration: 0.001 }, 0.999);
       return () => { el.classList.remove("is-scrub"); };
     });
-    mm.add("(prefers-reduced-motion: no-preference) and (max-width: 860px)", () => {
+    mm.add(STACKED, () => {
       // phone: the thread runs down the left edge as the stack scrolls by; each pitch arrives as it comes into view
       gsap.fromTo(el.querySelector(".pq-ab-rail i"), { scaleY: 0 }, { scaleY: 1, ease: "none", scrollTrigger: { trigger: el.querySelector(".pq-ab-row"), start: "top 70%", end: "bottom 60%", scrub: M.scrub } });
       q(".pq-ab-item").forEach((it) => gsap.from(it, { opacity: 0, y: 34, duration: M.durIn, ease: M.out, scrollTrigger: { trigger: it, start: "top 82%", once: true } }));
@@ -81,11 +82,11 @@ export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
           <ol className="pq-ab-row">
             <li className="pq-ab-rail" role="presentation" aria-hidden="true"><i /></li>
             {pitches.map((p, k) => {
-              const call = `${p.pitch}${p.words.length ? `, ${p.words.join(" ").toLowerCase()}` : ""}`, isOpen = open === k;
+              const isOpen = open === k;
               return (
                 <li key={p.n} className={`pq-ab-item${isOpen ? " is-open" : ""}`} onMouseEnter={() => setOpen(k)} onMouseLeave={() => setOpen((o) => (o === k ? null : o))}>
                   <button type="button" className="pq-ab-face" aria-expanded={isOpen} aria-controls={`ab-mix-${k}`} onClick={() => setOpen(isOpen ? null : k)}
-                    aria-label={`Pitch ${p.n}, count ${p.count}: ${call}. ${p.result}. Show the mix.`}>
+                    aria-label={`${p.pitch}${p.words.length ? ` ${p.words.join(" ").toLowerCase()}` : ""}: pitch ${p.n}, count ${p.count}. ${p.result}. Show the mix.`}>
                     <Watch pitch={p.pitch} words={p.words} />
                   </button>
                   <div className="pq-ab-meta">

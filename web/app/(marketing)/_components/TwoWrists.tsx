@@ -2,7 +2,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { Spot } from "@/lib/story";
 import { Watch } from "./Watch";
-import { kit, motion, reducedMotion, useKit } from "./motion";
+import { MOVING, calm, kit, motion, useKit } from "./motion";
 
 // Two wrists: the pitcher and the catcher get the same call. The one watch from the film, still showing its call,
 // slides apart into two as you scroll. Between them sits the coach's Accept button (in the product the coach accepts
@@ -28,7 +28,7 @@ export function TwoWrists({ calls }: { calls: Spot[] }) {
     setSay(`${changed ? "Changed call" : "New call"} on both watches: ${name(calls[next])}. ${changed ? "Two short buzzes." : "One long buzz."}`);
     if (byPress && typeof navigator !== "undefined" && "vibrate" in navigator) { try { navigator.vibrate(changed ? [90, 70, 90] : 380); } catch { /* not allowed here */ } }
     const k = kit();
-    if (!el || !k || reducedMotion()) { setShown(next); return; }
+    if (!el || !k || calm()) { setShown(next); return; }
     const { gsap } = k, M = motion(), words = el.querySelectorAll(".pq-tw-watch .pq-wwords"), pulse = el.querySelectorAll(".pq-tw-pulse i");
     tl.current?.progress(1).kill();
     // the pulse leaves the button toward both watches; the call that is up stays up until it gets there
@@ -42,7 +42,7 @@ export function TwoWrists({ calls }: { calls: Spot[] }) {
   useLayoutEffect(() => {
     const el = sec.current;
     const k = kit();
-    if (!el || !k || landed.current === shown || reducedMotion()) { landed.current = shown; return; }      // only when the call on the faces changed
+    if (!el || !k || landed.current === shown || calm()) { landed.current = shown; return; }      // only when the call on the faces changed
     landed.current = shown;
     const { gsap } = k, M = motion(), ws = el.querySelectorAll(".pq-tw-watch .pq-w"), words = el.querySelectorAll(".pq-tw-watch .pq-wwords"), rings = el.querySelectorAll(".pq-tw-watch .pq-wring");
     const t = gsap.timeline();
@@ -56,7 +56,7 @@ export function TwoWrists({ calls }: { calls: Spot[] }) {
   useKit(({ gsap, ScrollTrigger }) => {
     const el = sec.current; if (!el) return;
     const M = motion(), mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
+    mm.add(MOVING, () => {
       const wide = window.matchMedia("(min-width: 861px)").matches;
       const a = el.querySelector(".pq-tw-watch.is-p"), b = el.querySelector(".pq-tw-watch.is-c"), labels = el.querySelectorAll(".pq-tw-watch .who"), mid = el.querySelector(".pq-tw-mid");
       // the split: both start on the same spot (one watch) and slide apart

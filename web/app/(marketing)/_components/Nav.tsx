@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { Mark } from "./Mark";
 
 // The glass pill at the top: it tightens once the page is scrolled and marks the section on screen. On phones the
-// links fold into a glass sheet behind a Menu button (Escape or a tap outside closes it, focus returns to the button).
+// links fold into a glass sheet behind a Menu button (Escape or a tap outside closes it, focus returns to the button,
+// and Tab stays inside the sheet while it is open).
 const LINKS = [
   { id: "pg", label: "Try the engine" },
   { id: "at-bat", label: "The at-bat" },
@@ -38,7 +39,14 @@ export function Nav() {
   useEffect(() => {
     if (!open) return;
     sheet.current?.querySelector<HTMLElement>("a")?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); btn.current?.focus(); } };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { setOpen(false); btn.current?.focus(); return; }
+      if (e.key !== "Tab") return;
+      // while the sheet is open, Tab stays inside it: the menu button, then its links, then round again
+      const stops = [btn.current, ...Array.from(sheet.current?.querySelectorAll<HTMLElement>("a") || [])].filter(Boolean) as HTMLElement[];
+      const at = stops.indexOf(document.activeElement as HTMLElement), next = e.shiftKey ? (at <= 0 ? stops.length - 1 : at - 1) : (at < 0 || at === stops.length - 1 ? 0 : at + 1);
+      e.preventDefault(); stops[next]?.focus();
+    };
     const onDown = (e: PointerEvent) => { if (!sheet.current?.contains(e.target as Node) && !btn.current?.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onDown);
@@ -52,7 +60,7 @@ export function Nav() {
         {LINKS.map((l) => (
           <a key={l.id} className={`pq-nav-link${here === l.id ? " is-here" : ""}`} href={`#${l.id}`} aria-current={here === l.id ? "location" : undefined}>{l.label}</a>
         ))}
-        <Link className="pq-nav-link" href="/login">Sign in</Link>
+        <Link className="pq-nav-link" href="/login" prefetch={false}>Sign in</Link>
         <button type="button" className="pq-nav-menu" ref={btn} aria-expanded={open} aria-controls="pq-sheet" onClick={() => setOpen((o) => !o)}>
           <span className="pq-sr">{open ? "Close menu" : "Menu"}</span>
           <i aria-hidden="true" /><i aria-hidden="true" />
@@ -64,7 +72,7 @@ export function Nav() {
           {SHEET.map((l) => (
             <li key={l.id}><a href={`#${l.id}`} onClick={() => setOpen(false)} aria-current={here === l.id ? "location" : undefined}>{l.label}</a></li>
           ))}
-          <li><Link href="/login" onClick={() => setOpen(false)}>Sign in</Link></li>
+          <li><Link href="/login" prefetch={false} onClick={() => setOpen(false)}>Sign in</Link></li>
         </ul>
       </div>
     </header>

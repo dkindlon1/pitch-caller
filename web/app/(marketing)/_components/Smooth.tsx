@@ -1,21 +1,22 @@
 "use client";
 import { useEffect } from "react";
-import { loadKit, motion, reducedMotion } from "./motion";
+import { calm, loadKit, motion, useCalm } from "./motion";
 
 // One smooth-scroll engine for the whole page: Lenis, stepped by the GSAP ticker so the scroll scenes and the scroll
 // position are always computed in the same frame. Both arrive after the first paint (motion.ts, loadKit); until then,
-// and under reduced motion, scrolling is the browser's own. In-page links scroll through Lenis when it is there; the
+// and in the calm version (reduced motion or a too-small window), scrolling is the browser's own. In-page links scroll through Lenis when it is there; the
 // scenes are measured again when fonts or late content settle.
 type LenisLike = { raf(t: number): void; on(e: string, f: () => void): void; scrollTo(t: number | HTMLElement, o?: Record<string, unknown>): void; destroy(): void };
 declare global { interface Window { __lenis?: LenisLike } }
 
 export function Smooth() {
+  const still = useCalm();
   useEffect(() => {
     let lenis: LenisLike | null = null, dead = false, t = 0, last = document.body.scrollHeight, undo = () => {};
     // something inside a pinned scene (the playground in the film) is reached by scrolling the scene to its moment
     const anchorY = (el: HTMLElement) => {
       const host = el.closest<HTMLElement>("[data-anchor]");
-      return host && host !== el && !reducedMotion() ? host.getBoundingClientRect().top + window.scrollY + parseFloat(host.dataset.anchor!) * (host.offsetHeight - window.innerHeight) : null;
+      return host && host !== el && !calm() ? host.getBoundingClientRect().top + window.scrollY + parseFloat(host.dataset.anchor!) * (host.offsetHeight - window.innerHeight) : null;
     };
     const onFocus = (e: FocusEvent) => {
       const tg = e.target as HTMLElement, host = tg.closest?.<HTMLElement>("[data-anchor]");
@@ -42,7 +43,7 @@ export function Smooth() {
     loadKit().then(({ gsap, ScrollTrigger, Lenis }) => {
       if (dead) return;
       const tick = (time: number) => lenis?.raf(time * 1000);
-      if (!reducedMotion()) {
+      if (!calm()) {
         lenis = new Lenis({ lerp: motion().lerp, wheelMultiplier: motion().wheel }) as unknown as LenisLike;
         lenis.on("scroll", ScrollTrigger.update);
         gsap.ticker.add(tick);
@@ -61,6 +62,6 @@ export function Smooth() {
       undo = () => { ro.disconnect(); window.removeEventListener("load", refresh); gsap.ticker.remove(tick); lenis?.destroy(); delete window.__lenis; };
     }).catch(() => {});
     return () => { dead = true; window.clearTimeout(t); document.removeEventListener("click", onClick); document.removeEventListener("focusin", onFocus); undo(); };
-  }, []);
+  }, [still]);
   return null;
 }

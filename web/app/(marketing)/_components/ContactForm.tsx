@@ -20,9 +20,9 @@ export function ContactForm() {
       const json = (await res.json().catch(() => ({}))) as { errors?: Errors; error?: string };
       if (res.ok) { setState("sent"); return; }
       setErrors(json.errors || {});
-      setProblem(json.error || (json.errors ? "" : "That didn't send. Try again."));
+      setProblem(json.error || (json.errors ? "" : "That didn’t send. Try again."));
     } catch {
-      setProblem("That didn't send. Check your connection and try again.");
+      setProblem("That didn’t send. Check your connection and try again.");
     }
     setState("idle");
   }
@@ -67,7 +67,7 @@ export function ContactForm() {
         </label>
       </div>
       <label htmlFor="c-org"><span className="pq-form-label">Team or school <span className="pq-form-opt">(optional)</span></span><input {...field("org")} autoComplete="organization" placeholder="Lincoln High School" /></label>
-      <label htmlFor="c-message">What would you like to know?<textarea {...field("message")} rows={4} placeholder="How many pitchers you have, what level, what you'd want it to help with." required />{err("message")}</label>
+      <label htmlFor="c-message">What would you like to know?<textarea {...field("message")} rows={4} placeholder="How many pitchers you have, what level, what you’d want it to help with." required />{err("message")}</label>
       <div className="pq-form-hp" aria-hidden="true"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
       <div className="pq-form-foot">
         <button className="pq-cta" type="submit" disabled={state === "sending"}>{state === "sending" ? "Sending…" : "Send message"}</button>

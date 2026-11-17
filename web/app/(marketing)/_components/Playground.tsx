@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { STORY_SIT, pct, sameSit, weigh, type Sit, type Weighed } from "@/lib/story";
-import { kit, loadKit, motion, reducedMotion } from "./motion";
+import { kit, loadKit, motion, calm } from "./motion";
 
 // "Set the situation": the film's last frame stays where it is and two glass panels rise around it. The left one sets
 // the count, runners, outs, inning and which side the hitter stands on; the right one shows what the engine would
@@ -51,7 +51,7 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
     load().then((E) => {
       const r = sameSit(next, STORY_SIT) ? story : weigh(E, next);
       const k = kit();
-      if (root.current && k && !reducedMotion()) flip.current = k.Flip.getState(root.current.querySelectorAll(".pq-rowwrap"));
+      if (root.current && k && !calm()) flip.current = k.Flip.getState(root.current.querySelectorAll(".pq-rowwrap"));
       setRes(r); setOpen(r.groups[0].key);
       const t = r.groups[0];
       setSay(`${t.name}, ${pct(t.p)}% of the mix.`);
@@ -68,7 +68,7 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
     const draw = () => { f1.textContent = top.pitch.toUpperCase(); f2.innerHTML = words.map((w) => `<span>${w}</span>`).join(""); hr.style.display = words.length ? "" : "none"; };
     faceOn.current = true;
     const k = kit();
-    if (!k || reducedMotion()) { draw(); face.style.opacity = "1"; return; }
+    if (!k || calm()) { draw(); face.style.opacity = "1"; return; }
     const { gsap, Flip } = k;
     if (flip.current) {
       Flip.from(flip.current, { targets: el.querySelectorAll(".pq-rowwrap"), duration: M.durFlip, ease: M.out, absolute: false,
@@ -103,7 +103,7 @@ export function Playground({ story, faceOn }: { story: Weighed; faceOn: RefObjec
       <div className="pq-ctl pq-glass pq-lens" role="group" aria-labelledby="pg-h">
         <div className="pq-lbl">The count</div>
         <div className="pq-countrow">
-          <div className="pq-num" aria-label={`Count: ${sit.b} balls, ${sit.s} strikes`}>{sit.b}&ndash;{sit.s}</div>
+          <div className="pq-num" role="img" aria-label={`Count: ${sit.b} balls, ${sit.s} strikes`}>{sit.b}&ndash;{sit.s}</div>
           <div className="pq-steps">
             <div><span>Balls</span>
               <button type="button" className="pq-btn is-rnd" aria-label="One fewer ball" disabled={sit.b === 0} onClick={() => set({ b: Math.max(0, sit.b - 1) })}>&minus;</button>

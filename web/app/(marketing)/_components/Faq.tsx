@@ -3,15 +3,15 @@
 const FAQ = [
   {
     q: "Is it just going to call fastballs?",
-    a: "No. It draws every call from a mix of the reasonable options, so the same count doesn't always get the same pitch, and it follows what each pitcher actually has working that day.",
+    a: "No. It draws every call from a mix of the reasonable options, so the same count doesn’t always get the same pitch, and it follows what each pitcher actually has working that day.",
   },
   {
     q: "Does it work without a signal?",
-    a: "Yes. Download the game plan on Wi-Fi and the iPad calls the whole game on its own. Everything syncs when you're back online.",
+    a: "Yes. Download the game plan on Wi-Fi and the iPad calls the whole game on its own. Everything syncs when you’re back online.",
   },
   {
     q: "Do my players need accounts?",
-    a: "No. A coach can enter the staff and call a game alone. Players and parents can join later to see their own numbers, and only their own: teammates never see each other's. Players under 13 join through a parent, who gives consent first.",
+    a: "No. A coach can enter the staff and call a game alone. Players and parents can join later to see their own numbers, and only their own: teammates never see each other’s. Players under 13 join through a parent, who gives consent first.",
   },
   {
     q: "Do I need a TrackMan or Rapsodo?",

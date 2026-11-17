@@ -84,9 +84,9 @@ export default function Home() {
               <div>
                 <h2>Account</h2>
                 <ul>
-                  <li><Link href="/login">Sign in</Link></li>
-                  <li><Link href="/terms">Terms</Link></li>
-                  <li><Link href="/privacy">Privacy</Link></li>
+                  <li><Link href="/login" prefetch={false}>Sign in</Link></li>
+                  <li><Link href="/terms" prefetch={false}>Terms</Link></li>
+                  <li><Link href="/privacy" prefetch={false}>Privacy</Link></li>
                 </ul>
               </div>
             </nav>
