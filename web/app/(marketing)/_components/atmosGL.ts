@@ -8,11 +8,11 @@
 // invisible proxies (.pq-pin.has-gl hides them), and every frame the shader reads their opacity, scale and position.
 // No WebGL, or a lost context: the proxies stay visible and the CSS version shows instead.
 //
-// Behind the watch, not over it: every film frame has a cut-out mask, made once from the frames by
-// scripts/film-masks.py (ground connected to the frame's edge is background; everything else, the dark screen and
-// black strap included, is the watch). The masks sit in one sheet per frame set. The shader takes the current frame's
-// mask, mapped through the same cover crop the film canvas uses, draws the light only on the background, and lets
-// the watch's silhouette catch a soft backlit rim.
+// Behind the watch, not over it: every film frame has a cut-out, made once from the frames by scripts/film-masks.py
+// (ground connected to the frame's edge is background; everything else, the dark screen and black strap included, is
+// the watch) and stored as the distance to its edge, one sheet per frame set. The shader takes the current frame's
+// tile, mapped through the same cover crop the film canvas uses, ends the light exactly at the silhouette and draws a
+// thin backlit rim just inside it (about two CSS pixels: a rim, not a halo).
 
 import MASKS from "../../../public/media/film/watch/masks.json";
 
@@ -29,11 +29,13 @@ uniform vec2 uRes; uniform float uT, uAsp;
 uniform float uBlue, uBS, uGreen, uGS, uHaze, uHazeY, uBeam, uBeamRot, uFloor, uFloorY, uPg, uHasMask;
 uniform sampler2D uMask;
 uniform vec2 uFit, uTile, uCell, uSheet;   // cover crop (canvas size / drawn frame size), tile size, this frame's cell, sheet size
-float solid(vec2 uv){
+uniform float uSpread, uAA;                // the distance field's reach in CSS pixels, and half a canvas pixel in CSS pixels
+// distance to the watch's silhouette in CSS pixels: positive inside the watch, negative on the ground behind it
+float edge(vec2 uv){
   vec2 f = 0.5 + (uv - 0.5) * uFit;                                    // screen -> frame, as the film canvas draws it
-  if (f.x < 0.0 || f.y < 0.0 || f.x > 1.0 || f.y > 1.0) return 0.0;
+  if (f.x < 0.0 || f.y < 0.0 || f.x > 1.0 || f.y > 1.0) return -uSpread;
   vec2 t = clamp(f * uTile, vec2(0.5), uTile - 0.5);                   // stay inside this frame's tile
-  return texture2D(uMask, (uCell * uTile + t) / uSheet).r;
+  return (texture2D(uMask, (uCell * uTile + t) / uSheet).r - 0.5) * 2.0 * uSpread;
 }
 float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
@@ -77,13 +79,10 @@ void main(){
   // the watch and its parts: no light on them from behind; a rim where their edge meets the light; a little of the
   // light's colour on their bright metal
   if (uHasMask > 0.5) {
-    float m = solid(uv);
-    // the rim: a thin band just inside the silhouette, from the mask's (soft, anti-aliased) slope
-    vec2 e = 1.5 / (uTile * uFit) ;
-    float gx = solid(uv + vec2(e.x, 0.0)) - solid(uv - vec2(e.x, 0.0));
-    float gy = solid(uv + vec2(0.0, e.y)) - solid(uv - vec2(0.0, e.y));
-    float rim = smoothstep(0.08, 0.6, length(vec2(gx, gy))) * smoothstep(0.35, 0.9, m);
-    c = c * (1.0 - m) + c * rim * 1.4;
+    float d = edge(uv);
+    float m = smoothstep(-uAA, uAA, d);                                   // 1 on the watch, 0 behind it, one canvas pixel of edge
+    float rim = m * (1.0 - smoothstep(1.6, 1.6 + 2.0 * uAA, d));          // the first couple of pixels inside the silhouette
+    c = c * (1.0 - m) + c * rim * 1.25;
   }
   // vignette: the edges of the frame stay dark, so the light reads as being in a room, not painted on the glass
   vec2 vd = (uv - 0.5) * vec2(uAsp * 0.85, 1.0) / max(sm, 0.75); c *= mix(0.3, 1.0, smoothstep(1.0, 0.25, length(vd)));
@@ -93,7 +92,7 @@ void main(){
   gl_FragColor = vec4(max(c, 0.0), 1.0);
 }`;
 
-const NAMES = ["uRes", "uT", "uAsp", "uBlue", "uBS", "uGreen", "uGS", "uHaze", "uHazeY", "uBeam", "uBeamRot", "uFloor", "uFloorY", "uPg", "uHasMask", "uMask", "uFit", "uTile", "uCell", "uSheet"] as const;
+const NAMES = ["uRes", "uT", "uAsp", "uBlue", "uBS", "uGreen", "uGS", "uHaze", "uHazeY", "uBeam", "uBeamRot", "uFloor", "uFloorY", "uPg", "uHasMask", "uMask", "uFit", "uTile", "uCell", "uSheet", "uSpread", "uAA"] as const;
 
 /** Starts the shader on `canvas`. `read` returns the current light values. Returns a stop function, or null without WebGL. */
 export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: () => AtmosValues, hold: () => boolean = () => false, film?: { canvas: HTMLCanvasElement; set: () => "wide" | "tall" } | null): (() => void) | null {
@@ -146,11 +145,14 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
     gl.uniform2f(U.uFit, cw / (m.frame[0] * s), ch / (m.frame[1] * s));
     gl.uniform2f(U.uTile, m.tile[0], m.tile[1]); gl.uniform2f(U.uSheet, m.sheet[0], m.sheet[1]);
     gl.uniform2f(U.uCell, i % m.cols, Math.floor(i / m.cols));
+    gl.uniform1f(U.uSpread, m.spread * s); gl.uniform1f(U.uAA, Math.max(0.6, (0.75 * cw) / canvas.width));
     return true;
   };
-  // the light is soft, so it is drawn at 40% of the CSS size and the browser scales it up smoothly
+  // The light itself is soft, but it ends on the watch's silhouette, and that edge is only as sharp as this canvas.
+  // So: 80% of the CSS size, held under about 0.9 million pixels on big windows, and the browser scales it up.
   const size = () => {
-    const w = Math.max(2, Math.round(canvas.clientWidth * 0.4)), h = Math.max(2, Math.round(canvas.clientHeight * 0.4));
+    const cw = canvas.clientWidth, ch = canvas.clientHeight, k = Math.min(0.8, Math.sqrt(900000 / Math.max(1, cw * ch)));
+    const w = Math.max(2, Math.round(cw * k)), h = Math.max(2, Math.round(ch * k));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; gl.viewport(0, 0, w, h); }
   };
   let raf = 0, visible = true, dark = false, lost = false;
