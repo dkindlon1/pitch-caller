@@ -495,14 +495,14 @@ html:has(.pq) body { background: #0c0b0e; }
 @keyframes pq-blink { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
 @media (prefers-reduced-motion: no-preference) {
   .pq :is(.pq-head, .pq-game, .pq-tile, .pq-panel, .tbl-scroll, .pq-gamerow, .pq-sheet, .dash-card, .team-card, .shell-form, .chart, .pq-sum, .invite-box, .upload-box, .shell-alert, .ok-note, .pq-flow, .pq-white) {
-    animation: pq-rise 0.5s var(--e-out) both; animation-delay: calc(var(--i, 0) * var(--stagger)); }
+    animation: pq-rise 0.5s var(--e-out) backwards; animation-delay: calc(var(--i, 0) * var(--stagger)); }
   .pq .pq-head { --i: 0; } .pq .pq-game { --i: 1; } .pq .pq-launch aside .pq-panel:nth-child(1) { --i: 3; } .pq .pq-launch aside .pq-panel:nth-child(2) { --i: 5; }
   .pq .pq-tiles > li:nth-child(1) { --i: 2; } .pq .pq-tiles > li:nth-child(2) { --i: 3; } .pq .pq-tiles > li:nth-child(3) { --i: 4; } .pq .pq-tiles > li:nth-child(4) { --i: 5; }
   .pq .pq-tiles > li:nth-child(5) { --i: 6; } .pq .pq-tiles > li:nth-child(6) { --i: 7; } .pq .pq-tiles > li:nth-child(7) { --i: 8; } .pq .pq-tiles > li:nth-child(n+8) { --i: 9; }
   .pq .pq-games > li:nth-child(1) { --i: 1; } .pq .pq-games > li:nth-child(2) { --i: 2; } .pq .pq-games > li:nth-child(3) { --i: 3; } .pq .pq-games > li:nth-child(n+4) { --i: 4; }
   .pq .tbl-scroll { --i: 6; }
   .pq :is(.data-tbl tbody tr, .pq-list li, .pq-lineup li, .staff-list > li, .pq-sum > div) {
-    animation: pq-row 0.4s var(--e-out) both; animation-delay: calc(var(--i, 0) * var(--stagger) + 100ms + min(var(--j, 1), 14) * 28ms); }
+    animation: pq-row 0.4s var(--e-out) backwards; animation-delay: calc(var(--i, 0) * var(--stagger) + 100ms + min(var(--j, 1), 14) * 28ms); }
   /* charts fill in once: lines trace, points land, bars grow */
   .pq .chart polyline { stroke-dasharray: 3000; stroke-dashoffset: 3000; animation: pq-draw var(--t-fill) 0.3s var(--e-out) forwards; }
   .pq .chart circle { transform-box: fill-box; transform-origin: center; animation: pq-dot 0.4s var(--e-out) both; animation-delay: calc(0.4s + var(--k, 0) * 12ms); }
@@ -759,3 +759,19 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .chart .pt { cursor: default; }
 .pq .chart .pt:hover { stroke: var(--text); stroke-width: 3; }
 .pq .pq-mix span[data-tip]:hover { filter: brightness(1.12); }
+
+/* interaction states, from the close-ups: every state reads on its own */
+.pq .pq-tile:active { transform: translateY(0) scale(0.97); filter: brightness(0.92); }
+.pq .team-card:active { transform: scale(0.975); filter: brightness(0.92); }
+.pq .shell-btn.primary:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 #fff, 0 14px 30px -10px rgb(var(--text-rgb) / 0.7), 0 6px 14px -6px rgb(0 0 0 / 0.7); }
+.pq .shell-btn.primary:active { transform: scale(0.96); filter: brightness(0.94); }
+.pq .shell-btn:not(.primary):not(.text):active { filter: brightness(0.9); }
+.pq .pq-dock a:focus-visible { outline-offset: -2px; }
+.pq .data-tbl tbody tr:hover { background: rgb(var(--text-rgb) / 0.06); }
+.pq :is(input, select, textarea):disabled { opacity: 0.5; cursor: not-allowed; border-style: dashed; }
+.pq label:has(:disabled) { cursor: not-allowed; }
+@media (min-width: 641px) { .pq .data-tbl.cards th:nth-child(4) { width: 340px; } .pq .data-tbl.cards .inv .shell-form { width: 300px; } }
+/* a wide table scrolls inside its own panel and never widens the page: grid children may shrink below their content */
+.pq-launch > .pq-col > *, .pq-cols > *, .pq-stack > * { min-width: 0; }
+/* on an iPad or phone the dock floats over the bottom of the page: anything scrolled or tabbed to stops clear of it */
+@media (max-width: 1023px) { :root:has(.pq-dock) { scroll-padding-bottom: 112px; } }

@@ -83,7 +83,11 @@ export function Motion() {
         tip.replaceChildren(Object.assign(document.createElement("b"), { textContent: head }), Object.assign(document.createElement("span"), { textContent: body || "" }));
         tip.hidden = false;
       }
-      const r = el.getBoundingClientRect(), w = tip.offsetWidth, x = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+      const r = el.getBoundingClientRect(), w = tip.offsetWidth;
+      // kept inside the chart's own panel (and the window), so it never hangs off the card
+      const box = (el.closest(".chart, .pq-flow, .pq-main") || root).getBoundingClientRect();
+      const lo = Math.max(8, box.left + 8), hi = Math.min(window.innerWidth - 8, box.right - 8) - w;
+      const x = Math.max(lo, Math.min(hi, r.left + r.width / 2 - w / 2));
       const above = r.top - tip.offsetHeight - 10;
       tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(above < 70 ? r.bottom + 10 : above)}px)`;
     };

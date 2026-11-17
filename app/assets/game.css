@@ -629,3 +629,14 @@ input[type="checkbox"]:checked { background-color: var(--weigh); border-color: t
 input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 .check input { width: 26px; height: 26px; }
 @media (prefers-reduced-motion: reduce) { input[type="checkbox"] { transition: none; } }
+
+/* the call's location words: the condensed cut's own word space is too tight to read "KEEP IT DOWN" at a glance */
+.spot { word-spacing: 0.16em; }
+/* the pitcher's cell: his count, and beside it the pitch-count rule's line in full (two lines, never cut to "3…") */
+@media (min-width: 901px) { .strip { grid-template-columns: 1.25fr 0.72fr 0.9fr 0.85fr 1.7fr auto; } }
+@media (min-width: 901px) and (max-width: 1060px) { .strip { grid-template-columns: 1.2fr 0.8fr 0.9fr 0.9fr 1.5fr auto; } }
+.cell .v:has(.rule) { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 14px; row-gap: 2px; align-items: center; }
+.cell .v:has(.rule) > small:not(.rule) { grid-column: 2; grid-row: 1; align-self: end; }
+.cell .v:has(.rule) > .rule { grid-column: 2; grid-row: 2; align-self: start; white-space: normal; font-size: 13px; line-height: 1.2; min-height: 2.4em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.cell .v:has(.rule) { grid-auto-flow: column; }
+.cell .v:has(.rule)::before { content: none; }

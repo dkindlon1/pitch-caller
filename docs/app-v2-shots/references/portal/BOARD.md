@@ -39,3 +39,10 @@ Captured headless Chromium, 1440x900, DPR 1, top of page only. Fonts/colours are
 - Technique: the task table has a checkbox column, rows about 49px tall with thin dividers, and an outlined "Status" and "Priority" filter pill above it; each status and priority cell pairs a small icon with a label.
 
 Rejected: Linear features (dark, but only icon tiles at the top, no UI visible), Vercel (light marketing hero, no UI), Arc (farewell page, no UI). 6 of 9 kept.
+
+## Second session (Nov 17), live look in Chrome
+- Vercel Geist, Table: https://vercel.com/geist/table (read from the live page's computed styles, no screenshot kept). Header cells 36 px tall, muted grey (rgb 161 161 161), 8 px side padding; body rows 40 px, 10 px vertical padding, no row rules (zebra instead).
+  - Technique worth learning: headers a step quieter and shorter than rows, so the eye lands on the data.
+  - Against ours: our rows are taller (49 px, roomy tables 57 px) with hairlines, which suits touch on an iPad; our headers already use the quieter tone. Kept ours; took nothing new.
+- Settings pages (Linear, Vercel, from the earlier board): label and help on the left, control on the right, one setting per row -> `.shell-form.rows` on Settings and Profile; a sticky side form -> `.pq-cols` on Staff, Billing, Opponent.
+- Still thin: no live sports-dashboard product UI was studied (TrackMan, Rapsodo, Hawk-Eye and Whoop sit behind sign-in).
