@@ -150,4 +150,4 @@ All in `docs/site-v2-shots/final-check/picks/` unless noted.
 7. `10-sideways-phone-calm-version-top.png`
 8. `docs/site-v2-shots/final/site-v2-desktop-scroll.mp4` and `site-v2-phone-scroll.mp4`
 
-The full lossless captures (about 1.9 GB) are on this PC under `docs/site-v2-shots/final-check/before` and `after`; only the contact sheets and picks are in the repo.
+The full lossless captures (about 2.2 GB) are on this PC under `docs/site-v2-shots/final-check/before` and `after`; only the contact sheets and picks are in the repo.
