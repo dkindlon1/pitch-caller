@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { STORY_SIT, ledger, pct, type Weighed } from "@/lib/story";
 import { Playground } from "./Playground";
+import { startAtmos } from "./atmosGL";
 import { afterPaint, filmLength, loadKit, motion, reducedMotion, tallScreen, useKit } from "./motion";
 import { filmFrames, type FilmSet, type Frames } from "./filmFrames";
 import { glassMoving } from "./GlassFx";
@@ -269,12 +270,20 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
 
     const fontsIn = !document.fonts || document.fonts.status === "loaded";
     layout();
+    // the light behind the watch, drawn by a shader that reads the light elements the timeline tweens (atmosGL.ts)
+    const L = { b: $(".pq-light.is-b"), g: $(".pq-light.is-g"), haze: $(".pq-haze"), beam: $(".pq-beam"), floor: $(".pq-floor"), pg: $(".pq-pglight") };
+    const gp = (e: Element, k: string, d = 0) => { const x = Number(gsap.getProperty(e, k)); return Number.isFinite(x) ? x : d; };
+    const stopAtmos = startAtmos($<HTMLCanvasElement>(".pq-atm-gl"), pin, () => ({
+      blue: gp(L.b, "opacity"), blueScale: gp(L.b, "scale", 1), green: gp(L.g, "opacity"), greenScale: gp(L.g, "scale", 1),
+      haze: gp(L.haze, "opacity"), hazeY: (gp(L.haze, "yPercent") / 100) * 1.24, beam: gp(L.beam, "opacity"), beamRot: (gp(L.beam, "rotation") * Math.PI) / 180,
+      floor: gp(L.floor, "opacity"), floorY: (gp(L.floor, "yPercent") / 100) * 0.72, pg: gp(L.pg, "opacity"),
+    }), () => pg.classList.contains("is-live") && !document.documentElement.hasAttribute("data-glass") && !!$(".pq-ctl")?.style.backdropFilter);
     let rt = 0;
     const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { dir = tallScreen() ? "tall" : "wide"; count = frames[dir]; layout(); }, 160); };
     window.addEventListener("resize", onResize);
     if (!fontsIn) document.fonts.ready.then(() => { if (!dead) layout(); });      // measured again only if the type changed under it
     return () => {
-      dead = true; window.removeEventListener("resize", onResize); window.clearTimeout(rt);
+      dead = true; window.removeEventListener("resize", onResize); window.clearTimeout(rt); stopAtmos?.();
       tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); glass.forEach((g) => g.classList.remove("is-off"));
     };
   }, [frames.wide, frames.tall], sec);
@@ -285,6 +294,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
         <canvas className="pq-cv" aria-hidden="true" />
         <picture><source media="(max-aspect-ratio: 9/10)" srcSet="/media/film/watch/cut-tall.webp" /><img className="pq-cut" src="/media/film/watch/cut-wide.webp" alt="" aria-hidden="true" loading="lazy" decoding="async" /></picture>
         <div className="pq-atmos" aria-hidden="true"><div className="pq-haze" /><div className="pq-beam" /><div className="pq-floor" /></div>
+        <canvas className="pq-atm-gl" aria-hidden="true" />
         <div className="pq-light is-b" aria-hidden="true" /><div className="pq-light is-g" aria-hidden="true" />
         <div className="pq-grain" aria-hidden="true" />
         <div className="pq-shade" aria-hidden="true" />
