@@ -16,6 +16,7 @@
 
 .pq {
   --head: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
+  --cond: var(--font-archivo-cond), var(--font-archivo), "Arial Narrow", Arial, sans-serif;   /* big figures: a fixed condensed heavy cut, no width axis */
   --body: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;
   --rule: rgb(var(--text-rgb) / 0.08);
   --rule-2: rgb(var(--text-rgb) / 0.16);
@@ -50,7 +51,7 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq h3 { font-size: 1.0625rem; }
 .pq .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* a big figure: condensed heavy Archivo, tabular */
-.pq .fig { font-family: var(--head); font-weight: 900; font-stretch: 62%; letter-spacing: -0.01em; line-height: 0.86; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.pq .fig { font-family: var(--head); font-weight: 900; font-stretch: 100%; font-family: var(--cond); letter-spacing: -0.01em; line-height: 0.86; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 
 /* ---- the atmosphere behind everything: the site's Floodlight light, still. The ground, one large soft midnight light
    from above, a faint blue glow, and a little grain so the gradients don't band. Fixed, painted once, no script. */
@@ -292,7 +293,7 @@ html:has(.pq) body { background: #0c0b0e; }
 /* stat cards (billing, admin, a pitcher's headline numbers) */
 .pq .dash { display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 8px; }
 .pq .dash-card { padding: 18px 20px; display: grid; gap: 10px; align-content: start; }
-.pq .big-num { font-family: var(--head); font-weight: 900; font-stretch: 62%; font-size: 3rem; line-height: 0.9; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.pq .big-num { font-family: var(--head); font-weight: 900; font-stretch: 100%; font-family: var(--cond); font-size: 3rem; line-height: 0.9; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
 .pq .big-num small { font: 400 0.9375rem/1.2 var(--body); font-stretch: 100%; color: var(--text-3); letter-spacing: 0; }
 .pq .team-cards { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: var(--gap); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .pq .team-card { position: relative; border-radius: var(--r-lg); padding: 22px; display: grid; gap: 4px; min-height: 150px; align-content: end; transition: transform var(--t-med) var(--e-out); }
@@ -320,7 +321,7 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .pq-game > .pq-game-body { display: grid; gap: 14px; min-width: 0; align-content: center; padding: clamp(20px, 2.4vw, 30px) clamp(20px, 2.6vw, 34px); }
 .pq .pq-date { display: grid; align-content: center; justify-items: center; gap: 2px; text-align: center; padding: 22px 8px; border-right: 2px dashed rgb(var(--text-rgb) / 0.22); }
 .pq .pq-date .m { font: 600 0.875rem/1 var(--body); color: var(--text-2); }
-.pq .pq-date b { font-family: var(--head); font-weight: 900; font-stretch: 62%; font-size: clamp(4.25rem, 7vw, 6rem); line-height: 0.86; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; padding: 6px 0 4px; }
+.pq .pq-date b { font-family: var(--head); font-weight: 900; font-stretch: 100%; font-family: var(--cond); font-size: clamp(4.25rem, 7vw, 6rem); line-height: 0.86; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; padding: 6px 0 4px; }
 .pq .pq-date .d { color: var(--text-2); font-size: 0.875rem; font-weight: 500; }
 .pq .pq-date.empty b { color: var(--text-4); }
 .pq .pq-game-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; color: var(--text-2); font-size: 0.875rem; font-weight: 500; }
@@ -382,7 +383,7 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .pq-gamerow { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 16px; transition: background-color var(--t-fast), border-color var(--t-fast); }
 .pq .pq-gamerow:hover { background: var(--panel-2); border-color: var(--rule-2); }
 .pq-gamerow .date { display: grid; justify-items: center; line-height: 1.05; padding: 8px 0; border-radius: 14px; background: var(--wash); }
-.pq-gamerow .date b { font-family: var(--head); font-weight: 900; font-stretch: 62%; font-size: 2rem; line-height: 0.9; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; } .pq-gamerow .date span { color: var(--text-3); font-size: 0.8125rem; }
+.pq-gamerow .date b { font-family: var(--head); font-weight: 900; font-stretch: 100%; font-family: var(--cond); font-size: 2rem; line-height: 0.9; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; } .pq-gamerow .date span { color: var(--text-3); font-size: 0.8125rem; }
 .pq-gamerow h3 { font-size: 1.0625rem; letter-spacing: -0.02em; } .pq-gamerow p { color: var(--text-2); font-size: 0.875rem; margin: 2px 0 0; }
 .pq-gamerow .acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: end; }
 @media (max-width: 640px) { .pq .pq-gamerow { grid-template-columns: 60px minmax(0, 1fr); } .pq-gamerow .acts { grid-column: 1 / -1; justify-content: start; } }

@@ -44,9 +44,9 @@ test("no stylesheet sets a shared token by hand", () => {
 test("the game app's source and build carry the generated tokens and both fonts", () => {
   const src = read(join(ROOT, "app/index.src.html")), dist = read(join(ROOT, "app/dist/pitch-caller.html"));
   assert.equal(src.split("/*__TOKENS__*/").length - 1, 1, "index.src.html needs exactly one /*__TOKENS__*/ marker");
-  for (const f of ["archivo-app.woff2", "hanken-app.woff2"]) assert.ok(readFileSync(join(ROOT, "app/assets", f)).equals(readFileSync(join(WEB, "app/fonts", f))), `app/assets/${f} is not the portal's file`);
+  for (const f of ["archivo-app.woff2", "archivo-cond-app.woff2", "hanken-app.woff2"]) assert.ok(readFileSync(join(ROOT, "app/assets", f)).equals(readFileSync(join(WEB, "app/fonts", f))), `app/assets/${f} is not the portal's file`);
   assert.ok(dist.includes(read(APP_OUT).trim()), "app/dist/pitch-caller.html does not contain the current tokens: run python app/build.py");
-  assert.ok(/font-family:\s*"Archivo"/.test(dist) && /font-family:\s*"Hanken Grotesk"/.test(dist), "both typefaces must be inlined in the game app");
+  assert.ok(/font-family:\s*"Archivo"/.test(dist) && /font-family:\s*"Archivo Cond"/.test(dist) && /font-family:\s*"Hanken Grotesk"/.test(dist), "both typefaces must be inlined in the game app");
   assert.ok(!/https?:\/\/fonts\.|url\(\s*["']?https?:/.test(dist), "the game app must not fetch fonts or images over the network");
 });
 

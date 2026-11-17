@@ -8,4 +8,8 @@ const archivo = localFont({ src: "./fonts/archivo-app.woff2", weight: "600 900",
   declarations: [{ prop: "font-stretch", value: "62% 110%" }], adjustFontFallback: "Arial" });
 const hanken = localFont({ src: "./fonts/hanken-app.woff2", weight: "400 800", display: "swap", variable: "--font-hanken", adjustFontFallback: "Arial" });
 
-export const portalFonts = `${archivo.variable} ${hanken.variable}`;
+// the big figures' own face: Archivo at its narrowest and heaviest as a fixed cut, so they never depend on a browser's
+// handling of the width axis (the same file the game app inlines)
+const cond = localFont({ src: "./fonts/archivo-cond-app.woff2", weight: "900", display: "swap", variable: "--font-archivo-cond", adjustFontFallback: "Arial" });
+
+export const portalFonts = `${archivo.variable} ${hanken.variable} ${cond.variable}`;

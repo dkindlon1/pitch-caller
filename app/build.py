@@ -20,10 +20,11 @@ import base64
 b64 = lambda f: base64.b64encode(open(f, "rb").read()).decode()
 tokens = open("assets/floodlight.css", encoding="utf-8").read().strip()
 style = open("assets/game.css", encoding="utf-8").read().strip()
-for mark in ("__FONT_ARCHIVO__", "__FONT_HANKEN__", "/*__TOKENS__*/", "/*__STYLE__*/"):
+for mark in ("__FONT_ARCHIVO__", "__FONT_ARCHIVO_COND__", "__FONT_HANKEN__", "/*__TOKENS__*/", "/*__STYLE__*/"):
     assert src.count(mark) == 1, mark
 assert "</style" not in (tokens + style).lower()
 src = src.replace("/*__TOKENS__*/", tokens).replace("/*__STYLE__*/", style)
+src = src.replace("__FONT_ARCHIVO_COND__", b64("assets/archivo-cond-app.woff2"))
 src = src.replace("__FONT_ARCHIVO__", b64("assets/archivo-app.woff2")).replace("__FONT_HANKEN__", b64("assets/hanken-app.woff2"))
 out = src.replace("/*__ENGINE__*/", eng).replace("/*__DATA__*/", data).replace("/*__MODULES__*/", modules).replace("/*__ROSTER__*/", roster).replace("/*__WORKER__*/", worker)
 os.makedirs("dist", exist_ok=True)

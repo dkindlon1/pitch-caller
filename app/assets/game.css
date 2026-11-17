@@ -30,6 +30,8 @@
   --on: linear-gradient(180deg, var(--weigh-hi), var(--weigh));   /* a selected control */
   --shadow: 0 24px 50px -30px rgb(0 0 0 / 0.85);
   --head: "Archivo", "Arial Narrow", Arial, sans-serif;
+  /* the call, the sign and every big figure use a fixed condensed heavy cut of Archivo (no width axis to get wrong) */
+  --cond: "Archivo Cond", "Archivo", "Arial Narrow", Arial, sans-serif;
   --font: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
   --r-key: 6px; --r-ctl: 14px; --r-tile: 18px; --r-card: 24px;
   --gap: 14px; --pad: 20px;
@@ -122,7 +124,7 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .cell { padding: 9px 18px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .cell + .cell { border-left: 1px solid var(--rule); }
 .cell .k { font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cell .v { font-family: var(--head); font-size: 46px; font-weight: 900; font-stretch: 62%; letter-spacing: -0.01em; line-height: .86; font-feature-settings: "tnum" 1; white-space: nowrap; display: flex; align-items: center; gap: 14px; min-width: 0; }
+.cell .v { font-family: var(--head); font-size: 46px; font-weight: 900; font-stretch: 100%; font-family: var(--cond); letter-spacing: -0.01em; line-height: .86; font-feature-settings: "tnum" 1; white-space: nowrap; display: flex; align-items: center; gap: 14px; min-width: 0; }
 .cell:first-child .v { font-size: 62px; }
 .cell .v small { font: 500 14px/1.2 var(--font); font-stretch: 100%; letter-spacing: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cell.edit { justify-content: center; align-items: center; padding-inline: 8px; }
@@ -145,7 +147,7 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .stepper button { width: 48px; height: 48px; border-radius: var(--r-ctl); border: 1px solid var(--stroke-2); background: var(--well-2); font-size: 22px; line-height: 1; transition: transform var(--t-press) var(--e-press), border-color var(--t-fast); }
 .stepper button:hover { border-color: var(--ink); }
 .stepper button:active { transform: scale(0.94); }
-.stepper output { min-width: 22px; text-align: center; font: 900 26px/1 var(--head); font-stretch: 62%; font-feature-settings: "tnum" 1; }
+.stepper output { min-width: 22px; text-align: center; font: 900 26px/1 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; }
 .toggles { display: flex; gap: 6px; }
 .toggles button { height: 48px; min-width: 56px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--stroke-2); font-size: 15px; font-weight: 600; transition: transform var(--t-press) var(--e-press); }
 .toggles button:active { transform: scale(0.95); }
@@ -161,7 +163,7 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .panel-head .meta { font-size: 13px; color: var(--muted); }
 
 /* pitch chips: the sign number on the pitch's colour */
-.chip { --c: var(--ink); display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--c); color: var(--bg); font: 900 15px/1 var(--head); font-stretch: 75%; font-feature-settings: "tnum" 1; flex: none; }
+.chip { --c: var(--ink); display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--c); color: var(--bg); font: 900 15px/1 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; flex: none; }
 :root[data-theme="day"] .chip { color: #fff; }
 :root[data-theme="day"] :is(.k-FB, .k-SI, .k-SL).chip { color: var(--text); }
 .k-FB { --c: var(--fb); } .k-SL { --c: var(--sl); } .k-CB { --c: var(--cb); } .k-CH { --c: var(--ch); } .k-SI { --c: var(--si); } .k-FC { --c: var(--fc); }
@@ -180,13 +182,13 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .call-main > .sign { grid-column: 1; grid-row: 1; }
 .call-main > div:nth-child(2) { grid-column: 2 / -1; grid-row: 1; }
 .call > .zone { grid-column: 3; grid-row: 2 / span 2; align-self: start; margin-top: 14px; }
-.sign { width: 92px; height: 92px; border-radius: 26px; display: grid; place-items: center; margin-top: 4px; font: 900 64px/1 var(--head); font-stretch: 62%; font-feature-settings: "tnum" 1; color: var(--on-land); background: linear-gradient(180deg, var(--land-hi), var(--land)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 12px 30px -12px rgb(var(--land-rgb) / 0.7); }
+.sign { width: 92px; height: 92px; border-radius: 26px; display: grid; place-items: center; margin-top: 4px; font: 900 64px/1 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; color: var(--on-land); background: linear-gradient(180deg, var(--land-hi), var(--land)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 12px 30px -12px rgb(var(--land-rgb) / 0.7); }
 :root[data-theme="day"] .sign { background: var(--land); box-shadow: none; }
 /* the call's words size themselves to the room they have (22.5% of the column's width fits a nine-letter name on one
    line), and a longer name wraps: the call is never cut short */
 .call-main > div:nth-child(2) { container-type: inline-size; }
-.pitch { font-family: var(--head); font-size: clamp(48px, 22.5cqw, 128px); line-height: .86; font-weight: 900; font-stretch: 62%; letter-spacing: -0.01em; text-transform: uppercase; color: var(--land); overflow-wrap: break-word; text-wrap: balance; padding-block: 0.04em; }
-.spot { margin-top: 6px; font: 800 clamp(26px, 3vw, 38px)/1.05 var(--head); font-stretch: 75%; letter-spacing: 0; text-transform: uppercase; color: var(--ink); }
+.pitch { font-family: var(--head); font-size: clamp(48px, 22.5cqw, 128px); line-height: .86; font-weight: 900; font-stretch: 100%; font-family: var(--cond); letter-spacing: -0.01em; text-transform: uppercase; color: var(--land); overflow-wrap: break-word; text-wrap: balance; padding-block: 0.04em; }
+.spot { margin-top: 6px; font: 800 clamp(26px, 3vw, 38px)/1.05 var(--head); font-stretch: 100%; font-family: var(--cond); letter-spacing: 0; text-transform: uppercase; color: var(--ink); }
 .why { grid-column: 2; grid-row: 2; margin-top: 16px; color: var(--muted); font-size: 15px; max-width: 48ch; }
 .why b { color: var(--ink); font-weight: 650; }
 .whyline { display: block; margin-bottom: 2px; font-size: 16px; }
@@ -196,13 +198,14 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .readout > div { padding: 10px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .readout > div + div { border-left: 1px solid var(--rule); }
 .readout .k { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
-.readout .v { font: 900 30px/0.9 var(--head); font-stretch: 62%; font-feature-settings: "tnum" 1; }
+.readout .v { font: 900 30px/0.9 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; }
 .readout .v small { font: 500 13px/1 var(--font); font-stretch: 100%; color: var(--muted); margin-left: 4px; }
 .coachmark { display: inline-block; margin-left: 12px; white-space: nowrap; font: 700 13px/1 var(--font); font-stretch: 100%; letter-spacing: 0; text-transform: none; color: var(--bg); background: var(--ink); padding: 5px 10px; border-radius: 999px; vertical-align: 0.9em; }
 .zone { padding: 10px; border-radius: var(--r-tile); background: rgb(var(--bg-rgb) / 0.35); border: 1px solid var(--rule); }
 :root[data-theme="day"] .zone { background: var(--well); }
 .zone svg { display: block; width: 100%; height: auto; overflow: visible; }
 .zone svg text { font-family: var(--head); }
+.zone svg .core text { font-family: var(--cond); font-stretch: 100%; }
 .zone .lock { transform-box: fill-box; transform-origin: center; }
 .call-acts { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding-top: 18px; }
 /* Accept: the one green thing you can press, and the biggest. Once sent it settles into a quiet "Accepted". */
@@ -286,7 +289,7 @@ small.pstat { display: inline; padding: 1px 6px; margin: 0; font-size: 12px; bor
 .trow .chip { grid-row: span 2; }
 .trow .nm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
 .trow .nm span { color: var(--muted); font-weight: 400; }
-.trow .v { text-align: right; font: 900 22px/1 var(--head); font-stretch: 62%; font-feature-settings: "tnum" 1; }
+.trow .v { text-align: right; font: 900 22px/1 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; }
 .bullet { grid-column: 2 / -1; position: relative; height: 8px; background: var(--well-2); border-radius: 5px; }
 .bullet i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(180deg, var(--weigh-hi), var(--weigh)); border-radius: 5px; }
 .bullet.out i { background: var(--text-4); }
@@ -307,7 +310,7 @@ tr.pa-end td { border-bottom: 1px solid var(--stroke-2); }
 
 /* inning over */
 .done { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; padding: 34px var(--pad); }
-.done h2 { font-size: clamp(44px, 6vw, 72px); font-weight: 900; font-stretch: 62%; letter-spacing: -0.01em; line-height: .9; text-transform: uppercase; }
+.done h2 { font-size: clamp(44px, 6vw, 72px); font-weight: 900; font-stretch: 100%; font-family: var(--cond); letter-spacing: -0.01em; line-height: .9; text-transform: uppercase; }
 .done p { color: var(--muted); max-width: 52ch; font-size: 17px; }
 .done .btn.primary { min-height: 60px; padding: 0 30px; font-size: 18px; border-radius: 999px; }
 
@@ -445,10 +448,10 @@ input[type="range"] { height: 28px; padding: 0; border: 0; background: none; acc
 .legend .chip { width: 22px; height: 22px; font-size: 13px; border-radius: 7px; }
 .counts { display: flex; flex-direction: column; gap: 6px; }
 .crow { display: grid; grid-template-columns: 38px minmax(0, 1fr) 30px; gap: 12px; align-items: center; font-size: 14px; }
-.crow .c { font: 900 20px/1 var(--head); font-stretch: 62%; font-feature-settings: "tnum" 1; }
+.crow .c { font: 900 20px/1 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; }
 .crow .n { text-align: right; color: var(--muted); }
 .stack { display: flex; gap: 2px; height: 24px; border-radius: 6px; overflow: hidden; }
-.stack i { background: var(--c, var(--ink)); min-width: 3px; display: grid; place-items: center; font: 900 13px/1 var(--head); font-style: normal; font-stretch: 75%; color: var(--bg); }
+.stack i { background: var(--c, var(--ink)); min-width: 3px; display: grid; place-items: center; font: 900 13px/1 var(--head); font-style: normal; font-stretch: 100%; font-family: var(--cond); color: var(--bg); }
 :root[data-theme="day"] .stack i { color: #fff; }
 :root[data-theme="day"] .stack :is(.k-FB, .k-SI, .k-SL) { color: var(--text); }
 .stack i:first-child { border-radius: 6px 0 0 6px; } .stack i:last-child { border-radius: 0 6px 6px 0; }
