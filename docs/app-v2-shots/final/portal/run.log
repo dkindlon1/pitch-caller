@@ -82,3 +82,165 @@
   ok   game-new-2-error__phone
   ok   game-new-2__laptop
   ok   game-new-2__ipad-l
+  ok   game-new-2__ipad-p
+  ok   game-new-2__phone
+  ok   game-new-3__laptop
+  ok   game-new-3__ipad-l
+  ok   game-new-3__ipad-p
+  ok   game-new-3__phone
+  ok   game-new-4__laptop
+  ok   game-new-4__ipad-l
+  ok   game-new-4__ipad-p
+  ok   game-new-4__phone
+  ok   game-review__laptop
+  ok   game-review__ipad-l
+  ok   game-review__ipad-p
+  ok   game-review__phone
+  ok   game-detail-upcoming__laptop
+  ok   game-detail-upcoming__ipad-l
+  ok   game-detail-upcoming__ipad-p
+  ok   game-detail-upcoming__phone
+  ok   game-detail-noplan__laptop
+  ok   game-detail-noplan__ipad-l
+  ok   game-detail-noplan__ipad-p
+  ok   game-detail-noplan__phone
+  ok   game-detail-viewer__laptop
+  ok   game-detail-viewer__ipad-l
+  ok   game-detail-viewer__ipad-p
+  ok   game-detail-viewer__phone
+  ok   game-detail-finished__laptop
+  ok   game-detail-finished__ipad-l
+  ok   game-detail-finished__ipad-p
+  ok   game-detail-finished__phone
+  ok   game-edit__laptop
+  ok   game-edit__ipad-l
+  ok   game-edit__ipad-p
+  ok   game-edit__phone
+  ok   roster__laptop
+  ok   roster__ipad-l
+  ok   roster__ipad-p
+  ok   roster__phone
+  ok   roster-viewer__laptop
+  ok   roster-viewer__ipad-l
+  ok   roster-viewer__ipad-p
+  ok   roster-viewer__phone
+  ok   roster-invite-open__laptop
+  ok   roster-invite-open__ipad-l
+  ok   roster-invite-open__ipad-p
+  ok   roster-invite-open__phone
+  ok   pitcher__laptop
+  ok   pitcher__ipad-l
+  ok   pitcher__ipad-p
+  ok   pitcher__phone
+  ok   pitcher-two-pitches__laptop
+  ok   pitcher-two-pitches__ipad-l
+  ok   pitcher-two-pitches__ipad-p
+  ok   pitcher-two-pitches__phone
+  ok   pitcher-stats__laptop
+  ok   pitcher-stats__ipad-l
+  ok   pitcher-stats__ipad-p
+  ok   pitcher-stats__phone
+  ok   pitcher-stats-sparse__laptop
+  ok   pitcher-stats-sparse__ipad-l
+  ok   pitcher-stats-sparse__ipad-p
+  ok   pitcher-stats-sparse__phone
+  ok   pitcher-uploads__laptop
+  ok   pitcher-uploads__ipad-l
+  ok   pitcher-uploads__ipad-p
+  ok   pitcher-uploads__phone
+  ok   pitcher-upload-detail__laptop
+  ok   pitcher-upload-detail__ipad-l
+  ok   pitcher-upload-detail__ipad-p
+  ok   pitcher-upload-detail__phone
+  ok   opponents__laptop
+  ok   opponents__ipad-l
+  ok   opponents__ipad-p
+  ok   opponents__phone
+  ok   opponent-detail__laptop
+  ok   opponent-detail__ipad-l
+  ok   opponent-detail__ipad-p
+  ok   opponent-detail__phone
+  ok   opponent-empty__laptop
+  ok   opponent-empty__ipad-l
+  ok   opponent-empty__ipad-p
+  ok   opponent-empty__phone
+  ok   staff__laptop
+  ok   staff__ipad-l
+  ok   staff__ipad-p
+  ok   staff__phone
+  ok   settings__laptop
+  ok   settings__ipad-l
+  ok   settings__ipad-p
+  ok   settings__phone
+  ok   settings-viewer__laptop
+  ok   settings-viewer__ipad-l
+  ok   settings-viewer__ipad-p
+  ok   settings-viewer__phone
+  ok   billing__laptop
+  ok   billing__ipad-l
+  ok   billing__ipad-p
+  ok   billing__phone
+  ok   billing-lapsed__laptop
+  ok   billing-lapsed__ipad-l
+  ok   billing-lapsed__ipad-p
+  ok   billing-lapsed__phone
+  ok   exports__laptop
+  ok   exports__ipad-l
+  ok   exports__ipad-p
+  ok   exports__phone
+  ok   me-picker__laptop
+  ok   me-picker__ipad-l
+  ok   me-picker__ipad-p
+  ok   me-picker__phone
+  ok   me-home__laptop
+  ok   me-home__ipad-l
+  ok   me-home__ipad-p
+  ok   me-home__phone
+  ok   me-arsenal__laptop
+  ok   me-arsenal__ipad-l
+  ok   me-arsenal__ipad-p
+  ok   me-arsenal__phone
+  ok   me-uploads__laptop
+  ok   me-uploads__ipad-l
+  ok   me-uploads__ipad-p
+  ok   me-uploads__phone
+  ok   me-upload-detail__laptop
+  ok   me-upload-detail__ipad-l
+  ok   me-upload-detail__ipad-p
+  ok   me-upload-detail__phone
+  ok   me-stats__laptop
+  ok   me-stats__ipad-l
+  ok   me-stats__ipad-p
+  ok   me-stats__phone
+  ok   me-learned__laptop
+  ok   me-learned__ipad-l
+  ok   me-learned__ipad-p
+  ok   me-learned__phone
+  ok   me-profile__laptop
+  ok   me-profile__ipad-l
+  ok   me-profile__ipad-p
+  ok   me-profile__phone
+  ok   not-found__laptop  (1 console/page error)
+  ok   not-found__ipad-l  (1 console/page error)
+  ok   not-found__ipad-p  (1 console/page error)
+  ok   not-found__phone  (1 console/page error)
+  ok   not-found-app__laptop  (1 console/page error)
+  ok   not-found-app__ipad-l  (1 console/page error)
+  ok   not-found-app__ipad-p  (1 console/page error)
+  ok   not-found-app__phone  (1 console/page error)
+  ok   admin__laptop
+  ok   admin__ipad-l
+  ok   admin__ipad-p
+  ok   admin__phone
+  ok   admin-org__laptop
+  ok   admin-org__ipad-l
+  ok   admin-org__ipad-p
+  ok   admin-org__phone
+  ok   admin-audit__laptop
+  ok   admin-audit__ipad-l
+  ok   admin-audit__ipad-p
+  ok   admin-audit__phone
+console and page errors (grouped):
+  x8  console: Failed to load resource: the server responded with a status of 404 (Not Found)  [not-found__laptop, not-found__ipad-l, not-found__ipad-p, ...]
+shots: 242 written, 0 failed: none
+axe: 0 serious or critical findings in 0 groups

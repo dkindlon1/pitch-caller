@@ -1,0 +1,13 @@
+recording game-flow
+recording coach-portal
+recording player-portal
+---
+game-flow: recorded, 61.7 s, 3053 KB, 740 frames, 8 sheets
+coach-portal: recorded, 86.4 s, 10115 KB, 1037 frames, 8 sheets
+player-portal: recorded, 51.3 s, 4034 KB, 616 frames, 8 sheets
+game path: hand-off from the Game Day plan page (Start on this device) -> /app/game/ (then one navigation to the same URL with watch=1 added)
+note: today's game: link not clicked, went to /app/t/16a04f35-b236-411d-84fe-dcf992aa583e/games/gam_today100000000000000000000 directly
+note: hand-off URL could not carry watch=1; navigated once to /app/game/?watch=1
+note: back to the launcher: link not clicked, went to /app/t/16a04f35-b236-411d-84fe-dcf992aa583e directly
+console and page errors (grouped):
+sheets: game-flow__sheet_1.jpg, game-flow__sheet_2.jpg, game-flow__sheet_3.jpg, game-flow__sheet_4.jpg, game-flow__sheet_5.jpg, game-flow__sheet_6.jpg, game-flow__sheet_7.jpg, game-flow__sheet_8.jpg, coach-portal__sheet_1.jpg, coach-portal__sheet_2.jpg, coach-portal__sheet_3.jpg, coach-portal__sheet_4.jpg, coach-portal__sheet_5.jpg, coach-portal__sheet_6.jpg, coach-portal__sheet_7.jpg, coach-portal__sheet_8.jpg, player-portal__sheet_1.jpg, player-portal__sheet_2.jpg, player-portal__sheet_3.jpg, player-portal__sheet_4.jpg, player-portal__sheet_5.jpg, player-portal__sheet_6.jpg, player-portal__sheet_7.jpg, player-portal__sheet_8.jpg
