@@ -31,7 +31,7 @@
 | `tsc`, `npm test`, `next build` | clean; 60 of 60; compiled |
 | site e2e and the eight portal e2es | all pass, 252 portal checks, tests unchanged |
 | `rls_matrix_test` | 347 passed |
-| `scripts/test-app.sh` | TESTAPP_R3 |
+| `scripts/test-app.sh` | on the committed build every step passes up to `v11_fixture_test`, which stops under Git Bash on its `tar` path (known; it passes 8 of 8 with Windows' own `tar`); every later step was run by hand and passes, apart from `game_mix_e2e` (next row). `watch_e2e`, `sync_pill_e2e` and `game_mix_e2e` were re-run after the Setup switch was taken out |
 | `watch_e2e`, `watch_test`, `fold_e2e`, `watch_optin_e2e`, `sync_pill_e2e` | all pass |
 | `game_mix_e2e` | failed once in the full run (4 games over 70%, limit 3), then passed three runs in a row. It is seeded but not fully repeatable, and it sits exactly at its limit. I don't believe this round caused it, but I can't prove that |
 | axe, 240 game captures and 242 portal captures | 0 serious or critical |
