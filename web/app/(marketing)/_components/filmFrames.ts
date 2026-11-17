@@ -125,7 +125,6 @@ export function filmFrames(canvas: HTMLCanvasElement, set: FilmSet, count: numbe
     if (b >= 0) draw(b, t);       // the scroll sits between two frames: fade the next one over by the fraction
     ctx.globalAlpha = 1; shownKey = key;
     canvas.dataset.frame = String(a + 1); canvas.dataset.want = String(near + 1); canvas.dataset.sharp = String(kind);
-    canvas.dataset.v = String((Number(canvas.dataset.v) || 0) + 1);      // a new picture (the light behind the watch re-reads it)
     canvas.classList.add("is-on");
     if (onFirst) { const f = onFirst; onFirst = undefined; f(); }      // the first picture is on the canvas
   }

@@ -277,7 +277,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       blue: gp(L.b, "opacity"), blueScale: gp(L.b, "scale", 1), green: gp(L.g, "opacity"), greenScale: gp(L.g, "scale", 1),
       haze: gp(L.haze, "opacity"), hazeY: (gp(L.haze, "yPercent") / 100) * 1.24, beam: gp(L.beam, "opacity"), beamRot: (gp(L.beam, "rotation") * Math.PI) / 180,
       floor: gp(L.floor, "opacity"), floorY: (gp(L.floor, "yPercent") / 100) * 0.72, pg: gp(L.pg, "opacity"),
-    }), () => pg.classList.contains("is-live") && !document.documentElement.hasAttribute("data-glass") && !!$(".pq-ctl")?.style.backdropFilter, $<HTMLCanvasElement>(".pq-cv"));
+    }), () => pg.classList.contains("is-live") && !document.documentElement.hasAttribute("data-glass") && !!$(".pq-ctl")?.style.backdropFilter, { canvas: $<HTMLCanvasElement>(".pq-cv"), set: () => dir });
     let rt = 0;
     const onResize = () => { window.clearTimeout(rt); rt = window.setTimeout(() => { dir = tallScreen() ? "tall" : "wide"; count = frames[dir]; layout(); }, 160); };
     window.addEventListener("resize", onResize);
