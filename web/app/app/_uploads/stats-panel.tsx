@@ -8,16 +8,20 @@ import type { UploadAccess } from "./access";
 // A pitcher's stats (spec: "Player stats"): game pitches called in PitchIQ plus TrackMan game files, labeled by source,
 // every rate with its sample, and nothing on fewer than 10. Velocity and movement come from every upload.
 type SP = Record<string, string | string[] | undefined>;
-const KIND_COLOR: Record<string, string> = { FB: "#ff5a4e", SI: "#ff8a5c", FC: "#c98bff", SL: "#ffd43b", CB: "#52a9ff", CH: "#3fe08c" };   // v1.1: + sinker, cutter
+// the six pitch colours come from the shared tokens (--p-fb ... --p-ch); a mark never carries colour alone: every chart
+// has its legend of chips with the pitch's letters, and the tables beside it
+const KINDS6 = ["FB", "SI", "FC", "SL", "CB", "CH"];
+const kindVar = (k: string) => `var(--p-${KINDS6.includes(k) ? k.toLowerCase() : "fb"})`;
+const kindCls = (k: string) => `k-${KINDS6.includes(k) ? k : "FB"}`;
 const day = (iso: string) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 const SIDE = { same: "Same-side hitters", opp: "Opposite-side hitters" } as const;
 
 // a headline rate: the percentage big, its sample small; under the minimum, a dash and why
 function Big({ label, r, unit = "pitches" }: { label: string; r: Rate; unit?: string }) {
   return (
-    <section className="dash-card" aria-label={label}><h2 className="lbl">{label}</h2>
-      {r.pct === null ? <><p className="big-num mono">–</p><p className="shell-note small">{r.n ? `${sample(r.n, unit)}, not enough yet` : "None yet"}</p></>
-        : <><p className="big-num mono">{Math.round(r.pct)}%</p><p className="shell-note small">{r.k} of {sample(r.n, unit)}</p></>}
+    <section className="pq-figcell" aria-label={label}><h2 className="lbl">{label}</h2>
+      {r.pct === null ? <><p className="fig is-none">–</p><p className="shell-note small">{r.n ? `${sample(r.n, unit)}, not enough yet` : "None yet"}</p></>
+        : <><p className="fig">{Math.round(r.pct)}%</p><p className="shell-note small">{r.k} of {sample(r.n, unit)}</p></>}
     </section>
   );
 }
@@ -45,6 +49,8 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
   const rows: StatRow[] = src === "pitchiq" ? piq : src === "trackman" ? tm : combine(piq, tm);
   const all = line(rows, false), use = usage(rows), cp = byCountAndPitch(rows), sides = bySide(rows), log = outingLog(rows);
   const trend = veloTrend(ups), moves = movement(ups);
+  const bp = byPitch(rows);
+  const kindOfName = (pitch: string) => rows.find((r) => r.pitch === pitch)?.kind || "FB";
   const lp = (learned?.pitches || {}) as Record<string, Record<string, unknown>>;
   const linkSrc = (s: string, l: string) => <Link href={`${a.base}/stats${s === "all" ? "" : `?src=${s}`}`} aria-current={src === s ? "page" : undefined}>{l}</Link>;
   return (
@@ -52,24 +58,31 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
       <nav className="sub-tabs small" aria-label="Source">{linkSrc("all", `All (${combine(piq, tm).length})`)}{linkSrc("pitchiq", `Called in PitchIQ (${piq.length})`)}{linkSrc("trackman", `TrackMan games (${tm.length})`)}</nav>
       <p className="shell-note small">{src === "all" ? "Both sources; a game charted in PitchIQ and also uploaded from TrackMan counts once." : src === "pitchiq" ? "Only games called on the iPad." : "Only TrackMan game files."} The last 12 months. A rate needs 10 pitches (or swings, or balls in play) before it shows.</p>
       {rows.length ? (<>
-        <div className="dash">
-          <section className="dash-card" aria-label="Pitches"><h2 className="lbl">Game pitches</h2><p className="big-num mono">{all.n}</p></section>
+        <div className="pq-figs">
+          <section className="pq-figcell" aria-label="Pitches"><h2 className="lbl">Game pitches</h2><p className="fig">{all.n}</p><p className="shell-note small">{log.length} {log.length === 1 ? "outing" : "outings"}</p></section>
           <Big label="Strikes" r={all.strike} />
           <Big label="Whiffs per swing" r={all.whiff} unit="swings" />
           {all.k ? <Big label="Strikeouts, two strikes" r={all.k} /> : null}
         </div>
 
         <h2 className="shell-h2">By pitch</h2>
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="By pitch">
+        <div className="pq-mix" aria-hidden="true">
+          {bp.map((x) => { const share = (x.line.n / all.n) * 100; return (
+            <span key={x.pitch} className={kindCls(kindOfName(x.pitch))} style={{ flexGrow: x.line.n }} title={`${x.pitch}: ${x.line.n} of ${all.n} pitches, ${Math.round(share)}%`}>
+              {share >= 9 ? <><b>{x.pitch}</b> {Math.round(share)}%</> : null}</span>); })}
+        </div>
+        <div className="tbl-scroll"><table className="data-tbl by-pitch" aria-label="By pitch">
           <thead><tr><th>Pitch</th><th className="num">n</th><th className="num">Strike</th><th className="num">Whiff</th><th className="num">K, two strikes</th><th className="num">Hard contact</th></tr></thead>
-          <tbody>{byPitch(rows).map((x) => <tr key={x.pitch}><td>{x.pitch}</td><Cells l={x.line} /></tr>)}</tbody>
+          <tbody>{bp.map((x) => <tr key={x.pitch} className={kindCls(kindOfName(x.pitch))} style={x.line.strike.pct === null ? undefined : ({ ["--v" as string]: `${x.line.strike.pct}%` } as React.CSSProperties)}>
+            <td><span className="pq-pitch"><i className="chip" aria-hidden="true">{kindOfName(x.pitch)}</i>{x.pitch}</span></td><Cells l={x.line} /></tr>)}</tbody>
         </table></div>
 
         <h2 className="shell-h2">Usage by count</h2>
-        <div className="tbl-scroll"><table className="data-tbl" aria-label="Usage by count">
+        <div className="tbl-scroll"><table className="data-tbl usage" aria-label="Usage by count">
           <thead><tr><th>Count</th><th className="num">n</th>{use.pitches.map((p) => <th key={p} className="num">{p}</th>)}</tr></thead>
           <tbody>{use.counts.map((c) => <tr key={c.count}><td className="mono">{c.count}</td><td className="num mono">{c.n}</td>
-            {use.pitches.map((p) => <td key={p} className="num">{c.by[p].pct === null ? (c.by[p].k ? `${c.by[p].k}` : "–") : `${Math.round(c.by[p].pct)}%`}</td>)}</tr>)}</tbody>
+            {use.pitches.map((p) => c.by[p].pct === null ? <td key={p} className="num thin">{c.by[p].k ? `${c.by[p].k}` : "–"}</td>
+              : <td key={p} className="num heat" style={{ ["--v" as string]: (c.by[p].pct as number) / 100 } as React.CSSProperties}>{`${Math.round(c.by[p].pct as number)}%`}</td>)}</tr>)}</tbody>
         </table></div>
         <p className="shell-note small">Under 10 pitches in a count, the table shows how many, not a share.</p>
 
@@ -93,10 +106,12 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
         </table></div>
       </>) : <p className="shell-note">No game pitches {src === "trackman" ? "from TrackMan game files" : src === "pitchiq" ? "called in PitchIQ" : "yet"}. They show up once a game is charted on the iPad or a TrackMan game file is uploaded.</p>}
 
-      <h2 className="shell-h2">Velocity</h2>
-      {trend.length ? <VeloChart trend={trend} kindOf={(type) => ups.find((u) => u.pitch_type === type)?.kind || "FB"} /> : <p className="shell-note">From uploads: none yet.</p>}
-      <h2 className="shell-h2">Movement</h2>
-      {moves.length ? <MoveChart moves={moves} kindOf={(type) => ups.find((u) => u.pitch_type === type)?.kind || "FB"} /> : <p className="shell-note">From uploads: none yet.</p>}
+      <div className="pq-charts">
+        <section><h2 className="shell-h2">Velocity</h2>
+          {trend.length ? <VeloChart trend={trend} kindOf={(type) => ups.find((u) => u.pitch_type === type)?.kind || "FB"} /> : <p className="shell-note">From uploads: none yet.</p>}</section>
+        <section><h2 className="shell-h2">Movement</h2>
+          {moves.length ? <MoveChart moves={moves} kindOf={(type) => ups.find((u) => u.pitch_type === type)?.kind || "FB"} /> : <p className="shell-note">From uploads: none yet.</p>}</section>
+      </div>
 
       <h2 className="shell-h2">What the engine learned, next to the grades</h2>
       {Object.keys(lp).length ? (
@@ -115,13 +130,17 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
 }
 
 // ---------------------------------------------------------------- charts (plain SVG, drawn on the server)
-const W = 640, H = 260, PAD = { l: 44, r: 12, t: 12, b: 30 };
+const W = 640, H = 280, PAD = { l: 40, r: 44, t: 14, b: 30 };
 function VeloChart({ trend, kindOf }: { trend: ReturnType<typeof veloTrend>; kindOf: (t: string) => string }) {
   const dates = [...new Set(trend.map((x) => x.date))].sort(), types = [...new Set(trend.map((x) => x.type))];
   const vs = trend.map((x) => x.velo), lo = Math.floor(Math.min(...vs) - 1), hi = Math.ceil(Math.max(...vs) + 1);
   const X = (d: string) => PAD.l + (dates.length === 1 ? (W - PAD.l - PAD.r) / 2 : (dates.indexOf(d) / (dates.length - 1)) * (W - PAD.l - PAD.r));
   const Y = (v: number) => PAD.t + (1 - (v - lo) / Math.max(1, hi - lo)) * (H - PAD.t - PAD.b);
   const ticks = [lo, Math.round((lo + hi) / 2), hi];
+  // the value at each line's end, nudged apart so two close lines don't print on top of each other
+  const ends = types.map((t) => { const pts = trend.filter((x) => x.type === t); return { t, y: Y(pts[pts.length - 1].velo) }; }).sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;
+  const endY = Object.fromEntries(ends.map((e) => [e.t, e.y]));
   return (
     <figure className="chart">
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Average velocity by session: ${types.map((t) => `${t} ${trend.filter((x) => x.type === t).map((x) => x.velo).join(", ")} mph`).join("; ")}`}>
@@ -129,11 +148,13 @@ function VeloChart({ trend, kindOf }: { trend: ReturnType<typeof veloTrend>; kin
         {dates.map((d, i) => <text key={d} x={X(d)} y={H - 8} textAnchor={dates.length > 1 && i === 0 ? "start" : dates.length > 1 && i === dates.length - 1 ? "end" : "middle"} className="tick">{day(d)}</text>)}
         {types.map((t) => {
           const pts = trend.filter((x) => x.type === t);
-          return <g key={t}><polyline fill="none" stroke={KIND_COLOR[kindOf(t)] || "#aaa"} strokeWidth={2} points={pts.map((p) => `${X(p.date)},${Y(p.velo)}`).join(" ")} />
-            {pts.map((p) => <circle key={p.date} cx={X(p.date)} cy={Y(p.velo)} r={4} fill={KIND_COLOR[kindOf(t)] || "#aaa"}><title>{`${t}, ${day(p.date)}: ${p.velo} mph average, ${p.max} max, ${p.n} pitches`}</title></circle>)}</g>;
+          const last = pts[pts.length - 1];
+          return <g key={t}><polyline fill="none" stroke={kindVar(kindOf(t))} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" points={pts.map((p) => `${X(p.date)},${Y(p.velo)}`).join(" ")} />
+            {pts.map((p) => <circle key={p.date} cx={X(p.date)} cy={Y(p.velo)} r={5} fill={kindVar(kindOf(t))} className="pt"><title>{`${t}, ${day(p.date)}: ${p.velo} mph average, ${p.max} max, ${p.n} pitches`}</title></circle>)}
+            {types.length <= 4 ? <text x={X(last.date) + 9} y={endY[t] + 4} className="tick end">{last.velo}</text> : null}</g>;
         })}
       </svg>
-      <figcaption className="legend">{types.map((t) => <span key={t}><i style={{ background: KIND_COLOR[kindOf(t)] || "#aaa" }} /> {t}</span>)} <span className="lbl">mph, average per session</span></figcaption>
+      <figcaption className="legend">{types.map((t) => <span key={t}><i className={`chip ${kindCls(kindOf(t))}`} aria-hidden="true">{kindOf(t)}</i>{t}</span>)} <span className="lbl">mph, average per session</span></figcaption>
     </figure>
   );
 }
@@ -146,11 +167,11 @@ function MoveChart({ moves, kindOf }: { moves: ReturnType<typeof movement>; kind
       <svg viewBox={`0 0 ${S} ${S}`} role="img" aria-label={`Movement, inches: ${types.map((t) => { const ms = moves.filter((m) => m.type === t); const av = (f: "ivb" | "hb") => Math.round(ms.reduce((a, m) => a + m[f], 0) / ms.length); return `${t} ${av("ivb")} up, ${av("hb")} arm side`; }).join("; ")}`}>
         <line x1={20} x2={S - 20} y1={C} y2={C} className="grid" /><line x1={C} x2={C} y1={20} y2={S - 20} className="grid" />
         {[-20, -10, 10, 20].map((v) => <g key={v}><text x={C + v * k} y={C + 14} textAnchor="middle" className="tick">{v}</text><text x={C - 6} y={C - v * k + 4} textAnchor="end" className="tick">{v}</text></g>)}
-        {moves.slice(0, 3000).map((m, i) => { const col = KIND_COLOR[kindOf(m.type)] || "#aaa"; const x = C + Math.max(-M, Math.min(M, m.hb)) * k, y = C - Math.max(-M, Math.min(M, m.ivb)) * k;
+        {moves.slice(0, 3000).map((m, i) => { const col = kindVar(kindOf(m.type)); const x = C + Math.max(-M, Math.min(M, m.hb)) * k, y = C - Math.max(-M, Math.min(M, m.ivb)) * k;
           return m.developing ? <circle key={i} cx={x} cy={y} r={3} fill="none" stroke={col} strokeWidth={1.2} /> : <circle key={i} cx={x} cy={y} r={3} fill={col} fillOpacity={0.75} />; })}
         <text x={S - 22} y={C - 6} textAnchor="end" className="tick">arm side →</text><text x={C + 6} y={26} className="tick">↑ up</text>
       </svg>
-      <figcaption className="legend">{types.map((t) => <span key={t}><i style={{ background: KIND_COLOR[kindOf(t)] || "#aaa" }} /> {t}</span>)} <span className="lbl">hollow: developing</span></figcaption>
+      <figcaption className="legend">{types.map((t) => <span key={t}><i className={`chip ${kindCls(kindOf(t))}`} aria-hidden="true">{kindOf(t)}</i>{t}</span>)} <span className="lbl">inches; hollow: developing</span></figcaption>
     </figure>
   );
 }

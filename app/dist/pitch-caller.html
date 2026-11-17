@@ -685,20 +685,21 @@ td.wrapcell .line { display: block; }
   .bar .btn { padding: 0 10px; font-size: 14px; }
 }
 /* where it ended up */
-.locpick { margin-bottom: 10px; padding: 10px 12px 12px; border-radius: var(--r-tile); background: var(--well); border: 1px solid var(--rule); }
+.locpick { margin-bottom: 10px; padding: 10px; border-radius: var(--r-tile); background: var(--well); border: 1px solid var(--rule); }
 .lg-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; margin-bottom: 8px; }
 .lg-head .t { color: var(--ink); font-weight: 600; }
 .lg-body { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
-.lgrid { display: grid; grid-template-columns: repeat(5, 46px); grid-template-rows: repeat(5, 46px); gap: 4px; margin-inline: auto; }
+.lgrid { display: grid; grid-template-columns: repeat(5, 48px); grid-template-rows: repeat(5, 48px); gap: 3px; flex: none; }
 .lc { border-radius: 8px; border: 1px solid var(--rule); background: transparent; }
 .lc.z-edge, .lc.z-heart { background: var(--well-2); border-color: var(--stroke-2); }
 .lc.z-heart { background: rgb(var(--text-rgb) / 0.2); }
 .lc:hover { border-color: var(--ink); }
 .lc.on, .lwild.on { background: var(--on); border-color: transparent; color: var(--on-weigh); }
-.lg-body { justify-content: center; }
-.lways { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; width: 100%; }
-.lways .btn { min-height: 46px; padding: 0 4px; font-size: 13.5px; }
-@media (max-width: 1060px) { .lways { grid-template-columns: repeat(2, minmax(0, 1fr)); width: auto; } }
+.lg-body { justify-content: center; flex-wrap: nowrap; }
+/* way off: four arrow keys in a column beside the grid, so the result keys below stay on the first screen */
+.lways { display: grid; grid-template-columns: 48px; gap: 4px; justify-items: center; }
+.lways .cap { font-size: 11.5px; font-weight: 600; line-height: 1.1; color: var(--muted); text-align: center; }
+.lways .btn { width: 48px; min-height: 48px; padding: 0; font-size: 20px; }
 .pen-log { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .pen-log span { padding: 4px 10px; border-radius: 999px; background: var(--well-2); font-size: 13px; }
 @media (max-width: 640px) {
@@ -9126,9 +9127,9 @@ function locPicker() {
   return h("div", { class: "locpick" },
     h("div", { class: "lg-head" }, h("span", { class: "t" }, "Where it ended up"), h("span", { class: "muted" }, pendingLoc ? ({ heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[pendingLoc.z] + (wayName ? `, ${wayName}` : "")) : "catcher's view, optional")),
     h("div", { class: "lg-body" }, h("div", { class: "lgrid", role: "group", "aria-label": "Where it ended up, catcher's view" }, cells),
-      h("div", { class: "lways", role: "group", "aria-label": "Way off, which way (catcher's view)" }, WAY_DIRS.map(([wc, arrow, name]) =>
+      h("div", { class: "lways", role: "group", "aria-label": "Way off, which way (catcher's view)" }, h("span", { class: "cap", "aria-hidden": "true" }, "Way off"), WAY_DIRS.map(([wc, arrow, name]) =>
         h("button", { class: `btn pill lwild${wayOn(wc) ? " on" : ""}`, "aria-pressed": String(!!wayOn(wc)), "aria-label": `Way off, ${name}`, title: `Way off, ${name}`,
-          on: { click: () => { pendingLoc = wayOn(wc) ? null : { z: "noncomp", cell: wc.slice() }; render(); } } }, `Way off ${arrow}`)))));
+          on: { click: () => { pendingLoc = wayOn(wc) ? null : { z: "noncomp", cell: wc.slice() }; render(); } } }, h("span", { class: "sr" }, "Way off "), arrow)))));
 }
 
 // v1.2: where the catcher set up (optional): the target a miss lean is measured from, when it isn't the called spot

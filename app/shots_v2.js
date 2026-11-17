@@ -258,6 +258,24 @@ S["no-bluetooth"] = { watch: "nobt", run: async (page) => { await prepRoster(pag
   if (r.watch !== null || r.accept || r.bt) throw new Error("bluetooth/Accept present: " + JSON.stringify(r)); } };
 
 // ---------------------------------------------------------------- run
+
+// --axe: run axe-core on every page or state before its screenshot; a serious or critical finding fails the run
+const AXE_ON = process.argv.includes("--axe");
+const AXE_SRC = AXE_ON ? require("fs").readFileSync(require.resolve("axe-core/axe.min.js", { paths: [__dirname, require("path").join(__dirname, ".."), require("path").join(__dirname, "../..")] }), "utf8") : "";
+const axeHits = [];
+async function axeCheck(page, label) {
+  if (!AXE_ON) return;
+  await page.evaluate(AXE_SRC);
+  const r = await page.evaluate(() => window.axe.run(document, { resultTypes: ["violations"] }));
+  for (const v of r.violations) if (v.impact === "serious" || v.impact === "critical") axeHits.push({ label, id: v.id, impact: v.impact, n: v.nodes.length, target: String(v.nodes[0].target), html: v.nodes[0].html.slice(0, 160), why: (v.nodes[0].any[0] || {}).message || "" });
+}
+function axeReport() {
+  if (!AXE_ON) return 0;
+  const by = new Map(); for (const h of axeHits) { const k = h.id + " | " + h.target; const e = by.get(k) || { ...h, labels: [] }; e.labels.push(h.label); by.set(k, e); }
+  console.log(`axe: ${axeHits.length} serious or critical findings in ${by.size} groups`);
+  for (const e of by.values()) console.log(`  ${e.impact} ${e.id} x${e.labels.length} [${e.labels.slice(0, 3).join(", ")}] ${e.target} :: ${e.why} :: ${e.html}`);
+  return axeHits.length;
+}
 (async () => {
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const browser = await chromium.launch();
@@ -277,6 +295,7 @@ S["no-bluetooth"] = { watch: "nobt", run: async (page) => { await prepRoster(pag
           }
           await page.evaluate(() => document.fonts.ready);
           await wait(page, 400);
+          await axeCheck(page, `${name}__${theme}__${view}`);
           const base = path.join(OUT, `${name}__${theme}__${view}`);
           await page.screenshot({ path: base + ".png" }); written++; console.log("wrote " + base + ".png");
           if (FULL.has(name)) { await page.screenshot({ path: base + "__full.png", fullPage: true }); written++; console.log("wrote " + base + "__full.png"); }
@@ -290,5 +309,6 @@ S["no-bluetooth"] = { watch: "nobt", run: async (page) => { await prepRoster(pag
   for (const e of pageErrs) console.log("page error " + e);
   console.log(`shots: ${written} written, ${failed.size} states failed: ${[...failed.keys()].join(", ") || "none"}`);
   for (const [k, v] of failed) console.log(`  ${k}: ${v}`);
-  process.exit(failed.size ? 1 : 0);
+  const ax = axeReport();
+  process.exit(failed.size || ax ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

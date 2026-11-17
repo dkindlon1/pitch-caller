@@ -133,6 +133,24 @@ const SHOTS = [
 
 // ---------------------------------------------------------------- the run
 const consoleAll = new Map();   // message -> { n, shots: Set }
+
+// --axe: run axe-core on every page or state before its screenshot; a serious or critical finding fails the run
+const AXE_ON = process.argv.includes("--axe");
+const AXE_SRC = AXE_ON ? require("fs").readFileSync(require.resolve("axe-core/axe.min.js", { paths: [__dirname, require("path").join(__dirname, ".."), require("path").join(__dirname, "../..")] }), "utf8") : "";
+const axeHits = [];
+async function axeCheck(page, label) {
+  if (!AXE_ON) return;
+  await page.evaluate(AXE_SRC);
+  const r = await page.evaluate(() => window.axe.run(document, { resultTypes: ["violations"] }));
+  for (const v of r.violations) if (v.impact === "serious" || v.impact === "critical") axeHits.push({ label, id: v.id, impact: v.impact, n: v.nodes.length, target: String(v.nodes[0].target), html: v.nodes[0].html.slice(0, 160), why: (v.nodes[0].any[0] || {}).message || "" });
+}
+function axeReport() {
+  if (!AXE_ON) return 0;
+  const by = new Map(); for (const h of axeHits) { const k = h.id + " | " + h.target; const e = by.get(k) || { ...h, labels: [] }; e.labels.push(h.label); by.set(k, e); }
+  console.log(`axe: ${axeHits.length} serious or critical findings in ${by.size} groups`);
+  for (const e of by.values()) console.log(`  ${e.impact} ${e.id} x${e.labels.length} [${e.labels.slice(0, 3).join(", ")}] ${e.target} :: ${e.why} :: ${e.html}`);
+  return axeHits.length;
+}
 (async () => {
   const list = ONLY ? SHOTS.filter((s) => ONLY.includes(s.name)) : SHOTS;
   if (ONLY) { const miss = ONLY.filter((n) => !SHOTS.some((s) => s.name === n)); if (miss.length) { console.error("unknown shot(s): " + miss.join(", ")); process.exit(2); } }
@@ -190,6 +208,7 @@ const consoleAll = new Map();   // message -> { n, shots: Set }
       else if (status === 404 || o.notFound) throw new Error(`unexpected not-found page (HTTP ${status})`);
       await p.addStyleTag({ content: "nextjs-portal{display:none!important}" }).catch(() => {});   // the dev-server badge isn't part of the design
       await p.mouse.move(0, 0).catch(() => {});
+      await axeCheck(p, `${s.name}__${view}`);
       const base = path.join(OUT, `${s.name}__${view}`);
       if (!s.foldOnly) await p.screenshot({ path: base + ".png", fullPage: true });
       await p.screenshot({ path: base + "__fold.png", fullPage: false });
@@ -221,5 +240,6 @@ const consoleAll = new Map();   // message -> { n, shots: Set }
     fs.writeFileSync(path.join(OUT, "_console_errors.json"), JSON.stringify([...consoleAll].map(([m, e]) => ({ message: m, count: e.n, shots: [...e.shots] })), null, 2));
   }
   console.log(`shots: ${written} written, ${failed.length} failed: ${failed.join(", ") || "none"}`);
-  process.exit(failed.length ? 1 : 0);
+  const ax = axeReport();
+  process.exit(failed.length || ax ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

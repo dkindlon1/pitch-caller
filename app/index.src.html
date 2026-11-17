@@ -1033,9 +1033,9 @@ function locPicker() {
   return h("div", { class: "locpick" },
     h("div", { class: "lg-head" }, h("span", { class: "t" }, "Where it ended up"), h("span", { class: "muted" }, pendingLoc ? ({ heart: "middle", edge: "edge", off: "just off", noncomp: "way off" }[pendingLoc.z] + (wayName ? `, ${wayName}` : "")) : "catcher's view, optional")),
     h("div", { class: "lg-body" }, h("div", { class: "lgrid", role: "group", "aria-label": "Where it ended up, catcher's view" }, cells),
-      h("div", { class: "lways", role: "group", "aria-label": "Way off, which way (catcher's view)" }, WAY_DIRS.map(([wc, arrow, name]) =>
+      h("div", { class: "lways", role: "group", "aria-label": "Way off, which way (catcher's view)" }, h("span", { class: "cap", "aria-hidden": "true" }, "Way off"), WAY_DIRS.map(([wc, arrow, name]) =>
         h("button", { class: `btn pill lwild${wayOn(wc) ? " on" : ""}`, "aria-pressed": String(!!wayOn(wc)), "aria-label": `Way off, ${name}`, title: `Way off, ${name}`,
-          on: { click: () => { pendingLoc = wayOn(wc) ? null : { z: "noncomp", cell: wc.slice() }; render(); } } }, `Way off ${arrow}`)))));
+          on: { click: () => { pendingLoc = wayOn(wc) ? null : { z: "noncomp", cell: wc.slice() }; render(); } } }, h("span", { class: "sr" }, "Way off "), arrow)))));
 }
 
 // v1.2: where the catcher set up (optional): the target a miss lean is measured from, when it isn't the called spot

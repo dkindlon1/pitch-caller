@@ -1,14 +1,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { wasSeen } from "./Motion";
 
 // A number that counts up to its value once it's on screen. The page arrives with the real value (no script, a screen
-// reader and reduced motion all get it as is); the count only replays it, from zero, in about 0.7 s.
+// reader and reduced motion all get it as is); the count only replays it, from zero, in about 0.7 s, and only the first
+// time the screen is opened in a visit.
 export function Num({ value, delay = 0 }: { value: number; delay?: number }) {
   const [shown, setShown] = useState(value);
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const el = ref.current;
-    if (!el || !Number.isFinite(value) || value === 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setShown(value); return; }
+    if (!el || !Number.isFinite(value) || value === 0 || wasSeen(location.pathname) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { setShown(value); return; }
     let raf = 0, t0 = 0, timer = 0;
     const run = () => {
       t0 = performance.now();

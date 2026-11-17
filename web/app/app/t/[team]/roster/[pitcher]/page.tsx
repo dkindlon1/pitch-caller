@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { pitchersOf, teamFor, ROLE } from "@/lib/team";
 import { gradeHistory } from "@/lib/player";
-import { Tabs } from "../../../../_uploads/panels";
+import { PitcherHead } from "../../../../_uploads/pitcher-head";
 import { KINDS, PITCH_TYPES, signOf } from "@/lib/docs";
 import { v11Pitch } from "@/lib/engine_server";
 import { revertGrade, savePitcher } from "../../actions";
@@ -31,9 +30,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const ro = !roster;
   return (
     <>
-      <p><Link href={`/app/t/${team}/roster`}>Roster</Link></p>
-      <h1 className="shell-h1">{p.number ? `#${p.number} ` : ""}{p.name || "Unnamed"}</h1>
-      <Tabs base={`/app/t/${team}/roster/${p.id}`} at="profile" label="Profile and arsenal" />
+      <PitcherHead team={team} p={p} at="profile" />
       <Notice sp={sp} />
       <form action={savePitcher} className="shell-form" aria-label="Pitcher">
         <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={p.id} />

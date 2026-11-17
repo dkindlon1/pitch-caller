@@ -65,7 +65,8 @@ html:has(.pq) body { background: #0c0b0e; }
 /* ---- liquid glass (the site's recipe): a blurred, saturated backdrop, a bright top rim, an inner bloom, a blue glow
    along the bottom, and a highlight that follows the pointer (Motion.tsx sets --mx/--my). A glass panel's parents never
    carry opacity, or its blur stops working. */
-.pq .glass { position: relative; isolation: isolate; background: var(--glass-tint);
+:where(.pq .glass) { position: relative; }   /* (no weight: the dock and the bar set their own position) */
+.pq .glass { isolation: isolate; background: var(--glass-tint);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.1); backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) brightness(1.1);
   box-shadow: var(--glass-shadow); border: 0; }
 .pq .glass::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1; opacity: 0; transition: opacity var(--t-med);
@@ -534,4 +535,47 @@ html:has(.pq) body { background: #0c0b0e; }
 @media (prefers-reduced-motion: reduce) {
   .pq *, .pq *::before, .pq *::after { animation: none !important; transition: none !important; }
   .pq .chart polyline { stroke-dashoffset: 0; }
+}
+
+/* ---- one pitcher: his number in the big figures, his name, his arsenal as chips */
+.pq-who { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-bottom: 20px; }
+.pq-who > .fig { font-size: clamp(4rem, 7vw, 6.25rem); color: var(--text); min-width: 1ch; }
+.pq-who .shell-h1 { margin: 0; }
+.pq-who p { margin: 6px 0 0; color: var(--text-2); }
+.pq-arsenal { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.pq-arsenal li { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--panel); border: 1px solid var(--rule-2); font-size: 0.875rem; font-weight: 600; }
+@media (max-width: 760px) { .pq-arsenal { margin-left: 0; } }
+
+/* ---- stats: the headline figures as type on one panel (no tiles), the mix as one bar, tables that carry their own
+   small charts. Every rate keeps its sample beside it; under 10 it is a count in dim text, never a bar or a tint. */
+.pq-figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin: 4px 0 8px; border-radius: var(--r-md); background: var(--panel-2); border: 1px solid var(--rule); overflow: hidden; }
+.pq-figcell { padding: 18px 20px 16px; display: grid; gap: 8px; align-content: start; box-shadow: -1px 0 0 var(--rule), 0 -1px 0 var(--rule); }
+.pq .pq-figcell .lbl { font: 500 0.875rem/1.2 var(--body); color: var(--text-2); margin: 0; }
+.pq .pq-figcell .fig { margin: 0; font-size: clamp(3rem, 4.6vw, 4.25rem); }
+.pq .pq-figcell .fig.is-none { color: var(--text-4); }
+.pq .pq-figcell .shell-note { color: var(--text-3); }
+.pq-mix { display: flex; gap: 2px; height: 34px; margin: 0 0 12px; border-radius: 10px; overflow: hidden; }
+.pq-mix span { flex-basis: 0; min-width: 6px; background: var(--c); color: var(--bg); display: flex; align-items: center; gap: 6px; padding: 0 10px; font-size: 0.8125rem; font-weight: 600; white-space: nowrap; overflow: hidden; transform-origin: 0 50%; }
+.pq-mix span b { font-weight: 800; }
+.pq-pitch { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; }
+.pq-pitch .chip { font-style: normal; }
+/* the strike rate as a thin bar along the bottom of its row, in the pitch's colour */
+.pq .data-tbl.by-pitch tr { position: relative; }
+.pq .data-tbl.by-pitch td:nth-child(3) { position: relative; }
+.pq .data-tbl.by-pitch tr[style] td:nth-child(3)::after { content: ""; position: absolute; right: 16px; bottom: 5px; width: min(100% - 32px, 180px); height: 3px; border-radius: 2px; transform-origin: 100% 50%;
+  background: linear-gradient(270deg, var(--c) var(--v), rgb(var(--text-rgb) / 0.1) var(--v)); }
+/* usage by count: each share is also a tint of blue, one hue, deeper for more often */
+.pq .data-tbl.usage td.heat { background: rgb(var(--weigh-rgb) / calc(0.06 + var(--v) * 0.62)); box-shadow: inset 0 0 0 1px var(--panel-2); }
+.pq-charts { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 0 var(--gap); align-items: start; }
+.pq-charts .chart { max-width: none; margin-bottom: 8px; }
+@media (max-width: 900px) { .pq-charts { grid-template-columns: minmax(0, 1fr); } }
+.pq .chart .pt { stroke: var(--panel-2); stroke-width: 2; }
+.pq .chart .tick.end { fill: var(--text); font-weight: 700; font-size: 12px; }
+.pq .chart .legend, .pq .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 12px; font-size: 0.8125rem; color: var(--text-2); }
+.pq .legend > span { display: inline-flex; align-items: center; gap: 7px; }
+.pq .legend .chip { font-style: normal; }
+.pq .legend .lbl { margin-left: auto; font-size: 0.8125rem; color: var(--text-3); }
+@media (prefers-reduced-motion: no-preference) {
+  .pq:not(.is-seen) .pq-mix span { animation: pq-growx var(--t-fill) var(--e-out) both; animation-delay: 0.15s; }
+  .pq:not(.is-seen) .data-tbl.by-pitch tr[style] td:nth-child(3)::after { animation: pq-growx var(--t-fill) 0.3s var(--e-out) both; }
 }
