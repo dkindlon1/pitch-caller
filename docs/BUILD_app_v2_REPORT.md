@@ -54,13 +54,13 @@ Why not 9 everywhere:
 | The eight portal e2es | all pass, 252 checks, tests unchanged (detail under "Last round") |
 | `rls_matrix_test` | all 347 team checks passed (run with `PGURL` set to the local Supabase database) |
 | `app/watch_test.js`, `app/watch_e2e.js` | all passed |
-| `scripts/test-app.sh` | see "Last round" below |
+| `scripts/test-app.sh` | every step passes; one needs Windows' own `tar` (detail under "Last round") |
 | axe, every portal shot at four sizes (242, production build) | 0 serious or critical |
 | axe, every game state, both themes, four sizes (192) | 0 serious or critical |
 | Lighthouse mobile x3 (production build, local) | launcher 91/91/91, pitcher 86/90/92, pitcher stats 87/88/87, Game Day 85/90/90, wizard 90/90/90; accessibility 100; layout shift 0.000. These ran while a second copy of the check script was running by mistake, so they are, if anything, pessimistic |
 | Game trace (`node app/perf_v2.js`) | pitch logged to call painted: median 42 to 55 ms, max 129 ms (budget 200); layout shift 0; call never shown faded or mid-animation. **Long-task budget missed:** 69 to 91 ms on the first pitch of an at-bat |
 | WebKit and Firefox (`node web/tests/app_browsers.js`) | all browser checks passed |
-| Reduced motion | launcher, pitcher stats and wizard: 0 elements animating or transitioning, content complete 150 ms after load (shots in `final/states/reduced-*.png`). Game screen measured in the first session |
+| Reduced motion | launcher, pitcher stats and wizard: 0 elements animating or transitioning, content complete 150 ms after load. Game screen measured in the first session |
 
 - The long task is the engine's `makeCall`; the old build traces the same. With the CPU slowed four times it is 0.4 to 0.5 s once per hitter.
 - One regression was caught by `portal_e2e` and fixed: a wide table widened the phone launcher to 423 px. The suite passes again.
@@ -70,7 +70,7 @@ Why not 9 everywhere:
 Run alone, on the final build, after the last CSS change:
 - `npm run e2e` (site): all site checks passed.
 - `portal_e2e` 30, `shell_e2e` 43, `gameplan_e2e` 38, `billing_e2e` 52, `player_admin_e2e` 24, `uploads_e2e` 33, `retention_e2e` 10, `offline_game_e2e` 22: all pass, 252 checks, test files unchanged.
-- `scripts/test-app.sh`: TEST_APP_PLACEHOLDER
+- `scripts/test-app.sh`: the Python suites, parity, golden and the reproducible-build check pass, and the script then stops at `v11_fixture_test` under Git Bash, where its `tar` call rejects a Windows drive-letter path (7 of 8). With Windows' own `tar` first on the path that test passes 8 of 8. Every step after it was then run by hand in the script's order and passes: `lean_test`, `hitter_tags_test`, `watch_test`, the Bangle app test, `smoke.js`, and the twelve browser suites (`rules_e2e` through `watch_e2e`). On this PC the script also needs `python3` to resolve to the real Python (the Store alias has no numpy).
 
 ## Test selectors changed
 - `app/smoke.js` (first session): the font probe loads Archivo and Hanken Grotesk instead of Instrument Sans (it only prints).
@@ -96,12 +96,12 @@ Run alone, on the final build, after the last CSS change:
 
 ## Look at these first
 1. `docs/app-v2-shots/final/game-flow.mp4` (Game Day hand-off, pitches with Accept, a shake-off, a pitching change, end of game)
-2. `docs/app-v2-shots/final/game/sheet__night__ipad-l__1.png` and `sheet__day__ipad-l__1.png` (every game state, both themes; from the first session, the states have not changed layout)
-3. `docs/app-v2-shots/build/game-p4/_fix.png` (the scoreboard with the full pitch-count line, and the second-device notice)
+2. `docs/app-v2-shots/final/game/sheet__night__ipad-l__1.png` and `sheet__day__ipad-l__1.png` (every game state, both themes, re-shot on the final build)
+3. `docs/app-v2-shots/final/picks/game-scoreboard-and-second-device.png` (the scoreboard with the full pitch-count line, and the second-device notice); the offline and refused states are beside it in `final/picks/`
 4. `docs/app-v2-shots/final/portal/sheet__laptop__1.png` and `__2.png` (every portal screen)
 5. `docs/app-v2-shots/final/portal/sheet__phone__1.png` to `__3.png`
-6. `docs/app-v2-shots/final/portal/raw/billing__laptop__fold.png`, `staff__laptop__fold.png`, `me-home__laptop__fold.png` (three of this session's screens)
-7. `docs/app-v2-shots/final/states/` (hover, focus, pressed, disabled, chart sheet)
+6. `docs/app-v2-shots/final/picks/billing__laptop__fold.png`, `staff__laptop__fold.png`, `me-home__laptop__fold.png`, `roster__phone__fold.png` (this session's screens at full size)
+7. `docs/app-v2-shots/final/picks/tile-hover.png`, `tile-pressed.png`, `chart-tip.png`, `disabled.png` (interaction states at 2x)
 8. `docs/app-v2-shots/final/coach-portal.mp4` and `player-portal.mp4`
 
 ## Running it
