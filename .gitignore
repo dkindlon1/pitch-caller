@@ -29,3 +29,7 @@ results/step7/games_tw_guard.log
 data/statcast_minors/
 data/leaderboards/
 .claude/run-ledger.md
+
+# the final check keeps its lossless captures on disk only (about 1 GB); the contact sheets and picked close-ups are committed
+docs/site-v2-shots/final-check/**/*.png
+!docs/site-v2-shots/final-check/picks/*.png
