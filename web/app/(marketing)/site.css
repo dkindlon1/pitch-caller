@@ -179,6 +179,9 @@ html.lenis, html.lenis body { height: auto; }
 .pq-foot-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 30vh; opacity: 0; pointer-events: none; z-index: 3; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--ground) 70%, transparent) 45%, var(--ground) 86%); }
 .pq-pglight { position: absolute; inset: 0; opacity: 0; pointer-events: none; mix-blend-mode: screen; background: radial-gradient(34vw 46vh at 16% 62%, rgba(20, 34, 79, 0.5), transparent 70%), radial-gradient(30vw 44vh at 86% 44%, rgba(20, 34, 79, 0.45), transparent 70%), radial-gradient(9vw 12vh at 30% 27%, rgba(47, 91, 255, 0.22), transparent 70%), radial-gradient(8vw 11vh at 71% 80%, rgba(47, 91, 255, 0.2), transparent 70%); }
 
+/* Copy over the film: parts of the watch pass behind it, so every line carries a soft pool of the ground's own colour.
+   It is invisible on the dark ground and keeps the line readable when something bright goes by. */
+.pq-msg :is(h1, h2, p), .pq-explain p, .pq-illus { text-shadow: 0 0 2px rgba(12, 11, 14, 0.9), 0 0 14px rgba(12, 11, 14, 0.85), 0 0 30px rgba(12, 11, 14, 0.6); }
 .pq-film .is-out { pointer-events: none; }   /* a stop that has faded out (Film.tsx marks it) */
 .pq-msg { position: absolute; left: 6.6vw; top: 50%; width: min(36vw, 540px); transform: translateY(-50%); z-index: 4; }
 .pq-msg.is-1 { width: min(54vw, 820px); }
@@ -241,7 +244,7 @@ html.lenis, html.lenis body { height: auto; }
 .pq-rail .lab { display: flex; justify-content: space-between; margin-top: 10px; font-size: var(--fs-small); font-weight: 500; color: var(--dim); }
 .pq-rail .lab span { transition: color var(--t-med); }
 .pq-rail .lab .is-on { color: var(--chalk); } .pq-rail .lab .is-g { color: var(--call); }
-.pq-illus { position: absolute; right: 5vw; bottom: 4.4vh; z-index: 4; max-width: 15em; text-align: right; }
+.pq-illus { position: absolute; right: 5vw; bottom: 4.4vh; z-index: 4; max-width: 15em; text-align: right; color: #b6b8c1; }   /* (lighter than other fine print: the call's light comes up behind it) */
 
 /* ---------- the playground ---------- */
 .pq-pg { position: absolute; inset: 0; pointer-events: none; }
@@ -357,7 +360,7 @@ html.lenis, html.lenis body { height: auto; }
 
 /* ---------- phone and tablet portrait: the film recomposed, not shrunk ---------- */
 @media (max-aspect-ratio: 9/10) {
-  .pq-shade { background: linear-gradient(180deg, rgba(12, 11, 14, 0.9) 0%, rgba(12, 11, 14, 0.55) 24%, transparent 38%, transparent 66%, rgba(12, 11, 14, 0.7) 100%); }
+  .pq-shade { background: linear-gradient(180deg, rgba(12, 11, 14, 0.92) 0%, rgba(12, 11, 14, 0.84) 25%, rgba(12, 11, 14, 0.4) 34%, transparent 44%, transparent 66%, rgba(12, 11, 14, 0.7) 100%); }
   .pq-beam { width: 150vw; margin-left: -75vw; }
   .pq-floor { height: 52vh; bottom: -16vh; }
   .pq-light.is-b { background: radial-gradient(80vw 40vh at 50% 50%, color-mix(in oklab, var(--glow) 40%, transparent), color-mix(in oklab, var(--midnight) 42%, transparent) 55%, transparent 78%); }
