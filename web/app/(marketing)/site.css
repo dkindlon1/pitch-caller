@@ -1,3 +1,4 @@
+@import "../floodlight.css";
 /* PitchIQ public site, v2 ("Floodlight"). One file, tokens first.
    Color: a near-black ground that matches the film's frames exactly, chalk text, and two lights. Blue means "being
    weighed"; green means "the call". Gradient or green TEXT appears only where a call lands. Glass floats over the film
@@ -5,58 +6,16 @@
    Motion tokens (the --m-* values) are read by the GSAP code through _components/motion.ts, so timing lives here too. */
 
 .pq {
-  /* color */
-  --ground: #0c0b0e;
-  --midnight: #14224f;
-  --glow: #2f5bff;
-  --chalk: #ecebe6;
-  --call: #62f07a;
-  --soft: #c5c7cf;      /* body copy on the ground */
-  --dim: #a3a5ae;       /* labels, secondary numbers */
-  --faint: #8e909a;     /* fine print (4.9:1 on the ground) */
-  --line: rgba(236, 235, 230, 0.14);
-  --blend: linear-gradient(90deg in oklab, var(--glow), var(--call));
-  --glow-hi: #6f8dff;   /* the lit top of a blue bar or button */
-  /* type */
+  /* colours, glass, durations and easings come from the shared Floodlight tokens (../floodlight.css, generated from
+     lib/tokens/floodlight.json); only the site's own type scale and layout are set here */
   --head: var(--font-archivo), "Arial Narrow", Arial, sans-serif;
   --body: var(--font-hanken), "Helvetica Neue", Arial, sans-serif;
-  --fs-body: 1.0625rem;
-  --fs-small: 0.875rem;
-  --fs-fine: 0.78rem;
   --fs-h2: clamp(2.375rem, 4.5vw, 4.125rem);
   --fs-h2-big: clamp(3rem, 6.4vw, 6rem);
   --fs-hero: clamp(2.75rem, 4.9vw, 4.9rem);
   --fs-stop: clamp(2rem, min(3.3vw, 5.9vh), 3.3rem);   /* the film's stops 2 to 4: one size, two lines each */
-  /* glass */
-  --glass-blur: 22px;
-  --glass-sat: 190%;
-  --glass-tint: linear-gradient(170deg, rgba(236, 235, 230, 0.13) 0%, rgba(236, 235, 230, 0.04) 40%, rgba(47, 91, 255, 0.08) 100%);
-  --glass-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.42), inset 1px 0 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(120, 150, 255, 0.28), inset 0 22px 34px -22px rgba(255, 255, 255, 0.2), inset 0 -26px 40px -26px rgba(47, 91, 255, 0.38), 0 34px 70px -24px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.35);
-  --glass-shadow-won: inset 0 1.5px 0 rgba(255, 255, 255, 0.42), inset 0 -1px 0 rgba(98, 240, 122, 0.5), inset 0 -26px 40px -26px rgba(98, 240, 122, 0.38), 0 34px 70px -24px rgba(0, 0, 0, 0.75), 0 0 50px -12px rgba(98, 240, 122, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.35);
-  --r-panel: 28px;
-  --r-chip: 24px;
-  /* layout */
   --pad: clamp(20px, 5vw, 72px);
   --wrap: 1280px;
-  /* motion: CSS transitions */
-  --t-press: 0.14s;
-  --t-fast: 0.18s;
-  --t-med: 0.32s;
-  --t-slow: 0.6s;
-  --e-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --e-press: cubic-bezier(0.2, 0.9, 0.3, 1);
-  /* motion: GSAP (names of its eases, seconds) */
-  --m-ease-out: expo.out;
-  --m-ease-soft: power4.out;
-  --m-ease-in: power2.in;
-  --m-ease-move: power3.inOut;
-  --m-dur-in: 0.9;
-  --m-dur-flip: 0.55;
-  --m-dur-land: 0.5;
-  --m-stagger: 0.07;
-  --m-scrub: 0.12;
-  --m-lerp: 0.18;
-  --m-wheel: 1.1;
 
   min-height: 100vh;
   background: var(--ground);

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { sendReset } from "../actions";
 import { Shell } from "../../shell";
 
-export const viewport: Viewport = { themeColor: "#121316", colorScheme: "dark", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#0c0b0e", colorScheme: "dark", width: "device-width", initialScale: 1 };
 export const metadata: Metadata = { title: "Reset your password · PitchIQ", robots: { index: false } };
 
 type Search = Promise<Record<string, string | string[] | undefined>>;

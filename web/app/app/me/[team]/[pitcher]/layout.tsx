@@ -4,7 +4,7 @@ import { myPitchers, playerTeam } from "@/lib/player";
 import { playerNav } from "@/lib/nav";
 import { Frame } from "../../../_frame/Frame";
 import { Night } from "../../../_frame/Night";
-import { portalSans } from "@/app/portal-font";
+import { portalFonts } from "@/app/portal-font";
 
 type Params = Promise<{ team: string; pitcher: string }>;
 
@@ -12,7 +12,7 @@ type Params = Promise<{ team: string; pitcher: string }>;
 // about teammates, opponents or the game plan.
 export default function PlayerLayout({ children, params }: { children: ReactNode; params: Params }) {
   return (
-    <Suspense fallback={<div className={`pq ${portalSans.variable}`}><Night /></div>}>
+    <Suspense fallback={<div className={`pq ${portalFonts}`}><Night /></div>}>
       <PlayerFrame params={params}>{children}</PlayerFrame>
     </Suspense>
   );

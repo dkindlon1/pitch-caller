@@ -33,3 +33,6 @@ data/leaderboards/
 # the final check keeps its lossless captures on disk only (about 1 GB); the contact sheets and picked close-ups are committed
 docs/site-v2-shots/final-check/**/*.png
 !docs/site-v2-shots/final-check/picks/*.png
+
+# app v2: raw captures stay on disk; contact sheets, picks and recordings are committed
+docs/app-v2-shots/**/raw/

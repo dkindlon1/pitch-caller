@@ -3,22 +3,23 @@ import type { ReactNode } from "react";
 import { signOut } from "@/app/login/actions";
 import { Ball, Icon } from "./Icon";
 import { Night } from "./Night";
+import { Entry } from "./Entry";
 import { Dock } from "./Dock";
 import { Motion } from "./Motion";
 import type { NavItem } from "@/lib/nav";
-import { portalSans } from "@/app/portal-font";
+import { portalFonts } from "@/app/portal-font";
 
 export type SwitchItem = { href: string; label: string; sub?: string };
 
 // The signed-in frame: the night ballpark, a glass bar (the mark, which organization and team you're in, a switcher
 // when you're on more than one, the account menu) and the dock. Pages render inside.
-export function Frame({ children, org, current, switchTo = [], dock, home, email, off, end, brandHref = "/app" }: {
-  children: ReactNode; org?: string; current?: string; switchTo?: SwitchItem[]; dock?: NavItem[]; home?: string; email?: string | null; off?: string; end?: ReactNode; brandHref?: string;
+export function Frame({ children, org, current, switchTo = [], dock, home, email, off, end, brandHref = "/app", entry }: {
+  children: ReactNode; org?: string; current?: string; switchTo?: SwitchItem[]; dock?: NavItem[]; home?: string; email?: string | null; off?: string; end?: ReactNode; brandHref?: string; entry?: boolean;
 }) {
   return (
-    <div className={`pq ${portalSans.variable}`}>
+    <div className={`pq ${portalFonts}${entry ? " is-entry" : ""}`}>
       <a href="#main" className="pq-skip">Skip to content</a>
-      <Night />
+      {entry ? <Entry /> : <Night />}
       <Motion />
       <div className={`pq-frame${dock && dock.length ? "" : " no-dock"}`}>
         <header className="pq-bar">
@@ -45,7 +46,7 @@ export function Frame({ children, org, current, switchTo = [], dock, home, email
                 <details className="pq-switch pq-me">
                   <summary aria-label="Your account">{(email || "?").slice(0, 1).toUpperCase()}</summary>
                   <div className="pq-menu glass">
-                    <span style={{ padding: "8px 12px", color: "var(--text-2)", fontSize: ".875rem" }}>{email}</span>
+                    <span className="who">{email}</span>
                     <Link href="/app">Your teams</Link>
                     <Link href="/app/exports">Data downloads</Link>
                     <Link href="/app/password">Change password</Link>

@@ -89,7 +89,7 @@ async function HomeBody({ params }: { params: Params }) {
                     <td><Link href={`/app/t/${team}/roster/${x.pitcher.id}`}>{x.pitcher.number ? `#${x.pitcher.number} ` : ""}{x.pitcher.name || "Unnamed"}</Link></td>
                     <td>{x.last ? `${dayName(x.last.date)}, ${x.last.pitches} pitches` : "None in 30 days"}</td>
                     <td className="num"><Num value={x.week} delay={300} /></td>
-                    <td>{!x.eligible ? "–" : x.eligible.today ? <span className="pill-ok">Today</span> : <span className="pill-warn" title={x.eligible.why}>{dayName(x.eligible.date)}</span>}</td>
+                    <td>{!x.eligible ? "–" : x.eligible.today ? "Today" : <span className="pill-warn" title={x.eligible.why}>{dayName(x.eligible.date)}</span>}</td>
                   </tr>))}</tbody>
               </table></div>
             ) : <p className="shell-note">No pitchers yet. {a.can("manage_roster") ? <Link href={`/app/t/${team}/roster`}>Add the roster</Link> : null}</p>}
@@ -152,7 +152,7 @@ function GameCard({ team, g, opp, a, today, ready }: { team: string; g: GameList
       {ready && !isLive ? (
         <p className="pq-ready" aria-label="What’s in the plan">
           <span className={ready.starter ? undefined : "miss"}>Starter <b>{ready.starter || "not picked"}</b></span>
-          <span><b>{ready.staff}</b> on today’s staff</span>
+          <span>Today’s staff <b>{ready.staff}</b></span>
           <span>Catcher <b>{ready.catcher || "average blocker"}</b></span>
           <span>Lineup <b>{ready.named ? `${ready.named} named` : "hands only"}</b></span>
         </p>

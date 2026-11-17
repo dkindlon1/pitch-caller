@@ -4,7 +4,7 @@ import { coachNav, abilities } from "@/lib/nav";
 import { waitingOn } from "@/lib/upload_data";
 import { Frame } from "../../_frame/Frame";
 import { Night } from "../../_frame/Night";
-import { portalSans } from "@/app/portal-font";
+import { portalFonts } from "@/app/portal-font";
 
 type Params = Promise<{ team: string }>;
 
@@ -12,7 +12,7 @@ type Params = Promise<{ team: string }>;
 // from what this account may open on this team.
 export default function TeamLayout({ children, params }: { children: ReactNode; params: Params }) {
   return (
-    <Suspense fallback={<div className={`pq ${portalSans.variable}`}><Night /></div>}>
+    <Suspense fallback={<div className={`pq ${portalFonts}`}><Night /></div>}>
       <TeamFrame params={params}>{children}</TeamFrame>
     </Suspense>
   );
