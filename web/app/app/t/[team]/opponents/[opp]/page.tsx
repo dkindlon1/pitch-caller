@@ -25,20 +25,23 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const BATS: Record<string, string> = { R: "Right", L: "Left", S: "Switch" };
   return (
     <>
-      <p><Link href={`/app/t/${team}/opponents`}>Opponents</Link></p>
-      <h1 className="shell-h1">{o.name}</h1>
+      <Link className="pq-crumb" href={`/app/t/${team}/opponents`}>Opponents</Link>
+      <h1 className="shell-h1">{o.name}{mine.length ? <span style={{ font: "500 1rem/1 var(--body)", letterSpacing: 0, color: "var(--text-3)", marginLeft: 14 }}>{mine.length} hitter{mine.length === 1 ? "" : "s"}</span> : null}</h1>
       <Notice sp={sp} />
+      <div className="pq-cols"><div>
       {mine.length ? <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Hitters">
         <thead><tr><th className="num">#</th><th>Hitter</th><th>Bats</th></tr></thead>
         <tbody>{mine.map((x) => <tr key={x.id}><td className="num mono">{x.number}</td><td>{x.name}</td><td>{BATS[x.bats] || x.bats}</td></tr>)}</tbody>
-      </table></div> : <p className="shell-note">No hitters yet.</p>}
+      </table></div> : <p className="pq-empty-box">No hitters yet.</p>}
+      </div>
       {edit ? (
-        <form action={addHitters} className="shell-form" aria-label="Add hitters">
+        <aside><form action={addHitters} className="shell-form" aria-label="Add hitters">
           <input type="hidden" name="team" value={team} /><input type="hidden" name="opp" value={opp} />
           <label>Their hitters, one per line: number, name, and R, L or S for how he bats (R if left out). A number already here updates that hitter.
             <textarea name="hitters" rows={9} required placeholder={"12 Smith R\n4 Jones L\n22 Diaz S"} /></label>
           <button type="submit" className="shell-btn primary">Save hitters</button>
-        </form>) : null}
+        </form></aside>) : null}
+      </div>
     </>
   );
 }

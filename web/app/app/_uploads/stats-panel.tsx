@@ -68,7 +68,7 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
         <h2 className="shell-h2">By pitch</h2>
         <div className="pq-mix" aria-hidden="true">
           {bp.map((x) => { const share = (x.line.n / all.n) * 100; return (
-            <span key={x.pitch} className={kindCls(kindOfName(x.pitch))} style={{ flexGrow: x.line.n }} title={`${x.pitch}: ${x.line.n} of ${all.n} pitches, ${Math.round(share)}%`}>
+            <span key={x.pitch} className={kindCls(kindOfName(x.pitch))} style={{ flexGrow: x.line.n }} data-tip={`${x.pitch}|${x.line.n} of ${all.n} pitches · ${Math.round(share)}%`}>
               {share >= 9 ? <><b>{x.pitch}</b> {Math.round(share)}%</> : null}</span>); })}
         </div>
         <div className="tbl-scroll" tabIndex={0}><table className="data-tbl by-pitch" aria-label="By pitch">
@@ -150,7 +150,7 @@ function VeloChart({ trend, kindOf }: { trend: ReturnType<typeof veloTrend>; kin
           const pts = trend.filter((x) => x.type === t);
           const last = pts[pts.length - 1];
           return <g key={t}><polyline fill="none" stroke={kindVar(kindOf(t))} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" points={pts.map((p) => `${X(p.date)},${Y(p.velo)}`).join(" ")} />
-            {pts.map((p) => <circle key={p.date} cx={X(p.date)} cy={Y(p.velo)} r={5} fill={kindVar(kindOf(t))} className="pt"><title>{`${t}, ${day(p.date)}: ${p.velo} mph average, ${p.max} max, ${p.n} pitches`}</title></circle>)}
+            {pts.map((p) => <circle key={p.date} cx={X(p.date)} cy={Y(p.velo)} r={5} fill={kindVar(kindOf(t))} className="pt" data-tip={`${t}, ${day(p.date)}|${p.velo} mph average · ${p.max} max · ${p.n} pitches`} />)}
             {types.length <= 4 ? <text x={X(last.date) + 9} y={endY[t] + 4} className="tick end">{last.velo}</text> : null}</g>;
         })}
       </svg>

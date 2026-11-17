@@ -1,4 +1,4 @@
-// PitchIQ's own icons, drawn for the portal on a 24-unit grid: line, 1.6 stroke, round ends. Baseball things where a
+// PitchIQ's own icons, drawn for the portal on a 24-unit grid: line, 1.8 stroke (to sit beside Archivo), round ends. Baseball things where a
 // screen has one (a plate, a jersey, a bat, a zone), plain shapes where it doesn't.
 export type IconName = "gameday" | "roster" | "opponents" | "staff" | "settings" | "billing" | "org" | "uploads" | "stats" | "learned" | "arsenal"
   | "profile" | "home" | "tablet" | "teams" | "exports" | "chevron" | "plus" | "eye";
@@ -35,7 +35,7 @@ const P: Record<IconName, React.ReactNode> = {
 
 export function Icon({ name, size = 24, title }: { name: IconName; size?: number; title?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round"
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"
       aria-hidden={title ? undefined : true} role={title ? "img" : undefined}>
       {title ? <title>{title}</title> : null}
       {P[name]}

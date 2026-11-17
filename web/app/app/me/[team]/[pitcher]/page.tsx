@@ -9,6 +9,7 @@ import { Tiles } from "../../../_frame/Tiles";
 import { NumberBlock } from "../../../_frame/DateBlock";
 import { Num } from "../../../_frame/Num";
 import { LauncherSkeleton } from "../../../_frame/Skeleton";
+import { v11Pitch } from "@/lib/engine_server";
 
 export const metadata: Metadata = { title: "Me · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string; pitcher: string }>;
@@ -30,8 +31,9 @@ async function Body({ params }: { params: Params }) {
   const elig = rule ? PCRules.eligibleOn(rule, days, today) : null;
   const last = mine[0];
   const season = mine.reduce((a, o) => ({ n: a.n + o.pitches, s: a.s + o.strikes }), { n: 0, s: 0 });
+  const kindOf = new Map((me.pitches || []).map((d) => [d.name, v11Pitch(d).kind] as const));
   return (
-    <>
+    <div className="pq-stack">
       <section className="pq-game pq-white" aria-labelledby="me-h">
         <NumberBlock number={me.number} sub={me.hand === "L" ? "Lefty" : "Righty"} />
         <div className="pq-game-body">
@@ -58,11 +60,12 @@ async function Body({ params }: { params: Params }) {
                 <td>{dayName(o.date)}</td>
                 <td className="num mono">{o.pitches}</td>
                 <td className="num mono">{pct(o.strikes, o.pitches)}</td>
-                <td>{Object.entries(o.by_pitch).sort((a, b) => b[1].n - a[1].n).map(([name, x]) => `${name} ${x.n}`).join(" · ")}</td>
+                <td><span className="pq-mini" aria-hidden="true">{Object.entries(o.by_pitch).sort((a, b) => b[1].n - a[1].n).map(([name, x]) => <i key={name} className={`k-${kindOf.get(name) || "x"}`} style={{ flex: `${x.n} 0 0` }} />)}</span>
+                  <span className="pq-minitxt">{Object.entries(o.by_pitch).sort((a, b) => b[1].n - a[1].n).map(([name, x]) => `${name} ${x.n}`).join(" · ")}</span></td>
               </tr>))}</tbody>
           </table></div>
         ) : <p className="shell-note">Your game pitches show up here once your coach’s iPad syncs a game you pitched in.</p>}
       </section>
-          </>
+    </div>
   );
 }

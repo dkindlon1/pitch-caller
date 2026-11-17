@@ -29,10 +29,11 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const e = ERROR[String(sp.error || "")];
   return (
     <>
-      <p><Link href="/admin">Organizations</Link></p>
+      <Link className="pq-crumb" href="/admin">Organizations</Link>
       <h1 className="shell-h1">{o.name}</h1>
       {e ? <p className="shell-alert" role="alert">{e}</p> : sp.ok === "transferred" ? <p className="shell-note ok-note" role="status">Ownership moved. It&apos;s in the audit log.</p>
         : sp.ok === "resent" ? <p className="shell-note ok-note" role="status">Exports sent again to anyone missing one, and failed emails retried.</p> : null}
+      <div className="pq-cols"><div>
       <section className="dash-card" aria-label="Billing">
         <p><span className={o.status === "active" ? "pill-ok" : "pill-warn"}>{STATUS[o.status] || o.status}</span> Stripe: {o.sub_status || "no subscription"}{o.quantity !== null ? `, ${o.quantity} team${o.quantity === 1 ? "" : "s"}` : ""}{o.period_ends_at ? `, paid to ${day(o.period_ends_at)}` : ""}</p>
         <p className="shell-note small">Owner {o.owner_email} · started {day(o.created_at)}{o.billing_changed_at ? ` · billing last changed ${when(o.billing_changed_at)}` : ""}{o.has_customer ? "" : " · no Stripe customer yet"}</p>
@@ -43,7 +44,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <tbody>{o.teams.map((t) => <tr key={t.id}><td>{t.name}</td><td>{t.status}{t.ends_at ? ` (ends ${day(t.ends_at)})` : ""}</td><td className="num mono">{t.coaches}</td><td className="num mono">{t.players}</td><td>{day(t.created_at)}</td></tr>)}</tbody>
       </table></div>
       <h2 className="shell-h2">Staff</h2>
-      <ul className="plain-list" aria-label="Staff">{o.staff.map((s, i) => <li key={i}>{s.team}: {s.email} <span className="lbl">{s.role}</span></li>)}</ul>
+      <ul className="pq-dl pq-staffdl" aria-label="Staff">{o.staff.map((s, i) => <li key={i}><span>{s.team}: {s.email}</span> <span className="lbl">{s.role}</span></li>)}</ul>
       <h2 className="shell-h2">Billing events</h2>
       {o.events.length ? <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Billing events">
         <thead><tr><th>When</th><th>Event</th><th>Result</th></tr></thead>
@@ -60,6 +61,8 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
           <button type="submit" className="shell-btn">Send the exports again</button>
         </form>
       ) : null}
+      </div>
+      <aside>
       <h2 className="shell-h2">Support</h2>
       <form action={transferOwner} className="shell-form" aria-label="Transfer ownership">
         <input type="hidden" name="org" value={o.id} />
@@ -67,6 +70,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <label>Reason (goes in the audit log)<input name="reason" required maxLength={500} /></label>
         <button type="submit" className="shell-btn">Transfer ownership</button>
       </form>
+      </aside></div>
     </>
   );
 }

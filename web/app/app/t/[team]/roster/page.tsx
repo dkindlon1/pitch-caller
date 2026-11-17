@@ -31,17 +31,17 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const pending = (pid: string) => staff.find((s) => s.pending && s.role === "player" && s.pitcher_ids.includes(pid));
   return (
     <>
-      <h1 className="shell-h1">Roster</h1>
+      <h1 className="shell-h1">Roster{pitchers.length ? <span style={{ font: "500 1rem/1 var(--body)", letterSpacing: 0, color: "var(--text-3)", marginLeft: 14 }}>{pitchers.length} pitcher{pitchers.length === 1 ? "" : "s"}</span> : null}</h1>
       <Notice sp={sp} />
       {invite ? <div className="shell-note invite-box" role="status">Invite link for {(pitchers.find((p) => p.id === forPid) || { name: "the player" }).name}: <code>{`${origin}/join/${invite}`}</code>. Send it to him (or his parent). It works once, for 14 days. <MailNote v={one(sp.mailed)} /></div> : null}
       {pitchers.length ? (
-        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Pitchers">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl roomy cards" aria-label="Pitchers">
           <thead><tr><th>Pitcher</th><th>Throws</th><th>Arsenal</th>{roster ? <th>Account</th> : null}<th></th></tr></thead>
           <tbody>{pitchers.map((p) => {
             const acc = linked(p.id), inv = pending(p.id);
             return (
               <tr key={p.id}>
-                <td><Link href={`/app/t/${team}/roster/${p.id}`}>{p.number ? `#${p.number} ` : ""}{p.name || "Unnamed"}</Link></td>
+                <td><Link className="who" href={`/app/t/${team}/roster/${p.id}`}><span className="no">{p.number ? `#${p.number}` : "–"}</span> <span className="nm">{p.name || "Unnamed"}</span></Link></td>
                 <td>{p.hand === "L" ? "Left" : "Right"}</td>
                 <td><span className="chips">{(p.pitches || []).filter((d) => d.active !== false).map((d) => <span key={d.id} className={`chip k-${v11Pitch(d).kind}`} title={d.name}>{signOf(v11Pitch(d))}</span>)}</span></td>
                 {roster ? <td>{acc ? <span className="pill-ok">{acc.email}</span> : inv ? (
@@ -62,8 +62,9 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         </table></div>
       ) : <p className="shell-note">No pitchers yet.</p>}
       {roster ? (
-        <form action={addPitchers} className="shell-form" aria-label="Add pitchers">
+        <form action={addPitchers} className="shell-form split" aria-label="Add pitchers">
           <input type="hidden" name="team" value={team} />
+          <h2>Add pitchers</h2>
           <label>Paste your pitchers, one per line (&quot;12 Smith&quot;, &quot;Jones L&quot;: L or R is how he throws; R if left out)
             <textarea name="roster" rows={6} required placeholder={"12 Smith\n7 Jones L\nAvery Brooks"} /></label>
           <button type="submit" className="shell-btn primary">Add pitchers</button>

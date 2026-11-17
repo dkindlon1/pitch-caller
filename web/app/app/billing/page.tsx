@@ -33,7 +33,7 @@ const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-
 
 export default function Billing({ searchParams }: { searchParams: Search }) {
   return (
-    <Shell title="Billing" actions={<Link href="/app" className="shell-btn text">Your teams</Link>}>
+    <Shell title="Billing" wide actions={<Link href="/app" className="shell-btn text">Your teams</Link>}>
       <Suspense fallback={<p className="shell-note">Loading billing…</p>}><Body searchParams={searchParams} /></Suspense>
     </Shell>
   );
@@ -63,7 +63,9 @@ async function Body({ searchParams }: { searchParams: Search }) {
       {e ? <p className="shell-alert" role="alert">{e}</p> : o ? <p className="shell-note ok-note" role="status">{o}</p> : null}
       {one(sp.checkout) === "cancelled" ? <p className="shell-note" role="status">Checkout cancelled: nothing was charged.</p> : null}
 
-      <section className="dash-card" aria-labelledby="org-h">
+      <section className="pq-game pq-white pq-plan" aria-labelledby="org-h">
+        <div className={`pq-date${b.teams.length ? "" : " empty"}`} aria-hidden="true"><span className="m">{b.teams.length === 1 ? "Team" : "Teams"}</span><b>{b.teams.length}</b><span className="d">billed yearly</span></div>
+        <div className="pq-game-body">
         <h2 id="org-h" className="shell-h2">{b.name}</h2>
         {b.status === "active" ? (
           <p><span className="pill-ok">Active</span> {b.quantity ? `${b.quantity} team${b.quantity === 1 ? "" : "s"}` : ""}{b.period_ends_at ? `, paid through ${day(b.period_ends_at)}` : ""}</p>
@@ -79,9 +81,11 @@ async function Body({ searchParams }: { searchParams: Search }) {
           {b.has_customer ? <form action={openPortal} aria-label="Card and invoices">{hidden}<button type="submit" className="shell-btn">Card and invoices</button></form> : null}
         </div>
         <p className="shell-note small">Charged yearly per team, by card, through Stripe. Stripe emails each invoice and receipt.</p>
+        </div>
       </section>
 
-      <section aria-labelledby="teams-h">
+      <section aria-labelledby="teams-h" className="pq-cols" style={{ marginTop: 28 }}>
+        <div>
         <h2 id="teams-h" className="shell-h2">Teams</h2>
         <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Teams">
           <thead><tr><th>Team</th><th>Status</th><th></th></tr></thead>
@@ -106,12 +110,13 @@ async function Body({ searchParams }: { searchParams: Search }) {
         {b.live && b.status === "active" && waiting.length ? (
           <form action={payWaiting} aria-label="Pay for waiting teams" className="btn-row">{hidden}<button type="submit" className="shell-btn">Pay for {waiting.length} waiting team{waiting.length === 1 ? "" : "s"}</button></form>
         ) : null}
+        </div>
         {b.status !== "locked" ? (
-          <form action={addTeam} className="shell-form" aria-label="Add a team">{hidden}
+          <aside><form action={addTeam} className="shell-form" aria-label="Add a team">{hidden}
             <label>Add a team<input name="name" required maxLength={120} placeholder="Team name" /></label>
             <p className="shell-note small">{b.live ? "Charged now for the rest of the paid year, then yearly with the others." : "It's included when you pay."}</p>
             <button type="submit" className="shell-btn">Add team</button>
-          </form>
+          </form></aside>
         ) : null}
       </section>
     </>

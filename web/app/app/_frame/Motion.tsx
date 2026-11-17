@@ -21,6 +21,12 @@ export function Motion() {
     const t = window.setTimeout(() => { try { sessionStorage.setItem(SEEN + path, "1"); } catch { /* private mode: it just plays again */ } }, 1600);
     return () => clearTimeout(t);
   }, [path]);
+  // on an iPad or phone the dock is one scrolling row: keep the screen you are on in view
+  useEffect(() => {
+    const dock = document.querySelector<HTMLElement>(".pq .pq-dock"), cur = dock?.querySelector<HTMLElement>("a[aria-current=page]");
+    if (!dock || !cur || dock.scrollWidth <= dock.clientWidth) return;
+    dock.scrollLeft = cur.offsetLeft - (dock.clientWidth - cur.offsetWidth) / 2;
+  }, [path]);
   // the bar tightens once the page has scrolled, like the public site's
   useEffect(() => {
     const bar = document.querySelector<HTMLElement>(".pq .pq-bar");
@@ -60,5 +66,31 @@ export function Motion() {
     document.documentElement.addEventListener("pointerleave", onLeave);
     return () => { document.removeEventListener("pointermove", onMove); document.documentElement.removeEventListener("pointerleave", onLeave); cancelAnimationFrame(raf); };
   }, []);
+  // charts answer the pointer: a mark with data-tip ("title|detail") shows a small sheet beside it. Pointer and touch;
+  // the same numbers are always in the table under the chart, so nothing is hover-only.
+  useEffect(() => {
+    const root = document.querySelector<HTMLElement>(".pq");
+    if (!root) return;
+    let tip: HTMLDivElement | null = null, cur: Element | null = null;
+    const hide = () => { cur = null; if (tip) tip.hidden = true; };
+    const show = (e: PointerEvent) => {
+      const el = (e.target as Element | null)?.closest?.("[data-tip]") ?? null;
+      if (!el) { if (cur) hide(); return; }
+      if (!tip) { tip = document.createElement("div"); tip.className = "pq-tip"; tip.setAttribute("aria-hidden", "true"); root.appendChild(tip); }
+      if (el !== cur) {
+        cur = el;
+        const [head, body] = (el.getAttribute("data-tip") || "").split("|");
+        tip.replaceChildren(Object.assign(document.createElement("b"), { textContent: head }), Object.assign(document.createElement("span"), { textContent: body || "" }));
+        tip.hidden = false;
+      }
+      const r = el.getBoundingClientRect(), w = tip.offsetWidth, x = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+      const above = r.top - tip.offsetHeight - 10;
+      tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(above < 70 ? r.bottom + 10 : above)}px)`;
+    };
+    root.addEventListener("pointerover", show);
+    root.addEventListener("pointerdown", show);
+    window.addEventListener("scroll", hide, { passive: true });
+    return () => { root.removeEventListener("pointerover", show); root.removeEventListener("pointerdown", show); window.removeEventListener("scroll", hide); tip?.remove(); };
+  }, [path]);
   return null;
 }

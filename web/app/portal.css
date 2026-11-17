@@ -599,3 +599,163 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .data-tbl td.when, .pq .data-tbl .mono { white-space: nowrap; }
 
 .pq-pick .no { color: var(--text-3); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* ================= screen passes (each screen laid out on its own, not only inheriting) ================= */
+/* single screens stand in the middle of the window, under the bar: a reading column, or a wider one with a side column */
+.pq-solo { margin-inline: auto; }
+.pq-wide { max-width: 1120px; margin-inline: auto; }
+.pq-stack { display: grid; gap: var(--gap); }
+.pq-stack > :is(.pq-game, .pq-tiles, .tbl-scroll, .shell-form) { margin: 0; }
+.pq-stack .shell-h2 { margin: 18px 0 14px; }
+/* a work column and a side column (the add form, the invite): the side column stays in view on a laptop */
+.pq-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: var(--gap) calc(var(--gap) * 1.4); align-items: start; }
+.pq-cols > aside { position: sticky; top: 96px; display: grid; gap: 12px; }
+.pq-cols > aside .shell-form { margin: 0; }
+.pq-cols > aside .shell-form > :is(button, .shell-btn) { justify-self: stretch; }
+.pq-cols > div > .shell-h2:first-child, .pq-cols > aside > .shell-h2:first-child { margin-top: 0; }
+@media (max-width: 1100px) { .pq-cols { grid-template-columns: minmax(0, 1fr); } .pq-cols > aside { position: static; } }
+.pq .shell-h2 .count { font: 500 0.875rem/1 var(--body); letter-spacing: 0; color: var(--text-3); margin-left: 10px; font-variant-numeric: tabular-nums; }
+/* tiles fill their row */
+.pq-tiles { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+
+/* billing: the plan as a ticket (how many teams, its state, paid through when, the card), then teams and the add form */
+.pq .pq-plan .shell-h2 { font-size: clamp(1.9rem, 3.4vw, 2.9rem); line-height: 1; letter-spacing: -0.04em; margin: 0; }
+.pq .pq-plan p { margin: 0; color: var(--text-2); }
+.pq .pq-plan p > :is(.pill-ok, .pill-warn) { margin-right: 6px; }
+.pq .pq-plan .btn-row { margin: 2px 0 0; }
+.pq .pq-plan .shell-note.small { color: var(--text-3); }
+.pq .row-actions .shell-form.tight { min-width: min(100%, 300px); text-align: left; }
+
+/* staff: one aligned row per person (who, preset, the fine switches, the two actions), the invite beside the list */
+.pq .pq-av { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 700 0.875rem/1 var(--head); color: var(--text);
+  background: linear-gradient(180deg, rgb(var(--text-rgb) / 0.2), rgb(var(--text-rgb) / 0.06)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3); }
+.pq .staff-row b { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pq .staff-row > form:last-child:not(:first-child) { margin-left: auto; }
+.pq .staff-row.coach { display: grid; grid-template-columns: minmax(0, 1fr) 84px; gap: 0 8px; padding: 10px 12px 10px 14px; }
+.pq .staff-row.coach .inline-form { display: grid; grid-template-columns: 36px minmax(0, 1fr) minmax(150px, 190px) 104px 84px; gap: 8px 12px; align-items: center; }
+.pq .staff-row.coach .inline-form > .shell-btn { min-width: 0; padding: 0 12px; }
+.pq .staff-row.coach .adv[open] { grid-column: 1 / -1; order: 9; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0 18px; padding: 4px 4px 6px 48px; border-top: 1px solid var(--rule); }
+.pq .staff-row.coach .adv[open] summary, .pq .staff-row.coach .adv .owner-only { grid-column: 1 / -1; }
+.pq .staff-row.coach > form:last-child:not(:first-child) { justify-self: end; margin: 0; }
+@media (max-width: 760px) {
+  .pq .staff-row.coach { grid-template-columns: minmax(0, 1fr); }
+  .pq .staff-row.coach .inline-form { grid-template-columns: 36px minmax(0, 1fr) auto; }
+  .pq .staff-row.coach .inline-form select { grid-column: 1 / 3; }
+  .pq .staff-row.coach .adv { grid-column: 1 / 3; }
+  .pq .staff-row.coach .adv[open] { padding-left: 4px; grid-column: 1 / -1; }
+  .pq .staff-row.coach > form { justify-self: start; }
+}
+
+/* roster: the number in the big figures' face, the name, how he throws, his pitches, his account */
+.pq .data-tbl .who { display: inline-flex; align-items: baseline; gap: 12px; }
+.pq .data-tbl .who .no { font-family: var(--cond); font-weight: 900; font-size: 1.5rem; line-height: 1; min-width: 2.6ch; color: var(--text-3); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; transition: color var(--t-fast); }
+.pq .data-tbl a.who:hover { text-decoration: none; }
+.pq .data-tbl a.who:hover .nm { text-decoration: underline; text-underline-offset: 3px; }
+.pq .data-tbl a.who:hover .no { color: var(--text); }
+.pq .data-tbl.roomy td { padding-block: 14px; }
+.pq .inv summary { list-style: none; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; font-size: 0.875rem; font-weight: 600; color: var(--text); background: var(--wash); border: 1px solid var(--rule-2); transition: background-color var(--t-fast), border-color var(--t-fast); }
+.pq .inv summary::-webkit-details-marker { display: none; }
+.pq .inv summary:hover { background: var(--wash-2); border-color: rgb(var(--text-rgb) / 0.3); }
+.pq .inv[open] summary { background: rgb(var(--weigh-rgb) / 0.26); border-color: var(--weigh-hi); }
+.pq .shell-form.split { grid-template-columns: minmax(0, 1.5fr) minmax(220px, 1fr); gap: 14px 24px; align-items: start; }
+.pq .shell-form.split > h2 { grid-column: 1 / -1; font-size: 1.0625rem; letter-spacing: -0.02em; }
+.pq .shell-form.split > label { grid-column: 1; grid-row: 2 / span 3; }
+.pq .shell-form.split > .shell-note, .pq .shell-form.split > :is(button, .shell-btn) { grid-column: 2; }
+@media (max-width: 760px) { .pq .shell-form.split { grid-template-columns: minmax(0, 1fr); } .pq .shell-form.split > * { grid-column: 1 !important; grid-row: auto !important; } }
+
+/* settings: a setting per row, its name and what it does on the left, the control on the right */
+.pq .shell-form.rows { gap: 0; padding: 6px 24px 20px; max-width: 920px; }
+.pq .shell-form.rows > h2 { font-size: 0.8125rem; font-family: var(--body); font-weight: 600; font-stretch: 100%; letter-spacing: 0.02em; color: var(--text-3); padding: 20px 0 8px; }
+.pq .shell-form.rows > label { grid-template-columns: minmax(180px, 300px) minmax(0, 1fr); gap: 6px 28px; align-items: center; padding: 14px 0; border-top: 1px solid var(--rule); color: var(--text); font-weight: 600; }
+.pq .shell-form.rows > label small { display: block; font-weight: 400; color: var(--text-3); font-size: 0.875rem; margin-top: 2px; }
+.pq .shell-form.rows > label > :is(input, select) { justify-self: start; width: min(100%, 420px); }
+.pq .shell-form.rows > label.w-num > input { width: 140px; }
+.pq .shell-form.rows > .shell-note { padding: 0 0 14px; margin-left: calc(min(300px, 40%) + 28px); }
+.pq .shell-form.rows > :is(button, .shell-btn) { margin-top: 16px; justify-self: end; min-width: 132px; }
+@media (max-width: 700px) { .pq .shell-form.rows { padding: 2px 16px 16px; } .pq .shell-form.rows > label { grid-template-columns: minmax(0, 1fr); } .pq .shell-form.rows > .shell-note { margin-left: 0; } .pq .shell-form.rows > :is(button, .shell-btn) { justify-self: stretch; } }
+
+/* opponents: a card per club, how many hitters we know in the big figures */
+.pq .opp-cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.pq .opp-cards .team-card { min-height: 148px; align-content: space-between; gap: 10px; padding: 18px 20px; border-radius: 24px; }
+.pq .opp-cards .team-card h2 { font-size: 1.25rem; }
+.pq .opp-cards .team-card p { order: -1; display: flex; align-items: baseline; gap: 8px; color: var(--text-3); }
+.pq .opp-cards .team-card p .fig { font-size: 3.25rem; color: var(--text); }
+.pq .shell-form.oneline { grid-template-columns: minmax(0, 1fr) auto; align-items: end; max-width: 620px; }
+
+/* a small share bar inside a table row (an outing's pitches by type), with its words under it */
+.pq .pq-mini { display: flex; gap: 2px; height: 8px; width: min(100%, 320px); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+.pq .pq-mini i { background: var(--c, var(--text-4)); min-width: 3px; transform-origin: 0 50%; }
+.pq .pq-minitxt { color: var(--text-2); font-size: 0.875rem; }
+@media (prefers-reduced-motion: no-preference) { .pq:not(.is-seen) .pq-mini i { animation: pq-growx var(--t-fill) 0.3s var(--e-out) both; } }
+
+/* downloads, and a box that says what is missing */
+.pq .pq-dl { list-style: none; margin: 0 0 18px; padding: 4px 18px; }
+.pq .pq-dl li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: center; padding: 12px 0; border-top: 1px solid var(--rule); }
+.pq .pq-dl li:first-child { border-top: 0; }
+.pq .pq-dl li .lbl { grid-column: 1; font-variant-numeric: tabular-nums; }
+.pq .pq-dl li form { grid-column: 2; grid-row: 1 / span 2; }
+.pq .pq-empty-box { display: grid; gap: 6px; justify-items: start; padding: 26px 24px; border-radius: var(--r-md); border: 1px dashed var(--rule-2); color: var(--text-2); margin: 0 0 18px; }
+
+/* sheets that open inside a page (a confirm, an invite) slide in like the bar's menus */
+@media (prefers-reduced-motion: no-preference) {
+  .pq :is(.row-actions details, .inv, .danger)[open] > :not(summary) { animation: pq-pop 0.22s var(--e-out) both; transform-origin: top right; }
+  .pq .adv[open] > label { animation: pq-row 0.3s var(--e-out) both; }
+}
+.pq .pq-dl { display: block; background: var(--panel); border: 1px solid var(--rule); border-radius: var(--r-md); }
+.pq .data-tbl .who .no { width: 3.3ch; min-width: 0; flex: none; }
+.pq .data-tbl .shell-btn.text { color: var(--text-3); text-decoration-color: transparent; }
+.pq .data-tbl .shell-btn.text:hover, .pq .data-tbl .shell-btn.text:focus-visible { color: var(--text); text-decoration-color: currentColor; }
+.pq .data-tbl :is(th, td).num:first-child { width: 72px; }
+
+/* admin: the tabs and the standing note on one line; two headline figures; the staff as rows */
+.pq-adminbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; margin-bottom: 22px; }
+.pq-adminbar .portal-nav { margin: 0; }
+.pq-adminbar .shell-note { color: var(--text-3); }
+.pq .pq-figs-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); max-width: 760px; margin-bottom: 0; }
+.pq .pq-figcell .big-num { margin: 0; font-size: clamp(3rem, 4.6vw, 4.25rem); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.pq .pq-staffdl li { grid-template-columns: minmax(0, 1fr) auto; }
+.pq .pq-staffdl li .lbl { grid-column: 2; }
+.pq .dash-card p { margin: 0; }
+
+/* a grade on its 1 to 5 scale: a ring where it was entered, a blue dot where the engine reads it */
+.pq .pq-shift { position: relative; display: inline-block; vertical-align: middle; width: 96px; height: 14px; margin-right: 14px; }
+.pq .pq-shift::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 2px; border-radius: 1px;
+  background: linear-gradient(90deg, var(--rule-2) 0 1px, transparent 1px) 0 0 / 25% 100%, var(--rule-2); }
+.pq .pq-shift i, .pq .pq-key { position: absolute; top: 2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; }
+.pq .pq-shift .from, .pq .pq-key.from { background: var(--panel); border: 2px solid var(--text-2); }
+.pq .pq-shift .to, .pq .pq-key.to { background: var(--weigh-hi); box-shadow: 0 0 8px rgb(var(--weigh-rgb) / 0.8); }
+.pq .pq-key { position: static; display: inline-block; margin: 0; }
+@media (max-width: 760px) { .pq .pq-shift { display: none; } }
+@media (prefers-reduced-motion: no-preference) { .pq:not(.is-seen) .pq-shift .to { animation: pq-dot 0.4s 0.5s var(--e-out) both; } }
+
+/* phone: the roster is a card per pitcher (number and name, how he throws, his pitches, his account), not a squeezed table */
+@media (max-width: 640px) {
+  .pq .data-tbl.cards, .pq .data-tbl.cards tbody { display: block; }
+  .pq .data-tbl.cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .pq .data-tbl.cards tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 14px 14px 10px; border-top: 1px solid var(--rule); }
+  .pq .data-tbl.cards tbody tr:first-child { border-top: 0; }
+  .pq .data-tbl.cards td { display: block; padding: 0 !important; border: 0; min-width: 0; }
+  .pq .data-tbl.cards td:nth-child(2) { color: var(--text-3); font-size: 0.875rem; }
+  .pq .data-tbl.cards td:nth-child(3) { grid-column: 1 / -1; }
+  .pq .data-tbl.cards td:nth-child(4) { grid-column: 1; }
+  .pq .data-tbl.cards td:last-child { grid-column: 2; justify-self: end; }
+  .pq .data-tbl.cards td:nth-child(4):has(details[open]) { grid-column: 1 / -1; }
+  .pq .staff-row.coach { position: relative; }
+  .pq .staff-row.coach .inline-form > .shell-btn { margin-right: 84px; }
+  .pq .staff-row.coach .adv:not([open]) { grid-column: 1 / 3; }
+  .pq .staff-row.coach .adv[open] { padding-bottom: 8px; }
+  .pq .staff-row.coach > form:last-child:not(:first-child) { position: absolute; right: 12px; top: 106px; }
+  .pq .pq-minitxt { font-size: 0.8125rem; }
+}
+/* the phone dock floats over whatever scrolls under it (a white button included): a denser tint keeps its labels readable */
+@media (max-width: 1023px) { .pq .pq-dock.glass { background: linear-gradient(rgb(var(--bg-rgb) / 0.5), rgb(var(--bg-rgb) / 0.5)), var(--glass-tint); } }
+.pq .pq-list .slot i { display: inline-block; width: 2.2ch; font-style: normal; font-weight: 700; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.pq .pq-list .slot { font-weight: 600; }
+/* a chart mark under the pointer: a ring on the mark and a small sheet with its numbers */
+.pq .pq-tip { position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; display: grid; gap: 2px; padding: 9px 12px; border-radius: 12px; max-width: 280px;
+  background: var(--panel-3); border: 1px solid var(--rule-2); box-shadow: 0 16px 34px -14px rgb(0 0 0 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.12); font-size: 0.8125rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pq .pq-tip b { color: var(--text); font-weight: 650; font-size: 0.875rem; }
+.pq .pq-tip[hidden] { display: none; }
+.pq .chart .pt { cursor: default; }
+.pq .chart .pt:hover { stroke: var(--text); stroke-width: 3; }
+.pq .pq-mix span[data-tip]:hover { filter: brightness(1.12); }

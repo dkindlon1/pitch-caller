@@ -24,15 +24,17 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
     <>
       <h1 className="shell-h1">Settings</h1>
       <Notice sp={sp} />
-      <form action={saveSettings} className="shell-form narrow" aria-label="Team settings">
+      <form action={saveSettings} className="shell-form rows" aria-label="Team settings">
         <input type="hidden" name="team" value={team} />
-        <label>Team name<input name="name" defaultValue={t.team_name} required maxLength={120} /></label>
-        <label>Time zone (the team&apos;s dates and rest days)<select name="timezone" defaultValue={t.timezone}>{zones.map((z) => <option key={z} value={z}>{z.replace(/_/g, " ")}</option>)}</select></label>
-        <label>Pitch-count rule<select name="preset" defaultValue={rule ? rule.id : ""}>
+        <h2>Team</h2>
+        <label><span>Team name</span><input name="name" defaultValue={t.team_name} required maxLength={120} /></label>
+        <label><span>Time zone <small>(the team&apos;s dates and rest days)</small></span><select name="timezone" defaultValue={t.timezone}>{zones.map((z) => <option key={z} value={z}>{z.replace(/_/g, " ")}</option>)}</select></label>
+        <h2>Pitch counts</h2>
+        <label><span>Pitch-count rule</span><select name="preset" defaultValue={rule ? rule.id : ""}>
           <option value="">None</option>
           {groups.map((g) => <optgroup key={g} label={g}>{PCRules.PRESETS.filter((x) => x.group === g).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</optgroup>)}
         </select></label>
-        <label className="w-num">Daily limit (blank: the rule&apos;s)<input name="max" type="number" min={10} max={200} defaultValue={rule && rule.edited ? rule.max : ""} placeholder={rule ? String(rule.max) : ""} /></label>
+        <label className="w-num"><span>Daily limit <small>(blank: the rule&apos;s)</small></span><input name="max" type="number" min={10} max={200} defaultValue={rule && rule.edited ? rule.max : ""} placeholder={rule ? String(rule.max) : ""} /></label>
         {rule && rule.source ? <p className="shell-note small">From <a href={rule.source} target="_blank" rel="noopener">{rule.group}</a>, checked {rule.checked}. {rule.sourceNote || ""} The game app shows the full table, and any number can be changed there.</p> : null}
         <button type="submit" className="shell-btn primary">Save</button>
       </form>

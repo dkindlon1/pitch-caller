@@ -32,15 +32,18 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <h1 className="shell-h1">Staff</h1>
       <Notice sp={sp} />
       {invite ? <div className="shell-note invite-box" role="status">Invite link for a {(ROLE[one(sp.role)] || "coach").toLowerCase()}: <code>{`${origin}/join/${invite}`}</code>. It works once, for 14 days. <MailNote v={one(sp.mailed)} /></div> : null}
+      <div className="pq-cols">
+      <div>
       {staffOk ? <>
-        <h2 className="shell-h2">Coaches</h2>
+        <h2 className="shell-h2">Coaches<span className="count">{coaches.length}</span></h2>
         <ul className="staff-list">{coaches.map((m) => {
           const eff = (k: string) => (k in (m.perms || {}) ? !!m.perms[k] : (PRESET_PERMS[m.role] || []).includes(k));
           const me = m.user_id === user.id;
           return (
-            <li key={m.user_id || ""} className="staff-row">
+            <li key={m.user_id || ""} className="staff-row coach">
               <form action={setMember} className="inline-form" aria-label={`Preset for ${m.email}`}>
                 <input type="hidden" name="team" value={team} /><input type="hidden" name="member" value={m.user_id || ""} />
+                <span className="pq-av" aria-hidden="true">{(m.email || "?").slice(0, 1).toUpperCase()}</span>
                 <b>{m.email}{me ? " (you)" : ""}</b>
                 <select name="role" defaultValue={m.role} aria-label={`Preset for ${m.email}`} disabled={me}>{COACH.map((r) => <option key={r} value={r}>{ROLE[r]}</option>)}</select>
                 <details className="adv"><summary>Advanced</summary>
@@ -53,23 +56,15 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
               {me ? null : <form action={removeMember}><input type="hidden" name="team" value={team} /><input type="hidden" name="member" value={m.user_id || ""} /><button className="shell-btn text" type="submit">Remove</button></form>}
             </li>);
         })}</ul>
-        <form action={inviteStaff} className="shell-form" aria-label="Invite a coach">
-          <input type="hidden" name="team" value={team} />
-          <div className="row-fields">
-            <label className="w-sel">Invite as<select name="role" defaultValue="caller">{COACH.map((r) => <option key={r} value={r}>{ROLE[r]}</option>)}</select></label>
-            <label>Email (optional: ties the link to one person)<input name="email" type="email" /></label>
-          </div>
-          <button type="submit" className="shell-btn primary">Make invite link</button>
-        </form>
       </> : null}
       {rosterOk && players.length ? <>
-        <h2 className="shell-h2">Players</h2>
+        <h2 className="shell-h2">Players<span className="count">{players.length}</span></h2>
         <ul className="staff-list">{players.map((m) => (
-          <li key={m.user_id || ""} className="staff-row"><b>{m.email}</b> <span className="shell-note small">{m.pitcher_ids.map(pname).join(", ")}</span>
+          <li key={m.user_id || ""} className="staff-row"><span className="pq-av" aria-hidden="true">{(m.email || "?").slice(0, 1).toUpperCase()}</span><b>{m.email}</b> <span className="shell-note small">{m.pitcher_ids.map(pname).join(", ")}</span>
             <form action={removeMember}><input type="hidden" name="team" value={team} /><input type="hidden" name="member" value={m.user_id || ""} /><button className="shell-btn text" type="submit">Remove</button></form></li>))}</ul>
       </> : null}
       {pending.length ? <>
-        <h2 className="shell-h2">Waiting</h2>
+        <h2 className="shell-h2">Waiting<span className="count">{pending.length}</span></h2>
         <ul className="staff-list">{pending.map((m) => (
           <li key={m.token || ""} className="staff-row">
             <b>{m.email || "anyone with the link"}</b>
@@ -78,6 +73,18 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
             <form action={cancelInvite}><input type="hidden" name="team" value={team} /><input type="hidden" name="token" value={m.token || ""} /><button className="shell-btn text" type="submit">Cancel</button></form>
           </li>))}</ul>
       </> : null}
+      </div>
+      {staffOk ? <aside>
+        <form action={inviteStaff} className="shell-form" aria-label="Invite a coach">
+          <input type="hidden" name="team" value={team} />
+          <h2 className="shell-h2" style={{ margin: 0 }}>Invite a coach</h2>
+          <label>Invite as<select name="role" defaultValue="caller">{COACH.map((r) => <option key={r} value={r}>{ROLE[r]}</option>)}</select></label>
+          <label>Email (optional: ties the link to one person)<input name="email" type="email" /></label>
+          <button type="submit" className="shell-btn primary">Make invite link</button>
+          <p className="shell-note small">The link works once, for 14 days.</p>
+        </form>
+      </aside> : null}
+      </div>
     </>
   );
 }

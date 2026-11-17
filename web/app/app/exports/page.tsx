@@ -41,20 +41,20 @@ async function Exports({ searchParams }: { searchParams: Search }) {
         kept for 12 months, and paying again brings it all back.
       </p>
       {rows.length ? (
-        <ul className="org-list" aria-label="Downloads">
+        <ul className="org-list pq-dl" aria-label="Downloads">
           {rows.map((r) => (
             <li key={r.id}>
               <strong>{r.kind === "player" ? `${r.pitcher_name || "Your data"}, ${r.team_name}` : `${r.team_name} (team)`}</strong>{" "}
               <span className="lbl">{when(r.created_at)} · {r.rows} rows · {size(r.bytes)}</span>
-              <form action={downloadExport} aria-label={`Download ${r.kind === "player" ? r.pitcher_name || "your data" : r.team_name}`} style={{ display: "inline" }}>
+              <form action={downloadExport} aria-label={`Download ${r.kind === "player" ? r.pitcher_name || "your data" : r.team_name}`}>
                 <input type="hidden" name="id" value={r.id} />
-                <button type="submit" className="shell-btn text">Download</button>
+                <button type="submit" className="shell-btn small">Download</button>
               </form>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="shell-note">Nothing here: none of your teams has lapsed.</p>
+        <p className="pq-empty-box">Nothing here: none of your teams has lapsed.</p>
       )}
       <p className="shell-note"><Link href="/app">Your teams</Link></p>
     </>

@@ -24,12 +24,12 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <h1 className="shell-h1">Opponents</h1>
       <Notice sp={sp} />
       <p className="shell-note">Only your team&apos;s coaches see these. What the engine learns about each hitter stays with your team.</p>
-      {opps.length ? <ul className="team-cards" aria-label="Opponents">{opps.map((o) => (
-        <li key={o.id} className="team-card"><h2><Link href={`/app/t/${team}/opponents/${o.id}`}>{o.name}</Link></h2>
-          <p>{hitters.filter((x) => x.teamId === o.id && !x.deletedAt).length} hitters</p></li>))}</ul>
+      {opps.length ? <ul className="team-cards opp-cards" aria-label="Opponents">{opps.map((o) => (
+        <li key={o.id} className="team-card glass"><h2><Link href={`/app/t/${team}/opponents/${o.id}`}>{o.name}</Link></h2>
+          <p><b className="fig">{hitters.filter((x) => x.teamId === o.id && !x.deletedAt).length}</b> hitters</p></li>))}</ul>
         : <p className="shell-note">No opponents yet.</p>}
       {edit ? (
-        <form action={addOpponent} className="shell-form" aria-label="Add an opponent">
+        <form action={addOpponent} className="shell-form oneline" aria-label="Add an opponent">
           <input type="hidden" name="team" value={team} />
           <label>Opponent<input name="name" required maxLength={80} placeholder="Ithaca College" /></label>
           <button type="submit" className="shell-btn primary">Add</button>

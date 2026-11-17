@@ -21,11 +21,11 @@ async function Body({ searchParams }: { searchParams: Search }) {
   return (
     <>
       <h1 className="shell-h1">Organizations</h1>
-      <div className="dash">
-        <section className="dash-card" aria-label="Sign-ups"><h2 className="lbl">New accounts</h2><p className="big-num mono">{d.signups.users_7d}<small> this week, {d.signups.users_30d} in 30 days</small></p></section>
-        <section className="dash-card" aria-label="New organizations"><h2 className="lbl">New organizations</h2><p className="big-num mono">{d.signups.orgs_7d}<small> this week, {d.signups.orgs_30d} in 30 days</small></p></section>
+      <div className="pq-figs pq-figs-2">
+        <section className="pq-figcell" aria-label="Sign-ups"><h2 className="lbl">New accounts</h2><p className="big-num mono">{d.signups.users_7d}<small> this week, {d.signups.users_30d} in 30 days</small></p></section>
+        <section className="pq-figcell" aria-label="New organizations"><h2 className="lbl">New organizations</h2><p className="big-num mono">{d.signups.orgs_7d}<small> this week, {d.signups.orgs_30d} in 30 days</small></p></section>
       </div>
-      <form className="shell-form tight" role="search" aria-label="Find an organization">
+      <form className="shell-form oneline" style={{ marginTop: 18 }} role="search" aria-label="Find an organization">
         <label>Find by name or owner email<input name="q" defaultValue={q} maxLength={100} /></label>
         <button type="submit" className="shell-btn">Find</button>
       </form>
@@ -35,7 +35,7 @@ async function Body({ searchParams }: { searchParams: Search }) {
           <tr key={o.id}>
             <td><Link href={`/admin/org/${o.id}`}>{o.name}</Link></td>
             <td>{o.owner_email}</td>
-            <td><span className={o.status === "active" ? "pill-ok" : "pill-warn"}>{STATUS[o.status] || o.status}</span>{o.period_ends_at ? <small> to {day(o.period_ends_at)}</small> : null}</td>
+            <td><span className={o.status === "active" ? "pill-ok" : "pill-warn"}>{STATUS[o.status] || o.status}</span>{o.period_ends_at ? <small className="thin"> to {day(o.period_ends_at)}</small> : null}</td>
             <td className="num mono">{o.teams}</td><td className="num mono">{o.coaches}</td><td className="num mono">{o.players}</td>
             <td>{day(o.created_at)}</td>
           </tr>))}</tbody>

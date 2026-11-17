@@ -9,6 +9,12 @@ type Pair = { grade?: number; command?: number };
 const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const pair = (v: unknown): Pair => (v && typeof v === "object" ? { grade: num((v as Pair).grade) ?? undefined, command: num((v as Pair).command) ?? undefined } : {});
 const f1 = (v?: number) => (v === undefined ? "–" : v.toFixed(1));
+const at = (v?: number) => `${Math.max(0, Math.min(1, ((v ?? 3) - 1) / 4)) * 100}%`;
+// a grade on its scale: where it was entered (a ring) and where the results put it (blue: the engine's read)
+function Shift({ a, b }: { a?: number; b?: number }) {
+  if (a === undefined && b === undefined) return null;
+  return <span className="pq-shift" aria-hidden="true">{a !== undefined ? <i className="from" style={{ left: at(a) }} /> : null}{b !== undefined ? <i className="to" style={{ left: at(b) }} /> : null}</span>;
+}
 
 export default function Learned({ params }: { params: Params }) {
   return <Suspense fallback={<p className="shell-note">Loading…</p>}><Body params={params} /></Suspense>;
@@ -31,18 +37,19 @@ async function Body({ params }: { params: Params }) {
       <h1 className="shell-h1">What the engine learned</h1>
       <p className="shell-note">After each game the engine checks your grades against what actually happened: balls, called strikes, whiffs, fouls and contact. Little data moves nothing; a lot moves its read toward your results. It only changes the calls slowly.</p>
       {rows.length ? (
-        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="What the engine learned">
+        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl roomy" aria-label="What the engine learned">
           <thead><tr><th>Pitch</th><th className="num">Pitches</th><th className="num">Stuff: entered → read</th><th className="num">Command: entered → read</th><th className="num">Expected strikes</th></tr></thead>
           <tbody>{rows.map((r) => (
             <tr key={r.key}>
               <td>{r.name}</td>
               <td className="num mono">{r.n}{r.games ? <small> in {r.games} game{r.games === 1 ? "" : "s"}</small> : null}</td>
-              <td className="num mono">{f1(r.entered.grade)} → <b>{f1(r.read.grade)}</b></td>
-              <td className="num mono">{f1(r.entered.command)} → <b>{f1(r.read.command)}</b></td>
+              <td className="num mono"><Shift a={r.entered.grade} b={r.read.grade} />{f1(r.entered.grade)} → <b>{f1(r.read.grade)}</b></td>
+              <td className="num mono"><Shift a={r.entered.command} b={r.read.command} />{f1(r.entered.command)} → <b>{f1(r.read.command)}</b></td>
               <td className="num mono">{r.strike === null ? "–" : `${Math.round(r.strike * 100)}%`}</td>
             </tr>))}</tbody>
         </table></div>
-      ) : <p className="shell-note">Nothing yet: the engine learns from games charted on your coach&apos;s iPad.</p>}
+      ) : <p className="pq-empty-box">Nothing yet: the engine learns from games charted on your coach&apos;s iPad.</p>}
+      {rows.length ? <p className="legend" style={{ margin: "0 0 12px" }}><span><i className="pq-key from" /> entered</span><span><i className="pq-key to" /> the engine&apos;s read</span><span className="lbl">scale 1 to 5</span></p> : null}
       {L?.at ? <p className="shell-note small">Last updated {new Date(L.at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}.</p> : null}
     </>
   );

@@ -73,7 +73,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
           <section className="pq-panel" aria-labelledby="lu-h">
             <h2 id="lu-h">Their lineup <small>{opp || "No opponent picked"}</small></h2>
             {lineup.length ? <ol className="pq-list" style={{ listStyle: "none" }}>{lineup.map((b, i) => (
-              <li key={i}><span>{i + 1}. {b.name}</span><span className="meta">Bats {b.hand === "S" ? "both" : b.hand === "L" ? "left" : "right"}{b.hitterId && known.has(b.hitterId) ? "" : ", new"}</span></li>))}</ol>
+              <li key={i}><span className="slot"><i>{i + 1}.</i> {b.name}</span><span className="meta">Bats {b.hand === "S" ? "both" : b.hand === "L" ? "left" : "right"}{b.hitterId && known.has(b.hitterId) ? "" : ", new"}</span></li>))}</ol>
               : <p className="pq-empty">No names: the engine starts every hitter as average and learns him during the game.</p>}
           </section>
         </div>

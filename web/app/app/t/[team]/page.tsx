@@ -86,7 +86,7 @@ async function HomeBody({ params }: { params: Params }) {
                 <thead><tr><th>Pitcher</th><th>Last outing</th><th className="num">Last 7 days</th><th>Eligible</th></tr></thead>
                 <tbody>{avail.map((x) => (
                   <tr key={x.pitcher.id}>
-                    <td><Link href={`/app/t/${team}/roster/${x.pitcher.id}`}>{x.pitcher.number ? `#${x.pitcher.number} ` : ""}{x.pitcher.name || "Unnamed"}</Link></td>
+                    <td><Link className="who" href={`/app/t/${team}/roster/${x.pitcher.id}`}><span className="no">{x.pitcher.number ? `#${x.pitcher.number}` : "–"}</span> <span className="nm">{x.pitcher.name || "Unnamed"}</span></Link></td>
                     <td>{x.last ? `${dayName(x.last.date)}, ${x.last.pitches} pitches` : "None in 30 days"}</td>
                     <td className="num"><Num value={x.week} delay={300} /></td>
                     <td>{!x.eligible ? "–" : x.eligible.today ? "Today" : <span className="pill-warn" title={x.eligible.why}>{dayName(x.eligible.date)}</span>}</td>
