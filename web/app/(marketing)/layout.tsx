@@ -1,19 +1,13 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
+import type { Metadata, Viewport } from "next";
+import { siteFonts } from "./fonts";
 import { Smooth } from "./_components/Smooth";
 import { GlassFx } from "./_components/GlassFx";
 import "./site.css";
 import "./sections.css";
 import { SITE_ORIGIN } from "@/lib/site";
 
-// The public site: its own type and styles, separate from the portal (which keeps the Pitch Caller design system in
-// app/globals.css). Archivo for headlines (its width axis gives the condensed heavy call words), Hanken Grotesk for
-// reading. Both are self-hosted variable files in ./fonts, cut down to the characters, weights and widths this page
-// uses (fonttools; Archivo keeps weight 600 to 900 and width 62 to 110), so the build needs no network. Each gets a
-// metric-matched fallback so the text doesn't move when the real font arrives.
-const archivo = localFont({ src: "./fonts/archivo-site.woff2", weight: "600 900", display: "swap", variable: "--font-archivo",
-  declarations: [{ prop: "font-stretch", value: "62% 110%" }], adjustFontFallback: "Arial" });
-const hanken = localFont({ src: "./fonts/hanken-site.woff2", weight: "100 900", display: "swap", variable: "--font-hanken", adjustFontFallback: "Arial" });
+// The public site: its own type (./fonts.ts) and styles, separate from the portal (which keeps the Pitch Caller design
+// system in app/globals.css).
 
 const TITLE = "PitchIQ: pitch calling for high school, travel and college baseball";
 const DESCRIPTION = "PitchIQ calls every pitch from your pitcher's stuff today, the hitter and the count, and tells you why. Built for high school, travel and college coaches.";
@@ -23,13 +17,17 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
   title: TITLE,
   description: DESCRIPTION,
+  alternates: { canonical: "/" },
   openGraph: { title: "PitchIQ: every pitch called, every call explained", description: DESCRIPTION, type: "website", siteName: "PitchIQ" },
   twitter: { card: "summary_large_image", title: "PitchIQ: every pitch called, every call explained", description: DESCRIPTION },
 };
 
+// the browser's own chrome takes the page's ground colour
+export const viewport: Viewport = { themeColor: "#0c0b0e", colorScheme: "dark", width: "device-width", initialScale: 1 };
+
 export default function MarketingLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className={`pq ${archivo.variable} ${hanken.variable}`}>
+    <div className={`pq ${siteFonts}`}>
       <Smooth />
       <GlassFx />
       {children}
