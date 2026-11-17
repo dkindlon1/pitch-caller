@@ -1,0 +1,426 @@
+{
+ "name": "throttled",
+ "variant": "base",
+ "idleMs": 0,
+ "net": "4g",
+ "cpu": 4,
+ "url": "http://127.0.0.1:3210/",
+ "viewport": "1440x900@2x",
+ "dpr": 2.0000000596046448,
+ "canvas": [
+  1900,
+  1200,
+  1425,
+  900
+ ],
+ "seconds": 5.01,
+ "fcpMs": 1332,
+ "scrollStartMs": 1364,
+ "scrolledPx": 3456,
+ "lenis": true,
+ "frames": {
+  "rafCount": 453,
+  "fps": 90.4,
+  "p50": 8.3,
+  "p95": 16.7,
+  "p99": 100.2,
+  "max": 241.5,
+  "over20ms": 21,
+  "over34ms": 11,
+  "over50ms": 6,
+  "compositor": {
+   "presented": 489,
+   "partial": 478,
+   "droppedAffectingSmoothness": 575,
+   "states": {
+    "STATE_NO_UPDATE_DESIRED": 143,
+    "STATE_PRESENTED_ALL": 346,
+    "STATE_DROPPED": 575,
+    "STATE_PRESENTED_PARTIAL": 478
+   }
+  },
+  "swaps": {
+   "n": 565,
+   "p50": 4.9,
+   "p95": 19.5,
+   "p99": 33.4,
+   "max": 253.2,
+   "gapsOver12ms": 126,
+   "gapsOver20ms": 26,
+   "gapsOver34ms": 5,
+   "gapsOver50ms": 3,
+   "worstAt": "21ms:45 66ms:31 98ms:31 128ms:20 159ms:31 190ms:31 221ms:31 282ms:31 313ms:31 344ms:31 406ms:31 437ms:29 466ms:33 500ms:30 964ms:39 1244ms:29 1272ms:126 1398ms:253 1651ms:95 2238ms:32 3368ms:26 4095ms:21 4116ms:27 4211ms:23 4609ms:24 4808ms:32"
+  }
+ },
+ "gpu": {
+  "mainBusyMs": 1313,
+  "tasksOver8ms": 21,
+  "tasksOver16ms": 6,
+  "maxMs": 28,
+  "longAt": "1653ms:22 1676ms:11 1700ms:11 1714ms:13 2102ms:16 2238ms:28 2343ms:12 3080ms:8 3293ms:16 3369ms:25 3438ms:13 3608ms:12 3989ms:10 4026ms:11 4061ms:11 4079ms:13 4095ms:20 4116ms:26 4633ms:15 4747ms:10 4927ms:11"
+ },
+ "mainThread": {
+  "tasksOver16ms": 23,
+  "tasksOver50ms": 5,
+  "longest": [
+   {
+    "at": 1398,
+    "ms": 193,
+    "what": "TimerFire 193ms; v8.callFunction 193ms; Layout 7ms"
+   },
+   {
+    "at": 1831,
+    "ms": 143,
+    "what": "TimerFire 143ms; v8.callFunction 143ms; Layout 1ms"
+   },
+   {
+    "at": 423,
+    "ms": 111,
+    "what": "EvaluateScript 107ms 02mryk7pbbvte.js; v8.run 107ms; EventDispatch 3ms"
+   },
+   {
+    "at": 1682,
+    "ms": 60,
+    "what": "FireAnimationFrame 24ms; v8.callFunction 24ms; FunctionCall 24ms 0p7c6f75n6v68.js y"
+   },
+   {
+    "at": 1591,
+    "ms": 51,
+    "what": "FireAnimationFrame 28ms; v8.callFunction 28ms; FunctionCall 28ms 3e3hzl6xcssvp.js t"
+   },
+   {
+    "at": 1344,
+    "ms": 44,
+    "what": "EvaluateScript 43ms 3e3hzl6xcssvp.js; v8.run 43ms; UpdateLayoutTree 1ms"
+   },
+   {
+    "at": 1645,
+    "ms": 37,
+    "what": "TimerFire 37ms; v8.callFunction 37ms; Layout 1ms"
+   },
+   {
+    "at": 2069,
+    "ms": 33,
+    "what": "Commit 15ms; FireAnimationFrame 7ms; v8.callFunction 7ms"
+   },
+   {
+    "at": 964,
+    "ms": 31,
+    "what": "EvaluateScript 30ms 00tt7ey-kz-n5.js; v8.run 30ms; EventDispatch 1ms"
+   },
+   {
+    "at": 4810,
+    "ms": 30,
+    "what": "Commit 16ms; FireAnimationFrame 4ms; v8.callFunction 4ms"
+   },
+   {
+    "at": 1742,
+    "ms": 28,
+    "what": "FireAnimationFrame 9ms; v8.callFunction 9ms; FunctionCall 9ms 0p7c6f75n6v68.js w"
+   },
+   {
+    "at": 1997,
+    "ms": 28,
+    "what": "TimerFire 28ms; v8.callFunction 28ms; MinorGC 2ms"
+   },
+   {
+    "at": 2025,
+    "ms": 21,
+    "what": "FireAnimationFrame 8ms; v8.callFunction 8ms; FunctionCall 8ms 3e3hzl6xcssvp.js t"
+   },
+   {
+    "at": 1974,
+    "ms": 20,
+    "what": "FireAnimationFrame 5ms; v8.callFunction 5ms; FunctionCall 5ms 3e3hzl6xcssvp.js t"
+   }
+  ]
+ },
+ "busyMs": {
+  "GPU Process / GpuVSyncThread": 10020,
+  "Renderer / CrRendererMain": 8895,
+  "Renderer / ThreadPoolForegroundWorker": 2634,
+  "GPU Process / CrGpuMain": 2621,
+  "GPU Process / VizCompositorThread": 715,
+  "Renderer / Compositor": 523,
+  "GPU Process / ThreadPoolForegroundWorker": 515,
+  "Browser / CrBrowserMain": 198,
+  "Browser / CacheThread_BlockFile": 103,
+  "Renderer / Chrome_ChildIOThread": 24,
+  "Browser / Chrome_IOThread": 13,
+  "Browser / ThreadPoolForegroundWorker": 9
+ },
+ "workMs": {
+  "FunctionCall [main]": "1654 ms in 3303 (max 28.2)",
+  "FireAnimationFrame [main]": "1289 ms in 1201 (max 28.3)",
+  "UpdateLayoutTree [main]": "655 ms in 962 (max 6.4)",
+  "GPUTask [CrGpuMain]": "502 ms in 959 (max 28.0)",
+  "RasterTask [ThreadPoolForegroundWorker]": "495 ms in 639 (max 8.6)",
+  "TimerFire [main]": "436 ms in 33 (max 192.6)",
+  "HitTest [main]": "419 ms in 371 (max 2.5)",
+  "SkiaOutputSurfaceImplOnGpu::FinishPaintRenderPass [CrGpuMain]": "410 ms in 1870 (max 25.7)",
+  "Layerize [main]": "354 ms in 413 (max 2.0)",
+  "EventDispatch [main]": "321 ms in 586 (max 8.1)",
+  "Commit [main]": "271 ms in 453 (max 16.1)",
+  "Display::DrawAndSwap [VizCompositorThread]": "249 ms in 565 (max 1.1)",
+  "Paint [main]": "228 ms in 601 (max 6.1)",
+  "PrePaint [main]": "205 ms in 832 (max 2.0)",
+  "DirectRenderer::DrawFrame [VizCompositorThread]": "200 ms in 565 (max 1.0)",
+  "EvaluateScript [main]": "197 ms in 8 (max 107.4)",
+  "Layout [main]": "185 ms in 272 (max 7.1)",
+  "Decode Image [ThreadPoolForegroundWorker]": "33 ms in 5 (max 8.2)",
+  "MajorGC [main]": "12 ms in 2 (max 6.7)",
+  "V8.GC_MARK_COMPACTOR [main]": "11 ms in 2 (max 6.7)",
+  "MinorGC [main]": "11 ms in 5 (max 3.4)",
+  "V8.GC_SCAVENGER [main]": "7 ms in 5 (max 2.0)",
+  "Commit [CrBrowserMain]": "4 ms in 79 (max 0.1)",
+  "RasterTask [CompositorTileWorker]": "2 ms in 82 (max 0.2)",
+  "v8.compile [main]": "2 ms in 8 (max 0.4)",
+  "FunctionCall [CrRendererMain]": "0 ms in 9 (max 0.2)",
+  "ParseHTML [main]": "0 ms in 1 (max 0.2)",
+  "ParseHTML [CrRendererMain]": "0 ms in 10 (max 0.0)",
+  "ImageUploadTask [CompositorTileWorker]": "0 ms in 1 (max 0.0)",
+  "EventDispatch [CrRendererMain]": "0 ms in 2 (max 0.0)"
+ },
+ "imageDecode": {
+  "decodeImage": {
+   "n": 5,
+   "totalMs": 33,
+   "maxMs": 8.2
+  },
+  "lazyPixelRef": {
+   "n": 0,
+   "totalMs": 0,
+   "maxMs": 0
+  }
+ },
+ "film": {
+  "samples": 453,
+  "blankSamples": 218,
+  "firstFrameAtMs": 2101,
+  "distinctFramesShown": 4,
+  "steps": 3,
+  "biggestStep": 50,
+  "stepsOver2": 3,
+  "framesFromScrollPosition": {
+   "mean": 50.1,
+   "p95": 86.6,
+   "max": 91.6
+  },
+  "framesFromWanted": {
+   "mean": 24.31,
+   "max": 42,
+   "samplesOff": 216
+  },
+  "sharpShare": 0.03
+ },
+ "loafs": [
+  {
+   "start": 2762,
+   "dur": 234,
+   "block": 184,
+   "render": 41,
+   "style": 1,
+   "scripts": [
+    {
+     "dur": 193,
+     "src": "",
+     "fn": "",
+     "inv": "TimerHandler:setTimeout"
+    },
+    {
+     "dur": 28,
+     "src": "3e3hzl6xcssvp.js",
+     "fn": "t",
+     "inv": "FrameRequestCallback"
+    }
+   ]
+  },
+  {
+   "start": 3193,
+   "dur": 161,
+   "block": 101,
+   "render": 8,
+   "style": 1,
+   "scripts": [
+    {
+     "dur": 143,
+     "src": "",
+     "fn": "",
+     "inv": "TimerHandler:setTimeout"
+    },
+    {
+     "dur": 5,
+     "src": "3e3hzl6xcssvp.js",
+     "fn": "t",
+     "inv": "FrameRequestCallback"
+    }
+   ]
+  },
+  {
+   "start": 1783,
+   "dur": 116,
+   "block": 62,
+   "render": 1,
+   "style": 0,
+   "scripts": [
+    {
+     "dur": 107,
+     "src": "02mryk7pbbvte.js",
+     "fn": "",
+     "inv": "http://127.0.0.1:3210/_next/static/chunks/02mryk7pbbvte.js"
+    }
+   ]
+  },
+  {
+   "start": 1916,
+   "dur": 110,
+   "block": 0,
+   "render": 1,
+   "style": 0,
+   "scripts": [
+    {
+     "dur": 9,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 5,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 5,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 14,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 6,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 5,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 7,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 5,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 7,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 13,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 6,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 6,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    },
+    {
+     "dur": 8,
+     "src": "02mryk7pbbvte.js",
+     "fn": "z",
+     "inv": "MessagePort.onmessage"
+    }
+   ]
+  },
+  {
+   "start": 3006,
+   "dur": 93,
+   "block": 29,
+   "render": 43,
+   "style": 3,
+   "scripts": [
+    {
+     "dur": 37,
+     "src": "",
+     "fn": "",
+     "inv": "TimerHandler:setTimeout"
+    },
+    {
+     "dur": 5,
+     "src": "019uoq2zefwwl.js",
+     "fn": "onWheel",
+     "inv": "DOMWindow.onwheel"
+    },
+    {
+     "dur": 8,
+     "src": "3e3hzl6xcssvp.js",
+     "fn": "t",
+     "inv": "FrameRequestCallback"
+    },
+    {
+     "dur": 24,
+     "src": "0p7c6f75n6v68.js",
+     "fn": "y",
+     "inv": "FrameRequestCallback"
+    }
+   ]
+  },
+  {
+   "start": 2703,
+   "dur": 54,
+   "block": 0,
+   "render": 5,
+   "style": 1,
+   "scripts": [
+    {
+     "dur": 43,
+     "src": "3e3hzl6xcssvp.js",
+     "fn": "",
+     "inv": "http://127.0.0.1:3210/_next/static/chunks/3e3hzl6xcssvp.js"
+    }
+   ]
+  }
+ ],
+ "network": {
+  "duringScroll": 31,
+  "frames": 21,
+  "kb": 692,
+  "scripts": [
+   "02mryk7pbbvte.js 70KB @-1092ms",
+   "0cwl6fqupq8fk.js 46KB @-1092ms",
+   "0p7c6f75n6v68.js 23KB @-1091ms",
+   "3e3hzl6xcssvp.js 27KB @690ms",
+   "3qg8u4g5-64sf.js 17KB @691ms",
+   "00tt7ey-kz-n5.js 4KB @692ms",
+   "3nv1d2_wz8agr.js 9KB @693ms",
+   "019uoq2zefwwl.js 6KB @694ms"
+  ]
+ },
+ "errors": []
+}

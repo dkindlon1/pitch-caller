@@ -85,14 +85,18 @@ const say = (ok, msg) => console.log((ok ? "  ok   " : "  FLAG ") + msg);
 
   console.log("\n== zoom to 200% (a 720x450 viewport is what a 1440x900 window gives at 200%)");
   { const { ctx, page } = await open({ viewport: { width: 720, height: 450 } });
-    const film = await page.evaluate(() => { const f = document.getElementById("top"); return { top: f.offsetTop, h: f.offsetHeight - innerHeight }; });
-    for (const p of [0, 0.17, 0.3, 0.42, 0.56, 0.72, 0.9]) {
+    const film = await page.evaluate(() => { const f = document.getElementById("top"); return { top: f.offsetTop, h: f.offsetHeight - innerHeight, pinned: getComputedStyle(document.querySelector(".pq-pin")).position === "sticky" }; });
+    say(!film.pinned, film.pinned ? "the film is still a pinned scene at this size" : "at this size the page is its calm version: nothing is pinned, so everything is reached by scrolling");
+    const wide = await page.evaluate(() => [...document.querySelectorAll(".pq-film *")].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 2 && getComputedStyle(e).display !== "none" && (r.right > innerWidth + 1 || r.left < -1) && !e.closest("[aria-hidden=true]"); }).map((e) => e.className).slice(0, 6));
+    say(!wide.length, `nothing in the film's content is wider than the window${wide.length ? ": " + wide.join(", ") : ""}`);
+    for (const p of film.pinned ? [0, 0.17, 0.3, 0.42, 0.56, 0.72, 0.9] : []) {
       await to(page, film.top + p * film.h);
       const cut = await page.evaluate(() => [".pq-msg", ".pq-ledger", ".pq-chip", ".pq-explain", ".pq-pgtitle", ".pq-ctl", ".pq-mix"].flatMap((s) => [...document.querySelectorAll(s)].filter((e) => { let o = 1; for (let x = e; x && x !== document.body; x = x.parentElement) o *= +getComputedStyle(x).opacity; const r = e.getBoundingClientRect(); return o > 0.5 && (r.top < 0 || r.bottom > innerHeight + 1 || r.left < 0 || r.right > innerWidth + 1); }).map((e) => `${s} ${Math.round(e.getBoundingClientRect().top)}..${Math.round(e.getBoundingClientRect().bottom)} of ${innerHeight}`)));
       say(!cut.length, `film ${p}: ${cut.length ? "cut off: " + cut.join("; ") : "nothing cut off"}`);
       if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `zoom200-film-${String(Math.round(p * 100)).padStart(3, "0")}.png`) });
     }
     say(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "no sideways overflow at 200%");
+    if (SHOTS) { await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: path.join(SHOTS, "zoom200-full.png"), fullPage: true }); }
     await ctx.close(); }
 
   console.log("\n== other public routes");

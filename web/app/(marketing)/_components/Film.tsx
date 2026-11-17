@@ -112,13 +112,19 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
     // the call words, split into letters that keep one continuous gradient
     const splits = wordEls.map((w) => new SplitText(w, { type: "chars", charsClass: "ch" }));
     let tl: ReturnType<typeof gsap.timeline> | null = null, R = screenRect();
+    // Everything the timeline moves or fades, and each one's own inline style as the page drew it. When this is torn
+    // down (the calm version takes over, or the component goes) each gets exactly that back: GSAP's own undo restores
+    // what it recorded, and after a re-layout what it recorded was already mid-animation.
+    const TOUCHED = $$(".pq-chip, .pq-msg, .pq-ledger, .pq-ledger li, .pq-ledger h3, .pq-lg, .pq-landed, .pq-explain, .pq-rail, .pq-illus, .pq-pgtitle, .pq-ctl, .pq-mix, .pq-flow, .pq-shade, .pq-pglight, .pq-foot-fade, .pq-light, .pq-haze, .pq-beam, .pq-floor, .pq-cut, .pq-feel i, .pq-chip .pq-bar b");
+    const OWN = TOUCHED.map((e) => e.getAttribute("style"));
+    const giveBack = () => TOUCHED.forEach((e, i) => { if (OWN[i] === null) e.removeAttribute("style"); else e.setAttribute("style", OWN[i]!); });
 
     function layout() {
       if (dead) return;
       R = screenRect();
       const vw = pin.clientWidth, vh = pin.clientHeight, tall = dir === "tall", cy = R.y + R.h / 2;
       tl?.scrollTrigger?.kill(); tl?.kill(); tl = null;
-      gsap.set([chips, ".pq-word .ch", ".pq-msg", ".pq-ledger", ".pq-ledger li", ".pq-ledger h3", ".pq-lg", ".pq-landed", ".pq-explain", ".pq-rail", ".pq-illus", ".pq-pgtitle", ".pq-ctl", ".pq-mix", ".pq-flow", ".pq-shade", ".pq-pglight", ".pq-foot-fade", ".pq-light", ".pq-haze", ".pq-beam", ".pq-floor", ".pq-cut", ".pq-feel i", ".pq-chip .pq-bar b"], { clearProps: "opacity,transform,filter,visibility" });
+      gsap.set([TOUCHED, ".pq-word .ch"], { clearProps: "opacity,transform,filter,visibility" });
       // Vertical centring is set here, not left to the stylesheet's translateY(-50%). GSAP reads a transform back as
       // pixels and recognises "-50%" only when the block's height happens to round the same way; a block it missed
       // lost its centring the moment its y was animated, and sat half its own height too low.
@@ -280,6 +286,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       railEls[0].className = p > 0.09 ? "is-on" : ""; railEls[1].className = p > A ? "is-on" : ""; railEls[2].className = p > pp(0.49) ? "is-on is-g" : "";
       const live = p > pp(0.86);
       pg.classList.toggle("is-live", live);
+      pin.classList.toggle("is-held", p >= B + 0.004);      // the film is on its last frame (site.css: the fallback light's cut-out)
       // a changed call stays on the watch for as long as the playground is up, and comes back with it: above the
       // playground the film's own screen shows, so its story is never told with the visitor's call on it
       if (faceOn.current) { const show = p >= pp(0.78), up = parseFloat(faceEl.style.opacity || "0") > 0; if (show !== up) gsap.set(faceEl, { opacity: show ? 1 : 0 }); }
@@ -306,8 +313,9 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       // everything set by hand goes back to the stylesheet (the calm version places these itself)
       for (const k of ["left", "top", "width", "height"]) faceEl.style.removeProperty(k);
       faceEl.style.opacity = faceOn.current ? "1" : "";
-      wordEls.forEach((w) => w.removeAttribute("style")); pg.classList.remove("is-live"); chips[0].classList.remove("is-won");
+      wordEls.forEach((w) => w.removeAttribute("style")); pg.classList.remove("is-live"); pin.classList.remove("is-held"); chips[0].classList.remove("is-won");
       railEls.forEach((r) => { r.className = ""; }); delete el.dataset.stop;
+      giveBack(); queueMicrotask(giveBack);      // (again once GSAP's own undo, which runs right after this, has finished)
     };
   }, [frames.wide, frames.tall, still], sec);
 

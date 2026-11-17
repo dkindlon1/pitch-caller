@@ -16,6 +16,10 @@ import { PINNED, STACKED, motion, useKit } from "./motion";
 export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
   const sec = useRef<HTMLElement>(null);
   const [open, setOpen] = useState<number | null>(null);
+  // a pointer resting on a watch shows its mix; a click or a key press pins it open until the next one (so a click
+  // on a watch the pointer already opened keeps it, and does not shut it)
+  const [pinned, setPinned] = useState<number | null>(null);
+  const press = (k: number) => { const p = pinned === k ? null : k; setPinned(p); setOpen(p); };
   const last = pitches.length - 1;
 
   useKit(({ gsap }) => {
@@ -84,8 +88,8 @@ export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
             {pitches.map((p, k) => {
               const isOpen = open === k;
               return (
-                <li key={p.n} className={`pq-ab-item${isOpen ? " is-open" : ""}`} onMouseEnter={() => setOpen(k)} onMouseLeave={() => setOpen((o) => (o === k ? null : o))}>
-                  <button type="button" className="pq-ab-face" aria-expanded={isOpen} aria-controls={`ab-mix-${k}`} onClick={() => setOpen(isOpen ? null : k)}>
+                <li key={p.n} className={`pq-ab-item${isOpen ? " is-open" : ""}`} onMouseEnter={() => { if (pinned === null) setOpen(k); }} onMouseLeave={() => { if (pinned === null) setOpen((o) => (o === k ? null : o)); }}>
+                  <button type="button" className="pq-ab-face" aria-expanded={isOpen} aria-controls={`ab-mix-${k}`} onClick={() => press(k)}>
                     <Watch pitch={p.pitch} words={p.words} />
                     <span className="pq-sr">{`${p.pitch}${p.words.length ? ` ${p.words.join(" ").toLowerCase()}` : ""}: pitch ${p.n}, count ${p.count}. ${p.result}. Show the mix.`}</span>
                   </button>
