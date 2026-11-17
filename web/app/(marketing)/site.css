@@ -179,6 +179,7 @@ html.lenis, html.lenis body { height: auto; }
 .pq-foot-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 30vh; opacity: 0; pointer-events: none; z-index: 3; background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--ground) 70%, transparent) 45%, var(--ground) 86%); }
 .pq-pglight { position: absolute; inset: 0; opacity: 0; pointer-events: none; mix-blend-mode: screen; background: radial-gradient(34vw 46vh at 16% 62%, rgba(20, 34, 79, 0.5), transparent 70%), radial-gradient(30vw 44vh at 86% 44%, rgba(20, 34, 79, 0.45), transparent 70%), radial-gradient(9vw 12vh at 30% 27%, rgba(47, 91, 255, 0.22), transparent 70%), radial-gradient(8vw 11vh at 71% 80%, rgba(47, 91, 255, 0.2), transparent 70%); }
 
+.pq-film .is-out { pointer-events: none; }   /* a stop that has faded out (Film.tsx marks it) */
 .pq-msg { position: absolute; left: 6.6vw; top: 50%; width: min(36vw, 540px); transform: translateY(-50%); z-index: 4; }
 .pq-msg.is-1 { width: min(54vw, 820px); }
 .pq-msg h1 { font-size: var(--fs-hero); }
@@ -224,7 +225,8 @@ html.lenis, html.lenis body { height: auto; }
 /* one blend across both words (blue to green, mixed in OKLab); each letter carries its own slice of it */
 .pq-word.is-1 { --grad: linear-gradient(90deg, #2f5bff, #238be8 55%, #2cb0cd); }
 .pq-word.is-2 { --grad: linear-gradient(90deg, #2cb0cd, #45d1ab 45%, #62f07a); }
-.pq-word .ch { display: inline-block; -webkit-background-clip: text; background-clip: text; background-image: var(--grad); background-size: var(--bw) 100%; background-position: var(--bx) 0; color: transparent; will-change: transform, opacity; }
+/* (each letter's painted box reaches a quarter of an em past its own width, so a glyph that overhangs it is never cut) */
+.pq-word .ch { padding: 0 0.25em; margin: 0 -0.25em; display: inline-block; -webkit-background-clip: text; background-clip: text; background-image: var(--grad); background-size: var(--bw) 100%; background-position: var(--bx) 0; color: transparent; will-change: transform, opacity; }
 .pq-landed { position: absolute; left: 50%; display: flex; align-items: center; gap: 10px; padding: 11px 20px 11px 15px; border-radius: 999px; font-weight: 650; font-size: 1rem; white-space: nowrap; opacity: 0; z-index: 4; }
 .pq-landed i { width: 11px; height: 11px; border-radius: 50%; background: var(--call); box-shadow: 0 0 16px 4px rgba(98, 240, 122, 0.75); }
 .pq-explain { position: absolute; left: 6.6vw; bottom: 11vh; width: min(30vw, 430px); opacity: 0; z-index: 4; }

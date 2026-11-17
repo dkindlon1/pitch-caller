@@ -264,13 +264,16 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
     // panel that is not showing carries no backdrop filter at all (.is-off), and while the timeline moves the lens
     // panels are plain glass (GlassFx puts their refraction back once the page rests).
     const glass = $$(".pq-glass");
+    // The stops are stacked on one another, and the earlier ones sit above the playground. One that has faded out must
+    // not take the pointer: left alone, the invisible headlines swallowed clicks meant for the runners under them.
+    const layers = $$(".pq-msg, .pq-ledger, .pq-explain, .pq-landed, .pq-rail, .pq-illus");
     function stage() {
       glassMoving();
       for (const g of glass) { const off = !(parseFloat(g.style.opacity) > 0.01); if (off !== g.classList.contains("is-off")) g.classList.toggle("is-off", off); }
+      for (const l of layers) { const out = l.style.opacity !== "" && !(parseFloat(l.style.opacity) > 0.05); if (out !== l.classList.contains("is-out")) l.classList.toggle("is-out", out); }
     }
     const led_feel = led.pitcher.map((p) => p.feel);
     const railEls = $$(".pq-rail .lab span"), pg = $(".pq-pg"), faceEl = $(".pq-face");
-    let faceUp = faceOn.current && faceEl.style.opacity === "1";
     function frame(p: number) {
       film.current?.seek(timeAt(p, lead.current) * (count - 1), true);
       chips[0].classList.toggle("is-won", p > pp(0.35));
@@ -279,8 +282,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
       pg.classList.toggle("is-live", live);
       // a changed call stays on the watch for as long as the playground is up, and comes back with it: above the
       // playground the film's own screen shows, so its story is never told with the visitor's call on it
-      const show = faceOn.current && p >= pp(0.78);
-      if (show !== faceUp) { faceUp = show; gsap.set(faceEl, { opacity: show ? 1 : 0 }); }
+      if (faceOn.current) { const show = p >= pp(0.78), up = parseFloat(faceEl.style.opacity || "0") > 0; if (show !== up) gsap.set(faceEl, { opacity: show ? 1 : 0 }); }
       el!.dataset.stop = String(p < 0.08 ? 1 : p < 0.23 ? 2 : p < 0.35 ? 3 : p < pp(0.21) ? 4 : p < pp(0.44) ? 5 : p < pp(0.7) ? 6 : 7);
     }
 
@@ -300,7 +302,7 @@ export function Film({ story, frames }: { story: Weighed; frames: { wide: number
     if (!fontsIn) document.fonts.ready.then(() => { if (!dead) again(layout); });      // measured again only if the type changed under it
     return () => {
       dead = true; window.removeEventListener("resize", onResize); window.clearTimeout(rt); stopAtmos?.();
-      tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); glass.forEach((g) => g.classList.remove("is-off"));
+      tl?.scrollTrigger?.kill(); tl?.kill(); splits.forEach((s) => s.revert()); glass.forEach((g) => g.classList.remove("is-off")); layers.forEach((l) => l.classList.remove("is-out"));
       // everything set by hand goes back to the stylesheet (the calm version places these itself)
       for (const k of ["left", "top", "width", "height"]) faceEl.style.removeProperty(k);
       faceEl.style.opacity = faceOn.current ? "1" : "";
