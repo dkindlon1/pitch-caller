@@ -100,14 +100,25 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
   const gl = canvas.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: "low-power" });
   if (!gl) return null;
   // a software renderer (no graphics card) would spend the CPU the scroll needs: use the CSS light there (?gl=1 forces it)
-  const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+  // (Firefox reports the real renderer in RENDERER and warns in the console when the old extension is asked for)
+  const dbg = /Firefox\//.test(navigator.userAgent) ? null : gl.getExtension("WEBGL_debug_renderer_info");
   const renderer = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
   if (/swiftshader|llvmpipe|software|basic render/i.test(renderer) && !new URLSearchParams(window.location.search).has("gl")) { gl.getExtension("WEBGL_lose_context")?.loseContext(); return null; }
-  const sh = (type: number, src: string) => { const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
-  const vs = sh(gl.VERTEX_SHADER, VERT), fs = sh(gl.FRAGMENT_SHADER, FRAG);
-  if (!vs || !fs) return null;
-  const prog = gl.createProgram()!; gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
+  // The shader is compiled without waiting for it: asking for its status at once makes the browser finish the compile
+  // on the main thread (an 80 ms task as the page's motion arrives). Where the browser can say when it is done
+  // (KHR_parallel_shader_compile) the light starts a few frames later; elsewhere it is asked straight away, as before.
+  // Until then, and if the compile fails, the CSS light shows.
+  const sh = (type: number, src: string) => { const s = gl.createShader(type)!; gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const prog = gl.createProgram()!; gl.attachShader(prog, sh(gl.VERTEX_SHADER, VERT)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FRAG)); gl.linkProgram(prog);
+  const par = gl.getExtension("KHR_parallel_shader_compile");
+  let stop: (() => void) | null = null, gone = false, poll = 0;
+  const begin = () => { if (!gone && gl.getProgramParameter(prog, gl.LINK_STATUS)) stop = run(); };
+  const waitFor = () => { if (gone) return; if (!par || gl.getProgramParameter(prog, par.COMPLETION_STATUS_KHR)) begin(); else poll = requestAnimationFrame(waitFor); };
+  if (par) poll = requestAnimationFrame(waitFor); else begin();
+  return () => { gone = true; cancelAnimationFrame(poll); if (stop) stop(); else gl.getExtension("WEBGL_lose_context")?.loseContext(); };
+
+  function run(): () => void {
+  if (!gl) return () => {};
   gl.useProgram(prog);
   const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
@@ -123,16 +134,21 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
   const ensureMask = (set: "wide" | "tall") => {
     if (maskSet === set || loading === set) return;
     loading = set; hasMask = false;
-    const img = new Image();
-    img.decoding = "async";
-    img.onload = () => {
+    const put = (pic: TexImageSource) => {
       if (loading !== set) return;
       gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, img);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, pic);
       maskSet = set; loading = ""; hasMask = true;
     };
-    img.src = `/media/film/watch/${set}-mask.png`;
+    const url = `/media/film/watch/${set}-mask.png`;
+    // the sheet is a large picture: it is decoded off the main thread where the browser can (decoding it on the way
+    // into the texture was a 200 ms task on a slow phone), and the old way is the fallback
+    const viaImage = () => { const img = new Image(); img.decoding = "async"; img.onload = () => put(img); img.src = url; };
+    if (typeof createImageBitmap === "function") {
+      fetch(url).then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status))))).then((b) => createImageBitmap(b, { premultiplyAlpha: "none", colorSpaceConversion: "none" }))
+        .then((bmp) => { put(bmp); bmp.close(); }, viaImage);
+    } else viaImage();
   };
   // this frame's cell in the sheet and the cover crop, as the film canvas draws it (filmFrames.ts)
   const maskUniforms = () => {
@@ -191,4 +207,5 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
     canvas.removeEventListener("webglcontextlost", onLost); host.classList.remove("has-gl");
     gl.getExtension("WEBGL_lose_context")?.loseContext();
   };
+  }
 }
