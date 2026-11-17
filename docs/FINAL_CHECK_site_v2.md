@@ -1,10 +1,17 @@
-SHIP: NO. Every check I could run passes, but the test copy of Safari's engine drew the site's fonts wrong ("PERFECT PITCH" came out as "FEFFECT FITCH"), and until someone looks at the preview in real Safari on an iPhone I can't tell you that is only the test engine.
+SHIP: YES. Drew signed off on Nov 16 after a follow-up check: Playwright's Linux WebKit (closer to Safari than the Windows test build) draws PERFECT PITCH correctly on desktop and on an iPhone profile, the light stays behind the watch in WebKit, and every check passes. A look in real Safari on an iPhone stays the first step before going live.
 
 # PitchIQ site v2: final check (Nov 16, 2026)
 
 Branch `site/v2-alive`, final commit `b920719`. Nothing was merged, deployed or changed in Supabase.
 
-**If the Safari look is clean, this is a yes.** It is the first item under "Before going live" and takes two minutes.
+**Original verdict (superseded):** SHIP: NO. Every check I could run passes, but the test copy of Safari's engine drew the site's fonts wrong ("PERFECT PITCH" came out as "FEFFECT FITCH"), and until someone looks at the preview in real Safari on an iPhone I can't tell you that is only the test engine.
+
+## 0. Follow-up after the report (Nov 16, later)
+- **Safari fonts:** Linux WebKit (Playwright 27.2) renders PERFECT / PITCH and FASTBALL / OUTSIDE correctly at 1440x900 (2x) and on an iPhone 14 profile, with Archivo loaded at width 62% and weight 900. The "FEFFECT FITCH" render was the Windows WebKit test build. Real Safari is still unchecked.
+- **Fixed: light washing over the watch before its cut-out loaded.** WebKit reports its GPU as "Apple GPU" (so does real Safari), so the shader runs there; until the 650 KB mask arrived, the shader lit the watch too. The mask now starts loading at once, and the shader takes over from the CSS light only when it is ready. Checked with the mask delayed 7 s in WebKit and Chromium: the watch stays black and sharp at the call before and after.
+- **Fixed (Drew's two content decisions):** the programs panel's sample speeds now agree with the film's pitcher (slider 78.1, changeup 77.2 mph, where they were 77.4 and 78.0), and the FAQ no longer says "Game prep, bullpens and scrimmages are fine anywhere" (a device-rule claim).
+- **Checks on the final build:** tsc clean, 54/54 unit tests, next build, e2e all pass; final_interact all pass and final_audit 0 serious or critical in Chromium and WebKit; WebKit's one 404 is the audit's own missing-page probe (the real page has none on desktop or iPhone).
+- **Still not verified:** real Safari, a real phone and touch, other GPUs, screen readers, the contact form with a real email provider. Without WebGL (a software renderer) the CSS light still lies over the moving watch in stops 1 to 5, and over the watch at the call on phones.
 
 ## 1. What was wrong and is now fixed
 Four of these were real blockers that the earlier passes missed:

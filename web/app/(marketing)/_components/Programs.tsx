@@ -13,8 +13,8 @@ type P = "FB" | "SL" | "CH";
 const BIG: [string, string][] = [["61%", "Strikes"], ["26%", "Whiffs per swing"], ["37%", "Strikeouts with two strikes"]];
 const PITCHES: { p: P; name: string; detail: string; strike: number; exp: number; grade: string; learned: string }[] = [
   { p: "FB", name: "Fastball", detail: "86.1 mph, 17 in. ride", strike: 64, exp: 63, grade: "Holds at 4", learned: "Doing what its grade says." },
-  { p: "SL", name: "Slider", detail: "77.4 mph, 4 in. sweep", strike: 61, exp: 57, grade: "Up, 3.5 to 4", learned: "Better than its grade. Moving up." },
-  { p: "CH", name: "Changeup", detail: "78.0 mph, 14 in. fade", strike: 52, exp: 58, grade: "Down, 3 to 2.5", learned: "Missing more than expected. Moving down." },
+  { p: "SL", name: "Slider", detail: "78.1 mph, 4 in. sweep", strike: 61, exp: 57, grade: "Up, 3.5 to 4", learned: "Better than its grade. Moving up." },
+  { p: "CH", name: "Changeup", detail: "77.2 mph, 14 in. fade", strike: 52, exp: 58, grade: "Down, 3 to 2.5", learned: "Missing more than expected. Moving down." },
 ];
 const STAFF = ["17", "22", "31", "8", "40", "12"];
 const DOTS = 25, TOTAL = 412;

@@ -140,6 +140,8 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, gl.LUMINANCE, gl.UNSIGNED_BYTE, pic);
       maskSet = set; loading = ""; hasMask = true;
+      if (!lost) host.classList.add("has-gl");   // only now take over from the CSS light: before the mask, the light would cover the watch
+      kick();
     };
     const url = `/media/film/watch/${set}-mask.png`;
     // the sheet is a large picture: it is decoded off the main thread where the browser can (decoding it on the way
@@ -179,6 +181,7 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
     // held (the playground's glass is refracting at rest): keep the last frame, since anything moving under a
     // refracting panel makes the compositor redo the filter every frame
     if (hold()) { raf = requestAnimationFrame(draw); return; }
+    if (film) { ensureMask(film.set()); if (!hasMask) { raf = requestAnimationFrame(draw); return; } }   // wait for the mask (a resize can switch sets)
     const a = read();
     const lit = a.blue + a.green + a.haze + a.beam + a.floor + a.pg > 0.004;
     if (lit || !dark) {
@@ -200,7 +203,7 @@ export function startAtmos(canvas: HTMLCanvasElement, host: HTMLElement, read: (
   document.addEventListener("visibilitychange", onVis);
   const onLost = (e: Event) => { e.preventDefault(); lost = true; host.classList.remove("has-gl"); };
   canvas.addEventListener("webglcontextlost", onLost);
-  host.classList.add("has-gl");
+  if (film) ensureMask(film.set()); else host.classList.add("has-gl");   // start loading the mask at once
   kick();
   return () => {
     cancelAnimationFrame(raf); raf = 0; io.disconnect(); document.removeEventListener("visibilitychange", onVis);
