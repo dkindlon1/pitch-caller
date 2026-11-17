@@ -744,6 +744,27 @@ function watchCard() {
     S.setup.staff.map((pd) => { const n = signNote(pd); return n ? h("div", {}, h("b", {}, pd.name), n) : null; }),
     soakOn ? watchSoakPanel() : null);
 }
+// Setup's Watches row. Where the browser has Web Bluetooth (Chrome on a computer or Android) the switch is always there;
+// the full card (connect, receipts, signs) shows only once watch mode is on. The switch keeps the setting on this
+// device, the same stored flag ?watch=1 / ?watch=0 set, so every later open (the Game Day hand-off from the website
+// included) comes up the way it was left. It reloads the app once, after saving, so the watch link starts or stops
+// cleanly. Without Web Bluetooth (the iPad) there is no row at all.
+function setWatchOptIn(on) {
+  try { if (on) localStorage.setItem("pitchiq.watch.on", "1"); else localStorage.removeItem("pitchiq.watch.on"); }
+  catch (e) { toast("This browser won't keep the setting."); return; }
+  save(); setTimeout(() => location.reload(), 50);
+}
+function watchesRow(row) {
+  if (typeof PCWatch === "undefined" || !PCWatch.supported()) return null;
+  const on = !!WATCH;
+  const sw = h("div", { id: "watch-switch", class: "wswitch" },
+    h("button", { class: "switch", role: "switch", "aria-checked": String(on), on: { click: () => setWatchOptIn(!on) } },
+      h("i", { "aria-hidden": "true" }), "Use watches on this device"),
+    h("p", { class: "note" }, on ? "On for this device. The game app opens with watches from now on, from Game Day on the website too."
+      : "Off. Turn it on to connect a watch; the game app then opens with watches on this device, from Game Day on the website too."));
+  return row("Watches", "Wristbands for the pitcher and the catcher (Bangle.js 2, prototype). Accept on the Game screen sends the call: the sign, and where in words. Works in Chrome on a computer or an Android device.",
+    sw, on ? watchCard() : null);
+}
 function watchSoakPanel() {
   const st = WATCH.soakStats(), on = WATCH.soaking;
   return h("div", { class: "wsoak" }, h("b", {}, "Soak test"), " A new call every 5 s, counted per watch. ",
@@ -1469,7 +1490,7 @@ function setupView() {
       h("button", { class: "choice", "aria-pressed": String(!!st.logGlove), on: { click: () => { st.logGlove = !st.logGlove; changed(true); } } },
         h("b", {}, "Also log where the catcher set up"), h("span", {}, "One more tap before the pitch, when his glove isn't on the called spot. It's what each pitcher's miss lean is measured from."))),
     DB.ready ? row("Game day", "On Wi-Fi before the game: syncs, checks the app opens with no signal and today's staff and opponent are on this iPad. Then call the game anywhere; it syncs once there's a signal.", prepPanel()) : null,
-    WATCH ? row("Watches", "Wristbands for the pitcher and the catcher (Bangle.js 2, prototype). Accept on the Game screen sends the call: the sign, and where in words. Works in Chrome on a computer or an Android device.", watchCard()) : null,
+    watchesRow(row),
     DB.ready ? row("Pitch counts", "Your league's pitch-count rule: each pitcher's rest, the day he can pitch again, and a warning on the Game screen as he nears the limit.", pitchRulePanel()) : null,
     DB.ready ? row("Today's staff", "Who's available today. Pitchers, their arsenals, check-ins and what's been learned live on the Roster screen.", staffPick()) :
     row("Staff", "Bullpen feel is how much he trusts each pitch warming up. It moves with every result once the game starts.", staff,

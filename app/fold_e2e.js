@@ -1,7 +1,8 @@
 /*
  * The game screen's first view on an iPad in landscape: in every call state the call (its words and sign), Accept, the
  * watch status and all six result keys are on screen with the page at the top, no scrolling. Both themes, at 1180 x 820
- * (the full screen) and 1180 x 740 (Safari, under its own bars). Watches are connected in every state, so Accept is there.
+ * (the full screen) and 1180 x 740 (Safari, under its own bars), with at least 24 px to spare under the lowest of them;
+ * in the IBB state the intentional-walk suggestion too. Watches are connected in every state, so Accept is there.
  * Drives the real app through the states of app/shots_v2.js (it changes nothing in the app or the DOM).
  *   node app/fold_e2e.js [--only accept-ready,ibb] [--shots <dir>]
  */
@@ -18,6 +19,11 @@ if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 // what must be in view, by selector; the six result keys are counted
 const MUST = [["the call's words", ".call-panel .pitch"], ["the sign", ".call-panel .sign"], ["where", ".call-panel .spot"],
   ["Accept", ".call-panel .btn.accept"], ["the watch status", "#watch-pill"]];
+// per state: the IBB state's suggestion is part of what the coach must see (there is no walk button: the app suggests,
+// the coach signals the walk himself)
+const MUST_IN = { ibb: [["the intentional-walk suggestion", ".call-panel .walk-note"]] };
+// room to spare at the bottom of the first screen: the lowest required item ends at least this far above the fold
+const MARGIN = 24;
 
 let fails = 0, oks = 0;
 const check = (ok, msg) => { if (ok) oks++; else fails++; console.log(`  ${ok ? "ok  " : "FAIL"} ${msg}`); };
@@ -48,11 +54,12 @@ const check = (ok, msg) => { if (ok) oks++; else fails++; console.log(`  ${ok ? 
             }
             for (const k of document.querySelectorAll(".keys .key")) { out.keys++; const r = k.getBoundingClientRect(); out.lowest = Math.max(out.lowest, Math.round(r.bottom)); if (seen(k)) out.keysIn++; else out.below.push(`key "${k.firstChild.textContent}" (${Math.round(r.top)}-${Math.round(r.bottom)})`); }
             return out;
-          }, MUST);
+          }, MUST.concat(MUST_IN[name] || []));
           const tag = `${name} ${theme} ${w}x${hgt}`;
           check(m.scrollY === 0, `${tag}: at the top of the page`);
           check(!m.missing.length, `${tag}: present${m.missing.length ? ": missing " + m.missing.join(", ") : ""}`);
           check(m.keys === 6 && m.keysIn === 6 && !m.below.length, `${tag}: call, sign, Accept, status and ${m.keysIn} of ${m.keys} result keys in view, lowest at ${m.lowest} of ${hgt}${m.below.length ? ": cut off " + m.below.join("; ") : ""}`);
+          check(m.lowest <= hgt - MARGIN, `${tag}: at least ${MARGIN} px to spare under the lowest of them (${hgt - m.lowest} px)`);
           if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}__${theme}__${view}.png`) });
         }
       } catch (e) { check(false, `${name} ${w}x${hgt}: ${String(e.message || e).split("\n")[0]}`); }

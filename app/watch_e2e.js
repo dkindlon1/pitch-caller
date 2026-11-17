@@ -71,7 +71,8 @@ const FAKE_BT = `
     check(JSON.stringify(acts) === JSON.stringify(["He shook it off", "Call my own"]), `Game screen buttons: ${JSON.stringify(acts)}`);
     check(await page.evaluate(() => WATCH === null && !document.getElementById("watch-pill")), "no watch link, no pill");
     await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
-    check(!(await page.evaluate(() => document.body.innerText.includes("Watches"))), "no Watches card in Setup");
+    // selector only (round 4): the Setup row is titled "Watches" wherever the browser has Bluetooth, so the card is found by its element
+    check(!(await page.evaluate(() => document.getElementById("watch-card"))), "no Watches card in Setup");
     // review C1: a roster with two pitches on one sign (common after the v1.1 migration) shows no warning or picker here
     const quiet = await page.evaluate(() => {
       const pd = pitcherDef(); pd.pitches.push(Object.assign({}, pd.pitches.find((d) => d.kind === "FB"), { id: "tmp-fb2", name: "Two-seam test" }));
@@ -90,7 +91,9 @@ const FAKE_BT = `
     const page = await open(true, false);
     check(await page.evaluate(() => WATCH === null && !document.querySelector(".btn.accept")), "no watch link, no Accept");
     await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
-    check(!(await page.evaluate(() => document.body.innerText.includes("Watches"))), "no Watches card until it's opened once with ?watch=1");
+    // (Drew, Nov 17, round 4: the switch is always in Setup; the full Watches card shows only once watch mode is on)
+    check(await page.evaluate(() => { const s = document.querySelector('#watch-switch [role="switch"]'); return !!s && s.getAttribute("aria-checked") === "false" && !document.getElementById("watch-card"); }),
+      "Setup shows the watch switch, off, and no Watches card until watch mode is on");
     await page.close();
   }
 

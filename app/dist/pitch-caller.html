@@ -780,6 +780,7 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 @media (max-width: 700px) { .call > .zone { grid-row: 5; } }
 /* a landscape screen that is not tall: the same layout, packed. Every in-game target stays 48 px or more. */
 @media (min-width: 1061px) and (max-height: 920px) {
+  :root { --gap: 10px; }
   .wrap { padding-top: max(8px, env(safe-area-inset-top, 0px)); }
   .bar { height: 56px; }
   .head { padding: 6px 4px 4px; }
@@ -787,8 +788,8 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
   .strip { padding: 2px; }
   .cell { padding: 7px 18px 8px; gap: 4px; }
   .cell .v { font-size: 42px; } .cell:first-child .v { font-size: 54px; }
-  .strip .sitctl { padding-top: 6px; padding-bottom: 4px; }
-  .call-panel.panel, .side > .panel { padding-top: 14px; padding-bottom: 14px; }
+  .strip .sitctl { padding-top: 4px; padding-bottom: 2px; }
+  .call-panel.panel, .side > .panel { padding-top: 10px; padding-bottom: 14px; }
   .panel-head { margin-bottom: 6px; }
   .hitter { padding-bottom: 10px; }
   .call { padding-top: 12px; }
@@ -801,11 +802,11 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
   .call > .call-acts .wpill { font-size: 14px; line-height: 1.15; padding: 7px 14px; margin-right: 0; white-space: normal; max-width: 250px; text-wrap: balance; }
   .call-main > .why { margin-top: 12px; }
   .call > .zone { margin-top: 12px; }
-  .locpick { padding: 6px 10px; margin-bottom: 6px; }
+  .locpick { padding: 4px 10px; margin-bottom: 6px; }
   .lg-head { margin-bottom: 4px; }
   .lways { gap: 3px; }
-  .key { height: 50px; }
-  .keys { gap: 6px; }
+  .key { height: 48px; }   /* the floor for an in-game control */
+  .keys { gap: 6px; }   /* kept: a gloved miss must not land on the next key */
 }
 /* the sync pill in the bar: offline is quiet (nothing is lost), syncing is blue (work in progress), synced fades out */
 .pill.spill { align-self: center; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; padding: 6px 12px; color: var(--ink); }
@@ -821,6 +822,18 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
   @keyframes spill { 50% { opacity: 0.35; } }
 }
 @media (max-width: 700px) { .pill.spill { padding: 6px 9px; } .pill.spill.synced { display: none; } }
+
+/* Setup's watch switch: a real switch (role=switch), blue when on, 48 px tall */
+.wswitch { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.wswitch .switch { display: inline-flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 16px 0 10px; border-radius: 999px; border: 1px solid var(--stroke-2); background: var(--well-2); font-size: 15px; font-weight: 650; color: var(--ink); width: fit-content; cursor: pointer; transition: border-color var(--t-fast), transform var(--t-press); }
+.wswitch .switch:hover { border-color: var(--ink); }
+.wswitch .switch:active { transform: scale(0.97); }
+.wswitch .switch i { position: relative; flex: none; width: 46px; height: 28px; border-radius: 999px; background: rgb(var(--text-rgb) / 0.18); transition: background-color var(--t-fast); }
+.wswitch .switch i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); transition: transform var(--t-fast); }
+.wswitch .switch[aria-checked="true"] i { background: var(--on); }
+.wswitch .switch[aria-checked="true"] i::after { transform: translateX(18px); background: #fff; }
+.wswitch .note { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .wswitch .switch, .wswitch .switch i, .wswitch .switch i::after { transition: none; } }
 </style>
 
 <div class="stage" aria-hidden="true"><div class="glow" id="glow"></div></div>
@@ -8921,6 +8934,27 @@ function watchCard() {
     S.setup.staff.map((pd) => { const n = signNote(pd); return n ? h("div", {}, h("b", {}, pd.name), n) : null; }),
     soakOn ? watchSoakPanel() : null);
 }
+// Setup's Watches row. Where the browser has Web Bluetooth (Chrome on a computer or Android) the switch is always there;
+// the full card (connect, receipts, signs) shows only once watch mode is on. The switch keeps the setting on this
+// device, the same stored flag ?watch=1 / ?watch=0 set, so every later open (the Game Day hand-off from the website
+// included) comes up the way it was left. It reloads the app once, after saving, so the watch link starts or stops
+// cleanly. Without Web Bluetooth (the iPad) there is no row at all.
+function setWatchOptIn(on) {
+  try { if (on) localStorage.setItem("pitchiq.watch.on", "1"); else localStorage.removeItem("pitchiq.watch.on"); }
+  catch (e) { toast("This browser won't keep the setting."); return; }
+  save(); setTimeout(() => location.reload(), 50);
+}
+function watchesRow(row) {
+  if (typeof PCWatch === "undefined" || !PCWatch.supported()) return null;
+  const on = !!WATCH;
+  const sw = h("div", { id: "watch-switch", class: "wswitch" },
+    h("button", { class: "switch", role: "switch", "aria-checked": String(on), on: { click: () => setWatchOptIn(!on) } },
+      h("i", { "aria-hidden": "true" }), "Use watches on this device"),
+    h("p", { class: "note" }, on ? "On for this device. The game app opens with watches from now on, from Game Day on the website too."
+      : "Off. Turn it on to connect a watch; the game app then opens with watches on this device, from Game Day on the website too."));
+  return row("Watches", "Wristbands for the pitcher and the catcher (Bangle.js 2, prototype). Accept on the Game screen sends the call: the sign, and where in words. Works in Chrome on a computer or an Android device.",
+    sw, on ? watchCard() : null);
+}
 function watchSoakPanel() {
   const st = WATCH.soakStats(), on = WATCH.soaking;
   return h("div", { class: "wsoak" }, h("b", {}, "Soak test"), " A new call every 5 s, counted per watch. ",
@@ -9564,7 +9598,8 @@ function hittersPanel(rows) {
 // ------------------------------------------------------------------ database glue
 // The database is the source of truth for the roster, opponents, games, every pitch and what's been learned.
 // Reads during a game come from an in-memory copy (the engine needs answers instantly); writes go straight through.
-const DB = { D: null, ready: false, failed: null, teams: new Map(), pitchers: new Map(), catchers: new Map(), hitters: new Map(),
+const DB = { D: null, ready: false, failed: null, warm: false,   // warm: start-of-game learning done (see boot); false until then, from the first moment
+  teams: new Map(), pitchers: new Map(), catchers: new Map(), hitters: new Map(),
   checkins: new Map(), models: new Map(), sessions: new Map(), counts: new Map() };
 // games set up on the website (see openFromPortal): a message to show, and today's planned games on this device
 var PORTAL = { msg: null, today: [] };
@@ -9590,7 +9625,7 @@ const pModel = (pid) => DB.models.get("v2:" + pid);
 const hModel = (hid) => DB.models.get("h2:" + hid);
 
 async function boot() {
-  if (typeof PCDB === "undefined") return;
+  if (typeof PCDB === "undefined") { DB.warm = true; return; }   // no database: no start-of-game learning to wait for
   try {
     const D = await PCDB.open({ onVersionChange: () => { DB.ready = false; DB.failed = new Error("A newer version of PitchIQ opened in another tab. Reload this page."); toast(DB.failed.message); render(); } });
     DB.D = D;
@@ -9618,8 +9653,10 @@ async function boot() {
     await loadPlanned().catch(() => {});
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen.
-    // DB.warm says when that start-of-game learning is done (v1.2: game_mix_e2e waits for it before the first pitch)
-    DB.warm = false;
+    // DB.warm says when that start-of-game learning is done (v1.2: game_mix_e2e waits for it before the first pitch). It is
+    // false from the start (DB above), not only from here: the awaits before this line left a few milliseconds where it
+    // was still undefined, a test waiting for "not false" could start the game then, and the learning below landed in the
+    // middle of it (app v2 round 4: the rare game_mix_e2e runs that came out differently, on old builds too).
     setTimeout(async () => { try {
       // D9: learning that a closed page never finished (one job per game; "toLearn" alone is the older single slot)
       for (const job of (await D.all("meta")).filter((m) => m.id === "toLearn" || /^toLearn:/.test(m.id))) await learnAfterGame(job);
@@ -9631,6 +9668,7 @@ async function boot() {
       if (S.view === "roster") render();
     } finally { DB.warm = true; } }, 50);
   } catch (e) {
+    DB.warm = true;   // nothing to learn without the database
     DB.failed = e; console.warn("Database unavailable, running without it:", e && e.message);
     toast(e && e.code === "blocked" ? e.message : "The database couldn't open, so pitches are kept on this page only. Reload to try again.");
     render();
@@ -11230,7 +11268,7 @@ function setupView() {
       h("button", { class: "choice", "aria-pressed": String(!!st.logGlove), on: { click: () => { st.logGlove = !st.logGlove; changed(true); } } },
         h("b", {}, "Also log where the catcher set up"), h("span", {}, "One more tap before the pitch, when his glove isn't on the called spot. It's what each pitcher's miss lean is measured from."))),
     DB.ready ? row("Game day", "On Wi-Fi before the game: syncs, checks the app opens with no signal and today's staff and opponent are on this iPad. Then call the game anywhere; it syncs once there's a signal.", prepPanel()) : null,
-    WATCH ? row("Watches", "Wristbands for the pitcher and the catcher (Bangle.js 2, prototype). Accept on the Game screen sends the call: the sign, and where in words. Works in Chrome on a computer or an Android device.", watchCard()) : null,
+    watchesRow(row),
     DB.ready ? row("Pitch counts", "Your league's pitch-count rule: each pitcher's rest, the day he can pitch again, and a warning on the Game screen as he nears the limit.", pitchRulePanel()) : null,
     DB.ready ? row("Today's staff", "Who's available today. Pitchers, their arsenals, check-ins and what's been learned live on the Roster screen.", staffPick()) :
     row("Staff", "Bullpen feel is how much he trusts each pitch warming up. It moves with every result once the game starts.", staff,

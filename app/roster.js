@@ -1,7 +1,8 @@
 // ------------------------------------------------------------------ database glue
 // The database is the source of truth for the roster, opponents, games, every pitch and what's been learned.
 // Reads during a game come from an in-memory copy (the engine needs answers instantly); writes go straight through.
-const DB = { D: null, ready: false, failed: null, teams: new Map(), pitchers: new Map(), catchers: new Map(), hitters: new Map(),
+const DB = { D: null, ready: false, failed: null, warm: false,   // warm: start-of-game learning done (see boot); false until then, from the first moment
+  teams: new Map(), pitchers: new Map(), catchers: new Map(), hitters: new Map(),
   checkins: new Map(), models: new Map(), sessions: new Map(), counts: new Map() };
 // games set up on the website (see openFromPortal): a message to show, and today's planned games on this device
 var PORTAL = { msg: null, today: [] };
@@ -27,7 +28,7 @@ const pModel = (pid) => DB.models.get("v2:" + pid);
 const hModel = (hid) => DB.models.get("h2:" + hid);
 
 async function boot() {
-  if (typeof PCDB === "undefined") return;
+  if (typeof PCDB === "undefined") { DB.warm = true; return; }   // no database: no start-of-game learning to wait for
   try {
     const D = await PCDB.open({ onVersionChange: () => { DB.ready = false; DB.failed = new Error("A newer version of PitchIQ opened in another tab. Reload this page."); toast(DB.failed.message); render(); } });
     DB.D = D;
@@ -55,8 +56,10 @@ async function boot() {
     await loadPlanned().catch(() => {});
     save(); render();
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen.
-    // DB.warm says when that start-of-game learning is done (v1.2: game_mix_e2e waits for it before the first pitch)
-    DB.warm = false;
+    // DB.warm says when that start-of-game learning is done (v1.2: game_mix_e2e waits for it before the first pitch). It is
+    // false from the start (DB above), not only from here: the awaits before this line left a few milliseconds where it
+    // was still undefined, a test waiting for "not false" could start the game then, and the learning below landed in the
+    // middle of it (app v2 round 4: the rare game_mix_e2e runs that came out differently, on old builds too).
     setTimeout(async () => { try {
       // D9: learning that a closed page never finished (one job per game; "toLearn" alone is the older single slot)
       for (const job of (await D.all("meta")).filter((m) => m.id === "toLearn" || /^toLearn:/.test(m.id))) await learnAfterGame(job);
@@ -68,6 +71,7 @@ async function boot() {
       if (S.view === "roster") render();
     } finally { DB.warm = true; } }, 50);
   } catch (e) {
+    DB.warm = true;   // nothing to learn without the database
     DB.failed = e; console.warn("Database unavailable, running without it:", e && e.message);
     toast(e && e.code === "blocked" ? e.message : "The database couldn't open, so pitches are kept on this page only. Reload to try again.");
     render();
