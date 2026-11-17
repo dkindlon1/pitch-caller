@@ -85,9 +85,9 @@ export function AtBat({ pitches }: { pitches: AtBatPitch[] }) {
               const isOpen = open === k;
               return (
                 <li key={p.n} className={`pq-ab-item${isOpen ? " is-open" : ""}`} onMouseEnter={() => setOpen(k)} onMouseLeave={() => setOpen((o) => (o === k ? null : o))}>
-                  <button type="button" className="pq-ab-face" aria-expanded={isOpen} aria-controls={`ab-mix-${k}`} onClick={() => setOpen(isOpen ? null : k)}
-                    aria-label={`${p.pitch}${p.words.length ? ` ${p.words.join(" ").toLowerCase()}` : ""}: pitch ${p.n}, count ${p.count}. ${p.result}. Show the mix.`}>
+                  <button type="button" className="pq-ab-face" aria-expanded={isOpen} aria-controls={`ab-mix-${k}`} onClick={() => setOpen(isOpen ? null : k)}>
                     <Watch pitch={p.pitch} words={p.words} />
+                    <span className="pq-sr">{`${p.pitch}${p.words.length ? ` ${p.words.join(" ").toLowerCase()}` : ""}: pitch ${p.n}, count ${p.count}. ${p.result}. Show the mix.`}</span>
                   </button>
                   <div className="pq-ab-meta">
                     <span className="n">Pitch {p.n} <i>{p.count}</i></span>

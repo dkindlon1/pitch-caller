@@ -83,3 +83,9 @@ The seven reels were watched in the Windows browser (it was logged into Instagra
 - Color: nothing added. Ground and chalk carry the page, blue is the mood, green is only the call and the two buttons you press.
 
 Not seen: Awwwards and Codrops were not opened this round. The reels were sampled (a few frames each), not watched with sound.
+
+## Final check (Nov 16, evening)
+Seen in Chrome on the Windows browser. Only one new site was captured this round; the reels were not watched again and the "3 to 5 live sites per section" target was not met.
+| Site | Screenshot | One line |
+|---|---|---|
+| raycast.com | raycast-hero.jpg | One centred headline over one shaped light on near-black, a single small button: the light is the picture, nothing competes with it. |

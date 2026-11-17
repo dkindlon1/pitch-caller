@@ -56,6 +56,8 @@
   .pq-ab .pq-ab-row { margin-top: clamp(4px, 1.4vh, 18px); --fw: min(30vh, 17vw, 260px); }
   .pq-ab .pq-ab-meta .why { display: none; }
   .pq-ab .pq-ab-fine { margin-top: clamp(14px, 3vh, 30px); }
+  /* the mix opens over the strap and the result, not under them: below the row it ran off the pinned frame */
+  .pq-ab .pq-ab-mix { top: calc(var(--fw) * 0.9); }
 }
 @media (max-width: 860px) {
   .pq-ab-row { grid-template-columns: minmax(0, 1fr); gap: 26px; padding-left: 26px; --fw: 124px; }

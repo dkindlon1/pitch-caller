@@ -60,3 +60,18 @@ Trace findings, changes and before/after numbers: `docs/PERF_site_v2.md`. Tool: 
 Readings taken without asking:
 - "The assembly autoplays" was read as the film's first 22 frames (parts drifting, the case starting in) over 2.5 s, not the whole assembly: all 150 frames in 2.5 s would not be calm, and stops 2 to 6 need the rest.
 - The ledger and chips lost their blur-in (cause 2 in the perf doc).
+
+## Finish and final check (Nov 16, evening)
+Report: `docs/FINAL_CHECK_site_v2.md`. Tools: `web/tests/final_shots.js` (lossless captures plus geometry), `web/tests/final_sheets.py` (contact sheets, 2x close-ups, overlap and cut-off flags), `web/tests/final_audit.js` (axe, head tags, links, anchors, zoom, other routes). Raw captures stay on this PC under `docs/site-v2-shots/final-check/` (gitignored PNGs, about 1 GB); sheets and picks are committed.
+What changed, in short:
+- **Calm version** now also covers windows the pinned scenes cannot fit: wide but under 600 px tall or under 1024 px wide (phone on its side, small window, 200% zoom). One query, in three places that must stay in step: `CALM` in `_components/motion.ts`, `site.css`, `sections.css`. `reducedMotion()` is now `calm()`; `useCalm()` re-runs motion setup when it flips.
+- **Wide but short** (1280x800, 1366x768 laptops, iPad on its side): two tightening steps in `site.css` so the playground's panels are never cut off.
+- **Centring bug fixed**: film headlines and the ledger are centred by GSAP (`yPercent`), not by the stylesheet's `translateY(-50%)`, which GSAP sometimes read back as pixels and then lost.
+- Stops 2 to 4 share one size (`--fs-stop`), two lines each, clear of the watch.
+- **Rim**: `scripts/film-masks.py` now writes distance fields (`spread` in masks.json); the shader draws a thin rim and runs at 80% of CSS size (was 40%). Re-run the script after any re-render.
+- Share image and apple icon come from `web/scripts/share-image.cjs` (run with `NODE_PATH=../node_modules`).
+- 404 page (`app/not-found.tsx`) and the legal pages (`app/components/DocPage.tsx`) use the site's look; fonts are shared from `app/(marketing)/fonts.ts`.
+- The root layout no longer preloads the portal's condensed face; home-page links to /login, /terms, /privacy do not prefetch.
+Readings taken without asking:
+- Engine reason lines keep straight apostrophes (they are the engine's own strings and tests pin them).
+- The big count numeral keeps its en dash; counts in running text use a hyphen.
