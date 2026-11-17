@@ -776,9 +776,39 @@ function topBar() {
       h("button", { "aria-current": S.view === "bullpen" ? "page" : null, on: { click: () => go("bullpen") } }, "Bullpen"),
       h("button", { "aria-current": S.view === "setup" ? "page" : null, on: { click: () => go("setup") } }, "Setup")),
     h("div", { class: "end" },
+      syncPill(),
       h("span", { class: "stamp" }, `${LEVELS[S.setup.level]}, logging ${TIERS[S.setup.inputs - 1].t.toLowerCase()}`),
       h("button", { class: "btn pill", "aria-label": day ? "Switch to the night screen" : "Switch to the brighter day screen", title: "Brighter screen for day games", on: { click: () => { S.theme = day ? "night" : "day"; save(); render(); } } }, day ? "Night" : "Day"),
       S.view === "live" ? h("button", { class: "btn pill", on: { click: undoLast }, disabled: !undo.length, title: "Undo (U)" }, "Undo") : null));
+}
+
+// The sync pill (a device signed in to a team only): "Offline" while there is no signal (everything is kept on this
+// device), "Syncing" while a sync runs, "Synced" for a few seconds after one finishes. It reads the sync's own state and
+// changes nothing; a light check each second and the browser's online/offline events keep it current in place.
+let syncShown = "", syncDoneAt = 0, syncWasBusy = false;
+function syncState() {
+  if (typeof SYNC === "undefined" || !SYNC.sync) return "";
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return "offline";
+  if (SYNC.busy) return "syncing";
+  return Date.now() - syncDoneAt < 4000 ? "synced" : "";
+}
+function syncPill() {
+  const st = syncState(); syncShown = st;
+  if (!st) return null;
+  const txt = { offline: "Offline", syncing: "Syncing", synced: "Synced" }[st];
+  const tip = { offline: "No signal. Everything is saved on this device and goes up when the signal is back.", syncing: "Sending this device's games and changes to your team.", synced: "Everything on this device is up to date with your team." }[st];
+  return h("span", { id: "sync-pill", class: `pill spill ${st}`, role: "status", title: tip }, h("i", { "aria-hidden": "true" }), txt, h("span", { class: "sr" }, `. ${tip}`));
+}
+function syncRefresh() {
+  if (typeof SYNC !== "undefined") { if (syncWasBusy && !SYNC.busy && !SYNC.error) syncDoneAt = Date.now(); syncWasBusy = !!SYNC.busy; }
+  if (syncState() === syncShown) return;
+  const end = document.querySelector(".bar .end"); if (!end) return;
+  const old = document.getElementById("sync-pill"), np = syncPill();
+  if (old && np) old.replaceWith(np); else if (old) old.remove(); else if (np) end.prepend(np);
+}
+if (typeof window !== "undefined" && window.addEventListener) {
+  window.addEventListener("online", syncRefresh); window.addEventListener("offline", syncRefresh);
+  setInterval(syncRefresh, 1000);
 }
 
 // ------------------------------------------------------------------ game screen
@@ -875,6 +905,11 @@ function callPanel() {
     : [c.v08 && c.why ? h("b", { class: "whyline" }, c.why + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
        c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "down-middle" ? " Knee-high, over the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
+  const acts = h("div", { class: "call-acts" },
+    watchAcceptButton(), watchPill(),
+    h("button", { class: "btn", on: { click: shakeOff }, title: "Shake-off (K)" }, "He shook it off"),
+    h("button", { class: "btn", "aria-expanded": String(pickMode), on: { click: () => { pickMode = !pickMode; pickSel = { pitch: null, quad: null }; render(); } } }, pickMode ? "Cancel my call" : "Call my own"),
+    c.coach ? h("button", { class: "btn text", on: { click: recall } }, "Go back to the engine's call") : null);
   const call = h("div", { class: "call" },
     h("div", { class: "call-main" },
       h("div", { class: "sign", "aria-label": `Sign ${signFor(kind, c.pitch)}` }, signFor(kind, c.pitch)),
@@ -883,12 +918,8 @@ function callPanel() {
         h("p", { class: "spot" }, SPOT[c.quad])),
       h("p", { class: "why" }, why),
       readout(c.pitch)),
-    h("div", { class: `zone${fresh ? " fresh" : ""}`, html: zoneSVG(c) }));
-  const acts = h("div", { class: "call-acts" },
-    watchAcceptButton(), watchPill(),
-    h("button", { class: "btn", on: { click: shakeOff }, title: "Shake-off (K)" }, "He shook it off"),
-    h("button", { class: "btn", "aria-expanded": String(pickMode), on: { click: () => { pickMode = !pickMode; pickSel = { pitch: null, quad: null }; render(); } } }, pickMode ? "Cancel my call" : "Call my own"),
-    c.coach ? h("button", { class: "btn text", on: { click: recall } }, "Go back to the engine's call") : null);
+    h("div", { class: `zone${fresh ? " fresh" : ""}`, html: zoneSVG(c) }),
+    acts);   // Accept sits right under the call it sends, so it is on the first screen of an iPad in landscape
   const options = h("details", { class: "options", open: window.matchMedia("(max-width: 700px)").matches ? null : true },
     h("summary", { class: "t" }, c.coach ? "What the engine would mix here" : "The mix in this spot"),
     c.dist.map((d) => {
@@ -898,7 +929,7 @@ function callPanel() {
         h("span", { class: "track" }, h("i", { style: { width: `${Math.max(4, d.prob * 100)}%` } })),
         h("span", { class: "p" }, pct(d.prob)));
     }));
-  return h("section", { class: `panel glass span-8 call-panel${fresh ? " landed" : ""}`, "aria-label": "The call" }, hitter, call, acts, pickMode ? pickBox() : null, options);
+  return h("section", { class: `panel glass span-8 call-panel${fresh ? " landed" : ""}`, "aria-label": "The call" }, hitter, call, pickMode ? pickBox() : null, options);
 }
 
 function readout(name) {

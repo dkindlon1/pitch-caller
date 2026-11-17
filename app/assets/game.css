@@ -640,3 +640,57 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 .cell .v:has(.rule) > .rule { grid-column: 2; grid-row: 2; align-self: start; white-space: normal; font-size: 13px; line-height: 1.2; min-height: 2.4em; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .cell .v:has(.rule) { grid-auto-flow: column; }
 .cell .v:has(.rule)::before { content: none; }
+
+/* ---- the first screen of an iPad in landscape (1180 x 820, and about 1180 x 740 in Safari under its bars): the call,
+   its sign, Accept and the watch status, and all six result keys are on screen without scrolling, in every call state.
+   app/fold_e2e.js measures it. Accept sits in the call itself, right under the words it sends; the reasons, the read-out
+   and the target follow. */
+.call { grid-template-rows: auto auto auto 1fr; }
+.call > .call-acts { grid-column: 1 / -1; grid-row: 2; padding-top: 0; margin-top: 16px; }
+.call > .call-main > .why { grid-row: 3; }
+.call > .call-main > .readout { grid-row: 4; }
+.call > .zone { grid-row: 3 / span 2; }
+@media (max-width: 700px) { .call > .zone { grid-row: 5; } }
+/* a landscape screen that is not tall: the same layout, packed. Every in-game target stays 48 px or more. */
+@media (min-width: 1061px) and (max-height: 920px) {
+  .wrap { padding-top: max(8px, env(safe-area-inset-top, 0px)); }
+  .bar { height: 56px; }
+  .head { padding: 6px 4px 4px; }
+  .head h1 { font-size: 24px; }
+  .strip { padding: 2px; }
+  .cell { padding: 7px 18px 8px; gap: 4px; }
+  .cell .v { font-size: 42px; } .cell:first-child .v { font-size: 54px; }
+  .strip .sitctl { padding-top: 6px; padding-bottom: 4px; }
+  .call-panel.panel, .side > .panel { padding-top: 14px; padding-bottom: 14px; }
+  .panel-head { margin-bottom: 6px; }
+  .hitter { padding-bottom: 10px; }
+  .call { padding-top: 12px; }
+  .pitch { font-size: clamp(48px, 21cqw, 116px); }
+  .spot { margin-top: 4px; font-size: clamp(24px, 2.6vw, 32px); }
+  .call > .call-acts { margin-top: 12px; }
+  .call > .call-acts .btn { min-height: 50px; }
+  .call > .call-acts { gap: 8px; flex-wrap: nowrap; }
+  .call > .call-acts .btn:not(.accept) { padding: 0 14px; }
+  .call > .call-acts .wpill { font-size: 14px; line-height: 1.15; padding: 7px 14px; margin-right: 0; white-space: normal; max-width: 250px; text-wrap: balance; }
+  .call-main > .why { margin-top: 12px; }
+  .call > .zone { margin-top: 12px; }
+  .locpick { padding: 6px 10px; margin-bottom: 6px; }
+  .lg-head { margin-bottom: 4px; }
+  .lways { gap: 3px; }
+  .key { height: 50px; }
+  .keys { gap: 6px; }
+}
+/* the sync pill in the bar: offline is quiet (nothing is lost), syncing is blue (work in progress), synced fades out */
+.pill.spill { align-self: center; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; padding: 6px 12px; color: var(--ink); }
+.pill.spill i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.pill.spill.offline { background: transparent; border-color: var(--stroke-2); }
+.pill.spill.offline i { border: 2px solid var(--muted); width: 9px; height: 9px; }
+.pill.spill.syncing { background: rgb(var(--weigh-rgb) / 0.22); border-color: transparent; }
+.pill.spill.syncing i { background: var(--weigh-hi); box-shadow: 0 0 8px rgb(var(--weigh-rgb) / 0.9); }
+.pill.spill.synced { color: var(--muted); }
+.pill.spill.synced i { background: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .pill.spill.syncing i { animation: spill 1.2s ease-in-out infinite; }
+  @keyframes spill { 50% { opacity: 0.35; } }
+}
+@media (max-width: 700px) { .pill.spill { padding: 6px 9px; } .pill.spill.synced { display: none; } }

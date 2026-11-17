@@ -1,4 +1,59 @@
-# PitchIQ app v2 (Floodlight): build report (Nov 17, 2026, after the second session)
+# PitchIQ app v2 (Floodlight): build report
+
+## Round 3 (Nov 17, evening): Accept above the fold, and the approved items
+
+**Blocker: fixed and checked.** On an iPad in landscape, Accept ended at 830 px (off the bottom at 820, fully below the fold in Safari's roughly 740). Accept and the rest of the call's action row now sit inside the call card, right under the call's words. The reasons, read-out and target come after. Landscape screens up to 920 px tall get a packed layout. Every in-game target stays at 48 px or more: the location grid is unchanged and the result keys are 50 px.
+- **New check, `app/fold_e2e.js` (84 checks, all pass):**
+  - States: accept-ready, accepted (both watches and one), not-on-watch, shake-off, get-it-over and IBB, each with two watches connected so Accept is present.
+  - Sizes: both themes, at 1180x820 and 1180x740.
+  - Pass rule: with the page at the top and never scrolled, the call's words, sign, where, Accept, the watch status and all six result keys must be inside the viewport.
+  - Tightest case: IBB at 740, because runner controls add a row; its lowest key ends at 732 px.
+  - It is in `scripts/test-app.sh`.
+- **`app/shots_v2.js`:** no longer scrolls `.call-acts` into view on an iPad or a laptop (it still does on a phone, which is not a target). It has a new 1180x740 view (`ipad-l-safari`) and can be required as a module.
+- **Long watch status:** "Not on Bangle.js c3d4: give the sign" wraps inside its pill, so the row stays on one line and nothing is cut.
+
+**Approved items**
+- **Offline/syncing pill in the game bar.**
+  - It shows only on a device signed in to a team: "Offline" (quiet outline), "Syncing" (blue), then "Synced" for 4 s.
+  - It reads the sync's own state and changes nothing in the sync.
+  - Test: `app/sync_pill_e2e.js`, 16 checks: the call never moves, and the pill is a screen-reader status. The real offline flow was captured too.
+  - Limit: after the signal returns in the middle of a game it does not say "Syncing", because the app never syncs during a game (existing behavior; the game goes up when it ends).
+- **"Each count and pitch"** is folded behind a disclosure, with a line saying what's inside (row count and which rates). It opens and closes by click and by Enter, on laptop and phone.
+- **Watch mode remembered.**
+  - Checking showed the device already keeps watch mode once the app has been opened with `?watch=1`, so a Game Day hand-off after that already opens with watches. My earlier proposal said otherwise; it was wrong.
+  - New test: `app/watch_optin_e2e.js` (9 checks) proves it, using a hand-off-style link with no `?watch`, and confirms nothing changes without Web Bluetooth.
+  - I also built a switch in Setup ("Use watches on this device"), but it breaks an existing `watch_e2e` assertion ("no Watches card until it's opened once with ?watch=1"), so I took it back out. It is proposal 6 below.
+
+**Checks on the final code** (each run alone; logs in `$TEMP/appv2-checks/r9`)
+
+| Check | Result |
+|---|---|
+| `tsc`, `npm test`, `next build` | clean; 60 of 60; compiled |
+| site e2e and the eight portal e2es | all pass, 252 portal checks, tests unchanged |
+| `rls_matrix_test` | 347 passed |
+| `scripts/test-app.sh` | TESTAPP_R3 |
+| `watch_e2e`, `watch_test`, `fold_e2e`, `watch_optin_e2e`, `sync_pill_e2e` | all pass |
+| `game_mix_e2e` | failed once in the full run (4 games over 70%, limit 3), then passed three runs in a row. It is seeded but not fully repeatable, and it sits exactly at its limit. I don't believe this round caused it, but I can't prove that |
+| axe, 240 game captures and 242 portal captures | 0 serious or critical |
+| Lighthouse mobile x3 | launcher 91, pitcher 90, pitcher stats 88, Game Day 90, wizard 90 (medians); accessibility 100; layout shift 0 |
+| WebKit and Firefox | pass |
+| Game trace | call painted median 44 to 47 ms, max 102 ms; longest task 71 to 74 ms (the engine's at-bat solve, not in scope this round) |
+
+**Selectors changed in tests:** none. No existing test file was edited. The three new tests were added to `scripts/test-app.sh`.
+
+**Not verified this round:** a real iPad in Safari (the 740 px height is the figure you gave; I didn't measure Safari's bars myself); real watches; the pill's "Syncing" state through a real sync. Its states are proven with a stand-in that marks the device as signed in and flips the busy flag; the real offline state was captured against local Supabase.
+
+**Look at these first (round 3)**
+1. `docs/app-v2-shots/final/picks/r3-accept-ready__night__1180x740.png` and `r3-accept-ready__day__1180x820.png`
+2. `docs/app-v2-shots/final/picks/r3-ibb__day__1180x740.png` (the tightest state)
+3. `docs/app-v2-shots/final/picks/r3-not-on-watch__2x.png` (the action row at 2x, with the laptop view under it)
+4. `docs/app-v2-shots/final/picks/r3-pill-offline.png`, `r3-fold-closed__laptop.png`, `r3-fold-open__phone.png`
+5. `docs/app-v2-shots/final/game/sheet__night__ipad-l__1.png` and `sheet__day__ipad-l__1.png` (every state, re-shot)
+6. `docs/app-v2-shots/final/game-flow.mp4` (re-recorded on this build)
+
+---
+
+# Earlier rounds
 
 Branch `app/v2-floodlight`, from `site/v2-alive` at 9273064 (it had not merged into `main`). Nothing was pushed to `main`, merged, tagged, deployed or migrated; every test ran against local Supabase only. Working notes, and every reading I took without asking, are in `docs/APP_V2_PROGRESS.md`.
 
@@ -79,10 +134,11 @@ Run alone, on the final build, after the last CSS change:
 
 ## Proposals for Drew (not built)
 1. **Move the at-bat solve off the main thread.** It is the only thing over the 50 ms budget. It touches the engine's call path.
-2. **Show that the device is offline, and that it is syncing afterwards.** The captures show no indicator at all on the Game screen while offline or after reconnecting: the three states look identical. A quiet pill in the bar (alert colour offline, blue while syncing) would do it. It adds something to the screen, so it is yours to decide.
-3. **Fold "Each count and pitch"** on the stats page behind a disclosure, or turn it into a count grid.
+2. ~~Show that the device is offline, and that it is syncing afterwards~~: built in round 3. The captures show no indicator at all on the Game screen while offline or after reconnecting: the three states look identical. A quiet pill in the bar (alert colour offline, blue while syncing) would do it. It adds something to the screen, so it is yours to decide.
+3. ~~Fold "Each count and pitch"~~ (built in round 3): on the stats page behind a disclosure, or turn it into a count grid.
 4. **A phone layout for the Game screen** with the call first and the count on one line.
-5. **Hand-off with watches:** the Game Day hand-off URL cannot carry `watch=1`, so a coach using watches opens the game app once with it by hand.
+5. ~~Hand-off with watches~~: withdrawn. The device already remembers watch mode once opened with `?watch=1` (see round 3).
+6. **A watch switch in Setup** ("Use watches on this device", shown only where Web Bluetooth exists, kept on the device), so nobody has to type `?watch=1`. It was built and works, but it contradicts the existing `watch_e2e` assertion "no Watches card until it's opened once with ?watch=1". It needs your OK to change that assertion before it goes back in.
 
 ## Not verified
 - **A real iPad, in sun, with gloves; real Safari; the installed iPad app; real watches.** Everything ran in headless Chromium, plus Playwright WebKit and Firefox on Windows.

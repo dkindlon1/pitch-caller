@@ -48,3 +48,6 @@ echo "smoke: passed"
 (cd app && ../$run v123_fixes_e2e node v123_fixes_e2e.js)   # v1.2.3: umpire after one strike, radar box, bullpen faced, bases at the third out, coach call after a shake-off, version line
 (cd app && ../$run game_mix_e2e node game_mix_e2e.js)    # v1.1: whole games through the app keep a mix (FINDING_v1.0_game_mix_collapse)   # v1.0 Step 5: look from logged spot (#24), one owner of hitter memory (#7), seed centering (#20)
 (cd app && ../$run watch_e2e node watch_e2e.js)   # watch prototype: Accept, clears, shared signs, two watches; nothing changes without Web Bluetooth
+(cd app && ../$run fold_e2e node fold_e2e.js)   # app v2: on an iPad in landscape (1180x820 and Safari's 1180x740) the call, Accept and all result keys fit without scrolling
+(cd app && ../$run watch_optin_e2e node watch_optin_e2e.js)   # app v2: watch mode, once opted in with ?watch=1, is kept on the device, so the Game Day hand-off opens with watches
+(cd app && ../$run sync_pill_e2e node sync_pill_e2e.js)   # app v2: the offline / syncing pill in the game bar

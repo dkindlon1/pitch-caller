@@ -86,11 +86,14 @@ export async function StatsPanel({ a, sp }: { a: UploadAccess; sp: SP }) {
         </table></div>
         <p className="shell-note small">Under 10 pitches in a count, the table shows how many, not a share.</p>
 
-        <h2 className="shell-h2">Each count and pitch</h2>
-        <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Each count and pitch">
-          <thead><tr><th>Count</th><th>Pitch</th><th className="num">n</th><th className="num">Strike</th><th className="num">Whiff</th><th className="num">K</th><th className="num">Hard contact</th></tr></thead>
-          <tbody>{cp.map((x) => <tr key={x.count + x.pitch}><td className="mono">{x.count}</td><td>{x.pitch}</td><Cells l={x.line} /></tr>)}</tbody>
-        </table></div>
+        {/* the full breakdown, every pitch in every count: folded, since the two tables above answer the usual questions */}
+        <details className="pq-fold">
+          <summary><h2 className="shell-h2">Each count and pitch</h2><span className="pq-fold-meta">{cp.length} row{cp.length === 1 ? "" : "s"}: strike, whiff, strikeout and hard-contact rates for every pitch in every count</span></summary>
+          <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Each count and pitch">
+            <thead><tr><th>Count</th><th>Pitch</th><th className="num">n</th><th className="num">Strike</th><th className="num">Whiff</th><th className="num">K</th><th className="num">Hard contact</th></tr></thead>
+            <tbody>{cp.map((x) => <tr key={x.count + x.pitch}><td className="mono">{x.count}</td><td>{x.pitch}</td><Cells l={x.line} /></tr>)}</tbody>
+          </table></div>
+        </details>
 
         <h2 className="shell-h2">By hitter side</h2>
         <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="By hitter side">

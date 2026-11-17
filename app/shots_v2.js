@@ -24,6 +24,7 @@ const PCW = require("./watch.js");
 const VIEWS = {
   laptop: { viewport: { width: 1440, height: 900 } },
   "ipad-l": { viewport: { width: 1180, height: 820 }, hasTouch: true },
+  "ipad-l-safari": { viewport: { width: 1180, height: 740 }, hasTouch: true },   // Safari's own bars leave about 740 px
   "ipad-p": { viewport: { width: 820, height: 1180 }, hasTouch: true },
   phone: { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true },
 };
@@ -37,7 +38,8 @@ const ALIAS = { "pitching-change": ["pitching-change-open", "pitching-change-don
 const args = process.argv.slice(2);
 const opt = (n) => { const i = args.indexOf("--" + n); return i >= 0 ? args[i + 1] : undefined; };
 const OUT = opt("out");
-if (!OUT) { console.error("usage: node app/shots_v2.js --out <dir> [--only a,b] [--theme night|day|both] [--view a,b] [--scale 1|2] [--reduced]"); process.exit(2); }
+const MAIN = require.main === module;
+if (MAIN && !OUT) { console.error("usage: node app/shots_v2.js --out <dir> [--only a,b] [--theme night|day|both] [--view a,b] [--scale 1|2] [--reduced]"); process.exit(2); }
 const only = opt("only") ? opt("only").split(",").flatMap((s) => ALIAS[s.trim()] || [s.trim()]) : STATES;
 const themeArg = opt("theme") || "both";
 const THEMES = themeArg === "both" ? ["night", "day"] : [themeArg];
@@ -47,7 +49,7 @@ const REDUCED = args.includes("--reduced");
 for (const s of only) if (!STATES.includes(s)) { console.error("unknown state: " + s + " (known: " + STATES.join(", ") + ")"); process.exit(2); }
 for (const v of viewNames) if (!VIEWS[v]) { console.error("unknown view: " + v); process.exit(2); }
 if (!THEMES.every((t) => t === "night" || t === "day")) { console.error("bad --theme"); process.exit(2); }
-fs.mkdirSync(OUT, { recursive: true });
+if (MAIN) fs.mkdirSync(OUT, { recursive: true });
 
 // ---------------------------------------------------------------- server and stand-in Bluetooth (as watch_e2e.js)
 const server = http.createServer((req, res) => {
@@ -127,12 +129,17 @@ async function connectWatches(page, n) {
   const got = await page.evaluate(() => (window.__watches || []).filter((w) => w.connected).length);
   if (got !== n) throw new Error(`expected ${n} fake watches connected, got ${got}`);
 }
-const settle = (page) => wait(page, 700);   // Enter/Accept only act on a call that has been on screen 0.6 s
+const settle = (page) => wait(page, 700);
+// the call's buttons are brought into view on a phone only; on an iPad or a laptop every shot is taken at the top of the page
+const phoneOnlyScroll = async (page) => {
+  if (await page.evaluate(() => innerWidth < 700)) await page.locator(".call-acts").evaluate((e) => e.scrollIntoView({ block: "center" }));
+  else await page.evaluate(() => scrollTo(0, 0));
+};   // Enter/Accept only act on a call that has been on screen 0.6 s
 const pill = (page) => page.evaluate(() => (document.getElementById("watch-pill") || {}).textContent || "");
 async function acceptAndWait(page, ms) {
   await settle(page);
   await page.getByRole("button", { name: "Accept", exact: true }).click(); await wait(page, ms);
-  await page.locator(".call-acts").evaluate((e) => e.scrollIntoView({ block: "center" }));   // button and pill both in view on a phone
+  await phoneOnlyScroll(page);
 }
 async function midAtBat(page) {   // 1-1 after two logged pitches
   await logKey(page, "b"); await logKey(page, "c");
@@ -164,7 +171,7 @@ S["call-options"] = { run: async (page) => { await prepRoster(page); await toGam
   if (!(await d.evaluate((e) => e.open))) throw new Error("the mix list would not open");
   await d.evaluate((e) => e.scrollIntoView({ block: "nearest" })); } };
 S["accept-ready"] = { watch: "fake", run: async (page) => { await prepRoster(page); await connectWatches(page, 2); await toGame(page); await midAtBat(page); await settle(page);
-  await page.locator(".call-acts").evaluate((e) => e.scrollIntoView({ block: "center" }));
+  await phoneOnlyScroll(page);
   const r = await page.evaluate(() => ({ btn: (document.querySelector(".btn.accept") || {}).textContent, pill: (document.getElementById("watch-pill") || {}).textContent }));
   if (r.btn !== "Accept" || !/Both watches ready/.test(r.pill)) throw new Error("not in the accept-ready state: " + JSON.stringify(r)); } };
 S["accepted-both"] = { watch: "fake", run: async (page) => { await prepRoster(page); await connectWatches(page, 2); await toGame(page); await midAtBat(page);
@@ -276,7 +283,8 @@ function axeReport() {
   for (const e of by.values()) console.log(`  ${e.impact} ${e.id} x${e.labels.length} [${e.labels.slice(0, 3).join(", ")}] ${e.target} :: ${e.why} :: ${e.html}`);
   return axeHits.length;
 }
-(async () => {
+module.exports = { S, VIEWS, openPage, server, wait, STATES, connectWatches, FAKE_BT, NO_BT };
+if (MAIN) (async () => {
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
   const browser = await chromium.launch();
   let written = 0; const failed = new Map(); const pageErrs = new Set();
