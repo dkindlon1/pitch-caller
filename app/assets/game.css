@@ -428,6 +428,8 @@ input[type="range"] { height: 28px; padding: 0; border: 0; background: none; acc
 .pen-mix { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
 .mini { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
 .mini .chip { width: 22px; height: 22px; font-size: 13px; border-radius: 7px; }
+.pen-mix .mini .word { font-weight: 500; color: var(--muted); }   /* the call screen's confidence words; nothing when unremarkable */
+.pen-mix .mini.shaky .word { color: var(--alert); font-weight: 600; }
 .pen-act { justify-self: end; align-self: center; }
 .pen-act.muted { font-size: 13px; }
 .pen + .note, .heat + .note, .counts + .note { margin-top: 12px; }

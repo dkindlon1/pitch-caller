@@ -1353,7 +1353,9 @@ function bullpenPanel() {
         h("span", { class: `pill ${state[0]}` }, state[1]),
         h("div", { class: "pen-load" }, h("div", { class: "load", title: `${pc} of about ${maxPc} pitches` }, h("i", { style: { width: `${Math.min(100, (100 * pc) / maxPc)}%` } })),
           h("span", {}, `${pc} ${pc === 1 ? "pitch" : "pitches"}, ${(g.bf[keyOf(i)] || 0) + (inNow && g.inningOver ? 1 : 0)} faced`)),   // bf counts finished batters; at the third out the last one isn't counted until the next inning starts
-        h("div", { class: "pen-mix" }, ars.map((p) => h("span", { class: `mini k-${p.kind}`, title: `${p.name} confidence ${p.conf.toFixed(2)}` }, chip(p.kind, p.sign), p.conf.toFixed(2)))),
+        // the call screen's words (confNote): a word only when a pitch is notably low or high on the engine's scale
+        h("div", { class: "pen-mix" }, ars.map((p) => { const w = confNote(p);
+          return h("span", { class: `mini k-${p.kind}${w === "shaky today" ? " shaky" : ""}`, title: `${p.name}${w ? ": " + w : ""}` }, chip(p.kind, p.sign), w ? h("span", { class: "word" }, w) : h("span", { class: "sr" }, p.name)); })),
         inNow ? h("span", { class: "pen-act muted" }, "On the mound")
           : h("button", { class: "btn pen-act", on: { click: () => { snapshot(); const out = pitcherDef().id || null; g.pitcher = i; g.last = null; if (g.dbId) logPlay("sub_pitcher", { outId: out, inId: pd.id || null }); makeCall(); save(); toast(`${pd.name} is in`); S.view = "live"; render(); } } }, `Bring in ${pd.name}`));
     })),
