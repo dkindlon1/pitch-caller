@@ -1,0 +1,104 @@
+== night adjacent: #a05ef7,#947d18,#a04d68,#039797,#2f95fe,#e739b6 (surface #15141a)
+
+Palette (dark, surface #15141a, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.48–0.67
+  [PASS] Chroma floor           all 6 >= 0.1
+  [PASS] CVD separation         worst adjacent #039797↔#a04d68 ΔE 8.5 (deutan) · tritan 6.7
+  [PASS] Normal-vision floor    worst adjacent #2f95fe↔#039797 ΔE 16.2 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 0
+== night all: #a05ef7,#947d18,#a04d68,#039797,#2f95fe,#e739b6 (surface #15141a)
+
+Palette (dark, surface #15141a, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.48–0.67
+  [PASS] Chroma floor           all 6 >= 0.1
+  [FAIL] CVD separation         worst all-pairs #2f95fe↔#a05ef7 ΔE 3.5 (deutan) · tritan 6.7
+  [PASS] Normal-vision floor    worst all-pairs #2f95fe↔#039797 ΔE 16.2 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → FAILED — fix the marked checks  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 1
+== night(panel-2) adjacent: #a05ef7,#947d18,#a04d68,#039797,#2f95fe,#e739b6 (surface #1c1b23)
+
+Palette (dark, surface #1c1b23, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.48–0.67
+  [PASS] Chroma floor           all 6 >= 0.1
+  [PASS] CVD separation         worst adjacent #039797↔#a04d68 ΔE 8.5 (deutan) · tritan 6.7
+  [PASS] Normal-vision floor    worst adjacent #2f95fe↔#039797 ΔE 16.2 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 0
+== night(panel-2) all: #a05ef7,#947d18,#a04d68,#039797,#2f95fe,#e739b6 (surface #1c1b23)
+
+Palette (dark, surface #1c1b23, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.48–0.67
+  [PASS] Chroma floor           all 6 >= 0.1
+  [FAIL] CVD separation         worst all-pairs #2f95fe↔#a05ef7 ΔE 3.5 (deutan) · tritan 6.7
+  [PASS] Normal-vision floor    worst all-pairs #2f95fe↔#039797 ΔE 16.2 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → FAILED — fix the marked checks  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 1
+== day adjacent: #5b10c9,#a67500,#ee5c65,#179d9d,#0f6fe7,#a23e8c (surface #f6f5f1)
+
+Palette (light, surface #f6f5f1, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.43–0.77
+  [PASS] Chroma floor           all 6 >= 0.1
+  [PASS] CVD separation         worst adjacent #ee5c65↔#a67500 ΔE 8.6 (protan) · tritan 6.7
+  [PASS] Normal-vision floor    worst adjacent #ee5c65↔#a67500 ΔE 17.3 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 0
+== day all: #5b10c9,#a67500,#ee5c65,#179d9d,#0f6fe7,#a23e8c (surface #f6f5f1)
+
+Palette (light, surface #f6f5f1, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.43–0.77
+  [PASS] Chroma floor           all 6 >= 0.1
+  [PASS] CVD separation         worst all-pairs #ee5c65↔#a67500 ΔE 8.6 (protan) · tritan 6.7
+  [PASS] Normal-vision floor    worst all-pairs #ee5c65↔#a67500 ΔE 17.3 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 0
+== day(panel-2) adjacent: #5b10c9,#a67500,#ee5c65,#179d9d,#0f6fe7,#a23e8c (surface #ffffff)
+
+Palette (light, surface #ffffff, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.43–0.77
+  [PASS] Chroma floor           all 6 >= 0.1
+  [PASS] CVD separation         worst adjacent #ee5c65↔#a67500 ΔE 8.6 (protan) · tritan 6.7
+  [PASS] Normal-vision floor    worst adjacent #ee5c65↔#a67500 ΔE 17.3 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 0
+== day(panel-2) all: #5b10c9,#a67500,#ee5c65,#179d9d,#0f6fe7,#a23e8c (surface #ffffff)
+
+Palette (light, surface #ffffff, categorical): 6 slots
+  [PASS] Lightness band         all 6 inside L 0.43–0.77
+  [PASS] Chroma floor           all 6 >= 0.1
+  [PASS] CVD separation         worst all-pairs #ee5c65↔#a67500 ΔE 8.6 (protan) · tritan 6.7
+  [PASS] Normal-vision floor    worst all-pairs #ee5c65↔#a67500 ΔE 17.3 (normal)
+  [PASS] Contrast vs surface    all 6 >= 3:1
+
+  → ALL CHECKS PASS  (CVD in the 6–8 floor band is legal ONLY with secondary encoding: direct labels, gaps, or texture)
+  scope: categorical palettes only. For a lone status/text color check text contrast with this script's apca() or contrast(); for a sequential ramp, lightness monotonicity.
+
+exit 0

@@ -51,3 +51,4 @@ echo "smoke: passed"
 (cd app && ../$run fold_e2e node fold_e2e.js)   # app v2: on an iPad in landscape (1180x820 and Safari's 1180x740) the call, Accept and all result keys fit without scrolling
 (cd app && ../$run watch_optin_e2e node watch_optin_e2e.js)   # app v2: watch mode (Setup switch or ?watch=1) is kept on the device; the Game Day hand-off respects it; the card only when on
 (cd app && ../$run sync_pill_e2e node sync_pill_e2e.js)   # app v2: the offline / syncing pill in the game bar
+(cd app && ../$run readout_sessions_e2e node readout_sessions_e2e.js)   # app v2: the line under the call reads his sessions from the device only, after the first render, offline too

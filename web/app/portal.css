@@ -243,6 +243,7 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
 .pq .chip { display: inline-grid; place-items: center; min-width: 28px; height: 24px; padding: 0 6px; border-radius: 7px; font: 800 0.75rem/1 var(--head); font-stretch: 90%; letter-spacing: 0.01em; color: var(--bg); background: var(--c, var(--text-3)); }
 .pq .k-FB { --c: var(--p-fb); } .pq .k-SI { --c: var(--p-si); } .pq .k-FC { --c: var(--p-fc); }
+.pq .chip.k-FC { color: #fff; }   /* the cutter rose is dark: white letters (5.6:1) */
 .pq .k-SL { --c: var(--p-sl); } .pq .k-CB { --c: var(--p-cb); } .pq .k-CH { --c: var(--p-ch); }
 .pq .pill-ok, .pq .pill-warn, .pq .pill-live, .pq .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
 .pq .pill-ok, .pq .pill { background: var(--wash-2); color: var(--text); }

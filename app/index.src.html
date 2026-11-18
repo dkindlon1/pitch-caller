@@ -980,15 +980,11 @@ function speedNote(pd, d) {
   return +d.velo ? `usually about ${Math.round(+d.velo)} mph` : null;
 }
 // his readings of this pitch from his five latest sessions on this device: TrackMan / Rapsodo rows (matched the way an
-// import applies them: by type, or by kind when he has one pitch of that kind) and charted-bullpen radar readings
+// import applies them: by type, or by kind when he has one pitch of that kind) and charted-bullpen radar readings.
+// Memory only: roster.js loadStaffSessions fills DB.sessions from the local database after the first render.
 function realSpeeds(pd, d) {
-  if (!pd.id || !DB.D) return [];
-  const ss = DB.sessions.get(pd.id);
-  if (!ss) {
-    DB.sessions.set(pd.id, []);   // asked once; the call screen redraws when they're in
-    DB.D.byIndex("sessions", "pitcherId", pd.id).then((xs) => { DB.sessions.set(pd.id, xs.sort((a, b) => b.createdAt - a.createdAt)); render(); }).catch(() => {});
-    return [];
-  }
+  const ss = pd.id ? DB.sessions.get(pd.id) : null;
+  if (!ss) return [];
   const oneOfKind = (pd.pitches || []).filter((x) => x.active !== false && x.kind === d.kind).length === 1;
   const out = [];
   for (const s of ss.filter((x) => !x.deletedAt).slice(0, 5)) {

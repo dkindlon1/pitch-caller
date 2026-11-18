@@ -55,6 +55,7 @@ async function boot() {
     await openFromPortal().catch((e) => { PORTAL.msg = syncMessage(e); console.warn("open from the website", e); });
     await loadPlanned().catch(() => {});
     save(); render();
+    DB.sessionsOn = true; setTimeout(loadStaffSessions, 0);   // after the first render, not on the call's path
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen.
     // DB.warm says when that start-of-game learning is done (v1.2: game_mix_e2e waits for it before the first pitch). It is
     // false from the start (DB above), not only from here: the awaits before this line left a few milliseconds where it
@@ -103,6 +104,21 @@ function attachStaff() {
   const staff = S.setup.staffIds.map((id) => DB.pitchers.get(id)).filter(Boolean);
   if (staff.length) S.setup.staff = staff;
   if (G().pitcher >= S.setup.staff.length) G().pitcher = 0;
+  if (DB.sessionsOn) loadStaffSessions();   // a staff change after start-up: his sessions too (off the call's path)
+}
+// his TrackMan / Rapsodo and charted-bullpen sessions for the line under the call (readout in index.src.html). From this
+// iPad's own database (IndexedDB), never the network, so it works offline. Started only after boot's first render and
+// asynchronously; the call screen reads the in-memory copy (DB.sessions) and shows the roster speed until it's in.
+function loadStaffSessions() {
+  if (!DB.D) return;
+  for (const p of S.setup.staff || []) {
+    if (!p || !p.id || DB.sessions.has(p.id)) continue;
+    DB.sessions.set(p.id, []);   // asked once
+    DB.D.byIndex("sessions", "pitcherId", p.id).then((xs) => {
+      DB.sessions.set(p.id, xs.sort((a, c) => c.createdAt - a.createdAt));
+      if (xs.length && (S.view === "live" || S.view === "roster")) render();
+    }).catch((e) => console.warn("sessions", e));
+  }
 }
 
 // what's been learned about tonight's hitters, loaded before they step in
@@ -1423,6 +1439,7 @@ async function reloadFromDb() {
   // the pitcher in the game stays in the game: removed by another iPad mid-game, he's kept on this page until it ends
   if (on && on.id && !DB.pitchers.has(on.id)) DB.pitchers.set(on.id, on);
   S.setup.staffIds = (S.setup.staffIds || []).filter((id) => DB.pitchers.has(id));
+  if (DB.sessionsOn) DB.sessions.clear();   // a pull may have brought sessions: attachStaff reloads them from the device
   attachStaff();
   if (on && on.id) { const i = S.setup.staff.findIndex((p) => p.id === on.id); if (i >= 0) G().pitcher = i; }
   pastFix.games = null;

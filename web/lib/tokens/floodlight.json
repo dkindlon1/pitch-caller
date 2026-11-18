@@ -30,9 +30,9 @@
     "on-weigh": "#ffffff",
     "alert": "#f0a06a",
     "on-alert": "#1d0f04",
-    "p-fb": "#d57273",
+    "p-fb": "#a05ef7",
     "p-si": "#947d18",
-    "p-fc": "#a05ef7",
+    "p-fc": "#a04d68",
     "p-sl": "#039797",
     "p-cb": "#2f95fe",
     "p-ch": "#e739b6"
@@ -55,9 +55,9 @@
     "on-weigh": "#ffffff",
     "alert": "#9a3f0e",
     "on-alert": "#ffffff",
-    "p-fb": "#ee5c65",
+    "p-fb": "#5b10c9",
     "p-si": "#a67500",
-    "p-fc": "#5b10c9",
+    "p-fc": "#ee5c65",
     "p-sl": "#179d9d",
     "p-cb": "#0f6fe7",
     "p-ch": "#a23e8c"

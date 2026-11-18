@@ -81,9 +81,9 @@
   --on-weigh: #ffffff;
   --alert: #f0a06a;
   --on-alert: #1d0f04;
-  --p-fb: #d57273;
+  --p-fb: #a05ef7;
   --p-si: #947d18;
-  --p-fc: #a05ef7;
+  --p-fc: #a04d68;
   --p-sl: #039797;
   --p-cb: #2f95fe;
   --p-ch: #e739b6;
@@ -112,9 +112,9 @@
   --on-weigh: #ffffff;
   --alert: #9a3f0e;
   --on-alert: #ffffff;
-  --p-fb: #ee5c65;
+  --p-fb: #5b10c9;
   --p-si: #a67500;
-  --p-fc: #5b10c9;
+  --p-fc: #ee5c65;
   --p-sl: #179d9d;
   --p-cb: #0f6fe7;
   --p-ch: #a23e8c;
@@ -292,7 +292,8 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 /* pitch chips: the sign number on the pitch's colour */
 .chip { --c: var(--ink); display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: var(--c); color: var(--bg); font: 900 15px/1 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; flex: none; }
 :root[data-theme="day"] .chip { color: #fff; }
-:root[data-theme="day"] :is(.k-FB, .k-SI, .k-SL).chip { color: var(--text); }
+:root[data-theme="day"] :is(.k-FC, .k-SI, .k-SL).chip { color: var(--text); }
+:root:not([data-theme="day"]) .k-FC.chip { color: #fff; }   /* the night cutter rose is dark: white sign (5.6:1) */
 .k-FB { --c: var(--fb); } .k-SL { --c: var(--sl); } .k-CB { --c: var(--cb); } .k-CH { --c: var(--ch); } .k-SI { --c: var(--si); } .k-FC { --c: var(--fc); }
 
 /* ---- the call. A glass card whose rim and floor light are green the moment a call exists; its words are set, not
@@ -576,7 +577,8 @@ input[type="range"] { height: 28px; padding: 0; border: 0; background: none; acc
 .stack { display: flex; gap: 2px; height: 24px; border-radius: 6px; overflow: hidden; }
 .stack i { background: var(--c, var(--ink)); min-width: 3px; display: grid; place-items: center; font: 900 13px/1 var(--head); font-style: normal; font-stretch: 100%; font-family: var(--cond); color: var(--bg); }
 :root[data-theme="day"] .stack i { color: #fff; }
-:root[data-theme="day"] .stack :is(.k-FB, .k-SI, .k-SL) { color: var(--text); }
+:root[data-theme="day"] .stack :is(.k-FC, .k-SI, .k-SL) { color: var(--text); }
+:root:not([data-theme="day"]) .stack .k-FC { color: #fff; }
 .stack i:first-child { border-radius: 6px 0 0 6px; } .stack i:last-child { border-radius: 0 6px 6px 0; }
 .pas { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 .pa { font-size: 12.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--well-2); border: 1px solid var(--rule); }
@@ -9166,15 +9168,11 @@ function speedNote(pd, d) {
   return +d.velo ? `usually about ${Math.round(+d.velo)} mph` : null;
 }
 // his readings of this pitch from his five latest sessions on this device: TrackMan / Rapsodo rows (matched the way an
-// import applies them: by type, or by kind when he has one pitch of that kind) and charted-bullpen radar readings
+// import applies them: by type, or by kind when he has one pitch of that kind) and charted-bullpen radar readings.
+// Memory only: roster.js loadStaffSessions fills DB.sessions from the local database after the first render.
 function realSpeeds(pd, d) {
-  if (!pd.id || !DB.D) return [];
-  const ss = DB.sessions.get(pd.id);
-  if (!ss) {
-    DB.sessions.set(pd.id, []);   // asked once; the call screen redraws when they're in
-    DB.D.byIndex("sessions", "pitcherId", pd.id).then((xs) => { DB.sessions.set(pd.id, xs.sort((a, b) => b.createdAt - a.createdAt)); render(); }).catch(() => {});
-    return [];
-  }
+  const ss = pd.id ? DB.sessions.get(pd.id) : null;
+  if (!ss) return [];
   const oneOfKind = (pd.pitches || []).filter((x) => x.active !== false && x.kind === d.kind).length === 1;
   const out = [];
   for (const s of ss.filter((x) => !x.deletedAt).slice(0, 5)) {
@@ -9702,6 +9700,7 @@ async function boot() {
     await openFromPortal().catch((e) => { PORTAL.msg = syncMessage(e); console.warn("open from the website", e); });
     await loadPlanned().catch(() => {});
     save(); render();
+    DB.sessionsOn = true; setTimeout(loadStaffSessions, 0);   // after the first render, not on the call's path
     // pitch counts per pitcher for the roster cards, and hitter memory for tonight's lineup, without holding up the screen.
     // DB.warm says when that start-of-game learning is done (v1.2: game_mix_e2e waits for it before the first pitch). It is
     // false from the start (DB above), not only from here: the awaits before this line left a few milliseconds where it
@@ -9750,6 +9749,21 @@ function attachStaff() {
   const staff = S.setup.staffIds.map((id) => DB.pitchers.get(id)).filter(Boolean);
   if (staff.length) S.setup.staff = staff;
   if (G().pitcher >= S.setup.staff.length) G().pitcher = 0;
+  if (DB.sessionsOn) loadStaffSessions();   // a staff change after start-up: his sessions too (off the call's path)
+}
+// his TrackMan / Rapsodo and charted-bullpen sessions for the line under the call (readout in index.src.html). From this
+// iPad's own database (IndexedDB), never the network, so it works offline. Started only after boot's first render and
+// asynchronously; the call screen reads the in-memory copy (DB.sessions) and shows the roster speed until it's in.
+function loadStaffSessions() {
+  if (!DB.D) return;
+  for (const p of S.setup.staff || []) {
+    if (!p || !p.id || DB.sessions.has(p.id)) continue;
+    DB.sessions.set(p.id, []);   // asked once
+    DB.D.byIndex("sessions", "pitcherId", p.id).then((xs) => {
+      DB.sessions.set(p.id, xs.sort((a, c) => c.createdAt - a.createdAt));
+      if (xs.length && (S.view === "live" || S.view === "roster")) render();
+    }).catch((e) => console.warn("sessions", e));
+  }
 }
 
 // what's been learned about tonight's hitters, loaded before they step in
@@ -11070,6 +11084,7 @@ async function reloadFromDb() {
   // the pitcher in the game stays in the game: removed by another iPad mid-game, he's kept on this page until it ends
   if (on && on.id && !DB.pitchers.has(on.id)) DB.pitchers.set(on.id, on);
   S.setup.staffIds = (S.setup.staffIds || []).filter((id) => DB.pitchers.has(id));
+  if (DB.sessionsOn) DB.sessions.clear();   // a pull may have brought sessions: attachStaff reloads them from the device
   attachStaff();
   if (on && on.id) { const i = S.setup.staff.findIndex((p) => p.id === on.id); if (i >= 0) G().pitcher = i; }
   pastFix.games = null;
