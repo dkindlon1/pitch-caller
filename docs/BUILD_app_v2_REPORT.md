@@ -72,7 +72,7 @@ The round script itself died after the last `game_mix_e2e` run. A stray line I l
 
 **Not verified:** a real iPad in Safari (740 px is your figure); real watches; the switch's reload on a real Android or ChromeOS device (tested in Chromium with stand-in watches); that `game_mix_e2e` can never vary again. The cause I found is fixed and the runs after the fix agree game by game, but a one-in-50-games event can't be proven absent in a few runs.
 
-**Captures (2x):** `docs/app-v2-shots/final/picks/r4-ibb__day__1180x740.png`, `r4-switch-off__night.png`, `r4-switch-off-focus__night.png`, `r4-switch-on__day.png`.
+**Captures (2x):** `C:/dev/pitch-caller-shots/final/picks/r4-ibb__day__1180x740.png`, `r4-switch-off__night.png`, `r4-switch-off-focus__night.png`, `r4-switch-on__day.png`.
 
 ---
 
@@ -121,12 +121,12 @@ The round script itself died after the last `game_mix_e2e` run. A stray line I l
 **Not verified this round:** a real iPad in Safari (the 740 px height is the figure you gave; I didn't measure Safari's bars myself); real watches; the pill's "Syncing" state through a real sync. Its states are proven with a stand-in that marks the device as signed in and flips the busy flag; the real offline state was captured against local Supabase.
 
 **Look at these first (round 3)**
-1. `docs/app-v2-shots/final/picks/r3-accept-ready__night__1180x740.png` and `r3-accept-ready__day__1180x820.png`
-2. `docs/app-v2-shots/final/picks/r3-ibb__day__1180x740.png` (the tightest state)
-3. `docs/app-v2-shots/final/picks/r3-not-on-watch__2x.png` (the action row at 2x, with the laptop view under it)
-4. `docs/app-v2-shots/final/picks/r3-pill-offline.png`, `r3-fold-closed__laptop.png`, `r3-fold-open__phone.png`
-5. `docs/app-v2-shots/final/game/sheet__night__ipad-l__1.png` and `sheet__day__ipad-l__1.png` (every state, re-shot)
-6. `docs/app-v2-shots/final/game-flow.mp4` (re-recorded on this build)
+1. `C:/dev/pitch-caller-shots/final/picks/r3-accept-ready__night__1180x740.png` and `r3-accept-ready__day__1180x820.png`
+2. `C:/dev/pitch-caller-shots/final/picks/r3-ibb__day__1180x740.png` (the tightest state)
+3. `C:/dev/pitch-caller-shots/final/picks/r3-not-on-watch__2x.png` (the action row at 2x, with the laptop view under it)
+4. `C:/dev/pitch-caller-shots/final/picks/r3-pill-offline.png`, `r3-fold-closed__laptop.png`, `r3-fold-open__phone.png`
+5. `C:/dev/pitch-caller-shots/final/game/sheet__night__ipad-l__1.png` and `sheet__day__ipad-l__1.png` (every state, re-shot)
+6. `C:/dev/pitch-caller-shots/final/game-flow.mp4` (re-recorded on this build)
 
 ---
 
@@ -228,14 +228,14 @@ Run alone, on the final build, after the last CSS change:
 - **Day-theme contrast of the alert banner** ("This iPad isn't ready for offline") passes axe but looked a little soft to the worker who captured it; I did not measure it separately.
 
 ## Look at these first
-1. `docs/app-v2-shots/final/game-flow.mp4` (Game Day hand-off, pitches with Accept, a shake-off, a pitching change, end of game)
-2. `docs/app-v2-shots/final/game/sheet__night__ipad-l__1.png` and `sheet__day__ipad-l__1.png` (every game state, both themes, re-shot on the final build)
-3. `docs/app-v2-shots/final/picks/game-scoreboard-and-second-device.png` (the scoreboard with the full pitch-count line, and the second-device notice); the offline and refused states are beside it in `final/picks/`
-4. `docs/app-v2-shots/final/portal/sheet__laptop__1.png` and `__2.png` (every portal screen)
-5. `docs/app-v2-shots/final/portal/sheet__phone__1.png` to `__3.png`
-6. `docs/app-v2-shots/final/picks/billing__laptop__fold.png`, `staff__laptop__fold.png`, `me-home__laptop__fold.png`, `roster__phone__fold.png` (this session's screens at full size)
-7. `docs/app-v2-shots/final/picks/tile-hover.png`, `tile-pressed.png`, `chart-tip.png`, `disabled.png` (interaction states at 2x)
-8. `docs/app-v2-shots/final/coach-portal.mp4` and `player-portal.mp4`
+1. `C:/dev/pitch-caller-shots/final/game-flow.mp4` (Game Day hand-off, pitches with Accept, a shake-off, a pitching change, end of game)
+2. `C:/dev/pitch-caller-shots/final/game/sheet__night__ipad-l__1.png` and `sheet__day__ipad-l__1.png` (every game state, both themes, re-shot on the final build)
+3. `C:/dev/pitch-caller-shots/final/picks/game-scoreboard-and-second-device.png` (the scoreboard with the full pitch-count line, and the second-device notice); the offline and refused states are beside it in `final/picks/`
+4. `C:/dev/pitch-caller-shots/final/portal/sheet__laptop__1.png` and `__2.png` (every portal screen)
+5. `C:/dev/pitch-caller-shots/final/portal/sheet__phone__1.png` to `__3.png`
+6. `C:/dev/pitch-caller-shots/final/picks/billing__laptop__fold.png`, `staff__laptop__fold.png`, `me-home__laptop__fold.png`, `roster__phone__fold.png` (this session's screens at full size)
+7. `C:/dev/pitch-caller-shots/final/picks/tile-hover.png`, `tile-pressed.png`, `chart-tip.png`, `disabled.png` (interaction states at 2x)
+8. `C:/dev/pitch-caller-shots/final/coach-portal.mp4` and `player-portal.mp4`
 
 ## Running it
 - Local database: `npx supabase@2.122.1 start`. Dev: `bash web/tests/dev_local.sh 3111`. Production build: `npm run build` in `web/`, then `bash web/tests/start_local.sh 3120`.
@@ -243,4 +243,4 @@ Run alone, on the final build, after the last CSS change:
 - Captures: `node web/tests/app_shots.js --url ... --out <dir> [--axe]`, `node app/shots_v2.js --out <dir> [--axe]`, `node web/tests/app_interact_shots.js --url ... --out <dir>`, `node web/tests/app_state_shots.js`, `python web/tests/app_sheets.py`.
 - Game app build on Windows: `PYTHONUTF8=1 python app/build.py`, then `node web/scripts/game-shell.mjs`. Tokens: `node web/scripts/tokens.mjs`.
 - Run one check script at a time: the e2es each reset the local database and start their own server.
-- Raw captures and extracted frames stay on this PC (gitignored); sheets, picks and recordings are committed.
+- All captures (raw shots, extracted frames, sheets, picks and recordings) stay on this PC at `C:/dev/pitch-caller-shots/`; `docs/app-v2-shots/` is gitignored and none of them are in git.

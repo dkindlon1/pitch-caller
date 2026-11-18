@@ -34,6 +34,5 @@ data/leaderboards/
 docs/site-v2-shots/final-check/**/*.png
 !docs/site-v2-shots/final-check/picks/*.png
 
-# app v2: raw captures stay on disk; contact sheets, picks and recordings are committed
-docs/app-v2-shots/**/raw/
-docs/app-v2-shots/final/frames/*/
+# app v2: every capture stays on disk, none in git (copy kept at C:/dev/pitch-caller-shots/)
+docs/app-v2-shots/
