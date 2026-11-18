@@ -1,5 +1,28 @@
 # PitchIQ app v2 (Floodlight): build report
 
+## Baseline against `main` (Nov 17)
+
+`main` at 3b2f233 is where this branch starts, before the redesign. I put it in its own worktree and rebuilt both game apps with `app/build.py`. Each rebuild matched its committed `app/dist/pitch-caller.html` byte for byte. `main` has no `perf_v2.js`, so the branch's script traced `main`'s build through `DIST=<main>/app/dist/pitch-caller.html`. The page, the size (1180x820) and the 30 pitches were the same for both. I ran three rounds, one build after the other (branch, main, branch, main…), so background load fell on both builds alike. `engine.js`, `engine_data.json`, `learner.js` and `db.js` are identical on both.
+
+**`perf_v2`, normal CPU (budgets: 200 ms to paint, 50 ms longest task)**
+
+| Run | Branch night | Branch day | Main night | Main day |
+|---|---|---|---|---|
+| Longest task, run 1 / 2 / 3 | 75 / 85 / 72 ms | 73 / 62 / 79 ms | 103 / 75 / 73 ms | 70 / 64 / 76 ms |
+| Key press to call painted, median | 48 / 48 / 48 ms | 44 / 44 / 43 ms | 55 / 55 / 53 ms | 54 / 59 / 53 ms |
+| Key press to call painted, max | 102 / 113 / 102 ms | 104 / 91 / 108 ms | 139 / 103 / 112 ms | 101 / 92 / 104 ms |
+| Layout shift; calls faded or mid-animation | 0; 0 | 0; 0 | 0; 0 | 0; 0 |
+
+**CPU 4x slower (for reference; no budget):** longest task on the branch 385 to 545 ms, on main 416 to 515 ms. Median paint is 91 to 163 ms on the branch and 98 to 115 ms on main. The 163 ms is a single run on the branch; its other five runs were 91 to 99 ms.
+
+**Result:** the long task is **not longer on this branch.** Branch: 62 to 85 ms, median 74 ms over its six readings. Main: 64 to 103 ms, median 74 ms. The ranges overlap. Main also has the single worst reading. Both builds miss the 50 ms budget the same way: one task per at-bat, the engine's at-bat solve. The redesign added nothing to that task, so per the brief no fix was made. The call actually paints about 8 ms sooner on the branch (median 43 to 48 ms against 53 to 59 ms).
+
+**`v11_fixture_test`** (run from `app/` with Windows' `tar` first on the path, as before): **8 of 8 pass on both.** The two outputs are identical line for line.
+
+Logs: `C:\Users\kindl\AppData\Local\Temp\claude\60f5f0549f8331c3\6f86bfbb-720c-448b-af20-08bbf57c1c9f\scratchpad\perf\` (`branch_1..3.log`, `main_1..3.log`, `v11_branch.log`, `v11_main.log`); they are not committed.
+
+---
+
 ## Round 4 (Nov 17, night)
 
 **What changed**
