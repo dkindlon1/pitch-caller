@@ -193,13 +193,10 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .why b { color: var(--ink); font-weight: 650; }
 .whyline { display: block; margin-bottom: 2px; font-size: 16px; }
 .walk-note { display: block; margin-top: 8px; padding: 8px 12px; border-radius: 12px; font-weight: 600; color: var(--alert); background: var(--warn-bg); }
-.readout { grid-column: 2; grid-row: 3; align-self: start; margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 0; border-radius: var(--r-tile); background: rgb(var(--bg-rgb) / 0.35); border: 1px solid var(--rule); width: max-content; max-width: 100%; }
-:root[data-theme="day"] .readout { background: var(--well); }
-.readout > div { padding: 10px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.readout > div + div { border-left: 1px solid var(--rule); }
-.readout .k { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
-.readout .v { font: 900 30px/0.9 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; }
-.readout .v small { font: 500 13px/1 var(--font); font-stretch: 100%; color: var(--muted); margin-left: 4px; }
+/* under the reason: one quiet line about the called pitch (its usual speed, a word on his confidence only when it's
+   notably high or low, strikes today). It reads as a note, not as a live reading. */
+.readout { grid-column: 2; grid-row: 3; align-self: start; margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.35; max-width: 48ch; font-feature-settings: "tnum" 1; }
+.readout .sep { margin: 0 0.45em; opacity: 0.6; }
 .coachmark { display: inline-block; margin-left: 12px; white-space: nowrap; font: 700 13px/1 var(--font); font-stretch: 100%; letter-spacing: 0; text-transform: none; color: var(--bg); background: var(--ink); padding: 5px 10px; border-radius: 999px; vertical-align: 0.9em; }
 .zone { padding: 10px; border-radius: var(--r-tile); background: rgb(var(--bg-rgb) / 0.35); border: 1px solid var(--rule); }
 :root[data-theme="day"] .zone { background: var(--well); }
@@ -402,7 +399,6 @@ input[type="range"] { height: 28px; padding: 0; border: 0; background: none; acc
   .cell .v { font-size: 40px; } .cell:first-child .v { font-size: 52px; }
   .call-main { column-gap: 14px; }
   .sign { width: 68px; height: 68px; border-radius: 20px; font-size: 46px; }
-  .readout > div { padding: 8px 12px; }
   :root { --pad: 16px; }
 }
 

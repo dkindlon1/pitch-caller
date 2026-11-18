@@ -320,13 +320,10 @@ h1, h2, h3 { font-family: var(--head); font-stretch: 108%; letter-spacing: -0.03
 .why b { color: var(--ink); font-weight: 650; }
 .whyline { display: block; margin-bottom: 2px; font-size: 16px; }
 .walk-note { display: block; margin-top: 8px; padding: 8px 12px; border-radius: 12px; font-weight: 600; color: var(--alert); background: var(--warn-bg); }
-.readout { grid-column: 2; grid-row: 3; align-self: start; margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, max-content)); gap: 0; border-radius: var(--r-tile); background: rgb(var(--bg-rgb) / 0.35); border: 1px solid var(--rule); width: max-content; max-width: 100%; }
-:root[data-theme="day"] .readout { background: var(--well); }
-.readout > div { padding: 10px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.readout > div + div { border-left: 1px solid var(--rule); }
-.readout .k { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
-.readout .v { font: 900 30px/0.9 var(--head); font-stretch: 100%; font-family: var(--cond); font-feature-settings: "tnum" 1; }
-.readout .v small { font: 500 13px/1 var(--font); font-stretch: 100%; color: var(--muted); margin-left: 4px; }
+/* under the reason: one quiet line about the called pitch (its usual speed, a word on his confidence only when it's
+   notably high or low, strikes today). It reads as a note, not as a live reading. */
+.readout { grid-column: 2; grid-row: 3; align-self: start; margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.35; max-width: 48ch; font-feature-settings: "tnum" 1; }
+.readout .sep { margin: 0 0.45em; opacity: 0.6; }
 .coachmark { display: inline-block; margin-left: 12px; white-space: nowrap; font: 700 13px/1 var(--font); font-stretch: 100%; letter-spacing: 0; text-transform: none; color: var(--bg); background: var(--ink); padding: 5px 10px; border-radius: 999px; vertical-align: 0.9em; }
 .zone { padding: 10px; border-radius: var(--r-tile); background: rgb(var(--bg-rgb) / 0.35); border: 1px solid var(--rule); }
 :root[data-theme="day"] .zone { background: var(--well); }
@@ -529,7 +526,6 @@ input[type="range"] { height: 28px; padding: 0; border: 0; background: none; acc
   .cell .v { font-size: 40px; } .cell:first-child .v { font-size: 52px; }
   .call-main { column-gap: 14px; }
   .sign { width: 68px; height: 68px; border-radius: 20px; font-size: 46px; }
-  .readout > div { padding: 8px 12px; }
   :root { --pad: 16px; }
 }
 
@@ -9113,7 +9109,7 @@ function callPanel() {
   const ck = `${g.pitchNo}|${g.balls}${g.strikes}|${c.pitch}|${c.quad}|${!!c.coach}`, fresh = ck !== lastZoneKey; lastZoneKey = ck;
   const why = c.coach
     ? [h("b", {}, c.verdict), c.runs > 0.0005 ? `. About ${c.runs.toFixed(3)} runs worse than the engine's best call here.` : "."]
-    : [c.v08 && c.why ? h("b", { class: "whyline" }, c.why + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
+    : [c.v08 && c.why ? h("b", { class: "whyline" }, speedWhy(c.why, c.pitch) + ". ") : null, `Picked at random from the mix below, where it comes up `, h("b", {}, pct(c.prob)), ` of the time.`,
        c.quad === "middle" ? " Aim at the heart of the plate." : c.quad === "down-middle" ? " Knee-high, over the plate." : c.quad === "chase" ? " Just off the plate, not in the dirt." : "",
        c.walk ? h("span", { class: "walk-note" }, " Worth considering the intentional walk here.") : null];
   const acts = h("div", { class: "call-acts" },
@@ -9143,14 +9139,68 @@ function callPanel() {
   return h("section", { class: `panel glass span-8 call-panel${fresh ? " landed" : ""}`, "aria-label": "The call" }, hitter, call, pickMode ? pickBox() : null, options);
 }
 
+// App v2 (Drew, Nov 17): one quiet line under the call, not three big tiles that read like a live radar gun. DISPLAY
+// ONLY: nothing here feeds the engine. Speed: today's gun when radar logging is on and he has 3+ readings of it today;
+// else the range of his real readings (uploaded TrackMan / Rapsodo sessions, charted bullpens, this game's gun); else
+// the roster's typed-in speed, "usually about". Confidence: a word only when it's notably low or high on the engine's own
+// scale. Strikes today as "1 of 2 for strikes".
 function readout(name) {
-  const d = pitcherDef().pitches.find((p) => p.name === name) || {}, p = arsenal().find((x) => x.name === name);
+  const pd = pitcherDef(), d = pd.pitches.find((p) => p.name === name) || {}, p = arsenal().find((x) => x.name === name);
   const l = landTriple(name, ((G().land || {})[pKey()] || {})[name]);
-  const cellR = (k, v, u) => h("div", {}, h("span", { class: "k" }, k), h("span", { class: "v" }, v, u ? h("small", {}, u) : null));
-  return h("div", { class: "readout", "aria-label": `About the ${name.toLowerCase()}` },
-    cellR("Velo", +d.velo ? String(Math.round(+d.velo)) : "–", +d.velo ? "mph" : null),
-    cellR("His confidence", p ? p.conf.toFixed(2) : "–"),
-    cellR("Strikes today", l ? `${l[0]}/${l[2]}` : "–", l ? null : null));
+  const bits = [speedNote(pd, d), confNote(p), l && l[2] ? `${l[0]} of ${l[2]} for strikes` : null].filter(Boolean);
+  if (!bits.length) return null;
+  bits[0] = bits[0][0].toUpperCase() + bits[0].slice(1);
+  const kids = []; bits.forEach((b, i) => { if (i) kids.push(h("span", { class: "sep", "aria-hidden": "true" }, "·")); kids.push(h("span", {}, b)); });
+  return h("p", { class: "readout", "aria-label": `About the ${name.toLowerCase()}` }, kids);
+}
+const todayGun = (name) => (((G().radar || {})[pKey()] || {})[name] || []).filter((x) => +x > 40).map(Number);
+function speedNote(pd, d) {
+  const today = todayGun(d.name);
+  if (S.setup.radar && today.length >= 3) return `today about ${Math.round(today.reduce((a, b) => a + b, 0) / today.length)} mph (${today.length} readings)`;
+  const xs = realSpeeds(pd, d).concat(today).sort((a, b) => a - b);
+  if (xs.length >= 3) {   // the middle of his readings (10th to 90th percentile), so one odd reading doesn't stretch it
+    const at = (f) => xs[Math.min(xs.length - 1, Math.max(0, Math.round(f * (xs.length - 1))))];
+    const lo = Math.round(at(0.1)), hi = Math.round(at(0.9));
+    return lo === hi ? `usually about ${lo} mph` : `usually ${lo}–${hi} mph`;
+  }
+  return +d.velo ? `usually about ${Math.round(+d.velo)} mph` : null;
+}
+// his readings of this pitch from his five latest sessions on this device: TrackMan / Rapsodo rows (matched the way an
+// import applies them: by type, or by kind when he has one pitch of that kind) and charted-bullpen radar readings
+function realSpeeds(pd, d) {
+  if (!pd.id || !DB.D) return [];
+  const ss = DB.sessions.get(pd.id);
+  if (!ss) {
+    DB.sessions.set(pd.id, []);   // asked once; the call screen redraws when they're in
+    DB.D.byIndex("sessions", "pitcherId", pd.id).then((xs) => { DB.sessions.set(pd.id, xs.sort((a, b) => b.createdAt - a.createdAt)); render(); }).catch(() => {});
+    return [];
+  }
+  const oneOfKind = (pd.pitches || []).filter((x) => x.active !== false && x.kind === d.kind).length === 1;
+  const out = [];
+  for (const s of ss.filter((x) => !x.deletedAt).slice(0, 5)) {
+    for (const r of s.rows || []) if (r && +r.velo > 40 && (d.type ? r.type === d.type : oneOfKind && r.kind === d.kind)) out.push(+r.velo);
+    for (const r of s.pitches || []) if (r && +r.radar > 40 && r.pitch === d.name) out.push(+r.radar);
+  }
+  return out;
+}
+// the engine's confidence band (engine.js bandWeight, CONF_CAP_ABOVE): below his level's trust cutoff the engine
+// weighs the pitch down or out of the calls; it never lets confidence climb more than 0.10 over his bullpen feel
+const CONF_CAP_ABOVE = 0.10;
+function confNote(p) {
+  if (!p) return null;
+  const cutoff = ((PC_DATA.LEVEL || {})[S.setup.level] || {}).cutoff;
+  if (cutoff === undefined) return null;
+  if (p.conf < cutoff) return "shaky today";
+  if (p.conf - p.base_conf >= CONF_CAP_ABOVE / 2 - 1e-9) return "trusting it";
+  return null;
+}
+// the engine's timing reason says "about" when a speed in it is the roster's typed-in one, not today's gun (radarFor)
+function speedWhy(why, name) {
+  const m = /^He's timed for (\d+) mph; this plays (\d+) mph (slower|faster)$/.exec(why || "");
+  if (!m) return why;
+  const gun = radarFor(pKey()), ars = arsenal();
+  const aboutT = ars.some((x) => !(x.name in gun)), aboutP = aboutT || !(name in gun);
+  return `He's timed for ${aboutT ? "about " : ""}${m[1]} mph; this plays ${aboutP ? "about " : ""}${m[2]} mph ${m[3]}`;
 }
 
 function hitterRead() {
