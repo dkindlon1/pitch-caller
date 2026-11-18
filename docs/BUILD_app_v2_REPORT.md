@@ -1,5 +1,59 @@
 # PitchIQ app v2 (Floodlight): build report
 
+## Round 4 (Nov 17, night)
+
+**What changed**
+1. **Watch switch in Setup (approved).**
+   - Where the browser has Web Bluetooth, Setup always shows "Use watches on this device", a real switch at 48 px.
+   - The full Watches card (connect, receipts, signs) shows only once watch mode is on, through the switch or `?watch=1`.
+   - The setting is the same stored flag `?watch=1` / `?watch=0` set. Turning it on or off saves, then reloads the app once.
+   - Without Web Bluetooth (the iPad) there is still no Watches row at all. I read "always in Setup" as "always, on devices that can use watches", to keep the earlier decision that the iPad shows no watch UI.
+   - `watch_e2e`: line 93's assertion now says the switch shows, off, and no Watches card until watch mode is on (as approved). Line 74 got a selector-only change: its "no Web Bluetooth" section runs in Chromium, which does have Bluetooth, so the new row titled "Watches" tripped a text match. The check now looks for the card element; the assertion is unchanged.
+   - `watch_optin_e2e`: 17 checks. New: switch on, so the card shows and the setting survives a reload. Switch off, so the card is hidden and the Game screen has a call but no Accept and no watch status. A hand-off link with no `?watch` follows the saved setting, both on and off.
+2. **game_mix_e2e flakiness: pre-existing, found and fixed.**
+   - 5 runs on 6037440: 0 failures, but runs 3 and 4 differed from the others (seeds 57, 69, 81 and 11).
+   - 5 runs on d1e138a: 0 failures; run 5 differed (seed 21).
+   - So the variance is older than round 3. Round 3's one failure (4 games over 70%) was the same variance landing at the limit.
+   - **Cause:** the app sets `DB.warm = false` only after several awaits in its start-up, so for a few milliseconds after `DB.ready` the flag read `undefined`. The test waits for `DB.warm !== false`, which passes on `undefined`. When it checked inside that window, it started pitching before the start-up learning had run, and the learning then landed mid-game.
+   - **Proof:**
+     - Forcing an early start reproduces the variant games exactly (seed 57 tier 2: Slider 53 / Fastball 24 / Changeup 5; seed 69 tier 3; seed 11 tier 3).
+     - Ruled out: key presses arriving before a call was made (0 in every traced game, also at 4x and 6x slower CPU), clock reads, record ids (they use `crypto`, not `Math.random`).
+     - 63 traced games across three parallel runs were identical.
+   - **Fix (app, not test):** `DB.warm` is `false` from the moment `DB` exists, and it settles to `true` on the no-database and database-error paths too. Only the test reads the flag.
+   - **Result:** in 8 of 8 loads, `DB.warm` read `false` at the instant `DB.ready` turned true. After the fix, 6 runs on a95b522 (5 in a row, plus 1 inside the suite list) agree game by game: 52.1% average top pitch and 3 games over 70% every time. They match the path both old commits took in most of their runs.
+   - The limit was not touched.
+3. **IBB at 1180x740: 28 px to spare (was 8).**
+   - Taken from spacing only, in the landscape layout for screens up to 920 px tall: the gap between the strip and the panels 14 to 10 px, panel top padding 14 to 10, the runner-controls row 6/4 to 4/2, the location box padding 6 to 4.
+   - Result keys 50 to 48 px (the floor).
+   - Kept: the 6 px gap between result keys (a gloved miss must not land on the next key), the 48 px location grid, and the call's size.
+   - `fold_e2e` now also requires at least 24 px under the lowest required item in every state and size (112 checks).
+4. **The intentional-walk check.** There is no intentional-walk button in the app: in the IBB state the app shows the suggestion "Worth considering the intentional walk here." and the coach signals the walk. So `fold_e2e` now requires that suggestion to be visible in the IBB state. A button that issues the walk would be a new action; I haven't built one.
+
+**Checks** (each suite alone, on a95b522; logs in `$TEMP/appv2-checks/r10`)
+
+| Check | Result |
+|---|---|
+| `tsc`, `npm test`, `next build` | clean; 60 of 60 (including the token drift checks); compiled |
+| site e2e | all site checks passed |
+| `portal_e2e`, `shell_e2e`, `gameplan_e2e`, `billing_e2e`, `player_admin_e2e`, `uploads_e2e`, `retention_e2e`, `offline_game_e2e` | all pass: 30, 43, 38, 52, 24, 33, 10, 22 (252) |
+| `rls_matrix_test` | 347 passed |
+| `scripts/test-app.sh` | every step passes up to `v11_fixture_test`, which stops under Git Bash on its `tar` path (known); it passes 8 of 8 with Windows' `tar`. Every later step was run alone and passes, including the 15 browser suites |
+| `watch_e2e` / `watch_optin_e2e` / `fold_e2e` / `sync_pill_e2e` | all passed / 17 / 112 / 16 |
+| `game_mix_e2e` | 6 of 6 pass, identical game by game |
+| axe: 240 game captures, 242 portal captures | 0 serious or critical |
+| Lighthouse mobile x3 (medians) | launcher 91, pitcher 90, pitcher stats 87, Game Day 90, wizard 90; accessibility 100; layout shift 0 |
+| WebKit and Firefox | pass |
+| Game trace | call painted median 47 ms, max 99 ms; longest task 64 to 70 ms (the engine's at-bat solve; still over 50 ms, still out of scope) |
+
+The round script itself died after the last `game_mix_e2e` run. A stray line I left in it when patching the script was a syntax error. No test hung. The steps it skipped (the game-by-game comparison, the contact sheets) were run by hand, and the round's local server left on port 3120 was stopped.
+
+**Not verified:** a real iPad in Safari (740 px is your figure); real watches; the switch's reload on a real Android or ChromeOS device (tested in Chromium with stand-in watches); that `game_mix_e2e` can never vary again. The cause I found is fixed and the runs after the fix agree game by game, but a one-in-50-games event can't be proven absent in a few runs.
+
+**Captures (2x):** `docs/app-v2-shots/final/picks/r4-ibb__day__1180x740.png`, `r4-switch-off__night.png`, `r4-switch-off-focus__night.png`, `r4-switch-on__day.png`.
+
+---
+
+
 ## Round 3 (Nov 17, evening): Accept above the fold, and the approved items
 
 **Blocker: fixed and checked.** On an iPad in landscape, Accept ended at 830 px (off the bottom at 820, fully below the fold in Safari's roughly 740). Accept and the rest of the call's action row now sit inside the call card, right under the call's words. The reasons, read-out and target come after. Landscape screens up to 920 px tall get a packed layout. Every in-game target stays at 48 px or more: the location grid is unchanged and the result keys are 50 px.
@@ -138,7 +192,7 @@ Run alone, on the final build, after the last CSS change:
 3. ~~Fold "Each count and pitch"~~ (built in round 3): on the stats page behind a disclosure, or turn it into a count grid.
 4. **A phone layout for the Game screen** with the call first and the count on one line.
 5. ~~Hand-off with watches~~: withdrawn. The device already remembers watch mode once opened with `?watch=1` (see round 3).
-6. **A watch switch in Setup** ("Use watches on this device", shown only where Web Bluetooth exists, kept on the device), so nobody has to type `?watch=1`. It was built and works, but it contradicts the existing `watch_e2e` assertion "no Watches card until it's opened once with ?watch=1". It needs your OK to change that assertion before it goes back in.
+6. ~~A watch switch in Setup~~: built in round 4, approved. **A watch switch in Setup** ("Use watches on this device", shown only where Web Bluetooth exists, kept on the device), so nobody has to type `?watch=1`. It was built and works, but it contradicts the existing `watch_e2e` assertion "no Watches card until it's opened once with ?watch=1". It needs your OK to change that assertion before it goes back in.
 
 ## Not verified
 - **A real iPad, in sun, with gloves; real Safari; the installed iPad app; real watches.** Everything ran in headless Chromium, plus Playwright WebKit and Firefox on Windows.

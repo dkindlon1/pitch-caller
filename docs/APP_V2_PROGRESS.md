@@ -60,3 +60,9 @@ Branch `app/v2-floodlight`, from `site/v2-alive` at 9273064 (not yet merged into
 - The three new tests are listed in `scripts/test-app.sh`.
 - A slip of mine, caught and repaired before any commit: a find-and-replace in game.css matched an earlier 44 px rule and cut a block; the file was restored from the last commit and the new rules re-added.
 - Full round on the final code (`$TEMP/appv2-checks/r9`): everything passes except the engine long task; `game_mix_e2e` failed once (4 games over 70%, limit 3) and passed the next three runs: it is seeded but not fully repeatable and sits at its limit.
+
+## Round 4 (Nov 17, night)
+- Watch switch in Setup (approved): always there where there is Web Bluetooth; the card only once watch mode is on; same stored flag as ?watch=1/0; reloads once. `watch_e2e`: line 93 assertion changed as approved; line 74 selector only (text "Watches" -> #watch-card). `watch_optin_e2e` 17 checks.
+- game_mix_e2e variance: pre-existing (old commit varied too). Cause: `DB.warm` was undefined for a few ms after `DB.ready` (set false only after several awaits), and the test's `DB.warm !== false` wait could pass in that gap, so start-up learning landed mid-game. Forcing an early start reproduces the variant games exactly. Fix: `DB.warm: false` in the DB object from the start, true on the no-database paths. After: 6 runs identical game by game.
+- IBB at 1180x740: 28 px to spare (spacing only; keys 48, key gap kept at 6, grid 48, call unchanged). fold_e2e: 24 px margin rule and the walk suggestion in the IBB state (112 checks). There is no intentional-walk button in the app.
+- Lesson: my round-script patch left a stray line and bash exited after the last game_mix run; check generated scripts with `bash -n` before running them detached.
