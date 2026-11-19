@@ -19,7 +19,7 @@ Logs: `C:/dev/pitch-caller-logs/` (not committed).
 | 6 | Email, season so far, final recap, freeze | done: reports_e2e email section all pass |
 | 7 | Public link, toggles, parent approval, PDF, website view | done; dead links 404 from the proxy |
 | 8 | Visual loop | rounds 1-2 done (fixes: heat note layout, phone overflow, overrides as cards under 900px, trend labels, copy); round 3 next |
-| 9 | Full checks | |
+| 9 | Full checks | run; two existing checks fail (rls_matrix anon grant, v11_kinds migration order); test-app.sh not read. See BUILD1_REPORT Open. Usage limit hit Nov 18 night: builds 2-4 not started |
 
 ## Inventory (read from the code, Nov 18)
 - **Events** are JSON docs in `public.events` (`doc jsonb`), written only through `pc_push`, read by coaches via RLS
