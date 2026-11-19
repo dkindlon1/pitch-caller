@@ -5620,8 +5620,11 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 // judged with his normal as a modest prior (DRIFT_PRIOR observations), so a short stretch alone can't fire a note
 const DRIFT_MIN = 8, VELO_DROP = 1.5;
 let DRIFT_P = 0.9;
-let DRIFT_SHARE = 0.25;   // a quarter of the way to the bad end (the plan's default line); Nov 19 retune, see below
-let DRIFT_PRIOR = 4, SE_SHIFT = 0.5, EARLY_LOOK = 0.04;   // Nov 19 retune (Drew: most catches with false notes at or under ~0.35 per outing): peak_sim 200 -> 0.320 false, 53% of an all-night flat slider caught; 400 -> 0.305, 51%. _tune() is for sweeps only
+let DRIFT_SHARE = 0.2;   // the share of the room from his normal to the bad end (review fixes, Nov 19: retuned with STRIKE_GAP, below)
+// review fixes (Nov 19, Drew): the strike-rate line is measured from his own normal, STRIKE_GAP points of room, not toward
+// the level's 45% bad end (that sat on top of a 50%-strike pitcher's normal, so ordinary nights crossed it)
+let STRIKE_GAP = 0.4;
+let DRIFT_PRIOR = 4, SE_SHIFT = 0.5, EARLY_LOOK = 0.04;   // review fixes (Nov 19): with STRIKE_GAP 0.4 and DRIFT_SHARE 0.2, peak_sim 800 -> false notes 0.205 / 0.235 / 0.258 / 0.245 / 0.246 per steady outing at 50 / 55 / 58 / 64 / 70% strikes; an all-night flat slider caught 41 / 45 / 50 / 55 / 63%. _tune() is for sweeps only
 // a note needs more certainty on few observations (each pitch is another look at the same night): 90% at 20+, more below
 const needP = (n) => Math.min(0.99, DRIFT_P + EARLY_LOOK * Math.max(0, (20 - n) / 12));
   /**
@@ -5641,9 +5644,12 @@ const needP = (n) => Math.min(0.99, DRIFT_P + EARLY_LOOK * Math.max(0, (20 - n) 
       for (const [mk, md] of Object.entries(METRICS)) {
         const k = s[md.num], n = s[md.den]; if (n < DRIFT_MIN) continue;
         const p0 = b.metrics[mk].p, se0 = b.metrics[mk].se, bad = BAD[mk];
-        // the line: a quarter of the way from his normal toward the level's bad end, measured from the cautious edge of
-        // his normal (one standard error), so an uncertain normal doesn't make an ordinary night look like a drop
-        const line = md.bad === "low" ? (p0 - SE_SHIFT * se0) - DRIFT_SHARE * Math.max(0, p0 - bad) : (p0 + SE_SHIFT * se0) + DRIFT_SHARE * Math.max(0, bad - p0);
+        // the line: a share of the room from his normal toward the bad end, measured from the cautious edge of his normal
+        // (part of a standard error), so an uncertain normal doesn't make an ordinary night look like a drop. Whiffs and
+        // hard contact: the room to the level's bad end. Strike rate: STRIKE_GAP points below his own normal, so the line
+        // scales with the pitcher (review fixes, Nov 19)
+        const room = mk === "strike" ? STRIKE_GAP : md.bad === "low" ? Math.max(0, p0 - bad) : Math.max(0, bad - p0);
+        const line = md.bad === "low" ? (p0 - SE_SHIFT * se0) - DRIFT_SHARE * room : (p0 + SE_SHIFT * se0) + DRIFT_SHARE * room;
         // tonight's rate as Beta(k + DRIFT_PRIOR p0, n - k + DRIFT_PRIOR (1 - p0)): the chance it's on the bad side of the line
         const a = k + DRIFT_PRIOR * p0, bb = n - k + DRIFT_PRIOR * (1 - p0);
         const prob = md.bad === "low" ? betaCdf(line, a, bb) : 1 - betaCdf(line, a, bb);
@@ -5698,7 +5704,7 @@ const needP = (n) => Math.min(0.99, DRIFT_P + EARLY_LOOK * Math.max(0, (20 - n) 
   }
 
   const api = { VERSION, METRICS, VARS, LEVEL, BAD, PRIOR_N, RECENT, FADE, LAST_SEASON, MIN_CELL, SHRINK, CLEAR_Q, EARLY_P, MAX_SHOWN, DRIFT_MIN, DRIFT_P, DRIFT_SHARE, DRIFT_PRIOR,
-    isPitch, pitchOf, counts, baseline, _tune: (o) => { if (o.prior !== undefined) DRIFT_PRIOR = o.prior; if (o.seShift !== undefined) SE_SHIFT = o.seShift; if (o.early !== undefined) EARLY_LOOK = o.early; if (o.share !== undefined) DRIFT_SHARE = o.share; if (o.p !== undefined) DRIFT_P = o.p; }, priorFor, findings, sentence, drift, driftLog, archetype, betaCdf, normCdf, tto, pcBucket };
+    isPitch, pitchOf, counts, baseline, _tune: (o) => { if (o.prior !== undefined) DRIFT_PRIOR = o.prior; if (o.seShift !== undefined) SE_SHIFT = o.seShift; if (o.early !== undefined) EARLY_LOOK = o.early; if (o.share !== undefined) DRIFT_SHARE = o.share; if (o.p !== undefined) DRIFT_P = o.p; if (o.strikeGap !== undefined) STRIKE_GAP = o.strikeGap; }, priorFor, findings, sentence, drift, driftLog, archetype, betaCdf, normCdf, tto, pcBucket };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCPeak = api;
 })(typeof window !== "undefined" ? window : this);

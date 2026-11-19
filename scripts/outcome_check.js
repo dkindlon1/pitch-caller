@@ -25,7 +25,7 @@ const same = (label, a, b) => check(JSON.stringify(a) === JSON.stringify(b), `${
 const LEVEL = { whiff: { FB: 0.19, SI: 0.14, FC: 0.22, SL: 0.31, CB: 0.29, CH: 0.30 }, strike: { FB: 0.64, SI: 0.63, FC: 0.63, SL: 0.60, CB: 0.57, CH: 0.58 }, hard: { FB: 0.38, SI: 0.33, FC: 0.35, SL: 0.30, CB: 0.30, CH: 0.31 } };
 const LEVEL_ANY = { whiff: 0.22, strike: 0.61, hard: 0.34 }, BAD = { whiff: 0.06, strike: 0.45, hard: 0.65 };
 const PRIOR_N = 15, RECENT = 5, FADE = 0.8, OTHER_SEASON = 0.5, MIN_CELL = 8, Q_CLEAR = 0.05, Q_EARLY = 0.2, SHOW = 5;
-const DRIFT_MIN = 8, DRIFT_SHARE = 0.25, DRIFT_PRIOR = 4, SE_SHIFT = 0.5, EARLY_LOOK = 0.04;   // Nov 19 retune
+const DRIFT_MIN = 8, DRIFT_SHARE = 0.2, DRIFT_PRIOR = 4, SE_SHIFT = 0.5, EARLY_LOOK = 0.04, STRIKE_GAP = 0.4;   // review fixes (Nov 19): the strike-rate line sits STRIKE_GAP from his own normal
 const RATES = [["whiff", "whiff", "swing", -1], ["strike", "strike", "pitch", -1], ["hard", "hard", "bip", 1]];   // [metric, num, den, bad direction]
 const SITS = {
   tto: [["1st", "2nd", "3rd+"], (e) => { const bf = e.sit ? Number(e.sit.batters_faced) : NaN; if (!Number.isFinite(bf)) return null; return bf < 9 ? "1st" : bf < 18 ? "2nd" : "3rd+"; }],
@@ -134,7 +134,8 @@ function driftLog(ps, norm, kinds) {
     for (const [mk, num, den, dir] of RATES) {
       const k = r.s[num], n = r.s[den]; if (n < DRIFT_MIN || fired.has(key + "|" + mk)) continue;
       const p0 = m[mk].p, se0 = m[mk].se, bad = BAD[mk];
-      const line = dir < 0 ? p0 - SE_SHIFT * se0 - DRIFT_SHARE * Math.max(0, p0 - bad) : p0 + SE_SHIFT * se0 + DRIFT_SHARE * Math.max(0, bad - p0);
+      const room = mk === "strike" ? STRIKE_GAP : dir < 0 ? Math.max(0, p0 - bad) : Math.max(0, bad - p0);
+      const line = dir < 0 ? p0 - SE_SHIFT * se0 - DRIFT_SHARE * room : p0 + SE_SHIFT * se0 + DRIFT_SHARE * room;
       const below = betaBelow(line, k + DRIFT_PRIOR * p0, n - k + DRIFT_PRIOR * (1 - p0)), prob = dir < 0 ? below : 1 - below;
       const need = Math.min(0.99, 0.9 + EARLY_LOOK * Math.max(0, (20 - n) / 12));
       if (prob >= need) { fired.add(key + "|" + mk); log.push(`${key}|${mk}|${k}/${n}|${i + 1}`); }
