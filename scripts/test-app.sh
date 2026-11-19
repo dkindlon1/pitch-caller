@@ -52,3 +52,4 @@ echo "smoke: passed"
 (cd app && ../$run watch_optin_e2e node watch_optin_e2e.js)   # app v2: watch mode (Setup switch or ?watch=1) is kept on the device; the Game Day hand-off respects it; the card only when on
 (cd app && ../$run sync_pill_e2e node sync_pill_e2e.js)   # app v2: the offline / syncing pill in the game bar
 (cd app && ../$run readout_sessions_e2e node readout_sessions_e2e.js)   # app v2: the line under the call reads his sessions from the device only, after the first render, offline too
+(cd app && ../$run logging_exact_test node logging_exact_test.js 2)   # Build 1: logging the full mix changes no call (old build vs new, same seeded games, every event field for field)

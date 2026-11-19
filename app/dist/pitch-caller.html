@@ -8558,7 +8558,10 @@ function makeCall() {
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
   const c = G().call = { id: nextCallId(), pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
     sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
-    dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })) };
+    dist: r.dist.slice(0, 5).map((d) => ({ pitch: d.pitch.name, quad: d.quad, prob: d.prob })),
+    // Build 1: the engine's full mix (every call in it with its share), read off the same result the pick came from, so
+    // it changes nothing about the call. A coach's own call keeps it (Object.assign in pickBox): what the engine had.
+    mix: r.dist.map((d) => [d.pitch.name, d.quad, d.prob]) };
   // spec 9: the "why" line runs after the call is shown, off the critical path
   setTimeout(() => {
     if (G().call !== c) return;
@@ -8629,6 +8632,15 @@ function record(res) {
     pcRaw: g.pc[pKey()] || 0, fatigueShift: fatigueShift(pd0), checkinId: ci ? ci.id : null, regs: (g.regs || {})[pKey()] || 0,
     v: { app: APP_VERSION, engine: E.VERSION, data: E.dataVersion(), learn: PCLearn.VERSION }, deviceId: DB.deviceId || null,
     pred: PCLearn.predict(E, ars, sitNow, called.name, call.quad), sit: PCLearn.snapSituation(sitNow), ars: PCLearn.snapArsenal(ars) };
+  // Build 1 (PLAN_style_layer 3.2, 3.3, 5): the engine's full mix as [pitch id, pitch name, spot, share], the styled mix
+  // (the same until the style layer exists), whose style applied ("none" for now; later "coach" / "pitcher") and its
+  // strength (null for now). Older events have none of these and stay valid everywhere.
+  if (Array.isArray(call.mix)) {
+    const idOf = (nm) => (pd0.pitches.find((x) => x.name === nm) || {}).id || null;
+    evBase.mix = call.mix.map(([nm, q, pr]) => [idOf(nm), nm, q, pr]);
+    evBase.styledMix = evBase.mix.map((m) => m.slice());
+  }
+  evBase.styleApplied = "none"; evBase.strength = null;
   {   // spec 8.3: what the expectations were built from, so a replay can recompute every one of them
     const s0 = Object.assign({}, sitNow, { look: g.pa ? g.pa.look : null, ump_u: umpSeed() });
     evBase.v08 = { look: g.pa ? g.pa.look : null, sigma: call.sigma || null, why: call.why || null, intent: call.intent || null, mechanism: call.mechanism || null, walk: !!call.walk,

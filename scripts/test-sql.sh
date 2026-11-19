@@ -16,3 +16,4 @@ $run rls_matrix_test    node supabase/test/rls_matrix_test.js
 $run waitlist_test      node supabase/test/waitlist_test.js
 $run v11_kinds_test     node supabase/test/v11_kinds_test.js   # v1.1 Step 5: six kinds and v1.1 tags in the uploads tables
 $run v12_sessions_test  node supabase/test/v12_sessions_test.js   # v1.2 Step 4: charted sessions, way-off cells, glove spots and leans sync unchanged (no migration)
+$run logging_sync_test  node supabase/test/logging_sync_test.js   # Build 1: the full mix / styled mix / style fields sync unchanged; an older app's events still sync
