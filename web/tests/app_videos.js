@@ -35,11 +35,12 @@ const FAKE_BT = `
   function makeWatch(name) {
     const w = { name, writes: [], buzzes: [], overlaps: 0, connected: false, notifying: false, view: null, mute: false };
     let busy = false, listener = null; const disc = [];
-    w.core = PQCore({ draw: (v) => { w.view = v; }, buzz: (k) => w.buzzes.push(k), light: () => {}, now: () => Date.now(),
+    w.core = PQCore({ draw: (v) => { w.view = v; }, buzz: (k) => w.buzzes.push(k), light: () => {}, now: () => Date.now(), secure: () => w.connected,   // Build 4: the stand-in link counts as passkey-bonded
       notify: (t) => { if (w.mute) return; if (w.connected && w.notifying && listener) setTimeout(() => listener({ target: { value: new DataView(enc.encode(t).buffer) } }), 10); } });
     const op = (fn) => { if (busy) { w.overlaps++; return Promise.reject(new Error("GATT operation already in progress.")); } busy = true;
       return new Promise((res, rej) => setTimeout(() => { busy = false; if (!w.connected) return rej(new Error("disconnected")); fn(); res(); }, 15)); };
-    const rx = { writeValueWithResponse: (b) => op(() => { const t = dec.decode(b); w.writes.push(t); w.core.onWrite(t); }) };
+    // Build 4: writes are binary (the game key, sealed frames); the watch app gets one character per byte, as from E.toString
+    const rx = { writeValueWithResponse: (b) => op(() => { const t = String.fromCharCode.apply(null, new Uint8Array(b.buffer ? b.buffer.slice(b.byteOffset || 0, (b.byteOffset || 0) + b.byteLength) : b)); w.writes.push(t); w.core.onWrite(t); }) };
     const tx = { addEventListener: (e, f) => { listener = f; }, startNotifications: () => op(() => { w.notifying = true; }), stopNotifications: () => op(() => { w.notifying = false; }) };
     const svc = { getCharacteristic: async (u) => (u === RX ? rx : tx) };
     w.device = { id: "id-" + name, name, addEventListener: (e, f) => { if (e === "gattserverdisconnected") disc.push(f); },

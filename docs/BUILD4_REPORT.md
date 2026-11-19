@@ -48,7 +48,23 @@ production migration. Working notes: `docs/BUILD4_PROGRESS.md`.
 - **README**: a security section, what the watch shows, and desk-test items 6–9 plus more (see "Not verified").
 
 ## Commands and results
-B4_RESULTS
+Full proof run on the final code: `C:/dev/pitch-caller-logs/run_b4_full.sh`, which builds the game app and the site, runs the watch proofs, then every existing check. Logs are in `C:/dev/pitch-caller-logs/b4full/`.
+
+| Check (plan section 4) | Result |
+|---|---|
+| **1. Encryption shared between sender and watch, fixed test vectors on both sides:** `app/watch_sec_test.js` | **22/22**. The watch app's crypto block is byte-identical to `app/watch_sec.js`. Both sides pass AES-128 FIPS-197 C.1, all four RFC 4493 CMAC examples, and AES on 300 random blocks against OpenSSL. An independent build from Node's OpenSSL AES (its own CMAC, KDF and AES-CTR) agrees with both sides on pinned vectors and on 400 random messages (every kind, innings 1–255). Each side opens the other's messages; a wrong key, wrong key id or short frame doesn't open. |
+| **2. Tampered, replayed, wrong-inning and wrong-game messages rejected by the watch code under the fake:** `app/watch_test.js` section 9 | All rejected, with no buzz and nothing shown: all 128 one-bit changes of a captured call; an older captured call; a forged newer number; a plain-text call in the old format; an inning-2 call after inning 3; a frame relabelled to a later inning; a call captured in the previous game; any call after End game; a game key over a link that isn't passkey-bonded. A removed watch gets no key and is forgotten. |
+| **3. Inning rotation, extras included** | Both sides derive identical keys for innings 1–255, all 510 distinct (`watch_sec_test`). In `watch_test` the watch follows innings 1, 2, 3 and 10, 11, 12 with no new key sent between innings. |
+| **4. Key expiry and end-game wipe under the fake clock** | End game wipes both sides' keys (`watch_test`; and in the real page with two watches, `watch_e2e` section 12). Expiry: a dropped link keeps the key; at 5 h 59 m 59 s on the fake clock it's still there; past 6 h the watch's own tick wipes it. |
+| **5. Message size fits one Bluetooth write** | Sealed message 16 bytes, game key 18, every write in every run ≤ 20 (largest 18). `watch_e2e` checks the air in the real page carries only the key once per connection and 16-byte frames, with no plain-text call, spot word, watch name or pitcher name. |
+| The watch flow end to end on the fakes | `watch_test` **86/86** (sections 1–8, the prototype's whole flow under encryption, plus 9). `watch_e2e` **41/41** (Accept, clears, shake-off as a change, shared signs, two watches, soak, End game, in the built app). `watch_optin_e2e` 17/17. `watch/bangle/test.js` **68/68**: the watch app against stand-in firmware, covering pairing settings, every spot drawn, key rules, NO LINK, and the firmware AES used only when it gives the right answer (7 block operations for an inning's first call, 3 after). |
+| Team watch list: `supabase/test/watch_rls_test.js` | **19/19**: a caller registers; every coach sees; head coach or owner removes; a caller can't put a removed watch back; players, other teams and signed-out visitors see nothing; no direct writes. |
+| Portal Settings → Watches: `web/tests/watches_e2e.js` | **11/11** (after two fixes to the test itself: text matches inside the hidden confirm, and waiting for the redirect). Covers list, roles, remove with confirm, notice, the removed state, the database row, the game app's list call, phone width. |
+| Web chain: tsc, `npm test`, `next build`, site e2e | all pass |
+| SQL tests, each alone | sync 38, client_review 37, sync_auth 9, app_sync_e2e 37, rls_matrix 347, waitlist 22, v12_sessions 11, watch_rls 19: pass. `review_test` 28/29 (the baseline's known failure). **`v11_kinds_test` fails** by construction, as in Builds 1–3 (it now names this build's migration). |
+| Portal e2es | shell 43, offline_game 22, portal 30, billing 52, player_admin 24, uploads 33, retention 10, gameplan 38: all pass |
+| `scripts/test-app.sh` | every suite passes. Two runs stopped on test problems, both fixed: (1) `watch_e2e`'s "nothing readable" rule (any 4 letters in a row) could be tripped by random ciphertext, so it now looks for the actual plaintext; (2) `fold_e2e`'s fake watches (`app/shots_v2.js`) didn't speak the sealed protocol. The steps after the stop (fold_e2e 112, watch_optin_e2e 17, sync_pill_e2e 16, readout_sessions_e2e 6) were then run through the same runner. |
+| Screens: `C:/dev/pitch-caller-shots/build4/` | Settings → Watches at 1440 (list, confirm, removed) and 390 (no sideways scroll) |
 
 ## Readings and proposals
 1. **Receipts from the watch stay plain** (`A<n>` receipt, `B<pct>` battery, `K<id>` key received). They only feed

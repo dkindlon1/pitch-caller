@@ -24,4 +24,4 @@ Read first: watch/bangle/README.md, app/watch.js, app/watch_test.js, app/watch_e
 - Receipts (A<n>, B<pct>, K<id>) from the watch stay plain: informational, and the link itself is bonded.
 
 ## Next
-- Run watches_e2e against the local Supabase (after Build 3's full run frees it), full checks, BUILD4_REPORT.md, push.
+- Done: full run (`run_b4_full.sh`), report, pushed.

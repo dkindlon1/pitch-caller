@@ -68,7 +68,36 @@ are on disk, not in git.
   - `r3/home-top__390.png`: "At your best" on a player's home.
 
 ## Build 4: watch security (fake-tested)
-B4_SUMMARY
+- **Status:** done (on fakes), pushed. **Branch:** `feat/watch-security` (from `main`).
+- **Built** (plan section 5 steps 1–6):
+  - Shared crypto: AES-128, CMAC, per-inning keys, a 16-byte sealed message.
+  - Passkey pairing settings on the watch.
+  - A fresh game key per game, accepted only over the bonded link and kept in memory only.
+  - End-game wipe and 6-hour expiry.
+  - A team watch list with Remove in the portal (Settings → Watches).
+  - README desk-test additions.
+- **Proof** (plan section 4 items 1–5, all on the fakes):
+  - Crypto: 22/22. Published AES and CMAC vectors on both sides, an independent OpenSSL build, matching keys for
+    innings 1–255.
+  - Attacks the watch rejects silently: all 128 single-bit tampers, replays, wrong inning, wrong game, a key over an
+    unbonded link, plain text.
+  - End-game wipe and 6 hours on the fake clock.
+  - Every write within 20 bytes.
+  - The whole watch flow still works end to end on the fakes: `watch_test` 86, `watch_e2e` 41, the watch app's own
+    test 68.
+  - Permissions: 19/19. Portal: 11/11.
+  - Everything else passes, apart from the same known two.
+- **Not verified** (needs the real watch; also in the README's desk-test list):
+  - Pairing in Chrome.
+  - That an unpaired device can't connect or write.
+  - AES speed and Accept-to-buzz delay (target under 300 ms).
+  - Programmable off.
+  - Battery over a soak.
+  - Whether the OS bond needs removing by hand.
+- **Look at first:**
+  - `C:/dev/pitch-caller-shots/build4/settings-watches-confirm__1440.png`
+  - `settings-watches-removed__1440.png`
+  - The README's new desk-test list: `watch/bangle/README.md`.
 
 ## Needs Drew's decision
 1. **Drift sensitivity (Build 3).** The plan's default line alarmed about 1 outing in 3. The chosen settings alarm about 1
