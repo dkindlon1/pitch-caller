@@ -5,7 +5,7 @@
  * a choice:
  *   - the normal: per-pitch weighted sums built game by game in date order (newest first), not by sorting a list;
  *   - p-values from erfc by a high-precision series/continued fraction, not Abramowitz-Stegun;
- *   - the drift chance by numerical integration of the Beta density (Simpson, 4000 steps), not the incomplete-beta
+ *   - the drift chance by numerical integration of the Beta density (Simpson, 20000 steps), not the incomplete-beta
  *     continued fraction; BH by step-up from the largest p, not by a forward scan.
  * Compared: (1) every outing's findings (cells tested, the ones shown with their level, counts, normal and chart) and
  * drift log; (2) every pitcher's season-so-far findings; (3) the rows the report job stored (outcome_findings);
@@ -52,11 +52,14 @@ function erfc(x) {   // Numerical Recipes erfc via Chebyshev (relative error < 1
 const pTwoSided = (z) => erfc(Math.abs(z) / Math.SQRT2);
 function lnGamma(z) { const g = 7, c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61563141, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
   if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - lnGamma(1 - z); z -= 1; let x = c[0]; for (let i = 1; i < g + 2; i++) x += c[i] / (z + i); const t = z + g + 0.5; return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x); }
-function betaBelow(x, a, b) {   // P(X < x), Simpson's rule on the density (substituting u^(1/a) near 0 so the integrand is smooth)
+function betaBelow(x, a, b) {   // P(X < x) by Simpson's rule on the density
   if (x <= 0) return 0; if (x >= 1) return 1;
-  const lB = lnGamma(a) + lnGamma(b) - lnGamma(a + b), N = 4000, U = Math.pow(x, a);
-  // with t = u^(1/a): dt = (1/a) u^(1/a - 1) du, and t^(a-1) dt = du / a, so the integrand is (1 - u^(1/a))^(b-1) / a
-  const f = (u) => (u <= 0 ? 1 : Math.pow(1 - Math.pow(u, 1 / a), b - 1)) / a;
+  const lB = lnGamma(a) + lnGamma(b) - lnGamma(a + b), N = 20000;
+  let f, U;
+  if (a >= 1) { U = x; f = (t) => (t <= 0 ? (a === 1 ? 1 : 0) : Math.exp((a - 1) * Math.log(t) + (b - 1) * Math.log(1 - t))); }
+  else {   // a < 1: the density is infinite at 0; with u = t^a, t^(a-1) dt = du / a and the integrand is smooth
+    U = Math.pow(x, a); f = (u) => (u <= 0 ? 1 : Math.pow(1 - Math.pow(u, 1 / a), b - 1)) / a;
+  }
   let s = f(0) + f(U); for (let i = 1; i < N; i++) s += (i % 2 ? 4 : 2) * f((U * i) / N);
   return Math.min(1, (s * U) / (3 * N) / Math.exp(lB));
 }

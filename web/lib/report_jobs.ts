@@ -225,12 +225,15 @@ export async function opponentSuggestions(teamId: string): Promise<number> {
 
 // ---------------------------------------------------------------- Build 3: outcome tracking, stored after each game
 // For every finished game's pitchers: that outing's findings and drift notes (against his normal from the games before
-// it), and each pitcher's baseline after his latest game. Rebuilt when missing or older than the game's last change.
+// it), and each pitcher's baseline after his latest game. Every outing is worked out again on each run (a pitch fixed
+// in an earlier game changes the normal for every game after it) and a row is written only when it's new or changed.
+// the same JSON however its keys are ordered (Postgres jsonb sorts them its own way)
+const canon = (x: unknown): string => Array.isArray(x) ? `[${x.map(canon).join(",")}]` : x && typeof x === "object" ? `{${Object.keys(x).sort().map((k) => `${JSON.stringify(k)}:${canon((x as Record<string, unknown>)[k])}`).join(",")}}` : JSON.stringify(x);
 export async function storeOutcomes(teamId: string): Promise<number> {
   const games = (await restAll<GameRow & { synced_at?: string }>(`games?program_id=eq.${teamId}&deleted_at=is.null&select=id,doc`))
     .filter((g) => !g.doc?.dupOf && g.doc?.status === "final" && /^\d{4}-\d{2}-\d{2}$/.test(String(g.doc.date)));
   if (!games.length) return 0;
-  const have = new Set((await restAll<{ game_id: string; pitcher_id: string }>(`outcome_findings?program_id=eq.${teamId}&select=game_id,pitcher_id`)).map((r) => `${r.game_id}|${r.pitcher_id}`));
+  const have = new Map((await restAll<{ game_id: string; pitcher_id: string; data: unknown }>(`outcome_findings?program_id=eq.${teamId}&select=game_id,pitcher_id,data`)).map((r) => [`${r.game_id}|${r.pitcher_id}`, canon(r.data)]));
   const seasons = (await rest<SeasonRow[]>(`seasons?program_id=eq.${teamId}&select=id,name,start_date,end_date`)).map((s) => ({ name: s.name, start: s.start_date, end: s.end_date }));
   const meta = await teamMeta(teamId);
   const list = games.map((g) => ({ id: g.id, date: String(g.doc.date) }));
@@ -243,9 +246,10 @@ export async function storeOutcomes(teamId: string): Promise<number> {
     const gamesHis = list.filter((g) => mine.some((e) => e.gameId === g.id)).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
     const rows = [];
     for (const g of gamesHis) {
-      if (have.has(`${g.id}|${pid}`)) continue;
       const o = outingOutcome(mine as never[], list, g.id, seasons, pitches);
-      rows.push({ program_id: teamId, game_id: g.id, pitcher_id: pid, data: { findings: { tested: o.findings.tested, shown: o.findings.shown }, drift: o.drift, archetype: o.archetype, priorOutings: o.priorOutings } });
+      const data = JSON.parse(JSON.stringify({ findings: { tested: o.findings.tested, shown: o.findings.shown }, drift: o.drift, archetype: o.archetype, priorOutings: o.priorOutings }));
+      if (have.get(`${g.id}|${pid}`) === canon(data)) continue;
+      rows.push({ program_id: teamId, game_id: g.id, pitcher_id: pid, data });
     }
     if (rows.length) { await rest("outcome_findings?on_conflict=program_id,game_id,pitcher_id", { method: "POST", headers: { prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) }); n += rows.length; }
     if (gamesHis.length) {
