@@ -6,7 +6,8 @@ import { gradeHistory } from "@/lib/player";
 import { PitcherHead } from "../../../../_uploads/pitcher-head";
 import { KINDS, PITCH_TYPES, signOf } from "@/lib/docs";
 import { v11Pitch } from "@/lib/engine_server";
-import { revertGrade, savePitcher } from "../../actions";
+import { revertGrade, savePitcher, setMinor18 } from "../../actions";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { Notice, type Search } from "../../ui";
 
 export const metadata: Metadata = { title: "Pitcher · PitchIQ", robots: { index: false } };
@@ -28,6 +29,8 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const FIELD = { grade: "stuff", command: "command" } as const;
   const day = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const ro = !roster;
+  const { data: minorRows } = await (await getServerSupabase()).from("minor_guardians").select("parent_email").eq("program_id", team).eq("pitcher_id", p.id).limit(1);
+  const parentEmail = ((minorRows || [])[0] as { parent_email?: string } | undefined)?.parent_email || "";
   return (
     <>
       <PitcherHead team={team} p={p} at="profile" />
@@ -78,6 +81,18 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
                 </form>) : null}
             </li>))}</ul>
         ) : <p className="shell-note">No grade changes yet. When the player changes a grade in his portal, it shows here and you can put it back.</p>}
+      </section>
+      <section aria-labelledby="minor-h" className="shell-form" style={{ marginTop: 28 }}>
+        <h2 id="minor-h" className="shell-h2">Under 18</h2>
+        <p className="shell-note small">A player under 18 can make a public link to his season recap, but it stays off until his parent&apos;s account approves it. The parent signs in with this email to approve (no team access comes with it).</p>
+        {roster ? (
+          <form action={setMinor18} className="shell-form" aria-label="Under 18">
+            <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={p.id} />
+            <label className="rp-check" style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><input type="checkbox" name="under18" defaultChecked={!!parentEmail} /> He&apos;s under 18</label>
+            <label><span>Parent&apos;s email</span><input name="parent_email" type="email" autoComplete="off" spellCheck={false} defaultValue={parentEmail} placeholder="parent@example.com" /></label>
+            <button type="submit" className="shell-btn small">Save</button>
+          </form>
+        ) : <p className="shell-note small">{parentEmail ? `Marked under 18; a public link needs his parent's approval.` : "Not marked under 18."}</p>}
       </section>
     </>
   );

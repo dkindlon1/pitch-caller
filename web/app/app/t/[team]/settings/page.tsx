@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ensureOurTeam, teamFor, teamRule } from "@/lib/team";
 import PCRules from "@/lib/pitch_rules";
-import { saveSettings } from "../actions";
+import { markSeasonOver, saveSettings } from "../actions";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { Notice, type Search } from "../ui";
 
 export const metadata: Metadata = { title: "Settings · PitchIQ", robots: { index: false } };
@@ -39,6 +40,30 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <button type="submit" className="shell-btn primary">Save</button>
       </form>
       {t.active ? null : <p className="shell-note">This team isn&apos;t switched on yet: the name and time zone save now, the pitch-count rule once billing is done.</p>}
+      <Seasons team={team} active={t.active} />
     </>
+  );
+}
+
+// Seasons (Build 1): "Mark season over" freezes each pitcher's final recap and emails it; the season so far starts again.
+async function Seasons({ team, active }: { team: string; active: boolean }) {
+  const sb = await getServerSupabase();
+  const { data } = await sb.from("seasons").select("id, name, start_date, end_date").eq("program_id", team).order("end_date", { ascending: false }).limit(20);
+  const rows = (data || []) as { id: string; name: string; start_date: string; end_date: string }[];
+  const d = (iso: string) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  return (
+    <section className="shell-form rows" aria-labelledby="seasons-h" style={{ marginTop: 28 }}>
+      <h2 id="seasons-h">Seasons</h2>
+      {rows.length ? <ul className="pq-list">{rows.map((r) => <li key={r.id}>{r.name} <span className="shell-note small">({d(r.start_date)} – {d(r.end_date)})</span></li>)}</ul>
+        : <p className="shell-note small">No season marked over yet: every pitcher&apos;s recap is his whole history so far.</p>}
+      {active ? (
+        <form action={markSeasonOver} className="shell-form" aria-label="Mark season over">
+          <input type="hidden" name="team" value={team} />
+          <label><span>Season name</span><input name="season" required maxLength={80} placeholder="Spring 2026…" autoComplete="off" /></label>
+          <p className="shell-note small">Marking the season over builds each pitcher&apos;s final recap from every game since {rows.length ? "the last season" : "the first game"} through today, freezes it, and emails it to him and to the coaches. Games after today start the next season so far. It can&apos;t be undone.</p>
+          <button type="submit" className="shell-btn">Mark season over</button>
+        </form>
+      ) : null}
+    </section>
   );
 }

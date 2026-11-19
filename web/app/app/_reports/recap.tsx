@@ -9,12 +9,12 @@ import { CompareBlock, Completeness, HeatBlock, LineStrip, MixBlock, OutingsTabl
 export type Sections = { summary: boolean; heat: boolean; pitches: boolean; outings: boolean };
 export const ALL_SECTIONS: Sections = { summary: true, heat: true, pitches: true, outings: true };
 
-export function RecapView({ r, sections = ALL_SECTIONS, opponents, outingHref, back, sub, actions, title }: {
+export function RecapView({ r, sections = ALL_SECTIONS, opponents, outingHref, back, sub, actions, title, own }: {
   r: Partial<Recap> & { meta: Recap["meta"] }; sections?: Sections; opponents?: Map<string, string | null>; outingHref?: (game: string) => string;
-  back?: { href: string; label: string }; sub?: ReactNode; actions?: ReactNode; title?: string;
+  back?: { href: string; label: string }; sub?: ReactNode; actions?: ReactNode; title?: string; own?: boolean;
 }) {
   const m = r.meta;
-  const range = m.start ? `${dayText(m.start, { month: "short", day: "numeric" })}${m.end ? ` – ${dayText(m.end, { month: "short", day: "numeric", year: "numeric" })}` : " on"}` : "";
+  const range = m.start ? (m.end ? `${dayText(m.start, { month: "short", day: "numeric" })} – ${dayText(m.end, { month: "short", day: "numeric", year: "numeric" })}` : `Since ${dayText(m.start, { month: "short", day: "numeric" })}`) : "";
   return (
     <article className="rp">
       <header className="rp-head">
@@ -26,7 +26,7 @@ export function RecapView({ r, sections = ALL_SECTIONS, opponents, outingHref, b
           {m.final ? <><span className="sep" aria-hidden="true">·</span><span>Frozen when the season was marked over</span></> : null}{sub}</p>
         {actions ? <div className="rp-acts">{actions}</div> : null}
       </header>
-      {!m.outings ? <p className="rp-empty">{m.final ? "He didn't pitch in this season." : "No outings yet this season. The recap fills in after his first game syncs."}</p> : (<>
+      {!m.outings ? <p className="rp-empty">{m.final ? (own ? "You didn't pitch in this season." : "He didn't pitch in this season.") : own ? "No outings yet this season. Your recap fills in after your first game syncs." : "No outings yet this season. The recap fills in after his first game syncs."}</p> : (<>
         {sections.summary && r.line ? (
           <Section id="line" title="Season line">
             <LineStrip l={r.line} extra={<div><dt>Batters</dt><dd data-k="line.bf" data-v={r.line.bf}>{r.line.bf}</dd></div>} />

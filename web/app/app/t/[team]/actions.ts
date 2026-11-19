@@ -7,6 +7,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { ensureOurTeam, hittersOf, pitchersOf, push, teamFor, teamsOf, TOGGLES, PRESET_PERMS, OWNER_ONLY } from "@/lib/team";
 import { PITCH_TYPES, newHitter, newPitch, newPitcher, parseHitters, parseRoster, type Pitch } from "@/lib/docs";
 import PCRules from "@/lib/pitch_rules";
+import { runReports } from "@/lib/report_jobs";
 
 // Every action checks the user again and writes through the server's own rules (pc_push and the pc_ functions), then
 // goes back to the page with a code for a fixed message (never text from the URL).
@@ -203,4 +204,33 @@ export async function saveSettings(f: FormData) {
     if (!ok(r)) back(c.team, "/settings", "error=push");
   }
   back(c.team, "/settings", "ok=saved");
+}
+
+// ---------------------------------------------------------------- Build 1: seasons and the under-18 parent
+// Mark season over: the database checks the coach may (manage_roster) and writes the season (the day after the last
+// one to today); then this team's report run builds each pitcher's final recap, freezes it and emails it.
+export async function markSeasonOver(f: FormData) {
+  const c = await ctx(f);
+  if (!c.manage("manage_roster") || !c.can("manage_roster")) back(c.team, "/settings", "error=not_allowed");
+  const name = str(f, "season").slice(0, 80);
+  if (!name) back(c.team, "/settings", "error=season_name");
+  const sb = await getServerSupabase();
+  const { error } = await sb.rpc("pc_mark_season_over", { p: c.team, season_name: name });
+  if (error) back(c.team, "/settings", `error=${/already ended today/.test(error.message) ? "season_today" : /only a coach/.test(error.message) ? "not_allowed" : "season"}`);
+  const h = await headers();
+  const site = process.env.SITE_URL?.replace(/\/$/, "") || `${h.get("x-forwarded-proto") || "http"}://${h.get("host")}`;
+  await runReports(site, c.team).catch((e) => console.error("final recaps failed", (e as Error).message));
+  back(c.team, "/settings", "ok=season");
+}
+
+// Under 18: the parent whose account must approve a public recap link (blank: not marked)
+export async function setMinor18(f: FormData) {
+  const c = await ctx(f);
+  const pitcher = str(f, "pitcher"), email = str(f, "parent_email").toLowerCase();
+  if (!c.manage("manage_roster")) back(c.team, `/roster/${pitcher}`, "error=not_allowed");
+  if (f.get("under18") === "on" && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) back(c.team, `/roster/${pitcher}`, "error=parent");
+  const sb = await getServerSupabase();
+  const { error } = await sb.rpc("pc_set_minor18", { p: c.team, pitcher, parent_email: f.get("under18") === "on" ? email : null });
+  if (error) back(c.team, `/roster/${pitcher}`, "error=not_allowed");
+  back(c.team, `/roster/${pitcher}`, f.get("under18") === "on" ? "ok=minor18" : "ok=minor18_off");
 }

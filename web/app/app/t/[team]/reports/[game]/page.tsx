@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { teamFor } from "@/lib/team";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { buildGameSummary } from "@/lib/report_data.ts";
-import { gameEvents, gameMeta, teamGames, teamNames, teamPitchers } from "@/lib/report_fetch.ts";
+import { gameEvents, gameMeta, teamGames, teamNames, teamPitchers, type SB } from "@/lib/report_fetch.ts";
 import { LineStrip, OverridesBlock, Section, dayText } from "@/app/app/_reports/ui";
 import { ReportSkeleton } from "@/app/app/_reports/skeleton";
 
@@ -22,12 +22,12 @@ export default function Page({ params }: { params: Params }) {
 async function Body({ params }: { params: Params }) {
   const { team, game } = await params;
   const { team: t } = await teamFor(team);
-  const sb = await getServerSupabase();
-  const [games, pitchers, names] = await Promise.all([teamGames(sb, team), teamPitchers(sb, team), teamNames(sb, team)]);
+  const sb = await getServerSupabase(), db = sb as unknown as SB;
+  const [games, pitchers, names] = await Promise.all([teamGames(db, team), teamPitchers(db, team), teamNames(db, team)]);
   const g = games.find((x) => x.id === game);
   if (!g) notFound();
   const meta = gameMeta(g, names, t.level);
-  const evs = await gameEvents(sb, team, [game]);
+  const evs = await gameEvents(db, team, [game]);
   const s = buildGameSummary(evs, meta, pitchers.map((p) => ({ id: p.id, name: p.name, hand: p.hand, pitches: p.pitches })));
   return (
     <article className="rp">

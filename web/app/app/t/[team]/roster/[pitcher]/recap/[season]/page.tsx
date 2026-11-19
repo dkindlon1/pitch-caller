@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { teamFor } from "@/lib/team";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { Recap } from "@/lib/report_data.ts";
-import { teamGames, teamNames, teamPitchers } from "@/lib/report_fetch.ts";
+import { teamGames, teamNames, teamPitchers, type SB } from "@/lib/report_fetch.ts";
 import { RecapView } from "@/app/app/_reports/recap";
 import { ReportSkeleton } from "@/app/app/_reports/skeleton";
 
@@ -20,11 +20,11 @@ async function Body({ params }: { params: Params }) {
   const { team, pitcher, season } = await params;
   await teamFor(team);
   if (!/^[0-9a-f-]{36}$/.test(season)) notFound();
-  const sb = await getServerSupabase();
+  const sb = await getServerSupabase(), db = sb as unknown as SB;
   const { data } = await sb.from("recap_versions").select("version, data, created_at").eq("program_id", team).eq("season_id", season).eq("pitcher_id", pitcher).order("version", { ascending: false }).limit(1);
   const v = (data || [])[0] as { version: number; data: Recap; created_at: string } | undefined;
   if (!v) notFound();
-  const [games, names, pitchers] = await Promise.all([teamGames(sb, team), teamNames(sb, team), teamPitchers(sb, team)]);
+  const [games, names, pitchers] = await Promise.all([teamGames(db, team), teamNames(db, team), teamPitchers(db, team)]);
   const opp = new Map(games.map((g) => [g.id, g.opponent_id ? names.get(g.opponent_id) || null : null]));
   const p = pitchers.find((x) => x.id === pitcher);
   return (

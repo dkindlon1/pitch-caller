@@ -37,6 +37,7 @@ export function playerNav(team: string, pitcher: string): NavItem[] {
     { key: "arsenal", href: `${base}/arsenal`, icon: "arsenal", label: "Arsenal", short: "Arsenal", sub: "Your pitches and grades" },
     { key: "uploads", href: `${base}/uploads`, icon: "uploads", label: "Uploads", short: "Uploads", sub: "TrackMan and Rapsodo sessions" },
     { key: "stats", href: `${base}/stats`, icon: "stats", label: "Stats", short: "Stats", sub: "By pitch, count and hitter side" },
+    { key: "recap", href: `${base}/recap`, icon: "eye", label: "Season recap", short: "Recap", sub: "Your season so far, final recaps and sharing" },
     { key: "learned", href: `${base}/learned`, icon: "learned", label: "What it learned", short: "Learned", sub: "What the engine knows about your pitches" },
     { key: "profile", href: `${base}/profile`, icon: "profile", label: "Profile", short: "Profile", sub: "Your details" },
   ];

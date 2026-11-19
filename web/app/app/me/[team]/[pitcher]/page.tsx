@@ -52,12 +52,13 @@ async function Body({ params }: { params: Params }) {
 
       <section aria-labelledby="out-h">
         <h2 id="out-h" className="shell-h2">Outings</h2>
+        {mine.length ? <p className="shell-note small">Tap a date for that outing&rsquo;s report.</p> : null}
         {mine.length ? (
           <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Outings">
             <thead><tr><th>Date</th><th className="num">Pitches</th><th className="num">Strikes</th><th>By pitch</th></tr></thead>
             <tbody>{mine.map((o) => (
               <tr key={o.game_id}>
-                <td>{dayName(o.date)}</td>
+                <td><a href={`/app/me/${team}/${pitcher}/outings/${o.game_id}`}>{dayName(o.date)}</a></td>
                 <td className="num mono">{o.pitches}</td>
                 <td className="num mono">{pct(o.strikes, o.pitches)}</td>
                 <td><span className="pq-mini" aria-hidden="true">{Object.entries(o.by_pitch).sort((a, b) => b[1].n - a[1].n).map(([name, x]) => <i key={name} className={`k-${kindOf.get(name) || "x"}`} style={{ flex: `${x.n} 0 0` }} />)}</span>

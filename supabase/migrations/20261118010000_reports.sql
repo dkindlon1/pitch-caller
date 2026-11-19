@@ -399,12 +399,12 @@ begin
          or k = 'pitchByPitch' and (secs ->> 'pitches')::boolean));
   end if;
   return out || jsonb_build_object(
-    'games', case when (secs ->> 'outings')::boolean or (secs ->> 'pitches')::boolean then
-      coalesce((select jsonb_agg(jsonb_build_object('id', g.id, 'date', g.day, 'level', g.doc ->> 'level') order by g.day, g.id)
-                from private.pc_report_games(s.program_id, from_day, to_day) g
-                where exists (select 1 from public.events e where e.program_id = s.program_id and e.game_id = g.id and e.pitcher_id = s.pitcher_id and e.deleted_at is null)), '[]'::jsonb)
-      else '[]'::jsonb end,
-    'events', coalesce((select jsonb_agg(case when (secs ->> 'outings')::boolean or (secs ->> 'pitches')::boolean then r else r - 'gameId' end)
+    -- his games in order; their dates only with the outing list or pitch by pitch (otherwise outings are numbered)
+    'games', coalesce((select jsonb_agg(jsonb_strip_nulls(jsonb_build_object('id', g.id, 'level', g.doc ->> 'level',
+                 'date', case when (secs ->> 'outings')::boolean or (secs ->> 'pitches')::boolean then g.day end)) order by g.day, g.id)
+               from private.pc_report_games(s.program_id, from_day, to_day) g
+               where exists (select 1 from public.events e where e.program_id = s.program_id and e.game_id = g.id and e.pitcher_id = s.pitcher_id and e.deleted_at is null)), '[]'::jsonb),
+    'events', coalesce((select jsonb_agg(r)
       from (select private.pc_report_event(e.doc, (secs ->> 'heat')::boolean) - 'id' - 'pitcherId' - 'shaken' - 'recall' - 'slot' as r
             from public.events e join private.pc_report_games(s.program_id, from_day, to_day) g on g.id = e.game_id
             where e.program_id = s.program_id and e.pitcher_id = s.pitcher_id and e.deleted_at is null and (e.type is null or e.type = 'pitch')

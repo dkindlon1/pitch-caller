@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { hittersOf, teamFor, teamsOf } from "@/lib/team";
+import { getServerSupabase } from "@/lib/supabase/server";
 import { addHitters } from "../../actions";
 import { Notice, type Search } from "../../ui";
 
@@ -22,6 +23,11 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   if (!o) notFound();
   const mine = hitters.filter((x) => x.teamId === opp && !x.deletedAt).sort((a, b) => (+a.number || 999) - (+b.number || 999) || (a.name || "").localeCompare(b.name || ""));
   const edit = manage("manage_opponents") || manage("manage_roster");
+  // at-bats seen per hitter, across seasons (each links to his page with every at-bat and its outing report)
+  const sb = await getServerSupabase();
+  const { data: ends } = await sb.from("events").select("doc->>hitterId").eq("program_id", team).is("deleted_at", null).eq("doc->>end", "true").in("doc->>hitterId", mine.map((x) => x.id).slice(0, 200)).limit(5000);
+  const seen = new Map<string, number>();
+  for (const r of (ends || []) as { hitterId: string }[]) seen.set(r.hitterId, (seen.get(r.hitterId) || 0) + 1);
   const BATS: Record<string, string> = { R: "Right", L: "Left", S: "Switch" };
   return (
     <>
@@ -30,8 +36,9 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <Notice sp={sp} />
       <div className="pq-cols"><div>
       {mine.length ? <div className="tbl-scroll" tabIndex={0}><table className="data-tbl" aria-label="Hitters">
-        <thead><tr><th className="num">#</th><th>Hitter</th><th>Bats</th></tr></thead>
-        <tbody>{mine.map((x) => <tr key={x.id}><td className="num mono">{x.number}</td><td>{x.name}</td><td>{BATS[x.bats] || x.bats}</td></tr>)}</tbody>
+        <thead><tr><th className="num">#</th><th>Hitter</th><th>Bats</th><th className="num">At-bats seen</th></tr></thead>
+        <tbody>{mine.map((x) => <tr key={x.id}><td className="num mono">{x.number}</td><td><Link href={`/app/t/${team}/opponents/${opp}/hitters/${x.id}`}>{x.name}</Link></td><td>{BATS[x.bats] || x.bats}</td>
+          <td className="num mono" data-k={`opp.${x.id}.abs`} data-v={seen.get(x.id) || 0}>{seen.get(x.id) || "–"}</td></tr>)}</tbody>
       </table></div> : <p className="pq-empty-box">No hitters yet.</p>}
       </div>
       {edit ? (

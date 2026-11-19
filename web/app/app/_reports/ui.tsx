@@ -13,7 +13,7 @@ const KINDS6 = ["FB", "SI", "FC", "SL", "CB", "CH"];
 export const kindCls = (k: string) => `k-${KINDS6.includes(k) ? k : "FB"}`;
 export const Chip = ({ kind }: { kind: string }) => <i className={`chip ${kindCls(kind)}`} aria-hidden="true">{KINDS6.includes(kind) ? kind : "?"}</i>;
 export const dayText = (iso: string, opts: Intl.DateTimeFormatOptions = { weekday: "short", month: "short", day: "numeric" }) =>
-  new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { ...opts, timeZone: "UTC" });
+  /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(iso + "T12:00:00Z").toLocaleDateString("en-US", { ...opts, timeZone: "UTC" }) : iso.startsWith("#") ? `Outing ${+iso.slice(1)}` : iso;
 const pct = (r: Rate) => (r.pct === null ? null : `${Math.round(100 * r.pct)}%`);
 const rv = (r: Rate) => `${r.num}/${r.den}`;
 export const SPOT: Record<string, string> = { "up-in": "up and in", "up-away": "up and away", "down-in": "down and in", "down-away": "down and away", chase: "chase", middle: "middle", "down-middle": "down the middle" };
@@ -136,8 +136,8 @@ export function HeatBlock({ heat, k = "heat" }: { heat: Heat; k?: string }) {
             </div>
             <div className="rp-heatnote">
               <div className="rp-legend" aria-hidden="true"><span>Fewer</span><span className="steps">{[1, 2, 3, 4, 5].map((s) => <i key={s} style={{ background: `var(--ramp-${s})` }} />)}</span><span>More</span></div>
-              <p className="rp-left rp-map called">Every one of the <b data-k={`${k}.${f.key}.n`} data-v={f.n}>{f.n}</b> pitches has a called spot{f.called.left ? <>, except <b data-k={`${k}.${f.key}.called.left`} data-v={f.called.left}>{f.called.left}</b> logged before spots were exact</> : <span hidden data-k={`${k}.${f.key}.called.left`} data-v={0} />}.</p>
-              <p className="rp-left rp-map landed">{f.landed.left
+              <p className="rp-left rp-only called">Every one of the <b data-k={`${k}.${f.key}.n`} data-v={f.n}>{f.n}</b> pitches has a called spot{f.called.left ? <>, except <b data-k={`${k}.${f.key}.called.left`} data-v={f.called.left}>{f.called.left}</b> logged before spots were exact</> : <span hidden data-k={`${k}.${f.key}.called.left`} data-v={0} />}.</p>
+              <p className="rp-left rp-only landed">{f.landed.left
                 ? <><b data-k={`${k}.${f.key}.landed.left`} data-v={f.landed.left}>{f.landed.left}</b> of {f.n} pitches have no landing spot logged, so they're only in &ldquo;where it was called&rdquo;.</>
                 : <>Every pitch has its landing spot logged.<span hidden data-k={`${k}.${f.key}.landed.left`} data-v={0} /></>}</p>
               <p className="rp-note">Catcher&rsquo;s view. The box is the strike zone; the round cells are &ldquo;way off&rdquo;. Each cell counts the pitches in the layer you picked: strikes, balls, positive outcomes (whiffs, called strikes, fouls, weak contact, outs in play) or negative ones (hard contact, hits, ball four, hit by pitch). Shading is relative to this map.</p>
@@ -199,17 +199,17 @@ const OV_KIND: Record<string, string> = { coach: "Coach's call", shake: "Shake-o
 export function OverridesBlock({ ovs, who }: { ovs: (Override & { pitcher?: string })[]; who?: boolean }) {
   if (!ovs.length) return <p className="rp-empty">No coach calls, shake-offs or cross-ups: every pitch was the engine&rsquo;s call, thrown as called.</p>;
   return (
-    <div className="tbl-scroll" tabIndex={0} role="region" aria-label="Overrides"><table className="data-tbl">
+    <div className="tbl-scroll" tabIndex={0} role="region" aria-label="Overrides"><table className="data-tbl rp-ov">
       <thead><tr><th scope="col" className="num">Pitch</th>{who ? <th scope="col">Pitcher</th> : null}<th scope="col">What</th><th scope="col">Count</th><th scope="col">The engine had</th><th scope="col">Thrown</th><th scope="col">That pitch</th><th scope="col">Rest of the at-bat</th></tr></thead>
       <tbody>{ovs.map((o, i) => (
         <tr key={i} data-k={`ov.${o.game}.${o.n}.${o.kind}`} data-v={o.kind}>
-          <td className="num">{o.n}</td>{who ? <td>{o.pitcher}</td> : null}
-          <td>{OV_KIND[o.kind]}</td><td className="num">{o.count}</td>
-          <td>{o.kind === "shake" ? (o.shaken.length ? `Shaken: ${o.shaken.map((s) => `${s.pitch} ${SPOT[s.quad] || s.quad}`).join(", ")}` : "–")
+          <td className="num n">{o.n}</td>{who ? <td className="who" data-l="Pitcher">{o.pitcher}</td> : null}
+          <td className="what">{OV_KIND[o.kind]}</td><td className="num cnt">{o.count}</td>
+          <td className="had" data-l={o.kind === "shake" ? "Shaken off" : "The engine had"}>{o.kind === "shake" ? (o.shaken.length ? o.shaken.map((s) => `${s.pitch} ${SPOT[s.quad] || s.quad}`).join(", ") : "–")
             : o.engineTop.length ? o.engineTop.map((m) => `${m.pitch} ${SPOT[m.quad] || m.quad} ${Math.round(m.share * 100)}%`).join(" · ") : <span className="thin">Not logged (older app)</span>}</td>
-          <td>{o.kind === "cross" ? `${o.thrown} (called ${o.called})` : `${o.thrown}${o.calledQuad ? `, ${SPOT[o.calledQuad] || o.calledQuad}` : ""}`}</td>
-          <td className={o.negative ? "neg" : ""}>{o.result}</td>
-          <td>{o.restOfAtBat.pitches ? `${o.restOfAtBat.pitches} more: ${o.restOfAtBat.positive} positive, ${o.restOfAtBat.negative} negative. ` : ""}{o.restOfAtBat.result}</td>
+          <td className="thr" data-l="Thrown">{o.kind === "cross" ? `${o.thrown} (called ${o.called})` : `${o.thrown}${o.calledQuad ? `, ${SPOT[o.calledQuad] || o.calledQuad}` : ""}`}</td>
+          <td className={`res${o.negative ? " neg" : ""}`} data-l="That pitch">{o.result}</td>
+          <td className="rest" data-l="Rest of the at-bat">{o.restOfAtBat.pitches ? `${o.restOfAtBat.pitches} more: ${o.restOfAtBat.positive} positive, ${o.restOfAtBat.negative} negative. ` : ""}{o.restOfAtBat.result}</td>
         </tr>))}</tbody>
     </table></div>
   );
@@ -233,7 +233,7 @@ export function TrendChart({ rows, field, label, levelRef }: { rows: Trend[]; fi
         {levelRef != null ? <line className="ref" x1={L} x2={W - R} y1={Y(levelRef)} y2={Y(levelRef)} /> : null}
         <path className="ln" d={path} />
         {pts.map((p) => p.v === null ? null : <g key={p.i}><circle className="dot" cx={X(p.i)} cy={Y(p.v)} r={4.5}><title>{`${dayText(p.date)}: ${field === "velo" ? (p.v as number).toFixed(1) + " mph" : `${Math.round(p.v)}% (${(p.r[field] as Rate).num} of ${(p.r[field] as Rate).den})`}`}</title></circle></g>)}
-        {pts.length <= 14 ? pts.map((p) => <text key={"x" + p.i} className="tick" x={X(p.i)} y={H - 8} textAnchor="middle">{dayText(p.date, { month: "numeric", day: "numeric" })}</text>) : null}
+        {pts.length <= 14 ? pts.map((p) => <text key={"x" + p.i} className="tick" x={X(p.i)} y={H - 8} textAnchor={pts.length > 1 && p.i === 0 ? "start" : pts.length > 1 && p.i === pts.length - 1 ? "end" : "middle"}>{p.date.startsWith("#") ? `#${+p.date.slice(1)}` : dayText(p.date, { month: "numeric", day: "numeric" })}</text>) : null}
       </svg>
       <figcaption className="rp-note">{label} per outing{field === "velo" ? ", from the radar readings logged" : ", every outing counted (no 10-pitch rule on a whole outing)"}.</figcaption>
     </figure>

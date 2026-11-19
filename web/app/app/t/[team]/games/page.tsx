@@ -32,7 +32,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const upcoming = games.filter((g) => g.status === "live" || g.status === "suspended" || (g.status === "planned" && (g.date || "") >= today))
     .sort((x, y) => ((x.date || "") + (x.starts || "")).localeCompare((y.date || "") + (y.starts || "")));
   const stale = games.filter((g) => g.status === "planned" && (g.date || "") < today);
-  const played = games.filter((g) => g.status === "final").slice(0, 8);
+  const played = games.filter((g) => g.status === "final").slice(0, 20);
   const msg = MSG[one(sp.ok)] || MSG[one(sp.error)];
   return (
     <>
@@ -69,7 +69,7 @@ function Row({ g, team, opp, a, today }: { g: GameListRow; team: string; opp: st
       </div>
       <div className="acts">
         {isLive ? <span className="pill-live">{g.status === "suspended" ? "Suspended on one device" : "Live on one device"}</span>
-          : g.status === "final" ? <span className="pill">Final</span>
+          : g.status === "final" ? <><span className="pill">Final</span><Link className="shell-btn" href={`/app/t/${team}/reports/${g.id}`}>Reports</Link></>
           : <>
             {a.seesPlan ? <Link className="shell-btn" href={base}>{a.callGames ? "Plan" : "See plan"}</Link> : null}
             {a.callGames ? <a className="shell-btn primary" href={`${base}/open`}>Start on this device</a> : null}

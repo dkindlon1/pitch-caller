@@ -26,8 +26,8 @@ export function Notice({ sp }: { sp: SP }) {
   return e ? <p className="shell-alert" role="alert">{e}</p> : o ? <p className="shell-note ok-note" role="status">{o}</p> : null;
 }
 
-export function Tabs({ base, at, label }: { base: string; at: "profile" | "uploads" | "stats"; label: string }) {
-  const tabs: [string, string, string][] = [["profile", "", label], ["uploads", "/uploads", "Uploads"], ["stats", "/stats", "Stats"]];
+export function Tabs({ base, at, label }: { base: string; at: "profile" | "uploads" | "stats" | "recap"; label: string }) {
+  const tabs: [string, string, string][] = [["profile", "", label], ["uploads", "/uploads", "Uploads"], ["stats", "/stats", "Stats"], ["recap", "/recap", "Season and reports"]];
   return <nav className="sub-tabs" aria-label="Pitcher">{tabs.map(([k, h, l]) => <Link key={k} href={base + h} aria-current={k === at ? "page" : undefined}>{l}</Link>)}</nav>;
 }
 
