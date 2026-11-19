@@ -31,7 +31,18 @@ export async function saveSections(form: FormData) {
   if (!TOK.test(tok) || !ID.test(team) || !PID.test(pitcher)) return;
   const secs = { summary: form.get("summary") === "on", heat: form.get("heat") === "on", pitches: form.get("pitches") === "on", outings: form.get("outings") === "on" };
   const sb = await getServerSupabase();
-  await sb.rpc("pc_share_sections", { tok, secs });
+  const { data: waits } = await sb.rpc("pc_share_sections", { tok, secs });
+  // under 18 and wider than his parent approved: the link keeps serving what was approved; ask the parent about the rest
+  if (waits === true) await askParent(await site(), team, pitcher, tok, `${tok}:${Object.entries(secs).filter(([, v]) => v).map(([k]) => k).sort().join(",")}`).catch(() => false);
+  revalidatePath(back(team, pitcher, season));
+}
+
+// his link was paused (his under-18 mark was cleared before his parent approved it): he turns it on again
+export async function resumeShare(form: FormData) {
+  const tok = String(form.get("token") || ""), team = String(form.get("team") || ""), pitcher = String(form.get("pitcher") || ""), season = String(form.get("season") || "");
+  if (!TOK.test(tok) || !ID.test(team) || !PID.test(pitcher)) return;
+  const sb = await getServerSupabase();
+  await sb.rpc("pc_share_resume", { tok });
   revalidatePath(back(team, pitcher, season));
 }
 
