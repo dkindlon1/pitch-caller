@@ -8,14 +8,14 @@ parallel). Local Supabase only. Read this file and `git log` after any context r
 | # | Step | State |
 |---|---|---|
 | 1 | Schema check (hitter docs, tags, write rules) | done: see Readings |
-| 2 | Model + suggestions modules, tests | done: `web/lib/opp_model.ts`, `opp_suggest.ts`, `opp_suggest.test.ts` 14/14 |
+| 2 | Model + suggestions modules, tests | done: `web/lib/opp_model.ts`, `opp_suggest.ts`, `opp_suggest.test.ts` 15/15 |
 | 3 | Migration + permissions test | done: `20261119000000_opponent_db.sql`, `opp_rls_test.js` 26/26 |
 | 4 | Calls identical with every new field set | done: `app/opponent_exact_test.js` 12/12, 449 pitches |
-| 5 | Hitter page, team page, custom fields page, merge, suggestions UI | |
-| 6 | Suggestions job after games; importer columns | |
-| 7 | Two-season proof (attach, merge, thresholds) + e2e | |
-| 8 | Visual loop | |
-| 9 | Full checks, report | |
+| 5 | Hitter page, team page, custom fields page, merge, suggestions UI | done |
+| 6 | Suggestions job after games; importer columns | done: `report_jobs.ts opponentSuggestions`, `import_opp_test` 7/7 |
+| 7 | Two-season proof (attach, merge, thresholds) + e2e | done: `opponents_e2e.js` 28/28 |
+| 8 | Visual loop | done: r1, r2 (`C:/dev/pitch-caller-shots/build2/`) |
+| 9 | Full checks, report | done: `run_b2_full.sh`, all pass except the two known SQL items; `docs/BUILD2_REPORT.md` |
 
 ## Readings (taken without asking)
 1. **New fields live beside the engine's, never in them.** The engine reads a hitter's `grades` (c/w/d), `crowd`, and the
