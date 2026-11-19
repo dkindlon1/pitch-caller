@@ -83,14 +83,18 @@ const status = () => JSON.parse(execFileSync("npx", ["-y", "supabase@2.122.1", "
     if (zone) {
       await coach.goto(`${SITE}/app/t/${T}/opponents/${oppId}/hitters/${zone.hitter_id}`, { waitUntil: "networkidle" });
       const li = coach.locator(".op-sugg li").filter({ hasText: zone.value === "hot" ? "hot?" : "cold?" }).first();
-      await li.getByRole("button", { name: "Accept" }).click(); await coach.waitForLoadState("networkidle"); await wait(500);
+      // the Accept of exactly this suggestion (its form carries its id), then the redirect the action makes
+      await coach.locator(`form:has(input[name="suggestion"][value="${zone.id}"]):has(input[name="accept"][value="1"]) button`).click();
+      await coach.waitForURL(/ok=|error=/, { timeout: 15000 }); await coach.waitForLoadState("networkidle"); void li;
       const d = await hitterDoc(zone.hitter_id);
       check((d.zone || {})[zone.key] === zone.value, `accept writes it to his grid (${zone.key} ${zone.value})`);
       check((await db.query("select status from public.opp_suggestions where id = $1", [zone.id])).rows[0].status === "accepted", "and marks it accepted");
     }
     if (other) {
       await coach.goto(`${SITE}/app/t/${T}/opponents/${oppId}/hitters/${other.hitter_id}`, { waitUntil: "networkidle" });
-      await coach.locator(".op-sugg li").filter({ hasText: other.key === "contact" ? "Contact" : "Power" }).first().getByRole("button", { name: "Dismiss" }).click(); await coach.waitForLoadState("networkidle"); await wait(500);
+      await coach.locator(`form:has(input[name="suggestion"][value="${other.id}"]):has(input[name="accept"][value="0"]) button`).click();
+      await coach.waitForURL(/ok=|error=/, { timeout: 15000 }); await coach.waitForLoadState("networkidle");
+      check((await db.query("select status from public.opp_suggestions where id = $1", [other.id])).rows[0].status === "dismissed", "Dismiss marks exactly that suggestion dismissed");
       const before = (await hitterDoc(other.hitter_id)).ratings || {};
       check(before[other.key] === undefined, "dismiss changes nothing on him");
       await fetch(SITE + "/api/reports/run", { headers: { authorization: `Bearer ${CRON}` } });
