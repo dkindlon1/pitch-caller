@@ -1,5 +1,7 @@
 # Build 2: opponent database (pages and data): report
 
+> **Update, Nov 19 (Drew's follow-ups):** the organization's owner now reads and edits opponents on every team of the organization (migration `20261119003000_owner_opponents.sql`). Counts now: rls_matrix 365/365, opp_rls 27/27, and v11_kinds_test is fixed (14/14). See `docs/FOLLOWUPS_1-4_REPORT.md` on `feat/outcome-tracking`.
+
 Branch `feat/opponent-db` (from `feat/logging-reports`), pushed. Spec: `docs/PLAN_opponent_database_2026-11-18.md`
 sections 3, 4, 6, 7. **Section 5's engine mapping is not built and no engine file changed**: the hitter model revamp runs
 in parallel. Local Supabase only; nothing on `main`, nothing deployed, no production migration. Working notes:
