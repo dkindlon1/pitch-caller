@@ -188,6 +188,16 @@ export async function approveInvite(f: FormData) {
 }
 
 // ---------------------------------------------------------------- settings
+// Build 4: remove a watch from the team (it never gets another game key; pairing again brings it back)
+export async function removeWatch(f: FormData) {
+  const c = await ctx(f);
+  if (!c.manage("manage_roster")) back(c.team, "/settings", "error=not_allowed");
+  const sb = await getServerSupabase();
+  const { data, error } = await sb.rpc("pc_watch_remove", { p: c.team, watch_id: str(f, "watch") });
+  if (error) back(c.team, "/settings", "error=watch");
+  back(c.team, "/settings", (data as { ok?: boolean } | null)?.ok ? "ok=watch_removed" : "error=missing");
+}
+
 export async function saveSettings(f: FormData) {
   const c = await ctx(f);
   if (!c.manage("manage_roster")) back(c.team, "/settings", "error=not_allowed");

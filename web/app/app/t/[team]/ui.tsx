@@ -3,7 +3,7 @@ export type Search = Promise<Record<string, string | string[] | undefined>>;
 export const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) || "";
 
 const OK: Record<string, string> = {
-  added: "Added.", saved: "Saved.", removed: "Removed.", hitters: "Hitters saved.", member: "Saved.", cancelled: "Invite cancelled.",
+  added: "Added.", saved: "Saved.", watch_removed: "Removed. That watch won't get another game key; it has to be paired again to come back.", removed: "Removed.", hitters: "Hitters saved.", member: "Saved.", cancelled: "Invite cancelled.",
   approved: "Approved: the parent can now accept for the player.", reverted: "Put back. The player sees that a coach changed it back.",
 };
 const ERROR: Record<string, string> = {
@@ -12,7 +12,7 @@ const ERROR: Record<string, string> = {
   taken: "That player already has an account.", parent_email: "A player under 13 is invited through a parent's email.", invite: "That invite couldn't be made.",
   ceiling: "You can't give someone permissions you don't have.", owner_only: "Only the organization's owner decides who sees the game plan.", self: "You can't change your own permissions.",
   last_head: "A team keeps at least one head coach: make someone else head first.", member: "That couldn't be changed.",
-  approve: "That invite isn't waiting for approval any more.", tz: "Pick a time zone from the list.", name: "A team needs a name.", settings: "Those settings couldn't be saved.",
+  approve: "That invite isn't waiting for approval any more.", tz: "Pick a time zone from the list.", name: "A team needs a name.", settings: "Those settings couldn't be saved.", watch: "That watch couldn't be removed. Try again in a moment.",
   changed_again: "That grade has been changed again since, so it wasn't put back.", revert: "That change couldn't be put back.",
 };
 
