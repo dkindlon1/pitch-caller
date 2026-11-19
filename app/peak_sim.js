@@ -62,6 +62,11 @@ for (const [label, from] of [["off from the first pitch", 0], ["drops at pitch 3
   swings.sort((a, b) => a - b);
   console.log(`   slider whiffs to 8%, ${label}: caught in ${(100 * caught / N).toFixed(0)}% of outings, median ${swings[Math.floor(swings.length / 2)] ?? "-"} slider swings after it started`);
 }
+// the false-alarm targets, as checks (detection above is reported, not judged)
+const target = (ok, msg) => console.log((ok ? "  ok   " : "  FAIL ") + msg);
+target(falseSeasons / N <= 0.05, `seasons with a false "clear" finding: ${(100 * falseSeasons / N).toFixed(1)}% (target 5% or less)`);
+target(falseEarly / N < 0.5, `false early signs: ${(falseEarly / N).toFixed(2)} a season (target under 0.5)`);
+target(falseNotes / N < 0.2, `false drift notes: ${(falseNotes / N).toFixed(3)} per steady outing (target under 0.2)`);
 const ok = falseSeasons / N <= 0.05 && falseEarly / N < 0.5 && falseNotes / N < 0.2;
 console.log(ok ? "peak simulations: the false-alarm targets are met" : "peak simulations: a false-alarm target was missed");
 process.exit(ok ? 0 : 1);
