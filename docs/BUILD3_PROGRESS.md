@@ -21,6 +21,22 @@ Plan default line (a quarter of the way to the bad end) gave ~0.3 false notes pe
 SE shift 0.5, extra certainty on early looks. Steady outings 0.18 false notes per outing (target < 0.2). Detection is
 modest: slider whiffs to 8% all night caught 28%, dropping at pitch 30 caught 12%.
 
+### The sweep (peak_sim.js, 200 outings each; "off all night" = slider whiffs to 8% from the first pitch)
+| prior | SE shift | early | share | false notes / outing | caught: off all night | caught: drop at 30 |
+|---|---|---|---|---|---|---|
+| 8 | 1 | 0 | 0.25 | 0.120 | 17% | 6% |
+| 4 | 0.5 | 0.08 | 0.25 | 0.227 | 33% | 16% |
+| 2 | 0.5 | 0.08 | 0.25 | 0.307 | 51% | 27% |
+| **4** | **0.5** | **0.08** | **0.35** | **0.147-0.180** | **24-28%** | **10-12%** |
+| 4 | 0.5 | 0.08 | 0.5 | 0.057 | 12% | 5% |
+| 2 | 0 | 0.08 | 0.5 | 0.197 | 33% | 16% |
+| 0 | 0 | 0.08 | 0.5 | 0.427 | 56% | 29% |
+(bold: chosen; the two figures are the sweep's seed and peak_sim.js's own run)
+
+## Visual loop
+r1 (5 findings all "fastball strikes down" across situations) -> one finding per pitch/metric/direction; r2 label over
+bars, tiny-sample bars full height -> halo, faded under 8; r3/r4 phone game bar overflow with the Notes button -> the
+bar wraps to a second row while the button is there. Shots: `C:/dev/pitch-caller-shots/build3/`.
+
 ## Next
-- Fresh seed, report job, `outcome_check.js --site`, visual loop (`web/tests/outcome_shots.js`), full checks,
-  BUILD3_REPORT.md, push.
+- Full run `C:/dev/pitch-caller-logs/run_b3_full.sh` (-> logs/b3full/summary.txt), fill B3_RESULTS in BUILD3_REPORT.md, push.
