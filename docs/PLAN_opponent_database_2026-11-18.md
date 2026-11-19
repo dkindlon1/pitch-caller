@@ -19,6 +19,7 @@ Items marked **(default)** are Claude's suggestion where Drew didn't decide.
 | Per team | Lineup history (auto-filled from games); team tendencies (checkboxes). |
 | Custom fields | A fixed core set that can feed the engine, plus custom fields the owner creates (checkbox, dropdown, grid, text). Custom fields are coach info only; never reach the engine. |
 | Editing | Owner always; coaches with the existing "manage opponents" permission. Players never see it. |
+| Owner off the staff (**permission change, approved by Drew on Nov 19, 2026**) | The organization's owner reads and edits opponents on every active team of the organization, even when he isn't on that team's staff: opponent teams, hitters (ratings, grid, notes, custom field values), custom fields, suggestions and merges. Opponent data only: rosters, games, events, reports and everything else on a team he isn't staff on stay closed to him. Enforced in the database (`20261119003000_owner_opponents.sql`), proved in `rls_matrix_test` section 24. |
 | Engine use | Map where the engine already has a term (spray, power); contact and speed are stored and shown, and reach the engine only after they're fit to data and pass a check. |
 | Zone grid | 3×3 zone plus the chase ring, matching the game screen's spots; each tap cycles hot / neutral / cold. |
 | After games | The system suggests rating and grid updates from what happened; nothing changes until a coach accepts. |

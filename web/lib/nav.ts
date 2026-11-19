@@ -12,7 +12,8 @@ export function abilities(t: Row) {
   const can = (perm: string) => !!(coach && t.active && (t.perms || {})[perm]);
   const owner = t.is_owner && t.status !== "removed";
   const manage = (perm: string) => can(perm) || owner;
-  return { coach, can, owner, manage, callGames: can("call_games"), seesPlan: can("call_games") || can("view_plan") };
+  const oppOwner = owner && t.active;   // Nov 19: the owner edits opponents on every team of his organization
+  return { coach, can, owner, oppOwner, manage, callGames: can("call_games"), seesPlan: can("call_games") || can("view_plan") };
 }
 
 export function coachNav(t: Row, badges: { reviews?: number } = {}): NavItem[] {
@@ -21,8 +22,8 @@ export function coachNav(t: Row, badges: { reviews?: number } = {}): NavItem[] {
     sub: a.callGames ? "Set up a game, then start it on any device" : "Today’s game plan, read only" });
   if (a.coach) out.push({ key: "roster", href: `${base}/roster`, icon: "roster", label: "Roster", short: "Roster", badge: a.can("review_uploads") ? badges.reviews : undefined,
     sub: a.can("manage_roster") ? "Pitchers, arsenals and grades" : a.can("edit_grades") ? "Arsenals and grades" : "Pitchers and their arsenals" });
-  if (a.coach) out.push({ key: "opponents", href: `${base}/opponents`, icon: "opponents", label: "Opponents", short: "Opponents",
-    sub: a.can("manage_opponents") ? "Teams and their hitters" : "Their hitters, read only" });
+  if (a.coach || a.oppOwner) out.push({ key: "opponents", href: `${base}/opponents`, icon: "opponents", label: "Opponents", short: "Opponents",
+    sub: a.can("manage_opponents") || a.oppOwner ? "Teams and their hitters" : "Their hitters, read only" });
   if (a.manage("manage_staff") || a.manage("manage_roster")) out.push({ key: "staff", href: `${base}/staff`, icon: "staff", label: "Staff", short: "Staff", sub: "Coaches, players and invites" });
   if (a.manage("manage_roster")) out.push({ key: "settings", href: `${base}/settings`, icon: "settings", label: "Settings", short: "Settings", sub: "Name, time zone, pitch counts" });
   if (a.owner) out.push({ key: "billing", href: `/app/billing?org=${t.org_id}`, icon: "billing", label: "Billing", short: "Billing", sub: "Your organization’s plan and card" });

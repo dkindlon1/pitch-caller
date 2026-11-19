@@ -14,8 +14,8 @@ export default function Opponents({ params, searchParams }: { params: Params; se
 
 async function Body({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { team } = await params, sp = await searchParams;
-  const { manage, isCoach } = await teamFor(team);
-  if (!isCoach) return <p className="shell-note">Opponents are for the team&apos;s coaches.</p>;
+  const { manage, isCoach, oppOwner } = await teamFor(team);
+  if (!isCoach && !oppOwner) return <p className="shell-note">Opponents are for the team&apos;s coaches.</p>;
   const [teams, hitters] = await Promise.all([teamsOf(team), hittersOf(team)]);
   const opps = teams.filter((x) => !x.isOurs && !x.deletedAt).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   const edit = manage("manage_opponents") || manage("manage_roster");

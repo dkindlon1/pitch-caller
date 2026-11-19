@@ -54,7 +54,7 @@ No engine file changed (`git diff $(git merge-base HEAD feat/logging-reports) --
 1. **Fields never reach the engine.** The engine reads a hitter's `grades`, `crowd` and the approach / path / off-speed tags
    only; this build writes none of those. Proven: `opponent_exact_test` (every new field set on every hitter and the
    team: identical calls).
-2. **Proposal: owner editing.** The plan says "owner always" may edit opponents. Today an owner who isn't on the team's
+2. **Done Nov 19 (Drew approved): owner editing** (see `docs/FOLLOWUPS_1-4_REPORT.md`; migration `20261119003000_owner_opponents.sql`). Original note: The plan says "owner always" may edit opponents. Today an owner who isn't on the team's
    staff can't read any team data (an existing, tested rule). This build lets the owner set up custom fields (org level);
    editing opponents needs the owner on the staff. Changing that is a permission decision for Drew.
 3. **Proposal: the lists.** Pitch checkboxes and team tendencies use the plan's default lists (Drew to edit).

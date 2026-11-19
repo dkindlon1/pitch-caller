@@ -108,14 +108,15 @@ const now = () => Date.now();
     }
     const own = ["checkins", "sessions", "readings"].includes(t) ? 1 : 0;   // his pitcher record only through pc_pull (no coach notes)
     if ((await count("pl1", t, tA)) !== own) { allPlayer = false; console.log(`     pl1 ${t}: ${await count("pl1", t, tA)} (want ${own})`); }
-    for (const who of ["owner", "nonmember", "xhead"]) { const n = await count(who, t, tA); if (n !== 0 && n !== "denied") { allNone = false; console.log(`     ${who} ${t}: ${n}`); } }
+    // the owner off the staff reads the team's opponents (teams, hitters: section 24, approved Nov 19), nothing else
+    for (const who of ["owner", "nonmember", "xhead"]) { const n = await count(who, t, tA), ok = who === "owner" && (t === "teams" || t === "hitters") ? n === 2 : n === 0 || n === "denied"; if (!ok) { allNone = false; console.log(`     ${who} ${t}: ${n}`); } }
     const an = await count("anon", t, tA); if (an !== "denied" && an !== 0) { allNone = false; console.log(`     anon ${t}: ${an}`); }
   }
   check(allCoach, "every coach preset sees all of its own team's rows in every table, except a viewer, who doesn't see games or packs (the game plans)");
   check(allPlayer, "reading the tables, a player sees only his own check-ins, sessions and readings: no pitcher records, events, games, hitters, packs or learned values");
   const plPull = await pull("pl1", tA, "pitchers");
   check(plPull.rows.length === 1 && plPull.rows[0].id === "p1" && !("notes" in plPull.rows[0]), "his own pitcher record comes through pc_pull, without the coaches' notes");
-  check(allNone, "the owner without membership, a stranger, another team's coach and anon see nothing of the team");
+  check(allNone, "the owner without membership sees only the team's opponents (teams, hitters); a stranger, another team's coach and anon see nothing of the team");
   check((await count("head", "events", tC)) === 0, "a coach on team A sees nothing of team C");
   check((await pull("parent", tA, "pitchers")).rows.map((x) => x.id).sort().join() === "p3,p4", "the parent's pull has both siblings' records");
   const members = await as("viewer", "select count(*)::int n from public.members where program_id = $1", [tA]);
@@ -1060,6 +1061,80 @@ const now = () => Date.now();
     const logged = +(await su.query("select count(*) n from private.retention_log")).rows[0].n;
     check(logged === 2, "each run is logged");
     await su.query("update public.organizations set billing_status = 'active' where id = $1", [org1]);
+  }
+
+  console.log("24. The organization's owner and opponents (Nov 19, approved by Drew: 20261119003000_owner_opponents.sql)");
+  {
+    // its own organization and people, so nothing above is touched
+    for (const n of ["own3", "head3", "view3", "pl3", "xown3"]) { U[n] = crypto.randomUUID(); await su.query("insert into auth.users (id, email, email_confirmed_at) values ($1, $2, now())", [U[n], n + "@x.org"]); }
+    const o3 = await one("own3", "select public.pc_create_org('Owner Test Club') r");
+    const T3 = await one("own3", "select public.pc_create_team($1, 'Varsity', 'college_d3') r", [o3]);     // the owner isn't on its staff
+    const T3s = await one("own3", "select public.pc_create_team($1, 'JV', 'college_d3') r", [o3]);        // the owner is on this one's staff, as a viewer
+    const ox = await one("xown3", "select public.pc_create_org('Rival Club') r");
+    const TX = await one("xown3", "select public.pc_create_team($1, 'Rival Varsity', 'college_d3', 'America/New_York', 'head') r", [ox]);
+    await su.query("update public.organizations set billing_status = 'active' where id in ($1, $2)", [o3, ox]);
+    await su.query("update public.programs set status = 'active' where id in ($1, $2, $3)", [T3, T3s, TX]);
+    for (const [who, role] of [["head3", "head"], ["view3", "viewer"], ["pl3", "player"]]) await su.query("insert into public.members (program_id, user_id, role) values ($1, $2, $3)", [T3, U[who], role]);
+    await su.query("insert into public.members (program_id, user_id, role) values ($1, $2, 'viewer')", [T3s, U.own3]);
+    await su.query("insert into public.player_links (program_id, user_id, pitcher_id) values ($1, $2, 'q1')", [T3, U.pl3]);
+    const ins = (p, t, id, doc) => su.query(`insert into public.${t} (program_id, id, doc) values ($1, $2, $3)`, [p, id, { id, updatedAt: 1000, ...doc }]);
+    for (const p of [T3, T3s, TX]) {
+      await ins(p, "teams", "ours", { name: "Us", isOurs: true, pitchRule: { preset: "ncaa" } });
+      await ins(p, "teams", "opp1", { name: "Rivals U", isOurs: false });
+      await ins(p, "hitters", "h1", { teamId: "opp1", name: "Slugger", ratings: { power: 3 } });
+      await ins(p, "pitchers", "q1", { teamId: "ours", name: "Ace", notes: "coach note", pitchesInfo: [] });
+      for (const t of ["catchers", "checkins", "sessions", "games", "events", "packs", "readings", "learned"]) await ins(p, t, t + "1", { pitcherId: "q1", gameId: "g1", note: "x" });
+      await su.query("insert into public.opp_suggestions (program_id, hitter_id, kind, key, value, text, n) values ($1, 'h1', 'zone', '2,2', 'hot', 'Hit hard down the middle', 3)", [p]);
+    }
+    const cnt = async (who, t, p) => { const r = await as(who, `select count(*)::int n from public.${t} where program_id = $1`, [p]); return r.error ? "denied" : r.rows[0].n; };
+    const pushed = async (who, p, tbl, rows) => { const r = await push(who, p, tbl, rows); return r && r.error ? "error" : r && r.applied === rows.length ? "applied" : "rejected"; };
+    const t9 = Date.now();
+
+    // the owner, not on the team's staff
+    check((await cnt("own3", "teams", T3)) === 1 && (await cnt("own3", "hitters", T3)) === 1, "owner off the staff: reads the team's opponents (1 opponent team, not the team's own record) and their hitters");
+    check((await cnt("own3", "opp_suggestions", T3)) === 1 && (await cnt("own3", "opp_merges", T3)) === 0, "and the opponent suggestions (and the merge log)");
+    const others = (await su.query(`select table_name from information_schema.columns where table_schema = 'public' and column_name = 'program_id'
+      and table_name not in ('teams', 'hitters', 'opp_suggestions', 'opp_merges', 'members') order by 1`)).rows.map((r) => r.table_name);
+    const seen = [];
+    for (const t of others) { const n = await cnt("own3", t, T3); if (n !== 0 && n !== "denied") seen.push(`${t}: ${n}`); }
+    check(!seen.length && others.length >= 10, `owner off the staff: nothing in any other team table (${others.length} checked: rosters, games, events, packs, check-ins, reports...${seen.length ? "; saw " + seen.join(", ") : ""})`);
+    const pulls = [await pull("own3", T3, "hitters"), await pull("own3", T3, "pitchers")];
+    check(pulls.every((r) => r && r.error), "owner off the staff: no pc_pull (that's the iPad's sync, for the team's members)");
+    check((await pushed("own3", T3, "hitters", [{ id: "h1", updatedAt: t9, teamId: "opp1", name: "Slugger", ratings: { power: 2, contact: "unknown" }, zone: { "2,2": "hot" }, notes: "owner's note", custom: { f1: true } }])) === "applied",
+      "owner off the staff: edits a hitter (ratings, grid, notes, custom field values) through pc_push");
+    check((await pushed("own3", T3, "hitters", [{ id: "h2", updatedAt: t9, teamId: "opp1", name: "New Guy" }])) === "applied", "and adds a hitter");
+    check((await pushed("own3", T3, "teams", [{ id: "opp2", updatedAt: t9, name: "State", isOurs: false, tendencies: { bunts: true } }])) === "applied"
+      && (await pushed("own3", T3, "teams", [{ id: "opp1", updatedAt: t9, name: "Rivals U", isOurs: false, tendencies: { aggressive: true } }])) === "applied", "and adds and edits opponent teams");
+    check((await pushed("own3", T3, "teams", [{ id: "ours", updatedAt: t9, name: "Hijacked", pitchRule: null }])) === "rejected"
+      && (await pushed("own3", T3, "teams", [{ id: "ours2", updatedAt: t9, name: "Fake us", isOurs: true }])) === "rejected"
+      && (await su.query("select doc ->> 'name' n from public.teams where program_id = $1 and id = 'ours'", [T3])).rows[0].n === "Us", "but never the team's own record (stored or new isOurs): refused, unchanged");
+    check((await pushed("own3", T3, "pitchers", [{ id: "q1", updatedAt: t9, name: "x" }])) === "error" && (await pushed("own3", T3, "games", [{ id: "g9", updatedAt: t9 }])) === "error"
+      && (await pushed("own3", T3, "events", [{ id: "e9", updatedAt: t9, gameId: "g1" }])) === "error", "nor rosters, games or events (not a member of this team)");
+    const sid = (await su.query("select id from public.opp_suggestions where program_id = $1", [T3])).rows[0].id;
+    const dec = await one("own3", "select public.pc_opp_suggestion_decide($1, $2, true) r", [T3, sid]);
+    const mrg = await as("own3", "select public.pc_opp_merge_log($1, 'h1', 'h2')", [T3]);
+    check(dec && !dec.error && dec.hitter_id === "h1" && !mrg.error && (await cnt("own3", "opp_merges", T3)) === 1, "owner off the staff: accepts a suggestion and merges two hitters");
+    check((await cnt("own3", "hitters", TX)) === 0 && (await cnt("own3", "teams", TX)) === 0 && (await pushed("own3", TX, "hitters", [{ id: "h1", updatedAt: t9, name: "x" }])) === "error",
+      "another organization's team: nothing, read or write");
+    await su.query("update public.programs set status = 'ending', ends_at = now() - interval '1 day' where id = $1", [T3]);
+    check((await cnt("own3", "hitters", T3)) === 0 && (await pushed("own3", T3, "hitters", [{ id: "h1", updatedAt: t9 + 1, name: "x" }])) !== "applied", "a team that's switched off (billing): the owner neither reads nor writes its opponents");
+    await su.query("update public.programs set status = 'active', ends_at = null where id = $1", [T3]);
+
+    // the owner on the staff (a viewer there, without "manage opponents")
+    check((await cnt("own3", "teams", T3s)) === 2 && (await cnt("own3", "pitchers", T3s)) === 1 && (await cnt("own3", "games", T3s)) === 0,
+      "owner on the staff as a viewer: reads what a viewer reads (both team records and the roster, not the game plans)");
+    check((await pushed("own3", T3s, "hitters", [{ id: "h1", updatedAt: t9, teamId: "opp1", name: "Slugger", ratings: { speed: 3 } }])) === "applied"
+      && (await pushed("own3", T3s, "pitchers", [{ id: "q1", updatedAt: t9, name: "Ace" }])) === "rejected", "and edits opponents (as owner) but still not the roster (as a viewer)");
+
+    // a coach without the permission, a player, signed out
+    check((await cnt("view3", "hitters", T3)) === 2 && (await pushed("view3", T3, "hitters", [{ id: "h1", updatedAt: t9 + 5, name: "x" }])) === "rejected",
+      "a coach without \"manage opponents\" (viewer): reads opponents, can't edit them");
+    const vdec = await as("view3", "select public.pc_opp_suggestion_decide($1, gen_random_uuid(), true)", [T3]);
+    check(!!vdec.error && /manages opponents/.test(vdec.error), "nor decide suggestions");
+    check((await cnt("pl3", "hitters", T3)) === 0 && (await cnt("pl3", "teams", T3)) === 0 && (await cnt("pl3", "opp_suggestions", T3)) === 0
+      && (await pushed("pl3", T3, "hitters", [{ id: "h1", updatedAt: t9 + 6, name: "x" }])) === "rejected", "a player: no opponents, read or write");
+    check((await cnt("anon", "hitters", T3)) === "denied" && (await cnt("anon", "teams", T3)) === "denied" && (await pushed("anon", T3, "hitters", [{ id: "h1", updatedAt: t9 + 7 }])) === "error",
+      "signed out: refused");
   }
 
   console.log("13. The migration refuses a database that already has programs");
