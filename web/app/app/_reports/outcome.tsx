@@ -19,13 +19,13 @@ function MiniChart({ c, i, k }: { c: Cell; i: number; k: string }) {
     <svg viewBox={`0 0 ${W} ${H}`} className="oc-chart" role="img" aria-label={`${c.name} ${c.metric === "whiff" ? "whiffs per swing" : c.metric === "strike" ? "strike rate" : "hard contact"} by ${VAR_WORD[c.variable].toLowerCase()}: ${c.chart.map((b) => `${BUCKET_WORD[b.bucket] || b.bucket} ${b.n ? pct(b.k / b.n) : "none"} of ${b.n}`).join(", ")}; his normal ${pct(c.base)}`}>
       <line className="ax" x1={L} x2={W - R} y1={Y(0)} y2={Y(0)} />
       <text className="tick" x={L - 5} y={Y(0) + 4} textAnchor="end">0</text>
-      <text className="tick" x={L - 5} y={Y(hi / 1.1) + 4} textAnchor="end">{pct(hi / 1.1)}</text>
+      {Math.abs(hi / 1.1 - c.base) > 0.08 ? <text className="tick" x={L - 5} y={Y(hi / 1.1) + 4} textAnchor="end">{pct(hi / 1.1)}</text> : null}
       {c.chart.map((b, j) => {
         const v = vals[j], x = L + j * bw + bw * 0.18, w = bw * 0.64, flagged = b.bucket === c.bucket;
         return <g key={b.bucket}>
-          {v !== null ? <rect className={`bar${flagged ? " flag" : ""}`} x={x} y={Y(v)} width={w} height={Math.max(1, Y(0) - Y(v))} rx={4} data-k={`${k}.${i}.chart.${b.bucket}`} data-v={`${b.k}/${b.n}`} /> : null}
+          {v !== null ? <rect className={`bar${flagged ? " flag" : ""}${b.n < 8 ? " thin" : ""}`} x={x} y={Y(v)} width={w} height={Math.max(1, Y(0) - Y(v))} rx={4} data-k={`${k}.${i}.chart.${b.bucket}`} data-v={`${b.k}/${b.n}`} /> : null}
           <text className="tick" x={x + w / 2} y={H - 16} textAnchor="middle">{BUCKET_WORD[b.bucket] || b.bucket}</text>
-          <text className="tick n" x={x + w / 2} y={H - 4} textAnchor="middle">{b.n ? `${b.k}/${b.n}` : "–"}</text>
+          <text className="tick n" x={x + w / 2} y={H - 4} textAnchor="middle">{b.n ? `${b.k}/${b.n}` : "–"}{b.n && b.n < 8 ? <title>Too few to test (under 8)</title> : null}</text>
         </g>;
       })}
       <line className="base" x1={L} x2={W - R} y1={Y(c.base)} y2={Y(c.base)} />
@@ -47,7 +47,7 @@ export function OutcomeFindings({ f, k = "oc", empty }: { f: { shown: Cell[]; te
           <MiniChart c={c} i={i} k={k} />
           <p className="rp-note">{c.k} of {c.n} {UNIT_WORD[c.unit]} {BUCKET_WORD[c.bucket] ? `(${(BUCKET_WORD[c.bucket] || c.bucket).toLowerCase()})` : ""} vs his normal {pct(c.base)}.</p>
         </li>))}</ol>
-      <p className="rp-note">{f.tested} situations checked against his own normal for each pitch. &ldquo;Clear&rdquo; holds after a false-discovery control across all of them (about 95%); &ldquo;early sign&rdquo; is likely but not certain. Each finding is about one situation: a pitch doing well elsewhere isn&rsquo;t written off.</p>
+      <p className="rp-note">{f.tested} situations checked against his own normal for each pitch. &ldquo;Clear&rdquo; holds after a false-discovery control across all of them (about 95%); &ldquo;early sign&rdquo; is likely but not certain. Faded bars have under 8 and aren&rsquo;t tested. Each finding is about one situation: a pitch doing well elsewhere isn&rsquo;t written off.</p>
     </>
   );
 }

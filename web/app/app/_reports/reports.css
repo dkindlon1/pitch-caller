@@ -194,3 +194,5 @@
 .oc-arch { margin: 0 0 4px; color: var(--text-2); }
 .oc-arch b { color: var(--text); font-weight: 650; }
 .oc-drift { margin-top: 6px; display: grid; gap: 6px; }
+.oc-chart .bar.thin { opacity: 0.35; }
+.oc-chart .base-t { paint-order: stroke; stroke: var(--panel-2); stroke-width: 5px; stroke-linejoin: round; }

@@ -158,7 +158,16 @@
     // "early sign": the same control at a looser rate (likely, not certain), so noise doesn't fill the list either
     let cutE = -1; sorted.forEach((c, i) => { if (c.p <= ((i + 1) / m) * EARLY_P) cutE = i; });
     sorted.forEach((c, i) => { c.level = i <= cut ? "clear" : i <= cutE ? "early" : "noise"; c.q = Math.min(1, (c.p * m) / (i + 1)); });
-    const shown = sorted.filter((c) => c.level !== "noise").sort((a, b) => (a.level === b.level ? Math.abs(b.z) - Math.abs(a.z) : a.level === "clear" ? -1 : 1)).slice(0, MAX_SHOWN);
+    // one finding per pitch, metric and direction (the strongest): a pitch off all night shows once, saying in how many
+    // other situations it was the same; a pitch good in one situation and bad in another still shows twice
+    const ranked = sorted.filter((c) => c.level !== "noise").sort((a, b) => (a.level === b.level ? Math.abs(b.z) - Math.abs(a.z) : a.level === "clear" ? -1 : 1));
+    const firstOf = {}, shown = [];
+    for (const c of ranked) {
+      const g = `${c.pitch}|${c.metric}|${c.raw > c.base ? "up" : "down"}`;
+      if (firstOf[g]) { firstOf[g].alsoIn++; continue; }
+      c.alsoIn = 0; firstOf[g] = c; shown.push(c);
+    }
+    shown.splice(MAX_SHOWN);
     for (const c of shown) c.sentence = sentence(c);
     return { tested: m, shown, all: sorted };
   }
@@ -169,7 +178,8 @@
     const v = VARS[c.variable];
     const nWord = c.unit === "pitch" ? `${c.n} ${c.name.toLowerCase()}${c.n === 1 ? "" : "s"}` : `${c.n} ${UNIT[c.unit][c.n === 1 ? 0 : 1]}`;
     void md;
-    return `${what} ${c.metric === "hard" ? (up ? "goes up" : "goes down") : verb} from ${pct(c.base)} to ${pct(c.raw)} ${v.phrase(c.bucket)} (${nWord}).`;
+    const also = c.alsoIn ? ` The same in ${c.alsoIn} other situation${c.alsoIn === 1 ? "" : "s"}: ${c.alsoIn >= 2 ? "most of the outing, not just this spot" : "worth a look"}.` : "";
+    return `${what} ${c.metric === "hard" ? (up ? "goes up" : "goes down") : verb} from ${pct(c.base)} to ${pct(c.raw)} ${v.phrase(c.bucket)} (${nWord}).${also}`;
   }
 
   // ---------------------------------------------------------------- drift (in game)

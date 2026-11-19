@@ -4,7 +4,7 @@ export type Rate = { p: number; n: number; raw: number; se: number; prior: numbe
 export type PitchBase = { key: string; name: string; kind: string; pitches: number; metrics: Record<"whiff" | "strike" | "hard", Rate>; velo: { mean: number; sd: number; n: number } | null };
 export type Baseline = { version: string; pitches: Record<string, PitchBase>; outings: number };
 export type Cell = { pitch: string; name: string; kind: string; variable: string; bucket: string; metric: "whiff" | "strike" | "hard"; k: number; n: number; raw: number; shrunk: number;
-  base: number; z: number; p: number; q: number; worse: boolean; level: "clear" | "early" | "noise"; chart: { bucket: string; k: number; n: number }[]; unit: string; sentence?: string };
+  base: number; z: number; p: number; q: number; worse: boolean; level: "clear" | "early" | "noise"; chart: { bucket: string; k: number; n: number }[]; unit: string; sentence?: string; alsoIn?: number };
 export type Findings = { tested: number; shown: Cell[]; all: Cell[] };
 export type DriftNote = { pitch: string; name: string; metric: string; k: number; n: number; base: number; line: number; prob: number; text: string; at?: number; atN?: number };
 declare const PCPeak: {

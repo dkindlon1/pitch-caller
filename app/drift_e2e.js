@@ -45,8 +45,10 @@ let fails = 0; const check = (ok, m) => { console.log((ok ? "  ok   " : "  FAIL 
   check(await btn.count() === 1 && /Notes: [1-9]/.test(label || ""), `the Notes button shows a count (${label}) after ${tonight.sliders} sliders with no whiffs`);
   check(await page.locator("#peak-panel").isHidden(), "nothing opens on its own (no pop-up)");
   check(sounds === 0, "no sound or vibration");
+  const SHOT = process.env.SHOTS; if (SHOT) { require("fs").mkdirSync(SHOT, { recursive: true }); await page.screenshot({ path: SHOT + "/game-badge__1180.png" }); }
   await btn.click();
   const text = await page.locator("#peak-panel").innerText();
+  if (SHOT) { await page.screenshot({ path: SHOT + "/game-panel__1180.png" }); await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(300); await page.screenshot({ path: SHOT + "/game-panel__390.png" }); await page.setViewportSize({ width: 1180, height: 820 }); }
   check(/Drift Ace/.test(text) && /slider isn't missing bats like usual \(0 whiffs on \d+ swings vs about \d+%\)/.test(text), `the note in plain words: "${text.split("\n")[0]}"`);
   // Undo (its history lives in memory, so before any reload): take the pitches back and the note goes with them
   await page.evaluate(async () => { for (let i = 0; i < 70; i++) undoLast(); render(); await new Promise((r) => setTimeout(r, 300)); });

@@ -60,4 +60,8 @@ const strong = P.baseline([{ date: "d", pitches: [...Array.from({ length: 60 }, 
   ...Array.from({ length: 40 }, (_, i) => ev({ res: i % 5 < 2 ? "whiff" : "foul" }))] }]);
 check(P.archetype(strong) === "Strike thrower, slider for whiffs", `"${P.archetype(strong)}"`);
 check(P.archetype(P.baseline([])) === null, "no history: no label");
+// a pitch off all night (strikes low in every situation) shows once, with how many other situations matched
+{ const wild = []; for (let i = 0; i < 60; i++) wild.push({ type: "pitch", n: i + 1, pcRaw: i, pitchId: "fb", pitchName: "Fastball", kind: "FB", res: i % 5 ? "ball" : "cstrike", sit: { batters_faced: Math.floor(i / 2.2), same_side: i % 2 === 0, bases: [i % 3 === 0, false, false] } });
+  const fw = P.findings(wild, P.baseline([])), strikes = fw.shown.filter((x) => x.pitch === "fb" && x.metric === "strike");
+  check(strikes.length === 1 && strikes[0].alsoIn >= 2 && /The same in \d+ other situations: most of the outing/.test(strikes[0].sentence), `off all night: one finding, not one per situation (${strikes.length}; "${strikes[0] && strikes[0].sentence}")`); }
 console.log(fails ? `${fails} check(s) failed` : "all peak checks passed"); process.exit(fails ? 1 : 0);

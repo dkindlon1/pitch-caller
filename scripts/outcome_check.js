@@ -114,7 +114,13 @@ function look(ps, norm, kinds) {
   const cutAt = (q) => { for (let i = m - 1; i >= 0; i--) if (s[i].p <= ((i + 1) * q) / m) return i; return -1; };
   const c1 = cutAt(Q_CLEAR), c2 = cutAt(Q_EARLY);
   s.forEach((c, i) => { c.level = i <= c1 ? "clear" : i <= c2 ? "early" : "noise"; });
-  const shown = s.filter((c) => c.level !== "noise").sort((a, b) => (a.level !== b.level ? (a.level === "clear" ? -1 : 1) : Math.abs(b.z) - Math.abs(a.z))).slice(0, SHOW);
+  // one per pitch, metric and direction: the strongest
+  const seen = new Set(), shown = [];
+  for (const c of s.filter((c) => c.level !== "noise").sort((a, b) => (a.level !== b.level ? (a.level === "clear" ? -1 : 1) : Math.abs(b.z) - Math.abs(a.z)))) {
+    const [key, , , mk, kn, base] = c.id.split("|"), [k, n] = kn.split("/").map(Number), g = `${key}|${mk}|${k / n > Number(base) ? "up" : "down"}`;
+    if (!seen.has(g)) { seen.add(g); shown.push(c); }
+  }
+  shown.splice(SHOW);
   return { tested: m, shown };
 }
 function driftLog(ps, norm, kinds) {

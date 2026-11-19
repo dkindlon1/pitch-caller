@@ -712,4 +712,4 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 .btn.pill.peak .badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--alert); color: var(--on-alert); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .peak-panel { margin: 8px 16px 0; padding: 12px 16px; border-radius: 18px; display: grid; gap: 8px; max-width: 640px; }
 .peak-panel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
-@media (max-width: 560px) { .bar .end { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; min-width: 0; } .btn.pill.peak { padding-inline: 10px; } }
+@media (max-width: 560px) { .bar:has(#peak-btn) { flex-wrap: wrap; row-gap: 8px; height: auto; padding: 8px 8px 8px 16px; border-radius: 28px; } .bar:has(#peak-btn) .end { flex: 1 0 100%; justify-content: flex-end; margin-left: 0; } .btn.pill.peak { padding-inline: 10px; } }

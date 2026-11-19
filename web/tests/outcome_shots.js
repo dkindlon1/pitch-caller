@@ -30,7 +30,7 @@ const OUT = path.join("C:/dev/pitch-caller-shots/build3", round); fs.mkdirSync(O
     for (const [k, u] of list) for (const [w, hh] of [[1440, 900], [1180, 820], [820, 1180], [390, 844]]) {
       await p.setViewportSize({ width: w, height: hh }); const r = await p.goto(SITE + u, { waitUntil: "networkidle" }); await p.waitForTimeout(200);
       // the outcome section itself, cropped, plus the full page
-      const sec = p.locator("#ot").first();
+      const sec = p.locator("section:has(#h-ot)").first();
       if (await sec.count()) await sec.screenshot({ path: path.join(OUT, `${k}-section__${w}x${hh}.png`) }).catch(() => {});
       await p.screenshot({ path: path.join(OUT, `${k}__${w}x${hh}.png`), fullPage: true });
       rep.push(`${k} ${w} ${r.status()} overflow=${await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)}`);
