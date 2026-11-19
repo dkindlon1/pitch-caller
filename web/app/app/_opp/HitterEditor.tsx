@@ -84,7 +84,7 @@ export function HitterEditor({ team, opp, hitter, bats, init, defs, canEdit }: {
         <textarea id="op-notes" className="op-notes" value={s.notes} disabled={!canEdit} maxLength={4000} autoComplete="off" placeholder="What to remember about him…" onChange={(e) => set({ notes: e.target.value })} />
         <p className="rp-note">Staff only. Players never see opponents.</p>
       </section>
-      {canEdit ? <div className="op-save"><button type="submit" className="shell-btn">{dirty ? "Save scouting" : "Saved"}</button>{dirty ? <span className="rp-note" role="status">Unsaved changes</span> : null}</div> : null}
+      {canEdit ? <div className={`op-save${dirty ? " stuck" : ""}`}><button type="submit" className="shell-btn">{dirty ? "Save scouting" : "Saved"}</button>{dirty ? <span className="rp-note" role="status">Unsaved changes</span> : null}</div> : null}
     </form>
   );
 }

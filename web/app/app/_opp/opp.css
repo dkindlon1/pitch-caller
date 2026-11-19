@@ -24,7 +24,8 @@
 .op-flabel { display: block; color: var(--text-2); font-size: 0.875rem; margin-bottom: 6px; }
 .op-custom { display: grid; gap: 4px; }
 .op-notes { width: 100%; min-height: 96px; resize: vertical; background: var(--panel-3); color: var(--text); border: 1px solid var(--rule-2); border-radius: 12px; padding: 10px 12px; font: inherit; }
-.op-save { position: sticky; bottom: 12px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--rule-2); width: max-content; max-width: 100%; z-index: 5; }
+.op-save { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--rule-2); width: max-content; max-width: 100%; }
+.op-save.stuck { position: sticky; bottom: 12px; z-index: 5; box-shadow: 0 12px 30px -12px rgb(0 0 0 / 0.7); }
 .op-sugg { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .op-sugg li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--panel-3); border-radius: 12px; padding: 10px 12px; }
 .op-sugg li p { margin: 0; flex: 1 1 240px; }

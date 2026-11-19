@@ -45,7 +45,7 @@ const status = () => JSON.parse(execFileSync("npx", ["-y", "supabase@2.122.1", "
     console.log("1. At-bats across seasons");
     const coach = await as("coach");
     for (const hid of opp.hitters.slice(0, 4)) {
-      const n = (await db.query("select count(*)::int n from public.events where program_id = $1 and deleted_at is null and doc->>hitterId = $2 and (doc->>'end')::boolean", [T, hid])).rows[0].n;
+      const n = (await db.query("select count(*)::int n from public.events where program_id = $1 and deleted_at is null and doc->>'hitterId' = $2 and (doc->>'end')::boolean", [T, hid])).rows[0].n;
       const dates = (await db.query("select distinct g.doc->>'date' d from public.events e join public.games g on g.program_id = e.program_id and g.id = e.game_id where e.program_id = $1 and e.doc->>'hitterId' = $2 and e.deleted_at is null order by 1", [T, hid])).rows.map((r) => r.d);
       await coach.goto(`${SITE}/app/t/${T}/opponents/${oppId}/hitters/${hid}`, { waitUntil: "networkidle" });
       const shown = +(await coach.locator('[data-k="hitter.abs"]').getAttribute("data-v"));
@@ -116,7 +116,7 @@ const status = () => JSON.parse(execFileSync("npx", ["-y", "supabase@2.122.1", "
     await coach.getByRole("button", { name: "Save scouting" }).click(); await coach.waitForURL(/ok=saved|error=/, { timeout: 15000 });
     const d = await hitterDoc(hid);
     check(/ok=saved/.test(coach.url()), "saved");
-    check(JSON.stringify(d.ratings) === JSON.stringify({ power: 3, contact: "unknown", speed: 1 }), `ratings stored, Unknown as "unknown" (${JSON.stringify(d.ratings)})`);
+    check(d.ratings && d.ratings.power === 3 && d.ratings.contact === "unknown" && d.ratings.speed === 1 && Object.keys(d.ratings).length === 3, `ratings stored, Unknown as "unknown" (${JSON.stringify(d.ratings)})`);
     check(d.zone && d.zone["1,1"] === "hot" && d.zone["3,3"] === "cold" && Object.keys(d.zone).length === 2, `grid: one tap hot, two taps cold (${JSON.stringify(d.zone)})`);
     check(d.pitchFlags.crushesFB && d.smallBall.steal && d.notes === "E2E: sits on the first fastball." && Object.values(d.custom || {}).includes(true), "checkboxes, notes and the custom field stored");
     check(JSON.stringify(d.grades || null) === JSON.stringify(before.grades || null) && JSON.stringify({ ...(d.scoutTags || {}), spray: undefined }) === JSON.stringify({ ...(before.scoutTags || {}), spray: undefined }) && d.scoutTags.spray === "pull",
@@ -130,7 +130,8 @@ const status = () => JSON.parse(execFileSync("npx", ["-y", "supabase@2.122.1", "
     await coach.goto(`${SITE}/app/t/${T}/opponents/${oppId}`, { waitUntil: "networkidle" });
     await coach.getByLabel("Runs a lot").check(); await coach.getByRole("button", { name: "Save", exact: true }).click(); await coach.waitForURL(/ok=saved|error=/);
     check(((await db.query("select doc from public.teams where program_id = $1 and id = $2", [T, oppId])).rows[0].doc.tendencies || {}).runs === true, "team tendencies saved");
-    check((await coach.locator(".op-lineup").count()) > 0, "lineups faced are listed");
+    await coach.goto(`${SITE}/app/t/${T}/opponents/${oppId}`, { waitUntil: "networkidle" });
+    check(await coach.locator(".op-lineup").first().waitFor({ timeout: 10000 }).then(() => true, () => false), "lineups faced are listed");
 
     console.log("4. Merge");
     const [keep, drop] = [opp.hitters[1], opp.hitters[2]];
