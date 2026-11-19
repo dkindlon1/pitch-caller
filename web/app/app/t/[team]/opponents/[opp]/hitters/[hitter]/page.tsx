@@ -6,7 +6,8 @@ import { teamFor } from "@/lib/team";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { buildHitterAtBats, type Ev } from "@/lib/report_data.ts";
 import { hitterEvents, teamGames, teamNames, teamPitchers, type SB } from "@/lib/report_fetch.ts";
-import { cleanHitterScouting, type Heat, type Spray } from "@/lib/opp_model.ts";
+import { cleanHitterScouting, cellWords, type Heat, type Spray } from "@/lib/opp_model.ts";
+import { suggestionQuestion } from "@/lib/opp_suggest.ts";
 import { defsFor } from "@/lib/opp_server";
 import { AtBatList, Section, dayText } from "@/app/app/_reports/ui";
 import { ReportSkeleton } from "@/app/app/_reports/skeleton";
@@ -39,7 +40,9 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   // the owner off the staff (oppOwner) can't read games or events: his page leaves game history out and says so
   const staff = isCoach;
   const [games, pitchers, names, defs, sugg, ...evLists] = await Promise.all([teamGames(db, team), teamPitchers(db, team), teamNames(db, team), defsFor(t.org_id),
-    sb.from("opp_suggestions").select("id, kind, key, value, text, n").eq("program_id", team).eq("hitter_id", hitter).eq("status", "pending").order("created_at"),
+    // the staff read the suggestions with their evidence; the owner off the staff gets the question only (the evidence is game history)
+    staff ? sb.from("opp_suggestions").select("id, kind, key, value, text, n").eq("program_id", team).eq("hitter_id", hitter).eq("status", "pending").order("created_at")
+      : sb.rpc("pc_opp_suggestions_owner", { p: team, hitter }),
     ...(staff ? ids.map((id) => hitterEvents(db, team, id)) : [])]);
   // at-bats of a merged duplicate count as his: read under his id
   const evs = (evLists as Ev[][]).flat().map((e) => (e.hitterId && ids.includes(e.hitterId) ? { ...e, hitterId: hitter } : e));
@@ -49,7 +52,8 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const sc = cleanHitterScouting(h, defs), canEdit = can("manage_opponents") || can("manage_roster") || oppOwner;
   const spray = (h.scoutTags || {}).spray as Spray | undefined;
   const tags = Object.entries(h.scoutTags || {}).filter(([k]) => TAG_WORDS[k]).map(([k, v]) => TAG_WORDS[k][v]).filter(Boolean);
-  const pending = ((sugg as { data: unknown }).data || []) as { id: string; kind: string; key: string; value: string; text: string; n: number }[];
+  const pending = (((sugg as { data: unknown }).data || []) as { id: string; kind: string; key: string; value: string; text?: string; n?: number }[])
+    .map((s) => (staff ? s : { ...s, text: suggestionQuestion(s, (k) => cellWords(k, h.bats || "R")), n: undefined }));
   return (
     <article className="rp">
       <header className="rp-head">

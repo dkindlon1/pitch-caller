@@ -68,3 +68,11 @@ export function suggest(evs: Ev[], hitters: HitterState[], prior: Prior[] = [], 
     return s.n >= Math.max(dn * 2, dn + 2);
   });
 }
+
+/** A suggestion's question with no evidence ("Contact 2?", "Mark middle hot?"): what the organization's owner sees when
+ *  he isn't on the team's staff, since the evidence comes from the games (review fixes, Nov 19). */
+export function suggestionQuestion(sg: { kind: string; key: string; value: string }, cellName: (key: string) => string = (k) => `cell ${k}`): string {
+  if (sg.kind === "zone") return `Mark ${cellName(sg.key)} ${sg.value}?`;
+  if (sg.kind === "rating") return `${sg.key.charAt(0).toUpperCase()}${sg.key.slice(1)} ${sg.value}?`;
+  return "A change to his scouting?";
+}

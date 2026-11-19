@@ -91,9 +91,15 @@ async function teamMeta(teamId: string) {
   return { pitchers: new Map(pitchers.map((p) => [p.id, p.doc])), names: new Map(teams.map((x) => [x.id, x.doc?.name || "Opponent"])) };
 }
 
+// games and seasons from before the report emails started (20261118020000_report_backfill.sql): viewable, never emailed
+async function backfilled(teamId: string, kind: "game" | "season"): Promise<Set<string>> {
+  return new Set((await restAll<{ ref: string }>(`report_backfill?program_id=eq.${teamId}&kind=eq.${kind}&select=ref`)).map((r) => r.ref));
+}
+
 async function outingReports(site: string, t: { id: string; name: string; level: string | null }, people: Person[], out: RunResult) {
+  const old = await backfilled(t.id, "game");
   const games = (await restAll<GameRow>(`games?program_id=eq.${t.id}&deleted_at=is.null&select=id,doc`))
-    .filter((g) => g.doc?.status === "final" && !g.doc.dupOf && /^\d{4}-\d{2}-\d{2}$/.test(String(g.doc.date)));
+    .filter((g) => g.doc?.status === "final" && !g.doc.dupOf && /^\d{4}-\d{2}-\d{2}$/.test(String(g.doc.date)) && !old.has(g.id));
   if (!games.length) return;
   const done = await restAll<MailKey>(`report_mail?program_id=eq.${t.id}&kind=in.(outing,game_summary)&select=kind,ref,pitcher_id,email`);
   const coaches = people.filter((p) => p.role !== "player");
@@ -132,6 +138,7 @@ async function outingReports(site: string, t: { id: string; name: string; level:
 type SeasonRow = { id: string; name: string; start_date: string; end_date: string };
 export async function finalRecaps(site: string, t: { id: string; name: string; level: string | null }, people: Person[], out: RunResult) {
   const seasons = await rest<SeasonRow[]>(`seasons?program_id=eq.${t.id}&select=id,name,start_date,end_date&order=end_date.desc`);
+  const old = await backfilled(t.id, "season");
   for (const s of seasons) {
     const have = await rest<{ pitcher_id: string }[]>(`recap_versions?season_id=eq.${s.id}&select=pitcher_id`);
     const games = (await restAll<GameRow>(`games?program_id=eq.${t.id}&deleted_at=is.null&select=id,doc`))
@@ -158,6 +165,7 @@ export async function finalRecaps(site: string, t: { id: string; name: string; l
       out.frozen++;
       built.push({ pid, name: doc?.name || "Pitcher" });
     }
+    if (old.has(s.id)) continue;   // from before the emails started: frozen above, not emailed
     for (const b of built)
       for (const p of people.filter((x) => x.role === "player" && x.pitcher_id === b.pid))
         if (await send(t.id, { kind: "final_recap", ref: s.id, pitcher_id: b.pid, email: p.email }, p.user_id,
@@ -190,12 +198,13 @@ export async function refreeze(teamId: string, seasonId: string, pitcherId: stri
 }
 
 // ---------------------------------------------------------------- an under-18 player's link: ask the parent
-export async function askParent(site: string, teamId: string, pitcherId: string, token: string): Promise<boolean> {
+// ref: once per link by default; a widened link asks again under its own ref (token + the sections asked for)
+export async function askParent(site: string, teamId: string, pitcherId: string, token: string, ref: string = token): Promise<boolean> {
   const email = await rpc<string | null>("pc_report_parent", { p: teamId, pitcher: pitcherId });
   if (!email) return false;
   const [t] = await rest<{ name: string }[]>(`programs?id=eq.${teamId}&select=name`);
   const [p] = await rest<{ doc: { name?: string } }[]>(`pitchers?program_id=eq.${teamId}&id=eq.${q(pitcherId)}&select=doc`);
-  return send(teamId, { kind: "share_request", ref: token, pitcher_id: pitcherId, email }, null,
+  return send(teamId, { kind: "share_request", ref, pitcher_id: pitcherId, email }, null,
     () => shareRequestMail({ to: email, pitcher: p?.doc?.name || "Your player", team: t?.name || "the team", link: `${site}/app/approve` }));
 }
 

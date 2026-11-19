@@ -1,10 +1,10 @@
-import { createShare, revokeShare, saveSections } from "./share_actions";
+import { createShare, resumeShare, revokeShare, saveSections } from "./share_actions";
 import { ConfirmSubmit } from "../_frame/ConfirmSubmit";
 import type { Sections } from "./recap";
 
 // The pitcher's sharing panel: make a public link, choose its sections (summary on by default; heat maps, pitch by
 // pitch and the outing list off until he turns them on), turn it off. Coach notes, style and overrides are never on it.
-export type ShareRow = { token: string; sections: Sections; approved_at: string | null };
+export type ShareRow = { token: string; sections: Sections; approved_at: string | null; approved_sections?: Partial<Sections> | null; paused?: boolean };
 export function SharePanel({ team, pitcher, season, share, live, minor, site }: { team: string; pitcher: string; season: string; share: ShareRow | null; live: boolean; minor: boolean; site: string }) {
   const path = `/app/me/${team}/${pitcher}/recap${season ? `/${season}` : ""}`;
   if (!share) return (
@@ -16,12 +16,17 @@ export function SharePanel({ team, pitcher, season, share, live, minor, site }: 
     </section>
   );
   const url = `${site}/r/${share.token}`, s = share.sections;
+  // under 18, approved, and since widened: the link serves what his parent approved; the rest waits for the parent
+  const waiting = minor && !!share.approved_at && (Object.keys(s) as (keyof Sections)[]).some((k) => s[k] && !(share.approved_sections || {})[k]);
   const box = (name: keyof Sections, label: string, hint: string) => (
     <label className="rp-check" style={{ alignItems: "flex-start" }}><input type="checkbox" name={name} defaultChecked={s[name]} style={{ marginTop: 2 }} /><span><b style={{ fontWeight: 600, color: "var(--text)" }}>{label}</b><br /><span className="rp-note">{hint}</span></span></label>);
   return (
     <section className="rp-sec rp-card rp-share" aria-labelledby="h-share">
-      <header><h2 id="h-share">Public link</h2><span className={`rp-pill${live ? " shared" : ""}`} role="status">{live ? "Live" : minor ? "Waiting for your parent" : "Off"}</span></header>
-      {live ? <p className="rp-note">Anyone with this link can see the sections below. Nothing else.</p>
+      <header><h2 id="h-share">Public link</h2><span className={`rp-pill${live ? " shared" : ""}`} role="status">{live ? "Live" : share.paused ? "Off" : minor ? "Waiting for your parent" : "Off"}</span></header>
+      {live && waiting ? <p className="rp-note">Live with what your parent approved. The sections you added wait for your parent: we emailed them.</p>
+        : live ? <p className="rp-note">Anyone with this link can see the sections below. Nothing else.</p>
+        : share.paused ? <form action={resumeShare} className="rp-note"><input type="hidden" name="token" value={share.token} /><input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={pitcher} /><input type="hidden" name="season" value={season} />
+            This link is off. Nobody can open it until you turn it on. <button className="shell-btn small" type="submit">Turn the link on</button></form>
         : minor ? <p className="rp-note">Your parent needs to approve this link before anyone can open it. We emailed them; they can approve it after signing in with that email.</p> : null}
       <p className="url" data-k="share.url">{url}</p>
       <form action={saveSections} style={{ display: "grid", gap: 6 }}>

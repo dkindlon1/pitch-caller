@@ -173,13 +173,16 @@ begin
   if not private.pc_can(p, 'manage_roster') then raise exception 'only a coach who manages the roster can do this' using errcode = '42501'; end if;
   if parent_email is null or btrim(parent_email) = '' then
     delete from public.minor_guardians m where m.program_id = p and m.pitcher_id = pitcher;
-    -- no longer marked: a link he made while marked still needs its approval (never goes live on its own)
+    -- no longer marked: a link his parent never approved stays off until he turns it on again (pc_share_resume); it never
+    -- goes live on its own (review fixes, Nov 19)
+    update public.recap_shares s set paused = true
+    where s.program_id = p and s.pitcher_id = pitcher and s.revoked_at is null and s.approved_at is null;
     return;
   end if;
   insert into public.minor_guardians (program_id, pitcher_id, parent_email, marked_by) values (p, pitcher, lower(btrim(parent_email)), auth.uid())
   on conflict (program_id, pitcher_id) do update set parent_email = excluded.parent_email, marked_by = excluded.marked_by, marked_at = now();
   -- a new parent email: any approval given before is no longer his parent's, so live links stop until approved again
-  update public.recap_shares s set approved_by = null, approved_at = null
+  update public.recap_shares s set approved_by = null, approved_at = null, approved_sections = null
   where s.program_id = p and s.pitcher_id = pitcher and s.approved_by is not null
     and not exists (select 1 from auth.users u where u.id = s.approved_by and lower(u.email) = lower(btrim(parent_email)))
     and not exists (select 1 from public.guardian_consents g where g.program_id = p and g.pitcher_id = pitcher and g.guardian_user_id = s.approved_by);
@@ -198,7 +201,9 @@ create table public.recap_shares (
   created_at timestamptz not null default now(),
   revoked_at timestamptz,
   approved_by uuid,               -- under 18: the parent account that turned it on
-  approved_at timestamptz
+  approved_at timestamptz,
+  approved_sections jsonb,        -- under 18: the sections the parent approved; a wider choice waits for the parent again
+  paused boolean not null default false   -- off until the pitcher turns it on again (his under-18 mark was cleared before approval)
 );
 create unique index recap_shares_one_live on public.recap_shares (program_id, pitcher_id, coalesce(season_id::text, 'current')) where revoked_at is null;
 alter table public.recap_shares enable row level security;
@@ -212,7 +217,7 @@ grant select on public.recap_shares to authenticated;
 
 create function private.pc_share_live(s public.recap_shares) returns boolean
 language sql stable security definer set search_path = '' as $$
-  select s.revoked_at is null and private.pc_team_active(s.program_id)
+  select s.revoked_at is null and not s.paused and private.pc_team_active(s.program_id)
      and (s.approved_at is not null or not private.pc_is_minor18(s.program_id, s.pitcher_id))
 $$;
 
@@ -223,6 +228,22 @@ language sql immutable set search_path = '' as $$
     'heat', coalesce((x ->> 'heat')::boolean, false),
     'pitches', coalesce((x ->> 'pitches')::boolean, false),
     'outings', coalesce((x ->> 'outings')::boolean, false))
+$$;
+
+-- what a live link serves: the chosen sections; under 18, only those his parent approved as well (review fixes, Nov 19)
+create function private.pc_share_secs(s public.recap_shares) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select case when not private.pc_is_minor18(s.program_id, s.pitcher_id) then private.pc_clean_sections(s.sections)
+    else (select jsonb_object_agg(k, (x.c ->> k)::boolean and coalesce((x.a ->> k)::boolean, false))
+          from (select private.pc_clean_sections(s.sections) c,
+                       private.pc_clean_sections(coalesce(s.approved_sections, '{"summary": false}'::jsonb)) a) x,
+               jsonb_object_keys(x.c) k) end
+$$;
+-- true while a link has a section his parent hasn't approved (never approved, or widened since)
+create function private.pc_share_pending(s public.recap_shares) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select s.approved_at is null or exists (select 1 from jsonb_each_text(private.pc_clean_sections(s.sections)) c(k, v)
+    where c.v = 'true' and not coalesce((private.pc_clean_sections(coalesce(s.approved_sections, '{"summary": false}'::jsonb)) ->> c.k)::boolean, false))
 $$;
 
 -- the pitcher (his own account, or the parent account a young player joined through) makes his link; one live link per
@@ -242,14 +263,28 @@ begin
   return tok;
 end $$;
 
-create function public.pc_share_sections(tok text, secs jsonb) returns void
+-- true when the new choice waits for his parent (under 18 and wider than what was approved): until then the link serves
+-- only the approved sections; a narrower choice is served at once (review fixes, Nov 19)
+create function public.pc_share_sections(tok text, secs jsonb) returns boolean
 language plpgsql security definer set search_path = '' as $$
 declare s public.recap_shares;
 begin
   select * into s from public.recap_shares x where x.token = tok and x.revoked_at is null;
   if s.token is null or not exists (select 1 from private.pc_my_links() l where l.program_id = s.program_id and l.pitcher_id = s.pitcher_id) then
     raise exception 'only the pitcher can change his link' using errcode = '42501'; end if;
-  update public.recap_shares set sections = private.pc_clean_sections(secs) where token = tok;
+  update public.recap_shares x set sections = private.pc_clean_sections(secs) where x.token = tok returning * into s;
+  return private.pc_is_minor18(s.program_id, s.pitcher_id) and private.pc_share_pending(s);
+end $$;
+
+-- the pitcher turns a paused link back on (under 18 it still needs his parent)
+create function public.pc_share_resume(tok text) returns void
+language plpgsql security definer set search_path = '' as $$
+declare s public.recap_shares;
+begin
+  select * into s from public.recap_shares x where x.token = tok and x.revoked_at is null;
+  if s.token is null or not exists (select 1 from private.pc_my_links() l where l.program_id = s.program_id and l.pitcher_id = s.pitcher_id) then
+    raise exception 'only the pitcher can turn his link on' using errcode = '42501'; end if;
+  update public.recap_shares x set paused = false where x.token = tok;
 end $$;
 
 -- revoking kills the link for good; a new one gets a new token. The pitcher or his parent.
@@ -272,15 +307,18 @@ begin
   select * into s from public.recap_shares x where x.token = tok and x.revoked_at is null;
   if s.token is null or not private.pc_is_parent_of(s.program_id, s.pitcher_id) then
     raise exception 'only his parent can approve this link' using errcode = '42501'; end if;
-  update public.recap_shares set approved_by = case when approve then auth.uid() end, approved_at = case when approve then now() end where token = tok;
+  update public.recap_shares x set approved_by = case when approve then auth.uid() end, approved_at = case when approve then now() end,
+    approved_sections = case when approve then private.pc_clean_sections(x.sections) end,
+    paused = case when approve then false else x.paused end   -- the parent approving turns a paused link on
+  where x.token = tok;
 end $$;
 
 -- links waiting on (or approved by) the signed-in parent, with the player's name
 create function public.pc_my_share_requests() returns table (token text, program_id uuid, team_name text, pitcher_id text, pitcher_name text,
-  season_name text, sections jsonb, approved boolean, created_at timestamptz)
+  season_name text, sections jsonb, approved boolean, created_at timestamptz, pending boolean, approved_sections jsonb)
 language sql stable security definer set search_path = '' as $$
   select s.token, s.program_id, t.name, s.pitcher_id, coalesce(p.doc ->> 'name', 'Your player'), coalesce(se.name, 'Season so far'),
-         s.sections, s.approved_at is not null, s.created_at
+         s.sections, s.approved_at is not null, s.created_at, private.pc_share_pending(s), s.approved_sections
   from public.recap_shares s
   join public.programs t on t.id = s.program_id
   left join public.pitchers p on p.program_id = s.program_id and p.id = s.pitcher_id
@@ -373,7 +411,7 @@ begin
   if tok is null or tok !~ '^[0-9a-f]{64}$' then return null; end if;
   select * into s from public.recap_shares x where x.token = tok;
   if s.token is null or not private.pc_share_live(s) then return null; end if;
-  secs := private.pc_clean_sections(s.sections);
+  secs := private.pc_share_secs(s);
   select t.level into lvl from public.programs t where t.id = s.program_id;
   if s.season_id is not null then
     select * into se from public.seasons x where x.id = s.season_id;
@@ -413,14 +451,15 @@ end $$;
 
 revoke all on function private.pc_note_writer(uuid), private.pc_note_stamp(), private.pc_season_start(uuid), private.pc_recap_frozen(),
   private.pc_is_minor18(uuid, text), private.pc_is_parent_of(uuid, text), private.pc_share_live(public.recap_shares), private.pc_clean_sections(jsonb),
+  private.pc_share_secs(public.recap_shares), private.pc_share_pending(public.recap_shares),
   private.pc_report_event(jsonb, boolean), private.pc_report_games(uuid, date, date) from public, anon;
 grant execute on function private.pc_note_writer(uuid), private.pc_season_start(uuid), private.pc_is_minor18(uuid, text), private.pc_is_parent_of(uuid, text)
   to authenticated, service_role;
 revoke all on function public.pc_mark_season_over(uuid, text), public.pc_set_minor18(uuid, text, text), public.pc_share_create(uuid, text, uuid),
-  public.pc_share_sections(text, jsonb), public.pc_share_revoke(text), public.pc_share_approve(text, boolean), public.pc_my_share_requests(),
+  public.pc_share_sections(text, jsonb), public.pc_share_revoke(text), public.pc_share_resume(text), public.pc_share_approve(text, boolean), public.pc_my_share_requests(),
   public.pc_my_report(uuid, text, text, date, date), public.pc_public_recap(text) from public, anon;
 grant execute on function public.pc_mark_season_over(uuid, text), public.pc_set_minor18(uuid, text, text), public.pc_share_create(uuid, text, uuid),
-  public.pc_share_sections(text, jsonb), public.pc_share_revoke(text), public.pc_share_approve(text, boolean), public.pc_my_share_requests(),
+  public.pc_share_sections(text, jsonb), public.pc_share_revoke(text), public.pc_share_resume(text), public.pc_share_approve(text, boolean), public.pc_my_share_requests(),
   public.pc_my_report(uuid, text, text, date, date) to authenticated, service_role;
 -- signed-out visitors never call it directly (no pc_ function is anon's): the website's server calls it with the service key
 -- for /r/<token>; a signed-in pitcher may call it to see whether his own link is live

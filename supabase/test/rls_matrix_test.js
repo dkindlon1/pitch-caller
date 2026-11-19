@@ -1092,7 +1092,13 @@ const now = () => Date.now();
 
     // the owner, not on the team's staff
     check((await cnt("own3", "teams", T3)) === 1 && (await cnt("own3", "hitters", T3)) === 1, "owner off the staff: reads the team's opponents (1 opponent team, not the team's own record) and their hitters");
-    check((await cnt("own3", "opp_suggestions", T3)) === 1 && (await cnt("own3", "opp_merges", T3)) === 0, "and the opponent suggestions (and the merge log)");
+    // review fixes (Nov 19): the suggestions' evidence comes from the games, which he can't see: he reads no suggestion rows
+    // directly, only the question each asks (kind, spot, value) through pc_opp_suggestions_owner
+    const osg = await as("own3", "select * from public.pc_opp_suggestions_owner($1, 'h1')", [T3]);
+    check((await cnt("own3", "opp_suggestions", T3)) === 0 && (await cnt("own3", "opp_merges", T3)) === 0 && !osg.error && osg.rows.length === 1
+      && osg.rows[0].kind === "zone" && osg.rows[0].value === "hot" && !("text" in osg.rows[0]) && !("n" in osg.rows[0]),
+      `and the opponent suggestions' questions only: no rows of their own, no evidence text or counts (${osg.error || JSON.stringify(osg.rows[0])})`);
+    check(!!(await as("view3", "select * from public.pc_opp_suggestions_owner($1, 'h1')", [T3])).error, "nobody but the owner calls that");
     const others = (await su.query(`select table_name from information_schema.columns where table_schema = 'public' and column_name = 'program_id'
       and table_name not in ('teams', 'hitters', 'opp_suggestions', 'opp_merges', 'members') order by 1`)).rows.map((r) => r.table_name);
     const seen = [];

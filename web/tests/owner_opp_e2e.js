@@ -56,6 +56,16 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
     main = await p.locator("main").innerText();
     check(main.includes(STAFF_ONLY) && !/Every at-bat/.test(main) && !/At-bats seen/.test(main) && !/Not faced yet|Seen \d{4}/.test(main),
       "the hitter page says only the staff can see game history, with no empty at-bat list, totals or seasons seen");
+    // review fixes (Nov 19): a hitter with a suggestion waiting; the owner sees the question, never its evidence from the games
+    const EVIDENCE = /plate appearances|balls in play|hard-hit balls|whiffs or weak contact|strikeouts? in \d/;
+    const sg = (await db.query("select s.hitter_id, s.text, h.doc ->> 'teamId' opp from public.opp_suggestions s join public.hitters h on h.program_id = s.program_id and h.id = s.hitter_id where s.program_id = $1 and s.status = 'pending' and h.deleted_at is null order by s.created_at limit 1", [T])).rows[0];
+    if (sg) {
+      await p.goto(`${SITE}/app/t/${T}/opponents/${sg.opp}/hitters/${sg.hitter_id}`, { waitUntil: "networkidle" });
+      const ownMain = await p.locator("main").innerText();
+      const question = sg.text.split("?")[0] + "?";
+      check(!EVIDENCE.test(ownMain) && ownMain.includes(question), `the owner sees the suggestion "${question}" without its evidence from the games (staff text: "${sg.text}")`);
+      await p.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });   // back to the hitter the next steps edit
+    } else check(false, "the season has a pending suggestion to look at");
     // the editor's button reads "Saved" until something changes, then "Save scouting"
     const power3 = p.getByRole("group", { name: "Power" }).getByRole("button", { name: "3" });
     const editable = await power3.count() > 0 && !(await power3.isDisabled()) && !(await p.getByLabel("Notes on this hitter").isDisabled());
@@ -86,6 +96,10 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
     const cHit = await c.page.locator("main").innerText();
     check(!cTeam.includes(STAFF_ONLY) && /Lineups we.ve faced/.test(cTeam) && /against us/.test(cTeam) && !cHit.includes(STAFF_ONLY) && /Every at-bat/.test(cHit) && /At-bats seen/.test(cHit),
       "the staff still get the game history on both pages (lineups, games against us, every at-bat)");
+    if (sg) {
+      await c.page.goto(`${SITE}/app/t/${T}/opponents/${sg.opp}/hitters/${sg.hitter_id}`, { waitUntil: "networkidle" });
+      check((await c.page.locator("main").innerText()).includes(sg.text), "the staff see the suggestion with its evidence");
+    }
     await c.ctx.close();
     const v = await signIn("viewer");
     r = await v.page.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });
