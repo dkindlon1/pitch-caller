@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Recap } from "@/lib/report_data.ts";
+import { SeasonOutcome } from "./outcome";
+import type { OutcomeSeason } from "@/lib/outcome";
 import { CompareBlock, Completeness, HeatBlock, LineStrip, MixBlock, OutingsTable, PitchSeq, Section, TrendChart, dayText } from "./ui";
 
 // The season recap (PLAN_reports_recap 4): the season line and the level comparison, the pitch mix and results, the
@@ -9,9 +11,9 @@ import { CompareBlock, Completeness, HeatBlock, LineStrip, MixBlock, OutingsTabl
 export type Sections = { summary: boolean; heat: boolean; pitches: boolean; outings: boolean };
 export const ALL_SECTIONS: Sections = { summary: true, heat: true, pitches: true, outings: true };
 
-export function RecapView({ r, sections = ALL_SECTIONS, opponents, outingHref, back, sub, actions, title, own }: {
+export function RecapView({ r, sections = ALL_SECTIONS, opponents, outingHref, back, sub, actions, title, own, outcome }: {
   r: Partial<Recap> & { meta: Recap["meta"] }; sections?: Sections; opponents?: Map<string, string | null>; outingHref?: (game: string) => string;
-  back?: { href: string; label: string }; sub?: ReactNode; actions?: ReactNode; title?: string; own?: boolean;
+  back?: { href: string; label: string }; sub?: ReactNode; actions?: ReactNode; title?: string; own?: boolean; outcome?: OutcomeSeason | null;
 }) {
   const m = r.meta;
   const range = m.start ? (m.end ? `${dayText(m.start, { month: "short", day: "numeric" })} – ${dayText(m.end, { month: "short", day: "numeric", year: "numeric" })}` : `Since ${dayText(m.start, { month: "short", day: "numeric" })}`) : "";
@@ -44,6 +46,7 @@ export function RecapView({ r, sections = ALL_SECTIONS, opponents, outingHref, b
             </div>
             {!r.trends.showVelo ? <p className="rp-note">Velocity shows once radar readings are logged in 3 or more outings.</p> : null}
           </Section>) : null}
+        {outcome ? <Section id="ot" title="Outcome tracking" aside={<span className="rp-note">Situations against his own season normal · not on a public link</span>}><SeasonOutcome o={outcome} /></Section> : null}
         {sections.outings && r.outings ? <Section id="outings" title="Outings"><OutingsTable rows={r.outings} href={outingHref ? (o) => outingHref(o.game) : undefined} opponents={opponents} /></Section> : null}
         {sections.pitches && r.pitchByPitch ? (
           <Section id="pbp" title="Pitch by pitch">

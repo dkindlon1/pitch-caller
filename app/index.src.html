@@ -790,9 +790,10 @@ function render() {
   // the database didn't open (another tab holds an older version, or it failed): said on every screen, not just once
   const dbNote = typeof DB !== "undefined" && DB.failed ? h("p", { class: "pstat change", role: "alert", style: { margin: "8px 16px" } },
     DB.failed.code === "blocked" || /another tab/.test(DB.failed.message || "") ? DB.failed.message : "The database didn't open, so this game is kept on this page only. Reload to try again.") : null;
-  app.replaceChildren(...[topBar(), dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : S.view === "bullpen" ? bullpenView() : liveView()].filter(Boolean));
+  app.replaceChildren(...[topBar(), S.view === "live" ? peakPanel() : null, dbNote, S.view === "setup" ? setupView() : S.view === "data" ? dataView() : S.view === "roster" ? rosterView() : S.view === "bullpen" ? bullpenView() : liveView()].filter(Boolean));
   applyTheme();
   watchSync();
+  if (S.view === "live") peakSoon();
 }
 
 const MARK = `<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="var(--chalk)" stroke="var(--stroke-2)" stroke-width=".6"/><path d="M6.2 4.6c2.3 2 3.4 4.4 3.4 7.4s-1.1 5.4-3.4 7.4M17.8 4.6c-2.3 2-3.4 4.4-3.4 7.4s1.1 5.4 3.4 7.4" fill="none" stroke="var(--glow)" stroke-width="1.6" stroke-linecap="round"/></svg>`;
@@ -810,6 +811,7 @@ function topBar() {
       h("button", { "aria-current": S.view === "setup" ? "page" : null, on: { click: () => go("setup") } }, "Setup")),
     h("div", { class: "end" },
       syncPill(),
+      S.view === "live" ? peakBtn() : null,
       h("span", { class: "stamp" }, `${LEVELS[S.setup.level]}, logging ${TIERS[S.setup.inputs - 1].t.toLowerCase()}`),
       h("button", { class: "btn pill", "aria-label": day ? "Switch to the night screen" : "Switch to the brighter day screen", title: "Brighter screen for day games", on: { click: () => { S.theme = day ? "night" : "day"; save(); render(); } } }, day ? "Night" : "Day"),
       S.view === "live" ? h("button", { class: "btn pill", on: { click: undoLast }, disabled: !undo.length, title: "Undo (U)" }, "Undo") : null));
@@ -842,6 +844,57 @@ function syncRefresh() {
 if (typeof window !== "undefined" && window.addEventListener) {
   window.addEventListener("online", syncRefresh); window.addEventListener("offline", syncRefresh);
   setInterval(syncRefresh, 1000);
+}
+
+// ------------------------------------------------------------------ Build 3: drift notes (outcome tracking)
+// After each pitch, each pitcher's pitches tonight are compared with his normal (app/peak.js: the same code the website's
+// reports use; his normal comes from his earlier games on this device, so it works with no signal). A note when a pitch
+// is clearly below his normal. Notes only: they read the game's log and never write to it, the events, or anything a
+// call reads. The Notes button in the game bar shows a count badge; no sound, no pop-up. One note per pitch per metric,
+// updated as the night goes, gone if it stops holding.
+const PEAK = { base: {}, loading: {}, notes: [], open: false, timer: 0 };
+async function peakBaseFor(pid) {
+  if (!pid || PEAK.base[pid] !== undefined || PEAK.loading[pid] || typeof DB === "undefined" || !DB.ready || typeof PCPeak === "undefined") return;
+  PEAK.loading[pid] = true;
+  try {
+    const here = G().dbId, games = new Map((await DB.D.all("games")).map((x) => [x.id, x]));
+    const by = {};
+    for (const e of await DB.D.byIndex("events", "pitcherId", pid)) if (e.gameId && e.gameId !== here && games.has(e.gameId) && !games.get(e.gameId).dupOf) (by[e.gameId] = by[e.gameId] || []).push(e);
+    PEAK.base[pid] = PCPeak.baseline(Object.entries(by).map(([gid, list]) => ({ date: games.get(gid).date, pitches: list })), { kinds: peakKinds(pid) });
+  } catch (e) { PEAK.base[pid] = null; }
+  PEAK.loading[pid] = false; peakSoon();
+}
+function peakKinds(pid) { const k = {}; for (const d of ((DB.pitchers && DB.pitchers.get(pid)) || {}).pitches || []) k[d.id] = d.kind; return k; }
+function peakRefresh() {
+  if (typeof PCPeak === "undefined") return;
+  const g = G(), by = {};
+  for (const l of (g && g.log) || []) {
+    if (!l.pid) continue;
+    const pd = (DB.pitchers && DB.pitchers.get(l.pid)) || {}, idOf = (nm) => ((pd.pitches || []).find((x) => x.name === nm) || {}).id;
+    (by[l.pid] = by[l.pid] || []).push({ type: "pitch", n: l.n, pitchName: l.pitch, pitchId: idOf(l.pitch), kind: l.kind, thrown: l.thrown, thrownId: l.thrown ? idOf(l.thrown) : undefined, res: l.res, contact: l.contact });
+  }
+  const notes = [];
+  for (const [pid, list] of Object.entries(by)) {
+    if (PEAK.base[pid] === undefined) { peakBaseFor(pid); continue; }
+    const who = ((DB.pitchers && DB.pitchers.get(pid)) || {}).name || "Pitcher";
+    for (const n of PCPeak.drift(list.reverse(), PEAK.base[pid], { kinds: peakKinds(pid) })) notes.push(Object.assign({ who }, n));
+  }
+  PEAK.notes = notes;
+  const old = document.getElementById("peak-btn"); if (old) old.replaceWith(peakBtn());
+  const panel = document.getElementById("peak-panel"); if (panel) panel.replaceWith(peakPanel());
+}
+function peakSoon() { clearTimeout(PEAK.timer); PEAK.timer = setTimeout(peakRefresh, 0); }   // after the call has painted
+function peakBtn() {
+  const n = PEAK.notes.length;
+  return h("button", { id: "peak-btn", class: `btn pill peak${n ? " has" : ""}`, "aria-expanded": String(PEAK.open), "aria-controls": "peak-panel", "aria-label": n ? `Notes: ${n}` : "Notes: none", title: "Notes on how each pitch is doing tonight",
+    on: { click: () => { PEAK.open = !PEAK.open; const p = document.getElementById("peak-panel"); if (p) p.replaceWith(peakPanel()); const b = document.getElementById("peak-btn"); if (b) b.replaceWith(peakBtn()); } } },
+    "Notes", n ? h("span", { class: "badge", "aria-hidden": "true" }, String(n)) : null);
+}
+function peakPanel() {
+  if (!PEAK.open) return h("div", { id: "peak-panel", hidden: true });
+  return h("section", { id: "peak-panel", class: "peak-panel glass", "aria-label": "Notes" },
+    PEAK.notes.length ? h("ul", {}, PEAK.notes.map((n) => h("li", {}, h("b", {}, n.who), " ", n.text, "."))) : h("p", { class: "muted" }, "No notes. A note shows when a pitch is clearly below his normal over 8 or more tonight; it never changes a call."),
+    h("button", { class: "btn pill", on: { click: () => { PEAK.open = false; const p = document.getElementById("peak-panel"); if (p) p.replaceWith(peakPanel()); const b = document.getElementById("peak-btn"); if (b) b.replaceWith(peakBtn()); } } }, "Close"));
 }
 
 // ------------------------------------------------------------------ game screen

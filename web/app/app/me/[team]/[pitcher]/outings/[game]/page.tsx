@@ -27,7 +27,7 @@ async function Body({ params }: { params: Params }) {
       team, pitcherId: pitcher, pitcherName: d.pitcherName, hand: d.hand, opponent: d.opponent, level: d.level,
       hitterName: (a) => (a.slot !== null ? `Batting ${a.slot + 1}` : "Hitter"),
       notes: d.notes.map((n) => ({ ...n, shared: true })) as Note[], canWrite: false, path: `/app/me/${team}/${pitcher}/outings/${game}`,
-      pdfHref: `/app/me/${team}/${pitcher}/outings/${game}/pdf`, back: { href: `/app/me/${team}/${pitcher}/recap`, label: "Your season" },
+      pdfHref: `/app/me/${team}/${pitcher}/outings/${game}/pdf`, outcome: d.outcome, back: { href: `/app/me/${team}/${pitcher}/recap`, label: "Your season" },
     }} />
   );
 }

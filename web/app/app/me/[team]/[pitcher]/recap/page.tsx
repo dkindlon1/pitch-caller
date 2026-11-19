@@ -7,6 +7,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { buildRecap } from "@/lib/report_data.ts";
 import { myReport, type SB } from "@/lib/report_fetch.ts";
 import { RecapView } from "@/app/app/_reports/recap";
+import { seasonOutcome } from "@/lib/outcome";
 import { ReportSkeleton } from "@/app/app/_reports/skeleton";
 import { ShareFor } from "./shared";
 
@@ -28,12 +29,13 @@ async function Body({ params }: { params: Params }) {
   if (!d) notFound();
   const r = buildRecap(d.events, d.games, { id: pitcher, name: d.pitcher.name, hand: d.pitcher.hand, pitches: d.pitcher.pitches }, { name: "Season so far", start: d.season_start, final: false }, "pitcher", d.games[0]?.level);
   const opp = new Map(d.games.map((g) => [g.id, g.opponent || null]));
+  const outcome = seasonOutcome(d.events, d.games.map((g) => ({ id: g.id, date: g.date })), [], d.pitcher.pitches || []);
   const ssb = await getServerSupabase();
   const { data: finals } = await ssb.from("recap_versions").select("season_id").eq("program_id", team).eq("pitcher_id", pitcher);
   const done = d.seasons.filter((s) => (finals || []).some((f: { season_id: string }) => f.season_id === s.id));
   return (
     <div className="pq-stack">
-      <RecapView r={r} opponents={opp} outingHref={(g) => `/app/me/${team}/${pitcher}/outings/${g}`} title="Your season so far" own />
+      <RecapView r={r} outcome={outcome} opponents={opp} outingHref={(g) => `/app/me/${team}/${pitcher}/outings/${g}`} title="Your season so far" own />
       <ShareFor team={team} pitcher={pitcher} season="" />
       <section className="rp-sec" aria-labelledby="h-finals">
         <header><h2 id="h-finals">Final recaps</h2></header>

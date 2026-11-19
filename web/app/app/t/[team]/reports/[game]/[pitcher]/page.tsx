@@ -31,7 +31,7 @@ async function Body({ params }: { params: Params }) {
       },
       notes: d.notes as Note[], canWrite: ["head", "pitching", "caller"].includes(t.role || "") && t.active, path,
       others: d.others.map((o) => ({ ...o, href: `/app/t/${team}/reports/${game}/${o.id}` })),
-      summaryHref: `/app/t/${team}/reports/${game}`, pdfHref: `${path}/pdf`, back: { href: `/app/t/${team}/roster/${pitcher}/recap`, label: `${d.pitcherName}'s season` },
+      summaryHref: `/app/t/${team}/reports/${game}`, pdfHref: `${path}/pdf`, outcome: d.outcome, back: { href: `/app/t/${team}/roster/${pitcher}/recap`, label: `${d.pitcherName}'s season` },
     }} />
   );
 }

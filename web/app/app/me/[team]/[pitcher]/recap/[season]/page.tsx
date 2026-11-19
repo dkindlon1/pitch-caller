@@ -6,6 +6,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import type { Recap } from "@/lib/report_data.ts";
 import { myReport, type SB } from "@/lib/report_fetch.ts";
 import { RecapView } from "@/app/app/_reports/recap";
+import { seasonOutcome } from "@/lib/outcome";
 import { ReportSkeleton } from "@/app/app/_reports/skeleton";
 import { ShareFor } from "../shared";
 
@@ -27,9 +28,10 @@ async function Body({ params }: { params: Params }) {
   if (!v) notFound();
   const d = await myReport(sb as unknown as SB, team, pitcher, { from: v.data.meta.start, to: v.data.meta.end });
   const opp = new Map((d?.games || []).map((g) => [g.id, g.opponent || null]));
+  const outcome = d ? seasonOutcome(d.events, d.games.map((g) => ({ id: g.id, date: g.date })), [], d.pitcher.pitches || []) : null;
   return (
     <div className="pq-stack">
-      <RecapView r={v.data} opponents={opp} outingHref={(g) => `/app/me/${team}/${pitcher}/outings/${g}`} back={{ href: `/app/me/${team}/${pitcher}/recap`, label: "Your season so far" }}
+      <RecapView r={v.data} outcome={outcome} opponents={opp} outingHref={(g) => `/app/me/${team}/${pitcher}/outings/${g}`} back={{ href: `/app/me/${team}/${pitcher}/recap`, label: "Your season so far" }}
         title={`Your ${v.data.meta.season}`} own actions={<a className="shell-btn small" href={`/app/me/${team}/${pitcher}/recap/${season}/pdf`} download>Download PDF</a>} />
       <ShareFor team={team} pitcher={pitcher} season={season} />
     </div>

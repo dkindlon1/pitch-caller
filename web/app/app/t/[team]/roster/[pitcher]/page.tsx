@@ -8,6 +8,8 @@ import { KINDS, PITCH_TYPES, signOf } from "@/lib/docs";
 import { v11Pitch } from "@/lib/engine_server";
 import { revertGrade, savePitcher, setMinor18 } from "../../actions";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { gameEvents, teamGames, type SB } from "@/lib/report_fetch.ts";
+import { peakLabel } from "@/lib/outcome";
 import { Notice, type Search } from "../../ui";
 
 export const metadata: Metadata = { title: "Pitcher · PitchIQ", robots: { index: false } };
@@ -31,9 +33,13 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const ro = !roster;
   const { data: minorRows } = await (await getServerSupabase()).from("minor_guardians").select("parent_email").eq("program_id", team).eq("pitcher_id", p.id).limit(1);
   const parentEmail = ((minorRows || [])[0] as { parent_email?: string } | undefined)?.parent_email || "";
+  // his peak archetype (outcome tracking), from every game he's pitched in
+  const sbd = (await getServerSupabase()) as unknown as SB, gl = await teamGames(sbd, team);
+  const peak = peakLabel(await gameEvents(sbd, team, gl.map((g) => g.id), p.id), gl.map((g) => ({ id: g.id, date: String(g.date) })), p.pitches || []);
   return (
     <>
       <PitcherHead team={team} p={p} at="profile" />
+      {peak ? <p className="shell-note" style={{ marginTop: -6 }}>At his best: <b style={{ color: "var(--text)" }}>{peak}</b> <span className="small">(from his charted games)</span></p> : null}
       <Notice sp={sp} />
       <form action={savePitcher} className="shell-form" aria-label="Pitcher">
         <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={p.id} />

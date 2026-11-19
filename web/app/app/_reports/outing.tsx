@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import type { AtBat, Hurt, Outing } from "@/lib/report_data.ts";
 import { AtBatList, Completeness, HeatBlock, LineStrip, MixBlock, OverridesBlock, Section, WorkedHurt, dayText } from "./ui";
 import { Notes, type Note } from "./notes";
+import { DriftNotes, OutingOutcome } from "./outcome";
+import type { OutcomeOuting } from "@/lib/outcome";
 
 // One outing report (PLAN_reports_recap 2), in the order the plan lists: the line, pitch mix and results, heat maps,
 // hitter by hitter, overrides and style (staff only), outcome tracking (coming), notes. The staff view and the
@@ -15,6 +17,7 @@ export type OutingCtx = {
   notes: Note[]; canWrite: boolean; path: string;
   others?: { id: string; name: string; href: string }[];   // the game's other pitchers (staff)
   summaryHref?: string; pdfHref?: string; back: { href: string; label: string };
+  outcome?: OutcomeOuting | null;
 };
 const LEVEL: Record<string, string> = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
 
@@ -60,13 +63,14 @@ export function OutingReport({ r, c }: { r: Outing; c: OutingCtx }) {
       {staff ? (
         <Section id="ov" title="Overrides and style" aside={<span className="rp-note">Staff only</span>}>
           <OverridesBlock ovs={r.overrides || []} />
+          {c.outcome ? <DriftNotes notes={c.outcome.drift} /> : null}
           <h3 style={{ fontSize: "1rem" }}>Style notes</h3>
-          <p className="rp-empty">No style notes: the style layer isn&rsquo;t on yet. Its push-backs and peak-drift notes will show here.</p>
+          <p className="rp-empty">No style notes: the style layer isn&rsquo;t on yet. Its push-backs will show here.</p>
         </Section>
       ) : null}
 
-      <Section id="ot" title="Outcome tracking">
-        <p className="rp-empty">Coming soon: how each pitch did by time through the order, pitch count and runners, against his own normal.</p>
+      <Section id="ot" title="Outcome tracking" aside={<span className="rp-note">Against his own normal for each pitch</span>}>
+        {c.outcome ? <OutingOutcome o={c.outcome} staff={false} /> : <p className="rp-empty">Not available for this outing.</p>}
       </Section>
 
       <Section id="notes" title={staff ? "Notes" : "Notes from your coaches"} aside={staff ? <span className="rp-note">Staff only unless shared</span> : null}>

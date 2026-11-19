@@ -7,6 +7,7 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import { buildRecap } from "@/lib/report_data.ts";
 import { gameEvents, gameMeta, seasonSoFarStart, teamGames, teamNames, teamPitchers, teamSeasons, type SB } from "@/lib/report_fetch.ts";
 import { RecapView } from "@/app/app/_reports/recap";
+import { seasonOutcome } from "@/lib/outcome";
 import { ReportSkeleton } from "@/app/app/_reports/skeleton";
 import { dayText } from "@/app/app/_reports/ui";
 
@@ -32,11 +33,12 @@ async function Body({ params }: { params: Params }) {
   const metas = inSeason.map((g) => gameMeta(g, names, t.level));
   const r = buildRecap(evs, metas, { id: pitcher, name: p.name, hand: p.hand, pitches: p.pitches }, { name: "Season so far", start, final: false }, "staff", t.level);
   const opp = new Map(metas.map((g) => [g.id, g.opponent || null]));
+  const outcome = seasonOutcome(evs, metas.map((g) => ({ id: g.id, date: g.date })), [], p.pitches || []);
   const { data: finals } = await sb.from("recap_versions").select("season_id, version").eq("program_id", team).eq("pitcher_id", pitcher);
   const done = seasons.filter((s) => (finals || []).some((f: { season_id: string }) => f.season_id === s.id));
   return (
     <>
-      <RecapView r={r} opponents={opp} outingHref={(g) => `/app/t/${team}/reports/${g}/${pitcher}`} back={{ href: `/app/t/${team}/roster/${pitcher}`, label: p.name }} />
+      <RecapView r={r} outcome={outcome} opponents={opp} outingHref={(g) => `/app/t/${team}/reports/${g}/${pitcher}`} back={{ href: `/app/t/${team}/roster/${pitcher}`, label: p.name }} />
       <section className="rp-sec" style={{ marginTop: 28 }} aria-labelledby="h-finals">
         <header><h2 id="h-finals">Final recaps</h2></header>
         {done.length ? <ul className="pq-list">{done.map((s) => <li key={s.id}><Link href={`/app/t/${team}/roster/${pitcher}/recap/${s.id}`}>{s.name}</Link> <span className="rp-note">({dayText(s.start_date, { month: "short", day: "numeric" })} – {dayText(s.end_date, { month: "short", day: "numeric", year: "numeric" })})</span></li>)}</ul>

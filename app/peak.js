@@ -61,7 +61,8 @@
     const list = outings.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
     const by = {};
     list.forEach((o, i) => {
-      const w = (i < RECENT ? 1 : Math.pow(FADE, i - RECENT + 1)) * (opts.season && o.season && o.season !== opts.season ? LAST_SEASON : 1);
+      // opts.flat: every outing counts the same (a season's own normal, for the recap's situational findings)
+      const w = opts.flat ? 1 : (i < RECENT ? 1 : Math.pow(FADE, i - RECENT + 1)) * (opts.season && o.season && o.season !== opts.season ? LAST_SEASON : 1);
       for (const e of o.pitches) {
         if (!isPitch(e)) continue;
         const p = pitchOf(e), c = counts(e), b = by[p.key] || (by[p.key] = { key: p.key, name: p.name, kind: (opts.kinds || {})[p.key] || e.kind || "?", sums: { pitch: 0, strike: 0, swing: 0, whiff: 0, bip: 0, hard: 0 }, raw: { pitch: 0, swing: 0, bip: 0 }, velo: [] });

@@ -23,13 +23,13 @@ if ! git diff --quiet -- app/dist; then
 fi
 echo "build: app/dist matches the source"
 # the website demo loads web/lib/engine.js with web/lib/engine_data.json: both must be the app's copies (v1.0 review)
-for f in engine.js engine_data.json; do
+for f in engine.js engine_data.json peak.js; do   # peak.js: Build 3 (outcome tracking), the same code on the iPad and the site
   if ! cmp -s "app/$f" "web/lib/$f"; then echo "::error::web/lib/$f differs from app/$f: copy it"; exit 1; fi
 done
 echo "web/lib: engine.js and engine_data.json match the app's"
 node --test web/lib/demo.test.ts > /tmp/web_demo.txt 2>&1 || { cat /tmp/web_demo.txt; echo "::error::web demo test failed"; exit 1; }
 echo "web_demo: $(grep -E "^# pass" /tmp/web_demo.txt) (the website demo runs the engine with that data)"
-for t in learn_test db_test import_test import_opp_test rails_test schema_test stage2_test worlds_test pitch_rules_test kinds_test v11_fixture_test lean_test hitter_tags_test watch_test; do   # watch_test: the watch prototype's link against fake watches running the real watch app   # lean_test: v1.2 Step 3, the miss-lean estimate   # v11_fixture_test: v1.1 Step 5, a real v1.0 backup migrates and replays
+for t in learn_test db_test import_test import_opp_test peak_test rails_test schema_test stage2_test worlds_test pitch_rules_test kinds_test v11_fixture_test lean_test hitter_tags_test watch_test; do   # watch_test: the watch prototype's link against fake watches running the real watch app   # lean_test: v1.2 Step 3, the miss-lean estimate   # v11_fixture_test: v1.1 Step 5, a real v1.0 backup migrates and replays
   [ -f "app/$t.js" ] || continue
   (cd app && ../$run "$t" node "$t.js")
 done
@@ -54,3 +54,6 @@ echo "smoke: passed"
 (cd app && ../$run readout_sessions_e2e node readout_sessions_e2e.js)   # app v2: the line under the call reads his sessions from the device only, after the first render, offline too
 (cd app && ../$run logging_exact_test node logging_exact_test.js 2)   # Build 1: logging the full mix changes no call (old build vs new, same seeded games, every event field for field)
 (cd app && ../$run opponent_exact_test node opponent_exact_test.js 2)   # Build 2: every new opponent field set = identical calls
+(cd app && ../$run peak_sim node peak_sim.js 200)   # Build 3: findings and drift on simulated seasons (false-alarm targets)
+(cd app && ../$run drift_exact_test node drift_exact_test.js 2)   # Build 3: drift notes change no call (before vs with outcome tracking, every event field for field)
+(cd app && ../$run drift_e2e node drift_e2e.js)   # Build 3: the Notes button's badge, plain-words note, undo, reload; no sound, no pop-up

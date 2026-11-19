@@ -175,3 +175,22 @@
   .pq .rp-ov td[data-l]::before { content: attr(data-l) ": "; color: var(--text-3); }
   .pq .rp-ov td.res.neg { color: var(--alert); }
 }
+
+/* Build 3: outcome tracking */
+.oc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.oc-item { display: grid; gap: 8px; align-content: start; }
+.oc-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.oc-sentence { margin: 0; font-weight: 600; font-size: 1rem; line-height: 1.4; }
+.rp-pill.oc-clear { color: var(--text); border-color: rgb(236 235 230 / 0.55); }
+.rp-pill.oc-early { color: var(--text-2); border-style: dashed; }
+.oc-chart { width: 100%; height: auto; display: block; }
+.oc-chart .ax { stroke: var(--rule-2); stroke-width: 1; }
+.oc-chart .tick { fill: var(--text-3); font: 500 12px var(--body); font-variant-numeric: tabular-nums; }
+.oc-chart .tick.n { font-size: 11px; fill: var(--text-4); }
+.oc-chart .bar { fill: #878375; }
+.oc-chart .bar.flag { fill: #cdc8b2; stroke: var(--text); stroke-width: 2; }
+.oc-chart .base { stroke: var(--text); stroke-dasharray: 5 4; stroke-width: 1.5; }
+.oc-chart .base-t { fill: var(--text-2); font-size: 11px; }
+.oc-arch { margin: 0 0 4px; color: var(--text-2); }
+.oc-arch b { color: var(--text); font-weight: 650; }
+.oc-drift { margin-top: 6px; display: grid; gap: 6px; }

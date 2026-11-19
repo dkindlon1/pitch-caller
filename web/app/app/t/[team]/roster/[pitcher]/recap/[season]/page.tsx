@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { teamFor } from "@/lib/team";
 import { getServerSupabase } from "@/lib/supabase/server";
 import type { Recap } from "@/lib/report_data.ts";
-import { teamGames, teamNames, teamPitchers, type SB } from "@/lib/report_fetch.ts";
+import { gameEvents, teamGames, teamNames, teamPitchers, type SB } from "@/lib/report_fetch.ts";
+import { seasonOutcome } from "@/lib/outcome";
 import { RecapView } from "@/app/app/_reports/recap";
 import { ReportSkeleton } from "@/app/app/_reports/skeleton";
 
@@ -27,8 +28,11 @@ async function Body({ params }: { params: Params }) {
   const [games, names, pitchers] = await Promise.all([teamGames(db, team), teamNames(db, team), teamPitchers(db, team)]);
   const opp = new Map(games.map((g) => [g.id, g.opponent_id ? names.get(g.opponent_id) || null : null]));
   const p = pitchers.find((x) => x.id === pitcher);
+  // outcome tracking: computed from that season's events now (it isn't part of the frozen version)
+  const inSeason = games.filter((g) => String(g.date) >= String(v.data.meta.start) && String(g.date) <= String(v.data.meta.end));
+  const outcome = seasonOutcome(await gameEvents(db, team, inSeason.map((g) => g.id), pitcher), inSeason.map((g) => ({ id: g.id, date: String(g.date) })), [], p?.pitches || []);
   return (
-    <RecapView r={v.data} opponents={opp} outingHref={(g) => `/app/t/${team}/reports/${g}/${pitcher}`} back={{ href: `/app/t/${team}/roster/${pitcher}/recap`, label: `${p?.name || v.data.meta.name}'s season so far` }}
+    <RecapView r={v.data} outcome={outcome} opponents={opp} outingHref={(g) => `/app/t/${team}/reports/${g}/${pitcher}`} back={{ href: `/app/t/${team}/roster/${pitcher}/recap`, label: `${p?.name || v.data.meta.name}'s season so far` }}
       sub={<><span className="sep" aria-hidden="true">·</span><span>Version {v.version}, {new Date(v.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span></>}
       actions={<a className="shell-btn small" href={`/app/t/${team}/roster/${pitcher}/recap/${season}/pdf`} download>Download PDF</a>} />
   );

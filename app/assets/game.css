@@ -707,3 +707,9 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 .wswitch .switch[aria-checked="true"] i::after { transform: translateX(18px); background: #fff; }
 .wswitch .note { margin: 0; }
 @media (prefers-reduced-motion: reduce) { .wswitch .switch, .wswitch .switch i, .wswitch .switch i::after { transition: none; } }
+/* Build 3: the Notes button (count badge only) and its panel */
+.btn.pill.peak { position: relative; }
+.btn.pill.peak .badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--alert); color: var(--on-alert); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.peak-panel { margin: 8px 16px 0; padding: 12px 16px; border-radius: 18px; display: grid; gap: 8px; max-width: 640px; }
+.peak-panel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+@media (max-width: 560px) { .bar .end { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; min-width: 0; } .btn.pill.peak { padding-inline: 10px; } }

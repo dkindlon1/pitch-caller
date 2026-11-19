@@ -10,6 +10,9 @@ import { NumberBlock } from "../../../_frame/DateBlock";
 import { Num } from "../../../_frame/Num";
 import { LauncherSkeleton } from "../../../_frame/Skeleton";
 import { v11Pitch } from "@/lib/engine_server";
+import { getServerSupabase } from "@/lib/supabase/server";
+import { myReport, type SB } from "@/lib/report_fetch.ts";
+import { peakLabel } from "@/lib/outcome";
 
 export const metadata: Metadata = { title: "Me · PitchIQ", robots: { index: false } };
 type Params = Promise<{ team: string; pitcher: string }>;
@@ -32,6 +35,8 @@ async function Body({ params }: { params: Params }) {
   const last = mine[0];
   const season = mine.reduce((a, o) => ({ n: a.n + o.pitches, s: a.s + o.strikes }), { n: 0, s: 0 });
   const kindOf = new Map((me.pitches || []).map((d) => [d.name, v11Pitch(d).kind] as const));
+  const mine2 = await myReport((await getServerSupabase()) as unknown as SB, team, pitcher, {}).catch(() => null);
+  const peak = mine2 ? peakLabel(mine2.events, mine2.games.map((g) => ({ id: g.id, date: g.date })), mine2.pitcher.pitches || []) : null;
   return (
     <div className="pq-stack">
       <section className="pq-game pq-white" aria-labelledby="me-h">
@@ -46,6 +51,7 @@ async function Body({ params }: { params: Params }) {
           <div><dt>Strikes, last 12 months</dt><dd className="num">{season.n ? `${pct(season.s, season.n)} of ${season.n}` : "–"}</dd></div>
         </dl>
         {rule ? <p className="shell-note small">Rest days under {rule.name}.</p> : null}
+        {peak ? <p className="shell-note small">At your best: <b>{peak}</b></p> : null}
         </div>
       </section>
       <Tiles items={playerNav(team, pitcher).filter((x) => x.key !== "home")} label="Your screens" />
