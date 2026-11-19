@@ -91,3 +91,13 @@ test("cells in words follow the hitter's side", () => {
   assert.equal(cellWords("1,1", "R"), "up and in"); assert.equal(cellWords("1,1", "L"), "up and away"); assert.equal(cellWords("2,2", "R"), "middle");
   assert.equal(cellWords("3,2", "R"), "down, middle"); assert.equal(cellWords("4,2", "R"), "chase down"); assert.equal(cellWords("2,0", "R"), "chase in"); assert.equal(cellWords("0,4", "L"), "chase up, in");
 });
+// review fixes (Nov 19): the owner off the staff sees each suggestion's question without its evidence from the games
+import { suggestionQuestion } from "./opp_suggest.ts";
+test("a suggestion's question carries no evidence", () => {
+  const words = (k: string) => cellWords(k, "R");
+  assert.equal(suggestionQuestion({ kind: "zone", key: "2,2", value: "hot" }, words), "Mark middle hot?");
+  assert.equal(suggestionQuestion({ kind: "zone", key: "1,1", value: "cold" }, words), "Mark up and in cold?");
+  assert.equal(suggestionQuestion({ kind: "rating", key: "contact", value: "2" }), "Contact 2?");
+  assert.equal(suggestionQuestion({ kind: "rating", key: "power", value: "1" }), "Power 1?");
+  for (const q of ["Mark middle hot?", "Contact 2?"]) assert.ok(!/\d+ (hard|whiff|strikeout|of)|plate appearances|balls in play/.test(q));
+});

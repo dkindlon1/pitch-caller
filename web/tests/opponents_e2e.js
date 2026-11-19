@@ -121,7 +121,10 @@ const status = () => JSON.parse(execFileSync("npx", ["-y", "supabase@2.122.1", "
     const d = await hitterDoc(hid);
     check(/ok=saved/.test(coach.url()), "saved");
     check(d.ratings && d.ratings.power === 3 && d.ratings.contact === "unknown" && d.ratings.speed === 1 && Object.keys(d.ratings).length === 3, `ratings stored, Unknown as "unknown" (${JSON.stringify(d.ratings)})`);
-    check(d.zone && d.zone["1,1"] === "hot" && d.zone["3,3"] === "cold" && Object.keys(d.zone).length === 2, `grid: one tap hot, two taps cold (${JSON.stringify(d.zone)})`);
+    // compared with his grid before the taps: an accepted suggestion earlier in this test may already have marked a cell
+    const z0 = Object.assign({}, before.zone || {}); delete z0["1,1"]; delete z0["3,3"];
+    check(d.zone && d.zone["1,1"] === "hot" && d.zone["3,3"] === "cold" && Object.keys(d.zone).length === 2 + Object.keys(z0).length && Object.entries(z0).every(([k, v]) => d.zone[k] === v),
+      `grid: one tap hot, two taps cold, the rest as it was (${JSON.stringify(d.zone)}; before ${JSON.stringify(before.zone || {})})`);
     check(d.pitchFlags.crushesFB && d.smallBall.steal && d.notes === "E2E: sits on the first fastball." && Object.values(d.custom || {}).includes(true), "checkboxes, notes and the custom field stored");
     check(JSON.stringify(d.grades || null) === JSON.stringify(before.grades || null) && JSON.stringify({ ...(d.scoutTags || {}), spray: undefined }) === JSON.stringify({ ...(before.scoutTags || {}), spray: undefined }) && d.scoutTags.spray === "pull",
       "the engine's fields (grades, approach / path / off-speed) are untouched; spray is scoutTags.spray");

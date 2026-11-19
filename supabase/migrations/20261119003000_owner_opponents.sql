@@ -18,7 +18,8 @@ grant execute on function private.pc_owner_opp(uuid) to authenticated, service_r
 create policy owner_opp_read on public.teams for select to authenticated
   using (private.pc_owner_opp(program_id) and coalesce(doc -> 'isOurs', 'null'::jsonb) in ('false'::jsonb, 'null'::jsonb));
 create policy owner_opp_read on public.hitters for select to authenticated using (private.pc_owner_opp(program_id));
-create policy owner_opp_read on public.opp_suggestions for select to authenticated using (private.pc_owner_opp(program_id));
+-- (suggestions: no read policy for the owner path. Their text and counts come from the games, which he can't see; he gets
+-- each suggestion's question through pc_opp_suggestions_owner below. Review fixes, Nov 19)
 create policy owner_opp_read on public.opp_merges for select to authenticated using (private.pc_owner_opp(program_id));
 
 -- the row rules pc_push uses
@@ -196,6 +197,18 @@ begin
   end loop;
   return jsonb_build_object('applied', applied, 'skipped', jsonb_array_length(server), 'rejected', rejected, 'server', server);
 end $$;
+
+-- the suggestions waiting on one hitter, for the owner off the staff: the question only (kind, spot or rating, value),
+-- never the evidence (its text and counts come from the games, which only the team's staff see). Review fixes, Nov 19
+create or replace function public.pc_opp_suggestions_owner(p uuid, hitter text) returns table (id uuid, kind text, key text, value text)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if not private.pc_owner_opp(p) then raise exception 'only the organization''s owner can do this' using errcode = '42501'; end if;
+  return query select s.id, s.kind, s.key, s.value from public.opp_suggestions s
+    where s.program_id = p and s.hitter_id = hitter and s.status = 'pending' order by s.created_at;
+end $$;
+revoke all on function public.pc_opp_suggestions_owner(uuid, text) from public, anon;
+grant execute on function public.pc_opp_suggestions_owner(uuid, text) to authenticated, service_role;
 
 -- suggestions and merges: the owner too
 create or replace function public.pc_opp_suggestion_decide(p uuid, suggestion uuid, accept boolean) returns jsonb
