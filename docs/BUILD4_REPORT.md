@@ -1,5 +1,7 @@
 # Build 4: watch security (fake-tested): report
 
+> **Update, Nov 19 (Drew's follow-ups):** a pairing-only mode was added as a setting (default full encryption), the fallback if AES is too slow on the watch. Counts now: watch_test 106/106, watch app test 80/80, watch_e2e 47/47. See `docs/FOLLOWUPS_1-4_REPORT.md`.
+
 Branch `feat/watch-security` (from `main` 8ee2fdc), pushed. Spec: `docs/PLAN_watch_security_2026-11-18.md`, section 5
 steps 1–6. Everything was proved against the existing fakes (fake Web Bluetooth running the real watch core, fake
 Bangle firmware in Node, a fake clock) and the local Supabase. **Nothing ran on a real watch**; those items are under
