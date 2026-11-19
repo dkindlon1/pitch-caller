@@ -1,4 +1,5 @@
 import { createShare, revokeShare, saveSections } from "./share_actions";
+import { ConfirmSubmit } from "../_frame/ConfirmSubmit";
 import type { Sections } from "./recap";
 
 // The pitcher's sharing panel: make a public link, choose its sections (summary on by default; heat maps, pitch by
@@ -32,7 +33,7 @@ export function SharePanel({ team, pitcher, season, share, live, minor, site }: 
         <div><button className="shell-btn small" type="submit">Save what it shows</button></div>
       </form>
       <form action={revokeShare}><input type="hidden" name="token" value={share.token} /><input type="hidden" name="path" value={path} />
-        <button className="shell-btn text small" type="submit">Turn the link off for good</button>
+        <ConfirmSubmit label="Turn the link off for good" confirm="Yes, turn it off for good" keep="Keep it on" />
         <span className="rp-note"> A new link gets a new address; the old one stops working.</span></form>
       {live ? <p className="rp-note"><a href={`/r/${share.token}/pdf`} download>Download the PDF</a> of what the link shows, or <a href={`/r/${share.token}`}>open the page</a>.</p> : null}
     </section>

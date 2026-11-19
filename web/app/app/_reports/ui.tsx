@@ -107,7 +107,7 @@ function MapGrid({ g, k, view, caption }: { g: Grid; k: string; view: "called" |
     const key = cellKey(r, c), x = g.cells[key] || { n: 0, strike: 0, ball: 0, positive: 0, negative: 0 };
     for (const l of LAYERS) { const s = step(x[l], l); style[`--bg-${l}`] = `var(--ramp-${s})`; style[`--fg-${l}`] = s ? `var(--on-${s})` : "var(--text-4)"; }
     cells.push(
-      <div key={key} className={`rp-cell ${way ? "way" : "zone"}`} style={style} data-s1="" data-k={`${k}.${key}`} data-v={`${x.n},${x.strike},${x.ball},${x.positive},${x.negative}`}
+      <div key={key} role="img" className={`rp-cell ${way ? "way" : "zone"}`} style={style} data-s1="" data-k={`${k}.${key}`} data-v={`${x.n},${x.strike},${x.ball},${x.positive},${x.negative}`}
         data-tip={CELL_NAME(r, c)} tabIndex={x.n ? 0 : -1} aria-label={`${CELL_NAME(r, c)}: ${x.n} pitches, ${x.strike} strikes, ${x.ball} balls, ${x.positive} positive, ${x.negative} negative`}>
         {LAYERS.map((l) => <span key={l} className={`v ${l}${x[l] ? "" : " zero"}`} aria-hidden="true">{x[l] || (x.n ? "0" : "")}</span>)}
       </div>);
@@ -242,7 +242,7 @@ export function TrendChart({ rows, field, label, levelRef }: { rows: Trend[]; fi
 export function CompareBlock({ c }: { c: Comparison }) {
   const row = (key: string, label: string, r: Rate, lvl: number | null, fmt: (x: number) => string) => (
     <div><dt>{label}</dt><dd><b data-k={`cmp.${key}`} data-v={rv(r)}>{r.pct === null ? "–" : fmt(r.pct)}</b><span>{lvl === null ? "" : `${c.label} average ${fmt(lvl)}`}</span></dd>
-      <span className="rp-note">{r.num} of {r.den}</span></div>);
+      <dd className="rp-note">{r.num} of {r.den}</dd></div>);
   return (
     <>
       <dl className="rp-cmp">
@@ -257,7 +257,7 @@ export function CompareBlock({ c }: { c: Comparison }) {
 export function OutingsTable({ rows, href, opponents }: { rows: OutingRow[]; href?: (r: OutingRow) => string; opponents?: Map<string, string | null> }) {
   if (!rows.length) return <p className="rp-empty">No outings in this season yet.</p>;
   return (
-    <div className="tbl-scroll" tabIndex={0} role="region" aria-label="Outings"><table className="data-tbl">
+    <div className="tbl-scroll" tabIndex={0} role="region" aria-label="Outing list table"><table className="data-tbl">
       <thead><tr><th scope="col">Date</th>{opponents ? <th scope="col">Opponent</th> : null}<th scope="col" className="num">IP</th><th scope="col" className="num">Pitches</th><th scope="col" className="num">Strike</th><th scope="col" className="num">K</th><th scope="col" className="num">BB</th><th scope="col" className="num">H</th><th scope="col" className="num">Hard</th></tr></thead>
       <tbody>{rows.map((o) => (
         <tr key={o.game}>

@@ -73,7 +73,8 @@ async function load(db, team) {
   const names = Object.fromEntries((await db.query("select id, doc from public.teams where program_id = $1", [team])).rows.map((r) => [r.id, r.doc.name]));
   const seasons = (await db.query("select id, name, start_date::text s, end_date::text e from public.seasons where program_id = $1", [team])).rows;
   const frozen = (await db.query("select season_id, pitcher_id, version, data from public.recap_versions where program_id = $1", [team])).rows;
-  return { evs, games, pitchers, names, seasons, frozen };
+  const shares = Object.fromEntries((await db.query("select token, pitcher_id, season_id from public.recap_shares where program_id = $1", [team])).rows.map((r) => [r.token, { pitcher: r.pitcher_id, season: r.season_id }]));
+  return { evs, games, pitchers, names, seasons, frozen, shares };
 }
 const isPitch = (e) => (e.type === undefined || e.type === null || e.type === "pitch") && !e.legacy && ["ball", "cstrike", "whiff", "foul", "play", "hbp"].includes(e.res);
 function pitchOf(e, pitcher) {

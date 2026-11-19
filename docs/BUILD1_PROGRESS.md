@@ -11,14 +11,14 @@ Logs: `C:/dev/pitch-caller-logs/` (not committed).
 | # | Step | State |
 |---|---|---|
 | 0 | Plan docs committed (58b823c) | done |
-| 1 | Baseline: every existing check once, from a worktree of 58b823c (`C:/dev/pc-baseline`) | web/SQL/portal done; engine/app suite running (see Baseline) |
+| 1 | Baseline: every existing check once, from a worktree of 58b823c (`C:/dev/pc-baseline`) | done (see Baseline) |
 | 2 | Part 1 logging + exact-match and old-event tests | done (74addef): exact match 699 pitches 25/25; logging_sync_test all pass |
 | 3 | Seeded season through the app | done: `web/tests/season_seed.js` (13 games, 1,629 events) |
 | 4 | Data layer + independent check script | done: 3,313/3,313 agree; two planted bugs both caught (362 and 76 mismatches) |
-| 5 | Outing report, game summary, notes, permissions | in progress |
-| 6 | Email, season so far, final recap, freeze | |
-| 7 | Public link, toggles, parent approval, PDF, website view | |
-| 8 | Visual loop | |
+| 5 | Outing report, game summary, notes, permissions | done: pages + reports_rls_test 66/66; report_check --site 20,100 numbers on 88 pages |
+| 6 | Email, season so far, final recap, freeze | done: reports_e2e email section all pass |
+| 7 | Public link, toggles, parent approval, PDF, website view | done; dead links 404 from the proxy |
+| 8 | Visual loop | rounds 1-2 done (fixes: heat note layout, phone overflow, overrides as cards under 900px, trend labels, copy); round 3 next |
 | 9 | Full checks | |
 
 ## Inventory (read from the code, Nov 18)
@@ -81,10 +81,16 @@ Logs: `C:/dev/pitch-caller-logs/` (not committed).
   order issue noted in PLAN_portal section 8 (pre-existing).
 - Portal e2es (with the Windows npx shim): shell 43, offline_game 22, portal 30, billing 52, player_admin 24,
   uploads 33, retention 10, gameplan 38: all pass (252).
-- `scripts/test-app.sh`: running.
+- `scripts/test-app.sh`: every step passes. `v11_fixture_test` stops under Git Bash's tar (known); with Windows' `tar.exe` first on the
+  path (a copy in the shim folder, not System32 on the path) it passes 8/8. The steps after it were run by `run_app_rest.sh`: all pass.
 
 ## Seed notes
 - The seed's first two runs found two harness problems (not app problems): Chrome's Local Network Access blocks a
   page injected with `route.fulfill` from calling the loopback Supabase (fixed with a real localhost proxy for the old
   app); and rewinding the browser clock after a sync made later pitches look older than the sync mark (fixed: the clock
   only moves forward). Third run: every game's charted count equals the server's.
+
+14. **Signed-in not-found pages stream with a 200** (this Next version prerenders the shell first). They carry no data. For
+   the public link, where "dead" matters, `proxy.ts` checks the link first and answers a real 404 (page and PDF).
+15. **Irreversible actions confirm in place** (the portal's ConfirmSubmit): Mark season over, turn a link off for good,
+   delete a note, delete a link.

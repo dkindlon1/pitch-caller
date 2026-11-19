@@ -89,7 +89,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
           <form action={setMinor18} className="shell-form" aria-label="Under 18">
             <input type="hidden" name="team" value={team} /><input type="hidden" name="pitcher" value={p.id} />
             <label className="rp-check" style={{ display: "inline-flex", gap: 8, alignItems: "center" }}><input type="checkbox" name="under18" defaultChecked={!!parentEmail} /> He&apos;s under 18</label>
-            <label><span>Parent&apos;s email</span><input name="parent_email" type="email" autoComplete="off" spellCheck={false} defaultValue={parentEmail} placeholder="parent@example.com" /></label>
+            <label><span>Parent&apos;s email</span><input name="parent_email" type="email" autoComplete="off" spellCheck={false} defaultValue={parentEmail} placeholder="parent@example.com…" /></label>
             <button type="submit" className="shell-btn small">Save</button>
           </form>
         ) : <p className="shell-note small">{parentEmail ? `Marked under 18; a public link needs his parent's approval.` : "Not marked under 18."}</p>}

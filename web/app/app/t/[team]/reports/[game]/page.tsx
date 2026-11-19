@@ -41,7 +41,7 @@ async function Body({ params }: { params: Params }) {
       {!s.pitchers.length ? <p className="rp-empty">No pitches from this game have reached the site yet. They arrive when the iPad syncs after End game.</p> : (<>
         <Section id="staff" title="Staff line"><LineStrip l={s.staff} k="staff" /></Section>
         <Section id="pitchers" title="Each pitcher">
-          <div className="tbl-scroll" tabIndex={0} role="region" aria-label="Each pitcher"><table className="data-tbl">
+          <div className="tbl-scroll" tabIndex={0} role="region" aria-label="Each pitcher's line, table"><table className="data-tbl">
             <thead><tr><th scope="col">Pitcher</th><th scope="col" className="num">IP</th><th scope="col" className="num">Pitches</th><th scope="col" className="num">Strike</th><th scope="col" className="num">K</th>
               <th scope="col" className="num">BB</th><th scope="col" className="num">H</th><th scope="col" className="num">Hard</th><th scope="col" className="num">Coach calls</th><th scope="col" className="num">Shake-offs</th><th scope="col" className="num">Cross-ups</th><th scope="col"><span className="sr">Report</span></th></tr></thead>
             <tbody>{s.pitchers.map((p) => (

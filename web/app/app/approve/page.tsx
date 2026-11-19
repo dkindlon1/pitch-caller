@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerSupabase, getUser } from "@/lib/supabase/server";
 import { Shell } from "../../shell";
 import { approveShare, revokeShare } from "../_reports/share_actions";
+import { ConfirmSubmit } from "../_frame/ConfirmSubmit";
 
 export const metadata: Metadata = { title: "Approve a recap link · PitchIQ", robots: { index: false } };
 type Req = { token: string; team_name: string; pitcher_name: string; season_name: string; sections: Record<string, boolean>; approved: boolean; created_at: string };
@@ -36,7 +37,7 @@ async function Body() {
               <button className="shell-btn small" type="submit">{r.approved ? "Turn it off" : "Approve and turn it on"}</button></form>
             {r.approved ? <a className="shell-btn text small" href={`/r/${r.token}`}>See the page</a> : null}
             <form action={revokeShare}><input type="hidden" name="token" value={r.token} /><input type="hidden" name="path" value="/app/approve" />
-              <button className="shell-btn text small" type="submit">Delete the link</button></form>
+              <ConfirmSubmit label="Delete the link" confirm="Yes, delete it for good" keep="Keep it" /></form>
           </div>
         </li>))}</ul>
     </>

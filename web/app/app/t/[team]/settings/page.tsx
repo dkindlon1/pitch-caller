@@ -4,6 +4,7 @@ import { ensureOurTeam, teamFor, teamRule } from "@/lib/team";
 import PCRules from "@/lib/pitch_rules";
 import { markSeasonOver, saveSettings } from "../actions";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { ConfirmSubmit } from "../../../_frame/ConfirmSubmit";
 import { Notice, type Search } from "../ui";
 
 export const metadata: Metadata = { title: "Settings · PitchIQ", robots: { index: false } };
@@ -61,7 +62,7 @@ async function Seasons({ team, active }: { team: string; active: boolean }) {
           <input type="hidden" name="team" value={team} />
           <label><span>Season name</span><input name="season" required maxLength={80} placeholder="Spring 2026…" autoComplete="off" /></label>
           <p className="shell-note small">Marking the season over builds each pitcher&apos;s final recap from every game since {rows.length ? "the last season" : "the first game"} through today, freezes it, and emails it to him and to the coaches. Games after today start the next season so far. It can&apos;t be undone.</p>
-          <button type="submit" className="shell-btn">Mark season over</button>
+          <div><ConfirmSubmit label="Mark season over" confirm="Yes, mark it over and send the recaps" keep="Not yet" /></div>
         </form>
       ) : null}
     </section>

@@ -48,6 +48,7 @@
 .rp-grid { display: grid; grid-template-columns: repeat(7, var(--cell)); grid-template-rows: repeat(7, var(--cell)); gap: 2px; }
 .rp-cell { position: relative; display: grid; place-items: center; border-radius: 6px; font: 700 0.875rem/1 var(--body); font-variant-numeric: tabular-nums; background: var(--ramp-0); color: var(--text-3); }
 .rp-cell.zone { box-shadow: inset 0 0 0 1px rgb(236 235 230 / 0.06); }
+.rp-cell:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; z-index: 2; }
 .rp-cell.way { border-radius: 999px; }
 .rp-cell.empty { background: transparent; box-shadow: none; }
 .rp-cell .v { display: none; }
@@ -125,7 +126,7 @@
 .rp-cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .rp-cmp > div { background: var(--panel-2); border: 1px solid var(--rule); border-radius: 16px; padding: 14px 16px; display: grid; gap: 6px; }
 .rp-cmp dt { color: var(--text-3); font-size: 0.8125rem; font-weight: 500; }
-.rp-cmp dd { margin: 0; display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+.rp-cmp dd { margin: 0; } .rp-cmp dd:first-of-type { display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
 .rp-cmp dd b { font-family: var(--cond); font-weight: 900; font-size: 1.875rem; line-height: 1; }
 .rp-cmp dd span { color: var(--text-3); font-size: 0.875rem; }
 
@@ -158,15 +159,19 @@
 
 /* overrides: a table on a laptop; a card per override on an iPad held upright and a phone */
 @media (max-width: 900px) {
-  .pq .rp-ov thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .pq .tbl-scroll:has(> .rp-ov) { position: relative; }
+  .pq .rp-ov thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .pq .rp-ov thead tr { display: block; }
   .pq .rp-ov, .pq .rp-ov tbody { display: block; }
-  .pq .rp-ov tr { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; padding: 12px 14px; border-top: 1px solid var(--rule); }
+  .pq .rp-ov tbody tr { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "n what cnt" "who who who" "had had had" "thr thr thr" "res res res" "rest rest rest"; gap: 4px 12px; padding: 12px 14px; border-top: 1px solid var(--rule); }
   .pq .rp-ov tbody tr:first-child { border-top: 0; }
   .pq .rp-ov td { display: block; padding: 0; border: 0; text-align: left; }
-  .pq .rp-ov td.n { grid-column: 1; font-weight: 700; color: var(--text-3); }
-  .pq .rp-ov td.what { grid-column: 2; font-weight: 650; }
-  .pq .rp-ov td.cnt { grid-column: 3; color: var(--text-3); }
-  .pq .rp-ov td.who, .pq .rp-ov td.had, .pq .rp-ov td.thr, .pq .rp-ov td.res, .pq .rp-ov td.rest { grid-column: 1 / -1; color: var(--text-2); font-size: 0.875rem; }
+  .pq .rp-ov td.n { grid-area: n; font-weight: 700; color: var(--text-3); text-align: left; }
+  .pq .rp-ov td.n::before { content: "Pitch "; font-weight: 500; }
+  .pq .rp-ov td.what { grid-area: what; font-weight: 650; }
+  .pq .rp-ov td.cnt { grid-area: cnt; color: var(--text-3); }
+  .pq .rp-ov td.who { grid-area: who; } .pq .rp-ov td.had { grid-area: had; } .pq .rp-ov td.thr { grid-area: thr; } .pq .rp-ov td.res { grid-area: res; } .pq .rp-ov td.rest { grid-area: rest; }
+  .pq .rp-ov td.who, .pq .rp-ov td.had, .pq .rp-ov td.thr, .pq .rp-ov td.res, .pq .rp-ov td.rest { color: var(--text-2); font-size: 0.875rem; }
   .pq .rp-ov td[data-l]::before { content: attr(data-l) ": "; color: var(--text-3); }
   .pq .rp-ov td.res.neg { color: var(--alert); }
 }

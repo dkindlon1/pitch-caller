@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useEffect, useRef } from "react";
 import { addNote, deleteNote, setNoteShared, type NoteState } from "./actions";
+import { ConfirmSubmit } from "../_frame/ConfirmSubmit";
 
 export type Note = { id: string; scope: string; at_bat: string | null; body: string; shared: boolean; created_at: string; deleted_at?: string | null };
 const when = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
@@ -23,7 +24,7 @@ export function Notes({ notes, team, game, pitcher, atBat, canWrite, path, compa
             {canWrite ? <form action={setNoteShared}><input type="hidden" name="id" value={n.id} /><input type="hidden" name="team" value={team} /><input type="hidden" name="path" value={path} />
               <input type="hidden" name="shared" value={n.shared ? "0" : "1"} /><button className="shell-btn text small" type="submit">{n.shared ? "Make staff only" : "Share with the pitcher"}</button></form> : null}
             {canWrite ? <form action={deleteNote}><input type="hidden" name="id" value={n.id} /><input type="hidden" name="team" value={team} /><input type="hidden" name="path" value={path} />
-              <button className="shell-btn text small" type="submit">Delete</button></form> : null}
+              <ConfirmSubmit label="Delete" confirm="Yes, delete the note" keep="Keep it" /></form> : null}
           </div>
         </li>))}</ul> : compact ? null : <p className="rp-note">No notes yet.</p>}
       {canWrite ? (
@@ -33,7 +34,7 @@ export function Notes({ notes, team, game, pitcher, atBat, canWrite, path, compa
             <input type="hidden" name="team" value={team} /><input type="hidden" name="game" value={game} /><input type="hidden" name="pitcher" value={pitcher} />
             {atBat ? <input type="hidden" name="at_bat" value={atBat} /> : null}
             <label className="sr" htmlFor={`note-${game}-${atBat || "o"}`}>{label}</label>
-            <textarea id={`note-${game}-${atBat || "o"}`} name="body" required maxLength={4000} placeholder={atBat ? "What to remember about this at-bat…" : "What to remember about this outing…"} />
+            <textarea id={`note-${game}-${atBat || "o"}`} name="body" autoComplete="off" required maxLength={4000} placeholder={atBat ? "What to remember about this at-bat…" : "What to remember about this outing…"} />
             <div className="row">
               <label className="rp-check"><input type="checkbox" name="shared" /> Share with the pitcher</label>
               <button className="shell-btn" type="submit" disabled={pending}>{pending ? "Saving…" : "Save note"}</button>
