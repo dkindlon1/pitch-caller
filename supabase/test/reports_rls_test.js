@@ -157,7 +157,41 @@ const FORBIDDEN = ["choice", "coach", "mix", "styledMix", "prob", "pred", "hitte
     check((await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "and going back doesn't revive it: it needs approving again");
     await as("parent", "select public.pc_share_approve($1)", [ktok]);
     check(!!(await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r, "approved again: live");
+    // review fixes (Nov 19), S2 of the review: after the parent approves, widening the sections goes back to the parent; until
+    // then the link serves only what was approved. Narrowing needs no approval.
+    const served = async (tk) => { const r = (await as("service", "select public.pc_public_recap($1) as r", [tk])).rows[0].r; return r ? r.sections : null; };
+    const pending = async () => ((await as("parent", "select * from public.pc_my_share_requests()")).rows.find((x) => x.token === ktok) || {}).pending;
+    await as("kid", "select public.pc_share_sections($1, $2::jsonb)", [ktok, JSON.stringify({ summary: true })]);
+    await as("parent", "select public.pc_share_approve($1)", [ktok]);
+    let sv = await served(ktok);
+    check(!!sv && sv.summary === true && sv.heat === false && (await pending()) === false, "approved with the summary only: live, the summary only, nothing waiting");
+    await as("kid", "select public.pc_share_sections($1, $2::jsonb)", [ktok, JSON.stringify({ summary: true, heat: true, pitches: true, outings: true })]);
+    sv = await served(ktok);
+    check(!!sv && sv.summary === true && !sv.heat && !sv.pitches && !sv.outings, `he widens it (heat maps, pitch by pitch, outings): still only the approved summary is served (${JSON.stringify(sv)})`);
+    check((await pending()) === true, "and the widening waits for his parent (shown on the parent's approval page)");
+    await as("parent", "select public.pc_share_approve($1)", [ktok]);
+    sv = await served(ktok);
+    check(!!sv && sv.heat === true && sv.pitches === true && sv.outings === true && (await pending()) === false, "the parent approves the wider link: all four sections served");
+    await as("kid", "select public.pc_share_sections($1, $2::jsonb)", [ktok, JSON.stringify({ summary: true, heat: true })]);
+    sv = await served(ktok);
+    check(!!sv && sv.heat === true && !sv.pitches && !sv.outings && (await pending()) === false, "narrowing (pitch by pitch and outings off) needs no approval: served at once");
     check(!(await as("parent", "select public.pc_share_revoke($1)", [ktok])).error && (await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "the parent can kill it too");
+    // review fixes (Nov 19), S1 of the review: clearing the under-18 mark leaves an unapproved link off until he turns it on
+    await as("head", "select public.pc_set_minor18($1, 'pK', 'parent@x.org')", [t]);
+    const ctok = (await as("kid", "select public.pc_share_create($1, 'pK', null) as t", [t])).rows[0].t;
+    check((await served(ctok)) === null, "a new link while he's marked: off, waiting for the parent");
+    await as("head", "select public.pc_set_minor18($1, 'pK', '')", [t]);
+    check((await served(ctok)) === null, "the coach clears the under-18 mark: the link stays off (it never goes live by itself)");
+    check(!!(await as("p1", "select public.pc_share_resume($1)", [ctok])).error, "another player can't turn it on");
+    check(!(await as("kid", "select public.pc_share_resume($1)", [ctok])).error && !!(await served(ctok)), "he turns it on himself: live");
+    await as("head", "select public.pc_set_minor18($1, 'pK', '')", [t]);
+    const ptok = (await as("kid", "select public.pc_share_create($1, 'pK', $2) as t", [t, sid])).rows[0].t;
+    await as("head", "select public.pc_set_minor18($1, 'pK', 'parent@x.org')", [t]);
+    await as("head", "select public.pc_set_minor18($1, 'pK', '')", [t]);
+    check((await served(ptok)) === null, "(another link, paused the same way: off)");
+    await as("head", "select public.pc_set_minor18($1, 'pK', 'parent@x.org')", [t]);
+    check(!(await as("parent", "select public.pc_share_approve($1)", [ptok])).error && !!(await served(ptok)), "marked again: his parent approving turns a paused link on too");
+
 
     console.log("6. The server's own tables");
     check(!!(await as("head", "select count(*) from public.report_mail")).error, "a coach can't read the mail log");

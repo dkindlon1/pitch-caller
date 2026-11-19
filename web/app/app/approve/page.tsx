@@ -7,7 +7,7 @@ import { approveShare, revokeShare } from "../_reports/share_actions";
 import { ConfirmSubmit } from "../_frame/ConfirmSubmit";
 
 export const metadata: Metadata = { title: "Approve a recap link · PitchIQ", robots: { index: false } };
-type Req = { token: string; team_name: string; pitcher_name: string; season_name: string; sections: Record<string, boolean>; approved: boolean; created_at: string };
+type Req = { token: string; team_name: string; pitcher_name: string; season_name: string; sections: Record<string, boolean>; approved: boolean; created_at: string; pending: boolean; approved_sections: Record<string, boolean> | null };
 const SEC: [string, string][] = [["summary", "Summary stats"], ["heat", "Heat maps"], ["outings", "Outing list (no opponents)"], ["pitches", "Pitch by pitch"]];
 
 // A parent's account: the public recap links their under-18 player made, waiting on them (or already approved). Only
@@ -31,8 +31,12 @@ async function Body() {
         <li key={r.token} className="pq-pane" style={{ display: "grid", gap: 10, padding: 18, borderRadius: 18, background: "var(--panel-2)", border: "1px solid var(--rule)" }}>
           <div><strong>{r.pitcher_name}</strong> <span className="shell-note small">· {r.team_name} · {r.season_name}</span></div>
           <p className="shell-note small" style={{ margin: 0 }}>It shows: {SEC.filter(([k]) => r.sections[k]).map(([, l]) => l).join(", ") || "nothing yet"}.</p>
-          <p className="shell-note small" style={{ margin: 0 }} role="status">{r.approved ? "You approved it: the link is live." : "Waiting for you: the link is off."}</p>
+          <p className="shell-note small" style={{ margin: 0 }} role="status">{!r.approved ? "Waiting for you: the link is off."
+            : r.pending ? `Waiting for you: the link is live with what you approved (${SEC.filter(([k]) => (r.approved_sections || {})[k]).map(([, l]) => l).join(", ") || "nothing"}); the rest stays off until you approve it.`
+            : "You approved it: the link is live."}</p>
           <div className="btn-row inline">
+            {r.approved && r.pending ? <form action={approveShare}><input type="hidden" name="token" value={r.token} /><input type="hidden" name="approve" value="1" />
+              <button className="shell-btn small" type="submit">Approve what it shows now</button></form> : null}
             <form action={approveShare}><input type="hidden" name="token" value={r.token} /><input type="hidden" name="approve" value={r.approved ? "0" : "1"} />
               <button className="shell-btn small" type="submit">{r.approved ? "Turn it off" : "Approve and turn it on"}</button></form>
             {r.approved ? <a className="shell-btn text small" href={`/r/${r.token}`}>See the page</a> : null}
