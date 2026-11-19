@@ -798,3 +798,5 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .watch-remove summary::-webkit-details-marker { display: none; }
 .pq .watch-remove[open] summary { display: none; }
 .pq .watch-remove form { display: grid; gap: 8px; max-width: 420px; }
+.pq .shell-form.rows.watches > .shell-note { margin-left: 0; max-width: 64ch; }
+.pq .shell-form.rows.watches > .watch-list { padding-bottom: 4px; }

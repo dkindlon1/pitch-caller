@@ -57,14 +57,14 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     const head = await signIn("head");
     await head.page.goto(`${SITE}/app/t/${team}/settings`, { waitUntil: "networkidle" });
     const sec = head.page.getByRole("region", { name: "Watches" });
-    check(await sec.getByText("Bangle.js 1a2b").count() === 1 && await sec.getByText("Bangle.js 3c4d").count() === 1, "Settings → Watches lists both");
+    check(await sec.getByText("Bangle.js 1a2b", { exact: true }).count() === 1 && await sec.getByText("Bangle.js 3c4d", { exact: true }).count() === 1, "Settings → Watches lists both");
     check(await sec.getByText("Pitcher's watch").count() === 1 && await sec.getByText("Catcher's watch").count() === 1, "with their roles");
     await head.page.screenshot({ path: path.join(SHOTS, "settings-watches__1440.png"), fullPage: true });
     await sec.getByText("Remove…").first().click();
     const confirm = sec.getByRole("button", { name: "Remove Bangle.js 1a2b" });
-    check(await confirm.isVisible() && await sec.getByText(/won.t get another game key/).isVisible(), "Remove asks first, saying what it does");
+    check(await confirm.isVisible() && await sec.locator("details[open]").getByText(/won.t get another game key/).isVisible(), "Remove asks first, saying what it does");
     await head.page.screenshot({ path: path.join(SHOTS, "settings-watches-confirm__1440.png"), fullPage: true });
-    await confirm.click(); await head.page.waitForLoadState("networkidle");
+    await confirm.click(); await head.page.waitForURL(/ok=watch_removed|error=/, { timeout: 15000 }); await head.page.waitForLoadState("networkidle");
     check(/won.t get another game key; it has to be paired again/.test(await head.page.locator("main").innerText()), "removed: the notice says it has to be paired again");
     check(await sec.getByText(/removed/).count() >= 1 && await sec.getByRole("button", { name: "Remove Bangle.js 1a2b" }).count() === 0, "it shows as removed, with no Remove button");
     const row = (await db.query("select removed_at is not null removed, removed_by from public.team_watches where watch_id = 'dev-AAAA1111'")).rows[0];

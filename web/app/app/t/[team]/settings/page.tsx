@@ -44,7 +44,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <button type="submit" className="shell-btn primary">Save</button>
       </form>
       {t.active ? null : <p className="shell-note">This team isn&apos;t switched on yet: the name and time zone save now, the pitch-count rule once billing is done.</p>}
-      <section className="shell-form rows" aria-labelledby="h-watches">
+      <section className="shell-form rows watches" aria-labelledby="h-watches">
         <h2 id="h-watches">Watches</h2>
         <p className="shell-note small">Watches paired from the game app (Setup, Watches). Each one paired once with the code it shows; every game sends it a fresh key. Remove a lost or stolen watch here: no device on the team will send it another key.</p>
         {watches.length ? (

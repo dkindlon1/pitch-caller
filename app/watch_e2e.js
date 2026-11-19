@@ -214,7 +214,7 @@ const FAKE_BT = `
   check(a.view.sign && JSON.stringify(a.view) === JSON.stringify(b.view), `both watches show the same: ${a.view.sign} / ${(a.view.words || []).join(" ") || "(sign alone)"}`);
   check(/On both watches ✓/.test(await pill()), `pill: "${await pill()}"`);
   check(a.overlaps === 0 && b.overlaps === 0, `overlapping writes: ${a.overlaps}, ${b.overlaps}`);
-  check(a.raw.every((t) => t.length <= 20) && a.raw.every((t) => t === "H" || t.length === 16 || t.length === 18) && !a.raw.some((t) => /[a-z]{4}|HIGH|LOW|INSIDE|OUTSIDE/i.test(t.length === 18 ? "" : t)),
+  check(a.raw.every((t) => t.length <= 20) && a.raw.every((t) => t === "H" || t.length === 16 || t.length === 18) && !a.raw.some((t) => /^[CX]\d+,|,(HI|HO|LI|LO|L|M|CH|CL),|HIGH|INSIDE|OUTSIDE|CHASE|Bangle|Pitcher/.test(t.length === 18 ? "" : t)),
     `over the air: the game key (18 bytes) once per connection, then only 16-byte sealed frames; no name, no sign or spot in readable form (${a.raw.length} writes)`);
   check(a.writes.some((t) => /^K\d+$/.test(t)) && a.writes.filter((t) => t[0] === "C").length > 0 && !a.writes.includes("?bad"), "the watch got the game key and opened every call");
 
