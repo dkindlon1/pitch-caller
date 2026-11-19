@@ -31,8 +31,9 @@ export async function proxy(request: NextRequest) {
     const tok = pub[1];
     let live = false;
     if (/^[0-9a-f]{64}$/.test(tok)) {
-      const r = await fetch(`${url.replace(/\/$/, "")}/rest/v1/rpc/pc_public_recap`, { method: "POST", cache: "no-store",
-        headers: { apikey: key, "content-type": "application/json" }, body: JSON.stringify({ tok }) }).catch(() => null);
+      const svc = process.env.SUPABASE_SERVICE_ROLE_KEY;   // pc_public_recap is the server's to call, never anon's
+      const r = svc ? await fetch(`${url.replace(/\/$/, "")}/rest/v1/rpc/pc_public_recap`, { method: "POST", cache: "no-store",
+        headers: { apikey: svc, authorization: `Bearer ${svc}`, "content-type": "application/json" }, body: JSON.stringify({ tok }) }).catch(() => null) : null;
       live = !!r && r.ok && (await r.text().catch(() => "null")).trim() !== "null";
     }
     if (live) return response;

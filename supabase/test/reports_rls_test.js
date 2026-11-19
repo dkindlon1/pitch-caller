@@ -41,12 +41,12 @@ const FORBIDDEN = ["choice", "coach", "mix", "styledMix", "prob", "pred", "hitte
     await FX.addMember(su, t, U.p1, "player", ["pA"]); await FX.addMember(su, t, U.p2, "player", ["pB"]); await FX.addMember(su, t, U.kid, "player", ["pK"]);
     const as = async (who, sql, params = []) => {
       try {
-        if (who === "anon") {
-          await su.query("begin"); await su.query("set local role anon"); await su.query("select set_config('request.jwt.claims', '{\"role\":\"anon\"}', true)");
+        if (who === "anon" || who === "service") {
+          await su.query("begin"); await su.query(`set local role ${who === "anon" ? "anon" : "service_role"}`); await su.query("select set_config('request.jwt.claims', $1, true)", [JSON.stringify({ role: who === "anon" ? "anon" : "service_role" })]);
           const r = await su.query(sql, params); await su.query("commit"); return { rows: r.rows };
         }
         return { rows: (await FX.asUser(su, U[who], sql, params)).rows };
-      } catch (e) { if (who === "anon") await su.query("rollback").catch(() => {}); return { error: e.message }; }
+      } catch (e) { if (who === "anon" || who === "service") await su.query("rollback").catch(() => {}); return { error: e.message }; }
     };
     const push = (tbl, rows) => as("head", "select public.pc_push($1, $2, $3::jsonb) as r", [t, tbl, JSON.stringify(rows)]).then((r) => r.rows ? r.rows[0].r : r);
 
@@ -100,27 +100,28 @@ const FORBIDDEN = ["choice", "coach", "mix", "styledMix", "prob", "pred", "hitte
     const del = await as("head", "delete from public.report_notes where program_id = $1", [t]);
     check(!!del.error, "notes are never hard-deleted (soft delete only)");
 
-    console.log("3. Public links");
+    console.log("3. Public links (a signed-out visitor reads them through the website's server key; anon can't call it)");
     check(!!(await as("p2", "select public.pc_share_create($1, 'pA', null)", [t])).error, "only the pitcher himself makes his link");
     check(!!(await as("head", "select public.pc_share_create($1, 'pA', null)", [t])).error, "a coach can't make it for him");
     const tok = (await as("p1", "select public.pc_share_create($1, 'pA', null) as t", [t])).rows[0].t;
     check(/^[0-9a-f]{64}$/.test(tok), "a 64-character random token");
     check((await as("p1", "select public.pc_share_create($1, 'pA', null) as t", [t])).rows[0].t === tok, "one live link per recap (asking again returns it)");
-    let pub = (await as("anon", "select public.pc_public_recap($1) as r", [tok])).rows[0].r;
+    let pub = (await as("service", "select public.pc_public_recap($1) as r", [tok])).rows[0].r;
     check(pub && pub.sections.summary === true && pub.sections.heat === false && pub.sections.pitches === false && pub.sections.outings === false, "signed out: live, summary on by default, the rest off");
     check(pub && pub.events.length === 1 && !("locCell" in pub.events[0]) && !("quad" in pub.events[0]) && pub.games.every((g) => !("date" in g)), "heat maps off: no spots; outing list off: no dates");
     check(pub && !JSON.stringify(pub).match(/Slugger|Rivals U|shared with him|staff only|secret|"coach"|"mix"|catcherId|hitterId/), "no notes, hitters, opponents, overrides or style in it");
     check(!!(await as("p2", "select public.pc_share_sections($1, '{\"heat\":true}')", [tok])).error, "another player can't change his sections");
     await as("p1", "select public.pc_share_sections($1, '{\"summary\":true,\"heat\":true,\"outings\":true}')", [tok]);
-    pub = (await as("anon", "select public.pc_public_recap($1) as r", [tok])).rows[0].r;
+    pub = (await as("service", "select public.pc_public_recap($1) as r", [tok])).rows[0].r;
     check(pub && "locCell" in pub.events[0] && pub.games[0].date === "2026-04-01", "heat maps and the outing list on: spots and dates come through");
-    check((await as("anon", "select public.pc_public_recap($1) as r", ["f".repeat(64)])).rows[0].r === null && (await as("anon", "select public.pc_public_recap($1) as r", ["nope"])).rows[0].r === null, "a guessed or malformed token gets nothing");
+    check((await as("service", "select public.pc_public_recap($1) as r", ["f".repeat(64)])).rows[0].r === null && (await as("service", "select public.pc_public_recap($1) as r", ["nope"])).rows[0].r === null, "a guessed or malformed token gets nothing");
+    check(!!(await as("anon", "select public.pc_public_recap($1)", [tok])).error, "signed out, pc_public_recap itself isn't callable (no pc_ function is anon's)");
     const anonRead = await as("anon", "select count(*)::int n from public.recap_shares");
     check(!!anonRead.error, "signed out, the links table itself can't be read");
     await as("p1", "select public.pc_share_revoke($1)", [tok]);
-    check((await as("anon", "select public.pc_public_recap($1) as r", [tok])).rows[0].r === null, "revoked: the link is dead");
+    check((await as("service", "select public.pc_public_recap($1) as r", [tok])).rows[0].r === null, "revoked: the link is dead");
     const tok2 = (await as("p1", "select public.pc_share_create($1, 'pA', null) as t", [t])).rows[0].t;
-    check(tok2 !== tok && (await as("anon", "select public.pc_public_recap($1) as r", [tok])).rows[0].r === null, "a new link gets a new token; the old one stays dead");
+    check(tok2 !== tok && (await as("service", "select public.pc_public_recap($1) as r", [tok])).rows[0].r === null, "a new link gets a new token; the old one stays dead");
     console.log("4. Seasons and frozen recaps");
     check(!!(await as("caller", "select public.pc_mark_season_over($1, 'Spring')", [t])).error, "a pitch caller can't mark the season over");
     check(!!(await as("viewer", "select public.pc_mark_season_over($1, 'Spring')", [t])).error, "a viewer can't");
@@ -135,28 +136,28 @@ const FORBIDDEN = ["choice", "coach", "mix", "styledMix", "prob", "pred", "hitte
 
     // frozen: only the chosen sections of the stored recap
     const ftok = (await as("p1", "select public.pc_share_create($1, 'pA', $2) as t", [t, sid])).rows[0].t;
-    pub = (await as("anon", "select public.pc_public_recap($1) as r", [ftok])).rows[0].r;
+    pub = (await as("service", "select public.pc_public_recap($1) as r", [ftok])).rows[0].r;
     check(pub && pub.frozen && pub.frozen.line && pub.season.final === true && !("heat" in pub.frozen), "a final recap's link serves the frozen data, only the chosen sections");
 
     console.log("5. Under 18: the parent turns it on");
     check(!!(await as("caller", "select public.pc_set_minor18($1, 'pK', 'parent@x.org')", [t])).error, "only a coach who manages the roster marks a player under 18");
     check(!(await as("head", "select public.pc_set_minor18($1, 'pK', 'parent@x.org')", [t])).error, "the head coach marks him, with his parent's email");
     const ktok = (await as("kid", "select public.pc_share_create($1, 'pK', null) as t", [t])).rows[0].t;
-    check((await as("anon", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "his link is made but stays off");
+    check((await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "his link is made but stays off");
     check(!!(await as("kid", "select public.pc_share_approve($1)", [ktok])).error, "he can't approve it himself");
     check(!!(await as("head", "select public.pc_share_approve($1)", [ktok])).error, "a coach can't approve it");
     check(!!(await as("stranger", "select public.pc_share_approve($1)", [ktok])).error, "nor anyone else");
     const reqs = (await as("parent", "select * from public.pc_my_share_requests()")).rows;
     check(reqs.length === 1 && reqs[0].pitcher_name === "Pitcher pK" && reqs[0].approved === false, "his parent (signed in with that email) sees the request");
     check((await as("stranger", "select * from public.pc_my_share_requests()")).rows.length === 0, "nobody else does");
-    check(!(await as("parent", "select public.pc_share_approve($1)", [ktok])).error && !!(await as("anon", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r, "the parent approves and the link goes live");
+    check(!(await as("parent", "select public.pc_share_approve($1)", [ktok])).error && !!(await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r, "the parent approves and the link goes live");
     await as("head", "select public.pc_set_minor18($1, 'pK', 'newparent@x.org')", [t]);
-    check((await as("anon", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "a different parent email: the old approval no longer counts");
+    check((await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "a different parent email: the old approval no longer counts");
     await as("head", "select public.pc_set_minor18($1, 'pK', 'parent@x.org')", [t]);
-    check((await as("anon", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "and going back doesn't revive it: it needs approving again");
+    check((await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "and going back doesn't revive it: it needs approving again");
     await as("parent", "select public.pc_share_approve($1)", [ktok]);
-    check(!!(await as("anon", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r, "approved again: live");
-    check(!(await as("parent", "select public.pc_share_revoke($1)", [ktok])).error && (await as("anon", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "the parent can kill it too");
+    check(!!(await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r, "approved again: live");
+    check(!(await as("parent", "select public.pc_share_revoke($1)", [ktok])).error && (await as("service", "select public.pc_public_recap($1) as r", [ktok])).rows[0].r === null, "the parent can kill it too");
 
     console.log("6. The server's own tables");
     check(!!(await as("head", "select count(*) from public.report_mail")).error, "a coach can't read the mail log");
@@ -165,7 +166,7 @@ const FORBIDDEN = ["choice", "coach", "mix", "styledMix", "prob", "pred", "hitte
     check(!!(await as("anon", "select public.pc_my_report($1, 'pA')", [t])).error, "signed out, pc_my_report isn't callable");
     // a team that's switched off shares nothing
     await su.query("update public.organizations set billing_status = 'locked' where id = (select org_id from public.programs where id = $1)", [t]);
-    check((await as("anon", "select public.pc_public_recap($1) as r", [tok2])).rows[0].r === null, "a locked team's links go dark");
+    check((await as("service", "select public.pc_public_recap($1) as r", [tok2])).rows[0].r === null, "a locked team's links go dark");
     check((await as("p1", "select public.pc_my_report($1, 'pA') as r", [t])).rows[0].r === null, "and its pitchers' reports with them");
   } finally { await su.end(); }
   console.log(`${checks - fails}/${checks} checks passed`);

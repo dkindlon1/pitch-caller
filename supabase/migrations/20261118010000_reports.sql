@@ -9,7 +9,7 @@
 --   * a pitcher (or the parent account linked to a young player) reads his own outings through pc_my_report: his
 --     pitches with the coach-only fields left out (who chose the call, the engine's mix, overrides, hitters'
 --     identities), and only the notes a coach shared with him; never another pitcher's;
---   * a signed-out visitor reads a public recap only through pc_public_recap(token): only the sections the pitcher
+--   * a signed-out visitor reads a public recap only through the website, which calls pc_public_recap(token) with the server key: only the sections the pitcher
 --     chose, only while the link is live (not revoked; for a player under 18, approved by his parent account).
 
 -- ------------------------------------------------------------------ coach notes (per outing, per at-bat)
@@ -422,7 +422,9 @@ revoke all on function public.pc_mark_season_over(uuid, text), public.pc_set_min
 grant execute on function public.pc_mark_season_over(uuid, text), public.pc_set_minor18(uuid, text, text), public.pc_share_create(uuid, text, uuid),
   public.pc_share_sections(text, jsonb), public.pc_share_revoke(text), public.pc_share_approve(text, boolean), public.pc_my_share_requests(),
   public.pc_my_report(uuid, text, text, date, date) to authenticated, service_role;
-grant execute on function public.pc_public_recap(text) to anon, authenticated, service_role;
+-- signed-out visitors never call it directly (no pc_ function is anon's): the website's server calls it with the service key
+-- for /r/<token>; a signed-in pitcher may call it to see whether his own link is live
+grant execute on function public.pc_public_recap(text) to authenticated, service_role;
 
 -- ------------------------------------------------------------------ who gets the report emails (server only)
 -- Everyone on the team with a confirmed email: coaches (any staff role) and players with the pitcher records they speak

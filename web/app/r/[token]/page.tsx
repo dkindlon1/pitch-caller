@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getServerSupabase } from "@/lib/supabase/server";
 import { buildRecap, type Recap } from "@/lib/report_data.ts";
-import { publicRecap, type SB } from "@/lib/report_fetch.ts";
+import { readPublicRecap } from "@/lib/public_recap";
 import { RecapView } from "@/app/app/_reports/recap";
 import { Night } from "@/app/app/_frame/Night";
 import { Ball } from "@/app/app/_frame/Icon";
@@ -23,8 +22,7 @@ type Params = Promise<{ token: string }>;
 export default async function PublicRecap({ params }: { params: Params }) {
   // read before anything streams, so a dead, revoked or unapproved link answers 404, not an empty 200
   const { token } = await params;
-  const sb = (await getServerSupabase()) as unknown as SB;
-  const d = await publicRecap(sb, token);
+  const d = await readPublicRecap(token);
   if (!d || !d.pitcher) notFound();
   return (
     <div className={`pq ${portalFonts}`}>
@@ -38,7 +36,7 @@ export default async function PublicRecap({ params }: { params: Params }) {
   );
 }
 
-function Body({ token, d }: { token: string; d: NonNullable<Awaited<ReturnType<typeof publicRecap>>> }) {
+function Body({ token, d }: { token: string; d: NonNullable<Awaited<ReturnType<typeof readPublicRecap>>> }) {
   const name = d.pitcher.name || "Pitcher";
   // with no dates (the outing list and pitch by pitch off) the outings are numbered in order
   const games = (d.games || []).map((g, i) => ({ ...g, date: g.date || `#${String(i + 1).padStart(3, "0")}` }));

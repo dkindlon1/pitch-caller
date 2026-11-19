@@ -1,6 +1,5 @@
-import { getServerSupabase } from "@/lib/supabase/server";
 import { buildRecap, type Recap } from "@/lib/report_data.ts";
-import { publicRecap, type SB } from "@/lib/report_fetch.ts";
+import { readPublicRecap } from "@/lib/public_recap";
 import { recapPdf } from "@/lib/report_pdf";
 import { pdfResponse } from "@/app/app/_reports/load";
 
@@ -8,7 +7,7 @@ import { pdfResponse } from "@/app/app/_reports/load";
 // under 18, until the parent approves).
 export async function GET(_: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const d = await publicRecap((await getServerSupabase()) as unknown as SB, token);
+  const d = await readPublicRecap(token);
   if (!d || !d.pitcher) return new Response("Not found", { status: 404 });
   const name = d.pitcher.name || "Pitcher";
   const games = (d.games || []).map((g, i) => ({ ...g, date: g.date || `#${String(i + 1).padStart(3, "0")}` }));
