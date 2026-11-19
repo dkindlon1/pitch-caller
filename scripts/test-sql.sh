@@ -19,3 +19,4 @@ $run v12_sessions_test  node supabase/test/v12_sessions_test.js   # v1.2 Step 4:
 $run logging_sync_test  node supabase/test/logging_sync_test.js   # Build 1: the full mix / styled mix / style fields sync unchanged; an older app's events still sync
 $run reports_rls_test   node supabase/test/reports_rls_test.js   # Build 1: reports permissions (pitcher / staff / viewer / signed out / under-18 parent), at the database
 $run opp_rls_test       node supabase/test/opp_rls_test.js   # Build 2: opponent database permissions
+$run outcome_rls_test   node supabase/test/outcome_rls_test.js   # Build 3: outcome tracking tables

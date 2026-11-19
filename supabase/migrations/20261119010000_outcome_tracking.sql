@@ -27,3 +27,4 @@ create policy findings_read on public.outcome_findings for select to authenticat
 revoke all on public.peak_baselines, public.outcome_findings from anon;
 revoke insert, update, delete, truncate, references, trigger on public.peak_baselines, public.outcome_findings from authenticated;
 grant select on public.peak_baselines, public.outcome_findings to authenticated;
+grant select, insert, update, delete on public.peak_baselines, public.outcome_findings to service_role;
