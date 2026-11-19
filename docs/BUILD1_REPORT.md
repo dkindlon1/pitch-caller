@@ -43,7 +43,7 @@ are JSON, so `pc_push`/`pc_pull` carry the fields with no change).
 | `tsc --noEmit`, `npm test`, `next build`, site e2e | clean; 93/93; ok; all site checks passed |
 | 8 portal e2es | all pass: shell 43, offline 22, portal 30, billing 52, player_admin 24, uploads 33, retention 10, gameplan 38 (252, same as baseline) |
 | SQL tests, each alone | sync 38, client_review 37, sync_auth 9, app_sync_e2e 37, waitlist 22, v12_sessions 11, logging_sync 10, reports_rls 66: pass. `review_test` 28/29 (known, same as baseline). **`rls_matrix_test` 346/347: FAILS** "anon can execute no pc_ function (pc_public_recap)". **`v11_kinds_test` FAILS** "the v1.1 migration runs last" (see Open below) |
-| `scripts/test-app.sh` (engines, parity, goldens, learner worlds, app e2es) | was still running when the usage limit hit: **not read** |
+| `scripts/test-app.sh` (engines, parity, goldens, learner worlds, app e2es) | every step passes (exit 0, 47 min; with the Windows tar.exe / python3 shims), incl. parity, goldens, worlds, logging_exact_test 25/25 |
 
 
 ## Log fields: what every pitch already had, and gaps found
@@ -65,7 +65,6 @@ count (`pcRaw`), catcher id, hitter id and side (`bs`). Nothing had to be added 
 2. **`v11_kinds_test` asserts the v1.1 migration is the newest file.** It applies migrations only up to v1.1, so any new
    migration fails it by construction. I didn't edit an existing test. Proposed fix: apply the later migrations after
    the v1.1 step and assert they run cleanly. (On this Windows box it also needs `python3` resolvable from cmd.)
-3. `scripts/test-app.sh` result on the final code not read.
 
 ## Proposals (not built)
 1. **Coach emails:** one per game listing every outing (built) vs one per outing per coach. Say if you want the latter.
