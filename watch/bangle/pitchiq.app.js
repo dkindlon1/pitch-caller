@@ -183,7 +183,12 @@ function PQCore(io) {
     function drop() { st.rejected++; if (redraw) io.draw(view()); }
     if (b.length === PQSec.KEY_FRAME && b[0] === 0x4b) {          // a game key (full mode): only over the bonded, encrypted link
       if (!io.secure()) return drop();
-      wipe(); st.key = new Uint8Array(16); for (var i = 0; i < 16; i++) st.key[i] = b[2 + i]; st.keyId = b[1]; st.keyAt = io.now(); st.mode = "full";
+      // the same game key again (the coach's app sends it on every reconnect): keep the message count and the inning, so
+      // nothing captured before it can replay; only a different key (a new game) starts over (review fixes, Nov 19)
+      var same = !!st.key && st.mode === "full" && st.keyId === b[1];
+      for (var j = 0; same && j < 16; j++) if (st.key[j] !== b[2 + j]) same = false;
+      if (same) st.keyAt = io.now();
+      else { wipe(); st.key = new Uint8Array(16); for (var i = 0; i < 16; i++) st.key[i] = b[2 + i]; st.keyId = b[1]; st.keyAt = io.now(); st.mode = "full"; }
       io.draw(view()); io.notify("K" + st.keyId);
       return;
     }
@@ -286,7 +291,8 @@ if (typeof Bangle !== "undefined") {
   // pairing: a 6-digit passkey the watch shows while it isn't bonded; writes need an encrypted, passkey-protected (MITM)
   // link (to verify on the watch)
   var PQ_PAIR = String(100000 + Math.floor(Math.random() * 900000));
-  try { NRF.setSecurity({ passkey: PQ_PAIR, mitm: 1, display: 1 }); } catch (e) {}
+  // LE Secure Connections (lesc): the pairing can't be cracked from a recording of it (legacy passkey pairing can, offline)
+  try { NRF.setSecurity({ passkey: PQ_PAIR, mitm: 1, display: 1, lesc: 1 }); } catch (e) {}
   var pqSecure = function () { try { var s = NRF.getSecurityStatus(); return !!(s && s.connected && s.encrypted && s.mitm_protected); } catch (e) { return false; } };
   var pqBonded = function () { try { var s = NRF.getSecurityStatus(); return !!(s && s.bonded); } catch (e) { return false; } };
   var pqDrawV = function (v) { if (!pqBonded()) v.pair = PQ_PAIR; pqDraw(v); };

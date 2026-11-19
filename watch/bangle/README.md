@@ -32,7 +32,8 @@ To leave the app, **hold the button 3 seconds**. A short press (a glove) does no
 
 ## Security (docs/PLAN_watch_security_2026-11-18.md)
 - **Pairing, once per watch:** the first connection asks Chrome (Windows / macOS / Android) for the 6-digit code the watch
-  shows. After that the watch and that laptop are bonded, and only bonded devices may connect and write.
+  shows. The watch asks for LE Secure Connections, so a recording of the pairing can't be cracked later. After that the
+  watch and that laptop are bonded, and only bonded devices may connect and write.
 - **A fresh key every game:** the game app makes a random 128-bit key for each game and sends it to each watch over the
   bonded link. The watch keeps it in memory only (a restart forgets it) and wipes it at **End game**, or after 6 hours if
   the game was never ended.
@@ -40,7 +41,11 @@ To leave the app, **hold the button 3 seconds**. A short press (a glove) does no
   16 bytes). The watch drops, silently, anything that fails the check, repeats an older message, comes from an earlier
   inning or another game, or arrives in plain text. A dropped message never buzzes or shows.
 - **Lost or stolen watch:** remove it in the portal (team **Settings → Watches**). No device on the team will send it
-  another key; it must be paired again and re-added by a coach who manages the roster.
+  another key: each laptop asks the team's list before it sends a key, so a laptop that hadn't heard of the removal yet
+  can't undo it. To use it again, pair it again (Setup → Watches → **Connect a watch**, with its code) as a coach who
+  manages the roster; only that deliberate pairing re-adds it.
+- **Reconnecting:** the laptop sends the same game key again; the watch keeps its message count, so nothing captured
+  before the reconnect can be replayed.
 - Players see what they always saw: the sign and the spot. The encryption only protects the radio.
 - **Pairing-only mode** (Setup → Watches → Message security; full encryption is the default): the fallback if the
   watch's AES is too slow. No game key; calls go in plain text over the bonded link only; message numbers still refuse
@@ -60,12 +65,19 @@ To leave the app, **hold the button 3 seconds**. A short press (a glove) does no
 ## Desk test checklist (what Claude couldn't check)
 Security (plan section 4, items 6-9; Build 4 tested everything else against fake watches and Node):
 - [ ] **Pairing:** the first Connect shows the watch's 6-digit code and Chrome asks for it; after typing it, Setup shows
-      "game key ✓" once a game starts. (`NRF.setSecurity` with a display passkey and MITM; not run on a real watch.)
+      "game key ✓" once a game starts. (`NRF.setSecurity` with a display passkey, MITM and `lesc: 1`; not run on a real watch.)
+- [ ] **The bond is LE Secure Connections:** after pairing, in the IDE console (or the app's debug line),
+      `NRF.getSecurityStatus()` shows `encrypted: true`, `mitm_protected: true` and, where the firmware reports it,
+      `lesc: true`. On Windows, Settings → Bluetooth → the Bangle → properties lists the pairing as "LE Secure Connections";
+      on Android, nRF Connect's bond info does. If it says legacy pairing, the firmware or the OS didn't take `lesc`: note
+      which, and don't use full encryption in a real game until it's fixed.
 - [ ] **An unpaired device can't connect or write:** from a second laptop or phone (nRF Connect), try to connect and to
-      write to the PitchIQ characteristic: refused. (`NRF.setWhitelist(true)` and `security: { write: { encrypted, mitm } }`
+      write to the PitchIQ characteristic: refused (it should not even get a connection once the watch is bonded). (`NRF.setWhitelist(true)` and `security: { write: { encrypted, mitm } }`
       on the characteristic; Espruino's behaviour here is unverified.)
-- [ ] **Removing a watch:** remove it in Settings → Watches, then Connect again from the laptop: the app refuses it and
-      forgets it. Check whether Chrome's own pairing (the OS bond) also needs removing in the OS Bluetooth settings.
+- [ ] **Removing a watch:** remove it in Settings → Watches while the game app is open on a second laptop that still has
+      it connected; drop the link (walk away) and come back: that laptop must not send a key ("game key" never shows ✓)
+      and forgets the watch. Then Connect again from the laptop: refused. Check whether Chrome's own pairing (the OS bond)
+      also needs removing in the OS Bluetooth settings; re-adding it should show the 6-digit code again.
 - [ ] **AES on the Bangle:** in the IDE console, `PQSec.isNative()` says whether the firmware's AES passed the start-up
       check (else the app's own JavaScript AES runs). Time it: `t=getTime(); for(i=0;i<20;i++) PQSec.inningKeys(new Uint8Array(16),i+1); print((getTime()-t)/20)`
       (one new inning) and the time from Accept to the buzz over 20 calls: **game-ready means under 300 ms** from Accept

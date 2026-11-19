@@ -65,8 +65,15 @@ const dbUrl = (n) => { const u = new URL(BASE); u.pathname = "/" + n; return u.t
     check(r.rows && r.rows[0].r.ok === true && (await list("head")).find((w) => w.watch_id === "dev-aaaa").removed === true, "the head coach removes it (kept, marked removed)");
     r = await reg("caller", "dev-aaaa");
     check(r.rows && r.rows[0].r.ok === false && r.rows[0].r.removed === true && (await list("head")).find((w) => w.watch_id === "dev-aaaa").removed === true, "a pitch caller can't put a removed watch back");
+    // review fixes (Nov 19): the game app registers every watch it links to on its own; a head coach's laptop that hadn't
+    // heard of the removal yet must not undo it. Only a deliberate re-add (after pairing it again) does
     r = await reg("head", "dev-aaaa");
-    check(r.rows && r.rows[0].r.ok === true && (await list("head")).find((w) => w.watch_id === "dev-aaaa").removed === false, "the head coach can, after pairing it again");
+    check(r.rows && r.rows[0].r.ok === false && r.rows[0].r.removed === true && (await list("head")).find((w) => w.watch_id === "dev-aaaa").removed === true,
+      `the head coach's game app linking to it on its own (a stale laptop): still removed, no key (${r.error || JSON.stringify(r.rows[0].r)})`);
+    r = await as("caller", "select public.pc_watch_register($1, $2, $3, $4, true) r", [t, "dev-aaaa", "Bangle.js aaaa", "pitcher"]);
+    check((!!r.error || r.rows[0].r.ok === false) && (await list("head")).find((w) => w.watch_id === "dev-aaaa").removed === true, "a pitch caller can't re-add it even deliberately");
+    r = await as("head", "select public.pc_watch_register($1, $2, $3, $4, true) r", [t, "dev-aaaa", "Bangle.js aaaa", "pitcher"]);
+    check(r.rows && r.rows[0].r.ok === true && (await list("head")).find((w) => w.watch_id === "dev-aaaa").removed === false, "the head coach re-adds it deliberately, after pairing it again");
 
     console.log("4. Nobody writes the table directly");
     for (const who of ["head", "caller"]) {

@@ -77,6 +77,7 @@ function firmware(o = {}) {
   {
     const fw = firmware(), c = fw.ctx, rx = fw.services[c.PQ_SVC][c.PQ_RX];
     check(fw.security && /^\d{6}$/.test(fw.security.passkey) && fw.security.mitm === 1 && fw.security.display === 1, `passkey pairing: a 6-digit code shown on the watch (${fw.security && fw.security.passkey}), MITM protection`);
+    check(fw.security && fw.security.lesc === 1, `pairing asks for LE Secure Connections (lesc: ${fw.security && fw.security.lesc}), so a recorded pairing can't be cracked offline (review fixes, Nov 19)`);
     check(rx.security && rx.security.write && rx.security.write.encrypted === true && rx.security.write.mitm === true, "writes need an encrypted, passkey-protected link");
     check(fw.whitelist === true, "once bonded, only bonded devices may connect (whitelist on)");
     fw.sec.bonded = false; fw.handlers.connect(); fw.handlers.disconnect();
@@ -178,6 +179,26 @@ function firmware(o = {}) {
     check(fw.texts()[0] === "6" && fw.buzz.length === nb + 2, "the coach's app sends it again with a new number: shown, it buzzes");
     const f2 = firmware(); f2.handlers.connect(); await f2.advance(4000); f2.write("H"); await f2.advance(4000); f2.write("H");
     check(!f2.texts().includes("NO LINK") && f2.texts().includes("no key"), "with no key yet, a plain heartbeat keeps the link up");
+  }
+
+  console.log("6b. The same game key sent again (a reconnect) keeps the count: nothing from before it replays (review fixes, Nov 19)");
+  {
+    const fw = firmware(); fw.handlers.connect(); fw.sendKey();
+    const old = fw.call(1, 3, "LO");                 // captured on the air: call #1, sign 3
+    fw.call(2, 4, "HI"); fw.call(3, 5, "CL");
+    check(fw.texts()[0] === "5", "calls #1 to #3 shown, the watch is on #3");
+    fw.writeBytes(old); check(fw.texts()[0] === "5", "replaying #1 now: dropped");
+    const nb = fw.buzz.length;
+    fw.sendKey();                                     // a reconnect: the coach's app sends the same game key again
+    check(fw.notifies().filter((x) => x === "K" + fw.keyId).length >= 2, "the watch acknowledges the key again");
+    fw.writeBytes(old);
+    check(fw.texts()[0] === "5" && fw.buzz.length === nb, `after the same key is sent again, replaying #1: ${fw.texts()[0] === "5" && fw.buzz.length === nb ? "dropped" : "ACCEPTED (shows " + fw.texts()[0] + ", buzzes)"}`);
+    const inn1 = Sec.seal(Sec.inningKeys(fw.gameKey, 1), fw.keyId, 1, 2, { kind: "call", sign: "9", loc: "HI", chg: false });
+    fw.call(4, 6, "LO", false, 2); fw.sendKey(); fw.writeBytes(inn1);
+    check(fw.texts()[0] === "6", "nor an earlier inning's call after the key comes again");
+    fw.call(5, 7, "HI", false, 2); check(fw.texts()[0] === "7", "and the next real call still shows");
+    fw.gameKey = new Uint8Array(require("crypto").randomBytes(16)); fw.keyId = 0x2b; fw.sendKey(); fw.call(1, 8, "LO");
+    check(fw.texts()[0] === "8", "a new game's key starts the count over (a different key)");
   }
 
   console.log("7. The firmware's AES");

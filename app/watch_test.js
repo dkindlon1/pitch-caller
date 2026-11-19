@@ -423,6 +423,20 @@ const mem = () => { const m = {}; return { getItem: (k) => m[k] || null, setItem
     gone = true;
     L2.accept({ gid: "r", id: 1, pitchNo: 0, inning: 1, sign: 2, quad: "up-in", kind: "CB" }); await advance(300);
     check(!b.writes.some((t) => t[0] === "K") && !b.view.sign && L2.summary().devices.length === 0, "a watch removed from the team gets no key and is forgotten");
+    // review fixes (Nov 19): a stale laptop. Its own list never heard of the removal; the team's answer to the link's
+    // registration (onLinked) says removed. The removal wins: no key on the reconnect, and the watch is forgotten
+    const c = fakeWatch(T, "Bangle.js s7");
+    let teamSaysRemoved = false;
+    const L3 = W.create({ bluetooth: fakeBluetooth([c]), timers: T, storage: mem(), removed: () => false,
+      onLinked: () => new Promise((res) => T.setTimeout(() => res(teamSaysRemoved ? { removed: true } : { ok: true }), 120)) });
+    const p3 = L3.connect(); await advance(400); await p3;
+    L3.accept({ gid: "s", id: 1, pitchNo: 0, inning: 1, sign: 4, quad: "down-away", kind: "SL" }); await advance(400);
+    check(c.writes.some((t) => t[0] === "K") && c.view.sign === "4", "(the team's list says fine: keyed, the call shows)");
+    const kBefore = c.writes.filter((t) => t[0] === "K").length;
+    teamSaysRemoved = true;                      // removed in the portal; this laptop's own list doesn't know yet
+    c.inRange = false; c.drop(); c.inRange = true; await advance(4000);
+    check(c.writes.filter((t) => t[0] === "K").length === kBefore && L3.summary().devices.length === 0,
+      `a laptop that reconnects before refreshing its list: the team's answer comes first, no new key, the watch forgotten (${c.writes.filter((t) => t[0] === "K").length - kBefore} keys after the drop)`);
   }
 
   console.log("10. Pairing-only mode (the fallback if AES is too slow on the watch: plain over the bonded link)");

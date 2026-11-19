@@ -4823,7 +4823,7 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
       removeMember: (userId) => rpc("pc_remove_member", { p: programId, member: userId }),
       // Build 4: the team's watch list (pair, register with a role; a removed watch never gets a game key)
       watchList: () => rpc("pc_watch_list", { p: programId }),
-      watchRegister: (watchId, name, role) => rpc("pc_watch_register", { p: programId, watch_id: watchId, name, role }),
+      watchRegister: (watchId, name, role, readd) => rpc("pc_watch_register", { p: programId, watch_id: watchId, name, role, readd: !!readd }),
       watchRemove: (watchId) => rpc("pc_watch_remove", { p: programId, watch_id: watchId }),
     };
   }
@@ -5241,7 +5241,10 @@ else if (typeof self !== "undefined") self.PQSec = PQSec;
     const log = opts.log || (() => {});
     const random = opts.random || randomBytes;
     const removed = opts.removed || (() => false);   // (device) -> true when the coach removed this watch from the team
-    const onLinked = opts.onLinked || (() => {});    // (device id, name, role) after each connection: the app registers it with the team
+    // (device id, name, role, { fresh }) on each connection, before any key: the app registers it with the team and may answer
+    // { removed: true } (or a promise of it); fresh = picked in the chooser just now (pairing it), so a re-add may be asked
+    const onLinked = opts.onLinked || (() => {});
+    const LINK_CHECK_MS = opts.linkCheckMs || 2500;   // how long the team's answer may take before this device's own list decides (offline)
 
     // roles: { deviceId: "pitcher" | "catcher" }. mode: "full" (default: every message sealed with the game's key) or
     // "pairing" (pairing-only, the fallback if AES turns out too slow on the watch: plain messages over the bonded link,
@@ -5424,10 +5427,24 @@ else if (typeof self !== "undefined") self.PQSec = PQSec;
       if (d.conn !== conn) return;
       d.notifying = !!settings.receipt;
       d.backoff = 0;
-      if (removed(d.device)) { forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`); }
+      // review fixes (Nov 19): the team's list answers before any key goes out, so a removal made elsewhere wins even when
+      // this device's own list is out of date. Offline (no answer in time), the list kept on this device decides. A watch
+      // just picked in the chooser (fresh) may be re-added, but only if the team says so.
+      const fresh = !!d.fresh; d.fresh = false;
+      if (!fresh && removed(d.device)) { forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`); }
+      let answer = null;
+      try {
+        answer = await new Promise((res) => {
+          const to = T.setTimeout(() => res(null), LINK_CHECK_MS);
+          Promise.resolve(onLinked(d.device.id, d.name, roleOf(d), { fresh })).then((a) => { T.clearTimeout(to); res(a || null); }, () => { T.clearTimeout(to); res(null); });
+        });
+      } catch (e) {}
+      if (d.conn !== conn) return;
+      if ((answer && answer.removed) || (removed(d.device) && !(fresh && answer && answer.ok))) {
+        forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`);
+      }
       d.state = "ok";
       startHeartbeat();
-      try { onLinked(d.device.id, d.name, roleOf(d)); } catch (e) {}
       // the game key first (the watch takes it only over the bonded link), then what it should show now; a watch
       // joining or coming back gets the call as new (one long buzz), never as a change
       if (game) {
@@ -5470,6 +5487,7 @@ else if (typeof self !== "undefined") self.PQSec = PQSec;
       const device = await bt.requestDevice({ filters: [{ namePrefix: "Bangle" }], optionalServices: [SVC] });
       const d = addDevice(device);
       if (d.state === "ok") return d;
+      d.fresh = true;   // picked in the chooser just now: pairing it, so the team may re-add it if it was removed
       if (d.reT) { T.clearTimeout(d.reT); d.reT = null; }
       await linkOrRetry(d);
       return d;
@@ -5513,7 +5531,7 @@ else if (typeof self !== "undefined") self.PQSec = PQSec;
       const d = devs.find((x) => x.name === name);
       if (!d || (role !== "pitcher" && role !== "catcher")) return;
       settings.roles = Object.assign({}, settings.roles, { [d.device.id]: role }); saveSettings();
-      try { onLinked(d.device.id, d.name, role); } catch (e) {}
+      try { Promise.resolve(onLinked(d.device.id, d.name, role, { fresh: false })).then((a) => { if (a && a.removed) forget(d.name); }, () => {}); } catch (e) {}
       changed();
     }
     // full encryption or pairing-only; a game in progress starts a fresh session in the new mode (the watch takes the
@@ -9123,15 +9141,19 @@ async function watchListRefresh() {
     if (WATCH) for (const d of WATCH.summary().devices) if (WATCH_REMOVED.has(d.id)) { WATCH.forget(d.name); toast(`${d.name} was removed from the team. Pair it again to use it.`); }
   } catch (e) {}   // offline: the list kept on the device stands
 }
-async function watchRegister(id, name, role) {
-  const tr = watchTeam(); if (!tr || !tr.watchRegister) return;
+// the team's answer for a watch this device just linked to; the watch link waits for it before sending a key (review fixes,
+// Nov 19). readd: picked in the chooser just now, so a head coach's re-add of a removed watch (after pairing it again)
+async function watchRegister(id, name, role, readd) {
+  const tr = watchTeam(); if (!tr || !tr.watchRegister) return null;
   try {
-    const r = await tr.watchRegister(id, name, role);
-    if (r && r.removed) { WATCH_REMOVED.add(id); watchRemovedSave(); if (WATCH) WATCH.forget(name); toast(`${name} was removed from the team. The head coach can add it back after pairing it again.`); render(); }
-  } catch (e) {}
+    const r = await tr.watchRegister(id, name, role, !!readd);
+    if (r && r.removed) { WATCH_REMOVED.add(id); watchRemovedSave(); toast(`${name} was removed from the team. The head coach can add it back after pairing it again.`); setTimeout(render, 0); return { removed: true }; }
+    if (r && r.ok && WATCH_REMOVED.delete(id)) watchRemovedSave();
+    return r || null;
+  } catch (e) { return null; }
 }
 const WATCH = WATCH_OPT_IN && typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, removed: (dev) => WATCH_REMOVED.has(dev.id),
-  onLinked: (id, name, role) => { watchRegister(id, name, role); },
+  onLinked: (id, name, role, o) => watchRegister(id, name, role, o && o.fresh),
   onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
 const watchOn = () => !!WATCH && WATCH.summary().devices.length > 0;
 // the call on screen as the watch link sees it: this game, this call, this pitch; none once the inning is over

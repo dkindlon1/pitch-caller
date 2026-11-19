@@ -689,15 +689,19 @@ async function watchListRefresh() {
     if (WATCH) for (const d of WATCH.summary().devices) if (WATCH_REMOVED.has(d.id)) { WATCH.forget(d.name); toast(`${d.name} was removed from the team. Pair it again to use it.`); }
   } catch (e) {}   // offline: the list kept on the device stands
 }
-async function watchRegister(id, name, role) {
-  const tr = watchTeam(); if (!tr || !tr.watchRegister) return;
+// the team's answer for a watch this device just linked to; the watch link waits for it before sending a key (review fixes,
+// Nov 19). readd: picked in the chooser just now, so a head coach's re-add of a removed watch (after pairing it again)
+async function watchRegister(id, name, role, readd) {
+  const tr = watchTeam(); if (!tr || !tr.watchRegister) return null;
   try {
-    const r = await tr.watchRegister(id, name, role);
-    if (r && r.removed) { WATCH_REMOVED.add(id); watchRemovedSave(); if (WATCH) WATCH.forget(name); toast(`${name} was removed from the team. The head coach can add it back after pairing it again.`); render(); }
-  } catch (e) {}
+    const r = await tr.watchRegister(id, name, role, !!readd);
+    if (r && r.removed) { WATCH_REMOVED.add(id); watchRemovedSave(); toast(`${name} was removed from the team. The head coach can add it back after pairing it again.`); setTimeout(render, 0); return { removed: true }; }
+    if (r && r.ok && WATCH_REMOVED.delete(id)) watchRemovedSave();
+    return r || null;
+  } catch (e) { return null; }
 }
 const WATCH = WATCH_OPT_IN && typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, removed: (dev) => WATCH_REMOVED.has(dev.id),
-  onLinked: (id, name, role) => { watchRegister(id, name, role); },
+  onLinked: (id, name, role, o) => watchRegister(id, name, role, o && o.fresh),
   onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
 const watchOn = () => !!WATCH && WATCH.summary().devices.length > 0;
 // the call on screen as the watch link sees it: this game, this call, this pitch; none once the inning is over

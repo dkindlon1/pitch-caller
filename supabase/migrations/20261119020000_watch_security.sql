@@ -23,7 +23,10 @@ grant select, insert, update, delete on public.team_watches to service_role;
 
 -- a coach who calls games registers a paired watch (or changes its role). A removed watch can't be put back this way:
 -- it has to be paired again and re-added by someone who may manage the roster.
-create function public.pc_watch_register(p uuid, watch_id text, name text, role text) returns jsonb
+-- readd: a deliberate re-add after pairing the watch again (the game app's "pair a watch", never its automatic registration
+-- on every link). Review fixes (Nov 19): automatic registration never clears a removal, so a head coach's laptop that
+-- hadn't heard of it yet can't undo it; only a deliberate re-add by someone who manages the roster does.
+create function public.pc_watch_register(p uuid, watch_id text, name text, role text, readd boolean default false) returns jsonb
 language plpgsql security definer set search_path = '' as $$
 #variable_conflict use_column
 declare cur public.team_watches;
@@ -33,7 +36,7 @@ begin
      or length(pc_watch_register.name) not between 1 and 60 or pc_watch_register.role is null or pc_watch_register.role not in ('pitcher', 'catcher') then
     raise exception 'bad watch' using errcode = '22023'; end if;
   select * into cur from public.team_watches w where w.program_id = p and w.watch_id = pc_watch_register.watch_id;
-  if found and cur.removed_at is not null and not private.pc_can_manage(p, 'manage_roster') then
+  if found and cur.removed_at is not null and not (pc_watch_register.readd and private.pc_can_manage(p, 'manage_roster')) then
     return jsonb_build_object('ok', false, 'removed', true);
   end if;
   insert into public.team_watches as w (program_id, watch_id, name, role, added_by)
@@ -55,8 +58,8 @@ begin
   return jsonb_build_object('ok', found);
 end $$;
 
-revoke all on function public.pc_watch_register(uuid, text, text, text), public.pc_watch_remove(uuid, text) from public, anon;
-grant execute on function public.pc_watch_register(uuid, text, text, text), public.pc_watch_remove(uuid, text) to authenticated;
+revoke all on function public.pc_watch_register(uuid, text, text, text, boolean), public.pc_watch_remove(uuid, text) from public, anon;
+grant execute on function public.pc_watch_register(uuid, text, text, text, boolean), public.pc_watch_remove(uuid, text) to authenticated;
 
 -- the list, for the game app (coaches on the team): which watches are registered and which were removed
 create function public.pc_watch_list(p uuid) returns jsonb

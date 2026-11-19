@@ -89,7 +89,10 @@
     const log = opts.log || (() => {});
     const random = opts.random || randomBytes;
     const removed = opts.removed || (() => false);   // (device) -> true when the coach removed this watch from the team
-    const onLinked = opts.onLinked || (() => {});    // (device id, name, role) after each connection: the app registers it with the team
+    // (device id, name, role, { fresh }) on each connection, before any key: the app registers it with the team and may answer
+    // { removed: true } (or a promise of it); fresh = picked in the chooser just now (pairing it), so a re-add may be asked
+    const onLinked = opts.onLinked || (() => {});
+    const LINK_CHECK_MS = opts.linkCheckMs || 2500;   // how long the team's answer may take before this device's own list decides (offline)
 
     // roles: { deviceId: "pitcher" | "catcher" }. mode: "full" (default: every message sealed with the game's key) or
     // "pairing" (pairing-only, the fallback if AES turns out too slow on the watch: plain messages over the bonded link,
@@ -272,10 +275,24 @@
       if (d.conn !== conn) return;
       d.notifying = !!settings.receipt;
       d.backoff = 0;
-      if (removed(d.device)) { forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`); }
+      // review fixes (Nov 19): the team's list answers before any key goes out, so a removal made elsewhere wins even when
+      // this device's own list is out of date. Offline (no answer in time), the list kept on this device decides. A watch
+      // just picked in the chooser (fresh) may be re-added, but only if the team says so.
+      const fresh = !!d.fresh; d.fresh = false;
+      if (!fresh && removed(d.device)) { forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`); }
+      let answer = null;
+      try {
+        answer = await new Promise((res) => {
+          const to = T.setTimeout(() => res(null), LINK_CHECK_MS);
+          Promise.resolve(onLinked(d.device.id, d.name, roleOf(d), { fresh })).then((a) => { T.clearTimeout(to); res(a || null); }, () => { T.clearTimeout(to); res(null); });
+        });
+      } catch (e) {}
+      if (d.conn !== conn) return;
+      if ((answer && answer.removed) || (removed(d.device) && !(fresh && answer && answer.ok))) {
+        forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`);
+      }
       d.state = "ok";
       startHeartbeat();
-      try { onLinked(d.device.id, d.name, roleOf(d)); } catch (e) {}
       // the game key first (the watch takes it only over the bonded link), then what it should show now; a watch
       // joining or coming back gets the call as new (one long buzz), never as a change
       if (game) {
@@ -318,6 +335,7 @@
       const device = await bt.requestDevice({ filters: [{ namePrefix: "Bangle" }], optionalServices: [SVC] });
       const d = addDevice(device);
       if (d.state === "ok") return d;
+      d.fresh = true;   // picked in the chooser just now: pairing it, so the team may re-add it if it was removed
       if (d.reT) { T.clearTimeout(d.reT); d.reT = null; }
       await linkOrRetry(d);
       return d;
@@ -361,7 +379,7 @@
       const d = devs.find((x) => x.name === name);
       if (!d || (role !== "pitcher" && role !== "catcher")) return;
       settings.roles = Object.assign({}, settings.roles, { [d.device.id]: role }); saveSettings();
-      try { onLinked(d.device.id, d.name, role); } catch (e) {}
+      try { Promise.resolve(onLinked(d.device.id, d.name, role, { fresh: false })).then((a) => { if (a && a.removed) forget(d.name); }, () => {}); } catch (e) {}
       changed();
     }
     // full encryption or pairing-only; a game in progress starts a fresh session in the new mode (the watch takes the
