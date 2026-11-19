@@ -63,6 +63,7 @@ module.exports.run = async function run(season, D, H) {
       return { abs: String(abs.length), k: String(abs.filter((a) => a.result === "k").length), bb: String(abs.filter((a) => a.result === "walk").length), h: String(abs.filter((a) => a.result === "hit").length), hard: String(ctx.ps.filter((e) => judge(e).hard).length) }[k[1]]; }
     if (k[0] === "opp") return String(D.evs.filter((e) => e.hitterId === k[1] && isPitch(e) && !e.deletedAt && e.end).length);
     if (k[0] === "share") return null;   // the link's address: not a number
+    if (k[0] === "oc" || k[0] === "ocs" || k[0] === "drift") return null;   // Build 3 outcome tracking: checked number by number by scripts/outcome_check.js
     return undefined;
   }
 
