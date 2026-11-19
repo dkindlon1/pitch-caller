@@ -38,16 +38,18 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const sb = await getServerSupabase();
   // every at-bat against this team: who batted where, game by game (pitch events every coach can read)
   const idOf = new Map<string, string>(); for (const h of mine) { idOf.set(h.id, h.id); for (const a of h.aliases || []) idOf.set(a, h.id); }
+  // the owner off the staff (oppOwner) can't read games or events: no game history is read or shown for him, only a line saying so
+  const staff = isCoach;
   const readRows = async () => {   // in pages: PostgREST returns at most 1,000 rows a request
     const out: { game_id: string; hitterId: string; slot: number; end: boolean }[] = [], ids = [...idOf.keys()];
-    if (!ids.length) return out;
+    if (!ids.length || !staff) return out;
     for (let from = 0; ; from += 1000) {
       const { data } = await sb.from("events").select("id, game_id, doc->hitterId, doc->slot, doc->end").eq("program_id", team).is("deleted_at", null).in("doc->>hitterId", ids.slice(0, 400)).order("id").range(from, from + 999);
       const got = (data || []) as unknown as typeof out; out.push(...got);
       if (got.length < 1000) return out;
     }
   };
-  const [games, defs, rows] = await Promise.all([teamGames(sb as unknown as SB, team), defsFor(t.org_id), readRows()]);
+  const [games, defs, rows] = await Promise.all([staff ? teamGames(sb as unknown as SB, team) : Promise.resolve([]), defsFor(t.org_id), readRows()]);
   const seen = new Map<string, number>(), years = new Map<string, Set<string>>(), lineups = new Map<string, Map<number, string>>();
   const dateOf = new Map(games.map((g) => [g.id, String(g.date)]));
   for (const r of rows) {
@@ -66,24 +68,25 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <header className="rp-head">
         <Link className="pq-crumb" href={`/app/t/${team}/opponents`}><span aria-hidden="true">←</span> Opponents</Link>
         <h1>{o.name}</h1>
-        <p className="rp-sub"><span>{mine.length} hitter{mine.length === 1 ? "" : "s"}</span><span className="sep" aria-hidden="true">·</span><span>{history.length} game{history.length === 1 ? "" : "s"} against us</span></p>
+        <p className="rp-sub"><span>{mine.length} hitter{mine.length === 1 ? "" : "s"}</span>{staff ? <><span className="sep" aria-hidden="true">·</span><span>{history.length} game{history.length === 1 ? "" : "s"} against us</span></> : null}</p>
       </header>
       <Notice sp={sp} />
       <div className="op-two">
         <section className="rp-sec" aria-labelledby="h-roster">
           <header><h2 id="h-roster">Hitters, across seasons</h2></header>
           {mine.length ? <div className="tbl-scroll" tabIndex={0} role="region" aria-label="Hitters table"><table className="data-tbl" aria-label="Hitters">
-            <thead><tr><th className="num">#</th><th>Hitter</th><th>Bats</th><th>Seen</th><th className="num">At-bats seen</th></tr></thead>
+            <thead><tr><th className="num">#</th><th>Hitter</th><th>Bats</th>{staff ? <><th>Seen</th><th className="num">At-bats seen</th></> : null}</tr></thead>
             <tbody>{mine.map((x) => <tr key={x.id}><td className="num mono">{x.number}</td><td><Link href={`/app/t/${team}/opponents/${opp}/hitters/${x.id}`}>{x.name}</Link>{x.classYear ? <span className="rp-note"> {x.classYear}</span> : null}</td><td>{BATS[x.bats] || x.bats}</td>
-              <td>{[...(years.get(x.id) || [])].sort().join(", ") || "–"}</td>
-              <td className="num mono" data-k={`opp.${x.id}.abs`} data-v={seen.get(x.id) || 0}>{seen.get(x.id) || "–"}</td></tr>)}</tbody>
+              {staff ? <><td>{[...(years.get(x.id) || [])].sort().join(", ") || "–"}</td>
+              <td className="num mono" data-k={`opp.${x.id}.abs`} data-v={seen.get(x.id) || 0}>{seen.get(x.id) || "–"}</td></> : null}</tr>)}</tbody>
           </table></div> : <p className="rp-empty">No hitters yet.</p>}
         </section>
         <TeamEditor team={team} opp={opp} defs={defs} canEdit={canEdit} init={{ tendencies: sc.tendencies || {}, custom: sc.custom || {} }} />
       </div>
       <section className="rp-sec" aria-labelledby="h-lineups">
         <header><h2 id="h-lineups">Lineups we&rsquo;ve faced</h2><span className="rp-note">From the at-bats in each game</span></header>
-        {history.length ? <div className="op-lineups">{history.slice(0, 12).map(([g, l]) => (
+        {!staff ? <p className="rp-empty op-staff-only">Only the team&rsquo;s staff can see game history.</p>
+          : history.length ? <div className="op-lineups">{history.slice(0, 12).map(([g, l]) => (
           <div key={g} className="rp-card op-lineup"><strong>{dayText(dateOf.get(g)!, { month: "short", day: "numeric", year: "numeric" })}</strong>
             <ol>{[...l.entries()].sort((a, b) => a[0] - b[0]).map(([slot, hid]) => <li key={slot} value={slot + 1}>{nameOf(hid)}</li>)}</ol></div>))}</div>
           : <p className="rp-empty">No games against them yet. Lineups fill in from the at-bats once a game syncs.</p>}

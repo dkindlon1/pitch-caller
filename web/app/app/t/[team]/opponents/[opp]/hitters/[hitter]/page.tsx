@@ -36,9 +36,11 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const h = hres.data?.[0]?.doc;
   if (!h || h.teamId !== opp) notFound();
   const ids = [hitter, ...(h.aliases || [])];
+  // the owner off the staff (oppOwner) can't read games or events: his page leaves game history out and says so
+  const staff = isCoach;
   const [games, pitchers, names, defs, sugg, ...evLists] = await Promise.all([teamGames(db, team), teamPitchers(db, team), teamNames(db, team), defsFor(t.org_id),
     sb.from("opp_suggestions").select("id, kind, key, value, text, n").eq("program_id", team).eq("hitter_id", hitter).eq("status", "pending").order("created_at"),
-    ...ids.map((id) => hitterEvents(db, team, id))]);
+    ...(staff ? ids.map((id) => hitterEvents(db, team, id)) : [])]);
   // at-bats of a merged duplicate count as his: read under his id
   const evs = (evLists as Ev[][]).flat().map((e) => (e.hitterId && ids.includes(e.hitterId) ? { ...e, hitterId: hitter } : e));
   const abs = buildHitterAtBats(evs, games.map((g) => ({ id: g.id, date: String(g.date) })), pitchers.map((p) => ({ id: p.id, name: p.name, hand: p.hand, pitches: p.pitches })), hitter);
@@ -55,18 +57,18 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
         <h1>{h.number ? `#${h.number} ` : ""}{h.name || "Hitter"}</h1>
         <p className="rp-sub"><span>{names.get(opp) || "Opponent"}</span>{h.bats ? <><span className="sep" aria-hidden="true">·</span><span>{BATS[h.bats] || h.bats}</span></> : null}
           {sc.classYear ? <><span className="sep" aria-hidden="true">·</span><span>{sc.classYear}</span></> : null}
-          <span className="sep" aria-hidden="true">·</span><span>{seasons.length ? `Seen ${seasons.join(", ")}` : "Not faced yet"}</span>
+          {staff ? <><span className="sep" aria-hidden="true">·</span><span>{seasons.length ? `Seen ${seasons.join(", ")}` : "Not faced yet"}</span></> : null}
           {(h.aliases || []).length ? <><span className="sep" aria-hidden="true">·</span><span>{h.aliases!.length} merged record{h.aliases!.length === 1 ? "" : "s"}</span></> : null}</p>
         {tags.length ? <div className="op-tags" aria-label="Scouting tags the engine reads">{tags.map((x) => <span key={x} className="rp-pill">{x}</span>)}<span className="rp-note">(set in the game app; the engine reads these)</span></div> : null}
       </header>
       <Notice sp={sp} />
-      <dl className="rp-line">
+      {staff ? <dl className="rp-line">
         <div><dt>At-bats seen</dt><dd data-k="hitter.abs" data-v={ended.length}>{ended.length}</dd></div>
         <div><dt>Strikeouts</dt><dd data-k="hitter.k" data-v={count("k")}>{count("k")}</dd></div>
         <div><dt>Walks</dt><dd data-k="hitter.bb" data-v={count("walk")}>{count("walk")}</dd></div>
         <div><dt>Hits</dt><dd data-k="hitter.h" data-v={count("hit")}>{count("hit")}</dd></div>
         <div><dt>Hard contact</dt><dd data-k="hitter.hard" data-v={abs.reduce((a, b) => a + b.hard, 0)}>{abs.reduce((a, b) => a + b.hard, 0)}</dd></div>
-      </dl>
+      </dl> : null}
       {pending.length ? (
         <Section id="sugg" title="Suggestions from his at-bats" aside={<span className="rp-note">Nothing changes until a coach accepts</span>}>
           <ul className="op-sugg">{pending.map((s) => (
@@ -81,12 +83,12 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       <HitterEditor team={team} opp={opp} hitter={hitter} bats={h.bats || "R"} defs={defs} canEdit={canEdit}
         init={{ ratings: sc.ratings || {}, spray: spray || null, zone: (sc.zone || {}) as Record<string, Heat>, pitchFlags: sc.pitchFlags || {}, smallBall: sc.smallBall || {},
           classYear: sc.classYear || "", notes: typeof h.notes === "string" ? h.notes : "", custom: sc.custom || {} }} />
-      <Section id="abs" title="Every at-bat" aside={<span className="rp-note">Across seasons, newest first</span>}>
+      {staff ? <Section id="abs" title="Every at-bat" aside={<span className="rp-note">Across seasons, newest first</span>}>
         <AtBatList abs={abs} k="hab" who={(a) => {
           const x = abs.find((y) => y.game === a.game && y.key === a.key)!;
           return <Link href={`/app/t/${team}/reports/${x.game}/${x.pitcherId}`}>{dayText(x.date, { month: "short", day: "numeric", year: "numeric" })} vs {x.pitcherName}</Link>;
         }} />
-      </Section>
+      </Section> : <section className="rp-sec" aria-label="Game history"><p className="rp-empty op-staff-only">Only the team&rsquo;s staff can see game history.</p></section>}
     </article>
   );
 }

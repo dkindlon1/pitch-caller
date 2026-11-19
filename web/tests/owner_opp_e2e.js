@@ -44,9 +44,18 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
     check(r.status() === 200 && await p.getByText(opp.name || "", { exact: false }).count() > 0 && !/for the team.s coaches/.test(await p.locator("main").innerText()), "the opponents list opens with the team's opponents");
     r = await p.goto(`${SITE}/app/t/${T}/opponents/${opp.id}`, { waitUntil: "networkidle" });
     check(r.status() === 200 && /hitter/i.test(await p.locator("main").innerText()), "a team page opens");
+    // review tidy-up (Nov 19): no empty game-history sections for the owner off the staff, one line instead
+    const STAFF_ONLY = "Only the team’s staff can see game history.";
+    let main = await p.locator("main").innerText();
+    check(main.includes(STAFF_ONLY) && /Lineups we.ve faced/.test(main) && !/No games against them yet/.test(main) && !/against us/.test(main)
+      && await p.getByRole("columnheader", { name: /At-bats seen|Seen/ }).count() === 0,
+      "the team page says only the staff can see game history, with no empty lineups, game count or at-bat columns");
     r = await p.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });
     const h1 = await p.locator("h1").first().innerText().catch(() => "");
     check(r.status() === 200 && h1.includes(live.n), `a hitter page opens (it shows "${h1}"; a signed-in not-found would also answer 200)`);
+    main = await p.locator("main").innerText();
+    check(main.includes(STAFF_ONLY) && !/Every at-bat/.test(main) && !/At-bats seen/.test(main) && !/Not faced yet|Seen \d{4}/.test(main),
+      "the hitter page says only the staff can see game history, with no empty at-bat list, totals or seasons seen");
     // the editor's button reads "Saved" until something changes, then "Save scouting"
     const power3 = p.getByRole("group", { name: "Power" }).getByRole("button", { name: "3" });
     const editable = await power3.count() > 0 && !(await power3.isDisabled()) && !(await p.getByLabel("Notes on this hitter").isDisabled());
@@ -71,6 +80,12 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
     const c = await signIn("coach");
     r = await c.page.goto(`${SITE}/app/t/${T}/roster`, { waitUntil: "networkidle" });
     check(r.status() === 200 && /Pitchers|Roster/.test(await c.page.locator("main").innerText()), "the head coach (no longer owner) still has the roster as a coach");
+    await c.page.goto(`${SITE}/app/t/${T}/opponents/${opp.id}`, { waitUntil: "networkidle" });
+    const cTeam = await c.page.locator("main").innerText();
+    await c.page.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });
+    const cHit = await c.page.locator("main").innerText();
+    check(!cTeam.includes(STAFF_ONLY) && /Lineups we.ve faced/.test(cTeam) && /against us/.test(cTeam) && !cHit.includes(STAFF_ONLY) && /Every at-bat/.test(cHit) && /At-bats seen/.test(cHit),
+      "the staff still get the game history on both pages (lineups, games against us, every at-bat)");
     await c.ctx.close();
     const v = await signIn("viewer");
     r = await v.page.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });
