@@ -32,7 +32,10 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
       await page.waitForURL((u) => u.pathname.startsWith("/app"), { timeout: 15000 });
       return { ctx, page };
     };
-    const opp = Object.values(season.opponents)[0], hid = opp.hitters[0];
+    // a live hitter of the first opponent (opponents_e2e may have merged one away before this runs)
+    const opp = Object.values(season.opponents)[0];
+    const live = (await db.query("select id, doc ->> 'name' n from public.hitters where program_id = $1 and id = any($2) and deleted_at is null and doc ->> 'mergedInto' is null and coalesce(doc ->> 'deletedAt', 'null') = 'null' order by id limit 1", [T, opp.hitters])).rows[0];
+    const hid = live.id;
     const o = await signIn("outsider"), p = o.page;
     await p.goto(`${SITE}/app/t/${T}`, { waitUntil: "networkidle" });
     const nav = (await p.locator("nav").allInnerTexts()).join(" ");
@@ -42,7 +45,8 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
     r = await p.goto(`${SITE}/app/t/${T}/opponents/${opp.id}`, { waitUntil: "networkidle" });
     check(r.status() === 200 && /hitter/i.test(await p.locator("main").innerText()), "a team page opens");
     r = await p.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });
-    check(r.status() === 200, "a hitter page opens");
+    const h1 = await p.locator("h1").first().innerText().catch(() => "");
+    check(r.status() === 200 && h1.includes(live.n), `a hitter page opens (it shows "${h1}"; a signed-in not-found would also answer 200)`);
     const save = p.getByRole("button", { name: "Save scouting" });
     const editable = await save.count() > 0 && !(await p.getByRole("group", { name: "Power" }).getByRole("button", { name: "3" }).isDisabled());
     check(editable, "with the scouting editor switched on (the owner may edit)");
