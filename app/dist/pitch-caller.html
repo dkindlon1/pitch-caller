@@ -5676,14 +5676,19 @@ const needP = (n) => Math.min(0.99, DRIFT_P + EARLY_LOOK * Math.max(0, (20 - n) 
   }
 
   // ---------------------------------------------------------------- peak archetype
-  /** a plain label for what he is at his best, from his normal (only pitches with real history speak) */
-  function archetype(base) {
+  /**
+   * a plain label for what he is at his best, from his normal (only pitches with real history speak). opts.audience
+   * "player" (Drew, Nov 19): what a player or parent may see. "Effectively wild" is for staff only, so it's left out
+   * there (the rest of the label stays; none at all if nothing else is left). Staff, and anything stored, get it whole.
+   */
+  function archetype(base, opts) {
+    const player = !!(opts && opts.audience === "player");
     const ps = Object.values((base && base.pitches) || {}).filter((p) => p.pitches >= 30);
     if (!ps.length) return null;
     const total = ps.reduce((a, p) => a + p.pitches, 0);
     const strike = ps.reduce((a, p) => a + p.metrics.strike.p * p.pitches, 0) / total;
     const parts = [];
-    if (strike >= 0.64) parts.push("Strike thrower"); else if (strike < 0.57) parts.push("Effectively wild");
+    if (strike >= 0.64) parts.push("Strike thrower"); else if (strike < 0.57 && !player) parts.push("Effectively wild");
     const whiffer = ps.filter((p) => p.metrics.whiff.raw >= 15).sort((a, b) => b.metrics.whiff.p - a.metrics.whiff.p)[0];
     if (whiffer && whiffer.metrics.whiff.p >= 0.28) parts.push(`${whiffer.name.toLowerCase()} for whiffs`);
     const soft = ps.filter((p) => p.metrics.hard.raw >= 10).sort((a, b) => a.metrics.hard.p - b.metrics.hard.p)[0];
