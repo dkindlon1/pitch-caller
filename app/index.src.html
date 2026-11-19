@@ -673,10 +673,35 @@ const WATCH_OPT_IN = (() => {
     return localStorage.getItem("pitchiq.watch.on") === "1";
   } catch (e) { return false; }
 })();
-const WATCH = WATCH_OPT_IN && typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
+// Build 4 (docs/PLAN_watch_security_2026-11-18.md): the team's watch list. A watch the coach removed in the portal never
+// gets a game key from this device; the list is kept on the device too, so a removal holds offline. Signed out (a local
+// practice game) there's no list: pairing and the game keys still protect the link.
+const WATCH_REMOVED = new Set((() => { try { return JSON.parse(localStorage.getItem("pitchiq.watch.removed") || "[]"); } catch (e) { return []; } })());
+const watchTeam = () => (typeof SYNC !== "undefined" && SYNC.cfg && SYNC.cfg.programId && SYNC.authSession && typeof transportFor === "function") ? transportFor(SYNC.cfg.programId) : null;
+function watchRemovedSave() { try { localStorage.setItem("pitchiq.watch.removed", JSON.stringify([...WATCH_REMOVED])); } catch (e) {} }
+async function watchListRefresh() {
+  const tr = watchTeam(); if (!tr || !tr.watchList) return;
+  try {
+    const list = await tr.watchList();
+    if (!Array.isArray(list)) return;
+    WATCH_REMOVED.clear(); for (const w of list) if (w.removed) WATCH_REMOVED.add(w.watch_id);
+    watchRemovedSave();
+    if (WATCH) for (const d of WATCH.summary().devices) if (WATCH_REMOVED.has(d.id)) { WATCH.forget(d.name); toast(`${d.name} was removed from the team. Pair it again to use it.`); }
+  } catch (e) {}   // offline: the list kept on the device stands
+}
+async function watchRegister(id, name, role) {
+  const tr = watchTeam(); if (!tr || !tr.watchRegister) return;
+  try {
+    const r = await tr.watchRegister(id, name, role);
+    if (r && r.removed) { WATCH_REMOVED.add(id); watchRemovedSave(); if (WATCH) WATCH.forget(name); toast(`${name} was removed from the team. The head coach can add it back after pairing it again.`); render(); }
+  } catch (e) {}
+}
+const WATCH = WATCH_OPT_IN && typeof PCWatch !== "undefined" && PCWatch.supported() ? PCWatch.create({ bluetooth: navigator.bluetooth, removed: (dev) => WATCH_REMOVED.has(dev.id),
+  onLinked: (id, name, role) => { watchRegister(id, name, role); },
+  onChange: () => { clearTimeout(watchRefresh.t); watchRefresh.t = setTimeout(watchRefresh, 0); } }) : null;
 const watchOn = () => !!WATCH && WATCH.summary().devices.length > 0;
 // the call on screen as the watch link sees it: this game, this call, this pitch; none once the inning is over
-const watchCur = () => { const g = G(); return g.call && !g.inningOver ? { gid: g.watchGid, id: g.call.id, pitchNo: g.pitchNo } : null; };
+const watchCur = () => { const g = G(); return g.call && !g.inningOver ? { gid: g.watchGid, id: g.call.id, pitchNo: g.pitchNo, inning: g.inning } : null; };
 const watchIsAccepted = () => !!WATCH && WATCH.isAccepted(watchCur());
 // when the call on screen last changed: Enter can't accept a call the coach hasn't had a moment to see (a second Enter
 // right after recording a pitch used to do nothing, and still does)
@@ -699,7 +724,7 @@ function watchAccept() {
   if (!g.watchGid) g.watchGid = Math.random().toString(36).slice(2, 10);
   if (!c.id) c.id = nextCallId();   // a call made before this build had no id
   const kind = kindOf(c.pitch);
-  try { WATCH.accept({ gid: g.watchGid, id: c.id, pitchNo: g.pitchNo, ab: `${g.inning}|${g.batter}`, sign: signFor(kind, c.pitch), quad: c.quad, kind }); }
+  try { WATCH.accept({ gid: g.watchGid, id: c.id, pitchNo: g.pitchNo, inning: g.inning, ab: `${g.inning}|${g.batter}`, sign: signFor(kind, c.pitch), quad: c.quad, kind }); }
   catch (e) { toast(e.message); return; }
   save(); render();
 }
@@ -726,16 +751,19 @@ function watchRefresh() {
 const WSTATE = { ok: "Connected", connecting: "Connecting…", lost: "No link, trying again", noapp: "PitchIQ app isn't open on the watch", new: "Connecting…" };
 function watchCard() {
   const s = WATCH.summary();
+  if (!watchCard.at || Date.now() - watchCard.at > 30000) { watchCard.at = Date.now(); watchListRefresh(); }
   const soakOn = /[?&]watchsoak\b/.test(location.search);   // dev only, and only on a device already opted in
   const act = (fn) => async () => { try { await fn(); } catch (e) { if (!/cancel/i.test(e.message || "")) toast(e.message); } render(); };
   return h("div", { id: "watch-card", class: "wcard" },
     s.devices.length ? h("ul", { class: "wlist" }, s.devices.map((d) => h("li", {},
       h("span", { class: "dot", style: { background: d.state === "ok" ? "var(--pos, #3ccf7e)" : d.state === "connecting" || d.state === "new" ? "var(--warn)" : "var(--neg)" } }),
-      h("b", {}, d.name), h("span", { class: "muted" }, WSTATE[d.state] || d.state, d.battery !== null ? ` · ${d.battery}%` : ""),
+      h("b", {}, d.name), h("span", { class: "muted" }, WSTATE[d.state] || d.state, d.battery !== null ? ` · ${d.battery}%` : "", s.game && d.state === "ok" ? (d.keyed ? " · game key ✓" : " · sending the game key…") : ""),
+      h("span", { class: "wrole", role: "group", "aria-label": `${d.name} is the` }, ["pitcher", "catcher"].map((r) =>
+        h("button", { class: "btn pill small", "aria-pressed": String(d.role === r), on: { click: () => { WATCH.setRole(d.name, r); render(); } } }, r === "pitcher" ? "Pitcher" : "Catcher"))),
       h("span", { class: "row-acts" },
         d.state !== "ok" ? h("button", { class: "btn pill", on: { click: act(() => WATCH.reconnect(d.name)) } }, "Reconnect") : null,
         h("button", { class: "btn text", on: { click: () => { WATCH.forget(d.name); render(); } } }, "Forget"))))) :
-      h("p", { class: "muted" }, "No watch yet. Open the PitchIQ app on the watch, then connect it here."),
+      h("p", { class: "muted" }, "No watch yet. Open the PitchIQ app on the watch, then connect it here. The first time, the watch shows a 6-digit pair code: type it when Chrome asks. After that the two are paired and nothing else can send to the watch."),
     s.devices.length < 2 ? h("div", { class: "row-acts" }, h("button", { class: "btn primary pill", on: { click: act(() => WATCH.connect()) } }, s.devices.length ? "Connect a second watch" : "Connect a watch")) : null,
     h("div", { class: "choices wreceipt", role: "group", "aria-label": "Delivery receipt" },
       [[true, "Delivery receipt on", "Each watch confirms every call, and the Game screen says which one missed it. For bullpens and practice."],
@@ -1259,6 +1287,7 @@ const COUNTS = ["0-0", "1-0", "0-1", "2-0", "1-1", "0-2", "3-0", "2-1", "1-2", "
 // D9: the game is closed in the database and on the iPad, and the next one is up, before any learning runs. Learning
 // then happens in the background; if the page is closed mid-learning, it finishes on the next launch.
 async function endGame() {
+  if (WATCH) { try { WATCH.endGame(); } catch (e) {} }   // the watches wipe this game's key
   const had = G().log.length;
   undo = [];
   const comp = had ? await finishGameRecord() : null;
@@ -1642,4 +1671,5 @@ document.addEventListener("keydown", (e) => {
 render();
 boot();
 if (WATCH) WATCH.restore().then((n) => { if (n) render(); }).catch(() => {});
+if (WATCH) setTimeout(watchListRefresh, 3000);   // the team's watch list once the sign-in has settled
 </script>

@@ -329,6 +329,10 @@
       staff: () => rpc("pc_staff", { p: programId }),
       setMember: (userId, role, perms) => rpc("pc_set_member", { p: programId, member: userId, member_role: role, member_perms: perms || {} }),
       removeMember: (userId) => rpc("pc_remove_member", { p: programId, member: userId }),
+      // Build 4: the team's watch list (pair, register with a role; a removed watch never gets a game key)
+      watchList: () => rpc("pc_watch_list", { p: programId }),
+      watchRegister: (watchId, name, role) => rpc("pc_watch_register", { p: programId, watch_id: watchId, name, role }),
+      watchRemove: (watchId) => rpc("pc_watch_remove", { p: programId, watch_id: watchId }),
     };
   }
 

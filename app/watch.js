@@ -89,8 +89,9 @@
     const log = opts.log || (() => {});
     const random = opts.random || randomBytes;
     const removed = opts.removed || (() => false);   // (device) -> true when the coach removed this watch from the team
+    const onLinked = opts.onLinked || (() => {});    // (device id, name, role) after each connection: the app registers it with the team
 
-    let settings = { receipt: true, ids: [] };
+    let settings = { receipt: true, ids: [], roles: {} };   // roles: { deviceId: "pitcher" | "catcher" }
     try { const s = storage && storage.getItem(SETTINGS_KEY); if (s) settings = Object.assign(settings, JSON.parse(s)); } catch (e) {}
     const saveSettings = () => { try { storage && storage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {} };
 
@@ -265,6 +266,7 @@
       if (removed(d.device)) { forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`); }
       d.state = "ok";
       startHeartbeat();
+      try { onLinked(d.device.id, d.name, roleOf(d)); } catch (e) {}
       // the game key first (the watch takes it only over the bonded link), then what it should show now; a watch
       // joining or coming back gets the call as new (one long buzz), never as a change
       if (game) {
@@ -344,6 +346,15 @@
       settings.ids = settings.ids.filter((x) => x !== d.device.id); saveSettings();
       changed();
     }
+    // pitcher's or catcher's watch: the first one paired is the pitcher's, the second the catcher's, until the coach says
+    function roleOf(d) { return (settings.roles || {})[d.device.id] || (devs.indexOf(d) === 1 ? "catcher" : "pitcher"); }
+    function setRole(name, role) {
+      const d = devs.find((x) => x.name === name);
+      if (!d || (role !== "pitcher" && role !== "catcher")) return;
+      settings.roles = Object.assign({}, settings.roles, { [d.device.id]: role }); saveSettings();
+      try { onLinked(d.device.id, d.name, role); } catch (e) {}
+      changed();
+    }
     function setReceipt(on) {
       settings.receipt = !!on; saveSettings();
       for (const d of devs) {
@@ -397,7 +408,7 @@
       const list = devs.map((d) => {
         const w = d.want, isCall = !!(accepted && w && w.kind === "call");
         const delivered = d.state === "ok" && !!w && (settings.receipt ? w.acked : w.done >= 1);
-        return { name: d.name, state: d.state, battery: d.battery, keyed: !!(game && d.keyed), delivered: isCall && delivered, missing: isCall && d.state === "ok" && !!w.missing,
+        return { name: d.name, id: d.device.id, role: roleOf(d), state: d.state, battery: d.battery, keyed: !!(game && d.keyed), delivered: isCall && delivered, missing: isCall && d.state === "ok" && !!w.missing,
           latency: isCall && w.latency !== null ? w.latency : null };
       });
       return { supported: !!bt, receipt: settings.receipt, accepted: !!accepted, used: settings.ids.length > 0 || devs.length > 0, game: !!game, devices: list };
@@ -449,7 +460,7 @@
       return out;
     }
 
-    return { connect, restore, reconnect, forget, setReceipt, accept, sync, isAccepted, summary, line, startGame, endGame, setInning,
+    return { connect, restore, reconnect, forget, setReceipt, setRole, accept, sync, isAccepted, summary, line, startGame, endGame, setInning,
       get _game() { return game; },
       soakStart, soakStop, soakStats, get soaking() { return soak.on; }, get receipt() { return settings.receipt; }, _devs: devs };
   }
