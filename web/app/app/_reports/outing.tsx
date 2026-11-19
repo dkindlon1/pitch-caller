@@ -7,7 +7,7 @@ import { DriftNotes, OutingOutcome } from "./outcome";
 import type { OutcomeOuting } from "@/lib/outcome";
 
 // One outing report (PLAN_reports_recap 2), in the order the plan lists: the line, pitch mix and results, heat maps,
-// hitter by hitter, overrides and style (staff only), outcome tracking (coming), notes. The staff view and the
+// hitter by hitter, overrides and style (staff only), outcome tracking (Build 3), notes. The staff view and the
 // pitcher's own view are the same page; the pitcher's never gets overrides, coach push-backs, staff notes or hitters'
 // names (his data has none of them: the database leaves them out).
 export type OutingCtx = {

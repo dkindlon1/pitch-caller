@@ -200,7 +200,7 @@ const needP = (n) => Math.min(0.99, DRIFT_P + EARLY_LOOK * Math.max(0, (20 - n) 
         // the line: a quarter of the way from his normal toward the level's bad end, measured from the cautious edge of
         // his normal (one standard error), so an uncertain normal doesn't make an ordinary night look like a drop
         const line = md.bad === "low" ? (p0 - SE_SHIFT * se0) - DRIFT_SHARE * Math.max(0, p0 - bad) : (p0 + SE_SHIFT * se0) + DRIFT_SHARE * Math.max(0, bad - p0);
-        // tonight's rate as Beta(k + 12 p0, n - k + 12 (1 - p0)): the chance it's on the bad side of the line
+        // tonight's rate as Beta(k + DRIFT_PRIOR p0, n - k + DRIFT_PRIOR (1 - p0)): the chance it's on the bad side of the line
         const a = k + DRIFT_PRIOR * p0, bb = n - k + DRIFT_PRIOR * (1 - p0);
         const prob = md.bad === "low" ? betaCdf(line, a, bb) : 1 - betaCdf(line, a, bb);
         if (prob >= needP(n)) notes.push({ pitch: key, name, metric: mk, k, n, base: p0, line, prob, text: driftText(name, mk, k, n, p0) });

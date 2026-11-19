@@ -3,6 +3,8 @@ import { gameReportsMail, outingMail, recapMail, sendMail, shareRequestMail, typ
 import { buildRecap, line, pitchesOf, type Ev, type GameMeta } from "./report_data.ts";
 import { suggest, type HitterState, type Prior } from "./opp_suggest.ts";
 import { cellWords } from "./opp_model.ts";
+import { outingOutcome } from "./outcome";
+import PCPeak from "./peak";
 
 // The report jobs (docs/PLAN_reports_recap_2026-11-18.md 5), run on the server with the service key:
 //   1. Outing reports: a finished game whose pitches have all arrived (the iPad syncs after End game; an offline game
@@ -64,10 +66,10 @@ async function send(team: string, m: MailKey, userId: string | null, make: () =>
   return r.status === "sent";
 }
 
-export type RunResult = { teams: number; outingMails: number; summaryMails: number; recapMails: number; waiting: string[]; frozen: number; suggestions: number };
+export type RunResult = { teams: number; outingMails: number; summaryMails: number; recapMails: number; waiting: string[]; frozen: number; suggestions: number; outcomes: number };
 
 export async function runReports(site: string, only?: string): Promise<RunResult> {
-  const out: RunResult = { teams: 0, outingMails: 0, summaryMails: 0, recapMails: 0, waiting: [], frozen: 0, suggestions: 0 };
+  const out: RunResult = { teams: 0, outingMails: 0, summaryMails: 0, recapMails: 0, waiting: [], frozen: 0, suggestions: 0, outcomes: 0 };
   const teams = only ? await rest<{ id: string; name: string; level: string | null }[]>(`programs?id=eq.${only}&select=id,name,level`)
     : await rest<{ id: string; name: string; level: string | null }[]>("programs?status=in.(active,ending)&select=id,name,level");
   for (const t of teams) {
@@ -77,6 +79,7 @@ export async function runReports(site: string, only?: string): Promise<RunResult
     await outingReports(site, t, people, out);
     await finalRecaps(site, t, people, out);
     out.suggestions += await opponentSuggestions(t.id);
+    out.outcomes += await storeOutcomes(t.id);
   }
   return out;
 }
@@ -218,4 +221,40 @@ export async function opponentSuggestions(teamId: string): Promise<number> {
   const stale = prior.filter((p) => p.status === "pending" && !keep.has(`${p.hitter_id}|${p.kind}|${p.key}`));
   for (let i = 0; i < stale.length; i += 100) await rest(`opp_suggestions?id=in.(${stale.slice(i, i + 100).map((x) => x.id).join(",")})`, { method: "DELETE" });
   return list.length;
+}
+
+// ---------------------------------------------------------------- Build 3: outcome tracking, stored after each game
+// For every finished game's pitchers: that outing's findings and drift notes (against his normal from the games before
+// it), and each pitcher's baseline after his latest game. Rebuilt when missing or older than the game's last change.
+export async function storeOutcomes(teamId: string): Promise<number> {
+  const games = (await restAll<GameRow & { synced_at?: string }>(`games?program_id=eq.${teamId}&deleted_at=is.null&select=id,doc`))
+    .filter((g) => !g.doc?.dupOf && g.doc?.status === "final" && /^\d{4}-\d{2}-\d{2}$/.test(String(g.doc.date)));
+  if (!games.length) return 0;
+  const have = new Set((await restAll<{ game_id: string; pitcher_id: string }>(`outcome_findings?program_id=eq.${teamId}&select=game_id,pitcher_id`)).map((r) => `${r.game_id}|${r.pitcher_id}`));
+  const seasons = (await rest<SeasonRow[]>(`seasons?program_id=eq.${teamId}&select=id,name,start_date,end_date`)).map((s) => ({ name: s.name, start: s.start_date, end: s.end_date }));
+  const meta = await teamMeta(teamId);
+  const list = games.map((g) => ({ id: g.id, date: String(g.doc.date) }));
+  const evs = (await restAll<{ doc: Ev }>(`events?program_id=eq.${teamId}&deleted_at=is.null&select=doc`)).map((r) => r.doc);
+  const byPitcher = new Map<string, Ev[]>();
+  for (const e of evs) if (e.pitcherId && (e.type === undefined || e.type === "pitch")) (byPitcher.get(e.pitcherId) || byPitcher.set(e.pitcherId, []).get(e.pitcherId)!).push(e);
+  let n = 0;
+  for (const [pid, mine] of byPitcher) {
+    const pitches = meta.pitchers.get(pid)?.pitches || [];
+    const gamesHis = list.filter((g) => mine.some((e) => e.gameId === g.id)).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+    const rows = [];
+    for (const g of gamesHis) {
+      if (have.has(`${g.id}|${pid}`)) continue;
+      const o = outingOutcome(mine as never[], list, g.id, seasons, pitches);
+      rows.push({ program_id: teamId, game_id: g.id, pitcher_id: pid, data: { findings: { tested: o.findings.tested, shown: o.findings.shown }, drift: o.drift, archetype: o.archetype, priorOutings: o.priorOutings } });
+    }
+    if (rows.length) { await rest("outcome_findings?on_conflict=program_id,game_id,pitcher_id", { method: "POST", headers: { prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(rows) }); n += rows.length; }
+    if (gamesHis.length) {
+      const last = gamesHis[gamesHis.length - 1];
+      const outs = gamesHis.map((g) => ({ date: g.date, pitches: mine.filter((e) => e.gameId === g.id) as Record<string, unknown>[] }));
+      const base = PCPeak.baseline(outs, { kinds: Object.fromEntries(pitches.map((p) => [p.id, p.kind])) });
+      await rest("peak_baselines?on_conflict=program_id,pitcher_id", { method: "POST", headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify([{ program_id: teamId, pitcher_id: pid, through_game: last.id, data: { ...base, archetype: PCPeak.archetype(base) }, built_at: new Date().toISOString() }]) });
+    }
+  }
+  return n;
 }
