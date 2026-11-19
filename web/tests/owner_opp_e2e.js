@@ -47,11 +47,13 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
     r = await p.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });
     const h1 = await p.locator("h1").first().innerText().catch(() => "");
     check(r.status() === 200 && h1.includes(live.n), `a hitter page opens (it shows "${h1}"; a signed-in not-found would also answer 200)`);
-    const save = p.getByRole("button", { name: "Save scouting" });
-    const editable = await save.count() > 0 && !(await p.getByRole("group", { name: "Power" }).getByRole("button", { name: "3" }).isDisabled());
+    // the editor's button reads "Saved" until something changes, then "Save scouting"
+    const power3 = p.getByRole("group", { name: "Power" }).getByRole("button", { name: "3" });
+    const editable = await power3.count() > 0 && !(await power3.isDisabled()) && !(await p.getByLabel("Notes on this hitter").isDisabled());
     check(editable, "with the scouting editor switched on (the owner may edit)");
+    const save = p.getByRole("button", { name: "Save scouting" });
     if (editable) {
-      await p.getByRole("group", { name: "Power" }).getByRole("button", { name: "3" }).click();
+      await power3.click();
       const note = `owner note ${Date.now()}`;
       await p.getByLabel("Notes on this hitter").fill(note);
       await save.click(); await p.waitForURL(/ok=saved|error=/, { timeout: 15000 });
@@ -72,7 +74,7 @@ const check = (ok, msg) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") 
     await c.ctx.close();
     const v = await signIn("viewer");
     r = await v.page.goto(`${SITE}/app/t/${T}/opponents/${opp.id}/hitters/${hid}`, { waitUntil: "networkidle" });
-    check(await v.page.getByRole("button", { name: "Save scouting" }).count() === 0, "a viewer (no manage opponents, not the owner) gets no editor");
+    check(await v.page.getByRole("button", { name: /Save scouting|Saved/ }).count() === 0 && await v.page.getByRole("group", { name: "Power" }).getByRole("button", { name: "3" }).isDisabled(), "a viewer (no manage opponents, not the owner) gets no editor: read-only controls, no save button");
     await v.ctx.close();
   } finally {
     await browser.close();
