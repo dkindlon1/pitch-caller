@@ -70,3 +70,44 @@ export function inviteMail(o: { to: string; team: string; role: string; pitcher?
 <p>PitchIQ</p></div>`;
   return { to: o.to, subject, text: lines.join("\n"), html };
 }
+
+// ---------------------------------------------------------------- Build 1: report emails
+// "Your outing report is ready" with a link (sign-in needed); the coaches' one lists every pitcher's report in the game
+// and the game summary. Light and plain, like the other emails: the report itself is on the site.
+const btn = (href: string, label: string) => `<a href="${esc(href)}" style="display:inline-block;background:#14181d;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${esc(label)}</a>`;
+const wrap = (inner: string) => `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#14181d;max-width:560px">${inner}<p>PitchIQ</p></div>`;
+export type OutingLine = { pitcher: string; ip: string; pitches: number; k: number; bb: number; h: number; link: string };
+const lineText = (l: OutingLine) => `${l.ip} IP, ${l.pitches} pitch${l.pitches === 1 ? "" : "es"}, ${l.k} K, ${l.bb} BB, ${l.h} H`;
+
+export function outingMail(o: { to: string; pitcher: string; date: string; opponent: string | null; line: OutingLine }): Mail {
+  const vs = o.opponent ? ` vs ${o.opponent}` : "";
+  const subject = `Your outing report is ready: ${o.date}${vs}`;
+  const text = [`${o.pitcher}'s outing report from ${o.date}${vs} is ready.`, lineText(o.line), "", `See it: ${o.line.link}`, "You'll need to sign in.", "", "PitchIQ"].join("\n");
+  const html = wrap(`<p>${esc(o.pitcher)}'s outing report from ${esc(o.date)}${esc(vs)} is ready.</p><p style="font-variant-numeric:tabular-nums">${esc(lineText(o.line))}</p><p>${btn(o.line.link, "See the report")}</p><p style="color:#4a5561;font-size:13px">You'll need to sign in.</p>`);
+  return { to: o.to, subject, text, html };
+}
+
+export function gameReportsMail(o: { to: string; team: string; date: string; opponent: string | null; outings: OutingLine[]; summary: string }): Mail {
+  const vs = o.opponent ? ` vs ${o.opponent}` : "";
+  const subject = `Outing reports are ready: ${o.date}${vs}`;
+  const text = [`${o.team}: the outing reports from ${o.date}${vs} are ready.`, "", ...o.outings.map((l) => `${l.pitcher}: ${lineText(l)}\n${l.link}`), "", `Game summary: ${o.summary}`, "", "PitchIQ"].join("\n");
+  const rows = o.outings.map((l) => `<li style="margin:0 0 8px"><a href="${esc(l.link)}">${esc(l.pitcher)}</a> <span style="color:#4a5561;font-variant-numeric:tabular-nums">${esc(lineText(l))}</span></li>`).join("");
+  const html = wrap(`<p>${esc(o.team)}: the outing reports from ${esc(o.date)}${esc(vs)} are ready.</p><ul style="padding-left:18px">${rows}</ul><p>${btn(o.summary, "Game summary")}</p><p style="color:#4a5561;font-size:13px">You'll need to sign in.</p>`);
+  return { to: o.to, subject, text, html };
+}
+
+export function recapMail(o: { to: string; season: string; team: string; recaps: { pitcher: string; link: string }[]; forCoach: boolean }): Mail {
+  const subject = o.forCoach ? `Final recaps are ready: ${o.team}, ${o.season}` : `Your final recap is ready: ${o.season}`;
+  const intro = o.forCoach ? `${o.season} is marked over. Each pitcher's final recap is ready:` : `${o.season} is marked over. ${o.recaps[0]?.pitcher || "Your"}'s final recap is ready.`;
+  const text = [intro, "", ...o.recaps.map((r) => `${r.pitcher}: ${r.link}`), "", "You'll need to sign in. A recap is frozen once the season is marked over.", "", "PitchIQ"].join("\n");
+  const items = o.forCoach ? `<ul style="padding-left:18px">${o.recaps.map((r) => `<li><a href="${esc(r.link)}">${esc(r.pitcher)}</a></li>`).join("")}</ul>` : `<p>${btn(o.recaps[0]?.link || "", "See the recap")}</p>`;
+  const html = wrap(`<p>${esc(intro)}</p>${items}<p style="color:#4a5561;font-size:13px">You'll need to sign in. A recap is frozen once the season is marked over.</p>`);
+  return { to: o.to, subject, text, html };
+}
+
+export function shareRequestMail(o: { to: string; pitcher: string; team: string; link: string }): Mail {
+  const subject = `${o.pitcher} wants to share a PitchIQ recap`;
+  const text = [`${o.pitcher} (${o.team}) made a public link to a season recap. Players under 18 need a parent to turn it on.`, "", `See what it shows and decide: ${o.link}`, "Nothing is public until you approve it, and you can turn it off at any time.", "", "PitchIQ"].join("\n");
+  const html = wrap(`<p>${esc(o.pitcher)} (${esc(o.team)}) made a public link to a season recap. Players under 18 need a parent to turn it on.</p><p>${btn(o.link, "Review and decide")}</p><p style="color:#4a5561;font-size:13px">Nothing is public until you approve it, and you can turn it off at any time.</p>`);
+  return { to: o.to, subject, text, html };
+}

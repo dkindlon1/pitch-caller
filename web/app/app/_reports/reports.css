@@ -1,0 +1,148 @@
+/* Build 1: outing reports, the game summary, the season recap and hitters' at-bats. Floodlight, as the rest of the
+   portal: glass stays on the frame, every surface where numbers are read is solid (--panel-2). Blue is "being weighed"
+   and green "the call", so neither appears here: the heat maps use one warm neutral lightness ramp (validated with the
+   dataviz validator: monotone, one hue, the faintest step >= 2:1 on the panel, cell text >= 4.5:1 on every step), and
+   which layer is showing is said in words. Numbers are tabular and right-aligned. */
+
+.rp { --cell: 44px; --ramp-0: var(--panel-3); --ramp-1: #666358; --ramp-2: #878375; --ramp-3: #a9a593; --ramp-4: #cdc8b2; --ramp-5: #f2ebd2;
+  --on-1: #ecebe6; --on-2: #0c0b0e; --on-3: #0c0b0e; --on-4: #0c0b0e; --on-5: #0c0b0e; display: grid; gap: 28px; }
+.rp-head { display: grid; gap: 6px; }
+.rp-head h1 { font-size: clamp(1.5rem, 2.4vw, 2rem); }
+.rp-sub { color: var(--text-2); font-size: 0.9375rem; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+.rp-sub .sep { color: var(--text-4); }
+.rp-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.rp-sec { display: grid; gap: 12px; min-width: 0; }
+.rp-sec > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.rp-sec h2 { font-size: 1.25rem; }
+.rp-note { color: var(--text-3); font-size: 0.875rem; margin: 0; max-width: 72ch; }
+.rp-card { background: var(--panel-2); border: 1px solid var(--rule); border-radius: var(--r-md, 20px); padding: 18px 20px; min-width: 0; }
+
+/* the line: figures as type in one solid strip */
+.rp-line { display: flex; flex-wrap: wrap; background: var(--panel-2); border: 1px solid var(--rule); border-radius: var(--r-md, 20px); overflow: hidden; }
+.rp-line > div { flex: 1 1 110px; padding: 14px 18px 12px; display: grid; gap: 4px; box-shadow: -1px 0 0 var(--rule), 0 -1px 0 var(--rule); }
+.rp-line dt { color: var(--text-3); font-size: 0.8125rem; font-weight: 500; }
+.rp-line dd { margin: 0; font-family: var(--cond); font-weight: 900; font-size: 2.125rem; line-height: 0.95; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; color: var(--text); }
+.rp-line dd small { font-family: var(--body); font-weight: 600; font-size: 0.875rem; color: var(--text-3); margin-left: 6px; letter-spacing: 0; }
+
+/* segmented switches (heat map layer / view / pitch, mix slices) */
+.rp-switches { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.rp-seg { display: inline-flex; flex-wrap: wrap; padding: 4px; gap: 4px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--rule-2); }
+.rp-seg button { appearance: none; border: 0; background: transparent; color: var(--text-2); font: 600 0.875rem/1 var(--body); padding: 0 14px; min-height: 36px; border-radius: 999px; cursor: pointer; touch-action: manipulation; display: inline-flex; align-items: center; gap: 8px; }
+.rp-seg button:hover { color: var(--text); background: var(--panel-3); }
+.rp-seg button[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.rp-seg button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.rp-seg .chip { width: 22px; height: 22px; font-size: 0.6875rem; }
+
+/* tables: the portal's data-tbl, with right-aligned tabular figures */
+.rp .data-tbl td.num, .rp .data-tbl th.num { text-align: right; }
+.rp .data-tbl .thin { color: var(--text-4); }
+.rp .data-tbl small { color: var(--text-3); font-weight: 500; margin-left: 4px; }
+.rp-slices [hidden] { display: none !important; }
+
+/* heat maps: a 5x5 grid (catcher's view) with the four way-off cells around it */
+.rp-heat { display: grid; grid-template-columns: minmax(0, auto) minmax(220px, 1fr); gap: 20px 32px; align-items: start; }
+.rp-maps { display: flex; flex-wrap: wrap; gap: 24px; }
+.rp-map { display: grid; gap: 8px; justify-items: center; }
+.rp-map figcaption { color: var(--text-2); font-size: 0.875rem; font-weight: 600; }
+.rp-grid { display: grid; grid-template-columns: repeat(7, var(--cell)); grid-template-rows: repeat(7, var(--cell)); gap: 2px; }
+.rp-cell { position: relative; display: grid; place-items: center; border-radius: 6px; font: 700 0.875rem/1 var(--body); font-variant-numeric: tabular-nums; background: var(--ramp-0); color: var(--text-3); }
+.rp-cell.zone { box-shadow: inset 0 0 0 1px rgb(236 235 230 / 0.06); }
+.rp-cell.way { border-radius: 999px; }
+.rp-cell.empty { background: transparent; box-shadow: none; }
+.rp-cell .v { display: none; }
+.rp-zone-frame { pointer-events: none; grid-row: 3 / span 3; grid-column: 3 / span 3; border: 2px solid rgb(236 235 230 / 0.55); border-radius: 4px; z-index: 1; }
+.rp-plate { grid-row: 7; grid-column: 3 / span 3; align-self: end; justify-self: center; width: 70%; height: 12px; clip-path: polygon(0 0, 100% 0, 100% 45%, 50% 100%, 0 45%); background: rgb(236 235 230 / 0.25); }
+/* the layer showing: each cell carries its four counts and a ramp step per layer */
+.rp-heatwrap[data-layer="strike"] .rp-cell[data-s1] { background: var(--bg-strike); color: var(--fg-strike); }
+.rp-heatwrap[data-layer="ball"] .rp-cell[data-s1] { background: var(--bg-ball); color: var(--fg-ball); }
+.rp-heatwrap[data-layer="positive"] .rp-cell[data-s1] { background: var(--bg-positive); color: var(--fg-positive); }
+.rp-heatwrap[data-layer="negative"] .rp-cell[data-s1] { background: var(--bg-negative); color: var(--fg-negative); }
+.rp-heatwrap[data-layer="strike"] .rp-cell .v.strike, .rp-heatwrap[data-layer="ball"] .rp-cell .v.ball,
+.rp-heatwrap[data-layer="positive"] .rp-cell .v.positive, .rp-heatwrap[data-layer="negative"] .rp-cell .v.negative { display: inline; }
+.rp-heatwrap .rp-cell .v.zero { color: var(--text-4); font-weight: 500; }
+.rp-heatwrap[data-view="called"] .rp-map.landed, .rp-heatwrap[data-view="landed"] .rp-map.called { display: none; }
+.rp-heatwrap .rp-filter:not([data-on]) { display: none; }
+.rp-legend { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 0.8125rem; }
+.rp-legend .steps { display: flex; gap: 2px; }
+.rp-legend .steps i { width: 22px; height: 12px; border-radius: 3px; }
+.rp-heatnote { display: grid; gap: 10px; align-content: start; }
+.rp-left { color: var(--text-2); font-size: 0.875rem; margin: 0; }
+.rp-left b { font-variant-numeric: tabular-nums; }
+.rp-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--panel-3); color: var(--text); border: 1px solid var(--rule-2); border-radius: 10px; padding: 8px 10px; font-size: 0.8125rem; line-height: 1.4; font-variant-numeric: tabular-nums; max-width: 240px; box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.6); }
+
+/* hitter by hitter */
+.rp-abs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.rp-ab { background: var(--panel-2); border: 1px solid var(--rule); border-radius: 16px; padding: 12px 16px; display: grid; gap: 8px; }
+.rp-ab > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.rp-ab .who { font-weight: 650; }
+.rp-ab .res { margin-left: auto; font-weight: 650; }
+.rp-ab .res.neg { color: var(--alert); }
+.rp-ab .meta { color: var(--text-3); font-size: 0.8125rem; }
+.rp-seq { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.rp-seq li { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px 5px 5px; border-radius: 10px; background: var(--panel-3); font-size: 0.8125rem; color: var(--text-2); }
+.rp-seq li .c { font-variant-numeric: tabular-nums; color: var(--text-3); font-weight: 600; }
+.rp-seq li .chip { width: 22px; height: 22px; font-size: 0.6875rem; }
+.rp-seq li.pos { box-shadow: inset 0 -2px 0 rgb(236 235 230 / 0.55); }
+.rp-seq li.neg { box-shadow: inset 0 -2px 0 var(--alert); }
+.rp-seq li .tag { font-size: 0.75rem; color: var(--text-3); }
+.rp-mark { font-size: 0.75rem; font-weight: 700; color: var(--text-3); }
+
+/* two short lists side by side: what worked, who hurt us */
+.rp-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.rp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rp-list li { display: flex; align-items: baseline; gap: 10px; font-size: 0.9375rem; }
+.rp-list li .n { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 650; }
+.rp-list li .why { color: var(--text-3); font-size: 0.8125rem; }
+
+/* notes */
+.rp-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rp-notes li { background: var(--panel-3); border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; }
+.rp-notes li p { margin: 0; white-space: pre-wrap; }
+.rp-notes .by { color: var(--text-3); font-size: 0.8125rem; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.rp-noteform { display: grid; gap: 8px; }
+.rp-noteform textarea { width: 100%; min-height: 76px; resize: vertical; background: var(--panel-3); color: var(--text); border: 1px solid var(--rule-2); border-radius: 12px; padding: 10px 12px; font: inherit; }
+.rp-noteform textarea:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
+.rp-noteform .row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.rp-check { display: inline-flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-2); min-height: 36px; }
+.rp-check input { width: 18px; height: 18px; accent-color: var(--text); }
+.rp-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 650; border: 1px solid var(--rule-2); color: var(--text-2); }
+.rp-pill.shared { color: var(--text); border-color: rgb(236 235 230 / 0.4); }
+
+/* coming soon / empty */
+.rp-empty { color: var(--text-3); font-size: 0.9375rem; margin: 0; padding: 14px 16px; border: 1px dashed var(--rule-2); border-radius: 14px; }
+
+/* trends: a small line chart, one series */
+.rp-trend svg { width: 100%; height: auto; display: block; }
+.rp-trend .ax { stroke: var(--rule-2); stroke-width: 1; }
+.rp-trend .tick { fill: var(--text-3); font: 500 11px var(--body); font-variant-numeric: tabular-nums; }
+.rp-trend .ln { fill: none; stroke: var(--text); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.rp-trend .dot { fill: var(--text); stroke: var(--panel-2); stroke-width: 2; }
+.rp-trend .hit { fill: transparent; }
+.rp-trend .ref { stroke: var(--text-4); stroke-dasharray: 4 4; stroke-width: 1; }
+
+/* the comparison: him vs the level, as type */
+.rp-cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.rp-cmp > div { background: var(--panel-2); border: 1px solid var(--rule); border-radius: 16px; padding: 14px 16px; display: grid; gap: 6px; }
+.rp-cmp dt { color: var(--text-3); font-size: 0.8125rem; font-weight: 500; }
+.rp-cmp dd { margin: 0; display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+.rp-cmp dd b { font-family: var(--cond); font-weight: 900; font-size: 1.875rem; line-height: 1; }
+.rp-cmp dd span { color: var(--text-3); font-size: 0.875rem; }
+
+/* sharing (pitcher) */
+.rp-share { display: grid; gap: 12px; }
+.rp-share .url { font-family: var(--body); font-size: 0.8125rem; color: var(--text-2); word-break: break-all; background: var(--panel-3); border-radius: 10px; padding: 8px 10px; }
+
+@media (max-width: 1100px) { .rp-heat { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 640px) {
+  .rp { --cell: 38px; gap: 24px; }
+  .rp-line > div { flex-basis: 30%; padding: 12px 12px 10px; }
+  .rp-line dd { font-size: 1.75rem; }
+  .rp-maps { justify-content: center; }
+  .rp-switches { gap: 8px; }
+  .rp-seg button { padding: 0 11px; }
+}
+@media (max-width: 400px) { .rp { --cell: 36px; } }
+@media print { .rp-seg, .rp-acts, .rp-noteform { display: none !important; } }
+
+/* the public recap: the same blocks on the site's own page */
+.rp-public { max-width: 1040px; margin: 0 auto; padding: clamp(20px, 4vw, 48px) 16px 64px; }

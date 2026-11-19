@@ -1226,6 +1226,7 @@ async function syncOnce(quiet) {
     if (r.error) SYNC.error = `Some changes couldn't go up: ${r.error}. Everything stays on this iPad and is tried again next time.`;
     if (r.pull.merged || (r.push.skipped && r.push.skipped > 0)) { await reloadFromDb(); if (await checkDuplicates().then((x) => x.length).catch(() => 0)) await SYNC.sync.push().catch(() => {}); }
     if (!quiet) toast(r.locked ? LOCKED : `Synced: ${r.push.applied} up, ${r.pull.merged} down${r.push.rejected.length ? `, ${r.push.rejected.length} kept on this iPad` : ""}`);
+    if (r.push && r.push.applied > 0 && !r.locked) reportsReady();
     return r;
   } catch (e) {
     if (/refresh token|JWT expired|invalid jwt/i.test(e.message) || e.status === 401) {
@@ -1235,6 +1236,15 @@ async function syncOnce(quiet) {
     } else SYNC.error = syncMessage(e);
     return null;
   } finally { SYNC.busy = false; if (S.view === "setup") render(); }
+}
+// Build 1: once a sync has sent something up, the site builds and emails the reports of any finished game that's now
+// all there (an offline game's go out when it finally syncs). Only when PitchIQ serves the app (/app/game/); fire and
+// forget, so a report never holds up the iPad, and the site's daily run catches anything this misses.
+function reportsReady() {
+  if (typeof window === "undefined" || !window.PC_CONFIG_URL || !SYNC.cfg || !SYNC.cfg.managed || !SYNC.cfg.programId || !SYNC.auth) return;
+  const team = SYNC.cfg.programId;
+  Promise.resolve(SYNC.auth.token()).then((t) => t && fetch(new URL("/api/reports/run", location.href).toString(), {
+    method: "POST", headers: { authorization: `Bearer ${t}`, "content-type": "application/json" }, body: JSON.stringify({ team }) })).catch(() => {});
 }
 // One iPad holds one team. Using it for another means starting it fresh: a backup file first (everything on it,
 // to keep or restore later), then the iPad's database and game state are cleared and the app starts over.
