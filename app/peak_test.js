@@ -64,4 +64,9 @@ check(P.archetype(P.baseline([])) === null, "no history: no label");
 { const wild = []; for (let i = 0; i < 60; i++) wild.push({ type: "pitch", n: i + 1, pcRaw: i, pitchId: "fb", pitchName: "Fastball", kind: "FB", res: i % 5 ? "ball" : "cstrike", sit: { batters_faced: Math.floor(i / 2.2), same_side: i % 2 === 0, bases: [i % 3 === 0, false, false] } });
   const fw = P.findings(wild, P.baseline([])), strikes = fw.shown.filter((x) => x.pitch === "fb" && x.metric === "strike");
   check(strikes.length === 1 && strikes[0].alsoIn >= 2 && /The same in \d+ other situations: most of the outing/.test(strikes[0].sentence), `off all night: one finding, not one per situation (${strikes.length}; "${strikes[0] && strikes[0].sentence}")`); }
+// "Effectively wild" is for staff only (Drew, Nov 19): a player's view of the same normal leaves it out, keeps the rest
+{ const wildOuts = [{ date: "2026-03-01", pitches: [] }];
+  for (let i = 0; i < 120; i++) wildOuts[0].pitches.push({ type: "pitch", n: i + 1, pitchId: i % 2 ? "sl" : "fb", pitchName: i % 2 ? "Slider" : "Fastball", kind: i % 2 ? "SL" : "FB", res: i % 2 ? (i % 6 === 1 ? "whiff" : "ball") : (i % 4 === 0 ? "cstrike" : "ball") });
+  const wb = P.baseline(wildOuts), staff = P.archetype(wb), mine = P.archetype(wb, { audience: "player" });
+  check(/^Effectively wild/.test(staff || "") && mine && !/wild/i.test(mine) && staff.toLowerCase().endsWith(mine.toLowerCase()), `staff: "${staff}"; the player's own: "${mine}"`); }
 console.log(fails ? `${fails} check(s) failed` : "all peak checks passed"); process.exit(fails ? 1 : 0);

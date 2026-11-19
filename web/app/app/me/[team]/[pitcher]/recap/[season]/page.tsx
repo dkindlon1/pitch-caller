@@ -28,7 +28,7 @@ async function Body({ params }: { params: Params }) {
   if (!v) notFound();
   const d = await myReport(sb as unknown as SB, team, pitcher, { from: v.data.meta.start, to: v.data.meta.end });
   const opp = new Map((d?.games || []).map((g) => [g.id, g.opponent || null]));
-  const outcome = d ? seasonOutcome(d.events, d.games.map((g) => ({ id: g.id, date: g.date })), [], d.pitcher.pitches || []) : null;
+  const outcome = d ? seasonOutcome(d.events, d.games.map((g) => ({ id: g.id, date: g.date })), [], d.pitcher.pitches || [], "player") : null;
   return (
     <div className="pq-stack">
       <RecapView r={v.data} outcome={outcome} opponents={opp} outingHref={(g) => `/app/me/${team}/${pitcher}/outings/${g}`} back={{ href: `/app/me/${team}/${pitcher}/recap`, label: "Your season so far" }}

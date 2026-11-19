@@ -51,7 +51,7 @@ export async function loadMyOuting(team: string, game: string, pitcher: string):
   const g = d.games.find((x) => x.id === game);
   if (!g) return null;
   const ss: Season[] = d.seasons.map((x) => ({ name: x.name, start: x.start, end: x.end }));
-  const outcome = outingOutcome(d.events, d.games.map((x) => ({ id: x.id, date: x.date })), game, ss, d.pitcher.pitches || []);
+  const outcome = outingOutcome(d.events, d.games.map((x) => ({ id: x.id, date: x.date })), game, ss, d.pitcher.pitches || [], "player");   // a player or parent: no "Effectively wild"
   return { report: buildOuting(d.events.filter((e) => e.gameId === game), { id: g.id, date: g.date, opponent: g.opponent, level: g.level }, pitcher, d.pitcher.pitches || [], "pitcher", d.pitcher.hand),
     pitcherName: d.pitcher.name || "Your outing", hand: d.pitcher.hand || null, opponent: g.opponent || null, level: g.level || null, notes: d.notes.filter((n) => n.game_id === game), outcome };
 }

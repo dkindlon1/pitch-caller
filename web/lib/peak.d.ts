@@ -14,6 +14,6 @@ declare const PCPeak: {
   findings(evs: PeakEv[], base: Baseline | null, opts?: { kinds?: Record<string, string> }): Findings;
   drift(tonight: PeakEv[], base: Baseline | null, opts?: { kinds?: Record<string, string> }): DriftNote[];
   driftLog(game: PeakEv[], base: Baseline | null, opts?: { kinds?: Record<string, string> }): DriftNote[];
-  archetype(base: Baseline | null): string | null;
+  archetype(base: Baseline | null, opts?: { audience?: "staff" | "player" }): string | null;
 };
 export default PCPeak;

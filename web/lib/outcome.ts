@@ -10,6 +10,8 @@ type E = Record<string, unknown> & { gameId?: string; n?: number; pcRaw?: number
 export type Season = { name: string; start: string; end: string };
 export type OutcomeOuting = { findings: Findings; drift: DriftNote[]; archetype: string | null; base: Baseline; priorOutings: number };
 export type OutcomeSeason = { findings: Findings; archetype: string | null; base: Baseline };
+/** who it's for: a player or parent never gets "Effectively wild" (Drew, Nov 19); staff get the whole label */
+export type Audience = "staff" | "player";
 
 /** the season a date falls in (by the seasons a coach marked over; after the last one: the season so far) */
 export const seasonOf = (date: string, seasons: Season[]) => (seasons.find((s) => date >= s.start && date <= s.end) || { name: "so far" }).name;
@@ -30,24 +32,24 @@ function outingsOf(evs: E[], games: { id: string; date: string }[], seasons: Sea
 const kindsOf = (pitches: { id?: string | null; kind?: string | null }[] = []) => Object.fromEntries(pitches.filter((p) => p.id).map((p) => [String(p.id), String(p.kind || "?")]));
 
 /** one outing: his history (every earlier game of his) is the baseline; this game's pitches are looked at */
-export function outingOutcome(allEvs: E[], games: { id: string; date: string }[], gameId: string, seasons: Season[], pitches: { id?: string | null; kind?: string | null }[] = []): OutcomeOuting {
+export function outingOutcome(allEvs: E[], games: { id: string; date: string }[], gameId: string, seasons: Season[], pitches: { id?: string | null; kind?: string | null }[] = [], audience: Audience = "staff"): OutcomeOuting {
   const evs = ordered(allEvs), g = games.find((x) => x.id === gameId);
   const before = games.filter((x) => g && (x.date < g.date || (x.date === g.date && x.id < g.id)));
   const outs = outingsOf(evs, before, seasons), kinds = kindsOf(pitches);
   const base = PCPeak.baseline(outs, { season: g ? seasonOf(g.date, seasons) : undefined, kinds });
   const tonight = evs.filter((e) => e.gameId === gameId) as Record<string, unknown>[];
   const withTonight = PCPeak.baseline([...outs, ...(g ? [{ date: g.date, season: seasonOf(g.date, seasons), pitches: tonight }] : [])], { season: g ? seasonOf(g.date, seasons) : undefined, kinds });
-  return { findings: PCPeak.findings(tonight, base, { kinds }), drift: PCPeak.driftLog(tonight, base, { kinds }), archetype: PCPeak.archetype(withTonight), base, priorOutings: outs.length };
+  return { findings: PCPeak.findings(tonight, base, { kinds }), drift: PCPeak.driftLog(tonight, base, { kinds }), archetype: PCPeak.archetype(withTonight, { audience }), base, priorOutings: outs.length };
 }
 
 /** a season (or the season so far): his season normal is the baseline; the season's pitches are looked at */
-export function seasonOutcome(seasonEvs: E[], games: { id: string; date: string }[], seasons: Season[], pitches: { id?: string | null; kind?: string | null }[] = []): OutcomeSeason {
+export function seasonOutcome(seasonEvs: E[], games: { id: string; date: string }[], seasons: Season[], pitches: { id?: string | null; kind?: string | null }[] = [], audience: Audience = "staff"): OutcomeSeason {
   const evs = ordered(seasonEvs), kinds = kindsOf(pitches), outs = outingsOf(evs, games, seasons);
   const base = PCPeak.baseline(outs, { kinds, flat: true });
-  return { findings: PCPeak.findings(evs as Record<string, unknown>[], base, { kinds }), archetype: PCPeak.archetype(base), base };
+  return { findings: PCPeak.findings(evs as Record<string, unknown>[], base, { kinds }), archetype: PCPeak.archetype(base, { audience }), base };
 }
 
 /** his peak archetype from every outing he has (recency-weighted normal): for his profile */
-export function peakLabel(allEvs: E[], games: { id: string; date: string }[], pitches: { id?: string | null; kind?: string | null }[] = []): string | null {
-  return PCPeak.archetype(PCPeak.baseline(outingsOf(ordered(allEvs), games, []), { kinds: kindsOf(pitches) }));
+export function peakLabel(allEvs: E[], games: { id: string; date: string }[], pitches: { id?: string | null; kind?: string | null }[] = [], audience: Audience = "staff"): string | null {
+  return PCPeak.archetype(PCPeak.baseline(outingsOf(ordered(allEvs), games, []), { kinds: kindsOf(pitches) }), { audience });
 }

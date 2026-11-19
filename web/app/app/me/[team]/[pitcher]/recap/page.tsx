@@ -29,7 +29,7 @@ async function Body({ params }: { params: Params }) {
   if (!d) notFound();
   const r = buildRecap(d.events, d.games, { id: pitcher, name: d.pitcher.name, hand: d.pitcher.hand, pitches: d.pitcher.pitches }, { name: "Season so far", start: d.season_start, final: false }, "pitcher", d.games[0]?.level);
   const opp = new Map(d.games.map((g) => [g.id, g.opponent || null]));
-  const outcome = seasonOutcome(d.events, d.games.map((g) => ({ id: g.id, date: g.date })), [], d.pitcher.pitches || []);
+  const outcome = seasonOutcome(d.events, d.games.map((g) => ({ id: g.id, date: g.date })), [], d.pitcher.pitches || [], "player");
   const ssb = await getServerSupabase();
   const { data: finals } = await ssb.from("recap_versions").select("season_id").eq("program_id", team).eq("pitcher_id", pitcher);
   const done = d.seasons.filter((s) => (finals || []).some((f: { season_id: string }) => f.season_id === s.id));

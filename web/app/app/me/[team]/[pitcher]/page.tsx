@@ -36,7 +36,7 @@ async function Body({ params }: { params: Params }) {
   const season = mine.reduce((a, o) => ({ n: a.n + o.pitches, s: a.s + o.strikes }), { n: 0, s: 0 });
   const kindOf = new Map((me.pitches || []).map((d) => [d.name, v11Pitch(d).kind] as const));
   const mine2 = await myReport((await getServerSupabase()) as unknown as SB, team, pitcher, {}).catch(() => null);
-  const peak = mine2 ? peakLabel(mine2.events, mine2.games.map((g) => ({ id: g.id, date: g.date })), mine2.pitcher.pitches || []) : null;
+  const peak = mine2 ? peakLabel(mine2.events, mine2.games.map((g) => ({ id: g.id, date: g.date })), mine2.pitcher.pitches || [], "player") : null;
   return (
     <div className="pq-stack">
       <section className="pq-game pq-white" aria-labelledby="me-h">
