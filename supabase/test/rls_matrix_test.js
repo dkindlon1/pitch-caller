@@ -1108,6 +1108,10 @@ const now = () => Date.now();
     check((await pushed("own3", T3, "teams", [{ id: "ours", updatedAt: t9, name: "Hijacked", pitchRule: null }])) === "rejected"
       && (await pushed("own3", T3, "teams", [{ id: "ours2", updatedAt: t9, name: "Fake us", isOurs: true }])) === "rejected"
       && (await su.query("select doc ->> 'name' n from public.teams where program_id = $1 and id = 'ours'", [T3])).rows[0].n === "Us", "but never the team's own record (stored or new isOurs): refused, unchanged");
+    // review, Nov 19: any truthy isOurs counts as the team's own record (the game app reads it as truthy: roster.js, team.ts)
+    check((await pushed("own3", T3, "teams", [{ id: "ours3", updatedAt: t9, name: "Fake us", isOurs: 1 }])) === "rejected"
+      && (await pushed("own3", T3, "teams", [{ id: "ours4", updatedAt: t9, name: "Fake us", isOurs: "yes" }])) === "rejected",
+      "nor a new team record with a truthy isOurs that isn't true (1, \"yes\")");
     check((await pushed("own3", T3, "pitchers", [{ id: "q1", updatedAt: t9, name: "x" }])) === "error" && (await pushed("own3", T3, "games", [{ id: "g9", updatedAt: t9 }])) === "error"
       && (await pushed("own3", T3, "events", [{ id: "e9", updatedAt: t9, gameId: "g1" }])) === "error", "nor rosters, games or events (not a member of this team)");
     const sid = (await su.query("select id from public.opp_suggestions where program_id = $1", [T3])).rows[0].id;
@@ -1125,6 +1129,12 @@ const now = () => Date.now();
       "owner on the staff as a viewer: reads what a viewer reads (both team records and the roster, not the game plans)");
     check((await pushed("own3", T3s, "hitters", [{ id: "h1", updatedAt: t9, teamId: "opp1", name: "Slugger", ratings: { speed: 3 } }])) === "applied"
       && (await pushed("own3", T3s, "pitchers", [{ id: "q1", updatedAt: t9, name: "Ace" }])) === "rejected", "and edits opponents (as owner) but still not the roster (as a viewer)");
+    // review, Nov 19: being on the staff (as a viewer, without "manage opponents") must not let the owner path write the team's own record
+    check((await pushed("own3", T3s, "teams", [{ id: "ours", updatedAt: t9, name: "Hijacked", isOurs: true, pitchRule: null }])) === "rejected"
+      && (await su.query("select doc ->> 'name' n from public.teams where program_id = $1 and id = 'ours'", [T3s])).rows[0].n === "Us",
+      "owner on the staff as a viewer: still never the team's own record (refused, unchanged)");
+    check((await pushed("head3", T3, "teams", [{ id: "ours", updatedAt: t9 + 20, name: "Us", isOurs: true, pitchRule: { preset: "ncaa" } }])) === "applied",
+      "and the head coach (manage roster) still edits the team's own record");
 
     // a coach without the permission, a player, signed out
     check((await cnt("view3", "hitters", T3)) === 2 && (await pushed("view3", T3, "hitters", [{ id: "h1", updatedAt: t9 + 5, name: "x" }])) === "rejected",

@@ -16,7 +16,7 @@ grant execute on function private.pc_owner_opp(uuid) to authenticated, service_r
 
 -- reading: extra policies beside the coaches' (policies add up)
 create policy owner_opp_read on public.teams for select to authenticated
-  using (private.pc_owner_opp(program_id) and coalesce(doc ->> 'isOurs', 'false') <> 'true');
+  using (private.pc_owner_opp(program_id) and coalesce(doc -> 'isOurs', 'null'::jsonb) in ('false'::jsonb, 'null'::jsonb));
 create policy owner_opp_read on public.hitters for select to authenticated using (private.pc_owner_opp(program_id));
 create policy owner_opp_read on public.opp_suggestions for select to authenticated using (private.pc_owner_opp(program_id));
 create policy owner_opp_read on public.opp_merges for select to authenticated using (private.pc_owner_opp(program_id));
@@ -99,8 +99,13 @@ begin
     is_ins := cur is null;
     touch_del := coalesce(nullif(r -> 'deletedAt', 'null'::jsonb), 'null'::jsonb)
                  is distinct from coalesce(nullif(cur -> 'deletedAt', 'null'::jsonb), 'null'::jsonb);
-    -- the owner off the staff: opponents only, never the team's own record (isOurs), new or stored
-    if role is null and tbl = 'teams' and (coalesce(r ->> 'isOurs', 'false') = 'true' or coalesce(cur ->> 'isOurs', 'false') = 'true') then
+    -- the owner writing through his owner path (off the staff, or on it without "manage opponents" / "manage roster"):
+    -- opponents only, never the team's own record, new or stored. Any isOurs that isn't false or null counts as ours (the
+    -- game app reads it as truthy). Review, Nov 19: was "role is null", which let an owner on the staff as a viewer or player
+    -- through, and matched only the literal true.
+    if tbl = 'teams' and private.pc_owner_opp(p) and not (private.pc_can(p, 'manage_opponents') or private.pc_can(p, 'manage_roster'))
+       and (coalesce(r -> 'isOurs', 'null'::jsonb) not in ('false'::jsonb, 'null'::jsonb)
+            or coalesce(cur -> 'isOurs', 'null'::jsonb) not in ('false'::jsonb, 'null'::jsonb)) then
       rejected := rejected || jsonb_build_object('id', rid, 'reason', 'not allowed'); continue;
     end if;
     -- who may write it is checked first, so a refusal never tells someone about a pitcher he can't see
