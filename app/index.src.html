@@ -765,6 +765,12 @@ function watchCard() {
         h("button", { class: "btn text", on: { click: () => { WATCH.forget(d.name); render(); } } }, "Forget"))))) :
       h("p", { class: "muted" }, "No watch yet. Open the PitchIQ app on the watch, then connect it here. The first time, the watch shows a 6-digit pair code: type it when Chrome asks. After that the two are paired and nothing else can send to the watch."),
     s.devices.length < 2 ? h("div", { class: "row-acts" }, h("button", { class: "btn primary pill", on: { click: act(() => WATCH.connect()) } }, s.devices.length ? "Connect a second watch" : "Connect a watch")) : null,
+    // Build 4 fallback (docs/PLAN_watch_security_2026-11-18.md 6): full encryption is the default; pairing-only is for a
+    // watch whose AES turns out too slow at the desk test
+    h("div", { class: "choices wreceipt", role: "group", "aria-label": "Message security" },
+      [["full", "Full encryption", "Every call is encrypted with this game's key, on top of the pairing. The default."],
+       ["pairing", "Pairing only", "Calls go over the paired link without the extra encryption; old messages are still refused. Only if the watch is too slow with full encryption."]]
+        .map(([v, t, d]) => h("button", { class: "choice", "aria-pressed": String(s.mode === v), on: { click: () => { WATCH.setMode(v); render(); } } }, h("b", {}, t), h("span", {}, d)))),
     h("div", { class: "choices wreceipt", role: "group", "aria-label": "Delivery receipt" },
       [[true, "Delivery receipt on", "Each watch confirms every call, and the Game screen says which one missed it. For bullpens and practice."],
        [false, "Receipt off (one-way)", "For games under one-way rules: each call is sent three times and nothing comes back, so a missed call can't be shown."]]

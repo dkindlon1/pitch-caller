@@ -91,7 +91,10 @@
     const removed = opts.removed || (() => false);   // (device) -> true when the coach removed this watch from the team
     const onLinked = opts.onLinked || (() => {});    // (device id, name, role) after each connection: the app registers it with the team
 
-    let settings = { receipt: true, ids: [], roles: {} };   // roles: { deviceId: "pitcher" | "catcher" }
+    // roles: { deviceId: "pitcher" | "catcher" }. mode: "full" (default: every message sealed with the game's key) or
+    // "pairing" (pairing-only, the fallback if AES turns out too slow on the watch: plain messages over the bonded link,
+    // message numbers still guarding against replays)
+    let settings = { receipt: true, ids: [], roles: {}, mode: "full" };
     try { const s = storage && storage.getItem(SETTINGS_KEY); if (s) settings = Object.assign(settings, JSON.parse(s)); } catch (e) {}
     const saveSettings = () => { try { storage && storage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {} };
 
@@ -118,13 +121,17 @@
     function frameFor(tgt) {
       const content = `${game.inning}|${tgt.kind}|${tgt.sign || ""}|${tgt.loc || ""}|${tgt.chg ? 1 : 0}`;
       let f = game.content[content];
-      if (!f) { game.seq += 1; f = game.content[content] = { n: game.seq, bytes: seal(game, game.inning, game.seq, tgt) }; }
+      if (!f) { game.seq += 1; f = game.content[content] = { n: game.seq, bytes: game.mode === "pairing" ? enc.encode(plainText(tgt, game.seq)) : seal(game, game.inning, game.seq, tgt) }; }
       return f;
+    }
+    // pairing-only mode's plain message (at most 13 bytes: C65535,9,CL,1)
+    function plainText(tgt, n) {
+      return tgt.kind === "call" ? `C${n},${tgt.sign},${tgt.loc},${tgt.chg ? 1 : 0}` : tgt.kind === "end" ? `E${n}` : `X${n}`;
     }
     function startGame(gid) {
       const key = random(16), keyId = random(1)[0];
       const cache = {};
-      game = { gid, key, keyId, seq: 0, inning: 1, content: {},
+      game = { gid, key, keyId, seq: 0, inning: 1, content: {}, mode: settings.mode === "pairing" ? "pairing" : "full",
         keysFor: (i) => cache[i] || (cache[i] = Sec.inningKeys(key, i)) };
       for (const d of devs) if (d.state === "ok") { pushKey(d); if (target) send(d, target); }
       changed();
@@ -132,7 +139,7 @@
     function pushKey(d) {
       if (!game) return;
       if (removed(d.device)) { forget(d.name); return; }
-      const kf = Sec.keyFrame(game.keyId, game.key);
+      const kf = game.mode === "pairing" ? enc.encode("P") : Sec.keyFrame(game.keyId, game.key);   // pairing-only: no key, a P
       d.keyed = false;
       d.ops.push(() => (d.rx.writeValueWithResponse ? d.rx.writeValueWithResponse(kf) : d.rx.writeValue(kf)));
       pump(d);
@@ -180,7 +187,7 @@
       if (d.hbDue) {
         d.hbDue = false;
         if (w) write(d, w.bytes, null);
-        else if (game) { game.seq += 1; game.content = {}; write(d, seal(game, game.inning, game.seq, { kind: "hb" }), null); }
+        else if (game && game.mode === "full") { game.seq += 1; game.content = {}; write(d, seal(game, game.inning, game.seq, { kind: "hb" }), null); }
         else write(d, enc.encode("H"), null);
       }
     }
@@ -238,7 +245,9 @@
           changed();
         }
       } else if (text[0] === "K") {
-        if (game && +text.slice(1) === game.keyId) { d.keyed = true; changed(); }
+        if (game && game.mode === "full" && +text.slice(1) === game.keyId) { d.keyed = true; changed(); }
+      } else if (text === "P") {
+        if (game && game.mode === "pairing") { d.keyed = true; changed(); }
       } else if (text[0] === "B") {
         const b = +text.slice(1);
         if (b >= 0 && b <= 100) { d.battery = b; changed(); }
@@ -355,6 +364,14 @@
       try { onLinked(d.device.id, d.name, role); } catch (e) {}
       changed();
     }
+    // full encryption or pairing-only; a game in progress starts a fresh session in the new mode (the watch takes the
+    // new key, or the P, and the call on screen is sent again as new)
+    function setMode(mode) {
+      if (mode !== "full" && mode !== "pairing") return;
+      settings.mode = mode; saveSettings();
+      if (game && game.mode !== mode) { if (target && target.kind === "call") target = Object.assign({}, target, { chg: false }); startGame(game.gid); }
+      changed();
+    }
     function setReceipt(on) {
       settings.receipt = !!on; saveSettings();
       for (const d of devs) {
@@ -411,7 +428,7 @@
         return { name: d.name, id: d.device.id, role: roleOf(d), state: d.state, battery: d.battery, keyed: !!(game && d.keyed), delivered: isCall && delivered, missing: isCall && d.state === "ok" && !!w.missing,
           latency: isCall && w.latency !== null ? w.latency : null };
       });
-      return { supported: !!bt, receipt: settings.receipt, accepted: !!accepted, used: settings.ids.length > 0 || devs.length > 0, game: !!game, devices: list };
+      return { supported: !!bt, receipt: settings.receipt, mode: settings.mode, accepted: !!accepted, used: settings.ids.length > 0 || devs.length > 0, game: !!game, devices: list };
     }
     // one line for the Game screen's pill: { tone: "ok" | "watch" | "change" | "", text }
     function line() {
@@ -460,7 +477,7 @@
       return out;
     }
 
-    return { connect, restore, reconnect, forget, setReceipt, setRole, accept, sync, isAccepted, summary, line, startGame, endGame, setInning,
+    return { connect, restore, reconnect, forget, setReceipt, setRole, setMode, accept, sync, isAccepted, summary, line, startGame, endGame, setInning,
       get _game() { return game; },
       soakStart, soakStop, soakStats, get soaking() { return soak.on; }, get receipt() { return settings.receipt; }, _devs: devs };
   }

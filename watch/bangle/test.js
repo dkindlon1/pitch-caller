@@ -196,6 +196,38 @@ function firmware(o = {}) {
     check(!none.ctx.PQSec.isNative(), "no firmware AES: the app's own");
   }
 
+  console.log("8. Pairing-only mode (the fallback if AES is too slow)");
+  {
+    const fw = firmware();
+    fw.handlers.connect();
+    fw.sec.encrypted = false; fw.sec.mitm_protected = false;
+    fw.write("P");
+    check(fw.texts().includes("no key") && !fw.notifies().includes("P"), "P over a link that isn't passkey-bonded: refused");
+    fw.sec.encrypted = true; fw.sec.mitm_protected = true;
+    fw.write("P");
+    check(!fw.texts().includes("no key") && fw.notifies().includes("P"), "P over the bonded link: a pairing-only session (P back), \"no key\" gone");
+    fw.write("C1,5,LO,0");
+    check(fw.texts()[0] === "5" && fw.texts().slice(1).join(" ") === "LOW AND OUTSIDE" && fw.buzz.join() === "450" && fw.notifies().includes("A1"), "a plain call shows, one long buzz, receipt A1");
+    fw.write("C1,5,LO,0");
+    check(fw.buzz.length === 1, "the same message again: no second buzz");
+    fw.write("C2,1,HI,1"); await fw.advance(300);
+    check(fw.texts()[0] === "1" && fw.buzz.slice(1).join() === "120,120", "a changed call: two short buzzes");
+    fw.write("C1,6,CL,0");
+    check(fw.texts()[0] === "1", "an older number (a replay) is dropped");
+    fw.sec.mitm_protected = false; fw.write("C3,6,CL,0"); fw.sec.mitm_protected = true;
+    check(fw.texts()[0] === "1", "a plain call over a link that has lost its passkey protection: refused");
+    fw.write("X3");
+    check(!fw.texts().length && fw.rects === 1, "a plain clear: back to —");
+    fw.write("C4,2,L,0"); fw.write("E5");
+    check(fw.texts().includes("no key") && !fw.texts().includes("2"), "a plain end of game: the session ends");
+    fw.write("C6,3,HI,0");
+    check(!fw.texts().includes("3"), "after it, plain calls are refused");
+    fw.sendKey(); fw.write("C7,3,HI,0");
+    check(!fw.texts().includes("3"), "with a game key (full mode), plain calls are refused");
+    fw.write("P"); fw.write("C1,4,LI,0");
+    check(fw.texts()[0] === "4", "a new P (a new session) starts the count again");
+  }
+
   console.log(fails ? `\n${fails} FAILED` : "\nall passed");
   process.exit(fails ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

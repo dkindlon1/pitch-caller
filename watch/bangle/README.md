@@ -42,6 +42,9 @@ To leave the app, **hold the button 3 seconds**. A short press (a glove) does no
 - **Lost or stolen watch:** remove it in the portal (team **Settings → Watches**). No device on the team will send it
   another key; it must be paired again and re-added by a coach who manages the roster.
 - Players see what they always saw: the sign and the spot. The encryption only protects the radio.
+- **Pairing-only mode** (Setup → Watches → Message security; full encryption is the default): the fallback if the
+  watch's AES is too slow. No game key; calls go in plain text over the bonded link only; message numbers still refuse
+  replays; End game and the 6-hour limit end the session the same way.
 
 ## Connect from the game app
 1. Open the game app in **Chrome on a PC, laptop or Android device**, over `https` or `localhost`. For the prototype
@@ -66,7 +69,11 @@ Security (plan section 4, items 6-9; Build 4 tested everything else against fake
 - [ ] **AES on the Bangle:** in the IDE console, `PQSec.isNative()` says whether the firmware's AES passed the start-up
       check (else the app's own JavaScript AES runs). Time it: `t=getTime(); for(i=0;i<20;i++) PQSec.inningKeys(new Uint8Array(16),i+1); print((getTime()-t)/20)`
       (one new inning) and the time from Accept to the buzz over 20 calls: **game-ready means under 300 ms** from Accept
-      to buzz. If the JavaScript AES is too slow, the plan's fallback is pairing-only encryption for the prototype.
+      to buzz.
+- [ ] **If AES is too slow** (Accept to buzz over 300 ms with full encryption): switch to pairing-only, Setup → Watches →
+      Message security → **Pairing only**, and run the Accept-to-buzz timing again. Calls then go over the paired link
+      without the extra encryption layer (old message numbers are still refused, and only the bonded laptop can write).
+      Note which mode the watch was game-ready in.
 - [ ] **The service still works with Programmable off** (Settings → Bluetooth → Programmable: Off), including pairing.
 - [ ] **Battery over a soak with encryption on:** `?watch=1&watchsoak`, Setup → soak at 5 s for 2 hours; note the battery
       before and after (the receipts show it).

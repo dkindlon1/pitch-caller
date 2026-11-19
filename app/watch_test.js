@@ -425,6 +425,67 @@ const mem = () => { const m = {}; return { getItem: (k) => m[k] || null, setItem
     check(!b.writes.some((t) => t[0] === "K") && !b.view.sign && L2.summary().devices.length === 0, "a watch removed from the team gets no key and is forgotten");
   }
 
+  console.log("10. Pairing-only mode (the fallback if AES is too slow on the watch: plain over the bonded link)");
+  {
+    const { T, advance } = clock();
+    const a = fakeWatch(T, "Bangle.js a1"), b = fakeWatch(T, "Bangle.js b2");
+    const store = mem();
+    const L = W.create({ bluetooth: fakeBluetooth([a, b]), timers: T, storage: store });
+    check(L.summary().mode === "full", "full encryption is the default");
+    L.setMode("pairing");
+    check(L.summary().mode === "pairing" && JSON.parse(store.getItem("pitchiq.watch")).mode === "pairing", "the setting switches to pairing-only and is kept on this device");
+    let p = L.connect(); await advance(200); await p; p = L.connect(); await advance(200); await p;
+    L.accept({ gid: "pm", id: 1, pitchNo: 0, inning: 1, ab: "1|0", sign: 3, quad: "down-away", kind: "SL" }); await advance(300);
+    check(a.writes[a.writes.indexOf("P") + 1] === "C1,3,LO,0" && a.writes.indexOf("P") >= 0 && !a.writes.some((t) => /^K/.test(t)), `a game starts with P (no key), then plain calls (${a.writes.filter((t) => t !== "H").slice(0, 2).join(" ")})`);
+    check(a.view.sign === "3" && a.view.words.join(" ") === "LOW AND OUTSIDE" && a.buzzes.join() === "new" && b.view.sign === "3", "both watches show 3 / LOW AND OUTSIDE, one long buzz");
+    check(L.line().text === "On both watches ✓" && L.summary().devices.every((d) => d.keyed), `receipts come back; each watch acknowledged the pairing-only session (${L.line().text})`);
+    // the whole flow: a pitch clears, the same call again buzzes again, a shake-off is a change, a reconnect re-sends as new
+    L.sync({ gid: "pm", id: 2, pitchNo: 1, inning: 1 }); await advance(200);
+    check(!a.view.sign, "a recorded pitch clears the watch");
+    L.accept({ gid: "pm", id: 2, pitchNo: 1, inning: 1, ab: "1|1", sign: 3, quad: "down-away", kind: "SL" }); await advance(300);
+    L.sync({ gid: "pm", id: 3, pitchNo: 1, inning: 1 }); await advance(200);
+    L.accept({ gid: "pm", id: 3, pitchNo: 1, inning: 1, ab: "1|1", sign: 1, quad: "middle", kind: "FB" }); await advance(300);
+    check(a.buzzes.join() === "new,new,changed" && a.view.sign === "1" && a.view.words.length === 0, `the same call after a pitch buzzes again; a shake-off then Accept is a change (${a.buzzes.join(",")})`);
+    a.inRange = false; a.drop(); a.inRange = true; await advance(3000);
+    check(a.view.sign === "1" && a.buzzes.slice(-1)[0] === "new" && a.writes.filter((t) => t === "P").length === 2, "after a dropped link: P again, and the call comes back as new");
+    // replay protection stays: an older message, written over the bonded link, is dropped
+    const before = { buzz: a.buzzes.length, sign: a.view.sign };
+    a.core.onWrite("C2,6,CL,0");
+    check(a.buzzes.length === before.buzz && a.view.sign === before.sign, "replay: an older message number is dropped, no buzz");
+    const nNow = a.core.st.lastN; a.core.onWrite(`C${nNow},6,CL,0`);
+    check(a.buzzes.length === before.buzz && a.view.sign === before.sign, "the same number with different content is only a repeat: nothing changes");
+    for (const bad of [`C${nNow + 1},0,LO,0`, `C${nNow + 1},3,ZZ,0`, `C${nNow + 1},3,LO,2`, `C${nNow + 1}x,3,LO,0`, `X${nNow + 1},5`]) a.core.onWrite(bad);
+    check(a.buzzes.length === before.buzz && a.view.sign === before.sign && a.core.st.lastN === nNow, "malformed plain messages (bad sign, spot, flag, number) are dropped");
+    // only over the bonded link
+    a.bonded = false;
+    a.core.onWrite(`C${nNow + 5},6,CL,0`); a.core.onWrite("P");
+    check(a.buzzes.length === before.buzz && a.view.sign === before.sign && a.core.st.mode === "pairing" && a.core.st.lastN === nNow, "a plain message or a P over a link that isn't passkey-bonded: refused");
+    a.bonded = true;
+    // a watch in full mode refuses plain messages; switching the setting mid-game starts a fresh session in the new mode
+    L.setMode("full"); await advance(400);
+    const kAt = a.raw.map((x) => x.length).lastIndexOf(18), afterK = a.raw.slice(kAt + 1);
+    check(a.core.st.mode === "full" && kAt >= 0 && a.view.sign === "1" && afterK.length > 0 && afterK.every((x) => x.length === 16), `switched back to full encryption mid-game: the key goes out and every write after it is a 16-byte sealed frame (${afterK.length})`);
+    const fullBuzz = a.buzzes.length;
+    a.core.onWrite(`C${a.core.st.lastN + 1},6,CL,0`);
+    check(a.buzzes.length === fullBuzz && a.view.sign === "1", "in full mode a plain call is refused");
+    L.setMode("pairing"); await advance(400);
+    check(a.core.st.mode === "pairing" && a.view.sign === "1", "and back to pairing-only: P, the call re-sent plain");
+    // end of game and expiry, as in full mode
+    L.endGame(); await advance(300);
+    check(a.core.st.mode === null && !a.view.sign && a.view.nokey && b.core.st.mode === null, "End game: both watches end the session (— and \"no key\")");
+    const late = `C${50},2,HI,0`; a.core.onWrite(late);
+    check(!a.view.sign, "after the end a plain call is refused (no session)");
+    L.accept({ gid: "pm2", id: 1, pitchNo: 0, inning: 1, ab: "1|0", sign: 2, quad: "up-in", kind: "CB" }); await advance(300);
+    const startedAt = a.core.st.keyAt;
+    L.forget("Bangle.js a1"); L.forget("Bangle.js b2"); await advance(100);
+    const tickT = T.setInterval(() => a.core.tick(), 1000);
+    await advance(startedAt + 6 * 3600 * 1000 + 2000 - T.now(), 1000);
+    T.clearInterval(tickT);
+    check(a.core.st.mode === null, "a pairing-only session nobody ended expires after 6 hours (fake clock)");
+    check(!a.tooLong && !b.tooLong && a.raw.every((x) => x.length <= 20) && Math.max(...a.raw.map((x) => x.length)) <= 18, `every write fits 20 bytes (largest ${Math.max(...a.raw.map((x) => x.length))})`);
+    check(a.overlaps === 0 && b.overlaps === 0, "no overlapping writes");
+  }
+
   console.log(fails ? `\n${fails} FAILED` : "\nall passed");
   process.exit(fails ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

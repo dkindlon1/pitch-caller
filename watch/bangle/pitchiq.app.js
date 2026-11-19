@@ -14,6 +14,9 @@
  * earlier inning or another game is dropped silently: no buzz, nothing shown. "End of game" or 6 hours wipes the key.
  *   K<id><16 bytes>  game key (only over an encrypted, passkey-bonded link)   <16-byte frame>  call / clear / heartbeat / end
  *   H (plain)        liveness only, and only while the watch holds no key (nothing can be shown without one)
+ *   P                pairing-only mode (the fallback if AES is too slow on the watch; a setting in the coach's app):
+ *                    then C<n>,<sign>,<loc>,<chg> / X<n> / E<n> in plain text, taken only over the bonded link, with
+ *                    the same message-number rules (an older number is dropped, the same one is a repeat)
  * Back to the coach, by notification (only while the coach has "Delivery receipt" on): A<n> receipt, B<pct> battery,
  * K<id> key received. Message numbers count up through the game; an older number is dropped; the same number again only
  * gets its receipt again, no second buzz. No message for 6 s, or a disconnect: NO LINK, and the call is taken off the
@@ -150,54 +153,75 @@ var PQSec = (function () {
 // and bonded with the passkey (NRF.getSecurityStatus on the watch)
 function PQCore(io) {
   // held: the call taken off the screen by a quiet spell (NO LINK), with its message number, kept only so the same
-  // message repeated can put it back; any other message, or a disconnect, forgets it
-  var st = { lastN: 0, show: null, held: null, link: false, lastRx: 0, key: null, keyId: -1, keyAt: 0, inning: 0, keys: null, keysInning: 0, rejected: 0 };
-  function view() { return { link: st.link, nokey: !st.key, sign: st.show ? st.show.sign : null, words: st.show ? PQ_WORDS[st.show.loc] : null }; }
+  // message repeated can put it back; any other message, or a disconnect, forgets it.
+  // mode: null (no game), "full" (a game key: every message sealed), "pairing" (pairing-only, the fallback if AES is too
+  // slow on the watch: plain messages, accepted only over the passkey-bonded link; message numbers still guard replays)
+  var st = { lastN: 0, show: null, held: null, link: false, lastRx: 0, key: null, keyId: -1, keyAt: 0, inning: 0, keys: null, keysInning: 0, rejected: 0, mode: null };
+  function view() { return { link: st.link, nokey: !st.mode, sign: st.show ? st.show.sign : null, words: st.show ? PQ_WORDS[st.show.loc] : null }; }
   function clearShown() { st.show = null; st.held = null; }
-  function wipe() { st.key = null; st.keyId = -1; st.keys = null; st.keysInning = 0; st.lastN = 0; st.inning = 0; clearShown(); }
+  function wipe() { st.key = null; st.keyId = -1; st.keys = null; st.keysInning = 0; st.lastN = 0; st.inning = 0; st.mode = null; clearShown(); }
   function onConnect() { clearShown(); st.link = true; st.lastRx = io.now(); io.draw(view()); }
   function onDisconnect() { st.link = false; clearShown(); io.draw(view()); }
   function keysFor(inning) { if (st.keysInning !== inning) { st.keys = PQSec.inningKeys(st.key, inning); st.keysInning = inning; } return st.keys; }
   function bytesOf(text) { var b = new Uint8Array(text.length); for (var i = 0; i < text.length; i++) b[i] = text.charCodeAt(i) & 0xff; return b; }
+  // a plain message (pairing-only mode): C<n>,<sign>,<loc>,<chg>  X<n>  E<n>
+  function plain(text) {
+    var c = text.charAt(0), parts = text.slice(1).split(","), n = parseInt(parts[0], 10);
+    if (!(n > 0) || String(n) !== parts[0]) return null;
+    if (c === "C") { if (parts.length !== 4 || !/^[1-9]$/.test(parts[1]) || !PQ_WORDS.hasOwnProperty(parts[2]) || !/^[01]$/.test(parts[3])) return null;
+      return { n: n, kind: "call", sign: parts[1], loc: parts[2], chg: parts[3] === "1" }; }
+    if (parts.length !== 1) return null;
+    if (c === "X") return { n: n, kind: "clear" };
+    if (c === "E") return { n: n, kind: "end" };
+    return null;
+  }
   function onWrite(text) {
     st.lastRx = io.now();
     var redraw = false;
     if (!st.link) { st.link = true; redraw = true; }
-    var b = bytesOf(text);
+    var b = bytesOf(text), m = null;
     function drop() { st.rejected++; if (redraw) io.draw(view()); }
-    if (b.length === PQSec.KEY_FRAME && b[0] === 0x4b) {          // a game key: only over the bonded, encrypted link
+    if (b.length === PQSec.KEY_FRAME && b[0] === 0x4b) {          // a game key (full mode): only over the bonded, encrypted link
       if (!io.secure()) return drop();
-      wipe(); st.key = new Uint8Array(16); for (var i = 0; i < 16; i++) st.key[i] = b[2 + i]; st.keyId = b[1]; st.keyAt = io.now();
+      wipe(); st.key = new Uint8Array(16); for (var i = 0; i < 16; i++) st.key[i] = b[2 + i]; st.keyId = b[1]; st.keyAt = io.now(); st.mode = "full";
       io.draw(view()); io.notify("K" + st.keyId);
       return;
     }
+    if (text === "P") {                                               // a pairing-only game: only over the bonded, encrypted link
+      if (!io.secure()) return drop();
+      wipe(); st.mode = "pairing"; st.keyAt = io.now();
+      io.draw(view()); io.notify("P");
+      return;
+    }
     if (b.length === PQSec.FRAME && b[0] === 0x51) {
-      if (!st.key || b[2] < st.inning) return drop();                 // no key, or an earlier inning
-      var m = PQSec.open(b, st.keyId, keysFor);
+      if (st.mode !== "full" || b[2] < st.inning) return drop();      // no key, or an earlier inning
+      m = PQSec.open(b, st.keyId, keysFor);
       if (!m) return drop();                                          // forged, tampered, another game's
-      var n = m.n;
-      if (n < st.lastN) return drop();                                // older than what's shown (a replay): dropped
-      st.inning = m.inning;
-      if (n === st.lastN) {                                           // a repeat: receipt only, no buzz
-        if (!st.show && st.held && st.held.n === n) { st.show = st.held.show; st.held = null; redraw = true; }
-        if (redraw) io.draw(view());
-        io.notify("A" + n);
-        return;
-      }
-      st.held = null; st.lastN = n;
-      if (m.kind === "call") {
-        st.show = { sign: m.sign, loc: m.loc };
-        io.draw(view()); io.light(); io.buzz(m.chg ? "changed" : "new");
-      } else if (m.kind === "end") { wipe(); io.draw(view()); return; }
-      else { if (m.kind === "clear") st.show = null; io.draw(view()); }
+      if (m.n >= st.lastN) st.inning = m.inning;
+    } else if (st.mode === "pairing" && /^[CXE][0-9]/.test(text)) {
+      if (!io.secure()) return drop();                                // pairing-only trusts the bonded link, so only over it
+      m = plain(text);
+      if (!m) return drop();
+    } else if (text === "H" && st.mode !== "full") { if (redraw) io.draw(view()); return; }   // plain liveness, unless a key is held
+    else return drop();                                               // anything else: ignored (plain text in full mode included)
+    var n = m.n;
+    if (n < st.lastN) return drop();                                  // older than what's shown (a replay): dropped
+    if (n === st.lastN) {                                             // a repeat: receipt only, no buzz
+      if (!st.show && st.held && st.held.n === n) { st.show = st.held.show; st.held = null; redraw = true; }
+      if (redraw) io.draw(view());
       io.notify("A" + n);
       return;
     }
-    if (text === "H" && !st.key) { if (redraw) io.draw(view()); return; }   // liveness while there's no key
-    drop();                                                                 // anything else in plain text: ignored
+    st.held = null; st.lastN = n;
+    if (m.kind === "call") {
+      st.show = { sign: m.sign, loc: m.loc };
+      io.draw(view()); io.light(); io.buzz(m.chg ? "changed" : "new");
+    } else if (m.kind === "end") { wipe(); io.draw(view()); return; }
+    else { if (m.kind === "clear") st.show = null; io.draw(view()); }
+    io.notify("A" + n);
   }
   function tick() {
-    if (st.key && io.now() - st.keyAt > PQ_KEY_MS) { wipe(); io.draw(view()); }
+    if (st.mode && io.now() - st.keyAt > PQ_KEY_MS) { wipe(); io.draw(view()); }
     if (st.link && io.now() - st.lastRx > PQ_LINK_MS) { st.link = false; st.held = st.show ? { n: st.lastN, show: st.show } : null; st.show = null; io.draw(view()); }
   }
   return { onConnect: onConnect, onDisconnect: onDisconnect, onWrite: onWrite, tick: tick, view: view, st: st };

@@ -234,6 +234,27 @@ const FAKE_BT = `
   await page.evaluate(() => endGame()); await page.waitForTimeout(600);
   const after = await page.evaluate(() => window.__watches.map((w) => ({ key: w.core.st.key, nokey: w.view.nokey })));
   check(keyedBefore.every(Boolean) && after.every((w) => w.key === null && w.nokey), "End game: both watches wipe the game key (— and \"no key\")");
+  console.log("13. Pairing-only mode, switched in Setup");
+  await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
+  const group = page.getByRole("group", { name: "Message security" });
+  check(await group.getByRole("button", { name: /Full encryption/ }).getAttribute("aria-pressed") === "true", "Setup shows Full encryption chosen (the default)");
+  await group.getByRole("button", { name: /Pairing only/ }).click(); await page.waitForTimeout(300);
+  check(await page.getByRole("group", { name: "Message security" }).getByRole("button", { name: /Pairing only/ }).getAttribute("aria-pressed") === "true"
+    && await page.evaluate(() => JSON.parse(localStorage.getItem("pitchiq.watch")).mode) === "pairing", "Pairing only chosen, kept on this device");
+  await page.getByRole("button", { name: "Game" }).first().click(); await page.waitForTimeout(200);
+  const take2 = page.getByRole("button", { name: /^Take the field/ }); if (await take2.count()) { await take2.click(); await page.waitForTimeout(250); }
+  await settle();
+  const rawBefore = (await watch(0)).raw.length;
+  await key("Enter"); await page.waitForTimeout(400);
+  const pa = await watch(0), pb = await watch(1), fresh = pa.raw.slice(rawBefore);
+  check(pa.view.sign && JSON.stringify(pa.view) === JSON.stringify(pb.view), `pairing-only: both watches show the call (${pa.view.sign} / ${(pa.view.words || []).join(" ") || "(sign alone)"})`);
+  check(fresh.includes("P") && fresh.some((t) => /^C\d+,[1-9],(HI|HO|LI|LO|L|M|CH|CL),[01]$/.test(t)) && !fresh.some((t) => t.length === 16 || t.length === 18), `the air: a P, then plain calls, no key and no sealed frames (${fresh.filter((t) => t !== "H").join(" ")})`);
+  check(/On both watches ✓/.test(await pill()), `pill: "${await pill()}"`);
+  await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
+  await page.getByRole("group", { name: "Message security" }).getByRole("button", { name: /Full encryption/ }).click(); await page.waitForTimeout(500);
+  const back = await watch(0);
+  check(back.raw.slice(-3).some((t) => t.length === 18) && back.view.sign === pa.view.sign, "switched back to Full encryption: the game key goes out and the call stays on the watch");
+
 
   console.log("12. Receipt off");
   await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
