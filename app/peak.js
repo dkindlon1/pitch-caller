@@ -185,9 +185,10 @@
   // ---------------------------------------------------------------- drift (in game)
   // 8+ of the pitch tonight and 8+ of the metric's own count (swings, pitches, logged balls in play); tonight's rate is
 // judged with his normal as a modest prior (DRIFT_PRIOR observations), so a short stretch alone can't fire a note
-const DRIFT_MIN = 8, DRIFT_P = 0.9, VELO_DROP = 1.5;
-let DRIFT_SHARE = 0.35;   // plan default 0.25; 0.35 keeps false notes under 1 per 5 outings (peak_sim.js)
-let DRIFT_PRIOR = 4, SE_SHIFT = 0.5, EARLY_LOOK = 0.08;   // tuned on simulations (peak_sim.js); _tune() is for that sweep only
+const DRIFT_MIN = 8, VELO_DROP = 1.5;
+let DRIFT_P = 0.9;
+let DRIFT_SHARE = 0.25;   // a quarter of the way to the bad end (the plan's default line); Nov 19 retune, see below
+let DRIFT_PRIOR = 4, SE_SHIFT = 0.5, EARLY_LOOK = 0.04;   // Nov 19 retune (Drew: most catches with false notes at or under ~0.35 per outing): peak_sim 200 -> 0.320 false, 53% of an all-night flat slider caught; 400 -> 0.305, 51%. _tune() is for sweeps only
 // a note needs more certainty on few observations (each pitch is another look at the same night): 90% at 20+, more below
 const needP = (n) => Math.min(0.99, DRIFT_P + EARLY_LOOK * Math.max(0, (20 - n) / 12));
   /**
@@ -259,7 +260,7 @@ const needP = (n) => Math.min(0.99, DRIFT_P + EARLY_LOOK * Math.max(0, (20 - n) 
   }
 
   const api = { VERSION, METRICS, VARS, LEVEL, BAD, PRIOR_N, RECENT, FADE, LAST_SEASON, MIN_CELL, SHRINK, CLEAR_Q, EARLY_P, MAX_SHOWN, DRIFT_MIN, DRIFT_P, DRIFT_SHARE, DRIFT_PRIOR,
-    isPitch, pitchOf, counts, baseline, _tune: (o) => { if (o.prior !== undefined) DRIFT_PRIOR = o.prior; if (o.seShift !== undefined) SE_SHIFT = o.seShift; if (o.early !== undefined) EARLY_LOOK = o.early; if (o.share !== undefined) DRIFT_SHARE = o.share; }, priorFor, findings, sentence, drift, driftLog, archetype, betaCdf, normCdf, tto, pcBucket };
+    isPitch, pitchOf, counts, baseline, _tune: (o) => { if (o.prior !== undefined) DRIFT_PRIOR = o.prior; if (o.seShift !== undefined) SE_SHIFT = o.seShift; if (o.early !== undefined) EARLY_LOOK = o.early; if (o.share !== undefined) DRIFT_SHARE = o.share; if (o.p !== undefined) DRIFT_P = o.p; }, priorFor, findings, sentence, drift, driftLog, archetype, betaCdf, normCdf, tto, pcBucket };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PCPeak = api;
 })(typeof window !== "undefined" ? window : this);

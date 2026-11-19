@@ -4,12 +4,13 @@
  *   1. Findings. With no planted effect: how many seasons show any "clear" finding, and how many "early signs" (the
  *      false-discovery control's job: targets 5% of seasons and well under one early sign a season). With a planted effect
  *      (slider whiffs down 15 or 25 points the third time through, 12- and 24-outing seasons): how often it's flagged.
- *   2. Drift. Steady outings (every pitch at his normal): false notes per outing (target under 1 per 5 outings). Planted
+ *   2. Drift. Steady outings (every pitch at his normal): false notes per outing (target 0.35 or less, Drew Nov 19). Planted
  *      drops (slider whiffs to 8% from the first pitch, or from pitch 30): how often caught, and after how many slider swings.
  * The false-alarm targets pass or fail the run; detection is reported as measured.
  * Usage (from app/): node peak_sim.js [n=200]
  */
 const P = require("./peak.js");
+if (process.env.PEAK_TUNE) P._tune(JSON.parse(process.env.PEAK_TUNE));   // trying settings only; the shipped ones are peak.js's own
 const N = +(process.argv[2] || 200);
 let seed = 20261119;
 const rnd = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -51,7 +52,7 @@ for (const [len, drop] of [[12, 0.15], [24, 0.15], [12, 0.25], [24, 0.25]]) {
 console.log(`2. Drift (${N} outings each, his normal from 8 earlier outings)`);
 let falseNotes = 0;
 for (let i = 0; i < N; i++) { const base = P.baseline(season(8, null), { season: "2026" }); falseNotes += P.driftLog(outing("2026-04-01", null).pitches, base).length; }
-console.log(`   steady outings: ${(falseNotes / N).toFixed(3)} false notes per outing (target under 0.2)`);
+console.log(`   steady outings: ${(falseNotes / N).toFixed(3)} false notes per outing (target 0.35 or less)`);
 for (const [label, from] of [["off from the first pitch", 0], ["drops at pitch 30", 30]]) {
   let caught = 0; const swings = [];
   for (let i = 0; i < N; i++) {
@@ -66,7 +67,7 @@ for (const [label, from] of [["off from the first pitch", 0], ["drops at pitch 3
 const target = (ok, msg) => console.log((ok ? "  ok   " : "  FAIL ") + msg);
 target(falseSeasons / N <= 0.05, `seasons with a false "clear" finding: ${(100 * falseSeasons / N).toFixed(1)}% (target 5% or less)`);
 target(falseEarly / N < 0.5, `false early signs: ${(falseEarly / N).toFixed(2)} a season (target under 0.5)`);
-target(falseNotes / N < 0.2, `false drift notes: ${(falseNotes / N).toFixed(3)} per steady outing (target under 0.2)`);
-const ok = falseSeasons / N <= 0.05 && falseEarly / N < 0.5 && falseNotes / N < 0.2;
+target(falseNotes / N <= 0.35, `false drift notes: ${(falseNotes / N).toFixed(3)} per steady outing (target 0.35 or less: Drew, Nov 19)`);
+const ok = falseSeasons / N <= 0.05 && falseEarly / N < 0.5 && falseNotes / N <= 0.35;
 console.log(ok ? "peak simulations: the false-alarm targets are met" : "peak simulations: a false-alarm target was missed");
 process.exit(ok ? 0 : 1);

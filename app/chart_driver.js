@@ -66,6 +66,9 @@ async function playGame(opts) {
       res.loc = z; res.locCell = landCell(z, target(call.quad, tp.kind, bRight));
     }
     record(res); pitches++;
+    // o.drift (Build 3, drift_exact_test): run the app's own drift check after the pitch, as its render does in a real
+    // game, and keep the most notes it showed at once; a build without it (before outcome tracking) skips this
+    if (o.drift && typeof peakRefresh === "function") { peakRefresh(); window.__peakMax = Math.max(window.__peakMax || 0, PEAK.notes.length); }
     if (G().inningOver && G().inning >= o.innings) break;
   }
   const c = await finishGameRecord(); archiveGame(); S.game = newGame(); S.view = "live"; makeCall(); save();
