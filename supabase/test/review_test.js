@@ -55,7 +55,8 @@ const url = BASE.replace(/\/[^/]*$/, "/" + DB);
     const tok = await one("coach", "select public.pc_invite($1, $2, $3, $4) r", [p, role, pit, who + "@x.org"]);
     await as(who, "select public.pc_accept_invite($1)", [tok]);
   }
-  const roles = (await su.query("select u.email, m.role from public.members m join auth.users u on u.id = m.user_id where program_id = $1 order by 1", [p])).rows.map((r) => `${r.email.split("@")[0]}:${r.role}`).join(" ");
+  const roles = (await su.query("select u.email, m.role from public.members m join auth.users u on u.id = m.user_id where program_id = $1 order by 1", [p])).rows.map((r) => `${r.email.split("@")[0]}:${r.role}`)
+    .sort().join(" ");   // sorted here, by code point: Postgres's own order depends on the database's collation ("coach2" before or after "coach")
   check(roles === "charter:caller coach2:head coach:head pitcher:player", `accepted invites made them members (${roles})`);
   const chInv = await as("charter", "select public.pc_invite($1, 'head', null, 'stranger@x.org')", [p]);
   check(!!chInv.error, "a charter can't invite anyone");
