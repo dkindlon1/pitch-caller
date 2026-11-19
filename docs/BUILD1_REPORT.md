@@ -37,12 +37,12 @@ are JSON, so `pc_push`/`pc_pull` carry the fields with no change).
 | Old app build syncing (season seed, game 12 on main's build) | 150 pitches synced, 0 with mix fields; reports and check script handle them |
 | `web/lib/report_outcomes.test.ts` + `report_data.test.ts` | 22 + 11 pass (one test per result type: fouls by count, unlogged contact, ball four, HBP) |
 | `scripts/report_check.js --site` (independent recompute) | 23,463/23,463 on the fresh season (19,992 numbers read off 87 pages); after the e2e changed it, 23,971/23,971 on 92 pages; two planted bugs caught (362, 76 mismatches) |
-| `supabase/test/reports_rls_test.js` | 66/66 (each role, signed out, under-18 parent approval, frozen recaps, mail log) |
+| `supabase/test/reports_rls_test.js` | 67/67 (each role, signed out, under-18 parent approval, frozen recaps, mail log) |
 | `web/tests/reports_e2e.js` | 33/33 (roles, public sections, revoked/unapproved links 404, notes, one email each, final recaps once) |
 | `web/tests/report_audit.js` | axe: 58 page states, 0 serious/critical; Lighthouse mobile x3 medians 89 / 89 / 90, accessibility 100, CLS 0 |
 | `tsc --noEmit`, `npm test`, `next build`, site e2e | clean; 93/93; ok; all site checks passed |
 | 8 portal e2es | all pass: shell 43, offline 22, portal 30, billing 52, player_admin 24, uploads 33, retention 10, gameplan 38 (252, same as baseline) |
-| SQL tests, each alone | sync 38, client_review 37, sync_auth 9, app_sync_e2e 37, waitlist 22, v12_sessions 11, logging_sync 10, reports_rls 66: pass. `review_test` 28/29 (known, same as baseline). **`rls_matrix_test` 346/347: FAILS** "anon can execute no pc_ function (pc_public_recap)". **`v11_kinds_test` FAILS** "the v1.1 migration runs last" (see Open below) |
+| SQL tests, each alone | sync 38, client_review 37, sync_auth 9, app_sync_e2e 37, waitlist 22, v12_sessions 11, logging_sync 10, reports_rls 66: pass. `review_test` 28/29 (known, same as baseline). `rls_matrix_test` 347/347 (after the fix below). **`v11_kinds_test` FAILS** "the v1.1 migration runs last" (see Open below) |
 | `scripts/test-app.sh` (engines, parity, goldens, learner worlds, app e2es) | every step passes (exit 0, 47 min; with the Windows tar.exe / python3 shims), incl. parity, goldens, worlds, logging_exact_test 25/25 |
 
 
@@ -59,9 +59,11 @@ count (`pcRaw`), catcher id, hitter id and side (`bs`). Nothing had to be added 
 5. `styledMix` doubles the mix's size per pitch (about 1-2 KB) while it equals `mix`.
 
 ## Open (found in the final full run, not fixed)
-1. **`rls_matrix_test`: anon may execute no `pc_` function.** This build granted `pc_public_recap` to anon for the signed-out
-   link. Planned fix (not done): revoke anon; the site's server (page, PDF route and proxy) calls it with the service key.
-   Then update `reports_rls_test` to call it as service_role. Until then this existing check fails on the branch.
+1. **Fixed after the first full run:** `rls_matrix_test` requires that anon can execute no `pc_` function, and this build
+   had granted `pc_public_recap` to anon. Now the site's server (public page, PDF route, proxy) calls it with the
+   service key; anon has no grant (`rls_matrix_test` 347/347, `reports_rls_test` 67/67 with a check for it). Re-verified
+   on a fresh seeded season: `reports_e2e` 33/33, `report_check --site` 23,910/23,910 numbers on 92 pages.
+Still open:
 2. **`v11_kinds_test` asserts the v1.1 migration is the newest file.** It applies migrations only up to v1.1, so any new
    migration fails it by construction. I didn't edit an existing test. Proposed fix: apply the later migrations after
    the v1.1 step and assert they run cleanly. (On this Windows box it also needs `python3` resolvable from cmd.)
