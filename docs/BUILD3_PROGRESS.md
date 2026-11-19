@@ -39,4 +39,4 @@ bars, tiny-sample bars full height -> halo, faded under 8; r3/r4 phone game bar 
 bar wraps to a second row while the button is there. Shots: `C:/dev/pitch-caller-shots/build3/`.
 
 ## Next
-- Full run `C:/dev/pitch-caller-logs/run_b3_full.sh` (-> logs/b3full/summary.txt), fill B3_RESULTS in BUILD3_REPORT.md, push.
+- Done: full run + recheck (see BUILD3_REPORT.md), pushed.

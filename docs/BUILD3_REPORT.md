@@ -42,7 +42,26 @@ migration. Working notes: `docs/BUILD3_PROGRESS.md`.
     has changed. A fix to an earlier game changes his normal for every game after it.
 
 ## Commands and results
-B3_RESULTS
+Full proof run on the final code: `C:/dev/pitch-caller-logs/run_b3_full.sh` (build, a fresh 13-game season seeded through the game app, then everything). Then `run_b3_recheck.sh`: a fresh seed again, because `test-app.sh` and the portal e2es wipe the season. Logs are in `C:/dev/pitch-caller-logs/b3full/`.
+
+| Check | Result |
+|---|---|
+| **Plan 5.1** Findings on simulated seasons: `app/peak_sim.js` (200 seasons each) | **No planted effect: 0% of seasons with a false "clear"** (target 5% or less), 0.06 false early signs a season. Planted slider-whiff drop the 3rd time through: 25 points over 24 outings flagged clear 68% (+20% early); 15 points over 12 outings, 1% clear (+3% early). The false-alarm targets pass as checks (3/3). Detection is reported as measured. |
+| **Plan 5.2** Drift on simulated outings (same script) | **Steady outings: 0.18 false notes per outing** (target under 0.2). Slider whiffs to 8% all night: caught in 28% of outings (median 13 slider swings in); a drop starting at pitch 30: caught in 12%. See "Readings" 1. |
+| **Plan 5.3** Every number recomputed by an independent script: `scripts/outcome_check.js --site` | **266/266 agree** (full run; 19 outings, 19 stored rows, 4 season views, 30 pages); **167/167** on the recheck season. It shares no code with `peak.js` / `outcome.ts`: it reads Postgres directly, uses a different p-value (erfc), a different beta CDF (Simpson integration), and step-up BH. It also checks the stored rows match the pages. |
+| **Plan 5.4** Situational rule: `app/peak_test.js` | a slider good the 1st time through and bad the 3rd gets two findings, not one; a pitch off all night shows once ("the same in N other situations"). **22/22** |
+| **Plan 5.5** Drift notes don't change calls: `app/drift_exact_test.js` | **12/12: 475 pitches identical**, every logged event field for field (the engine's full mix included). The old build (3e4660b, before outcome tracking) vs the new one with the drift check running after every pitch; the new build run twice first for determinism. |
+| Game app Notes button: `app/drift_e2e.js` | **7/7**: count badge after a flat slider, nothing opens on its own, no sound or vibration, plain-words note, Undo removes it, a reload works it out again |
+| Outcome tables permissions: `supabase/test/outcome_rls_test.js` | **9/9** (the runner's summary says "1 FAIL" because it counts the text "0 FAIL"; rc 0) |
+| Build 1's every-number check: `scripts/report_check.js --site` | **23,318/23,318 agree** (recheck). In the full run it stopped on one item: the new outcome keys weren't on its list of known keys. They are now handed to `outcome_check.js`. |
+| Build 2 opponents e2e / Build 1 reports e2e | 28/28, 33/33 |
+| Web chain: tsc, `npm test`, `next build`, site e2e | all pass |
+| SQL tests, each alone | sync 38, client_review 37, sync_auth 9, app_sync_e2e 37, rls_matrix 347, waitlist 22, v12_sessions 11, logging_sync 10, reports_rls 67, opp_rls 26, outcome_rls 9: pass. `review_test` 28/29 (the baseline's known failure). **`v11_kinds_test` fails** "the v1.1 migration runs last" by construction (now naming `20261119010000_outcome_tracking.sql`); same open item as Builds 1 and 2. |
+| Portal e2es | shell 43, offline_game 22, portal 30, billing 52, player_admin 24, uploads 33, retention 10: pass. `gameplan_e2e` timed out once in the full run ("element is not stable" on the game setup form, a page this build doesn't touch); **38/38 when run alone** in the recheck. |
+| `scripts/test-app.sh` | every suite passes. In the full run it stopped at `peak_sim` because the runner needs counted checks and the script printed none. Fixed (the targets print as checks); `peak_sim` 3/3, `drift_exact_test` 12/12 and `drift_e2e` 7/7 were then run through the same runner. |
+| Visual loop: `web/tests/outcome_shots.js` r1-r5, game app shots | all pages 200, no horizontal overflow at 1440 / 1180 / 820 / 390. Shots: `C:/dev/pitch-caller-shots/build3/` |
+
+No engine file changed: `git diff 3e4660b -- app/engine.js app/engine_data.json` is empty.
 
 ## Readings and proposals (decisions Drew may want to revisit)
 1. **The drift line had to be stricter than the plan's default.** The plan puts the line a quarter of the way from his
