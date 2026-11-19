@@ -36,7 +36,7 @@ test("ratings: nothing under 10 plate appearances, contact at 10", () => {
 test("power: only with 6+ logged balls in play (and 10+ PAs); hard share decides", () => {
   const evs = [...Array(10)].map((_, i) => ({ ...pa("h1", "out"), contact: i < 5 ? "hard" : "weak" }));
   assert.equal(suggest(evs, [{ id: "h1" }]).find((x) => x.key === "power")!.value, "3", "5 hard of 10");
-  const fewBip = [...Array(5)].map(() => ({ ...pa("h1", "out"), contact: "hard" })).concat([...Array(5)].map(() => pa("h1", "k")));
+  const fewBip: Ev[] = [...Array(5)].map((): Ev => ({ ...pa("h1", "out"), contact: "hard" })).concat([...Array(5)].map(() => pa("h1", "k")));
   assert.equal(suggest(fewBip, [{ id: "h1" }]).find((x) => x.key === "power"), undefined, "5 balls in play: too few");
 });
 test("a rating that already matches isn't suggested", () => {
@@ -85,4 +85,9 @@ test("applying scouting never touches the engine's fields (grades, approach / pa
   assert.deepEqual(out.scoutTags, { approach: "aggressive", offspeed: "hits", spray: "pull" });
   const back = applyHitterScouting(out, {}, null);
   assert.deepEqual(back.scoutTags, { approach: "aggressive", offspeed: "hits" }); assert.equal("ratings" in back, false);
+});
+import { cellWords } from "./opp_model.ts";
+test("cells in words follow the hitter's side", () => {
+  assert.equal(cellWords("1,1", "R"), "up and in"); assert.equal(cellWords("1,1", "L"), "up and away"); assert.equal(cellWords("2,2", "R"), "middle");
+  assert.equal(cellWords("3,2", "R"), "down, middle"); assert.equal(cellWords("4,2", "R"), "chase down"); assert.equal(cellWords("2,0", "R"), "chase in"); assert.equal(cellWords("0,4", "L"), "chase up, in");
 });

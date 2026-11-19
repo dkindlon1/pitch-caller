@@ -798,6 +798,8 @@ function teamPanel(t) {
             const ex = teamHitters(t.id).find((y) => y.name.toLowerCase() === x.name.toLowerCase());
             if (ex) { Object.assign(ex, { number: x.number || ex.number, bats: x.bats, pos: x.pos || ex.pos, stats: Object.assign({}, ex.stats, x.stats) });
               if (x.scoutTags) ex.scoutTags = Object.assign({}, ex.scoutTags, x.scoutTags);   // v1.2 Part B: a sheet's tag columns fill in (blank cells keep his tags)
+              if (x.ratings) ex.ratings = Object.assign({}, ex.ratings, x.ratings);   // Build 2: scouting ratings and spots (blank keeps his)
+              if (x.zone) ex.zone = Object.assign({}, ex.zone, x.zone);
               await dbPut("hitters", ex); updated++; }
             else { const nh = await dbPut("hitters", PCDB.newHitter(t.id, x)); DB.hitters.set(nh.id, nh); added++; }
           }

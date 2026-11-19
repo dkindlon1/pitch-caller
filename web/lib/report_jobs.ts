@@ -1,6 +1,8 @@
 import "server-only";
 import { gameReportsMail, outingMail, recapMail, sendMail, shareRequestMail, type OutingLine } from "./email";
 import { buildRecap, line, pitchesOf, type Ev, type GameMeta } from "./report_data.ts";
+import { suggest, type HitterState, type Prior } from "./opp_suggest.ts";
+import { cellWords } from "./opp_model.ts";
 
 // The report jobs (docs/PLAN_reports_recap_2026-11-18.md 5), run on the server with the service key:
 //   1. Outing reports: a finished game whose pitches have all arrived (the iPad syncs after End game; an offline game
@@ -62,10 +64,10 @@ async function send(team: string, m: MailKey, userId: string | null, make: () =>
   return r.status === "sent";
 }
 
-export type RunResult = { teams: number; outingMails: number; summaryMails: number; recapMails: number; waiting: string[]; frozen: number };
+export type RunResult = { teams: number; outingMails: number; summaryMails: number; recapMails: number; waiting: string[]; frozen: number; suggestions: number };
 
 export async function runReports(site: string, only?: string): Promise<RunResult> {
-  const out: RunResult = { teams: 0, outingMails: 0, summaryMails: 0, recapMails: 0, waiting: [], frozen: 0 };
+  const out: RunResult = { teams: 0, outingMails: 0, summaryMails: 0, recapMails: 0, waiting: [], frozen: 0, suggestions: 0 };
   const teams = only ? await rest<{ id: string; name: string; level: string | null }[]>(`programs?id=eq.${only}&select=id,name,level`)
     : await rest<{ id: string; name: string; level: string | null }[]>("programs?status=in.(active,ending)&select=id,name,level");
   for (const t of teams) {
@@ -74,6 +76,7 @@ export async function runReports(site: string, only?: string): Promise<RunResult
     out.teams++;
     await outingReports(site, t, people, out);
     await finalRecaps(site, t, people, out);
+    out.suggestions += await opponentSuggestions(t.id);
   }
   return out;
 }
@@ -191,4 +194,28 @@ export async function askParent(site: string, teamId: string, pitcherId: string,
   const [p] = await rest<{ doc: { name?: string } }[]>(`pitchers?program_id=eq.${teamId}&id=eq.${q(pitcherId)}&select=doc`);
   return send(teamId, { kind: "share_request", ref: token, pitcher_id: pitcherId, email }, null,
     () => shareRequestMail({ to: email, pitcher: p?.doc?.name || "Your player", team: t?.name || "the team", link: `${site}/app/approve` }));
+}
+
+// ---------------------------------------------------------------- Build 2: suggestions after games (opponent database)
+// From every at-bat against each opponent hitter (merged duplicates included), the zone and rating suggestions waiting
+// on a coach (lib/opp_suggest.ts). A pending suggestion is refreshed with the latest evidence; one that no longer holds
+// (the grid now says so, the numbers moved) is cleared; a decided one comes back only when opp_suggest says the
+// evidence clearly grew. Nothing on a hitter changes until a coach accepts.
+export async function opponentSuggestions(teamId: string): Promise<number> {
+  const hitters = await restAll<{ id: string; doc: HitterState & { bats?: string }; deleted_at: number | null }>(`hitters?program_id=eq.${teamId}&select=id,doc,deleted_at`);
+  if (!hitters.length) return 0;
+  const evs = (await restAll<{ doc: Ev }>(`events?program_id=eq.${teamId}&deleted_at=is.null&doc->>hitterId=not.is.null&select=doc`)).map((r) => r.doc);
+  const prior = await restAll<Prior & { id: string }>(`opp_suggestions?program_id=eq.${teamId}&select=id,hitter_id,kind,key,value,status,decided_n`);
+  const states: HitterState[] = hitters.map((h) => ({ ...h.doc, id: h.id, deletedAt: h.deleted_at ?? h.doc.deletedAt ?? null }));
+  const batsOf = new Map(hitters.map((h) => [h.id, h.doc.bats || "R"]));
+  const list: ReturnType<typeof suggest> = [];
+  for (const h of states) if (!h.mergedInto && !h.deletedAt) list.push(...suggest(evs as never[], [h, ...states.filter((x) => x.mergedInto === h.id)], prior, (k) => cellWords(k, batsOf.get(h.id) || "R")));
+  const now = new Date().toISOString();
+  if (list.length) await rest("opp_suggestions?on_conflict=program_id,hitter_id,kind,key", { method: "POST", headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify(list.map((x) => ({ program_id: teamId, hitter_id: x.hitterId, kind: x.kind, key: x.key, value: x.value, text: x.text, evidence: x.evidence, n: x.n,
+      status: "pending", updated_at: now, decided_by: null, decided_at: null, decided_n: null }))) });
+  const keep = new Set(list.map((x) => `${x.hitterId}|${x.kind}|${x.key}`));
+  const stale = prior.filter((p) => p.status === "pending" && !keep.has(`${p.hitter_id}|${p.kind}|${p.key}`));
+  for (let i = 0; i < stale.length; i += 100) await rest(`opp_suggestions?id=in.(${stale.slice(i, i + 100).map((x) => x.id).join(",")})`, { method: "DELETE" });
+  return list.length;
 }

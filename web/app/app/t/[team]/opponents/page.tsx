@@ -23,7 +23,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
     <>
       <h1 className="shell-h1">Opponents</h1>
       <Notice sp={sp} />
-      <p className="shell-note">Only your team&apos;s coaches see these. What the engine learns about each hitter stays with your team.</p>
+      <p className="shell-note">Only your team&apos;s coaches see these. What the engine learns about each hitter stays with your team. <Link href={`/app/t/${team}/opponents/fields`}>Your scouting fields</Link></p>
       {opps.length ? <ul className="team-cards opp-cards" aria-label="Opponents">{opps.map((o) => (
         <li key={o.id} className="team-card glass"><h2><Link href={`/app/t/${team}/opponents/${o.id}`}>{o.name}</Link></h2>
           <p><b className="fig">{hitters.filter((x) => x.teamId === o.id && !x.deletedAt).length}</b> hitters</p></li>))}</ul>

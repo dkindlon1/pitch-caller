@@ -1,0 +1,36 @@
+/* Build 2: the opponent database's screens. The same Floodlight blocks as the reports (reports.css): solid panels where
+   things are read and set. Hot and cold are the hitter's (not the call's): hot uses the alert colour with a word on it,
+   cold a plain outline with a word, so neither the call's green nor the weighing blue is reused and colour is never alone. */
+.op-edit { display: grid; gap: 16px; }
+.op-block { display: grid; gap: 10px; align-content: start; }
+.op-block h2 { font-size: 1.05rem; }
+.op-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+.op-ratings { display: grid; gap: 10px; margin: 0; }
+.op-ratings > div { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: center; gap: 4px 12px; }
+.op-ratings dt { color: var(--text-2); font-weight: 600; font-size: 0.9375rem; }
+.op-ratings dd { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.op-word { color: var(--text-3); font-size: 0.8125rem; }
+.op-zone { --c: 46px; display: grid; grid-template-columns: repeat(5, var(--c)); grid-template-rows: repeat(5, var(--c)); gap: 3px; width: max-content; }
+.op-cell { appearance: none; border: 1px solid var(--rule-2); background: var(--panel-3); color: var(--text); border-radius: 8px; font: 700 0.6875rem/1 var(--body); cursor: pointer; touch-action: manipulation; padding: 0; }
+.op-cell.zone { background: var(--panel-2); border-color: rgb(236 235 230 / 0.28); }
+.op-cell.ring { border-style: dashed; }
+.op-cell.hot { background: var(--alert); color: var(--on-alert); border-color: var(--alert); border-style: solid; }
+.op-cell.cold { background: transparent; color: var(--text); border: 2px solid var(--text-2); }
+.op-cell:hover:not(:disabled) { border-color: var(--text); }
+.op-cell:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.op-cell:disabled { cursor: default; }
+.op-field { display: grid; gap: 6px; color: var(--text-2); font-size: 0.875rem; }
+.op-field input, .op-field select { background: var(--panel-3); color: var(--text); border: 1px solid var(--rule-2); border-radius: 10px; min-height: 40px; padding: 0 10px; font: inherit; }
+.op-flabel { display: block; color: var(--text-2); font-size: 0.875rem; margin-bottom: 6px; }
+.op-custom { display: grid; gap: 4px; }
+.op-notes { width: 100%; min-height: 96px; resize: vertical; background: var(--panel-3); color: var(--text); border: 1px solid var(--rule-2); border-radius: 12px; padding: 10px 12px; font: inherit; }
+.op-save { position: sticky; bottom: 12px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--rule-2); width: max-content; max-width: 100%; z-index: 5; }
+.op-sugg { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.op-sugg li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; background: var(--panel-3); border-radius: 12px; padding: 10px 12px; }
+.op-sugg li p { margin: 0; flex: 1 1 240px; }
+.op-sugg form { margin: 0; }
+.op-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.op-lineups { display: grid; gap: 10px; }
+.op-lineup ol { margin: 6px 0 0; padding-left: 22px; columns: 3 160px; font-size: 0.9rem; color: var(--text-2); }
+.op-merge { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
+@media (max-width: 640px) { .op-zone { --c: 52px; } .op-ratings > div { grid-template-columns: minmax(0, 1fr); } }

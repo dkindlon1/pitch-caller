@@ -103,3 +103,16 @@ export function applyHitterScouting<T extends Record<string, unknown>>(doc: T, s
   }
   return out as T;
 }
+
+/** A grid cell in words, from the hitter's side ("up and in", "chase down, away"): for labels and suggestion text. */
+export function cellWords(key: string, bats: string): string {
+  const [r, c] = key.split(",").map(Number), L = bats === "L";
+  const side = c === 2 ? "" : (c < 2) !== L ? "in" : "away";
+  if (!inZone(key)) {
+    const v = r === 0 ? "up" : r === 4 ? "down" : "";
+    return `chase ${[v, side].filter(Boolean).join(", ") || "away"}`;
+  }
+  const v = ["", "up", "", "down"][r];
+  if (!v && !side) return "middle";
+  return v && side ? `${v} and ${side}` : v ? `${v}, middle` : `middle, ${side}`;
+}

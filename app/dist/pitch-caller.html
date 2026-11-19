@@ -4448,6 +4448,14 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
     return zonePct < 0.35 ? 1 : zonePct < 0.42 ? 2 : zonePct < 0.50 ? 3 : zonePct < 0.58 ? 4 : 5;
   }
 
+  // Build 2: a spot in the hitter's own terms -> the 5x5 catcher's-view grid key (web/lib/opp_model.ts cellOfSpot)
+  function spotCell(w, bats) {
+    const L = bats === "L", inC = L ? 3 : 1, awC = L ? 1 : 3;
+    const m = { "up-in": [1, inC], "up-away": [1, awC], "down-in": [3, inC], "down-away": [3, awC], middle: [2, 2], "up-middle": [1, 2], "down-middle": [3, 2],
+      in: [2, inC], away: [2, awC], "chase-up": [0, 2], "chase-down": [4, 2], "chase-in": [2, L ? 4 : 0], "chase-away": [2, L ? 0 : 4] };
+    const x = m[String(w).trim().toLowerCase().replace(/\s+/g, "-")];
+    return x ? x[0] + "," + x[1] : null;
+  }
   // a hitters sheet: name, number, bats, PA, AVG, OBP, SLG, K%, BB% (any order, loose names)
   function parseHitters(text) {
     const all = parseCSV(text);
@@ -4457,7 +4465,11 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
     const ix = { name: col(["name", "player", "hitter", "playername"]), first: col(["first", "firstname"]), last: col(["last", "lastname"]), number: col(["number", "no", "num", "jersey"]),
       bats: col(["bats", "b", "hand", "bat"]), pos: col(["pos", "position"]), pa: col(["pa", "plateappearances"]), ab: col(["ab"]), avg: col(["avg", "ba"]), obp: col(["obp"]), slg: col(["slg"]),
       k: col(["k", "so", "kpct", "k%", "sopct"]), bb: col(["bb", "bbpct", "walks"]),
-      approach: col(["approach", "early"]), path: col(["path", "swingpath", "swing"]), offspeed: col(["offspeed", "os"]) };   // v1.2 Part B tags
+      approach: col(["approach", "early"]), path: col(["path", "swingpath", "swing"]), offspeed: col(["offspeed", "os"]),   // v1.2 Part B tags
+      // Build 2 (opponent database): ratings 1 / 2 / 3 or Unknown, spray, and hot / cold spots (scouting only: the
+      // engine doesn't read these)
+      power: col(["power", "pow"]), contact: col(["contact", "con"]), speed: col(["speed", "spd", "run"]), spray: col(["spray", "sprays"]),
+      hot: col(["hot", "hotzones", "hotspots"]), cold: col(["cold", "coldzones", "coldspots"]) };
     if (ix.name < 0 && ix.last < 0) throw new Error("Needs a Name column (or First and Last).");
     const out = [];
     for (const r of all.slice(1)) {
@@ -4478,9 +4490,26 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
         path: { lift: "lift", uppercut: "lift", flat: "flat", level: "flat" }, offspeed: { hits: "hits", hitshard: "hits", yes: "hits" } };
       const tags = {};
       for (const k of Object.keys(TAGW)) { const v = ix[k] >= 0 ? norm(r[ix[k]] || "") : ""; if (TAGW[k][v]) tags[k] = TAGW[k][v]; }
-      out.push({ name: name.trim(), number: ix.number >= 0 ? (r[ix.number] || "").trim() : "", bats: ["R", "L", "S", "B"].includes(b) ? (b === "B" ? "S" : b) : "R", pos: ix.pos >= 0 ? (r[ix.pos] || "").trim() : "",
+      const bats = ["R", "L", "S", "B"].includes(b) ? (b === "B" ? "S" : b) : "R";
+      // Build 2: ratings ("1" / "2" / "3", or "unknown" / "?" / "u"); blank leaves a hitter's rating as it was
+      const ratings = {};
+      for (const k of ["power", "contact", "speed"]) {
+        const v = ix[k] >= 0 ? norm(r[ix[k]] || "") : "";
+        if (v === "1" || v === "2" || v === "3") ratings[k] = +v; else if (v === "unknown" || v === "u" || v === "?" || v === "unk") ratings[k] = "unknown";
+      }
+      const SPRAYW = { pull: "pull", pullside: "pull", mixed: "mixed", allfields: "mixed", spray: "mixed", oppo: "oppo", opposite: "oppo", oppositefield: "oppo" };
+      const spray = ix.spray >= 0 ? SPRAYW[norm(r[ix.spray] || "")] : undefined;
+      if (spray) tags.spray = spray;
+      // hot / cold spots: "up-in | down-away" (or "/"; a ";" splits columns in these sheets unless the cell is quoted), in
+      // the hitter's own terms (inside is his side), into the catcher's-view grid
+      const zone = {};
+      for (const [k, heat] of [["hot", "hot"], ["cold", "cold"]]) {
+        if (ix[k] < 0) continue;
+        for (const w of String(r[ix[k]] || "").split(/[;|/]+/)) { const c = spotCell(w, bats); if (c) zone[c] = heat; }
+      }
+      out.push({ name: name.trim(), number: ix.number >= 0 ? (r[ix.number] || "").trim() : "", bats, pos: ix.pos >= 0 ? (r[ix.pos] || "").trim() : "",
         stats: { pa: pa ?? "", avg: num(r[ix.avg]) ?? "", obp: num(r[ix.obp]) ?? "", slg: num(r[ix.slg]) ?? "", k_pct: k ?? "", bb_pct: bb ?? "" },
-        ...(Object.keys(tags).length ? { scoutTags: tags } : {}) });
+        ...(Object.keys(tags).length ? { scoutTags: tags } : {}), ...(Object.keys(ratings).length ? { ratings } : {}), ...(Object.keys(zone).length ? { zone } : {}) });
     }
     return out;
   }
@@ -10459,6 +10488,8 @@ function teamPanel(t) {
             const ex = teamHitters(t.id).find((y) => y.name.toLowerCase() === x.name.toLowerCase());
             if (ex) { Object.assign(ex, { number: x.number || ex.number, bats: x.bats, pos: x.pos || ex.pos, stats: Object.assign({}, ex.stats, x.stats) });
               if (x.scoutTags) ex.scoutTags = Object.assign({}, ex.scoutTags, x.scoutTags);   // v1.2 Part B: a sheet's tag columns fill in (blank cells keep his tags)
+              if (x.ratings) ex.ratings = Object.assign({}, ex.ratings, x.ratings);   // Build 2: scouting ratings and spots (blank keeps his)
+              if (x.zone) ex.zone = Object.assign({}, ex.zone, x.zone);
               await dbPut("hitters", ex); updated++; }
             else { const nh = await dbPut("hitters", PCDB.newHitter(t.id, x)); DB.hitters.set(nh.id, nh); added++; }
           }
