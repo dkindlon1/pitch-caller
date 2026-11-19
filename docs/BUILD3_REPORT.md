@@ -1,5 +1,7 @@
 # Build 3: outcome tracking + peak profile: report
 
+> **Update, Nov 19 (Drew's follow-ups):** drift retuned to 0.320 false notes per steady outing, catching 53% of all-night slider drops (was 0.18 and 28%). "Effectively wild" is now staff-only. The drift and archetype readings below are the overnight numbers. See `docs/FOLLOWUPS_1-4_REPORT.md`.
+
 Branch `feat/outcome-tracking` (from `feat/opponent-db`, with Build 2's final commits merged in), pushed. Spec:
 `docs/PLAN_outcome_tracking_2026-11-18.md`. **No trait goes into the engine and no engine file changed**: drift notes and
 findings are read-only views (proved below). Local Supabase only; nothing on `main`, nothing deployed, no production

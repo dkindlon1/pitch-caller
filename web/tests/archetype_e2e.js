@@ -3,6 +3,7 @@
  *   - as the head coach, at least one pitcher's "At his best" label says it (so this test isn't empty);
  *   - signed in as each player and as the parent, on every page their account opens (home, each of their outings, the
  *     season so far, each final recap) and in their PDFs, the label never appears, while their own numbers still do;
+ *     the parent (not linked to a pitcher) on their home, the approval page, and the child's link once approved;
  *   - signed out, on every live public recap link and its PDF, never;
  *   - the database: the stored copies (outcome_findings, peak_baselines) are closed to players and parents;
  *   - the emails: the mail code never carries the label.
@@ -73,6 +74,25 @@ const pdfText = (buf) => {
     check(numbersOk.length === 0 || numbersOk.every(Boolean), `${who} (${names[pid]}): their own outing numbers are still there (${numbersOk.length} outing pages)`);
     if (wild.includes(pid)) check(!own || (!WILD.test(own) && staffLabel[pid].toLowerCase().includes(own.trim().toLowerCase())), `${who}: the rest of the label stays ("${own}" vs staff "${staffLabel[pid]}")`);
     await me.ctx.close();
+  }
+
+  // a parent's account isn't linked to a pitcher: it opens its home, the approval page and the child's public links
+  {
+    const par = await signIn("parent"), seen = [], urls = ["/app", "/app/approve"];
+    for (const u of urls) { const r = await text(par.page, u); pages++; if (r.status !== 200) seen.push(`${u} -> ${r.status}`); else if (WILD.test(r.html)) seen.push(u); }
+    // the child's waiting link is approved for this check (as the parent would) and put back afterwards
+    const pending = (await db.query("update public.recap_shares set approved_at = now(), approved_by = $2 where program_id = $1 and pitcher_id = $3 and revoked_at is null and approved_at is null returning token",
+      [T, season.users.parent.id, season.pitchers.Kid || Object.values(season.pitchers).find((id) => names[id] === "Eli Brooks")])).rows.map((r) => r.token);
+    const approveHtml = (await text(par.page, "/app/approve")).html;
+    const kidLinks = [...new Set([...approveHtml.matchAll(/\/r\/([A-Za-z0-9_-]+)/g)].map((m) => m[1]))];
+    for (const tok of kidLinks) {
+      const r = await text(par.page, `/r/${tok}`); pages++; if (r.status === 200 && WILD.test(r.html)) seen.push(`/r/${tok}`);
+      const p = await pdf(par.page, `/r/${tok}/pdf`); pdfs++; if (p.status === 200 && WILD.test(p.text)) seen.push(`/r/${tok}/pdf`);
+    }
+    check(/Eli Brooks/.test(approveHtml) && !seen.length, `parent (signed in): not on home, the approval page (shows Eli Brooks: ${/Eli Brooks/.test(approveHtml)}), or ${kidLinks.length} of the child's link(s) and PDFs${seen.length ? ": " + seen.join(", ") : ""}`);
+    if (pending.length) await db.query("update public.recap_shares set approved_at = null, approved_by = null where token = any($1)", [pending]);
+    check(kidLinks.length >= 1, `the child's approved link was read as the parent (${kidLinks.length}; ${pending.length} approved for the check, then put back)`);
+    await par.ctx.close();
   }
 
   console.log("3. Public links");
