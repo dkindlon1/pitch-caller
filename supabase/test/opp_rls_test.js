@@ -47,7 +47,10 @@ const dbUrl = (n) => { const u = new URL(BASE); u.pathname = "/" + n; return u.t
     check(v.applied === 0, `a viewer (no manage opponents) can't edit (${JSON.stringify(v.rejected || v.error || "")})`);
     const pl = await push("player", "hitters", [{ ...hitter, id: "h2", updatedAt: now + 6 }]);
     check(pl.applied === 0 || !!pl.error, "a player can't write one");
-    check((await push("owner", "hitters", [{ ...hitter, updatedAt: now + 7, notes: "owner edit" }])).applied !== 1, "the owner who isn't on the staff can't write team data (the existing rule; see the report)");
+    // Nov 19, approved by Drew: the owner edits opponents off the staff (20261119003000_owner_opponents.sql); still not the roster
+    check((await push("owner", "hitters", [{ ...hitter, updatedAt: now + 7, notes: "owner edit" }])).applied === 1, "the owner who isn't on the staff edits a hitter (the Nov 19 rule)");
+    const ownRoster = await push("owner", "pitchers", [{ id: "pz", updatedAt: now + 8, name: "x" }]);
+    check(!!ownRoster.error || ownRoster.applied === 0, "but still can't write the roster");
 
     console.log("2. Reading");
     const read = (who, tbl) => as(who, `select count(*)::int n from public.${tbl} where program_id = $1`, [t]).then((r) => (r.error ? "denied" : r.rows[0].n));

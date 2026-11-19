@@ -35,7 +35,10 @@ export async function teamFor(teamId: string) {
   if (!t) notFound();
   if (t.role === "player") redirect(`/app/me/${teamId}`);   // players have their own portal
   const can = (perm: string) => !!(t.role && t.role !== "player" && t.active && (t.perms || {})[perm]);
-  return { user, team: t, teams, can, isCoach: !!t.role && t.role !== "player", manage: (perm: string) => can(perm) || (t.is_owner && t.status !== "removed") };
+  // oppOwner (Nov 19, approved by Drew): the organization's owner reads and edits this team's opponents even off its
+  // staff; nothing else (the database enforces it: 20261119003000_owner_opponents.sql)
+  const oppOwner = !!(t.is_owner && t.active && t.status !== "removed");
+  return { user, team: t, teams, can, oppOwner, isCoach: !!t.role && t.role !== "player", manage: (perm: string) => can(perm) || (t.is_owner && t.status !== "removed") };
 }
 
 async function rows<T>(table: string, teamId: string): Promise<T[]> {

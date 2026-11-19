@@ -28,13 +28,13 @@ export default function Opponent({ params, searchParams }: { params: Params; sea
 // and the owner's team fields, a merge tool for a hitter entered twice, and adding hitters. Coaches only.
 async function Body({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { team, opp } = await params, sp = await searchParams;
-  const { manage, can, isCoach, team: t } = await teamFor(team);
-  if (!isCoach) notFound();
+  const { manage, can, isCoach, oppOwner, team: t } = await teamFor(team);
+  if (!isCoach && !oppOwner) notFound();
   const [teams, hitters] = await Promise.all([teamsOf(team), hittersOf(team)]);
   const o = teams.find((x) => x.id === opp && !x.isOurs) as (typeof teams)[number] & { tendencies?: Record<string, boolean>; custom?: Record<string, unknown> } | undefined;
   if (!o) notFound();
   const mine = (hitters as unknown as HDoc[]).filter((x) => x.teamId === opp).sort((a, b) => (+a.number || 999) - (+b.number || 999) || (a.name || "").localeCompare(b.name || ""));
-  const edit = manage("manage_opponents") || manage("manage_roster"), canEdit = can("manage_opponents") || can("manage_roster");
+  const edit = manage("manage_opponents") || manage("manage_roster"), canEdit = can("manage_opponents") || can("manage_roster") || oppOwner;
   const sb = await getServerSupabase();
   // every at-bat against this team: who batted where, game by game (pitch events every coach can read)
   const idOf = new Map<string, string>(); for (const h of mine) { idOf.set(h.id, h.id); for (const a of h.aliases || []) idOf.set(a, h.id); }

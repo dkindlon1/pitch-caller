@@ -15,7 +15,7 @@ type Doc = Record<string, unknown> & { id: string; teamId?: string; aliases?: st
 
 async function editor(team: string) {
   const c = await teamFor(team);
-  if (!c.can("manage_opponents") && !c.can("manage_roster")) return null;
+  if (!c.can("manage_opponents") && !c.can("manage_roster") && !c.oppOwner) return null;
   return c;
 }
 

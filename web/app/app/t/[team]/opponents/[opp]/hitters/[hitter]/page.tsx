@@ -29,8 +29,8 @@ export default function Page({ params, searchParams }: { params: Params; searchP
 // duplicates included). Coaches only; players never see opponents. Editing: coaches who manage opponents.
 async function Body({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { team, opp, hitter } = await params, sp = await searchParams;
-  const { isCoach, can, team: t } = await teamFor(team);
-  if (!isCoach) notFound();
+  const { isCoach, can, oppOwner, team: t } = await teamFor(team);
+  if (!isCoach && !oppOwner) notFound();
   const sb = await getServerSupabase(), db = sb as unknown as SB;
   const hres = (await sb.from("hitters").select("doc").eq("program_id", team).eq("id", hitter).limit(1)) as unknown as { data: { doc: HDoc }[] | null };
   const h = hres.data?.[0]?.doc;
@@ -44,7 +44,7 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const abs = buildHitterAtBats(evs, games.map((g) => ({ id: g.id, date: String(g.date) })), pitchers.map((p) => ({ id: p.id, name: p.name, hand: p.hand, pitches: p.pitches })), hitter);
   const ended = abs.filter((a) => a.ended), count = (r: string) => ended.filter((a) => a.result === r).length;
   const seasons = [...new Set(abs.map((a) => a.date.slice(0, 4)))].sort();
-  const sc = cleanHitterScouting(h, defs), canEdit = can("manage_opponents") || can("manage_roster");
+  const sc = cleanHitterScouting(h, defs), canEdit = can("manage_opponents") || can("manage_roster") || oppOwner;
   const spray = (h.scoutTags || {}).spray as Spray | undefined;
   const tags = Object.entries(h.scoutTags || {}).filter(([k]) => TAG_WORDS[k]).map(([k, v]) => TAG_WORDS[k][v]).filter(Boolean);
   const pending = ((sugg as { data: unknown }).data || []) as { id: string; kind: string; key: string; value: string; text: string; n: number }[];
