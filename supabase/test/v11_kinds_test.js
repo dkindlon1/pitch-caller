@@ -1,7 +1,9 @@
 /*
  * v1.1 Step 5: supabase/migrations/20261115000000_v11_kinds.sql against a real Postgres. Every earlier migration is
  * applied, v1.0 data is put in (upload rows with sinkers and cutters stored as FB, pending shape proposals with v1.0
- * tags), then the v1.1 migration runs, and the checks read what it left.
+ * tags), then the v1.1 migration runs, and the checks read what it left. Then every migration newer than v1.1 is applied
+ * on top, in order, on that same data, and must run cleanly (it used to assert v1.1 was the newest file, which every
+ * later migration broke by construction).
  * Run from the repo root: PGURL=postgresql://postgres@localhost:5432/postgres node supabase/test/v11_kinds_test.js
  */
 const { Client } = require("pg");
@@ -22,7 +24,7 @@ const uid = (i) => `00000000-0000-4000-8000-0000000000${String(i).padStart(2, "0
   try {
     await su.query(fs.readFileSync(path.join(__dirname, "auth_stub.sql"), "utf8"));
     const files = fs.readdirSync(MIG).filter((x) => x.endsWith(".sql")).sort();
-    check(files[files.length - 1] === V11, `the v1.1 migration runs last (${files[files.length - 1]})`);
+    check(files.includes(V11), `the v1.1 migration is there (${V11})`);
     for (const f of files.filter((x) => x < V11)) await su.query(fs.readFileSync(path.join(MIG, f), "utf8"));
 
     // ---- v1.0 data
@@ -100,6 +102,15 @@ print(json.dumps([[*c, list(e.migrate_pitch(*c))] for c in cases]))`], { cwd: pa
     const b = (await su.query("select doc from public.pitchers where program_id = $1 and id = 'p1'", [t])).rows[0].doc.pitches.find((x) => x.id === "b");
     check(b.kind === "SI" && b.shape === "two-seam" && b.type === "Sinker" && b.ivb === 14,
       `accepting it leaves the v1.0-stored sinker a consistent v1.1 pitch (${JSON.stringify({ kind: b.kind, shape: b.shape, type: b.type })})`);
+
+    console.log("5. Every later migration on top of the v1.1 data");
+    const snap = async () => (await su.query("select idx, pitch_type, kind from public.upload_pitches where upload_id = $1 order by idx", [up])).rows.map((r) => `${r.idx}:${r.pitch_type}:${r.kind}`).join(",");
+    const beforeLater = await snap();
+    const later = files.filter((x) => x > V11), broke = [];
+    for (const f of later) { try { await su.query(fs.readFileSync(path.join(MIG, f), "utf8")); } catch (e) { broke.push(`${f}: ${e.message}`); break; } }
+    check(!broke.length, `${later.length} later migration(s) apply cleanly after v1.1, in order${later.length ? " (" + later.join(", ") + ")" : ""}${broke.length ? ": " + broke[0] : ""}`);
+    const afterLater = await snap();
+    check(afterLater === beforeLater, `the v1.1 data is unchanged by them (${afterLater.split(",").length} upload rows, same kinds)`);
   } finally {
     await su.end();
     const a2 = new Client({ connectionString: BASE }); await a2.connect(); await a2.query(`drop database if exists ${DB}`); await a2.end();
