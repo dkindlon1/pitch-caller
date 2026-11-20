@@ -8,14 +8,16 @@ for the migration list), `docs/REVIEW_FIXES_REPORT.md`.
 **This is for Drew to run, step by step. Claude did none of it:** nothing merged to `main`, nothing deployed, no
 production migration, no tag.
 
-Checked on a throwaway local merge of all four (`review/merge-stack-3`, never pushed), rebuilt fresh Nov 20 from the
-branches as pushed (4 merged last, game app rebuilt: byte-identical): every SQL test (15 files, rls_matrix 369/369),
-every portal e2e (shell 43, offline 22, portal 30, billing 52, player_admin 24, uploads 33, retention 10, gameplan 38),
-opponents 29, reports 33, backfill 9, joined 10, archetype 17, owner 18, watches 11, Bangle 88, site e2e, `tsc`,
-`npm test`, `test-app.sh` (51 suites, 49 min), identical calls (logging 699 pitches 25/25, opponents 449 12/12, drift
-notes 463 14/14), recounts (report check 23,397/23,397, outcome check 201/201), axe 58 + 12 page states with 0 serious
-or critical, the logging migration on 1,000,000 rows (63 ms; a read waited 5 ms). All passed. Logs:
-`C:/dev/pitch-caller-logs/pre/merged3b/`.
+Checked on a throwaway local merge of all four (`review/merge-stack-4`, never pushed), rebuilt Nov 20 from the branches
+with the Nov 20 fixes (4 merged last, game app rebuilt: identical to the previous merge apart from the version line,
+now `1.4.0`): every SQL test (15 files, rls_matrix 369/369), every portal e2e (shell 43, offline 22, portal 30, billing
+52, player_admin 24, uploads 33, retention 10, gameplan 38), opponents 29, reports 33, backfill 9, joined 10, retry 14,
+recap on a phone 41, archetype 17, owner 18, watches 11, Bangle 88, site e2e, `tsc`, `npm test`, `test-app.sh` (51
+suites, 48 min, version line `PitchIQ 1.4.0 · engine 1.2.3`), identical calls (logging 699 pitches 25/25, opponents 449
+12/12, drift notes 463 14/14), recounts (report check 23,470/23,470, outcome check 173/173), axe 58 + 12 page states
+with 0 serious or critical, the logging migration on 1,000,000 rows (52 ms; a read waited 2 ms). All passed; the retry
+test first failed one check in the full run because of a flaw in the test (it counted emails an earlier test had sent),
+fixed and re-run in the same order: 14/14 twice. Logs: `C:/dev/pitch-caller-logs/pre2/merged4/` and `pre2/retry_rerun/`.
 
 ## What's new
 
@@ -49,8 +51,9 @@ or critical, the logging migration on 1,000,000 rows (63 ms; a read waited 5 ms)
 ## Before you start
 1. **Look at the screenshots** (review section 7):
    - `C:/dev/pitch-caller-shots/build1/rv/outing__1440x900.png`: the outing report on a laptop.
-   - `C:/dev/pitch-caller-shots/build1/rv/public__390x844.png`: the public recap on a phone (the pitch-mix table is cut off
-     after "Strike").
+   - `C:/dev/pitch-caller-shots/prerelease2/after/public-mix__390x844.png` (and the full page, `public__390x844.png`):
+     the public recap's pitch mix on a phone, one card per pitch with every column labeled (fixed Nov 20; it was cut off
+     after "Strike": `prerelease2/before/`). At 820 the table is unchanged: `prerelease2/after/public-mix__820x1180.png`.
    - `C:/dev/pitch-caller-shots/review/pdf-outing-p1.png`: the outing PDF, page 1.
    - `C:/dev/pitch-caller-shots/build3/rv/outing-section__1180x820.png`: outcome tracking on the coach's outing report.
    - `C:/dev/pitch-caller-shots/review/owner-team__1440.png` and `owner-hitter__390.png`: the owner off the staff.
@@ -69,20 +72,16 @@ or critical, the logging migration on 1,000,000 rows (63 ms; a read waited 5 ms)
 4. **Vercel production environment variables**, Vercel → the PitchIQ project → Settings → Environment Variables,
    Production:
    - `RESEND_API_KEY` set (the live key, not `re_test_…`), and `EMAIL_FROM` on the verified domain. Without the key the
-     job records every email as `no_provider` and **never retries it** (review S4, not fixed): those emails are lost.
+     job records every email as `no_provider`; since Nov 20 (review S4) the first run after the key is set sends them,
+     each once. That would be a burst of late emails, so set the key before the release anyway.
    - `SUPABASE_SERVICE_ROLE_KEY` set (the report job and the backfill check run with it).
    - Also already there from earlier releases and needed by the report job: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`,
      `CRON_SECRET`, `SITE_URL` (the production address; email links are built from it). No new variable is added by
      these builds.
 5. **Hold production deploys back until the migrations are in** (recommended). Vercel → Settings → Environments →
    Production → turn **off** "Auto-assign Custom Production Domains". The merge to `main` then builds a production
-   deployment but doesn't serve it until you press **Promote** (step 5 below). Without this, the new portal goes live
+   deployment but doesn't serve it until you press **Promote** (step 4 below). Without this, the new portal goes live
    minutes after the push while CI (about 1 h 25 min) and the migrations are still to come (see Gap risks).
-6. **Decide the game app version.** `APP_VERSION` is `"1.3.0"` on `main` and on all four branches, and the engine is
-   `1.2.3` on both, so the iPad check in step 6 can't tell the old app from the new one. Recommended: during step 1's
-   last merge, set `const APP_VERSION = "1.4.0";` in `app/index.src.html` (and its comment), update the two assertions
-   that expect `"PitchIQ 1.3.0 · engine 1.2.3"` (`app/v121_shake_e2e.js:29`, `app/v123_fixes_e2e.js:78`), then rebuild
-   `app/dist`. Not done or tested by Claude. If you skip it, use the fallback check in step 6.
 
 ## Release order (each step needs Drew)
 1. **Merge into `main`, locally, and push once at the end** (one production build instead of four):
@@ -91,16 +90,16 @@ or critical, the logging migration on 1,000,000 rows (63 ms; a read waited 5 ms)
    3. `git merge --ff-only feat/opponent-db`, then `git merge --ff-only feat/outcome-tracking` (each is built on the one
       before, so both fast-forward).
    4. `git merge feat/watch-security`: a merge commit with **four conflicts, all additive**. Resolve them as the review
-      did (the resolved files are on the local throwaway branch `review/merge-stack-3`, `C:/dev/pc-review`, if you want to
-      copy them: `git checkout review/merge-stack-3 -- <file>`):
+      did (the resolved files are on the local throwaway branch `review/merge-stack-4`, `C:/dev/pc-review`, if you want to
+      copy them: `git checkout review/merge-stack-4 -- <file>`):
       - `app/build.py`: keep both; `watch_sec.js` comes before `watch.js`, then `peak.js`.
       - `scripts/test-app.sh`: keep `import_opp_test`, `peak_test` and `watch_sec_test`.
       - `scripts/test-sql.sh`: keep both lists of tests.
       - `web/app/app/t/[team]/settings/page.tsx`: import both `markSeasonOver` and `removeWatch`, and keep both the
         Seasons and the Watches sections.
    5. **Rebuild the game app** rather than trusting the text merge: `cd app && python build.py`, then commit `app/dist` if
-      it changed (on the throwaway merge it came out byte-identical). If you're bumping the version (Before you start
-      #6), do it here, before the rebuild.
+      it changed (on the throwaway merge it came out byte-identical). The game app version is already `1.4.0` on
+      `feat/watch-security` (Nov 20), so it lands with this merge; `main` says `1.3.0`.
    6. `git push origin main`.
 2. **CI must pass on `main`** (Actions → CI on the merge commit, all four jobs green, about 1 h 25 min) before the
    migrations. If it fails, stop here: with auto-assign off nothing has changed for anyone yet.
@@ -129,15 +128,14 @@ or critical, the logging migration on 1,000,000 rows (63 ms; a read waited 5 ms)
    game app at `/app/game/` and registers the report cron from `web/vercel.json`.
 5. **Every iPad (and laptop used for games): open the game app once and check the version** under Game on the setup
    screen. Do it after the current game on that device; the app updates when it's reloaded between games.
-   - With the bump: `PitchIQ 1.4.0 · engine 1.2.3`.
-   - Without it, the line doesn't change, and there's no other on-screen sign that's there before a game. Fallback:
-     after that device's first game syncs, its pitches carry the engine mix (the new app's logging), which the old app
-     never sends: `select g.doc->>'deviceId' as device, bool_or(e.has_mix) as new_app, count(*) from public.events e join
+   - New app: `PitchIQ 1.4.0 · engine 1.2.3`. Still the old one: `PitchIQ 1.3.0 · engine 1.2.3` (reload it again).
+   - Cross-check from the database, after that device's first game syncs: its pitches carry the engine mix (the new
+     app's logging), which the old app never sends: `select g.doc->>'deviceId' as device, bool_or(e.has_mix) as new_app, count(*) from public.events e join
      public.games g on g.program_id = e.program_id and g.id = e.game_id where e.synced_at > now() - interval '1 day' and
      e.doc->>'type' = 'pitch' group by 1;` A device showing `false` is still on the old app.
 6. **Tag the release:** `git tag -a v1.4 -m "Builds 1-4: reports and recap, opponents, outcome tracking, watch
    security prototype"` on the `main` commit that was deployed, then `git push origin v1.4`. (Tags so far: `v1.0`, `v1.2`,
-   `v1.2.1`; `main` already says 1.3.0, so `v1.4` keeps the numbers going up.)
+   `v1.2.1`; the game app now says 1.4.0, so the tag matches it.)
 
 ## Gap risks
 | If… | What happens | How long it can safely last |
@@ -147,8 +145,9 @@ or critical, the logging migration on 1,000,000 rows (63 ms; a read waited 5 ms)
 | **The promote stops part way** | The files before the failing one stay applied (the workflow's "Up to date afterwards" step and its log show which). After #2 without #3: if the new portal were live, the next sync or the 10:41 UTC cron would email **every past game to every coach and pitcher**. | Zero with the new portal live. With it held back: fix as in step 3 before promoting. |
 | **Old iPad app against the new schema and portal** (a device not reloaded yet) | It calls and syncs as before (checked: `logging_sync_test`, and the season seed plays one game on `main`'s app build). Its pitches carry no engine mix (`has_mix` false/null), so those outings show less in outcome tracking; no drift notes on that iPad; its watch prototype (only with `?watch=1`) doesn't check the team's watch list, so a removed watch isn't enforced there. | A day. Update every device the same day. |
 | **New game app against the old schema** (only if the new portal went live before the migrations) | Watch list calls fail (only with `?watch=1`); its call after a sync gets an error and is ignored; calling and syncing work. | Minutes, same as the first row. |
-| **Only some branches released** (stopped after 1–3) | Works: 1–3 have no dependency on 4, and their migrations are #1–#6. Releasing 4 later adds #7 (dated last, so it still sorts after). Releasing 4 without 1–3 needs `v11_kinds_test`'s fix from build 1 for CI to pass, so don't. | Indefinitely. |
-| **Report emails fail** (bad Resend key, provider down) | Each failed email is marked failed and **never retried** (S4, not fixed); one error in a team's run also stops that run for every later team (S4, S10); the next day's cron goes on from there. | Watch the first runs (Checks after going live). |
+| **Only some branches released** (stopped after 1–3) | Works: 1–3 have no dependency on 4, and their migrations are #1–#6. Releasing 4 later adds #7 (dated last, so it still sorts after). The version bump is on 4, so the game app keeps saying `1.3.0` until then (use the database cross-check in step 5). Releasing 4 without 1–3 needs `v11_kinds_test`'s fix from build 1 for CI to pass, so don't. | Indefinitely. |
+| **No Resend key on production** | Every email is recorded `no_provider`, nothing is sent. Since Nov 20 (S4 fixed for this case) the first run after the key is set sends each of them once, late; the backfill and joined-date rules still apply. | Hours: set the key and they go out on the next sync or cron. Days means a burst of stale emails. |
+| **Report emails fail** (key set but rejected, provider down) | Each email the provider rejects is marked `failed` and **not retried** (that part of S4 is still open); one error in a team's run also stops that run for every later team (S4, S10); the next day's cron goes on from there. | Watch the first runs (Checks after going live). |
 
 ## Checks after going live
 Create nothing: no game, no note, no season, no link.
@@ -202,6 +201,6 @@ reverse order:
   and the old game app's sync was checked, but `main`'s portal suites weren't run against the seven migrations.
 - **Production-size timing:** the events lock was measured on a 1,000,000-row copy, not production; the first report
   run's cost on a team with several seasons (it reads every event for outcome tracking) wasn't measured, and it has 300 s.
-- **Known, not fixed (review "should fix"):** S4 (emails never retried; one error stops later teams' run), S5 (a game
+- **Known, not fixed (review "should fix"):** S4's other half (an email the provider rejected, `failed`, is never retried; one error stops later teams' run; the `no_provider` half was fixed Nov 20), S5 (a game
   synced after "Mark season over" isn't added to the frozen recap), S10 (event reads page by offset with no order, so a
   team with more than 1,000 events in a game or season can skip or double rows), S8, S11.
