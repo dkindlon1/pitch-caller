@@ -51,6 +51,8 @@ function stop(child) {
     console.log("1. The backfill migration (as on deploy); anything the season still had owed goes out first");
     if (fs.existsSync(MIG)) await db.query(fs.readFileSync(MIG, "utf8"));
     await run(SITE);
+    // emails written from here on (earlier tests may have emailed games that this backfill run now marks as past)
+    const startId = +(await db.query("select coalesce(max(id), 0) n from public.report_mail")).rows[0].n;
     const backfilled = (await db.query("select ref from public.report_backfill where program_id = $1 and kind = 'game'", [T])).rows.map((r) => r.ref);
     check(backfilled.length > 0, `the season's past games are backfilled (${backfilled.length})`);
     const src = (await db.query("select id, doc from public.games where program_id = $1 and doc ->> 'status' = 'final' and doc ->> 'dupOf' is null order by doc ->> 'date' desc, (doc ->> 'pitches')::int desc limit 1", [T])).rows[0];
@@ -88,8 +90,8 @@ function stop(child) {
     check(Object.keys(counts).every((to) => want.has(to)) && Object.entries(expectPer).every(([e, n]) => counts[e] === n), `to the people who were owed them, as many as each was owed (${Object.keys(expectPer).length} people)`);
     check(!r1.some((m) => m.email === NEWC) && !got1.some((m) => m.to.includes(NEWC)), "nothing for the coach who joined after (joined-date rule)");
     const all2 = +(await db.query("select count(*) n from public.report_mail where program_id = $1", [T])).rows[0].n;
-    const pastMail = +(await db.query("select count(*) n from public.report_mail where program_id = $1 and ref = any($2)", [T, backfilled])).rows[0].n;
-    check(all2 === all1 && pastMail === 0, `no new rows, and no email for any backfilled game (${all2 - all1} new rows; ${pastMail} for past games)`);
+    const pastMail = +(await db.query("select count(*) n from public.report_mail where program_id = $1 and ref = any($2) and id > $3", [T, backfilled, startId])).rows[0].n;
+    check(all2 === all1 && pastMail === 0, `no new rows, and no email for any backfilled game (${all2 - all1} new rows; ${pastMail} for past games since the test began)`);
 
     console.log("4. Sent stays sent");
     const in2 = (await inbox()).length;
