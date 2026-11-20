@@ -171,7 +171,7 @@ function toast(msg) { const t = document.getElementById("toast"); t.textContent 
 const G = () => S.game;
 // every call gets its own id (the watch is sent the call on screen by id: the same pitch and spot twice in a row are two calls)
 const nextCallId = () => (G().callSeq = (G().callSeq || 0) + 1);
-const APP_VERSION = "1.3.0";   // logged with every pitch and shown under Game on the setup screen (1.3.0: watch prototype, opt-in; 1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
+const APP_VERSION = "1.4.0";   // logged with every pitch and shown under Game on the setup screen (1.4.0: builds 1-4 release: reports, opponents, outcome tracking and drift notes, watch security; 1.3.0: watch prototype, opt-in; 1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
