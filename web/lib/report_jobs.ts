@@ -10,6 +10,9 @@ import { cellWords } from "./opp_model.ts";
 //      (every pitcher's report in that game and the game summary).
 //   2. Final recaps: a season a coach marked over gets each pitcher's recap built from the raw events, frozen as a
 //      version, and emailed to that pitcher and to the coaches.
+// Nobody is emailed about a game that ended (or a season marked over) before they joined the team: a coach added
+// mid-season, or a pitcher whose account was linked later, gets only what ends after that. The older reports are still
+// theirs to open in the portal.
 // Each email is written to report_mail before it's sent, under a unique key, so two runs at once never send it twice.
 // Nothing about a report is stored except the frozen recap: the pages build the rest from the events every time.
 // Who gets them: the team's coaches (any staff role) and the pitcher's own account (a young player's parent account).
@@ -43,7 +46,7 @@ const rpc = <T,>(fn: string, args: Record<string, unknown>) => rest<T>(`rpc/${fn
 const q = encodeURIComponent;
 
 type GameRow = { id: string; doc: { date?: string; status?: string; dupOf?: string; pitches?: number; endedAt?: number; opponentId?: string | null; level?: string } };
-type Person = { user_id: string; email: string; role: string; pitcher_id: string | null };
+type Person = { user_id: string; email: string; role: string; pitcher_id: string | null; joined: number };
 type MailKey = { kind: string; ref: string; pitcher_id: string; email: string };
 
 // claim one email: true when this run wrote the row (so this run sends it)
@@ -71,7 +74,7 @@ export async function runReports(site: string, only?: string): Promise<RunResult
   const teams = only ? await rest<{ id: string; name: string; level: string | null }[]>(`programs?id=eq.${only}&select=id,name,level`)
     : await rest<{ id: string; name: string; level: string | null }[]>("programs?status=in.(active,ending)&select=id,name,level");
   for (const t of teams) {
-    const people = await rpc<Person[]>("pc_report_people", { p: t.id });
+    const people = await withJoined(t.id, await rpc<Omit<Person, "joined">[]>("pc_report_people", { p: t.id }));
     if (!people.length) continue;   // a team that isn't switched on gets nothing
     out.teams++;
     await outingReports(site, t, people, out);
@@ -87,6 +90,24 @@ async function teamMeta(teamId: string) {
     restAll<{ id: string; doc: { name?: string } }>(`teams?program_id=eq.${teamId}&select=id,doc`)]);
   return { pitchers: new Map(pitchers.map((p) => [p.id, p.doc])), names: new Map(teams.map((x) => [x.id, x.doc?.name || "Opponent"])) };
 }
+
+// when each person joined the team: added to it (members.added_at), and for a player also when his account was linked to
+// his pitcher record (player_links.linked_at), whichever is later. Unknown: treated as just now, so nothing older goes.
+async function withJoined(teamId: string, people: Omit<Person, "joined">[]): Promise<Person[]> {
+  if (!people.length) return [];
+  const [members, links] = await Promise.all([
+    restAll<{ user_id: string; added_at: string }>(`members?program_id=eq.${teamId}&select=user_id,added_at`),
+    restAll<{ user_id: string; pitcher_id: string; linked_at: string }>(`player_links?program_id=eq.${teamId}&select=user_id,pitcher_id,linked_at`)]);
+  const added = new Map(members.map((m) => [m.user_id, Date.parse(m.added_at)]));
+  const now = Date.now();
+  return people.map((p) => {
+    const link = p.pitcher_id ? links.find((l) => l.user_id === p.user_id && l.pitcher_id === p.pitcher_id) : undefined;
+    const joined = Math.max(added.get(p.user_id) ?? now, link ? Date.parse(link.linked_at) : 0);
+    return { ...p, joined: Number.isFinite(joined) ? joined : now };
+  });
+}
+// when a game ended: the game app's End game time; an older game without one counts as the end of its day (UTC)
+const endedAt = (g: GameRow) => Number(g.doc.endedAt) || Date.parse(`${g.doc.date}T23:59:59Z`) || 0;
 
 // games and seasons from before the report emails started (20261118020000_report_backfill.sql): viewable, never emailed
 async function backfilled(teamId: string, kind: "game" | "season"): Promise<Set<string>> {
@@ -110,8 +131,9 @@ async function outingReports(site: string, t: { id: string; name: string; level:
     const pids = [...new Set(ps.map((e) => e.pitcherId).filter((x): x is string => !!x))];
     if (!pids.length) continue;
     const owed = (kind: string, pitcher: string, email: string) => !done.some((d) => d.kind === kind && d.ref === g.id && d.pitcher_id === pitcher && d.email === email);
-    const pitcherMails = pids.flatMap((pid) => people.filter((p) => p.role === "player" && p.pitcher_id === pid && owed("outing", pid, p.email)).map((p) => ({ pid, p })));
-    const coachMails = coaches.filter((c) => owed("game_summary", "", c.email));
+    const ended = endedAt(g), onTeam = (p: Person) => p.joined <= ended;   // joined before the game ended
+    const pitcherMails = pids.flatMap((pid) => people.filter((p) => p.role === "player" && p.pitcher_id === pid && onTeam(p) && owed("outing", pid, p.email)).map((p) => ({ pid, p })));
+    const coachMails = coaches.filter((c) => onTeam(c) && owed("game_summary", "", c.email));
     if (!pitcherMails.length && !coachMails.length) continue;
     meta = meta || await teamMeta(t.id);
     const date = String(g.doc.date), opponent = g.doc.opponentId ? meta.names.get(g.doc.opponentId) || null : null;
@@ -132,9 +154,9 @@ async function outingReports(site: string, t: { id: string; name: string; level:
 }
 
 // ---------------------------------------------------------------- final recaps: build, freeze, email
-type SeasonRow = { id: string; name: string; start_date: string; end_date: string };
+type SeasonRow = { id: string; name: string; start_date: string; end_date: string; ended_at?: string };
 export async function finalRecaps(site: string, t: { id: string; name: string; level: string | null }, people: Person[], out: RunResult) {
-  const seasons = await rest<SeasonRow[]>(`seasons?program_id=eq.${t.id}&select=id,name,start_date,end_date&order=end_date.desc`);
+  const seasons = await rest<SeasonRow[]>(`seasons?program_id=eq.${t.id}&select=id,name,start_date,end_date,ended_at&order=end_date.desc`);
   const old = await backfilled(t.id, "season");
   for (const s of seasons) {
     const have = await rest<{ pitcher_id: string }[]>(`recap_versions?season_id=eq.${s.id}&select=pitcher_id`);
@@ -163,12 +185,13 @@ export async function finalRecaps(site: string, t: { id: string; name: string; l
       built.push({ pid, name: doc?.name || "Pitcher" });
     }
     if (old.has(s.id)) continue;   // from before the emails started: frozen above, not emailed
+    const over = Date.parse(String(s.ended_at)) || Date.now(), onTeam = (p: Person) => p.joined <= over;   // joined before it was marked over
     for (const b of built)
-      for (const p of people.filter((x) => x.role === "player" && x.pitcher_id === b.pid))
+      for (const p of people.filter((x) => x.role === "player" && x.pitcher_id === b.pid && onTeam(x)))
         if (await send(t.id, { kind: "final_recap", ref: s.id, pitcher_id: b.pid, email: p.email }, p.user_id,
           () => recapMail({ to: p.email, season: s.name, team: t.name, recaps: [{ pitcher: b.name, link: `${site}/app/me/${t.id}/${b.pid}/recap/${s.id}` }], forCoach: false }))) out.recapMails++;
     if (built.length)
-      for (const c of people.filter((x) => x.role !== "player"))
+      for (const c of people.filter((x) => x.role !== "player" && onTeam(x)))
         if (await send(t.id, { kind: "final_recap", ref: s.id, pitcher_id: "", email: c.email }, c.user_id,
           () => recapMail({ to: c.email, season: s.name, team: t.name, forCoach: true,
             recaps: built.map((b) => ({ pitcher: b.name, link: `${site}/app/t/${t.id}/roster/${b.pid}/recap/${s.id}` })) }))) out.recapMails++;
