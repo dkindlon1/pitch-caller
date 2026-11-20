@@ -1,5 +1,5 @@
 import "server-only";
-import { gameReportsMail, outingMail, recapMail, sendMail, shareRequestMail, type OutingLine } from "./email";
+import { gameReportsMail, hasProvider, outingMail, recapMail, sendMail, shareRequestMail, type OutingLine } from "./email";
 import { buildRecap, line, pitchesOf, type Ev, type GameMeta } from "./report_data.ts";
 import { suggest, type HitterState, type Prior } from "./opp_suggest.ts";
 import { cellWords } from "./opp_model.ts";
@@ -16,6 +16,8 @@ import PCPeak from "./peak";
 // mid-season, or a pitcher whose account was linked later, gets only what ends after that. The older reports are still
 // theirs to open in the portal.
 // Each email is written to report_mail before it's sent, under a unique key, so two runs at once never send it twice.
+// One recorded as "no_provider" (no email provider set up when it was due) is sent by the first run after a provider is:
+// that run takes the row over in one conditional update, so only one run can, and a sent email is never sent again.
 // Nothing about a report is stored except the frozen recap: the pages build the rest from the events every time.
 // Who gets them: the team's coaches (any staff role) and the pitcher's own account (a young player's parent account).
 // Never a catcher, an opponent, or anyone off the team. Games with no pitcher record (sample staff) send nothing.
@@ -51,16 +53,21 @@ type GameRow = { id: string; doc: { date?: string; status?: string; dupOf?: stri
 type Person = { user_id: string; email: string; role: string; pitcher_id: string | null; joined: number };
 type MailKey = { kind: string; ref: string; pitcher_id: string; email: string };
 
-// claim one email: true when this run wrote the row (so this run sends it)
+const keyOf = (team: string, m: MailKey) => `program_id=eq.${team}&kind=eq.${q(m.kind)}&ref=eq.${q(m.ref)}&pitcher_id=eq.${q(m.pitcher_id)}&email=eq.${q(m.email)}`;
+// claim one email: true when this run wrote the row, or (a provider now set up) took over a "no_provider" one, so this
+// run sends it. The takeover is one UPDATE ... WHERE status = 'no_provider': two runs at once, only one gets the row.
 async function claim(team: string, m: MailKey, userId: string | null): Promise<boolean> {
   const rows = await rest<{ id: number }[]>("report_mail?on_conflict=program_id,kind,ref,pitcher_id,email", {
     method: "POST", headers: { prefer: "resolution=ignore-duplicates,return=representation" },
     body: JSON.stringify([{ program_id: team, kind: m.kind, ref: m.ref, pitcher_id: m.pitcher_id, email: m.email, user_id: userId, status: "sending" }]) });
-  return rows.length === 1;
+  if (rows.length === 1) return true;
+  if (!hasProvider()) return false;
+  const retry = await rest<{ id: number }[]>(`report_mail?${keyOf(team, m)}&status=eq.no_provider`, {
+    method: "PATCH", headers: { prefer: "return=representation" }, body: JSON.stringify({ status: "sending", error: null }) });
+  return retry.length === 1;
 }
 async function settle(team: string, m: MailKey, status: string, error?: string) {
-  await rest(`report_mail?program_id=eq.${team}&kind=eq.${q(m.kind)}&ref=eq.${q(m.ref)}&pitcher_id=eq.${q(m.pitcher_id)}&email=eq.${q(m.email)}`, {
-    method: "PATCH", body: JSON.stringify({ status, error: error || null }) });
+  await rest(`report_mail?${keyOf(team, m)}`, { method: "PATCH", body: JSON.stringify({ status, error: error || null }) });
 }
 async function send(team: string, m: MailKey, userId: string | null, make: () => Parameters<typeof sendMail>[0]): Promise<boolean> {
   if (!(await claim(team, m, userId))) return false;
@@ -122,7 +129,8 @@ async function outingReports(site: string, t: { id: string; name: string; level:
   const games = (await restAll<GameRow>(`games?program_id=eq.${t.id}&deleted_at=is.null&select=id,doc`))
     .filter((g) => g.doc?.status === "final" && !g.doc.dupOf && /^\d{4}-\d{2}-\d{2}$/.test(String(g.doc.date)) && !old.has(g.id));
   if (!games.length) return;
-  const done = await restAll<MailKey>(`report_mail?program_id=eq.${t.id}&kind=in.(outing,game_summary)&select=kind,ref,pitcher_id,email`);
+  // emails already handled; a "no_provider" one is still owed once a provider is set up
+  const done = await restAll<MailKey>(`report_mail?program_id=eq.${t.id}&kind=in.(outing,game_summary)${hasProvider() ? "&status=neq.no_provider" : ""}&select=kind,ref,pitcher_id,email`);
   const coaches = people.filter((p) => p.role !== "player");
   let meta: Awaited<ReturnType<typeof teamMeta>> | null = null;
   for (const g of games) {
