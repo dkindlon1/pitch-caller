@@ -140,18 +140,19 @@ Also fixed and pushed: B2 above (owner `isOurs` guard, 7118d4e). Nothing else wa
 
 **Order:** merge 1, 2, 3, then 4. Rebuild `app/dist` after merging 4 rather than trusting the text merge. Because 4's copy of `v11_kinds_test` fails until it has 1's fix, merge 4 last.
 
-**Production migrations (Drew to approve each), in this order:**
+**Production migrations (Drew to approve each), in this order** (updated Nov 19 after the review fixes; see `docs/REVIEW_FIXES_REPORT.md`):
 
 | # | Migration | What it does to existing rows |
 |---|---|---|
-| 1 | `20261118000000_build1_logging.sql` | Adds two STORED generated columns to `public.events`. **Rewrites the whole events table twice under an exclusive lock**, which blocks every iPad's sync while it runs (S3). Existing rows get `style_applied` null and `has_mix` false. Prefer dropping it or merging it into one `ALTER`. |
-| 2 | `20261118010000_reports.sql` | New tables (notes, seasons, frozen recaps, under-18 marks, public links, mail log) and functions. Touches no existing table. **Deploy with B1's fix or a `report_mail` pre-fill, otherwise the first run emails all history.** Needs `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM` and `SITE_URL` on Vercel, and the second cron entry in `vercel.json`. |
-| 3 | `20261119000000_opponent_db.sql` | New tables (custom fields, suggestions, merge log). No existing rows. |
-| 4 | `20261119003000_owner_opponents.sql` | Replaces `pc_push`, `pc_can_read` and `pc_can_write`, and adds read policies on `teams`, `hitters`, `opp_suggestions` and `opp_merges`. No rows change. The swap is atomic: calls already running finish on the old body. Each new policy calls a function per row, a small cost on every coach's read of teams and hitters. |
-| 5 | `20261119010000_outcome_tracking.sql` | New tables `peak_baselines` and `outcome_findings`. No existing rows. The first report run fills them for every past outing, reading every event (S10). |
-| 6 | `20261119020000_watch_security.sql` | New table `team_watches` and three functions. No existing rows. |
+| 1 | `20261118000000_build1_logging.sql` | Adds two **nullable columns with no default** to `public.events` (`style_applied`, `has_mix`) and a trigger that fills them for events written from now on. There's no table rewrite, and the lock is held for milliseconds: on a 1,000,000-row, 1 GB events table it took 59 ms and a concurrent read waited 3 ms (the old version: 11.3 s, with a rewrite). **Existing rows keep both columns null**, meaning "written before this migration"; nothing reads them but the tests. |
+| 2 | `20261118010000_reports.sql` | New tables (notes, seasons, frozen recaps, under-18 marks, public links, mail log) and functions. Public links now carry `approved_sections` and `paused`. It touches no existing table. Needs `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM` and `SITE_URL` on Vercel, and the second cron entry in `vercel.json`. |
+| 3 | `20261118020000_report_backfill.sql` | **New:** a table `report_backfill`, filled with one row for every game that is already final and every season that already exists. Nothing existing changes. Effect: none of those is ever emailed (their reports stay viewable), so only games finished after this migration send. **Apply it in the same deploy as #2, before the report job's cron or the game app's post-sync call can run.** |
+| 4 | `20261119000000_opponent_db.sql` | New tables (custom fields, suggestions, merge log). No existing rows. |
+| 5 | `20261119003000_owner_opponents.sql` | Replaces `pc_push`, `pc_can_read` and `pc_can_write`. Adds owner read policies on `teams`, `hitters` and `opp_merges` (any truthy `isOurs` is kept from him), and `pc_opp_suggestions_owner`, which gives the owner off the staff suggestions' questions only; he has no direct read of `opp_suggestions`. No rows change. The swap is atomic: calls already running finish on the old body. Each new policy calls a function per row, a small cost on every coach's read of teams and hitters. |
+| 6 | `20261119010000_outcome_tracking.sql` | New tables `peak_baselines` and `outcome_findings`. No existing rows. The first report run fills them for every past outing, reading every event (S10, not changed by the fixes). |
+| 7 | `20261119020000_watch_security.sql` | New table `team_watches` and three functions; `pc_watch_register` takes `readd` (only a deliberate re-add clears a removal). No existing rows. |
 
-None of the six has a down script. Undoing #4 means re-applying the `20261106000000_pitchiq_teams.sql` bodies.
+None of the seven has a down script. Undoing #5 means re-applying the `20261106000000_pitchiq_teams.sql` bodies. #1's columns and trigger can be dropped with no effect on anything else.
 
 ## 6. Not verified
 
