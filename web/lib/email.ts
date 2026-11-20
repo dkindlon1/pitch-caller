@@ -6,6 +6,9 @@ import "server-only";
 export type Mail = { to: string; subject: string; text: string; html: string };
 export type Sent = { status: "sent" | "failed" | "no_provider"; id?: string; error?: string };
 
+/** Whether a provider is configured: emails recorded as "no_provider" are retried only once one is. */
+export const hasProvider = () => !!process.env.RESEND_API_KEY;
+
 export async function sendMail(m: Mail): Promise<Sent> {
   // without a verified domain of its own, Resend only sends from its test address (and only to the account owner)
   const key = process.env.RESEND_API_KEY, from = process.env.EMAIL_FROM || "PitchIQ <onboarding@resend.dev>";

@@ -236,6 +236,16 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .data-tbl input[type=number] { width: 76px; }
 .pq .data-tbl.small td, .pq .data-tbl.small th { font-size: 0.8125rem; padding: 6px 10px; }
 .pq .data-tbl .thin { color: var(--text-4); font-weight: 400; }   /* under the 10-pitch minimum */
+/* the pitch-mix table on a phone: one card per pitch, every column labeled, nothing past the screen's edge */
+@media (max-width: 600px) {
+  .pq .data-tbl.mix-cards, .pq .data-tbl.mix-cards tbody { display: block; }
+  .pq .data-tbl.mix-cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .pq .data-tbl.mix-cards tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 14px; padding: 14px 12px; border-top: 1px solid var(--rule); }
+  .pq .data-tbl.mix-cards tbody tr:first-child { border-top: 0; }
+  .pq .data-tbl.mix-cards th[scope=row] { grid-column: 1 / -1; padding: 0; border: 0; white-space: normal; color: var(--text); font: 600 1rem/1.2 var(--body); }
+  .pq .data-tbl.mix-cards td { display: block; padding: 0 !important; border: 0; text-align: left; min-width: 0; }
+  .pq .data-tbl.mix-cards td::before { content: attr(data-label); display: block; margin-bottom: 3px; font: 500 0.75rem/1.2 var(--body); color: var(--text-3); }
+}
 .pq .review tr.out td { color: var(--text-4); }
 .pq .review tr.dev td:nth-child(2) { font-style: italic; }
 
