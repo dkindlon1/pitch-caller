@@ -24,10 +24,10 @@ export function Section({ id, title, aside, children }: { id: string; title: str
 }
 
 /** A rate cell: the share when there's enough of that pitch, else the counts; data-v is always num/den. */
-function RateTd({ k, r, n }: { k: string; r: Rate; n: number }) {
+function RateTd({ k, r, n, label }: { k: string; r: Rate; n: number; label?: string }) {
   const p = pct(r);
-  if (r.den === 0) return <td className="num thin" data-k={k} data-v={rv(r)}>–</td>;
-  return <td className="num" data-k={k} data-v={rv(r)}>{p ? <>{p}<small>{r.num}/{r.den}</small></> : <span className="thin" title={`Fewer than ${MIN_SAMPLE} of this pitch: counts only`}>{r.num} of {r.den}</span>}</td>;
+  if (r.den === 0) return <td className="num thin" data-k={k} data-v={rv(r)} data-label={label}>–</td>;
+  return <td className="num" data-k={k} data-v={rv(r)} data-label={label}>{p ? <>{p}<small>{r.num}/{r.den}</small></> : <span className="thin" title={`Fewer than ${MIN_SAMPLE} of this pitch: counts only`}>{r.num} of {r.den}</span>}</td>;
 }
 
 // ---------------------------------------------------------------- the line
@@ -49,22 +49,24 @@ export function LineStrip({ l, k = "line", extra }: { l: Line; k?: string; extra
 }
 
 // ---------------------------------------------------------------- pitch mix and results
+// On a phone (600 px and under) each pitch is a card: its name, then every column with its label (data-label), so no
+// column is cut off past the screen's edge (portal.css, .mix-cards). Wider screens keep the table.
 function MixTable({ slice, k, label }: { slice: MixSlice; k: string; label: string }) {
   if (!slice.n) return <p className="rp-empty">No pitches in this group.</p>;
   return (
-    <div className="tbl-scroll" tabIndex={0} role="region" aria-label={label}><table className="data-tbl">
+    <div className="tbl-scroll" tabIndex={0} role="region" aria-label={label}><table className="data-tbl mix-cards">
       <thead><tr><th scope="col">Pitch</th><th scope="col" className="num">Pitches</th><th scope="col" className="num">Share</th><th scope="col" className="num">Strike</th>
         <th scope="col" className="num">Whiff per swing</th><th scope="col" className="num">Hard contact</th><th scope="col" className="num">Positive</th><th scope="col" className="num">Negative</th></tr></thead>
       <tbody>{slice.rows.map((r: MixRow) => (
         <tr key={r.key}>
           <th scope="row"><span className="pq-pitch"><Chip kind={r.kind} />{r.name}</span></th>
-          <td className="num" data-k={`${k}.${r.key}.n`} data-v={r.n}>{r.n}</td>
-          <td className="num" data-k={`${k}.${r.key}.share`} data-v={rv(r.share)}>{pct(r.share)}</td>
-          <RateTd k={`${k}.${r.key}.strike`} r={r.strikes} n={r.n} />
-          <RateTd k={`${k}.${r.key}.whiff`} r={r.whiffs} n={r.n} />
-          <RateTd k={`${k}.${r.key}.hard`} r={r.hard} n={r.n} />
-          <td className="num" data-k={`${k}.${r.key}.pos`} data-v={r.positive}>{r.positive}</td>
-          <td className="num" data-k={`${k}.${r.key}.neg`} data-v={r.negative}>{r.negative}</td>
+          <td className="num" data-k={`${k}.${r.key}.n`} data-v={r.n} data-label="Pitches">{r.n}</td>
+          <td className="num" data-k={`${k}.${r.key}.share`} data-v={rv(r.share)} data-label="Share">{pct(r.share)}</td>
+          <RateTd k={`${k}.${r.key}.strike`} r={r.strikes} n={r.n} label="Strike" />
+          <RateTd k={`${k}.${r.key}.whiff`} r={r.whiffs} n={r.n} label="Whiff per swing" />
+          <RateTd k={`${k}.${r.key}.hard`} r={r.hard} n={r.n} label="Hard contact" />
+          <td className="num" data-k={`${k}.${r.key}.pos`} data-v={r.positive} data-label="Positive">{r.positive}</td>
+          <td className="num" data-k={`${k}.${r.key}.neg`} data-v={r.negative} data-label="Negative">{r.negative}</td>
         </tr>))}</tbody>
     </table></div>
   );
