@@ -310,7 +310,7 @@ export const LEVEL_AVG: Record<string, { AVG: number; K: number; BB: number; lab
   college_d3: { AVG: 0.295, K: 0.162, BB: 0.114, label: "D3" },
   college_d2: { AVG: 0.295, K: 0.162, BB: 0.114, label: "D2 (D3 numbers)" },   // PLACEHOLDER_D2: D3's averages until there is D2 data (v1.3)
   college_d1: { AVG: 0.265, K: 0.193, BB: 0.108, label: "D1" },
-  mlb: { AVG: 0.255, K: 0.200, BB: 0.079, label: "pro" },
+  mlb: { AVG: 0.245, K: 0.225, BB: 0.084, label: "pro" },
 };
 export type Trend = { game: string; date: string; pitches: number; strikePct: Rate; whiffPct: Rate; velo: number | null };
 export type OutingRow = { game: string; date: string; opponent?: string | null; line: Line };

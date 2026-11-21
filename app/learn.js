@@ -216,7 +216,7 @@
     college_d3: { AVG: 0.295, OBP: 0.402, SLG: 0.426, K: 0.162, BB: 0.114 },
     college_d2: { AVG: 0.295, OBP: 0.402, SLG: 0.426, K: 0.162, BB: 0.114 },   // PLACEHOLDER_D2: D3's averages until there is D2 data (v1.3)
     college_d1: { AVG: 0.265, OBP: 0.368, SLG: 0.395, K: 0.193, BB: 0.108 },
-    mlb: { AVG: 0.255, OBP: 0.320, SLG: 0.405, K: 0.200, BB: 0.079 },
+    mlb: { AVG: 0.245, OBP: 0.315, SLG: 0.404, K: 0.225, BB: 0.084 },
   };
   LEVEL_AVG.travel = LEVEL_AVG.hs;   // travel ball uses the high school numbers (engine v0.7c)
   const isOS = (k) => k === "SL" || k === "CB" || k === "CH";

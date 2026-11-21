@@ -138,11 +138,11 @@ def rates_v08(teams):
     return r
 
 
-# MLB 2010-15 era per-PA rates (approximate public league averages) -- used only to validate the method
-# against the MLB RE24 table the engine already uses.
-MLB = {"K": 0.200, "BB": 0.079, "HBP": 0.009, "1B": 0.154, "2B": 0.045, "3B": 0.005, "HR": 0.026,
-       "SF": 0.007, "SH": 0.008, "GDP": 0.019, "E": 0.016, "WPPB": 0.0095, "SB": 0.0130, "CS": 0.0050,
-       "R_per_PA": 0.112}
+# MLB per-PA rates: v1.3 refit from Savant MLB 2021-2025, recency weighted (hitter_data/refit_mlb_targets.py).
+# WPPB, SB, CS keep the 2010-15 values (Savant's MLB rows carry no baserunning events).
+MLB = {"K": 0.2251, "BB": 0.0837, "HBP": 0.011, "1B": 0.1418, "2B": 0.043, "3B": 0.0036, "HR": 0.0307,
+       "SF": 0.0069, "SH": 0.0027, "GDP": 0.0178, "E": 0.0108, "WPPB": 0.0095, "SB": 0.013, "CS": 0.005,
+       "R_per_PA": 0.1182}
 
 
 # ---------------------------------------------------------------------------
