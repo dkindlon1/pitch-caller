@@ -12,6 +12,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HS = ("hs", "travel")
+ENGINE_DERIVED = ("radar", "look")     # golden/cases.py draws these from Pitch.mph() (PROFILES' speed gaps)
 
 
 def fmt_pick(c):
@@ -29,8 +30,13 @@ def golden_rows(old_tag, new_tag):
     b = json.load(open(os.path.join(HERE, f"golden_{new_tag}.json")))
     assert len(a) == len(b), "golden sets have different case counts"
     rows, moved = [], 0
+    derived = 0
     for i, (x, y) in enumerate(zip(a, b)):
-        assert x["s"] == y["s"] and x["arsenal"] == y["arsenal"], f"case {i} inputs differ"
+        # radar and look are drawn from the engine's own tables when the inputs are built (golden_v10.inputs), so a
+        # refit of those tables moves them slightly; every other input must be identical
+        strip = lambda s: {k: v for k, v in s.items() if k not in ENGINE_DERIVED}
+        assert strip(x["s"]) == strip(y["s"]) and x["arsenal"] == y["arsenal"], f"case {i} inputs differ"
+        derived += x["s"] != y["s"]
         ca, cb = x["out"].get("call"), y["out"].get("call")
         if not ca or not cb:
             continue
@@ -42,7 +48,7 @@ def golden_rows(old_tag, new_tag):
         elif abs(ca["prob"] - cb["prob"]) > 0.02:
             moved += 1
     n = sum(1 for x in a if x["out"].get("call"))
-    return rows, n, moved
+    return rows, n, moved, derived
 
 
 def scenario_rows(old_path, new_path):
@@ -63,7 +69,7 @@ def scenario_rows(old_path, new_path):
 
 def main():
     old_tag, new_tag, so, sn, out = sys.argv[1:6]
-    g, n, moved = golden_rows(old_tag, new_tag)
+    g, n, moved, derived = golden_rows(old_tag, new_tag)
     sc, ns, sa, sb = scenario_rows(so, sn)
     hs = [r for r in g if r["level"] in HS]
     other = [r for r in g if r["level"] not in HS]
@@ -78,6 +84,8 @@ def main():
          f"- Golden cases with a call: {n}. Top call changed: **{len(g)}** ({len(other)} non-HS, {len(hs)} HS). "
          f"By level: " + ", ".join(f"{k} {v}" for k, v in sorted(by_level.items())) + ".",
          f"- Same top call but its probability moved more than 2 points: {moved}.",
+         f"- Inputs are the same cases; in {derived} of them the radar / look values (drawn from the engine's pitch speeds "
+         "when the inputs are built) moved slightly with the refit profile speed gaps.",
          f"- Read-through scenario rows (suite v12): {ns}; top call changed: **{len(sc)}**; passing "
          f"{sum(r['passed'] for r in sa)} -> {sum(r['passed'] for r in sb)}.", ""]
 
@@ -90,16 +98,23 @@ def main():
         return out_
     L += ["## Golden cases, college and MLB", ""] + (table(other) if other else ["None."]) + [""]
     L += ["## Golden cases, HS and travel (separate, for Drew)", ""] + (table(hs) if hs else ["None."]) + [""]
-    L += ["## Read-through scenario rows (readthrough/scenarios_v12.json)", ""]
-    if sc:
-        L += ["| row | old top call | new top call | old call now | new call before | grade old -> new | pass old -> new |",
-              "|---|---|---|---|---|---|---|"]
-        for r in sc:
-            L.append(f"| {r['id']} | {r['old'][0]} {r['old'][1]} ({r['old'][2]:.0%}, {r['old'][3]}) | {r['new'][0]} {r['new'][1]} "
-                     f"({r['new'][2]:.0%}, {r['new'][3]}) | {r['old_now']:.0%} | {r['new_before']:.0%} | "
-                     f"acc {r['shares'][0]['acc']:.0%} -> {r['shares'][1]['acc']:.0%} | {r['passed'][0]} -> {r['passed'][1]} |")
-    else:
-        L.append("None.")
+    doc = json.load(open(os.path.join(os.path.dirname(HERE), "readthrough", "scenarios_v12.json")))
+    lvl = {r["id"]: r["inputs"].get("level", doc["defaults"].get("level")) for r in doc["rows"]}
+
+    def stable(rows):
+        if not rows:
+            return ["None."]
+        o = ["| row | level | old top call | new top call | old call now | new call before | acceptable old -> new | pass old -> new |",
+             "|---|---|---|---|---|---|---|---|"]
+        for r in rows:
+            o.append(f"| {r['id']} | {lvl.get(r['id'])} | {r['old'][0]} {r['old'][1]} ({r['old'][2]:.0%}, {r['old'][3]}) | "
+                     f"{r['new'][0]} {r['new'][1]} ({r['new'][2]:.0%}, {r['new'][3]}) | {r['old_now']:.0%} | {r['new_before']:.0%} | "
+                     f"{r['shares'][0]['acc']:.0%} -> {r['shares'][1]['acc']:.0%} | {r['passed'][0]} -> {r['passed'][1]} |")
+        return o
+    sc_hs = [r for r in sc if lvl.get(r["id"]) in HS]
+    sc_other = [r for r in sc if lvl.get(r["id"]) not in HS]
+    L += [f"## Read-through scenario rows, college and MLB (readthrough/scenarios_v12.json; {len(sc_other)})", ""] + stable(sc_other)
+    L += ["", f"## Read-through scenario rows, HS and travel (separate, for Drew; {len(sc_hs)})", ""] + stable(sc_hs)
     flips = [(x["id"], x["passed"], y["passed"]) for x, y in zip(sa, sb) if x["passed"] != y["passed"]]
     L += ["", "Scenario rows whose pass / fail changed (top call changed or not): " +
           (", ".join(f"{i} {'pass->FAIL' if a_ else 'fail->pass'}" for i, a_, b_ in flips) if flips else "none") + "."]
