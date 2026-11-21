@@ -59,6 +59,126 @@ TRUE_POWER = os.environ.get("TRUE_POWER", "") == "1"
 SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
 
 # ---------------------------------------------------------------------------
+# v1.3 Part 5 (plan 3.4, Step 5 scaffolding): hidden hitter traits. World only: the engine never reads them (they are not
+# in the Situation the caller sees, nor in true_situation); they reshape the outcome mix outcome_probs drew for the world
+# and the in-play draw. Each trait is in hitter-SD units (0 = an average hitter; presets use about +-1.5) and moves a
+# logit by TRAIT_SIZE per unit:
+#   early       swing share at 0-0 / 1-0 / 0-1                     (logit(swing) += early * early_swing)
+#   two_strike  swing share at two strikes, and foul share of contact at two strikes
+#   contact     whiff share of swings                              (logit(whiff | swing) += contact * contact_whiff; size < 0)
+#   power       double, triple and home run per ball in play       (each logit += power * power_xbh, taken out of the outs)
+#   spray       RECORDED ONLY: the simulator has no ball-in-play direction (foul direction is the timing read the engine
+#               learns from, so it isn't borrowed), so spray changes nothing yet.
+# A swing shift scales the four take outcomes (ball, wild-pitch ball, HBP, called strike) together and the five swing
+# outcomes together, so each keeps its own mix; a whiff shift does the same inside the swings, a foul shift inside contact.
+# No rng draw is made, so a lineup without traits plays exactly the same game as before (bitwise: tests_v13_sim.py).
+#   HITTERS=power                every hitter is the preset
+#   HITTERS=3:power,4:contact    by lineup spot (others average)
+#   HITTERS=2:early=1/contact=-0.5   custom trait values for a spot
+# PLACEHOLDER sizes (plan 3.4: "sized from real hitters in that group at the level"): no fit exists yet. The trait sizes and
+# the preset values below are guesses of the right order, to be replaced when the trait fits land (plan section 7, Step 5).
+# ---------------------------------------------------------------------------
+PLACEHOLDER_TRAIT_SIZES = True
+HITTER_TRAITS = ("early", "two_strike", "contact", "power", "spray")
+TRAIT_SIZE = {"early_swing": 0.35, "two_strike_swing": 0.30, "two_strike_foul": 0.30, "contact_whiff": -0.35, "power_xbh": 0.30}
+HITTER_PRESETS = {                                   # PLACEHOLDER values (plan 3.4), in trait SD units
+    "aggressive_early": {"early": 1.5},
+    "patient": {"early": -1.5, "two_strike": -0.5},
+    "power": {"power": 1.5, "contact": -1.0},
+    "contact": {"contact": 1.5, "power": -0.5},
+    "free_swinger": {"early": 1.5, "contact": -1.0, "power": 0.5},
+    "two_strike_battler": {"two_strike": 1.5, "contact": 0.5},
+}
+_TAKE = ("ball", "wp_ball", "hbp", "cstrike")
+_SWING = ("whiff", "foul", "weak", "solid", "hard")
+
+
+def _lg(p):
+    return math.log(p / (1 - p))
+
+
+def _sg(x):
+    return 1 / (1 + math.exp(-x))
+
+
+def parse_hitters(spec):
+    """HITTERS env value -> {spot: {trait: value}} (spots 1..9; '' -> {})."""
+    def one(txt):
+        if txt in HITTER_PRESETS:
+            return dict(HITTER_PRESETS[txt])
+        out = {}
+        for kv in txt.split("/"):
+            k, _, v = kv.partition("=")
+            if k not in HITTER_TRAITS or not v:
+                raise SystemExit(f"HITTERS: unknown preset or trait {txt!r} (presets: {', '.join(HITTER_PRESETS)}; traits: {', '.join(HITTER_TRAITS)})")
+            out[k] = float(v)
+        return out
+    spec = spec.strip()
+    if not spec:
+        return {}
+    if ":" not in spec:
+        return {i: one(spec) for i in range(1, 10)}
+    res = {}
+    for part in spec.split(","):
+        spot, _, txt = part.partition(":")
+        if not spot.strip().isdigit() or not 1 <= int(spot) <= 9:
+            raise SystemExit(f"HITTERS: bad lineup spot in {part!r}")
+        res[int(spot)] = one(txt.strip())
+    return res
+
+
+HITTERS = parse_hitters(os.environ.get("HITTERS", ""))
+
+
+def _rescale(P, keys, new_total):
+    old = sum(P[k] for k in keys)
+    f = new_total / old
+    for k in keys:
+        P[k] = P[k] * f
+
+
+def apply_hitter_traits(P, traits, balls, strikes):
+    """The world's outcome mix for a hitter with hidden traits (see the block above). Returns a new dict, same key order."""
+    P = dict(P)
+    t = traits or {}
+    a = 0.0
+    if (balls, strikes) in ((0, 0), (1, 0), (0, 1)):
+        a += t.get("early", 0.0) * TRAIT_SIZE["early_swing"]
+    if strikes == 2:
+        a += t.get("two_strike", 0.0) * TRAIT_SIZE["two_strike_swing"]
+    sw = sum(P.get(k, 0.0) for k in _SWING)
+    tot = sw + sum(P.get(k, 0.0) for k in _TAKE)
+    if a and 0 < sw < tot:
+        sw2 = tot * _sg(_lg(sw / tot) + a)
+        _rescale(P, [k for k in _TAKE if k in P], tot - sw2)
+        _rescale(P, _SWING, sw2)
+        sw = sw2
+    c = t.get("contact", 0.0) * TRAIT_SIZE["contact_whiff"]
+    if c and 0 < P["whiff"] < sw:
+        wh2 = sw * _sg(_lg(P["whiff"] / sw) + c)
+        _rescale(P, _SWING[1:], sw - wh2)
+        P["whiff"] = wh2
+    f = t.get("two_strike", 0.0) * TRAIT_SIZE["two_strike_foul"] if strikes == 2 else 0.0
+    con = sw - P["whiff"]
+    if f and 0 < P["foul"] < con:
+        fo2 = con * _sg(_lg(P["foul"] / con) + f)
+        _rescale(P, _SWING[2:], con - fo2)
+        P["foul"] = fo2
+    return P
+
+
+def power_row(row, power):
+    """One in-play outcome row (out, 1B, 2B, 3B, HR, error) for a hitter's power trait: each extra-base share's logit moves
+    by power * power_xbh, out of the outs (as TRUE_POWER's HR shift does). A share of 0 stays 0."""
+    po, p1, p2, p3, phr, pe = row
+    d = power * TRAIT_SIZE["power_xbh"]
+    if not d:
+        return row
+    new = [(_sg(_lg(x) + d) if 0 < x < 1 else x) for x in (p2, p3, phr)]
+    po = max(0.0, po - sum(n - o for n, o in zip(new, (p2, p3, phr))))
+    return (po, p1, new[0], new[1], new[2], pe)
+
+# ---------------------------------------------------------------------------
 # Yardstick hook (v1.0 Step 0d): CALL_ENGINE=<path to an engine.py> makes THAT engine call the pitches inside THIS
 # tree's world. The caller supplies the table, the policy, the call and its explanation; the world (outcome_probs, the
 # hitters, the in-play draw) and the truth judge (the regret columns, which score every call against a table solved on
@@ -321,15 +441,18 @@ def run_ball_in_play_v6b(contact, outs, bases, R):
     return 0, b1 + b2 + b3 + 1, (False, False, False), "home run"
 
 
-def run_ball_in_play_typed(contact, outs, bases, p, q, infield_in=False, dh=0.0):
+def run_ball_in_play_typed(contact, outs, bases, p, q, infield_in=False, dh=0.0, power=0.0):
     """v0.8 (spec 7.3): batted-ball type, then the typed outcome table and runner rules the engine uses.
-    dh (TRUE_POWER): item 8's logit shift on HR, applied exactly as engine.in_play_value_typed does (out of that type's outs)."""
+    dh (TRUE_POWER): item 8's logit shift on HR, applied exactly as engine.in_play_value_typed does (out of that type's outs).
+    power (v1.3 Part 5): the hitter's hidden power trait (power_row), world only."""
     L = LEVEL_NAME
     t = sample(engine.type_mix(p, q, contact))
     po, p1, p2, p3, phr, pe = engine.OUT_TABLE[L][contact][t]
     if dh and 0 < phr < 1:
         nhr = engine.sig(engine.logit(phr) + dh)
         po, phr = max(0.0, po - (nhr - phr)), nhr
+    if power:
+        po, p1, p2, p3, phr, pe = power_row((po, p1, p2, p3, phr, pe), power)
     rf = engine.RUNNER_FIT[L]
     ev = sample({"out": po, "single": p1, "double": p2, "triple": p3, "homer": phr, "error": pe})
     b1, b2, b3 = bases
@@ -483,6 +606,9 @@ def play_game(log_path):
         prng = random.Random(SEED_FOR_MOVE[0] * 1_000_003 + 17)
         for hh in lineup:
             hh["w"] = max(1.0, min(5.0, 3.0 + prng.gauss(0, 1)))
+    for i, hh in enumerate(lineup):                  # v1.3 Part 5: hidden hitter traits (HITTERS); no rng draw
+        if HITTERS.get(i + 1):
+            hh["traits"] = dict(HITTERS[i + 1])
     K = Knowledge()
     land = defaultdict(lambda: [0, 0])          # (pitcher, pitch name) -> [strikes, thrown] today, every pitch: what a
     # frozen pre-v1.0 caller (CALL_ENGINE) reads. v1.0 Step 3: the engine reads land3 instead, (strikes, expected
@@ -622,6 +748,8 @@ def play_game(log_path):
                                        if TRUE_MISS else {})) for x in ars]
                 p_true = next(x for x in ars_true if x.name == p.name)
                 P = outcome_probs(p_true, q, ts, ars_true)
+                if hitter.get("traits"):          # v1.3 Part 5: the hidden traits reshape the world's mix (the judge below doesn't see them)
+                    P = apply_hitter_traits(P, hitter["traits"], s.balls, s.strikes)
                 # decision quality: true run cost of the engine's mix vs a caller who knows the hidden truth
                 tc = engine.root_costs(ars_true, ts, tab)
                 tcw = None
@@ -722,7 +850,8 @@ def play_game(log_path):
                         strikes += 1
                 else:   # in play
                     dh = engine.power_hr_shift(ts, ts.grades) if (TRUE_POWER and ev == "hard" and ts.grades) else 0.0
-                    o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q, dh=dh)
+                    o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q, dh=dh,
+                                                                                  power=(hitter.get("traits") or {}).get("power", 0.0))
                     outs += o_add
                     detail = f"{ev} contact: {label.upper()}"
                     if INPUTS >= 2:
@@ -759,6 +888,7 @@ def play_game(log_path):
                     "regret_exp": round(regret_exp, 5), "regret_pick": round(regret_pick, 5),
                     "regret_info": round(regret_info, 5), "regret_mix": round(regret_mix, 5), "big_spot": int(engine.is_big_spot(s)),
                     **rw, **({"true_w": round(hitter["w"], 2)} if TRUE_POWER else {}),
+                    **({"true_traits": " ".join(f"{k}={v:+.2f}" for k, v in sorted(hitter.get("traits", {}).items()))} if HITTERS else {}),
                     **(miss_cell(p_true, q, ts, crng, pitcher["hand"]) if TRUE_MISS else {}),
                 })
                 last = (p.name, q, "whiff" if ev == "whiff" else result)
@@ -828,6 +958,7 @@ if __name__ == "__main__":
     log, lineup, (them, us, tr, ur), _ = play_game(f"game_{SEED}.csv")
     print("\nHIDDEN LINEUP TRUTH")
     for h in lineup:
-        print(f"  {h['name']} {h['hand']}  fb {h['fb']:+.2f}  os {h['os']:+.2f}  timing {h['timing']:+.2f}")
+        print(f"  {h['name']} {h['hand']}  fb {h['fb']:+.2f}  os {h['os']:+.2f}  timing {h['timing']:+.2f}"
+              + ("  traits " + " ".join(f"{k} {v:+.2f}" for k, v in sorted(h["traits"].items())) if h.get("traits") else ""))
     print(f"\nLINE  them {them} = {tr}   us {us} = {ur}")
     print(f"pitches: {len([r for r in log if 'pitch' in r])}")

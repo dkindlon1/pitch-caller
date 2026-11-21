@@ -7,6 +7,8 @@ cd "$(dirname "$0")/.."
 run=scripts/run-check.sh
 $run tests.py      python3 tests.py
 $run tests_hitter_data python3 tests_hitter_data.py   # v1.3 prework: college play-by-play parser on synthetic lines, the held-out (2026) guard
+$run tests_zone_seed python3 tests_zone_seed.py   # v1.3 Part 2: zone seed math on synthetic pitches (not wired into the engine)
+$run tests_harness  python3 tests_harness.py       # v1.3 Part 4: scoring harness (held-out + in-sample guards, bootstrap, frozen landing)
 $run explain       python3 tests_v11_explain.py 60   # v1.1 Step 3 (was tests_v10_explain.py): why line and intent tell the truth, setups included
 $run tests_v11     python3 tests_v11.py              # v1.1: six kinds, one migration table, exactly v1.0's calls (Step 1)
 $run fast_parity   python3 golden/fast.py 40      # live Python vs JS on 40 golden inputs, plus confidence and grading (v1.0 #18)
@@ -19,6 +21,7 @@ $run tests_v122   python3 tests_v122.py             # v1.2.2: the confidence ban
 $run tests_v123   python3 tests_v123.py             # v1.2.3: the umpire prior (200 takes): one take moves u under 0.1, exactly v1.2.2 with ump_u given (vs git ca6905e), Python = JS
 $run tests_v13_d2  python3 tests_v13_d2.py          # v1.3 Part 3: college D2 in both engines on D3's numbers (PLACEHOLDER_D2), Python = JS; release_guard_d2.py trips (the release checklist runs the guard itself, not this suite)
 FAST_LEVEL=college_d2 $run fast_parity_d2 python3 golden/fast.py 40   # v1.3 Part 3: the same 40 golden inputs, every case at college D2
+$run tests_v13_sim python3 tests_v13_sim.py         # v1.3 Part 5: hidden hitter traits in the simulator; no traits = the e202169 games byte for byte, Python = JS
 $run golden_v123  node golden/golden_v11.js v123  # v1.2.3 release reference (JS); golden_v10, v11a, v11, v12a, v12 and v122 (v1.2.2; differs only in the umpire estimate) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
