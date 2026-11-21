@@ -16,6 +16,7 @@ FAST_TAGS=1 $run fast_parity_tags python3 golden/fast.py 40   # v1.2 Part B: the
 $run tests_v121   python3 tests_v121.py             # v1.2.1: the second shake-off is a hard switch, a shake costs 0.05; exactly v1.2 otherwise (vs git 504aaa8), Python = JS
 $run tests_v122   python3 tests_v122.py             # v1.2.2: the confidence band under the cutoff (blend), exactly v1.2.1 with no pitch in the band (vs git cb64db1), smooth, Python = JS, speed
 $run tests_v123   python3 tests_v123.py             # v1.2.3: the umpire prior (200 takes): one take moves u under 0.1, exactly v1.2.2 with ump_u given (vs git ca6905e), Python = JS
+$run tests_v13_sim python3 tests_v13_sim.py         # v1.3 Part 5: hidden hitter traits in the simulator; no traits = the e202169 games byte for byte, Python = JS
 $run golden_v123  node golden/golden_v11.js v123  # v1.2.3 release reference (JS); golden_v10, v11a, v11, v12a, v12 and v122 (v1.2.2; differs only in the umpire estimate) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then

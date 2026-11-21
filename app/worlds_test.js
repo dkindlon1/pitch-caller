@@ -221,6 +221,98 @@ console.log("13. The learner's fast strike-rate table matches the exact calculat
   check(worst < 0.01, `largest difference ${worst.toFixed(4)} (must be under 0.01)`);
 }
 
+console.log("14. Hitter world (v1.3 Part 5): hidden traits recovered from realistic at-bat counts; an average hitter isn't moved");
+{
+  // Estimator (what a prefill would do with logged pitches): each trait's maximum-likelihood value given the average
+  // hitter's mix for every pitch he saw (the offset), one trait at a time (the traits act on separate outcomes, so this
+  // is the joint estimate). SE from the curvature. Pass criteria fixed before results:
+  //   a. 2-SE intervals cover the truth in 90-99% of seasons (150 and 400 PAs, every preset and trait, zeros included);
+  //   b. at 400 PAs every preset trait of size >= 1 on early / two-strike / contact has the right sign in >= 90% of
+  //      seasons; power is reported with the PAs it needs (balls in play are few and extra-base hits rarer);
+  //   c. no bias: at 400 PAs the mean estimate is within 4 SE-of-the-mean (+0.05) of the truth for every trait;
+  //   d. an average hitter (all traits 0) plays exactly the average hitter's at-bats, and his estimates sit at 0 (as c).
+  const HW = require("./worlds.js"), SZ = HW.TRAIT_SIZE, R14 = Math.max(40, REPS), NS = [60, 150, 400];
+  const SWING = new Set(["whiff", "foul", "weak", "solid", "hard"]), CONTACT = new Set(["foul", "weak", "solid", "hard"]);
+  const sum = (o, ks) => ks.reduce((a, k) => a + (o[k] || 0), 0);
+  const logitFit = (obs) => {   // obs: [offset, y, size]; logit P(y) = offset + size * theta
+    let th = 0, info = 0;
+    for (let it = 0; it < 50; it++) {
+      let g = 0; info = 0;
+      for (const [o, y, s] of obs) { const p = 1 / (1 + Math.exp(-(o + s * th))); g += s * (y - p); info += s * s * p * (1 - p); }
+      if (!info) return { est: 0, se: Infinity };
+      const st = g / info; th = Math.max(-8, Math.min(8, th + st)); if (Math.abs(st) < 1e-9) break;
+    }
+    return { est: th, se: 1 / Math.sqrt(info) };
+  };
+  const numFit = (ll) => {   // 1-D maximum likelihood by grid then Newton (numeric derivatives)
+    let bt = 0, bv = -Infinity; for (let x = -6; x <= 6.0001; x += 0.1) { const v = ll(x); if (v > bv) { bv = v; bt = x; } }
+    const h = 1e-3, d = (x) => [(ll(x + h) - ll(x - h)) / (2 * h), (ll(x + h) - 2 * ll(x) + ll(x - h)) / (h * h)];
+    let th = bt; for (let it = 0; it < 30; it++) { const [d1, d2] = d(th); if (d2 >= 0) break; const st = -d1 / d2; th = Math.max(-8, Math.min(8, th + st)); if (Math.abs(st) < 1e-7) break; }
+    const d2 = d(th)[1]; return { est: th, se: d2 < 0 ? 1 / Math.sqrt(-d2) : Infinity };
+  };
+  const lgt = (p) => Math.log(p / (1 - p));
+  function estimate(pas) {
+    const early = [], two = [], con = [], bips = [];
+    for (const pa of pas) {
+      for (const x of pa.pitches) {
+        const B = x.base, sw = sum(B, [...SWING]), tot = sw + sum(B, ["ball", "wp_ball", "hbp", "cstrike"]), isEarly = x.b + x.k <= 1;   // 0-0, 1-0, 0-1
+        const y = SWING.has(x.cat) ? 1 : 0;
+        if (sw > 0 && sw < tot) { if (isEarly) early.push([lgt(sw / tot), y, SZ.early_swing]); if (x.k === 2) two.push([lgt(sw / tot), y, SZ.two_strike_swing]); }
+        if (y) {
+          if (B.whiff > 0 && B.whiff < sw) con.push([lgt(B.whiff / sw), x.cat === "whiff" ? 1 : 0, SZ.contact_whiff]);
+          const c = sw - B.whiff;
+          if (x.k === 2 && CONTACT.has(x.cat) && B.foul > 0 && B.foul < c) two.push([lgt(B.foul / c), x.cat === "foul" ? 1 : 0, SZ.two_strike_foul]);
+        }
+      }
+      if (pa.bip) bips.push(pa.bip);
+    }
+    const OT = require("./engine_data.json").V08.OUT_TABLE.college_d3;
+    const power = numFit((th) => { let s = 0; for (const b of bips) { let p = 0; for (const t of ["GB", "LD", "FB", "PU"]) p += b.mix[t] * HW.powerRow(OT[b.contact][t], th)[b.ev]; s += Math.log(Math.max(p, 1e-300)); } return s; });
+    return { early: logitFit(early), two_strike: logitFit(two), contact: logitFit(con), power };
+  }
+  const TR = ["early", "two_strike", "contact", "power"], cover = [0, 0], need = {}, res = {};
+  for (const [name, pre] of Object.entries(HW.HITTER_PRESETS)) {
+    res[name] = {};
+    for (const n of NS) {
+      const ests = []; for (let r = 0; r < R14; r++) ests.push(estimate(HW.hitterSeason({ traits: pre, pas: n, seed: 1400 + 97 * r + n })));
+      res[name][n] = {};
+      for (const t of TR) {
+        const truth = pre[t] || 0, xs = ests.map((e) => e[t].est), ses = ests.map((e) => e[t].se), m = mean(xs);
+        const sd = Math.sqrt(mean(xs.map((x) => (x - m) ** 2))), inside = xs.filter((x, i) => Math.abs(x - truth) <= 2 * ses[i]).length;
+        const sign = truth ? xs.filter((x) => Math.sign(x) === Math.sign(truth)).length / R14 : null;
+        res[name][n][t] = { truth, m, sd, se: mean(ses), inside, sign };
+        if (n >= 150) { cover[0] += inside; cover[1] += R14; }
+      }
+    }
+  }
+  console.log("     preset              trait       truth |  60 PAs est (SE) sign |  150 PAs est (SE) sign |  400 PAs est (SE) sign");
+  for (const [name, pre] of Object.entries(HW.HITTER_PRESETS)) for (const t of TR) {
+    const cells = NS.map((n) => { const x = res[name][n][t]; return `${x.m >= 0 ? "+" : ""}${x.m.toFixed(2)} (${x.se.toFixed(2)}) ${x.sign === null ? "  - " : (100 * x.sign).toFixed(0).padStart(3) + "%"}`; });
+    console.log(`     ${name.padEnd(19)} ${t.padEnd(11)} ${(pre[t] || 0).toFixed(1).padStart(5)} | ${cells.join(" | ")}`);
+  }
+  // PAs needed: SE shrinks as 1/sqrt(PAs); read off the 400-PA SE (averaged over presets) for SE 0.5 (half a hitter SD)
+  // and SE 0.75 (a preset-sized 1.5 told from average at 2 SE)
+  for (const t of TR) { const se400 = mean(Object.keys(res).map((nm) => res[nm][400][t].se)); need[t] = [Math.round(400 * (se400 / 0.5) ** 2), Math.round(400 * (se400 / 0.75) ** 2), se400]; }
+  console.log("     PAs needed (from the 400-PA SE): " + TR.map((t) => `${t} SE 0.5 -> ${need[t][0]}, SE 0.75 -> ${need[t][1]}`).join("; "));
+  console.log("     spray: recorded only (no ball-in-play direction in either simulator), so not estimated");
+  check(cover[0] / cover[1] >= 0.9 && cover[0] / cover[1] <= 0.99, `a. 2-SE intervals cover the truth in ${(100 * cover[0] / cover[1]).toFixed(1)}% of ${cover[1]} (150 and 400 PAs)`);
+  const signs = []; for (const [name, pre] of Object.entries(HW.HITTER_PRESETS)) for (const t of ["early", "two_strike", "contact"]) if (Math.abs(pre[t] || 0) >= 1) signs.push([`${name} ${t}`, res[name][400][t].sign]);
+  check(signs.every(([, s]) => s >= 0.9), `b. right sign at 400 PAs: ${signs.map(([k, s]) => `${k} ${(100 * s).toFixed(0)}%`).join(", ")}`);
+  const pw = Object.entries(HW.HITTER_PRESETS).filter(([, pre]) => Math.abs(pre.power || 0) >= 1).map(([nm]) => `${nm} ${(100 * res[nm][400].power.sign).toFixed(0)}%`);
+  console.log(`     (power, reported: right sign at 400 PAs ${pw.join(", ")}; SE at 400 PAs ${need.power[2].toFixed(2)})`);
+  const bias = []; for (const nm of Object.keys(res)) for (const t of TR) { const x = res[nm][400][t]; if (Math.abs(x.m - x.truth) >= 4 * x.sd / Math.sqrt(R14) + 0.05) bias.push(`${nm} ${t} ${x.m.toFixed(2)} vs ${x.truth}`); }
+  check(bias.length === 0, `c. no bias at 400 PAs${bias.length ? ": " + bias.join(", ") : ""}`);
+  // d. the average hitter
+  const zeros = { early: 0, two_strike: 0, contact: 0, power: 0, spray: 0 };
+  const same = JSON.stringify(HW.hitterSeason({ traits: zeros, pas: 400, seed: 1499 })) === JSON.stringify(HW.hitterSeason({ pas: 400, seed: 1499 }));
+  let exact = true; for (const pa of HW.hitterSeason({ pas: 60, seed: 1498 })) for (const x of pa.pitches) { const Q = HW.applyHitterTraits(x.base, zeros, x.b, x.k); for (const k of Object.keys(x.base)) if (Q[k] !== x.base[k]) exact = false; }
+  const z = []; for (let r = 0; r < R14; r++) z.push(estimate(HW.hitterSeason({ traits: zeros, pas: 400, seed: 1700 + r })));
+  const zm = TR.map((t) => { const xs = z.map((e) => e[t].est), m = mean(xs), sd = Math.sqrt(mean(xs.map((x) => (x - m) ** 2))); return [t, m, sd]; });
+  console.log(`     average hitter at 400 PAs: ${zm.map(([t, m, sd]) => `${t} ${m >= 0 ? "+" : ""}${m.toFixed(2)} (sd ${sd.toFixed(2)})`).join(", ")}`);
+  check(same && exact, "d. all traits 0: the mix is returned unchanged and the at-bats are exactly the average hitter's");
+  check(zm.every(([, m, sd]) => Math.abs(m) < 4 * sd / Math.sqrt(R14) + 0.05), "d. an average hitter's estimates sit at 0");
+}
+
 console.log(`\n${((Date.now() - t0) / 1000).toFixed(0)}s, ${REPS} seasons per world`);
 console.log(fails ? `${fails} check(s) failed` : "all worlds checks passed");
 process.exit(fails ? 1 : 0);

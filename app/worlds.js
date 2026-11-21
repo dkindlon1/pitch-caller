@@ -132,4 +132,114 @@ function season(o) {
   return events;
 }
 
-module.exports = { season, rng, E, L };
+/*
+ * v1.3 Part 5 (plan 3.4, Step 5 scaffolding): a HITTER world. One hitter with hidden traits faces an average pitcher;
+ * the trait math mirrors simulate.py's apply_hitter_traits / power_row exactly (tests_v13_sim.py checks Python = JS).
+ * Traits are in hitter-SD units, 0 = average; each moves a logit by TRAIT_SIZE per unit:
+ *   early       swing share at 0-0 / 1-0 / 0-1
+ *   two_strike  swing share at two strikes, and foul share of contact at two strikes
+ *   contact     whiff share of swings (size < 0: more contact, fewer whiffs)
+ *   power       double, triple and HR per ball in play (out of the outs)
+ *   spray       recorded only: neither simulator has a ball-in-play direction
+ * PLACEHOLDER sizes and preset values (plan 3.4: sized from real hitters at the level once the trait fits exist).
+ */
+const PLACEHOLDER_TRAIT_SIZES = true;
+const HITTER_TRAITS = ["early", "two_strike", "contact", "power", "spray"];
+const TRAIT_SIZE = { early_swing: 0.35, two_strike_swing: 0.30, two_strike_foul: 0.30, contact_whiff: -0.35, power_xbh: 0.30 };
+const HITTER_PRESETS = {   // PLACEHOLDER values (plan 3.4), trait SD units; the same table as simulate.py
+  aggressive_early: { early: 1.5 },
+  patient: { early: -1.5, two_strike: -0.5 },
+  power: { power: 1.5, contact: -1.0 },
+  contact: { contact: 1.5, power: -0.5 },
+  free_swinger: { early: 1.5, contact: -1.0, power: 0.5 },
+  two_strike_battler: { two_strike: 1.5, contact: 0.5 },
+};
+const H_TAKE = ["ball", "wp_ball", "hbp", "cstrike"], H_SWING = ["whiff", "foul", "weak", "solid", "hard"];
+const lg = (p) => Math.log(p / (1 - p)), sg = (x) => 1 / (1 + Math.exp(-x));
+function rescaleH(P, keys, total) { let old = 0; for (const k of keys) old += P[k]; const f = total / old; for (const k of keys) P[k] = P[k] * f; }
+function applyHitterTraits(P0, traits, b, k) {
+  const P = Object.assign({}, P0), t = traits || {}, g = (n) => t[n] || 0;
+  let a = 0.0;
+  if ((b === 0 && k === 0) || (b === 1 && k === 0) || (b === 0 && k === 1)) a += g("early") * TRAIT_SIZE.early_swing;
+  if (k === 2) a += g("two_strike") * TRAIT_SIZE.two_strike_swing;
+  let sw = 0, tk = 0; for (const x of H_SWING) sw += P[x] || 0; for (const x of H_TAKE) tk += P[x] || 0;
+  const tot = sw + tk;
+  if (a && sw > 0 && sw < tot) {
+    const sw2 = tot * sg(lg(sw / tot) + a);
+    rescaleH(P, H_TAKE.filter((x) => x in P), tot - sw2); rescaleH(P, H_SWING, sw2); sw = sw2;
+  }
+  const c = g("contact") * TRAIT_SIZE.contact_whiff;
+  if (c && P.whiff > 0 && P.whiff < sw) { const wh2 = sw * sg(lg(P.whiff / sw) + c); rescaleH(P, H_SWING.slice(1), sw - wh2); P.whiff = wh2; }
+  const f = k === 2 ? g("two_strike") * TRAIT_SIZE.two_strike_foul : 0.0, con = sw - P.whiff;
+  if (f && P.foul > 0 && P.foul < con) { const fo2 = con * sg(lg(P.foul / con) + f); rescaleH(P, H_SWING.slice(2), con - fo2); P.foul = fo2; }
+  return P;
+}
+function powerRow(row, power) {   // [out, 1B, 2B, 3B, HR, error]
+  const d = (power || 0) * TRAIT_SIZE.power_xbh;
+  if (!d) return row;
+  const [po, p1, p2, p3, phr, pe] = row, old = [p2, p3, phr], nw = old.map((x) => (x > 0 && x < 1 ? sg(lg(x) + d) : x));
+  let up = 0; for (let i = 0; i < 3; i++) up += nw[i] - old[i];
+  return [Math.max(0.0, po - up), p1, nw[0], nw[1], nw[2], pe];
+}
+
+/*
+ * hitterSeason(o): plate appearances for one hitter. o = { traits, pas, seed, level (college_d3), pitches (default an
+ * average three-pitch arsenal), grade/command (3/3) }. Bases empty, none out, a fresh pitcher each PA (so the outcome mix
+ * depends only on pitch, target and count: cached). Returns PAs: { pitches: [{ b, k, pitch, quad, cat, base }], bip }
+ * where base is the average hitter's mix for that pitch (what an estimator reads as "expected") and bip, on a ball in
+ * play, is { contact, mix: { GB, LD, FB, PU }, ev } (ev: 0 out, 1 single, 2 double, 3 triple, 4 HR, 5 error).
+ * With no traits (or all 0) the draws are exactly those of the average hitter (the trait math returns the mix unchanged).
+ */
+const HW_PITCHES = [{ name: "Fastball", kind: "FB", shape: "ride", velo: 86, usage: 0.55 }, { name: "Slider", kind: "SL", shape: "tight", velo: 78, usage: 0.3 },
+  { name: "Changeup", kind: "CH", shape: "fade", velo: 78, usage: 0.15 }];
+const HW_QW = { "up-in": 0.13, "up-away": 0.17, "down-in": 0.17, "down-away": 0.27, middle: 0.14, chase: 0.12 };
+const HW_CACHE = new Map();
+function hitterBase(level, pitches, grade, command) {
+  const key = JSON.stringify([level, pitches, grade, command]);
+  if (HW_CACHE.has(key)) return HW_CACHE.get(key);
+  const ars = pitches.map((p) => E.Pitch({ name: p.name, kind: p.kind, shape: p.shape, velo: p.velo, grade, command, conf: 0.7, base_conf: 0.7 }));
+  const out = {}, tm = {}, OT = require("./engine_data.json").V08.OUT_TABLE[level];
+  for (const p of ars) for (const q of Object.keys(HW_QW)) {
+    for (const c of ["weak", "solid", "hard"]) tm[`${p.name}|${q}|${c}`] = E.v08.typeMix(p, q, c);
+    for (let b = 0; b < 4; b++) for (let k = 0; k < 3; k++) {
+      const sit = E.Situation({ balls: b, strikes: k, outs: 0, bases: [false, false, false], inning: 1, margin: 0, pitch_count: 0, batters_faced: 0, level, same_side: true,
+        last: null, timing: {}, hitter_damage: {}, landing_today: {} });
+      out[`${p.name}|${q}|${b}|${k}`] = E.outcomeProbs(p, q, sit, ars);
+    }
+  }
+  const r = { P: out, typeMix: tm, OT };
+  HW_CACHE.set(key, r);
+  return r;
+}
+const HW_CATS = ["ball", "wp_ball", "hbp", "cstrike", "whiff", "foul", "weak", "solid", "hard"];
+function hitterSeason(o) {
+  const r = rng(o.seed || 1), level = o.level || "college_d3", pitches = o.pitches || HW_PITCHES, t = o.traits || {};
+  const B = hitterBase(level, pitches, o.grade ?? 3, o.command ?? 3);
+  const pick = (ws) => { let x = r() * ws.reduce((a, w) => a + w, 0); for (let i = 0; i < ws.length; i++) { x -= ws[i]; if (x <= 0) return i; } return ws.length - 1; };
+  const quads = Object.keys(HW_QW), qw = Object.values(HW_QW), uw = pitches.map((p) => p.usage), pas = [];
+  for (let pa = 0; pa < o.pas; pa++) {
+    let b = 0, k = 0, end = false, bip = null;
+    const rec = [];
+    while (!end) {
+      const pn = pitches[pick(uw)].name, quad = quads[pick(qw)], base = B.P[`${pn}|${quad}|${b}|${k}`];
+      const P = applyHitterTraits(base, t, b, k);
+      let cat = HW_CATS[pick(HW_CATS.map((c) => P[c] || 0))];
+      if (cat === "wp_ball") cat = "ball";
+      rec.push({ b, k, pitch: pn, quad, cat, base });
+      if (cat === "ball") { b++; if (b === 4) end = true; }
+      else if (cat === "hbp") end = true;
+      else if (cat === "cstrike" || cat === "whiff") { k++; if (k === 3) end = true; }
+      else if (cat === "foul") { if (k < 2) k++; }
+      else {
+        const mix = B.typeMix[`${pn}|${quad}|${cat}`], ty = ["GB", "LD", "FB", "PU"][pick(["GB", "LD", "FB", "PU"].map((x) => mix[x]))];
+        const row = powerRow(B.OT[cat][ty], t.power || 0);
+        bip = { contact: cat, mix, ev: pick(row) };
+        end = true;
+      }
+    }
+    pas.push({ pitches: rec, bip });
+  }
+  return pas;
+}
+
+module.exports = { season, rng, E, L, hitterSeason, applyHitterTraits, powerRow, PLACEHOLDER_TRAIT_SIZES, HITTER_TRAITS, TRAIT_SIZE, HITTER_PRESETS };
