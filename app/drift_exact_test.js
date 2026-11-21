@@ -22,10 +22,12 @@ const ARS2 = [{ type: "Sinker", name: "Sinker", kind: "FB", shape: "sink", velo:
 // notes fire during the later games (the same games in both builds: only the drift check differs)
 const TRUTH = { Fastball: { command: 2.5 }, Slider: { grade: 3, command: 3 }, Curve: { command: 3 } };
 const WORSE = { Fastball: { command: 2.5 }, Slider: { grade: 0.5, command: 1 }, Curve: { grade: 1, command: 1 } };
+// v1.3 Part 3: the data fingerprint (v.data) is left out too: it changes with any new table (college_d2 added D2 rows,
+// D3's numbers), while every call, probability and snapshot below is still compared field for field.
 const DROP = new Set(["ts", "createdAt", "updatedAt", "deviceId"]);
 function canon(x, ids) {
   if (Array.isArray(x)) return x.map((v) => canon(v, ids));
-  if (x && typeof x === "object") { const o = {}; for (const k of Object.keys(x).sort()) { if (DROP.has(k)) continue; if (k === "v") { const v = Object.assign({}, x.v); delete v.app; o.v = v; continue; } o[k] = canon(x[k], ids); } return o; }
+  if (x && typeof x === "object") { const o = {}; for (const k of Object.keys(x).sort()) { if (DROP.has(k)) continue; if (k === "v") { const v = Object.assign({}, x.v); delete v.app; delete v.data; o.v = v; continue; } o[k] = canon(x[k], ids); } return o; }
   if (typeof x === "string" && /^[a-z]{2,4}_[0-9a-z]{16,}$/.test(x)) { if (!ids.has(x)) ids.set(x, "ID" + ids.size); return ids.get(x); }
   return x;
 }
