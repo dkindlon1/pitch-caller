@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(HERE, ".."))
 os.chdir(os.path.join(HERE, ".."))
 import engine as e
 
-LEVELS = ["mlb", "college_d1", "college_d3", "hs"]
+LEVELS = ["mlb", "college_d1", "college_d2", "college_d3", "hs"]   # v1.3: college_d2 (D3's numbers for now: PLACEHOLDER_D2)
 bk = lambda b: ("1" if b[0] else "0") + ("2" if b[1] else "0") + ("3" if b[2] else "0")
 data = {
     "RE": {l: {f"{o}|{b}": v for (o, b), v in e.RE_BY_LEVEL[l].items()} for l in LEVELS},
@@ -26,6 +26,9 @@ data["V08"] = {
     "OUT_TABLE": itp.OUT_TABLE, "RUNNER_FIT": itp.RUNNER_FIT, "HITTER_SPREAD": HITTER_SPREAD, "RUN_GAME": dict(e.RUN_GAME),
 }
 data["WE"] = json.load(open(os.path.join(HERE, "..", "we_tables.json")))
+# v1.3 (plan 3.5): the tables whose college_d2 entry is still D3's (engine.D2_PLACEHOLDERS); release_guard_d2.py fails while
+# this list is not empty. The JS engine reads D2 from the tables above and its win tables through WE_LEVEL (engine.js).
+data["PLACEHOLDER_D2"] = list(e.D2_PLACEHOLDERS)
 import hashlib
 # a fingerprint of the tables, logged with every pitch so a replay knows which numbers made the call
 data["version"] = hashlib.sha1(json.dumps({k: v for k, v in data.items() if k != "version"}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:10]

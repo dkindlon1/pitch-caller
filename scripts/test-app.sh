@@ -17,6 +17,8 @@ FAST_TAGS=1 $run fast_parity_tags python3 golden/fast.py 40   # v1.2 Part B: the
 $run tests_v121   python3 tests_v121.py             # v1.2.1: the second shake-off is a hard switch, a shake costs 0.05; exactly v1.2 otherwise (vs git 504aaa8), Python = JS
 $run tests_v122   python3 tests_v122.py             # v1.2.2: the confidence band under the cutoff (blend), exactly v1.2.1 with no pitch in the band (vs git cb64db1), smooth, Python = JS, speed
 $run tests_v123   python3 tests_v123.py             # v1.2.3: the umpire prior (200 takes): one take moves u under 0.1, exactly v1.2.2 with ump_u given (vs git ca6905e), Python = JS
+$run tests_v13_d2  python3 tests_v13_d2.py          # v1.3 Part 3: college D2 in both engines on D3's numbers (PLACEHOLDER_D2), Python = JS; release_guard_d2.py trips (the release checklist runs the guard itself, not this suite)
+FAST_LEVEL=college_d2 $run fast_parity_d2 python3 golden/fast.py 40   # v1.3 Part 3: the same 40 golden inputs, every case at college D2
 $run golden_v123  node golden/golden_v11.js v123  # v1.2.3 release reference (JS); golden_v10, v11a, v11, v12a, v12 and v122 (v1.2.2; differs only in the umpire estimate) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
@@ -47,6 +49,7 @@ echo "smoke: passed"
 (cd app && ../$run v12_tags_e2e node v12_tags_e2e.js)   # v1.2 Part B: hitter tags on the card, the engine, snapshots and the importer
 (cd app && ../$run v121_shake_e2e node v121_shake_e2e.js)   # v1.2.1: back after one shake, out after the second, toasts, version line
 (cd app && ../$run v123_fixes_e2e node v123_fixes_e2e.js)   # v1.2.3: umpire after one strike, radar box, bullpen faced, bases at the third out, coach call after a shake-off, version line
+(cd app && ../$run d2_e2e node d2_e2e.js)   # v1.3 Part 3: the coach picks College D2, a nine-inning game charts at D2 and saves as a D2 game
 (cd app && ../$run game_mix_e2e node game_mix_e2e.js)    # v1.1: whole games through the app keep a mix (FINDING_v1.0_game_mix_collapse)   # v1.0 Step 5: look from logged spot (#24), one owner of hitter memory (#7), seed centering (#20)
 (cd app && ../$run watch_e2e node watch_e2e.js)   # watch prototype: Accept, clears, shared signs, two watches; nothing changes without Web Bluetooth
 (cd app && ../$run fold_e2e node fold_e2e.js)   # app v2: on an iPad in landscape (1180x820 and Safari's 1180x740) the call, Accept and all result keys fit without scrolling

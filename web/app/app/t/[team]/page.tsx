@@ -119,7 +119,7 @@ async function HomeBody({ params }: { params: Params }) {
   );
 }
 
-const LEVELS: Record<string, string> = { hs: "high school", travel: "travel ball", college_d3: "college D3", college_d1: "college D1", mlb: "pro" };
+const LEVELS: Record<string, string> = { hs: "high school", travel: "travel ball", college_d3: "college D3", college_d2: "college D2", college_d1: "college D1", mlb: "pro" };
 const levelName = (l: string) => LEVELS[l] || l;
 
 type Ready = { starter: string | null; staff: number; catcher: string | null; named: number };

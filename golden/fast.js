@@ -113,6 +113,8 @@ function main() {
         .forEach(([k, vals], j) => { const v = vals[(i * (j + 2) + j) % vals.length]; if (v) out[k] = v; });
       c.s.hitter_tags = out;
     });
+  if (process.env.FAST_LEVEL)   // v1.3 Part 3: fast.py's FAST_LEVEL, every case at one level (college_d2)
+    cases.forEach((c) => { c.s.level = process.env.FAST_LEVEL; });
   if (emit) { process.stdout.write(JSON.stringify(cases.map(compute))); return; }
   let t0 = Date.now(); const js = cases.map(compute); const tJs = (Date.now() - t0) / 1000;
   t0 = Date.now(); const py = pySide(n); const tPy = (Date.now() - t0) / 1000;

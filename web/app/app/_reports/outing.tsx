@@ -19,7 +19,7 @@ export type OutingCtx = {
   summaryHref?: string; pdfHref?: string; back: { href: string; label: string };
   outcome?: OutcomeOuting | null;
 };
-const LEVEL: Record<string, string> = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1", mlb: "Pro" };
+const LEVEL: Record<string, string> = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d2: "College D2", college_d1: "College D1", mlb: "Pro" };
 
 export function OutingReport({ r, c }: { r: Outing; c: OutingCtx }) {
   const staff = r.view === "staff";

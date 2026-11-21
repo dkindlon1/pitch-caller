@@ -37,12 +37,14 @@ const CONFIGS = [
 ];
 
 // per-run values: ids made from the clock and crypto, clock stamps, the app version string, and Build 1's new fields
+// v1.3 Part 3: the data fingerprint (v.data) is left out too: it changes with any new table (college_d2 added D2 rows,
+// D3's numbers), while every call, probability and snapshot below is still compared field for field.
 const DROP = new Set(["ts", "createdAt", "updatedAt", "deviceId", "mix", "styledMix", "styleApplied", "strength"]);
 function canon(x, ids) {
   if (Array.isArray(x)) return x.map((v) => canon(v, ids));
   if (x && typeof x === "object") {
     const o = {};
-    for (const k of Object.keys(x).sort()) { if (DROP.has(k)) continue; if (k === "v") { const v = Object.assign({}, x.v); delete v.app; o.v = v; continue; } o[k] = canon(x[k], ids); }
+    for (const k of Object.keys(x).sort()) { if (DROP.has(k)) continue; if (k === "v") { const v = Object.assign({}, x.v); delete v.app; delete v.data; o.v = v; continue; } o[k] = canon(x[k], ids); }
     return o;
   }
   if (typeof x === "string" && /^[a-z]{2,4}_[0-9a-z]{16,}$/.test(x)) { if (!ids.has(x)) ids.set(x, "ID" + ids.size); return ids.get(x); }

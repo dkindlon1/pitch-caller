@@ -10,7 +10,7 @@ import { billingConfigured, billingIds, checkoutUrl, portalUrl, setQuantity } fr
 // through the webhook, except removing a team, which is the owner's own change (A5).
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const LEVELS = new Set(["hs", "travel", "college_d3", "college_d1", "mlb"]);
+const LEVELS = new Set(["hs", "travel", "college_d3", "college_d2", "college_d1", "mlb"]);
 const PRESETS = new Set(["head", "pitching", "caller", "viewer"]);
 const back = (org: string, q: string): never => redirect(`/app/billing?org=${org}${q ? "&" + q : ""}`);
 

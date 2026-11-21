@@ -6,7 +6,7 @@ const DB = { D: null, ready: false, failed: null, warm: false,   // warm: start-
   checkins: new Map(), models: new Map(), sessions: new Map(), counts: new Map() };
 // games set up on the website (see openFromPortal): a message to show, and today's planned games on this device
 var PORTAL = { msg: null, today: [] };
-const FATIGUE = { hs: 60, travel: 60, college_d3: 75, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
+const FATIGUE = { hs: 60, travel: 60, college_d3: 75, college_d2: 75 /* PLACEHOLDER_D2: D3's */, college_d1: 80, mlb: 90 };   // the engine's fatigue points (engine_data.json, LEVEL)
 const LOCZ = ["heart", "edge", "off", "noncomp"];
 let pendingLoc = null;
 let pendingGlove = null;   // v1.2: where the catcher set up (a 5x5 cell), when that's logged

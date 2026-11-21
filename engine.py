@@ -59,6 +59,7 @@ TYPED = dict(beta_y=-0.8, gamma={"weak": 0.3, "solid": 0.0, "hard": -0.3},      
 RHO_L = {"hs": 0.6, "travel": 0.6}            # 3.2 level scaling of MLB-fitted behavioral effects (others 1.0). v1.0 #19, one
 # rule: every term fitted on MLB hitter behavior scales by it (timing, eye level, tunneling, familiarity, matchup memory,
 # SIDE, POWER_HR); structural terms (count kappa, beta_y, ground-ball rates) and the unfitted repeat guesses do not.
+# v1.3 (plan 3.5): college D2 takes the college default, 1.0, like D1 and D3 (a rule, not a D3 number to replace).
 # v0.9 item 6, fitted in Step 3 (readthrough/step3_fits.py, results/step3): whiff | swing on a pitch class
 # rises with the whiffs and called strikes that class got from this hitter in earlier trips today (M1, capped at 4), and
 # falls after he hit that class hard at that spot in an earlier trip (M2, capped at 2), scaled by RHO_L. Their hard-contact
@@ -2733,7 +2734,8 @@ def root_costs(arsenal, s, tab, sigma=None):
 # v0.8 win expectancy, leverage and the objective blend (7.1, 7.2), intentional walk suggestion (7.7)
 # ---------------------------------------------------------------------------
 _WE = {}
-WE_LEVEL = {"travel": "hs", "college": "college_d1"}
+WE_LEVEL = {"travel": "hs", "college": "college_d1",
+            "college_d2": "college_d3"}   # PLACEHOLDER_D2: D3's win tables until we_tables.py has D2 rates
 MCAP_WE = 15
 
 
@@ -3104,3 +3106,34 @@ def intent_label(arsenal, s, tab, pick, info, exclude=None):
     else:
         line = f"Off the zone early: {p.name.lower()} {spot}" + (f", because {intent_mech_text(mech)}" if mech else "")
     return label, mech, line
+
+
+# ---------------------------------------------------------------------------
+# v1.3 Part 3 (plan 3.5): college D2 is a product level. PLACEHOLDER_D2: until D2 has its own fits (run tables, outcome
+# fit, spread calibration, typed batted balls, simulation constants, hitter spread, steal success, profiles, win tables),
+# every level table without a college_d2 entry uses D3's, the same object (as travel uses high school's). D2_PLACEHOLDERS
+# names the tables filled this way; release_guard_d2.py fails while any remain, so D2 can't ship on D3's numbers. A table
+# that gains its own college_d2 entry drops off the list by itself; remove this block when the list is empty.
+# ---------------------------------------------------------------------------
+D2_PLACEHOLDERS = []
+
+
+def _fill_d2_placeholders():
+    seen = set()
+    for name, t in (("LEVEL", LEVEL), ("OUTCOME_ADJ", OUTCOME_ADJ), ("RE", RE_BY_LEVEL), ("CV", CV_BY_LEVEL),
+                    ("IN_PLAY", IN_PLAY_BY_LEVEL), ("LW", LW_BY_LEVEL), ("PROFILES", PROFILES), ("MOVE_RATIO", MOVE_RATIO),
+                    ("A_BAR", A_BAR), ("I_BAR_UMP", I_BAR_UMP), ("SIM.A_BAR", SIM_CONST.get("A_BAR")),
+                    ("SIM.I_BAR_UMP", SIM_CONST.get("I_BAR_UMP")), ("SIM.I0_GRADE", SIM_CONST.get("I0_GRADE")),
+                    ("I0_GRADE", I0_GRADE), ("OUT_TABLE", OUT_TABLE), ("RUNNER_FIT", RUNNER_FIT), ("RUN_GAME", RUN_GAME),
+                    ("HITTER_SPREAD", HITTER_SPREAD)):
+        if t is None or id(t) in seen:
+            continue
+        seen.add(id(t))
+        if "college_d3" in t and "college_d2" not in t:
+            t["college_d2"] = t["college_d3"]          # PLACEHOLDER_D2
+            D2_PLACEHOLDERS.append(name)
+    if WE_LEVEL.get("college_d2") == "college_d3":     # PLACEHOLDER_D2 (the alias above)
+        D2_PLACEHOLDERS.append("WE")
+
+
+_fill_d2_placeholders()

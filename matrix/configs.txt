@@ -1,5 +1,6 @@
 lvl_hs LEVEL=hs
 lvl_d3 LEVEL=college_d3
+lvl_d2 LEVEL=college_d2
 lvl_d1 LEVEL=college_d1
 lvl_mlb LEVEL=mlb
 staff_power LEVEL=college_d3 STAFF=power
