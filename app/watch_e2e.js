@@ -29,13 +29,23 @@ const FAKE_BT = `
   const enc = new TextEncoder(), dec = new TextDecoder();
   window.__watches = [];
   function makeWatch(name) {
-    const w = { name, writes: [], buzzes: [], overlaps: 0, connected: false, notifying: false, view: null };
+    const w = { name, writes: [], raw: [], buzzes: [], overlaps: 0, connected: false, notifying: false, view: null, bonded: true };
     let busy = false, listener = null; const disc = [];
-    w.core = PQCore({ draw: (v) => { w.view = v; }, buzz: (k) => w.buzzes.push(k), light: () => {}, now: () => Date.now(),
+    w.core = PQCore({ draw: (v) => { w.view = v; }, buzz: (k) => w.buzzes.push(k), light: () => {}, now: () => Date.now(), secure: () => w.connected && w.bonded,
       notify: (t) => { if (w.connected && w.notifying && listener) setTimeout(() => listener({ target: { value: new DataView(enc.encode(t).buffer) } }), 10); } });
     const op = (fn) => { if (busy) { w.overlaps++; return Promise.reject(new Error("GATT operation already in progress.")); } busy = true;
       return new Promise((res, rej) => setTimeout(() => { busy = false; if (!w.connected) return rej(new Error("disconnected")); fn(); res(); }, 15)); };
-    const rx = { writeValueWithResponse: (b) => op(() => { const t = dec.decode(b); w.writes.push(t); w.core.onWrite(t); }) };
+    // each write as the watch app gets it (E.toString: one character per byte), and as readable text for the checks
+    // (opened with the key the watch holds): K<id>, H, C<n>,<sign>,<loc>,<chg>, X<n>, HB<n>, E<n>
+    const desc = (bytes) => {
+      if (bytes.length === 18 && bytes[0] === 0x4b) return "K" + bytes[1];
+      if (bytes.length === 16 && bytes[0] === 0x51 && w.core.st.key) {
+        const m = PQSec.open(bytes, w.core.st.keyId, (i) => PQSec.inningKeys(w.core.st.key, i));
+        return !m ? "?bad" : m.kind === "call" ? "C" + m.n + "," + m.sign + "," + m.loc + "," + (m.chg ? 1 : 0) : m.kind === "clear" ? "X" + m.n : m.kind === "hb" ? "HB" + m.n : "E" + m.n;
+      }
+      return String.fromCharCode.apply(null, bytes);
+    };
+    const rx = { writeValueWithResponse: (b) => op(() => { const bytes = new Uint8Array(b.buffer ? b.buffer.slice(b.byteOffset || 0, (b.byteOffset || 0) + b.byteLength) : b); const t = String.fromCharCode.apply(null, bytes); w.raw.push(t); w.writes.push(desc(bytes)); w.core.onWrite(t); }) };
     const tx = { addEventListener: (e, f) => { listener = f; }, startNotifications: () => op(() => { w.notifying = true; }), stopNotifications: () => op(() => { w.notifying = false; }) };
     const svc = { getCharacteristic: async (u) => (u === RX ? rx : tx) };
     w.device = { id: "id-" + name, name, addEventListener: (e, f) => { if (e === "gattserverdisconnected") disc.push(f); },
@@ -100,7 +110,7 @@ const FAKE_BT = `
   const page = await open(true);
   const key = async (k) => { await page.keyboard.press(k); await page.waitForTimeout(150); };
   const settle = () => page.waitForTimeout(700);   // Enter accepts only a call that's been on screen 0.6 s
-  const watch = (i = 0) => page.evaluate((i) => { const w = window.__watches[i]; return w ? { view: w.view, buzzes: w.buzzes.slice(), overlaps: w.overlaps, writes: w.writes.slice() } : null; }, i);
+  const watch = (i = 0) => page.evaluate((i) => { const w = window.__watches[i]; return w ? { view: w.view, buzzes: w.buzzes.slice(), overlaps: w.overlaps, writes: w.writes.slice(), raw: w.raw.slice() } : null; }, i);
   const screen = () => page.evaluate(() => { const c = G().call, k = c && kindOf(c.pitch); return c ? { sign: signFor(k, c.pitch), quad: c.quad, kind: k, id: c.id, pitch: c.pitch } : null; });
   const words = (quad, kind) => PCW.WORDS[PCW.locCode(quad, kind)].join(" ");
   const pill = () => page.evaluate(() => document.getElementById("watch-pill")?.textContent || "");
@@ -204,7 +214,9 @@ const FAKE_BT = `
   check(a.view.sign && JSON.stringify(a.view) === JSON.stringify(b.view), `both watches show the same: ${a.view.sign} / ${(a.view.words || []).join(" ") || "(sign alone)"}`);
   check(/On both watches ✓/.test(await pill()), `pill: "${await pill()}"`);
   check(a.overlaps === 0 && b.overlaps === 0, `overlapping writes: ${a.overlaps}, ${b.overlaps}`);
-  check(a.writes.every((t) => t.length <= 20) && !a.writes.some((t) => /[a-z]{3}/i.test(t.replace(/^[CXH]/, "").replace(/HI|HO|LI|LO|CH|CL/, ""))), "only codes over the air, never a name");
+  check(a.raw.every((t) => t.length <= 20) && a.raw.every((t) => t === "H" || t.length === 16 || t.length === 18) && !a.raw.some((t) => /^[CX]\d+,|,(HI|HO|LI|LO|L|M|CH|CL),|HIGH|INSIDE|OUTSIDE|CHASE|Bangle|Pitcher/.test(t.length === 18 ? "" : t)),
+    `over the air: the game key (18 bytes) once per connection, then only 16-byte sealed frames; no name, no sign or spot in readable form (${a.raw.length} writes)`);
+  check(a.writes.some((t) => /^K\d+$/.test(t)) && a.writes.filter((t) => t[0] === "C").length > 0 && !a.writes.includes("?bad"), "the watch got the game key and opened every call");
 
   console.log("11. Soak test while the app renders");
   const soak = await page.evaluate(async () => {
@@ -216,6 +228,33 @@ const FAKE_BT = `
   check(sk.length === 2 && sk.every((v) => v.sent >= 5 && v.missing === 0 && v.late === 0), `renders don't clear soak calls (review I4): ${JSON.stringify(soak)}`);
   await page.waitForTimeout(200);
   check(!(await watch()).view.sign, "stopping the soak clears the watches");
+
+  console.log("12. End of game");
+  const keyedBefore = await page.evaluate(() => window.__watches.map((w) => !!w.core.st.key));
+  await page.evaluate(() => endGame()); await page.waitForTimeout(600);
+  const after = await page.evaluate(() => window.__watches.map((w) => ({ key: w.core.st.key, nokey: w.view.nokey })));
+  check(keyedBefore.every(Boolean) && after.every((w) => w.key === null && w.nokey), "End game: both watches wipe the game key (— and \"no key\")");
+  console.log("13. Pairing-only mode, switched in Setup");
+  await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
+  const group = page.getByRole("group", { name: "Message security" });
+  check(await group.getByRole("button", { name: /Full encryption/ }).getAttribute("aria-pressed") === "true", "Setup shows Full encryption chosen (the default)");
+  await group.getByRole("button", { name: /Pairing only/ }).click(); await page.waitForTimeout(300);
+  check(await page.getByRole("group", { name: "Message security" }).getByRole("button", { name: /Pairing only/ }).getAttribute("aria-pressed") === "true"
+    && await page.evaluate(() => JSON.parse(localStorage.getItem("pitchiq.watch")).mode) === "pairing", "Pairing only chosen, kept on this device");
+  await page.getByRole("button", { name: "Game" }).first().click(); await page.waitForTimeout(200);
+  const take2 = page.getByRole("button", { name: /^Take the field/ }); if (await take2.count()) { await take2.click(); await page.waitForTimeout(250); }
+  await settle();
+  const rawBefore = (await watch(0)).raw.length;
+  await key("Enter"); await page.waitForTimeout(400);
+  const pa = await watch(0), pb = await watch(1), fresh = pa.raw.slice(rawBefore);
+  check(pa.view.sign && JSON.stringify(pa.view) === JSON.stringify(pb.view), `pairing-only: both watches show the call (${pa.view.sign} / ${(pa.view.words || []).join(" ") || "(sign alone)"})`);
+  check(fresh.includes("P") && fresh.some((t) => /^C\d+,[1-9],(HI|HO|LI|LO|L|M|CH|CL),[01]$/.test(t)) && !fresh.some((t) => t.length === 16 || t.length === 18), `the air: a P, then plain calls, no key and no sealed frames (${fresh.filter((t) => t !== "H").join(" ")})`);
+  check(/On both watches ✓/.test(await pill()), `pill: "${await pill()}"`);
+  await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
+  await page.getByRole("group", { name: "Message security" }).getByRole("button", { name: /Full encryption/ }).click(); await page.waitForTimeout(500);
+  const back = await watch(0);
+  check(back.raw.slice(-3).some((t) => t.length === 18) && back.view.sign === pa.view.sign, "switched back to Full encryption: the game key goes out and the call stays on the watch");
+
 
   console.log("12. Receipt off");
   await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);

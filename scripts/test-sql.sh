@@ -21,3 +21,4 @@ $run reports_rls_test   node supabase/test/reports_rls_test.js   # Build 1: repo
 $run logging_lock_test  env LOCK_ROWS=20000 node supabase/test/logging_lock_test.js   # review fixes: the logging migration adds its columns without a rewrite or a long lock (1,000,000 rows: run it with LOCK_ROWS unset)
 $run opp_rls_test       node supabase/test/opp_rls_test.js   # Build 2: opponent database permissions
 $run outcome_rls_test   node supabase/test/outcome_rls_test.js   # Build 3: outcome tracking tables
+$run watch_rls_test     node supabase/test/watch_rls_test.js   # Build 4: the team watch list (register, see, remove)

@@ -799,3 +799,14 @@ html:has(.pq) body { background: #0c0b0e; }
 .pq .pq-fold[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
 .pq .pq-fold[open] > .tbl-scroll { margin-top: 4px; }
 @media (prefers-reduced-motion: no-preference) { .pq .pq-fold[open] > .tbl-scroll { animation: pq-pop 0.22s var(--e-out) both; transform-origin: top center; } }
+
+/* Build 4: the team's watches (Settings) */
+.pq .watch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pq .watch-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 14px; min-width: 0; }
+.pq .watch-list li.removed { opacity: 0.7; }
+.pq .watch-remove summary { list-style: none; cursor: pointer; }
+.pq .watch-remove summary::-webkit-details-marker { display: none; }
+.pq .watch-remove[open] summary { display: none; }
+.pq .watch-remove form { display: grid; gap: 8px; max-width: 420px; }
+.pq .shell-form.rows.watches > .shell-note { margin-left: 0; max-width: 64ch; }
+.pq .shell-form.rows.watches > .watch-list { padding-bottom: 4px; }

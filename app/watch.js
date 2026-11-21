@@ -3,19 +3,22 @@
  * Bangle.js 2 watches running watch/bangle/pitchiq.app.js, over Web Bluetooth (Chrome on a PC, laptop or Android; iPad
  * Safari has none, so nothing here runs there).
  *
- * What goes over the air is codes only, one write of at most 20 bytes per message, never a name:
- *   C<n>,<sign>,<loc>,<chg>   a call: message number, the catcher's sign, the location code, 1 if it replaces a call
- *                             already on the watch before a pitch was recorded (two short buzzes) else 0 (one long buzz)
- *   X<n>                      clear: the watch shows "—"
- *   S                         a new session: the watch restarts its message count (first write on every connection)
- *   H                         heartbeat every 3 s when there's no message yet; otherwise the heartbeat re-sends the
- *                             newest message (a repeat: no second buzz), so a watch that missed or dropped it gets it back
- * and back from the watch (notifications, only while "Delivery receipt" is on):
- *   A<n>                      receipt for message n        B<pct>   battery
+ * What goes over the air (docs/PLAN_watch_security_2026-11-18.md), one write of at most 20 bytes, never a name:
+ *   K<id><key>        the game's key (18 bytes): a fresh random 128-bit key per game, written to each watch over the
+ *                     passkey-bonded link as the first write of every connection while a game is on. Never stored.
+ *   <16-byte frame>   a call (sign, location, changed flag), a clear, a heartbeat or "end of game", encrypted and
+ *                     authenticated with that inning's key (app/watch_sec.js: AES-CTR + CMAC, keys derived per inning)
+ *   H                 plain heartbeat, only while no game key is out (the watch can show nothing without one)
+ * The heartbeat (every 3 s) re-sends the newest frame (a repeat: no second buzz), so a watch that missed or dropped it
+ * gets it back. Message numbers count up through the game across every watch and connection (never per connection: a
+ * number is part of the encryption's counter block and must not repeat under one key).
+ * Back from the watch (notifications, only while "Delivery receipt" is on):
+ *   A<n>   receipt for message n        B<pct>   battery        K<id>   game key received
  *
- * Rules (plan rev 2 review items 1-4, 10, 12, 13):
- *   - every message number counts up per watch and restarts at 1 on each new connection (the watch resets too), so a
- *     reload or an undo can't leave the watch ignoring new calls;
+ * Rules (plan rev 2 review items 1-4, 10, 12, 13; security plan 2):
+ *   - message numbers count up for the whole game; a reload makes a new game key (the watch takes the new key and
+ *     starts its count again), so a reload or an undo can't leave the watch ignoring new calls;
+ *   - a watch removed from the team (opts.removed) never gets a key: the coach's app forgets it;
  *   - only the newest numbered message matters: a newer one replaces an older one still waiting or unconfirmed;
  *   - one write at a time per watch (Chrome rejects overlapping GATT operations);
  *   - with the receipt on, a message with no receipt after 1 s is "missing" and re-sent every second until it arrives
@@ -35,6 +38,7 @@
   const MAX_WATCHES = 2;
   const ACK_MS = 1000, RETRY_MS = 1000, HB_MS = 3000, REPEATS = 3, REPEAT_GAP_MS = 150, BACKOFF_MS = [1000, 2000, 4000, 8000, 10000];
   const SETTINGS_KEY = "pitchiq.watch";   // this device only: never in the synced setup or the game plan (review 16)
+  const Sec = typeof PQSec !== "undefined" ? PQSec : (typeof require === "function" ? require("./watch_sec.js") : null);
 
   // the engine's spots as the watch says them (plan rev 3). Chase goes the way the engine aims it: above the zone for
   // fastball-class pitches, below it for the breaking balls and the changeup (engine.js yTarget / targetHeight).
@@ -60,11 +64,19 @@
     return Object.keys(by).filter((s) => by[s].length > 1).map((s) => ({ sign: s, names: by[s] }));
   }
 
-  function encode(target, n) {
-    const t = target.kind === "call" ? `C${n},${target.sign},${target.loc},${target.chg ? 1 : 0}` : `X${n}`;
-    if (t.length > MAX_LEN) throw new Error(`watch message too long: ${t}`);
-    return t;
+  // one sealed frame (16 bytes): what the watch is to show, under that inning's keys
+  function seal(game, inning, n, target) {
+    const f = Sec.seal(game.keysFor(inning), game.keyId, inning, n, target);
+    if (f.length > MAX_LEN) throw new Error("watch message too long");
+    return f;
   }
+  const randomBytes = (n) => {
+    const b = new Uint8Array(n);
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) crypto.getRandomValues(b);
+    else if (typeof require === "function") b.set(require("crypto").randomBytes(n));
+    else throw new Error("no secure random source");
+    return b;
+  };
 
   function create(opts) {
     opts = opts || {};
@@ -75,8 +87,17 @@
     const onChange = opts.onChange || (() => {});
     const enc = new TextEncoder(), dec = new TextDecoder();
     const log = opts.log || (() => {});
+    const random = opts.random || randomBytes;
+    const removed = opts.removed || (() => false);   // (device) -> true when the coach removed this watch from the team
+    // (device id, name, role, { fresh }) on each connection, before any key: the app registers it with the team and may answer
+    // { removed: true } (or a promise of it); fresh = picked in the chooser just now (pairing it), so a re-add may be asked
+    const onLinked = opts.onLinked || (() => {});
+    const LINK_CHECK_MS = opts.linkCheckMs || 2500;   // how long the team's answer may take before this device's own list decides (offline)
 
-    let settings = { receipt: true, ids: [] };
+    // roles: { deviceId: "pitcher" | "catcher" }. mode: "full" (default: every message sealed with the game's key) or
+    // "pairing" (pairing-only, the fallback if AES turns out too slow on the watch: plain messages over the bonded link,
+    // message numbers still guarding against replays)
+    let settings = { receipt: true, ids: [], roles: {}, mode: "full" };
     try { const s = storage && storage.getItem(SETTINGS_KEY); if (s) settings = Object.assign(settings, JSON.parse(s)); } catch (e) {}
     const saveSettings = () => { try { storage && storage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (e) {} };
 
@@ -86,6 +107,8 @@
     let lastAcc = null;     // the last accepted call and the at-bat moment it was for (the changed flag)
     let hbTimer = null;
     let lastSig = "";
+    // the game key: { gid, keyId, key, seq, inning, keysFor(inning), content: { text: { n, bytes } } } or null. In memory only
+    let game = null;
     const soak = { on: false, timer: null, seq: 0, stats: {} };
 
     const changed = () => { const s = JSON.stringify(summary()); if (s !== lastSig) { lastSig = s; onChange(); } };
@@ -96,13 +119,57 @@
       if (hbTimer) return;
       hbTimer = T.setInterval(() => { for (const d of devs) if (d.state === "ok") { d.hbDue = true; pump(d); } }, HB_MS);
     }
+    // the frame for this target under the game key: every watch gets the same frame for the same content, and new
+    // content always gets a new number (a counter block never repeats under one key)
+    function frameFor(tgt) {
+      const content = `${game.inning}|${tgt.kind}|${tgt.sign || ""}|${tgt.loc || ""}|${tgt.chg ? 1 : 0}`;
+      let f = game.content[content];
+      if (!f) { game.seq += 1; f = game.content[content] = { n: game.seq, bytes: game.mode === "pairing" ? enc.encode(plainText(tgt, game.seq)) : seal(game, game.inning, game.seq, tgt) }; }
+      return f;
+    }
+    // pairing-only mode's plain message (at most 13 bytes: C65535,9,CL,1)
+    function plainText(tgt, n) {
+      return tgt.kind === "call" ? `C${n},${tgt.sign},${tgt.loc},${tgt.chg ? 1 : 0}` : tgt.kind === "end" ? `E${n}` : `X${n}`;
+    }
+    function startGame(gid) {
+      const key = random(16), keyId = random(1)[0];
+      const cache = {};
+      game = { gid, key, keyId, seq: 0, inning: 1, content: {}, mode: settings.mode === "pairing" ? "pairing" : "full",
+        keysFor: (i) => cache[i] || (cache[i] = Sec.inningKeys(key, i)) };
+      for (const d of devs) if (d.state === "ok") { pushKey(d); if (target) send(d, target); }
+      changed();
+    }
+    function pushKey(d) {
+      if (!game) return;
+      if (removed(d.device)) { forget(d.name); return; }
+      const kf = game.mode === "pairing" ? enc.encode("P") : Sec.keyFrame(game.keyId, game.key);   // pairing-only: no key, a P
+      d.keyed = false;
+      d.ops.push(() => (d.rx.writeValueWithResponse ? d.rx.writeValueWithResponse(kf) : d.rx.writeValue(kf)));
+      pump(d);
+    }
+    // the coach ends the game: each watch is told (it wipes the key) and the key is dropped here
+    function endGame() {
+      if (!game) return;
+      game.content = {};
+      for (const d of devs) if (d.state === "ok") send(d, { kind: "end" });
+      accepted = null; target = null; lastAcc = null;
+      const g = game;
+      T.setTimeout(() => { if (game === g) { game = null; changed(); } }, 2000);   // after the end frames have gone out
+      changed();
+    }
+    function setInning(i) {
+      if (!game || !(i >= 1 && i <= 255) || i === game.inning) return;
+      if (i < game.inning) return;   // innings only go forward (an undo across an inning keeps the later inning's keys)
+      game.inning = i; game.content = {};
+    }
 
     // ---------------------------------------------------------------- one watch's queue
     function send(d, tgt) {
-      if (!tgt) return;
-      d.n += 1;
+      if (!tgt || !game) return;
+      if (removed(d.device)) { forget(d.name); return; }
+      const f = frameFor(tgt);
       if (d.want) clearWantTimers(d.want);
-      d.want = { n: d.n, text: encode(tgt, d.n), kind: tgt.kind, soak: !!tgt.soak, writes: 0, done: 0, needWrite: true, firstAt: null, acked: false,
+      d.want = { n: f.n, bytes: f.bytes, kind: tgt.kind, soak: !!tgt.soak, writes: 0, done: 0, needWrite: true, firstAt: null, acked: false,
         missing: false, ackArmed: false, ackT: null, retryT: null, repeatT: null, latency: null };
       pump(d);
       changed();
@@ -119,10 +186,15 @@
         return;
       }
       const w = d.want;
-      if (w && w.needWrite) { write(d, w.text, w); return; }
-      if (d.hbDue) { d.hbDue = false; write(d, w ? w.text : "H", null); }
+      if (w && w.needWrite) { write(d, w.bytes, w); return; }
+      if (d.hbDue) {
+        d.hbDue = false;
+        if (w) write(d, w.bytes, null);
+        else if (game && game.mode === "full") { game.seq += 1; game.content = {}; write(d, seal(game, game.inning, game.seq, { kind: "hb" }), null); }
+        else write(d, enc.encode("H"), null);
+      }
     }
-    function write(d, text, w) {
+    function write(d, bytes, w) {
       d.writing = true;
       const conn = d.conn;
       if (w) {
@@ -130,7 +202,6 @@
         if (w.firstAt === null) w.firstAt = T.now();
         if (settings.receipt) armReceipt(d, w);   // from the first attempt, so a write that keeps failing still shows as missing
       }
-      const bytes = enc.encode(text);
       const chr = d.rx;
       let go;
       try { go = chr.writeValueWithResponse ? chr.writeValueWithResponse(bytes) : chr.writeValue(bytes); }
@@ -176,6 +247,10 @@
           if (soak.on && w.soak) soakAck(d, w);
           changed();
         }
+      } else if (text[0] === "K") {
+        if (game && game.mode === "full" && +text.slice(1) === game.keyId) { d.keyed = true; changed(); }
+      } else if (text === "P") {
+        if (game && game.mode === "pairing") { d.keyed = true; changed(); }
       } else if (text[0] === "B") {
         const b = +text.slice(1);
         if (b >= 0 && b <= 100) { d.battery = b; changed(); }
@@ -199,14 +274,32 @@
       if (settings.receipt) await d.tx.startNotifications();
       if (d.conn !== conn) return;
       d.notifying = !!settings.receipt;
-      d.n = 0; d.backoff = 0;
+      d.backoff = 0;
+      // review fixes (Nov 19): the team's list answers before any key goes out, so a removal made elsewhere wins even when
+      // this device's own list is out of date. Offline (no answer in time), the list kept on this device decides. A watch
+      // just picked in the chooser (fresh) may be re-added, but only if the team says so.
+      const fresh = !!d.fresh; d.fresh = false;
+      if (!fresh && removed(d.device)) { forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`); }
+      let answer = null;
+      try {
+        answer = await new Promise((res) => {
+          const to = T.setTimeout(() => res(null), LINK_CHECK_MS);
+          Promise.resolve(onLinked(d.device.id, d.name, roleOf(d), { fresh })).then((a) => { T.clearTimeout(to); res(a || null); }, () => { T.clearTimeout(to); res(null); });
+        });
+      } catch (e) {}
+      if (d.conn !== conn) return;
+      if ((answer && answer.removed) || (removed(d.device) && !(fresh && answer && answer.ok))) {
+        forget(d.name); throw new Error(`${d.name} was removed from the team. Pair it again to use it.`);
+      }
       d.state = "ok";
       startHeartbeat();
-      // a new session starts with S: the watch resets its message count even if it never saw the old link drop (a
-      // reload where the browser reconnects before the radio link goes down)
-      d.ops.push(() => d.rx.writeValueWithResponse ? d.rx.writeValueWithResponse(enc.encode("S")) : d.rx.writeValue(enc.encode("S")));
-      // what it should show now; a watch joining or coming back gets the call as new (one long buzz), never as a change
-      send(d, target && target.kind === "call" ? Object.assign({}, target, { chg: false }) : (target || { kind: "clear" }));
+      // the game key first (the watch takes it only over the bonded link), then what it should show now; a watch
+      // joining or coming back gets the call as new (one long buzz), never as a change
+      if (game) {
+        pushKey(d);
+        game.content = {};   // a fresh number: the watch shows it as a new call (it took the old one off at the drop)
+        send(d, target && target.kind === "call" ? Object.assign({}, target, { chg: false }) : (target || { kind: "clear" }));
+      }
       changed();
     }
     function onDisconnect(d) {
@@ -226,7 +319,7 @@
       let d = devs.find((x) => x.device === device || (device.id && x.device.id === device.id));
       if (d) return d;
       if (devs.length >= MAX_WATCHES) throw new Error(`Up to ${MAX_WATCHES} watches.`);
-      d = { device, name: device.name || "Watch", state: "new", battery: null, n: 0, want: null, writing: false, hbDue: false, ops: [], backoff: 0, reT: null, conn: 0 };
+      d = { device, name: device.name || "Watch", state: "new", battery: null, keyed: false, want: null, writing: false, hbDue: false, ops: [], backoff: 0, reT: null, conn: 0 };
       device.addEventListener("gattserverdisconnected", () => onDisconnect(d));
       devs.push(d);
       if (device.id && !settings.ids.includes(device.id)) { settings.ids.push(device.id); saveSettings(); }
@@ -242,6 +335,7 @@
       const device = await bt.requestDevice({ filters: [{ namePrefix: "Bangle" }], optionalServices: [SVC] });
       const d = addDevice(device);
       if (d.state === "ok") return d;
+      d.fresh = true;   // picked in the chooser just now: pairing it, so the team may re-add it if it was removed
       if (d.reT) { T.clearTimeout(d.reT); d.reT = null; }
       await linkOrRetry(d);
       return d;
@@ -273,8 +367,27 @@
       if (d.reT) T.clearTimeout(d.reT);
       if (d.want) clearWantTimers(d.want);
       try { d.device.gatt.disconnect(); } catch (e) {}
+      // drop this browser's permission for the watch where Chrome allows it, so it can't come back without pairing again
+      try { if (typeof d.device.forget === "function") d.device.forget().catch(() => {}); } catch (e) {}
       devs.splice(i, 1);
       settings.ids = settings.ids.filter((x) => x !== d.device.id); saveSettings();
+      changed();
+    }
+    // pitcher's or catcher's watch: the first one paired is the pitcher's, the second the catcher's, until the coach says
+    function roleOf(d) { return (settings.roles || {})[d.device.id] || (devs.indexOf(d) === 1 ? "catcher" : "pitcher"); }
+    function setRole(name, role) {
+      const d = devs.find((x) => x.name === name);
+      if (!d || (role !== "pitcher" && role !== "catcher")) return;
+      settings.roles = Object.assign({}, settings.roles, { [d.device.id]: role }); saveSettings();
+      try { Promise.resolve(onLinked(d.device.id, d.name, role, { fresh: false })).then((a) => { if (a && a.removed) forget(d.name); }, () => {}); } catch (e) {}
+      changed();
+    }
+    // full encryption or pairing-only; a game in progress starts a fresh session in the new mode (the watch takes the
+    // new key, or the P, and the call on screen is sent again as new)
+    function setMode(mode) {
+      if (mode !== "full" && mode !== "pairing") return;
+      settings.mode = mode; saveSettings();
+      if (game && game.mode !== mode) { if (target && target.kind === "call") target = Object.assign({}, target, { chg: false }); startGame(game.gid); }
       changed();
     }
     function setReceipt(on) {
@@ -298,10 +411,13 @@
       if (!signOk(c.sign)) throw new Error(`sign ${c.sign} can't go to the watch (1 to 9)`);
       if (!loc) throw new Error(`unknown spot ${c.quad}`);
       const at = `${c.pitchNo}|${c.ab || ""}`;
+      if (!game || game.gid !== c.gid) startGame(c.gid);   // a new game: a new key, to every watch, before its first call
+      if (c.inning) setInning(c.inning);
       const chg = !!(lastAcc && lastAcc.gid === c.gid && lastAcc.at === at && lastAcc.id !== c.id);
       accepted = { gid: c.gid, id: c.id, pitchNo: c.pitchNo };
       lastAcc = { gid: c.gid, id: c.id, at };
       target = { kind: "call", sign: String(c.sign), loc, chg, soak: !!c.soak };
+      game.content = {};   // a new target: new frames, new numbers
       for (const d of devs) if (d.state === "ok") send(d, target);
       changed();
       return target;
@@ -310,10 +426,12 @@
     // pitch of the same game; anything else (a recorded pitch, a shake-off, a new call, undo, the third out) clears them.
     // A soak test owns the watches while it runs.
     function sync(cur) {
+      if (cur && cur.inning) setInning(cur.inning);
       if (!accepted || soak.on) return false;
       if (cur && cur.gid === accepted.gid && cur.id === accepted.id && cur.pitchNo === accepted.pitchNo) return false;
       accepted = null;
       target = { kind: "clear" };
+      if (game) game.content = {};
       for (const d of devs) if (d.state === "ok") send(d, target);
       changed();
       return true;
@@ -325,10 +443,10 @@
       const list = devs.map((d) => {
         const w = d.want, isCall = !!(accepted && w && w.kind === "call");
         const delivered = d.state === "ok" && !!w && (settings.receipt ? w.acked : w.done >= 1);
-        return { name: d.name, state: d.state, battery: d.battery, delivered: isCall && delivered, missing: isCall && d.state === "ok" && !!w.missing,
+        return { name: d.name, id: d.device.id, role: roleOf(d), state: d.state, battery: d.battery, keyed: !!(game && d.keyed), delivered: isCall && delivered, missing: isCall && d.state === "ok" && !!w.missing,
           latency: isCall && w.latency !== null ? w.latency : null };
       });
-      return { supported: !!bt, receipt: settings.receipt, accepted: !!accepted, used: settings.ids.length > 0 || devs.length > 0, devices: list };
+      return { supported: !!bt, receipt: settings.receipt, mode: settings.mode, accepted: !!accepted, used: settings.ids.length > 0 || devs.length > 0, game: !!game, devices: list };
     }
     // one line for the Game screen's pill: { tone: "ok" | "watch" | "change" | "", text }
     function line() {
@@ -366,7 +484,7 @@
     function soakStop() {
       if (soak.timer) T.clearInterval(soak.timer);
       soak.timer = null; soak.on = false;
-      accepted = null; target = { kind: "clear" };
+      accepted = null; target = { kind: "clear" }; if (game) game.content = {};
       for (const d of devs) if (d.state === "ok") send(d, target);
       changed();
       return soakStats();
@@ -377,11 +495,12 @@
       return out;
     }
 
-    return { connect, restore, reconnect, forget, setReceipt, accept, sync, isAccepted, summary, line,
+    return { connect, restore, reconnect, forget, setReceipt, setRole, setMode, accept, sync, isAccepted, summary, line, startGame, endGame, setInning,
+      get _game() { return game; },
       soakStart, soakStop, soakStats, get soaking() { return soak.on; }, get receipt() { return settings.receipt; }, _devs: devs };
   }
 
-  const PCWatch = { VERSION: "0.2.0", SVC, RX, TX, MAX_LEN, LOC, WORDS, locCode, sharedSigns, encode, create,
+  const PCWatch = { VERSION: "0.3.0", SVC, RX, TX, MAX_LEN, LOC, WORDS, locCode, sharedSigns, create,
     supported: () => typeof navigator !== "undefined" && !!navigator.bluetooth };
   root.PCWatch = PCWatch;
   if (typeof module !== "undefined" && module.exports) module.exports = PCWatch;

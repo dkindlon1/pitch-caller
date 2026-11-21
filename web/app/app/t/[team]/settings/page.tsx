@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ensureOurTeam, teamFor, teamRule } from "@/lib/team";
 import PCRules from "@/lib/pitch_rules";
-import { markSeasonOver, saveSettings } from "../actions";
+import { markSeasonOver, removeWatch, saveSettings } from "../actions";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { ConfirmSubmit } from "../../../_frame/ConfirmSubmit";
 import { Notice, type Search } from "../ui";
@@ -22,6 +22,10 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
   const rule = teamRule(ours);
   const zones = Intl.supportedValuesOf("timeZone");
   const groups = [...new Set(PCRules.PRESETS.map((x) => x.group))];
+  // Build 4: the team's watches (paired and registered from the game app). Removing one stops every device on the team
+  // from sending it a game key; it has to be paired again (passkey) and re-added by a coach who manages the roster.
+  const { data: watchRows } = await (await getServerSupabase()).rpc("pc_watch_list", { p: team });
+  const watches = (Array.isArray(watchRows) ? watchRows : []) as { watch_id: string; name: string; role: string; removed: boolean }[];
   return (
     <>
       <h1 className="shell-h1">Settings</h1>
@@ -42,6 +46,29 @@ async function Body({ params, searchParams }: { params: Params; searchParams: Se
       </form>
       {t.active ? null : <p className="shell-note">This team isn&apos;t switched on yet: the name and time zone save now, the pitch-count rule once billing is done.</p>}
       <Seasons team={team} active={t.active} />
+      <section className="shell-form rows watches" aria-labelledby="h-watches">
+        <h2 id="h-watches">Watches</h2>
+        <p className="shell-note small">Watches paired from the game app (Setup, Watches). Each one paired once with the code it shows; every game sends it a fresh key. Remove a lost or stolen watch here: no device on the team will send it another key.</p>
+        {watches.length ? (
+          <ul className="watch-list">
+            {watches.map((w) => (
+              <li key={w.watch_id} className={w.removed ? "removed" : undefined}>
+                <span><b>{w.name}</b> <span className="shell-note small">{w.role === "catcher" ? "Catcher's watch" : "Pitcher's watch"}{w.removed ? " · removed" : ""}</span></span>
+                {w.removed ? <span className="shell-note small">Pair it again in the game app to add it back.</span> : (
+                  <details className="watch-remove">
+                    <summary className="shell-btn">Remove…</summary>
+                    <form action={removeWatch}>
+                      <input type="hidden" name="team" value={team} /><input type="hidden" name="watch" value={w.watch_id} />
+                      <p className="shell-note small">{w.name} won&apos;t get another game key. A game it&apos;s in now keeps working until it ends or the watch restarts.</p>
+                      <button type="submit" className="shell-btn danger">Remove {w.name}</button>
+                    </form>
+                  </details>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : <p className="shell-note">No watches yet. Pair one from the game app on a laptop (Chrome): Setup, Watches.</p>}
+      </section>
     </>
   );
 }
