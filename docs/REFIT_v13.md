@@ -92,3 +92,35 @@ approach, per-level platoon) wait for the college archive.
   vs 84.6% (rows 10-11). Some of the inplay_typed_params / hitter_spread_params change is rerun drift (rerunning
   inplay_fit.py / fit_hitter_spread.py on the unchanged branch already moves them, e.g. D1 g_d .856 -> .752).
 - **Not rerun:** sim_constants.py (TAKE_W; kappa still centred on it), hs_rates.py, college / HS count values.
+
+## Rule checks on the refit engine (before -> after, same scripts)
+
+| Check | Script | v1.2.3 numbers | Refit numbers |
+|---|---|---|---|
+| Better stuff never makes a pitch cost more (fuzz, outside 2-0 / 3-0 / 3-1) | `fuzz.py` | 3000/3000 (3 tiny reversals < 0.002 runs) | **3000/3000** (4 tiny) |
+| A pitch 2-for-10 is never called more than at 8-for-10 | `fuzz.py` | 144/150 (FAIL) | **146/150 (FAIL, as before)** |
+| Get it over loses about half when not landing (slider 3-for-9 at 2-1) | `tests.py` | PASS | **PASS**: 26% fresh, 0% at 3 of 9, 29% at 7 of 9 |
+| Hard rules: hard-rule scenario rows with any Not-acceptable share | `readthrough/scenarios.py --suite v12` | none | **none** |
+| Scenario pass rule | same | 94/98 (P2, P3, P5, P7 fail) | 94/98 (E7, P2, P3, P7 fail: E7 new, P5 now passes) |
+| No chase at 3-0 / 3-1; probabilities; windows; run tables; counts | `fuzz.py` Part A | same pass / fail set | same pass / fail set (the three window / trust / 2-for-10 fails exist before and after) |
+| Fuzz learning rows | `fuzz.py` Part B | hs "crushes fastballs" FAIL, rest pass except the changeup confidence row | hs row now PASS; **college_d3 "fastball hole barely moves the call on thin evidence" now FAIL** (56 -> 63% at 3 looks); changeup confidence row FAIL as before |
+
+## scripts/test-app.sh (Nov 21, lock held, run with `set -e` dropped so every check runs)
+
+Pass: every suite except the ones below (refit tests, hitter_data, zone_seed, explain, all four fast_parity runs
+= Python = JS, tests_v13_d2, tests_v13_sim, **golden_v13refit**, build matches source, web/lib copies, web demo, all Node
+tests and e2e runs including game_mix_e2e, opponent_exact_test, peak_sim).
+
+Fail, all from the moved numbers:
+- **Exact-vs-old-numbers checks:** golden_v123 (240,501 differences); tests_v12 "exact at lean 0 vs 14e0ad2" (2);
+  tests_v121 "identical to 504aaa8"; tests_v122 "identical to cb64db1" and its band-edge check against cb64db1;
+  tests_v123 "exactly v1.2.2's"; tests_v11 "exactly v1.0 with Step 2 set back"; tests.py "LAND_K / LAND_GAIN are the
+  results/v10 Statcast fit" (GAIN 1.9 vs that file's 2.02); tests_v12b "the fitted size is results/v12/hitter_fits.json's
+  coefficient" (0.1961 vs 0.2077); tests_harness "one-zone integration reproduces v1.2's own outcome_probs" (the frozen
+  v1.2 integration vs the live engine); logging_exact_test and drift_exact_test (old build = a git ref's app/dist with
+  the old numbers, so the seeded games diverge; drift_exact_test's "drift notes really showed" precondition also fails
+  because the refit games of seed 3 raised no note).
+- **Behavior rows that moved (for Drew's regrade, nothing tuned back):** tests.py R1 mixing (1-2, runner on 3rd, after
+  a fastball up-in: fastball 43%, slider 35%, wants within 6 points); tests_v11 Q4 (riding four-seam up at most 36% of
+  two-strike calls: hs 41.4%, college_d3 42.5%); tests_v12 S5 re-gate row (sinker in 1.0%, toward 0.0%, away 12.1%);
+  plus fuzz's college_d3 fastball-hole row and scenario E7 above.
