@@ -38,6 +38,10 @@ PA_VERBS = [
     ("reached first", "REACH"), ("reached", "REACH"), ("out on batter's interference", "BINT"),
     ("out on batters interference", "BINT"), ("awarded base on catcher's interference", "CI"),
     ("awarded first on catcher's interference", "CI"),
+    # present-tense feed ("Alt walks, Gendron pitching")
+    ("strikes out looking", "K_L"), ("strikes out swinging", "K_S"), ("strikes out", "K"), ("walks", "BB"),
+    ("singles", "1B"), ("doubles", "2B"), ("triples", "3B"), ("homers", "HR"), ("grounds out", "GO"),
+    ("flies out", "FO"), ("lines out", "LO"), ("pops out", "PO"), ("pops up", "PO"), ("is hit by pitch", "HBP"),
 ]
 PA_VERB_RE = re.compile(r"^(?P<name>.+?) (?P<verb>" + "|".join(re.escape(v) for v, _ in PA_VERBS) + r")\b")
 VERB_CODE = dict(PA_VERBS)
@@ -48,8 +52,9 @@ SUB2_RE = re.compile(r"^(?P<new>.+?) (?:in for|replaces|subbed for|substituted f
 SUB3_RE = re.compile(r"^(?:\S+ )?substitution: (?P<new>.+?) (?:(?P<ph>pinch hitting)|(?P<pr>pinch running)|"
                      r"(?P<to>(?:now )?(?:pitching|playing (?P<pos>\w+))))(?: for (?P<old>.+?))?\.*$", re.I)
 SLASH_FOR_RE = re.compile(r"^/ for (?P<old>.+?)\.*$")
+PITCH_CHANGE_RE = re.compile(r"^(?:\S+ )?pitching change: (?P<new>.+?) (?:replaces|for) (?P<old>.+?)\.*$", re.I)
 RUNNER_VERB_RE = re.compile(r"^(?P<name>.+?) (?P<verb>stole|advanced|scored|picked off|caught stealing|out at|"
-                            r"was picked off|was caught stealing|out on|failed pickoff|placed on|"
+                            r"was picked off|was caught stealing|out on|failed pickoff|placed on|steals|"
                             r"to (?:first|second|third))\b")
 NONPLAY_RE = re.compile(r"^(?:no play|.*\bno play\.?$|dropped foul|.*\bfailed pickoff attempt\.?$|.*\btimeout\b|"
                         r".*\bvisits mound\b|.*\bpitch count\b|.*\bposition change:|distance:|.*\bexit velo|\W*$|"
@@ -216,11 +221,17 @@ def clause_dest(clause):
     m0 = re.search(r"placed on (first|second|third)", c)          # extra-inning runner
     if m0:
         return BASE_WORD[m0[1]]
+    m0 = re.search(r"\bsteals (2b|2nd|second|3b|3rd|third|home)\b", c)
+    if m0:
+        return {"2b": 2, "2nd": 2, "second": 2, "3b": 3, "3rd": 3, "third": 3, "home": 4}[m0[1]]
     for m in re.finditer(r"(advanced to (first|second|third|home)|stole (second|third|home)|scored|"
                          r"out at (first|second|third|home)|out on the play|caught stealing|picked off|"
-                         r"out on (?:a|the)? ?(?:double|triple) play|was out|thrown out|^\S.{0,30}? to (first|second|third)\b(?! base))", c):
+                         r"out on (?:a|the)? ?(?:double|triple) play|was out|thrown out|^\S.{0,30}? to (first|second|third)\b(?! base)|"
+                         r"advanced from (?:first|second|third)(?: base)? to (second|third|home))", c):
         s = m.group(0)
-        if s.startswith("advanced to"):
+        if m[6]:
+            fate = BASE_WORD[m[6]]
+        elif s.startswith("advanced to"):
             fate = BASE_WORD[m[2]]
         elif s.startswith("stole"):
             fate = BASE_WORD[m[3]]
@@ -236,7 +247,7 @@ def clause_dest(clause):
 
 
 def clause_name(clause):
-    m = re.match(r"^(?P<name>.+?) (?:advanced|stole|scored|out|caught|picked|was|placed|to (?:first|second|third)|failed|"
+    m = re.match(r"^(?P<name>.+?) (?:advanced|stole|steals|scored|out|caught|picked|was|placed|to (?:first|second|third)|failed|"
                  r"remained|held|returned)\b", clause.strip())
     return m["name"].strip() if m else None
 
@@ -364,6 +375,9 @@ def classify(text, state, batting_names=None):
     s = text.strip()
     if not s:
         return "nonplay", None
+    m = PITCH_CHANGE_RE.match(s)
+    if m:
+        return "pitch_change", m
     if NONPLAY_RE.match(s):
         return "nonplay", None
     m = SLASH_FOR_RE.match(s)
@@ -479,10 +493,10 @@ def parse_game(plays, lineups=(), away="", home="", away_runs=None, home_runs=No
                     for p in pas:
                         if p["fld_side"] == side and p["pitcher"] is None:
                             p["pitcher"] = old
-            elif kind == "sub":
+            elif kind in ("sub", "pitch_change"):
                 info["parsed_lines"] += 1
                 d = m.groupdict()
-                pos = (d.get("pos") or "").lower()
+                pos = "p" if kind == "pitch_change" else (d.get("pos") or "").lower()
                 to = (d.get("to") or "").lower()
                 if to in ("pitching", "now pitching"):
                     pos = "p"
@@ -592,7 +606,7 @@ def parse_game(plays, lineups=(), away="", home="", away_runs=None, home_runs=No
                 if int(stated[1]) != state.outs:
                     state.outs = int(stated[1])
                 hinfo["stated_outs"] = int(stated[1])
-            if kind in ("sub", "nonplay"):
+            if kind in ("sub", "nonplay", "pitch_change", "sub_cont"):
                 before = None if not pending_mid else before
             lrec["flags"] = sorted(flags)
             lines.append(lrec)

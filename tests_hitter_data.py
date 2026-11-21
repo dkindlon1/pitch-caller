@@ -140,6 +140,12 @@ def t_more_state():
                          L("Away U Top of 1st Inning", "Cole lined out to ss. (2 out)"),
                          L("Away U Top of 1st Inning", "Dunn grounded out to 3b. (3 out)")])
     check("Presto inning label and (n out)", info["halves"][0]["half"] == "top" and info["halves"][0]["outs_final"] == 3)
+    pas, _, info = game([L(T1, "Larson,Colin walked."), L(T1, "Gallo,Luke walked; Larson,Colin advanced to second base."),
+                         L(T1, "Solier,Julio singled, RBI; Larson,Colin scored from second base; "
+                               "Gallo,Luke advanced from first base to third base."),
+                         L(T1, "Wang,Nick walked.")])
+    check("'advanced from first base to third base'", pas[3]["bases_before"] == "101" and info["final_parsed"] == [1, 0],
+          (pas[3]["bases_before"], info["final_parsed"]))
     pas, _, _ = game([L(T1, "A. Able placed on second."), L(T1, "B. Baker singled to left field; A. Able scored.")])
     check("extra-inning runner placed on second", pas[0]["bases_before"] == "010" and pas[0]["runs_on_play"] == 1,
           (pas[0]["bases_before"], pas[0]["runs_on_play"]))
@@ -159,6 +165,10 @@ def t_people():
                       L(T1, "B. Baker walked.")])
     check("'/ for' continuation names the replaced starter", pas[0]["pitcher"] == "L. Lincoln" and
           pas[1]["pitcher"] == "M. McKenzie", (pas[0]["pitcher"], pas[1]["pitcher"]))
+    pas, _, _ = game([L(T1, "Able,Al singled."), L(T1, "ME pitching change: Donlin,Jack replaces Stabley,Thomas."),
+                      L(T1, "Baker,Bo walked.")])
+    check("'pitching change: X replaces Y' changes the pitcher and names the starter",
+          pas[0]["pitcher"] == "Stabley,Thomas" and pas[1]["pitcher"] == "Donlin,Jack", (pas[0]["pitcher"], pas[1]["pitcher"]))
     check("name keys: 'S. Pace' = 'Pace, Sawyer'", parse.same_person("S. Pace", "Pace, Sawyer"))
     check("name keys: 'PACE' = 'Sawyer Pace'", parse.same_person("PACE", "Sawyer Pace"))
     check("name keys: different initials differ", not parse.same_person("S. Pace", "T. Pace"))

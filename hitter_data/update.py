@@ -11,7 +11,7 @@ unparsed_top20.csv, dupes.csv, summary.txt)."""
 import json, multiprocessing as mp, os, re, sqlite3, sys, time
 from . import ingest, parse, quality
 
-PARSER_VERSION = "2"   # bump when the parser changes: every game re-parses on the next update
+PARSER_VERSION = "3"   # bump when the parser changes: every game re-parses on the next update
 
 PA_SCHEMA = """
 CREATE TABLE IF NOT EXISTS pa(game_id TEXT, idx INTEGER, seq REAL, inning INTEGER, half TEXT, bat_side TEXT,
