@@ -9,6 +9,7 @@ platform. Tolerance 1e-9 on numbers; exact on everything else.
 usage: python3 golden/fast.py N          -> compute both sides, diff, exit non-zero on any mismatch
        FAST_LEANS=1 python3 golden/fast.py N  -> the same with a miss lean and spread on every pitch (v1.2)
        FAST_TAGS=1 python3 golden/fast.py N   -> the same with hitter tags on every case (v1.2 Part B)
+       FAST_LEVEL=college_d2 python3 golden/fast.py N  -> the same with every case at that level (v1.3: college D2)
        python3 golden/fast.py --emit N   -> print this side's results as JSON (used by golden/fast.js)
 """
 import json, os, subprocess, sys
@@ -36,6 +37,9 @@ def load(n):
     if os.environ.get("FAST_TAGS") == "1":      # v1.2 Part B: the same inputs with hitter tags on every case
         for i, c in enumerate(cs):
             c["s"]["hitter_tags"] = tag_tags(i)
+    if os.environ.get("FAST_LEVEL"):            # v1.3 Part 3: the same inputs with every case at one level (college_d2)
+        for c in cs:
+            c["s"]["level"] = os.environ["FAST_LEVEL"]
     return cs
 
 

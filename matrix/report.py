@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 RV = json.load(open("college_run_values.json"))
-REAL = {"mlb": "mlb_check", "college_d1": "college_d1", "college_d3": "college_d3", "hs": "hs"}
+REAL = {"mlb": "mlb_check", "college_d1": "college_d1", "college_d3": "college_d3", "hs": "hs", "college_d2": "college_d3"}   # PLACEHOLDER_D2
 S = {"cstrike", "whiff", "foul", "weak", "solid", "hard"}
 tags = [l.split()[0] for l in open(sys.argv[1] if len(sys.argv) > 1 else "matrix/configs.txt") if l.strip()]
 rows_out = []

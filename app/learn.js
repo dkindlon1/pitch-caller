@@ -214,6 +214,7 @@
   const LEVEL_AVG = {
     hs: { AVG: 0.286, OBP: 0.415, SLG: 0.383, K: 0.210, BB: 0.141 },
     college_d3: { AVG: 0.295, OBP: 0.402, SLG: 0.426, K: 0.162, BB: 0.114 },
+    college_d2: { AVG: 0.295, OBP: 0.402, SLG: 0.426, K: 0.162, BB: 0.114 },   // PLACEHOLDER_D2: D3's averages until there is D2 data (v1.3)
     college_d1: { AVG: 0.265, OBP: 0.368, SLG: 0.395, K: 0.193, BB: 0.108 },
     mlb: { AVG: 0.255, OBP: 0.320, SLG: 0.405, K: 0.200, BB: 0.079 },
   };

@@ -101,6 +101,9 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     await coach.getByRole("link", { name: "Set up a game" }).first().click(); await coach.waitForURL(/\/games\/new/); await settle(coach);
     const sheet = coach.getByRole("form", { name: "Set up a game" });
     await sheet.getByLabel("Opponent").selectOption({ label: "Ithaca College" });
+    const lvOpts = await sheet.getByLabel("Level", { exact: true }).locator("option").allInnerTexts();   // v1.3 Part 3 (plan 3.5)
+    check(lvOpts.includes("College D2") && lvOpts.indexOf("College D3") < lvOpts.indexOf("College D2") && lvOpts.indexOf("College D2") < lvOpts.indexOf("College D1"),
+      `the level picker offers College D2, between D3 and D1 (${lvOpts.join(", ")})`);
     await sheet.getByLabel("First pitch (optional)").fill("13:05");
     await sheet.getByRole("button", { name: "Home", exact: true }).click();
     await sheet.getByRole("button", { name: /Next: Our staff/ }).click();

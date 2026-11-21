@@ -3,7 +3,7 @@
 // starter and radar choice. The game app on any device opens it with ?game=<id> and starts the game on this record.
 // Pure: no database, so the checks run in unit tests (gameplan.test.ts).
 
-export const LEVELS: Record<string, string> = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d1: "College D1" };
+export const LEVELS: Record<string, string> = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d2: "College D2", college_d1: "College D1" };
 export const TIERS: [number, string, string][] = [
   [1, "Results only", "Ball, strike, foul, in play, hit or out. The minimum a charter can keep up with."],
   [2, "Plus contact", "Weak, solid or hard on every ball in play."],

@@ -14,7 +14,7 @@ type TeamRow = {
   team_id: string; team_name: string; level: string | null; org_id: string; org_name: string;
   role: string | null; is_owner: boolean; active: boolean; status: string;
 };
-const LEVEL_NAME: Record<string, string> = { hs: "high school", travel: "travel ball", college_d3: "college D3", college_d1: "college D1" };
+const LEVEL_NAME: Record<string, string> = { hs: "high school", travel: "travel ball", college_d3: "college D3", college_d2: "college D2", college_d1: "college D1" };
 const ROLE: Record<string, string> = { head: "Head coach", pitching: "Pitching coach", caller: "Pitch caller", viewer: "Viewer", player: "Player" };
 
 export default function AppHome() {

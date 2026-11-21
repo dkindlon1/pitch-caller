@@ -57,6 +57,8 @@
   // --- end PROFILE_TERMS ---
   const BASE_FB_MPH = 85.0, PROFILE_LEVEL = "college_d3";
   const PROFILE_NAMES = { "Two-seam": "two-seam", Sweeper: "sweeper", Slurve: "slurve", Splitter: "split", Forkball: "split", "12-6 curve": "12-6" };
+  // v1.3 (plan 3.5): college D2 uses D3's profiles until profiles_fit.py has D2 rows (engine.py _fill_d2_placeholders)
+  PROFILES.college_d2 = PROFILES.college_d3; MOVE_RATIO.college_d2 = MOVE_RATIO.college_d3;   // PLACEHOLDER_D2
   function profile(kind, shape, level) {
     const tab = PROFILES[level || PROFILE_LEVEL] || PROFILES[PROFILE_LEVEL];
     return tab[kind + "|" + (shape || "")] || tab[kind + "|"];
@@ -1641,7 +1643,7 @@
   }
 
   // ---------------------------------------------------------------- 7.1-7.2 win expectancy, 7.7 walk suggestion
-  const WE_LEVEL = { travel: "hs", college: "college_d1" };
+  const WE_LEVEL = { travel: "hs", college: "college_d1", college_d2: "college_d3" };   // PLACEHOLDER_D2: D3's win tables (engine.py)
   const sched = (s) => s.sched_innings || ((s.level === "hs" || s.level === "travel") ? 7 : 9);
   const bitsOf = (b) => (b[0] ? 1 : 0) | (b[1] ? 2 : 0) | (b[2] ? 4 : 0);
   function weTab(level, N, xr) { return WE ? WE[(WE_LEVEL[level] || level) + "|" + N + "|" + (xr ? 1 : 0)] : null; }
