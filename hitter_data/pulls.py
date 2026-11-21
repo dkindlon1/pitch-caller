@@ -39,18 +39,22 @@ SAV_MIN = ("https://baseballsavant.mlb.com/statcast-search-minors/csv?all=true&h
            "&hfLevel={lv}%7C&game_date_gt={d}&game_date_lt={d}&type=details&minors=true")
 
 
-def savant_plan():
-    for lv, years in (("A", range(2026, 2020, -1)), ("AAA", range(2026, 2022, -1))):   # zone seed first
-        for y in years:
-            yield lv, y
-    for y in range(2026, 2007, -1):
-        yield "MLB", y
+def savant_plan(which):
+    if which == "minors":                     # zone seed first: Single-A, then Triple-A
+        for lv, years in (("A", range(2026, 2020, -1)), ("AAA", range(2026, 2022, -1))):
+            for y in years:
+                yield lv, y
+    else:                                     # MLB: fit seasons newest first, then 2026 (held out), then PITCHf/x years
+        for y in list(range(2025, 2014, -1)) + [2026] + list(range(2014, 2007, -1)):
+            yield "MLB", y
 
 
-def savant():
-    for lv, y in savant_plan():
+def savant(which="minors"):
+    for lv, y in savant_plan(which):
         out = os.path.join(DATA, "statcast", lv, str(y)); os.makedirs(out, exist_ok=True)
-        d, end = dt.date(y, 3, 1), min(dt.date(y, 11, 10), dt.date.today() - dt.timedelta(days=1))
+        # regular season only (hfGT=R): MLB from mid-March, the minors from April; nothing after early October
+        d = dt.date(y, 3, 15) if lv == "MLB" else dt.date(y, 4, 1)
+        end = min(dt.date(y, 10, 5), dt.date.today() - dt.timedelta(days=1))
         while d <= end:
             path = os.path.join(out, f"{d}.csv.gz"); empty = path + ".empty"
             if not (os.path.exists(path) or os.path.exists(empty)):
@@ -121,8 +125,11 @@ def pbp_rows(pk, date, level, season, venue, data):
 
 def statsapi(seasons=range(2026, 2004, -1)):
     root = os.path.join(DATA, "statsapi"); os.makedirs(root, exist_ok=True)
+    only = os.environ.get("LEVEL")            # one worker per level: LEVEL=AAA python -m hitter_data.pulls statsapi
     for season in seasons:
         for sport, level in LEVELS.items():
+            if only and level != only:
+                continue
             d = os.path.join(root, level); os.makedirs(d, exist_ok=True)
             if os.path.exists(os.path.join(d, f"nopitch_{season}.txt")):
                 continue
@@ -138,29 +145,39 @@ def statsapi(seasons=range(2026, 2004, -1)):
             done = set(open(done_path).read().split()) if os.path.exists(done_path) else set()
             todo = [g for g in games if str(g[0]) not in done]
             print(level, season, len(games), "games,", len(todo), "to fetch", flush=True)
-            out_path = os.path.join(d, f"pitches_{season}.csv.gz")
-            new = not os.path.exists(out_path)
             nopitch = 0
+            buf, buf_pks = [], []
+
+            def flush():
+                # each chunk is its own file, written to .part and renamed, and only then marked done: a kill can
+                # lose at most the unflushed games, never corrupt a file
+                if not buf_pks:
+                    return
+                k = len([f for f in os.listdir(d) if f.startswith(f"pitches_{season}_")])
+                path = os.path.join(d, f"pitches_{season}_{k:04d}.csv.gz")
+                with gzip.open(path + ".part", "wt", newline="", encoding="utf-8") as f:
+                    w = csv.writer(f); w.writerow(PITCH_COLS); w.writerows(buf)
+                os.replace(path + ".part", path)
+                with open(done_path, "a") as f:
+                    f.write("".join(f"{pk}\n" for pk in buf_pks))
+                buf.clear(); buf_pks.clear()
             for i, (pk, date, venue) in enumerate(todo):
-                body = get(f"https://statsapi.mlb.com/api/v1/game/{pk}/playByPlay", pause=0.7)
+                body = get(f"https://statsapi.mlb.com/api/v1/game/{pk}/playByPlay", pause=0.25)
                 if body == b"":
                     continue
                 rows = pbp_rows(pk, date, level, season, venue, json.loads(body)) if body else []
                 nopitch += not rows
-                # one gzip member per game: a crash mid-write loses at most that game (it isn't in done yet)
-                with gzip.open(out_path, "at", newline="", encoding="utf-8") as f:
-                    w = csv.writer(f)
-                    if new:
-                        w.writerow(PITCH_COLS); new = False
-                    w.writerows(rows)
-                with open(done_path, "a") as f:
-                    f.write(f"{pk}\n")
+                buf.extend(rows); buf_pks.append(pk)
+                if len(buf_pks) >= 100:
+                    flush()
                 if i % 250 == 0:
                     print(level, season, i, "/", len(todo), "games with no pitch events so far:", nopitch, flush=True)
                 if nopitch >= 60 and nopitch == i + 1:
                     print(level, season, "first 60 games carry no pitch events; skipping this level-season", flush=True)
                     open(os.path.join(d, f"nopitch_{season}.txt"), "w").write("first 60 games had no pitch events\n")
+                    buf.clear(); buf_pks.clear()
                     break
+            flush()
     print("statsapi done", flush=True)
 
 
@@ -205,18 +222,19 @@ def counts():
                         loc += 1
             out.append(["statcast", lv, os.path.basename(yd), days, n, loc])
     for lv in LEVELS.values():
+        per = {}
         for f in sorted(glob.glob(os.path.join(DATA, "statsapi", lv, "pitches_*.csv.gz"))):
-            season = os.path.basename(f)[8:12]; n = loc = 0; games = set()
+            season = os.path.basename(f)[8:12]
+            c = per.setdefault(season, [set(), 0, 0])
             it = _gz_rows(f); h = next(it, None)
             if not h:
                 continue
             gi, xi = h.index("game_pk"), h.index("px")
             for row in it:
-                if row == h:
-                    continue
-                n += 1; games.add(row[gi])
+                c[1] += 1; c[0].add(row[gi])
                 if row[xi]:
-                    loc += 1
+                    c[2] += 1
+        for season, (games, n, loc) in sorted(per.items()):
             out.append(["statsapi", lv, season, len(games), n, loc])
     for f in sorted(glob.glob(os.path.join(DATA, "retrosheet", "*eve.zip"))):
         y = os.path.basename(f)[:4]; pa = with_pitches = 0
@@ -243,4 +261,5 @@ def counts():
 
 
 if __name__ == "__main__":
-    {"savant": savant, "statsapi": statsapi, "retrosheet": retrosheet, "counts": counts}[sys.argv[1]]()
+    fn = {"savant": savant, "statsapi": statsapi, "retrosheet": retrosheet, "counts": counts}[sys.argv[1]]
+    fn(*sys.argv[2:])
