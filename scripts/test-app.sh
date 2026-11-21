@@ -9,6 +9,10 @@ $run tests.py      python3 tests.py
 $run tests_hitter_data python3 tests_hitter_data.py   # v1.3 prework: college play-by-play parser on synthetic lines, the held-out (2026) guard
 $run tests_zone_seed python3 tests_zone_seed.py   # v1.3 Part 2: zone seed math on synthetic pitches (not wired into the engine)
 $run tests_harness  python3 tests_harness.py       # v1.3 Part 4: scoring harness (held-out + in-sample guards, bootstrap, frozen landing)
+$run tests_refit_v13 python3 tests_refit_v13.py   # v1.3 Part 2.5: shared-refit loaders (new data layout, 2026 guard, recency weights) and refit math, synthetic
+$run tests_refit_seq python3 tests_refit_seq.py   # v1.3 Part 2.5: sequencing refit rows (seq_fit on the new layout), synthetic
+$run tests_refit_profiles python3 tests_refit_profiles.py   # v1.3 Part 2.5: profile refit loader injection / weighted medians, synthetic
+$run tests_refit_mlbt python3 tests_refit_mlbt.py   # v1.3 Part 2.5: MLB targets / RE24 / count values / HARD_SD math, synthetic
 $run explain       python3 tests_v11_explain.py 60   # v1.1 Step 3 (was tests_v10_explain.py): why line and intent tell the truth, setups included
 $run tests_v11     python3 tests_v11.py              # v1.1: six kinds, one migration table, exactly v1.0's calls (Step 1)
 $run fast_parity   python3 golden/fast.py 40      # live Python vs JS on 40 golden inputs, plus confidence and grading (v1.0 #18)

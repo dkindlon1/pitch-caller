@@ -205,9 +205,10 @@ def controls(r, seq_i, tabs, prev_row):
 
 # ---------------------------------------------------------------------------------------------- penalized logistic
 class Fit:
-    def __init__(self, X, y, pid, bid, games, npit, nbat):
+    def __init__(self, X, y, pid, bid, games, npit, nbat, w=None):
         self.X, self.y, self.pid, self.bid, self.g = X, y, pid, bid, games
         self.np_, self.nb = npit, nbat
+        self.w = None if w is None else np.asarray(w, dtype=float)   # v1.3 refit: optional per-row likelihood weight
 
     def run(self, extra=None):
         X = self.X if extra is None else np.hstack([self.X, extra])
@@ -219,12 +220,18 @@ class Fit:
         lam_re = 1 / RE_SD ** 2
         D = d + 1
 
+        rw = self.w
+
         def fg(w):
             beta, up, ub = w[:D], w[D:D + self.np_], w[D + self.np_:]
             eta = Z @ beta + up[pid] + ub[bid]
             p = 1 / (1 + np.exp(-eta))
-            ll = np.sum(y * eta - np.logaddexp(0, eta))
-            res = y - p
+            if rw is None:
+                ll = np.sum(y * eta - np.logaddexp(0, eta))
+                res = y - p
+            else:
+                ll = np.sum(rw * (y * eta - np.logaddexp(0, eta)))
+                res = rw * (y - p)
             gb = Z.T @ res - 1e-4 * np.r_[0, beta[1:]]
             gp = np.bincount(pid, res, self.np_) - lam_re * up
             gu = np.bincount(bid, res, self.nb) - lam_re * ub
@@ -232,16 +239,17 @@ class Fit:
             return obj, -np.r_[gb, gp, gu]
 
         w0 = np.zeros(D + self.np_ + self.nb)
-        w0[0] = math.log(y.mean() / (1 - y.mean()))
+        ym = y.mean() if rw is None else float(np.sum(rw * y) / np.sum(rw))
+        w0[0] = math.log(ym / (1 - ym))
         r = minimize(fg, w0, jac=True, method="L-BFGS-B", options=dict(maxiter=3000))
         w = r.x
         beta, up, ub = w[:D], w[D:D + self.np_], w[D + self.np_:]
         eta = Z @ beta + up[pid] + ub[bid]
         p = 1 / (1 + np.exp(-eta))
         # cluster-robust covariance for the fixed effects (random intercepts held at their estimates)
-        Wd = p * (1 - p)
+        Wd = p * (1 - p) if rw is None else rw * p * (1 - p)
         H = (Z * Wd[:, None]).T @ Z + 1e-4 * np.diag(np.r_[0, np.ones(D - 1)])
-        S = Z * (y - p)[:, None]
+        S = Z * ((y - p) if rw is None else rw * (y - p))[:, None]
         G = np.zeros((self.g.max() + 1, D))
         np.add.at(G, self.g, S)
         Hi = np.linalg.pinv(H)
@@ -250,8 +258,9 @@ class Fit:
         b_raw = beta[1:] / sd
         se_raw = np.sqrt(np.diag(cov)[1:]) / sd
         corr_raw = cov[1:, 1:] / np.outer(np.sqrt(np.diag(cov)[1:]), np.sqrt(np.diag(cov)[1:]))
+        llv = y * eta - np.logaddexp(0, eta)
         return dict(beta=beta, mu=mu, sd=sd, up=up, ub=ub, b_raw=b_raw, se_raw=se_raw, corr=corr_raw,
-                    ll=float(np.sum(y * eta - np.logaddexp(0, eta))), n=n)
+                    ll=float(np.sum(llv) if rw is None else np.sum(rw * llv)), n=n)
 
     @staticmethod
     def predict(m, X, pid, bid, extra=None):
