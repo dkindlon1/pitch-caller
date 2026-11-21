@@ -15,7 +15,7 @@ FAILS = []
 
 
 def check(name, cond, detail=""):
-    print(("ok   " if cond else "FAIL ") + name + ("" if cond else f"  ({detail})"))
+    print(("  ok   " if cond else "  FAIL ") + name + ("" if cond else f"  ({detail})"))
     if not cond:
         FAILS.append(name)
 
