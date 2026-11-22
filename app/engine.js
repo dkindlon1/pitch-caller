@@ -136,7 +136,10 @@
   // ---------------------------------------------------------------- state values
   const basesKey = (b) => (b[0] ? "1" : "0") + (b[1] ? "2" : "0") + (b[2] ? "3" : "0");
   const re = (outs, bases, level) => (outs >= 3 ? 0.0 : D.RE[level][outs + "|" + basesKey(bases)]);
-  const runScale = (level) => D.RE[level]["0|000"] / D.RE.mlb["0|000"];
+  // v1.3 (Drew's ruling 10): the denominator is pinned at v1.2's MLB RE[0|000] = 0.481, not the refit table's value, until
+  // college run values exist; after that college levels take no scale from MLB (engine.py RUN_SCALE_MLB_RE00)
+  const RUN_SCALE_MLB_RE00 = 0.481;
+  const runScale = (level) => D.RE[level]["0|000"] / RUN_SCALE_MLB_RE00;
   const cvKey = (b, k) => b + "-" + k;
 
   // ---------------------------------------------------------------- confidence
@@ -540,7 +543,7 @@
   // v0.9 item 3 widened: inner vs outer half on and near the plate (engine.py side_shift; Step 5 fit)
   const SIDE = {"hard": {"FB|up|same": -0.736, "FB|up|opp": -0.972, "FB|down|same": 0.052, "FB|down|opp": -0.082, "OS|up|same": -0.069, "OS|up|opp": -0.452, "OS|down|same": 0.553, "OS|down|opp": 0.353}, "whiff": {"FB|up|same": -0.535, "FB|up|opp": -0.361, "FB|down|same": -0.8, "FB|down|opp": -0.602, "OS|up|same": -0.901, "OS|up|opp": -0.747, "OS|down|same": -0.337, "OS|down|opp": 0.2}, "swing": {"FB|up|same": 1.086, "FB|up|opp": 0.61, "FB|down|same": 0.545, "FB|down|opp": -0.042, "OS|up|same": -0.379, "OS|up|opp": -0.339, "OS|down|same": 0.262, "OS|down|opp": 0.382}};
   // v0.9 item 8: more of a power hitter's hard contact leaves the park (engine.py power_hr_shift)
-  const POWER_HR = 0.172;   // v1.0 #11/#28: one power-grade point = one SD of hard-hit share
+  const POWER_HR = 0.196;   // v1.0 #11/#28: one power-grade point = one SD of hard-hit share
   const powerHrShift = (s, gr) => (RHO_L[s.level] ?? 1.0) * POWER_HR * ((gr.w ?? 3) - 3);
   function sideShift(p, q, s, z, what) {
     if ((z !== "heart" && z !== "edge") || q === "middle" || q === "chase" || q === "down-middle") return 0.0;   // no side over the plate
@@ -1364,7 +1367,7 @@
   const GB_RULE_BONUS = 0.005, GB_RULE_TARGETS = ["down-in", "down-away", "down-middle"];
   const groundBallSpot = (s) => s.outs < 2 && (s.bases[0] || s.bases[2]) && s.balls < 3 && s.strikes < 2;
   // v1.0 Step 7 (Drew): the coaching reads, each a named soft credit (engine.py COACH_RULE and coach_credit)
-  const COACH_RULE = { late_fb: 0.027, early_os: 0.02, crowd: 0.03, squared_up: 0.005, away: 0.012, went_back: 0.03, hot: 0.03, plus_opp: 0.015, ride_up_2k: 0.008 };   // v1.1 Step 4: ride_up_2k (engine.py)   // v1.1 Step 2: away 0.01 -> 0.012 (engine.py)
+  const COACH_RULE = { late_fb: 0.027, early_os: 0.02, crowd: 0.03, squared_up: 0.005, away: 0.012, went_back: 0.03, hot: 0.03, plus_opp: 0.015, ride_up_2k: 0.003 };   // v1.3 (ruling 5): ride_up_2k 0.008 -> 0.003 (engine.py)   // v1.1 Step 4: ride_up_2k (engine.py)   // v1.1 Step 2: away 0.01 -> 0.012 (engine.py)
   const READ_T = 0.2, HOT_EST = 0.10, SIDE_TARGETS = { in: ["up-in", "down-in"], away: ["up-away", "down-away"] };
   // v1.1: "lean on it" wears off once he has leaned (mirror of engine.py HOT_FADE / hot_fade)
   const HOT_FADE = [1.2, 1.6];   // v1.2 Step 5 (L6): by ratio to the normal share (engine.py)

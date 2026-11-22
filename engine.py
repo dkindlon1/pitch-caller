@@ -85,7 +85,9 @@ SIDE = {"hard": {"FB|up|same": -0.736, "FB|up|opp": -0.972, "FB|down|same": 0.05
 # zone and the HR effect x heart did not ship). v1.0 #11/#28: one power-grade point = one SD of hitters' hard-hit share
 # (0.0518, fit_hitter_spread.py's g_w target), so the fitted per-SD effect applies as is. The extra home runs come out of
 # that type's outs.
-POWER_HR = 0.172
+# v1.3 (Drew's ruling 8): one power point = HARD_SD = 0.0728, the hitter talent SD with luck removed
+# (hitter_data/hard_talent_sd.py); the refit's 0.177 per SD of its own power measure (0.0657) is restated per HARD_SD.
+POWER_HR = 0.196
 
 
 def power_hr_shift(s, gr):
@@ -159,7 +161,9 @@ GB_RULE_TARGETS = ("down-in", "down-away", "down-middle")
 # v1.1 Step 2: "away" 0.01 -> 0.012. Under the profile terms (the fastball's inside / away lines by batter side) 0.01
 # moved its calls 19.9 points, just short of Drew's 20; 0.012 moves them 23.
 COACH_RULE = {"late_fb": 0.027, "early_os": 0.02, "crowd": 0.03, "squared_up": 0.005, "away": 0.012, "went_back": 0.03,
-              "hot": 0.03, "plus_opp": 0.015, "ride_up_2k": 0.008}
+              "hot": 0.03, "plus_opp": 0.015, "ride_up_2k": 0.003}
+# v1.3 (Drew's ruling 5, Nov 21): ride_up_2k 0.008 -> 0.003, the smallest size that passes every graded row on the refit
+# engine (C5 78% acceptable, E7 passes, S7f's climb-the-ladder floor holds); the 36% cap (tests_v11 Q4) is unchanged.
 READ_T = 0.2           # the app labels a hitter "late on"/"early on" a pitch class from |timing| 0.2
 HOT_EST = 0.10         # landing better than his normal by this much (the not-landing rule's shrinkage), at least LAND_BLOCK_N thrown
 SIDE_TARGETS = {"in": ("up-in", "down-in"), "away": ("up-away", "down-away")}
@@ -499,9 +503,16 @@ def re(outs, bases, level="mlb"):
     return 0.0 if outs >= 3 else RE_BY_LEVEL[level][(outs, bases_key(*bases))]
 
 
+# v1.3 (Drew's ruling 10, Nov 21): the run-scale denominator is pinned at v1.2's MLB RE[0|000] = 0.481 (the 2010-15
+# table), not the refit MLB table's .503: a higher-scoring MLB in recent seasons is no reason for HS / college credits
+# and randomness to shrink. Pinned until college run values exist; after that, college levels take no scale from MLB.
+# RE_BY_LEVEL["mlb"] itself stays as fitted (used everywhere else). Same constant in app/engine.js.
+RUN_SCALE_MLB_RE00 = 0.481
+
+
 def run_scale(level):
     """How big runs are at this level vs MLB (runs per inning from scratch). Randomness settings scale with it."""
-    return RE_BY_LEVEL[level][(0, "000")] / RE_BY_LEVEL["mlb"][(0, "000")]
+    return RE_BY_LEVEL[level][(0, "000")] / RUN_SCALE_MLB_RE00
 
 
 def V(balls, strikes, outs, bases, cv=None, level="mlb"):
