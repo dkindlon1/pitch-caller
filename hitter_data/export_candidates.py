@@ -247,14 +247,14 @@ def write(obj, name):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def verify(count_path, levels=None):
+def verify(count_path, levels=None, thru=2025):
     """Fresh process with PITCH_COUNT_TABLE=count_path: the engine's per-count rates vs the fits, no in-memory edits."""
     import engine as e
     out = {"versions": e.TABLE_VERSIONS, "levels": {}}
     for lv, (dl, fn, thin) in LEVELS.items():
         if levels and lv not in levels:
             continue
-        j = load_cand(fn)
+        j = load_cand(fn.replace("thru2025", f"thru{thru}"))
         t, t_bo, n_bo, late = targets(j)
         rates, sw_bo = engine_rates(Probe(lv, dl), n_bo, late)
         err = errors(rates, sw_bo, t, t_bo, n_bo)
@@ -354,8 +354,10 @@ def core_paths():
     return {k: os.path.join(ROOT, "data_tables", f"{k}_{CORE_VERSION}.json") for k in ("count", "run")}
 
 
-def run_core(log=print, prove=True):
-    """Calibrate the D1 and HS count candidates on top of the shared refit's count layer, under the approved zone table
+def run_core(log=print, prove=True, thru=2025, out_paths=None):
+    """thru / out_paths (score_core): thru=2024 builds the "as scored" copy from the *_thru2024 candidates (fit <= 2024,
+    so the harness may score it on 2025) and writes it to out_paths {"count": ..., "run": ...} instead of data_tables/.
+    Calibrate the D1 and HS count candidates on top of the shared refit's count layer, under the approved zone table
     (zone_v13) and the harness's primary landing (h3, Single-A), and write the core defaults. HS gets the pitch kind x
     velocity table (fit_count_hs.pitch_table) after calibration: the count layer is the average pitch, the table moves a
     pitch off that average, as in the fit. D2 / D3 keep v1.2's count terms (labelled). Run values: D1 and HS from the fits,
@@ -371,11 +373,12 @@ def run_core(log=print, prove=True):
     with open(os.path.join(ROOT, "data_tables", "count_v13refit.json"), encoding="utf8") as f:
         C = json.load(f)
     old_path = os.path.join(OUT, "count_v13prov.json")
-    old = json.load(open(old_path, encoding="utf8")) if os.path.exists(old_path) else None
+    old = json.load(open(old_path, encoding="utf8")) if os.path.exists(old_path) and thru == 2025 else None
     report = {"provisional": FD.PROVISIONAL, "version": CORE_VERSION, "base": CORE_BASE, "landing": PRIMARY_ASSUMPTION,
               "levels": {}}
     for lv in CORE_LEVELS:
         dl, fn, thin = LEVELS[lv]
+        fn = fn.replace("thru2025", f"thru{thru}")
         j = load_cand(fn)
         t, t_bo, n_bo, late = targets(j)
         base_row = copy.deepcopy(e._CT[lv])
@@ -401,8 +404,12 @@ def run_core(log=print, prove=True):
         rec["after_errors"] = {k: v for k, v in err.items() if k != "per_count"}
         rec["after_offsets"] = {ck: dict(swing=L["swing"][ck]["heart"], cstrike=L["cstrike"][ck]) for ck in CK}
         report["levels"][lv] = rec
-    with open(HS.PITCH_TABLE_OUT, encoding="utf-8") as f:
-        C["levels"]["hs"]["pitch_velo"] = json.load(f)
+    if thru == 2025:
+        with open(HS.PITCH_TABLE_OUT, encoding="utf-8") as f:
+            C["levels"]["hs"]["pitch_velo"] = json.load(f)
+    else:
+        hcon = HS.connect()
+        C["levels"]["hs"]["pitch_velo"] = HS.pitch_table({x: HS.load_season(hcon, x) for x in HS.SEASONS if x <= thru}, thru=thru)
     for lv in ("college_d2", "college_d3"):
         C["levels"][lv]["label"] = V12_PENDING
     C["version"] = CORE_VERSION
@@ -415,7 +422,7 @@ def run_core(log=print, prove=True):
     with open(os.path.join(ROOT, "data_tables", "run_v13refit.json"), encoding="utf8") as f:
         R = json.load(f)
     for lv in CORE_LEVELS:
-        with open(os.path.join(FD.FITS, "run_values", RUN_LEVELS[lv]), encoding="utf-8") as f:
+        with open(os.path.join(FD.FITS, "run_values", RUN_LEVELS[lv].replace("thru2025", f"thru{thru}")), encoding="utf-8") as f:
             r = json.load(f)
         R["levels"][lv]["re"] = {bo: round(r["RE"][bo], 4) for bo in BO}
         c0 = r["CV"]["0-0"]
@@ -426,18 +433,24 @@ def run_core(log=print, prove=True):
                   "college_d3 and mlb the shared refit's (run_v13refit); lw the refit's; college_d2 absent (D3's: PLACEHOLDER, "
                   "release_guard_d2.py trips). The run-scale denominator is pinned at 0.481 (ruling 10). Format: docs/TABLES_v13.md.")
     e.check_table(R, "run_v13core.json")
-    paths = core_paths()
+    paths = out_paths or core_paths()
+    if thru != 2025:
+        C["version"] = R["version"] = f"{CORE_VERSION}_s{thru}"
+        for obj in (C, R):
+            obj["about"] = (f"SCORING COPY (hitter_data.score_core): as {CORE_VERSION} but from the *_thru{thru} candidates "
+                            f"(fit <= {thru}), so the harness can score it out of sample. Not the default. ") + obj["about"]
     NL = chr(10)
     for kind, obj in (("count", C), ("run", R)):
         with open(paths[kind], "w", encoding="utf8", newline=NL) as f:
             f.write(build_v12.dumps(obj) + NL)
         log(f"  wrote {paths[kind]}")
     # fresh process: the written count rows without pitch_velo reproduce the fitted per-count rates
-    scratch = os.path.join(OUT, "count_v13core_nopv.json")
+    scratch = os.path.join(OUT, "count_v13core_nopv.json" if thru == 2025 else f"count_v13core_s{thru}_nopv.json")
     C0 = copy.deepcopy(C)
     C0["levels"]["hs"].pop("pitch_velo")
     write(C0, os.path.basename(scratch))
-    v = subprocess.run([sys.executable, "-m", "hitter_data.export_candidates", "--verify", scratch, "--levels", ",".join(CORE_LEVELS)],
+    v = subprocess.run([sys.executable, "-m", "hitter_data.export_candidates", "--verify", scratch, "--levels", ",".join(CORE_LEVELS),
+                        "--thru", str(thru)],
                        cwd=ROOT, capture_output=True, text=True,
                        env=dict(os.environ, PYTHONUTF8="1", PITCH_ZONE_TABLE="v13", PITCH_COUNT_TABLE=scratch, PITCH_RUN_TABLE=paths["run"]))
     if v.returncode != 0:
@@ -447,7 +460,7 @@ def run_core(log=print, prove=True):
         log(f"  fresh process: {lv}: max per-count error {er['max_all_count_terms']:.5f}; count x base-out swing max "
             f"{er['swing_count_bo_max']:.4f}, wRMS {er['swing_count_bo_wrms']:.4f}")
     report["seconds"] = round(time.time() - t0, 1)
-    write(report, "core_export_report.json")
+    write(report, "core_export_report.json" if thru == 2025 else f"core_s{thru}_export_report.json")
     log(f"  done ({report['seconds']} s)")
     return C, R, report
 
@@ -473,9 +486,10 @@ def main(argv=None):
     ap.add_argument("--no-proof", action="store_true")
     ap.add_argument("--levels", default=None, help="--verify only these engine levels (comma list)")
     ap.add_argument("--core", action="store_true", help="v1.3 core: write data_tables/count_v13core.json and run_v13core.json")
+    ap.add_argument("--thru", type=int, default=2025, help="--verify against the *_thru<N> candidates")
     a = ap.parse_args(argv)
     if a.verify:
-        verify(a.verify, levels=a.levels.split(",") if a.levels else None)
+        verify(a.verify, levels=a.levels.split(",") if a.levels else None, thru=a.thru)
         return
     if a.core:
         run_core(prove=not a.no_proof)
