@@ -20,6 +20,7 @@ Branch `feat/hitter-v13-fits-count`, stacked on `feat/hitter-v13-prework` at 90f
 | `python -m hitter_data.fit_runs` | `fit_runs.run()` | `fits/run_values/{level}_thru{2024,2025}.json`, `compare_2025.json` |
 | `python -m hitter_data.fit_count_proxy` | `fit_count_proxy.run()` | `fits/count_layer/proxy_check.json` |
 | `python -m hitter_data.score_candidates` | `score_candidates.main()` | `fits/score_2025/scores.json`, `scores.md` (needs `fit_count` first) |
+| `python -m hitter_data.fit_count_hs` | `fit_count_hs.run()` | HS / travel, everything in one run (section 12): `fits/count_layer/hs_*.json`, `fits/run_values/hs_thru{2024,2025}.json`, `fits/hs/hs_summary.json`, `hs_report.md` |
 
 - Per-season sufficient counts are cached in `fits/cache/`. The cache key is a hash of each season's full-game id list,
   so newly scraped games trigger a rebuild. `fit_count --no-cache` forces one.
@@ -224,7 +225,153 @@ validation season; the pass / fail test is 2026, once, at Step 6.
 - The weak-contact proxy fails the Single-A ranking check (section 6). Count tables should carry the hard proxy only.
 - Side is unknown for about 90% of pitches. The platoon offsets rest on 5-15% of PAs.
 - Not done here:
-  - HS / travel (Part 1 intake and its pitch-class / velocity splits);
   - converting to the TABLES_v13 format;
   - walk / strikeout linear weights (`_lw_bb`, `_lw_k`);
   - the Single-A zone-by-zone check of a v1.3 count layer (HARNESS_v13 section 10, required before v1.3 ships).
+
+## 12. HS / travel (level `hs`: one model for both, Drew Nov 21; travel keeps HS's numbers; no bat type)
+
+**PROVISIONAL.** The Perfect Game data is about 40% collected: the Atlanta 15U-17U events are 20-40% captured. 2026
+was not touched.
+
+Command: `python -m hitter_data.fit_count_hs [--boot 1000] [--no-cache]`. It takes about 35 s once the seasons are
+cached (`fits/cache/hs_season_*.pkl`, keyed on the games' content hashes). Code: `hitter_data/fit_count_hs.py`.
+
+**Data:**
+- `hs.sqlite3`, read-only. Games with a full pitch log, 2022-2025: 7,235 games and 1.52 M pitch events.
+- Fit seasons 2022-2024; 2025 is the validation season (1,921 games, 404,959 pitches).
+- The season build mirrors the college harness: the same replay (`harness.pitch_events` on the letter string plus the
+  in-play pitch), the same filters and the same contexts. Late = inning 5 or later of 7 with a margin of 2 or less.
+
+### 12.1 Count layer
+
+All variants were tuned on 2025 with the fit on seasons up to 2024.
+
+| Variant | Half-life | A_bo | A_sd | K | pitch_5way 2025 |
+|---|---|---|---|---|---|
+| `sep` (HS / travel alone) | 2 | 3200 | 5000 | n/a | 1.44305 |
+| `borrow` (from D3) | 3 | 3200 | 5000 | **0** | 1.44308 |
+| `shared` (HS + D3 + HS offset) | 1.5 | 3200 | ∞ | n/a | 1.44324 |
+
+- **There is no borrowing from D3.** The tuned K is 0 and the borrowed share is 0.000. HS has 1.1 M fit pitches, and
+  D3's pattern doesn't help.
+- The half-life curve is flat: 1.5-6 are within 0.00001 nats.
+- **The candidate is `hs_sep_thru2025.json`.** The paired 2025 harness differences:
+  - shared − sep = +0.00018 (SE 0.00007);
+  - borrow − sep = +0.00003 (SE 0.00003).
+
+Per-count tables (`sep`, ship refit, weights 2022 .35 / 2023 .50 / 2024 .71 / 2025 1.0):
+
+| Count | n | swing | cs/take | whiff/sw | foul/sw | inplay/sw |
+|---|---|---|---|---|---|---|
+| 0-0 | 261,135 | .311 | .341 | .236 | .358 | .406 |
+| 0-1 | 109,539 | .405 | .271 | .266 | .347 | .387 |
+| 0-2 | 53,402 | .481 | .157 | .301 | .334 | .365 |
+| 1-0 | 116,196 | .375 | .327 | .218 | .359 | .423 |
+| 1-1 | 95,407 | .431 | .273 | .248 | .352 | .400 |
+| 1-2 | 74,843 | .505 | .169 | .288 | .331 | .381 |
+| 2-0 | 47,965 | .349 | .359 | .214 | .362 | .424 |
+| 2-1 | 59,470 | .454 | .280 | .229 | .367 | .404 |
+| 2-2 | 67,288 | .530 | .178 | .269 | .340 | .391 |
+| 3-0 | 19,626 | .117 | .499 | .221 | .361 | .417 |
+| 3-1 | 32,832 | .431 | .310 | .210 | .371 | .419 |
+| 3-2 | 49,232 | .559 | .196 | .231 | .361 | .408 |
+
+The hard proxy is not comparable with college: PG labels hits as liners too, so it reads about .27 vs college's .17.
+
+### 12.2 Format terms and pitch terms
+
+Each term is a multiplicative offset per count × term level, shrunk to 1 with 200 pseudo-pitches. It is fit on seasons
+up to 2024 on top of `sep`, and scored on 2025 as a paired difference. The SE is the largest of the game / home-team /
+two-team bootstrap SEs (B = 1,000).
+
+| Term | 2025 gain (nats / pitch) | SE | Kept (> 2 SE) | ≥ 0.002 |
+|---|---|---|---|---|
+| HS vs travel | −0.00002 | 0.00005 | no | no |
+| age group | +0.00048 | 0.00015 | yes | no |
+| pool / bracket | −0.00003 | 0.00007 | no | no |
+| series | +0.00036 | 0.00013 | yes | no |
+| all four format terms together | +0.00046 | 0.00016 | yes | no |
+| pitch class (FB / breaking / offspeed) | +0.00677 | 0.00043 | yes | **yes** |
+| pitch kind (FB / CB / SL / CH) | +0.00697 | 0.00044 | yes | **yes** |
+| velocity vs his own mean, per class | +0.00829 | 0.00044 | yes | **yes** |
+| absolute velocity, per class | +0.00916 | 0.00048 | yes | **yes** |
+| kind + relative + absolute velocity | **+0.01040** | 0.00052 | yes | **yes** |
+| kind + velocity + all format terms | +0.01024 | 0.00053 | no gain over the line above | |
+
+- HS vs travel and pool vs bracket don't matter. Age group and series are real but tiny (under 0.0005). Once pitch kind
+  and velocity are in, they add nothing (the last row). So one HS / travel model is supported.
+- Pitch kind and velocity are the first terms in this buildout to clear the proposed 0.002 minimum effect, by about
+  5×.
+- Missing information gets no adjustment. Blank pitch types (2.4% of 2025 pitches) and missing velocities (5.0%) are concentrated on the
+  in-play pitch (in play .26-.28 vs .16), a scorecard artefact. A "missing" level would learn the outcome, so those
+  pitches get no term adjustment (tested). The engine always knows the pitch.
+
+Effects (2022-2025, game-bootstrap SE ≈ 0.001-0.004). The first numbers are raw rates; Δ is against what the count
+layer expects at that count and state. The full tables, including velocity bins and age groups, are in
+`fits/hs/hs_report.md`.
+
+| Pitch | swing | whiff / swing | in play / swing | Δ swing | Δ whiff / swing | Δ in play / swing |
+|---|---|---|---|---|---|---|
+| Fastball | .422 | .221 | .411 | +.025 | −.024 | +.011 |
+| Curveball | .332 | .331 | .359 | −.085 | +.071 | −.035 |
+| Slider | .364 | .378 | .325 | −.053 | +.117 | −.069 |
+| Change-up | .410 | .348 | .342 | −.003 | +.090 | −.049 |
+| FB < 70 mph | .403 | .180 | .479 | +.017 | −.059 | +.075 |
+| FB 80-85 | .421 | .227 | .393 | +.022 | −.018 | −.007 |
+| FB ≥ 85 | .427 | .275 | .337 | +.023 | +.025 | −.061 |
+| FB ≥ 3 mph under his mean | .395 | .200 | .451 | +.009 | −.043 | +.050 |
+| FB ≥ 3 mph over his mean | .419 | .262 | .375 | +.006 | +.005 | −.019 |
+| Breaking ≥ 75 mph | .376 | .415 | .295 | −.045 | +.153 | −.098 |
+| Breaking ≥ 3 under his mean | .277 | .293 | .382 | −.130 | +.037 | −.014 |
+
+Velocity mostly moves whiff and contact, not swing. Within a pitcher, the gradient is about −0.025 whiff and +0.03 in
+play per swing for each 2 mph below his mean. Swing changes only on breaking balls: slow breaking balls are taken more.
+
+### 12.3 Platoon (the first real test: hands matched for 87-94% of PAs, 2022-2025)
+
+- Both hands known: 94.0% / 88.3% / 89.2% / 86.7% of PAs by season; 351,074 of 404,959 pitches in 2025.
+- On the known-hand pitches, `sep` − `sep_noplatoon` = **−0.00022 (SE 0.00005), about 4.4 SE**: platoon is real. Over
+  all pitches it is −0.00016 (SE 0.00006).
+- It is small in nats. The visible effect is on called strikes: opposite-hand takes are called strikes 2-3 points less
+  often (0-0 .324 vs .350; 0-2 .139 vs .166). Swing and whiff move by under a point.
+
+### 12.4 Run values vs today's HS table (2025; 101,193 PAs, 364,554 pitch states)
+
+| Table | PA-start MSE | Pitch-state MSE | vs today (PA-start) | vs today (pitch-state) |
+|---|---|---|---|---|
+| today `hs` (MaxPreps, ×1.111) | 1.9185 | 1.9131 | | |
+| fit RE + CV | 1.8710 | 1.8675 | −0.0475 (SE 0.0131) | −0.0455 (SE 0.0134) |
+| fit count × base-out | 1.8710 | 1.8648 | −0.0475 (SE 0.0131) | **−0.0482 (SE 0.0130)** |
+
+- **Today's HS table is too high for PG play.** Runs from 0 outs, bases empty are 0.777 here vs 1.069 today; bases
+  loaded with 2 outs is 1.034 vs 1.282. Count values are close (3-0 +0.420 vs +0.415).
+- Tuned: half-life 1, A 1000, K 1000. 4% is borrowed from D3.
+- Caveat: halves cut short by the time limit or run rule are excluded, as in college. PG showcase play may not
+  represent HS varsity play generally.
+
+### 12.5 Scores on 2025 (harness, pitch_5way; v1.2 at HS settings is asked about the D3 frozen pitcher world)
+
+| Version | pitch_5way (SE) | − v1.2_recal (SE) |
+|---|---|---|
+| v1.2 [hs, D3 world] | 1.4552 (0.0023) | +0.0112 |
+| v1.2_recal (pass reference) | 1.4440 (0.0022) | |
+| base_count / base_count_bo | 1.4439 / 1.4437 | |
+| **v13 `sep`** | **1.4431 (0.0022)** | **−0.00094 (0.00013), 7 SE** |
+| v13 `borrow` / `shared` | 1.4431 / 1.4432 | −0.00091 / −0.00075 |
+
+- **The count layer alone gains about 0.001 nats over per-count frequencies, as in college.** The harness can't see
+  pitch type or velocity, because it scores the table without the pitch.
+- On top of that table, the pitch-kind + velocity terms (12.2) add 0.0104 on the same 2025 pitches. That gain is the
+  one that matters for HS. It needs the engine to read per-pitch-class count terms, which is not in the table format
+  yet.
+- The frozen calib world has no HS mix. So raw v1.2 at HS is approximate; `v1.2_recal` doesn't depend on the mix.
+
+### 12.6 Candidate files
+
+- `fits/count_layer/hs_{sep,borrow,shared}_thru{2024,2025}.json`, plus `hs_{sep,borrow}_noplatoon_thru2024.json`.
+  The format is the same as section 8, with level `hs`.
+- `fits/run_values/hs_thru{2024,2025}.json`.
+- The term offsets are not written as an engine table yet. They live in `fits/hs/hs_summary.json` (`terms`,
+  `effects`). A per-class count table, `p6` by count × pitch class × velocity bin, would be the natural engine form;
+  it is waiting on the TABLES_v13 format.

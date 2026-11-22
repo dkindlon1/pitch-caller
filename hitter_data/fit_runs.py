@@ -100,7 +100,12 @@ def today_tables(e, lv):
 def compare(con, level, season, fits, B=1000, seed=1):
     """Squared-error comparison on the real 2025 events with clustered bootstrap SEs. fits: {name: (RE, CV, RV|None)}."""
     assert_not_heldout(season)
-    S = H.build_season(con, level, season)
+    return compare_season(H.build_season(con, level, season), fits, B, seed)
+
+
+def compare_season(S, fits, B=1000, seed=1):
+    """compare() on an already built harness Season (college or HS)."""
+    assert_not_heldout(S.season)
     Ws = H.boot_weights(S, B, seed)
     a, p = S.pa, S.pit
     m = p["run_ok"] == 1
