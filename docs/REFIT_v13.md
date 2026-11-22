@@ -6,10 +6,10 @@ keeping the shipped functional form; the numbers are applied to both engines in 
 
 **Two refits.** The first (commit 1dfc81e) ran while the pulls were still writing (MLB 2021 partial - 2025, AAA 2024
 partial - 2025, A 2021-2025). The **full-data rerun** (commit 5b3901a, next section) uses every finished
-season <= 2025 and is what the branch now ships. The sections after it describe the first refit; the method is the
-same.
+season <= 2025; Drew's rulings 5, 8 and 10 are applied on top of it (next section after it). The sections after
+those describe the first refit; the method is the same.
 
-## Full-data rerun (what the branch ships now)
+## Full-data rerun (the numbers the rulings below were applied to)
 
 **Data.** Savant MLB 2008-2025 (18 seasons, 12.4M pitches on disk), AAA 2023-2025, A 2021-2025; MLB Stats API not
 needed by any runnable route (as before). 2026 never read (`assert_not_heldout` on every path). Same recency weight
@@ -75,6 +75,73 @@ terms with the tracked fit_v08.json (the first refit's numbers) instead of v1.2.
   in both (18 HS), 12 moved only in the first refit (7 HS), 13 only in the full-data refit (5 HS); 34 cases' new top
   call differs between the two refits. Drew's ruling on "the 25 HS / travel calls" was on the first refit's list:
   7 of those 25 no longer move and 5 new HS cases do.
+
+## Rulings 5, 8, 10 applied (Nov 22; what the branch ships now)
+
+Drew's Nov 21 rulings (`docs/DECISIONS_refit_v13.md`, top), applied on the full-data refit. Both engines, app/dist and
+the web/lib copies are in sync (`golden/fast.py 40`: 0 mismatches; `node golden/golden_v11.js v13refit`: PASS).
+
+| Ruling | Number | Before (full-data refit) | Now |
+|---|---|---|---|
+| 5 | `COACH_RULE["ride_up_2k"]` (36% cap unchanged) | 0.008 | **0.003** (x RHO_L at HS: 0.0018) |
+| 8 | `HARD_SD` (fit_hitter_spread.py; one power point) | 0.0636 (SD of shrunk estimates) | **0.0728, bootstrap SE 0.0017** (talent SD, luck removed) |
+| 8 | `POWER_HR` | 0.172 (0.177 per 0.0657 SD, restated per 0.0636) | **0.196** (restated per 0.0728) |
+| 8 | hitter_spread_params g_w (fit_hitter_spread.py rerun) | hs .3667, D3 .3768, D1 .3706 | hs .4203, D3 .4310, D1 .4241 (g_c / g_d move < .004: rerun drift) |
+| 10 | run_scale denominator | RE_BY_LEVEL["mlb"][(0, "000")] = .503 | **`RUN_SCALE_MLB_RE00` = 0.481** (v1.2's MLB RE[0\|000]); the refit MLB RE table stays as fitted. MLB's own scale is now .503 / .481 = 1.046 |
+
+**HARD_SD (ruling 8), `hitter_data/hard_talent_sd.py`.** talent_spread.py's method for pitchers applied to hitters:
+each hitter-season's hard-hit count is true talent plus binomial noise; the spread of true rates is estimated by a
+beta-binomial fit with each hitter's likelihood weighted by his batted balls (talent_spread.bb_fit) and cross-checked by
+method of moments (observed variance minus binomial noise, batted-ball weighted). Same data and definition as the
+refit's HARD_SD: Savant MLB regular season, batted balls with a launch speed (bunts out), hard = launch_speed >= 95,
+seasons 2015-2025 (launch speed starts in 2015), all games; 2026 never read. The league rate moves from .350 (2015) to
+.416 (2025), so each season is fit on its own and the true variances are pooled with weight = the refit's recency
+weight x the season's batted balls. SE: bootstrap over hitters within season, B = 200.
+- Pooled: beta-binomial **0.0728 (SE 0.0017)**; method of moments 0.0727 (SE 0.0014). Per season 0.070-0.079.
+- Sensitivities: universal-DH seasons only (2022-2025, no pitchers batting) 0.0728; method of moments with the refit's
+  hard-ball weights 0.0671; one common mean over all hitter-seasons 0.0745 (adds the league-rate drift, not talent).
+- Comparison: refit shrunk-estimate SD 0.0636; plain SD among 100+ batted-ball hitter-seasons 0.0775; the decision
+  sheet's ~0.070 estimate; v1.2.3 0.0518.
+- refit_apply restates POWER_HR on it (hard_talent_sd.json first, then mlbt.json); refit_chain writes it into
+  fit_hitter_spread.py. Synthetic recovery test: tests_refit_mlbt.py `test_hard_talent_sd`.
+
+**Tests rewritten (rulings 6, 7) and size references.** R1 (tests.py): slider at least 30%, no pitch over 60%. S5
+(tests_v12.py): leaning toward the hitter drops the inside sinker to <= 1% and never above the base; leaning away raises
+it 3+ points (test size 0.004). tests_v11's Q4 fire check and tests_v12's Q5 check now expect 0.003.
+
+**Checks (each run alone, output read):**
+- `tests.py`: **44/45**. R1 PASS (fastball 41%, slider 35%, changeup 24%); get it over loses about half PASS (slider at
+  2-1: 26% fresh, 0% at 3 of 9, 29% at 7 of 9). The one failure is still the landing check against results/v10's fit
+  (GAIN 1.8 vs 2.02; the refit moved LAND_GAIN, so the old reference is stale, as before).
+- `fuzz.py` (3000 / 300): better stuff never makes a pitch cost more **3000/3000** (3 tiny reversals < 0.002 runs).
+  2-for-10 rule (report only) **146/150, FAIL as always** (e.g. Fastball 1-2 mlb 44% landing vs 49% not). Part A
+  otherwise as before (never-pick windows 278/300 and trust line 239/300 fail, as before; no chase at 3-0 / 3-1 60/60).
+  Part B 23/29: college_d3 "fastball hole barely moves the call" now **PASS** (60 -> 57 -> ... 67%); the two hs
+  learning rows **FAIL** (crushes fastballs 58 -> 53 -> 50 -> 48 -> 51 -> 45%: one +3.2-point step over the 3-point
+  tolerance; fastball hole 58 -> 60 -> ... 60%: not +5). They fail the same way on the full-data refit without the
+  rulings (all three put back: 48.7 -> 51.7 and 59.1 -> 60.9%), so the full-data refit moved them, not the rulings
+  (fuzz had not been rerun on it); the changeup confidence row fails as before.
+- Read-through `readthrough/scenarios.py --suite v12`: **95/98** (full-data refit 93/98). Fail: P2 (SL any 24.7% >
+  20%), P3 (SL zone 8.5% < 10%), P7 (FF down 14.6% > 12%), the three long-standing rows. D3 now passes (70.7%
+  acceptable), E7 passes (76.6%). Hard rules: no hard-rule row with any Not-acceptable share.
+- Q4 worst case (tests_v11, riding four-seam up as a share of two-strike calls, cap 36%): **HS 29.8%, D3 26.6%,
+  D1 22.6%**, under the cap (the check failed at 0.008). C5 76.9% acceptable (pass), E7 76.6% (pass), S7f pass
+  (100% acceptable; the climb-the-ladder floor holds).
+- S5's fire row now: base 4.8%, toward 0.0%, away 12.6% (first refit: 1.0 / 0.0 / 12.1).
+- Targeted suites: tests_refit_v13, tests_refit_seq, tests_refit_profiles, tests_refit_mlbt (4 incl. the new one),
+  tests_v13_d2 13/13, `golden/fast.py 40` 0 mismatches: all pass. tests_v11 40/41 and tests_v12 20/22: the only
+  failures are the exact-vs-old-numbers checks listed in the test-app section below (v1.0 with Step 2 set back; lean 0
+  vs 14e0ad2 landing / outcome_probs).
+
+**Changed calls vs v1.2.3** (`docs/REFIT_v13_CHANGED_CALLS.md`, regenerated by `golden/changed_calls.py v123 v13refit`
+against `scen_v12_old.json` / `scen_v12_rulings.json`):
+- Golden top calls **60 / 250** (44 college / MLB, **16 HS / travel**; previous full-data list 64: 41 / 23).
+  vs the previous list: 49 cases move in both (15 HS), 15 moved only before (8 HS), 11 move only now (1 HS, #460);
+  6 of the 49 have a different new call; in all 32 golden cases' top call differs from the previous refit (10 HS).
+- Read-through scenario rows: top call changed **31 / 98** (31 college / MLB, 0 HS; previous 24: 23 / 1); passing
+  94 -> 95 vs v1.2.3 (P5 fail -> pass).
+- The run-scale pin (ruling 10) alone puts 7 HS cases back on v1.2.3's call (#42, 46, 206, 222, 298, 360, 456); the
+  ride-up shrink moves #460. HS rows for Drew: `docs/DECISIONS_refit_v13.md` section 2 (16 rows; Drew grades 6).
 
 ## Data, weighting, guards
 
