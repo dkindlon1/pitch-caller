@@ -271,7 +271,8 @@ def engine_fingerprint(engine_dir=None):
     d = engine_dir or ROOT
     sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=d).stdout.strip()
     dirty = subprocess.run(["git", "status", "--porcelain", "--", "engine.py", "outcome_params.py", "run_tables.py",
-                            "inplay_typed_params.py", "fit_v08.json"], capture_output=True, text=True, cwd=d).stdout.strip()
+                            "inplay_typed_params.py", "fit_v08.json", "data_tables"],   # v1.3 Part 2: the engine's table files
+                           capture_output=True, text=True, cwd=d).stdout.strip()
     adj = hashlib.sha256(json.dumps(e.OUTCOME_ADJ, sort_keys=True).encode()).hexdigest()[:16]
     return {"engine_sha": sha + ("+dirty" if dirty else ""), "outcome_adj_sha256": adj}
 

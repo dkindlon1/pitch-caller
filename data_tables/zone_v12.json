@@ -1,0 +1,1201 @@
+{
+ "kind": "zone",
+ "version": "v12",
+ "about": "v1.2's zone effects restated (data_tables/build_v12.py). base: per landing band; class: v1.0's hand class terms; cells: logit offsets by band x profile x count group x height (all 0: v1.2 has no fitted zone table). Format: docs/TABLES_v13.md.",
+ "bands": ["heart", "edge", "off", "noncomp"],
+ "profiles": ["FB", "SI", "FC", "SL", "SW", "CB", "CH", "SP"],
+ "count_groups": ["first", "ahead", "even", "behind", "two"],
+ "heights": ["up", "mid", "down"],
+ "base": {
+  "swing": {"heart": 0.72, "edge": 0.5, "off": 0.28, "noncomp": 0.05},
+  "cstrike": {"heart": 0.98, "edge": 0.55, "off": 0.08, "noncomp": 0.0},
+  "whiff": {"heart": 0.12, "edge": 0.2, "off": 0.34, "noncomp": 0.5},
+  "foul": {"heart": 0.4, "edge": 0.5, "off": 0.5, "noncomp": 0.45},
+  "quality": {"heart": [0.3, 0.38, 0.32], "edge": [0.48, 0.34, 0.18], "off": [0.6, 0.3, 0.1], "noncomp": [0.75, 0.2, 0.05]},
+  "zone_in": {"heart": 1.0, "edge": 0.5, "off": 0.0, "noncomp": 0.0}
+ },
+ "class": {
+  "whiff_fb": -0.2,
+  "whiff_os": {"SL": 0.25, "CB": 0.2, "CH": 0.25},
+  "line_low": 0.4,
+  "line_up": -1.0,
+  "line_whiff": 0.25,
+  "line_hard": -0.3,
+  "up_mid_hard": 0.4,
+  "chase_os": {"off": 0.2, "noncomp": 0.0},
+  "hanger_hard": 0.5
+ },
+ "cells": {
+  "swing": {
+   "heart": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "edge": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "off": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "noncomp": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   }
+  },
+  "cstrike": {
+   "heart": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "edge": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "off": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "noncomp": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   }
+  },
+  "whiff": {
+   "heart": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "edge": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "off": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "noncomp": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   }
+  },
+  "foul": {
+   "heart": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "edge": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "off": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "noncomp": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   }
+  },
+  "hard": {
+   "heart": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "edge": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "off": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   },
+   "noncomp": {
+    "FB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SI": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "FC": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SL": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SW": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CB": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "CH": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    },
+    "SP": {
+     "first": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "ahead": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "even": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "behind": {"up": 0.0, "mid": 0.0, "down": 0.0},
+     "two": {"up": 0.0, "mid": 0.0, "down": 0.0}
+    }
+   }
+  }
+ },
+ "level_cells": {}
+}

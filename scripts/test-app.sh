@@ -22,6 +22,7 @@ $run tests_v123   python3 tests_v123.py             # v1.2.3: the umpire prior (
 $run tests_v13_d2  python3 tests_v13_d2.py          # v1.3 Part 3: college D2 in both engines on D3's numbers (PLACEHOLDER_D2), Python = JS; release_guard_d2.py trips (the release checklist runs the guard itself, not this suite)
 FAST_LEVEL=college_d2 $run fast_parity_d2 python3 golden/fast.py 40   # v1.3 Part 3: the same 40 golden inputs, every case at college D2
 $run tests_v13_sim python3 tests_v13_sim.py         # v1.3 Part 5: hidden hitter traits in the simulator; no traits = the e202169 games byte for byte, Python = JS
+$run tests_v13_tables python3 tests_v13_tables.py   # v1.3 buildout Part 2: zone / count / run tables read from data_tables/ (v12 = 90fca9b bit for bit, a changed value moves the call, Python = JS)
 $run golden_v123  node golden/golden_v11.js v123  # v1.2.3 release reference (JS); golden_v10, v11a, v11, v12a, v12 and v122 (v1.2.2; differs only in the umpire estimate) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then
