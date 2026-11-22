@@ -148,13 +148,13 @@ def evaluate(level, adj=None, policy_cache=None):
 
 
 # --- targets ------------------------------------------------------------------
-# MLB pitch-level: v1.3 refit from Savant MLB 2021-2025, recency weighted, zone = Savant zones 1-9
+# MLB pitch-level: v1.3 refit from Savant MLB 2008-2025, recency weighted, zone = Savant zones 1-9
 #   (hitter_data/refit_mlb_targets.py; was the FanGraphs Library league-average guide).
-# MLB PA rates: college_rates.MLB (v1.3 refit, Savant MLB 2021-2025).
+# MLB PA rates: college_rates.MLB (v1.3 refit, Savant MLB 2008-2025).
 # College PA rates: 2026 conference team totals (college_rates.py).
 RV = json.load(open("college_run_values.json"))
-MLB_PITCH = {"zone": 0.496, "z_swing": 0.674, "o_swing": 0.285, "z_contact": 0.846, "o_contact": 0.582,
-             "f_strike": 0.619}
+MLB_PITCH = {"zone": 0.494, "z_swing": 0.672, "o_swing": 0.285, "z_contact": 0.846, "o_contact": 0.587,
+             "f_strike": 0.617}
 PA_TARGETS = {
     "mlb": {k: RV["mlb_check"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},
     "college_d1": {k: RV["college_d1"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},

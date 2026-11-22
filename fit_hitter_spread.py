@@ -6,7 +6,7 @@ results/step4b/power_hr.json power_sd_raw, hitters with 100+ balls in play; was 
 (calib.evaluate over the calibration staff and lineups), the call mix held fixed (policy cache) so the fit measures the
 grade's own effect. usage: python3 fit_hitter_spread.py"""
 # v1.0 Step 5 (#11): re-run on the v1.0 engine (the old values were made under v0.7c settings).
-HARD_SD = 0.0627   # v1.3 refit (hitter_data/refit_mlb_targets.py)
+HARD_SD = 0.0636   # v1.3 refit (hitter_data/refit_mlb_targets.py)
 
 import os, pprint
 import engine as e, calib
