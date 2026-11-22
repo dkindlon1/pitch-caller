@@ -39,7 +39,7 @@ from . import fit_count as FC
 from . import fit_count_data as FD
 from . import fit_runs as FR
 from . import harness as H
-from .harness_adapters import (BIP_TYPES, CI, Assumption, EmpiricalAdapter, EngineV12Adapter, RecalAdapter,
+from .harness_adapters import (BIP_TYPES, CI, PRIMARY_ASSUMPTION, Assumption, EmpiricalAdapter, EngineV12Adapter, RecalAdapter,
                                bases_index)
 
 HS_DB = os.path.join(DATA, "hs", "hs.sqlite3")
@@ -457,7 +457,7 @@ class AliasAssumption(Assumption):
 
 
 def v12_hs():
-    ad = EngineV12Adapter("college_d1", assumption=AliasAssumption("calib_world"))
+    ad = EngineV12Adapter("college_d1", assumption=AliasAssumption(PRIMARY_ASSUMPTION))
     ad.name = "v1.2[hs, D3 world]"
     return ad
 

@@ -9,14 +9,18 @@ hitter's ZONE-conditional rates toward the truth, or away from it (absorbing the
   4. score raw and recalibrated v1.2 on the real pitches given count only (what the college harness can see) and given
      count + class + band (what the live engine needs). Also compares the frozen landing with Single-A's real bands.
 
-usage: python -m hitter_data.harness_truth [--season 2025]"""
+Since harness h3 (ruling 9) the primary landing is Single-A's own class x band shares (harness_frozen_a.py), so the
+landing comparison at the end shows the re-frozen landing against the scored season; --assumption calib_world gives
+the h2 (calib world) numbers of HARNESS_v13 section 10.
+
+usage: python -m hitter_data.harness_truth [--season 2025] [--assumption single_a|calib_world]"""
 import argparse
 
 import numpy as np
 
 from . import assert_not_heldout
 from . import harness_frozen as FZ
-from .harness_adapters import CI, COUNTS, FASTBALLS, EngineV12Adapter, rake
+from .harness_adapters import CI, COUNTS, FASTBALLS, PRIMARY_ASSUMPTION, EngineV12Adapter, rake
 from .zone_defs import BANDS, FASTBALL_PROFILES
 from .zone_load import load_season
 
@@ -35,9 +39,9 @@ def real_cells(season):
     return y
 
 
-def model_cells(level="D1"):
+def model_cells(level="D1", assumption=PRIMARY_ASSUMPTION):
     """-> P[12, 2, 4, 5] v1.2 zone-conditional 5-way, W[12, 2, 4] frozen landing weight of each cell per count."""
-    ad = EngineV12Adapter("college_d1")
+    ad = EngineV12Adapter("college_d1", assumption=assumption)
     P = np.zeros((12, 2, 4, 6))
     W = np.zeros((12, 2, 4))
     for (b, k) in COUNTS:
@@ -61,9 +65,9 @@ def ll(y, p):
     return float(-(y * np.log(p)).sum() / y.sum())
 
 
-def run(season=2025, out=print):
+def run(season=2025, out=print, assumption=PRIMARY_ASSUMPTION):
     y = real_cells(season)
-    P, W = model_cells()
+    P, W = model_cells(assumption=assumption)
     real_c = y.sum(axis=(1, 2))
     real_c = real_c / real_c.sum(axis=1, keepdims=True)
     Pr = rake(P.reshape(12, 8, 5), W.reshape(12, 8), real_c, None).reshape(P.shape)
@@ -97,7 +101,7 @@ def run(season=2025, out=print):
             + "   recal " + "/".join(f"{x:.3f}" for x in rows[z]["v1.2_recal"]))
     res["by_band"] = rows
     # landing: frozen D1 band shares vs Single-A real, per count
-    out("\nlanded band shares, frozen D1 calib world vs Single-A real (heart / edge / off / noncomp):")
+    out(f"\nlanded band shares, frozen D1 ({assumption}) vs Single-A {season} real (heart / edge / off / noncomp):")
     land = {}
     for (b, k) in COUNTS:
         ci = CI[(b, k)]
@@ -112,4 +116,6 @@ def run(season=2025, out=print):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", type=int, default=2025)
-    run(ap.parse_args().season)
+    ap.add_argument("--assumption", default=PRIMARY_ASSUMPTION)
+    a = ap.parse_args()
+    run(a.season, assumption=a.assumption)

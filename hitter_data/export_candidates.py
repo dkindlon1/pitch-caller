@@ -39,7 +39,7 @@ import time
 import numpy as np
 
 from . import fit_count_data as FD
-from .harness_adapters import ROOT, COUNTS, EngineV12Adapter, bases_key
+from .harness_adapters import ROOT, COUNTS, PRIMARY_ASSUMPTION, EngineV12Adapter, bases_key
 
 OUT = os.path.join(FD.FITS, "candidates")
 VERSION = "v13prov"
@@ -100,7 +100,7 @@ class Probe(EngineV12Adapter):
 
     def __init__(self, engine_level, data_level):
         from .fit_count_hs import AliasAssumption
-        super().__init__("college_d1", assumption=AliasAssumption("calib_world"))
+        super().__init__("college_d1", assumption=AliasAssumption(PRIMARY_ASSUMPTION))
         self.lv, self.dl = engine_level, data_level
 
     def engine_level(self, data_level):

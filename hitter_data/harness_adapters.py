@@ -25,6 +25,7 @@ from math import isfinite
 import numpy as np
 
 from . import harness_frozen as FZ
+from . import harness_frozen_a as FZA
 from .harness_landing import LANDING as LANDING_H1, ZONES
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -59,8 +60,13 @@ def bases_key(bi):
 # Primary ("calib_world", review decision Nov 21): v1.2's calib.py world, frozen in harness_frozen.py by
 # harness_freeze.py: the simulator's default staff, the engine's own calls and their landing, weighted by count visits;
 # per level x side x count a list of (arsenal, pitch, target, landed zone, weight). Variants are for sensitivity only.
+# v1.3 core (Drew's ruling 9, Nov 21): the PRIMARY is now "single_a": the same pitchers, pitches and targets with the landed
+# zones reweighted so each level x side x count has Single-A Statcast's class x band shares (harness_frozen_a.py, made by
+# `python -m hitter_data.harness_freeze --single-a`; seasons 2021-2025, 2026 never loaded). "calib_world" (h2, the old
+# primary, v1.2's own world) stays as a side report (--variants).
 # =====================================================================================================================
-HARNESS_ASSUMPTION_VERSION = "h2-calibworld-2026-11-21"
+HARNESS_ASSUMPTION_VERSION = "h3-singleA-2026-11-22"
+PRIMARY_ASSUMPTION = "single_a"
 
 # --- the retired hand-set assumption (h1), kept as the "handset" variant -------------------------------------------
 HANDSET_ARSENAL = [dict(name=k, kind=k, grade=3, command=3, conf=0.6, shape="", velo=0, slot="three-quarter")
@@ -93,7 +99,7 @@ class Assumption:
     """mix(level, side, b, k) -> [(arsenal id, pitch index, target, landed zone, weight)] (weights sum to 1);
     same_share(level, b, k); arsenals[id] -> [pitch spec dict]."""
 
-    def __init__(self, name="calib_world"):
+    def __init__(self, name=PRIMARY_ASSUMPTION):
         if name not in ASSUMPTIONS:
             raise ValueError(f"unknown assumption {name!r}; known: {sorted(ASSUMPTIONS)}")
         self.name = name
@@ -110,6 +116,8 @@ class Assumption:
                         w = wk * wq * LANDING_H1[level][p["kind"]][q][zi]
                         if w > 0:
                             out.append(("H", j, q, z, w))
+        elif self.name == "single_a":
+            out = list(FZA.MIX[level][(side, (b, k))])
         else:
             out = list(FZ.MIX[level][(side, (b, k))])
             if self.name in ("calib_more_fb", "calib_less_fb"):
@@ -124,7 +132,7 @@ class Assumption:
         return 0.5 if self.name == "handset" else FZ.SAME_SHARE[level][(b, k)]
 
 
-ASSUMPTIONS = ("calib_world", "handset", "calib_more_fb", "calib_less_fb")
+ASSUMPTIONS = ("single_a", "calib_world", "handset", "calib_more_fb", "calib_less_fb")
 
 
 # =====================================================================================================================
@@ -211,7 +219,7 @@ class EngineAdapter(Adapter):
           bip = P(type, result | in play), summing to 1
       run_tables(data_level) -> (RE[3, 8], CV[12])"""
 
-    def __init__(self, assumption="calib_world"):
+    def __init__(self, assumption=PRIMARY_ASSUMPTION):
         self.assumption = Assumption(assumption) if isinstance(assumption, str) else assumption
         self._cache = {}
 
@@ -282,12 +290,12 @@ class EngineV12Adapter(EngineAdapter):
     batted-ball mix (type_mix) x in-play table (OUT_TABLE), and RE_BY_LEVEL / CV_BY_LEVEL. The hitter is the engine's
     unknown average hitter (no grades, tags, reads or history). d2_as: v1.2 level standing in for D2 (plan 1.5)."""
 
-    def __init__(self, d2_as="college_d1", assumption="calib_world", engine_dir=None):
+    def __init__(self, d2_as="college_d1", assumption=PRIMARY_ASSUMPTION, engine_dir=None):
         super().__init__(assumption)
         self.e = _import_engine(engine_dir)
         self.d2_as = d2_as
         an = self.assumption.name
-        self.name = "v1.2" + ("" if d2_as == "college_d1" else "@D3") + ("" if an == "calib_world" else f"[{an}]")
+        self.name = "v1.2" + ("" if d2_as == "college_d1" else "@D3") + ("" if an == PRIMARY_ASSUMPTION else f"[{an}]")
         self._ars = {}
 
     def engine_level(self, data_level):

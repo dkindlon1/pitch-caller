@@ -23,6 +23,7 @@ from . import DATA, assert_not_heldout
 from .harness_adapters import (BIP_TYPES, CI, HARNESS_ASSUMPTION_VERSION, PA5, SHAPE, EmpiricalAdapter,
                                EngineV12Adapter, RecalAdapter, bases_index, check_tables, engine_fingerprint)
 from . import harness_frozen
+from . import harness_frozen_a
 
 DB = os.path.join(DATA, "college", "college.sqlite3")
 COVERAGE_CSV = os.path.join(DATA, "college", "reports", "coverage.csv")
@@ -621,7 +622,9 @@ def main(argv=None):
     con = connect(a.db)
     t0 = time.time()
     fp = engine_fingerprint()
-    meta = {"assumption": HARNESS_ASSUMPTION_VERSION, "frozen_source_commit": harness_frozen.SOURCE_COMMIT, **fp,
+    meta = {"assumption": HARNESS_ASSUMPTION_VERSION, "frozen_source_commit": harness_frozen.SOURCE_COMMIT,
+            "landing": "single_a", "landing_source_commit": harness_frozen_a.SOURCE_COMMIT,
+            "landing_single_a_seasons": {str(k): v for k, v in harness_frozen_a.SINGLE_A_SEASONS.items()}, **fp,
             "boot": a.boot, "seed": a.seed, "fit_window": FIT_WINDOW, "half_life": HALF_LIFE, "min_effect": MIN_EFFECT,
             "primary": PRIMARY, "plan_rule": plan_rule(), "coverage_rule": dict(full_game_share=FULL_GAME_SHARE,
                                                                                 min_full_games=MIN_FULL_GAMES,
@@ -630,7 +633,7 @@ def main(argv=None):
     raw = {"D1": EngineV12Adapter("college_d1"), "D3": EngineV12Adapter("college_d3")}
     variants = {}
     if a.variants:
-        for an in ("handset", "calib_more_fb", "calib_less_fb"):
+        for an in ("calib_world", "handset", "calib_more_fb", "calib_less_fb"):   # calib_world: the h2 primary, a side report
             variants[an] = (EngineV12Adapter("college_d1", assumption=an), EngineV12Adapter("college_d3", assumption=an))
     allres = {"meta": meta, "results": {}}
     for level in a.levels.split(","):

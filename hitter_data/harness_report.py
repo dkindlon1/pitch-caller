@@ -67,8 +67,8 @@ def tables(path):
     out.append("")
     out.append("**Assumption sensitivity (2025):** pitch_5way for raw / recalibrated v1.2 under each pitcher assumption.")
     out.append("")
-    out.append("| Level | calib_world raw / recal | handset raw / recal | calib_more_fb raw / recal | calib_less_fb raw / recal |")
-    out.append("|---|---|---|---|---|")
+    out.append("| Level | single_a (primary) raw / recal | calib_world (h2, side report) raw / recal | handset raw / recal | calib_more_fb raw / recal | calib_less_fb raw / recal |")
+    out.append("|---|---|---|---|---|---|")
     for lv in ("D1", "D2", "D3"):
         e = res.get(f"{lv}_2025")
         if not e:
@@ -76,7 +76,7 @@ def tables(path):
         A = e["scores"]["pitch_5way"]["adapters"]
         base = e["refs"][0][:-len("_recal")]
         cells = []
-        for an in ("", "[handset]", "[calib_more_fb]", "[calib_less_fb]"):
+        for an in ("", "[calib_world]", "[handset]", "[calib_more_fb]", "[calib_less_fb]"):
             nm = base + an
             if nm in A:
                 cells.append(f"{A[nm][0]:.4f} / {A[nm + '_recal'][0]:.4f}")

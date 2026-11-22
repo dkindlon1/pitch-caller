@@ -15,6 +15,9 @@ from hitter_data import harness as H
 from hitter_data.harness_adapters import (ASSUMPTIONS, CI, COUNTS, SHAPE, Adapter, Assumption, EmpiricalAdapter,
                                           EngineV12Adapter, RecalAdapter, Tables, check_tables, engine_fingerprint, pa_chain)
 from hitter_data import harness_frozen as FZ
+from hitter_data import harness_frozen_a as FZA
+from hitter_data import harness_freeze as HF
+from hitter_data.harness_adapters import HARNESS_ASSUMPTION_VERSION, PRIMARY_ASSUMPTION
 
 FAILS = []
 
@@ -292,8 +295,17 @@ def t_mix_and_v12():
     for a, j, q, z, w in Assumption("handset").mix("D1", "same", 1, 1):
         agg[(j, q)] = agg.get((j, q), 0) + w
     ref = np.zeros(6)
+    # the handset assumption lands each (kind, target) on the frozen h1 shares (harness_landing.py), not on today's
+    # engine.landing (the v1.3 refit changed the landing model): integrate outcome_probs over those same shares
+    from hitter_data.harness_landing import LANDING as LANDING_H1, ZONES as LZ
+    orig_landing = e.landing
+    try:
+        e.landing = lambda p_, q_, s_: dict(zip(LZ, LANDING_H1["D1"][p_.kind][q_]))
+        Ps = {(j, q): e.outcome_probs(ars[j], q, s, ars) for (j, q) in agg}
+    finally:
+        e.landing = orig_landing
     for (j, q), w in agg.items():
-        P = e.outcome_probs(ars[j], q, s, ars)
+        P = Ps[(j, q)]
         ref += w * np.array([P["ball"] + P["wp_ball"], P["hbp"], P["cstrike"], P["whiff"], P["foul"],
                              P["weak"] + P["solid"] + P["hard"]])
     check("one-zone integration reproduces v1.2's own outcome_probs (handset, D1, 1-1)",
@@ -309,6 +321,42 @@ def t_mix_and_v12():
     check("engine fingerprint: sha and OUTCOME_ADJ hash", bool(fp["engine_sha"]) and len(fp["outcome_adj_sha256"]) == 16, fp)
 
 
+# ---------- ruling 9: the landing re-frozen from Single-A (harness h3) ----------
+def t_single_a():
+    check("harness version bumped to h3 (Single-A landing) and single_a is the primary assumption",
+          HARNESS_ASSUMPTION_VERSION.startswith("h3-singleA") and PRIMARY_ASSUMPTION == "single_a" and ASSUMPTIONS[0] == "single_a"
+          and Assumption().name == "single_a" and EngineV12Adapter("college_d1").assumption.name == "single_a")
+    check("the calib-world landing stays available (side report): calib_world in ASSUMPTIONS, v1.2 named v1.2[calib_world]",
+          "calib_world" in ASSUMPTIONS and EngineV12Adapter("college_d1", assumption="calib_world").name == "v1.2[calib_world]")
+    check("Single-A landing built from seasons 2021-2025 only (2026 never loaded)",
+          sorted(FZA.SINGLE_A_SEASONS) == [2021, 2022, 2023, 2024, 2025])
+    check("single_a_targets trips on 2026", trips(HF.single_a_targets, seasons=(2025, 2026)))
+    cls_of = lambda a, j: "FB" if FZ.ARSENALS[a][j]["kind"] in HF.FASTBALL_KINDS else "OS"
+    worst = 0.0
+    for lv in ("D1", "D2", "D3"):
+        for key, rows in FZA.MIX[lv].items():
+            m = {}
+            for a, j, q, z, w in rows:
+                m[(cls_of(a, j), z)] = m.get((cls_of(a, j), z), 0.0) + w
+            tgt = FZA.TARGETS[key]
+            worst = max(worst, max(abs(m.get(k_, 0.0) - tgt.get(k_, 0.0)) for k_ in set(m) | set(tgt)))
+    check("re-frozen landing: per level x side x count the class x band shares equal Single-A's (within 1e-5)", worst < 1e-5, worst)
+    same_rows = all({r[:3] for r in FZA.MIX[lv][key]} <= {r[:3] for r in FZ.MIX[lv][key]} for lv in FZA.MIX for key in FZA.MIX[lv])
+    check("re-frozen landing keeps the calib world's pitchers, pitches and targets (only the landed-zone weights move)", same_rows)
+    heart30 = sum(w for a, j, q, z, w in Assumption("single_a").mix("D1", "same", 3, 0) if z == "heart")
+    heart30c = sum(w for a, j, q, z, w in Assumption("calib_world").mix("D1", "same", 3, 0) if z == "heart")
+    check("3-0 heart share: Single-A-like (about .24) under single_a, heart-heavy (about .44) under calib_world",
+          0.18 < heart30 < 0.30 and heart30c > 0.38, (heart30, heart30c))
+    # reweight on a synthetic mix: cells hit their targets, composition kept within a cell, unreachable mass reported
+    rows = [(0, 0, "middle", "heart", 0.3), (0, 0, "up-in", "heart", 0.1), (0, 0, "middle", "edge", 0.2), (0, 1, "chase", "off", 0.4)]
+    cl = lambda a, j: "FB" if j == 0 else "OS"
+    out, lost = HF.reweight(rows, cl, {("FB", "heart"): 0.5, ("FB", "edge"): 0.3, ("OS", "off"): 0.15, ("OS", "heart"): 0.05})
+    d = {r[:4]: r[4] for r in out}
+    check("reweight: synthetic cells scaled to their targets, within-cell composition kept, unreachable share reported",
+          np.isclose(lost, 0.05) and np.isclose(sum(d.values()), 1) and np.isclose(d[(0, 0, "middle", "heart")] / d[(0, 0, "up-in", "heart")], 3)
+          and np.isclose(d[(0, 0, "middle", "edge")], 0.3 / 0.95), d)
+
+
 if __name__ == "__main__":
     tmp = tempfile.mkdtemp()
     dbpath = os.path.join(tmp, "fixture.sqlite3")
@@ -321,6 +369,7 @@ if __name__ == "__main__":
     t_build(con)
     t_heldout(con, dbpath)
     t_mix_and_v12()
+    t_single_a()
     con.close()
     print(f"\n{'FAILED ' + str(len(FAILS)) if FAILS else 'all passed'}")
     sys.exit(1 if FAILS else 0)
