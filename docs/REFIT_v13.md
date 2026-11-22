@@ -4,6 +4,78 @@ Every inventory row (`docs/HITTER_V13_INVENTORY.md`, 36 rows) whose refit route 
 keeping the shipped functional form; the numbers are applied to both engines in one commit ("v1.3 refit numbers").
 **Stop point:** Drew regrades the moved calls (`docs/REFIT_v13_CHANGED_CALLS.md`). No call was tuned back.
 
+**Two refits.** The first (commit 1dfc81e) ran while the pulls were still writing (MLB 2021 partial - 2025, AAA 2024
+partial - 2025, A 2021-2025). The **full-data rerun** (commit 5b3901a, next section) uses every finished
+season <= 2025 and is what the branch now ships. The sections after it describe the first refit; the method is the
+same.
+
+## Full-data rerun (what the branch ships now)
+
+**Data.** Savant MLB 2008-2025 (18 seasons, 12.4M pitches on disk), AAA 2023-2025, A 2021-2025; MLB Stats API not
+needed by any runnable route (as before). 2026 never read (`assert_not_heldout` on every path). Same recency weight
+(halves every 2 seasons from 2025). New: seasons with weight below 0.25 (MLB 2008-2020) enter on a
+**weight-proportional game sample** (`refit_load.savant(sample=True)`): each game kept with probability w / 0.25 by a
+fixed hash of game_pk, kept pitches weighted 0.25, so the expected weighted sum is unchanged and memory stays bounded
+(MLB 2008 keeps 1% of its games, 2015 12.5%, 2019 50%, 2020 71%; 2021 on keeps all). Pooled rows then use about 7.9M
+pitches. Columns missing in the PITCHf/x years drop out where a fit needs them: launch speed (rows 9 hard, B2 hard,
+B3, B4, B1's M2) and spin start in 2015, arm angle (B11) in 2020, so those rows effectively use 2015+ / 2020+; the
+approach pairs before 2013 -> 2014 have no qualifying hitters on the thinned sample and add nothing.
+
+**Material move** below = the full-data value differs from the first refit by more than 2 of the first refit's SEs
+(or, for grid / rounded settings, a step). Old = v1.2.3.
+
+| # | Number | v1.2.3 | First refit | Full-data refit | SE (full) | Seasons (full) | Material vs first |
+|---|---|---|---|---|---|---|---|
+| 1 | HIT_FIT approach | 0.2077 | 0.1961 | **0.2240** | boot 0.0032 | pairs MLB 2013->14 ... 2024->25, AAA 2023->25, A 2021->25 | **yes** (MLB 2021 was partial; 13 more MLB pairs, +0.14 to +0.33 each) |
+| 2 | beta_T / gamma_T / lam, alpha | 0.2409 / 0.30 / 0.8, 0.6 | 0.2842 / 0.1518 / same | 0.2785 / 0.1336 / same | 0.014 / 0.019 | pooled, 25% games | no |
+| 3 | beta_E / beta_E_S / dstar_E | -0.1425 / -0.2526 / 2.0 | -0.1827 / -0.0469 / 1.5 | -0.1785 / **-0.1793** / **2.0** | 0.016 / 0.016 / grid | pooled, 25% games | **yes** for beta_E_S (back near v1.2.3) and d* (grid back to 2.0) |
+| 4 | beta_tun_chase / beta_tun_whiff | 0.3103 / 0 | 0.3179 / 0.0598 | **0.2933** / 0.0586 | 0.011 / 0.013 | pooled, 25% games | **yes** for tun_chase (-0.025, 2.2 SE) |
+| 5 | LAND_K / LAND_GAIN | 20 / 2.0 | 20 / 1.9 | 20 / **1.8** | GAIN 1.759 (SE 0.035); beta 0.967 (0.019) | pooled, all games / sample | **yes** (one rounding step; beta is unchanged, the engine's strike slope c moved 0.1155 -> 0.1275 with the first refit) |
+| 6 | GEO_HBP_BANDS 12..30 in. | .003 .0165 .041 .104 .20 .345 .57 | .00385 .0152 .0423 .103 .203 .344 .525 | .00359 .0142 .0401 .0987 .196 .330 .521 | boot .0001-.0058 | pooled | small (each band -2 to -7%; shape unchanged, MLB/AAA/A curves still agree) |
+| 7 | PROFILES mlb | e.g. FB\| (0, 16.0, 7.7) | (0, 16.2, 7.7) | (0, 16.2, 7.7); every row within 0.4 in. / 0.1 mph of the first refit (largest CH\| IVB 4.8 -> 5.2) | boot <= 0.15 | MLB 2008-2025 | no |
+| 8 | PROFILE_T | 24 thresholds | unchanged | unchanged (sl_sweeper_hb -12 -> -10 again) | - | MLB | no |
+| 9, B5 | PT_* terms | tables | refit | refit; largest moves PT_FBZ_H FC\|big cell -0.10 -> -0.36, PT_B whiff SI rows -0.06, PT_PLAT hard FC\|ride -0.27 -> -0.16; PT_C max 0.005; PT_FB_IVB 16.2 | SE ~0.001-0.005 | pooled 35% games | a few small cells; cstrike joint fit stopped at 3000 iterations (see open items) |
+| 10 | MLB K / BB / HBP | .200 / .079 / .009 | .2251 / .0837 / .0110 | .2242 / .0839 / .0109 | .0005 / .0003 / .0001 | MLB 2008-2025 | no |
+| 10 | zone / z-sw / o-sw / z-ct / o-ct / f-str | .45 .65 .30 .87 .66 .59 | .496 .674 .285 .846 .582 .619 | .494 .673 .285 .846 .587 .617 | <= .0007 | MLB | no |
+| 11-12 | OUT.mlb (and the levels' copies / refits) | cmd -.643 ... | cmd -.336 zsw -.102 osw -.419 wz -.551 wo +.264 cs -.906 hbp .033 | cmd -.317 zsw -.112 osw -.366 wz -.571 wo +.239 cs -.886 hbp .033 | sim (max rel. err .091) | simulated | recalibrated (follows the other rows) |
+| 13 | MLB hit mix per PA | 1B .154 2B .045 3B .005 HR .026 E .016 | .1418 .0430 .0036 .0307 .0108 | .1421 .0433 .0038 .0308 .0111 | <= .0004 | MLB | no |
+| B1 | MM succ / hard | 0.107 / -0.346 | 0.105 / -0.328 | **0.131** / -0.341 | 0.0057 / 0.027 | pooled, 35% games | **yes** for succ (+0.026, 3.5 SE) |
+| B2 | SIDE (24 cells) | | refit | every cell within 0.017 of the first refit | SE 0.006-0.018 | pooled heart + edge | no |
+| B3 | POWER_HR | 0.112 | 0.165 | 0.172 | 0.006 | pooled 2015+ (coef 0.177 per SD 0.0657, per HARD_SD 0.0636) | no |
+| B4 | HARD_SD | 0.0518 | 0.0627 | 0.0636 | 0.0012 | MLB 2015-2025 | no |
+| B6, B7 | GB_PROFILE / TYPED gb | | refit / .3416 .5487 .4138 .4040 .4671 .5110 | max cell move 0.01 / .3439 .5494 .4180 .4055 .4687 .5091 | <= .02 | pooled | no |
+| B8 | beta_y | -0.3634 | -0.6207 | **-0.4859** | 0.032 | pooled 25% | **yes** (+0.13, 3.4 SE) |
+| B9 | KAPPA_FIT | e.g. 2-0 +.377, 3-0 +.588 | +.249, +.484 | +.181, +.420 (others within .04) | .045-.059 | pooled 25% | no (2-0 / 3-0 about 1.2 SE) |
+| B10 | phi_FB / phi_OS | 0.0295 / 0.116 | 0.0179 / 0.0435 | 0.0181 / 0.0395 | 0.0045 / 0.0069 | pooled 25% | no |
+| B11 | SLOT_ANGLE / SLOT_MOVE | | refit | within 0.4 deg / 0.01 | - | pooled 2020+ | no |
+| B12 | HBP_LOC | | unchanged | unchanged (ratio A 3.06, AAA 3.00, MLB 3.26 vs 3.05) | | A 2021-25 | no |
+| B14 | RE24 0\|000 (run_scale) / CV mlb | .481 | .500 | .503 (others within ~.01) | .0025 | MLB 2008-2025, innings 1-8 | no |
+| B15 | we_tables mlb | | regenerated | regenerated | | MLB | follows B14 |
+| B22 | pro AVG / OBP / SLG / K / BB | .255 .320 .405 .200 .079 | .245 .315 .404 .225 .084 | .246 .316 .406 .224 .084 | <= .001 | MLB | no |
+
+Rows not refit stay as in the first refit (14 via other rows; B13, B16, B17, B18, B19, B20, B21 unchanged, same
+reasons). **Material moves vs the first refit: 7 numbers in 6 rows** (1 approach; 3 beta_E_S and d*; 4 tun_chase;
+5 LAND_GAIN by one rounding step; B1 MM succ; B8 beta_y). Fix found in the rerun: `refit_seq` had compared the held
+terms with the tracked fit_v08.json (the first refit's numbers) instead of v1.2.3's spec / 0; corrected (commit
+9f710ff), so gamma_T, beta_tun_whiff and phi_OS take their fitted values by the v1.2.3 A3 rule, as in the first refit.
+
+**Checks on the full-data engine** (full test-app.sh skipped this time: the shared lock was needed by other agents):
+- Python = JS: `golden/fast.py 40` 0 mismatches; `node golden/golden_v11.js v13refit` PASS (regenerated golden).
+- tests_refit_v13 (26), tests_refit_seq (15), tests_refit_profiles (10), tests_refit_mlbt (3), tests_v13_d2 (13),
+  tests_v13_sim (16): all pass.
+- Get it over loses about half (tests.py): PASS. tests.py otherwise fails the same two checks as the first refit
+  (R1 mixing: fastball 42%, slider 36%; the landing check against results/v10's 2.02).
+- Hard rules (hard-rule scenario rows with any Not-acceptable share): none. Read-through pass count **93/98** (v1.2.3
+  94/98; first refit 94/98): D3 newly fails (acceptable 68.5% < 70%), E7 fails as in the first refit, P5 passes.
+- **Fuzz (better stuff, 2-for-10) not rerun on the full-data engine:** the run was stopped by the session's
+  low-memory guard (the machine was at ~98% memory with other agents' jobs) before printing a result, and was not
+  restarted. The first refit's results (better stuff 3000/3000, 2-for-10 146/150) stand until it is rerun.
+- Changed calls vs v1.2.3 (`docs/REFIT_v13_CHANGED_CALLS.md`, regenerated): golden **64 / 250** (41 college / MLB,
+  **23 HS / travel**); scenario rows 24 / 98 (23 college, 1 HS). Against the first refit's list: 51 golden cases move
+  in both (18 HS), 12 moved only in the first refit (7 HS), 13 only in the full-data refit (5 HS); 34 cases' new top
+  call differs between the two refits. Drew's ruling on "the 25 HS / travel calls" was on the first refit's list:
+  7 of those 25 no longer move and 5 new HS cases do.
+
 ## Data, weighting, guards
 
 - **Savant** (`hitter_data/refit_load.py`): `C:/dev/pitchiq-data/statcast/{MLB,AAA,A}/<year>/*.csv.gz`, finished day
