@@ -606,6 +606,24 @@
   // ---------------------------------------------------------------- outcome model
   // The outcome model in two parts (speed): opPrep computes everything that doesn't depend on the hitter's sit, opEval
   // adds the sit terms. Every sum is formed in the original order, so the result is identical to the one-pass model.
+  const pvBin = (x, edges) => { let n = 0; for (const e of edges) if (x >= e) n++; return n; };   // np.digitize (engine.py _bin)
+  function pitchVeloFactors(p, s, arsenal) {   // v1.3 core (ruling 4): HS / travel kind x velocity (engine.py pitch_velo_factors)
+    const L = CT[s.level] || CT[TABLE_LEVEL_ALIAS[s.level] || ""];
+    const T = L ? L.pitch_velo : null;
+    if (!T) return null;
+    const c = s.balls + "-" + s.strikes;
+    let f = T.kind[c][T.engine_kind[p.kind]].slice();
+    if (p.velo) {
+      const cls = T.engine_class[p.kind];
+      const pool = arsenal.includes(p) ? arsenal : arsenal.concat([p]);
+      const vs = pool.filter((x) => x.velo && T.engine_class[x.kind] === cls).map((x) => x.velo);
+      let sum = 0; for (const v of vs) sum += v;
+      const rel = p.velo - sum / vs.length;
+      const fr = T.velo_rel[c][cls][pvBin(rel, T.vrel_edges)], fa = T.velo_abs[c][cls][pvBin(p.velo, T.vabs_edges[cls])];
+      f = f.map((x, i) => x * fr[i] * fa[i]);
+    }
+    return f;
+  }
   function hangerGate(p, s) {   // v1.3 core (ruling 3): H x min(1, wild_today / 0.30) when wild_today > 0 (engine.py hanger_gate)
     if (!HANGER_GATE || !isOffspeed(p.kind)) return 0.0;
     const wt = wildToday(p, s);
@@ -686,7 +704,7 @@
       if (leanW !== 1.0 && Z.wp) Z.wp = Math.min(0.9, Z.wp * leanW);
       zones.push(Z);
     }
-    return { zones, hL, tauEff, big };
+    return { zones, hL, tauEff, big, pv: pitchVeloFactors(p, s, arsenal) };
   }
   function opEval(pr, p, q, s, arsenal, sit, byZone, zout) {
     const hL = pr.hL;
@@ -736,6 +754,13 @@
         const ct = S * (1 - W) * (1 - F);
         byZone[z] = { land: pz, ball: ballZ, wp_ball: wpZ, hbp: hbpZ, cstrike: take_ * C, whiff: S * W, foul: S * (1 - W) * F, weak: ct * weak2, solid: ct * solid2, hard: ct * hard2 };
       }
+    }
+    if (pr.pv) {   // v1.3 core (ruling 4): HS / travel pitch kind x velocity, then renormalise (engine.py outcome_probs)
+      const [mb, mh, mc, mw, mf, mi] = pr.pv;
+      out.ball *= mb; out.wp_ball *= mb; out.hbp *= mh; out.cstrike *= mc; out.whiff *= mw; out.foul *= mf;
+      out.weak *= mi; out.solid *= mi; out.hard *= mi;
+      const tot = out.ball + out.wp_ball + out.hbp + out.cstrike + out.whiff + out.foul + out.weak + out.solid + out.hard;
+      for (const k of Object.keys(out)) out[k] /= tot;
     }
     return out;
   }
@@ -1953,7 +1978,7 @@
     classTerms,
     v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
       LEAN_MAX, SPREAD_MIN, SPREAD_MAX, HIT_FIT, HIT_PATH_RULE, HIT_OS_PRIOR, HIT_OS_N0, HIT_TAG_VALUES, hitTag, pathCost, damage, typeMix },   // v1.2 location model, Part B hitter tags
-    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, countBaseOut, zoneProfile, countGroup, hangerGate } };   // v1.3 Part 2
+    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, countBaseOut, zoneProfile, countGroup, hangerGate, pitchVeloFactors } };   // v1.3 Part 2
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);

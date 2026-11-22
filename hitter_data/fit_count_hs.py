@@ -572,6 +572,63 @@ def run(con=None, B=1000, write=True, log=print, cache=True):
     return summary
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# v1.3 core (Drew's ruling 4): the pitch kind x velocity terms as an engine table (count_<v>.json levels.hs.pitch_velo)
+PITCH_TABLE_OUT = os.path.join(OUT, "pitch_velo_thru2025.json")
+PV_OUTCOMES = ("ball", "hbp", "cstrike", "whiff", "foul", "inplay")     # the harness's 6 pitch events, in fit order
+PV_TERMS = ("kind", "velo_rel", "velo_abs")                             # the stack that gained +0.0104 on 2025 (12.2)
+ENGINE_KIND = {"FB": "Fastball", "SI": "Fastball", "FC": "Fastball", "SL": "Slider", "CB": "Curveball", "CH": "Change-Up"}
+ENGINE_CLASS = {"FB": "fastball", "SI": "fastball", "FC": "fastball", "SL": "breaking", "CB": "breaking", "CH": "offspeed"}
+
+
+def pitch_table(Ss, thru=VALID, alpha=TERM_ALPHA):
+    """The kind + relative-velocity + absolute-velocity terms exactly as test_terms' stack "kind+velo_rel+velo_abs" fits
+    them (sequential, each a count x level x 6 multiplier shrunk to 1 with alpha pseudo-pitches, on top of the HS-alone
+    count table), refit on every season through `thru` on top of hs_sep_thru{thru} (the candidate the engine's count layer
+    comes from). Returns the engine table dict (count_<v>.json levels.hs.pitch_velo)."""
+    seasons = fit_seasons([x for x in SEASONS if x <= thru])
+    with open(FC.out_path(LEVEL, "sep", thru), encoding="utf-8") as fh:
+        t = FC.tables_from_json(json.load(fh))
+    S_list = [Ss[x] for x in seasons]
+    Pf = [base_p6(t, S) for S in S_list]
+    r = {}
+    for term in PV_TERMS:
+        r[term] = fit_term(Pf, S_list, term, alpha=alpha)
+        Pf = [apply_term(P, S, term, r[term]) for P, S in zip(Pf, S_list)]
+    cls_names = CLASSES[:4]
+    out = {
+        "about": "HS / travel pitch kind x velocity (Drew's ruling 4), exported by hitter_data.fit_count_hs.pitch_table from the "
+                 "fit that gained +0.0104 nats per pitch on 2025 (FITS_COUNT_v13 12.2, stack kind + velo_rel + velo_abs), refit "
+                 f"on {seasons[0]}-{seasons[-1]} on top of hs_sep_thru{thru}. Each term multiplies the pitch's six event "
+                 "probabilities (outcomes) at its count and renormalises: P(y) ~ P_engine(y) x kind[count][kind][y] x "
+                 "velo_rel[count][class][bin][y] x velo_abs[count][class][bin][y]. A velocity term is skipped when the pitch has "
+                 "no entered speed (the fit's missing-data rule).",
+        "seasons": seasons, "alpha": alpha, "outcomes": list(PV_OUTCOMES), "kinds": list(KINDS), "classes": list(cls_names),
+        "engine_kind": dict(ENGINE_KIND), "engine_class": dict(ENGINE_CLASS),
+        "vrel_edges": list(VREL_EDGES),
+        "vabs_edges": {cls_names[c]: list(e) for c, e in VABS_EDGES.items()},
+        "kind": {}, "velo_rel": {}, "velo_abs": {},
+    }
+    for (b, k), ci in CI.items():
+        c = f"{b}-{k}"
+        out["kind"][c] = {KINDS[i]: [round(float(x), 6) for x in r["kind"][ci, i]] for i in range(len(KINDS))}
+        for term in ("velo_rel", "velo_abs"):
+            out[term][c] = {cls_names[ci_]: [[round(float(x), 6) for x in r[term][ci, ci_ * 6 + j]] for j in range(6)]
+                            for ci_ in range(4)}
+    return out
+
+
+def export_pitch_table(con=None, cache=True, log=print):
+    con = con or connect()
+    Ss = {x: load_season(con, x, cache=cache) for x in SEASONS}
+    tab = pitch_table(Ss)
+    os.makedirs(OUT, exist_ok=True)
+    with open(PITCH_TABLE_OUT, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(tab, fh, indent=1)
+    log(f"wrote {PITCH_TABLE_OUT} (seasons {tab['seasons']}). 2026 was not loaded.")
+    return tab
+
+
 def write_md(s, path):
     from .score_candidates import se as _se
     L = ["# HS / travel count layer, terms, run values, scores (PROVISIONAL)", "", FD.PROVISIONAL, "",
@@ -611,7 +668,11 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--boot", type=int, default=1000)
     ap.add_argument("--no-cache", action="store_true")
+    ap.add_argument("--pitch-table", action="store_true", help="only export the pitch kind x velocity engine table (ruling 4)")
     a = ap.parse_args(argv)
+    if a.pitch_table:
+        export_pitch_table(cache=not a.no_cache)
+        return
     run(B=a.boot, cache=not a.no_cache)
 
 

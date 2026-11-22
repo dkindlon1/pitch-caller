@@ -88,6 +88,8 @@ def check_table(t, path="table"):
             _need(all(num(L.get("cstrike", {}).get(c)) for c in T_COUNTS), path, f"levels.{lv}.cstrike needs a number per count")
             _need(all(num(L.get("bip_gb", {}).get(c)) for c in T_COUNTS), path, f"levels.{lv}.bip_gb needs a number per count")
             _need(all(num(L.get("swing_base_out", {}).get(bo)) for bo in T_BASE_OUT), path, f"levels.{lv}.swing_base_out needs outs|bases")
+            if "pitch_velo" in L:
+                _check_pitch_velo(L["pitch_velo"], path, lv)
             if "out_table" in L:
                 _need(all(isinstance(L["out_table"].get(q, {}).get(ty), list) and len(L["out_table"][q][ty]) == 6
                           for q in ("weak", "solid", "hard") for ty in ("GB", "LD", "FB", "PU")), path, f"levels.{lv}.out_table")
@@ -100,6 +102,27 @@ def check_table(t, path="table"):
             _need(num(L.get("lw", {}).get("bb")) and num(L.get("lw", {}).get("k")), path, f"levels.{lv}.lw needs bb and k")
         _need(all(lv in t.get("levels", {}) for lv in ("mlb", "college_d1", "college_d3", "hs")), path, "levels: mlb, college_d1, college_d3, hs")
     return t
+
+
+PV_KINDS = ("FB", "SI", "FC", "SL", "CB", "CH")
+
+
+def _check_pitch_velo(T, path, lv):
+    """v1.3 core (ruling 4): count_<v>.json levels.<lv>.pitch_velo, the HS / travel pitch kind x velocity multipliers"""
+    num = lambda x: isinstance(x, (int, float)) and not isinstance(x, bool) and x == x
+    six = lambda v: isinstance(v, list) and len(v) == 6 and all(num(x) and x > 0 for x in v)
+    w = f"levels.{lv}.pitch_velo"
+    _need(lv == "hs", path, f"{w}: only the hs level (travel reads it) carries the pitch kind x velocity table")
+    _need(all(k in T for k in ("engine_kind", "engine_class", "vrel_edges", "vabs_edges", "kind", "velo_rel", "velo_abs")),
+          path, f"{w} needs engine_kind, engine_class, vrel_edges, vabs_edges, kind, velo_rel, velo_abs")
+    _need(all(k in T["engine_kind"] and k in T["engine_class"] for k in PV_KINDS), path, f"{w}: every engine kind mapped")
+    classes = set(T["engine_class"].values())
+    _need(len(T["vrel_edges"]) == 4 and all(len(T["vabs_edges"].get(c, ())) == 4 for c in classes), path, f"{w}: 4 edges each")
+    for c in T_COUNTS:
+        _need(all(six(T["kind"].get(c, {}).get(k)) for k in set(T["engine_kind"].values())), path, f"{w}.kind needs count > kind > 6")
+        for term in ("velo_rel", "velo_abs"):
+            _need(all(isinstance(T[term].get(c, {}).get(cl), list) and len(T[term][c][cl]) == 6 and all(map(six, T[term][c][cl]))
+                      for cl in classes), path, f"{w}.{term} needs count > class > 6 bins > 6")
 
 
 def load_table(kind, version=None):
@@ -1870,6 +1893,35 @@ def pair_terms(p, q, s, arsenal):
     return w, sw
 
 
+def _bin(x, edges):
+    """np.digitize(x, edges) (right=False): the number of edges at or below x"""
+    return sum(1 for e in edges if x >= e)
+
+
+def pitch_velo_factors(p, s, arsenal):
+    """v1.3 core (Drew's ruling 4): HS / travel's pitch kind x velocity multipliers on the six pitch events (ball, hbp,
+    called strike, whiff, foul, in play), defined exactly as the fit (hitter_data/fit_count_hs.pitch_table): the count's
+    kind multiplier x relative-velocity multiplier x absolute-velocity multiplier. Velocity is the pitch's entered arsenal
+    speed (Pitch.velo); relative = velo minus the mean entered speed of his arsenal's pitches of the same class (the fit's
+    "his own mean for that class"). No entered speed: both velocity terms are skipped, as the fit skips missing velocity
+    (the kind term still applies). None when the level's count table has no pitch_velo (every level but hs / travel)."""
+    L = _CT.get(s.level) or _CT.get(TABLE_LEVEL_ALIAS.get(s.level, ""))
+    T = L.get("pitch_velo") if L else None
+    if not T:
+        return None
+    c = f"{s.balls}-{s.strikes}"
+    f = list(T["kind"][c][T["engine_kind"][p.kind]])
+    if p.velo:
+        cls = T["engine_class"][p.kind]
+        pool = list(arsenal) if any(x is p for x in arsenal) else list(arsenal) + [p]
+        vs = [x.velo for x in pool if x.velo and T["engine_class"][x.kind] == cls]
+        rel = p.velo - sum(vs) / len(vs)
+        fr = T["velo_rel"][c][cls][_bin(rel, T["vrel_edges"])]
+        fa = T["velo_abs"][c][cls][_bin(p.velo, T["vabs_edges"][cls])]
+        f = [f[i] * fr[i] * fa[i] for i in range(6)]
+    return f
+
+
 def hanger_gate(p, s):
     """v1.3 core (Drew's ruling 3): the extra hard-contact logit for an off-speed pitch landing over the heart,
     HANGER_GATE x min(1, wild_today / HANGER_GATE_FULL) when wild_today > 0, else 0 (and 0 for fastballs or H = 0)."""
@@ -2019,6 +2071,16 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             stats["oswing"] += pz * S * (1 - wz_)
             stats["zcontact"] += pz * S * (1 - W) * wz_
             stats["ocontact"] += pz * S * (1 - W) * (1 - wz_)
+    pv = pitch_velo_factors(p, s, arsenal)
+    if pv is not None:            # v1.3 core (ruling 4): HS / travel pitch kind x velocity, then renormalise (as the fit)
+        mb, mh, mc, mw, mf, mi = pv
+        for k_, m_ in (("ball", mb), ("wp_ball", mb), ("hbp", mh), ("cstrike", mc), ("whiff", mw), ("foul", mf),
+                       ("weak", mi), ("solid", mi), ("hard", mi)):
+            out[k_] *= m_
+        tot = (out["ball"] + out["wp_ball"] + out["hbp"] + out["cstrike"] + out["whiff"] + out["foul"]
+               + out["weak"] + out["solid"] + out["hard"])
+        for k_ in out:
+            out[k_] /= tot
     return out
 
 
