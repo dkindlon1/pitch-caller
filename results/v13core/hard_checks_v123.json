@@ -1,0 +1,209 @@
+{
+ "engine": "v1.2.3 (no tables)",
+ "hanger_gate": null,
+ "hard_foul": {
+  "tv": 0.0,
+  "limit": 0.01,
+  "ok": true,
+  "top_hard": [
+   "Slider down-away",
+   0.1526
+  ],
+  "top_plain": [
+   "Slider down-away",
+   0.1526
+  ]
+ },
+ "hit_hard": {
+  "base_fb_upin": 0.1128,
+  "once_fb_upin": 0.1057,
+  "twice_fb_upin": 0,
+  "once_drop": 0.0071,
+  "once_max_other_move": 0.1338,
+  "tv_once": 0.1338,
+  "once_ok": false,
+  "twice_ok": true,
+  "top_base": [
+   "Fastball middle",
+   0.2936
+  ],
+  "top_once": [
+   "Slider middle",
+   0.2216
+  ],
+  "top_twice": [
+   "Fastball middle",
+   0.2728
+  ]
+ },
+ "no_chase_30_31": {
+  "cells": 180,
+  "worst_chase": 0.0,
+  "ok": true,
+  "h13_30_top": [
+   "Fastball middle",
+   0.8758
+  ],
+  "h13_30_chase": 0
+ },
+ "no_scouting": {
+  "h13_28_top": [
+   "Changeup middle",
+   0.2335
+  ],
+  "h13_28_chase": 0,
+  "h13_29_top": [
+   "Curveball middle",
+   0.2563
+  ],
+  "h13_29_chase": 0
+ },
+ "robustness": {
+  "2-2": {
+   "no_history_top": "Slider middle",
+   "no_history_share": 0.2561,
+   "by_n": [
+    {
+     "n": 0,
+     "share": 0.2561,
+     "move": 0.0,
+     "top": [
+      "Slider middle",
+      0.2561
+     ]
+    },
+    {
+     "n": 1,
+     "share": 0.1723,
+     "move": 0.0838,
+     "top": [
+      "Changeup middle",
+      0.2296
+     ]
+    },
+    {
+     "n": 2,
+     "share": 0.1112,
+     "move": 0.1449,
+     "top": [
+      "Changeup middle",
+      0.2113
+     ]
+    },
+    {
+     "n": 3,
+     "share": 0.0703,
+     "move": 0.1858,
+     "top": [
+      "Fastball down-away",
+      0.2115
+     ]
+    },
+    {
+     "n": 4,
+     "share": 0.0201,
+     "move": 0.236,
+     "top": [
+      "Fastball down-away",
+      0.2317
+     ]
+    },
+    {
+     "n": 5,
+     "share": 0,
+     "move": 0.2561,
+     "top": [
+      "Fastball down-away",
+      0.2463
+     ]
+    },
+    {
+     "n": 6,
+     "share": 0,
+     "move": 0.2561,
+     "top": [
+      "Fastball down-away",
+      0.2556
+     ]
+    }
+   ],
+   "move_at_3": 0.1858,
+   "max_move": 0.2561,
+   "ok_at_3": false,
+   "ok_all": false
+  },
+  "3-2": {
+   "no_history_top": "Fastball middle",
+   "no_history_share": 0.423,
+   "by_n": [
+    {
+     "n": 0,
+     "share": 0.423,
+     "move": 0.0,
+     "top": [
+      "Fastball middle",
+      0.423
+     ]
+    },
+    {
+     "n": 1,
+     "share": 0.3551,
+     "move": 0.0679,
+     "top": [
+      "Fastball middle",
+      0.3551
+     ]
+    },
+    {
+     "n": 2,
+     "share": 0.3095,
+     "move": 0.1135,
+     "top": [
+      "Slider middle",
+      0.3725
+     ]
+    },
+    {
+     "n": 3,
+     "share": 0.2737,
+     "move": 0.1493,
+     "top": [
+      "Slider middle",
+      0.4103
+     ]
+    },
+    {
+     "n": 4,
+     "share": 0.2453,
+     "move": 0.1777,
+     "top": [
+      "Slider middle",
+      0.4417
+     ]
+    },
+    {
+     "n": 5,
+     "share": 0.2675,
+     "move": 0.1556,
+     "top": [
+      "Slider middle",
+      0.4664
+     ]
+    },
+    {
+     "n": 6,
+     "share": 0.3164,
+     "move": 0.1066,
+     "top": [
+      "Slider middle",
+      0.4858
+     ]
+    }
+   ],
+   "move_at_3": 0.1493,
+   "max_move": 0.1777,
+   "ok_at_3": false,
+   "ok_all": false
+  }
+ }
+}

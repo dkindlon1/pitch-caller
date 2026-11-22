@@ -1,0 +1,495 @@
+{
+ "approved": "NOT APPROVED. HG-1 to HG-4 drafted for the hanger gate (docs/DECISIONS_refit_v13.md section 4, Drew's ruling 3): PROPOSED (Claude, 2026-11-22, v1.3 core Task C step 3); Drew grades",
+ "arsenals": {
+  "cut_ch": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "",
+    "velo": 88
+   },
+   {
+    "command": 3,
+    "conf": 0.66,
+    "grade": 3,
+    "kind": "FC",
+    "name": "Cutter",
+    "shape": "hard",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 80
+   }
+  ],
+  "deadzone": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "straight",
+    "velo": 87
+   },
+   {
+    "command": 3,
+    "conf": 0.66,
+    "grade": 3,
+    "kind": "SI",
+    "name": "Sinker",
+    "shape": "run",
+    "velo": 86
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 79
+   }
+  ],
+  "fd": [
+   {
+    "command": 4,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "SI",
+    "name": "Sinker",
+    "shape": "run",
+    "velo": 87
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curve",
+    "shape": "",
+    "velo": 74
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 79
+   }
+  ],
+  "four": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 77
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curveball",
+    "shape": "loopy",
+    "velo": 71
+   },
+   {
+    "command": 3,
+    "conf": 0.6,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 77
+   }
+  ],
+  "four_cut": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "",
+    "velo": 88
+   },
+   {
+    "command": 3,
+    "conf": 0.66,
+    "grade": 3,
+    "kind": "FC",
+    "name": "Cutter",
+    "shape": "hard",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "gyro",
+    "velo": 80
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curve",
+    "shape": "",
+    "velo": 74
+   }
+  ],
+  "hs_two": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 82
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curveball",
+    "shape": "loopy",
+    "velo": 70
+   }
+  ],
+  "ride126": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "rides",
+    "slot": "over the top",
+    "velo": 88
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "CB",
+    "name": "Curve",
+    "shape": "12-6",
+    "slot": "over the top",
+    "velo": 74
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "split",
+    "slot": "over the top",
+    "velo": 80
+   }
+  ],
+  "sink_sweep": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "SI",
+    "name": "Sinker",
+    "shape": "run",
+    "slot": "low three-quarter",
+    "velo": 87
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "sweeper",
+    "slot": "low three-quarter",
+    "velo": 76
+   },
+   {
+    "command": 3,
+    "conf": 0.62,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "slot": "low three-quarter",
+    "velo": 79
+   }
+  ],
+  "three": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 77
+   },
+   {
+    "command": 3,
+    "conf": 0.6,
+    "grade": 3,
+    "kind": "CH",
+    "name": "Changeup",
+    "shape": "fade",
+    "velo": 77
+   }
+  ],
+  "two": [
+   {
+    "command": 3,
+    "conf": 0.7,
+    "grade": 3,
+    "kind": "FB",
+    "name": "Fastball",
+    "shape": "ride",
+    "velo": 85
+   },
+   {
+    "command": 3,
+    "conf": 0.65,
+    "grade": 3,
+    "kind": "SL",
+    "name": "Slider",
+    "shape": "tight",
+    "velo": 77
+   }
+  ]
+ },
+ "changes": [],
+ "defaults": {
+  "arsenal": "three",
+  "balls": 0,
+  "bases": [
+   false,
+   false,
+   false
+  ],
+  "batters_faced": 4,
+  "catcher_block": 3,
+  "home": true,
+  "inning": 4,
+  "level": "college_d3",
+  "margin": 0,
+  "outs": 0,
+  "pitch_count": 50,
+  "same_side": true,
+  "strikes": 0
+ },
+ "defaults_text": "College D3. Three-pitch arsenal: fastball 85 (ride), slider 77, changeup 77, all grade 3 and command 3, all landing normally. Hitter grades 3 (no scouting), same-side hitter. Bases empty, no outs, 4th inning, tied, pitch count 50, first time through, catcher blocks at 3.",
+ "pass_rule": {
+  "acc_min": 0.7,
+  "not_max": 0.05,
+  "not_max_hard": 0.0
+ },
+ "rows": [
+  {
+   "acceptable": [
+    "ANY:zone",
+    "OS:chase"
+   ],
+   "arguable": [
+    "FB:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "HG-1a",
+   "inputs": {
+    "balls": 1,
+    "strikes": 1,
+    "landing_today": {
+     "Slider": [
+      5,
+      9
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, slider landing normally (5 of 9 today: wild_today +0.014, about his expected rate)",
+   "status": "PROPOSED (Claude, 2026-11-22, v1.3 core Task C step 3); Drew grades",
+   "why": "Section 4, HG-1 (landing half): a slider that is landing is a fine 1-1 call, middle included",
+   "relation": {
+    "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+    "pattern": "SL:middle",
+    "type": "not_below_h0"
+   }
+  },
+  {
+   "acceptable": [
+    "FB:zone",
+    "CH:zone",
+    "SL:chase",
+    "SL:down-away",
+    "SL:down-in"
+   ],
+   "arguable": [
+    "SL:middle",
+    "SL:up-in",
+    "SL:up-away",
+    "SL:down-middle",
+    "FB:chase",
+    "CH:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "HG-1b",
+   "inputs": {
+    "balls": 1,
+    "strikes": 1,
+    "landing_today": {
+     "Slider": [
+      2,
+      9
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "1-1, the same slider landing 2 of 9 today (wild_today +0.200)",
+   "status": "PROPOSED (Claude, 2026-11-22, v1.3 core Task C step 3); Drew grades",
+   "why": "Section 4, HG-1 (not-landing half): the slider over the middle is the hanger risk when it isn't landing",
+   "relation": {
+    "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+    "pattern": "SL:middle",
+    "type": "at_most_half_of",
+    "of": "HG-1a"
+   }
+  },
+  {
+   "acceptable": [
+    "CB:chase",
+    "CB:down",
+    "ANY:chase",
+    "ANY:corners",
+    "ANY:down-middle"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "HG-2",
+   "inputs": {
+    "arsenal": "four",
+    "strikes": 2,
+    "landing_today": {
+     "Curveball": [
+      1,
+      8
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "CB:middle"
+   ],
+   "pitch_edits": {},
+   "situation": "0-2, four-pitch arsenal, curveball landing 1 of 8 today (wild_today +0.234)",
+   "status": "PROPOSED (Claude, 2026-11-22, v1.3 core Task C step 3); Drew grades",
+   "why": "Section 4, HG-2: a curve that isn't landing hangs over the middle; in the dirt it can still get a chase"
+  },
+  {
+   "acceptable": [
+    "ANY:zone"
+   ],
+   "arguable": [
+    "ANY:chase"
+   ],
+   "exclude": [],
+   "hard": false,
+   "id": "HG-3",
+   "inputs": {
+    "landing_today": {
+     "Changeup": [
+      5,
+      8
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [],
+   "pitch_edits": {},
+   "situation": "0-0, changeup landing normally (5 of 8 today: wild_today -0.023)",
+   "status": "PROPOSED (Claude, 2026-11-22, v1.3 core Task C step 3); Drew grades",
+   "why": "Section 4, HG-3 (a control): changeup middle at 0-0 is acceptable (data 1.00x a fastball there); the gate must not touch it",
+   "relation": {
+    "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+    "pattern": "CH:middle",
+    "type": "equal_h0"
+   }
+  },
+  {
+   "acceptable": [
+    "FB:zone"
+   ],
+   "arguable": [],
+   "exclude": [],
+   "hard": false,
+   "id": "HG-4",
+   "inputs": {
+    "arsenal": "hs_two",
+    "level": "hs",
+    "balls": 3,
+    "strikes": 2,
+    "landing_today": {
+     "Curveball": [
+      3,
+      10
+     ]
+    }
+   },
+   "matchup": [],
+   "not_acceptable": [
+    "CB:middle"
+   ],
+   "pitch_edits": {},
+   "situation": "3-2, high school, two-pitch (FB, CB), curveball landing 3 of 10 today (wild_today +0.168)",
+   "status": "PROPOSED (Claude, 2026-11-22, v1.3 core Task C step 3); Drew grades",
+   "why": "Section 4, HG-4: full count, HS two-pitch: a curve that isn't landing is a hanger over the middle; the fastball strike is the call"
+  }
+ ],
+ "version": "hg_v13 2026-11-22 (PROPOSED). Graded by readthrough/scenarios.py --suite hg_v13 (the frozen pass rule); the 'relation' rules (HG-1, HG-3) compare a row with another row or with itself at H = 0 and are checked by readthrough/hanger_gate_size.py"
+}
