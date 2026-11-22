@@ -5,7 +5,8 @@ Traits (logit effects relative to the level-season's per-count average; then div
 final units are the simulator's "hitter SD" units, simulate.py HITTER_TRAITS):
 - early       swing at 0-0 / 1-0 / 0-1                         (sim: logit(swing) += early * TRAIT_SIZE early_swing)
 - two_strike  composite of ts_swing (swing at two strikes) and ts_foul (foul share of contact at two strikes), each
-              standardised, summed and rescaled by the true-score correlation so the composite has SD 1
+              standardised, summed and divided by sqrt(2 + 2 max(rho, 0)), rho = their true-score correlation (SD 1
+              when rho >= 0; the parts are also written separately, since the data puts rho below 0)
 - contact     MINUS the whiff-per-swing effect (contact +1 = fewer whiffs; sim: contact_whiff < 0)
 - power       extra-base hits (2B / 3B / HR) per ball in play, bunts out (sim: power_xbh)
 - spray       pull share of balls in play with a direction (L / LC pulled by a right-handed hitter; R / RC by a lefty;
@@ -213,11 +214,11 @@ def team_strength(S, k=10.0):
 
 
 # --- tuning across hitter-seasons ---------------------------------------------------------------------------------------
-def stack(tables, part, min_pa=MIN_PA):
+def stack(tables, part, min_pa=MIN_PA, min_n=5):
     rows = defaultdict(list)
     for T in tables:
         b, se, n = T[part]
-        m = (T["pa"] >= min_pa) & (n >= 5)
+        m = (T["pa"] >= min_pa) & (n >= min_n)
         bo, seo, no = T[part + "_odd"]
         be, see, ne = T[part + "_even"]
         for k, v in (("b", b), ("se", se), ("n", n), ("bo", bo), ("no", no), ("be", be), ("ne", ne),
@@ -375,7 +376,7 @@ def run_level(con, level, train, prefill_seasons, max_games=None, log=print, out
 def two_strike_rho(tables, params):
     if "tau" not in params.get("ts_swing", {}) or "tau" not in params.get("ts_foul", {}):
         return None
-    a, b = stack(tables, "ts_swing"), stack(tables, "ts_foul")
+    a, b = stack(tables, "ts_swing", min_n=0), stack(tables, "ts_foul", min_n=0)
     m = (a["no"] >= 10) & (a["ne"] >= 10) & (b["no"] >= 10) & (b["ne"] >= 10)
     if m.sum() < 20:
         return None
@@ -402,7 +403,7 @@ def hitter_traits(T, params, rho, idx=None):
         res[part] = dict(z=SIGN[part] * (sh - mean) / e["tau"], se_z=sse / e["tau"], logit=sh - mean, se_logit=sse,
                          raw=b - mean, raw_se=se, n=n, R=R, prior_z=SIGN[part] * (pr - mean) / e["tau"])
     if "ts_swing" in res and "ts_foul" in res:
-        k = np.sqrt(2 + 2 * (rho if rho is not None else 0.0))
+        k = np.sqrt(2 + 2 * max(rho or 0.0, 0.0))      # rho floored at 0: anti-correlated parts aren't inflated
         z = (res["ts_swing"]["z"] + res["ts_foul"]["z"]) / k
         se = np.sqrt(res["ts_swing"]["se_z"] ** 2 + res["ts_foul"]["se_z"] ** 2) / k
         res["two_strike"] = dict(z=z, se_z=se, prior_z=(res["ts_swing"]["prior_z"] + res["ts_foul"]["prior_z"]) / k)
