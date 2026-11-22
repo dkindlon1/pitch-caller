@@ -255,7 +255,117 @@ def t_guards():
     check("held-out: proxy run over 2026 trips", trips(FP.run, (2025, 2026), False))
 
 
+# ---------- HS / travel (fit_count_hs) on a synthetic hs.sqlite3 ----------
+HS_SCHEMA = """
+CREATE TABLE hs_games(game_id TEXT PRIMARY KEY, level TEXT, series TEXT, age_group TEXT, phase TEXT, season INTEGER,
+  home_team TEXT, away_team TEXT, home_runs INTEGER, away_runs INTEGER, content_hash TEXT, parsed TEXT);
+CREATE TABLE hs_game_qc(game_id TEXT PRIMARY KEY, full_log INTEGER);
+CREATE TABLE hs_pa(game_id TEXT, idx INTEGER, inning INTEGER, half TEXT, outs_before INTEGER, bases_before TEXT,
+  bat_score_before INTEGER, fld_score_before INTEGER, balls INTEGER, strikes INTEGER, pitches TEXT, result TEXT,
+  in_play INTEGER, bip_type TEXT, outs_on_play INTEGER, runs_rest_inning INTEGER, bats TEXT, throws TEXT, text TEXT);
+CREATE TABLE hs_pitch(game_id TEXT, pa_idx INTEGER, pitch_no INTEGER, seq INTEGER, letter TEXT, outcome TEXT,
+  pitch_type TEXT, pitch_class TEXT, velo REAL, pitcher_id TEXT, count_ok INTEGER);
+"""
+# outs, bases, balls, strikes, letters, result, in_play, bip, outs_on_play, runs_rest, bats, throws, text, pitch rows
+# pitch rows: (letter, outcome, type, class, velo)
+FB, CB = ("Fastball", "fastball"), ("Curveball", "breaking")
+HS_HALF = [
+    (0, "000", 0, 2, "KKS", "K_S", 0, None, 1, 1, "R", "R", "Strike Out Swinging",
+     [("K", "Strike Called") + FB + (80.0,), ("K", "Strike Called") + FB + (82.0,), ("S", "Strike Out Swinging") + CB + (70.0,)]),
+    (1, "000", 0, 1, "K", "2B", 1, "line", 0, 1, "L", "R", "Double Line to LF",
+     [("K", "Strike Called") + CB + (68.0,), ("X", "Double") + FB + (None,)]),          # velocity missing on the in-play pitch
+    (1, "020", 0, 0, "", "GO", 1, "ground", 1, 1, "R", "R", "Out Ground ball to Pitcher 1-3",
+     [("X", "Out", None, "unknown", None)]),                                           # blank type
+    (2, "020", 0, 0, "", "SH", 1, "bunt", 1, 0, "R", "R", "Out GroundBunt to Catcher",
+     [("X", "Out") + FB + (79.0,)]),                                                   # bunt: excluded
+    (2, "020", 0, 0, "", "PO", 1, "pop", 1, 0, None, None, "Out Pop to SS",
+     [("X", "Out") + FB + (81.0,)]),
+]
+
+
+def make_hs_db(path):
+    con = sqlite3.connect(path)
+    con.executescript(HS_SCHEMA)
+    for gid, s, lev in (("h24", 2024, "travel_ball"), ("h25", 2025, "high_school"), ("h26", 2026, "travel_ball")):
+        con.execute("INSERT INTO hs_games VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (gid, lev, "Atlanta WWBA", "17U", "pool", s, "Team A", "Team B", 3, 1, "h" + gid, "1:x"))
+        con.execute("INSERT INTO hs_game_qc VALUES (?, 1)", (gid,))
+        idx, seq = 0, 0
+        for inn in (1, 2):
+            for half in ("top", "bottom"):
+                for (o, b, bl, st, let, res, ip, bip, oo, rr, bats, thr, text, rows) in HS_HALF:
+                    con.execute("INSERT INTO hs_pa VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                (gid, idx, inn, half, o, b, 0, 0, bl, st, let, res, ip, bip, oo, rr, bats, thr, text))
+                    for k, (L, oc, pt, pc, v) in enumerate(rows):
+                        seq += 1
+                        con.execute("INSERT INTO hs_pitch VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                    (gid, idx, k + 1, seq, L, oc, pt, pc, v, "p1", 1 if k < len(rows) - 1 else None))
+                    idx += 1
+    con.commit()
+    con.close()
+
+
+def t_hs():
+    from hitter_data import fit_count_hs as HS
+    from hitter_data.harness_adapters import Assumption
+    d = tempfile.mkdtemp()
+    path = os.path.join(d, "hs.sqlite3")
+    make_hs_db(path)
+    con = HS.connect(path)
+    S = HS.build_hs_season(con, 2025)
+    p = S.pit
+    check("hs: per half 3 + 2 + 1 + 1 pitch events (the bunt PA dropped)", len(p["y"]) == 4 * 7, len(p["y"]))
+    check("hs: the replay matches the college one (K, in play at 0-1)",
+          list(zip(p["ci"][:5], p["y"][:5])) == [(0, 2), (CI[(0, 1)], 2), (CI[(0, 2)], 3), (0, 2), (CI[(0, 1)], 5)],
+          list(zip(p["ci"][:5], p["y"][:5])))
+    check("hs: class and kind kept per pitch (blank type = kind -1)",
+          list(p["cls"][:7]) == [0, 0, 1, 1, 0, 4, 0] and list(p["kind"][:7]) == [0, 0, 1, 1, 0, -1, 0], (p["cls"][:7], p["kind"][:7]))
+    check("hs: velocity missing stays NaN", np.isnan(p["velo"][4]) and p["velo"][0] == 80.0)
+    check("hs: relative velocity: breaking (8 readings) NaN, fastball (16) defined", np.isnan(p["vrel"][p["cls"] == 1]).all() and not np.isnan(p["vrel"][0]), p["vrel"][:7])
+    pid = np.array([1] * 12 + [2] * 3, dtype=np.int64)
+    rv = HS.relative_velo(dict(velo=np.array([80.0] * 6 + [84.0] * 6 + [70.0] * 3, dtype=np.float32), pid=pid,
+                               cls=np.zeros(15, dtype=np.int8)))
+    check("hs: relative velocity = minus the pitcher's own class mean", np.allclose(rv[:12], [-2] * 6 + [2] * 6) and np.isnan(rv[12:]).all(), rv)
+    check("hs: side same / opposite / unknown", list(np.bincount(p["sd"], minlength=3)) == [4 * 4, 4 * 2, 4 * 1],
+          np.bincount(p["sd"], minlength=3))
+    check("hs: game level / age / phase recorded", S.g_lev[0] == 0 and HS.AGES[S.g_age[0]] == "17U" and HS.PHASES[S.g_phase[0]] == "pool")
+    c = HS.counts_from_hs_season(S)
+    check("hs: counts = events; weak proxy (grounder to Pitcher + pop-up), hard (line)",
+          c["ev6"].sum() == 28 and c["weak"].sum() == 8 and c["hard"].sum() == 4, (c["ev6"].sum(), c["weak"].sum(), c["hard"].sum()))
+    ti, n = HS.term_index(S, "velo_abs")
+    check("hs: missing velocity / blank type -> no term adjustment (-1)", ti[4] == -1 and ti[5] == -1 and ti[0] >= 0, ti[:7])
+    ti, n = HS.term_index(S, "class")
+    check("hs: blank class -> no adjustment", ti[5] == -1 and n == 4)
+    # term recovery: base uniform, fastballs put in play twice as often
+    P = np.full((len(p["y"]), 6), 1 / 6)
+    r = HS.fit_term([P], [S], "class", alpha=0.0)
+    fb_ip = (p["y"][p["cls"] == 0] == 5).mean()
+    check("hs: term offset = observed / expected (alpha 0)", abs(r[CI[(0, 1)], 0, 5] * (1 / 6) -
+          ((p["y"] == 5) & (p["cls"] == 0) & (p["ci"] == CI[(0, 1)])).sum() / ((p["cls"] == 0) & (p["ci"] == CI[(0, 1)])).sum()) < 1e-9, fb_ip)
+    Pa = HS.apply_term(P, S, "class", r)
+    check("hs: applied term normalised; untouched where -1", np.allclose(Pa.sum(1), 1) and np.allclose(Pa[5], 1 / 6))
+    check("hs: an unseen count x level gets factor 1", np.allclose(r[CI[(3, 0)]], 1.0))
+    A = HS.AliasAssumption("calib_world")
+    check("hs: v1.2 at HS asks the D3 frozen mix", A.mix("HS", "same", 1, 1) == Assumption("calib_world").mix("D3", "same", 1, 1))
+    check("held-out: hs_games(2026) trips", trips(HS.hs_games, con, 2026))
+    check("held-out: build_hs_season(2026) trips", trips(HS.build_hs_season, con, 2026))
+    check("held-out: hs load_season(2026) trips", trips(HS.load_season, con, 2026, False))
+    con.close()
+    j = {"variant": "sep", "level": "hs", "fit_seasons": {"2024": 1.0}}
+    pth = os.path.join(d, "c.json")
+    with open(pth, "w", encoding="utf-8") as fh:
+        json.dump(j, fh)
+    ad = SCN.CandidateAdapter(pth)
+    try:
+        ad.j["p6_ctx"] = None
+        ad.tables("D3")
+        check("hs: candidate 'hs' refuses a college level", False)
+    except ValueError:
+        check("hs: candidate 'hs' refuses a college level", True)
+
+
 if __name__ == "__main__":
+    t_hs()
     t_math()
     t_recency()
     t_borrow()

@@ -44,7 +44,7 @@ class CandidateAdapter(Adapter):
         self._t = None
 
     def tables(self, data_level):
-        if data_level != self.j["level"]:
+        if data_level.lower() != self.j["level"].lower():
             raise ValueError(f"{self.name} is a {self.j['level']} table, asked for {data_level}")
         if self._t is None:
             self._t = FC.tables_from_json(self.j)
