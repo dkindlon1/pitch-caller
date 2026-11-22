@@ -76,6 +76,32 @@ def test_hard_sd():
     assert sd < 1e-12 and abs(sd100 - 0.25) < 1e-12
 
 
+def test_hard_talent_sd():
+    """Ruling 8: HARD_SD as the talent SD with binomial luck removed (talent_spread.py's two estimates) recovers a known
+    true spread from made-up hitter-seasons, and the shrunk / plain SDs bracket it the way the decision sheet says."""
+    from hitter_data import hard_talent_sd as H
+    rng = np.random.default_rng(7)
+    hs = {}
+    for s, mu in ((2024, 0.36), (2025, 0.40)):            # the league mean moves between seasons; the true SD does not
+        n = rng.integers(20, 450, 1500)
+        a = mu * (mu * (1 - mu) / 0.065 ** 2 - 1)
+        b = (1 - mu) / mu * a
+        k = rng.binomial(n, rng.beta(a, b, len(n)))
+        hs[s] = pd.DataFrame({"n": n, "h": k}, index=np.arange(len(n)))
+    res = H.compute(hs, boot=10)
+    assert abs(res["HARD_SD_raw"] - 0.065) < 0.006, res["HARD_SD_raw"]
+    assert abs(res["mom_sd"] - 0.065) < 0.006, res["mom_sd"]
+    assert res["HARD_SD_se"] and res["HARD_SD_se"] < 0.005
+    assert res["common_mean_mom_sd"] > res["mom_sd"]            # pooling around one mean adds the league drift
+    plain = np.sqrt(np.average((hs[2025]["h"] / hs[2025]["n"] - 0.40) ** 2, weights=hs[2025]["n"]))
+    assert plain > res["HARD_SD_raw"]                            # the plain SD still carries luck
+    try:
+        H.compute({2026: hs[2025]}, boot=0)
+    except HeldOutSeasonError:
+        return
+    raise AssertionError("2026 was not refused")
+
+
 def test_heldout_guard():
     try:
         T.compute({2026: frame()}, boot=0)
@@ -85,7 +111,7 @@ def test_heldout_guard():
 
 
 if __name__ == "__main__":
-    for t in (test_rates_re_cv, test_hard_sd, test_heldout_guard):
+    for t in (test_rates_re_cv, test_hard_sd, test_hard_talent_sd, test_heldout_guard):
         t()
         print("[PASS]", t.__name__)
     print("tests_refit_mlbt: all passed")

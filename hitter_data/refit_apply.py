@@ -36,12 +36,16 @@ def side_json(d):
 def power_hr_value():
     """POWER_HR is per power-grade point, and one point = one HARD_SD of hitters' hard-hit share (engine.py comment at
     POWER_HR). refit_power_hr's coefficient is per SD of its own power measure (power_sd_raw), so it is restated per
-    HARD_SD (the refit value from hitter_data/refit_mlb_targets.py when present)."""
+    HARD_SD. Since Drew's ruling 8 (Nov 21) HARD_SD is the hitter talent SD with luck removed
+    (hitter_data/hard_talent_sd.py -> hard_talent_sd.json); before it, the refit's shrunk-estimate SD (mlbt.json)."""
     p = load("power_hr")
     try:
-        hard_sd = load("mlbt")["HARD_SD"]
+        hard_sd = load("hard_talent_sd")["HARD_SD"]
     except OSError:
-        hard_sd = p["power_sd_raw"]
+        try:
+            hard_sd = load("mlbt")["HARD_SD"]
+        except OSError:
+            hard_sd = p["power_sd_raw"]
     return round(p["coef_raw"] * hard_sd / p["power_sd_raw"], 3)
 
 

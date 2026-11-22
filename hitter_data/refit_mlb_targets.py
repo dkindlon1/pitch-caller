@@ -311,7 +311,7 @@ def report(res):
     for (o, b) in STATES:
         k = f"{o}|{b}"
         L.append(f"  {k}  old {RE_BY_LEVEL['mlb'][(o, b)]:.3f}  new {res['RE'][k]:.4f}  se {res['RE_se'][k]:.4f}")
-    L.append("  ** RE[0|000] is the run_scale denominator for every level (engine.py run_scale) **")
+    L.append("  ** RE[0|000] no longer feeds run_scale: ruling 10 pins its denominator at 0.481 (engine.RUN_SCALE_MLB_RE00) **")
     L.append("\ncount values (old = run_tables.py CV_BY_LEVEL['mlb']):")
     for (b, k) in COUNTS:
         kk = f"{b}-{k}"

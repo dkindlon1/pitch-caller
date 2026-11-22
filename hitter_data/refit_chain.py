@@ -6,8 +6,9 @@ Edits (number literals only, form unchanged):
 - college_run_values.json `mlb_check` (the same Markov model rerun on the new rates: RE, LW walk / strikeout, out rates);
   the other levels' entries are left as they are;
 - calib.py `MLB_PITCH` (pitch-level targets);
-- run_tables.py RE_BY_LEVEL['mlb'] and CV_BY_LEVEL['mlb'] (RE['mlb'][0, '000'] is engine.run_scale's denominator);
-- fit_hitter_spread.py HARD_SD;
+- run_tables.py RE_BY_LEVEL['mlb'] and CV_BY_LEVEL['mlb'] (RE['mlb'][0, '000'] was engine.run_scale's denominator; since ruling 10 the denominator is pinned at 0.481,
+  engine.RUN_SCALE_MLB_RE00);
+- fit_hitter_spread.py HARD_SD (the talent SD from hitter_data/hard_talent_sd.py when present, ruling 8);
 - the pro (mlb) baselines in app/learner.js, app/learn.js, web/lib/report_data.ts.
 Then runs, in the repo directory: refit_mlb.py -> fit_all.py -> chain_v08.py -> inplay_fit.py -> fit_hitter_spread.py ->
 we_tables.py. It does not run app/export_data.py or app/build.py. Generated files are rewritten with LF line endings.
@@ -108,8 +109,14 @@ def apply_targets(repo, T):
             if has and span != "Savant MLB 2021-2025":
                 _rw(fp, lambda s: s.replace("Savant MLB 2021-2025", span))
 
+    # ruling 8: the talent SD with luck removed (hitter_data/hard_talent_sd.py) once it has been computed
+    tsd = os.path.join(DATA, "refit", "hard_talent_sd.json")
+    if os.path.exists(tsd):
+        hsd, src = json.load(open(tsd))["HARD_SD"], "talent SD, luck removed: hitter_data/hard_talent_sd.py, ruling 8"
+    else:
+        hsd, src = T["HARD_SD"], "hitter_data/refit_mlb_targets.py"
     _rw(os.path.join(repo, "fit_hitter_spread.py"),
-        lambda s: _sub1(r"\nHARD_SD = [0-9.]+[^\n]*", f"\nHARD_SD = {T['HARD_SD']:.4f}   # v1.3 refit (hitter_data/refit_mlb_targets.py)", s))
+        lambda s: _sub1(r"\nHARD_SD = [0-9.]+[^\n]*", f"\nHARD_SD = {hsd:.4f}   # v1.3 refit ({src})", s))
 
     # pro baselines
     js = (f"mlb: {{ AVG: {base['AVG']:.3f}, OBP: {base['OBP']:.3f}, SLG: {base['SLG']:.3f}, K: {base['K']:.3f}, "
