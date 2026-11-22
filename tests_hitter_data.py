@@ -229,7 +229,28 @@ def t_heldout():
     check("fit_seasons refuses a list containing 2026", tripped)
 
 
-for t in (t_pitch_strings, t_results, t_bip, t_state, t_more_state, t_people, t_grouped, t_nonplay, t_ingest, t_heldout):
+# ---------- representativeness (task D) ----------
+def t_represent():
+    from hitter_data import represent as rp
+    check("full: 9 of 10 lettered", rp.is_full(10, 9, 0))
+    check("full: 8 lettered + one first-pitch 0-0 in play", rp.is_full(10, 8, 1))
+    check("not full: 0-0 alone does not make a game full", not rp.is_full(10, 0, 10))
+    check("not full: 8 of 10", not rp.is_full(10, 8, 0))
+    r, se = rp.ratio([2, 2, 2], [10, 10, 10])
+    check("ratio: equal games -> rate exact, SE 0", abs(r - 0.2) < 1e-12 and se < 1e-12, (r, se))
+    r, se = rp.ratio([1, 3], [10, 10])
+    # residuals 1-2=-1, 3-2=+1 -> sum sq 2 /(n-1)=2 /n=1 /dbar^2=100 -> var 0.01 -> SE 0.1
+    check("ratio: two games -> 0.2 with game-clustered SE 0.1", abs(r - 0.2) < 1e-12 and abs(se - 0.1) < 1e-12, (r, se))
+    check("ratio: one game -> no SE", rp.ratio([1], [3]) == (None, None))
+    rows = [("D1", 2025, True, 40, 8, 4, 1, 9, 1), ("D1", 2025, False, 38, 6, 5, 0, 7, 0),
+            ("D1", 2025, True, 42, 9, 3, 2, 11, 2), ("D1", 2025, False, 36, 7, 4, 1, 5, 1)]
+    t = rp.summarize(rows)
+    check("summarize: one level-season, 4 games, 2 full", t[0][:5] == ["D1", 2025, 4, 2, "0.500"], t[0][:5])
+    check("summarize: full K% = 17/82", t[0][5] == f"{17 / 82:.4f}", t[0][5])
+
+
+for t in (t_pitch_strings, t_results, t_bip, t_state, t_more_state, t_people, t_grouped, t_nonplay, t_ingest, t_heldout,
+          t_represent):
     t()
 print(f"\n{'FAILED ' + str(len(FAILS)) if FAILS else 'all passed'}")
 sys.exit(1 if FAILS else 0)
