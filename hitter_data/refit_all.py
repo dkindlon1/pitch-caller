@@ -15,6 +15,7 @@ C:/dev/pitchiq-data/fits/logs/refit_all_<step>.log):
   7. traits      per-hitter traits, priors, presets, prefill files
   8. score       candidates scored on 2025 vs v1.2 and the per-count baseline
   8b. fit_count_hs  HS / travel (one level): count layer, format terms, pitch kind + velocity, run values, 2025 scores
+  8c. export    candidate engine tables (count_v13prov / run_v13prov, docs/TABLES_v13.md format) in fits/candidates
   9. zone        zone draft (docs/ZONE_TABLE_DRAFT_v13.md), only when the Statcast files changed since the last run
 Then one summary: C:/dev/pitchiq-data/fits/refit_all_summary.md (and printed).
 
@@ -41,9 +42,10 @@ STEPS = [
     ("traits", "fit_traits", [], None),
     ("score", "score_candidates", [], None),
     ("fit_count_hs", "fit_count_hs", [], None),
+    ("export", "export_candidates", [], None),
     ("zone", "zone_seed", ["--write-doc", "--quiet"], "zone"),
 ]
-ORDER_NOTE = "score runs after fit_count (it scores fit_count's candidates)"
+ORDER_NOTE = "score runs after fit_count (it scores fit_count's candidates); export runs after fit_count, fit_runs and fit_count_hs"
 
 
 def statcast_fingerprint(root=None):

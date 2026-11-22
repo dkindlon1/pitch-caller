@@ -296,6 +296,8 @@ def candidate_json(level, variant, prm, wts, f, Wl, target):
                  "p6": list(P6_NAMES), "bip_type": list(BIP_TYPES), "bip_result": list(BIP_RESULTS)},
         "count": count,
         "p6_count_bo": r5(d["p_bo"]),
+        "n_count_bo": np.round(n_ctx.sum(axis=(3, 4)), 1).tolist(),          # weighted pitches per count x outs x bases
+        "late_share": np.round(n_ctx.sum(axis=(1, 2, 3))[:, 1] / np.maximum(n_c, EPS), 5).tolist(),   # per count
         "p6_ctx": r5(P6),
         "platoon": platoon,
         "late_offset": r5(d["f_lt"]) if variant != "shared" else None,
