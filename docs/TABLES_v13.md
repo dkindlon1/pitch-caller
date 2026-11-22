@@ -114,6 +114,11 @@ Each file also has `"kind"`, `"version"` (a string, recorded with the export) an
    2. Re-export.
    3. Regenerate the golden JSONs and review the diff.
 
+The zone candidate already exists: `python -m hitter_data.zone_candidate` (also run by `refit_all` after the zone step)
+writes `C:/dev/pitchiq-data/fits/candidates/zone_v13prov.json` plus `zone_v13prov_report.md` (per-statement and per-cell
+error vs the seed, hanger rows, what the format can't carry). It is PROVISIONAL: Drew has not approved the zone numbers.
+`engine.use_zone_table(t)` swaps a zone table in place in Python for fit code.
+
 Fit-side notes:
 - **Zone ratios.** The zone draft's fitted numbers are ratios of rates (mean-preserving per count group). The fit converts
   them to logit offsets relative to what the engine adds already (base + count + class terms). Once the zone table is

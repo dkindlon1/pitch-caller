@@ -16,6 +16,7 @@ C:/dev/pitchiq-data/fits/logs/refit_all_<step>.log):
   8. score       candidates scored on 2025 vs v1.2 and the per-count baseline
   8b. fit_count_hs  HS / travel (one level): count layer, format terms, pitch kind + velocity, run values, 2025 scores
   9. zone        zone draft (docs/ZONE_TABLE_DRAFT_v13.md), only when the Statcast files changed since the last run
+  9b. zone_candidate  PROVISIONAL zone-table candidate fits/candidates/zone_v13prov.json (not default), when zone runs
 Then one summary: C:/dev/pitchiq-data/fits/refit_all_summary.md (and printed).
 
 Everything it produces is PROVISIONAL until Drew reviews it. 2026 stays held out: every fit step goes through
@@ -42,6 +43,7 @@ STEPS = [
     ("score", "score_candidates", [], None),
     ("fit_count_hs", "fit_count_hs", [], None),
     ("zone", "zone_seed", ["--write-doc", "--quiet"], "zone"),
+    ("zone_candidate", "zone_candidate", ["--quiet"], "zone"),   # PROVISIONAL zone_v13prov.json (not default); runs when zone runs
 ]
 ORDER_NOTE = "score runs after fit_count (it scores fit_count's candidates)"
 

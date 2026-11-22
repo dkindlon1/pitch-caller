@@ -1219,6 +1219,24 @@ def count_group(b, k):
 _ZCELL = {}
 
 
+def use_zone_table(t):
+    """Swap the zone table in place (fit code: compute with a candidate without a new process). Returns the table it replaced.
+    Python only; the JS engine takes its tables from engine_data.json (app/export_data.py with PITCH_ZONE_TABLE)."""
+    global _ZT, ZONE_CLASS, W_FB, HANGER
+    check_table(t)
+    old = _ZT
+    _ZT = TABLES["zone"] = t
+    TABLE_VERSIONS["zone"] = t["version"]
+    for d, k in ((S0, "swing"), (C0, "cstrike"), (W0, "whiff"), (F0, "foul"), (ZONE_IN, "zone_in")):
+        d.clear(); d.update(t["base"][k])
+    Q0.clear(); Q0.update({z: tuple(v) for z, v in t["base"]["quality"].items()})
+    ZONE_CLASS = t["class"]
+    W_FB, HANGER = ZONE_CLASS["whiff_fb"], ZONE_CLASS["hanger_hard"]
+    KIND_W_OS.clear(); KIND_W_OS.update(ZONE_CLASS["whiff_os"])
+    _ZCELL.clear()
+    return old
+
+
 def zone_cells(level, prof, cg, ht):
     """{band: (swing, cstrike, whiff, foul, hard)} logit offsets of the zone table's cell (level_cells override per level)"""
     key = (level, prof, cg, ht)
