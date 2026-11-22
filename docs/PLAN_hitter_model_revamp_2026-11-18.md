@@ -306,3 +306,23 @@ Scraping and data collection (separate chat). New location logging. The hitter-s
    Claude suggested a legal read before launch; Drew's call.
 2. **Zone table approval** (Step 2): the first concrete thing Drew reviews.
 3. **D2 in production:** any database migration for the new level waits for Drew's go.
+
+## 11. Decisions after the prework (Nov 21)
+- **Hanger:** zone effects follow the data by location (off-speed over the heart ≈ a fastball there). An extra hanger
+  penalty applies only when that pitch is below his normal today; v1.2's flat +0.5 hanger term goes when the zone table
+  is wired.
+- **Zone numbers:** approved only after the MLB / MiLB pulls finish and the table is regenerated (multiple seasons,
+  Triple-A in the transfer check).
+- **Refit regrading:** Drew rules now on the three broken limits (R1, Q4, S5) and the 25 HS / travel changes; every
+  other moved row is graded once, after the college core lands. `feat/hitter-v13-refit` stays unmerged until then.
+- **Coverage rule:** undecided; more D2 / D3 2025 games are being collected. Decided from the coverage +
+  representativeness numbers once they land.
+- **HS data:** the HS source is Perfect Game WWBA and Showdown games (about 4,700 games and 1M pitches so far; ~16,900
+  WWBA finals still being collected). **Drew: one model for HS and travel**, fit on this data; travel keeps using the
+  HS numbers.
+  - **No bat-type split (Drew, Nov 21):** wood and BBCOR games are treated the same.
+  - (default) Event format (pitch limits, time limits, pool vs bracket) is recorded per game and tested as a fit term,
+    reported so its effect is visible.
+  - **The archive records pitch type and velocity per pitch (Drew, Nov 21).** At HS / travel this allows count-layer
+    fits split by pitch class (fastball vs off-speed, and kinds where data supports), velocity effects on swing / whiff
+    / contact, and per-pitcher stuff checks. No location, so zone shape still comes from the Single-A seeded table.
