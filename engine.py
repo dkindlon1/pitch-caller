@@ -70,6 +70,12 @@ def check_table(t, path="table"):
         _need(all(num(c.get(k)) for k in ("whiff_fb", "line_low", "line_up", "line_whiff", "line_hard", "up_mid_hard", "hanger_hard"))
               and all(num(c.get("whiff_os", {}).get(k)) for k in ("SL", "CB", "CH"))
               and all(num(c.get("chase_os", {}).get(z)) for z in ("off", "noncomp")), path, "class terms missing")
+        # v1.3 core, optional (absent = 0, as in the v12 / v13refit files): class.hanger_gate H (ruling 3: off-speed over the
+        # heart gets H x min(1, wild_today / HANGER_GATE_FULL) more hard-contact logit when wild_today > 0) and class.gb_kind
+        # {kind: logit} added to the ground-ball rate given contact (ruling 2's P3 row: the sinker's grounder ratio)
+        _need(num(c.get("hanger_gate", 0.0)) and isinstance(c.get("gb_kind", {}), dict)
+              and all(k in ("FB", "SI", "FC", "SL", "CB", "CH") and num(v) for k, v in c.get("gb_kind", {}).items()),
+              path, "class.hanger_gate must be a number and class.gb_kind {kind: number}")
         for name, cells in [("cells", t.get("cells"))] + [(f"level_cells.{lv}", v) for lv, v in (t.get("level_cells") or {}).items()]:
             _need(isinstance(cells, dict), path, f"{name} missing")
             for o in T_ZONE_OUT:
@@ -1202,6 +1208,12 @@ ZONE_IN = dict(_ZT["base"]["zone_in"])
 ZONE_CLASS = _ZT["class"]
 W_FB = ZONE_CLASS["whiff_fb"]
 HANGER = ZONE_CLASS["hanger_hard"]     # v1.2's hanger: off-speed over the heart is hit harder (logit)
+# v1.3 core, Drew's ruling 3 (DECISIONS_refit_v13.md section 4): the quality-gated hanger. An off-speed pitch landing over the
+# heart gets HANGER_GATE x min(1, wild_today / HANGER_GATE_FULL) more hard-contact logit, only when wild_today > 0 (he isn't
+# landing it today). H is the zone table's class.hanger_gate (absent = 0); the next agent sizes it on graded rows.
+HANGER_GATE = ZONE_CLASS.get("hanger_gate", 0.0)
+HANGER_GATE_FULL = 0.30
+GB_KIND = dict(ZONE_CLASS.get("gb_kind", {}))   # v1.3 core (ruling 2, P3): ground-ball logit by pitch kind (absent = 0)
 
 
 def zone_profile(p):
@@ -1233,7 +1245,7 @@ _ZCELL = {}
 def use_zone_table(t):
     """Swap the zone table in place (fit code: compute with a candidate without a new process). Returns the table it replaced.
     Python only; the JS engine takes its tables from engine_data.json (app/export_data.py with PITCH_ZONE_TABLE)."""
-    global _ZT, ZONE_CLASS, W_FB, HANGER
+    global _ZT, ZONE_CLASS, W_FB, HANGER, HANGER_GATE
     check_table(t)
     old = _ZT
     _ZT = TABLES["zone"] = t
@@ -1243,6 +1255,8 @@ def use_zone_table(t):
     Q0.clear(); Q0.update({z: tuple(v) for z, v in t["base"]["quality"].items()})
     ZONE_CLASS = t["class"]
     W_FB, HANGER = ZONE_CLASS["whiff_fb"], ZONE_CLASS["hanger_hard"]
+    HANGER_GATE = ZONE_CLASS.get("hanger_gate", 0.0)
+    GB_KIND.clear(); GB_KIND.update(ZONE_CLASS.get("gb_kind", {}))
     KIND_W_OS.clear(); KIND_W_OS.update(ZONE_CLASS["whiff_os"])
     _ZCELL.clear()
     return old
@@ -1856,6 +1870,15 @@ def pair_terms(p, q, s, arsenal):
     return w, sw
 
 
+def hanger_gate(p, s):
+    """v1.3 core (Drew's ruling 3): the extra hard-contact logit for an off-speed pitch landing over the heart,
+    HANGER_GATE x min(1, wild_today / HANGER_GATE_FULL) when wild_today > 0, else 0 (and 0 for fastballs or H = 0)."""
+    if not HANGER_GATE or not is_offspeed(p.kind):
+        return 0.0
+    wt = wild_today(p, s)
+    return HANGER_GATE * min(1.0, wt / HANGER_GATE_FULL) if wt > 0 else 0.0
+
+
 def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=None, sit=None, zout=None):
     if p.fb_mph is None:
         resolve_speeds(arsenal)
@@ -1894,6 +1917,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     cnt, kap, _ = count_cells(s.level, s.balls, s.strikes)
     bo_sw = count_base_out(s.level, s.outs, s.bases)
     zcell = zone_cells(s.level, zone_profile(p), count_group(s.balls, s.strikes), _T_HT[target_height(q, p.kind)])
+    gate = hanger_gate(p, s)
 
     for z, pz in land.items():
         c_sw, c_wh, c_fo, c_hd = cnt[z]
@@ -1954,6 +1978,8 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             hl -= P08["crowd"]
         if z == "heart" and is_offspeed(p.kind):
             hl += HANGER       # hanger: off-speed over the middle gets hit hard (zone table class term; v1.2 +0.5)
+            if gate:
+                hl += gate     # v1.3 core (ruling 3): the quality-gated hanger, only while he isn't landing it today
         hl += c_hd + z_hd
         hl += side_shift(p, q, s, z, "hard")
         hl += pt["hard"]
@@ -2027,7 +2053,7 @@ def type_mix(p, q, c, s=None):
     """batted-ball type mix of contact quality c; with a situation, plus the count table's ground-ball offset (bip_gb) for
     its level and count (v1.3 Part 2; 0 in count_v12.json)"""
     g = sig(logit(gb_rate(p)) + TYPED["beta_y"] * (y_target(q, p.kind) - 2.5) + TYPED["gamma"][c]
-            + (count_cells(s.level, s.balls, s.strikes)[2] if s is not None else 0.0))
+            + (count_cells(s.level, s.balls, s.strikes)[2] if s is not None else 0.0) + GB_KIND.get(p.kind, 0.0))
     lfp = TYPED["nongb"][c]
     return {"GB": g, "LD": (1 - g) * lfp[0], "FB": (1 - g) * lfp[1], "PU": (1 - g) * lfp[2]}
 

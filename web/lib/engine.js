@@ -25,6 +25,10 @@
   // off-speed line, chase, hanger), the zone table's cells and the count layer come from engine_data.json's TABLES (the
   // versioned files engine.py loaded; zone_v12 / count_v12 = v1.2's numbers), set in initTables.
   let S0 = null, C0 = null, W0 = null, F0 = null, Q0 = null, ZONE_IN = null, W_FB = null, KIND_W_OS = null, ZCLASS = null, HANGER = null;
+  // v1.3 core: the quality-gated hanger (ruling 3; zone class.hanger_gate, absent = 0) and the ground-ball logit by kind
+  // (ruling 2's P3 row; zone class.gb_kind, absent = 0), as engine.py HANGER_GATE / HANGER_GATE_FULL / GB_KIND
+  let HANGER_GATE = 0.0, GB_KIND = {};
+  const HANGER_GATE_FULL = 0.30;
   let ZT = null, CT = null;
   const ZCELL = new Map(), CNTC = new Map(), CNTBO = new Map(), GBV = new Map();
   const T_ZONE_OUT = ["swing", "cstrike", "whiff", "foul", "hard"], T_COUNT_BAND_OUT = ["swing", "whiff", "foul", "hard"];
@@ -35,6 +39,7 @@
     const b = ZT.base;
     S0 = b.swing; C0 = b.cstrike; W0 = b.whiff; F0 = b.foul; Q0 = b.quality; ZONE_IN = b.zone_in;
     W_FB = ZCLASS.whiff_fb; KIND_W_OS = ZCLASS.whiff_os; HANGER = ZCLASS.hanger_hard;
+    HANGER_GATE = ZCLASS.hanger_gate ?? 0.0; GB_KIND = ZCLASS.gb_kind || {};
     ZCELL.clear(); CNTC.clear(); CNTBO.clear(); GBV.clear();
   }
   const ctLevel = (level) => CT[level] || CT[TABLE_LEVEL_ALIAS[level]];
@@ -601,6 +606,11 @@
   // ---------------------------------------------------------------- outcome model
   // The outcome model in two parts (speed): opPrep computes everything that doesn't depend on the hitter's sit, opEval
   // adds the sit terms. Every sum is formed in the original order, so the result is identical to the one-pass model.
+  function hangerGate(p, s) {   // v1.3 core (ruling 3): H x min(1, wild_today / 0.30) when wild_today > 0 (engine.py hanger_gate)
+    if (!HANGER_GATE || !isOffspeed(p.kind)) return 0.0;
+    const wt = wildToday(p, s);
+    return wt > 0 ? HANGER_GATE * Math.min(1.0, wt / HANGER_GATE_FULL) : 0.0;
+  }
   function opPrep(p, q, s, arsenal, policy, sitGiven) {
     const L = D.LEVEL[s.level], A = D.OUTCOME_ADJ[s.level];
     const big = isBigSpot(s);
@@ -626,6 +636,7 @@
     const boSw = countBaseOut(s.level, s.outs, s.bases);
     const tht = q === "middle" ? "middle" : (q.startsWith("up") || (q === "chase" && isFastball(p.kind))) ? "up" : "down";
     const zcell = zoneCells(s.level, zoneProfile(p), countGroup(s.balls, s.strikes), T_HT[tht]);
+    const gate = hangerGate(p, s);
     for (const z of ZONES) {
       const pz = land[z], Z = { z, pz };
       const [cSw, cWh, cFo, cHd] = cnt[z], [zSw, zCs, zWh, zFo, zHd] = zcell[z];
@@ -662,7 +673,10 @@
       { const c_ = isOffspeed(p.kind) ? "OS" : "FB"; Z.hlPost.push((RHO_L[s.level] ?? 1.0) * Math.min(P08.fam_cap, P08["phi_" + c_] * ((s.familiar || {})[c_] || 0))); }   // #19
       if (gr) Z.hlPost.push(gval("g_w", s.level) * ((gr.w ?? 3) - 3));
       if (s.crowding && (q === "up-in" || q === "down-in")) Z.hlPost.push(-P08.crowd);
-      if (z === "heart" && isOffspeed(p.kind)) Z.hlPost.push(HANGER);   // the hanger (zone table class term; v1.2 +0.5)
+      if (z === "heart" && isOffspeed(p.kind)) {
+        Z.hlPost.push(HANGER);   // the hanger (zone table class term; v1.2 +0.5)
+        if (gate) Z.hlPost.push(gate);   // v1.3 core (ruling 3): the quality-gated hanger (engine.py hanger_gate)
+      }
       Z.hlPost.push(cHd + zHd);
       Z.hlPost.push(sideShift(p, q, s, z, "hard"));
       Z.hlPost.push(pt.hard);
@@ -936,7 +950,7 @@
   }
   function typeMix(p, q, c, s) {   // s (optional): + the count table's ground-ball offset for its level and count (engine.py type_mix)
     const g = sig(logit(gbRate(p)) + TYPED.beta_y * (yTarget(q, p.kind) - 2.5) + TYPED.gamma[c]
-      + (s ? countCells(s.level, s.balls, s.strikes)[2] : 0.0));
+      + (s ? countCells(s.level, s.balls, s.strikes)[2] : 0.0) + (GB_KIND[p.kind] ?? 0.0));
     const l = TYPED.nongb[c];
     return { GB: g, LD: (1 - g) * l[0], FB: (1 - g) * l[1], PU: (1 - g) * l[2] };
   }
@@ -1939,7 +1953,7 @@
     classTerms,
     v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
       LEAN_MAX, SPREAD_MIN, SPREAD_MAX, HIT_FIT, HIT_PATH_RULE, HIT_OS_PRIOR, HIT_OS_N0, HIT_TAG_VALUES, hitTag, pathCost, damage, typeMix },   // v1.2 location model, Part B hitter tags
-    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, countBaseOut, zoneProfile, countGroup } };   // v1.3 Part 2
+    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, countBaseOut, zoneProfile, countGroup, hangerGate } };   // v1.3 Part 2
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);
