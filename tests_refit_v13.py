@@ -91,6 +91,13 @@ finally:
 check("recency weight halves every 2 seasons", L.recency_weight(2025) == 1.0 and abs(L.recency_weight(2023) - 0.5) < 1e-12
       and abs(L.recency_weight(2021) - 0.25) < 1e-12)
 check("recency weight refuses 2026", raises(lambda: L.recency_weight(2026), HeldOutSeasonError))
+gp = np.arange(1, 200001)
+kp = L.keep_games(gp, L.game_keep_prob(2015))
+check("weight-proportional sample: 2021+ keeps every game; an older season keeps about w / 0.25 of them",
+      L.game_keep_prob(2021) == 1.0 and L.keep_games(gp, 1.0).all() and abs(kp.mean() - 0.125) < 0.005, kp.mean())
+check("weight-proportional sample: a kept pitch carries w / keep prob (= 0.25 before 2021, its own weight after)",
+      abs(L.sample_weight(2015) - 0.25) < 1e-12 and L.sample_weight(2024) == L.recency_weight(2024)
+      and (L.keep_games(gp, 0.3) == L.keep_games(gp, 0.3)).all())
 check("check_seasons refuses a frame with 2026", raises(lambda: R.check_seasons(pd.DataFrame(dict(season=[2025, 2026]))),
                                                          HeldOutSeasonError))
 

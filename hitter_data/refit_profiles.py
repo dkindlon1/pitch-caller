@@ -627,7 +627,7 @@ def main(argv=None):
     seasons = fit_seasons(RL.fit_seasons_on_disk("MLB"))
     say(f"rows 7/8: MLB seasons {seasons}, weights " + ", ".join(f"{s}: {RL.recency_weight(s):.3f}" for s in seasons))
     cols = ["pitch_type", "release_speed", "pfx_x", "pfx_z", "p_throws", "pitcher", "game_pk", "season", "w"]
-    raw = RL.savant(levels=("MLB",), seasons=seasons)
+    raw = RL.savant(levels=("MLB",), seasons=seasons, cols=[c for c in cols if c not in ("season", "w")], sample=True)
     mlb = movement_frame(raw[cols], PF.KIND)
     del raw
     say(f"MLB pitches with a main fastball: {len(mlb):,}")
@@ -666,9 +666,9 @@ def main(argv=None):
         frames = []
         for lv in RL.LEVELS:
             for s in fit_seasons(RL.fit_seasons_on_disk(lv)):
-                x = RL.load_savant(lv, s)
+                x = RL.load_savant(lv, s, sample=True)      # weight-proportional game sample (full-data rerun)
                 x = sample_games(x, a.frac)
-                x["w"] = RL.recency_weight(s)
+                x["w"] = RL.sample_weight(s)
                 frames.append(x)
         df = pd.concat(frames, ignore_index=True)
         del frames

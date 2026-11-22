@@ -97,9 +97,19 @@ def apply_targets(repo, T):
         return s.replace("MLB = 2010-15 MLB averages (the engine's original table).",
                          "MLB = v1.3 refit: Savant MLB 2021-2025, innings 1-8, recency weighted (hitter_data/refit_mlb_targets.py).")
     _rw(os.path.join(repo, "run_tables.py"), rt)
+    # the season span in the comments follows the targets file (first refit 2021-2025, full-data rerun 2008-2025)
+    ss = sorted(int(s) for s in T.get("weights", {}))
+    if ss:
+        span = f"Savant MLB {ss[0]}-{ss[-1]}"
+        for f in ("college_rates.py", "calib.py", "run_tables.py"):
+            fp = os.path.join(repo, f)
+            with open(fp, encoding="utf-8", newline="") as fh:
+                has = "Savant MLB 2021-2025" in fh.read()
+            if has and span != "Savant MLB 2021-2025":
+                _rw(fp, lambda s: s.replace("Savant MLB 2021-2025", span))
 
     _rw(os.path.join(repo, "fit_hitter_spread.py"),
-        lambda s: _sub1(r"\nHARD_SD = [0-9.]+", f"\nHARD_SD = {T['HARD_SD']:.4f}   # v1.3 refit (hitter_data/refit_mlb_targets.py)", s))
+        lambda s: _sub1(r"\nHARD_SD = [0-9.]+[^\n]*", f"\nHARD_SD = {T['HARD_SD']:.4f}   # v1.3 refit (hitter_data/refit_mlb_targets.py)", s))
 
     # pro baselines
     js = (f"mlb: {{ AVG: {base['AVG']:.3f}, OBP: {base['OBP']:.3f}, SLG: {base['SLG']:.3f}, K: {base['K']:.3f}, "

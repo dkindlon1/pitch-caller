@@ -141,11 +141,21 @@ def main(argv=None):
     args = ap.parse_args(argv)
     t0 = time.time()
     levels = tuple(args.levels.split(","))
-    df = RL.savant(levels=levels)
+    # full-data rerun: each level-season loads on the weight-proportional game sample (refit_load.savant(sample=True):
+    # older seasons thinned in proportion to their recency weight, kept pitches weighted w / keep prob), then this
+    # script's own game fraction, so the pooled frame never holds every season at once
+    parts = []
+    for lv in levels:
+        for s in RL.fit_seasons_on_disk(lv):
+            x = RL.load_savant(lv, s, sample=True)
+            x = sample_games(x, args.frac)
+            x["w"] = RL.sample_weight(s)
+            parts.append(x)
+    df = pd.concat(parts, ignore_index=True)
+    del parts
     seasons = sorted({(str(l), int(s)) for l, s in zip(df["level"], df["season"])})
     for _, s in seasons:
         assert_not_heldout(s)
-    df = sample_games(df, args.frac)
     rows = rows_from_frame(df)
     del df
     say(f"refit_seq: levels {levels}, level-seasons {seasons}, game fraction {args.frac} (seed {SEED})")

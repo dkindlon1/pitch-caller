@@ -647,16 +647,58 @@ def refit_hbp_loc_ratio(df, B=200, seed=12):
 FITS = ("hbp_bands", "landing", "approach", "side", "power_hr", "hbp_loc", "mm")
 
 
+MM_COLS = ["pitch_type", "description", "des", "at_bat_number", "pitch_number", "pitcher", "batter", "balls", "strikes",
+           "outs_when_up", "on_1b", "on_2b", "on_3b", "fld_score", "bat_score", "n_thruorder_pitcher", "release_speed",
+           "release_spin_rate", "pfx_x", "pfx_z", "release_extension", "plate_x", "plate_z", "sz_top", "sz_bot", "stand",
+           "p_throws", "zone", "vx0", "vy0", "vz0", "ax", "ay", "az", "release_pos_x", "release_pos_z", "launch_speed",
+           "bb_type"]
+FIT_COLS = dict(
+    hbp_bands=["pitch_type", "plate_x", "stand", "description"],
+    hbp_loc=["plate_x", "stand", "description", "events"],
+    approach=["plate_z", "sz_top", "sz_bot", "pitch_type", "batter", "balls", "strikes", "description", "zone"],
+    landing=["pitch_type", "description", "balls", "strikes", "at_bat_number", "pitch_number", "pitcher"],
+    side=["pitch_type", "plate_x", "plate_z", "sz_top", "sz_bot", "description", "stand", "p_throws", "balls", "strikes",
+          "launch_speed", "pitcher", "batter"],
+    power_hr=["pitch_type", "description", "launch_speed", "plate_x", "plate_z", "sz_top", "sz_bot", "batter", "events",
+              "balls", "strikes", "pitcher"],
+    mm=MM_COLS)
+
+
+def load_for(nm):
+    """The fit's columns only, on the weight-proportional game sample (refit_load.savant(sample=True)); MM's own game
+    fraction is applied per level-season as it loads, so the full pooled frame never sits in memory."""
+    if nm != "mm":
+        return check_seasons(L.savant(cols=FIT_COLS[nm], sample=True))
+    parts = []
+    for lv in L.LEVELS:
+        for s in L.fit_seasons_on_disk(lv):
+            d = L.load_savant(lv, s, cols=MM_COLS, sample=True)
+            d = d[L.keep_games(d["game_pk"], MM_FRAC)]
+            d["w"] = L.sample_weight(s)
+            parts.append(d)
+    out = pd.concat(parts, ignore_index=True)
+    out["level"] = out["level"].astype("category")
+    return check_seasons(out)
+
+
+MM_FRAC = 0.35
+
+
 def run(names=FITS):
     os.makedirs(OUT, exist_ok=True)
-    df = check_seasons(L.savant())
-    say(f"Savant fit data: {len(df):,} pitches; " + ", ".join(f"{k} {v:,}" for k, v in describe(df).items()))
     res = {}
     for nm in names:
         t0 = time.time()
+        df = load_for(nm)
+        say(f"\n[{nm}] Savant fit data (weight-proportional game sample): {len(df):,} pitches; " +
+            ", ".join(f"{k} {v:,}" for k, v in describe(df).items()))
         fn = dict(hbp_bands=refit_hbp_bands, landing=refit_landing, approach=refit_approach, side=refit_side,
-                  power_hr=refit_power_hr, hbp_loc=refit_hbp_loc_ratio, mm=refit_mm)[nm]
+                  power_hr=refit_power_hr, hbp_loc=refit_hbp_loc_ratio,
+                  mm=lambda d: refit_mm(d, frac=1.0))[nm]
         res[nm] = fn(df)
+        if nm == "mm":
+            res[nm]["frac"] = MM_FRAC
+        del df
         say(f"  [{nm} {time.time() - t0:.0f}s]")
         with open(os.path.join(OUT, f"{nm}.json"), "w") as fh:
             json.dump(res[nm], fh, indent=1, default=float)

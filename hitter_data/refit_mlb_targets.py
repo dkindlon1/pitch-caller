@@ -266,9 +266,30 @@ def compute(frames, boot=200, seed=0):
            for s, P in parts.items()})
 
 
+class LazyFrames:
+    """season -> Savant frame, read one season at a time (the full-data rerun covers MLB 2008-2025, too much to hold
+    at once; compute() only keeps each season's per-game sums)."""
+
+    def __init__(self, seasons):
+        self.seasons = [assert_not_heldout(s) for s in seasons]
+
+    def __iter__(self):
+        return iter(self.seasons)
+
+    def __len__(self):
+        return len(self.seasons)
+
+    def keys(self):
+        return list(self.seasons)
+
+    def items(self):
+        for s in self.seasons:
+            yield s, RL.load_savant("MLB", s)
+
+
 def load_frames(seasons=None):
     ss = RL.fit_seasons_on_disk("MLB") if seasons is None else [assert_not_heldout(s) for s in seasons]
-    return {s: RL.load_savant("MLB", s) for s in ss}
+    return LazyFrames(ss)
 
 
 def report(res):

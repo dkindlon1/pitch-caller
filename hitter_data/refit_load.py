@@ -85,8 +85,9 @@ def _key(files):
     return [[os.path.basename(f), os.path.getsize(f)] for f in files]
 
 
-def load_savant(level, season, root=None, cache=True, regular_only=True):
-    """One level-season of Savant pitches (column subset COLS). Refuses the held-out season."""
+def load_savant(level, season, root=None, cache=True, regular_only=True, cols=None, sample=False):
+    """One level-season of Savant pitches (column subset COLS, or `cols` of it). Refuses the held-out season.
+    sample=True keeps a weight-proportional share of its games (see game_keep_prob)."""
     season = assert_not_heldout(season)
     files = day_files(level, season, root)
     cdir = os.path.join(root or DATA, "refit", "cache") if root else CACHE
@@ -98,7 +99,7 @@ def load_savant(level, season, root=None, cache=True, regular_only=True):
         try:
             with open(kp) as fh:
                 if json.load(fh) == key:
-                    df = pd.read_parquet(cp)
+                    df = pd.read_parquet(cp, columns=None if cols is None else _with_keys(cols))
         except (OSError, ValueError):
             df = None
     if df is None:
@@ -111,6 +112,10 @@ def load_savant(level, season, root=None, cache=True, regular_only=True):
             df.to_parquet(cp, index=False)
             with open(kp, "w") as fh:
                 json.dump(key, fh)
+        if cols is not None:
+            df = df[_with_keys(cols)]
+    if sample:
+        df = df[keep_games(df["game_pk"], game_keep_prob(season))]
     if regular_only and "game_type" in df.columns:
         df = df[df["game_type"].fillna("R") == "R"]
     df = df.copy()
@@ -119,17 +124,46 @@ def load_savant(level, season, root=None, cache=True, regular_only=True):
     return df
 
 
-def savant(levels=LEVELS, seasons=None, root=None, weighted=True):
+def _with_keys(cols):
+    return list(dict.fromkeys(list(cols) + ["game_pk", "game_type"]))
+
+
+# Weight-proportional game sampling (the full-data rerun, MLB back to 2008). A level-season whose recency weight is at
+# least FULL_WEIGHT (2021 on) keeps every game; an older one keeps each game with probability w / FULL_WEIGHT (a fixed
+# hash of game_pk, so reruns keep the same games), and its kept pitches carry weight FULL_WEIGHT. In expectation that is
+# the same recency-weighted sum over every game, at a fraction of the memory: the old seasons' weight is tiny.
+FULL_WEIGHT = 0.25
+
+
+def game_keep_prob(season):
+    return min(1.0, recency_weight(season) / FULL_WEIGHT)
+
+
+def keep_games(game_pk, p):
+    if p >= 1.0:
+        return np.ones(len(game_pk), bool)
+    g = np.asarray(game_pk, dtype=np.int64)
+    u = ((g * 2654435761) % 4294967296) / 4294967296.0
+    return u < p
+
+
+def sample_weight(season):
+    """The recency weight a kept pitch carries under sample=True: w / P(keep its game)."""
+    return recency_weight(season) / game_keep_prob(season)
+
+
+def savant(levels=LEVELS, seasons=None, root=None, weighted=True, cols=None, sample=False):
     """Pooled Savant pitches for the fit seasons of each level, with `level`, `season` and recency weight `w`.
-    seasons=None takes every fit season on disk (<= 2025)."""
+    seasons=None takes every fit season on disk (<= 2025). cols: a subset of COLS to read. sample=True: the
+    weight-proportional game sample (older seasons thinned in proportion to their weight; w = weight / keep prob)."""
     frames = []
     for lv in levels:
         ss = fit_seasons(seasons) if seasons is not None else fit_seasons_on_disk(lv, root)
         for s in ss:
             if not day_files(lv, s, root):
                 continue
-            d = load_savant(lv, s, root)
-            d["w"] = recency_weight(s) if weighted else 1.0
+            d = load_savant(lv, s, root, cols=cols, sample=sample)
+            d["w"] = (sample_weight(s) if sample else recency_weight(s)) if weighted else 1.0
             frames.append(d)
     if not frames:
         return pd.DataFrame(columns=COLS + ["level", "season", "w"])
