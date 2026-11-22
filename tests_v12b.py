@@ -117,7 +117,7 @@ for c, j in zip(cases, J):
     S = e.Situation(c["b"], c["k"], 1, (False,) * 3, level=c["lv"], same_side=c["same"], hitter_tags=c["tags"],
                     hitter_damage={k: tuple(v) for k, v in c["hd"].items()})
     p = A[c["i"]]
-    op, cc, dm, tm = e.outcome_probs(p, c["q"], S, A), e.coach_credit(p, c["q"], S, A), e.damage(p, c["q"], S), e.type_mix(p, c["q"], "solid")
+    op, cc, dm, tm = e.outcome_probs(p, c["q"], S, A), e.coach_credit(p, c["q"], S, A), e.damage(p, c["q"], S), e.type_mix(p, c["q"], "solid", S)   # v1.3 core: the situation, as JS gets it (count bip_gb)
     worst = max([worst, abs(cc - j["cc"]), abs(dm - j["dm"])] + [abs(op[k] - j["op"][k]) for k in op] + [abs(tm[k] - j["tm"][k]) for k in tm])
 check("Python = JS on 600 random hitters with tags (outcome_probs, coach credit, damage, batted-ball mix)", worst < 1e-12, f"largest difference {worst:.1e}")
 jc = js("console.log(JSON.stringify({fit:E.v12.HIT_FIT,path:E.v12.HIT_PATH_RULE,os:[E.v12.HIT_OS_PRIOR,E.v12.HIT_OS_N0],vals:E.v12.HIT_TAG_VALUES}))")
