@@ -457,3 +457,35 @@ The fit gives probabilities; the engine's count terms are logit offsets on top o
 6. A per-band shape for the count terms. The fit has no zone.
 7. Run values by count × base-out. The run file is additive `re` + `cv`.
 8. `lw` (walk / strikeout run values) is not refit.
+
+## 14. v1.3 core (Nov 22, `feat/hitter-v13-core`): the D1 and HS candidates recalibrated under the h3 landing
+
+What depends on the landing: only the conversion to engine offsets (`export_candidates`) and the harness scores. The fits
+themselves (`fit_count`, `fit_runs`, `fit_count_hs`) are per-count frequencies from the data and were not rerun (same
+candidates as section 13: D1 `shared`, HS `sep`, thru 2025). Command:
+`PITCH_ZONE_TABLE=v13 PITCH_COUNT_TABLE=v13refit PITCH_RUN_TABLE=v13refit python -m hitter_data.export_candidates --core`
+(78 s), which writes `data_tables/count_v13core.json` / `run_v13core.json` (the core defaults, docs/TABLES_v13.md) and
+`fits/candidates/core_export_report.json`.
+- Calibrated under the harness's **h3 landing (Single-A)**, the **approved zone table (zone_v13)**, on top of the refit's
+  count layer (count_v13refit). D2 / D3 keep v1.2's count layer (not recalibrated; pending the coverage rule).
+- HS: calibrated with the pitch kind x velocity table off (the count layer is the average pitch), then the table is added
+  (section 12.2's stack, now carried: `levels.hs.pitch_velo`). The HS 3-2 called strike, out of reach at the -4 cap under
+  the old landing, is now reached: max per-count error 0.00002 (D1 0.00000) in a fresh process.
+
+Before / after (D1; HS alike). "h2 row" = the section-13 export's row (fit under the h2 calib-world landing, zone_v12),
+asked under the h3 landing and zone_v13; "fit" = the fitted rate, which the new row reproduces exactly:
+
+| Count | swing fit / h2 row | whiff per swing fit / h2 row | called strike per take fit / h2 row | swing offset (heart) h2 → core | cstrike offset h2 → core |
+|---|---|---|---|---|---|
+| 0-0 | .292 / .268 | .245 / .309 | .395 / .400 | -0.66 → -0.52 | 1.25 → 1.27 |
+| 1-0 | .377 / .338 | .227 / .316 | .387 / .413 | -0.21 → -0.01 | 1.39 → 1.26 |
+| 3-0 | .050 / .037 | .247 / .431 | .579 / .496 | -3.17 → -2.85 | 1.26 → 2.04 |
+| 0-2 | .490 / .432 | .283 / .339 | .092 / .077 | 0.74 → 1.03 | -2.44 → -1.15 |
+| 3-2 | .640 / .593 | .187 / .249 | .193 / .159 | 1.03 → 1.27 | -0.93 → -0.15 |
+
+- The old rows miss by up to .074 in swing, .184 in whiff per swing and .083 in called strike per take (HS .064 / .133 /
+  .084): the h2 landing's heart-heavy mix and v1.2's zone shape were absorbed into them.
+- The core's D1 3-0 swing offset (-2.85) is still beyond v1.2's -2.0, now relative to the Single-A zone shape.
+- The section-13 candidates (`count_v13prov` / `run_v13prov`, all four levels) are now also calibrated on count_v13refit
+  under zone_v13 when `export_candidates` (or `refit_all`'s export step, which sets the overrides) is rerun; they were not
+  rerun here.

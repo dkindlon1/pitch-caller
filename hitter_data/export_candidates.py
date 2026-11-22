@@ -4,9 +4,9 @@
     python -m hitter_data.export_candidates --verify C:/dev/pitchiq-data/fits/candidates/count_v13prov.json   (internal)
 
 Writes to C:/dev/pitchiq-data/fits/candidates/ (never into data_tables/; nothing tracked changes; nothing is the default):
-  count_v13prov.json   copy of data_tables/count_v12.json, version "v13prov"; per level college_d1 / college_d2 (THIN) /
+  count_v13prov.json   copy of data_tables/count_v13refit.json (core: the shared refit's count layer), version "v13prov"; per level college_d1 / college_d2 (THIN) /
                        college_d3 (THIN) / hs, the numbers the fit owns replaced; mlb unchanged
-  run_v13prov.json     copy of data_tables/run_v12.json; re / cv for college_d1, college_d3, hs from fit_runs /
+  run_v13prov.json     copy of data_tables/run_v13refit.json; re / cv for college_d1, college_d3, hs from fit_runs /
                        fit_count_hs; lw and mlb unchanged; NO college_d2 entry (the engine then fills D2 from D3 and lists it
                        in D2_PLACEHOLDERS, so release_guard_d2.py still trips, as the doc requires until D2 is approved)
   export_report.json / export_report.md   the calibration errors, what the format can't carry, the load / parity proof
@@ -219,12 +219,12 @@ def calibrate(e, lv, dl, j, iters=12, log=print, rates_fn=None):
 
 
 def run_candidate(e):
-    with open(os.path.join(ROOT, "data_tables", "run_v12.json"), encoding="utf8") as f:
+    with open(os.path.join(ROOT, "data_tables", "run_v13refit.json"), encoding="utf8") as f:
         R = json.load(f)
     R["version"] = VERSION
     R["about"] = ("PROVISIONAL v1.3 candidate (" + FD.PROVISIONAL + ") re / cv for college_d1, college_d3 and hs from "
                   "hitter_data.fit_runs / fit_count_hs (fit <= 2025, recency-weighted; count x base-out values are not "
-                  "carried: the format is additive). lw and mlb are v12's. college_d2 deliberately absent (D3's by the "
+                  "carried: the format is additive). lw and mlb are the refit's (run_v13refit). college_d2 deliberately absent (D3's by the "
                   "engine's placeholder rule; release_guard_d2.py still trips). Not the default.")
     for lv, fn in RUN_LEVELS.items():
         with open(os.path.join(FD.FITS, "run_values", fn), encoding="utf-8") as f:
@@ -247,11 +247,13 @@ def write(obj, name):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-def verify(count_path):
+def verify(count_path, levels=None):
     """Fresh process with PITCH_COUNT_TABLE=count_path: the engine's per-count rates vs the fits, no in-memory edits."""
     import engine as e
     out = {"versions": e.TABLE_VERSIONS, "levels": {}}
     for lv, (dl, fn, thin) in LEVELS.items():
+        if levels and lv not in levels:
+            continue
         j = load_cand(fn)
         t, t_bo, n_bo, late = targets(j)
         rates, sw_bo = engine_rates(Probe(lv, dl), n_bo, late)
@@ -294,9 +296,9 @@ def run(write_files=True, log=print, prove=True):
     t0 = time.time()
     sys.path.insert(0, ROOT)
     import engine as e
-    if any(os.environ.get(v) for v in e.TABLE_ENV.values()):
-        raise RuntimeError("run the export with no table override set (it starts from the v12 files)")
-    with open(os.path.join(ROOT, "data_tables", "count_v12.json"), encoding="utf8") as f:
+    if dict(e.TABLE_VERSIONS) != CORE_BASE:     # v1.3 core: calibrated on the refit's count layer under zone_v13
+        raise RuntimeError(f"run with {' '.join(f'{k}={v}' for k, v in CORE_ENV.items())} (loaded: {e.TABLE_VERSIONS})")
+    with open(os.path.join(ROOT, "data_tables", "count_v13refit.json"), encoding="utf8") as f:
         C = json.load(f)
     C["version"] = VERSION
     C["about"] = ("PROVISIONAL v1.3 candidate (" + FD.PROVISIONAL + ") count layer for college_d1, college_d2 (THIN), "
@@ -304,7 +306,7 @@ def run(write_files=True, log=print, prove=True):
                   "(*_thru2025: D1/D2/D3 'shared + level offset', hs 'sep'), converted by hitter_data.export_candidates: "
                   "per-count offsets on swing / whiff / foul / cstrike / bip_gb and swing_base_out calibrated so the engine "
                   "gives back the fitted rates under the harness's frozen calib-world pitcher. hard, out_table, runner and "
-                  "mlb are v12's. Not the default.")
+                  "mlb are the refit's (count_v13refit). Not the default.")
     report = {"provisional": FD.PROVISIONAL, "version": VERSION, "levels": {}, "not_carried": NOT_CARRIED}
     for lv, (dl, fn, thin) in LEVELS.items():
         j = load_cand(fn)
@@ -337,6 +339,119 @@ def run(write_files=True, log=print, prove=True):
     return C, R, report
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# v1.3 core (feat/hitter-v13-core): the default count / run tables data_tables/count_v13core.json and run_v13core.json
+CORE_VERSION = "v13core"
+CORE_LEVELS = ("college_d1", "hs")                     # D1 and HS / travel take the count + run candidates
+CORE_BASE = {"zone": "v13", "count": "v13refit", "run": "v13refit"}
+CORE_ENV = {"PITCH_ZONE_TABLE": "v13", "PITCH_COUNT_TABLE": "v13refit", "PITCH_RUN_TABLE": "v13refit"}
+V12_PENDING = ("v1.2 count layer pending the coverage rule: count terms are v1.2's (swing / whiff / foul / hard by count and "
+               "band, base-out swing, ground ball by count); the called-strike kappas and in-play tables are the shared "
+               "refit's (as count_v13refit)")
+
+
+def core_paths():
+    return {k: os.path.join(ROOT, "data_tables", f"{k}_{CORE_VERSION}.json") for k in ("count", "run")}
+
+
+def run_core(log=print, prove=True):
+    """Calibrate the D1 and HS count candidates on top of the shared refit's count layer, under the approved zone table
+    (zone_v13) and the harness's primary landing (h3, Single-A), and write the core defaults. HS gets the pitch kind x
+    velocity table (fit_count_hs.pitch_table) after calibration: the count layer is the average pitch, the table moves a
+    pitch off that average, as in the fit. D2 / D3 keep v1.2's count terms (labelled). Run values: D1 and HS from the fits,
+    everything else the refit's."""
+    t0 = time.time()
+    sys.path.insert(0, ROOT)
+    import engine as e
+    from . import fit_count_hs as HS
+    sys.path.insert(0, os.path.join(ROOT, "data_tables"))
+    import build_v12
+    if dict(e.TABLE_VERSIONS) != CORE_BASE:
+        raise RuntimeError(f"run with {' '.join(f'{k}={v}' for k, v in CORE_ENV.items())} (loaded: {e.TABLE_VERSIONS})")
+    with open(os.path.join(ROOT, "data_tables", "count_v13refit.json"), encoding="utf8") as f:
+        C = json.load(f)
+    old_path = os.path.join(OUT, "count_v13prov.json")
+    old = json.load(open(old_path, encoding="utf8")) if os.path.exists(old_path) else None
+    report = {"provisional": FD.PROVISIONAL, "version": CORE_VERSION, "base": CORE_BASE, "landing": PRIMARY_ASSUMPTION,
+              "levels": {}}
+    for lv in CORE_LEVELS:
+        dl, fn, thin = LEVELS[lv]
+        j = load_cand(fn)
+        t, t_bo, n_bo, late = targets(j)
+        base_row = copy.deepcopy(e._CT[lv])
+        rec = dict(candidate=fn, targets={ck: t[ck] for ck in CK})
+        if old is not None:                      # before: the h2 export's row, asked under the new landing and zone table
+            e._CT[lv] = copy.deepcopy(old["levels"][lv])
+            e._CNT.clear()
+            e._GBV.clear()
+            rb, swb = engine_rates(Probe(lv, dl), n_bo, late)
+            eb = errors(rb, swb, t, t_bo, n_bo)
+            rec["before_h2_row_rates"] = {ck: rb[ck] for ck in CK}
+            rec["before_h2_row_errors"] = {k: v for k, v in eb.items() if k != "per_count"}
+            rec["before_h2_offsets"] = {ck: dict(swing=old["levels"][lv]["swing"][ck]["heart"], cstrike=old["levels"][lv]["cstrike"][ck])
+                                        for ck in CK}
+            e._CT[lv] = base_row
+            e._CNT.clear()
+            e._GBV.clear()
+        log(f"  {lv} ({fn}):")
+        L, err = calibrate(e, lv, dl, j, log=log)
+        L["label"] = (f"v1.3 core: PROVISIONAL count candidate ({fn}), calibrated under zone_v13 and the harness's h3 landing "
+                      "(Single-A) on top of count_v13refit")
+        C["levels"][lv] = copy.deepcopy(L)
+        rec["after_errors"] = {k: v for k, v in err.items() if k != "per_count"}
+        rec["after_offsets"] = {ck: dict(swing=L["swing"][ck]["heart"], cstrike=L["cstrike"][ck]) for ck in CK}
+        report["levels"][lv] = rec
+    with open(HS.PITCH_TABLE_OUT, encoding="utf-8") as f:
+        C["levels"]["hs"]["pitch_velo"] = json.load(f)
+    for lv in ("college_d2", "college_d3"):
+        C["levels"][lv]["label"] = V12_PENDING
+    C["version"] = CORE_VERSION
+    C["about"] = ("v1.3 core default count layer (hitter_data.export_candidates --core). college_d1 and hs: the PROVISIONAL "
+                  "count candidates (" + FD.PROVISIONAL + "; D1 'shared' thru2025, hs 'sep' thru2025) calibrated under "
+                  "zone_v13 and the harness's h3 (Single-A) landing on top of count_v13refit; hs also carries pitch_velo (HS / "
+                  "travel pitch kind x velocity, ruling 4). college_d2 / college_d3: " + V12_PENDING + ". mlb: count_v13refit. "
+                  "Format: docs/TABLES_v13.md.")
+    e.check_table(C, "count_v13core.json")
+    with open(os.path.join(ROOT, "data_tables", "run_v13refit.json"), encoding="utf8") as f:
+        R = json.load(f)
+    for lv in CORE_LEVELS:
+        with open(os.path.join(FD.FITS, "run_values", RUN_LEVELS[lv]), encoding="utf-8") as f:
+            r = json.load(f)
+        R["levels"][lv]["re"] = {bo: round(r["RE"][bo], 4) for bo in BO}
+        c0 = r["CV"]["0-0"]
+        R["levels"][lv]["cv"] = {ck: round(r["CV"][ck] - c0, 4) for ck in CK}
+    R["version"] = CORE_VERSION
+    R["about"] = ("v1.3 core default run values (hitter_data.export_candidates --core): re / cv for college_d1 and hs from "
+                  "hitter_data.fit_runs / fit_count_hs (PROVISIONAL, fit <= 2025, recency-weighted; cv relative to 0-0); "
+                  "college_d3 and mlb the shared refit's (run_v13refit); lw the refit's; college_d2 absent (D3's: PLACEHOLDER, "
+                  "release_guard_d2.py trips). The run-scale denominator is pinned at 0.481 (ruling 10). Format: docs/TABLES_v13.md.")
+    e.check_table(R, "run_v13core.json")
+    paths = core_paths()
+    NL = chr(10)
+    for kind, obj in (("count", C), ("run", R)):
+        with open(paths[kind], "w", encoding="utf8", newline=NL) as f:
+            f.write(build_v12.dumps(obj) + NL)
+        log(f"  wrote {paths[kind]}")
+    # fresh process: the written count rows without pitch_velo reproduce the fitted per-count rates
+    scratch = os.path.join(OUT, "count_v13core_nopv.json")
+    C0 = copy.deepcopy(C)
+    C0["levels"]["hs"].pop("pitch_velo")
+    write(C0, os.path.basename(scratch))
+    v = subprocess.run([sys.executable, "-m", "hitter_data.export_candidates", "--verify", scratch, "--levels", ",".join(CORE_LEVELS)],
+                       cwd=ROOT, capture_output=True, text=True,
+                       env=dict(os.environ, PYTHONUTF8="1", PITCH_ZONE_TABLE="v13", PITCH_COUNT_TABLE=scratch, PITCH_RUN_TABLE=paths["run"]))
+    if v.returncode != 0:
+        raise RuntimeError(v.stderr[-3000:])
+    report["fresh_process_check"] = json.loads(v.stdout.strip().splitlines()[-1])
+    for lv, er in report["fresh_process_check"]["levels"].items():
+        log(f"  fresh process: {lv}: max per-count error {er['max_all_count_terms']:.5f}; count x base-out swing max "
+            f"{er['swing_count_bo_max']:.4f}, wRMS {er['swing_count_bo_wrms']:.4f}")
+    report["seconds"] = round(time.time() - t0, 1)
+    write(report, "core_export_report.json")
+    log(f"  done ({report['seconds']} s)")
+    return C, R, report
+
+
 def write_md(r):
     L = [f"# Candidate tables {VERSION} (PROVISIONAL)", "", FD.PROVISIONAL, "",
          "| level | candidate | max per-count error | swing | whiff/sw | foul/contact | cs/take | GB/BIP | count x base-out swing max (>= 500) | wRMS |",
@@ -356,9 +471,14 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--verify", default=None)
     ap.add_argument("--no-proof", action="store_true")
+    ap.add_argument("--levels", default=None, help="--verify only these engine levels (comma list)")
+    ap.add_argument("--core", action="store_true", help="v1.3 core: write data_tables/count_v13core.json and run_v13core.json")
     a = ap.parse_args(argv)
     if a.verify:
-        verify(a.verify)
+        verify(a.verify, levels=a.levels.split(",") if a.levels else None)
+        return
+    if a.core:
+        run_core(prove=not a.no_proof)
         return
     run(prove=not a.no_proof)
 

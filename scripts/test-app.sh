@@ -29,7 +29,8 @@ $run tests_v123   python3 tests_v123.py             # v1.2.3: the umpire prior (
 $run tests_v13_d2  python3 tests_v13_d2.py          # v1.3 Part 3: college D2 in both engines on D3's numbers (PLACEHOLDER_D2), Python = JS; release_guard_d2.py trips (the release checklist runs the guard itself, not this suite)
 FAST_LEVEL=college_d2 $run fast_parity_d2 python3 golden/fast.py 40   # v1.3 Part 3: the same 40 golden inputs, every case at college D2
 $run tests_v13_sim python3 tests_v13_sim.py         # v1.3 Part 5: hidden hitter traits in the simulator; no traits = the e202169 games byte for byte, Python = JS
-$run golden_v13refit node golden/golden_v11.js v13refit   # v1.3 Part 2.5: the refit engine's reference (docs/REFIT_v13.md); golden_v123 below stays the release reference and fails while the refit numbers are in
+$run golden_v13core node golden/golden_v11.js v13core   # v1.3 core: the core engine's reference (zone_v13, count / run v13core); golden_v13refit stays as history (tests_v13_tables proves the v13refit tables reproduce the refit tip); golden_v123 below stays the release reference and fails while v1.3 numbers are in
+$run tests_v13_core python3 tests_v13_core.py     # v1.3 core: defaults (frozen shas), each component switch-off gives back the stage before, D2 / D3 on v1.2's count layer, hanger gate, HS pitch kind x velocity, Python = JS
 $run tests_v13_tables python3 tests_v13_tables.py   # v1.3 buildout Part 2: zone / count / run tables read from data_tables/ (v12 built from the v1.2 sources at 90fca9b; v13refit = the refit tip 21f44ac bit for bit; a changed value moves the call; Python = JS)
 $run golden_v123  node golden/golden_v11.js v123  # v1.2.3 release reference (JS); golden_v10, v11a, v11, v12a, v12 and v122 (v1.2.2; differs only in the umpire estimate) stay as history
 (cd app && python3 build.py)

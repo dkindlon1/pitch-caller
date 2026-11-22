@@ -91,6 +91,8 @@ def run_step(name, mod, argv, python=sys.executable):
     log = os.path.join(LOGS, f"refit_all_{name}.log")
     t0 = time.time()
     env = dict(os.environ, PYTHONUTF8="1")
+    if mod == "export_candidates":     # v1.3 core: candidates are calibrated on the refit's count layer under zone_v13
+        env.update(PITCH_ZONE_TABLE="v13", PITCH_COUNT_TABLE="v13refit", PITCH_RUN_TABLE="v13refit")
     with open(log, "w", encoding="utf-8") as f:
         rc = subprocess.call([python, "-u", "-m", f"hitter_data.{mod}", *argv], stdout=f, stderr=subprocess.STDOUT,
                              cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))), env=env)

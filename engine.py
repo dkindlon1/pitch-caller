@@ -32,7 +32,7 @@ from run_tables import IN_PLAY_BY_LEVEL   # v0.5: untyped in-play tables (calibr
 # app/export_data.py copies the selected tables into app/engine_data.json for the JS engine.
 # ---------------------------------------------------------------------------
 TABLES_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "data_tables")
-TABLE_DEFAULT = {"zone": "v13refit", "count": "v13refit", "run": "v13refit"}
+TABLE_DEFAULT = {"zone": "v13", "count": "v13core", "run": "v13core"}   # v1.3 core (feat/hitter-v13-core): zone_v13 (ruling 2, gate H = 0), count / run v13core (D1 + HS candidates, HS pitch kind x velocity; D2 / D3 v1.2 count layer)
 TABLE_ENV = {"zone": "PITCH_ZONE_TABLE", "count": "PITCH_COUNT_TABLE", "run": "PITCH_RUN_TABLE"}
 T_BANDS = ("heart", "edge", "off", "noncomp")
 T_PROFILES = ("FB", "SI", "FC", "SL", "SW", "CB", "CH", "SP")

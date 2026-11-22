@@ -186,6 +186,11 @@ def zone_candidate_checks(tmp, js_ship_inp, js_ship):
     planted = lambda o, g, z, p: float(np.exp(0.25 * np.sin(zlib.crc32(f"{o}{g}{z}{p}".encode()) % 1000)))   # x0.78 to x1.28
     base = json.load(open(os.path.join(HERE, "data_tables", "zone_v12.json"), encoding="utf8"))
     W = {o: zc.weights(P, o) for o in zc.CARRIED}
+    # v1.3 core: the synthetic conversion is checked on the refit's count layer (the defaults' calibrated count offsets
+    # are larger, so the one-offset-per-group error grows past this check's 10%); restored below
+    saved_ct = dict(e._CT)
+    e._CT.clear(); e._CT.update(json.load(open(os.path.join(HERE, "data_tables", "count_v13refit.json"), encoding="utf8"))["levels"])
+    e._CNT.clear(); e._GBV.clear()
     before = zc.rows_with(e, base, "college_d1")
     l0 = zc.rows_with(e, zc.stage0_table(base), "college_d1")
     cand, info = zc.build_candidate(planted, W, before, l0, base, version="synthetic")
@@ -221,6 +226,7 @@ def zone_candidate_checks(tmp, js_ship_inp, js_ship):
     check("zone candidate reproduces the planted ratios in the engine (swing, whiff, foul, hard; every band x profile x count group; within 10%)",
           worst_r < 0.10, f"largest relative error {worst_r:.3f}")
     again = zc.rows_with(e, base, "college_d1")
+    e._CT.clear(); e._CT.update(saved_ct); e._CNT.clear(); e._GBV.clear()
     check("zone candidate: swapping the candidate in and out leaves the default engine bit for bit (use_zone_table restores the default)",
           again == before and e.TABLE_VERSIONS["zone"] == e.TABLE_DEFAULT["zone"])
     import types

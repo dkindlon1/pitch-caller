@@ -11,10 +11,27 @@ these files (called-strike kappas, typed in-play tables, RE / CV / LW) are in `*
 tip 21f44ac bit for bit (`tests_v13_tables.py`). The run-scale denominator is pinned at 0.481 (ruling 10,
 `engine.RUN_SCALE_MLB_RE00`), not read from `re.mlb["0|000"]`.
 
+## The core defaults (v1.3 core, Task C; PROPOSED, nothing ships)
+
+`engine.TABLE_DEFAULT` on `feat/hitter-v13-core` is `zone v13`, `count v13core`, `run v13core`:
+
+| File | sha256 | What it is |
+|---|---|---|
+| `zone_v13.json` | `4c9f98efb96a3e66a2f1367b6635caf451b2521efeb1169a707625643f253323` | The approved zone table (ruling 2; `docs/ZONE_v13_APPROVED.md`, built by `python -m hitter_data.zone_v13`): Single-A cells, per-level cells for college D1 / D2 / D3 (trend carried one step down) and HS (two steps), `class.gb_kind.SI` = -0.0221 (P3 from Triple-A), the flat hanger and flat chase removed, `class.hanger_gate` H = 0 (ruling 3, sized later) |
+| `count_v13core.json` | `466ab368e688e00b2db01e6f55d142c8c4b5db22059111f1e00c930f2933c2a1` | college_d1 and hs: the PROVISIONAL count candidates (D1 `shared`, HS `sep`, thru 2025) calibrated under zone_v13 and the harness's h3 landing on top of count_v13refit; hs also carries `pitch_velo` (ruling 4). college_d2 / college_d3: **v1.2 count layer pending the coverage rule** (count terms v1.2's; kappas and in-play tables the refit's; labelled in the file). mlb: count_v13refit |
+| `run_v13core.json` | `ea99383c9af5606462453a1024a5c00c934707a8fb0fd02e690fa2391bca2d98` | re / cv for college_d1 and hs from the fits (cv relative to 0-0); college_d3, mlb and every lw the refit's; no college_d2 (D3's: PLACEHOLDER) |
+
+- Rebuild: `PITCH_ZONE_TABLE=v13 PITCH_COUNT_TABLE=v13refit PITCH_RUN_TABLE=v13refit python -m hitter_data.export_candidates --core`
+  (needs `python -m hitter_data.fit_count_hs --pitch-table` first). It rewrites the two files, so their shas change:
+  update `tests_v13_core.py` SHA256 and this table.
+- `tests_v13_core.py` checks the shas, each component's switch-off and Python = JS.
+- The previous stages stay selectable: `v13refit` for all three is the refit tip; `PITCH_ZONE_TABLE=v13` with count / run
+  `v13refit` is "zone only".
+
 ## Selecting a version
 
 - `engine.py` loads `data_tables/<kind>_<version>.json` for each kind (`zone`, `count`, `run`) at import.
-  - Default: `engine.TABLE_DEFAULT` (all `v12`).
+  - Default: `engine.TABLE_DEFAULT` (all `v12` on the tables branch; on the core branch `v13` / `v13core` / `v13core`).
   - Override: `PITCH_ZONE_TABLE`, `PITCH_COUNT_TABLE` or `PITCH_RUN_TABLE`, set to a version (`v13`) or to a path ending
     in `.json`.
   - A missing or incomplete file is an import error. There is no silent fallback.
@@ -59,6 +76,8 @@ Each file also has `"kind"`, `"version"` (a string, recorded with the export) an
 | `class.line_low`, `line_up`, `line_whiff`, `line_hard`, `up_mid_hard` | logit | `class_terms`' off-speed location line (f = 0.4 low / -1.0 up; whiff 0.25 f; hard -0.3 f + 0.4 when aimed up or middle) |
 | `class.chase_os {off, noncomp}` | logit, swing | the +0.2 off-speed chase just off the plate |
 | `class.hanger_hard` | logit, hard contact | the +0.5 hanger (off-speed over the heart) |
+| `class.hanger_gate` (optional, absent = 0) | logit, hard contact | v1.3 core, ruling 3: H. An off-speed pitch landing over the heart gets H x min(1, wild_today / 0.30) when `wild_today` > 0 (`engine.HANGER_GATE_FULL` = 0.30; `engine.hanger_gate`, `engine.js hangerGate`) |
+| `class.gb_kind` (optional, absent = {}) | logit, ground ball given contact, by pitch kind | v1.3 core, ruling 2's P3 row: added in `type_mix` (zone_v13: SI only) |
 | `cells.<outcome>[band][profile][count group][height]` | logit | new: the fitted zone table. Outcomes: `swing`, `cstrike`, `whiff`, `foul`, `hard` |
 | `level_cells.<level>` | the same shape as `cells` | new: a level's own cells, replacing `cells` at that level (for the transfer check's "carry the trend down") |
 
@@ -84,6 +103,31 @@ Each file also has `"kind"`, `"version"` (a string, recorded with the export) an
 | `bip_gb[count]` | logit, ground ball given contact | new (0 in v12). Added in `type_mix` when it is given the situation |
 | `out_table[weak/solid/hard][GB/LD/FB/PU]` | probabilities `[out, 1B, 2B, 3B, HR, E]` | `inplay_typed_params.OUT_TABLE` |
 | `runner {p_GB, p_FB, S_DP}` | probabilities / scale | `inplay_typed_params.RUNNER_FIT` (the three fields the engines use) |
+| `pitch_velo` (hs only, optional) | multipliers on the six pitch events | v1.3 core, ruling 4: HS / travel pitch kind x velocity (below) |
+| `label` (optional) | text | what the level's row is (e.g. "v1.2 count layer pending the coverage rule"); the engines ignore it |
+
+**`levels.hs.pitch_velo`** (Drew's ruling 4; exported by `python -m hitter_data.fit_count_hs --pitch-table` into
+`fits/hs/pitch_velo_thru2025.json`, copied into the count file by `export_candidates --core`):
+- Defined exactly as the fit that gained +0.0104 nats per pitch on 2025 (FITS_COUNT_v13 section 12.2, the stack
+  kind + velo_rel + velo_abs): per count, multipliers on the six events `ball, hbp, cstrike, whiff, foul, inplay`, for
+  - `kind[count][Fastball | Curveball | Slider | Change-Up | other]` (engine FB / SI / FC = Fastball, SL = Slider,
+    CB = Curveball, CH = Change-Up: `engine_kind`);
+  - `velo_rel[count][class][bin]`: speed minus his own mean for the class (class: FB / SI / FC fastball, SL / CB breaking,
+    CH offspeed: `engine_class`), bins by `vrel_edges` -3 / -1 / 1 / 3 mph (bin 5 = "fewer than 10 readings", unused by the
+    engine);
+  - `velo_abs[count][class][bin]`: absolute speed, bins by `vabs_edges` per class (fastball 70 / 75 / 80 / 85, breaking
+    60 / 65 / 70 / 75, offspeed 65 / 70 / 75 / 80). A speed on an edge goes to the bin above (np.digitize).
+  - Reference: none; each level's multiplier is shrunk to 1 with 200 pseudo-pitches against the count layer's expectation.
+  - Fit seasons 2022-2025 on top of `hs_sep_thru2025` (the HS count candidate). It does not depend on the harness landing.
+- The engine: P(y) is the count layer's mix x kind x velo_rel x velo_abs, renormalised (`engine.pitch_velo_factors`,
+  applied at the end of `outcome_probs`; `engine.js pitchVeloFactors`, at the end of `opEval`). The zone rows (`zout`) and
+  JS `byZone` are left as the count layer gives them.
+- Speed: the pitch's entered arsenal speed (`Pitch.velo`). "His mean for the class" is the mean entered speed of his
+  arsenal's pitches of that class (the pitch itself included).
+- **Fallback when a pitch has no entered speed: both velocity terms are skipped and the kind term still applies**, the
+  fit's own rule for missing velocity (5% of 2025 pitches had none). The speed the engine would derive off his fastball
+  (`Pitch.mph`) is not used.
+- Applies at hs and travel only (travel reads hs's table).
 
 - Required levels: `mlb`, `college_d1`, `college_d3`, `hs`.
 - College D2:
