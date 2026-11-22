@@ -230,3 +230,8 @@ bash /c/dev/pitch-caller-logs/v13/pulls/start_pulls.sh   # resume the MLB / MiLB
     - Parity and golden_v13refit pass.
   - **Not rerun:** the fuzz checks on the full-data refit (stopped by low memory). The first refit's 3000/3000 and
     146/150 stand until they're rerun.
+
+**Follow-up summary**
+- The decision sheet is ready for Drew. The 2-for-10 rule never passed on main's line against the live engine (only against an old call it was testing by mistake).
+- All pulls are done. The zone table is regenerated on the full data and ready for approval; the full-data refit and its changed-call list are on `feat/hitter-v13-refit`.
+- D2 / D3 2025 coverage hasn't grown yet; the representativeness numbers are in place for Drew's coverage decision.
