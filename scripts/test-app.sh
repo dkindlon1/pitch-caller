@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 run=scripts/run-check.sh
 $run tests.py      python3 tests.py
 $run tests_hitter_data python3 tests_hitter_data.py   # v1.3 prework: college play-by-play parser on synthetic lines, the held-out (2026) guard
+$run tests_hs_data python3 tests_hs_data.py   # v1.3 Part 1: HS / travel (Perfect Game) parser, quality checks, snapshot and incremental ingest on invented rows
 $run tests_zone_seed python3 tests_zone_seed.py   # v1.3 Part 2: zone seed math on synthetic pitches (not wired into the engine)
 $run tests_harness  python3 tests_harness.py       # v1.3 Part 4: scoring harness (held-out + in-sample guards, bootstrap, frozen landing)
 $run tests_fit_count python3 tests_fit_count.py    # v1.3 buildout Part 3.1/3.2/3.5: count-layer + run-value fits and candidate scoring on synthetic counts (PROVISIONAL fits; held-out guard)

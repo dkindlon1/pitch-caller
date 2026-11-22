@@ -3,6 +3,8 @@
   python -m hitter_data.update            # copy new/changed games from the archive, dedupe, parse, reports
   python -m hitter_data.update --reparse  # also re-parse every game (after a parser change)
   python -m hitter_data.update --report   # reports only
+  python -m hitter_data.update --no-hs    # college only (the HS / travel step is skipped)
+  python -m hitter_data.update --hs-only  # HS / travel only (hitter_data.hs_ingest; reports in PITCHIQ_DATA/hs/reports/)
 
 Safe to re-run any time while ChatGPT's collector keeps adding games: the archive is opened read-only, a game is
 copied only when new or its source digest changed, and parsed only when its parsed digest differs (or --reparse).
@@ -246,15 +248,20 @@ def parse_all(con, reparse=False, log=print, workers=None):
 
 
 def main(argv):
-    con = ingest.connect()
-    con.executescript(PA_SCHEMA)
-    if "--report" not in argv:
-        arc = ingest.archive_con()
-        new, changed, removed = ingest.copy(con, arc)
-        arc.close()
-        ingest.dedupe(con)
-        parse_all(con, reparse="--reparse" in argv)
-    quality.report(con)
+    if "--hs-only" not in argv:
+        con = ingest.connect()
+        con.executescript(PA_SCHEMA)
+        if "--report" not in argv:
+            arc = ingest.archive_con()
+            new, changed, removed = ingest.copy(con, arc)
+            arc.close()
+            ingest.dedupe(con)
+            parse_all(con, reparse="--reparse" in argv)
+        quality.report(con)
+    if "--no-hs" not in argv:
+        # HS / travel (Perfect Game) step: snapshot the archive CSVs, parse new / changed games, HS reports
+        from . import hs_ingest
+        hs_ingest.main([a for a in argv if a in ("--report", "--reparse")])
 
 
 if __name__ == "__main__":
