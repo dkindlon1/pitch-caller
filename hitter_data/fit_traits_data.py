@@ -111,52 +111,64 @@ def load_season(con, level, season, max_games=None):
             team_games.append((c.most_common(1)[0][0], gidx[gid], rr))
     S.team_games = team_games
 
-    hitters, hix = [], {}
-    S.h_team, S.h_name = [], []
     sched = {}
     for gid, i in gidx.items():
         hr, ar = runs[gid]
         sched[gid] = scheduled_innings(max_inn[gid], None if hr is None or ar is None else abs(hr - ar))
+    n_amb = 0
+    amb_groups = set()
+    for d in recs:
+        tid, (last, ini) = d["tid"], d["nk"]
+        d["pk"] = (d["game_id"], d["bat_side"], name_key(d["pitcher"])) if d["pitcher"] else None
+        d["hname"] = (last, ini)
+        d["cat"] = ""
+        if not last:
+            d["hkey"] = None
+            reasons["no_name"] += 1
+            continue
+        I = inits.get((tid, last), set())
+        key_ini = ini if ini else (next(iter(I)) if len(I) == 1 else ("" if not I else None))
+        if key_ini is None:
+            d["hkey"] = None
+            n_amb += 1
+            amb_groups.add((tid, last))
+        else:
+            d["hkey"] = f"{level}|{season}|{tid}|{last}|{key_ini}"
+            d["hname"] = (last, key_ini)
+    S.n_pa_ambiguous, S.n_ambiguous_groups = n_amb, len(amb_groups)
+    return _build(S, recs, gidx, sched, reasons)
+
+
+def _build(S, recs, gidx, sched, reasons):
+    """the shared per-PA pass: records carry game_id, tid, hkey (None = no hitter), hname, pk (pitcher key or None),
+    cat (a hitter group for the prior, '' at college) and the pa columns"""
+    hitters, hix = [], {}
+    h_team, h_cat = defaultdict(Counter), defaultdict(Counter)
+    S.h_name = []
     bf = Counter()
     pit = defaultdict(list)
     bip = defaultdict(list)
     pa = defaultdict(list)
-    n_amb = n_pa = 0
-    amb_groups = set()
+    n_pa = 0
     for d in recs:
         g = gidx[d["game_id"]]
-        tid, (last, ini) = d["tid"], d["nk"]
         # pitcher batters faced before this PA (all PAs count, lettered or not)
-        pk = (d["game_id"], d["bat_side"], name_key(d["pitcher"])) if d["pitcher"] else None
+        pk = d["pk"]
         b_f = min(bf[pk], BF_CAP) if pk else -1
         if pk:
             bf[pk] += 1
         n_pa += 1
-        if not last:
+        key = d["hkey"]
+        if key is None:
             h = -1
-            reasons["no_name"] += 1
         else:
-            I = inits.get((tid, last), set())
-            if ini:
-                key_ini = ini
-            elif len(I) == 1:
-                key_ini = next(iter(I))
-            elif len(I) == 0:
-                key_ini = ""
-            else:
-                key_ini = None
-            if key_ini is None:
-                h = -1
-                n_amb += 1
-                amb_groups.add((tid, last))
-            else:
-                key = f"{level}|{season}|{tid}|{last}|{key_ini}"
-                h = hix.get(key)
-                if h is None:
-                    h = hix[key] = len(hitters)
-                    hitters.append(key)
-                    S.h_team.append(tid)
-                    S.h_name.append((last, key_ini))
+            h = hix.get(key)
+            if h is None:
+                h = hix[key] = len(hitters)
+                hitters.append(key)
+                S.h_name.append(d["hname"])
+            h_team[h][d["tid"]] += 1
+            h_cat[h][d["cat"]] += 1
         bb = d["bases_before"] or ""
         o = d["outs_before"]
         if len(bb) != 3 or o is None or not 0 <= o <= 2:
@@ -183,7 +195,7 @@ def load_season(con, level, season, max_games=None):
             for k, v in (("g", g), ("h", h), ("ci", ci), ("r", br), ("dir", DIRS.get(d["bip_dir"], 9)),
                          ("bats", bats), ("thr", thr), ("bf", b_f), ("risp", risp), ("lc", lc), ("slot", slot)):
                 bip[k].append(v)
-        ev, why = pitch_events(d["pitches"], d["balls"], d["strikes"], res, ip, d["count_ok"])
+        ev, why = pitch_events(d["pitches"], d["balls"], d["strikes"], res, ip, d.get("count_ok", 1))
         reasons["pitches:" + why] += 1
         if ev is None:
             continue
@@ -196,8 +208,10 @@ def load_season(con, level, season, max_games=None):
     dt = {"g": np.int32, "h": np.int32}
     S.pit, S.bip, S.pa = _arr(pit, dt), _arr(bip, dt), _arr(pa, dt)
     S.hitters = hitters
-    S.n_games = len(games)
-    S.n_pa_rows, S.n_pa_ambiguous, S.n_ambiguous_groups = n_pa, n_amb, len(amb_groups)
+    S.h_team = [h_team[h].most_common(1)[0][0] for h in range(len(hitters))]     # modal team
+    S.h_cat = [h_cat[h].most_common(1)[0][0] for h in range(len(hitters))]
+    S.n_games = len(S.g_id)
+    S.n_pa_rows = n_pa
     S.reasons = reasons
     return S
 

@@ -264,7 +264,8 @@ def t_refit_all():
     args = types.SimpleNamespace(skip_ingest=False, skip_zone=False, force_zone=False)
     steps = {n: r for n, _, _, r in ra.plan(args, {"statcast_fingerprint": "abc"}, "abc")}
     check("zone skipped when Statcast unchanged", steps["zone"] is not None, steps["zone"])
-    check("fits always run", all(steps[k] is None for k in ("fit_count", "fit_runs", "situation", "traits", "score")))
+    check("fits always run", all(steps[k] is None for k in ("fit_count", "fit_runs", "situation", "traits", "score",
+                                                             "fit_count_hs")))
     steps = {n: r for n, _, _, r in ra.plan(args, {"statcast_fingerprint": "abc"}, "def")}
     check("zone runs when new Statcast landed", steps["zone"] is None)
     args.skip_ingest = True

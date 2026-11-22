@@ -6,7 +6,7 @@
 
 Steps (each runs as its own `python -m hitter_data.<module>` so one failure doesn't stop the rest; logs in
 C:/dev/pitchiq-data/fits/logs/refit_all_<step>.log):
-  1. ingest      update: copy new college (and, once wired, HS) games, dedupe, parse, quality + coverage reports
+  1. ingest      update: copy new college games and snapshot + parse new HS (Perfect Game) games, quality + coverage
   2. represent   full-string games vs all games (K%, BB%, HBP%, runs and HR per game)
   3. fit_count   count layer per level (half-life tuned on 2025, borrowing, level split, platoon)
   4. fit_runs    run values, count x base-out per level, vs today's tables on 2025
@@ -14,6 +14,7 @@ C:/dev/pitchiq-data/fits/logs/refit_all_<step>.log):
   6. situation   times through the order, RISP, late and close, previous pitch: 2025 gain vs the bar
   7. traits      per-hitter traits, priors, presets, prefill files
   8. score       candidates scored on 2025 vs v1.2 and the per-count baseline
+  8b. fit_count_hs  HS / travel (one level): count layer, format terms, pitch kind + velocity, run values, 2025 scores
   9. zone        zone draft (docs/ZONE_TABLE_DRAFT_v13.md), only when the Statcast files changed since the last run
 Then one summary: C:/dev/pitchiq-data/fits/refit_all_summary.md (and printed).
 
@@ -39,6 +40,7 @@ STEPS = [
     ("situation", "fit_situation", [], None),
     ("traits", "fit_traits", [], None),
     ("score", "score_candidates", [], None),
+    ("fit_count_hs", "fit_count_hs", [], None),
     ("zone", "zone_seed", ["--write-doc", "--quiet"], "zone"),
 ]
 ORDER_NOTE = "score runs after fit_count (it scores fit_count's candidates)"
@@ -185,7 +187,7 @@ def summarize(results, started):
         L += ["", "## Situation effects, 2025 gain alone (nats per pitch; bar: > 2 SE and >= 0.002)", "",
               "| level | effect | gain | SE | clears bar |", "|---|---|---|---|---|"]
         L += [f"| {a} | {b} | {f5(c)} | {d:.5f} | {'yes' if c > 2 * d and c >= 0.002 else 'no'} |" for a, b, c, d in si]
-    L += ["", "Details: docs/FITS_COUNT_v13.md, docs/FITS_TRAITS_v13.md, docs/ZONE_TABLE_DRAFT_v13.md; raw outputs under "
+    L += ["", "Details: docs/FITS_COUNT_v13.md (HS: section 12, fits/hs/hs_report.md), docs/FITS_TRAITS_v13.md, docs/ZONE_TABLE_DRAFT_v13.md, docs/HS_ARCHIVE_v13.md; raw outputs under "
           f"{FITS}; quality and coverage under {REPORTS}."]
     return "\n".join(L) + "\n"
 
