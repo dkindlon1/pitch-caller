@@ -44,10 +44,10 @@ import numpy as np
 
 from . import DATA, assert_not_heldout, fit_seasons
 from . import harness as H
-from .fit_traits_data import load_season
+from .fit_traits_hs import HS_DB, HS_LEVEL, connect_hs, load_any
 
-LEVELS = ("D1", "D2", "D3")
-FIT_LEVEL = {"D1": "fit-eligible", "D2": "THIN", "D3": "THIN"}
+LEVELS = ("D1", "D2", "D3", "hs")
+FIT_LEVEL = {"D1": "fit-eligible", "D2": "THIN", "D3": "THIN", "hs": "fit-eligible (HS + travel pooled)"}
 VALID = 2025
 PARTS = ("early", "ts_swing", "ts_foul", "contact", "power", "spray")
 SIGN = {"early": 1, "ts_swing": 1, "ts_foul": 1, "contact": -1, "power": 1, "spray": 1}   # contact = minus whiff
@@ -55,6 +55,9 @@ TRAITS = ("early", "two_strike", "contact", "power", "spray")
 PRIOR_SD = 2.0
 MIN_PA = 60            # hitters used for tau / reliability / priors (about 30 PAs per half)
 PRESET_MIN_PA = 100
+# HS / travel: a player-season is a few tournaments (median 6 PAs, 90th percentile ~15), so lower floors there
+LEVEL_MIN_PA = {"hs": (12, 25, 3)}       # (hitters used, preset hitters, opportunities per half for split-half)
+_CUR = {"min_pa": MIN_PA, "preset_min_pa": PRESET_MIN_PA, "min_half": 10}
 PRESET_SHARE = 0.15
 # simulate.py PLACEHOLDER values, copied for the comparison only (simulate.py is not imported or changed)
 SIM_TRAIT_SIZE = {"early": 0.35, "ts_swing": 0.30, "ts_foul": 0.30, "contact": 0.35, "power": 0.30}
@@ -188,6 +191,7 @@ def season_table(S):
     slots[:, 0] = 0
     T["slot"] = np.where(slots.sum(axis=1) > 0, slots.argmax(axis=1), 0)
     T["hand"] = hitter_hand(S)
+    T["cat"] = list(getattr(S, "h_cat", [""] * nH))
     for part, (h, g, off, y) in obs.items():
         b, se, n = estimate(h, off, y, nH)
         T[part] = (b, se, n)
@@ -214,7 +218,8 @@ def team_strength(S, k=10.0):
 
 
 # --- tuning across hitter-seasons ---------------------------------------------------------------------------------------
-def stack(tables, part, min_pa=MIN_PA, min_n=5):
+def stack(tables, part, min_pa=None, min_n=5):
+    min_pa = _CUR["min_pa"] if min_pa is None else min_pa
     rows = defaultdict(list)
     for T in tables:
         b, se, n = T[part]
@@ -222,13 +227,15 @@ def stack(tables, part, min_pa=MIN_PA, min_n=5):
         bo, seo, no = T[part + "_odd"]
         be, see, ne = T[part + "_even"]
         for k, v in (("b", b), ("se", se), ("n", n), ("bo", bo), ("no", no), ("be", be), ("ne", ne),
-                     ("slot", T["slot"]), ("z", T["team_z"])):
+                     ("slot", T["slot"]), ("z", T["team_z"]), ("cat", T["cat_ix"])):
             rows[k].append(v[m])
     return {k: np.concatenate(v) for k, v in rows.items()}
 
 
-def reliability(X, min_half=10):
-    """talent variance and split-half reliability from odd / even game estimates"""
+def reliability(X, min_half=None):
+    """talent variance and split-half reliability from odd / even game estimates; also the opportunities a hitter
+    needs for reliability 0.5 / 0.7 (n = R / (1 - R) * c / tau^2, c = median SE^2 * n)"""
+    min_half = _CUR["min_half"] if min_half is None else min_half
     m = (X["no"] >= min_half) & (X["ne"] >= min_half)
     if m.sum() < 20:
         return dict(n_hitters=int(m.sum()))
@@ -238,27 +245,34 @@ def reliability(X, min_half=10):
     sb = 2 * r / (1 + r) if r > -1 else float("nan")
     full = (X["n"] > 0)
     mom = float(np.var(X["b"][full]) - np.mean(X["se"][full] ** 2))
+    c = float(np.median(X["se"][full] ** 2 * X["n"][full]))
+    need = {f"n_for_R{int(R * 100)}": (round(R / (1 - R) * c / cov, 1) if cov > 0 else None) for R in (0.5, 0.7)}
     return dict(n_hitters=int(m.sum()), tau2_splithalf=cov, tau_splithalf=float(np.sqrt(max(cov, 0))),
-                tau2_moment=mom, r_half=r, spearman_brown=sb, median_n=float(np.median(X["n"][full])))
+                tau2_moment=mom, r_half=r, spearman_brown=sb, median_n=float(np.median(X["n"][full])), **need)
 
 
-def prior_design(slot, z):
-    D = np.zeros((len(slot), 13))
+def prior_design(slot, z, cat=None, ncat=1):
+    """slot dummies (0 = unknown, 1-9), team z x slot group (1-3 / 4-6 / 7-9), and at HS an age-group dummy per
+    group after the first (cat = index into the level's sorted age groups)"""
+    D = np.zeros((len(slot), 13 + max(ncat - 1, 0)))
     D[np.arange(len(slot)), np.clip(slot, 0, 9)] = 1
     grp = np.where(slot <= 0, -1, (np.clip(slot, 1, 9) - 1) // 3)
     for k in range(3):
         D[:, 10 + k] = z * (grp == k)
+    if cat is not None:
+        for k in range(1, ncat):
+            D[:, 12 + k] = (cat == k)
     return D
 
 
-def fit_prior(X, tau2):
-    D = prior_design(X["slot"], X["z"])
+def fit_prior(X, tau2, ncat=1):
+    D = prior_design(X["slot"], X["z"], X["cat"], ncat)
     w = 1.0 / (tau2 + X["se"] ** 2)
     keep = D.sum(axis=0) > 0
     keep[10:] = True
     Dk = D[:, keep]
     A = Dk.T @ (Dk * w[:, None]) + 1e-6 * np.eye(Dk.shape[1])
-    coef = np.zeros(13)
+    coef = np.zeros(D.shape[1])
     coef[keep] = np.linalg.solve(A, Dk.T @ (w * X["b"]))
     # slots never seen fall back to the weighted mean
     mean = float((w * X["b"]).sum() / w.sum())
@@ -268,16 +282,16 @@ def fit_prior(X, tau2):
     fitted = D @ coef
     var_fit = float(np.average((fitted - np.average(fitted, weights=w)) ** 2, weights=w))
     tau2_res = max(tau2 - var_fit, 0.1 * tau2)
-    return dict(coef=coef, mean=mean, var_fitted=var_fit, tau2_res=tau2_res)
+    return dict(coef=coef, mean=mean, var_fitted=var_fit, tau2_res=tau2_res, ncat=ncat)
 
 
-def prior_of(P, slot, z):
-    return prior_design(slot, z) @ P["coef"]
+def prior_of(P, slot, z, cat=None):
+    return prior_design(slot, z, cat, P.get("ncat", 1)) @ P["coef"]
 
 
 def prior_r2(X, P, tau2):
     """share of the true (noise-corrected) between-hitter variance the prior explains"""
-    pr = prior_of(P, X["slot"], X["z"])
+    pr = prior_of(P, X["slot"], X["z"], X["cat"])
     noise = np.mean(X["se"] ** 2)
     tot = np.mean((X["b"] - X["b"].mean()) ** 2) - noise
     res = np.mean((X["b"] - pr) ** 2) - noise
@@ -295,6 +309,8 @@ def shrink(b, se, prior, tau2_res):
 
 # --- one level ------------------------------------------------------------------------------------------------------------
 def run_level(con, level, train, prefill_seasons, max_games=None, log=print, out_dir=OUT_DIR):
+    """con: a connection (college) or {"college": con, "hs": con}"""
+    _CUR["min_pa"], _CUR["preset_min_pa"], _CUR["min_half"] = LEVEL_MIN_PA.get(level, (MIN_PA, PRESET_MIN_PA, 10))
     train = fit_seasons(train)
     prefill_seasons = fit_seasons(prefill_seasons)
     need = sorted(set(train) | {VALID} | {s - k for s in prefill_seasons for k in (0, 1, 2)})
@@ -302,7 +318,7 @@ def run_level(con, level, train, prefill_seasons, max_games=None, log=print, out
     data, tables = {}, {}
     for s in need:
         t = time.time()
-        S = load_season(con, level, s, max_games=max_games)
+        S = load_any(con, level, s, max_games=max_games)
         if S.n_games == 0:
             continue
         data[s] = S
@@ -310,11 +326,17 @@ def run_level(con, level, train, prefill_seasons, max_games=None, log=print, out
         log(f"  {level} {s}: {S.n_games} games, {len(S.hitters)} hitter keys, {len(S.pit['y'])} pitches,"
             f" {len(S.bip['g'])} balls in play; ambiguous PAs {S.n_pa_ambiguous} of {S.n_pa_rows}"
             f" ({S.n_ambiguous_groups} name groups) ({time.time() - t:.0f}s)")
+    cats = sorted({c for T in tables.values() for c in T["cat"]})
+    for T in tables.values():
+        T["cat_ix"] = np.array([cats.index(c) for c in T["cat"]], dtype=np.int64)
+        T["team_arr"] = np.array(T["team"], dtype=object)
+    out_cats = cats
     tr = [tables[s] for s in train if s in tables]
     out = dict(level=level, label=FIT_LEVEL[level], train=[s for s in train if s in tables], valid=VALID,
                keys={str(s): dict(hitter_keys=len(data[s].hitters), pa_rows=data[s].n_pa_rows,
                                   pa_ambiguous=data[s].n_pa_ambiguous, ambiguous_name_groups=data[s].n_ambiguous_groups,
-                                  hitters_min_pa=int((tables[s]["pa"] >= MIN_PA).sum()))
+                                  hitters_min_pa=int((tables[s]["pa"] >= _CUR["min_pa"]).sum()),
+                                  min_pa=_CUR["min_pa"])
                      for s in data})
     if not tr:
         out["status"] = "no training data"
@@ -327,7 +349,7 @@ def run_level(con, level, train, prefill_seasons, max_games=None, log=print, out
             params[part] = dict(reliability_train=rel, status="no usable talent variance")
             continue
         tau2 = rel["tau2_splithalf"]
-        P = fit_prior(X, tau2)
+        P = fit_prior(X, tau2, ncat=len(cats))
         e = dict(reliability_train=rel, tau=float(np.sqrt(tau2)), tau_res=float(np.sqrt(P["tau2_res"])),
                  prior=dict(slot={str(k): round(float(P["coef"][k]), 4) for k in range(1, 10)},
                             slot_unknown=round(float(P["coef"][0]), 4),
@@ -355,10 +377,10 @@ def run_level(con, level, train, prefill_seasons, max_games=None, log=print, out
     # presets from the training hitter-seasons
     Z = []
     for s in out["train"]:
-        Z.append(shrunk_z(tables[s], params, rho, min_pa=PRESET_MIN_PA))
+        Z.append(shrunk_z(tables[s], params, rho, min_pa=_CUR["preset_min_pa"]))
     Zc = {k: np.concatenate([z[k] for z in Z]) for k in Z[0]} if Z else {}
     out["presets"] = presets(Zc)
-    out["presets_2025"] = presets(shrunk_z(tables[VALID], params, rho, min_pa=PRESET_MIN_PA)) if VALID in tables else None
+    out["presets_2025"] = presets(shrunk_z(tables[VALID], params, rho, min_pa=_CUR["preset_min_pa"])) if VALID in tables else None
     out["trait_size_vs_placeholder"] = {p: dict(fit_tau_logit=params[p].get("tau"), placeholder=SIM_TRAIT_SIZE.get(p))
                                         for p in PARTS}
     # prefill
@@ -366,10 +388,15 @@ def run_level(con, level, train, prefill_seasons, max_games=None, log=print, out
     for s in prefill_seasons:
         if s not in data:
             continue
-        path, n = write_prefill(level, s, data, params, rho, out_dir)
+        path, n = write_prefill(level, s, data, params, rho, out_dir, tables[s])
         out["prefill"][str(s)] = dict(path=path, hitters=n)
         log(f"    prefill {level} {s}: {n} hitters -> {path}")
     out["params"] = {p: {k: v for k, v in e.items() if not k.startswith("_")} for p, e in params.items()}
+    out["prior_groups"] = out_cats if len(out_cats) > 1 else None
+    for p, e in params.items():
+        if "_P" in e and len(out_cats) > 1:
+            out["params"][p]["prior"]["group_offset"] = {c: round(float(e["_P"]["coef"][12 + k]), 4)
+                                                         for k, c in enumerate(out_cats) if k > 0}
     return out
 
 
@@ -377,7 +404,8 @@ def two_strike_rho(tables, params):
     if "tau" not in params.get("ts_swing", {}) or "tau" not in params.get("ts_foul", {}):
         return None
     a, b = stack(tables, "ts_swing", min_n=0), stack(tables, "ts_foul", min_n=0)
-    m = (a["no"] >= 10) & (a["ne"] >= 10) & (b["no"] >= 10) & (b["ne"] >= 10)
+    k = _CUR["min_half"]
+    m = (a["no"] >= k) & (a["ne"] >= k) & (b["no"] >= k) & (b["ne"] >= k)
     if m.sum() < 20:
         return None
     c = 0.5 * (np.cov(a["bo"][m], b["be"][m])[0, 1] + np.cov(b["bo"][m], a["be"][m])[0, 1])
@@ -393,7 +421,7 @@ def hitter_traits(T, params, rho, idx=None):
         if "tau" not in e:
             continue
         b, se, n = (x[idx] for x in T[part])
-        pr = prior_of(e["_P"], T["slot"][idx], T["team_z"][idx])
+        pr = prior_of(e["_P"], T["slot"][idx], T["team_z"][idx], T["cat_ix"][idx])
         has = n > 0
         sh, sse, R = shrink(b, se, pr, e["_P"]["tau2_res"])
         sh = np.where(has, sh, pr)
@@ -441,15 +469,16 @@ def presets(Z):
 
 
 def stability(tables, params):
-    """2024 shrunk value vs 2025 raw estimate for the same team + name key (logit units). Slope ~1 = calibrated
-    shrinkage if talent were stable; < 1 also reflects real year-to-year change."""
+    """2024 shrunk value vs 2025 raw estimate for the same hitter (college: same team + name key; HS: same Perfect Game
+    id, any team) in logit units. Slope ~1 = calibrated shrinkage if talent were stable; < 1 also reflects real
+    year-to-year change. Also reported for the hitters whose (modal) team changed."""
     A, B = tables[2024], tables[VALID]
     ka = {k.split("|", 2)[2]: i for i, k in enumerate(A["key"])}
     pairs = [(ka[k.split("|", 2)[2]], j) for j, k in enumerate(B["key"]) if k.split("|", 2)[2] in ka]
     if len(pairs) < 30:
         return None
     ia, ib = np.array([p[0] for p in pairs]), np.array([p[1] for p in pairs])
-    m = (A["pa"][ia] >= MIN_PA) & (B["pa"][ib] >= MIN_PA)
+    m = (A["pa"][ia] >= _CUR["min_pa"]) & (B["pa"][ib] >= _CUR["min_pa"])
     ia, ib = ia[m], ib[m]
     out = {}
     for part in PARTS:
@@ -457,7 +486,7 @@ def stability(tables, params):
         if "tau" not in e or len(ia) < 30:
             continue
         b, se, n = (x[ia] for x in A[part])
-        pr = prior_of(e["_P"], A["slot"][ia], A["team_z"][ia])
+        pr = prior_of(e["_P"], A["slot"][ia], A["team_z"][ia], A["cat_ix"][ia])
         sh = shrink(b, se, pr, e["_P"]["tau2_res"])[0]
         y = B[part][0][ib]
         ok = (n > 0) & (B[part][2][ib] > 0)
@@ -466,15 +495,20 @@ def stability(tables, params):
         x_, y_ = sh[ok], y[ok]
         slope = float(np.cov(x_, y_)[0, 1] / np.var(x_, ddof=1))
         out[part] = dict(n=int(ok.sum()), corr=float(np.corrcoef(x_, y_)[0, 1]), slope=slope)
+        moved = (A["team_arr"][ia] != B["team_arr"][ib])[ok]
+        out[part]["n_changed_team"] = int(moved.sum())
+        if moved.sum() >= 30:
+            xm, ym = x_[moved], y_[moved]
+            out[part]["changed_team"] = dict(corr=float(np.corrcoef(xm, ym)[0, 1]),
+                                             slope=float(np.cov(xm, ym)[0, 1] / np.var(xm, ddof=1)))
     return out
 
 
 # --- prefill ----------------------------------------------------------------------------------------------------------------
-def write_prefill(level, season, data, params, rho, out_dir):
+def write_prefill(level, season, data, params, rho, out_dir, T):
     """the season's hitters, with their own PAs from this season and the two before it (same team + name key),
     recency-weighted 0.5^(age / 2); priors from this season's slot and team strength"""
     S = data[season]
-    T = season_table(S)
     nH = len(S.hitters)
     base = {k.split("|", 2)[2]: i for i, k in enumerate(S.hitters)}
     pooled = {}
@@ -503,6 +537,8 @@ def write_prefill(level, season, data, params, rho, out_dir):
             continue
         rec = dict(team=T["team"][i], slot=int(T["slot"][i]), pa_season=int(T["pa"][i]),
                    hand="RLS?"[int(T["hand"][i])], team_strength_z=round(float(T["team_z"][i]), 3), traits={})
+        if level == HS_LEVEL:
+            rec.update(pg_player_id=key.split("|", 2)[2], age_group=T["cat"][i])
         for t in TRAITS:
             if t not in tr:
                 continue
@@ -522,10 +558,12 @@ def write_prefill(level, season, data, params, rho, out_dir):
     meta = dict(provisional=True, level=level, season=season, label=FIT_LEVEL[level],
                 generated=datetime.date.today().isoformat(),
                 units="hitter SD (simulate.py trait units); value = shrunk estimate, se = posterior SD, prior = slot x team prior",
-                key="level|season|team id|last name|first initial (team id s:<school id> or n:<printed name>)",
+                key=("hs|season|Perfect Game player id (pooled across teams and, for prior seasons, by the same id)"
+                     if level == HS_LEVEL else
+                     "level|season|team id|last name|first initial (team id s:<school id> or n:<printed name>)"),
                 pooled_seasons=[season - a for a in (0, 1, 2) if season - a in data],
                 recency_weight="0.5^(age/2)", heldout_never_loaded=2026,
-                note="PROVISIONAL: fit on the college data in hand; not wired into the engine or the app")
+                note="PROVISIONAL: fit on the data in hand; not wired into the engine or the app")
     d = os.path.join(out_dir, "prefill")
     os.makedirs(d, exist_ok=True)
     path = os.path.join(d, f"{level}_{season}.json")
@@ -541,16 +579,19 @@ def parse_years(txt):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--levels", default="D1,D2,D3")
+    ap.add_argument("--levels", default="D1,D2,D3,hs")
     ap.add_argument("--train", default="2022-2024")
     ap.add_argument("--prefill", default="2025")
     ap.add_argument("--max-games", type=int, default=None)
     ap.add_argument("--db", default=H.DB)
+    ap.add_argument("--hs-db", default=HS_DB)
     ap.add_argument("--out", default=OUT_DIR)
     a = ap.parse_args(argv)
     train = fit_seasons(parse_years(a.train))
     pre = fit_seasons(parse_years(a.prefill))
-    con = sqlite3.connect(f"file:{a.db}?mode=ro", uri=True)
+    con = {"college": sqlite3.connect(f"file:{a.db}?mode=ro", uri=True)}
+    if HS_LEVEL in a.levels.split(","):
+        con[HS_LEVEL] = connect_hs(a.hs_db)
     os.makedirs(a.out, exist_ok=True)
     t0 = time.time()
     res = dict(provisional=True, generated=datetime.date.today().isoformat(), heldout_never_loaded=2026,

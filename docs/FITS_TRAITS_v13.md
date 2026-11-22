@@ -1,19 +1,20 @@
-# v1.3 fits: situation effects and hitter traits, college (PROVISIONAL, Nov 21)
+# v1.3 fits: situation effects and hitter traits, college and HS / travel (PROVISIONAL, Nov 21)
 
 **PROVISIONAL.** These numbers come from the college data in hand, and they will move as the scrapes land. Nothing
 here is graded or approved, and nothing is wired into either engine, the app or the simulator (`engine.py`, `app/` and
 `simulate.py` are untouched). 2026 was never loaded: every season goes through `assert_not_heldout` / `fit_seasons`,
 and the tests trip the guard in every path. Tuning uses seasons up to 2024; 2025 is for validation. D1 is the only
-level eligible for a fit. D2 and D3 are run on the data that exists and are labeled **THIN**.
+level eligible for a fit. D2 and D3 are run on the data that exists and are labeled **THIN**. HS / travel (Perfect
+Game, one pooled level `hs`) is in section 5.
 
 Buildout prompt Part 3, items 3 and 4 (plan 3.3, 3.4, 1.3, 1.4).
 
 | | |
 |---|---|
-| Code | `hitter_data/fit_traits_data.py` (loader, hitter keys), `hitter_data/fit_situation.py`, `hitter_data/fit_traits.py` |
-| Entry points (for `refit_all`) | `python -m hitter_data.fit_situation [--levels D1,D2,D3] [--boot 500]` (200 s) and `python -m hitter_data.fit_traits [--train 2022-2024] [--prefill 2025]` (70 s) |
-| Outputs (not in git) | `C:/dev/pitchiq-data/fits/situation_effects.json`, `fits/traits_summary.json`, `fits/prefill/{D1,D2,D3}_2025.json`, logs in `fits/logs/` |
-| Tests | `python3 tests_fit_traits.py`: 42 checks on a synthetic fixture with no real data. Wired into `scripts/test-app.sh` |
+| Code | `hitter_data/fit_traits_data.py` (loader, hitter keys), `hitter_data/fit_traits_hs.py` (HS loader), `hitter_data/fit_situation.py`, `hitter_data/fit_traits.py` |
+| Entry points (for `refit_all`; the default levels are D1,D2,D3,hs) | `python -m hitter_data.fit_situation --boot 500` (240 s) and `python -m hitter_data.fit_traits` (110 s). One level: `--levels hs`. The HS database is `--hs-db`, default `C:/dev/pitchiq-data/hs/hs.sqlite3` |
+| Outputs (not in git) | `C:/dev/pitchiq-data/fits/situation_effects.json` (levels D1, D2, D3, hs, hs_full_length), `fits/traits_summary.json`, `fits/prefill/{D1,D2,D3,hs}_2025.json`, logs in `fits/logs/` |
+| Tests | `python3 tests_fit_traits.py`: 58 checks on synthetic college and HS fixtures with no real data. Wired into `scripts/test-app.sh` |
 
 ## 1. Hitter key
 
@@ -280,3 +281,155 @@ Among D1 hitters with at least 100 PAs, the SD of the prefilled values is 0.81 (
    - two-strike swing 0.23;
    - two-strike foul 0.14;
    - the preset table.
+
+## 5. HS / travel (Perfect Game), level `hs` (PROVISIONAL)
+
+HS and travel are one pooled model (plan section 11), and bat type is not read.
+
+**Data.**
+- Source: `C:/dev/pitchiq-data/hs/hs.sqlite3`, opened read-only.
+- Seasons: 2022-2025 are used (7,462 games). 2026 is never loaded (`load_hs_season` calls the guard).
+- Split: tune on 2022-2024, validate on 2025.
+
+**Key.** `hs | season | Perfect Game player id` (`batter_id`).
+- One key per player per season, across teams. The same id links seasons.
+- 30-47 PAs per season have no id: 0.03%. No name ambiguity is possible.
+- Team id is the printed team name. PG names are event-specific ("... 17U ..."), so team strength is per event team.
+- **Thin per player.** A player-season is a few tournaments: median 6 PAs, 90th percentile ~15, 99th ~32. Only
+  2,100-2,900 players a season reach 12 PAs.
+  - The trait floors are lower here: 12 PAs for tau and the prior, 25 for presets, and 3 opportunities per half for
+    split-half.
+
+### 5.1 Situation effects (2025 validation, nats per pitch, same bar)
+
+The data: fit 2022-2024 full-log games (recency-weighted), validated on 2025 (1,921 games, 405 k pitches). Late and
+close uses 7 scheduled innings for every game.
+
+| Set | Effect | Gain alone (SE) | z | Given slot (SE) | Clears bar |
+|---|---|---|---|---|---|
+| hs, all games | tto | +0.00067 (0.00011) | +6.3 | +0.00072 (0.00011) | no |
+| hs, all games | risp | +0.00007 (0.00004) | +1.7 | +0.00008 (0.00004) | no |
+| hs, all games | late_close | +0.00002 (0.00003) | +0.8 | +0.00003 (0.00003) | no |
+| hs, all games | prev | +0.00129 (0.00014) | +9.1 | +0.00125 (0.00014) | no |
+| hs, all games | **all four** | **+0.00203 (0.00019)** | +10.7 | | **yes, as a group (just)** |
+| hs, reached the 7th only | tto / risp / late_close / prev | +0.00070 / +0.00006 / +0.00001 / +0.00130 | | | no |
+| hs, reached the 7th only | all four | +0.00203 (0.00028) | +7.3 | | yes, as a group (just) |
+
+- **No single effect clears 0.002.** The four together reach it by a hair (+0.00203), on all games and on full-length
+  games alike.
+- With the 2-SE rule alone, tto and prev pass; risp and late-and-close don't.
+- The previous-pitch effect is larger here than in college (+0.0013 vs +0.0009). It carries the same caveat: it is
+  probably mostly the matchup persisting within the PA.
+
+**Tournament-format confound.**
+- About half of pool games stop before the 7th on the time limit or run rule. In those games "late" is never reached,
+  and the half-innings near the end are cut short.
+- Rerun on games that reached the 7th only (`hs_full_length`: 847 validation games): the pitch-level gains are
+  unchanged (tto +0.00070, prev +0.00130, late-and-close +0.00001). So the early endings don't create or hide these
+  effects.
+- Two things do differ:
+  - **The count-only loss** is 1.4625 on full-length games vs 1.4440 on all. Games that reach the 7th are a different
+    mix: closer games, likely better teams.
+  - **RISP per ball in play** shows +2.5 points of hits on all games, +0.5 points beyond 2 SE (+0.00049 nats per ball in
+    play). On full-length games it is only +0.3 points and not significant. That points at blowout / run-rule games
+    (weak defense with runners on) or base-state reconstruction in them, not at the hitter.
+
+Effect sizes, all games (percentage points, full model, 2025 mix):
+
+| Effect | Swing | Called strike / take | Whiff / swing | Foul / swing | In play / swing |
+|---|---|---|---|---|---|
+| TTO bf 9 vs 0 (given slot) | +2.6 | +0.2 | -0.8 | -1.0 | +1.8 |
+| TTO bf 18 vs 0 (given slot) | +4.5 | +0.1 | -2.9 | -1.3 | +4.2 |
+| TTO bf 27 vs 0 (given slot) | +5.8 | -0.2 | -6.2 | -1.1 | +7.3 |
+| RISP | +0.4 | -1.5 | -0.8 | +0.4 | +0.4 |
+| late and close | +0.4 | +1.1 | +0.3 | +0.1 | -0.4 |
+| after whiff vs take, 1 strike | +0.9 | +0.6 | +9.3 | -1.9 | -7.4 |
+| after foul vs take, 1 strike | -2.5 | -2.0 | -3.6 | +2.5 | +1.1 |
+| after whiff vs take, 2 strikes | +0.6 | +0.7 | +9.9 | -2.1 | -7.8 |
+| after foul vs take, 2 strikes | -0.5 | -2.3 | -3.6 | +1.5 | +2.1 |
+
+The times-through-the-order curve is steeper than in college: whiff per swing falls 6 points by the fourth time
+through. It is smooth by construction. Starters going deep in HS games are a stronger selection, which is the same
+confound as college.
+
+### 5.2 Traits (tune 2022-2024, validate 2025)
+
+**Spray** comes from `hs_pa.bip_dir`, which `hs_parse` reads from play_text ("to LF / CF / RF", infield positions
+mapped). It has three values, L / C / R; there is no LC / RC. Hand is printed for 95% of batters, so 13,481 of 15,180
+prefilled players get a spray estimate.
+
+| Part | Tau (logit per SD) | Split-half r → SB, train (median opportunities) | SB, 2025 | Opportunities for R 0.5 / 0.7 | 2024 → 2025 r (slope), same id | Same, team changed (n) |
+|---|---|---|---|---|---|---|
+| early | 0.29 | 0.22 → 0.37 (29) | 0.34 | 52 / 122 | 0.29 (0.75) | 0.30 (0.77), 464 of 593 |
+| ts_swing | 0.25 | 0.11 → 0.20 (15) | 0.16 | 64 / 150 | 0.14 (0.69) | 0.14 (0.68) |
+| ts_foul | 0.13 | 0.02 → 0.05 (8) | 0.08 | 254 / 592 | 0.08 (1.13) | 0.11 |
+| contact | 0.39 | 0.22 → 0.36 (25) | 0.39 | 38 / 90 | 0.31 (0.78) | 0.33 (0.78) |
+| power | 0.28 | 0.10 → 0.18 (10) | 0.08 | 159 / 371 | 0.12 (0.68) | 0.15 (0.82) |
+| spray | 0.22 | 0.07 → 0.12 (10) | 0.18 | 87 / 203 | 0.10 (1.02) | 0.09 (0.94) |
+
+**Sizes.**
+- The talent spread is close to college: contact 0.39 (D1 0.38), early 0.29 (D1 0.36), power 0.28 (D1 0.39).
+- **Reliability is low because the samples are tiny.**
+  - Early and contact reach R 0.5 at about 40-50 opportunities: roughly 30-35 PAs, about two big tournaments.
+  - Power needs ~160 balls in play, which almost no player-season has. The two-strike foul part is effectively
+    unmeasurable (R 0.5 at ~250 two-strike contacts).
+- The two-strike swing / foul true-score correlation is +0.14 (college −0.22). Both parts are noisy.
+
+**Across seasons and teams.**
+- 593 players have 12 or more PAs in both 2024 and 2025. 464 of them changed (modal) team: PG team names change with
+  age group and event.
+- Stability is the same for players who changed team as for all: early r 0.30, contact 0.33. So the id link works, and
+  the traits travel with the player, not the team.
+- Slopes of 0.7-0.8 on shrunk values mean the shrinkage is about right given a year of development.
+
+**Prior** (slot × team strength + age group).
+- Team strength is runs per game for the event team, z-scored within the season and shrunk by n / (n + 10).
+- The prior adds an age-group offset (15U as the reference; 16U-18U, Open, Underclass, Varsity, Academies).
+- It explains little: R² ≤ 0.05 for early and contact on train, about 0 on 2025, and too little true variance to say for
+  the others.
+- What it does show:
+  - Leadoff to 9th, whiff logit −0.37 → −0.10: top-of-order hitters whiff less.
+  - Power from slot 3 to 9: +0.45 → +0.18.
+  - Team z: whiff −0.20 to −0.23 and power +0.30 to +0.35 per SD of team runs. These team slopes are bigger than
+    college's, as expected with wider talent gaps between travel teams.
+  - Older groups and Academies whiff more relative to 15U (+0.14 to +0.34). That is probably better pitching at those
+    events.
+
+**Presets** (players with 25 or more PAs in a training season, top 15%: 169 of 1,122 per group; shrunk group means in
+hitter SDs):
+
+| Preset | early | two_strike | contact | power | spray | 2025 groups (headline) | Placeholder |
+|---|---|---|---|---|---|---|---|
+| aggressive_early | **+0.91** | +0.03 | +0.01 | +0.01 | +0.06 | early +0.88 | early +1.5 |
+| patient | **−1.15** | −0.33 | +0.47 | +0.31 | −0.01 | early −1.09 | early −1.5, two_strike −0.5 |
+| power | −0.24 | −0.33 | +0.44 | **+1.04** | −0.03 | power +1.02 | power +1.5, contact −1.0 |
+| contact | −0.37 | −0.36 | **+1.21** | +0.33 | −0.04 | contact +1.19 | contact +1.5, power −0.5 |
+| free_swinger | **+0.64** | +0.10 | **−0.66** | −0.04 | +0.05 | +0.57 / −0.65 | early +1.5, contact −1.0, power +0.5 |
+| two_strike_battler | +0.10 | **+0.57** | +0.00 | −0.13 | +0.07 | two_strike +0.56 | two_strike +1.5, contact +0.5 |
+
+**How to read the presets.**
+- These are the true means of groups we can pick out from 25-60 PAs. With reliability 0.2-0.4, the group picked as
+  "top 15%" is truly only about 0.6-1.2 SD out. That is why every preset is smaller than college's.
+- A coach-set preset describes a player the coach *knows* is that type, so the college sizes (or the placeholder ±1.5)
+  are the better reference for what a real type is. The HS numbers say how far data alone can classify.
+- Unlike college:
+  - HS power hitters make **more** contact (+0.44), not less.
+  - Patient hitters have some power (+0.31).
+  - At this level, the better hitters are better at everything.
+
+**Prefill:** `C:/dev/pitchiq-data/fits/prefill/hs_2025.json`.
+- Keyed by `hs|2025|<PG player id>`; each record also carries `pg_player_id` and `age_group`.
+- Each player's 2023-2025 PAs under the same id are pooled, on any team, with weight 0.5^(age / 2).
+- 15,180 players: 489 with 25 or more PAs in 2025, and 13,481 with a printed hand.
+
+### 5.3 HS open issues
+- **Coverage.** Atlanta 15U-17U are 20-40% captured, so per-player samples will grow as the pending ~11,800 finals
+  land. The reliabilities above are the ones most likely to rise.
+- **The group gain.** The all-four group gain (+0.00203) sits right at the bar and could fall either side as data lands.
+  Shipping "as a group" is not a rule in the plan; Drew decides.
+- **RISP in play.** The RISP effect on balls in play exists only when games stopped early are included. Treat it as a
+  format / defense artifact unless it survives with full data.
+- **Team strength** is per event team. A season-level club rating (linking a club's teams across events) would be
+  steadier.
+- **Velocity and pitch type** are not used in these two fits. They belong to the count layer (Part 3.1 HS extra), which
+  another agent owns.

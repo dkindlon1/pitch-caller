@@ -23,7 +23,10 @@ The bar: gain > 2 SE AND gain >= harness.MIN_EFFECT (0.002 nats per pitch, the h
 plan sets no size, so this is the bar used here).
 
 2026 is never loaded (fit_seasons / assert_not_heldout on every season).
-usage: python -m hitter_data.fit_situation [--levels D1,D2,D3] [--boot 300] [--out DIR] [--max-games N]"""
+HS / travel (level "hs", Perfect Game, HS and travel pooled): late and close uses 7 scheduled innings; pool games often
+stop early on the time limit, so the hs fit is also rerun on games that reached the 7th ("hs_full_length") to show the
+format confound.
+usage: python -m hitter_data.fit_situation [--levels D1,D2,D3,hs] [--boot 300] [--out DIR] [--max-games N]"""
 import argparse
 import datetime
 import json
@@ -37,11 +40,12 @@ from scipy.optimize import minimize
 
 from . import DATA, assert_not_heldout, fit_seasons
 from . import harness as H
-from .fit_traits_data import BF_CAP, load_season
+from .fit_traits_data import BF_CAP
+from .fit_traits_hs import HS_DB, HS_LEVEL, connect_hs, load_any
 
 VALID = 2025
-LEVELS = ("D1", "D2", "D3")
-FIT_LEVEL = {"D1": "fit-eligible", "D2": "THIN", "D3": "THIN"}
+LEVELS = ("D1", "D2", "D3", "hs")
+FIT_LEVEL = {"D1": "fit-eligible", "D2": "THIN", "D3": "THIN", "hs": "fit-eligible (HS + travel pooled)"}
 NB = BF_CAP + 1
 K5 = ("take_ball", "take_strike", "whiff", "foul", "in_play")
 KB = ("out", "1B", "2B", "3B", "HR")
@@ -289,7 +293,9 @@ def bip_effects(model, names, w_cells):
 
 
 # --- one level ----------------------------------------------------------------------------------------------------------
-def run_level(con, level, fit_years, B=300, seed=7, max_games=None, log=print):
+def run_level(con, level, fit_years, B=300, seed=7, max_games=None, log=print, load_kw=None):
+    """con: a connection (college) or {"college": con, "hs": con}; load_kw goes to the hs loader"""
+    load_kw = load_kw or {}
     fit_years = fit_seasons(fit_years)
     assert_not_heldout(VALID)
     Np = np.zeros((NP, 5))
@@ -297,7 +303,7 @@ def run_level(con, level, fit_years, B=300, seed=7, max_games=None, log=print):
     used = {}
     for s in fit_years:
         t = time.time()
-        S = load_season(con, level, s, max_games=max_games)
+        S = load_any(con, level, s, max_games=max_games, **load_kw)
         if S.g_full.sum() == 0:
             continue
         w = H.recency_weight(s, VALID)
@@ -309,7 +315,7 @@ def run_level(con, level, fit_years, B=300, seed=7, max_games=None, log=print):
         log(f"  {level} {s}: {int(S.g_full.sum())} full games, {int(n_p.sum())} pitches, weight {w:.3f} ({time.time() - t:.0f}s)")
     if not used:
         return dict(level=level, status="no fit data")
-    V = load_season(con, level, VALID, max_games=max_games)
+    V = load_any(con, level, VALID, max_games=max_games, **load_kw)
     vp_counts, vp = season_pitch_counts(V)
     vb_counts, vb = season_bip_counts(V)
     full_games = np.flatnonzero(V.g_full)
@@ -385,13 +391,16 @@ def fit_years_for(level, valid=VALID, window=H.FIT_WINDOW):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--levels", default="D1,D2,D3")
+    ap.add_argument("--levels", default="D1,D2,D3,hs")
+    ap.add_argument("--hs-db", default=HS_DB)
     ap.add_argument("--boot", type=int, default=300)
     ap.add_argument("--max-games", type=int, default=None, help="per season, for a quick run")
     ap.add_argument("--db", default=H.DB)
     ap.add_argument("--out", default=OUT_DIR)
     a = ap.parse_args(argv)
-    con = sqlite3.connect(f"file:{a.db}?mode=ro", uri=True)
+    con = {"college": sqlite3.connect(f"file:{a.db}?mode=ro", uri=True)}
+    if HS_LEVEL in a.levels.split(","):
+        con[HS_LEVEL] = connect_hs(a.hs_db)
     os.makedirs(a.out, exist_ok=True)
     t0 = time.time()
     res = dict(provisional=True, generated=datetime.date.today().isoformat(), heldout_never_loaded=2026,
@@ -400,6 +409,12 @@ def main(argv=None):
     for lv in a.levels.split(","):
         print(f"[{lv}] {FIT_LEVEL[lv]}")
         res["levels"][lv] = run_level(con, lv, fit_years_for(lv), B=a.boot, max_games=a.max_games)
+        if lv == HS_LEVEL:
+            print(f"[{lv}] format check: only games that reached the 7th inning (fit and validation)")
+            r = run_level(con, lv, fit_years_for(lv), B=a.boot, max_games=a.max_games,
+                          load_kw=dict(full_length_only=True))
+            r["label"] = "format check: games that reached the 7th only"
+            res["levels"]["hs_full_length"] = r
     path = os.path.join(a.out, "situation_effects.json")
     with open(path, "w", encoding="utf-8", newline="") as fh:
         json.dump(res, fh, indent=1, default=float)

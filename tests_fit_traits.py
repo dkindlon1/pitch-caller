@@ -268,6 +268,117 @@ def t_traits(con, tr, out):
     check("trait sizes compared with the placeholders", res["trait_size_vs_placeholder"]["early"]["placeholder"] == 0.35)
 
 
+# ---------- HS / travel (Perfect Game) fixture: player ids, 7-inning games, some stopped early ----------
+HS_SCHEMA = """
+CREATE TABLE hs_games(game_id TEXT PRIMARY KEY, season INTEGER, level TEXT, game_date TEXT, home_team TEXT,
+  away_team TEXT, home_runs INTEGER, away_runs INTEGER, ended_before_7 INTEGER, phase TEXT, age_group TEXT);
+CREATE TABLE hs_game_qc(game_id TEXT PRIMARY KEY, full_log INTEGER);
+CREATE TABLE hs_pa(game_id TEXT, idx INTEGER, inning INTEGER, half TEXT, bat_side TEXT, batter TEXT, batter_id TEXT,
+  pitcher TEXT, pitcher_id TEXT, slot INTEGER, outs_before INTEGER, bases_before TEXT, bat_score_before INTEGER,
+  fld_score_before INTEGER, balls INTEGER, strikes INTEGER, pitches TEXT, result TEXT, in_play INTEGER, bip_type TEXT,
+  bip_dir TEXT, bats TEXT, throws TEXT, PRIMARY KEY(game_id, idx));
+"""
+HS_TEAMS = [f"Club {c} 17U" for c in "ABCDEF"]
+MOVER = "900004"           # player id 900004 (team 0, slot 4) plays for team 5 in 2025: same id, new team
+
+
+def hs_pid(t, s):
+    return f"9{t:02d}{s:03d}"
+
+
+def make_hs_db(path, seed=11):
+    rng = np.random.default_rng(seed)
+    tr = truth(rng)
+    con = sqlite3.connect(path)
+    con.executescript(HS_SCHEMA)
+    for season in (2023, 2024, 2025, 2026):
+        for gi in range(6 if season == 2026 else 160):
+            ht, at = rng.choice(6, size=2, replace=False)
+            gid = f"pg{season}_{gi}"
+            early = gi % 4 == 0                       # a pool game stopped by the time limit after 5 innings
+            score = {"home": 0, "away": 0}
+            nxt = {"home": 0, "away": 0}
+            rows = []
+            for inn in range(1, 6 if early else 8):
+                for half, side, t in (("top", "away", at), ("bottom", "home", ht)):
+                    outs = 0
+                    while outs < 3:
+                        s = nxt[side] % 9
+                        nxt[side] += 1
+                        bases = "".join("1" if rng.random() < 0.25 else "0" for _ in range(3))
+                        letters, res, ip, bl, st = sim_pa(rng, tr, t, s, bases[1] == "1" or bases[2] == "1")
+                        d = None
+                        if ip:
+                            ph = sg(-2.0 + tr["power"][t, s])
+                            u = rng.random()
+                            res = "2B" if u < ph else ("1B" if u < ph + 0.2 else "GO")
+                            pull = rng.random() < sg(tr["spray"][t, s])
+                            d = ("L" if s % 2 == 0 else "R") if pull else ("R" if s % 2 == 0 else "L")
+                        if res in ("K_S", "K_L", "GO"):
+                            outs += 1
+                        if res == "2B" and rng.random() < 0.5:
+                            score[side] += 1
+                        pid = hs_pid(t, s)
+                        if season == 2025 and pid == MOVER:
+                            pid = "999999"            # the 2025 team-0 slot-4 hitter is someone else ...
+                        if season == 2025 and t == 5 and s == 4:
+                            pid = MOVER                # ... and the 2024 team-0 hitter now bats 5th for team 5
+                        rows.append((gid, len(rows), inn, half, side, f"Player {pid}", pid, f"Pitcher {t}", f"8{t}",
+                                     s + 1, min(outs, 2), bases, score[side], score["home" if side == "away" else "away"],
+                                     bl, st, letters, res, ip, "ground" if res == "GO" else ("line" if ip else None), d,
+                                     "R" if s % 2 == 0 else "L", "R"))
+            for r in rows:
+                con.execute("INSERT INTO hs_pa VALUES (" + ",".join("?" * 23) + ")", r)
+            con.execute("INSERT INTO hs_games VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (gid, season, "travel_ball", f"{season}-07-{1 + gi % 28:02d}", HS_TEAMS[ht], HS_TEAMS[at],
+                         score["home"], score["away"], int(early), "pool", "17U" if gi % 2 else "16U"))
+            con.execute("INSERT INTO hs_game_qc VALUES (?,?)", (gid, 1))
+    con.commit()
+    con.close()
+    return tr
+
+
+def t_hs(path, out):
+    from hitter_data import fit_traits_hs as FH
+    tr = make_hs_db(path)
+    con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    cons = {"hs": con}
+    check("hs held-out: load_hs_season(2026) trips", trips(FH.load_hs_season, con, 2026))
+    check("hs held-out: fit_traits main --levels hs --prefill 2026 trips",
+          trips(FT.main, ["--levels", "hs", "--prefill", "2026", "--hs-db", path, "--out", out]))
+    S = FH.load_hs_season(con, 2025)
+    check("hs key = hs|season|Perfect Game id", all(k.startswith("hs|2025|") and len(k.split("|")) == 3 for k in S.hitters))
+    check("hs: one key per player id (54 players)", len(S.hitters) == 54, len(S.hitters))
+    check("hs: the moved player's modal team is his 2025 team", S.h_team[S.hitters.index("hs|2025|" + MOVER)] == "n:clubf17u")
+    check("hs: age group carried for the prior", set(S.h_cat) <= {"16U", "17U"} and len(set(S.h_cat)) >= 1)
+    lc_inn = S.pit["lc"].astype(bool)
+    check("hs: late and close is defined against 7 innings (some pitches flagged)", lc_inn.any())
+    F = FH.load_hs_season(con, 2025, full_length_only=True)
+    check("hs: full_length_only drops the games stopped early", F.g_full.sum() == S.g_full.sum() - 40,
+          (F.g_full.sum(), S.g_full.sum()))
+    res = FS.run_level(cons, "hs", [2023, 2024], B=40, log=lambda *a: None)
+    r = res["pitch"]["effects"]["risp"]["gain_alone"]
+    check("hs situation: planted risp effect recovered (> 2 SE)", r["gain"] > 2 * r["se_max"], r)
+    res = FT.run_level(cons, "hs", [2023, 2024], [2025], log=lambda *a: None, out_dir=out)
+    check("hs traits: early talent SD positive", res["params"]["early"].get("tau", 0) > 0.3, res["params"]["early"].get("tau"))
+    check("hs traits: reliability reports the opportunities needed for R 0.5",
+          (res["params"]["early"]["reliability_train"].get("n_for_R50") or 0) > 0)
+    check("hs traits: the prior has an age-group offset", res["prior_groups"] == ["16U", "17U"]
+          and "17U" in res["params"]["early"]["prior"]["group_offset"])
+    st = res["stability_2024_2025"]["early"]
+    check("hs stability across seasons by player id, team changes counted", st["n"] >= 50 and st["n_changed_team"] >= 1, st)
+    pf = res["prefill"]["2025"]["path"]
+    check("hs prefill file is hs_2025.json", pf.endswith("prefill/hs_2025.json"), pf)
+    d = json.load(open(pf, encoding="utf-8"))
+    rec = d["hitters"]["hs|2025|" + MOVER]
+    check("hs prefill keyed by player id, with pg_player_id and age group", rec["pg_player_id"] == MOVER and rec["age_group"])
+    new = d["hitters"]["hs|2025|999999"]           # only exists in 2025
+    rm = rec["traits"]["early"]["n"] / rec["pa_season"]
+    rn = new["traits"]["early"]["n"] / new["pa_season"]
+    check("hs prefill pools the moved player's 2023-2024 PAs on his old team (by id)", rm > 1.8 * rn, (rm, rn))
+    con.close()
+
+
 def main():
     tmp = tempfile.mkdtemp(prefix="fit_traits_test_")
     try:
@@ -281,6 +392,7 @@ def main():
         t_situation(con)
         t_traits(con, tr, out)
         con.close()
+        t_hs(os.path.join(tmp, "hs_fixture.sqlite3"), os.path.join(tmp, "fits_hs"))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print(f"{len(FAILS)} failed" if FAILS else "all passed")
