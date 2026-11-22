@@ -3,6 +3,9 @@
 For Drew. Tasks A and C of `docs/PROMPT_hitter_v13_next_2026-11-21.md`. **Every grade and recommendation here is
 PROPOSED (Claude). Nothing is decided until you rule.** No engine code, test or number was changed.
 
+**Nov 22 update (ruling 12):** section 2 is refreshed on the full-data refit with rulings 5, 8 and 10 applied
+(`feat/hitter-v13-refit`, commit 33fa6cf); it marks the six rows Drew grades. Everything else below is as of Nov 21.
+
 The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d14115b). The refit itself is written up in
 `docs/REFIT_v13.md` and the moved calls are listed in `docs/REFIT_v13_CHANGED_CALLS.md`, both on that branch.
 
@@ -10,14 +13,51 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
-## Your rulings at a glance (all PROPOSED)
+## Drew's rulings (Nov 21, night): DECIDED
+
+These supersede the PROPOSED recommendations below wherever they differ (source:
+`docs/PROMPT_hitter_v13_apply_2026-11-21.md`).
+
+1. **Pass bar: Drew's original rule stands.** v1.3 must beat **raw v1.2** by more than 2 SE at each level (D2 against
+   the better of v1.2's D1 / D3 settings). Each extra term beyond the count layer (base-out, times through the order,
+   scoring position, late and close, in-at-bat, platoon) ships only if it clears 2 SE on 2025 **and** its call changes
+   pass Drew's graded rows. **No fixed 0.002 floor** (the proposal below is not adopted). Recalibrated v1.2 stays as a
+   reported comparison, not the pass reference.
+2. **Zone table approved:** the regenerated draft (`docs/ZONE_TABLE_DRAFT_v13.md`), with two changes: the plan's trend
+   is carried one level step down for college and two for HS / travel; the sinker-grounder row (P3) comes from Triple-A
+   instead of Single-A (Single-A 1.28× vs AAA / MLB ~1.65×; likely labeling). Frozen with a sha as
+   `data_tables/zone_v13.json`, with a statement-by-statement record of what was approved.
+3. **Hanger gate approved as designed (section 4):** the flat +0.5 goes; an off-speed pitch over the heart gets
+   H × min(1, wild_today / 0.30) only when `wild_today > 0`; H is sized by graded rows (HG-1 to HG-4 plus the existing
+   gated and control rows) and stays 0 if the rows pass without it.
+4. **HS pitch kind × velocity:** an engine table for HS / travel covering swing, whiff and contact by pitch kind and
+   velocity, defined exactly as in the +0.010 fit, fed from each pitch's arsenal speed. Both engines, parity-tested.
+5. **Ride-up credit:** keep the 36% cap; `ride_up_2k` 0.008 → 0.003 (Q4 option 1).
+6. **R1** rewritten to its intent: slider at least 30%, no pitch over 60% (option 2).
+7. **S5** tests the gate's direction: leaning toward the hitter drops the inside sinker to ~0 (≤ 1%, never above the
+   base); leaning away raises it 3+ points (option 2).
+8. **HARD_SD:** the hitter talent SD with luck removed, computed properly the way `talent_spread.py` does it (not the
+   ~.070 estimate); POWER_HR restated on it.
+9. **Harness landing:** re-frozen from Single-A before any v1.3 score. Calib-world scores kept as a side report;
+   harness version bumped.
+10. **MLB run-value scale:** the denominator pinned at v1.2's .481 until college run values exist. After that, college
+    levels take no scale from MLB.
+11. **Simulator:** `two_strike` split into `two_strike_swing` and `two_strike_foul`, sized from the D1 fits.
+12. **HS / travel changed calls:** the list is refreshed to the full-data refit with rulings 5, 8 and 10 applied. Drew
+    grades only the **arguable** and **flagged** rows (e.g. #410, middle at 3-2 halved; #100; #154); every other row
+    takes its proposed grade.
+13. **Coverage rule:** still open; D2 / D3 2025 is still being collected.
+
+Not ruled on and left as stated below: R12 (state it, don't refit).
+
+## Your rulings at a glance (all PROPOSED; see the decided list above)
 
 | Item | Recommendation |
 |---|---|
 | R1 mixing (1-2, runner on 3rd) | **Rewrite the limit to its intent:** slider at least 30%, no pitch over 60%. Stop chasing a points gap. |
 | Q4 riding fastball up, two strikes | **Keep the 36% cap. Shrink the coach credit from 0.008 to 0.003.** The refit data now does most of that work. |
 | S5 sinker lean gate | **Test the gate's direction, not a 3-point drop.** S5 is switched off anyway. |
-| 25 HS / travel calls | 20 acceptable, 5 arguable, 0 not acceptable. Only 2 got a worse grade, and in both the menu barely moved. |
+| 25 HS / travel calls | 20 acceptable, 5 arguable, 0 not acceptable. Only 2 got a worse grade, and in both the menu barely moved. *(Nov 21, first refit; superseded by the refreshed section 2: 16 rows, Drew grades 6.)* |
 | HARD_SD | Use the talent spread with luck taken out (about .070), the same rule as pitchers' grades. |
 | 0.002 minimum effect | Adopt it. |
 | Re-freeze harness landing from Single-A | Yes, before any v1.3 score exists, and report the old world alongside. |
@@ -136,52 +176,106 @@ restores the old result, that group moved it.
 
 ---
 
-## 2. The 25 HS / travel changed calls
+## 2. HS / travel changed calls, refreshed (ruling 12): full-data refit + rulings 5, 8 and 10
+
+**Refreshed Nov 22** on `feat/hitter-v13-refit` (rulings applied in commit 33fa6cf; list
+`docs/REFIT_v13_CHANGED_CALLS.md`, golden_v123 -> golden_v13refit). It replaces the 25-row table of Nov 21, which was
+on the first refit. **Every grade below is PROPOSED.** Under ruling 12, Drew grades only the rows marked **Drew
+grades**; every other row takes its proposed grade.
 
 **Read this first.** The golden list's "call" is the **middle draw of the menu** (the engine sorts its menu and the test
 takes the call at the 50% mark). When two spots are near-tied, a 1-point shift swaps the call shown even though the menu
-barely moved. Most of these 25 are that. So each row below shows the top of the menu, and the grade is on the menu.
+barely moved. So each row shows the top of the menu (golden dist), and the grade is on the menu. Grading words and
+rules are the read-through's (`readthrough/scenarios_v12.json`): 0-0 B1 (B8: a curve not landing at 0-0 is arguable),
+1-0 B3, 2-0 D5/F3, 3-0 and 3-1 A1/A2 (hard rule), 2-2 A3 (hard rule), 0-2 C1, 1-2 C3, 3-2 C7/C8, a runner on 3rd with
+fewer than 2 outs D2.
 
-Grading words and rules are the read-through's (`readthrough/scenarios_v12.json`). For example: 0-0 B1, 1-0 B3, 2-0
-D5/F3, 3-0 and 3-1 A1/A2 (hard rule), 2-2 A3 (hard rule), 0-2 C1, 1-2 C3, 3-2 C7/C8, a runner on 3rd with fewer than 2
-outs D2. "Why" names the groups whose put-back restores the old call:
-- **level calibration** = `outcome_params.py` (MLB's command and swing numbers copied into the levels);
-- **run values** = MLB RE24 / count values;
-- **sequence fits** = `fit_v08.json`, split into eye level, grounders by height, familiarity and the count effect;
-- **shape terms** = the `PT_*` tables.
+**How "why it moved" was found (lighter than Nov 21).** For the 14 rows that also moved in the earlier refit lists, the
+Nov 21 swap-back reason stands (shown in brief). For the change from the previous full-data list to this one, I
+recomputed every HS case on the current Python engine with one ruling put back at a time (ride_up_2k 0.008; run-scale
+denominator = the refit MLB RE[0|000] .503; POWER_HR 0.172 with the previous hitter_spread_params), then all three
+(= the previous full-data refit, which reproduces its golden). Scratch script, nothing committed.
 
-| # | Situation | Before: shown call (menu top) | After: shown call (menu top) | Why it moved | Grade (PROPOSED) |
+**What changed vs the earlier lists.**
+- **16 HS / travel rows move now** (7 hs, 9 travel) vs v1.2.3; the previous full-data list had 23, the Nov 21 table 25.
+- **Of the Nov 21 table's 25 rows, 11 no longer move:** #4, 100, 186, 238, 336, 366, 464 (already dropped by the
+  full-data refit) and **#46, 202, 222, 360** (back to v1.2.3's call with the rulings: 46, 222 and 360 by the run-scale
+  pin, ruling 10, alone; 202 by the three together). **14 still move:** #58, 92, 138, 154, 182, 264, 266, 314, 320, 338,
+  358, 410, 476, 478.
+- **New vs the Nov 21 table: 2 rows**, #246 (new in the full-data refit; its shown call changed again with ruling 10)
+  and **#460** (new now: the ride-up shrink, ruling 5, moved it; putting 0.008 back restores v1.2.3's call).
+- The full-data list's other new rows (#42, 206, 298, 456) are back to v1.2.3's call: the run-scale pin alone restores
+  each one.
+- Ruling 8 (HARD_SD / POWER_HR) moves no HS shown call: the power effect is zero at power grade 3, and only #460 carries
+  a contact grade off 3.
+- **#100 no longer moves**, so its flag is dropped. **#410 still moves** and keeps its flag; **#154** keeps its flag.
+
+**Tally (PROPOSED): 16 rows. Drew grades 6** (3 arguable: #92, 154, 476; 3 flagged: #410 kept, #246 and #460 new).
+**10 rows take their proposed grade (Acceptable) under ruling 12.** No row is proposed Not acceptable.
+
+| # | Situation | Before (v1.2.3): shown call (menu top) | After: shown call (menu top) | Why it moved | Grade (PROPOSED) |
 |---|---|---|---|---|---|
-| 4 | travel 1-1, 1 out, runner 2nd, opp. hitter; FB 94 + SL (landing 4/6) | FB up-away 31% (SL down-away 36, FB up-away 31) | SL down-away 32% (FB up-away 34, SL down-away 32) | Same menu, top two swapped. Grounders by height, familiarity, run values | Acceptable |
-| 46 | travel 2-1, 0 out, 2nd & 3rd, 9th, up 4; sinker 94 g5 | SI down-in 53% (down-in 53, up-in 47) | SI up-in 44% (down-in 46, up-in 44, middle 10) | Riding / sinker zone whiff, grounders by height, run values, count effect | **Arguable** (D2: keep it down with a runner on 3rd and 0 outs; up 4 in the 9th softens it). Up-in was 47% before too |
-| 58 | HS 3-0, 0 out, runner 3rd, down 2; cutter command 1, slider landing 1/13 | FB down-in 20% (middle 25, up-in 25) | FB middle 23% (up-in 28, middle 23) | Level calibration and run values together | Acceptable (FB zone at 3-0) |
-| 92 | travel 0-0, 2 out, runner 2nd, pitch 118; FC g5, curve landing 3/14; he has hit the FB hard | FB down-away 7% (curve-heavy, top 12%) | CB down-in 7% (same menu within 1 point) | Sequence fits | **Arguable** (B8: curve not landing at 0-0 → curve arguable). The curve-heavy menu is the same as before |
-| 100 | travel 2-0, 1 out, runner 2nd; curve g5 landing 7/10; hitter discipline 1 | CB down-middle 10% (FB chase 19, FB up-in 17) | CB middle 13% (FB chase 21, FB up-in 16) | Many small: shape terms, run values, in-play tables, grounders by height | Acceptable. **Flag:** FB chase tops the 2-0 menu (19 → 21%), in both engines; defensible only because he chases |
-| 138 | travel 2-0, bases loaded, 1 out, disciplined hitter; 4 pitches | SL down-middle 17% (four off-speed strikes ~17 each) | SL middle 17% (SL down-middle 18, CB down-middle 17) | Several small together | Acceptable (off-speed strikes; the curve's corner dropped out, good with bases loaded) |
-| 154 | HS 3-0, bases loaded, 2 out; FB landing 4/10, SL 3/11, changeup command 1 | CH up-in 20% (FB middle 30, CH up-in 20, CH up-away 20) | CH up-away 18% (FB middle 30, CH up-in 19, CH up-away 18) | Sequence fits | **Arguable** (off-speed at 3-0), the same as before. **Flag:** about 70% changeups at 3-0 bases loaded, in both engines |
-| 182 | HS 1-2, empty, pitch 116; SL g5, CH g5 (both off-speed landing 3/13) | SL down-away 14% (CH down-away 33, CH up-away 16) | CH up-away 17% (CH down-away 34, CH up-away 17) | Same menu. Level calibration, or `PT_C` | Acceptable (anything at 1-2) |
-| 186 | HS 3-0, bases loaded, 1 out, up 4; FC g1 80, firm CH g4 | CH down-in 16% (FB middle 30, CH down-middle 19) | CH down-middle 21% (FB middle 30, CH down-middle 21) | Level calibration, run values, in-play tables | **Arguable** (off-speed at 3-0), the same as before; down-middle is the better strike |
-| 202 | HS 3-1, 2 out, runner 2nd; slider landing 4/5 | SL down-in 19% (all-slider menu 18-20 each) | SL middle 19% (same) | Same menu. Level calibration | Acceptable (E3: an off-speed pitch that's landing at 3-1) |
-| 222 | travel 2-2, 1st & 3rd, 1 out; sinker command 1, he crushes the FB | CH down-away 28% (CH down-in 29, CH down-away 28, SL down-away 21) | SL down-away 36% (CH down-away 37, SL down-away 36, CH down-in 28) | Run values; the side-by-location table | Acceptable (zone at 2-2; every call on a corner) |
-| 238 | HS 1-0, empty, up 4; cutter landing well | FB down-away 19% (FB middle 40) | FB up-away 19% (FB middle 42) | Eye level, grounders by height | Acceptable |
-| 264 | HS 0-2, bases loaded, 2 out; everything landing so-so | FB down-away 13% (CH middle 16, CH down-middle 15) | CH down-middle 12% (CH chase 14, CH down-away 13, CH middle 12) | Eye level; shape whiff (`PT_B`) | Acceptable. Middle went down and chase went up, the way C1 wants |
-| 266 | travel 0-1, runner 3rd, 0 out; sinker g5, slider g1 landing 4/10 | SL down-away 17% (SI down-away 21, SI down-middle 17) | SL down-middle 19% (SL down-away 20, SI down-away 19, SL down-middle 19) | Several small together | Acceptable (down with a runner on 3rd). Note: a grade-1 slider's share rose |
-| 314 | HS 1-2, 1st & 3rd, 2 out; he's late on the sinker | SI up-away 26% (SI middle 42) | SI down-away 19% (SI middle 48) | Level calibration plus shape terms | Acceptable. Sinker up-away fell from 26% to 16% |
-| 320 | HS 3-2, empty, 1 out; FB cutter command 1 | FB middle 27% (FB down-away 31) | FB down-away 31% (FB middle 39) | Level calibration; eye level | Acceptable (FB zone at 3-2) |
-| 336 | travel 3-1, 2nd & 3rd, 1 out; sinker 94 landing 2/10 | SI down-in 16% (SI middle 25, up-in 20) | SI up-away 15% (SI middle 22, up-in 21) | Eye level, grounders by height, sinker zone / lane terms | Acceptable (FB zone at 3-1) |
-| 338 | travel 1-0, empty; FB landing 0/12, changeup landing well | CH middle 12% (CH down-away 19) | CH down-middle 14% (CH down-away 20, CH up-away 17) | Level calibration with run values or shape terms | Acceptable (B3) |
-| 358 | travel 1-0, runner 3rd, 1 out; power hitter, late on the FB | CB down-away 16% (CB down-middle 22) | SI down-away 25% (CB down-middle 26, SI down-away 25) | Level calibration plus shape terms | Acceptable. More fastballs (15 → 25%) to a hitter who's late on it, as in F6 |
-| 360 | travel 1-1, runner 2nd, 2 out; slider command 1 | SL middle 15% (CH down-away 24) | SL down-away 13% (CH down-away 28) | Level calibration; side table; eye level | Acceptable. Away from the middle for a command-1 slider |
-| 366 | travel 0-0, empty; FB command 5 | FB up-in 17% (FB middle 22) | FB down-middle 18% (FB middle 21) | Same menu. Level calibration; grounders by height | Acceptable |
-| 410 | travel 3-2, 1st & 3rd, 0 out, new pitcher; curve g4 command 5, slider landing well | CB middle 54% (CB middle 54, SL middle 21) | SL down-away 20% (CB middle 38, SL down-away 20, SL down-in 19) | Level calibration plus shape terms | Acceptable (zone at 3-2). **Worth your look:** the middle went from ~75% to ~38% at 3-2 with runners on and 0 outs |
-| 464 | travel 2-2, runner 2nd, 0 out; split CH g4, sinker command 1 | CH down-away 61% | SI up-away 33% (CH down-away 50, SI up-away 33, SI middle 10) | Many: shape terms, run values, hitter spread, grounders by height | Acceptable by A3 (any zone at 2-2). Note: a command-1 sinker aimed up |
-| 476 | travel 3-1, runner 3rd, 2 out, tied 8th; curve g4 command 2 | CB down-middle 11% (CB middle 18, SI up-in 16) | CB middle 13% (SI up-in 23, SI up-away 16, CB middle 13) | Level calibration | **Arguable** (off-speed at 3-1), the same as before. The menu moved toward the sinker, as A2 wants |
-| 478 | travel 0-1, runner 2nd; riding FB g4 command 5 landing well | FB chase 20% (FB up-away 24, FB down-away 22) | FB down-away 25% (FB up-away 29, FB down-away 25) | Level calibration | Acceptable |
+| 58 | HS 3-0, 0 out, runner 3rd, down 2; cutter command 1, slider landing 1/13 | FB down-in 20% (FB middle 25, up-in 25) | FB middle 23% (up-in 27, middle 23, down-in 21) | Level calibration and run values (Nov 21); unchanged by the rulings | Acceptable (A1: FB zone at 3-0). Takes its proposed grade (ruling 12) |
+| 92 | travel 0-0, 2 out, runner 2nd, pitch 118; FC g5, curve landing 3/14; he has hit the FB hard | FB down-away 7% (curve-heavy, top 12%) | CB chase 7% (same menu within 1 point; curve 60% before and after) | Sequence fits (Nov 21); unchanged by the rulings | **Arguable. Drew grades** (see below) |
+| 138 | travel 2-0, bases loaded, 1 out, disciplined hitter; 4 pitches | SL down-middle 17% (four off-speed strikes ~17 each) | SL middle 17% (SL down-middle 18, CB down-middle 17) | Several small together (Nov 21); unchanged by the rulings | Acceptable (off-speed strikes; the curve's corner dropped out, good with bases loaded). Takes its proposed grade (ruling 12) |
+| 154 | HS 3-0, bases loaded, 2 out; FB landing 4/10, SL 3/11, changeup command 1 | CH up-in 20% (FB middle 30, CH up-in 20, CH up-away 20) | CH up-away 18% (FB middle 29, CH up-in 20, CH up-away 18) | Sequence fits (Nov 21); unchanged by the rulings | **Arguable, flagged. Drew grades** (see below) |
+| 182 | HS 1-2, empty, pitch 116; SL g5, CH g5 (curve and changeup landing 3/13) | SL down-away 14% (CH down-away 33, CH up-away 16) | CH up-away 17% (CH down-away 34, CH up-away 17, SL down-away 15) | Same menu. Level calibration or `PT_C` (Nov 21) | Acceptable (anything at 1-2). Takes its proposed grade (ruling 12) |
+| 246 | travel 0-0, 2 out, runner 3rd, up 4; FB g1 command 5 (72), curve g1 command 4; he has hit the FB hard (+0.72 over 21 looks) | CB chase 8% (CB down-away 12, FB up-in 11, CB down-in 10) | FB down-away 9% (CB down-away 14, FB up-in 14, FB chase 10, FB up-away 10) | Near-tied spots. The refit raised the fastball share (52% -> 60%); ruling 10 then swapped the shown spot (put back alone: CB down-in, the previous list's call) | **Flagged (new). Drew grades** (see below) |
+| 264 | HS 0-2, bases loaded, 2 out; everything landing so-so | FB down-away 13% (CH middle 16, CH down-middle 15) | CH down-middle 12% (CH down-away 13, CH chase 13, CH middle 12) | Eye level; shape whiff `PT_B` (Nov 21) | Acceptable (C1: middle went down and chase went up). Takes its proposed grade (ruling 12) |
+| 266 | travel 0-1, runner 3rd, 0 out; sinker g5 command 1, slider g1 landing 4/10 | SL down-away 17% (SI down-away 21, SI down-middle 17) | SL down-middle 18% (SL down-away 20, SI down-away 20, SL down-middle 18) | Several small together (Nov 21) | Acceptable (D2: down with a runner on 3rd). Note: the grade-1 slider's share rose 32% -> 39%. Takes its proposed grade (ruling 12) |
+| 314 | HS 1-2, 1st & 3rd, 2 out; he's late on the sinker | SI up-away 26% (SI middle 42) | SI down-away 20% (SI middle 47, down-away 20, down-middle 18) | Level calibration plus shape terms (Nov 21) | Acceptable (C3). Takes its proposed grade (ruling 12) |
+| 320 | HS 3-2, empty, 1 out; FB cutter command 1 | FB middle 27% (FB down-away 31) | FB down-away 31% (FB middle 32, down-away 31) | Level calibration; eye level (Nov 21) | Acceptable (C7: FB zone at 3-2). Takes its proposed grade (ruling 12) |
+| 338 | travel 1-0, empty; FB landing 0/12, changeup landing well | CH middle 12% (CH down-away 19) | CH down-middle 14% (CH down-away 20, CH up-away 17) | Level calibration with run values or shape terms (Nov 21) | Acceptable (B3). Takes its proposed grade (ruling 12) |
+| 358 | travel 1-0, runner 3rd, 1 out; power hitter, late on the FB | CB down-away 16% (CB down-middle 22) | CB down-middle 25% (SI down-away 27, CB down-middle 25) | Level calibration plus shape terms (Nov 21) | Acceptable (F6: more fastballs, 15 -> 27%, to a hitter late on it). Takes its proposed grade (ruling 12) |
+| 410 | travel 3-2, 1st & 3rd, 0 out, new pitcher; curve g4 command 5, slider landing well | CB middle 54% (CB middle 54, SL middle 21) | SL down-away 23% (CB middle 36, SL down-away 23, SL down-in 21) | Level calibration plus shape terms (Nov 21); the rulings move it 1-2 points | **Flagged (kept). Drew grades** (see below) |
+| 460 | HS 2-2, 2 out, 1st & 2nd; riding FB g1 command 1 (88), slow curve g2 command 1 landing 7/14 | FB down-away 41% (FB middle 42, down-away 41, up-away 17) | FB middle 52% (FB middle 52, down-away 38, up-away 10) | **Ruling 5:** the smaller ride-up credit takes FB up-away 18% -> 10%; putting 0.008 back restores the old call. The refit had already raised the middle (42 -> 48%) | **Flagged (new). Drew grades** (see below) |
+| 476 | travel 3-1, runner 3rd, 2 out, tied 8th; sinker g1 command 4, curve g4 command 2 | CB down-middle 11% (CB middle 18, SI up-in 16) | SI down-away 10% (SI up-in 20, SI up-away 14, CB middle 13) | Level calibration (Nov 21); unchanged by the rulings | **Arguable. Drew grades** (see below) |
+| 478 | travel 0-1, runner 2nd; riding FB g4 command 5 landing well | FB chase 20% (FB up-away 24, FB down-away 22) | FB down-away 25% (FB up-away 28, FB down-away 25, FB chase 23) | Level calibration (Nov 21) | Acceptable. Takes its proposed grade (ruling 12) |
 
-**Tally (PROPOSED):**
-- **20 acceptable, 5 arguable** (46, 92, 154, 186, 476), **0 not acceptable**.
-- 3 of the 5 arguable were arguable before. Only #46 and #92 drop a grade, and in both the menu is nearly what it was.
-- Worth a look: **#410** (the middle at 3-2 fell by half), plus the pre-existing flags on #100 and #154.
+### The six rows Drew grades (menus: golden dist, top spots with shares)
+
+Options for each: **Acceptable / Arguable / Not acceptable**.
+
+- **#92 (arguable, as on Nov 21).** travel 0-0, 2 out, runner 2nd, pitch 118, up 4 in the 9th; cutter g5, curve g3
+  landing 3/14; the hitter has hit the fastball hard (+0.83 over 3 looks, thin).
+  - Before: CB down-away 12, CB middle 10, CB down-middle 10, CB up-away 8, CB down-in 8 (curve 60% in all).
+  - After: CB down-away 12, CB middle 10, CB down-middle 10, CB up-away 8, CB down-in 7 (curve 60%).
+  - Rule: **B8** (a curve not landing at 0-0 is arguable). Proposed: Arguable; the menu is the same as before, only
+    the shown spot moved.
+- **#154 (arguable, flagged; as on Nov 21).** HS 3-0, bases loaded, 2 out, down 2; sinker g2 landing 4/10, slider g4
+  landing 3/11, changeup g2 command 1.
+  - Before: FB middle 30, CH up-in 20, CH up-away 20, CH down-in 15, CH down-away 15 (changeup 70%).
+  - After: FB middle 29, CH up-in 20, CH up-away 18, CH down-in 16, CH down-away 15 (changeup 70%).
+  - Rule: **A1** (3-0 hard rule: get a strike; off-speed at 3-0 is arguable at best). **Flag:** about 70% changeups,
+    command 1, at 3-0 with the bases loaded, in both engines and before the refit too. Proposed: Arguable.
+- **#246 (new, flagged).** travel 0-0, 2 out, runner 3rd, up 4 in the 1st; fastball g1 command 5 (72 mph), curve g1
+  command 4; the hitter has hit the fastball hard (+0.72 over 21 looks).
+  - Before: CB down-away 12, FB up-in 11, CB down-in 10, FB chase 9, CB chase 8 (fastball 52%).
+  - After: CB down-away 14, FB up-in 14, FB chase 10, FB up-away 10, FB down-away 9 (fastball 60%).
+  - Rule: **B1** (0-0, any strike) and the hitter read (hit hard -> fewer of that pitch). **Why flagged:** the
+    fastball share rose 8 points against a hitter with a well-sampled hard-contact read on it. The rise came with the
+    full-data refit; ruling 10 only swapped the shown spot. Proposed: Arguable.
+- **#410 (flag kept).** travel 3-2, 1st & 3rd, 0 out, up 4 in the 7th, new pitcher; sinker g1 command 1, slider g3
+  command 5 landing 9/5 (landing well), curve g4 command 5, changeup g1.
+  - Before: CB middle 54, SL middle 21, SL down-middle 15, SL down-in 7, SL down-away 3 (middle 75%).
+  - After: CB middle 36, SL down-away 23, SL down-in 21, SL down-middle 15, SL middle 6 (middle 42%).
+  - Rule: **C7/C8** (3-2: a strike he can't do much with; zone is acceptable). **Why flagged:** the middle fell from
+    about 75% to 42% at 3-2 with runners on and 0 outs, toward slider corners. Proposed: Acceptable (every top spot is
+    a landing pitch in or at the zone).
+- **#460 (new, flagged).** HS 2-2, 2 out, 1st & 2nd, up 2 in the 7th; riding fastball g1 command 1 (88), slow curve g2
+  command 1 landing 7/14; contact grade 3.
+  - Before: FB middle 42, FB down-away 41, FB up-away 17.
+  - After: FB middle 52, FB down-away 38, FB up-away 10.
+  - Rule: **A3** (2-2 hard rule: zone pitches are acceptable). **Why flagged:** ruling 5 moved it directly (the
+    smaller ride-up credit gives back 8 points of FB up-away, mostly to the middle), so a middle-middle fastball from a
+    grade-1 / command-1 arm is now over half the 2-2 calls with two on. Proposed: Acceptable (command 1 aims at the
+    middle so the pitch lands; no curve at 2-2 for a command-1 curve).
+- **#476 (arguable, as on Nov 21).** travel 3-1, runner 3rd, 2 out, tied 8th; sinker g1 command 4 (72), curve g4
+  command 2.
+  - Before: CB middle 18, SI up-in 16, SI up-away 12, CB down-middle 11, CB down-in 10 (curve 62%).
+  - After: SI up-in 20, SI up-away 14, CB middle 13, SI down-away 10, CB down-middle 9 (curve 48%).
+  - Rule: **A2** (3-1 hard rule: get a strike; off-speed at 3-1 is arguable). The menu moved toward the sinker, as A2
+    wants, but the curve is still about half. Proposed: Arguable.
 
 ---
 
