@@ -249,8 +249,37 @@ def t_represent():
     check("summarize: full K% = 17/82", t[0][5] == f"{17 / 82:.4f}", t[0][5])
 
 
+# ---------- refit_all driver (buildout Part 4) ----------
+def t_refit_all():
+    import os, tempfile, types
+    from hitter_data import refit_all as ra
+    with tempfile.TemporaryDirectory() as d:
+        os.makedirs(os.path.join(d, "A", "2025"))
+        p = os.path.join(d, "A", "2025", "2025-04-01.csv.gz")
+        open(p, "wb").write(b"x")
+        f1 = ra.statcast_fingerprint(d)
+        check("fingerprint stable when nothing changes", f1 == ra.statcast_fingerprint(d))
+        open(os.path.join(d, "A", "2025", "2025-04-02.csv.gz"), "wb").write(b"y")
+        check("fingerprint changes when a Statcast file lands", f1 != ra.statcast_fingerprint(d))
+    args = types.SimpleNamespace(skip_ingest=False, skip_zone=False, force_zone=False)
+    steps = {n: r for n, _, _, r in ra.plan(args, {"statcast_fingerprint": "abc"}, "abc")}
+    check("zone skipped when Statcast unchanged", steps["zone"] is not None, steps["zone"])
+    check("fits always run", all(steps[k] is None for k in ("fit_count", "fit_runs", "situation", "traits", "score",
+                                                             "fit_count_hs")))
+    steps = {n: r for n, _, _, r in ra.plan(args, {"statcast_fingerprint": "abc"}, "def")}
+    check("zone runs when new Statcast landed", steps["zone"] is None)
+    args.skip_ingest = True
+    check("--skip-ingest skips ingest", {n: r for n, _, _, r in ra.plan(args, {}, "x")}["ingest"] == "--skip-ingest")
+    names = [n for n, _, _, _ in ra.STEPS]
+    check("score runs after fit_count", names.index("score") > names.index("fit_count"))
+    check("no step passes the held-out season", all(str(ra.HELDOUT_SEASON) not in " ".join(a) for _, _, a, _ in ra.STEPS))
+    txt = ra.summarize([("fit_count", 0, 12.0, None, None), ("zone", None, 0, None, "no new Statcast since the last run")], 0)
+    check("summary labeled PROVISIONAL and lists skipped steps",
+          "PROVISIONAL" in txt and "skipped (no new Statcast" in txt and "| fit_count | ok |" in txt)
+
+
 for t in (t_pitch_strings, t_results, t_bip, t_state, t_more_state, t_people, t_grouped, t_nonplay, t_ingest, t_heldout,
-          t_represent):
+          t_represent, t_refit_all):
     t()
 print(f"\n{'FAILED ' + str(len(FAILS)) if FAILS else 'all passed'}")
 sys.exit(1 if FAILS else 0)

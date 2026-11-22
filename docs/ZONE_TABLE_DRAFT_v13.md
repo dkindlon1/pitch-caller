@@ -7,7 +7,7 @@ Seed level: **A** (plan 1.2: Single-A Statcast seeds the table). Triple-A and ML
 ## How to read it
 
 - Every number is a **ratio of rates**: x1.30 means 30% more often, x0.70 means 30% less often. In brackets: the 95% interval from resampling whole games (game_pk bootstrap, 200 draws).
-- "The average pitch in that count" means the count group's own rate over that level's real location mix. The table is **mean-preserving**: averaged over that mix every count group comes back to its own rate exactly (checked: largest deviation 6.7e-16), so the count layer fit per level sets the level and this table only the shape.
+- "The average pitch in that count" means the count group's own rate over that level's real location mix. The table is **mean-preserving**: averaged over that mix every count group comes back to its own rate exactly (checked: largest deviation 7.8e-16), so the count layer fit per level sets the level and this table only the shape.
 - Zone bands, pitch classes and count groups are the engine's own: heart / edge / off / way-off are the engine's Savant attack zones (`engine.py` GEO_HEART / GEO_ZONE / GEO_EXT: inside 67%, 133%, 200% of the zone; the batter's own zone height); fastball = four-seam, sinker, cutter (`FASTBALL_KINDS`); off-speed = slider, curveball, changeup (sweeper = SL|sweeper, splitter = CH|split). Count groups follow the engine's count terms: first pitch (0-0), hitter's counts (1-0, 2-0, 3-0, 2-1, 3-1), 1-1, 0-1, two strikes. Height thirds (up / middle / down) are thirds of the zone height (`HEIGHTS`). Hard-hit = 95+ mph exit speed.
 - **v1.2** is what today's engine implies for the same comparison: `engine.outcome_probs` per landing band for a neutral pitch (grade 3, command 3, same side, no hitter reads) at D1, averaged with the seed level's own counts the same way. "v1.2 has no such term" is written where the engine's value doesn't move with that cell.
 - Fit: each cell's recency-weighted rate (weights halve every 2 seasons back), shrunk by 20 pitches toward the same cell pooled over all counts, then rescaled to be mean-preserving.
@@ -16,72 +16,72 @@ Seed level: **A** (plan 1.2: Single-A Statcast seeds the table). Triple-A and ML
 
 ### Swing
 
-| # | Statement | A (seed) | MLB | v1.2 now |
-|---|---|---|---|---|
-| S1 | On the first pitch, a fastball over the heart is swung at **x1.98** as often as the average 0-0 pitch. (n=4,581) | x1.98 (1.95-2.02) | x1.68 (1.66-1.70) | x1.82 |
-| S2 | In hitter's counts, a fastball over the heart is swung at **x1.75** as often as the average pitch in those counts. (n=5,666) | x1.75 (1.73-1.78) | x1.56 (1.54-1.57) | x1.67 |
-| S3 | With two strikes, a fastball over the heart is swung at **x1.60** as often as the average two-strike pitch. (n=3,564) | x1.60 (1.58-1.62) | x1.56 (1.55-1.56) | x1.57 |
-| S4 | On the first pitch, a fastball on the edge is swung at **x1.26** as often as the average 0-0 pitch. (n=7,921) | x1.26 (1.23-1.28) | x1.05 (1.03-1.06) | x1.15 |
-| S5 | With two strikes, an off-speed pitch on the edge is swung at **x1.31** as often as the average two-strike pitch. (n=5,318) | x1.31 (1.29-1.33) | x1.34 (1.33-1.35) | x1.26 |
+| # | Statement | A (seed) | AAA | MLB | v1.2 now |
+|---|---|---|---|---|---|
+| S1 | On the first pitch, a fastball over the heart is swung at **x1.93** as often as the average 0-0 pitch. (n=22,127) | x1.93 (1.91-1.95) | x1.83 (1.82-1.85) | x1.75 (1.74-1.76) | x1.88 |
+| S2 | In hitter's counts, a fastball over the heart is swung at **x1.72** as often as the average pitch in those counts. (n=28,108) | x1.72 (1.70-1.73) | x1.64 (1.63-1.65) | x1.58 (1.57-1.58) | x1.72 |
+| S3 | With two strikes, a fastball over the heart is swung at **x1.60** as often as the average two-strike pitch. (n=17,620) | x1.60 (1.59-1.61) | x1.57 (1.56-1.57) | x1.55 (1.55-1.56) | x1.62 |
+| S4 | On the first pitch, a fastball on the edge is swung at **x1.31** as often as the average 0-0 pitch. (n=38,416) | x1.31 (1.30-1.33) | x1.23 (1.22-1.24) | x1.07 (1.07-1.08) | x1.19 |
+| S5 | With two strikes, an off-speed pitch on the edge is swung at **x1.32** as often as the average two-strike pitch. (n=28,544) | x1.32 (1.31-1.33) | x1.35 (1.35-1.36) | x1.35 (1.34-1.35) | x1.30 |
 
 ### Chase
 
-| # | Statement | A (seed) | MLB | v1.2 now |
-|---|---|---|---|---|
-| C1 | With two strikes, an off-speed pitch just off the plate is chased **x1.52** as often as the average two-strike pitch out of the zone. (n=4,472) | x1.52 (1.48-1.56) | x1.60 (1.57-1.61) | x1.52 |
-| C2 | In hitter's counts, an off-speed pitch just off the plate is chased **x1.63** as often as the average out-of-zone pitch in those counts. (n=2,007) | x1.63 (1.55-1.72) | x1.58 (1.52-1.64) | x1.37 |
-| C3 | With two strikes, a fastball just off the plate is chased **x1.33** as often as the average two-strike pitch out of the zone. (n=4,358) | x1.33 (1.29-1.37) | x1.09 (1.06-1.12) | x1.54 |
-| C4 | With two strikes, an off-speed pitch way off (waste) is chased **x0.56** as often as the average two-strike pitch out of the zone. (n=4,170) | x0.56 (0.53-0.59) | x0.41 (0.39-0.43) | x0.29 |
-| C5 | On the first pitch, an off-speed pitch just off the plate is chased **x1.23** as often as a fastball just off the plate. (n=2,912) | x1.23 (1.10-1.35) | x1.76 (1.61-1.89) | x0.95 |
+| # | Statement | A (seed) | AAA | MLB | v1.2 now |
+|---|---|---|---|---|---|
+| C1 | With two strikes, an off-speed pitch just off the plate is chased **x1.51** as often as the average two-strike pitch out of the zone. (n=24,695) | x1.51 (1.49-1.53) | x1.53 (1.52-1.54) | x1.59 (1.59-1.60) | x1.60 |
+| C2 | In hitter's counts, an off-speed pitch just off the plate is chased **x1.59** as often as the average out-of-zone pitch in those counts. (n=10,630) | x1.59 (1.54-1.64) | x1.57 (1.55-1.60) | x1.66 (1.64-1.67) | x1.44 |
+| C3 | With two strikes, a fastball just off the plate is chased **x1.33** as often as the average two-strike pitch out of the zone. (n=22,833) | x1.33 (1.31-1.34) | x1.32 (1.30-1.33) | x1.14 (1.13-1.15) | x1.55 |
+| C4 | With two strikes, an off-speed pitch way off (waste) is chased **x0.60** as often as the average two-strike pitch out of the zone. (n=24,818) | x0.60 (0.59-0.62) | x0.55 (0.54-0.56) | x0.46 (0.45-0.46) | x0.30 |
+| C5 | On the first pitch, an off-speed pitch just off the plate is chased **x1.16** as often as a fastball just off the plate. (n=17,249) | x1.16 (1.11-1.21) | x1.28 (1.24-1.33) | x1.75 (1.72-1.80) | x0.99 |
 
 ### Whiff
 
-| # | Statement | A (seed) | MLB | v1.2 now |
-|---|---|---|---|---|
-| W1 | With two strikes, a swing at an off-speed pitch just off the plate misses **x1.90** as often as the average two-strike swing. (n=2,107) | x1.90 (1.83-1.99) | x2.25 (2.20-2.31) | x2.05 |
-| W2 | On the first pitch, a swing at a fastball over the heart misses **x0.43** as often as the average 0-0 swing. (n=2,959) | x0.43 (0.39-0.46) | x0.49 (0.46-0.51) | x0.34 |
-| W3 | With two strikes, a swing at off-speed over the heart misses **x0.98** as often as a swing at a fastball there. (n=2,428) | x0.98 (0.84-1.14) | x1.07 (1.00-1.20) | x1.63 |
-| W4 | At 0-1, a swing at a fastball on the edge misses **x0.80** as often as the average 0-1 swing. (n=1,637) | x0.80 (0.74-0.88) | x0.81 (0.77-0.85) | x0.66 |
-| W5 | With two strikes, a swing at an off-speed pitch way off misses **x3.33** as often as the average two-strike swing. (n=724) | x3.33 (3.21-3.45) | x3.93 (3.82-4.03) | x2.96 |
+| # | Statement | A (seed) | AAA | MLB | v1.2 now |
+|---|---|---|---|---|---|
+| W1 | With two strikes, a swing at an off-speed pitch just off the plate misses **x1.74** as often as the average two-strike swing. (n=12,561) | x1.74 (1.71-1.77) | x1.87 (1.85-1.89) | x2.15 (2.13-2.16) | x1.99 |
+| W2 | On the first pitch, a swing at a fastball over the heart misses **x0.49** as often as the average 0-0 swing. (n=14,143) | x0.49 (0.48-0.51) | x0.46 (0.45-0.47) | x0.51 (0.50-0.52) | x0.31 |
+| W3 | With two strikes, a swing at off-speed over the heart misses **x1.15** as often as a swing at a fastball there. (n=12,309) | x1.15 (1.08-1.21) | x1.10 (1.06-1.14) | x1.09 (1.06-1.11) | x1.69 |
+| W4 | At 0-1, a swing at a fastball on the edge misses **x0.72** as often as the average 0-1 swing. (n=8,019) | x0.72 (0.69-0.74) | x0.73 (0.71-0.75) | x0.78 (0.77-0.79) | x0.58 |
+| W5 | With two strikes, a swing at an off-speed pitch way off misses **x3.02** as often as the average two-strike swing. (n=5,163) | x3.02 (2.97-3.06) | x3.36 (3.32-3.40) | x3.84 (3.81-3.87) | x2.88 |
 
 ### Hard contact
 
-| # | Statement | A (seed) | MLB | v1.2 now |
-|---|---|---|---|---|
-| H1 | Hung off-speed over the heart with two strikes is hit hard (95+ mph) **x0.88** as often as a fastball there. (n=1,207) | x0.88 (0.80-0.98) | x0.90 (0.86-0.94) | x1.52 |
-| H2 | In hitter's counts, a fastball over the heart put in play is hit hard **x1.25** as often as the average ball in play in those counts. (n=1,992) | x1.25 (1.21-1.30) | x1.24 (1.21-1.26) | x1.29 |
-| H3 | With two strikes, an off-speed pitch just off the plate put in play is hit hard **x0.47** as often as the average two-strike ball in play. (n=454) | x0.47 (0.38-0.58) | x0.39 (0.35-0.45) | x0.40 |
-| H4 | At 0-1, a fastball on the edge put in play is hit hard **x0.91** as often as the average 0-1 ball in play. (n=580) | x0.91 (0.81-1.01) | x0.93 (0.88-0.98) | x0.72 |
-| H5 | On the first pitch, off-speed over the heart put in play is hit hard **x1.00** as often as the average 0-0 ball in play. (n=520) | x1.00 (0.91-1.10) | x1.06 (1.01-1.10) | x1.56 |
+| # | Statement | A (seed) | AAA | MLB | v1.2 now |
+|---|---|---|---|---|---|
+| H1 | Hung off-speed over the heart with two strikes is hit hard (95+ mph) **x0.78** as often as a fastball there. (n=5,776) | x0.78 (0.74-0.82) | x0.81 (0.79-0.83) | x0.85 (0.84-0.87) | x1.48 |
+| H2 | In hitter's counts, a fastball over the heart put in play is hit hard **x1.27** as often as the average ball in play in those counts. (n=9,098) | x1.27 (1.24-1.29) | x1.28 (1.27-1.30) | x1.26 (1.25-1.26) | x1.33 |
+| H3 | With two strikes, an off-speed pitch just off the plate put in play is hit hard **x0.38** as often as the average two-strike ball in play. (n=2,777) | x0.38 (0.34-0.43) | x0.43 (0.41-0.46) | x0.34 (0.33-0.35) | x0.40 |
+| H4 | At 0-1, a fastball on the edge put in play is hit hard **x0.94** as often as the average 0-1 ball in play. (n=2,662) | x0.94 (0.89-1.00) | x0.92 (0.89-0.94) | x0.88 (0.87-0.90) | x0.76 |
+| H5 | On the first pitch, off-speed over the heart put in play is hit hard **x1.07** as often as the average 0-0 ball in play. (n=2,501) | x1.07 (1.01-1.12) | x1.07 (1.04-1.10) | x1.07 (1.06-1.09) | x1.59 |
 
 ### Ball type
 
-| # | Statement | A (seed) | MLB | v1.2 now |
-|---|---|---|---|---|
-| B1 | A fastball in the top third of the zone or above, put in play, is a pop-up **x1.63** as often as the average ball in play. (n=4,295) | x1.63 (1.55-1.72) | x1.71 (1.64-1.79) | x1.26 |
-| B2 | An off-speed pitch in the bottom third or below, put in play, is a ground ball **x1.21** as often as the average ball in play. (n=3,552) | x1.21 (1.18-1.24) | x1.22 (1.20-1.24) | x1.21 |
-| B3 | A fastball up, put in play, is a fly ball **x1.25** as often as the average ball in play. (n=4,295) | x1.25 (1.20-1.30) | x1.25 (1.22-1.28) | x1.13 |
-| B4 | A fastball over the heart, put in play, is a line drive **x1.05** as often as the average ball in play. (n=6,040) | x1.05 (1.02-1.09) | x1.10 (1.08-1.13) | x1.16 |
-| B5 | An off-speed pitch just off the plate, put in play, is a ground ball **x1.40** as often as the average ball in play. (n=751) | x1.40 (1.31-1.49) | x1.46 (1.40-1.51) | x1.20 |
+| # | Statement | A (seed) | AAA | MLB | v1.2 now |
+|---|---|---|---|---|---|
+| B1 | A fastball in the top third of the zone or above, put in play, is a pop-up **x1.71** as often as the average ball in play. (n=21,878) | x1.71 (1.65-1.76) | x1.70 (1.67-1.73) | x1.81 (1.79-1.84) | x1.27 |
+| B2 | An off-speed pitch in the bottom third or below, put in play, is a ground ball **x1.23** as often as the average ball in play. (n=18,727) | x1.23 (1.21-1.24) | x1.20 (1.19-1.21) | x1.20 (1.19-1.20) | x1.22 |
+| B3 | A fastball up, put in play, is a fly ball **x1.30** as often as the average ball in play. (n=21,878) | x1.30 (1.28-1.32) | x1.24 (1.23-1.26) | x1.27 (1.26-1.28) | x1.13 |
+| B4 | A fastball over the heart, put in play, is a line drive **x1.09** as often as the average ball in play. (n=27,397) | x1.09 (1.07-1.11) | x1.10 (1.08-1.11) | x1.08 (1.08-1.09) | x1.18 |
+| B5 | An off-speed pitch just off the plate, put in play, is a ground ball **x1.36** as often as the average ball in play. (n=4,673) | x1.36 (1.33-1.40) | x1.38 (1.36-1.40) | x1.44 (1.43-1.45) | x1.20 |
 
 ### Profiles
 
-| # | Statement | A (seed) | MLB | v1.2 now |
-|---|---|---|---|---|
-| P1 | With two strikes, a sweeper just off the plate is chased **x1.18** as often as a slider there. (n=94) | x1.18 (1.00-1.37) | x1.02 (0.96-1.07) | x1.06 |
-| P2 | A swing at a splitter just off the plate misses **x1.10** as often as a swing at a changeup there. (n=115) | x1.10 (0.90-1.26) | x1.18 (1.11-1.25) | x1.00 (v1.2 has no such term) |
-| P3 | A sinker put in play is a ground ball **x1.30** as often as a four-seam fastball put in play. (n=4,089) | x1.30 (1.23-1.35) | x1.73 (1.68-1.79) | x1.63 |
-| P4 | A curveball over the heart put in play is hit hard **x0.97** as often as a slider over the heart. (n=540) | x0.97 (0.85-1.09) | x0.95 (0.89-1.01) | x0.96 |
+| # | Statement | A (seed) | AAA | MLB | v1.2 now |
+|---|---|---|---|---|---|
+| P1 | With two strikes, a sweeper just off the plate is chased **x0.96** as often as a slider there. (n=578) | x0.96 (0.87-1.05) | x0.98 (0.95-1.01) | x0.98 (0.96-1.00) | x1.06 |
+| P2 | A swing at a splitter just off the plate misses **x1.00** as often as a swing at a changeup there. (n=200) | x1.00 (0.86-1.15) | x1.15 (1.11-1.20) | x1.16 (1.14-1.19) | x0.98 |
+| P3 | A sinker put in play is a ground ball **x1.28** as often as a four-seam fastball put in play. (n=21,244) | x1.28 (1.26-1.31) | x1.66 (1.63-1.68) | x1.65 (1.64-1.66) | x1.62 |
+| P4 | A curveball over the heart put in play is hit hard **x0.99** as often as a slider over the heart. (n=2,830) | x0.99 (0.93-1.06) | x0.98 (0.95-1.01) | x0.98 (0.96-0.99) | x0.96 |
 
 ### Foul
 
-| # | Statement | A (seed) | MLB | v1.2 now |
-|---|---|---|---|---|
-| F1 | With two strikes, contact on a fastball on the edge is fouled off **x1.05** as often as the average two-strike contact. (n=3,801) | x1.05 (1.03-1.08) | x1.10 (1.09-1.12) | x1.07 |
+| # | Statement | A (seed) | AAA | MLB | v1.2 now |
+|---|---|---|---|---|---|
+| F1 | With two strikes, contact on a fastball on the edge is fouled off **x1.05** as often as the average two-strike contact. (n=19,819) | x1.05 (1.04-1.07) | x1.07 (1.06-1.07) | x1.09 (1.08-1.09) | x1.06 |
 
-**Largest effects at the seed level** (interval excludes x1.00): W5 x3.33, W2 x0.43, H3 x0.47, S1 x1.98, W1 x1.90.
+**Largest effects at the seed level** (interval excludes x1.00): W5 x3.02, H3 x0.38, W2 x0.49, S1 x1.93, W1 x1.74.
 
-**Where the seed and v1.2 disagree most** (v1.2's value outside the seed's 95% interval, largest gap first): C4 data x0.56 vs v1.2 x0.29; H1 data x0.88 vs v1.2 x1.52; W3 data x0.98 vs v1.2 x1.63; H5 data x1.00 vs v1.2 x1.56; B1 data x1.63 vs v1.2 x1.26; C5 data x1.23 vs v1.2 x0.95; W2 data x0.43 vs v1.2 x0.34; H4 data x0.91 vs v1.2 x0.72.
+**Where the seed and v1.2 disagree most** (v1.2's value outside the seed's 95% interval, largest gap first): C4 data x0.60 vs v1.2 x0.30; H1 data x0.78 vs v1.2 x1.48; W2 data x0.49 vs v1.2 x0.31; H5 data x1.07 vs v1.2 x1.59; W3 data x1.15 vs v1.2 x1.69; B1 data x1.71 vs v1.2 x1.27; P3 data x1.28 vs v1.2 x1.62; H4 data x0.94 vs v1.2 x0.76.
 
 Where v1.2's numbers come from (`engine.py`): swing = `S0` by band + the count terms in `outcome_probs` (+0.9 logit at two strikes for every band; -0.4 at 0-0; hitter's counts +0.3 in the zone and -0.4 out of it; 3-0 -2.0) + the level swing offsets `zsw` / `osw` + `class_terms` (+0.2 on an off-speed pitch just off the plate) + `profile_terms`; whiff = `W0` by band + `W_FB` / `KIND_W_OS` + `wz` / `wo`; foul = `F0` by band (+0.3 at two strikes); hard = `Q0` by band + the +0.5 hanger term (off-speed over the heart) + `class_terms` / `profile_terms`; ball type = `GB_PROFILE` + `TYPED.beta_y` (-0.36 logit per ft of aimed height) + the contact-quality shift, so the band moves ball type only through v1.2's weak / solid / hard split. The plan's inventory (`docs/HITTER_V13_INVENTORY.md` B20) lists `S0 C0 W0 F0 Q0` as provenance unclear and to be superseded by this table.
 
@@ -91,13 +91,39 @@ Baseball Savant `details` day files, regular season, `C:/dev/pitchiq-data/statca
 
 | Level | Season | Day files | Raw rows | Kept pitches | Use |
 |---|---|---|---|---|---|
-| A | 2025 | 120 | 173,691 | 153,778 | fit (4 games in 5) + check (1 in 5) |
+| A | 2021 | 120 | 173,901 | 155,199 | fit |
+| A | 2022 | 132 | 181,593 | 161,815 | fit |
+| A | 2023 | 132 | 192,847 | 160,386 | fit |
+| A | 2024 | 134 | 188,527 | 168,021 | fit |
+| A | 2025 | 132 | 189,948 | 168,260 | check (held out from the fit) |
 | A | 2026 | 133 | 193,353 | - | held out: counted only, never fit or scored |
-| MLB | 2025 | 100 | 379,405 | 375,854 | fit (4 games in 5) + check (1 in 5) |
+| AAA | 2023 | 150 | 687,351 | 681,722 | fit |
+| AAA | 2024 | 151 | 662,133 | 656,944 | fit |
+| AAA | 2025 | 149 | 659,139 | 649,790 | check (held out from the fit) |
+| AAA | 2026 | 148 | 652,772 | - | held out: counted only, never fit or scored |
+| MLB | 2008 | 184 | 714,139 | 675,338 | fit |
+| MLB | 2009 | 180 | 716,667 | 694,853 | fit |
+| MLB | 2010 | 180 | 710,399 | 691,273 | fit |
+| MLB | 2011 | 179 | 707,843 | 690,154 | fit |
+| MLB | 2012 | 181 | 705,322 | 690,351 | fit |
+| MLB | 2013 | 180 | 709,917 | 696,083 | fit |
+| MLB | 2014 | 181 | 704,976 | 690,208 | fit |
+| MLB | 2015 | 179 | 702,306 | 688,813 | fit |
+| MLB | 2016 | 179 | 715,823 | 702,421 | fit |
+| MLB | 2017 | 179 | 724,627 | 710,807 | fit |
+| MLB | 2018 | 184 | 724,452 | 712,856 | fit |
+| MLB | 2019 | 185 | 735,090 | 723,731 | fit |
+| MLB | 2020 | 67 | 264,262 | 262,534 | fit |
+| MLB | 2021 | 182 | 712,320 | 705,527 | fit |
+| MLB | 2022 | 179 | 710,210 | 705,134 | fit |
+| MLB | 2023 | 182 | 720,684 | 714,593 | fit |
+| MLB | 2024 | 185 | 711,899 | 704,935 | fit |
+| MLB | 2025 | 184 | 712,528 | 706,051 | check (held out from the fit) |
+| MLB | 2026 | 184 | 716,792 | - | held out: counted only, never fit or scored |
 
-- **AAA: no data on disk yet.** The code runs on it as soon as files land (rerun the command above).
-- **A**: only 2025 is on disk below the held-out season, so it is both fit and checked: 4 games in 5 fit, 1 in 5 (game_pk % 5 == 0) held out for the check. Recency weights don't apply (one season).
-- **MLB**: only 2025 is on disk below the held-out season, so it is both fit and checked: 4 games in 5 fit, 1 in 5 (game_pk % 5 == 0) held out for the check. Recency weights don't apply (one season).
+- **A**: fit on 2021, 2022, 2023, 2024 (recency weights 2021: 0.35, 2022: 0.50, 2023: 0.71, 2024: 1.00); 2025 held out for the check.
+- **AAA**: fit on 2023, 2024 (recency weights 2023: 0.71, 2024: 1.00); 2025 held out for the check.
+- **MLB**: fit on 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 (recency weights 2008: 0.00, 2009: 0.01, 2010: 0.01, 2011: 0.01, 2012: 0.02, 2013: 0.02, 2014: 0.03, 2015: 0.04, 2016: 0.06, 2017: 0.09, 2018: 0.12, 2019: 0.18, 2020: 0.25, 2021: 0.35, 2022: 0.50, 2023: 0.71, 2024: 1.00); 2025 held out for the check.
 
 ## Held-out check (the seed's own check)
 
@@ -105,128 +131,133 @@ Each level's latest fit season is scored against the shape fitted without it. Th
 
 | Level | Check set | Outcome | Decisions | Log loss base | Log loss zone | Gain (SE) | Gain / SE | Cal. slope | Max gap |
 |---|---|---|---|---|---|---|---|---|---|
-| A | 2025, 1 game in 5 | swing | 32,509 | 0.6709 | 0.5395 | +0.1313 (0.0035) | +37.3 | 0.99 | 0.052 |
-| A | 2025, 1 game in 5 | chase | 13,729 | 0.4933 | 0.4569 | +0.0363 (0.0022) | +16.8 | 0.97 | 0.029 |
-| A | 2025, 1 game in 5 | whiff | 14,614 | 0.5788 | 0.5053 | +0.0734 (0.0034) | +21.5 | 0.98 | 0.029 |
-| A | 2025, 1 game in 5 | foul | 10,728 | 0.6926 | 0.6859 | +0.0067 (0.0013) | +5.1 | 0.91 | 0.057 |
-| A | 2025, 1 game in 5 | hard | 5,205 | 0.6302 | 0.6122 | +0.0180 (0.0025) | +7.3 | 1.03 | 0.023 |
-| A | 2025, 1 game in 5 | gb | 5,228 | 0.6862 | 0.6820 | +0.0042 (0.0012) | +3.6 | 1.04 | 0.069 |
-| A | 2025, 1 game in 5 | ld | 5,228 | 0.5442 | 0.5444 | -0.0002 (0.0006) | -0.4 | 0.43 | 0.065 |
-| A | 2025, 1 game in 5 | fb | 5,228 | 0.5484 | 0.5449 | +0.0035 (0.0010) | +3.4 | 1.04 | 0.046 |
-| A | 2025, 1 game in 5 | pu | 5,228 | 0.2827 | 0.2816 | +0.0011 (0.0011) | +1.1 | 0.80 | 0.020 |
-| MLB | 2025, 1 game in 5 | swing | 74,888 | 0.6679 | 0.5416 | +0.1263 (0.0022) | +57.4 | 1.00 | 0.025 |
-| MLB | 2025, 1 game in 5 | chase | 25,411 | 0.4904 | 0.4490 | +0.0414 (0.0018) | +23.6 | 1.00 | 0.018 |
-| MLB | 2025, 1 game in 5 | whiff | 35,399 | 0.5368 | 0.4679 | +0.0689 (0.0024) | +29.3 | 1.00 | 0.032 |
-| MLB | 2025, 1 game in 5 | foul | 27,316 | 0.6922 | 0.6848 | +0.0074 (0.0007) | +10.2 | 1.01 | 0.031 |
-| MLB | 2025, 1 game in 5 | hard | 13,067 | 0.6761 | 0.6465 | +0.0296 (0.0019) | +15.9 | 1.05 | 0.060 |
-| MLB | 2025, 1 game in 5 | gb | 13,117 | 0.6797 | 0.6747 | +0.0051 (0.0011) | +4.8 | 0.88 | 0.045 |
-| MLB | 2025, 1 game in 5 | ld | 13,117 | 0.5468 | 0.5466 | +0.0002 (0.0004) | +0.4 | 0.63 | 0.048 |
-| MLB | 2025, 1 game in 5 | fb | 13,117 | 0.5820 | 0.5789 | +0.0031 (0.0009) | +3.5 | 0.79 | 0.041 |
-| MLB | 2025, 1 game in 5 | pu | 13,117 | 0.2601 | 0.2589 | +0.0012 (0.0005) | +2.4 | 0.87 | 0.026 |
+| A | 2025 season | swing | 168,260 | 0.6711 | 0.5388 | +0.1323 (0.0015) | +90.7 | 1.06 | 0.035 |
+| A | 2025 season | chase | 70,542 | 0.4928 | 0.4543 | +0.0385 (0.0010) | +39.4 | 1.03 | 0.017 |
+| A | 2025 season | whiff | 75,992 | 0.5697 | 0.4979 | +0.0717 (0.0014) | +50.3 | 1.11 | 0.105 |
+| A | 2025 season | foul | 56,430 | 0.6926 | 0.6849 | +0.0077 (0.0005) | +16.5 | 1.08 | 0.089 |
+| A | 2025 season | hard | 27,157 | 0.6335 | 0.6159 | +0.0176 (0.0011) | +15.5 | 0.99 | 0.047 |
+| A | 2025 season | gb | 27,272 | 0.6850 | 0.6814 | +0.0036 (0.0005) | +6.6 | 0.97 | 0.034 |
+| A | 2025 season | ld | 27,272 | 0.5481 | 0.5474 | +0.0007 (0.0003) | +2.5 | 0.88 | 0.023 |
+| A | 2025 season | fb | 27,272 | 0.5535 | 0.5507 | +0.0028 (0.0004) | +6.5 | 0.98 | 0.038 |
+| A | 2025 season | pu | 27,272 | 0.2791 | 0.2777 | +0.0013 (0.0004) | +3.7 | 0.92 | 0.020 |
+| AAA | 2025 season | swing | 649,790 | 0.6690 | 0.5450 | +0.1240 (0.0007) | +174.3 | 1.04 | 0.037 |
+| AAA | 2025 season | chase | 255,928 | 0.5056 | 0.4653 | +0.0404 (0.0005) | +76.0 | 1.04 | 0.025 |
+| AAA | 2025 season | whiff | 298,768 | 0.5580 | 0.4852 | +0.0728 (0.0008) | +96.0 | 1.07 | 0.043 |
+| AAA | 2025 season | foul | 225,072 | 0.6921 | 0.6838 | +0.0083 (0.0003) | +31.9 | 1.07 | 0.036 |
+| AAA | 2025 season | hard | 106,427 | 0.6587 | 0.6359 | +0.0228 (0.0006) | +35.3 | 1.02 | 0.030 |
+| AAA | 2025 season | gb | 107,466 | 0.6816 | 0.6766 | +0.0051 (0.0003) | +16.9 | 1.02 | 0.041 |
+| AAA | 2025 season | ld | 107,466 | 0.5542 | 0.5533 | +0.0009 (0.0001) | +6.4 | 0.93 | 0.040 |
+| AAA | 2025 season | fb | 107,466 | 0.5726 | 0.5685 | +0.0040 (0.0003) | +15.9 | 1.04 | 0.039 |
+| AAA | 2025 season | pu | 107,466 | 0.2506 | 0.2488 | +0.0018 (0.0002) | +8.6 | 0.88 | 0.024 |
+| MLB | 2025 season | swing | 706,051 | 0.6681 | 0.5419 | +0.1262 (0.0007) | +185.8 | 1.00 | 0.025 |
+| MLB | 2025 season | chase | 237,945 | 0.4943 | 0.4539 | +0.0404 (0.0006) | +69.6 | 1.00 | 0.014 |
+| MLB | 2025 season | whiff | 335,889 | 0.5416 | 0.4733 | +0.0683 (0.0007) | +95.1 | 1.06 | 0.044 |
+| MLB | 2025 season | foul | 257,806 | 0.6921 | 0.6846 | +0.0076 (0.0002) | +33.4 | 1.12 | 0.037 |
+| MLB | 2025 season | hard | 122,891 | 0.6756 | 0.6493 | +0.0263 (0.0006) | +41.3 | 1.01 | 0.056 |
+| MLB | 2025 season | gb | 123,280 | 0.6791 | 0.6725 | +0.0067 (0.0003) | +20.4 | 1.01 | 0.031 |
+| MLB | 2025 season | ld | 123,280 | 0.5526 | 0.5519 | +0.0007 (0.0001) | +6.5 | 0.98 | 0.042 |
+| MLB | 2025 season | fb | 123,280 | 0.5817 | 0.5764 | +0.0052 (0.0003) | +19.1 | 1.00 | 0.027 |
+| MLB | 2025 season | pu | 123,280 | 0.2548 | 0.2532 | +0.0016 (0.0002) | +10.3 | 1.06 | 0.047 |
 
-**Read-out at the seed level:** the zone shape beats the count average by more than 2 SE for swing, chase, whiff, foul, hard, gb, fb; it does **not** for ld, pu, so those outcomes should get no zone term (they stay at the count layer; a line-drive share can be the remainder after ground balls, fly balls and pop-ups). Calibration slopes near 1.00 mean the fitted offsets are about the right size on games they were not fit on.
+**Read-out at the seed level:** the zone shape beats the count average by more than 2 SE for swing, chase, whiff, foul, hard, gb, ld, fb, pu. Calibration slopes near 1.00 mean the fitted offsets are about the right size on games they were not fit on.
 
 ## Transfer check: Single-A -> Triple-A -> MLB
 
 Shape compared on the main table (band x class x count group) in logit offsets, cells with 100+ decisions at every level. **Scale** = the higher level's offsets regressed on Single-A's (1.00 = same shape; above 1 = sharper, below 1 = flatter; 95% basic-bootstrap interval). **Mean abs diff** = average absolute logit difference from Single-A, beside what sampling noise alone would give. **Moving cells** = cells whose per-level slope has a 95% interval excluding 0 and is at least 0.10 logit per level step (A -> MLB counts as two steps).
 
-| Outcome | Cells | Scale MLB vs A | Mean abs diff MLB | Moving cells | Verdict |
-|---|---|---|---|---|---|
-| swing | 40 | 1.13 (1.11-1.16) | 0.293 (noise 0.047) | 21 of 40 | differs: sharper at MLB (scale 1.13); 21 of 40 cells move |
-| chase | 20 | 1.22 (1.13-1.32) | 0.288 (noise 0.062) | 11 of 20 | differs: sharper at MLB (scale 1.22); 11 of 20 cells move |
-| whiff | 36 | 1.06 (1.03-1.10) | 0.108 (noise 0.055) | 9 of 36 | differs: 9 of 36 cells move |
-| foul | 31 | 0.99 (0.94-1.13) | 0.069 (noise 0.041) | 0 of 31 | stable |
-| hard | 25 | 1.22 (1.15-1.36) | 0.100 (noise 0.060) | 3 of 25 | differs: sharper at MLB (scale 1.22) |
-| gb | 25 | 1.16 (1.05-1.53) | 0.091 (noise 0.056) | 3 of 25 | differs: sharper at MLB (scale 1.16) |
-| ld | 25 | 0.48 (0.39-0.89) | 0.084 (noise 0.066) | 0 of 25 | differs: flatter at MLB (scale 0.48) |
-| fb | 25 | 1.11 (1.02-1.44) | 0.081 (noise 0.065) | 2 of 25 | differs: sharper at MLB (scale 1.11) |
-| pu | 25 | 0.83 (0.70-1.24) | 0.105 (noise 0.104) | 1 of 25 | stable |
+| Outcome | Cells | Scale AAA vs A | Scale MLB vs A | Mean abs diff AAA | Mean abs diff MLB | Moving cells | Verdict |
+|---|---|---|---|---|---|---|---|
+| swing | 40 | 1.02 (1.01-1.03) | 1.21 (1.20-1.23) | 0.113 (noise 0.020) | 0.344 (noise 0.018) | 26 of 40 | trends with level: sharper at MLB (scale 1.21); 26 of 40 cells move |
+| chase | 20 | 1.05 (1.02-1.07) | 1.32 (1.29-1.35) | 0.069 (noise 0.022) | 0.307 (noise 0.021) | 14 of 20 | trends with level: sharper at MLB (scale 1.32); 14 of 20 cells move |
+| whiff | 40 | 1.06 (1.04-1.07) | 1.15 (1.14-1.17) | 0.054 (noise 0.025) | 0.124 (noise 0.023) | 11 of 40 | trends with level: sharper at MLB (scale 1.15); 11 of 40 cells move |
+| foul | 37 | 1.07 (1.03-1.13) | 1.07 (1.04-1.13) | 0.029 (noise 0.021) | 0.041 (noise 0.019) | 0 of 37 | stable |
+| hard | 32 | 1.03 (0.99-1.10) | 1.21 (1.17-1.28) | 0.066 (noise 0.034) | 0.104 (noise 0.031) | 11 of 32 | trends with level: sharper at MLB (scale 1.21); 11 of 32 cells move |
+| gb | 32 | 1.04 (0.98-1.16) | 1.25 (1.19-1.39) | 0.039 (noise 0.030) | 0.070 (noise 0.027) | 2 of 32 | trends with level: sharper at MLB (scale 1.25) |
+| ld | 32 | 0.98 (0.93-1.24) | 0.88 (0.85-1.10) | 0.034 (noise 0.034) | 0.032 (noise 0.031) | 0 of 32 | stable |
+| fb | 32 | 0.98 (0.90-1.12) | 1.25 (1.18-1.40) | 0.049 (noise 0.035) | 0.073 (noise 0.031) | 8 of 32 | trends with level: sharper at MLB (scale 1.25); 8 of 32 cells move |
+| pu | 32 | 1.20 (1.13-1.44) | 0.91 (0.88-1.12) | 0.104 (noise 0.056) | 0.095 (noise 0.051) | 5 of 32 | stable |
 
-**Verdict:** levels compared: A -> MLB. stable for none; **not stable for swing (differs: sharper at MLB (scale 1.13); 21 of 40 cells move); chase (differs: sharper at MLB (scale 1.22); 11 of 20 cells move); whiff (differs: 9 of 36 cells move); hard (differs: sharper at MLB (scale 1.22)); gb (differs: sharper at MLB (scale 1.16))**. Triple-A has no data yet, so this is Single-A vs MLB only: two points can't separate a trend from a jump between the minors and MLB. Provisional reading for college: use the Single-A shape (the closest hitters); if Triple-A lands between Single-A and MLB, plan 3.2 says carry the trend one step down for college and two for HS, which would make the college shape a little flatter than Single-A's for the outcomes that are sharper at MLB.
+**Verdict:** levels compared: A -> AAA -> MLB. stable for none; **not stable for swing (trends with level: sharper at MLB (scale 1.21); 26 of 40 cells move); chase (trends with level: sharper at MLB (scale 1.32); 14 of 20 cells move); whiff (trends with level: sharper at MLB (scale 1.15); 11 of 40 cells move); hard (trends with level: sharper at MLB (scale 1.21); 11 of 32 cells move); gb (trends with level: sharper at MLB (scale 1.25))**. Plan 3.2: where it trends with level, carry the trend one step down for college and two for HS (and say so in the table).
 
 Moving cells (change in the cell's logit offset per level step, Single-A towards MLB; + = the cell sits higher against its count's average at the higher level):
 
-- swing: first heart FB -0.22; first edge FB -0.15; first off FB -0.20; first noncomp FB -0.26; ahead heart FB -0.16; ahead edge FB -0.17; ahead off FB -0.23; ahead noncomp FB -0.38 (+13 more)
-- chase: first off FB -0.19; first noncomp FB -0.25; ahead off FB -0.19; ahead noncomp FB -0.33; even off FB -0.14; even noncomp FB -0.41; even noncomp OS -0.25; behind off FB -0.17 (+3 more)
-- whiff: first off OS +0.21; ahead off OS +0.20; even off OS +0.22; behind off FB -0.11; behind off OS +0.29; behind noncomp OS +0.75; two off OS +0.12; two noncomp FB -0.29 (+1 more)
-- hard: ahead heart OS +0.14; behind off OS -0.33; two off OS -0.15
-- gb: first edge OS +0.12; even edge OS +0.11; behind edge OS +0.13
-- fb: first heart OS +0.11; first off FB -0.28
-- pu: even edge OS -0.19
+- swing: first heart FB -0.16; first edge FB -0.17; first off FB -0.27; first noncomp FB -0.38; first noncomp OS -0.10; ahead heart FB -0.11; ahead edge FB -0.17; ahead off FB -0.28 (+18 more)
+- chase: first off FB -0.18; first noncomp FB -0.30; ahead off FB -0.16; ahead noncomp FB -0.36; ahead noncomp OS -0.21; even off FB -0.15; even noncomp FB -0.38; even noncomp OS -0.17 (+6 more)
+- whiff: first off OS +0.23; first noncomp OS +0.52; ahead off OS +0.15; ahead noncomp FB +0.22; ahead noncomp OS +0.54; even off OS +0.19; even noncomp OS +0.54; behind off OS +0.21 (+3 more)
+- hard: first off FB -0.33; first off OS -0.29; ahead heart OS +0.12; ahead off FB -0.31; ahead off OS -0.22; even off FB -0.26; even off OS -0.20; behind off FB -0.32 (+3 more)
+- gb: first off FB +0.15; behind off FB +0.16
+- fb: first off FB -0.26; ahead off FB -0.19; even off FB -0.15; behind off FB -0.16; behind off OS -0.15; two off FB -0.12; two noncomp FB -0.22; two noncomp OS -0.38
+- pu: first edge OS -0.11; ahead off OS -0.22; behind edge OS -0.15; two off OS -0.10; two noncomp OS +0.40
 
 ## Appendix: the seed's main table (ratio to the count's average)
 
-**swing** (count averages: first 0.325, ahead 0.426, even 0.491, behind 0.466, two 0.575, all 0.452)
+**swing** (count averages: first 0.328, ahead 0.435, even 0.499, behind 0.463, two 0.583, all 0.458)
 
 | Count | heart FB | heart OS | edge FB | edge OS | off FB | off OS | noncomp FB | noncomp OS |
 |---|---|---|---|---|---|---|---|---|
-| first | 1.98 | 1.56 | 1.26 | 1.05 | 0.46 | 0.57 | 0.06 | 0.22 |
-| ahead | 1.75 | 1.44 | 1.20 | 1.08 | 0.46 | 0.60 | 0.07 | 0.24 |
-| even | 1.72 | 1.62 | 1.25 | 1.26 | 0.52 | 0.65 | 0.12 | 0.26 |
-| behind | 1.73 | 1.69 | 1.25 | 1.26 | 0.59 | 0.72 | 0.08 | 0.23 |
-| two | 1.60 | 1.61 | 1.30 | 1.31 | 0.71 | 0.82 | 0.16 | 0.30 |
-| all | 1.70 | 1.61 | 1.22 | 1.24 | 0.55 | 0.74 | 0.11 | 0.28 |
+| first | 1.93 | 1.50 | 1.31 | 1.09 | 0.53 | 0.61 | 0.09 | 0.25 |
+| ahead | 1.72 | 1.39 | 1.24 | 1.09 | 0.51 | 0.66 | 0.10 | 0.31 |
+| even | 1.70 | 1.53 | 1.27 | 1.21 | 0.60 | 0.70 | 0.14 | 0.29 |
+| behind | 1.73 | 1.63 | 1.28 | 1.28 | 0.61 | 0.77 | 0.13 | 0.29 |
+| two | 1.60 | 1.53 | 1.32 | 1.32 | 0.76 | 0.87 | 0.20 | 0.35 |
+| all | 1.68 | 1.53 | 1.25 | 1.25 | 0.60 | 0.78 | 0.14 | 0.33 |
 
-**chase** (count averages: first 0.118, ahead 0.157, even 0.211, behind 0.216, two 0.310, all 0.207)
+**chase** (count averages: first 0.133, ahead 0.181, even 0.241, behind 0.232, two 0.336, all 0.230)
 
 | Count | off FB | off OS | noncomp FB | noncomp OS |
 |---|---|---|---|---|
-| first | 1.27 | 1.56 | 0.17 | 0.61 |
-| ahead | 1.24 | 1.63 | 0.19 | 0.65 |
-| even | 1.21 | 1.52 | 0.27 | 0.60 |
-| behind | 1.27 | 1.56 | 0.18 | 0.50 |
-| two | 1.33 | 1.52 | 0.30 | 0.56 |
-| all | 1.20 | 1.61 | 0.23 | 0.62 |
+| first | 1.30 | 1.50 | 0.21 | 0.62 |
+| ahead | 1.23 | 1.59 | 0.23 | 0.74 |
+| even | 1.25 | 1.46 | 0.28 | 0.60 |
+| behind | 1.22 | 1.53 | 0.26 | 0.58 |
+| two | 1.33 | 1.51 | 0.36 | 0.60 |
+| all | 1.20 | 1.57 | 0.28 | 0.66 |
 
-**whiff** (count averages: first 0.264, ahead 0.225, even 0.262, behind 0.283, two 0.257, all 0.255)
-
-| Count | heart FB | heart OS | edge FB | edge OS | off FB | off OS | noncomp FB | noncomp OS |
-|---|---|---|---|---|---|---|---|---|
-| first | 0.43 | 0.62 | 0.85 | 1.38 | 1.76 | 2.81 | 3.01 | 3.67 |
-| ahead | 0.50 | 0.66 | 0.87 | 1.42 | 1.91 | 2.94 | 3.22 | 4.16 |
-| even | 0.45 | 0.56 | 0.79 | 1.02 | 1.75 | 2.27 | 2.91 | 3.55 |
-| behind | 0.51 | 0.42 | 0.80 | 1.03 | 1.71 | 2.03 | 2.74 | 3.23 |
-| two | 0.45 | 0.44 | 0.71 | 0.88 | 1.51 | 1.90 | 2.82 | 3.33 |
-| all | 0.46 | 0.52 | 0.79 | 1.08 | 1.68 | 2.22 | 2.92 | 3.51 |
-
-**hard** (count averages: first 0.361, ahead 0.370, even 0.361, behind 0.314, two 0.292, all 0.334)
+**whiff** (count averages: first 0.298, ahead 0.254, even 0.286, behind 0.311, two 0.279, all 0.281)
 
 | Count | heart FB | heart OS | edge FB | edge OS | off FB | off OS | noncomp FB | noncomp OS |
 |---|---|---|---|---|---|---|---|---|
-| first | 1.26 | 1.00 | 0.87 | 0.69 | 0.41 | 0.47 | 0.56 | 0.39 |
-| ahead | 1.25 | 0.89 | 0.92 | 0.64 | 0.45 | 0.45 | 0.66 | 0.37 |
-| even | 1.32 | 1.04 | 0.97 | 0.75 | 0.48 | 0.31 | 0.49 | 0.37 |
-| behind | 1.35 | 1.11 | 0.91 | 0.78 | 0.69 | 0.50 | 0.54 | 0.37 |
-| two | 1.36 | 1.20 | 1.00 | 0.76 | 0.65 | 0.47 | 0.47 | 0.26 |
-| all | 1.33 | 1.06 | 0.95 | 0.71 | 0.53 | 0.43 | 0.42 | 0.22 |
+| first | 0.49 | 0.71 | 0.80 | 1.28 | 1.50 | 2.44 | 2.35 | 3.17 |
+| ahead | 0.55 | 0.79 | 0.82 | 1.41 | 1.54 | 2.66 | 2.68 | 3.56 |
+| even | 0.50 | 0.56 | 0.78 | 1.03 | 1.47 | 2.07 | 2.45 | 3.04 |
+| behind | 0.50 | 0.51 | 0.72 | 1.00 | 1.43 | 1.98 | 2.28 | 2.86 |
+| two | 0.45 | 0.52 | 0.70 | 0.86 | 1.36 | 1.74 | 2.24 | 3.02 |
+| all | 0.50 | 0.60 | 0.76 | 1.05 | 1.44 | 2.04 | 2.34 | 3.09 |
 
-**gb** (count averages: first 0.415, ahead 0.413, even 0.440, behind 0.456, two 0.456, all 0.436)
-
-| Count | heart FB | heart OS | edge FB | edge OS | off FB | off OS | noncomp FB | noncomp OS |
-|---|---|---|---|---|---|---|---|---|
-| first | 1.00 | 0.95 | 0.98 | 1.07 | 1.09 | 1.37 | 1.17 | 1.48 |
-| ahead | 0.95 | 0.92 | 1.01 | 1.13 | 1.22 | 1.43 | 1.01 | 1.59 |
-| even | 0.99 | 0.94 | 1.00 | 1.02 | 1.02 | 1.30 | 0.92 | 1.57 |
-| behind | 0.97 | 0.90 | 0.98 | 1.00 | 1.14 | 1.48 | 1.21 | 1.37 |
-| two | 0.95 | 0.89 | 0.93 | 1.08 | 1.02 | 1.34 | 1.21 | 1.65 |
-| all | 0.96 | 0.92 | 0.97 | 1.08 | 1.09 | 1.40 | 1.16 | 1.66 |
-
-**pu** (count averages: first 0.083, ahead 0.083, even 0.076, behind 0.074, two 0.081, all 0.081)
+**hard** (count averages: first 0.344, ahead 0.366, even 0.319, behind 0.303, two 0.275, all 0.317)
 
 | Count | heart FB | heart OS | edge FB | edge OS | off FB | off OS | noncomp FB | noncomp OS |
 |---|---|---|---|---|---|---|---|---|
-| first | 0.83 | 1.04 | 1.08 | 1.26 | 1.22 | 1.06 | 0.63 | 0.28 |
-| ahead | 0.81 | 1.09 | 1.16 | 0.98 | 1.57 | 0.64 | 0.60 | 0.28 |
-| even | 0.72 | 1.00 | 0.97 | 1.23 | 2.00 | 1.34 | 0.55 | 0.28 |
-| behind | 0.72 | 1.18 | 1.05 | 1.04 | 1.77 | 0.80 | 0.60 | 0.28 |
-| two | 0.73 | 1.01 | 1.19 | 1.01 | 1.55 | 0.73 | 0.64 | 0.11 |
-| all | 0.78 | 1.05 | 1.13 | 1.06 | 1.56 | 0.81 | 0.52 | 0.09 |
+| first | 1.29 | 1.07 | 0.91 | 0.67 | 0.56 | 0.45 | 0.31 | 0.23 |
+| ahead | 1.27 | 0.91 | 0.91 | 0.68 | 0.59 | 0.44 | 0.42 | 0.13 |
+| even | 1.41 | 1.12 | 0.93 | 0.72 | 0.62 | 0.43 | 0.29 | 0.21 |
+| behind | 1.39 | 1.19 | 0.94 | 0.74 | 0.64 | 0.51 | 0.36 | 0.20 |
+| two | 1.46 | 1.14 | 1.07 | 0.75 | 0.68 | 0.38 | 0.52 | 0.14 |
+| all | 1.38 | 1.07 | 0.97 | 0.69 | 0.62 | 0.39 | 0.39 | 0.14 |
+
+**gb** (count averages: first 0.435, ahead 0.413, even 0.448, behind 0.480, two 0.470, all 0.449)
+
+| Count | heart FB | heart OS | edge FB | edge OS | off FB | off OS | noncomp FB | noncomp OS |
+|---|---|---|---|---|---|---|---|---|
+| first | 0.96 | 0.88 | 1.01 | 1.13 | 1.06 | 1.36 | 0.90 | 1.48 |
+| ahead | 0.94 | 0.97 | 1.01 | 1.09 | 1.14 | 1.41 | 0.70 | 1.69 |
+| even | 0.94 | 0.87 | 1.03 | 1.04 | 1.07 | 1.40 | 0.82 | 1.64 |
+| behind | 0.96 | 0.87 | 0.99 | 1.07 | 0.97 | 1.34 | 0.86 | 1.44 |
+| two | 0.94 | 0.88 | 0.97 | 1.07 | 0.98 | 1.29 | 0.74 | 1.51 |
+| all | 0.93 | 0.90 | 0.99 | 1.10 | 1.04 | 1.36 | 0.78 | 1.58 |
+
+**pu** (count averages: first 0.077, ahead 0.087, even 0.080, behind 0.070, two 0.072, all 0.077)
+
+| Count | heart FB | heart OS | edge FB | edge OS | off FB | off OS | noncomp FB | noncomp OS |
+|---|---|---|---|---|---|---|---|---|
+| first | 0.76 | 1.08 | 1.13 | 1.08 | 1.50 | 0.71 | 1.73 | 0.45 |
+| ahead | 0.80 | 1.05 | 1.17 | 0.83 | 1.46 | 0.92 | 2.09 | 0.71 |
+| even | 0.73 | 1.00 | 1.20 | 0.97 | 1.68 | 0.79 | 1.89 | 0.60 |
+| behind | 0.69 | 1.03 | 1.07 | 1.14 | 1.60 | 0.62 | 1.79 | 1.45 |
+| two | 0.83 | 1.08 | 1.02 | 0.98 | 1.47 | 0.88 | 2.40 | 0.41 |
+| all | 0.80 | 1.04 | 1.13 | 0.97 | 1.50 | 0.80 | 2.12 | 0.58 |
 
 ## Waiting on more data
 
-- A: only 2025 so far, so the check is a 1-in-5 game split, not a held-out season; earlier seasons are still downloading.
-- AAA: no files yet; the fit, check and transfer pick it up on the next run.
-- MLB: only 2025 so far, so the check is a 1-in-5 game split, not a held-out season; earlier seasons are still downloading.
-- MLB 2025: 100 day files so far (a full season is about 150-190); still downloading.
-- The transfer verdict needs Triple-A for a three-point trend.
+- MLB 2020: 67 day files so far (a full season is about 150-190); still downloading.
 - Rerun `python -m hitter_data.zone_seed --write-doc` when the pulls finish; the statements and intervals refresh.

@@ -7,12 +7,15 @@ cd "$(dirname "$0")/.."
 run=scripts/run-check.sh
 $run tests.py      python3 tests.py
 $run tests_hitter_data python3 tests_hitter_data.py   # v1.3 prework: college play-by-play parser on synthetic lines, the held-out (2026) guard
+$run tests_hs_data python3 tests_hs_data.py   # v1.3 Part 1: HS / travel (Perfect Game) parser, quality checks, snapshot and incremental ingest on invented rows
 $run tests_zone_seed python3 tests_zone_seed.py   # v1.3 Part 2: zone seed math on synthetic pitches (not wired into the engine)
 $run tests_harness  python3 tests_harness.py       # v1.3 Part 4: scoring harness (held-out + in-sample guards, bootstrap, frozen landing)
 $run tests_refit_v13 python3 tests_refit_v13.py   # v1.3 Part 2.5: shared-refit loaders (new data layout, 2026 guard, recency weights) and refit math, synthetic
 $run tests_refit_seq python3 tests_refit_seq.py   # v1.3 Part 2.5: sequencing refit rows (seq_fit on the new layout), synthetic
 $run tests_refit_profiles python3 tests_refit_profiles.py   # v1.3 Part 2.5: profile refit loader injection / weighted medians, synthetic
 $run tests_refit_mlbt python3 tests_refit_mlbt.py   # v1.3 Part 2.5: MLB targets / RE24 / count values / HARD_SD math, synthetic
+$run tests_fit_count python3 tests_fit_count.py    # v1.3 buildout Part 3.1/3.2/3.5: count-layer + run-value fits and candidate scoring on synthetic counts (PROVISIONAL fits; held-out guard)
+$run tests_fit_traits python3 tests_fit_traits.py  # v1.3 buildout 3.3 / 3.4: situation-effect and hitter-trait fits on a synthetic fixture (held-out guard)
 $run explain       python3 tests_v11_explain.py 60   # v1.1 Step 3 (was tests_v10_explain.py): why line and intent tell the truth, setups included
 $run tests_v11     python3 tests_v11.py              # v1.1: six kinds, one migration table, exactly v1.0's calls (Step 1)
 $run fast_parity   python3 golden/fast.py 40      # live Python vs JS on 40 golden inputs, plus confidence and grading (v1.0 #18)
@@ -27,6 +30,7 @@ $run tests_v13_d2  python3 tests_v13_d2.py          # v1.3 Part 3: college D2 in
 FAST_LEVEL=college_d2 $run fast_parity_d2 python3 golden/fast.py 40   # v1.3 Part 3: the same 40 golden inputs, every case at college D2
 $run tests_v13_sim python3 tests_v13_sim.py         # v1.3 Part 5: hidden hitter traits in the simulator; no traits = the e202169 games byte for byte, Python = JS
 $run golden_v13refit node golden/golden_v11.js v13refit   # v1.3 Part 2.5: the refit engine's reference (docs/REFIT_v13.md); golden_v123 below stays the release reference and fails while the refit numbers are in
+$run tests_v13_tables python3 tests_v13_tables.py   # v1.3 buildout Part 2: zone / count / run tables read from data_tables/ (v12 built from the v1.2 sources at 90fca9b; v13refit = the refit tip 21f44ac bit for bit; a changed value moves the call; Python = JS)
 $run golden_v123  node golden/golden_v11.js v123  # v1.2.3 release reference (JS); golden_v10, v11a, v11, v12a, v12 and v122 (v1.2.2; differs only in the umpire estimate) stay as history
 (cd app && python3 build.py)
 if ! git diff --quiet -- app/dist; then

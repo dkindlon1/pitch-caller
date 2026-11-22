@@ -1,7 +1,12 @@
 """Export the Python engine's tables to app/engine_data.json for the JavaScript engine.
 The Python engine is the reference; run this after any change to its tables, then golden/fast.py and golden/golden_v10.js.
-Usage (from the repo root): python3 app/export_data.py [--check]   (--check: compare to the current file, write nothing)"""
+Usage (from the repo root): python3 app/export_data.py [--check] [--out PATH]
+  --check: compare to the current file, write nothing; --out PATH: write (or check) PATH instead of app/engine_data.json.
+v1.3 Part 2: the zone, count and run tables are the versioned files the Python engine loaded (engine.TABLES; pick them with
+PITCH_ZONE_TABLE / PITCH_COUNT_TABLE / PITCH_RUN_TABLE, docs/TABLES_v13.md). "TABLES" carries the zone file and the count
+layer; the run values go out as RE / CV / LW and the typed in-play tables as V08.OUT_TABLE / RUNNER_FIT, as before."""
 import json, os, sys
+START = os.getcwd()
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, ".."))
 os.chdir(os.path.join(HERE, ".."))
@@ -17,13 +22,20 @@ data = {
     "LEVEL": {l: dict(e.LEVEL[l]) for l in LEVELS},
 }
 # v0.8 tables (docs/SPEC_v0.8.md): fitted parameters, typed batted balls, shared simulation constants, win tables
-import inplay_typed_params as itp
 from hitter_spread_params import HITTER_SPREAD
 data["V08"] = {
     "P08": dict(e.P08), "TYPED": e.TYPED, "RHO_L": e.RHO_L,
-    "KAPPA_FIT": {f"{b}-{k}": v for (b, k), v in e.KAPPA_FIT.items()},
     "SIM": {k: v for k, v in e.SIM_CONST.items() if k in ("A_BAR", "I_BAR_UMP", "I0_GRADE", "TAKE_W", "PITCHES_PER_PA")},
-    "OUT_TABLE": itp.OUT_TABLE, "RUNNER_FIT": itp.RUNNER_FIT, "HITTER_SPREAD": HITTER_SPREAD, "RUN_GAME": dict(e.RUN_GAME),
+    "OUT_TABLE": e.OUT_TABLE, "RUNNER_FIT": e.RUNNER_FIT, "HITTER_SPREAD": HITTER_SPREAD, "RUN_GAME": dict(e.RUN_GAME),
+}
+# v1.3 Part 2 (docs/TABLES_v13.md): the zone table (the whole file) and the count layer (the count file without its in-play
+# tables, which go out in V08 above), with the versions the engine loaded
+_cnt = e.TABLES["count"]
+data["TABLES"] = {
+    "versions": dict(e.TABLE_VERSIONS),
+    "zone": e.TABLES["zone"],
+    "count": dict({k: v for k, v in _cnt.items() if k != "levels"},
+                  levels={lv: {k: v for k, v in L.items() if k not in ("out_table", "runner")} for lv, L in _cnt["levels"].items()}),
 }
 data["WE"] = json.load(open(os.path.join(HERE, "..", "we_tables.json")))
 # v1.3 (plan 3.5): the tables whose college_d2 entry is still D3's (engine.D2_PLACEHOLDERS); release_guard_d2.py fails while
@@ -33,6 +45,8 @@ import hashlib
 # a fingerprint of the tables, logged with every pitch so a replay knows which numbers made the call
 data["version"] = hashlib.sha1(json.dumps({k: v for k, v in data.items() if k != "version"}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:10]
 path = os.path.join(HERE, "engine_data.json")
+if "--out" in sys.argv:
+    path = os.path.join(START, sys.argv[sys.argv.index("--out") + 1])
 if "--check" in sys.argv:
     cur = json.load(open(path))
     def diff(a, b, p=""):
