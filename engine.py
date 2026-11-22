@@ -23,7 +23,95 @@ import json as _json, os as _os
 from math import exp, log
 import random as _random
 from itertools import combinations   # v1.2.2: the confidence band blend
-from run_tables import RE_BY_LEVEL, CV_BY_LEVEL, IN_PLAY_BY_LEVEL   # v0.5: run values by level
+from run_tables import IN_PLAY_BY_LEVEL   # v0.5: untyped in-play tables (calibration only; live calls use the count table)
+
+# ---------------------------------------------------------------------------
+# v1.3 Part 2: versioned tables (docs/TABLES_v13.md). The zone effects, the count layer and the run values come from
+# data_tables/<kind>_<version>.json. The default versions reproduce v1.2 bit for bit; a fit writes a candidate file in the
+# same format and is selected by version (TABLE_DEFAULT, or the environment: PITCH_ZONE_TABLE=v13 / a path to a .json).
+# app/export_data.py copies the selected tables into app/engine_data.json for the JS engine.
+# ---------------------------------------------------------------------------
+TABLES_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "data_tables")
+TABLE_DEFAULT = {"zone": "v12", "count": "v12", "run": "v12"}
+TABLE_ENV = {"zone": "PITCH_ZONE_TABLE", "count": "PITCH_COUNT_TABLE", "run": "PITCH_RUN_TABLE"}
+T_BANDS = ("heart", "edge", "off", "noncomp")
+T_PROFILES = ("FB", "SI", "FC", "SL", "SW", "CB", "CH", "SP")
+T_COUNT_GROUPS = ("first", "ahead", "even", "behind", "two")
+T_HEIGHTS = ("up", "mid", "down")
+T_COUNTS = tuple(f"{b}-{k}" for k in range(3) for b in range(4))
+T_BASE_OUT = tuple(f"{o}|{b}" for o in range(3) for b in ("000", "100", "020", "120", "003", "103", "023", "123"))
+T_ZONE_OUT = ("swing", "cstrike", "whiff", "foul", "hard")
+T_COUNT_BAND_OUT = ("swing", "whiff", "foul", "hard")
+
+
+def table_path(kind, version=None):
+    """the file for table kind at version (default: the environment override, else TABLE_DEFAULT); a .json path is used as is"""
+    v = version or _os.environ.get(TABLE_ENV[kind]) or TABLE_DEFAULT[kind]
+    return v if v.endswith(".json") else _os.path.join(TABLES_DIR, f"{kind}_{v}.json")
+
+
+def _need(cond, path, what):
+    if not cond:
+        raise ValueError(f"{path}: {what} (format: docs/TABLES_v13.md)")
+
+
+def check_table(t, path="table"):
+    """Raises ValueError unless t is a complete table of its kind (every level / count / band / cell present, numbers)."""
+    num = lambda x: isinstance(x, (int, float)) and not isinstance(x, bool) and x == x
+    kind = t.get("kind")
+    _need(kind in TABLE_DEFAULT and isinstance(t.get("version"), str) and t["version"], path, "needs kind and version")
+    if kind == "zone":
+        b = t.get("base", {})
+        for o in ("swing", "cstrike", "whiff", "foul", "zone_in"):
+            _need(all(num(b.get(o, {}).get(z)) for z in T_BANDS), path, f"base.{o} needs a number per band")
+        _need(all(isinstance(b.get("quality", {}).get(z), list) and len(b["quality"][z]) == 3 and all(map(num, b["quality"][z]))
+                  for z in T_BANDS), path, "base.quality needs [weak, solid, hard] per band")
+        c = t.get("class", {})
+        _need(all(num(c.get(k)) for k in ("whiff_fb", "line_low", "line_up", "line_whiff", "line_hard", "up_mid_hard", "hanger_hard"))
+              and all(num(c.get("whiff_os", {}).get(k)) for k in ("SL", "CB", "CH"))
+              and all(num(c.get("chase_os", {}).get(z)) for z in ("off", "noncomp")), path, "class terms missing")
+        for name, cells in [("cells", t.get("cells"))] + [(f"level_cells.{lv}", v) for lv, v in (t.get("level_cells") or {}).items()]:
+            _need(isinstance(cells, dict), path, f"{name} missing")
+            for o in T_ZONE_OUT:
+                _need(all(num(cells.get(o, {}).get(z, {}).get(p, {}).get(g, {}).get(h)) for z in T_BANDS for p in T_PROFILES
+                          for g in T_COUNT_GROUPS for h in T_HEIGHTS), path, f"{name}.{o} needs band > profile > count group > height")
+    elif kind == "count":
+        for lv, L in t.get("levels", {}).items():
+            for o in T_COUNT_BAND_OUT:
+                _need(all(num(L.get(o, {}).get(c, {}).get(z)) for c in T_COUNTS for z in T_BANDS), path, f"levels.{lv}.{o} needs count > band")
+            _need(all(num(L.get("cstrike", {}).get(c)) for c in T_COUNTS), path, f"levels.{lv}.cstrike needs a number per count")
+            _need(all(num(L.get("bip_gb", {}).get(c)) for c in T_COUNTS), path, f"levels.{lv}.bip_gb needs a number per count")
+            _need(all(num(L.get("swing_base_out", {}).get(bo)) for bo in T_BASE_OUT), path, f"levels.{lv}.swing_base_out needs outs|bases")
+            if "out_table" in L:
+                _need(all(isinstance(L["out_table"].get(q, {}).get(ty), list) and len(L["out_table"][q][ty]) == 6
+                          for q in ("weak", "solid", "hard") for ty in ("GB", "LD", "FB", "PU")), path, f"levels.{lv}.out_table")
+                _need(all(num(L.get("runner", {}).get(k)) for k in ("p_GB", "p_FB", "S_DP")), path, f"levels.{lv}.runner")
+        _need(all(lv in t.get("levels", {}) for lv in ("mlb", "college_d1", "college_d3", "hs")), path, "levels: mlb, college_d1, college_d3, hs")
+    else:
+        for lv, L in t.get("levels", {}).items():
+            _need(all(num(L.get("re", {}).get(bo)) for bo in T_BASE_OUT), path, f"levels.{lv}.re needs outs|bases")
+            _need(all(num(L.get("cv", {}).get(c)) for c in T_COUNTS), path, f"levels.{lv}.cv needs a number per count")
+            _need(num(L.get("lw", {}).get("bb")) and num(L.get("lw", {}).get("k")), path, f"levels.{lv}.lw needs bb and k")
+        _need(all(lv in t.get("levels", {}) for lv in ("mlb", "college_d1", "college_d3", "hs")), path, "levels: mlb, college_d1, college_d3, hs")
+    return t
+
+
+def load_table(kind, version=None):
+    path = table_path(kind, version)
+    with open(path, encoding="utf8") as f:
+        t = _json.load(f)
+    _need(t.get("kind") == kind, path, f"is a {t.get('kind')} table, not {kind}")
+    return check_table(t, path)
+
+
+TABLES = {k: load_table(k) for k in TABLE_DEFAULT}
+TABLE_VERSIONS = {k: t["version"] for k, t in TABLES.items()}
+
+_RUN_T = TABLES["run"]["levels"]
+RE_BY_LEVEL = {lv: {(int(k[0]), k[2:]): v for k, v in L["re"].items()} for lv, L in _RUN_T.items()}
+CV_BY_LEVEL = {lv: {(int(k[0]), int(k[2])): v for k, v in L["cv"].items()} for lv, L in _RUN_T.items()}
+for _t in (RE_BY_LEVEL, CV_BY_LEVEL):
+    _t["college"] = _t["college_d1"]   # 'college' = D1 by default
 try:   # v0.6: in-play tables refit to each level's real hit mix (calib.py)
     from outcome_params import IN_PLAY_FIT
     IN_PLAY_BY_LEVEL.update(IN_PLAY_FIT)
@@ -1089,14 +1177,94 @@ def landing_pre(p: Pitch, q: str, s: Situation):
 # Stage 2: hitter vs pitch, per landing zone
 # ---------------------------------------------------------------------------
 
-S0 = {"heart": 0.72, "edge": 0.50, "off": 0.28, "noncomp": 0.05}
-C0 = {"heart": 0.98, "edge": 0.55, "off": 0.08, "noncomp": 0.0}
-W0 = {"heart": 0.12, "edge": 0.20, "off": 0.34, "noncomp": 0.50}
-F0 = {"heart": 0.40, "edge": 0.50, "off": 0.50, "noncomp": 0.45}
-Q0 = {"heart": (0.30, 0.38, 0.32), "edge": (0.48, 0.34, 0.18),
-      "off": (0.60, 0.30, 0.10), "noncomp": (0.75, 0.20, 0.05)}
-ZONE_IN = {"heart": 1.0, "edge": 0.5, "off": 0.0, "noncomp": 0.0}   # edge straddles the border
-W_FB = -0.20   # whiff level of the four-seam class (v1.0 KIND_W["FB"]); the off-speed classes' weights are in class_terms
+# v1.3 Part 2: the band base rates and the hand class terms come from the zone table (TABLES["zone"], docs/TABLES_v13.md);
+# zone_v12.json holds v1.2's values: swing heart .72 / edge .50 / off .28 / way-off .05, called strike .98 / .55 / .08 / 0,
+# whiff .12 / .20 / .34 / .50, foul .40 / .50 / .50 / .45, (weak, solid, hard) by band, ZONE_IN 1 / .5 / 0 / 0 (edge
+# straddles the border), W_FB -0.20 (whiff level of the four-seam class, v1.0 KIND_W["FB"]).
+_ZT = TABLES["zone"]
+S0 = dict(_ZT["base"]["swing"])
+C0 = dict(_ZT["base"]["cstrike"])
+W0 = dict(_ZT["base"]["whiff"])
+F0 = dict(_ZT["base"]["foul"])
+Q0 = {z: tuple(v) for z, v in _ZT["base"]["quality"].items()}
+ZONE_IN = dict(_ZT["base"]["zone_in"])
+ZONE_CLASS = _ZT["class"]
+W_FB = ZONE_CLASS["whiff_fb"]
+HANGER = ZONE_CLASS["hanger_hard"]     # v1.2's hanger: off-speed over the heart is hit harder (logit)
+
+
+def zone_profile(p):
+    """the zone table's profile of pitch p (hitter_data/zone_defs.py PROFILES: sweeper = SL|sweeper, splitter = CH|split)"""
+    if p.kind == "SL" and p.shape == "sweeper":
+        return "SW"
+    if p.kind == "CH" and p.shape == "split":
+        return "SP"
+    return p.kind
+
+
+_T_HT = {"up": "up", "middle": "mid", "down": "down"}   # target_height -> the zone table's height thirds
+
+
+def count_group(b, k):
+    """the zone table's count group (hitter_data/zone_defs.py count_group)"""
+    if k == 2:
+        return "two"
+    if b == 0 and k == 0:
+        return "first"
+    if b > k:
+        return "ahead"
+    return "even" if b == k else "behind"
+
+
+_ZCELL = {}
+
+
+def zone_cells(level, prof, cg, ht):
+    """{band: (swing, cstrike, whiff, foul, hard)} logit offsets of the zone table's cell (level_cells override per level)"""
+    key = (level, prof, cg, ht)
+    v = _ZCELL.get(key)
+    if v is None:
+        lc = _ZT.get("level_cells") or {}
+        cells = lc.get(level) or lc.get(TABLE_LEVEL_ALIAS.get(level, level)) or _ZT["cells"]
+        v = {z: tuple(cells[o][z][prof][cg][ht] for o in T_ZONE_OUT) for z in T_BANDS}
+        _ZCELL[key] = v
+    return v
+
+
+TABLE_LEVEL_ALIAS = {"travel": "hs", "college": "college_d1"}
+_CT = TABLES["count"]["levels"]
+_CNT = {}
+
+
+def count_cells(level, b, k):
+    """the count table's row for this level and count: ({band: (swing, whiff, foul, hard)}, called-strike kappa, ball-in-play
+    ground-ball offset). Travel uses high school's, 'college' D1's; a level the file lacks raises KeyError."""
+    key = (level, b, k)
+    v = _CNT.get(key)
+    if v is None:
+        L = _CT.get(level) or _CT[TABLE_LEVEL_ALIAS[level]]
+        c = f"{b}-{k}"
+        v = ({z: tuple(L[o][c][z] for o in T_COUNT_BAND_OUT) for z in T_BANDS}, L["cstrike"][c], L["bip_gb"][c])
+        _CNT[key] = v
+    return v
+
+
+def count_base_out(level, outs, bases):
+    L = _CT.get(level) or _CT[TABLE_LEVEL_ALIAS[level]]
+    return L["swing_base_out"][f"{outs}|{bases_key(*bases)}"]
+
+
+def gb_by_count(level):
+    """True when the level's ball-in-play ground-ball offset differs between counts (ball-in-play values then depend on the
+    count, and the speed caches key on it)"""
+    v = _GBV.get(level)
+    if v is None:
+        L = _CT.get(level) or _CT.get(TABLE_LEVEL_ALIAS.get(level, ""))
+        v = _GBV[level] = bool(L) and len(set(L["bip_gb"].values())) > 1
+    return v
+
+
+_GBV = {}
 
 
 # ---------------------------------------------------------------------------
@@ -1450,7 +1618,7 @@ def tag_for(kind, ivb, hb, mph, fb_mph, fb_ivb, fb_hb, level=None, type_=None):
     return ""
 
 
-KIND_W_OS = {"SL": 0.25, "CB": 0.20, "CH": 0.25}   # v1.0's off-speed class whiff weights (hand-set)
+KIND_W_OS = dict(ZONE_CLASS["whiff_os"])   # v1.0's off-speed class whiff weights (hand-set; the zone table's "class")
 
 
 def class_terms(p: Pitch, q: str, s: Situation):
@@ -1461,10 +1629,11 @@ def class_terms(p: Pitch, q: str, s: Situation):
     decision (BUILD_v1.1_REPORT). Fastballs: 0 (their differences are profile_terms')."""
     if is_fastball(p.kind):
         return {"whiff": 0.0, "chase": {"off": 0.0, "noncomp": 0.0}, "cstrike": 0.0, "hard": 0.0}
+    zc = ZONE_CLASS          # v1.3 Part 2: the numbers are the zone table's "class" terms (zone_v12.json: v1.0's values)
     up = q.startswith("up")
-    f = 0.4 if (not up or q == "chase") else -1.0
-    return {"whiff": (KIND_W_OS[p.kind] - W_FB) + 0.25 * f, "chase": {"off": 0.2, "noncomp": 0.0}, "cstrike": 0.0,
-            "hard": -0.3 * f + (0.4 if (up or q == "middle") else 0.0)}
+    f = zc["line_low"] if (not up or q == "chase") else zc["line_up"]
+    return {"whiff": (KIND_W_OS[p.kind] - W_FB) + zc["line_whiff"] * f, "chase": zc["chase_os"], "cstrike": 0.0,
+            "hard": zc["line_hard"] * f + (zc["up_mid_hard"] if (up or q == "middle") else 0.0)}
 
 
 def pt_key(p):
@@ -1680,7 +1849,6 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     tau = s.timing.get("OS" if is_offspeed(p.kind) else "FB", 0.0)
     tau_eff = tau if is_fastball(p.kind) else -tau        # late (+) helps fastballs, early (-) helps off-speed
 
-    hitters_count = s.balls > s.strikes and s.strikes < 2
     t_appr, rho_h = hit_tag(s, "approach"), RHO_L.get(s.level, 1.0)      # v1.2 Part B (0 = unknown: no effect)
     land = landing(p, q, s)
     lean_h, lean_w = lean_hbp_wp(p, q, s)     # v1.2: (1.0, 1.0) without a lean
@@ -1692,20 +1860,23 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     # and around the zone, where hitters make more contact; this term sets how much (fit_spread.py). 0 = off.
     cw = L.get("cmd_whiff", 0.0) * (command - 3)
     out = {"ball": 0, "cstrike": 0, "whiff": 0, "foul": 0, "weak": 0, "solid": 0, "hard": 0, "wp_ball": 0, "hbp": 0}
+    # v1.3 Part 2: the count layer (count table: offsets by count and band, by base-out, the called-strike kappa) and the zone
+    # table's fitted cells (by band, profile, count group, height of the target). v12 files: v1.2's count terms, cells 0.
+    cnt, kap, _ = count_cells(s.level, s.balls, s.strikes)
+    bo_sw = count_base_out(s.level, s.outs, s.bases)
+    zcell = zone_cells(s.level, zone_profile(p), count_group(s.balls, s.strikes), _T_HT[target_height(q, p.kind)])
 
     for z, pz in land.items():
-        # swing (hitter behavior by count: modeled, not a pitcher rule)
+        c_sw, c_wh, c_fo, c_hd = cnt[z]
+        z_sw, z_cs, z_wh, z_fo, z_hd = zcell[z]
+        # swing (hitter behavior by count: modeled, not a pitcher rule). v1.2's count terms (count_v12.json): +0.9 at two
+        # strikes, -0.4 at 0-0, -2.0 at 3-0, hitter's counts +0.3 in the zone and -0.4 out of it
         sl = logit(S0[z])
-        if s.strikes == 2:
-            sl += 0.9
-        if s.balls == 0 and s.strikes == 0:
-            sl -= 0.4
-        if (s.balls, s.strikes) == (3, 0):
-            sl -= 2.0
-        elif hitters_count:
-            sl += 0.3 if z in ("heart", "edge") else -0.4
+        sl += c_sw
+        sl += bo_sw
         if z in ("off", "noncomp"):
             sl += ct["chase"][z]
+        sl += z_sw
         wz_ = ZONE_IN[z]            # v0.6: share of this landing band inside the rulebook zone
         sl += wz_ * A["zsw"] + (1 - wz_) * A["osw"]
         offz = z in ("off", "noncomp")
@@ -1721,7 +1892,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             sl += pt["chase"]
         S = sig(sl) if S0[z] > 0 else 0
         if z in ("edge", "off"):
-            C = sig(logit(C0[z]) + A["cs"] + count_kappa(s.balls, s.strikes, s.level) + s.ump_u + ct["cstrike"] + pt["cstrike"])
+            C = sig(logit(C0[z]) + A["cs"] + kap + s.ump_u + ct["cstrike"] + pt["cstrike"] + z_cs)
         else:
             C = C0[z]
         # whiff
@@ -1730,6 +1901,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         ex = max(-P08["capW"] * hL, min(P08["capW"] * hL, ex))
         wl += ex - hL * 0.4 * DMG_SCALE * dmg
         wl += pw + ct["whiff"]
+        wl += c_wh + z_wh
         wl += wz_ * A["wz"] + (1 - wz_) * A["wo"]
         if cw:
             wl -= cw
@@ -1740,7 +1912,7 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         wl += side_shift(p, q, s, z, "whiff")
         wl += pt["whiff"]
         W = sig(wl)
-        F = sig(logit(F0[z]) + (0.3 if s.strikes == 2 else 0))
+        F = sig(logit(F0[z]) + c_fo + z_fo)          # v1.2: +0.3 at two strikes (count_v12.json)
         # contact quality: shift hard share
         hx = hL * (P08["sit_tH"] * m_t + P08["sit_hH"] * m_h) - hL * 0.5 * tau_eff - P08["gamma_T"] * tB
         hx = max(-P08["capH"] * hL, min(P08["capH"] * hL, hx))
@@ -1752,7 +1924,8 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         if s.crowding and q in ("up-in", "down-in"):
             hl -= P08["crowd"]
         if z == "heart" and is_offspeed(p.kind):
-            hl += 0.5          # hanger: off-speed over the middle gets hit hard
+            hl += HANGER       # hanger: off-speed over the middle gets hit hard (zone table class term; v1.2 +0.5)
+        hl += c_hd + z_hd
         hl += side_shift(p, q, s, z, "hard")
         hl += pt["hard"]
         weak, solid, hard = Q0[z]
@@ -1803,10 +1976,15 @@ def end_pa_value(outs, bases, runs, level="mlb"):
     return runs + re(outs, bases, level)
 
 
-try:   # v0.8 typed batted-ball tables (inplay_fit.py); absent = flag can't be turned on
-    from inplay_typed_params import OUT_TABLE, RUNNER_FIT
-except ImportError:
-    OUT_TABLE, RUNNER_FIT = {}, {}
+# v0.8 typed batted-ball tables: OUT_TABLE[level][contact][type] = (out, 1B, 2B, 3B, HR, E) and the runner rules. v1.3 Part 2:
+# from the count table (out_table / runner per level; count_v12.json = inplay_fit.py's inplay_typed_params.py). A level the
+# file leaves out (college D2) gets D3's in _fill_d2_placeholders.
+OUT_TABLE = {lv: L["out_table"] for lv, L in _CT.items() if "out_table" in L}
+RUNNER_FIT = {lv: L["runner"] for lv, L in _CT.items() if "out_table" in L}
+for _t in (OUT_TABLE, RUNNER_FIT):
+    for _a, _b in TABLE_LEVEL_ALIAS.items():
+        if _b in _t and _a not in _t:
+            _t[_a] = _t[_b]
 B_TYPES = ("GB", "LD", "FB", "PU")
 
 
@@ -1816,8 +1994,11 @@ def gb_rate(p):
     return GB_PROFILE[pt_key(p)]
 
 
-def type_mix(p, q, c):
-    g = sig(logit(gb_rate(p)) + TYPED["beta_y"] * (y_target(q, p.kind) - 2.5) + TYPED["gamma"][c])
+def type_mix(p, q, c, s=None):
+    """batted-ball type mix of contact quality c; with a situation, plus the count table's ground-ball offset (bip_gb) for
+    its level and count (v1.3 Part 2; 0 in count_v12.json)"""
+    g = sig(logit(gb_rate(p)) + TYPED["beta_y"] * (y_target(q, p.kind) - 2.5) + TYPED["gamma"][c]
+            + (count_cells(s.level, s.balls, s.strikes)[2] if s is not None else 0.0))
     lfp = TYPED["nongb"][c]
     return {"GB": g, "LD": (1 - g) * lfp[0], "FB": (1 - g) * lfp[1], "PU": (1 - g) * lfp[2]}
 
@@ -1837,7 +2018,7 @@ def in_play_value_typed(c, p, q, s):
     o, (b1, b2, b3), L = s.outs, s.bases, s.level
     tab, rf = OUT_TABLE[L][c], RUNNER_FIT[L]
     ev = lambda o_, b_, r_: v_end(s, o_, b_, r_)
-    tm = type_mix(p, q, c)
+    tm = type_mix(p, q, c, s)
     gr = (s.grades or GRADES_OVERRIDE) if c == "hard" else None
     dh = power_hr_shift(s, gr) if gr else 0.0
     total = 0.0
@@ -1944,15 +2125,9 @@ def candidates(arsenal, s, forced=None, extra=()):
 
 
 import json as _json, os as _os
-try:   # walk and strikeout run values by level (college_rates.py / hs_rates.py)
-    _RVJ = _json.load(open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "college_run_values.json")))
-    LW_BY_LEVEL = {"mlb": (_RVJ["mlb_check"]["_lw_bb"], _RVJ["mlb_check"]["_lw_k"]),
-                   "college_d1": (_RVJ["college_d1"]["_lw_bb"], _RVJ["college_d1"]["_lw_k"]),
-                   "college_d3": (_RVJ["college_d3"]["_lw_bb"], _RVJ["college_d3"]["_lw_k"]),
-                   "hs": (_RVJ["hs"]["_lw_bb"], _RVJ["hs"]["_lw_k"])}
-    LW_BY_LEVEL["college"] = LW_BY_LEVEL["college_d1"]
-except Exception:
-    LW_BY_LEVEL = {}
+# walk and strikeout run values by level (v1.3 Part 2: the run table; v1.2's came from college_run_values.json)
+LW_BY_LEVEL = {lv: (L["lw"]["bb"], L["lw"]["k"]) for lv, L in _RUN_T.items()}
+LW_BY_LEVEL["college"] = LW_BY_LEVEL["college_d1"]
 
 # v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
 for _t in (LEVEL, OUTCOME_ADJ, RE_BY_LEVEL, CV_BY_LEVEL, IN_PLAY_BY_LEVEL, LW_BY_LEVEL):
@@ -1976,13 +2151,13 @@ except Exception:
 
 
 GRADES_OVERRIDE = None   # 8.2 fit_hitter_spread.py hook: grades for every hitter when s.grades is None
-KAPPA_FIT = {}   # seq_fit.py: count-zone logit shifts (fitted, centered on the simulated take mix); empty = area rule
 
 
 def count_kappa(b, k, level):
-    if KAPPA_FIT:
-        return KAPPA_FIT[(b, k)]
-    return log(zone_area(b, k) / A_BAR.get(level, 3.0))
+    """the called-strike count shift (logit). v1.3 Part 2: the count table's cstrike per level (count_v12.json: seq_fit.py's
+    kappas centred on the simulated take mix, as v1.2's _apply_fit made them). zone_area is the pre-fit rule, kept for
+    reference."""
+    return count_cells(level, b, k)[1]
 
 
 def _apply_fit():
@@ -2002,15 +2177,8 @@ def _apply_fit():
         TYPED["gb"] = {k_: float(gbt[k_]) for k_ in ("4-seam", "sink", "cut", "SL", "CB", "CH")}
     except Exception:
         pass
-    if sh.get("kappa"):
-        raw = {(0, 0): 0.0}
-        raw.update({tuple(int(x) for x in c.split("-")): v for c, v in sh["kappa"].items()})
-        w = SIM_CONST.get("TAKE_W")
-        if w:
-            mean = sum(w.get(f"{b}-{k}", 0.0) * v for (b, k), v in raw.items()) / sum(w.values())
-        else:
-            mean = sum(raw.values()) / len(raw)
-        KAPPA_FIT.update({c: v - mean for c, v in raw.items()})
+    # v1.3 Part 2: the count kappas (ship.kappa, centred on sim_constants.json TAKE_W) moved into the count table (cstrike);
+    # data_tables/build_v12.py computes them from fit_v08.json the way this function did.
 
 
 _apply_fit()
@@ -2426,7 +2594,8 @@ def _ipv_cached(tab, p, q, s):
     w = s.win
     key = (p.name, q, s.outs, s.bases, s.infield_in, s.level,
            (w["omega"], w["WE0"], w["m0"], w["margin0"]) if (w and w["omega"] > 0) else None,
-           ((s.grades or GRADES_OVERRIDE) or {}).get("w", 3))
+           ((s.grades or GRADES_OVERRIDE) or {}).get("w", 3),
+           (s.balls, s.strikes) if gb_by_count(s.level) else None)    # v1.3 Part 2: a count table whose bip_gb varies by count
     cache = tab.__dict__.setdefault("ipv", {})
     v = cache.get(key)
     if v is None:
