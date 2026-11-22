@@ -143,6 +143,23 @@ against `scen_v12_old.json` / `scen_v12_rulings.json`):
 - The run-scale pin (ruling 10) alone puts 7 HS cases back on v1.2.3's call (#42, 46, 206, 222, 298, 360, 456); the
   ride-up shrink moves #460. HS rows for Drew: `docs/DECISIONS_refit_v13.md` section 2 (16 rows; Drew grades 6).
 
+**scripts/test-app.sh (Nov 22, run alone, 71 min, with `set -e` dropped so every suite runs; the unmodified script stops
+at its first suite, tests.py, and exits 1).** 63 suites: **51 pass, 12 fail**. None of the 12 is caused by rulings 5, 8
+and 10:
+- **Exact-vs-old-numbers references** (as on Nov 21; the refit moved the numbers they pin): tests.py landing fit
+  (GAIN 1.8 vs results/v10's 2.02); tests_harness "one-zone integration reproduces v1.2's own outcome_probs";
+  tests_v11 "exactly v1.0 with Step 2 set back"; tests_v12 "exact at lean 0 vs 14e0ad2" (2); tests_v12b "fitted size is
+  results/v12/hitter_fits.json's"; tests_v121 "identical to 504aaa8"; tests_v122 "identical to cb64db1" and its band
+  edges; tests_v123 "exactly v1.2.2's"; golden_v123 (240,479 differences: v1.2.3 stays the release reference);
+  logging_exact_test (6) and drift_exact_test (5) (old build = a git ref's app/dist with the old numbers).
+- **stage2_test D5** (new vs the Nov 21 run, which was on the first refit): "the real learner on the same seasons is
+  switched off at most once": 2 of 40 (the noise-chasing learner is caught in 32 of 40, bar 80%). It fails the same
+  way, 2 of 40, on the full-data refit engine without the rulings (8555bb4's app/engine.js + engine_data.json), and
+  with ruling 5 or 10 put back alone, so the full-data refit moved it (test-app.sh was not run on it). A simulated-season
+  count one over its bar; not retuned here (the switch's margin is a learner setting Drew has sized before).
+- The behavior rows the Nov 21 run failed (tests.py R1, tests_v11 Q4, tests_v12 S5) now pass. golden_v13refit, all
+  four fast_parity runs, build matches source, web/lib copies, web demo and the Node / e2e suites pass.
+
 ## Data, weighting, guards
 
 - **Savant** (`hitter_data/refit_load.py`): `C:/dev/pitchiq-data/statcast/{MLB,AAA,A}/<year>/*.csv.gz`, finished day
