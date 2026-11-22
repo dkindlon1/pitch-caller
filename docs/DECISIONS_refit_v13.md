@@ -10,7 +10,44 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
-## Your rulings at a glance (all PROPOSED)
+## Drew's rulings (Nov 21, night): DECIDED
+
+These supersede the PROPOSED recommendations below wherever they differ (source:
+`docs/PROMPT_hitter_v13_apply_2026-11-21.md`).
+
+1. **Pass bar: Drew's original rule stands.** v1.3 must beat **raw v1.2** by more than 2 SE at each level (D2 against
+   the better of v1.2's D1 / D3 settings). Each extra term beyond the count layer (base-out, times through the order,
+   scoring position, late and close, in-at-bat, platoon) ships only if it clears 2 SE on 2025 **and** its call changes
+   pass Drew's graded rows. **No fixed 0.002 floor** (the proposal below is not adopted). Recalibrated v1.2 stays as a
+   reported comparison, not the pass reference.
+2. **Zone table approved:** the regenerated draft (`docs/ZONE_TABLE_DRAFT_v13.md`), with two changes: the plan's trend
+   is carried one level step down for college and two for HS / travel; the sinker-grounder row (P3) comes from Triple-A
+   instead of Single-A (Single-A 1.28× vs AAA / MLB ~1.65×; likely labeling). Frozen with a sha as
+   `data_tables/zone_v13.json`, with a statement-by-statement record of what was approved.
+3. **Hanger gate approved as designed (section 4):** the flat +0.5 goes; an off-speed pitch over the heart gets
+   H × min(1, wild_today / 0.30) only when `wild_today > 0`; H is sized by graded rows (HG-1 to HG-4 plus the existing
+   gated and control rows) and stays 0 if the rows pass without it.
+4. **HS pitch kind × velocity:** an engine table for HS / travel covering swing, whiff and contact by pitch kind and
+   velocity, defined exactly as in the +0.010 fit, fed from each pitch's arsenal speed. Both engines, parity-tested.
+5. **Ride-up credit:** keep the 36% cap; `ride_up_2k` 0.008 → 0.003 (Q4 option 1).
+6. **R1** rewritten to its intent: slider at least 30%, no pitch over 60% (option 2).
+7. **S5** tests the gate's direction: leaning toward the hitter drops the inside sinker to ~0 (≤ 1%, never above the
+   base); leaning away raises it 3+ points (option 2).
+8. **HARD_SD:** the hitter talent SD with luck removed, computed properly the way `talent_spread.py` does it (not the
+   ~.070 estimate); POWER_HR restated on it.
+9. **Harness landing:** re-frozen from Single-A before any v1.3 score. Calib-world scores kept as a side report;
+   harness version bumped.
+10. **MLB run-value scale:** the denominator pinned at v1.2's .481 until college run values exist. After that, college
+    levels take no scale from MLB.
+11. **Simulator:** `two_strike` split into `two_strike_swing` and `two_strike_foul`, sized from the D1 fits.
+12. **HS / travel changed calls:** the list is refreshed to the full-data refit with rulings 5, 8 and 10 applied. Drew
+    grades only the **arguable** and **flagged** rows (e.g. #410, middle at 3-2 halved; #100; #154); every other row
+    takes its proposed grade.
+13. **Coverage rule:** still open; D2 / D3 2025 is still being collected.
+
+Not ruled on and left as stated below: R12 (state it, don't refit).
+
+## Your rulings at a glance (all PROPOSED; see the decided list above)
 
 | Item | Recommendation |
 |---|---|

@@ -326,3 +326,18 @@ Scraping and data collection (separate chat). New location logging. The hitter-s
   - **The archive records pitch type and velocity per pitch (Drew, Nov 21).** At HS / travel this allows count-layer
     fits split by pitch class (fastball vs off-speed, and kinds where data supports), velocity effects on swing / whiff
     / contact, and per-pitcher stuff checks. No location, so zone shape still comes from the Single-A seeded table.
+
+## 12. Drew's rulings on the decision sheet (Nov 21, night)
+- **Pass bar:** v1.3 must beat raw v1.2 by more than 2 SE at each level. Extra terms ship only if they clear 2 SE on
+  2025 and their call changes pass Drew's graded rows. No fixed 0.002 floor; recalibrated v1.2 is reported only.
+- **Zone table approved** (regenerated on full Single-A / Triple-A / MLB data), trend carried one step down for college
+  and two for HS / travel. The sinker-grounder row is taken from Triple-A.
+- **Hanger gate approved:** the flat +0.5 goes; penalty H × min(1, wild_today / 0.30) only when the pitch isn't landing
+  today, H sized by graded rows (0 if rows pass without it).
+- **HS / travel pitch kind × velocity:** new engine table (biggest single gain found, +0.010 nats per pitch).
+- **Ride-up credit** 0.008 → 0.003, 36% cap kept. **R1** rewritten (slider ≥ 30%, nothing over 60%). **S5** tests the
+  gate's direction.
+- **HARD_SD** = hitter talent SD with luck removed. **Harness landing** re-frozen from Single-A. **MLB run-value scale**
+  pinned at v1.2's .481 until college run values exist. **Simulator** two-strike trait split into swing and foul.
+- **HS / travel changed calls:** list refreshed to the full-data refit; Drew grades only arguable and flagged rows.
+- **Coverage rule:** still open pending D2 / D3 2025 data.
