@@ -29,7 +29,7 @@ import inplay_typed_params as IT
 
 DEFAULT = {"zone": "v13", "count": "v13core", "run": "v13core"}
 SHA256 = {"zone_v13.json": "4c9f98efb96a3e66a2f1367b6635caf451b2521efeb1169a707625643f253323",
-          "count_v13core.json": "466ab368e688e00b2db01e6f55d142c8c4b5db22059111f1e00c930f2933c2a1",
+          "count_v13core.json": "349f6a848fa5e4f5f5bc1579be5c3a4d92b766e366b0e7d9c02daa4cdf6e06ae",
           "run_v13core.json": "ea99383c9af5606462453a1024a5c00c934707a8fb0fd02e690fa2391bca2d98"}
 REFIT = dict(TT.REFIT_ENV)
 ZONE_ONLY = {"PITCH_ZONE_TABLE": "v13", "PITCH_COUNT_TABLE": "v13refit", "PITCH_RUN_TABLE": "v13refit"}
