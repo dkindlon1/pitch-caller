@@ -364,6 +364,86 @@ def t_hs():
         check("hs: candidate 'hs' refuses a college level", True)
 
 
+# ---------- export_candidates (synthetic candidate, fake engine) ----------
+def t_export(W):
+    from hitter_data import export_candidates as EX
+    import copy as _copy
+    prm = dict(FC.DEFAULTS)
+    f = FC.fit_level(W, "D1", prm, "shared")
+    j = json.loads(json.dumps(FC.candidate_json("D1", "shared", prm, {2024: 1.0}, f, W["D1"], 2025)))
+    t, t_bo, n_bo, late = EX.targets(j)
+    check("export: targets are the fitted chain terms", abs(t["0-2"]["swing"] - j["count"]["0-2"]["swing"]) < 1e-12
+          and n_bo.shape == (12, 3, 8) and len(late) == 12)
+    with open(os.path.join(os.path.dirname(os.path.abspath(FC.__file__)), "..", "data_tables", "count_v12.json"), encoding="utf8") as fh:
+        C12 = json.load(fh)
+    L12 = C12["levels"]["college_d1"]
+    d = {ck: {k: 0.1 * i for i, k in enumerate(EX.TERMS)} for ck in EX.CK}
+    bo = {key: 0.05 for key in EX.BO}
+    L = EX.apply_offsets(L12, d, bo)
+    check("export: a per-count offset is added to every band; v1.2's band shape kept",
+          all(abs(L["whiff"][ck][z] - L12["whiff"][ck][z] - 0.1) < 1e-12 for ck in EX.CK for z in EX.BANDS)
+          and abs((L["swing"]["3-0"]["heart"] - L["swing"]["3-0"]["off"]) - (L12["swing"]["3-0"]["heart"] - L12["swing"]["3-0"]["off"])) < 1e-12)
+    check("export: cstrike / bip_gb / swing_base_out shifted, hard / out_table untouched",
+          abs(L["cstrike"]["1-1"] - L12["cstrike"]["1-1"] - 0.3) < 1e-12 and abs(L["swing_base_out"]["2|123"] - 0.05) < 1e-12
+          and L["hard"] == L12["hard"] and L["out_table"] == L12["out_table"])
+
+    # a fake engine: each band's probability = sig(base_z + offset), mixed over bands (nonlinear, like the real one)
+    class FakeE:
+        _CT = {"college_d1": _copy.deepcopy(L12)}
+    mixw = np.array([0.3, 0.3, 0.25, 0.15])
+    base = {"swing": [1.2, 0.2, -0.8, -2.5], "whiff_sw": [-2.0, -1.4, -0.6, 0.5], "foul_ct": [0.0, 0.1, -0.2, -0.3],
+            "cs_take": [1.0, 0.0, -1.0, -2.0], "gb": [-0.2, -0.2, -0.2, -0.2]}
+    sig = lambda x: 1 / (1 + np.exp(-x))
+
+    def rates_fn(L):
+        r, sw = {}, np.zeros((12, 3, 8))
+        for i, ck in enumerate(EX.CK):
+            off = dict(swing=np.array([L["swing"][ck][z] for z in EX.BANDS]), whiff_sw=np.array([L["whiff"][ck][z] for z in EX.BANDS]),
+                       foul_ct=np.array([L["foul"][ck][z] for z in EX.BANDS]), cs_take=L["cstrike"][ck], gb=L["bip_gb"][ck])
+            r[ck] = {k: float((mixw * sig(np.array(base[k]) + off[k])).sum()) for k in EX.TERMS}
+            for o in range(3):
+                for bi in range(8):
+                    key = f"{o}|{EX.bases_key(bi)}"
+                    sw[i, o, bi] = float((mixw * sig(np.array(base["swing"]) + off["swing"] + L["swing_base_out"][key])).sum())
+        return r, sw
+    Lc, err = EX.calibrate(FakeE, "college_d1", "D1", j, iters=15, log=lambda *a: None, rates_fn=rates_fn)
+    check("export: calibration gives back the fitted per-count rates (fake engine, < 1e-4)", err["max_all_count_terms"] < 1e-4,
+          err["max_all_count_terms"])
+    check("export: the calibrated row passes the engine's format check", _check_count(C12, Lc))
+    check("export: no calibrated offset exceeds the cap (unreachable targets stop there)",
+          all(abs(Lc["cstrike"][ck] - L12["cstrike"][ck]) <= EX.MAX_OFFSET + 1e-9 for ck in EX.CK))
+    # run file: D2 stays absent, cv relative to 0-0, mlb and lw v12's
+    tmp = tempfile.mkdtemp()
+    old = FD.FITS
+    try:
+        FD.FITS = tmp
+        os.makedirs(os.path.join(tmp, "run_values"))
+        for lv, fn in EX.RUN_LEVELS.items():
+            with open(os.path.join(tmp, "run_values", fn), "w", encoding="utf-8") as fh:
+                json.dump({"RE": {b: 0.5 for b in EX.BO}, "CV": {ck: 0.01 * i + 0.02 for i, ck in enumerate(EX.CK)}}, fh)
+        import engine as _e
+        R = EX.run_candidate(_e)
+    finally:
+        FD.FITS = old
+    check("export: run candidate has no college_d2 (the D2 release guard keeps tripping)", "college_d2" not in R["levels"])
+    check("export: run cv is relative to 0-0; re replaced; lw and mlb are v12's",
+          R["levels"]["hs"]["cv"]["0-0"] == 0 and abs(R["levels"]["hs"]["cv"]["0-1"] - 0.01) < 1e-9
+          and R["levels"]["college_d1"]["re"]["0|000"] == 0.5 and R["levels"]["mlb"] == _e.TABLES["run"]["levels"]["mlb"]
+          and R["levels"]["hs"]["lw"] == _e.TABLES["run"]["levels"]["hs"]["lw"])
+    check("export: version / provisional label", R["version"] == EX.VERSION and "PROVISIONAL" in R["about"])
+
+
+def _check_count(C12, L):
+    import engine as _e
+    C = json.loads(json.dumps(C12))
+    C["levels"]["college_d1"] = L
+    try:
+        _e.check_table(C, "synthetic")
+        return True
+    except ValueError:
+        return False
+
+
 if __name__ == "__main__":
     t_hs()
     t_math()
@@ -371,6 +451,7 @@ if __name__ == "__main__":
     t_borrow()
     W = t_recovery()
     t_json(W)
+    t_export(W)
     t_runs()
     t_text()
     t_fixture()

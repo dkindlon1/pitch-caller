@@ -153,6 +153,7 @@ The files are `fits/count_layer/{D1,D2,D3}_{sep,borrow,shared}_thru{2024,2025}.j
 | `axes` | count `"b-k"` ×12, outs 0-2, bases `"000"…"123"` (bi = on1 + 2·on2 + 4·on3), side same/opp/unknown, late 0/1, p6 / bip names |
 | `count[ck]` | `p6` (ball, hbp, cstrike, whiff, foul, inplay), `swing`, `cstrike_given_take`, `hbp_given_take`, `whiff_given_swing`, `foul_given_swing`, `inplay_given_swing`, `n_weighted`, `borrowed_share` |
 | `p6_count_bo` | [12][3][8][6]: count × outs × bases |
+| `n_count_bo`, `late_share` | Weighted pitches per count × outs × bases, and the late-and-close share per count (the export's calibration weights) |
 | `p6_ctx` | [12][3][8][3][2][6]: the full harness cell (what is scored) |
 | `platoon[ck].same/opp` | Chain terms with the side offset |
 | `late_offset` | [12][2][6] multipliers |
@@ -225,7 +226,6 @@ validation season; the pass / fail test is 2026, once, at Step 6.
 - The weak-contact proxy fails the Single-A ranking check (section 6). Count tables should carry the hard proxy only.
 - Side is unknown for about 90% of pitches. The platoon offsets rest on 5-15% of PAs.
 - Not done here:
-  - converting to the TABLES_v13 format;
   - walk / strikeout linear weights (`_lw_bb`, `_lw_k`);
   - the Single-A zone-by-zone check of a v1.3 count layer (HARNESS_v13 section 10, required before v1.3 ships).
 
@@ -233,6 +233,14 @@ validation season; the pass / fail test is 2026, once, at Step 6.
 
 **PROVISIONAL.** The Perfect Game data is about 40% collected: the Atlanta 15U-17U events are 20-40% captured. 2026
 was not touched.
+
+The numbers below come from the first run, at 7,235 games. The HS ingest kept running, and a rerun later the same
+evening, at 7,645 games, moved every figure by 0.0003 nats or less. The candidates exported in section 13 come from
+that rerun. Rerun values:
+- kind + velocity terms: +0.0103 (SE 0.0005);
+- `sep` − recal: −0.00096 (SE 0.00013);
+- platoon on known-hand pitches: −0.00021 (SE 0.00005);
+- run values vs today, pitch state: −0.050 (SE 0.012).
 
 Command: `python -m hitter_data.fit_count_hs [--boot 1000] [--no-cache]`. It takes about 35 s once the seasons are
 cached (`fits/cache/hs_season_*.pkl`, keyed on the games' content hashes). Code: `hitter_data/fit_count_hs.py`.
@@ -373,5 +381,79 @@ play per swing for each 2 mph below his mean. Swing changes only on breaking bal
   The format is the same as section 8, with level `hs`.
 - `fits/run_values/hs_thru{2024,2025}.json`.
 - The term offsets are not written as an engine table yet. They live in `fits/hs/hs_summary.json` (`terms`,
-  `effects`). A per-class count table, `p6` by count × pitch class × velocity bin, would be the natural engine form;
-  it is waiting on the TABLES_v13 format.
+  `effects`). The format can't carry them: section 13 lists the new table they need.
+
+## 13. Candidate engine tables (docs/TABLES_v13.md format), PROVISIONAL
+
+Command: `python -m hitter_data.export_candidates`, about 7 minutes. It is the `export` step in `refit_all`, after
+`fit_count_hs`. Output goes to `C:/dev/pitchiq-data/fits/candidates/`. Nothing in `data_tables/` changes, and nothing is
+the default.
+
+**Files:**
+- `count_v13prov.json`: `data_tables/count_v12.json` with version `v13prov`.
+  - college_d1, college_d2 (THIN) and college_d3 (THIN) come from the `shared` candidates (the level-split rule). hs
+    comes from `sep`. All are `*_thru2025`.
+  - The numbers the fit owns are replaced: `swing`, `whiff`, `foul`, `cstrike`, `bip_gb` and `swing_base_out`.
+  - `hard`, `out_table`, `runner` and mlb stay v12's.
+- `run_v13prov.json`: `run_v12.json` with `re` and `cv` replaced for college_d1, college_d3 and hs. `cv` is shifted so
+  that 0-0 = 0. `lw` and mlb stay v12's.
+  - **There is no college_d2 entry.** The engine therefore lists RE / CV / LW in `D2_PLACEHOLDERS`, and
+    `release_guard_d2.py` exits 1 with both candidates loaded.
+- `export_report.json` and `export_report.md`: the errors, the proof, and what isn't carried.
+
+### How the fit maps onto the format
+
+The fit gives probabilities; the engine's count terms are logit offsets on top of its base + zone + class terms.
+- The engine is asked for its per-count rates through the harness's frozen calib-world pitcher (HS: the D3 mix). The
+  rates are averaged over the level's own count × base-out × side × late mix.
+- One offset per count per term is iterated (secant steps, at most ±4 logit) until the engine gives back the fitted
+  swing, whiff | swing, foul | contact, called strike | take and ground ball | in play.
+- Each count's offset is added to every band, so v1.2's band shape is kept.
+- `swing_base_out` gets one offset per state, shared by all counts.
+- The check runs in a fresh process with `PITCH_COUNT_TABLE=<path>` set and no in-memory edits.
+
+**Max |engine − fit| per level:**
+
+| Level | Per-count terms (swing, whiff/sw, foul/contact, cs/take, GB/BIP) | Swing by count × base-out: max over cells with ≥ 500 pitches / weighted RMS |
+|---|---|---|
+| college_d1 | 0.00000 | 0.041 / 0.009 |
+| college_d2 (THIN) | 0.00000 | 0.027 / 0.009 |
+| college_d3 (THIN) | 0.00000 | 0.026 / 0.008 |
+| hs | 0.0050: only cs/take at 3-2 (offset at the −4 cap); everything else 0.00000 | 0.020 / 0.005 |
+
+- **HS 3-2:** the engine's called strike moves only on edge / off takes, because heart and way-off use the fixed base
+  rate. Under the frozen landing, the fitted 3-2 rate is out of reach.
+- **Count × base-out:** the residual is the format's limit, since one base-out offset is shared by all 12 counts.
+
+### Caveats
+
+- These offsets are fit **under the harness's frozen calib-world landing**, which is heart-heavy against Single-A
+  (HARNESS_v13 section 10). The count offsets absorb that landing's error: the R1 / E7 trap. Expect large moves vs v12,
+  for example D1 0-0 swing −0.66 vs −0.40 and 3-0 swing −3.17 vs −2.0. The Single-A zone-by-zone check stays required
+  before anything ships.
+- **`bip_gb` +1.0 to +1.4 logit at college** (hs +0.4 to +0.7): the scorer's "ground" share (D1 0-0: .59 of balls in
+  play, with types imputed on hits) is far above the engine's Statcast-based ground-ball rate. Scorer words are not
+  Statcast types (risk R9), so treat `bip_gb` as the least trustworthy number here.
+
+### Proof (the export runs it)
+
+| Check | Result |
+|---|---|
+| Python with the env override | `TABLE_VERSIONS` = zone v12, count v13prov, run v13prov; `check_table` passes |
+| JS | `app/export_data.py --out fits/candidates/engine_data_v13prov.json` and `node` with `app/engine.js` load it (versions recorded) |
+| Python vs JS, 300 outcome cases + 40 full calls (tests_v13_tables runners) | worst difference 2.9e-14 |
+| Calls vs v12 | 10 of 40 top calls change, as expected |
+| `release_guard_d2.py` with both candidates | exit 1 (D2 placeholders remain: RE, CV, LW, OUT_TABLE, …) |
+
+### What the format can't carry (needed tables, listed, engine unchanged)
+
+1. **HS pitch kind × velocity**: 2025 gain +0.0103 nats per pitch. Proposed:
+   `count_<v>.levels.hs.pitch[count][kind FB/CB/SL/CH][velo bin]`, logit offsets on swing / whiff / foul / cstrike,
+   with velocity relative to the pitcher's own mean and absolute (bins as `fit_count_hs.VREL_EDGES` / `VABS_EDGES`).
+2. **Platoon**: per-count same / opposite offsets. At HS it is real: −0.0002 nats, about 4 SE.
+3. Whiff, foul, called strike and in play by base-out. Only swing has a base-out term.
+4. Late-and-close per-count offsets.
+5. Ball-in-play result by count (and count × base-out). `out_table` is by contact quality × type.
+6. A per-band shape for the count terms. The fit has no zone.
+7. Run values by count × base-out. The run file is additive `re` + `cv`.
+8. `lw` (walk / strikeout run values) is not refit.
