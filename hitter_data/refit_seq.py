@@ -316,6 +316,11 @@ OLD_FIT = os.path.join(HERE, "fit_v08.json")
 COUNTS = [(b, k) for b in range(4) for k in range(3)][1:]
 
 
+# The A3 rule compares the held terms with v1.2.3's held values (the spec / 0), not with whatever fit_v08.json holds
+# now: after the first refit the tracked file carries fitted values, and comparing against those would freeze them.
+V123_HELD = {"gamma_T": 0.30, "beta_tun_whiff": 0.0, "phi_OS": 0.116}
+
+
 def decide(res, meta):
     """v1.0's ship decisions kept: shipped terms take the refit value; held terms go through the A3 rule."""
     old = json.load(open(OLD_FIT))
@@ -331,7 +336,7 @@ def decide(res, meta):
     b, se = fitted("B_whiff"); ship["beta_T"] = b
     row("beta_T", "fit_v08.json ship.beta_T", osh["beta_T"], b, se, True, "shipped as fitted -> refit")
     b, se = fitted("B_hard")
-    v, why["gamma_T"] = a3(b, se, -osh["gamma_T"])
+    v, why["gamma_T"] = a3(b, se, -V123_HELD["gamma_T"])
     ship["gamma_T"] = -v
     row("gamma_T", "fit_v08.json ship.gamma_T", osh["gamma_T"], -v, se, -v != osh["gamma_T"],
         f"held at spec; A3 on fitted {-b:+.4f} (as gamma_T): " + why["gamma_T"])
@@ -347,7 +352,7 @@ def decide(res, meta):
     row("beta_tun_chase", "fit_v08.json ship.beta_tun_chase", osh["beta_tun_chase"], b, se, True,
         "shipped as fitted -> refit")
     b, se = fitted("tun_whiff")
-    v, why["beta_tun_whiff"] = a3(b, se, osh["beta_tun_whiff"])
+    v, why["beta_tun_whiff"] = a3(b, se, V123_HELD["beta_tun_whiff"])
     if v == 0.0 and osh["beta_tun_whiff"] == 0.0:
         lo, hi = b - 1.96 * se, b + 1.96 * se
         why["beta_tun_whiff"] = (f"interval {lo:+.3f}..{hi:+.3f} " + ("includes 0 -> stays 0" if lo <= 0 <= hi
@@ -361,7 +366,7 @@ def decide(res, meta):
     row("phi_FB", "fit_v08.json ship.phi_FB", osh["phi_FB"], ship["phi_FB"], se, True,
         "v1.0 used the fitted value (A3: interval excluded spec and 0) -> refit (floored at 0)")
     b, se = fitted("fam_all", 1)
-    v, why["phi_OS"] = a3(b, se, osh["phi_OS"])
+    v, why["phi_OS"] = a3(b, se, V123_HELD["phi_OS"])
     ship["phi_OS"] = max(0.0, v)
     row("phi_OS", "fit_v08.json ship.phi_OS", osh["phi_OS"], ship["phi_OS"], se, ship["phi_OS"] != osh["phi_OS"],
         f"held at spec; fitted {b:+.4f}: " + why["phi_OS"])
