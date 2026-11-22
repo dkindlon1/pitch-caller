@@ -162,6 +162,87 @@ def worst(a, b):
     return w
 
 
+def zone_candidate_checks(tmp, js_ship_inp, js_ship):
+    """hitter_data/zone_candidate.py on a synthetic seed (planted ratios, synthetic location mix): the conversion reproduces
+    the planted ratios in the engine, follows plan section 11 (no flat chase / hanger, no gated hanger), leaves the default
+    untouched, and the written file loads in both engines (Python = JS) and moves calls. The real candidate
+    (C:/dev/pitchiq-data/fits/candidates/zone_v13prov.json) gets the load / parity checks too when it is on disk."""
+    import numpy as np
+    import pandas as pd
+    from hitter_data import zone_candidate as zc
+    from hitter_data.zone_defs import BANDS, COUNT_GROUPS, HEIGHTS, PROFILES, count_group
+    rng = np.random.default_rng(5)
+    rows = [dict(b=b, s=s, band=z, ht=h, prof=p, w=1.0, n=float(rng.integers(1, 60)), sw=float(rng.integers(1, 30)),
+                 con=float(rng.integers(1, 20)), evn=float(rng.integers(1, 10)))
+            for s in range(3) for b in range(4) for z in BANDS for h in HEIGHTS for p in PROFILES]
+    P = pd.DataFrame(rows)
+    import zlib
+    planted = lambda o, g, z, p: float(np.exp(0.25 * np.sin(zlib.crc32(f"{o}{g}{z}{p}".encode()) % 1000)))   # x0.78 to x1.28
+    base = json.load(open(os.path.join(HERE, "data_tables", "zone_v12.json"), encoding="utf8"))
+    W = {o: zc.weights(P, o) for o in zc.CARRIED}
+    before = zc.rows_with(e, base, "college_d1")
+    l0 = zc.rows_with(e, zc.stage0_table(base), "college_d1")
+    cand, info = zc.build_candidate(planted, W, before, l0, base, version="synthetic")
+    after = zc.rows_with(e, cand, "college_d1")
+    try:
+        e.check_table(cand, "candidate"); ok_fmt = True
+    except ValueError:
+        ok_fmt = False
+    check("zone candidate: the file passes the format check, version set, level_cells empty", ok_fmt and cand["version"] == "synthetic" and cand["level_cells"] == {})
+    check("zone candidate follows plan section 11: class.chase_os and class.hanger_hard are 0, no other class term changed, no gated-hanger key",
+          cand["class"]["chase_os"] == {"off": 0.0, "noncomp": 0.0} and cand["class"]["hanger_hard"] == 0.0
+          and {k: v for k, v in cand["class"].items() if k not in ("chase_os", "hanger_hard")} == {k: v for k, v in base["class"].items() if k not in ("chase_os", "hanger_hard")}
+          and set(cand) == set(base))
+    cs0 = all(v == 0.0 for z in cand["cells"]["cstrike"].values() for p in z.values() for g in p.values() for v in g.values())
+    same_h = all(len(set(cand["cells"][o][z][p][g].values())) == 1 for o in zc.CARRIED for z in BANDS for p in PROFILES for g in COUNT_GROUPS)
+    check("zone candidate: called-strike cells stay 0 (no seed table), each (band, profile, count group) offset is the same at every height",
+          cs0 and same_h)
+    # reproduction: the engine with the candidate gives pbar(count) x planted ratio, data-weighted over the group's counts
+    worst_r = 0.0
+    for o in zc.CARRIED:
+        w = W[o]
+        pbar = {}
+        for b, s in [(b, s) for s in range(3) for b in range(4)]:
+            ks = [k for k in w if k[0] == b and k[1] == s]
+            pbar[(b, s)] = sum(w[k] * before[k][o] for k in ks) / sum(w[k] for k in ks)
+        for g in COUNT_GROUPS:
+            for z in BANDS:
+                for p in PROFILES:
+                    ks = [k for k in w if count_group(k[0], k[1]) == g and k[2] == z and k[4] == p]
+                    eng = sum(w[k] * after[k][o] for k in ks) / sum(w[k] for k in ks)
+                    tgt = sum(w[k] * pbar[(k[0], k[1])] * planted(o, g, z, p) for k in ks) / sum(w[k] for k in ks)
+                    worst_r = max(worst_r, abs(eng / tgt - 1))
+    check("zone candidate reproduces the planted ratios in the engine (swing, whiff, foul, hard; every band x profile x count group; within 10%)",
+          worst_r < 0.10, f"largest relative error {worst_r:.3f}")
+    again = zc.rows_with(e, base, "college_d1")
+    check("zone candidate: swapping the candidate in and out leaves the default engine bit for bit (use_zone_table restores v12)",
+          again == before and e.TABLE_VERSIONS["zone"] == "v12")
+    import types
+    from hitter_data import refit_all as ra
+    names = [n for n, _, _, _ in ra.STEPS]
+    args = types.SimpleNamespace(skip_ingest=False, skip_zone=False, force_zone=False)
+    same = {n: r for n, _, _, r in ra.plan(args, {"statcast_fingerprint": "a"}, "a")}
+    new = {n: r for n, _, _, r in ra.plan(args, {"statcast_fingerprint": "a"}, "b")}
+    check("refit_all: zone_candidate runs right after the zone step, and only when it runs",
+          names.index("zone_candidate") == names.index("zone") + 1 and same["zone_candidate"] is not None and new["zone_candidate"] is None)
+    # the written file in both engines
+    targets =[("synthetic candidate", os.path.join(tmp, "zone_synthetic.json"))]
+    with open(targets[0][1], "w", encoding="utf8", newline="\n") as f:
+        json.dump(cand, f)
+    if os.path.exists(zc.OUT):
+        targets.append(("real candidate zone_v13prov.json", zc.OUT))
+    for name, path in targets:
+        env = {e.TABLE_ENV["zone"]: path}
+        dpath = os.path.join(tmp, f"engine_data_{len(results)}.json")
+        export(env, dpath)
+        pz, jz = json.loads(run_py(HERE, js_ship_inp, env)), json.loads(run_js(HERE, js_ship_inp, dpath))
+        w = worst(pz, jz)
+        check(f"{name}: loads in Python (PITCH_ZONE_TABLE) and JS (export_data --out); Python = JS on 300 cases and 8 calls (within 1e-9)",
+              w <= 1e-9 and json.load(open(dpath, encoding="utf8"))["TABLES"]["versions"]["zone"] == json.load(open(path, encoding="utf8"))["version"],
+              f"largest difference {w:.1e}")
+        check(f"{name}: calls change vs v12 (expected: a new zone table)", worst(jz["calls"], js_ship["calls"]) > 1e-6)
+
+
 def main():
     tmp = tempfile.mkdtemp(prefix="v13tables_")
     # 1. the files ------------------------------------------------------------------------------------------------------
@@ -323,6 +404,9 @@ def main():
     check("Python = JS on the perturbed tables: 300 outcome cases, 8 full calls, run scale and stakes (within 1e-9)", w <= 1e-9, f"largest difference {w:.1e}")
     check("the JS engine reads them too: its numbers on the perturbed data differ from the shipped data's",
           worst(jm["cases"], js_ship["cases"]) > 1e-6 and worst(jm["calls"], js_ship["calls"]) > 1e-6)
+
+    # 4b. the zone candidate (hitter_data/zone_candidate.py): synthetic seed -> candidate file -> both engines ---------------
+    zone_candidate_checks(tmp, js_ship_inp=inp2, js_ship=js_ship)
 
     # 5. D2 keeps its placeholders --------------------------------------------------------------------------------------
     need = {"RE", "CV", "LW", "OUT_TABLE", "RUNNER_FIT"}
