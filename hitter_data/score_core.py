@@ -42,11 +42,17 @@ from .harness_adapters import (ROOT, SHAPE, Adapter, EngineV12Adapter, RecalAdap
                                bases_tuple)
 
 SEASON = 2025
-OUT = os.path.join(FD.FITS, "score_core")
-CAND = os.path.join(FD.FITS, "candidates")
+# After the core's level recalibration (hitter_data.core_recal) the as-scored copy is recalibrated the same way in its own
+# engine directory; these environment variables point the scoring at it (and keep the pre-recalibration outputs):
+#   SCORE_CORE_OUT      output directory (default fits/score_core)
+#   SCORE_CORE_S2024    directory holding the as-scored count / run copies (default fits/candidates)
+#   SCORE_CORE_ENGINE   engine directory for the core configs (default this repo)
+OUT = os.environ.get("SCORE_CORE_OUT") or os.path.join(FD.FITS, "score_core")
+CAND = os.environ.get("SCORE_CORE_S2024") or os.path.join(FD.FITS, "candidates")
 S2024 = {"count": os.path.join(CAND, "count_v13core_s2024.json"), "run": os.path.join(CAND, "run_v13core_s2024.json")}
 S2024_NOPV = os.path.join(CAND, "count_v13core_s2024_nopv.json")
 S2024_NOBO = os.path.join(CAND, "count_v13core_s2024_nobo.json")      # step 2: swing_base_out zeroed at college_d1 / hs
+CORE_DIR = os.path.abspath(os.environ.get("SCORE_CORE_ENGINE") or ROOT)
 DEFAULT_V123 = os.path.join(os.environ.get("TEMP", "/tmp"), "v123_engine")
 LEVELS = ("D1", "D2", "D3", "HS")
 CFGS = ("v123", "core", "core_nopv", "core_nobo")
@@ -60,9 +66,9 @@ def configs(v123_dir):
     v12 += [("v1.2@D3", "D2", "college_d3", a) for a in ("single_a", "calib_world")]
     core = [("core", lv, "college_d2", a) for lv in LEVELS for a in ("single_a", "calib_world")]
     return {"v123": (v123_dir, {"PITCH_ZONE_TABLE": "", "PITCH_COUNT_TABLE": "", "PITCH_RUN_TABLE": ""}, v12),
-            "core": (ROOT, core_env, core),
-            "core_nopv": (ROOT, nopv_env, [("core_nopv", "HS", "college_d2", "single_a")]),
-            "core_nobo": (ROOT, nobo_env, [("core_nobo", lv, "college_d2", "single_a") for lv in ("D1", "HS")])}
+            "core": (CORE_DIR, core_env, core),
+            "core_nopv": (CORE_DIR, nopv_env, [("core_nopv", "HS", "college_d2", "single_a")]),
+            "core_nobo": (CORE_DIR, nobo_env, [("core_nobo", lv, "college_d2", "single_a") for lv in ("D1", "HS")])}
 
 
 def tag(name, assumption):
@@ -103,7 +109,7 @@ def build_tables(cfg_name, engine_dir, out_dir=OUT):
         print(f"  {cfg_name}: {key} ({ad.engine_level(lv)}) {time.time() - t0:.0f} s", flush=True)
     e = ad.e
     meta["_engine"] = dict(dir=engine_dir, file=e.__file__, table_versions=getattr(e, "TABLE_VERSIONS", "v1.2.3 (no tables)"),
-                           fingerprint=H.engine_fingerprint(engine_dir) if engine_dir == ROOT else "git archive main (v1.2.3)")
+                           fingerprint=H.engine_fingerprint(engine_dir) if engine_dir == CORE_DIR else "git archive main (v1.2.3)")
     os.makedirs(out_dir, exist_ok=True)
     np.savez_compressed(os.path.join(out_dir, f"tables_{cfg_name}.npz"), **arrs)
     with open(os.path.join(out_dir, f"tables_{cfg_name}.json"), "w", encoding="utf-8") as f:

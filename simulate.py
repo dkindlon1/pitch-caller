@@ -441,12 +441,14 @@ def run_ball_in_play_v6b(contact, outs, bases, R):
     return 0, b1 + b2 + b3 + 1, (False, False, False), "home run"
 
 
-def run_ball_in_play_typed(contact, outs, bases, p, q, infield_in=False, dh=0.0, power=0.0):
+def run_ball_in_play_typed(contact, outs, bases, p, q, infield_in=False, dh=0.0, power=0.0, s=None):
     """v0.8 (spec 7.3): batted-ball type, then the typed outcome table and runner rules the engine uses.
+    s (v1.3 core): the situation, so the type mix is the engine's own (engine.type_mix adds the count table's ground-ball
+    offset for the level and count; 0 in count_v12 / v13refit and at D2 / D3 / MLB in v13core, so those games are unchanged).
     dh (TRUE_POWER): item 8's logit shift on HR, applied exactly as engine.in_play_value_typed does (out of that type's outs).
     power (v1.3 Part 5): the hitter's hidden power trait (power_row), world only."""
     L = LEVEL_NAME
-    t = sample(engine.type_mix(p, q, contact))
+    t = sample(engine.type_mix(p, q, contact, s))
     po, p1, p2, p3, phr, pe = engine.OUT_TABLE[L][contact][t]
     if dh and 0 < phr < 1:
         nhr = engine.sig(engine.logit(phr) + dh)
@@ -851,7 +853,7 @@ def play_game(log_path):
                 else:   # in play
                     dh = engine.power_hr_shift(ts, ts.grades) if (TRUE_POWER and ev == "hard" and ts.grades) else 0.0
                     o_add, runs_scored, bases, label, _bt = run_ball_in_play_typed(ev, outs, bases, p_true, q, dh=dh,
-                                                                                  power=(hitter.get("traits") or {}).get("power", 0.0))
+                                                                                  power=(hitter.get("traits") or {}).get("power", 0.0), s=ts)
                     outs += o_add
                     detail = f"{ev} contact: {label.upper()}"
                     if INPUTS >= 2:

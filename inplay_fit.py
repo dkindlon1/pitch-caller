@@ -3,7 +3,11 @@
   type-weighted marginal at the reference mix equals the engine's current IN_PLAY_BY_LEVEL[level][contact];
 - S_G, S_F (runner on 3rd scores on GB / FB outs) solved so the typed rate equals the chain's T_L (we_rates.json);
 - S_DP so the typed double-play rate per opportunity equals the chain's DP rate.
-Reads the current engine tables; never reruns fit_all.py. usage: python3 inplay_fit.py"""
+Reads the current engine tables; never reruns fit_all.py. usage: python3 inplay_fit.py
+v1.3 core (level recalibration): the reference type mix is the engine's own at the reference situation (0-0, as
+ref_contact_mix): it includes the count table's ground-ball offset for the level at 0-0 (count bip_gb, which engine.type_mix
+adds whenever it has the situation; 0 in count_v12 / count_v13refit, so those levels are unchanged). The engine reads
+OUT_TABLE / RUNNER_FIT from the count table, not from this file: hitter_data.core_recal copies them in."""
 # Nov 6: the engine is now one flag-free v0.9 engine. This script ran under the v0.7c settings when its data was made;
 # those settings no longer exist, so a rerun computes v0.9-based values.
 
@@ -20,20 +24,26 @@ REF_GB = (e.TYPED["gb"]["4-seam"], e.TYPED["gb"]["SL"], e.TYPED["gb"]["CH"])   #
 # changeup at 2.5 ft (v1.0 #16: the fitted rates, previously the spec guesses 0.379 / 0.439 / 0.478)
 
 
-def type_mix(gb_p, y, c):
-    """P(type | pitch GB rate, target height, contact): spec 7.3."""
-    g = e.sig(e.logit(gb_p) + e.TYPED["beta_y"] * (y - 2.5) + e.TYPED["gamma"][c])
+def type_mix(gb_p, y, c, off=0.0):
+    """P(type | pitch GB rate, target height, contact): spec 7.3; off = the count table's ground-ball offset (engine.type_mix)"""
+    g = e.sig(e.logit(gb_p) + e.TYPED["beta_y"] * (y - 2.5) + e.TYPED["gamma"][c] + off)
     lfp = e.TYPED["nongb"][c]
     return {"GB": g, "LD": (1 - g) * lfp[0], "FB": (1 - g) * lfp[1], "PU": (1 - g) * lfp[2]}
 
 
-def ref_type_mix(c):
-    ms = [type_mix(g, 2.5, c) for g in REF_GB]
+def ref_bip_gb(level):
+    """the count table's ground-ball offset at the reference count 0-0 (engine.type_mix adds it with a situation)"""
+    return e.count_cells(level, 0, 0)[2]
+
+
+def ref_type_mix(c, level):
+    off = ref_bip_gb(level)
+    ms = [type_mix(g, 2.5, c, off) for g in REF_GB]
     return {t: sum(m[t] for m in ms) / len(ms) for t in TYPES}
 
 
-def ipf(c, target):
-    w = ref_type_mix(c)
+def ipf(c, target, level):
+    w = ref_type_mix(c, level)
     X = {t: list(SHAPE[t]) for t in TYPES}
     for t in TYPES:
         s_ = sum(X[t]); X[t] = [v / s_ for v in X[t]]
@@ -71,14 +81,14 @@ def main():
         table[level] = {}
         worst = 0
         for c in ("weak", "solid", "hard"):
-            X, err = ipf(c, e.IN_PLAY_BY_LEVEL[level][c])
+            X, err = ipf(c, e.IN_PLAY_BY_LEVEL[level][c], level)
             table[level][c] = {t: tuple(X[t]) for t in TYPES}
             worst = max(worst, err)
         cm = ref_contact_mix(level)
         # out shares by type at the reference mix, and DP weighting among GB outs
         outs = {t: 0.0 for t in TYPES}; dpw = 0.0
         for c, pc in cm.items():
-            tm = ref_type_mix(c)
+            tm = ref_type_mix(c, level)
             for t in TYPES:
                 o = pc * tm[t] * table[level][c][t][0]
                 outs[t] += o
@@ -119,9 +129,9 @@ def main():
         pg, pf = min(0.95, 0.35 * s_G), min(0.85, 0.60 * s_F)
         got = typed_rate(pg, pf)
         fit[level] = dict(S_G=s_G, S_F=s_F, S_DP=s_dp, p_GB=pg, p_FB=pf, T_L=target, typed_rate=got,
-                          shortfall=target - got, out_share=share, contact_mix=cm, ipf_err=worst)
+                          shortfall=target - got, out_share=share, contact_mix=cm, ipf_err=worst, ref_bip_gb=ref_bip_gb(level))
         print(f"{level:11} IPF err {worst:.1e}  out shares GB {share['GB']:.2f} FB {share['FB']:.2f} LD+PU {share['LD']+share['PU']:.2f}  "
-              f"T_L {target:.3f} typed {got:.3f}  p_GB {pg:.2f} p_FB {pf:.2f}  s_dp {s_dp:.2f}")
+              f"T_L {target:.3f} typed {got:.3f}  p_GB {pg:.2f} p_FB {pf:.2f}  s_dp {s_dp:.2f}  ref bip_gb {ref_bip_gb(level):+.3f}")
     for t in (table, fit):
         t["travel"] = t["hs"]; t["college"] = t["college_d1"]
     with open("inplay_typed_params.py", "w") as fh:

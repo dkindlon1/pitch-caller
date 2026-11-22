@@ -11,7 +11,10 @@
     + gb_kind (P3):  only sinkers' ball-in-play values move
     + hanger gate:   H = 0 is bit for bit the key absent; H > 0 moves only off-speed pitches over the heart with
                      wild_today > 0, by H x min(1, wild_today / 0.30), in both engines
-- D2 / D3 count numbers are v1.2's (count terms), with the shared refit's called-strike kappas and in-play tables.
+- D2 / D3 count numbers are v1.2's (count terms), with the shared refit's called-strike kappas.
+- In-play tables (out_table / runner, every level): the core's level recalibration (hitter_data.core_recal copies
+  inplay_fit.py's inplay_typed_params.py into count_v13core); the count / run switch-off keeps them (count_v13refit with the
+  core's in-play tables), since they belong to the recalibration, not to the count candidates.
 - Python = JS on outcome cases and full calls at every level, HS / travel with entered velocities and with a missing one.
 
   python3 tests_v13_core.py      -> runs every check, exits non-zero on a failure
@@ -22,6 +25,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import engine as e
 import tests_v13_tables as TT
+import inplay_typed_params as IT
 
 DEFAULT = {"zone": "v13", "count": "v13core", "run": "v13core"}
 SHA256 = {"zone_v13.json": "4c9f98efb96a3e66a2f1367b6635caf451b2521efeb1169a707625643f253323",
@@ -168,7 +172,11 @@ def main():
     C_nopv = copy.deepcopy(C); C_nopv["levels"]["hs"].pop("pitch_velo")
     p_nopv = scratch(tmp, "count", C_nopv, "nopv")
     R_nopv = json.loads(TT.run_py(HERE, inp, {"PITCH_COUNT_TABLE": p_nopv}))
-    R_zone = json.loads(TT.run_py(HERE, inp, ZONE_ONLY))
+    CRi = copy.deepcopy(CR)                 # the refit's count layer with the core's (recalibrated) in-play tables
+    for lv, L in CRi["levels"].items():
+        if "out_table" in L:
+            L["out_table"], L["runner"] = C["levels"][lv]["out_table"], C["levels"][lv]["runner"]
+    R_zone = json.loads(TT.run_py(HERE, inp, dict(ZONE_ONLY, PITCH_COUNT_TABLE=scratch(tmp, "count", CRi, "refit_inplay"))))
     R_refit = json.loads(TT.run_py(HERE, inp, REFIT))
     lv_of = [c["lv"] for c in inp["cases"]]
     idx = lambda lvs: [i for i, lv in enumerate(lv_of) if lv in lvs]
@@ -196,7 +204,7 @@ def main():
     ok_rest = all(same_case(R_nopv["cases"][i], R_zone["cases"][i]) for i in idx(("mlb", "college_d2", "college_d3")))
     d1hs = sum(not same_case(R_nopv["cases"][i], R_zone["cases"][i]) for i in idx(("college_d1", "hs", "travel")))
     ex_rest = all(R_nopv["extras"][lv] == R_zone["extras"][lv] for lv in ("mlb", "college_d2", "college_d3"))
-    check("count / run v13core off (back to v13refit, zone_v13 kept): MLB / D2 / D3 bit for bit (outcomes, in-play values, "
+    check("count / run v13core off (back to v13refit with the core's in-play tables, zone_v13 kept): MLB / D2 / D3 bit for bit (outcomes, in-play values, "
           "kappas, run scale, stakes); D1 and HS / travel move", ok_rest and ex_rest and d1hs == len(idx(("college_d1", "hs", "travel"))),
           f"{d1hs} D1 / HS cases moved")
     check("zone_v13 off (back to zone_v13refit, count / run v13refit = the refit tip): run scale, count stakes and "
@@ -222,17 +230,20 @@ def main():
     v12_keys = ("swing", "whiff", "foul", "hard", "swing_base_out", "bip_gb")
     ok = all(C["levels"][lv][k] == C12["levels"][lv][k] for lv in ("college_d2", "college_d3") for k in v12_keys)
     ok_r = all(C["levels"][lv][k] == CR["levels"][lv][k] for lv in ("college_d2", "college_d3") for k in ("cstrike",)) \
-        and C["levels"]["college_d3"]["out_table"] == CR["levels"]["college_d3"]["out_table"] \
-        and C["levels"]["college_d3"]["runner"] == CR["levels"]["college_d3"]["runner"]
+        and all(C["levels"][lv]["out_table"] == {c: {t: list(v) for t, v in IT.OUT_TABLE[lv][c].items()} for c in IT.OUT_TABLE[lv]}
+                and C["levels"][lv]["runner"] == {k: IT.RUNNER_FIT[lv][k] for k in ("p_GB", "p_FB", "S_DP")}
+                for lv in C["levels"] if "out_table" in C["levels"][lv])
     lab = all("v1.2 count layer pending the coverage rule" in C["levels"][lv].get("label", "") for lv in ("college_d2", "college_d3"))
     check("D2 / D3 count numbers are v1.2's (count terms, base-out swing, ground ball by count), labelled 'v1.2 count layer "
-          "pending the coverage rule'; kappas and in-play tables the shared refit's", ok and ok_r and lab)
+          "pending the coverage rule'; kappas the shared refit's; every level's in-play tables the level recalibration's "
+          "(inplay_typed_params.py)", ok and ok_r and lab)
     check("run_v13core: D1 and HS re / cv from the fits, D3 and MLB the refit's, no D2 entry (release_guard_d2 still trips)",
           R["levels"]["college_d3"] == RR["levels"]["college_d3"] and R["levels"]["mlb"] == RR["levels"]["mlb"]
           and "college_d2" not in R["levels"] and R["levels"]["college_d1"]["re"] != RR["levels"]["college_d1"]["re"]
           and R["levels"]["hs"]["cv"]["0-0"] == 0 and {"RE", "CV", "LW"} <= set(e.D2_PLACEHOLDERS))
-    check("count_v13core: MLB is the refit's count layer; D1 and HS are the calibrated candidates (labelled)",
-          C["levels"]["mlb"] == CR["levels"]["mlb"] and all("PROVISIONAL count candidate" in C["levels"][lv]["label"] for lv in ("college_d1", "hs")))
+    nip = lambda L: {k: v for k, v in L.items() if k not in ("out_table", "runner")}
+    check("count_v13core: MLB is the refit's count layer (in-play tables the recalibration's); D1 and HS are the calibrated candidates (labelled)",
+          nip(C["levels"]["mlb"]) == nip(CR["levels"]["mlb"]) and all("PROVISIONAL count candidate" in C["levels"][lv]["label"] for lv in ("college_d1", "hs")))
 
     # 5. the hanger gate ------------------------------------------------------------------------------------------------
     old = e.use_zone_table(dict(copy.deepcopy(Z), **{"class": dict(Z["class"], hanger_gate=0.5)}))

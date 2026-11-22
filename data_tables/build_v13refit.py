@@ -4,7 +4,7 @@ The shared refit (feat/hitter-v13-refit, docs/REFIT_v13.md) changed numbers that
 engines into data_tables/: the called-strike count kappas (fit_v08.json ship.kappa), the typed in-play tables
 (inplay_typed_params.py OUT_TABLE / RUNNER_FIT), RE24 and count values (run_tables.py) and the walk / strikeout values
 (college_run_values.json). This script restates them in the table formats exactly as data_tables/build_v12.py does for
-v1.2, reading the working-tree (refit) sources instead of git 90fca9b. The refit left the zone terms alone, so the zone
+v1.2, reading the refit's sources (git 21f44ac, REFIT_SOURCE) instead of git 90fca9b. The refit left the zone terms alone, so the zone
 file is v12's with a new version name.
 
 With these three files loaded the merged engine reproduces the refit tip (21f44ac, numbers as literals) bit for bit:
@@ -20,7 +20,11 @@ sys.path.insert(0, HERE)
 import build_v12 as B
 
 VERSION = "v13refit"
-TREE = B.Source(None)
+# The refit sources are read from the refit tip in git, not the working tree: the core's level recalibration
+# (hitter_data.core_recal) reruns inplay_fit.py, which rewrites inplay_typed_params.py with the core's in-play tables.
+# At 21f44ac the five sources equal the core branch's pre-recalibration tree, so the files are unchanged.
+REFIT_SOURCE = "21f44ac"
+TREE = B.Source(REFIT_SOURCE)
 
 
 def zone_v13refit():
