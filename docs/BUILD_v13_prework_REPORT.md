@@ -186,3 +186,47 @@ bash /c/dev/pitch-caller-logs/v13/pulls/start_pulls.sh   # resume the MLB / MiLB
 - Archive intake and parser v3 are done: 89,696 games parsed at ≥98% on every quality check. Only D1 has enough full pitch strings to fit on today; 2026 stays held out.
 - The zone seed, scoring harness with v1.2 baseline, D2 plumbing, simulator hitter traits and draft scenarios are built and tested; the merged branch passes test-app and test-sql.
 - The shared refit is on `feat/hitter-v13-refit` (63 golden calls moved). It waits on Drew's regrade, as do the zone table, the scenarios and the harness decisions.
+
+## Nov 21 follow-up (docs/PROMPT_hitter_v13_next_2026-11-21.md)
+- **A + C, the decision sheet:** `docs/DECISIONS_refit_v13.md`. Every grade and recommendation in it is PROPOSED.
+  - R1: rewrite the limit as slider at least 30%, nothing over 60%.
+  - Q4: keep the 36% cap and shrink the ride-up credit 0.008 → 0.003. The read-through then goes to 95/98 and E7 passes
+    again.
+  - S5: test the gate's direction.
+  - The 25 HS calls: 20 acceptable, 5 arguable, 0 not acceptable.
+  - HARD_SD: use the talent SD (~.070). Adopt the 0.002 minimum effect. Re-freeze the landing from Single-A. State R12.
+    Pin the run scale at .481 until college run values exist.
+  - Hanger gate: H × min(1, wild_today / 0.30), proposed H = 0.5, sized by the landing rows.
+  - The sheet was written against the first refit. The full-data refit moves 23 HS golden calls: 7 of the sheet's 25
+    no longer move and 5 new ones do, so those 5 need adding.
+- **B, the 2-for-10 rule: it never passed on main's line against the engine that makes calls.**
+  - The recorded 150/150 (`results/logic_checks.txt`, Nov 3, v0.7c) tested the old `call_mixed`. The check kept testing
+    it until Step 6 (6c5eb3d, Nov 11).
+  - The live `call_v08` scores 147/150 at v0.9, 146 at Step 5 and Step 6, 145 at v1.0, and 144 at v1.2 and main (some of
+    that drift is a different case set).
+  - All 6 failures today are fastballs, none behind in the count or at 0-0. The likely link is Step 7 part 3 (05b3a9e),
+    but that's unproven: the fixed-case split was stopped by low memory. Its tools are in the session scratchpad.
+  - Not fixed (Drew).
+- **D, coverage + representativeness:** `python -m hitter_data.update` picked up 9,323 new games (99,019 total, 0 parser
+  errors). `python -m hitter_data.represent` writes `college/reports/representativeness.csv` (game-clustered SEs).
+  - D1 2025: 6,210 of 9,399 games are full (0.66). Full games strike out more: K% 19.5 vs 19.2 for all games (+0.96 ±
+    0.13 against the rest). Runs per game are 13.3 vs 13.5; HR per game 2.19 vs 2.12.
+  - D2 2025: 736 of 2,144 full (0.34). BB% -0.64 ± 0.21 and runs per game -0.91 ± 0.32 against the rest; K% is within 2
+    SE.
+  - D3 2025: 220 of 1,589 full (0.14). Every difference is within 2 SE (thin).
+  - 2026 (counted only): D1 0.85, D2 0.73, D3 0.74 full.
+  - D2 / D3 2025 coverage hasn't grown yet, so the rule stays Drew's open decision.
+- **E, pulls and zone:** every pull finished: Statcast MLB 2008-26, AAA 2023-26, A 2021-26; Stats API AAA/AA/A+/A
+  2005-26 (Rookie was finishing its last seasons).
+  - `python -m hitter_data.zone_seed --write-doc` was rerun on the full data: fit on the earlier seasons with recency
+    weights, 2025 held out per level for the check (every check gain is positive), and Triple-A in the transfer check.
+  - The hanger row is now ×0.78 (A) / ×0.81 (AAA) / ×0.85 (MLB) vs v1.2's ×1.48. **The zone table is ready for Drew's
+    approval**; it is not approved and not wired.
+  - The shared refit was rerun on the full data on `feat/hitter-v13-refit`, as a new numbers commit (5b3901a). The
+    refreshed changed-call list is in 8555bb4.
+    - 7 numbers in 6 rows moved materially vs the first refit, for example approach .196 → .224 and beta_y -.62 → -.49.
+    - 64 golden calls change vs v1.2.3 (41 college/MLB, 23 HS).
+    - The read-through is 93/98.
+    - Parity and golden_v13refit pass.
+  - **Not rerun:** the fuzz checks on the full-data refit (stopped by low memory). The first refit's 3000/3000 and
+    146/150 stand until they're rerun.
