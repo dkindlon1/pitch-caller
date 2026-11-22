@@ -556,8 +556,8 @@ for (const [k, sh, b, st, q] of C) {
 }
 console.log(JSON.stringify(out));""", json.dumps(RC)], cwd=HERE, capture_output=True, text=True).stdout)
 check("Step 4 Q4: the riding-fastball-up rule fires on a riding four-seam aimed up with two strikes (never at three balls, "
-      "never below two strikes, never a dead-zone or sinker), the same in both engines, at 0.008",
-      py_rc == [x[-1] for x in RC] and js_rc == py_rc and e.COACH_RULE["ride_up_2k"] == 0.008, f"py {py_rc} js {js_rc}")
+      "never below two strikes, never a dead-zone or sinker), the same in both engines, at 0.003 (v1.3 ruling 5; was 0.008)",
+      py_rc == [x[-1] for x in RC] and js_rc == py_rc and e.COACH_RULE["ride_up_2k"] == 0.003, f"py {py_rc} js {js_rc}")
 # ...and not leaned on: the riding four-seam up stays under the ceiling on the arsenals with one (36% at every level;
 # v1.1 measured 35.1% D3, 28.4% D1, 44.3% HS at size 0.008; v1.2 Step 5 (Q5) scales the credit by RHO_L at HS, so HS's
 # ceiling moved from 45% to 36%)

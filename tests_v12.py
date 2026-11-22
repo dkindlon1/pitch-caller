@@ -220,8 +220,9 @@ const E = require('./app/engine.js'); E.init(require('./app/engine_data.json'));
 const p = E.Pitch({ name: 'Fastball', kind: 'FB', grade: 3, command: 3, conf: 0.8, shape: 'rides', velo: 88 });
 const out = {}; for (const lv of ['hs', 'travel', 'college_d3', 'college_d1', 'mlb']) out[lv] = E.v08.coachCredit(p, 'up-away', E.Situation({ balls: 1, strikes: 2, outs: 0, bases: [false, false, false], level: lv }));
 console.log(JSON.stringify(out));"""], cwd=HERE, capture_output=True, text=True, check=True).stdout)
-check("Step 5 (Q5): the riding four-seam up with two strikes gets 0.008 x RHO_L: 0.0048 at HS and travel, 0.008 at college and "
-      "MLB; both engines", all(abs(_cc[lv] - 0.008 * e.RHO_L.get(lv, 1.0)) < 1e-15 and abs(_ccj[lv] - _cc[lv]) < 1e-15 for lv in _cc), str(_cc))
+# v1.3 (Drew's ruling 5, Nov 21): ride_up_2k 0.008 -> 0.003; the x RHO_L rule is unchanged
+check("Step 5 (Q5): the riding four-seam up with two strikes gets ride_up_2k x RHO_L (0.003 since ruling 5; was 0.008): 0.0018 at "
+      "HS and travel, 0.003 at college and MLB; both engines", all(abs(_cc[lv] - 0.003 * e.RHO_L.get(lv, 1.0)) < 1e-15 and abs(_ccj[lv] - _cc[lv]) < 1e-15 for lv in _cc), str(_cc))
 # S4 narrowed (L7): the fastball away went for a strike, and the payoff is 8+ mph slower
 _S4 = [  # (setup result, payoff kind, shape, payoff mph, fires)
     ("cstrike", "CH", "fade", 81, True), ("foul", "CH", "fade", 81, True), ("whiff", "CB", "", 80, True), ("ball", "CH", "fade", 81, False),
@@ -261,8 +262,12 @@ def _s5(lean):
 _S5_SAVED = e.SETUP_RULE["S5"]; e.SETUP_RULE["S5"] = _S5_SAVED or 0.004   # dropped (0): the gate's logic is checked at a test size
 _g0, _gt, _ga = _s5(0.0), _s5(-3.0), _s5(3.0)
 e.SETUP_RULE["S5"] = _S5_SAVED
-check("Step 5 (L7): S5 re-gated by the lean: on its fire row the front-door sinker drops when it leans toward the opposite-side "
-      "hitter (the HBP cost) and rises when it leans away", _gt < _g0 - 0.03 and _ga > _g0, f"sinker in {_g0:.1%}; leaning toward him {_gt:.1%}; away {_ga:.1%}")
+# v1.3 (Drew's ruling 7, Nov 21): the refit's fitted inside lane for a run sinker vs an opposite-side hitter (PT_FBL_H, +0.32
+# hard contact) leaves a base of about 1%, too small to drop 3 points from. The check tests the gate's direction instead:
+# leaning toward him drops the inside sinker to about 0 (at most 1%, never above the base); leaning away raises it 3+ points.
+check("Step 5 (L7): S5 re-gated by the lean: on its fire row, leaning toward the opposite-side hitter (the HBP cost) drops the "
+      "inside sinker to <= 1% and never above the base; leaning away raises it 3+ points (ruling 7)",
+      _gt <= 0.01 and _gt <= _g0 and _ga >= _g0 + 0.03, f"sinker in {_g0:.1%}; leaning toward him {_gt:.1%}; away {_ga:.1%}")
 
 # ------------------------------------------------------------------ 7. Step 6 (Drew, L5): high misses with two strikes are chases
 _rf = e.Pitch("Fastball", "FB", grade=3, command=3, conf=0.8, shape="rides", velo=90, lean_z=3.0)

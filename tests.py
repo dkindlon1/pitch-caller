@@ -55,8 +55,12 @@ p = type_shares(A, Situation(1, 2, 1, R3, last=("Fastball", "up-in"), level="col
 # scripted, and the slider within 5 points of the top. Flagged for Drew's Step 4 read-through.
 # v1.1 Step 4 (Drew, Nov 13, Q4): the riding four-seam up with two strikes is a strikeout pitch (COACH_RULE ride_up_2k); at
 # this 1-2 it adds 1.2 points of fastball up (39.5% -> 40.7%; slider 35.1% either way), so the gap is 5.6 points: 6.
-check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider within 6 points of the top pitch, nothing scripted (< 95%)",
-      max(p.values()) - p.get("Slider", 0) <= 0.06 and max(p.values()) < 0.95,
+# v1.3 (Drew's ruling 6, Nov 21): the limit had moved three times, each time following the engine; the refit (fitted eye
+# level, height, tunneling and shape terms, about a point each) put the gap at 7.0 (fastball 42.5%, slider 35.5%). It is
+# rewritten to what it always meant: the slider is a real part of the mix (at least 30%) and nothing is scripted (no pitch
+# over 60%).
+check("R1 mixing: 1-2 with a runner on 3rd after a fastball up-in: slider at least 30%, no pitch over 60% (ruling 6)",
+      p.get("Slider", 0) >= 0.30 and max(p.values()) <= 0.60,
       ", ".join(f"{n} {v:.0%}" for n, v in sorted(p.items(), key=lambda x: -x[1])))
 
 # R2 think in at-bats: count values come from this matchup (v1.0 #18: the live at-bat table, solve_table, read at the
