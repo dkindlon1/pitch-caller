@@ -268,6 +268,12 @@ Among D1 hitters with at least 100 PAs, the SD of the prefilled values is 0.81 (
 3. **TTO** is confounded with which pitchers go deep. Starter-only or within-pitcher fits would separate that.
 4. **Two-strike trait.** The data says swing and foul aren't one trait (rho ≈ −0.2). The simulator's single
    `two_strike` should split, or drop the foul part. This is a `simulate.py` change for whoever owns it.
+   **Done (ruling 11, Nov 22, `feat/hitter-v13-core`):** `simulate.py` and `app/worlds.js` now have `two_strike_swing`
+   (size 0.23) and `two_strike_foul` (size 0.14) in place of `two_strike`. Traits are set by preset or `HITTERS`, never
+   drawn, so the fitted rho isn't imposed; the presets carry the real groups' joint values. Preset two-strike parts (D1
+   groups under the section 3.2 rules, split on the D1 2025 prefill, whose composites match section 3.2):
+   - patient: swing −0.25, foul −0.11 (was two_strike −0.5);
+   - two_strike_battler: swing +0.93, foul +0.44 (was two_strike +1.5).
 5. **Spray** needs the batter's hand: 29% of D1 2025 hitters in the prefill have it. Hand could be inferred from roster
    pages or switch / opposite-field patterns.
 6. **Key quality.** Some `team_school` ids absorb several schools (one D1 id has 235 games in 2025). One school printed
@@ -281,6 +287,8 @@ Among D1 hitters with at least 100 PAs, the SD of the prefilled values is 0.81 (
    - two-strike swing 0.23;
    - two-strike foul 0.14;
    - the preset table.
+   The two two-strike sizes and the presets' two-strike parts are now in the simulator (item 4); the rest are still
+   placeholders.
 
 ## 5. HS / travel (Perfect Game), level `hs` (PROVISIONAL)
 

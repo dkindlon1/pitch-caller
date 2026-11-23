@@ -64,7 +64,11 @@ SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
 # and the in-play draw. Each trait is in hitter-SD units (0 = an average hitter; presets use about +-1.5) and moves a
 # logit by TRAIT_SIZE per unit:
 #   early       swing share at 0-0 / 1-0 / 0-1                     (logit(swing) += early * early_swing)
-#   two_strike  swing share at two strikes, and foul share of contact at two strikes
+#   two_strike_swing  swing share at two strikes                (logit(swing) += two_strike_swing * two_strike_swing size)
+#   two_strike_foul   foul share of contact at two strikes      (logit(foul | contact) += two_strike_foul * two_strike_foul size)
+#               (one `two_strike` trait until ruling 11, Nov 21: the D1 fits found the two parts anti-correlated, true-score
+#               rho -0.22, so they are two traits now. Traits are set by preset or HITTERS, never drawn, so no correlation
+#               is imposed; the presets carry the real groups' joint values.)
 #   contact     whiff share of swings                              (logit(whiff | swing) += contact * contact_whiff; size < 0)
 #   power       double, triple and home run per ball in play       (each logit += power * power_xbh, taken out of the outs)
 #   spray       RECORDED ONLY: the simulator has no ball-in-play direction (foul direction is the timing read the engine
@@ -75,19 +79,23 @@ SEE_POWER = TRUE_POWER and os.environ.get("SEE_POWER", "") == "1"
 #   HITTERS=power                every hitter is the preset
 #   HITTERS=3:power,4:contact    by lineup spot (others average)
 #   HITTERS=2:early=1/contact=-0.5   custom trait values for a spot
-# PLACEHOLDER sizes (plan 3.4: "sized from real hitters in that group at the level"): no fit exists yet. The trait sizes and
-# the preset values below are guesses of the right order, to be replaced when the trait fits land (plan section 7, Step 5).
+# Sizes (plan 3.4: "sized from real hitters in that group at the level"). FITTED (ruling 11): the two two-strike sizes are
+# the D1 logit per hitter SD (docs/FITS_TRAITS_v13.md section 3: swing 0.23, foul 0.14), and the two-strike values in the
+# patient and two_strike_battler presets are the D1 groups' means of each part (top / bottom 15% of real hitters, the
+# section 3.2 rules; parts split on the D1 prefill groups, whose composite matches section 3.2: battler +0.97, patient
+# -0.26 vs -0.27). Still PLACEHOLDER: early / contact / power sizes and the other preset values (fit candidates in
+# FITS_TRAITS_v13 section 4 item 8, not ruled on).
 # ---------------------------------------------------------------------------
 PLACEHOLDER_TRAIT_SIZES = True
-HITTER_TRAITS = ("early", "two_strike", "contact", "power", "spray")
-TRAIT_SIZE = {"early_swing": 0.35, "two_strike_swing": 0.30, "two_strike_foul": 0.30, "contact_whiff": -0.35, "power_xbh": 0.30}
-HITTER_PRESETS = {                                   # PLACEHOLDER values (plan 3.4), in trait SD units
+HITTER_TRAITS = ("early", "two_strike_swing", "two_strike_foul", "contact", "power", "spray")
+TRAIT_SIZE = {"early_swing": 0.35, "two_strike_swing": 0.23, "two_strike_foul": 0.14, "contact_whiff": -0.35, "power_xbh": 0.30}
+HITTER_PRESETS = {                                   # trait SD units; PLACEHOLDER values except the two-strike parts (D1 fit)
     "aggressive_early": {"early": 1.5},
-    "patient": {"early": -1.5, "two_strike": -0.5},
+    "patient": {"early": -1.5, "two_strike_swing": -0.25, "two_strike_foul": -0.11},
     "power": {"power": 1.5, "contact": -1.0},
     "contact": {"contact": 1.5, "power": -0.5},
     "free_swinger": {"early": 1.5, "contact": -1.0, "power": 0.5},
-    "two_strike_battler": {"two_strike": 1.5, "contact": 0.5},
+    "two_strike_battler": {"two_strike_swing": 0.93, "two_strike_foul": 0.44, "contact": 0.5},
 }
 _TAKE = ("ball", "wp_ball", "hbp", "cstrike")
 _SWING = ("whiff", "foul", "weak", "solid", "hard")
@@ -145,7 +153,7 @@ def apply_hitter_traits(P, traits, balls, strikes):
     if (balls, strikes) in ((0, 0), (1, 0), (0, 1)):
         a += t.get("early", 0.0) * TRAIT_SIZE["early_swing"]
     if strikes == 2:
-        a += t.get("two_strike", 0.0) * TRAIT_SIZE["two_strike_swing"]
+        a += t.get("two_strike_swing", 0.0) * TRAIT_SIZE["two_strike_swing"]
     sw = sum(P.get(k, 0.0) for k in _SWING)
     tot = sw + sum(P.get(k, 0.0) for k in _TAKE)
     if a and 0 < sw < tot:
@@ -158,7 +166,7 @@ def apply_hitter_traits(P, traits, balls, strikes):
         wh2 = sw * _sg(_lg(P["whiff"] / sw) + c)
         _rescale(P, _SWING[1:], sw - wh2)
         P["whiff"] = wh2
-    f = t.get("two_strike", 0.0) * TRAIT_SIZE["two_strike_foul"] if strikes == 2 else 0.0
+    f = t.get("two_strike_foul", 0.0) * TRAIT_SIZE["two_strike_foul"] if strikes == 2 else 0.0
     con = sw - P["whiff"]
     if f and 0 < P["foul"] < con:
         fo2 = con * _sg(_lg(P["foul"] / con) + f)

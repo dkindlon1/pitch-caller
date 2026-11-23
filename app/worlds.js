@@ -137,22 +137,26 @@ function season(o) {
  * the trait math mirrors simulate.py's apply_hitter_traits / power_row exactly (tests_v13_sim.py checks Python = JS).
  * Traits are in hitter-SD units, 0 = average; each moves a logit by TRAIT_SIZE per unit:
  *   early       swing share at 0-0 / 1-0 / 0-1
- *   two_strike  swing share at two strikes, and foul share of contact at two strikes
+ *   two_strike_swing  swing share at two strikes
+ *   two_strike_foul   foul share of contact at two strikes
+ *               (one `two_strike` trait until ruling 11: the D1 fits found the parts anti-correlated, rho -0.22; traits are
+ *               set, never drawn, so no correlation is imposed)
  *   contact     whiff share of swings (size < 0: more contact, fewer whiffs)
  *   power       double, triple and HR per ball in play (out of the outs)
  *   spray       recorded only: neither simulator has a ball-in-play direction
- * PLACEHOLDER sizes and preset values (plan 3.4: sized from real hitters at the level once the trait fits exist).
+ * Sizes: the two two-strike sizes and the presets' two-strike parts are FITTED (D1, docs/FITS_TRAITS_v13.md; see
+ * simulate.py); the other sizes and preset values are still PLACEHOLDER (plan 3.4).
  */
 const PLACEHOLDER_TRAIT_SIZES = true;
-const HITTER_TRAITS = ["early", "two_strike", "contact", "power", "spray"];
-const TRAIT_SIZE = { early_swing: 0.35, two_strike_swing: 0.30, two_strike_foul: 0.30, contact_whiff: -0.35, power_xbh: 0.30 };
-const HITTER_PRESETS = {   // PLACEHOLDER values (plan 3.4), trait SD units; the same table as simulate.py
+const HITTER_TRAITS = ["early", "two_strike_swing", "two_strike_foul", "contact", "power", "spray"];
+const TRAIT_SIZE = { early_swing: 0.35, two_strike_swing: 0.23, two_strike_foul: 0.14, contact_whiff: -0.35, power_xbh: 0.30 };
+const HITTER_PRESETS = {   // trait SD units; PLACEHOLDER except the two-strike parts (D1 fit); the same table as simulate.py
   aggressive_early: { early: 1.5 },
-  patient: { early: -1.5, two_strike: -0.5 },
+  patient: { early: -1.5, two_strike_swing: -0.25, two_strike_foul: -0.11 },
   power: { power: 1.5, contact: -1.0 },
   contact: { contact: 1.5, power: -0.5 },
   free_swinger: { early: 1.5, contact: -1.0, power: 0.5 },
-  two_strike_battler: { two_strike: 1.5, contact: 0.5 },
+  two_strike_battler: { two_strike_swing: 0.93, two_strike_foul: 0.44, contact: 0.5 },
 };
 const H_TAKE = ["ball", "wp_ball", "hbp", "cstrike"], H_SWING = ["whiff", "foul", "weak", "solid", "hard"];
 const lg = (p) => Math.log(p / (1 - p)), sg = (x) => 1 / (1 + Math.exp(-x));
@@ -161,7 +165,7 @@ function applyHitterTraits(P0, traits, b, k) {
   const P = Object.assign({}, P0), t = traits || {}, g = (n) => t[n] || 0;
   let a = 0.0;
   if ((b === 0 && k === 0) || (b === 1 && k === 0) || (b === 0 && k === 1)) a += g("early") * TRAIT_SIZE.early_swing;
-  if (k === 2) a += g("two_strike") * TRAIT_SIZE.two_strike_swing;
+  if (k === 2) a += g("two_strike_swing") * TRAIT_SIZE.two_strike_swing;
   let sw = 0, tk = 0; for (const x of H_SWING) sw += P[x] || 0; for (const x of H_TAKE) tk += P[x] || 0;
   const tot = sw + tk;
   if (a && sw > 0 && sw < tot) {
@@ -170,7 +174,7 @@ function applyHitterTraits(P0, traits, b, k) {
   }
   const c = g("contact") * TRAIT_SIZE.contact_whiff;
   if (c && P.whiff > 0 && P.whiff < sw) { const wh2 = sw * sg(lg(P.whiff / sw) + c); rescaleH(P, H_SWING.slice(1), sw - wh2); P.whiff = wh2; }
-  const f = k === 2 ? g("two_strike") * TRAIT_SIZE.two_strike_foul : 0.0, con = sw - P.whiff;
+  const f = k === 2 ? g("two_strike_foul") * TRAIT_SIZE.two_strike_foul : 0.0, con = sw - P.whiff;
   if (f && P.foul > 0 && P.foul < con) { const fo2 = con * sg(lg(P.foul / con) + f); rescaleH(P, H_SWING.slice(2), con - fo2); P.foul = fo2; }
   return P;
 }

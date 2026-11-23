@@ -227,11 +227,15 @@ console.log("14. Hitter world (v1.3 Part 5): hidden traits recovered from realis
   // hitter's mix for every pitch he saw (the offset), one trait at a time (the traits act on separate outcomes, so this
   // is the joint estimate). SE from the curvature. Pass criteria fixed before results:
   //   a. 2-SE intervals cover the truth in 90-99% of seasons (150 and 400 PAs, every preset and trait, zeros included);
-  //   b. at 400 PAs every preset trait of size >= 1 on early / two-strike / contact has the right sign in >= 90% of
-  //      seasons; power is reported with the PAs it needs (balls in play are few and extra-base hits rarer);
+  //   b. at 400 PAs every preset trait of size >= 1 on early / two-strike swing / two-strike foul / contact has the right
+  //      sign in >= 90% of seasons; power is reported with the PAs it needs (balls in play are few and extra-base hits
+  //      rarer). Ruling 11 split two_strike into two_strike_swing / two_strike_foul and the fitted presets carry them below
+  //      1 (battler +0.93 / +0.44), so a probe hitter (swing +1.5, foul -1.5: opposite signs, each estimated on its own)
+  //      runs beside the presets so both new traits face the sign check;
   //   c. no bias: at 400 PAs the mean estimate is within 4 SE-of-the-mean (+0.05) of the truth for every trait;
   //   d. an average hitter (all traits 0) plays exactly the average hitter's at-bats, and his estimates sit at 0 (as c).
   const HW = require("./worlds.js"), SZ = HW.TRAIT_SIZE, R14 = Math.max(40, REPS), NS = [60, 150, 400];
+  const HITTERS14 = Object.assign({}, HW.HITTER_PRESETS, { split_probe: { two_strike_swing: 1.5, two_strike_foul: -1.5 } });
   const SWING = new Set(["whiff", "foul", "weak", "solid", "hard"]), CONTACT = new Set(["foul", "weak", "solid", "hard"]);
   const sum = (o, ks) => ks.reduce((a, k) => a + (o[k] || 0), 0);
   const logitFit = (obs) => {   // obs: [offset, y, size]; logit P(y) = offset + size * theta
@@ -252,26 +256,26 @@ console.log("14. Hitter world (v1.3 Part 5): hidden traits recovered from realis
   };
   const lgt = (p) => Math.log(p / (1 - p));
   function estimate(pas) {
-    const early = [], two = [], con = [], bips = [];
+    const early = [], twoSw = [], twoFo = [], con = [], bips = [];
     for (const pa of pas) {
       for (const x of pa.pitches) {
         const B = x.base, sw = sum(B, [...SWING]), tot = sw + sum(B, ["ball", "wp_ball", "hbp", "cstrike"]), isEarly = x.b + x.k <= 1;   // 0-0, 1-0, 0-1
         const y = SWING.has(x.cat) ? 1 : 0;
-        if (sw > 0 && sw < tot) { if (isEarly) early.push([lgt(sw / tot), y, SZ.early_swing]); if (x.k === 2) two.push([lgt(sw / tot), y, SZ.two_strike_swing]); }
+        if (sw > 0 && sw < tot) { if (isEarly) early.push([lgt(sw / tot), y, SZ.early_swing]); if (x.k === 2) twoSw.push([lgt(sw / tot), y, SZ.two_strike_swing]); }
         if (y) {
           if (B.whiff > 0 && B.whiff < sw) con.push([lgt(B.whiff / sw), x.cat === "whiff" ? 1 : 0, SZ.contact_whiff]);
           const c = sw - B.whiff;
-          if (x.k === 2 && CONTACT.has(x.cat) && B.foul > 0 && B.foul < c) two.push([lgt(B.foul / c), x.cat === "foul" ? 1 : 0, SZ.two_strike_foul]);
+          if (x.k === 2 && CONTACT.has(x.cat) && B.foul > 0 && B.foul < c) twoFo.push([lgt(B.foul / c), x.cat === "foul" ? 1 : 0, SZ.two_strike_foul]);
         }
       }
       if (pa.bip) bips.push(pa.bip);
     }
     const OT = require("./engine_data.json").V08.OUT_TABLE.college_d3;
     const power = numFit((th) => { let s = 0; for (const b of bips) { let p = 0; for (const t of ["GB", "LD", "FB", "PU"]) p += b.mix[t] * HW.powerRow(OT[b.contact][t], th)[b.ev]; s += Math.log(Math.max(p, 1e-300)); } return s; });
-    return { early: logitFit(early), two_strike: logitFit(two), contact: logitFit(con), power };
+    return { early: logitFit(early), two_strike_swing: logitFit(twoSw), two_strike_foul: logitFit(twoFo), contact: logitFit(con), power };
   }
-  const TR = ["early", "two_strike", "contact", "power"], cover = [0, 0], need = {}, res = {};
-  for (const [name, pre] of Object.entries(HW.HITTER_PRESETS)) {
+  const TR = ["early", "two_strike_swing", "two_strike_foul", "contact", "power"], cover = [0, 0], need = {}, res = {};
+  for (const [name, pre] of Object.entries(HITTERS14)) {
     res[name] = {};
     for (const n of NS) {
       const ests = []; for (let r = 0; r < R14; r++) ests.push(estimate(HW.hitterSeason({ traits: pre, pas: n, seed: 1400 + 97 * r + n })));
@@ -285,10 +289,10 @@ console.log("14. Hitter world (v1.3 Part 5): hidden traits recovered from realis
       }
     }
   }
-  console.log("     preset              trait       truth |  60 PAs est (SE) sign |  150 PAs est (SE) sign |  400 PAs est (SE) sign");
-  for (const [name, pre] of Object.entries(HW.HITTER_PRESETS)) for (const t of TR) {
+  console.log("     preset              trait            truth |  60 PAs est (SE) sign |  150 PAs est (SE) sign |  400 PAs est (SE) sign");
+  for (const [name, pre] of Object.entries(HITTERS14)) for (const t of TR) {
     const cells = NS.map((n) => { const x = res[name][n][t]; return `${x.m >= 0 ? "+" : ""}${x.m.toFixed(2)} (${x.se.toFixed(2)}) ${x.sign === null ? "  - " : (100 * x.sign).toFixed(0).padStart(3) + "%"}`; });
-    console.log(`     ${name.padEnd(19)} ${t.padEnd(11)} ${(pre[t] || 0).toFixed(1).padStart(5)} | ${cells.join(" | ")}`);
+    console.log(`     ${name.padEnd(19)} ${t.padEnd(16)} ${(pre[t] || 0).toFixed(2).padStart(5)} | ${cells.join(" | ")}`);
   }
   // PAs needed: SE shrinks as 1/sqrt(PAs); read off the 400-PA SE (averaged over presets) for SE 0.5 (half a hitter SD)
   // and SE 0.75 (a preset-sized 1.5 told from average at 2 SE)
@@ -296,14 +300,14 @@ console.log("14. Hitter world (v1.3 Part 5): hidden traits recovered from realis
   console.log("     PAs needed (from the 400-PA SE): " + TR.map((t) => `${t} SE 0.5 -> ${need[t][0]}, SE 0.75 -> ${need[t][1]}`).join("; "));
   console.log("     spray: recorded only (no ball-in-play direction in either simulator), so not estimated");
   check(cover[0] / cover[1] >= 0.9 && cover[0] / cover[1] <= 0.99, `a. 2-SE intervals cover the truth in ${(100 * cover[0] / cover[1]).toFixed(1)}% of ${cover[1]} (150 and 400 PAs)`);
-  const signs = []; for (const [name, pre] of Object.entries(HW.HITTER_PRESETS)) for (const t of ["early", "two_strike", "contact"]) if (Math.abs(pre[t] || 0) >= 1) signs.push([`${name} ${t}`, res[name][400][t].sign]);
+  const signs = []; for (const [name, pre] of Object.entries(HITTERS14)) for (const t of ["early", "two_strike_swing", "two_strike_foul", "contact"]) if (Math.abs(pre[t] || 0) >= 1) signs.push([`${name} ${t}`, res[name][400][t].sign]);
   check(signs.every(([, s]) => s >= 0.9), `b. right sign at 400 PAs: ${signs.map(([k, s]) => `${k} ${(100 * s).toFixed(0)}%`).join(", ")}`);
   const pw = Object.entries(HW.HITTER_PRESETS).filter(([, pre]) => Math.abs(pre.power || 0) >= 1).map(([nm]) => `${nm} ${(100 * res[nm][400].power.sign).toFixed(0)}%`);
   console.log(`     (power, reported: right sign at 400 PAs ${pw.join(", ")}; SE at 400 PAs ${need.power[2].toFixed(2)})`);
   const bias = []; for (const nm of Object.keys(res)) for (const t of TR) { const x = res[nm][400][t]; if (Math.abs(x.m - x.truth) >= 4 * x.sd / Math.sqrt(R14) + 0.05) bias.push(`${nm} ${t} ${x.m.toFixed(2)} vs ${x.truth}`); }
   check(bias.length === 0, `c. no bias at 400 PAs${bias.length ? ": " + bias.join(", ") : ""}`);
   // d. the average hitter
-  const zeros = { early: 0, two_strike: 0, contact: 0, power: 0, spray: 0 };
+  const zeros = { early: 0, two_strike_swing: 0, two_strike_foul: 0, contact: 0, power: 0, spray: 0 };
   const same = JSON.stringify(HW.hitterSeason({ traits: zeros, pas: 400, seed: 1499 })) === JSON.stringify(HW.hitterSeason({ pas: 400, seed: 1499 }));
   let exact = true; for (const pa of HW.hitterSeason({ pas: 60, seed: 1498 })) for (const x of pa.pitches) { const Q = HW.applyHitterTraits(x.base, zeros, x.b, x.k); for (const k of Object.keys(x.base)) if (Q[k] !== x.base[k]) exact = false; }
   const z = []; for (let r = 0; r < R14; r++) z.push(estimate(HW.hitterSeason({ traits: zeros, pas: 400, seed: 1700 + r })));
