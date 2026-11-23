@@ -248,6 +248,10 @@ def parse_all(con, reparse=False, log=print, workers=None):
 
 
 def main(argv):
+    from .freeze import LOCK                       # v1.3 full data: a frozen game list blocks every pull (hitter_data.freeze)
+    if os.path.exists(LOCK) and "--report" not in argv:
+        print(f"REFUSING: the game list is frozen ({LOCK}); python -m hitter_data.freeze --unfreeze to pull again")
+        sys.exit(3)
     if "--hs-only" not in argv:
         con = ingest.connect()
         con.executescript(PA_SCHEMA)

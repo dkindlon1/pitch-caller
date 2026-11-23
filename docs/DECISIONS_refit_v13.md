@@ -13,6 +13,31 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 22, night, addendum): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_fulldata_addendum_2026-11-22.md` (after `docs/BUILD_v13_core_REPORT.md`, core tip f0c326e).
+Applied inside Tasks C and E of the full-data run.
+
+4. **HS calibration staff matches the data.** The 86 / 89 mph staff goes. Staff fastball speeds are drawn from the real
+   HS / travel distribution of pitcher season-average fastball speed (fit seasons only); off-speed speeds by pitch kind
+   the same way. Then HS is recalibrated and rescored.
+5. **Recalibration holds the count layer to the data.** `fit_all.py` moves only pitcher-side keys; the fitted count-layer
+   tables are not changed. A level whose K / BB / HBP can't land within 1 point that way stops and its gap is reported;
+   the count numbers are not bent to close it. Before recalibrating, the edge called-strike gap (engine .324 vs real
+   .630) is diagnosed: where .630 comes from, which landing or zone piece drives the engine's number, what fixing it would
+   change. Report only: zone numbers are Drew's.
+6. **Sims: 400 paired games per level**, one level at a time, before the +0.25 runs-per-game flag is judged; runs per game
+   with SE.
+7. **Grading waits for the full-data core.** HG-1 to HG-4, the 6 HS rows and the 35 scenarios are graded once, on the
+   full-data core. H stays 0 for now. The read-through is reported three ways on the full-data core: as built, with the
+   refit zone table swapped back, and with the flat hanger restored.
+- **Also:** the failing suites are listed with old pinned value, new value and whether an approved change explains the
+  move; only explained ones are re-pinned; `stage2 D5` stays open for Drew. The cross-check is like-for-like on the
+  snapshot's games. D2 / D3 are rescored with their own count layers and the core report's explanation is checked.
+- **Clarified by Drew (Nov 22, night):** ruling 10 means college levels whose run values are fit on their own
+  play-by-play take no scale from MLB at all; the .481 pin applies only until those values exist. The live archive keeps
+  growing, so the full-data fit's game-id list is frozen and recorded.
+
 ## Drew's rulings (Nov 22): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_fulldata_2026-11-22.md`. Carried out on `feat/hitter-v13-fulldata`
