@@ -13,6 +13,31 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 22, late): DECIDED
+
+Context: after the pitcher-side-only recalibration (commit 99b22fb) K lands high at every non-MLB level (D1 +2.4, D2 +2.3,
+D3 +2.5, HS +6.9 points; BB / HBP within 1). These rulings set what happens next. Carried out in
+`docs/KGAP_v13_DIAGNOSIS.md` (feat/hitter-v13-fulldata).
+
+1. **K gap: diagnose first, no tuning.** Nothing gets wired; report only. For D1, D2, D3 and HS (MLB as the control),
+   measure how much of the strikeout gap each piece explains, as a K change with SE, in one table:
+   - a. **Per-pitch rates vs count mix.** In sims: per-count swing / whiff / foul / called strike / in play against the
+     fitted count layer, plus the share of PAs reaching two strikes and pitches per PA against real. Does the extra K come
+     from per-pitch rates or from reaching two strikes more often?
+   - b. **Engine-chosen spots.** K when the engine's chosen locations are swapped for the average-pitcher landing mix the
+     count layer is normalized to. Also check that the zone table averages back to the count layer over the landing mix
+     the sims actually use. This splits the "calling advantage" from model error.
+   - c. **Zone trend.** K with the college / HS trend extension turned off (Single-A shape as is).
+   - d. **HS only.** K with the velocity table off, and with the whole staff at the median speed.
+   - e. **Edge called strike.** Engine vs real on the inner and outer half of the edge (real .922 / .410), and K with the
+     engine's edge called strike set to real, as a diagnostic run only.
+   - f. **v1.2.** Which settings v1.2's recalibration moved to land K, for comparison.
+   - Enough games per run for a K SE of about 0.3 points. One heavy job at a time.
+   - Then stop and report, with a proposed fix marked PROPOSED. Don't wire it.
+2. **Hold** the 400-game sims, the three-way read-through, the suite re-pin table and the D2 / D3 rescore until Drew rules
+   on the fix.
+3. **The edge called-strike ruling waits for this diagnosis.**
+
 ## Drew's rulings (Nov 22, night, addendum): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_fulldata_addendum_2026-11-22.md` (after `docs/BUILD_v13_core_REPORT.md`, core tip f0c326e).
