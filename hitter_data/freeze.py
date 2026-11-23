@@ -30,7 +30,8 @@ def h(items):
     return hashlib.sha256("\n".join(items).encode()).hexdigest()
 
 
-def snapshot():
+def snapshot(ids=None):
+    """ids: a dict to receive the explicit game-id lists (college rows level, season, id, digest, full; hs season, id, hash)."""
     c = ro(COLLEGE)
     per = {}
     for gid, lv, season, dig, pas, pf, pz in c.execute(
@@ -39,14 +40,19 @@ def snapshot():
         k = f"{lv}|{season}"
         d = per.setdefault(k, {"all": [], "full": []})
         d["all"].append(f"{gid}:{dig}")
-        if is_full(pas, pf, pz):
+        full = is_full(pas, pf, pz)
+        if full:
             d["full"].append(gid)
+        if ids is not None:
+            ids.setdefault("college", []).append([lv, season, gid, dig, int(bool(full))])
     college = {k: dict(games=len(v["all"]), full_games=len(v["full"]), sha256_all=h(v["all"]), sha256_full=h(v["full"]))
                for k, v in sorted(per.items())}
     hc = ro(HS)
     hper = {}
     for gid, season, ch in hc.execute("SELECT game_id, season, content_hash FROM hs_games ORDER BY game_id"):
         hper.setdefault(str(season), []).append(f"{gid}:{ch}")
+        if ids is not None:
+            ids.setdefault("hs", []).append([season, gid, ch])
     hs = {k: dict(games=len(v), sha256=h(v)) for k, v in sorted(hper.items())}
     total = h([f"{k}:{v['sha256_all']}" for k, v in college.items()] + [f"hs{k}:{v['sha256']}" for k, v in hs.items()])
     archive_games = c.execute("SELECT archive_games FROM ingest_runs ORDER BY at DESC LIMIT 1").fetchone()
@@ -57,6 +63,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--unfreeze", action="store_true")
+    ap.add_argument("--write-ids", action="store_true",
+                    help="write the explicit game-id list beside the locked manifest (refuses unless it hashes to the lock)")
     a = ap.parse_args(argv)
     os.makedirs(FREEZE, exist_ok=True)
     if a.unfreeze:
@@ -64,7 +72,24 @@ def main(argv=None):
             os.remove(LOCK)
         print("unfrozen: hitter_data.update may pull again")
         return 0
-    snap = snapshot()
+    ids = {} if a.write_ids else None
+    snap = snapshot(ids)
+    if a.write_ids:
+        import gzip
+        lock = json.load(open(LOCK, encoding="utf-8"))
+        if lock["sha256"] != snap["sha256"]:
+            print("REFUSING: the current game list does not hash to the lock:", lock)
+            return 1
+        path = lock["manifest"].replace("manifest_", "game_ids_").replace(".json", ".json.gz")
+        ids.update(sha256=snap["sha256"], manifest=lock["manifest"], frozen_at=lock["frozen_at"],
+                   columns=dict(college=["level", "season", "game_id", "digest", "full"], hs=["season", "game_id", "content_hash"]))
+        with gzip.open(path, "wt", encoding="utf-8") as f:
+            json.dump(ids, f)
+        lock["game_ids"] = path
+        with open(LOCK, "w", encoding="utf-8") as f:
+            json.dump(lock, f, indent=1)
+        print(f"game ids: {path} ({len(ids['college'])} college, {len(ids['hs'])} hs; sha256 {snap['sha256'][:16]} = lock)")
+        return 0
     if a.check:
         lock = json.load(open(LOCK, encoding="utf-8"))
         man = json.load(open(lock["manifest"], encoding="utf-8"))

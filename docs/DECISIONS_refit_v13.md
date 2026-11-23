@@ -37,6 +37,9 @@ Applied inside Tasks C and E of the full-data run.
 - **Clarified by Drew (Nov 22, night):** ruling 10 means college levels whose run values are fit on their own
   play-by-play take no scale from MLB at all; the .481 pin applies only until those values exist. The live archive keeps
   growing, so the full-data fit's game-id list is frozen and recorded.
+  Recorded: `C:/dev/pitchiq-data/freeze/manifest_2026-11-22_2134.json` (per level-season hashes, sha256
+  d2c143db8faacfa9) and the explicit list `game_ids_2026-11-22_2134.json.gz` (131,581 canonical college games, 21,707
+  HS; it hashes to the lock). Archive at last ingest 137,692 games; `hitter_data.update` refuses to pull while frozen.
 
 ## Drew's rulings (Nov 22): DECIDED
 
