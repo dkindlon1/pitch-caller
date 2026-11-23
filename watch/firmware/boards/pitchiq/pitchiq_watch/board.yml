@@ -1,9 +1,9 @@
-# PitchIQ watch rev B board definition (Zephyr hardware model v2).
+# PitchIQ watch rev C board definition (Zephyr hardware model v2).
 # SPDX-License-Identifier: Apache-2.0
 
 boards:
 - name: pitchiq_watch
-  full_name: PitchIQ watch rev B
+  full_name: PitchIQ watch rev C
   vendor: pitchiq
   socs:
   - name: nrf52840

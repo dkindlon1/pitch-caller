@@ -105,6 +105,16 @@ static const struct device *const charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_c
 #define VBUS_ILIMUPDATE 0x00U
 #define VBUS_ILIM 0x01U
 #define VBUS_ILIMSTARTUP 0x02U
+/* USB-C detect status (VBUSIN block 0x02, offset 0x05; stock driver npm13xx_charger.c VBUS_OFFSET_DETECT).  Two 2-bit fields,
+ * CC1 in bits 1:0 and CC2 in bits 3:2.  The stock driver tests mask 0x0A and calls the result "CC1 or CC2 indicate 1.5A or 3A
+ * capability" (DETECT_HI_MASK, DETECT_HI_CURRENT 1.5 A) and treats any other nonzero value as the 500 mA default-USB case; this
+ * code uses the same mask.  The field values themselves (2 = 1.5 A, 3 = 3 A) are not spelled out in the Zephyr tree or in
+ * hardware/revB/research/datasheets.md: they follow from that mask and from the nPM1300 product specification (USBCDETECTSTATUS). */
+#define VBUS_DETECT 0x05U
+#define VBUS_DETECT_HI_MASK 0x0AU
+/* Input limit once the source has advertised 1.5 A or 3 A.  The cell charges at about 75 mA, so 500 mA is ample. */
+#define VBUS_ILIM_HI_UA 500000U
+BUILD_ASSERT(DT_PROP(CHG, vbus_limit_microamp) == 100000, "rev C: the start-up VBUS limit must stay 100 mA (default USB), see power.c");
 /* Charger temperature registers (offsets in the CHGR block, as the stock driver's CHGR_OFFSET_NTC_TEMPS 0x10 / _DIE_TEMPS 0x18:
  * NTCCOLD 0x10, NTCCOOL 0x12, NTCWARM 0x14, NTCHOT 0x16, DIETEMPSTOP 0x18, DIETEMPRESUME 0x1A; each is msb = code >> 2 then
  * lsb = code & 3).  Checked against npm13xx_charger.c set_ntc_thresholds()/set_dietemp_thresholds() in the Zephyr tree. */
@@ -244,13 +254,22 @@ int power_sample(struct power_status *o) {
   o->mv = (uint16_t)(code * 5000U / 1024U);
   o->charging = (st & (CHG_TRICKLE | CHG_CC | CHG_CV)) != 0;
   o->vbus = (vb & VBUS_PRESENT) != 0;
-  /* VBUS limit: the chip uses 100 mA until VBUSINILIM is written and ILIMUPDATE is triggered, and goes back to 100 mA when the
-   * cable is removed (stock driver comment).  So (re)apply the devicetree limit (500 mA) whenever VBUS is seen and not yet done. */
+  /* VBUS input limit (rev C, USB Type-C).  The chip starts at 100 mA (default USB) and goes back to 100 mA when the cable is
+   * removed (stock driver comment).  CC1/CC2 go straight to the nPM1300, which has its own 5.1 k pull-downs and reports what the
+   * source advertises in the USB-C detect status register.  Only if CC1 or CC2 shows 1.5 A or 3 A is VBUSINILIM raised to
+   * 500 mA; a source that advertises default USB power (or nothing the chip could read) leaves 100 mA.  The detect result needs
+   * a moment after the plug-in, so this is retried on every sample (60 s, and on charger events) until it has been applied. */
   if (o->vbus && !vbus_limit_set) {
-    int r = pm_wr(VBUS_BASE, VBUS_ILIM, VBUS_IDX(DT_PROP(CHG, vbus_limit_microamp)));
-    r |= pm_wr(VBUS_BASE, VBUS_ILIMUPDATE, 1U);
-    vbus_limit_set = r == 0;
-    LOG_INF("VBUS input limit %u mA: %d", DT_PROP(CHG, vbus_limit_microamp) / 1000U, r);
+    uint8_t det = 0;
+    int r = pm_rd(VBUS_BASE, VBUS_DETECT, &det);
+    if (r == 0 && (det & VBUS_DETECT_HI_MASK)) {
+      r = pm_wr(VBUS_BASE, VBUS_ILIM, VBUS_IDX(VBUS_ILIM_HI_UA));
+      r |= pm_wr(VBUS_BASE, VBUS_ILIMUPDATE, 1U);
+      vbus_limit_set = r == 0;
+      LOG_INF("USB-C detect 0x%02x: source offers 1.5/3 A, VBUS input limit %u mA: %d", det, VBUS_ILIM_HI_UA / 1000U, r);
+    } else if (r) {
+      LOG_WRN("USB-C detect read failed: %d (VBUS limit stays 100 mA)", r);
+    }
   } else if (!o->vbus) {
     vbus_limit_set = false;
   }

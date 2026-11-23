@@ -1,5 +1,5 @@
 /*
- * PitchIQ watch rev B: nRF52840 (QIAA) in a Raytac MDBT50Q module, Sharp memory LCD, LIS2DH12, MAX30101, nPM1300.
+ * PitchIQ watch rev C: nRF52840 (QIAA) in a Raytac MDBT50Q module, Sharp memory LCD, LIS2DH12, nPM1300 (no heart-rate sensor, no 5 V boost).
  * Pin numbers live in pitchiq_watch-pinctrl.dtsi (PQ_PIN_*); this file refers to them by name.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -13,8 +13,8 @@
 #include <zephyr/dt-bindings/sensor/lis2dh.h>
 
 / {
-	model = "PitchIQ watch rev B";
-	compatible = "pitchiq,watch-rev-b";
+	model = "PitchIQ watch rev C";
+	compatible = "pitchiq,watch-rev-c";
 
 	chosen {
 		/* No console and no shell: logging is SEGGER RTT only (see the defconfig).  The LCD is the display. */
@@ -31,17 +31,15 @@
 		 * "active high"); no flicker problem at 1 kHz for a still LED; the duty chosen in ui.c is a guess to tune. */
 		/* Vibration motor, active high, low-side MOSFET, PWM1 channel 0 on PQ_PIN_MOTOR_PWM.  20 kHz so it is quiet.
 		 * (Both are entries of one "pwms" property, named "light" and "motor": a custom "<name>-pwms" needs its own cells name.)
-		 * The motor is wired from VSYS, NOT the 3.0 V rail: VSYS is about 3.1-4.2 V on battery and up to about 5 V when docked.
-		 * The motor is rated 3 V (range 1.5-4.2 V), so haptics.c caps the PWM duty to give about 3.0 V effective
-		 * (scaled by the last battery sample, lower again when VBUS is present).  A flyback diode is fitted across it.
-		 * ASSUMPTION: neither the duty cap nor the diode can be checked from firmware. */
+		 * Rev C: the motor is an 8 mm coin ERM (rev B had a 10 mm part), same drive circuit.  It is wired from VSYS, NOT the
+		 * 3.0 V rail: VSYS is about 3.1-4.2 V on battery and about 5 V when VBUS is present (USB Type-C).
+		 * haptics.c caps the PWM duty to give about 3.0 V effective (scaled by the last battery sample, lower again when VBUS
+		 * is present).  A flyback diode is fitted across it.
+		 * ASSUMPTION: the 8 mm part is also rated 3 V (carried over from the 10 mm part's cap, check its datasheet), and
+		 * neither the duty cap nor the diode can be checked from firmware. */
 		pwms = <&pwm0 0 PWM_USEC(1000) PWM_POLARITY_NORMAL>,
 		       <&pwm1 0 PWM_USEC(50) PWM_POLARITY_NORMAL>;
 		pwm-names = "light", "motor";
-		/* BOOST_EN, active high: enables the TI TPS61023 5 V boost (true output disconnect) that feeds the MAX30101
-		 * LED anode.  Off at boot.
-		 * ASSUMPTION: the board has an external pull-down so the boost is off while the pin is still an input. */
-		boost-en-gpios = <&gpio0 PQ_PIN_BOOST_EN GPIO_ACTIVE_HIGH>;
 		/* LCD DISP (P0.22), active high.  Deliberately NOT given to the ls0xx driver (no disp-en-gpios there): that
 		 * driver raises DISP before it sends the all-clear, but the LS013B7DH03 needs the memory cleared first or it
 		 * shows random pixels.  Without the property the driver clears the panel at init and leaves DISP alone; ui_init()
@@ -74,7 +72,7 @@
 };
 
 &uicr {
-	/* ASSUMPTION: P0.18 is brought out to the SWD header as nRESET, as on the MDBT50Q reference design. */
+	/* ASSUMPTION: P0.18 is brought out to the SWD programming pads (SWD only on rev C, no charge pad) as nRESET, as on the MDBT50Q reference design. */
 	gpio-as-nreset;
 };
 
@@ -95,30 +93,6 @@
 		anym-on-int1;
 	};
 
-	/* Heart-rate sensor, green LED only (multi-LED mode, slot 1 = green, the third LED channel).  Its 1.8 V core is
-	 * BUCK1 and its LED anode is the 5 V boost (BOOST_EN), both switched by firmware, so the stock Zephyr driver cannot
-	 * be used: that driver
-	 * programs the chip once at init and cannot survive a power cut.  The node is deferred-init and the driver is
-	 * switched off in prj.conf; sensors.c reads these properties (address, interrupt pin, mode, LED current, sample
-	 * rate, pulse width, ADC range) and does the I2C itself each time the rail is switched on.
-	 * ASSUMPTION: MAX30101 INT is open drain, active low, with an external pull-up; the I2C pull-ups are to 1.8 V or
-	 * the part tolerates the 3.0 V bus (the datasheet allows both). */
-	ppg: max30101@57 {
-		compatible = "maxim,max30101";
-		reg = <0x57>;
-		zephyr,deferred-init;
-		irq-gpios = <&gpio0 PQ_PIN_PPG_INT GPIO_ACTIVE_LOW>;
-		acq-mode = "multi-led";
-		led-slot = <3 0 0 0>;
-		/* [red, ir, green] pulse amplitude, 0.2 mA per step: 0x30 = 9.6 mA on green. Tune on the wrist. */
-		led-pa = [00 00 30];
-		smp-sr = <100>;
-		smp-ave = <2>;
-		led-pw = <411>;
-		adc-rge = <4096>;
-		fifo-rollover-en;
-	};
-
 	/* nPM1300 power management chip.  BUCK2 is the system rail.  The user button is wired to its SHPHLD pin, so a
 	 * press arrives as an nPM1300 event on the host interrupt line, not as a GPIO key. */
 	npm1300_pmic: pmic@6b {
@@ -137,16 +111,11 @@
 		npm1300_regulators: regulators {
 			compatible = "nordic,npm1300-regulator";
 
-			/* Heart-rate sensor core, 1.8 V.  A 47 k resistor on VSET1 makes it come up ON at power-up; sensors.c
-			 * turns it off at boot when heart rate is not in use and on again before use.  (BUCK1 cannot reach
-			 * 3.0 V, hence the rails are not the other way round.) */
-			buck1: BUCK1 {
-				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <1800000>;
-				regulator-init-microvolt = <1800000>;
-				/* It is ON at power-up (see above); the regulator driver sees that and switches it off at its init. */
-				regulator-boot-off;
-			};
+			/* BUCK1 (the 1.8 V rail) is NOT used on rev C and deliberately has NO node here. VSET1 is tied to
+			 * ground, so the chip leaves BUCK1 off at start-up; its inductor and output capacitor stay fitted (as on
+			 * Nordic's evaluation kit) only so that the pins are terminated. Nothing is connected to the rail, so never
+			 * enable it. Because no BUCK1 child node exists, the regulator driver does not initialise it and the
+			 * application cannot look it up (nothing in app/ refers to buck1). */
 
 			/* System rail 3.0 V, always on: set at start-up by a 150 k resistor on VSET2, the nRF52840 is already
 			 * running from it before this code executes; the firmware only confirms it.  The PMIC's VDDIO is tied to
@@ -165,8 +134,11 @@
 		 * every boot, in firmware, with no other code needed.  A flat battery still recovers: VBUS feeds VSYS
 		 * through the PMIC power path, so the MCU boots from cable power alone and then runs this init. Until it does,
 		 * the chip's defaults (32 mA, 100 mA) apply and nothing charges, which is safe.
-		 * ASSUMPTION: the NTC beta is 3380 K (typical for the 10 k part, check the datasheet of the fitted one);
-		 * VBUS source is a 5 V charging contact able to give 500 mA. */
+		 * ASSUMPTION: the NTC beta is 3380 K (typical for the 10 k part, check the datasheet of the fitted one).
+		 * Rev C: charging is through a USB Type-C receptacle, CC1/CC2 straight to the nPM1300 (internal 5.1 k Rd).  The
+		 * input limit stays at the chip default of 100 mA (default USB) until power.c has read the USB-C detect status
+		 * register and seen a source that advertises 1.5 A or 3 A; only then does it write 500 mA (power.c).  The
+		 * vbus-limit-microamp below is the start-up limit (VBUSINILIMSTARTUP), so it must stay 100 mA. */
 		npm1300_charger: charger {
 			compatible = "nordic,npm1300-charger";
 			term-microvolt = <4200000>;
@@ -175,7 +147,7 @@
 			/* 1 A (the nPM1300 high setting): the 200 mA low setting is below the 150-240 mA worst case (motor + radio + LED)
 			 * and a trip browns the system out.  Firmware review 6.  power.c DISCHG_LIMIT must match. */
 			dischg-limit-microamp = <1000000>;
-			vbus-limit-microamp = <500000>;
+			vbus-limit-microamp = <100000>;
 			thermistor-ohms = <10000>;
 			thermistor-beta = <3380>;
 			charging-enable;

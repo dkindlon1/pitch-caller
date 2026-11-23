@@ -1,6 +1,6 @@
 /*
- * ble_pq.c - the Bluetooth side: the PitchIQ GATT service, pairing and bonding, advertising, and the standard Battery and
- * Heart Rate services (those two come from Zephyr).
+ * ble_pq.c - the Bluetooth side: the PitchIQ GATT service, pairing and bonding, advertising, and the standard Battery
+ * service (from Zephyr).  Rev C has no heart-rate sensor, so there is no Heart Rate Service.
  *
  * Service (same UUIDs as watch/bangle/pitchiq.app.js):
  *   7a1d0001-... service
@@ -24,7 +24,6 @@
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/hci.h>
 #include <zephyr/bluetooth/services/bas.h>
-#include <zephyr/bluetooth/services/hrs.h>
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -114,24 +113,6 @@ int ble_pq_notify(const uint8_t *data, size_t len) {
 void ble_pq_battery_level(uint8_t pct) {
   (void)bt_bas_set_battery_level(pct);
 }
-
-void ble_pq_heart_rate(uint8_t bpm) {
-  (void)bt_hrs_notify(bpm);
-}
-
-#if IS_ENABLED(CONFIG_PQ_HAVE_PPG)
-static void hrs_ntf_changed(bool enabled) {
-  /* HRS permissions are authenticated (CONFIG_BT_HRS_DEFAULT_PERM_RW_AUTHEN); as a second gate the LEDs only start for a
-   * link at security level 4 (LESC with passkey).  Unsubscribing is always honoured. */
-  if (enabled && !(conn && bt_conn_get_security(conn) >= BT_SECURITY_L4)) {
-    LOG_WRN("HR subscribe ignored: link not authenticated");
-    return;
-  }
-  struct app_evt e = {.type = EVT_HR_SUBSCRIBE, .value = enabled};
-  app_post(&e);
-}
-static struct bt_hrs_cb hrs_cb = {.ntf_changed = hrs_ntf_changed};
-#endif
 
 /* ------------------------------------------------------------------------------------------ bonds and advertising */
 
@@ -399,9 +380,6 @@ int ble_pq_init(void) {
   }
   (void)bt_set_name(dev_name);
 
-#if IS_ENABLED(CONFIG_PQ_HAVE_PPG)
-  (void)bt_hrs_cb_register(&hrs_cb);
-#endif
 #if IS_ENABLED(CONFIG_MCUMGR_MGMT_NOTIFICATION_HOOKS)
   mgmt_callback_register(&smp_guard_cb);
 #endif

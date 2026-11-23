@@ -23,10 +23,6 @@ config PQ_HAVE_ACCEL
 	bool "LIS2DH12 accelerometer present"
 	default $(dt_nodelabel_enabled,accel)
 
-config PQ_HAVE_PPG
-	bool "MAX30101 heart-rate sensor present"
-	default $(dt_nodelabel_enabled,ppg)
-
 config PQ_NPM1300_STOCK_CHARGER
 	bool "Use the stock Zephyr nPM1300 charger driver (needs a full C library)"
 	depends on PQ_HAVE_PMIC
@@ -59,12 +55,5 @@ config PQ_LIGHT_ON_MOTION
 	bool "Turn the frontlight on for a moment when the wrist moves"
 	default y
 	depends on PQ_HAVE_ACCEL
-
-config PQ_HR_ON_SUBSCRIBE
-	bool "Start heart rate when a client subscribes to the Heart Rate Service"
-	default y
-	depends on PQ_HAVE_PPG
-	help
-	  Heart rate is OFF until this (or sensors_hr_start()) turns it on, and off again on unsubscribe or disconnect.
 
 source "Kconfig.zephyr"

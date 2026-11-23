@@ -54,7 +54,6 @@ static K_WORK_DELAYABLE_DEFINE(notice_work, notice_done);
 #if defined(CONFIG_PQ_LOW_BATTERY_PCT)
 static K_WORK_DELAYABLE_DEFINE(lowbat_work, lowbat_fired);
 #endif
-static bool hr_start_pending; /* a heart-rate subscribe waits for the motor to stop buzzing */
 static atomic_t dropped;
 static bool need_battery; /* the coach's app is subscribed by its first write: answer it with a battery receipt */
 static uint32_t since_battery;
@@ -65,7 +64,6 @@ static bool was_idle;
 #if defined(CONFIG_PQ_LOW_BATTERY_PCT)
 static uint8_t low_count;
 #endif
-static bool hr_wanted;
 
 /* ------------------------------------------------------------------------------------------ watchdog */
 
@@ -99,8 +97,15 @@ static void wdt_kick(void) {
     (void)wdt_feed(wdt, wdt_chan);
   }
 }
+/* Also fed by pq_i2c_recover() after every failed I2C try: the boot-time I2C set-up (charger registers, accelerometer) can take
+ * longer than 8 s when the bus is stuck (each access is 3 tries with a bus recovery between, and there are about 15 of them),
+ * and a stuck bus must not turn into a reset loop.  Every one of those loops is bounded, so a real hang still trips the dog. */
+void app_wdt_feed(void) {
+  wdt_kick();
+}
 #else
 void app_wdt_init(void) {}
+void app_wdt_feed(void) {}
 static void wdt_kick(void) {}
 #endif
 
@@ -180,21 +185,15 @@ __weak void pq_policy_idle_changed(bool idle) {
 
 /* ------------------------------------------------------------------------------------------ work */
 
-static void try_hr_start(void) {
-  if (haptics_busy()) {
-    return; /* never start the LEDs (and the 5 V boost) while the motor is buzzing: one peak at a time */
-  }
-  hr_start_pending = false;
-  hr_wanted = sensors_hr_start() == 0;
-}
+#define STABLE_AFTER_MS 60000 /* a boot that survives this long is not part of a fatal-error loop (main.c) */
 
 static void tick(struct k_work *w) {
   ARG_UNUSED(w);
   wdt_kick();
-  pq_core_tick(&core);
-  if (hr_start_pending) {
-    try_hr_start();
+  if (k_uptime_get() > STABLE_AFTER_MS) {
+    app_boot_stable();
   }
+  pq_core_tick(&core);
 
   since_battery += TICK_MS;
   if (since_battery >= BATTERY_MS) {
@@ -261,11 +260,6 @@ static void handle(const struct app_evt *e) {
   case EVT_DISCONNECTED:
     pq_core_on_disconnect(&core);
     need_battery = false;
-    hr_start_pending = false;
-    if (hr_wanted) {
-      hr_wanted = false;
-      sensors_hr_stop();
-    }
     break;
   case EVT_SECURITY:
     break;
@@ -289,20 +283,6 @@ static void handle(const struct app_evt *e) {
   case EVT_MOTION:
     if (IS_ENABLED(CONFIG_PQ_LIGHT_ON_MOTION)) {
       ui_light();
-    }
-    break;
-  case EVT_HR_SUBSCRIBE:
-    if (IS_ENABLED(CONFIG_PQ_HR_ON_SUBSCRIBE)) {
-      if (e->value && !hr_wanted) {
-        hr_start_pending = true;
-        try_hr_start(); /* retried from tick() while the motor is busy */
-      } else if (!e->value) {
-        hr_start_pending = false;
-        if (hr_wanted) {
-          hr_wanted = false;
-          sensors_hr_stop();
-        }
-      }
     }
     break;
   default:

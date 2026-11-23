@@ -2,7 +2,8 @@
  * haptics.c - the buzz patterns, as in the JS pqBuzz(): one 450 ms buzz for a new call, two 120 ms buzzes 120 ms apart
  * for a changed one.  haptics_buzz() returns at once; a delayable work item walks the pattern.
  *
- * Watch: the motor is on PWM1 (zephyr,user pwms \"motor\").  DK: LED 1 stands in (alias pq-buzz).
+ * Watch: the motor is on PWM1 (zephyr,user pwms \"motor\"): rev C has an 8 mm coin ERM (rev B: 10 mm), same low-side drive.
+ * DK: LED 1 stands in (alias pq-buzz).
  */
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -40,14 +41,13 @@ static void run(struct k_work *w);
 /* Static definition: no interrupt or caller can submit an uninitialised work item (firmware review 7). */
 static K_WORK_DELAYABLE_DEFINE(work, run);
 static bool ready; /* set by haptics_init once the motor driver answered */
-static atomic_t busy; /* a pattern is running: sensors/app_glue do not start the heart-rate LEDs meanwhile (firmware review 6) */
 static const struct step *pat;
 static uint8_t pos;
 static struct k_spinlock lock;
 
 static void motor_set(bool on) {
 #if HAVE_MOTOR
-  /* The motor hangs on VSYS (3.1-4.2 V on battery, about 5 V docked) but is a 3 V part (electrical review 10): cap the duty
+  /* The motor hangs on VSYS (3.1-4.2 V on battery, about 5 V docked) but is taken to be a 3 V part (electrical review 10, written for the 10 mm motor; ASSUMPTION: the rev C 8 mm coin ERM is also 3 V, check its datasheet): cap the duty
    * so the effective voltage is about 3.0 V, from the last battery sample / VBUS state.  0 = off. */
   uint32_t duty = 0;
   if (on) {
@@ -69,8 +69,6 @@ static void run(struct k_work *w) {
   motor_set(s->on);
   if (s->ms) {
     k_work_schedule(&work, K_MSEC(s->ms));
-  } else {
-    atomic_clear(&busy);
   }
 }
 
@@ -101,11 +99,6 @@ void haptics_buzz(enum pq_buzz_kind kind) {
   pat = kind == PQ_BUZZ_CHANGED ? PAT_CHANGED : PAT_NEW;
   pos = 0;
   k_spin_unlock(&lock, k);
-  atomic_set(&busy, 1);
   LOG_INF("buzz %s", kind == PQ_BUZZ_CHANGED ? "changed" : "new");
   k_work_schedule(&work, K_NO_WAIT);
-}
-
-bool haptics_busy(void) {
-  return atomic_get(&busy) != 0;
 }

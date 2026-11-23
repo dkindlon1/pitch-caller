@@ -24,7 +24,6 @@ enum app_evt_type {
   EVT_BTN_RELEASE,
   EVT_CHARGER,      /* charger or USB state changed: send a fresh battery receipt */
   EVT_MOTION,
-  EVT_HR_SUBSCRIBE, /* value 1 = subscribed, 0 = not */
 };
 
 struct app_evt {
@@ -46,7 +45,6 @@ bool ble_pq_adv_running(void);
 int ble_pq_notify(const uint8_t *data, size_t len); /* TX characteristic */
 void ble_pq_clear_bonds(void);
 void ble_pq_battery_level(uint8_t pct);             /* standard Battery Service */
-void ble_pq_heart_rate(uint8_t bpm);                /* standard Heart Rate Service */
 
 /* ---- ui.c ---- */
 int ui_init(void);
@@ -59,7 +57,6 @@ void ui_light(void);                    /* frontlight on for a few seconds */
 /* ---- haptics.c ---- */
 int haptics_init(void);
 void haptics_buzz(enum pq_buzz_kind kind); /* returns at once; the motor is run from a k_work */
-bool haptics_busy(void);                   /* a buzz pattern is running */
 
 /* ---- power.c ---- */
 struct power_status {
@@ -80,10 +77,11 @@ void power_ship(void);                      /* low-battery / commanded shutdown:
 /* ---- sensors.c ---- */
 int sensors_init(void);
 bool sensors_idle(void);                    /* no motion for a while (idle power policy input) */
-int sensors_hr_start(void);                 /* powers BUCK1 then the 5 V boost, samples, publishes via the HR service */
-void sensors_hr_stop(void);
-bool sensors_hr_active(void);
 bool sensors_identity_ok(void);             /* accelerometer WHO_AM_I answers 0x33 (DK: true) */
+
+/* ---- main.c / app_glue.c ---- */
+void app_wdt_feed(void);   /* feed the watchdog (no-op until it is armed) */
+void app_boot_stable(void); /* the image has run long enough: forget the fatal-error count (main.c) */
 
 /* ---- i2c_util.c: retry with bus recovery (QA review 4/10) ---- */
 /* Recover the shared I2C bus (the driver clocks SCL until SDA is released); 0 if done or nothing to recover. */

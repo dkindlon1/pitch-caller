@@ -1,5 +1,5 @@
 /*
- * PitchIQ watch rev B: the one place every pin is named.
+ * PitchIQ watch rev C: the one place every pin is named.
  *
  * Pin map v1 (final hardware may adjust: change a number here and nowhere else).  Format is the nRF52840 port
  * and pin, "P0.13" = port 0 pin 13.  Everything below is the schematic intent given to the firmware, not
@@ -11,15 +11,13 @@
  *   P0.20  LCD EXTCOMIN   VCOM toggle driven by the display driver
  *   P0.22  LCD DISP       display on/off
  *   P0.24  frontlight     PWM, active high
- *   P0.26  I2C0 SDA       400 kHz: LIS2DH12 0x19, MAX30101 0x57, nPM1300 0x6b
+ *   P0.26  I2C0 SDA       400 kHz: LIS2DH12 0x19, nPM1300 0x6b
  *   P0.27  I2C0 SCL
  *   P0.04  LIS2DH12 INT1  accelerometer interrupt, active high
- *   P0.05  MAX30101 INT   open drain, active low
  *   P0.06  nPM1300 host interrupt (the user button arrives here as an nPM1300 SHPHLD event)
- *   P0.08  BOOST_EN       active high, 5 V boost for the heart-rate LED
  *   P0.11  vibration motor PWM, active high (low-side MOSFET)
  *
- * Not used, left alone: P0.09 / P0.10 (NFC antenna pins), P0.18 (reset, see &uicr), P0.00 / P0.01 (module crystal),
+ * Not used, left alone (rev C: P0.05 and P0.08 are free, the heart-rate interrupt and the 5 V boost enable are gone): P0.09 / P0.10 (NFC antenna pins), P0.18 (reset, see &uicr), P0.00 / P0.01 (module crystal),
  * USB, UART.
  */
 
@@ -32,9 +30,7 @@
 #define PQ_PIN_I2C_SDA 26
 #define PQ_PIN_I2C_SCL 27
 #define PQ_PIN_ACCEL_INT1 4
-#define PQ_PIN_PPG_INT 5
 #define PQ_PIN_PMIC_INT 6
-#define PQ_PIN_BOOST_EN 8
 #define PQ_PIN_MOTOR_PWM 11
 
 &pinctrl {

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 identifier: pitchiq_watch
-name: PitchIQ watch rev B
+name: PitchIQ watch rev C
 vendor: pitchiq
 type: mcu
 arch: arm

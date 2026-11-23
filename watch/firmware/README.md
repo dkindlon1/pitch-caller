@@ -1,4 +1,4 @@
-# PitchIQ watch firmware (rev B), Zephyr v4.4.2
+# PitchIQ watch firmware (rev C; the history below was written for rev B, see "Rev C changes" at the end), Zephyr v4.4.2
 
 First working firmware for the custom watch (nRF52840 in a Raytac MDBT50Q module). The message logic is the tested portable C in
 `core/` (not modified); everything else here is hardware glue.
@@ -19,7 +19,7 @@ First working firmware for the custom watch (nRF52840 in a Raytac MDBT50Q module
 | `app/src/ui.c`, `ui_render.[ch]` | Display API and frontlight; `ui_render` is pure C (the 5x7 font and layout) and was checked on a host. |
 | `app/src/haptics.c` | 450 ms buzz (new), 2 x 120 ms 120 ms apart (changed), via `k_work`. |
 | `app/src/power.c` | nPM1300: battery, charger, button, ship mode. DK stub. |
-| `app/src/sensors.c`, `hr_est.[ch]` | LIS2DH12 motion; MAX30101 heart rate (off by default) and the integer peak-interval estimator. |
+| `app/src/sensors.c` | LIS2DH12 motion (rev C: no heart-rate sensor; `hr_est.[ch]` were removed). |
 
 ## Build
 
@@ -60,14 +60,14 @@ running; if it never confirms, the next reset swaps the old image back.
 
 * Advertises as `PitchIQ` + last 4 hex digits of the address (e.g. `PitchIQ A1B2`).
 * RX (`7a1d0002-...`) write / write-without-response, <= 20 bytes, authenticated encrypted link required. TX (`7a1d0003-...`) read + notify;
-  receipts are only sent on a secure link. Also Battery Service, Heart Rate Service (only fed while heart rate runs), and mcumgr SMP.
+  receipts are only sent on a secure link. Also Battery Service and mcumgr SMP (rev C: no Heart Rate Service).
 * LE Secure Connections only, bondable, MITM. The watch is display-only: **the passkey appears when the phone starts pairing** (the stack makes a new random one each time) and is shown full screen as `Pair` / 6 digits. This differs from the JS watch, which showed one number all the time while unbonded.
 * After a bond exists, advertising uses the filter accept list: only the bonded phone can connect. **Hold the button 5 s**
   (`CONFIG_PQ_BOND_CLEAR_HOLD_MS`) to forget the bond; advertising reopens to any phone. One bond only (`BT_MAX_PAIRED=1`).
 * 20 ms connection interval is requested (peripheral preferred parameters plus an update on connect); the phone may refuse.
 * Button (nPM1300 SHPHLD): press = frontlight; 5 s hold = forget pairing; 10 s hold = the nPM1300 power-cycles the watch. Below 3 % battery
   (three readings a minute apart, not charging) the watch enters ship mode; hold the button 1 s to wake.
-* Heart rate: OFF. Starts when a client subscribes to Heart Rate Measurement (`CONFIG_PQ_HR_ON_SUBSCRIBE`) or when code calls `sensors_hr_start()`. Sequence: BUCK1 (1.8 V) on, sensor configured in shutdown, BOOST_EN (5 V) on, sensor runs; stop is the reverse.
+* Heart rate: removed in rev C (see "Rev C changes").
 
 ## Try the DK with the existing coach page today
 
@@ -98,7 +98,6 @@ NOT verified (nothing ran on hardware or a radio):
 
 Stubbed / replaced:
 * **Charger.** The stock Zephyr nPM1300 charger driver calls `logf()`, so it needs a full C library. This workspace's toolchain has none Zephyr can use (no picolibc; newlib built without retargetable locking), so the build fails with it. By default `power.c` programs the charger itself through the mfd driver with the same registers and the same devicetree values (4.20 V, 75 mA, 100 mA steps VBUS limit 500 mA, 10 k NTC, enable) and reads voltage, charge status and VBUS; it has **no battery temperature**. `CONFIG_PQ_NPM1300_STOCK_CHARGER=y` plus removing `CONFIG_NPM13XX_CHARGER=n` from `app/boards/pitchiq_watch.conf` uses the stock driver under the Zephyr SDK; that path has not been compiled.
-* **MAX30101.** The stock driver is not used (it configures the chip once at boot and cannot survive the 1.8 V rail being cut); `sensors.c` does the I2C from the devicetree properties. The INT pin is wired but unused (the FIFO is polled every 100 ms).
 * **nRF52840 DK.** No LCD, accelerometer, heart-rate sensor or PMIC: `PQ_HAVE_*` are off, the screen is described in the log, battery is the fixed `PQ_BATTERY_STUB` (100 %), ship mode is ignored.
 * The battery percentage is a typical Li-ion voltage curve, not this cell's.
 
@@ -138,3 +137,29 @@ Checks: pitchiq_watch west build exit 0, nrf52840dk build exit 0, `make -C core 
 14. VBUS limit: 500 mA written to VBUSINILIM and triggered with ILIMUPDATE whenever VBUS is seen (it resets to 100 mA on cable removal); startup limit unchanged at 500 mA. Chosen from the existing devicetree value; only valid if the cradle supplies 500 mA.
 
 Heart-rate LED settings in use (devicetree `pitchiq_watch.dts` lines 112-119, applied by `sensors.c` 132-133 and 236): green only (slot 3), LED current 0x30 = 9.6 mA, pulse width 411 us (18-bit), sample rate 100 Hz, averaging 2 (so 50 FIFO samples per second), ADC range 4096 nA, FIFO polled every 100 ms (`sensors.c:140`), notified at 1 Hz.
+
+## Rev C changes
+
+Compile-checked only (nothing was flashed or run on hardware); logs in `build_logs/revC_*.log`.
+
+* **Removed: heart rate and 5 V boost.** No MAX30101 driver code, `hr_est.[ch]`, `CONFIG_BT_HRS`, "no HR during buzz" logic (`haptics_busy()`),
+  `ppg` node, `boost-en-gpios`, `PQ_PIN_PPG_INT` (P0.05) and `PQ_PIN_BOOST_EN` (P0.08). `core/` has no heart-rate hook and the JS app has no heart-rate
+  field in the phone protocol, so nothing is stubbed. P0.05 and P0.08 are unused.
+* **BUCK1 is never enabled.** Rev C has no 1.8 V rail (inductor not fitted, VSET1 to ground, so it is off at start-up). The `BUCK1` devicetree node
+  and every regulator call for it are gone; a comment in `pitchiq_watch.dts` says why. Do not add it back.
+* **USB Type-C charging.** `power.c` reads the nPM1300 USB-C detect status (VBUSIN block 0x02, offset 0x05, mask 0x0A as in the stock driver) and
+  writes VBUSINILIM = 500 mA (+ ILIMUPDATE) only when CC1 or CC2 shows a 1.5 A or 3 A source; otherwise the 100 mA default stays. The devicetree
+  `vbus-limit-microamp` (the start-up limit) is now 100000, enforced by a `BUILD_ASSERT`. The check is repeated on each battery sample (60 s and on charger
+  events) until applied, because the CC result lags the plug-in. Charge current stays 75 mA. The optional stock-charger path
+  (`CONFIG_PQ_NPM1300_STOCK_CHARGER`, not compiled here) does not do this CC check.
+* **Motor.** 8 mm coin ERM, same drive; duty cap unchanged, comments updated. ASSUMPTION: its rating is also 3 V (check the datasheet).
+* **Programming pads** are SWD only; comments fixed (`prod.conf`, `pitchiq_watch.dts`).
+* **Watchdog vs stuck I2C.** `pq_i2c_recover()` now feeds the watchdog after each failed try (`app_wdt_feed()`), so the boot I2C set-up (about 15 charger
+  writes, 3 tries each) cannot exceed the 8 s window on a stuck bus. Each loop is bounded, so a real hang still resets.
+* **Fatal-error reboot-loop guard (`main.c`).** The noinit word now holds a tag plus a count of consecutive fatal resets; `app_boot_stable()` (called by the
+  1 s tick after 60 s uptime) clears it. The 3rd consecutive fatal error does not reboot: `fatal_park()` forces the motor pin low, disables NVIC interrupts,
+  radio and HF clock, and waits in a WFE loop woken by an RTC1 compare event every 4 s to feed the watchdog (it cannot be stopped). Never run on hardware;
+  a power cycle (button hold) leaves the halt.
+* **32.768 kHz crystal (not changed).** With `CLOCK_CONTROL_NRF_K32SRC_XTAL` the system timer waits for a stable crystal (blocks if it never starts).
+  Options in v4.4.2, documented in `pitchiq_watch_defconfig`: `CONFIG_SYSTEM_CLOCK_WAIT_FOR_AVAILABILITY=y` (boot on the RC, switch to the crystal when ready), or
+  `CONFIG_CLOCK_CONTROL_NRF_K32SRC_RC=y` with its calibration (default on, 4 s period; accuracy defaults to 500 ppm on nRF52).

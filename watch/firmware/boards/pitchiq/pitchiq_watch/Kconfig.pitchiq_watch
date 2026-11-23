@@ -1,4 +1,4 @@
-# PitchIQ watch rev B: nRF52840 (QIAA) in a Raytac MDBT50Q module.
+# PitchIQ watch rev C: nRF52840 (QIAA) in a Raytac MDBT50Q module.
 # SPDX-License-Identifier: Apache-2.0
 
 config BOARD_PITCHIQ_WATCH

@@ -17,7 +17,6 @@ target_sources(app PRIVATE
   src/power.c
   src/sensors.c
   src/i2c_util.c
-  src/hr_est.c
   ${PQ_CORE}/pq_sec.c
   ${PQ_CORE}/pq_core.c
 )

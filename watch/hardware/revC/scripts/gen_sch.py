@@ -48,15 +48,15 @@ def libsym(name, p):
 # sheet placement: columns of blocks (ref order), in mm on an A2 sheet
 COLS = [
     (60,  ["U1"]),
-    (150, ["Y1", "C3", "C4", "C1", "C2", "R3", "R4", "R16", "TP1", "TP2", "TP3", "TP4", "TP5", "TP6", "R17", "R18", "R19", "D4", "D5", "D6", "TP7", "TP8", "TP9"]),
+    (150, ["Y1", "C3", "C4", "C1", "C2", "R3", "R4", "R16", "TP2", "TP3", "TP4", "TP5", "TP6", "R17", "R18", "R19", "D4", "D5", "D6", "TP8", "TP1"]),
     (225, ["U2", "L1", "L2", "R1", "R2", "RT1", "C12", "D2", "C25"]),
     (295, ["C5", "C6", "C7", "C8", "C9", "C10", "C11", "BT1", "JP1", "SW1", "D3"]),
-    (365, ["U3", "C14", "C15", "C16", "C17", "R5", "U5", "L3", "C18", "C19", "C20", "R6", "R7", "R8"]),
+    (365, ["J3"]),
     (440, ["J1", "C21", "C22", "C23", "R9", "R10", "R11", "R12", "J2", "R13", "Q2", "R14"]),
     (515, ["U4", "C13", "M1", "Q1", "R15", "D1", "C24"]),
 ]
 TITLES = {60: "Radio module (nRF52840)", 150: "Clock, decoupling, I2C pull-ups, cradle and test pads", 225: "Power chip nPM1300",
-          295: "Rails, battery, button", 365: "Heart rate (bottom side) and 5 V LED boost", 440: "Display and frontlight", 515: "Accelerometer, vibration motor"}
+          295: "Rails, battery, button", 365: "USB Type-C charging port", 440: "Display and frontlight", 515: "Accelerometer, vibration motor"}
 
 def main():
     placed = set()
@@ -92,7 +92,7 @@ def main():
             y += h + 14
     missing = set(D.P) - placed
     assert not missing, missing
-    notes = ["PitchIQ watch board rev B. Generated from scripts/design.py (edit there). Original pin map for our own Zephyr firmware.",
+    notes = ["PitchIQ watch board rev C. Generated from scripts/design.py (edit there). Original pin map for our own Zephyr firmware.",
              "U3 (heart-rate sensor), its capacitors and all TP pads are on the BOTTOM side (wrist side). Everything else is on the top side.",
              "NOT BUILT. nPM1300 capacitor node assignment and unused-pin handling must be compared with Nordic's reference schematic before ordering."]
     for i, t in enumerate(notes):

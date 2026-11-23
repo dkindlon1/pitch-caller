@@ -1,5 +1,5 @@
 /*
- * nRF52840 DK stand-in for the watch.  The DK has no LCD, accelerometer, heart-rate sensor or power chip, so those parts are
+ * nRF52840 DK stand-in for the watch.  The DK has no LCD, accelerometer or power chip, so those parts are
  * compiled out (Kconfig PQ_HAVE_* follow the devicetree) and these DK parts take their places:
  *   LED 1 (P0.13)  = the vibration motor: on for the buzz     (alias pq-buzz)
  *   LED 2 (P0.14)  = the frontlight                           (alias pq-light)

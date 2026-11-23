@@ -8,7 +8,7 @@ at the power chip. The PADM / HALO / EP / VSP / I2CPRE environment variables exi
 import sys, os, heapq, math
 import numpy as np, pcbnew
 sys.path.insert(0, os.path.dirname(__file__)); import design as D
-from gen_pcb import PCB, PLACED, W, H, RAD, OX, OY, mm, V
+from gen_pcb import PCB, PLACED, W, H, RAD, OX, OY, mm, V, NOTCH
 
 RES = 0.1; NX = int(round(W / RES)) + 1; NY = int(round(H / RES)) + 1
 TW = 0.2; CLR = 0.15; VIA_D = 0.5; VIA_DRILL = 0.2; PADM = int(os.environ.get('PADM', 3))   # via centres stay 0.3 mm from any pad edge: via copper ends 0.05 mm outside the pad and 0.025 mm outside its mask opening (0.4 was unroutable around the QFN)
@@ -51,6 +51,7 @@ def disc(l, i, j, net, r):
 
 def inside_board(x, y, inset):
     if x < inset or y < inset or x > W - inset or y > H - inset: return False
+    if NOTCH[0] - 1 <= x <= NOTCH[2] + inset and NOTCH[1] - inset <= y <= NOTCH[3] + inset: return False   # the USB-C notch is not board
     r = RAD
     for cx, cy in ((r, r), (W - r, r), (r, H - r), (W - r, H - r)):
         if (x < r and cx == r or x > W - r and cx == W - r) and (y < r and cy == r or y > H - r and cy == H - r):
@@ -100,7 +101,7 @@ def setup(b):
             if name: pads.setdefault(name, []).append(dict(ref=f.GetReference(), num=p.GetNumber(), cells=cells, c=((x0 + x1) / 2, (y0 + y1) / 2)))
     # Reserve a short straight exit corridor for every routed pin of the fine-pitch parts, so that an earlier net cannot
     # wall a neighbouring pin in. Only the router's bookkeeping changes: no copper is drawn for a reservation.
-    RESERVE = {"U2": 0.9, "J1": 0.7, "U5": 0.5, "U4": 0.5, "U3": 0.5}
+    RESERVE = {"U2": 0.9, "J1": 0.7, "U4": 0.5, "J3": 1.0}
     for f in b.GetFootprints():
         ref = f.GetReference()
         if ref not in RESERVE: continue
@@ -109,7 +110,7 @@ def setup(b):
             name = p.GetNetname()
             if not name or name not in netid: continue
             bb = p.GetBoundingBox(); x0, y0, x1, y1 = [pcbnew.ToMM(v) for v in (bb.GetLeft(), bb.GetTop(), bb.GetRight(), bb.GetBottom())]
-            if min(x1 - x0, y1 - y0) > 0.6: continue   # big pads (exposed pad, mounting pads) need no corridor
+            if min(x1 - x0, y1 - y0) > 0.85: continue   # big pads (exposed pad, mounting pads, shell stakes) need no corridor
             x0 -= OX; x1 -= OX; y0 -= OY; y1 -= OY; cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
             dx, dy = cx - fx, cy - fy
             if abs(dx) >= abs(dy): ux, uy, half = (1 if dx > 0 else -1), 0, (x1 - x0) / 2
@@ -227,20 +228,19 @@ def attempt(order, early):
     ep = next(p for p in pads["GND"] if p["ref"] == "U2" and p["num"] == "33")
     for dx in ((-0.9, 0.9) if int(os.environ.get('EP', 1)) else ()):
         for dy in (-0.9, 0.9): plane_via(b, (0, round((ep["c"][0] + dx) / RES), round((ep["c"][1] + dy) / RES)), "GND", netid["GND"], stats)
-    FIRST_VIAS = {'U5.4', 'U2.12'}   # the boost's ground pin sits between its switch and output pins: give it its via before anything else
+    FIRST_VIAS = {'U2.12'}   # the power chip's VDDIO pin gets its plane via before anything else
     for net in PLANES:
         for p in pads[net]:
             if f"{p['ref']}.{p['num']}" in FIRST_VIAS: fanout(b, net, netid[net], p, stats, fails)
     # Pre-routes: the short pin-to-neighbour connections of the power chip and the boost, in a fixed order, on an
     # otherwise empty board. A greedy router walls these pins in if longer nets go first.
-    PRE = [("VBUSOUT", "U2.22", "C5.1"), ("VBUS", "U2.21", "C12.1"), ("VSYS", "U2.20", "C7.1"), ("VBAT", "U2.19", "C6.1"),
+    PRE = [("CC2", "U2.24", "J3.B5"), ("CC1", "U2.23", "J3.A5"),   # the two USB-C sense lines leave the chip's top-right corner before the supply pins fence them in
+           ("VBUSOUT", "U2.22", "C5.1"), ("VBUS", "U2.21", "C12.1"), ("VSYS", "U2.20", "C7.1"), ("VBAT", "U2.19", "C6.1"),
            ("SW1", "U2.3", "L1.1"), ("SW2", "U2.5", "L2.1"), ("VSYS", "U2.4", "C8.1"), ("1V8", "U2.1", "L1.2"), ("1V8", "L1.2", "C9.1"),
            ("VSET1", "U2.17", "R1.1"), ("NTC", "U2.18", "RT1.1"), ("VSET2", "U2.16", "R2.1"),
-           ("5V_LED", "U5.6", "C19.1"), ("BOOST_SW", "U5.5", "L3.2"), ("BOOST_FB", "U5.1", "R6.2"), ("BOOST_FB", "R6.2", "R7.1"), ("BOOST_EN", "U5.2", "R8.1"),
-           ("VSYS", "U5.3", "C18.1"), ("VSYS", "C18.1", "L3.1"),
            ("PMIC_INT", "U2.8", "U1.22"), ("BTN", "U2.15", "SW1.1")]
     I2C = [("I2C_SCL", "U2.14", "R4.2"), ("I2C_SDA", "U2.13", "R3.2")] if os.environ.get("SCLFIRST") else [("I2C_SDA", "U2.13", "R3.2"), ("I2C_SCL", "U2.14", "R4.2")]
-    if os.environ.get("TOU3"): I2C = [("I2C_SCL", "U2.14", "U3.2"), ("I2C_SDA", "U2.13", "U3.3")]
+
     mode = os.environ.get("I2CPRE", "before")
     if mode == "before": PRE = PRE[:-2] + I2C + PRE[-2:]
     if mode == "after": PRE = PRE + I2C
