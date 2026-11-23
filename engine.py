@@ -625,10 +625,18 @@ def re(outs, bases, level="mlb"):
 # and randomness to shrink. Pinned until college run values exist; after that, college levels take no scale from MLB.
 # RE_BY_LEVEL["mlb"] itself stays as fitted (used everywhere else). Same constant in app/engine.js.
 RUN_SCALE_MLB_RE00 = 0.481
+# v1.3 full data (ruling 10 takes effect, Drew Nov 22): the college levels' run values are now fit on their own
+# play-by-play (run_v13core college_d1 / d2 / d3), so they take no scale from MLB: their run scale is 1 (the sizes are
+# used in the level's own runs). The 0.481 pin stays for the levels without that (MLB itself, HS / travel). Same in
+# app/engine.js.
+RUN_SCALE_OWN = ("college", "college_d1", "college_d2", "college_d3")
 
 
 def run_scale(level):
-    """How big runs are at this level vs MLB (runs per inning from scratch). Randomness settings scale with it."""
+    """How big runs are at this level vs MLB (runs per inning from scratch). Randomness settings scale with it.
+    College levels (own fitted run values, ruling 10): 1, no MLB scale."""
+    if level in RUN_SCALE_OWN:
+        return 1.0
     return RE_BY_LEVEL[level][(0, "000")] / RUN_SCALE_MLB_RE00
 
 

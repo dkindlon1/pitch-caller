@@ -191,7 +191,10 @@
   // v1.3 (Drew's ruling 10): the denominator is pinned at v1.2's MLB RE[0|000] = 0.481, not the refit table's value, until
   // college run values exist; after that college levels take no scale from MLB (engine.py RUN_SCALE_MLB_RE00)
   const RUN_SCALE_MLB_RE00 = 0.481;
-  const runScale = (level) => D.RE[level]["0|000"] / RUN_SCALE_MLB_RE00;
+  // v1.3 full data (ruling 10 takes effect): college levels' run values are fit on their own play-by-play, so they take
+  // no scale from MLB (run scale 1); the pin stays for MLB and HS / travel (engine.py RUN_SCALE_OWN)
+  const RUN_SCALE_OWN = ["college", "college_d1", "college_d2", "college_d3"];
+  const runScale = (level) => (RUN_SCALE_OWN.includes(level) ? 1.0 : D.RE[level]["0|000"] / RUN_SCALE_MLB_RE00);
   const cvKey = (b, k) => b + "-" + k;
 
   // ---------------------------------------------------------------- confidence

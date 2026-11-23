@@ -274,6 +274,34 @@ def our_staff():
     return _default_staff()
 
 
+# v1.3 full data (Drew's addendum ruling 4, Nov 22): the HS / travel CALIBRATION staff matches the data. Six pitchers at
+# the 1/12, 3/12, ..., 11/12 quantiles of the real distribution of pitcher season-average speed, HS / travel fit seasons
+# 2022-25 (Perfect Game, hs.sqlite3; fastball >= 10 readings, off-speed >= 5; C:/dev/pitchiq-data/hs/
+# staff_velo_distribution_2022-25.json: fastball median 78.4, 10th-90th 71.5-85.1 mph). Off-speed speeds are the same
+# quantile of each kind's own distribution. Pitcher i alternates the default starter (FB / SL / CH) and reliever (FB / CB /
+# CH) templates, grades and command as _default_staff.
+HS_STAFF_Q = (1 / 12, 3 / 12, 5 / 12, 7 / 12, 9 / 12, 11 / 12)
+HS_STAFF_VELO = {"FB": (70.9, 74.7, 77.2, 79.5, 82.0, 85.6), "CB": (61.9, 65.1, 67.1, 69.0, 71.2, 74.2),
+                 "SL": (65.5, 69.2, 71.4, 73.1, 75.0, 77.7), "CH": (66.3, 70.2, 72.2, 74.0, 76.1, 79.4)}
+
+
+def hs_data_staff():
+    """-> six staff dicts (one pitcher each) for HS / travel calibration (ruling 4); weight them equally."""
+    out = []
+    for i in range(len(HS_STAFF_Q)):
+        v = {k: t[i] for k, t in HS_STAFF_VELO.items()}
+        if i % 2 == 0:
+            ars = [Pitch("Fastball", "FB", grade=3, command=4, conf=0.80, shape="ride", velo=v["FB"]),
+                   Pitch("Slider", "SL", grade=4, command=3, conf=0.75, shape="tight", velo=v["SL"]),
+                   Pitch("Changeup", "CH", grade=3, command=2, conf=0.60, shape="fade", velo=v["CH"])]
+        else:
+            ars = [Pitch("Fastball", "FB", grade=4, command=3, conf=0.80, shape="ride", velo=v["FB"]),
+                   Pitch("Curveball", "CB", grade=3, command=3, conf=0.70, shape="loopy", velo=v["CB"]),
+                   Pitch("Changeup", "CH", grade=2, command=3, conf=0.55, shape="fade", velo=v["CH"])]
+        out.append({"name": f"HS staff q{round(HS_STAFF_Q[i] * 12)}/12 ({v['FB']} mph)", "arsenal": ars, "hand": "R"})
+    return out
+
+
 def _default_staff():
     starter = [
         Pitch("Fastball", "FB", grade=3, command=4, conf=0.80, shape="ride", velo=86),

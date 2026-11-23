@@ -95,12 +95,18 @@ def main(argv=None):
     ap.add_argument("--note", default="In-play tables (out_table / runner): the core's level recalibration "
                                       "(hitter_data.core_recal: inplay_fit.py on the recalibrated engine).")
     ap.add_argument("--log", default=os.path.join(DATA, "core_recal", "chain_run.log"))
+    ap.add_argument("--pitcher-only", action="store_true",
+                    help="addendum ruling 5: skip refit_mlb.py; fit_all moves only wild / cmd / hbp at every level")
     a = ap.parse_args(argv)
     repo = os.path.abspath(a.repo)
     for kv in a.env:
         k, v = kv.split("=", 1)
         os.environ[k] = v
     os.environ["PYTHONUTF8"] = "1"
+    steps = STEPS
+    if a.pitcher_only:
+        os.environ["PITCH_RECAL_PITCHER_ONLY"] = "1"
+        steps = tuple(s for s in STEPS if s != "refit_mlb.py")
     env = dict(os.environ)
     os.makedirs(os.path.dirname(a.log), exist_ok=True)
     t0 = time.time()
@@ -112,7 +118,7 @@ def main(argv=None):
             log.write("pass 0 (before) " + json.dumps(hist[-1]) + "\n")
             print("before:", json.dumps(hist[-1]["realism"]), flush=True)
         for n in range(1, a.passes + 1):
-            for step in STEPS:
+            for step in steps:
                 _run(repo, [step], f"pass {n} {step}", log)
                 lf(repo)
             for cp in a.count:

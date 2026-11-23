@@ -26,6 +26,40 @@ save()
 show("mlb", "mlb (stored fit)")
 m = OUT["mlb"]
 levels = sys.argv[1:] or ["college_d1", "college_d2", "college_d3", "hs"]   # v1.3 full data: D2 fitted
+# v1.3 full data (Drew's addendum ruling 5): PITCH_RECAL_PITCHER_ONLY=1 moves only the pitcher-side keys (wild, cmd, hbp)
+# at every level including MLB (refit_mlb.py is skipped by core_recal --pitcher-only); the hitter-side keys (zsw, osw, wz,
+# wo, cs) stay at the values the fitted count layer was calibrated under, so the count layer is held to the data. A level
+# that can't land K / BB / HBP within 1 point is reported (GAP line), not forced.
+import os
+if os.environ.get("PITCH_RECAL_PITCHER_ONLY") == "1":
+    from calib import PA_TARGETS
+    PO = ["wild", "cmd", "hbp"]
+    gaps = {}
+    for lvl in ["mlb"] + [l for l in levels if l != "mlb"]:
+        key = "mlb_check" if lvl == "mlb" else lvl
+        tg = {k: RV[key][k] for k in ("K", "BB", "HBP")}
+        OUTCOME_ADJ[lvl].update(OUT.get(lvl, {}))
+        OUTCOME_ADJ[lvl].setdefault("wild", 0.0)
+        start = {k: OUTCOME_ADJ[lvl].get(k, 0.0) for k in PO}
+        for outer in range(2):
+            r = fit(lvl, PO, tg, {}, start=start)
+            start = r
+            OUT[lvl] = dict(OUTCOME_ADJ[lvl])
+            tab, mix, target, model = fit_inplay(lvl, key)
+            INP[lvl] = tab
+            mm = show(lvl, f"{lvl} pitcher-only pass {outer+1}")
+            save()
+        gap = {k: mm[k] - tg[k] for k in ("K", "BB", "HBP")}
+        gaps[lvl] = gap
+        flag = "GAP" if any(abs(v) > 0.01 for v in gap.values()) else "ok"
+        print(f"[{time.time()-t0:.0f}s] {flag} {lvl}: K {mm['K']:.1%} (target {tg['K']:.1%}) BB {mm['BB']:.1%} ({tg['BB']:.1%}) "
+              f"HBP {mm['HBP']:.1%} ({tg['HBP']:.1%})", flush=True)
+    saved["OUT"]["mlb"] = OUT["mlb"]
+    saved["INP"]["mlb"] = {c: list(v) for c, v in INP["mlb"].items()}
+    json.dump(saved, open("fit_mlb.json", "w", newline="\n"), indent=1)
+    json.dump(gaps, open("results/recal_pitcher_only_gaps.json", "w", newline="\n"), indent=1)
+    print("done")
+    sys.exit(0)
 for lvl in levels:
     key = lvl
     tg = {k: RV[key][k] for k in ("K", "BB", "HBP")}

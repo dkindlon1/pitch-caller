@@ -39,6 +39,15 @@ _orng = random.Random(99)
 for _h in HITTERS:                    # each sampled matchup gets its own random day (v0.6f off days)
     _h["_off"] = {w["name"]: simulate.draw_off(_orng, w["arsenal"]) for w in STAFF}
 STAFF_W = (0.65, 0.35)     # share of pitches: starter ~95 of ~145
+# v1.3 full data (addendum ruling 4): HS / travel calibrate against a staff drawn from the real HS speed distribution
+STAFF_HS = simulate.hs_data_staff()
+STAFF_HS_W = tuple(1.0 / len(STAFF_HS) for _ in STAFF_HS)
+for _h in HITTERS:
+    _h["_off"].update({w["name"]: simulate.draw_off(_orng, w["arsenal"]) for w in STAFF_HS})
+
+
+def staff_for(level):
+    return (STAFF_HS, STAFF_HS_W) if level in ("hs", "travel") else (STAFF, STAFF_W)
 
 
 _LAST_RAW = {}
@@ -54,7 +63,7 @@ def evaluate(level, adj=None, policy_cache=None):
         OUTCOME_ADJ[level].update(adj)
     tot = defaultdict(float)
     pa_tot = defaultdict(float)
-    for (who, w) in zip(STAFF, STAFF_W):
+    for (who, w) in zip(*staff_for(level)):
         ars = who["arsenal"]
         for same in (True, False):
             hs = [h for h in HITTERS if (h["hand"] == who["hand"]) == same]
