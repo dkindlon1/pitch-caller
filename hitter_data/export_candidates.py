@@ -358,8 +358,10 @@ def run(write_files=True, log=print, prove=True):
 CORE_VERSION = "v13core"
 CORE_LEVELS = ("college_d1", "college_d2", "college_d3", "hs")   # v1.3 full data (Nov 22 ruling 1): D2 / D3 fitted too
 # the count candidate each core level ships (ruling 1: D2 / D3 use "borrow"; D1 "shared", HS "sep" as in the core)
-CORE_COUNT = {"college_d1": "D1_shared_thru2025.json", "college_d2": "D2_borrow_thru2025.json",
-              "college_d3": "D3_borrow_thru2025.json", "hs": "hs_sep_thru2025.json"}
+# v1.3 (Drew's Nov 23 ruling 10): the college candidates are refit on the weighted full games (fit_count --weighted:
+# fullgame_weights tilts each level-season's full games to the whole level's K / BB / HBP); the "_w" files
+CORE_COUNT = {"college_d1": "D1_shared_w_thru2025.json", "college_d2": "D2_borrow_w_thru2025.json",
+              "college_d3": "D3_borrow_w_thru2025.json", "hs": "hs_sep_thru2025.json"}
 # run values fit on each level's own play-by-play (ruling 10: college levels take no scale from MLB)
 CORE_RUN = {"college_d1": "D1_thru2025.json", "college_d2": "D2_thru2025.json", "college_d3": "D3_thru2025.json",
             "hs": "hs_thru2025.json"}

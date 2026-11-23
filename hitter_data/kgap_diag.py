@@ -42,6 +42,8 @@ E6 = ("ball", "hbp", "cs", "whiff", "foul", "inplay")
 FIRST_SEED = 2001
 CORE_COUNT = {"college_d1": "D1_shared_thru2025.json", "college_d2": "D2_borrow_thru2025.json",
               "college_d3": "D3_borrow_thru2025.json", "hs": "hs_sep_thru2025.json"}
+if os.environ.get("KGAP_WEIGHTED") == "1":     # v1.3 ruling 10: the weighted college candidates the fixed core ships
+    CORE_COUNT.update({lv: fn.replace("_thru", "_w_thru") for lv, fn in CORE_COUNT.items() if lv != "hs"})
 RV_KEY = {"mlb": "mlb_check", "college_d1": "college_d1", "college_d2": "college_d2", "college_d3": "college_d3", "hs": "hs"}
 HS_MEDIAN = {"FB": 78.4, "CB": 68.1, "SL": 72.2, "CH": 73.0}     # hs/staff_velo_distribution_2022-25.json, 0.5 quantiles
 

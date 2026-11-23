@@ -290,6 +290,8 @@ def candidate_json(level, variant, prm, wts, f, Wl, target):
     return {
         "provisional": FD.PROVISIONAL, "format": "count-layer-candidate/1 (docs/FITS_COUNT_v13.md section 8)",
         "level": level, "thin": level in THIN, "variant": variant, "predicts_season": target,
+        "weighted": ("full games weighted to the whole level's K / BB / HBP per level-season (hitter_data.fullgame_weights, "
+                     "Drew's Nov 23 ruling 10)") if FD.WEIGHTED else None,
         "fit_seasons": {str(s): w for s, w in sorted(wts.items())}, "params": {k: (None if v >= INF else v) for k, v in prm.items()},
         "diagnostics": scalar_diag,
         "axes": {"count": CK, "outs": [0, 1, 2], "bases": BASES, "side": ["same", "opp", "unknown"], "late": [0, 1],
@@ -322,8 +324,13 @@ def tables_from_json(j):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+def _w():
+    """v1.3 ruling 10: weighted candidates are written beside the unweighted ones with a _w tag"""
+    return "_w" if FD.WEIGHTED else ""
+
+
 def out_path(level, variant, thru):
-    return os.path.join(FD.FITS, "count_layer", f"{level}_{variant}_thru{thru}.json")
+    return os.path.join(FD.FITS, "count_layer", f"{level}_{variant}{_w()}_thru{thru}.json")
 
 
 def write_json(path, obj):
@@ -373,7 +380,7 @@ def run(data=None, con=None, levels=LEVELS, variants=("sep", "borrow", "shared")
             log(f"  {lv} stability: tuned on {valid - 1} (fit <= {valid - 2}): {fmt_prm(prm1)}")
     summary["seconds"] = round(time.time() - t0, 1)
     if write:
-        write_json(os.path.join(FD.FITS, "count_layer", "summary.json"),
+        write_json(os.path.join(FD.FITS, "count_layer", f"summary{_w()}.json"),
                    json.loads(json.dumps(summary, default=lambda o: None if isinstance(o, np.ndarray) else str(o))))
         write_report(summary, data)
     return summary
@@ -389,7 +396,7 @@ def write_report(summary, data):
                              bip_result_2025=round(s["bip_result"], 5), **{k: s["params"][k] for k in DEFAULTS},
                              **{k: v for k, v in s["diagnostics"].items() if k.startswith("borrowed_share")}))
     keys = sorted({k for r in rows for k in r}, key=lambda k: (k not in ("level", "variant"), k))
-    with open(os.path.join(d, "report_tuning.csv"), "w", newline="", encoding="utf-8") as f:
+    with open(os.path.join(d, f"report_tuning{_w()}.csv"), "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(rows)
@@ -405,7 +412,7 @@ def write_report(summary, data):
             L.append(f"| {ck} | {c['n_weighted']:.0f} | {c['swing']:.3f} | {c['cstrike_given_take']:.3f} | "
                      f"{c['whiff_given_swing']:.3f} | {c['foul_given_swing']:.3f} | {c['inplay_given_swing']:.3f} | "
                      f"{c.get('borrowed_share', 0):.3f} | {h['hard']:.3f} | {h['weak']:.3f} |")
-    with open(os.path.join(d, "report_tables.md"), "w", encoding="utf-8", newline="") as f:
+    with open(os.path.join(d, f"report_tables{_w()}.md"), "w", encoding="utf-8", newline="") as f:
         f.write("\n".join(L) + "\n")
 
 
@@ -415,7 +422,9 @@ def main(argv=None):
     ap.add_argument("--valid", type=int, default=VALID)
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument("--passes", type=int, default=2)
+    ap.add_argument("--weighted", action="store_true", help="v1.3 ruling 10: full games weighted to the whole level (fullgame_weights)")
     a = ap.parse_args(argv)
+    FD.WEIGHTED = a.weighted
     assert_not_heldout(a.valid)
     from . import harness as H
     levels = tuple(a.levels.split(","))

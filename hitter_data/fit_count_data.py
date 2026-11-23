@@ -51,70 +51,96 @@ def is_weak(bip_type, text):
     return bip_type in ("ground", "unknown") and bool(WEAK_RE.search(text or ""))
 
 
-def counts_from_season(con, S):
-    """Sufficient counts from a harness Season plus one text pass over the same games."""
+def counts_from_season(con, S, gw=None):
+    """Sufficient counts from a harness Season plus one text pass over the same games. gw: per-game weights in S.games
+    order (v1.3 ruling 10: full games weighted to the whole level's K / BB / HBP), or None (every game 1)."""
     c = empty()
     p, a = S.pit, S.pa
+    gw = np.ones(len(S.games)) if gw is None else np.asarray(gw, float)
     if len(p.get("y", [])):
-        np.add.at(c["ev6"], (p["ci"], p["o"], p["bi"], p["sd"], p["lt"], p["y"]), 1)
+        wp = gw[p["g"]]
+        np.add.at(c["ev6"], (p["ci"], p["o"], p["bi"], p["sd"], p["lt"], p["y"]), wp)
         m = p["run_ok"] == 1
         idx = (p["ci"][m], p["o"][m], p["bi"][m])
         rr = p["rr"][m].astype(float)
-        np.add.at(c["cv_sum"], idx, rr)
-        np.add.at(c["cv_n"], idx, 1)
-        np.add.at(c["cv_sq"], idx, rr * rr)
+        np.add.at(c["cv_sum"], idx, wp[m] * rr)
+        np.add.at(c["cv_n"], idx, wp[m])
+        np.add.at(c["cv_sq"], idx, wp[m] * rr * rr)
     if len(a.get("b_g", [])):
         t = np.where(a["b_t"] >= 0, a["b_t"], 4)
-        np.add.at(c["bip"], (a["b_ci"], a["b_o"], a["b_bi"], a["b_sd"], a["b_lt"], t, a["b_r"]), 1)
+        np.add.at(c["bip"], (a["b_ci"], a["b_o"], a["b_bi"], a["b_sd"], a["b_lt"], t, a["b_r"]), gw[a["b_g"]])
     if len(a.get("r_g", [])):
         y = a["r_y"].astype(float)
-        np.add.at(c["runs_sum"], (a["r_o"], a["r_bi"]), y)
-        np.add.at(c["runs_n"], (a["r_o"], a["r_bi"]), 1)
-        np.add.at(c["pa_sq"], (a["r_o"], a["r_bi"]), y * y)
+        wr = gw[a["r_g"]]
+        np.add.at(c["runs_sum"], (a["r_o"], a["r_bi"]), wr * y)
+        np.add.at(c["runs_n"], (a["r_o"], a["r_bi"]), wr)
+        np.add.at(c["pa_sq"], (a["r_o"], a["r_bi"]), wr * y * y)
     # text pass: proxy and handedness (same games, same bunt / count rules as the harness BIP arrays)
     ids = list(S.games)
+    gwd = dict(zip(ids, gw.tolist()))
     for i in range(0, len(ids), 400):
         part = ids[i:i + 400]
-        q = (f"SELECT balls, strikes, in_play, bip_type, result, text, bats, throws FROM pa "
+        q = (f"SELECT game_id, balls, strikes, in_play, bip_type, result, text, bats, throws FROM pa "
              f"WHERE game_id IN ({','.join('?' * len(part))})")
-        for b, k, ip, bt, res, text, bats, throws in con.execute(q, part):
+        for gid, b, k, ip, bt, res, text, bats, throws in con.execute(q, part):
             if res in H.EXCLUDED_RESULTS:
                 continue
+            w = gwd[gid]
             hb, ht = bats in ("R", "L", "S", "B"), throws in ("R", "L")
-            c["hand"][0 if hb and ht else 1 if hb else 2 if ht else 3] += 1
+            c["hand"][0 if hb and ht else 1 if hb else 2 if ht else 3] += w
             if not ip or bt == "bunt" or res in H.BUNT_RESULTS or (b, k) not in CI:
                 continue
             ci = CI[(b, k)]
-            c["bipn"][ci] += 1
+            c["bipn"][ci] += w
             r = H.bip_result(res)
             if bt == "line" or r in XBH:
-                c["hard"][ci] += 1
+                c["hard"][ci] += w
             if is_weak(bt, text):
-                c["weak"][ci] += 1
+                c["weak"][ci] += w
     return c
 
 
-def _key(con, level, season):
+# v1.3 (Drew's Nov 23 ruling 10): WEIGHTED = True makes every college season's counts weighted (hitter_data.fullgame_weights:
+# the full games tilted so their K / BB / HBP per PA equal the whole level's). Off by default: the unweighted counts and
+# their caches are untouched.
+WEIGHTED = False
+
+
+def _weights(level, season):
+    if not WEIGHTED or level not in ("D1", "D2", "D3"):
+        return None
+    from . import fullgame_weights as FW
+    return FW.load(level, season)
+
+
+def _key(con, level, season, wmap=None):
     ids = [g["id"] for g in H.games_for(con, level, season)]
-    return hashlib.sha1(("|".join(ids) + CACHE_VERSION).encode()).hexdigest()[:16], len(ids)
+    tag = CACHE_VERSION
+    if wmap is not None:
+        tag += "|w|" + "|".join(f"{wmap.get(i, 1.0):.12g}" for i in ids)
+    return hashlib.sha1(("|".join(ids) + tag).encode()).hexdigest()[:16], len(ids)
 
 
 def season_counts(con, level, season, cache=True, verbose=False):
-    """Counts for one level-season (full games only). Cached on disk unless cache=False."""
+    """Counts for one level-season (full games only). Cached on disk unless cache=False. WEIGHTED: game-weighted
+    (ruling 10), cached under their own name."""
     assert_not_heldout(season)
-    key, n = _key(con, level, season)
-    path = os.path.join(CACHE, f"count_{level}_{int(season)}_{key}.npz")
+    wmap = _weights(level, season)
+    key, n = _key(con, level, season, wmap)
+    pre = f"count_{level}_{int(season)}_" + ("w_" if wmap is not None else "")
+    path = os.path.join(CACHE, f"{pre}{key}.npz")
     if cache and os.path.exists(path):
         z = np.load(path)
         return {k: z[k] for k in KEYS}
     S = H.build_season(con, level, season)
-    c = counts_from_season(con, S)
+    gw = None if wmap is None else [wmap.get(g, 1.0) for g in S.games]
+    c = counts_from_season(con, S, gw)
     if verbose:
         print(f"  built {level} {season}: {S.n_games} full games, {int(c['ev6'].sum())} pitch events")
     if cache:
         os.makedirs(CACHE, exist_ok=True)
         for old in os.listdir(CACHE):
-            if old.startswith(f"count_{level}_{int(season)}_") and old.endswith(".npz"):
+            if old.startswith(pre) and old.endswith(".npz") and (wmap is not None or not old.startswith(pre + "w_")):
                 os.remove(os.path.join(CACHE, old))
         np.savez_compressed(path, **c)
     return c
