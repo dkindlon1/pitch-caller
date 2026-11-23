@@ -1,8 +1,3 @@
-attempt 0: track 650 mm, vias 131, failures 10 ['LCD_MOSI: J1.2 -> U1.39', 'LCD_DISP: J1.5 -> R9.1', 'LCD_DISP: J1.5 -> C21.1', 'LCD_DISP: J1.5 -> U1.46', 'GND plane via: C7.2', 'GND plane via: C3.2']
-attempt 1: track 698 mm, vias 144, failures 3 ['I2C_SCL: U2.14 -> U4.1', 'GND plane via: C1.2', '3V0 plane via: R3.1']
-attempt 2: track 640 mm, vias 143, failures 3 ['LCD_MOSI: J1.2 -> U1.39', 'LCD_SCK: J1.1 -> U1.37', 'LCD_CS: J1.3 -> U1.41']
-attempt 3: track 690 mm, vias 139, failures 6 ['LCD_EXTCOMIN: J1.4 -> U1.44', 'GND plane via: C8.2', '3V0 plane via: J1.6', '3V0 plane via: J1.7', '3V0 plane via: C1.1', '3V0 plane via: R4.1']
-attempt 4: track 712 mm, vias 145, failures 1 ['VSYS: U2.20 -> C24.1']
-attempt 5: track 675 mm, vias 142, failures 1 ['LCD_MOSI: J1.2 -> U1.39']
-attempt 6: track 695 mm, vias 153, failures 0 []
-kept: 37 signal nets, track 695 mm, vias 153, failures 0
+attempt 0: track 730 mm, vias 142, failures 5 ['3V0 plane via: R16.1', '3V0 plane via: R13.1', '3V0 plane via: C13.1', '3V0 plane via: U4.2', '3V0 plane via: U4.3']
+attempt 1: track 744 mm, vias 150, failures 0 []
+kept: 38 signal nets, track 744 mm, vias 150, failures 0

@@ -38,9 +38,9 @@ def profile(name, conn_ms=None, adv=False, calls_per_h=0, hr=False, frontlight_d
     motor = calls_per_h / 3600 * 0.45 * MOTOR_MA * 1.15 * 1000   # 450 ms buzz per call from VSYS, duty capped by firmware to about 3 V effective; +15% for start current [est]
     bat += motor
     return name, bat
-P = [profile("Ship mode (storage)"), profile("Standby: advertising 1 s, screen on", adv=True),
+P = [profile("Ship mode (storage)"), profile("Standby, no phone: advertising at 1.0-1.2 s (firmware drops to this 30 s after each start), screen on", adv=True),
      profile("Game, typical: connected 20 ms, 50 calls/h", conn_ms=20, calls_per_h=50),
-     profile("Game, relaxed link: connected 100 ms, 50 calls/h", conn_ms=100, calls_per_h=50),
+     profile("Connected but idle (phone left connected, 20 ms interval, no calls)", conn_ms=20),
      profile("Game at night with the optional frontlight on 30% of the time", conn_ms=20, calls_per_h=50, frontlight_duty=0.3)]
 P[0] = ("Ship mode (storage)", SHIP)
 out = ["# Power budget, rev C (estimate, not measured)", "",
@@ -57,6 +57,7 @@ day = (game * 3 + standby * 21) / 1000
 dayh = (heavy * 3 + standby * 21) / 1000
 out += ["", f"One 3-hour game a day plus 21 hours of standby uses about {day:.1f} mAh a day (typical) or {dayh:.1f} mAh (night games with the optional frontlight).",
         f"On a 150 mAh cell at 80% usable that is about {150*0.8/day:.0f} days between charges (typical) or {150*0.8/dayh:.0f} days (night games with the frontlight).",
+        f"If the phone stays connected all day at the firmware's fixed 20 ms interval, use is about {P[3][1] * 24 / 1000:.1f} mAh a day: about {150*0.8/(P[3][1] * 24 / 1000):.0f} days. A slower interval while idle would need a firmware change (not made).",
         "", "Peak current [est]: motor start about 70-105 mA (2-3x its 35 mA rating; start current is not on the data sheet) + radio 15 mA at +8 dBm = about 90-120 mA worst case. The firmware selects the nPM1300's high discharge limit (1 A nominal).",
         "", "Storage: ship mode draws 0.37 uA from the power chip, but the cell's own protection circuit and self-discharge are larger. Ship at 40-60% charge and top up every 6 months.",
         "", "Charging [est]: 74 mA into 150 mAh is about 1.5 hours of constant current plus about 1 hour of taper, about 2.5 hours; about 4 hours between 0 and 10 C where the chip halves the current. Firmware raises the VBUS limit from the 100 mA default to 500 mA when a 1.5 A or 3 A USB-C source is detected, and stops charging above 45 C (cell limit).",

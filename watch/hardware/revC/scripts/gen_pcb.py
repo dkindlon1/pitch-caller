@@ -12,15 +12,17 @@ DSN = os.path.join(HERE, "..", "out", "pitchiq_watch.dsn"); SES = os.path.join(H
 LIBS = "/usr/share/kicad/footprints"
 mm = pcbnew.FromMM
 def V(x, y): return pcbnew.VECTOR2I(mm(x), mm(y))
-W, H, RAD = 30.0, 36.0, 3.0
+W, H, RAD = 30.6, 36.0, 3.0   # 0.6 mm wider than the first rev C pass: room between the cell and the side switch (mechanical review)
+MOTOR = (5.3, 22.7, 4.1)      # top side: keep-clear circle for the 8 mm motor (x, y, radius); no vias inside it (steel can)
 USB_Y = 10.5; NOTCH = (0.0, USB_Y - 5.15, 6.3, USB_Y + 5.15)   # board-edge notch for the mid-mount USB-C receptacle (x0, y0, x1, y1)
 OX, OY = 100.0, 80.0   # board origin on the sheet
 
 # ref: (x, y, rotation degrees, side)   board coordinates in mm, origin top-left, y down
 PLACE = {
     # Rev C stack: the board is in the middle. F = top = display side: module, all small parts, the motor (glued to the board),
-    # with the LCD lying 2.3 mm above. B = bottom = wrist side: the cell, the side switch, the lower half of the USB-C receptacle
-    # and the programming pads.
+    # with the LCD lying 2.7 mm above. B = bottom = wrist side: the cell, the side switch, the programming pads and the USB-C
+    # receptacle. The receptacle stands 4.21 mm proud of the side it is soldered to (GCT drawing: 4.76 flange less the 0.55 mm
+    # it sinks into the notch), so it is on the BOTTOM, in the 4.5 mm bay beside the cell, not under the display.
     "U1": (15.0, 8.4, 0),
     "J3": (6.3, USB_Y, 0), "D2": (4.4, 17.6, 0),
     "C2": (17.6, 17.7, 0), "C1": (20.2, 17.8, 0), "R16": (15.4, 18.0, 0),
@@ -38,15 +40,15 @@ PLACE = {
     "J1": (14.0, 31.0, 0), "R9": (20.7, 31.8, 0), "R10": (20.7, 30.6, 0), "C21": (20.7, 33.0, 0), "C22": (7.7, 29.4, 90), "C23": (7.7, 31.6, 90),
     "R11": (5.4, 34.6, 0), "R12": (5.4, 33.4, 0),
     # bottom side
-    "SW1": (27.9, 12.0, 270), "BT1": (27.9, 21.0, 90), "JP1": (27.9, 26.4, 90),
+    "SW1": (28.5, 12.0, 270), "BT1": (28.5, 21.0, 90), "JP1": (28.5, 26.4, 90),
     # programming pads in the strip left of the cell (reachable with the back cover off and the cell in place): GND, nRESET, SWDCLK, SWDIO, 3V0
-    "TP2": (2.4, 19.4, 0), "TP5": (2.4, 22.0, 0), "TP4": (2.4, 24.6, 0), "TP3": (2.4, 27.2, 0), "TP6": (2.4, 29.8, 0),
-    "D6": (4.9, 20.6, 90), "D5": (4.9, 24.0, 90), "D4": (4.9, 27.4, 90),
-    "R19": (4.9, 30.6, 0), "R18": (4.9, 31.8, 0), "R17": (4.9, 33.0, 0),   # series resistors next to the pads they protect
+    "TP5": (2.4, 19.4, 0), "TP4": (2.4, 22.0, 0), "TP2": (2.4, 24.6, 0), "TP3": (2.4, 27.2, 0), "TP6": (2.4, 29.8, 0),   # nRESET, SWDCLK, GND (middle), SWDIO, 3V0
+    "D6": (4.9, 19.6, 90), "D5": (4.9, 23.0, 90), "D4": (4.9, 27.4, 90),
+    "R19": (4.9, 30.6, 0), "R18": (4.9, 31.8, 0), "R17": (4.9, 33.0, 0), "R20": (2.6, 31.9, 0), "R21": (8.1, 9.4, 90), "R22": (8.1, 11.6, 90),   # series resistors next to the pads they protect
     "TP1": (9.5, 7.0, 0), "TP8": (20.5, 7.0, 0),
 }
 KEEPOUT = (-1.0, 0.0, 33.0, 4.0)   # antenna end of the module: no copper on any layer, full board width (RF review)
-HOLES = [(2.2, 2.2), (27.8, 2.2), (2.2, 33.8), (27.8, 33.8)]   # 1.6 mm unplated; the top pair sits beside the antenna: plastic posts only, no metal screws
+HOLES = [(2.2, 2.2), (28.4, 2.2), (2.2, 33.8), (28.4, 33.8)]   # 1.6 mm unplated; the top pair sits beside the antenna: plastic posts only, no metal screws
 
 def custom(name):
     f = pcbnew.FOOTPRINT(None); f.SetFPID(pcbnew.LIB_ID("PQ", name))
@@ -59,11 +61,13 @@ def custom(name):
     elif name == "USB4715":
         # GCT USB4715-GF-A land pattern, drawn from GCT's "Recommended PCB Layout" (PCB 0.80 mm). Origin = middle of the notch's
         # back edge; local +x points into the board, the receptacle opens toward -x; local y runs along the board edge.
-        # Contact pads are 0.30 mm longer than the drawing's 1.05 and start 0.25 mm behind the notch edge (edge clearance).
+        # Contact pads are the drawing's 1.05 mm long and start 0.20 mm behind the notch edge (the drawing starts them at the edge;
+        # 0.20 mm is the fab's copper-to-edge limit). The part is fitted on the bottom side; the pattern is symmetric about its
+        # centre line except for CC1/CC2, which are interchangeable.
         def smd(num, y, w):
             p = pcbnew.PAD(f); p.SetNumber(num); p.SetShape(pcbnew.PAD_SHAPE_RECT); p.SetAttribute(pcbnew.PAD_ATTRIB_SMD)
             ls = pcbnew.LSET(); [ls.AddLayer(L) for L in (pcbnew.F_Cu, pcbnew.F_Mask, pcbnew.F_Paste)]; p.SetLayerSet(ls)
-            p.SetSize(V(1.35, w)); p.SetPos0(V(0.925, y)); p.SetPosition(V(0.925, y)); f.Add(p)
+            p.SetSize(V(1.05, w)); p.SetPos0(V(0.725, y)); p.SetPosition(V(0.725, y)); f.Add(p)
         for num, y, w in (("B12", -2.75, 0.80), ("B9", -1.52, 0.76), ("A5", -0.50, 0.70), ("B5", 0.50, 0.70), ("A9", 1.52, 0.76), ("A12", 2.75, 0.80)): smd(num, y, w)
         k = 0
         for x in (-2.30, -5.30):          # shell stakes: plated slots 0.50 x 1.10 in pads 0.90 x 1.50, long axis along x
@@ -89,9 +93,9 @@ def outline(b):
     r = RAD
     x0, y0, x1, y1 = NOTCH; rr = 0.5
     seg(r, 0, W - r, 0); seg(W, r, W, H - r); seg(W - r, H, r, H)
-    seg(0, H - r, 0, y1); seg(0, y1, x1, y1); seg(0, y0, 0, r); seg(x1, y0, 0, y0)          # left edge, broken by the notch
-    seg(x1, y0 + 2 * rr, x1, y1 - 2 * rr)                                                   # notch back edge between the corner reliefs
-    arc(x1, y0 + rr, x1, y0, x1, y0 + 2 * rr); arc(x1, y1 - rr, x1, y1 - 2 * rr, x1, y1)    # 0.5 mm radius reliefs bulging into the board
+    seg(0, H - r, 0, y1); seg(0, y1, x1 - rr, y1); seg(0, y0, 0, r); seg(x1 - rr, y0, 0, y0)   # left edge, broken by the notch
+    seg(x1, y0 + rr, x1, y1 - rr)                                                           # notch back edge between the corner reliefs
+    arc(x1, y0, x1 - rr, y0, x1, y0 + rr); arc(x1, y1, x1, y1 - rr, x1 - rr, y1)            # 0.5 mm radius relief circles centred ON the two inside corners (270 degrees each), so the square connector body is not pinched by the router radius
     arc(W - r, r, W - r, 0, W, r); arc(W - r, H - r, W, H - r, W - r, H); arc(r, H - r, r, H, 0, H - r); arc(r, r, 0, r, r, 0)
 
 def rules(b):
@@ -149,8 +153,8 @@ def place():
         for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
             s = pcbnew.PCB_SHAPE(b); s.SetShape(pcbnew.SHAPE_T_SEGMENT); s.SetStart(V(OX + x0, OY + y0)); s.SetEnd(V(OX + x1, OY + y1)); s.SetLayer(layer); s.SetWidth(mm(0.1)); b.Add(s)
     fabline(pcbnew.Dwgs_User, [(6.2, 9.8), (25.95, 9.8), (25.95, 35.8), (6.2, 35.8), (6.2, 9.8)])        # nominal 402025 cell (19.75 x 26.0) UNDER the board (bottom side), between the USB-C body and the side switch
-    fabline(pcbnew.Cmts_User, [(1.7, 5.5), (28.3, 5.5), (28.3, 35.8), (1.7, 35.8), (1.7, 5.5)])        # LS013B7DH03 outline 26.6 x 30.3 mm above the cell, pushed down so its metal is off the antenna end (RF review; position is a proposal)
-    fabline(pcbnew.Eco1_User, [(5.3 + 4.1 * math.cos(a / 12 * math.pi), 22.7 + 4.1 * math.sin(a / 12 * math.pi)) for a in range(25)])   # top side: keep-clear circle for the 8 mm motor (glued to the board)
+    fabline(pcbnew.Cmts_User, [(2.0, 5.5), (28.6, 5.5), (28.6, 35.8), (2.0, 35.8), (2.0, 5.5)])        # LS013B7DH03 outline 26.6 x 30.3 mm above the cell, pushed down so its metal is off the antenna end (RF review; position is a proposal)
+    fabline(pcbnew.Eco1_User, [(MOTOR[0] + MOTOR[2] * math.cos(a / 12 * math.pi), MOTOR[1] + MOTOR[2] * math.sin(a / 12 * math.pi)) for a in range(25)])   # top side: keep-clear circle for the 8 mm motor (glued to the board)
     pcbnew.SaveBoard(PCB, b); pcbnew.SaveBoard(PLACED, b)
     ok = pcbnew.ExportSpecctraDSN(b, DSN)
     print("placed", len(b.GetFootprints()), "footprints; DSN export:", ok)

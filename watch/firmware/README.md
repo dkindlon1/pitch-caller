@@ -87,7 +87,7 @@ Flash `build_dk` (above). The DK advertises as `PitchIQ XXXX`; LED1 buzzes, LED2
 Verified (run in this workspace):
 * Both `west build` commands exit 0 with no compiler or Kconfig warning (the only message is CMake's "debug signing key"). Zephyr v4.4.2, gnuarmemb 13.2.
 * Watch image: 217,300 B flash text+data, 50,584 B RAM used (19 %) in the 483,178 B slot region; MCUboot 27,552 B of its 48 KB (56 %). DK similar.
-* The compiled devicetree contains lcd (`sharp,ls0xx`), accel (`st,lis2dh12`), ppg (`maxim,max30101`), the nPM1300 with regulators, BUCK1 (1.8 V), BUCK2 (3.0 V, always on) and charger, pwm0, pwm1, i2c0, spi2, all enabled; the real code paths (display, PMIC, accelerometer, heart rate) are the ones compiled in the watch build.
+* (Rev B build, historical; rev C has no ppg node and no BUCK1.) The compiled devicetree contains lcd (`sharp,ls0xx`), accel (`st,lis2dh12`), ppg (`maxim,max30101`), the nPM1300 with regulators, BUCK1 (1.8 V), BUCK2 (3.0 V, always on) and charger, pwm0, pwm1, i2c0, spi2, all enabled; the real code paths (display, PMIC, accelerometer, heart rate) are the ones compiled in the watch build.
 * The screen layout, font and link icon were rendered as text on a host for several calls, "NO LINK", "no key" and the pairing screen. The heart-rate estimator was run on a host against synthetic PPG (48 to 180 bpm, noise, 0.25 Hz baseline wander, no-contact, lost signal): within +-3 bpm after 15 s in all cases.
 
 NOT verified (nothing ran on hardware or a radio):
@@ -145,7 +145,7 @@ Compile-checked only (nothing was flashed or run on hardware); logs in `build_lo
 * **Removed: heart rate and 5 V boost.** No MAX30101 driver code, `hr_est.[ch]`, `CONFIG_BT_HRS`, "no HR during buzz" logic (`haptics_busy()`),
   `ppg` node, `boost-en-gpios`, `PQ_PIN_PPG_INT` (P0.05) and `PQ_PIN_BOOST_EN` (P0.08). `core/` has no heart-rate hook and the JS app has no heart-rate
   field in the phone protocol, so nothing is stubbed. P0.05 and P0.08 are unused.
-* **BUCK1 is never enabled.** Rev C has no 1.8 V rail (inductor not fitted, VSET1 to ground, so it is off at start-up). The `BUCK1` devicetree node
+* **BUCK1 is never enabled.** Rev C has no 1.8 V load (VSET1 to ground, so the buck is off at start-up; its inductor L1 and output capacitor stay fitted on the board so the pin is never left in an undocumented state). The `BUCK1` devicetree node
   and every regulator call for it are gone; a comment in `pitchiq_watch.dts` says why. Do not add it back.
 * **USB Type-C charging.** `power.c` reads the nPM1300 USB-C detect status (VBUSIN block 0x02, offset 0x05, mask 0x0A as in the stock driver) and
   writes VBUSINILIM = 500 mA (+ ILIMUPDATE) only when CC1 or CC2 shows a 1.5 A or 3 A source; otherwise the 100 mA default stays. The devicetree
@@ -163,3 +163,13 @@ Compile-checked only (nothing was flashed or run on hardware); logs in `build_lo
 * **32.768 kHz crystal (not changed).** With `CLOCK_CONTROL_NRF_K32SRC_XTAL` the system timer waits for a stable crystal (blocks if it never starts).
   Options in v4.4.2, documented in `pitchiq_watch_defconfig`: `CONFIG_SYSTEM_CLOCK_WAIT_FOR_AVAILABILITY=y` (boot on the RC, switch to the crystal when ready), or
   `CONFIG_CLOCK_CONTROL_NRF_K32SRC_RC=y` with its calibration (default on, 4 s period; accuracy defaults to 500 ppm on nRF52).
+
+## Rev C fix pass 2 (2026-11-23)
+
+* Advertising: fast (100-150 ms) for 30 s after every start, then 1.0-1.2 s (`ADV_FAST_S`, `adv_slow_fn` in `app/src/ble_pq.c`). The power
+  budget assumes the slow interval for an idle watch. Compiles; not run on hardware.
+* Rebuilt after this change: `pitchiq_watch` exit 0, 226,184 B flash, 50,656 B RAM; `nrf52840dk/nrf52840` exit 0, 219,512 B; core host
+  tests all pass. Logs: `build_logs/boss_revC_pitchiq.log`, `build_logs/boss_revC_dk.log`.
+* Still open from the rev C review (not fixed): the charger code never clears charger errors and does not disable the charger before
+  changing the charge current; no trickle-charge setting for a deeply discharged cell; the motor duty cap uses a battery reading that can
+  be up to 60 s old; no guard against repeated watchdog resets; the connection interval is fixed at 20 ms.

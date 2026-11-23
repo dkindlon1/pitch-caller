@@ -135,6 +135,13 @@ static void add_to_accept_list(const struct bt_bond_info *info, void *user) {
   }
 }
 
+/* Advertising runs fast (100-150 ms) for ADV_FAST_S after every start so a phone finds the watch at once, then drops to a
+ * 1.0-1.2 s interval, which is what the power budget assumes for an idle, unconnected watch (rev C review). */
+#define ADV_FAST_S 30
+static bool adv_slow;
+static void adv_slow_fn(struct k_work *w);
+static K_WORK_DELAYABLE_DEFINE(adv_slow_work, adv_slow_fn);
+
 static void adv_start(void) {
   uint32_t opts = BT_LE_ADV_OPT_CONN;
   int rc;
@@ -156,20 +163,34 @@ static void adv_start(void) {
   const struct bt_data sd[] = {
       BT_DATA_BYTES(BT_DATA_UUID128_ALL, PQ_UUID_SVC),
   };
-  rc = bt_le_adv_start(BT_LE_ADV_PARAM(opts, BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, NULL), ad,
-                       ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+  rc = bt_le_adv_start(adv_slow ? BT_LE_ADV_PARAM(opts, BT_GAP_ADV_SLOW_INT_MIN, BT_GAP_ADV_SLOW_INT_MAX, NULL)
+                                : BT_LE_ADV_PARAM(opts, BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, NULL),
+                       ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
   if (rc) {
     LOG_ERR("advertising failed: %d (retrying)", rc);
     k_work_schedule(&adv_work, K_SECONDS(2));
     return;
   }
   atomic_set(&adv_flag, 1);
-  LOG_INF("advertising as \"%s\"%s", dev_name, (opts & BT_LE_ADV_OPT_FILTER_CONN) ? " (bonded peers only)" : "");
+  LOG_INF("advertising as \"%s\"%s%s", dev_name, (opts & BT_LE_ADV_OPT_FILTER_CONN) ? " (bonded peers only)" : "",
+          adv_slow ? ", slow" : ", fast");
+  if (!adv_slow) {
+    k_work_reschedule(&adv_slow_work, K_SECONDS(ADV_FAST_S));
+  }
 }
 
 static void adv_work_fn(struct k_work *w) {
   ARG_UNUSED(w);
+  adv_slow = false; /* every (re)start begins fast */
   adv_start();
+}
+
+static void adv_slow_fn(struct k_work *w) {
+  ARG_UNUSED(w);
+  if (ble_pq_adv_running() && conn == NULL) {
+    adv_slow = true;
+    adv_start();
+  }
 }
 
 bool ble_pq_adv_running(void) {

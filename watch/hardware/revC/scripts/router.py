@@ -8,7 +8,7 @@ at the power chip. The PADM / HALO / EP / VSP / I2CPRE environment variables exi
 import sys, os, heapq, math
 import numpy as np, pcbnew
 sys.path.insert(0, os.path.dirname(__file__)); import design as D
-from gen_pcb import PCB, PLACED, W, H, RAD, OX, OY, mm, V, NOTCH
+from gen_pcb import PCB, PLACED, W, H, RAD, OX, OY, mm, V, NOTCH, MOTOR
 
 RES = 0.1; NX = int(round(W / RES)) + 1; NY = int(round(H / RES)) + 1
 TW = 0.2; CLR = 0.15; VIA_D = 0.5; VIA_DRILL = 0.2; PADM = int(os.environ.get('PADM', 3))   # via centres stay 0.3 mm from any pad edge: via copper ends 0.05 mm outside the pad and 0.025 mm outside its mask opening (0.4 was unroutable around the QFN)
@@ -52,6 +52,8 @@ def disc(l, i, j, net, r):
 def inside_board(x, y, inset):
     if x < inset or y < inset or x > W - inset or y > H - inset: return False
     if NOTCH[0] - 1 <= x <= NOTCH[2] + inset and NOTCH[1] - inset <= y <= NOTCH[3] + inset: return False   # the USB-C notch is not board
+    for cy in (NOTCH[1], NOTCH[3]):   # relief circles on the notch's inside corners
+        if math.hypot(x - NOTCH[2], y - cy) <= 0.5 + inset: return False
     r = RAD
     for cx, cy in ((r, r), (W - r, r), (r, H - r), (W - r, H - r)):
         if (x < r and cx == r or x > W - r and cx == W - r) and (y < r and cy == r or y > H - r and cy == H - r):
@@ -137,6 +139,7 @@ def ok(l, i, j, n):
 
 def via_ok(i, j, n):
     if padarea[:, i, j].any(): return False
+    if math.hypot(i * RES - MOTOR[0], j * RES - MOTOR[1]) < MOTOR[2] + 0.25: return False   # no via under the motor's steel can
     for a, b in VIAS:
         if (a - i) ** 2 + (b - j) ** 2 < int(os.environ.get('VSP', 49)): return False      # hole centres at least 0.7 mm apart (0.2 mm drills: 0.5 mm web)
     for a, b in disc_offsets(0.2):

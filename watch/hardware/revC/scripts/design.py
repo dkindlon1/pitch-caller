@@ -116,18 +116,26 @@ part("J3", "USB-C receptacle (power only, IP67)", "PQ:USB4715",
      [("A12", "GND", "GND", "pi"), ("B12", "GND", "GND", "pi"), ("A9", "VBUS", "VBUS", "po"), ("B9", "VBUS", "VBUS", "pas"), ("A5", "CC1", "CC1", "pas"), ("B5", "CC2", "CC2", "pas"),
       ("S1", "SHELL", "GND", "pas"), ("S2", "SHELL", "GND", "pas"), ("S3", "SHELL", "GND", "pas"), ("S4", "SHELL", "GND", "pas")],
      mpn="USB4715-GF-A", mfr="GCT", lcsc="C6906846", desc="waterproof USB Type-C, charging only; gasket USBTJ-04 is fitted after soldering (kit: USB4715-GF-A-KIT, C5984345). LCSC out of stock Nov 23: buy at Mouser and consign",
-     src="https://octopart.com/part/gct/USB4715-GF-A")
+     src="https://octopart.com/part/gct/USB4715-GF-A", side="B")
+
+# Fallback only, NOT fitted: external 5.1 k pull-downs on CC1/CC2. The power chip is documented to present Rd itself; whether it
+# still does with a completely flat cell is not confirmed. If a USB-C to USB-C charger will not start a flat watch on the first
+# boards, fit these two resistors.
+R("R21", "5.1k", "CC1", "GND", "0402WGF5101TCE", "C25905", "DNP fallback: external Rd on CC1 (see note above)", dnp=True)
+R("R22", "5.1k", "CC2", "GND", "0402WGF5101TCE", "C25905", "DNP fallback: external Rd on CC2", dnp=True)
 
 # ---------------------------------------------------------------- hidden programming pads (BOTTOM side, inside the case, for a pogo jig)
-# Five pads in a row: GND, nRESET, SWDCLK, SWDIO, 3V0 (3V0 = target-voltage reference for the debug probe, never a supply input).
-# The three logic pads reach the module through 100R and have a clamp diode at the pad.
+# Five pads in a row: nRESET, SWDCLK, GND, SWDIO, 3V0. GND is the middle pad, so a jig put on backwards still lands ground on
+# ground; nothing else it can then touch is unprotected: the logic pads have 100R and a clamp, and the 3V0 pad (target-voltage
+# reference for the probe, never a supply input) reaches the rail through 1 k (R20).
 for ref, net, t, d in (("TP2", "GND", "po", "ground"), ("TP3", "SWDIO_P", "io", "SWDIO"), ("TP4", "SWDCLK_P", "out", "SWDCLK"),
-                       ("TP5", "NRESET_P", "pas", "nRESET"), ("TP6", "3V0", "pas", "3V0 reference out (VTref)")):
+                       ("TP5", "NRESET_P", "pas", "nRESET"), ("TP6", "3V0_P", "pas", "3V0 reference out (VTref) through 1 k")):
     part(ref, d, "TestPoint:TestPoint_Pad_D1.5mm", [("1", "1", net, t)], desc=f"programming pad: {d}", dnp=True, side="B")
 R100 = dict(mpn="0402WGF1000TCE", lcsc="C25076")
 R("R17", "100R", "SWDIO", "SWDIO_P", desc="series protection, SWDIO pad", side="B", **R100)
 R("R18", "100R", "SWDCLK", "SWDCLK_P", desc="series protection, SWDCLK pad", side="B", **R100)
 R("R19", "100R", "NRESET", "NRESET_P", desc="series protection, nRESET pad", side="B", **R100)
+R("R20", "1k", "3V0", "3V0_P", "0402WGF1001TCE", "C11702", "limits current if the 3V0 reference pad is ever shorted or back-fed by a misplaced jig (a probe's reference input draws microamps)", side="B")
 for ref, net in (("D4", "SWDIO_P"), ("D5", "SWDCLK_P"), ("D6", "NRESET_P")):
     two(ref, "TVS 5V", "Diode_SMD:D_SOD-323", net, "GND", mpn="PESD5V0S1BA", mfr="DOWO (Nexperia original)", lcsc="C2985486", desc="programming-pad ESD clamp (about 35 pF: fine for SWD at 1 MHz through 100R)", side="B")
 R("R16", "10k", "3V0", "NRESET", "0402WGF1002TCE", "C25744", "reset pull-up (pin is a GPIO until firmware enables pin reset)")
