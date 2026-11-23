@@ -13,6 +13,32 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 23): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_kgap_fixes_2026-11-23.md` (after `docs/KGAP_v13_DIAGNOSIS.md`, commit deea124). Carried
+out on `feat/hitter-v13-fulldata` (`docs/BUILD_v13_fulldata_REPORT.md`). The count layer stays fixed in recalibration
+(addendum ruling 5).
+
+8. **HS pitch mix: real-range guard.**
+   - The HS pitch kind × velocity table stays as fit on real HS data, and HS is calibrated with the table on.
+   - The HS engine's fastball share in each count can't go below what the most off-speed-heavy real HS pitchers throw in
+     that count: the 10th percentile of pitcher-season fastball share in that count, fit seasons only, among pitchers with
+     enough pitches in that count to count (the minimum used is reported).
+   - The floor table is built from the HS data and wired into both engines, parity-tested.
+   - **College (default, report only):** with Single-A / AAA Statcast pitcher usage as the reference, show how far the
+     college engines' mix sits outside the same real range and what the same guard would change. Not wired for college.
+9. **Simulated hitters: center, then calibrate.**
+   - The hidden hitter traits are centered so the average sim hitter equals the level average, including the lineup's
+     built-in off-speed weakness.
+   - Calibration runs against that same hitter population.
+   - Report what centering does to the MLB control (the diagnosis put it at −0.6 below target).
+10. **College K: reweight the full games.**
+    - Full games are weighted (by conference / team, or whatever matches best) so their K / BB / HBP match the whole level.
+    - The college count layers are refit on the weighted data; the real all-games target stays.
+    - If the chained count layer still misses its own data afterwards, that is reported as a chaining bug and found.
+11. **Zone trend extension and edge called strike: ruled later.** After fixes 8–10, both pieces are re-measured on the
+    fixed core and reported for Drew's ruling. Neither changes before then.
+
 ## Drew's rulings (Nov 22, late): DECIDED
 
 Context: after the pitcher-side-only recalibration (commit 99b22fb) K lands high at every non-MLB level (D1 +2.4, D2 +2.3,
