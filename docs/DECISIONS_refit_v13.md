@@ -37,6 +37,18 @@ D3 +2.5, HS +6.9 points; BB / HBP within 1). These rulings set what happens next
 2. **Hold** the 400-game sims, the three-way read-through, the suite re-pin table and the D2 / D3 rescore until Drew rules
    on the fix.
 3. **The edge called-strike ruling waits for this diagnosis.**
+4. **(Nov 23) Size any adaptation fix from real data.** If the probes confirm the gap is pitch choice against a hitter who
+   never adapts, the PROPOSED fix is sized from data, not by tuning K: measure how whiff per swing on a pitch kind falls
+   as it becomes more predictable (its usage share in that count, for that pitcher). HS / travel pitch-type data for HS;
+   Statcast (Single-A / AAA) for college. Compare within each pitcher where possible, so good-slider pitchers throwing
+   more sliders don't mask the effect. Report the size with SE beside the proposed fix. Still report only; nothing wired.
+   (Tool: `hitter_data/kgap_predict.py`.)
+5. **(Nov 23) Parallel runs replace "one heavy job at a time".**
+   - The desktop has 24 cores and 64 GB. Independent games and bootstrap replicas run across worker processes, up to
+     cores − 2, and no worker is added above about 48 GB used.
+   - Every game keeps its fixed seed, so results are byte-identical to a serial run (proved on a small batch).
+   - Two fits or suites that write the same files never run at once.
+   - Nothing uses the GPU.
 
 ## Drew's rulings (Nov 22, night, addendum): DECIDED
 
