@@ -441,7 +441,8 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
                   "college_d2, college_d3 and hs from hitter_data.fit_runs / fit_count_hs on each level's own play-by-play "
                   "(PROVISIONAL, fit <= 2025, recency-weighted; cv relative to 0-0): ruling 10, college levels take no run "
                   "values from MLB. mlb the shared refit's (run_v13refit); lw the refit's (college_d2's lw = college_d3's). The "
-                  "run-scale constant stays 0.481 (a fixed unit, no longer MLB's fitted RE). Format: docs/TABLES_v13.md.")
+                  "run scale (engine run_scale) is 1 for college_d1 / d2 / d3 (own run values, ruling 10); the 0.481 pin (v1.2's MLB RE00) "
+                  "only for mlb and hs. Format: docs/TABLES_v13.md.")
     e.check_table(R, "run_v13core.json")
     paths = out_paths or core_paths()
     if thru != 2025:
