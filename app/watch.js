@@ -332,7 +332,7 @@
     async function connect() {
       if (!bt) throw new Error("This browser has no Bluetooth. Use Chrome on a computer or an Android device.");
       if (devs.filter((x) => x.state !== "closed").length >= MAX_WATCHES) throw new Error(`Up to ${MAX_WATCHES} watches.`);
-      const device = await bt.requestDevice({ filters: [{ namePrefix: "Bangle" }], optionalServices: [SVC] });
+      const device = await bt.requestDevice({ filters: [{ namePrefix: "PitchIQ" }, { namePrefix: "Bangle" }], optionalServices: [SVC] });
       const d = addDevice(device);
       if (d.state === "ok") return d;
       d.fresh = true;   // picked in the chooser just now: pairing it, so the team may re-add it if it was removed
