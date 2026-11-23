@@ -13,6 +13,29 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 22): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_fulldata_2026-11-22.md`. Carried out on `feat/hitter-v13-fulldata`
+(`docs/BUILD_v13_fulldata_REPORT.md`). These supersede the Nov 21 rulings below wherever they differ.
+
+1. **Coverage rule: the 50% full-game share rule is dropped** (supersedes Nov 21 ruling 13).
+   - D2 and D3 get fitted count layers using `borrow` (and `shared` + offset in the level-split check).
+   - Their full games must pass the full-vs-rest check: K, BB and HBP per PA within 1 point of the level's other
+     games (the plan's default threshold), with game-clustered SEs reported.
+   - The pass bar decides: a level that doesn't beat raw v1.2 by more than 2 SE on 2025 keeps v1.2's count numbers,
+     labelled as such.
+2. **Data copy:** for each archive, the copy holding more games, opened read-only.
+   - College: the live ChatGPT archive (122,767 games at the Nov 22 14:10 check; 123,110 later) over the packaged
+     snapshot `Downloads/college-baseball-data/archive.sqlite3` (119,021 games, 11,460,098 plays). The snapshot is a
+     strict subset of the live archive with identical digests. Its `derived/` folder is not a source.
+   - HS / travel: the live DiamondKast archive. `Downloads/DiamondKast_2022-2026.zip` holds the same export (identical
+     CSVs, 21,707 games); the live folder has 21,712 scorecards.
+   - The cross-check against Claude's independent numbers is compared like-for-like on the snapshot's 119,021 games
+     (Drew, Nov 22); fits use the live archive.
+3. The Nov 21 rulings (pass bar, zone table, hanger gate, HS kind x velocity, ride-up 0.003, R1 / S5, HARD_SD,
+   harness landing, MLB run-value scale, simulator split, HS changed calls) all stand. **Ruling 10 now takes effect:**
+   once college run values are fit on the full data, college levels take no scale from MLB.
+
 ## Drew's rulings (Nov 21, night): DECIDED
 
 These supersede the PROPOSED recommendations below wherever they differ (source:
