@@ -320,6 +320,15 @@ def _default_staff():
     return {"name": f"Starter ({hand})", "arsenal": starter, "hand": hand}, {"name": f"Reliever ({hand})", "arsenal": reliever, "hand": hand}
 
 
+# v1.3 (Drew's Nov 23 ruling 9): the hidden hitters are centered, so the average sim hitter is the level average the count
+# layer and the calibration describe. The built-in off-speed hole (os = skill - 0.2 + noise) is gone: with the default
+# lineup every trait (skill, fb, os, timing) has population mean 0 (the batting-order bases +0.35 / 0 / -0.35 cancel over
+# the nine spots; the noise and the [-1, 1] clip are symmetric). calib.py's population is drawn from here, so the
+# calibration runs against the same hitters the sims play. The named lineups (strong, weak, fb_mashers, os_killers, late)
+# keep their deliberate shifts on top. Was -0.2 through v1.3 full data 99b22fb (K-gap diagnosis row i).
+OS_HOLE = 0.0
+
+
 def their_lineup():
     """Hidden truth. skill shifts damage on everything; fb/os add to it; timing < 0 early, > 0 late."""
     hitters = []
@@ -334,7 +343,7 @@ def their_lineup():
         if LINEUP == "switch":
             hand = "S" if rng.random() < 0.6 else hand
         fb = max(-1, min(1, skill + (0.6 if LINEUP == "fb_mashers" else 0.0) + rng.gauss(0, 0.35)))
-        os_ = max(-1, min(1, skill - 0.2 + (0.6 if LINEUP == "os_killers" else 0.0) + rng.gauss(0, 0.35)))
+        os_ = max(-1, min(1, skill + OS_HOLE + (0.6 if LINEUP == "os_killers" else 0.0) + rng.gauss(0, 0.35)))
         tim = max(-1, min(1, (0.6 if LINEUP == "late" else 0.0) + rng.gauss(0, 0.4 if LINEUP != "late" else 0.2)))
         hitters.append({"name": f"#{spot}", "hand": hand, "fb": fb, "os": os_, "timing": tim})
     return hitters

@@ -29,8 +29,20 @@ COUNTS = [(b, k) for b in range(4) for k in range(3)]
 
 
 def population(n_lineups=4, seed=7):
+    """the calibration's hidden hitters: n_lineups default lineups from the simulator (simulate.their_lineup, centered by
+    Drew's Nov 23 ruling 9). v1.3: the sample's own trait means are then moved to exactly 0 (fb, os, timing; clipped to
+    [-1, 1] again, repeated until the means are within 1e-9), so the calibration's average hitter is the level average the
+    sims' population has in expectation (4 x 9 draws had fb +0.065, os +0.030, timing +0.010)."""
     simulate.rng = random.Random(seed)
-    return [h for _ in range(n_lineups) for h in simulate.their_lineup()]
+    hs = [h for _ in range(n_lineups) for h in simulate.their_lineup()]
+    for k in ("fb", "os", "timing"):
+        for _ in range(50):
+            m = sum(h[k] for h in hs) / len(hs)
+            if abs(m) < 1e-9:
+                break
+            for h in hs:
+                h[k] = max(-1.0, min(1.0, h[k] - m))
+    return hs
 
 
 HITTERS = population()
