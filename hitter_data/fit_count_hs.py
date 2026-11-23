@@ -29,6 +29,7 @@ import os
 import pickle
 import re
 import sqlite3
+import sys
 import time
 from collections import Counter, defaultdict
 
@@ -39,7 +40,7 @@ from . import fit_count as FC
 from . import fit_count_data as FD
 from . import fit_runs as FR
 from . import harness as H
-from .harness_adapters import (BIP_TYPES, CI, PRIMARY_ASSUMPTION, Assumption, EmpiricalAdapter, EngineV12Adapter, RecalAdapter,
+from .harness_adapters import (BIP_TYPES, CI, PRIMARY_ASSUMPTION, ROOT, Assumption, EmpiricalAdapter, EngineV12Adapter, RecalAdapter,
                                bases_index)
 
 HS_DB = os.path.join(DATA, "hs", "hs.sqlite3")
@@ -489,6 +490,37 @@ class AliasAssumption(Assumption):
 
     def same_share(self, level, b, k):
         return super().same_share("D3" if level == DL else level, b, k)
+
+
+class HSVeloAssumption(AliasAssumption):
+    """v1.3 (Drew's Nov 23 ruling 8: HS is calibrated with the pitch kind x velocity table on). The D3 mix as AliasAssumption,
+    but the frozen world's two arsenals throw at real HS / travel speeds: they are the default starter (FB / SL / CH) and
+    reliever (FB / CB / CH) templates, which are exactly the templates of simulate.hs_data_staff (addendum ruling 4), so
+    arsenal 0 is played at that staff's speed quantiles 1/12, 5/12, 9/12 and arsenal 1 at 3/12, 7/12, 11/12
+    (simulate.HS_STAFF_VELO), each a third of its arsenal's weight. The count layer is then calibrated against the same six
+    pitchers calib.py and the sims use. Levels other than HS: unchanged."""
+
+    def __init__(self, name=PRIMARY_ASSUMPTION):
+        super().__init__(name)
+        if ROOT not in sys.path:
+            sys.path.insert(0, ROOT)
+        from simulate import HS_STAFF_VELO
+        self.vmap = {0: (0, 2, 4), 1: (1, 3, 5)}
+        for a, qs in self.vmap.items():
+            for i in qs:
+                self.arsenals[f"{a}v{i}"] = [dict(sp, velo=HS_STAFF_VELO[sp["kind"]][i]) for sp in self.arsenals[a]]
+
+    def mix(self, level, side, b, k):
+        out = super().mix(level, side, b, k)
+        if level != DL:
+            return out
+        res = []
+        for a, j, q, z, w in out:
+            if a in self.vmap:
+                res += [(f"{a}v{i}", j, q, z, w / len(self.vmap[a])) for i in self.vmap[a]]
+            else:
+                res.append((a, j, q, z, w))
+        return res
 
 
 def v12_hs():

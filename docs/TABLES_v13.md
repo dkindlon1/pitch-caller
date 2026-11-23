@@ -104,6 +104,8 @@ Each file also has `"kind"`, `"version"` (a string, recorded with the export) an
 | `out_table[weak/solid/hard][GB/LD/FB/PU]` | probabilities `[out, 1B, 2B, 3B, HR, E]` | `inplay_typed_params.OUT_TABLE` |
 | `runner {p_GB, p_FB, S_DP}` | probabilities / scale | `inplay_typed_params.RUNNER_FIT` (the three fields the engines use) |
 | `pitch_velo` (hs only, optional) | multipliers on the six pitch events | v1.3 core, ruling 4: HS / travel pitch kind x velocity (below) |
+| `fb_floor` (hs only, optional) | {count: share in [0, 1)} | v1.3, Drew's Nov 23 ruling 8: the HS / travel engine's fastball share in a count can't go below it (`engine.fb_floor` / `apply_fb_floor`, `app/engine.js` `fbFloor` / `applyFbFloor`): the 10th percentile of pitcher-season fastball share in that count (hs.sqlite3 2022-25, pitcher-seasons with >= 10 typed pitches in the count; `hitter_data/hs_fb_floor.py`). Applied to the PA table's per-count policy and to the root call after its tie-break; the hitter's sit game is solved without it. Absent = no floor |
+| `calibrated_with_pitch_velo` (hs only, optional) | true | ruling 8: the hs row was calibrated with `pitch_velo` on, the frozen world at the HS data staff's speeds (`fit_count_hs.HSVeloAssumption`); `export_candidates.probe_for` reads it |
 | `label` (optional) | text | what the level's row is (e.g. "v1.2 count layer pending the coverage rule"); the engines ignore it |
 
 **`levels.hs.pitch_velo`** (Drew's ruling 4; exported by `python -m hitter_data.fit_count_hs --pitch-table` into

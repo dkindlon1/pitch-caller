@@ -98,9 +98,9 @@ def targets(j):
 class Probe(EngineV12Adapter):
     """v1.2's harness adapter, at a given engine level, with the situation passed to type_mix (so bip_gb is seen)."""
 
-    def __init__(self, engine_level, data_level):
+    def __init__(self, engine_level, data_level, assumption=None):
         from .fit_count_hs import AliasAssumption
-        super().__init__("college_d1", assumption=AliasAssumption(PRIMARY_ASSUMPTION))
+        super().__init__("college_d1", assumption=assumption or AliasAssumption(PRIMARY_ASSUMPTION))
         self.lv, self.dl = engine_level, data_level
 
     def engine_level(self, data_level):
@@ -173,14 +173,24 @@ def errors(rates, sw_bo, t, t_bo, n_bo, min_n=500.0):
                 swing_count_bo_wrms=float(np.sqrt((bo_err ** 2 * n_bo).sum() / n_bo.sum())), per_count=per)
 
 
+def probe_for(e, lv, dl):
+    """the harness probe for a level: HS with the pitch kind x velocity table in its row (v1.3 ruling 8: calibrated with
+    the table on) asks the frozen world at real HS speeds (fit_count_hs.HSVeloAssumption); otherwise v1.2's alias probe."""
+    from .fit_count_hs import HSVeloAssumption
+    if lv == "hs" and (e._CT.get("hs") or {}).get("calibrated_with_pitch_velo"):
+        return Probe(lv, dl, assumption=HSVeloAssumption(PRIMARY_ASSUMPTION))
+    return Probe(lv, dl)
+
+
 def calibrate(e, lv, dl, j, iters=12, log=print, rates_fn=None):
     """Calibrate one level in memory (engine._CT[lv] is replaced, caches cleared). -> (new level row, errors).
-    rates_fn(level row) -> (rates, swing [12,3,8]) replaces the engine probe (tests)."""
+    rates_fn(level row) -> (rates, swing [12,3,8]) replaces the engine probe (tests). The probe is probe_for(the row
+    as given): an HS row flagged calibrated_with_pitch_velo (and carrying pitch_velo) is calibrated with the table on."""
     t, t_bo, n_bo, late = targets(j)
     L12 = copy.deepcopy(e._CT[lv])
     d = {ck: {k: 0.0 for k in TERMS} for ck in CK}
     bo = {key: 0.0 for key in BO}
-    probe = Probe(lv, dl) if rates_fn is None else None
+    probe = probe_for(e, lv, dl) if rates_fn is None else None
     prev_d = {ck: {k: 0.0 for k in TERMS} for ck in CK}
     prev_lr = {ck: {k: 0.0 for k in TERMS} for ck in CK}
     for it in range(iters):
@@ -260,7 +270,7 @@ def verify(count_path, levels=None, thru=2025):
             fn = CORE_COUNT[lv]
         j = load_cand(fn.replace("thru2025", f"thru{thru}"))
         t, t_bo, n_bo, late = targets(j)
-        rates, sw_bo = engine_rates(Probe(lv, dl), n_bo, late)
+        rates, sw_bo = engine_rates(probe_for(e, lv, dl), n_bo, late)
         err = errors(rates, sw_bo, t, t_bo, n_bo)
         err.pop("per_count")
         out["levels"][lv] = err
@@ -368,10 +378,10 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
     """thru / out_paths (score_core): thru=2024 builds the "as scored" copy from the *_thru2024 candidates (fit <= 2024,
     so the harness may score it on 2025) and writes it to out_paths {"count": ..., "run": ...} instead of data_tables/.
     Calibrate the D1 and HS count candidates on top of the shared refit's count layer, under the approved zone table
-    (zone_v13) and the harness's primary landing (h3, Single-A), and write the core defaults. HS gets the pitch kind x
-    velocity table (fit_count_hs.pitch_table) after calibration: the count layer is the average pitch, the table moves a
-    pitch off that average, as in the fit. D2 / D3 keep v1.2's count terms (labelled). Run values: D1 and HS from the fits,
-    everything else the refit's."""
+    (zone_v13) and the harness's primary landing (h3, Single-A), and write the core defaults. HS carries the pitch kind x
+    velocity table (fit_count_hs.pitch_table) and, since Drew's Nov 23 ruling 8, is calibrated WITH it on (the frozen
+    world at the HS data staff's speeds, fit_count_hs.HSVeloAssumption), plus the fastball-share floor (hs_fb_floor).
+    Run values: each core level's own fits; mlb the refit's."""
     t0 = time.time()
     sys.path.insert(0, ROOT)
     import engine as e
@@ -386,6 +396,13 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
     old = json.load(open(old_path, encoding="utf8")) if os.path.exists(old_path) and thru == 2025 else None
     report = {"provisional": FD.PROVISIONAL, "version": CORE_VERSION, "base": CORE_BASE, "landing": PRIMARY_ASSUMPTION,
               "levels": {}}
+    from . import hs_fb_floor
+    if thru == 2025:
+        with open(HS.PITCH_TABLE_OUT, encoding="utf-8") as f:
+            pv_table = json.load(f)
+    else:
+        hcon = HS.connect()
+        pv_table = HS.pitch_table({x: HS.load_season(hcon, x) for x in HS.SEASONS if x <= thru}, thru=thru)
     for lv in CORE_LEVELS:
         dl, _, thin = LEVELS[lv]
         fn = CORE_COUNT[lv].replace("thru2025", f"thru{thru}")
@@ -407,19 +424,24 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
             e._CNT.clear()
             e._GBV.clear()
         log(f"  {lv} ({fn}):")
+        if lv == "hs":                     # v1.3 (Drew's Nov 23 ruling 8): HS is calibrated with the table on
+            row = copy.deepcopy(base_row)
+            row["pitch_velo"] = copy.deepcopy(pv_table)
+            row["calibrated_with_pitch_velo"] = True
+            e._CT[lv] = row
+            e._CNT.clear()
+            e._GBV.clear()
         L, err = calibrate(e, lv, dl, j, log=log)
+        e._CT[lv] = base_row
+        e._CNT.clear()
+        e._GBV.clear()
         L["label"] = (f"v1.3 core: PROVISIONAL count candidate ({fn}), calibrated under zone_v13 and the harness's h3 landing "
                       "(Single-A) on top of count_v13refit")
         C["levels"][lv] = copy.deepcopy(L)
         rec["after_errors"] = {k: v for k, v in err.items() if k != "per_count"}
         rec["after_offsets"] = {ck: dict(swing=L["swing"][ck]["heart"], cstrike=L["cstrike"][ck]) for ck in CK}
         report["levels"][lv] = rec
-    if thru == 2025:
-        with open(HS.PITCH_TABLE_OUT, encoding="utf-8") as f:
-            C["levels"]["hs"]["pitch_velo"] = json.load(f)
-    else:
-        hcon = HS.connect()
-        C["levels"]["hs"]["pitch_velo"] = HS.pitch_table({x: HS.load_season(hcon, x) for x in HS.SEASONS if x <= thru}, thru=thru)
+    C["levels"]["hs"]["fb_floor"] = hs_fb_floor.floor_table(thru)     # ruling 8: the fastball-share floor (fit <= thru)
     C["version"] = CORE_VERSION
     C["about"] = ("v1.3 core default count layer, full data (hitter_data.export_candidates --core). college_d1, college_d2, "
                   "college_d3 and hs: the count candidates fit on the full archives (" + FD.PROVISIONAL + "; D1 'shared', "
@@ -455,11 +477,9 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
         with open(paths[kind], "w", encoding="utf8", newline=NL) as f:
             f.write(build_v12.dumps(obj) + NL)
         log(f"  wrote {paths[kind]}")
-    # fresh process: the written count rows without pitch_velo reproduce the fitted per-count rates
-    scratch = os.path.join(OUT, "count_v13core_nopv.json" if thru == 2025 else f"count_v13core_s{thru}_nopv.json")
-    C0 = copy.deepcopy(C)
-    C0["levels"]["hs"].pop("pitch_velo")
-    write(C0, os.path.basename(scratch))
+    # fresh process: the written count rows reproduce the fitted per-count rates (HS with its table on, at HS speeds: ruling 8)
+    scratch = os.path.join(OUT, "count_v13core_check.json" if thru == 2025 else f"count_v13core_s{thru}_check.json")
+    write(copy.deepcopy(C), os.path.basename(scratch))
     v = subprocess.run([sys.executable, "-m", "hitter_data.export_candidates", "--verify", scratch, "--levels", ",".join(CORE_LEVELS),
                         "--thru", str(thru)],
                        cwd=ROOT, capture_output=True, text=True,
@@ -474,6 +494,75 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
     write(report, "core_export_report.json" if thru == 2025 else f"core_s{thru}_export_report.json")
     log(f"  done ({report['seconds']} s)")
     return C, R, report
+
+
+def relevel(levels, fb_floor=False, log=print):
+    """v1.3 Nov 23 fixes (rulings 8 and 10): recalibrate only `levels` of data_tables/count_v13core.json, exactly as run_core
+    does (the same count_v13refit starting row, zone_v13, h3 landing; HS with its pitch kind x velocity table on at HS
+    speeds), from the candidates named in CORE_COUNT, and keep everything else in the file: other levels, and each
+    level's in-play tables (out_table / runner, from the level recalibration), pitch_velo and fb_floor. fb_floor=True also
+    writes levels.hs.fb_floor (hs_fb_floor.floor_table, fit <= 2025). Then a fresh-process check of the written file."""
+    t0 = time.time()
+    sys.path.insert(0, ROOT)
+    import engine as e
+    sys.path.insert(0, os.path.join(ROOT, "data_tables"))
+    import build_v12
+    from . import hs_fb_floor
+    if dict(e.TABLE_VERSIONS) != CORE_BASE:
+        raise RuntimeError(f"run with {' '.join(f'{k}={v}' for k, v in CORE_ENV.items())} (loaded: {e.TABLE_VERSIONS})")
+    path = core_paths()["count"]
+    with open(path, encoding="utf8") as f:
+        C = json.load(f)
+    rep_ = {"levels": {}, "candidates": {lv: CORE_COUNT[lv] for lv in levels}}
+    for lv in levels:
+        dl = LEVELS[lv][0]
+        j = load_cand(CORE_COUNT[lv])
+        base_row = copy.deepcopy(e._CT[lv])
+        old = C["levels"][lv]
+        row = copy.deepcopy(base_row)
+        if lv == "hs":
+            row["pitch_velo"] = copy.deepcopy(old["pitch_velo"])      # the table stays as fit (ruling 8)
+            row["calibrated_with_pitch_velo"] = True
+        e._CT[lv] = row
+        e._CNT.clear()
+        e._GBV.clear()
+        log(f"  {lv} ({CORE_COUNT[lv]}):")
+        L, err = calibrate(e, lv, dl, j, log=log)
+        L = copy.deepcopy(L)
+        e._CT[lv] = base_row
+        e._CNT.clear()
+        e._GBV.clear()
+        for key in ("out_table", "runner", "pitch_velo", "fb_floor"):
+            if key in old:
+                L[key] = copy.deepcopy(old[key])
+        L["label"] = (f"v1.3 core: PROVISIONAL count candidate ({CORE_COUNT[lv]}), calibrated under zone_v13 and the harness's "
+                      "h3 landing (Single-A) on top of count_v13refit" +
+                      ("; HS calibrated with its pitch kind x velocity table on, at the HS data staff's speeds (ruling 8)"
+                       if lv == "hs" else ""))
+        C["levels"][lv] = L
+        rep_["levels"][lv] = {"after_errors": {k: v for k, v in err.items() if k != "per_count"},
+                              "offsets_vs_old": {ck: dict(swing=L["swing"][ck]["heart"] - old["swing"][ck]["heart"],
+                                                          whiff=L["whiff"][ck]["heart"] - old["whiff"][ck]["heart"],
+                                                          foul=L["foul"][ck]["heart"] - old["foul"][ck]["heart"],
+                                                          cstrike=L["cstrike"][ck] - old["cstrike"][ck]) for ck in CK}}
+    if fb_floor:
+        C["levels"]["hs"]["fb_floor"] = hs_fb_floor.floor_table(2025)
+    e.check_table(C, "count_v13core.json")
+    with open(path, "w", encoding="utf8", newline=chr(10)) as f:
+        f.write(build_v12.dumps(C) + chr(10))
+    log(f"  wrote {path}")
+    v = subprocess.run([sys.executable, "-m", "hitter_data.export_candidates", "--verify", path, "--levels", ",".join(levels)],
+                       cwd=ROOT, capture_output=True, text=True,
+                       env=dict(os.environ, PYTHONUTF8="1", PITCH_ZONE_TABLE="v13", PITCH_COUNT_TABLE=path,
+                                PITCH_RUN_TABLE=core_paths()["run"]))
+    if v.returncode != 0:
+        raise RuntimeError(v.stderr[-3000:])
+    rep_["fresh_process_check"] = json.loads(v.stdout.strip().splitlines()[-1])
+    for lv, er in rep_["fresh_process_check"]["levels"].items():
+        log(f"  fresh process: {lv}: max per-count error {er['max_all_count_terms']:.5f}")
+    rep_["seconds"] = round(time.time() - t0, 1)
+    write(rep_, "relevel_report_" + "_".join(levels) + ".json")
+    return C, rep_
 
 
 def write_md(r):
@@ -498,7 +587,12 @@ def main(argv=None):
     ap.add_argument("--levels", default=None, help="--verify only these engine levels (comma list)")
     ap.add_argument("--core", action="store_true", help="v1.3 core: write data_tables/count_v13core.json and run_v13core.json")
     ap.add_argument("--thru", type=int, default=2025, help="--verify against the *_thru<N> candidates")
+    ap.add_argument("--relevel", default=None, help="recalibrate only these core levels (comma list) in count_v13core.json")
+    ap.add_argument("--fb-floor", action="store_true", help="with --relevel: write levels.hs.fb_floor (ruling 8)")
     a = ap.parse_args(argv)
+    if a.relevel:
+        relevel(a.relevel.split(","), fb_floor=a.fb_floor)
+        return
     if a.verify:
         verify(a.verify, levels=a.levels.split(",") if a.levels else None, thru=a.thru)
         return

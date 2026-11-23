@@ -1109,7 +1109,40 @@
     for (let i = 0; i < n; i++) out[i] = out[i] / f;
     return true;
   }
-  function policyArr(cost, st, temp, win, lwin, piOut) {   // pi over calls (Float64Array); zero where not picked
+  // v1.3 (Drew's Nov 23 ruling 8): the HS / travel fastball-share floor by count (engine.py fb_floor / fb_names /
+  // apply_fb_floor; count table levels.hs.fb_floor). Same operations in the same order as engine.py.
+  function fbFloor(s) { const L = ctLevel(s.level); const T = L ? L.fb_floor : null; return T ? T[cntKey(s.balls, s.strikes)] : null; }
+  function fbNames(arsenal, s) {
+    if (fbFloor(s) == null) return null;
+    return new Set(arsenal.filter((x) => isFastball(x.kind)).map((x) => x.name));
+  }
+  function applyFbFloor(pi, s, fb) {   // pi: {callKey: prob} -> fastball calls' share raised to the floor
+    if (!fb || !fb.size) return pi;
+    const f = fbFloor(s);
+    let w = 0.0, t = 0.0;
+    for (const a in pi) { t += pi[a]; if (fb.has(skName(a))) w += pi[a]; }
+    if (!(w > 0.0 && w < f * t)) return pi;
+    const kf = f * t / w, ko = (1.0 - f) * t / (t - w), o = {};
+    for (const a in pi) o[a] = pi[a] * (fb.has(skName(a)) ? kf : ko);
+    return o;
+  }
+  function floorArr(piOut, st, s, fb) {   // applyFbFloor on policyArr's array (group order = policy_from_costs' dict order)
+    if (!fb || !fb.size) return piOut;
+    const f = fbFloor(s);
+    let w = 0.0, t = 0.0;
+    for (let g = 0; g < st.groups.length; g++) {
+      const isF = fb.has(st.names[g]);
+      for (const i of st.groups[g]) if (piOut[i] > 0) { t += piOut[i]; if (isF) w += piOut[i]; }
+    }
+    if (!(w > 0.0 && w < f * t)) return piOut;
+    const kf = f * t / w, ko = (1.0 - f) * t / (t - w);
+    for (let g = 0; g < st.groups.length; g++) {
+      const isF = fb.has(st.names[g]);
+      for (const i of st.groups[g]) if (piOut[i] > 0) piOut[i] = piOut[i] * (isF ? kf : ko);
+    }
+    return piOut;
+  }
+  function policyArr(cost, st, temp, win, lwin, piOut, s, fb) {   // pi over calls (Float64Array); zero where not picked
     const G = st.groups.length, best = new Float64Array(G), pn = new Float64Array(G);
     for (let g = 0; g < G; g++) { let m = Infinity; for (const i of st.groups[g]) if (cost[i] < m) m = cost[i]; best[g] = m; }
     let overall = Infinity; for (let g = 0; g < G; g++) if (best[g] < overall) overall = best[g];
@@ -1123,20 +1156,20 @@
       if (!softArr(tmpC, idx.length, temp, lw, best[g], tmpW)) continue;
       for (let j = 0; j < idx.length; j++) if (tmpW[j] > 0) piOut[idx[j]] = pn[g] * tmpW[j];
     }
-    return piOut;
+    return floorArr(piOut, st, s, fb);
   }
   function piToObject(pi, st) {   // insertion order as Python's dict: by pitch (first appearance), then its targets
     const o = {};
     for (const idx of st.groups) for (const i of idx) if (pi[i] > 0) o[st.calls[i]] = pi[i];
     return o;
   }
-  function policyFromCosts(costs, s, temp) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
+  function policyFromCosts(costs, s, temp, fb) {   // costs: {callKey: cost} in allowed-call order; returns {callKey: prob}
     const calls = Object.keys(costs), st = callStruct(calls), [win, lwin] = windows(s);
     const cost = Float64Array.from(calls.map((a) => costs[a]));
-    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length)), st);
+    return piToObject(policyArr(cost, st, temp, win, lwin, new Float64Array(calls.length), s, fb), st);
   }
   function csum(f, c, x) { const t = f + x; if (Math.abs(f) >= Math.abs(x)) c += (f - t) + x; else c += (x - t) + f; return [t, c]; }
-  function solveSitGame(M, ks, s, temp, bH, usage) {
+  function solveSitGame(M, ks, s, temp, bH, usage, fb) {
     const calls = Object.keys(M), nA = calls.length, nK = ks.length, st = callStruct(calls);
     const Mat = new Float64Array(nA * nK);
     for (let a = 0; a < nA; a++) for (let k = 0; k < nK; k++) Mat[a * nK + k] = M[calls[a]][ks[k]];
@@ -1157,7 +1190,7 @@
         if (c && Number.isFinite(c)) s_ += c;
         cost[a] = s_;
       }
-      return policyArr(cost, st, temp, win, lwin, pi);
+      return policyArr(cost, st, temp, win, lwin, pi, s, fb);
     };
     const response = (p_) => {   // f = sigma*(p~)
       for (let a = 0; a < nA; a++) pt[a] = nU ? (4 * p_[a] + us[a]) / (4 + nU) : p_[a];
@@ -1591,6 +1624,7 @@
     const tab = Table(arsenal, s);
     const order = COUNTS.slice().sort((a, b) => -(a[0] + a[1]) + (b[0] + b[1]));
     const ks = sitOptions(arsenal);
+    const fb = fbNames(arsenal, s);   // v1.3 ruling 8 (null off HS / travel)
     for (const [b, k] of COUNTS) {
       const v0 = vEnd(s, s.outs, s.bases, 0) + D.CV[s.level][cntKey(b, k)];
       tab.V[cntKey(b, k)] = {}; tab.N[cntKey(b, k)] = {};
@@ -1612,7 +1646,7 @@
         for (const bn of tab.bins) {
           const look = binLook(tab, bn), cs = {}, Ps = {}, scL = replace(sc, { look }), mix = ["mix", sg];
           for (const a of calls) [cs[a], Ps[a]] = cost08(byName(arsenal, skName(a)), skH(a), scL, arsenal, tab, look, mix);
-          const pol = policyFromCosts(cs, sc, temp);
+          const pol = policyFromCosts(cs, sc, temp, fb);
           const nv = psum(Object.keys(pol).map((a) => pol[a] * cs[a]));
           delta = Math.max(delta, Math.abs(nv - tab.V[cntKey(b, k)][bn]));
           tab.V[cntKey(b, k)][bn] = nv;
@@ -1679,9 +1713,10 @@
       M = {}; Mmy = {}; for (const a of calls) { M[a] = cache[a][0]; Mmy[a] = cache[a][1]; }
     }
     if (s.balls === 3 || !lookValue) M = Mmy;   // three-ball counts rank by myopic cost (no setups)
+    const fb = fbNames(arsenal, s);   // v1.3 ruling 8 (null off HS / travel)
     const [pi0, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
-    const pi = tieBreak(pi0, full, arsenal, s, exclude, M);   // v1.1 Step 3 (E5)
+    const pi = applyFbFloor(tieBreak(pi0, full, arsenal, s, exclude, M), s, fb);   // v1.1 Step 3 (E5); v1.3 ruling 8
     return [pi, sg, full, res, M];
   }
   function callV08(arsenal, s, opts = {}) {
@@ -1981,7 +2016,7 @@
     classTerms,
     v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
       LEAN_MAX, SPREAD_MIN, SPREAD_MAX, HIT_FIT, HIT_PATH_RULE, HIT_OS_PRIOR, HIT_OS_N0, HIT_TAG_VALUES, hitTag, pathCost, damage, typeMix },   // v1.2 location model, Part B hitter tags
-    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, countBaseOut, zoneProfile, countGroup, hangerGate, pitchVeloFactors } };   // v1.3 Part 2
+    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, countBaseOut, zoneProfile, countGroup, hangerGate, pitchVeloFactors, fbFloor, fbNames, applyFbFloor, policyFromCosts } };   // v1.3 Part 2
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);

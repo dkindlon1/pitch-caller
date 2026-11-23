@@ -90,6 +90,9 @@ def check_table(t, path="table"):
             _need(all(num(L.get("swing_base_out", {}).get(bo)) for bo in T_BASE_OUT), path, f"levels.{lv}.swing_base_out needs outs|bases")
             if "pitch_velo" in L:
                 _check_pitch_velo(L["pitch_velo"], path, lv)
+            if "fb_floor" in L:   # v1.3 (Drew's Nov 23 ruling 8): HS / travel fastball-share floor by count, hs only
+                _need(lv == "hs" and all(num(L["fb_floor"].get(c)) and 0.0 <= L["fb_floor"][c] < 1.0 for c in T_COUNTS),
+                      path, f"levels.{lv}.fb_floor: only the hs level (travel reads it), a share in [0, 1) per count")
             if "out_table" in L:
                 _need(all(isinstance(L["out_table"].get(q, {}).get(ty), list) and len(L["out_table"][q][ty]) == 6
                           for q in ("weak", "solid", "hard") for ty in ("GB", "LD", "FB", "PU")), path, f"levels.{lv}.out_table")
@@ -2544,7 +2547,49 @@ def _soft(costs, temp, w, ref):
     return {k: v / t for k, v in wt.items() if v > 0} if t > 0 else {}
 
 
-def policy_from_costs(costs, s, temp):
+# v1.3 (Drew's Nov 23 ruling 8): the HS / travel engine's fastball share in a count can't go below what the most
+# off-speed-heavy real HS pitchers throw there: count_<v>.json levels.hs.fb_floor[count], the 10th percentile of pitcher-
+# season fastball share in that count (hs.sqlite3, fit seasons, pitchers with enough pitches in that count; hitter_data/
+# hs_fb_floor.py). Applied to the policy the engine plays: the PA table's per-count policy (so the continuation values see
+# the floored mix) and the root call after its tie-break. The hitter's sit game is solved on the unfloored operator: with
+# the floor inside the quantal-response map the solve cycles instead of converging (2-2 residual 0.17 after 3000 steps on a
+# travel sinker / cutter arsenal), so the floor is a guard on the output, not a term of the game. When the allowed calls' fastball share
+# w is above 0 and below the floor f, every fastball call is scaled by f / w and every other call by (1 - f) / (1 - w)
+# (shares of the policy's own total). A fastball outside the never-pick window (share 0) or shaken off is not forced back.
+# Every other level, and any count table without fb_floor (v12, v13refit): no change.
+def fb_floor(s):
+    """the fastball-share floor at s's count, or None (level without a floor table)"""
+    L = _CT.get(s.level) or _CT.get(TABLE_LEVEL_ALIAS.get(s.level, ""))
+    T = L.get("fb_floor") if L else None
+    return T[f"{s.balls}-{s.strikes}"] if T else None
+
+
+def fb_names(arsenal, s):
+    """the arsenal's fastball-class pitch names when s's level has a floor table, else None (the floor is off)"""
+    if fb_floor(s) is None:
+        return None
+    return frozenset(x.name for x in arsenal if is_fastball(x.kind))
+
+
+def apply_fb_floor(pi, s, fb):
+    """pi {(name, q): prob} -> pi with the fastball calls' share raised to fb_floor(s) (see above); plain left-to-right
+    sums in pi's order (app/engine.js applyFbFloor does the same operations)"""
+    if not fb:
+        return pi
+    f = fb_floor(s)
+    w = t = 0.0
+    for a, v in pi.items():
+        t += v
+        if a[0] in fb:
+            w += v
+    if not (w > 0.0 and w < f * t):
+        return pi
+    kf = f * t / w
+    ko = (1.0 - f) * t / (t - w)
+    return {a: v * (kf if a[0] in fb else ko) for a, v in pi.items()}
+
+
+def policy_from_costs(costs, s, temp, fb=None):
     """v0.8 two-stage operator Phi (A2: continuous form of v0.7c's). Pitch type: softmax over each pitch's best cost,
     weight tapered to zero at the never-pick window. Location within a pitch: softmax from the pitch's own best, inside a
     window that shrinks from LOC_WINDOW as the pitch's best falls behind the overall best (floor 20%), tapered the same
@@ -2563,10 +2608,10 @@ def policy_from_costs(costs, s, temp):
         loc = _soft({q: c for (m, q), c in costs.items() if m == n}, temp, lw, best_by[n])
         for q, pq in loc.items():
             pi[(n, q)] = pn * pq
-    return pi
+    return apply_fb_floor(pi, s, fb)
 
 
-def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
+def solve_sit_game(M, ks, s, temp, b_h=None, usage=None, fb=None):
     """2.3 (A2) the quantal-response balance point. pi = Phi(M sigma) exactly at every step, so the residual is
     ||sigma - sigma*(pi~)||_inf; sigma moves by a damped step w (0.3, halved whenever the residual grows, floor 0.002)
     until the residual < QRE_TOL or QRE_ITERS steps. Deterministic. Returns (pi, sigma, residual)."""
@@ -2578,7 +2623,7 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None):
         return {a: (4 * p_.get(a, 0.0) + usage.get(a, 0)) / (4 + n_u) for a in calls} if n_u else p_
 
     def phi(sg):
-        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp)
+        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp, fb)
 
     sg = {k: 1.0 / len(ks) for k in ks}
     w, last = 0.3, None
@@ -2769,6 +2814,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     order = sorted(COUNTS, key=lambda c: -(c[0] + c[1]))
     ks = sit_options(arsenal)
     by = {x.name: x for x in arsenal}
+    fb = fb_names(arsenal, s)     # v1.3 ruling 8 (None off HS / travel)
     # start: v0.7c count values on top of the base-out value, flat across looks; N from a rough 4 pitches
     for (b, k) in COUNTS:
         v0 = v_end(s, s.outs, s.bases, 0) + CV_BY_LEVEL[s.level][(b, k)]
@@ -2795,7 +2841,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
                 scL = replace(sc, look=look)
                 for a in calls:
                     cs[a], Ps[a] = cost08(by[a[0]], a[1], scL, arsenal, tab, look, ("mix", sg))
-                pol = policy_from_costs(cs, sc, temp)
+                pol = policy_from_costs(cs, sc, temp, fb)
                 new = sum(pv * cs[a] for a, pv in pol.items())
                 delta = max(delta, abs(new - tab.V[(b, k)][bn]))
                 tab.V[(b, k)][bn] = new
@@ -2873,9 +2919,10 @@ def _root_solve(arsenal, s, tab, exclude=None, look_value=True, extra=(), cache=
                 cache[a] = {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks}
         M = {a: cache[a] for a in calls}
     usage = s.usage_by_call
+    fb = fb_names(arsenal, s)     # v1.3 ruling 8 (None off HS / travel)
     pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
-    pi = tie_break(pi, full, arsenal, s, exclude, M)
+    pi = apply_fb_floor(tie_break(pi, full, arsenal, s, exclude, M), s, fb)
     return pi, sg, full, res, M
 
 
