@@ -1,0 +1,13 @@
+# Firmware review (sonnet, read-only, espruino 46b13ba) — findings
+1 BLOCKER(process) no released full hex for BANGLEJS2: espruino.com/binaries has only DFU zips (app.bin/.dat). Merged hex (SoftDevice s140 6.1.1 + bootloader + app + dfu_settings) must be built from source (make/common/NRF5X.make:537-539; NRF_Bootloader.md:6-17: bootloader first with BOOTLOADER=1; needs SDK + NRF_BOOTLOADER_NO_WRITE_PROTECT patch). Without dfu_settings bootloader sticks at "BANK0 INVALID" (targets/nrf5x_dfu/main.c:150). Raytac modules ship pre-programmed: nrfjprog --recover first.
+2 MAJOR blank flash: no .boot0/.bootcde/launcher/Settings until Bangle.factoryReset() (jswrap_bangle.c:6762) run once from the IDE; README install steps (Settings -> Programmable, launcher) impossible without touch. Save app as .bootcde or factoryReset then load.
+3 MAJOR BLE console (Nordic UART) open: NRF.setServices(svc,{}) leaves uart true (jswrap_bluetooth.c:1752); attacker could read the game key. Fix in app: {uart:false} for the custom board build, and test.
+4 OK stock firmware boots with sensors absent: bit-banged I2C, NACK check compiled out (jsi2c.c:54,148), reads 0xFF, probes set flags false (jswrap_bangle.c:3989-4000), watchdog kicked. Side effect: fake accel tap events every 80 ms (wasted CPU/power).
+5 trimmed board file will NOT compile without ~12 patch hunks (jswrap_bangle.c:612-624 unconditional *_I2C defines etc.). Cheapest: keep BANGLEJS2.py unchanged (all sensor pins are NC pads).
+6 MAJOR battery reads high with 3.3M/1M on 3.0 V: fix by batFullVoltage = 0.3256 in setting.json (loaded at jswrap_bangle.c:4163-4166) or -DESPR_BATTERY_FULL_VOLTAGE=0.3256; calibrate per unit.
+7 MAJOR LFXO: nrf5x_utils.c:52 waits forever for LFCLKSTARTED -> reboot loop if crystal fails. Check XL1 oscillates first; keep a build without ESPR_LSE_ENABLE.
+8 MAJOR cold power-on: bootloader main.c:357-388 goes to System OFF after 1 s unless button held; hold ~3.5 s to boot (1-3.5 s = DFU prompt). USB plug does not wake (VBUS NC).
+9 recovery: hold button 5 s -> watchdog reset -> DFU prompt; BLE DFU packages signed with Espruino key; real recovery = SWD (J4).
+10 MINOR LCD SPI at 4 MHz (lcd_memlcd.c:516) vs 2 MHz datasheet max (same as stock Bangle). 11 MINOR EXTCOMIN 1.25 Hz in power-save (min 1 Hz).
+12 MINOR P0.18 is GPIO (pinreset not configured): J4 nRESET does nothing; use SWD SYSRESETREQ.
+OK: button polarity (jsdevices.c:159-162, jshardware.c:1209-1212, 1175/1194; bootloader hardware.h:112-125 pull-up sense low); backlight active-high via setLCDPower; flash WP#/HOLD# high OK, dual read 0x3B; DC/DC guard; advert name "Bangle.js xxxx" matches sender filter; STAT open drain.

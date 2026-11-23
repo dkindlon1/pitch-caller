@@ -1,0 +1,12 @@
+attempt 0: track 698 mm, vias 144, failures 9 ['LCD_CS: J1.3 -> R10.1', 'LCD_CS: J1.3 -> U1.41', 'LCD_DISP: J1.5 -> R9.1', 'LCD_DISP: J1.5 -> C21.1', 'LCD_DISP: J1.5 -> U1.46', 'GND plane via: C3.2']
+attempt 1: track 709 mm, vias 150, failures 4 ['LCD_MOSI: J1.2 -> U1.39', 'FL_PWM: U1.48 -> R14.1', 'FL_PWM: U1.48 -> Q2.1', 'GND plane via: C8.2']
+attempt 2: track 754 mm, vias 145, failures 1 ['I2C_SDA: U2.13 -> U1.19']
+attempt 3: track 760 mm, vias 147, failures 5 ['5V_LED: U5.6 -> U3.10', '5V_LED: U5.6 -> U3.9', '3V0 plane via: U2.32', '3V0 plane via: R3.1', '3V0 plane via: R16.1']
+attempt 4: track 742 mm, vias 149, failures 3 ['BOOST_EN: R8.1 -> U1.24', '3V0 plane via: J1.6', '3V0 plane via: J1.7']
+attempt 5: track 766 mm, vias 149, failures 3 ['GND plane via: C1.2', 'GND plane via: C2.2', '3V0 plane via: L2.2']
+attempt 6: track 793 mm, vias 152, failures 1 ['3V0 plane via: R4.1']
+attempt 7: track 748 mm, vias 146, failures 12 ['VSYS: joining pre-routed parts', 'VSYS: joining pre-routed parts', 'VSYS: U2.20 -> U2.4', 'VSYS: U2.20 -> M1.1', 'VSYS: U2.20 -> C24.1', 'VSYS: U2.20 -> C8.1']
+attempt 8: track 757 mm, vias 155, failures 2 ['HR_INT: U1.21 -> U3.13', '3V0 plane via: C11.1']
+attempt 9: track 792 mm, vias 156, failures 1 ['GND plane via: C15.2']
+attempt 10: track 798 mm, vias 156, failures 0 []
+kept: 40 signal nets, track 798 mm, vias 156, failures 0

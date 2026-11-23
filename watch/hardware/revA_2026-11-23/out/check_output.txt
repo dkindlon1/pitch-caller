@@ -1,0 +1,14 @@
+== 1 schematic parses in KiCad and its netlist equals design.py
+netlist check: 31 nets in schematic, 31 in design, 46 components, differences: 0
+== 2 board copper equals design.py (pad nets) and KiCad DRC
+board check: 46 footprints, 108 vias, 352 track segments, copper layers 4, pad-net differences: 0
+DRC (KiCad 7.0.11): errors 0 {}, unconnected 0, warnings 48 {'silk_over_copper': 2, 'lib_footprint_issues': 46}
+antenna strip check (x 6-26 mm, y 0-4 mm, 4 layers): foreign copper items 0
+== 3 BOM: every fitted part has an MPN, a source and (if machine-placed) an LCSC number
+CPL rows: 37
+BOM lines 30, SMT parts 37, unique SMT part numbers 21
+on-board parts incl. battery+motor: $18.82 @1, $15.74 @~100; display +$34.28
+SMT parts without an LCSC number: []
+BOM lines missing MPN or source: []
+== 4 manufacturing files present
+CHECK: PASS (design files consistent and rule-clean; this says nothing about a built board)

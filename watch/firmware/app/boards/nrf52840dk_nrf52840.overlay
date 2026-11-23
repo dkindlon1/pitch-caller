@@ -1,0 +1,14 @@
+/*
+ * nRF52840 DK stand-in for the watch.  The DK has no LCD, accelerometer, heart-rate sensor or power chip, so those parts are
+ * compiled out (Kconfig PQ_HAVE_* follow the devicetree) and these DK parts take their places:
+ *   LED 1 (P0.13)  = the vibration motor: on for the buzz     (alias pq-buzz)
+ *   LED 2 (P0.14)  = the frontlight                           (alias pq-light)
+ *   button 1 (P0.11) = the watch button (SHPHLD): a press lights LED 2, a 5 s hold forgets the pairing
+ * The call text goes to the log (RTT) instead of a screen.
+ */
+/ {
+	aliases {
+		pq-buzz = &led0;
+		pq-light = &led1;
+	};
+};

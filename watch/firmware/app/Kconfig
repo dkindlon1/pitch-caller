@@ -1,0 +1,70 @@
+# Application options.  The PQ_HAVE_* symbols follow the devicetree: a board that has the part gets the real code, a board
+# that does not (the nRF52840 DK) gets the stub.  They are plain bools so a developer can still turn one off.
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "PitchIQ watch firmware"
+
+DT_CHOSEN_Z_DISPLAY := zephyr,display
+
+config PQ_HAVE_DISPLAY
+	bool "Sharp memory LCD present"
+	default $(dt_chosen_enabled,$(DT_CHOSEN_Z_DISPLAY))
+	select DISPLAY
+	help
+	  Off: the call text goes to the log instead of a screen (the DK build).
+
+config PQ_HAVE_PMIC
+	bool "nPM1300 power chip present"
+	default $(dt_nodelabel_enabled,npm1300_pmic)
+	help
+	  Off: PQ_BATTERY_STUB reports a fixed battery level, the button is DK button 1, and there is no ship mode.
+
+config PQ_HAVE_ACCEL
+	bool "LIS2DH12 accelerometer present"
+	default $(dt_nodelabel_enabled,accel)
+
+config PQ_HAVE_PPG
+	bool "MAX30101 heart-rate sensor present"
+	default $(dt_nodelabel_enabled,ppg)
+
+config PQ_NPM1300_STOCK_CHARGER
+	bool "Use the stock Zephyr nPM1300 charger driver (needs a full C library)"
+	depends on PQ_HAVE_PMIC
+	help
+	  Off (default): power.c sets up and reads the charger itself through the mfd driver, same registers and the same devicetree
+	  values, but without battery temperature.  On: the stock driver is used; it calls logf() so it needs picolibc (Zephyr SDK)
+	  and boards/pitchiq_watch.conf must drop CONFIG_NPM13XX_CHARGER=n.  The stock path is NOT compiled in this workspace's
+	  toolchain (no picolibc, newlib without retargetable locking).
+
+config PQ_BATTERY_STUB
+	bool "Fixed battery level (STUB: no fuel data on this board)"
+	default y if !PQ_HAVE_PMIC
+	help
+	  Reports 100 % and "not charging".  Exists only so the DK build runs the same battery notification path.
+
+config PQ_BOND_CLEAR_HOLD_MS
+	int "Hold the button this long to forget the pairing (ms)"
+	default 5000
+	help
+	  Hold the button for this long (watch: the nPM1300 SHPHLD button; DK: button 1) with the watch awake.  The bond is
+	  removed, advertising reopens to any phone and a new passkey is shown at the next pairing.  Must stay below the
+	  nPM1300 hardware reset hold (10 s).
+
+config PQ_LOW_BATTERY_PCT
+	int "Battery percent at or below which the watch shuts down (ship mode)"
+	default 3
+	depends on PQ_HAVE_PMIC
+
+config PQ_LIGHT_ON_MOTION
+	bool "Turn the frontlight on for a moment when the wrist moves"
+	default y
+	depends on PQ_HAVE_ACCEL
+
+config PQ_HR_ON_SUBSCRIBE
+	bool "Start heart rate when a client subscribes to the Heart Rate Service"
+	default y
+	depends on PQ_HAVE_PPG
+	help
+	  Heart rate is OFF until this (or sensors_hr_start()) turns it on, and off again on unsubscribe or disconnect.
+
+source "Kconfig.zephyr"

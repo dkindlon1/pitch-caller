@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+
+identifier: pitchiq_watch
+name: PitchIQ watch rev B
+vendor: pitchiq
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+ram: 256
+flash: 1024
+supported:
+  - ble
+  - gpio
+  - i2c
+  - pwm
+  - spi
+  - watchdog

@@ -1,0 +1,153 @@
+"""PitchIQ watch board, rev B: single source of truth (parts, pins -> nets, pin types, footprints, sourcing).
+Original design for our own Zephyr firmware. No Bangle.js pin map, no Espruino, no external flash, no USB connector.
+gen_sch.py, erc.py, gen_pcb.py and gen_bom.py all read this file, so schematic, checks, board and BOM cannot disagree.
+Pin numbers come from research/datasheets.md (extracted from the manufacturers' documents, with URLs)."""
+
+NC = None
+P = {}
+# pin types for the scripted ERC: pi power in, po power out (source), in, out, io, od open-drain out, pas passive, nc
+def part(ref, value, fp, pins, mpn="", mfr="", lcsc="", desc="", dnp=False, hand=False, src="", side="F"):
+    P[ref] = dict(ref=ref, value=value, fp=fp, pins=[(a, b, c) for a, b, c, *_ in pins], types={p[0]: (p[3] if len(p) > 3 else "pas") for p in pins},
+                  mpn=mpn, mfr=mfr, lcsc=lcsc, desc=desc, dnp=dnp, hand=hand, src=src, side=side)
+def two(ref, value, fp, a, b, **k):
+    part(ref, value, fp, [("1", "1", a), ("2", "2", b)], **k)
+
+R0402 = "Resistor_SMD:R_0402_1005Metric"; C0402 = "Capacitor_SMD:C_0402_1005Metric"; C0603 = "Capacitor_SMD:C_0603_1608Metric"
+def R(ref, val, a, b, mpn, lcsc, desc, **k): two(ref, val, R0402, a, b, mpn=mpn, mfr="UNI-ROYAL" if mpn.startswith("0402WG") else "Yageo", lcsc=lcsc, desc=desc, **k)
+def C100n(ref, net, desc, **k): two(ref, "100nF", C0402, net, "GND", mpn="CL05B104KO5NNNC", mfr="Samsung", lcsc="C1525", desc=desc, **k)
+def C1u(ref, net, desc, **k): two(ref, "1uF", C0402, net, "GND", mpn="CL05A105KA5NQNC", mfr="Samsung", lcsc="C52923", desc=desc, **k)
+def C10u(ref, net, desc, **k): two(ref, "10uF", C0603, net, "GND", mpn="CL10A106KP8NNNC", mfr="Samsung", lcsc="C19702", desc=desc + " (10 V part: rails here are <= 5.5 V)", **k)
+
+# ---------------------------------------------------------------- radio module: nRF52840 inside Raytac MDBT50Q-1MV2
+used = {  # module pad -> (name, net, type)      PIN MAP v1 (ours; mirrored in watch/firmware/boards/pitchiq/pitchiq_watch)
+    "17": ("P0.00/XL1", "XL1", "pas"), "18": ("P0.01/XL2", "XL2", "pas"),
+    "37": ("P0.13 LCD_SCK", "LCD_SCK", "out"), "39": ("P0.15 LCD_MOSI", "LCD_MOSI", "out"), "41": ("P0.17 LCD_CS", "LCD_CS", "out"),
+    "44": ("P0.20 EXTCOMIN", "LCD_EXTCOMIN", "out"), "46": ("P0.22 LCD_DISP", "LCD_DISP", "out"), "48": ("P0.24 FL_PWM", "FL_PWM", "out"),
+    "19": ("P0.26 SDA", "I2C_SDA", "io"), "16": ("P0.27 SCL", "I2C_SCL", "io"),
+    "20": ("P0.04 ACC_INT1", "ACC_INT", "in"), "21": ("P0.05 HR_INT", "HR_INT", "in"), "22": ("P0.06 PMIC_INT", "PMIC_INT", "in"),
+    "24": ("P0.08 BOOST_EN", "BOOST_EN", "out"), "27": ("P0.11 VIB", "VIB", "out"), "40": ("P0.18/nRESET", "NRESET", "in"),
+    "51": ("SWDIO", "SWDIO", "io"), "53": ("SWDCLK", "SWDCLK", "in"),   # reach the cradle pads through 100R (R17, R18)
+    "28": ("VDD", "3V0", "pi"), "30": ("VDDH", "3V0", "pi"), "31": ("DCCH", NC, "nc"), "32": ("VBUS", "GND", "pas"),   # USB not used: Raytac "USB disabled" reference ties VBUS to GND
+    "1": ("GND", "GND", "pi"), "2": ("GND", "GND", "pi"), "15": ("GND", "GND", "pi"), "33": ("GND", "GND", "pi"), "55": ("GND", "GND", "pi"),
+}
+other = {"3": "P1.10", "4": "P1.11", "5": "P1.12", "6": "P1.13", "7": "P1.14", "8": "P1.15", "9": "P0.03", "10": "P0.29", "11": "P0.02",
+         "12": "P0.31", "13": "P0.28", "14": "P0.30", "23": "P0.07", "25": "P1.08", "26": "P1.09", "29": "P0.12", "34": "D-", "35": "D+",
+         "36": "P0.14", "38": "P0.16", "42": "P0.19", "43": "P0.21", "45": "P0.23", "47": "P1.00", "49": "P0.25", "50": "P1.02",
+         "52": "P0.09", "54": "P0.10", "56": "P1.04", "57": "P1.06", "58": "P1.07", "59": "P1.05", "60": "P1.03", "61": "P1.01"}
+part("U1", "MDBT50Q-1MV2", "RF_Module:Raytac_MDBT50Q",
+     [(n,) + used[n] if n in used else (n, other[n], NC, "nc") for n in map(str, range(1, 62))],
+     mpn="MDBT50Q-1MV2", mfr="Raytac", lcsc="C5118826", desc="nRF52840 BLE module, chip antenna, FCC ID SH6MDBT50Q (LCSC out of stock Nov 23: consign)",
+     src="https://www.sparkfun.com/nordic-nrf52840-ble-module-mdbt50q-1mv2.html")
+C10u("C1", "3V0", "module bulk decoupling, next to VDD/VDDH pads"); C100n("C2", "3V0", "module decoupling")
+two("Y1", "32.768kHz", "Crystal:Crystal_SMD_3215-2Pin_3.2x1.5mm", "XL1", "XL2", mpn="Q13FC13500004", mfr="Epson", lcsc="C32346", desc="FC-135 32.768 kHz 12.5 pF")
+for r, n in (("C3", "XL1"), ("C4", "XL2")):
+    two(r, "18pF", C0402, n, "GND", mpn="CL05C180JB5NNNC", mfr="Samsung", lcsc="C307443", desc="crystal load: 2 x (12.5 pF - ~3.5 pF stray)")
+
+# ---------------------------------------------------------------- power: Nordic nPM1300 (charger, power path, ship mode, 2 bucks, fuel gauge)
+part("U2", "nPM1300-QEAA", "Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.45x3.45mm",
+     [("1", "VOUT1", "1V8", "pi"), ("2", "PVSS1", "GND", "pi"), ("3", "SW1", "SW1", "po"), ("4", "PVDD", "VSYS", "pi"), ("5", "SW2", "SW2", "po"), ("6", "PVSS2", "GND", "pi"),
+      ("7", "GPIO0", NC, "nc"), ("8", "GPIO1 (INT)", "PMIC_INT", "out"), ("9", "GPIO2", NC, "nc"), ("10", "GPIO3", NC, "nc"), ("11", "GPIO4", NC, "nc"),
+      ("12", "VDDIO", "3V0", "pi"), ("13", "SDA", "I2C_SDA", "io"), ("14", "SCL", "I2C_SCL", "in"), ("15", "SHPHLD", "BTN", "in"),
+      ("16", "VSET2", "VSET2", "pas"), ("17", "VSET1", "VSET1", "pas"), ("18", "NTC", "NTC", "pas"), ("19", "VBAT", "VBAT", "io"), ("20", "VSYS", "VSYS", "po"),
+      ("21", "VBUS", "VBUS", "pi"), ("22", "VBUSOUT", "VBUSOUT", "po"), ("23", "CC1", "GND", "pas"), ("24", "CC2", "GND", "pas"),
+      ("25", "LED0", NC, "nc"), ("26", "LED1", NC, "nc"), ("27", "LED2", NC, "nc"),
+      ("28", "LSIN1/VINLDO1", "GND", "pas"), ("29", "LSOUT1", "GND", "pas"), ("30", "LSIN2/VINLDO2", "GND", "pas"), ("31", "LSOUT2", "GND", "pas"),
+      ("32", "VOUT2", "3V0", "pi"), ("33", "AVSS (pad)", "GND", "pi")],
+     mpn="NPM1300-QEAA-R7", mfr="Nordic Semiconductor", lcsc="C7501206", desc="PMIC: 800 mA charger with power path, ship mode, 2 x 200 mA buck, fuel gauge (LCSC 0 stock Nov 23: buy at DigiKey/Mouser)",
+     src="https://www.digikey.com/en/products/detail/nordic-semiconductor-asa/NPM1300-QEAA-R7/19722485")
+for r, a, b in (("L1", "SW1", "1V8"), ("L2", "SW2", "3V0")):
+    part(r, "2.2uH", "Inductor_SMD:L_0805_2012Metric", [("1", "1", a), ("2", "2", b, "po")],   # pin 2 = regulated rail (the ERC's power source for that net)
+         mpn="MLP2012H2R2MT0S1", mfr="TDK", lcsc="C383369", desc="buck inductor 2.2 uH, DCR 150 mOhm typ, 1 A rated (saturation current not published; alternative Murata DFE201610E-2R2M C337891 needs a 2016 footprint)")
+C10u("C5", "VBUSOUT", "VBUSOUT bypass"); C10u("C6", "VBAT", "battery node"); C10u("C7", "VSYS", "system node"); C10u("C8", "VSYS", "buck input (PVDD)")
+C100n("C25", "VSYS", "PVDD high-frequency bypass (Nordic nwp_050: 10-100 nF at PVDD for RF-sensitive boards)")
+C10u("C9", "1V8", "BUCK1 output"); C10u("C10", "3V0", "BUCK2 output"); C1u("C11", "3V0", "PMIC VDDIO")
+two("C12", "10uF 25V", "Capacitor_SMD:C_0805_2012Metric", "VBUS", "GND", mpn="CL21A106KAYNNNE", mfr="Samsung", lcsc="C15850", desc="VBUS input (25 V rated: VBUS pin survives 22 V)")
+R("R1", "47k", "VSET1", "GND", "0402WGF4702TCE", "C25792", "BUCK1 start-up voltage = 1.8 V (nPM1300 VSET table). Bring-up option: fit 0R instead = BUCK1 off at start-up, firmware enables it over I2C")
+R("R2", "150k", "VSET2", "GND", "0402WGF1503TCE", "C25755", "BUCK2 start-up voltage = 3.0 V (nPM1300 VSET table)")
+two("RT1", "10k NTC", R0402, "NTC", "GND", mpn="NCP15XH103F03RC", mfr="Murata", lcsc="C77131", desc="battery temperature (place against the cell); B 3380")
+part("D2", "TVS 5V", "Diode_SMD:D_SOD-323", [("1", "A1", "VBUS"), ("2", "A2", "GND")], mpn="PESD5V0S1BA", mfr="DOWO (Nexperia original)", lcsc="C2985486", desc="charge-pad ESD clamp")
+part("BT1", "LiPo 150 mAh (protected)", "PQ:Pad_2x_wire", [("1", "+", "BATP", "po"), ("2", "-", "GND", "po")], mpn="1317", mfr="Adafruit",
+     desc="3.7 V 150 mAh 402025 cell with protection circuit; leads soldered to pads", hand=True, src="https://www.adafruit.com/products/1317")
+part("JP1", "Battery link", "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm", [("1", "A", "BATP"), ("2", "B", "VBAT")],
+     mpn="(solder bridge)", mfr="-", desc="open until final assembly; bridge with solder last", hand=True)
+part("SW1", "Side button", "Button_Switch_SMD:SW_Push_1P1T-MP_NO_Horizontal_Alps_SKRTLAE010", [("1", "1", "BTN"), ("2", "2", "GND"), ("MP", "MP", "GND")],
+     mpn="SKRTLAE010", mfr="Alps Alpine", lcsc="C110293", desc="to nPM1300 SHPHLD: wake from ship mode, long-press power cycle, user button (events over I2C)")
+two("D3", "TVS 5V", "Diode_SMD:D_SOD-323", "BTN", "GND", mpn="PESD5V0S1BA", mfr="DOWO (Nexperia original)", lcsc="C2985486", desc="button ESD clamp (finger-touched)")
+
+# ---------------------------------------------------------------- I2C bus
+R("R3", "4.7k", "3V0", "I2C_SDA", "0402WGF4701TCE", "C25900", "I2C pull-up"); R("R4", "4.7k", "3V0", "I2C_SCL", "0402WGF4701TCE", "C25900", "I2C pull-up")
+
+# ---------------------------------------------------------------- accelerometer (top side)
+part("U4", "LIS2DH12TR", "Package_LGA:LGA-12_2x2mm_P0.5mm",
+     [("1", "SCL", "I2C_SCL", "in"), ("2", "CS", "3V0", "in"), ("3", "SA0", "3V0", "in"), ("4", "SDA", "I2C_SDA", "io"), ("5", "RES", "GND", "pas"),
+      ("6", "GND", "GND", "pi"), ("7", "GND", "GND", "pi"), ("8", "GND", "GND", "pi"), ("9", "VDD", "3V0", "pi"), ("10", "VDD_IO", "3V0", "pi"),
+      ("11", "INT2", NC, "nc"), ("12", "INT1", "ACC_INT", "out")],
+     mpn="LIS2DH12TR", mfr="STMicroelectronics", lcsc="C110926", desc="3-axis accelerometer, I2C 0x19, 4 uA at 25 Hz low-power")
+C100n("C13", "3V0", "accelerometer decoupling")
+
+# ---------------------------------------------------------------- optical heart rate (BOTTOM side, faces the wrist) + 5 V LED boost
+part("U3", "MAX30101EFD+", "OptoDevice:Maxim_OLGA-14_3.3x5.6mm_P0.8mm",
+     [("1", "NC", NC, "nc"), ("2", "SCL", "I2C_SCL", "in"), ("3", "SDA", "I2C_SDA", "io"), ("4", "PGND", "GND", "pi"), ("5", "NC", NC, "nc"), ("6", "NC", NC, "nc"),
+      ("7", "NC", NC, "nc"), ("8", "NC", NC, "nc"), ("9", "VLED+", "5V_LED", "pi"), ("10", "VLED+", "5V_LED", "pi"), ("11", "VDD", "1V8", "pi"), ("12", "GND", "GND", "pi"),
+      ("13", "INT", "HR_INT", "od"), ("14", "NC", NC, "nc")],
+     mpn="MAX30101EFD+T", mfr="Analog Devices (Maxim)", lcsc="C2859066", desc="optical heart-rate sensor with green/red/IR LEDs, I2C 0x57 (LCSC 53 in stock Nov 23; check DigiKey stock before ordering)", side="B",
+     src="https://www.digikey.com/en/products/detail/analog-devices-inc-maxim-integrated/MAX30101EFD-T/6188733")
+C1u("C14", "1V8", "MAX30101 VDD", side="B"); C100n("C15", "1V8", "MAX30101 VDD", side="B"); C10u("C16", "5V_LED", "MAX30101 LED supply", side="B"); C100n("C17", "5V_LED", "MAX30101 LED supply", side="B")
+R("R5", "100k", "3V0", "HR_INT", "0402WGF1003TCE", "C25741", "open-drain interrupt pull-up")
+part("U5", "TPS61023DRLR", "Package_TO_SOT_SMD:SOT-563",
+     [("1", "FB", "BOOST_FB", "in"), ("2", "EN", "BOOST_EN", "in"), ("3", "VIN", "VSYS", "pi"), ("4", "GND", "GND", "pi"), ("5", "SW", "BOOST_SW", "pas"), ("6", "VOUT", "5V_LED", "po")],
+     mpn="TPS61023DRLR", mfr="Texas Instruments", lcsc="C919459", desc="5 V boost for the green LED, true output disconnect when off")
+two("L3", "2.2uH", "Inductor_SMD:L_0805_2012Metric", "VSYS", "BOOST_SW", mpn="MLP2012H2R2MT0S1", mfr="TDK", lcsc="C383369", desc="boost inductor 2.2 uH (TPS61023 allows 0.37-2.9 uH); 1 A thermal rating, saturation current not published while the chip limits at 2.7-3.7 A: measure start-up current on the first board or change to a part with Isat >= 2.5 A")
+C10u("C18", "VSYS", "boost input"); C10u("C19", "5V_LED", "boost output"); C10u("C20", "5V_LED", "boost output")
+R("R6", "732k", "5V_LED", "BOOST_FB", "0402WGF7323TCE", "C27016", "boost feedback top: 0.595 V x (1 + 732k/100k) = 4.95 V")
+R("R7", "100k", "BOOST_FB", "GND", "0402WGF1003TCE", "C25741", "boost feedback bottom")
+R("R8", "1M", "BOOST_EN", "GND", "0402WGF1004TCE", "C26083", "boost off in reset (1 M: 3 uA while the boost is on)")
+
+# ---------------------------------------------------------------- display: Sharp LS013B7DH03 (10-pin FPC) + optional frontlight LED
+part("J1", "LCD FPC 10p 0.5mm", "Connector_FFC-FPC:Hirose_FH12-10S-0.5SH_1x10-1MP_P0.50mm_Horizontal",
+     [("1", "SCLK", "LCD_SCK", "in"), ("2", "SI", "LCD_MOSI", "in"), ("3", "SCS", "LCD_CS", "in"), ("4", "EXTCOMIN", "LCD_EXTCOMIN", "in"), ("5", "DISP", "LCD_DISP", "in"),
+      ("6", "VDDA", "3V0", "pi"), ("7", "VDD", "3V0", "pi"), ("8", "EXTMODE", "LCD_EXTMODE", "in"), ("9", "VSS", "GND", "pi"), ("10", "VSSA", "GND", "pi"), ("MP", "MP", "GND")],
+     mpn="FH12-10S-0.5SH(55)", mfr="Hirose", lcsc="C506791", desc="ZIF FPC connector, bottom contact (Sharp lists bottom-contact types for this panel)")
+C100n("C21", "LCD_DISP", "Sharp fig. 9-1: DISP to VSS"); C100n("C22", "3V0", "Sharp fig. 9-1: VDDA"); C1u("C23", "3V0", "Sharp fig. 9-1: VDD")
+R("R9", "1M", "LCD_DISP", "GND", "0402WGF1004TCE", "C26083", "display off in reset (1 M: DISP is high all the time, so this resistor is a standing 3 uA load)"); R("R10", "100k", "LCD_CS", "GND", "0402WGF1003TCE", "C25741", "LCD deselected in reset (SCS active high)")
+R("R11", "0R", "3V0", "LCD_EXTMODE", "0402WGF0000TCE", "C17168", "EXTMODE high: COM inversion from the EXTCOMIN pin")
+R("R12", "0R", "LCD_EXTMODE", "GND", "0402WGF0000TCE", "C17168", "alternative: EXTMODE low, COM inversion by serial flag (fit instead of R11)", dnp=True)
+part("J2", "Frontlight LED pads", "PQ:Pad_2x_wire_small", [("1", "A", "FL_A"), ("2", "K", "FL_K")], mpn="(pads only)", mfr="-", desc="for an Azumo frontlight LED tail (5 mA typ at 3.0 V); unused with a bare panel", hand=True)
+R("R13", "47R", "3V0", "FL_A", "0402WGF470JTCE", "C25118", "frontlight LED current limit (value to confirm on the first frontlit unit)")
+part("Q2", "AO3400A", "Package_TO_SOT_SMD:SOT-23", [("1", "G", "FL_PWM", "in"), ("2", "S", "GND", "pas"), ("3", "D", "FL_K", "pas")], mpn="AO3400A", mfr="Alpha & Omega", lcsc="C20917", desc="frontlight low-side switch (PWM)")
+R("R14", "100k", "FL_PWM", "GND", "0402WGF1003TCE", "C25741", "frontlight off in reset")
+
+# ---------------------------------------------------------------- vibration motor
+part("M1", "ERM coin motor 10 mm 3 V", "PQ:Pad_2x_wire_small", [("1", "+", "VSYS"), ("2", "-", "MOTOR_N")], mpn="FIT0774", mfr="DFRobot",
+     desc="coin vibration motor 50 mA rated, leads soldered to pads", hand=True, src="https://www.digikey.com/en/products/detail/dfrobot/FIT0774/14322639")
+part("Q1", "AO3400A", "Package_TO_SOT_SMD:SOT-23", [("1", "G", "VIB", "in"), ("2", "S", "GND", "pas"), ("3", "D", "MOTOR_N", "pas")], mpn="AO3400A", mfr="Alpha & Omega", lcsc="C20917", desc="motor low-side switch (PWM)")
+R("R15", "100k", "VIB", "GND", "0402WGF1003TCE", "C25741", "motor off in reset")
+part("D1", "1N4148WS", "Diode_SMD:D_SOD-323", [("1", "K", "VSYS"), ("2", "A", "MOTOR_N")], mpn="1N4148WS", mfr="various", lcsc="C2128", desc="motor flyback diode")
+C10u("C24", "VSYS", "reservoir next to the motor switch")
+
+# ---------------------------------------------------------------- charge / program contacts and test pads (BOTTOM side, gold pads for pogo pins)
+# Six pads in one row: VBUS, GND, NRESET, SWDCLK, SWDIO, 3V0 (3V0 = target-voltage reference for the debug probe, never a supply input).
+# The three logic pads reach the module through 100R and have their own ESD clamp at the pad (the pads touch skin).
+for ref, net, t, d in (("TP1", "VBUS", "po", "charge +5 V"), ("TP2", "GND", "po", "ground"), ("TP3", "SWDIO_P", "io", "SWDIO"), ("TP4", "SWDCLK_P", "out", "SWDCLK"),
+                       ("TP5", "NRESET_P", "pas", "nRESET"), ("TP6", "3V0", "pas", "3V0 reference out (VTref)")):
+    part(ref, d, "TestPoint:TestPoint_Pad_D2.0mm", [("1", "1", net, t)], desc=f"cradle contact: {d}", dnp=True, side="B")
+R100 = dict(mpn="0402WGF1000TCE", lcsc="C25076")
+R("R17", "100R", "SWDIO", "SWDIO_P", desc="series protection, SWDIO pad", side="B", **R100)
+R("R18", "100R", "SWDCLK", "SWDCLK_P", desc="series protection, SWDCLK pad", side="B", **R100)
+R("R19", "100R", "NRESET", "NRESET_P", desc="series protection, nRESET pad", side="B", **R100)
+for ref, net in (("D4", "SWDIO_P"), ("D5", "SWDCLK_P"), ("D6", "NRESET_P")):
+    two(ref, "TVS 5V", "Diode_SMD:D_SOD-323", net, "GND", mpn="PESD5V0S1BA", mfr="DOWO (Nexperia original)", lcsc="C2985486", desc="cradle-pad ESD clamp (about 35 pF: fine for SWD at 1 MHz through 100R)", side="B")
+R("R16", "10k", "3V0", "NRESET", "0402WGF1002TCE", "C25744", "reset pull-up (pin is a GPIO until firmware enables pin reset)")
+for ref, net in (("TP7", "1V8"), ("TP8", "VSYS"), ("TP9", "5V_LED")):
+    part(ref, net, "TestPoint:TestPoint_Pad_D1.5mm", [("1", "1", net)], desc="test pad " + net, dnp=True, side="B")
+
+def nets():
+    n = {}
+    for p in P.values():
+        for num, name, net in p["pins"]:
+            if net is not NC: n.setdefault(net, []).append((p["ref"], num))
+    return n
+
+if __name__ == "__main__":
+    n = nets(); print(len(P), "parts,", len(n), "nets")
+    for k in sorted(n): print(f"{k:14s} {len(n[k]):2d}  " + " ".join(f"{r}.{p}" for r, p in n[k])[:150])

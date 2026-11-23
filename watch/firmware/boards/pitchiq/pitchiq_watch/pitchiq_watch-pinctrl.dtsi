@@ -1,0 +1,102 @@
+/*
+ * PitchIQ watch rev B: the one place every pin is named.
+ *
+ * Pin map v1 (final hardware may adjust: change a number here and nowhere else).  Format is the nRF52840 port
+ * and pin, "P0.13" = port 0 pin 13.  Everything below is the schematic intent given to the firmware, not
+ * something this file could check; see the ASSUMPTION lines in pitchiq_watch.dts.
+ *
+ *   P0.13  LCD SCK        Sharp LS013B7DH03, SPIM2
+ *   P0.15  LCD MOSI       Sharp LS013B7DH03, SPIM2 (the panel has no MISO)
+ *   P0.17  LCD SCS        chip select, ACTIVE HIGH
+ *   P0.20  LCD EXTCOMIN   VCOM toggle driven by the display driver
+ *   P0.22  LCD DISP       display on/off
+ *   P0.24  frontlight     PWM, active high
+ *   P0.26  I2C0 SDA       400 kHz: LIS2DH12 0x19, MAX30101 0x57, nPM1300 0x6b
+ *   P0.27  I2C0 SCL
+ *   P0.04  LIS2DH12 INT1  accelerometer interrupt, active high
+ *   P0.05  MAX30101 INT   open drain, active low
+ *   P0.06  nPM1300 host interrupt (the user button arrives here as an nPM1300 SHPHLD event)
+ *   P0.08  BOOST_EN       active high, 5 V boost for the heart-rate LED
+ *   P0.11  vibration motor PWM, active high (low-side MOSFET)
+ *
+ * Not used, left alone: P0.09 / P0.10 (NFC antenna pins), P0.18 (reset, see &uicr), P0.00 / P0.01 (module crystal),
+ * USB, UART.
+ */
+
+#define PQ_PIN_LCD_SCK 13
+#define PQ_PIN_LCD_MOSI 15
+#define PQ_PIN_LCD_SCS 17
+#define PQ_PIN_LCD_EXTCOMIN 20
+#define PQ_PIN_LCD_DISP 22
+#define PQ_PIN_LIGHT_PWM 24
+#define PQ_PIN_I2C_SDA 26
+#define PQ_PIN_I2C_SCL 27
+#define PQ_PIN_ACCEL_INT1 4
+#define PQ_PIN_PPG_INT 5
+#define PQ_PIN_PMIC_INT 6
+#define PQ_PIN_BOOST_EN 8
+#define PQ_PIN_MOTOR_PWM 11
+
+&pinctrl {
+	/* I2C0.  ASSUMPTION: external pull-ups on SDA/SCL (the nPM1300 / sensors board has them); none enabled here. */
+	i2c0_default: i2c0_default {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, PQ_PIN_I2C_SDA)>,
+				<NRF_PSEL(TWIM_SCL, 0, PQ_PIN_I2C_SCL)>;
+		};
+	};
+
+	i2c0_sleep: i2c0_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, PQ_PIN_I2C_SDA)>,
+				<NRF_PSEL(TWIM_SCL, 0, PQ_PIN_I2C_SCL)>;
+			low-power-enable;
+		};
+	};
+
+	/* LCD SPI.  SPIM2 (not SPIM0/1: those share silicon with TWIM0/1).  No MISO pin. */
+	spi2_default: spi2_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, PQ_PIN_LCD_SCK)>,
+				<NRF_PSEL(SPIM_MOSI, 0, PQ_PIN_LCD_MOSI)>;
+		};
+	};
+
+	spi2_sleep: spi2_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, PQ_PIN_LCD_SCK)>,
+				<NRF_PSEL(SPIM_MOSI, 0, PQ_PIN_LCD_MOSI)>;
+			low-power-enable;
+		};
+	};
+
+	/* Frontlight, active high.  In sleep the pin is pulled down so the LED driver gate cannot float. */
+	pwm0_default: pwm0_default {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, PQ_PIN_LIGHT_PWM)>;
+		};
+	};
+
+	pwm0_sleep: pwm0_sleep {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, PQ_PIN_LIGHT_PWM)>;
+			low-power-enable;
+			bias-pull-down;
+		};
+	};
+
+	/* Vibration motor, active high, low-side MOSFET: the gate must never float, hence the pull-down in sleep. */
+	pwm1_default: pwm1_default {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, PQ_PIN_MOTOR_PWM)>;
+		};
+	};
+
+	pwm1_sleep: pwm1_sleep {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 0, PQ_PIN_MOTOR_PWM)>;
+			low-power-enable;
+			bias-pull-down;
+		};
+	};
+};
