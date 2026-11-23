@@ -227,6 +227,23 @@ def t_heldout():
     except HeldOutSeasonError:
         tripped = True
     check("fit_seasons refuses a list containing 2026", tripped)
+    # Step 6: the unlock opens only with the literal --drew-go, and the final test refuses to run without it
+    from hitter_data import _final_test_unlock
+    for token in (None, "", "yes", "--drew_go", True):
+        try:
+            _final_test_unlock(2026, token); opened = True
+        except HeldOutSeasonError:
+            opened = False
+        check(f"held-out unlock refuses token {token!r}", not opened)
+    try:
+        assert_not_heldout(2026); tripped = False
+    except HeldOutSeasonError:
+        tripped = True
+    check("2026 still held out after refused unlocks", tripped)
+    import os as _os, subprocess as _sp
+    r = _sp.run([sys.executable, "-m", "hitter_data.final_test"], capture_output=True, text=True,
+                cwd=_os.path.dirname(_os.path.abspath(__file__)))
+    check("final_test without --drew-go exits 2 (prepared, not run)", r.returncode == 2 and "NOT RUN" in r.stdout)
 
 
 # ---------- representativeness (task D) ----------

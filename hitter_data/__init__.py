@@ -13,12 +13,26 @@ class HeldOutSeasonError(RuntimeError):
     pass
 
 
+# Step 6 (plan 5.1): the one sanctioned read of the held-out season. Only hitter_data.final_test opens it, only after
+# Drew's explicit go (--drew-go), and only for scoring (never fitting). Empty = everything >= HELDOUT_SEASON refuses.
+_FINAL_TEST_UNLOCKED = set()
+
+
+def _final_test_unlock(season, drew_go):
+    """Called by hitter_data.final_test alone. drew_go must be the literal flag string '--drew-go'."""
+    if drew_go != "--drew-go" or int(season) != HELDOUT_SEASON:
+        raise HeldOutSeasonError("the held-out season opens only for Step 6, with --drew-go")
+    _FINAL_TEST_UNLOCKED.add(int(season))
+
+
 def assert_not_heldout(season):
     """Every fit, tuning and scoring path calls this on each season it touches (plan 5.1)."""
     try:
         s = int(season)
     except (TypeError, ValueError):
         raise HeldOutSeasonError(f"season {season!r} is not a year; refusing (an unknown season could be the held-out one)")
+    if s in _FINAL_TEST_UNLOCKED:            # Step 6 only (hitter_data.final_test --drew-go)
+        return s
     if s >= HELDOUT_SEASON:
         raise HeldOutSeasonError(f"season {s} is held out (>= {HELDOUT_SEASON}): no fit, tuning or scoring may use it")
     return s

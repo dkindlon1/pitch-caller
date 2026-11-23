@@ -388,7 +388,7 @@ import json as _json
 import college_rates as _cr
 _RV = _json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "college_run_values.json")))
 _RKEY = {"mlb": "mlb_check", "college": "college_d1", "college_d1": "college_d1", "college_d3": "college_d3", "hs": "hs",
-         "college_d2": "college_d3"}   # PLACEHOLDER_D2: D3's per-PA rates until college_rates.py has D2
+         "college_d2": "college_d2"}   # v1.3 full data: D2's own per-PA rates (college_run_values.json college_d2)
 
 
 def level_rates():

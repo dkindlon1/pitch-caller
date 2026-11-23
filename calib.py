@@ -158,6 +158,7 @@ MLB_PITCH = {"zone": 0.494, "z_swing": 0.672, "o_swing": 0.285, "z_contact": 0.8
 PA_TARGETS = {
     "mlb": {k: RV["mlb_check"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},
     "college_d1": {k: RV["college_d1"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},
+    "college_d2": {k: RV["college_d2"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},   # v1.3 full data
     "college_d3": {k: RV["college_d3"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},
 }
 

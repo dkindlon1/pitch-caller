@@ -47,7 +47,7 @@ LEVEL = "hs"
 DL = "HS"                        # the harness data level (engine level 'hs' through V12_LEVEL)
 SEASONS = (2022, 2023, 2024, 2025)
 VALID = 2025
-CACHE_VERSION = "hs3"
+CACHE_VERSION = "hs4"      # hs4 (full data): the season keeps per-pitch vday (today's fastball vs his season norm)
 OUT = os.path.join(FD.FITS, "hs")
 CLASSES = ("fastball", "breaking", "offspeed", "other", "unknown")
 KINDS = ("Fastball", "Curveball", "Slider", "Change-Up", "other")
@@ -205,6 +205,7 @@ def build_hs_season(con, season):
     S.pa = {k: np.asarray(v, dtype=np.int32 if k.endswith("_g") else small.get(k, np.int16)) for k, v in pa.items()}
     S.pit = {k: np.asarray(v, dtype=small.get(k, np.int8)) for k, v in pit.items()}
     S.pit["vrel"] = relative_velo(S.pit)
+    S.pit["vday"] = day_velo(S.pit)
     del S.pit["pid"]
     S.reasons, S.lettered_pas, S.n_pa_rows, S.n_games = reasons, lettered, len(pas), len(games)
     S.extra = dict(hand=hand, weak=weak, hard=hard, bipn=bipn)
@@ -224,6 +225,36 @@ def relative_velo(p, min_n=10):
     n = np.bincount(inv, minlength=len(u))
     m = np.where(n >= min_n, s / np.maximum(n, 1), np.nan)
     out[ok] = v[ok] - m[inv]
+    return out.astype(np.float32)
+
+
+def day_velo(p, min_prior=3, min_season=10):
+    """Today's fastball vs his own norm (Nov 22 candidate term): for each pitch, the mean speed of the pitcher's EARLIER
+    fastballs in this game (at least min_prior readings, so nothing after the pitch is used) minus his season fastball
+    mean (at least min_season readings). Applies to every pitch he throws (any class). NaN when either is missing."""
+    v = p["velo"].astype(float)
+    n_p = len(v)
+    out = np.full(n_p, np.nan)
+    if not n_p:
+        return out.astype(np.float32)
+    pid = p["pid"].astype(np.int64)
+    g = p["g"].astype(np.int64)
+    fb = (p["cls"].astype(np.int64) == 0) & ~np.isnan(v) & (pid != 0)
+    u, inv = np.unique(pid[fb], return_inverse=True)
+    s_sum = np.bincount(inv, weights=v[fb], minlength=len(u))
+    s_n = np.bincount(inv, minlength=len(u))
+    season_mean = dict(zip(u.tolist(), np.where(s_n >= min_season, s_sum / np.maximum(s_n, 1), np.nan).tolist()))
+    run = {}
+    for i in range(n_p):                       # pitches are in game order within each game
+        if pid[i] == 0:
+            continue
+        key = (g[i], pid[i])
+        tot, cnt = run.get(key, (0.0, 0))
+        m = season_mean.get(int(pid[i]), np.nan)
+        if cnt >= min_prior and not np.isnan(m):
+            out[i] = tot / cnt - m
+        if fb[i]:
+            run[key] = (tot + v[i], cnt + 1)
     return out.astype(np.float32)
 
 
@@ -303,6 +334,10 @@ def term_index(S, term):
         b = np.digitize(np.nan_to_num(p["vrel"], nan=0.0), VREL_EDGES)
         b = np.where(np.isnan(p["vrel"]), 5, b)               # 5 = velocity read, but < 10 readings for his mean
         return np.where(bad, -1, cls * 6 + b), 4 * 6
+    if term == "velo_day":                    # every pitch of a pitcher whose fastball is up / down today; not class-gated
+        vd = p["vday"].astype(float)
+        b = np.digitize(np.nan_to_num(vd, nan=0.0), VREL_EDGES)
+        return np.where(np.isnan(vd), -1, b), 5
     if term == "velo_abs":
         b = np.full(len(v), 0)
         for c, edges in VABS_EDGES.items():

@@ -668,7 +668,7 @@ LEVEL = {  # c_L confidence weight, h_L hitter-read weight, confidence cutoff, f
 #   hbp  share of way-off taken pitches that hit the batter (scaled by location)
 #   wild  level wildness: share of in-zone landing mass that misses off the plate instead
 OUTCOME_ADJ = {lvl: dict(cmd=0.0, zsw=0.0, osw=0.0, wz=0.0, wo=0.0, cs=0.0, hbp=0.0, wild=0.0)
-               for lvl in ("hs", "college", "college_d1", "college_d3", "mlb")}
+               for lvl in ("hs", "college", "college_d1", "college_d2", "college_d3", "mlb")}   # v1.3 full data: D2 own fit
 HBP_LOC = {"up-in": 1.6, "down-in": 1.6, "chase": 0.8, "middle": 0.5, "up-away": 0.3, "down-away": 0.3,
            "down-middle": 0.5}     # down-middle: over the plate, like middle
 try:

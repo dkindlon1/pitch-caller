@@ -30,7 +30,8 @@ from . import DATA
 from .refit_chain import STEPS, _run, lf
 
 RUNNER_KEYS = ("p_GB", "p_FB", "S_DP")
-REALISM = (("mlb", "mlb_check"), ("college_d1", "college_d1"), ("college_d3", "college_d3"), ("hs", "hs"))
+REALISM = (("mlb", "mlb_check"), ("college_d1", "college_d1"), ("college_d2", "college_d2"), ("college_d3", "college_d3"),
+           ("hs", "hs"))
 
 
 def typed_tables(repo):

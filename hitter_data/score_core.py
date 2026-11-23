@@ -51,7 +51,7 @@ OUT = os.environ.get("SCORE_CORE_OUT") or os.path.join(FD.FITS, "score_core")
 CAND = os.environ.get("SCORE_CORE_S2024") or os.path.join(FD.FITS, "candidates")
 S2024 = {"count": os.path.join(CAND, "count_v13core_s2024.json"), "run": os.path.join(CAND, "run_v13core_s2024.json")}
 S2024_NOPV = os.path.join(CAND, "count_v13core_s2024_nopv.json")
-S2024_NOBO = os.path.join(CAND, "count_v13core_s2024_nobo.json")      # step 2: swing_base_out zeroed at college_d1 / hs
+S2024_NOBO = os.path.join(CAND, "count_v13core_s2024_nobo.json")      # step 2: swing_base_out zeroed at every fitted level
 CORE_DIR = os.path.abspath(os.environ.get("SCORE_CORE_ENGINE") or ROOT)
 DEFAULT_V123 = os.path.join(os.environ.get("TEMP", "/tmp"), "v123_engine")
 LEVELS = ("D1", "D2", "D3", "HS")
@@ -68,7 +68,7 @@ def configs(v123_dir):
     return {"v123": (v123_dir, {"PITCH_ZONE_TABLE": "", "PITCH_COUNT_TABLE": "", "PITCH_RUN_TABLE": ""}, v12),
             "core": (CORE_DIR, core_env, core),
             "core_nopv": (CORE_DIR, nopv_env, [("core_nopv", "HS", "college_d2", "single_a")]),
-            "core_nobo": (CORE_DIR, nobo_env, [("core_nobo", lv, "college_d2", "single_a") for lv in ("D1", "HS")])}
+            "core_nobo": (CORE_DIR, nobo_env, [("core_nobo", lv, "college_d2", "single_a") for lv in LEVELS])}
 
 
 def tag(name, assumption):
@@ -156,7 +156,8 @@ def load_fixed(out_dir=OUT):
 
 def core_fit_seasons(level):
     """College / HS seasons the as-scored core's count layer was fit on (D2 / D3: none, v1.2's count layer)."""
-    fn = {"D1": "D1_shared_thru2024.json", "HS": "hs_sep_thru2024.json"}.get(level)
+    fn = {"D1": "D1_shared_thru2024.json", "D2": "D2_borrow_thru2024.json", "D3": "D3_borrow_thru2024.json",
+          "HS": "hs_sep_thru2024.json"}.get(level)
     if not fn:
         return ()
     with open(os.path.join(FD.FITS, "count_layer", fn), encoding="utf-8") as f:
@@ -321,7 +322,7 @@ def main(argv=None):
         with open(S2024_NOPV, "w", encoding="utf-8", newline="\n") as f:
             json.dump(C, f, indent=1)
         C = json.load(open(S2024["count"], encoding="utf-8"))
-        for lv in ("college_d1", "hs"):
+        for lv in ("college_d1", "college_d2", "college_d3", "hs"):          # full data: every fitted level
             C["levels"][lv]["swing_base_out"] = {k: 0.0 for k in C["levels"][lv]["swing_base_out"]}
         with open(S2024_NOBO, "w", encoding="utf-8", newline="\n") as f:
             json.dump(C, f, indent=1)

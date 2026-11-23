@@ -25,7 +25,7 @@ def save():
 save()
 show("mlb", "mlb (stored fit)")
 m = OUT["mlb"]
-levels = sys.argv[1:] or ["college_d1", "college_d3", "hs"]
+levels = sys.argv[1:] or ["college_d1", "college_d2", "college_d3", "hs"]   # v1.3 full data: D2 fitted
 for lvl in levels:
     key = lvl
     tg = {k: RV[key][k] for k in ("K", "BB", "HBP")}

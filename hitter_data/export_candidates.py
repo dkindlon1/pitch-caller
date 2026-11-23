@@ -251,9 +251,13 @@ def verify(count_path, levels=None, thru=2025):
     """Fresh process with PITCH_COUNT_TABLE=count_path: the engine's per-count rates vs the fits, no in-memory edits."""
     import engine as e
     out = {"versions": e.TABLE_VERSIONS, "levels": {}}
+    with open(count_path, encoding="utf8") as f:
+        core = str(json.load(f).get("version", "")).startswith(CORE_VERSION)
     for lv, (dl, fn, thin) in LEVELS.items():
         if levels and lv not in levels:
             continue
+        if core:                                  # a core file ships the candidates named in CORE_COUNT (D2 / D3: borrow)
+            fn = CORE_COUNT[lv]
         j = load_cand(fn.replace("thru2025", f"thru{thru}"))
         t, t_bo, n_bo, late = targets(j)
         rates, sw_bo = engine_rates(Probe(lv, dl), n_bo, late)
@@ -342,7 +346,13 @@ def run(write_files=True, log=print, prove=True):
 # ----------------------------------------------------------------------------------------------------------------------
 # v1.3 core (feat/hitter-v13-core): the default count / run tables data_tables/count_v13core.json and run_v13core.json
 CORE_VERSION = "v13core"
-CORE_LEVELS = ("college_d1", "hs")                     # D1 and HS / travel take the count + run candidates
+CORE_LEVELS = ("college_d1", "college_d2", "college_d3", "hs")   # v1.3 full data (Nov 22 ruling 1): D2 / D3 fitted too
+# the count candidate each core level ships (ruling 1: D2 / D3 use "borrow"; D1 "shared", HS "sep" as in the core)
+CORE_COUNT = {"college_d1": "D1_shared_thru2025.json", "college_d2": "D2_borrow_thru2025.json",
+              "college_d3": "D3_borrow_thru2025.json", "hs": "hs_sep_thru2025.json"}
+# run values fit on each level's own play-by-play (ruling 10: college levels take no scale from MLB)
+CORE_RUN = {"college_d1": "D1_thru2025.json", "college_d2": "D2_thru2025.json", "college_d3": "D3_thru2025.json",
+            "hs": "hs_thru2025.json"}
 CORE_BASE = {"zone": "v13", "count": "v13refit", "run": "v13refit"}
 CORE_ENV = {"PITCH_ZONE_TABLE": "v13", "PITCH_COUNT_TABLE": "v13refit", "PITCH_RUN_TABLE": "v13refit"}
 V12_PENDING = ("v1.2 count layer pending the coverage rule: count terms are v1.2's (swing / whiff / foul / hard by count and "
@@ -377,13 +387,13 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
     report = {"provisional": FD.PROVISIONAL, "version": CORE_VERSION, "base": CORE_BASE, "landing": PRIMARY_ASSUMPTION,
               "levels": {}}
     for lv in CORE_LEVELS:
-        dl, fn, thin = LEVELS[lv]
-        fn = fn.replace("thru2025", f"thru{thru}")
+        dl, _, thin = LEVELS[lv]
+        fn = CORE_COUNT[lv].replace("thru2025", f"thru{thru}")
         j = load_cand(fn)
         t, t_bo, n_bo, late = targets(j)
         base_row = copy.deepcopy(e._CT[lv])
         rec = dict(candidate=fn, targets={ck: t[ck] for ck in CK})
-        if old is not None:                      # before: the h2 export's row, asked under the new landing and zone table
+        if old is not None and lv in old["levels"]:   # before: the h2 export's row, asked under the new landing and zone table
             e._CT[lv] = copy.deepcopy(old["levels"][lv])
             e._CNT.clear()
             e._GBV.clear()
@@ -410,28 +420,28 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
     else:
         hcon = HS.connect()
         C["levels"]["hs"]["pitch_velo"] = HS.pitch_table({x: HS.load_season(hcon, x) for x in HS.SEASONS if x <= thru}, thru=thru)
-    for lv in ("college_d2", "college_d3"):
-        C["levels"][lv]["label"] = V12_PENDING
     C["version"] = CORE_VERSION
-    C["about"] = ("v1.3 core default count layer (hitter_data.export_candidates --core). college_d1 and hs: the PROVISIONAL "
-                  "count candidates (" + FD.PROVISIONAL + "; D1 'shared' thru2025, hs 'sep' thru2025) calibrated under "
-                  "zone_v13 and the harness's h3 (Single-A) landing on top of count_v13refit; hs also carries pitch_velo (HS / "
-                  "travel pitch kind x velocity, ruling 4). college_d2 / college_d3: " + V12_PENDING + ". mlb: count_v13refit. "
-                  "Format: docs/TABLES_v13.md.")
+    C["about"] = ("v1.3 core default count layer, full data (hitter_data.export_candidates --core). college_d1, college_d2, "
+                  "college_d3 and hs: the count candidates fit on the full archives (" + FD.PROVISIONAL + "; D1 'shared', "
+                  "D2 / D3 'borrow' (Nov 22 ruling 1), hs 'sep', thru2025) calibrated under zone_v13 and the harness's h3 "
+                  "(Single-A) landing on top of count_v13refit; hs also carries pitch_velo (HS / travel pitch kind x velocity, "
+                  "ruling 4). mlb: count_v13refit. Format: docs/TABLES_v13.md.")
     e.check_table(C, "count_v13core.json")
     with open(os.path.join(ROOT, "data_tables", "run_v13refit.json"), encoding="utf8") as f:
         R = json.load(f)
     for lv in CORE_LEVELS:
-        with open(os.path.join(FD.FITS, "run_values", RUN_LEVELS[lv].replace("thru2025", f"thru{thru}")), encoding="utf-8") as f:
+        R["levels"].setdefault(lv, copy.deepcopy(R["levels"]["college_d3"]))     # college_d2: its own entry now
+        with open(os.path.join(FD.FITS, "run_values", CORE_RUN[lv].replace("thru2025", f"thru{thru}")), encoding="utf-8") as f:
             r = json.load(f)
         R["levels"][lv]["re"] = {bo: round(r["RE"][bo], 4) for bo in BO}
         c0 = r["CV"]["0-0"]
         R["levels"][lv]["cv"] = {ck: round(r["CV"][ck] - c0, 4) for ck in CK}
     R["version"] = CORE_VERSION
-    R["about"] = ("v1.3 core default run values (hitter_data.export_candidates --core): re / cv for college_d1 and hs from "
-                  "hitter_data.fit_runs / fit_count_hs (PROVISIONAL, fit <= 2025, recency-weighted; cv relative to 0-0); "
-                  "college_d3 and mlb the shared refit's (run_v13refit); lw the refit's; college_d2 absent (D3's: PLACEHOLDER, "
-                  "release_guard_d2.py trips). The run-scale denominator is pinned at 0.481 (ruling 10). Format: docs/TABLES_v13.md.")
+    R["about"] = ("v1.3 core default run values, full data (hitter_data.export_candidates --core): re / cv for college_d1, "
+                  "college_d2, college_d3 and hs from hitter_data.fit_runs / fit_count_hs on each level's own play-by-play "
+                  "(PROVISIONAL, fit <= 2025, recency-weighted; cv relative to 0-0): ruling 10, college levels take no run "
+                  "values from MLB. mlb the shared refit's (run_v13refit); lw the refit's (college_d2's lw = college_d3's). The "
+                  "run-scale constant stays 0.481 (a fixed unit, no longer MLB's fitted RE). Format: docs/TABLES_v13.md.")
     e.check_table(R, "run_v13core.json")
     paths = out_paths or core_paths()
     if thru != 2025:
