@@ -86,9 +86,8 @@ def main():
     check("no fastball in the policy and no costs given (shaken off): unchanged", e.apply_fb_floor(zero, s, frozenset({"Fastball"})) is zero)
     costs = {("Slider", "chase"): 0.10, ("Fastball", "middle"): 0.30, ("Fastball", "down-away"): 0.3005}
     back = e.apply_fb_floor(zero, s, frozenset({"Fastball"}), costs, 0.01)
-    check("fastball outside the never-pick window (share 0): brought back at the floor, split by the location softmax",
-          abs(back[("Fastball", "middle")] + back[("Fastball", "down-away")] - f32) < 1e-12 and abs(sum(back.values()) - 1) < 1e-12
-          and back[("Fastball", "middle")] > back[("Fastball", "down-away")] and abs(back[("Slider", "chase")] - (1 - f32)) < 1e-12)
+    check("ruling 14: fastball outside the never-pick window (share 0, costs given): unchanged, the window outranks the floor",
+          back is zero)
     check("fb_floor is None off HS / travel; travel reads hs",
           all(e.fb_floor(e.Situation(1, 1, 0, (False, False, False), level=lv)) is None for lv in ("mlb", "college_d1", "college_d2", "college_d3"))
           and e.fb_floor(e.Situation(1, 1, 0, (False, False, False), level="travel")) == F["1-1"])
@@ -108,18 +107,19 @@ def main():
           "the parity tolerance)", w <= 1e-9, f"largest difference {w:.1e}")
     kinds = {d["name"]: d["kind"] for a in inp["ars"] for d in a}
     below = []
-    raised = 0
+    raised = zero_share = 0
     for c, dist in zip(calls, py["calls"]):
         if c["lv"] == "college_d1":
             continue
         ars_kinds = {d["name"]: d["kind"] for d in inp["ars"][c["a"]]}
         w = sum(pr for pr, n, q in dist if ars_kinds[n] in ("FB", "SI", "FC"))
         f = F[f"{c['b']}-{c['k']}"]
-        if w < f - 1e-6:          # the zero-share case included: a fastball outside the window is brought back
+        if 0 < w < f - 1e-6:      # ruling 14: the floor holds among the allowed calls (share 0 = no fastball call allowed)
             below.append((c["b"], c["k"], round(w, 4), f))
+        zero_share += w == 0
         raised += abs(w - f) < 1e-6
-    check("every HS / travel call's fastball share >= the floor (call_v08's dist; every test arsenal has a fastball)", not below, str(below[:5]))
-    print(f"     ({raised} of {len(calls) - 8} calls sit exactly at the floor)")
+    check("every HS / travel call that allows a fastball has fastball share >= the floor (call_v08's dist)", not below, str(below[:5]))
+    print(f"     ({raised} of {len(calls) - 8} calls sit exactly at the floor; {zero_share} allow no fastball call)")
     nof = copy.deepcopy(C)
     nof["levels"]["hs"].pop("fb_floor")
     path = os.path.join(DATA, "kgapfix", "count_v13core_nofloor.json")
@@ -129,8 +129,20 @@ def main():
     check("college_d1 calls bit for bit with or without the hs floor", py0["calls"][-8:] == py["calls"][-8:])
     check("the floor changes HS calls (it binds)", py0["calls"][:-8] != py["calls"][:-8])
 
-    # --- ruling 9 ------------------------------------------------------------------------------------------------------
+    # --- ruling 14: the coach's own pitch is floored too ---------------------------------------------------------------
     import simulate
+    cands = [e.Pitch(n, k, 3, 3, 0.6) for n, k in (("Fastball", "FB"), ("Slider", "SL"), ("Curve", "CB"), ("Change", "CH"))]
+    s00 = e.Situation(0, 0, 0, (False, False, False), level="hs")
+    r1 = random.Random(5)
+    share = sum(simulate.coach_pitch(r1, cands, s00).kind == "FB" for _ in range(20000)) / 20000
+    check("ruling 14: the coach's own pitch (OVERRIDE) meets the floor at HS (uniform share 0.25 -> the 0-0 floor)",
+          abs(share - F["0-0"]) < 0.015, f"{share:.3f} vs {F['0-0']}")
+    r2, r3 = random.Random(9), random.Random(9)
+    sc = e.Situation(0, 0, 0, (False, False, False), level="college_d1")
+    check("off HS / travel the coach's pitch is exactly the old rng.choice draw",
+          all(simulate.coach_pitch(r2, cands, sc) is r3.choice(cands) for _ in range(200)))
+
+    # --- ruling 9 ------------------------------------------------------------------------------------------------------
     import calib
     check("simulate.OS_HOLE = 0 (no built-in off-speed hole)", simulate.OS_HOLE == 0.0)
     check("calib's hidden hitters: fb / os / timing means exactly 0",

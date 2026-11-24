@@ -2589,11 +2589,10 @@ def _soft(costs, temp, w, ref):
 # the floor inside the quantal-response map the solve cycles instead of converging (2-2 residual 0.17 after 3000 steps on a
 # travel sinker / cutter arsenal), so the floor is a guard on the output, not a term of the game. When the allowed calls' fastball share
 # w is above 0 and below the floor f, every fastball call is scaled by f / w and every other call by (1 - f) / (1 - w)
-# (shares of the policy's own total). When the fastball's share is 0 (every fastball call outside the never-pick window)
-# but fastball calls are allowed, the floor brings them in: the rest of the policy x (1 - f), and f spread over the
-# fastball calls by the location softmax of policy_from_costs (temperature and location window as there, from the best
-# fastball call's cost). Ruling 8 overrides the never-pick window for the fastball only. A shaken-off fastball (not in
-# the allowed calls) is not forced back.
+# (shares of the policy's own total). Drew's Nov 24 ruling 14: the never-pick window and every other safety / hitter rule
+# outrank the floor, which applies only among the allowed calls (the policy's support): when no fastball call is allowed
+# (every one outside the never-pick window, or shaken off) the policy is left as it is. (Nov 23's e00cfe5 brought the
+# fastball back from outside the window; withdrawn.) The simulator also floors the coach's own pitch (simulate.py).
 # Every other level, and any count table without fb_floor (v12, v13refit): no change.
 def fb_floor(s):
     """the fastball-share floor at s's count, or None (level without a floor table)"""
@@ -2610,9 +2609,9 @@ def fb_names(arsenal, s):
 
 
 def apply_fb_floor(pi, s, fb, costs=None, temp=None):
-    """pi {(name, q): prob} -> pi with the fastball calls' share raised to fb_floor(s) (see above); plain left-to-right
-    sums in pi's order (app/engine.js applyFbFloor does the same operations). costs {(name, q): cost} of the allowed calls
-    and temp: needed to bring the fastball back when its share is 0."""
+    """pi {(name, q): prob} -> pi with the allowed fastball calls' share raised to fb_floor(s) (see above); plain
+    left-to-right sums in pi's order (app/engine.js applyFbFloor does the same operations). costs / temp: unused since
+    ruling 14 (kept for the callers)."""
     if not fb:
         return pi
     f = fb_floor(s)
@@ -2621,15 +2620,6 @@ def apply_fb_floor(pi, s, fb, costs=None, temp=None):
         t += v
         if a[0] in fb:
             w += v
-    if w == 0.0 and costs is not None and t > 0.0:
-        fbc = {a: c for a, c in costs.items() if a[0] in fb}
-        if not fbc:
-            return pi
-        loc = _soft(fbc, temp, windows(s)[1], min(fbc.values()))
-        out = {a: v * (1.0 - f) for a, v in pi.items()}
-        for a, pq in loc.items():
-            out[a] = out.get(a, 0.0) + f * t * pq
-        return out
     if not (w > 0.0 and w < f * t):
         return pi
     kf = f * t / w

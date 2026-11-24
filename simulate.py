@@ -329,6 +329,20 @@ def _default_staff():
 OS_HOLE = 0.0
 
 
+def coach_pitch(rng, cands, s):
+    """the coach's own pitch (OVERRIDE): uniform over the candidates, except that Drew's Nov 24 ruling 14 floors it too: at a
+    level with a fastball-share floor (engine.fb_floor; HS / travel), when the candidates hold a fastball and their uniform
+    fastball share is below the floor, a fastball is called with the floor's probability (uniform within each class). With no
+    floor, no fastball or a share already at the floor, the draw is exactly the old rng.choice(cands)."""
+    f = engine.fb_floor(s) if hasattr(engine, "fb_floor") else None
+    fbs = [x for x in cands if engine.is_fastball(x.kind)]
+    if f is None or not fbs or len(fbs) == len(cands) or len(fbs) / len(cands) >= f:
+        return rng.choice(cands)
+    if rng.random() < f:
+        return rng.choice(fbs)
+    return rng.choice([x for x in cands if not engine.is_fastball(x.kind)])
+
+
 def their_lineup():
     """Hidden truth. skill shifts damage on everything; fb/os add to it; timing < 0 early, > 0 late."""
     hitters = []
@@ -763,7 +777,7 @@ def play_game(log_path):
                 override = 0
                 if OVERRIDE and rng.random() < OVERRIDE:   # the coach calls his own pitch instead
                     cands_ = CALLER.candidates(ars, s)
-                    p = rng.choice(cands_); q = rng.choice(QUADS); override = 1
+                    p = coach_pitch(rng, cands_, s); q = rng.choice(QUADS); override = 1
                     prob = next((d[0] for d in dist if d[2].name == p.name and d[3] == q), 0.0)
                     cst = CALLER.root_costs(ars, s, tab)[(p.name, q)]
                 best_cost = min(d[1] for d in dist)

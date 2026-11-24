@@ -265,8 +265,16 @@ def worker(level, variant, seeds, outdir, stub=True):
     if variant == "edgereal":
         ec = real_["edge_cs"][landing_group(level)]["by_count"]
         engine.KGAP_EDGE_CS.update({(int(k[0]), int(k[2])): v for k, v in ec.items()})
+    LASTCALL = {"fb": None}
+
+    def call_v08_tracked(ars, s, *a, **k):
+        """engine.call_v08, remembering whether the call's distribution allowed a fastball (ruling 14's 'where allowed')"""
+        r = engine.call_v08(ars, s, *a, **k)
+        LASTCALL["fb"] = sum(pr for pr, _, p_, _ in r[1] if engine.is_fastball(p_.kind))
+        return r
     if stub:
-        simulate.CALLER = _Proxy(engine, why_line=lambda *a, **k: ("",), intent_label=lambda *a, **k: ("",))
+        simulate.CALLER = _Proxy(engine, why_line=lambda *a, **k: ("",), intent_label=lambda *a, **k: ("",),
+                                 call_v08=call_v08_tracked)
         simulate.engine = _Proxy(engine, root_costs=lambda *a, **k: _ZeroCosts())
     if level == "hs":
         def hs_staff():
@@ -315,6 +323,12 @@ def worker(level, variant, seeds, outdir, stub=True):
                                              real=[0] * 6))
         r["n"] += 1
         r["n_cls"][cls] += 1
+        if LASTCALL["fb"] is not None:   # ruling 14: thrown class where the final call allowed a fastball / the call's own share
+            al = r.setdefault("fb_allowed", {"n": 0, "FB": 0, "call_fb": 0.0})
+            if LASTCALL["fb"] > 0:
+                al["n"] += 1
+                al["FB"] += cls == "FB"
+                al["call_fb"] += LASTCALL["fb"]
         for i, v in enumerate(_six(P)):
             r["P"][i] += v
         for i, v in enumerate(_six(Ps)):

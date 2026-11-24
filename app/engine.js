@@ -1123,15 +1123,7 @@
     const f = fbFloor(s);
     let w = 0.0, t = 0.0;
     for (const a in pi) { t += pi[a]; if (fb.has(skName(a))) w += pi[a]; }
-    if (w === 0.0 && costs && t > 0.0) {   // the fastball outside the never-pick window: brought back at the floor
-      const fbc = Object.keys(costs).filter((a) => fb.has(skName(a))).map((a) => [a, costs[a]]);
-      if (!fbc.length) return pi;
-      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
-      const loc = soft(fbc, temp, windows(s)[1], best), o = {};
-      for (const a in pi) o[a] = pi[a] * (1.0 - f);
-      for (const [a, pq] of loc) o[a] = (o[a] ?? 0.0) + f * t * pq;
-      return o;
-    }
+    // ruling 14: only among the allowed calls; no allowed fastball call (outside the never-pick window / shaken off): unchanged
     if (!(w > 0.0 && w < f * t)) return pi;
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w), o = {};
     for (const a in pi) o[a] = pi[a] * (fb.has(skName(a)) ? kf : ko);
@@ -1145,17 +1137,7 @@
       const isF = fb.has(st.names[g]);
       for (const i of st.groups[g]) if (piOut[i] > 0) { t += piOut[i]; if (isF) w += piOut[i]; }
     }
-    if (w === 0.0 && t > 0.0) {   // the fastball outside the never-pick window: brought back at the floor (costs in call order)
-      const fbc = [];
-      for (let i = 0; i < st.calls.length; i++) if (fb.has(skName(st.calls[i]))) fbc.push([i, cost[i]]);
-      if (!fbc.length) return piOut;
-      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
-      const loc = soft(fbc, temp, lwin, best);
-      for (let i = 0; i < piOut.length; i++) if (piOut[i] > 0) piOut[i] = piOut[i] * (1.0 - f);
-      for (const [i, pq] of loc) piOut[i] = piOut[i] + f * t * pq;
-      return piOut;
-    }
-    if (!(w > 0.0 && w < f * t)) return piOut;
+    if (!(w > 0.0 && w < f * t)) return piOut;   // ruling 14: only among the allowed calls
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w);
     for (let g = 0; g < st.groups.length; g++) {
       const isF = fb.has(st.names[g]);
