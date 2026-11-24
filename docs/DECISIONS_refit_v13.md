@@ -13,6 +13,30 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 24): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_meanpreserve_2026-11-24.md` (after `docs/BUILD_v13_fulldata_REPORT.md` and
+`docs/KGAP_v13_TABLE_fixed.md`, commit 52be85b). Carried out on `feat/hitter-v13-fulldata` (report Part 2). The fitted
+count layer is never changed.
+
+12. **Per-count mean preservation (plan 3.2, enforced exactly).** Replaces chasing K with pitcher-side keys.
+    - Per level and count, per-outcome scalars (swing, whiff | swing, foul | contact, called strike | take, in play) on the
+      zone table and pitch-kind effects (and the HS velocity table), set so that under the **reference world** (the real
+      pitch mix by count + the average-pitcher landing model, harness h3; HS: the real HS mix from the HS data; college /
+      MLB: the reference mix the count layer is calibrated to) the world reproduces the fitted count layer's rates exactly.
+    - Computed, not tuned; stored in a table with a sha, wired into both engines, parity-tested.
+    - Relative effects between zones, kinds and speeds unchanged; only their per-count level is pinned to the data.
+    - Pitcher-side keys then fit BB, HBP and command only.
+    - **Gate:** under the reference world each level's K / BB / HBP lands within 1 point of target, or stop and report.
+    - The K target counts sacrifices, intentional walks and interference the same way the chain does (the ~0.4 college piece).
+13. **Calling-edge limit.** In engine-called sims, K above target is the engine's calling edge: reported per level with SE;
+    above **+1.5 points**, stop for Drew's review of the graded rows that drive it. BB / HBP in engine-called sims must still
+    land within 1 point, or that is reported.
+14. **Fastball floor vs never-pick.** The never-pick window and every other safety / hitter rule outrank the HS fastball
+    floor; the floor applies only among allowed pitches. In sims it is applied after shake-offs and coach overrides too, so
+    the thrown share meets it where allowed.
+15. **HS keeps the floor**; it does not move to the real HS pitch mix.
+
 ## Drew's rulings (Nov 23): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_kgap_fixes_2026-11-23.md` (after `docs/KGAP_v13_DIAGNOSIS.md`, commit deea124). Carried
