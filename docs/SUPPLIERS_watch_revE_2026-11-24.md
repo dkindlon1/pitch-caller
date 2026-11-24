@@ -147,3 +147,22 @@ PCBWay
 - Consign spares rule (JLC) and consign handling fee (PCBWay); JLC pages that failed to load: assembly help pages, price guide, stackup page.
 - Polarity/rotation preview and first-article photo policy (PCBWay); photos (JLC).
 - IPC-4761 type VII named explicitly (neither).
+
+## Live order-form readings, 2026-11-24 (rev E Gerbers loaded; nothing saved to a cart, nothing ordered)
+
+Read in the suppliers' own instant-quote forms in a browser, not signed in. These are form prices before any engineer has reviewed the files; both sites say the final price is subject to review.
+
+**JLCPCB** (`cart.jlcpcb.com/quote`, Gerber zip uploaded; the form detected "6 layer board of 36x30.6mm"):
+- 0.8 mm is selectable for 6 layers (0.4 and 0.6 mm are greyed out). Standard 6-layer 0.8 mm stack-ups are listed (JLC06081H-1080A, -2116, -7628 and others). This settles the conflict between their published pages.
+- Epoxy filled and capped vias: selectable, $0.00 extra. 0.2 mm via hole adds $17.15 and forces TG155 and a 4-wire test ($16.87). ENIG $17.20.
+- Precision +/-0.1 mm outline is greyed out for this board: "Individually routed boards need to be at least 50x50 mm for precision routing".
+- Bare boards, 5 pcs, 7-8 days: **$86.38** with production-file confirmation ($1.05). Shipping estimate **$25.99** UPS Express Saver, duties prepaid (DDP), 2-4 business days. About **$112 delivered** before coupons.
+- Assembly: Economic is greyed out for this board; only Standard is offered. Standard offers top, bottom or both sides. Edge rails and fiducials "Added by JLCPCB": the form says the board is enlarged to 70.6 x 70 mm with rails. "Confirm Parts Placement" exists as an option (set to Yes, not auto-confirmed). Assembly prices appear only after the BOM and placement files are uploaded on the next step, which needs the terms box ticked and a sign-in; not done.
+- Consequence: the "Economic, top side only, no panel" idea from the rev D notes is not available. The panel question is answered: JLCPCB adds the rails itself.
+
+**PCBWay** (`pcbway.com/orderonline.aspx`, Standard PCB form, values typed in; no file uploaded):
+- 6 layers, 0.8 mm, 5/5 mil track and space, 0.2 mm minimum hole, ENIG, TG150: all selectable together.
+- Bare boards, 5 pcs, 5-6 days: **$176.09**. Shipping **$26.55** DHL, 2-4 business days. About **$203 delivered**.
+- The Standard form has no filled-and-capped via option (only tenting / plugged with solder mask); the page points to its Advanced PCB form for resin-filled vias and via-in-pad. Not priced. Their assembly quote was not opened.
+
+Still needing a human answer from each: the notch's 0.5 mm inside-corner relief, outline tolerance at the notch without precision routing, customer-supplied nPM1300, and assembled price.
