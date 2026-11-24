@@ -97,6 +97,9 @@ static const struct device *const charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_c
 #define CHGR_TRICKLE_SEL 0x0EU
 #define CHGR_ITERM_SEL 0x0FU
 #define CHGR_CHG_STAT 0x34U
+#define CHGR_ERR_CLR 0x00U    /* TASKCLEARCHGERR */
+#define CHGR_ERR_REASON 0x36U /* BCHGERRREASON */
+#define CHG_ERR_RETRIES 5U    /* per plug-in: a deeply flat cell can hit the trickle time-out more than once */
 #define CHGR_VBATLOW_EN 0x50U /* BCHGVBATLOWCHARGE: allow charging when VBAT is below VBATLOW (2.1 V). Reset value 0 = a flat cell never charges. */
 #define ADC_TASK_VBAT 0x00U
 #define ADC_NTCR_SEL 0x0AU
@@ -259,6 +262,26 @@ int power_sample(struct power_status *o) {
   o->mv = (uint16_t)(code * 5000U / 1024U);
   o->charging = (st & (CHG_TRICKLE | CHG_CC | CHG_CV)) != 0;
   o->vbus = (vb & VBUS_PRESENT) != 0;
+  /* Charger error recovery.  A latched charger error (e.g. the trickle-charge time-out on a deeply discharged cell) stops
+   * charging until the host clears it.  While USB power is present: read the reason, clear the error and re-enable charging,
+   * at most CHG_ERR_RETRIES times per plug-in so a genuinely bad cell is not charged for ever.  Same registers as Zephyr's
+   * own driver (ERR_CLR 0x00, ERR_REASON 0x36, EN_SET 0x04).  Compiles; not run on hardware. */
+  static uint8_t chg_err_tries;
+  if (!o->vbus) {
+    chg_err_tries = 0;
+  } else {
+    uint8_t why = 0;
+    if (pm_rd(CHGR_BASE, CHGR_ERR_REASON, &why) == 0 && why != 0) {
+      if (chg_err_tries < CHG_ERR_RETRIES) {
+        chg_err_tries++;
+        int r2 = pm_wr(CHGR_BASE, CHGR_ERR_CLR, 1U);
+        r2 |= pm_wr(CHGR_BASE, CHGR_EN_SET, 1U);
+        LOG_WRN("charger error 0x%02x: cleared and re-enabled (try %u of %u): %d", why, chg_err_tries, CHG_ERR_RETRIES, r2);
+      } else {
+        LOG_ERR("charger error 0x%02x persists after %u tries: charging left off until the cable is re-plugged", why, CHG_ERR_RETRIES);
+      }
+    }
+  }
   /* VBUS input limit (rev C, USB Type-C).  The chip starts at 100 mA (default USB) and goes back to 100 mA when the cable is
    * removed (stock driver comment).  CC1/CC2 go straight to the nPM1300, which has its own 5.1 k pull-downs and reports what the
    * source advertises in the USB-C detect status register.  Only if CC1 or CC2 shows 1.5 A or 3 A is VBUSINILIM raised to

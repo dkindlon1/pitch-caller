@@ -67,6 +67,7 @@ if os.path.exists(pos):
             if D.P[row["Ref"]]["dnp"] or D.P[row["Ref"]]["hand"]: continue
             rot = float(row["Rot"])
             if row["Side"] != "top": rot = (180.0 - rot) % 360.0   # bottom-side convention used by the kicad-jlcpcb-tools plugin (component review M1)
+            if D.P[row["Ref"]]["fp"].endswith("SOT-23"): rot = (rot - 90.0) % 360.0   # community JLCPCB rotation table: SOT-23 needs -90 (audit C, read 2026-11-23; confirm in the preview)
             # No per-footprint JLCPCB rotation corrections are applied here: every polarised part must be checked in JLCPCB's placement preview.
             w.writerow([row["Ref"], row["PosX"] + "mm", row["PosY"] + "mm", "Top" if row["Side"] == "top" else "Bottom", f"{rot:g}"]); n += 1
     print("CPL rows:", n)

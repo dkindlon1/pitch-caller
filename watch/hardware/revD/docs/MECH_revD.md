@@ -9,7 +9,7 @@ Everything here is a computer model. Nothing has been printed, machined, measure
 | `cad/params.py` | Every dimension, with its SEEN / EST / DESIGN tag. Edit here. |
 | `cad/build.py` | Builds all solids, the assembly, STEP files, views and the checks (`python3 cad/build.py`; needs `pip install cadquery`). |
 | `cad/assembly.step`, `cad/exploded.step` | Whole watch, and the same parts pulled apart. Open in FreeCAD, Fusion 360, Onshape or SolidWorks. |
-| `cad/step/*.step` | One STEP file per part (23 parts). |
+| `cad/step/*.step` | One STEP file per part (24 parts), nominal dimensions. `cad/step_mjf/` holds the same parts with printing allowances. |
 | `cad/report.md` | Part volumes, every overlap between solids, every checked clearance. |
 | `mech/pitchiq_watch_revD_layout.svg` | Dimensioned plan and section, generated from the same parameters (`scripts/mech_drawing.py`). |
 
@@ -19,26 +19,26 @@ The model is parametric in the sense that matters here: change a number in `para
 
 | | Value |
 |---|---|
-| Case | 34.8 x 41.8 x 11.19 mm |
-| Over the lugs | 53.0 mm |
+| Case | 34.8 x 42.1 x 11.49 mm body. On the right side a 5 mm round boss stands 1.0 mm proud at the button and the cap 0.6 mm more: 36.4 mm across the button |
+| Over the lugs | 53.3 mm |
 | Strap | 20 mm quick-release |
 
-Stack, lens to back: lens 1.00, adhesive 0.15, display 0.74, clearance 0.35, top-side parts 2.35, board 0.80, bay 4.80, back 1.00.
+Stack, lens to back: lens 1.00, adhesive 0.15, display 0.74, clearance 0.35, top-side parts 2.35, board 0.80, bay 5.10, back 1.00.
 
-The bay grew from 4.5 to 4.8 mm in this revision. The USB-C gasket's sealing face needs solid wall below it, and at 4.5 mm only 0.24 mm was left between the gasket and the case/back joint. At 4.8 mm it is 0.54 mm. The extra depth also gives the cell 0.5 mm of swelling room.
+The bay grew from 4.5 mm (rev C) to 5.1 mm. The reason is the USB-C port plate: the gasket pocket sits low on the wall, and the plate needs at least 0.6 mm of solid material under the pocket. The mechanical audit found only 0.02 mm there in my first rev D model. The fix was a deeper bay (5.10) and a pocket 5.30 mm high instead of GCT's 5.90 (still 0.22 mm clear of the gasket all round). The deeper bay also gives the cell 0.8 mm of swelling room. The case length grew 0.3 mm so the display cable's fold starts at least 0.8 mm past the glass edge, as Sharp requires.
 
 ## Parts
 
 | Part | Material and process (prototype) | Notes |
 |---|---|---|
 | Case | MJF nylon PA12, or CNC ABS/PC for sealed units | Walls 1.8, corner radius 4.0, four integral lugs, lens ledge, board stop ribs, two locating pins at the antenna end |
-| Port plate | CNC acetal or SLA tough resin, reamed | 14.4 wide, full wall thickness. Carries GCT's pocket (11.00 x 5.90 x 0.90) and opening (9.14 x 3.36). Bonded into the case |
+| Port plate | CNC acetal or SLA tough resin, reamed | 14.4 wide, full wall thickness. Carries the gasket pocket (11.00 x 5.30 x 0.90; GCT draws 5.90 high) and GCT's opening (9.14 x 3.36). Bonded into the case |
 | Back cover | Same as case | 1.0 thick, four ears under the lugs for the screws, gasket groove, two posts with pins under the board, cell stop rib |
 | Lens | 1.0 mm hard-coated PMMA or glass, 29.4 x 34.7, R1.5 | Bonded on a 1.2 mm ledge with die-cut tape |
 | Back gasket | 1.0 wide x 0.5 thick silicone or PORON, die-cut or cut by hand | Sits in a 0.35 groove: 0.15 compression (30%) |
 | USB-C gasket | GCT USBTJ-04 (comes in the connector kit) | 1.50 free, 0.90-1.05 compressed |
-| Button plunger | Turned or printed, 2.0 shaft, 3.0 inner head | Retained by its head; O-ring 1.5 x 0.5 in the wall |
-| Cover screws | 4 x M1.4 x 5 thread-forming for plastic | Size is an estimate, not picked from a catalogue |
+| Button plunger | Turned or printed, 2.0 shaft, 3.0 inner head, 0.5 mm soft pad on its tip | Retained by its head; O-ring 1.5 x 0.5 in a gland in the 2.3 mm bore. The pad absorbs the stack-up (about +/-0.4 mm against 0.2 mm of switch travel) and lets the board pass the plunger on assembly |
+| Cover screws | 4 x M1.4 x 5 thread-forming for plastic | Size is an estimate; the sourcing audit found no catalogue part. Fallback to price and model before any case order: M1.6 screws into heat-set brass inserts (McMaster 92120A150 was the audit's suggestion; not modelled, lug root width not re-checked for it) |
 | Spring bars | 2 x Archer quick-release, 1.8 body, 0.9 tips | Come with the strap |
 | Strap | Archer 20 mm quick-release silicone, black, 3 mm thick, 75 / 120 mm | $19.99 seen |
 
@@ -58,10 +58,11 @@ Options compared (detail and sources in `research/mech_inputs.md`, section B):
 How the chosen option works:
 
 1. The receptacle is soldered to the board as designed. Its flange faces the inside of the left wall.
-2. The wall has a window 0.4 mm larger all round than the port plate.
+2. The wall has a window 0.15 mm larger than the port plate. The window locates the plate up-down and along the wall; only its depth is free.
 3. With the board seated, the plate (with the gasket in its pocket) is pushed against the flange until the gasket is at 0.975 mm (0.075 mm gap between flange and wall face, set with a shim), then bonded to the case with epoxy or UV adhesive.
 4. A small fillet of RTV around the flange is the second barrier.
-5. Each unit gets a leak test.
+5. After cure, the case's bottom face is lapped flat across the plate joint, because the back gasket crosses it.
+6. Each unit gets a leak test.
 
 Insertion loads: GCT gives 5-20 N to mate and 6-20 N to unmate. Pushing a plug in presses the flange into the gasket (toward the wall). Pulling a plug out is carried by the four shell stakes and six solder tails; the board in turn is held by the rib at that wall. No pull-strength figure for the stakes was found. Treat connector retention as a test item.
 
@@ -75,7 +76,7 @@ What stays unproven: the bond's long-term seal, the gasket's real free thickness
 | USB-C gasket gap, with the bonded plate | 0.075 | shim 0.02, bond shrink/creep 0.03 EST | +/-0.05 | Fits, if the bond step is done with care |
 | Lens to display | 0.15 adhesive | tape 0.02 | | Fine |
 | Display underside to tallest top part (module 2.05 +0.2) | 0.65 | board seat 0.1, display bond 0.05, module 0.2 | 0.30 left | Fine |
-| Cell to back cover | 0.50 | cell thickness: 3.8 for the chosen cell, other 402025 cells up to 4.5 | -0.2 with a 4.5 mm cell | Use the 3.8 mm cell or raise `bay` |
+| Cell to back cover | 0.80 | cell thickness: 3.8 for the chosen cell, other 402025 cells up to 4.5 | +0.1 with a 4.5 mm cell | Fits either cell |
 | Cell to USB-C body | 0.50 | cell width up to 20.5 on other cells, placement 0.3 | 0.0 | Cell must be located by the back cover's rib and foam |
 | Cell to side switch | 1.20 | same | 0.5 | Fine |
 | Board edge to wall | 0.30 | MJF 0.25, board 0.10 | -0.05 | Ream or file printed cases; fine in CNC |
@@ -84,12 +85,14 @@ What stays unproven: the bond's long-term seal, the gasket's real free thickness
 
 ## Clearances and interference
 
-From `cad/report.md` (generated). No part overlaps another except three intended ones (screw threads in their pilots, the cable in its connector, the receptacle body sitting in the board notch). All 21 checked clearances meet their minimum. Smallest: plunger to switch 0.04 (meant to touch), strap to lugs 0.10 a side, lens to display 0.15, display to case opening 0.20.
+From `cad/report.md` (generated). No part overlaps another except intended ones (screw threads in their pilots, the cable in its connector, the pad on the plunger). Every checked clearance and design rule meets its minimum; the list with values is in the report file.
 
 ## Preliminary structural estimates (not simulations)
 
 - Lug tear-out. Each bar tip sits 1.9 mm deep in a 1.0 mm hole, 2.4 mm from the lug end. Two shear planes of about 1.9 x 1.9 mm per tip, PA12 shear strength taken as 29 MPa (0.6 x 48 MPa tensile): about 200 N per tip, 400 N per bar, before any safety factor. With a factor of 3 for printed parts, about 130 N working load per bar. No test has been done; printed nylon lugs are the first thing to pull-test.
-- Cover screws. Four M1.4 screws in the lug roots. The long sides of the cover span about 38 mm between screws; a 1.0 mm nylon cover may not hold gasket pressure in the middle. If it leaks there, the fixes are a stiffer cover (CNC, or 1.5 mm) or adhesive gasket tape.
+- Cover screws. Four M1.4 screws in the lug roots. The long sides of the cover span about 45 mm between screws. The audit's arithmetic gives about 2.4 mm of bowing mid-span for a 1.0 mm nylon cover under gasket load, so **a printed nylon cover will not seal**. The sealing set needs a 1.5 mm aluminium cover (then re-test the antenna) or adhesive gasket tape instead of a compressed gasket. The printed set is for fit only.
+- Antenna. A steel spring bar sits about 6.5 mm from the antenna zone and two of the cover screws about 7.3 mm. The board notes say no metal fasteners at that end. For the first range test use a plastic bar and nylon screws at the antenna end, then compare with steel.
+- Thin features found by the audit: cover floor under the gasket groove 0.65 mm, screw-head floor 0.55 mm, lug webs 0.64-0.70 mm. Printable in MJF at the limit; fine in CNC.
 - Button. Switch force 1.6 N, O-ring drag unknown. The plunger's inner head stops it leaving the case.
 
 No finite-element analysis was run.
@@ -99,18 +102,18 @@ No finite-element analysis was run.
 1. Bond the lens to the case ledge. Bond the display to the lens underside inside the opening (frame of tape), tail toward the lower end.
 2. Fit the button O-ring and plunger from inside.
 3. Board (already assembled and tested): solder motor leads, stick the motor down. Fit the USB-C gasket into the port plate.
-4. Latch the display cable into J1 with the board held at an angle, then swing the board down onto the ribs and the two locating pins.
+4. Latch the display cable into J1 with the board held at an angle, then swing the board down onto the ribs and the two locating pins. This step has no proven slack: the connector sits 0.7 mm under the glass and its latch needs about 2 mm to open, and the cable's length is unknown. It must be tried with a real panel before a case design is frozen.
 5. Set the port plate against the connector with the shim, bond it, add the RTV fillet. Let it cure.
 6. Solder the cell leads, check polarity with a meter, bridge the battery jumper. Lay the cell on its foam pad.
 7. Program through the five pads beside the cell (they stay reachable with the cell in place).
 8. Fit the back gasket and cover, four screws.
 9. Fit the strap.
 
-Serviceable afterwards: back cover, cell, strap, board. Not serviceable without damage: lens, display, port plate.
+Serviceable afterwards: back cover, cell, strap. Not serviceable without damage: lens, display, port plate, and therefore the board (it is tied to the bonded plate by the connector and to the display by the cable).
 
 ## Prototype manufacturing plan
 
-1. One fit-check set in MJF PA12 (case, cover, plate, plunger) from a print bureau. Purpose: does everything go in. Not for sealing.
+1. One fit-check set in MJF PA12 (case, cover, plate, plunger) from a print bureau, built from `cad/step_mjf/` (`PQ_PROCESS=mjf python3 cad/build.py`: wider clearances for +/-0.25 mm printing). Purpose: does everything go in. Not for sealing.
 2. Measure real parts, update `params.py`, rebuild.
 3. One CNC set (or SLA tough resin, reamed) for sealing and strap tests.
 4. Lens: laser-cut 1.0 mm hard-coated acrylic for the first units.
@@ -121,7 +124,15 @@ No quotations were obtained. Bureau design-guide tolerances: MJF +/-0.25, CNC +/
 
 | | Reference | Rev C | Rev D (recommended) | Smaller alternative |
 |---|---|---|---|---|
-| Case | 36 x 43 x 12 | 34.8 x 41.8 x 10.9 | 34.8 x 41.8 x 11.2 | about 34.8 x 40.6 x 10.7 |
-| What changes | | | +0.3 for the gasket land and cell swell | Needs a 1 mm-tall radio module (-0.5 thickness, new board) and a shorter display cable loop (-1.2 length); neither can be confirmed without parts |
+| Case | 36 x 43 x 12 | 34.8 x 41.8 x 10.9 (could not have been built: USB-C seal) | 34.8 x 42.1 x 11.5 | about 34.8 x 40.6 x 11.0 |
+| What changes | | | +0.6 thickness for the port plate, +0.3 length for the cable fold | Needs a 1 mm-tall radio module (-0.5 thickness, new board) and a shorter display cable loop (-1.5 length); neither can be confirmed without parts |
 
-Rev D is the recommended size. The preferred 34 x 40 x 11 target is missed by 0.8 mm in width (set by the display glass plus walls), 1.8 mm in length (the display cable fold) and 0.2 mm in thickness (the USB-C connector's height).
+Rev D is the recommended size. The preferred 34 x 40 x 11 target is missed by 0.8 mm in width (set by the display glass plus walls), 2.1 mm in length (the display cable fold) and 0.5 mm in thickness (the USB-C connector's height and the plate that seals it). It is still smaller than the 36 x 43 x 12 reference in every dimension.
+
+## Changes after the re-audit (2026-11-23)
+
+- Button: the 1.8 mm wall could not hold the head counterbore, the O-ring groove and a proper wall each side (the re-audit measured a 0.16 mm lip). A round boss (5 mm x 1.0 mm) now thickens the wall to 2.8 mm at the button. Measured on `cad/step/case.step`: 0.59 mm and 0.60 mm of wall either side of the 0.90 mm groove. The counterbore is 0.70 mm deep, so the plunger can slide 0.25 mm outward to let the board and switch pass on assembly. Side effect: up to 0.25 mm of free play before the button bites; judge on a print.
+- O-ring is now defined as 2.0 mm inner diameter x 0.5 mm section for the 2.0 mm shaft. Not sourced.
+- Spring-bar centre moved from 3.2 to 3.5 mm off the case end: the web to the cover-screw pilot is 0.94 mm (0.79 mm in the print preset).
+- Print preset: port-plate window gap 0.40 mm.
+- `cad/report.md` formulas corrected: flex bend start is 0.89 mm (was printed as 1.03), pocket-to-gasket clearance 0.18 mm (was 0.22). Both still pass. Two rule checks added (groove walls, lug web).

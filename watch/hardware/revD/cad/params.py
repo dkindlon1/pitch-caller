@@ -28,7 +28,7 @@ P = dict(
     lcd_active=(23.04, 23.04),    # SEEN
     lcd_gap=0.35,                 # DESIGN: clearance between the tallest top-side part zone and the glass underside
     fpc_w=6.0, fpc_t=0.12,        # EST: tail width and thickness (the Sharp figure is an image; measure the part)
-    fpc_loop=1.6,                 # EST: how far the folded tail reaches past the glass edge (bend radius >= 0.45 SEEN)
+    fpc_loop=1.9,                 # DESIGN: room past the glass edge for the fold. Sharp allows bending only from 0.8 mm beyond the glass (SEEN), radius >= 0.45
     # ---- lens --------------------------------------------------------------------------------------------------------
     lens_t=1.00, lens_adh=0.15,   # DESIGN: hard-coated PMMA or glass, bonded with a die-cut frame of tape
     lens_ledge=1.2,               # DESIGN: bond ledge width all round
@@ -37,17 +37,17 @@ P = dict(
     top_zone=2.35,                # DESIGN: height reserved above the board (module 2.05 +0.2 SEEN, motor 2.1 + tape)
     module=(10.5, 15.5, 2.05),    # SEEN Raytac MDBT50Q-1MV2 (x, y, z)
     motor=(8.0, 2.1),             # SEEN diameter, thickness
-    fpc_conn=(9.0, 5.6, 2.0),     # EST Hirose FH12-10S body (width, depth, height): not read from the drawing
+    fpc_conn=(9.1, 5.6, 2.0),     # SEEN on KiCad's 3D model of FH12-10S-0.5SH (width, depth, height); cable slot on the footprint's +y side
     pmic=(5.0, 5.0, 0.9),         # SEEN package
     # ---- bottom-side parts and the bay -------------------------------------------------------------------------------
     cell=(19.75, 26.0, 3.8),      # SEEN Adafruit 1317 (x, y, thickness). Other 402025 cells run to 20.5 x 29 x 4.5 (SEEN max)
     cell_xy=(6.6, 9.8),           # DESIGN: 0.5 mm clear of the back of the USB-C body
     cell_gap=0.5,                 # DESIGN: foam / Kapton between the board's bottom and the cell (clears the USB-C solder tails)
-    bay=4.80,                     # DESIGN: board bottom to back cover. Set by the USB-C gasket land (see usb_*), not by the cell
+    bay=5.10,                     # DESIGN: board bottom to back cover. Set by the port plate: it needs >= 0.6 mm of material under the gasket pocket
     switch=(2.56, 4.5, 3.3),      # EST Alps SKRTLAE010 body (x, y, height below the board); plunger tip at the board edge
     switch_travel=0.2, switch_force=1.6,   # SEEN
     # ---- USB-C receptacle (GCT USB4715-GF-A) and its gasket (USBTJ-04) ------------------------------------------------
-    usb_flange=(10.54, 4.76, 0.6),      # SEEN width, height; EST flange thickness
+    usb_flange=(10.54, 4.76, 0.2),      # SEEN width, height; EST flange thickness (sheet metal; it stands in front of the board edge, wider than the 10.30 notch)
     usb_shell=(9.94, 4.46),             # SEEN width, height behind the flange
     usb_nose=(8.34, 2.56, 1.90),        # SEEN tongue shell width, height, length in front of the flange
     usb_sink=0.55,                      # SEEN: how far the body sinks into the board notch
@@ -55,10 +55,10 @@ P = dict(
     usb_tail=(7.55, 0.30),              # SEEN pad end; EST tail + solder height below the board's bottom face
     gasket_free=1.50, gasket_outer=(10.64, 4.86), gasket_inner=(8.94, 3.16),   # SEEN
     gasket_compressed=0.975,            # DESIGN target (35 %); GCT: at least 0.45 compression, 30-40 % suggested -> 0.90..1.05
-    pocket=(11.00, 5.90, 0.90),         # SEEN: recess in the inside of the wall (width, height, depth)
+    pocket=(11.00, 5.30, 0.90),         # width and depth SEEN (GCT 11.00 x 5.90 x 0.90). Height reduced to 5.30 (DESIGN): still 0.22 mm clear of the 4.86 gasket all round, and leaves 0.6 mm of plate under it
     port_open=(9.14, 3.36),             # SEEN: through-opening for the nose
     plate=(14.4, 1.0),                  # DESIGN: port-plate width along the wall, and how far it rises above the pocket top
-    plate_gap=0.40,                     # DESIGN: bond gap all round the port plate (lets the plate follow the real connector)
+    plate_gap=0.15,                     # DESIGN: fit clearance round the port plate. The window locates the plate in y and z; only its depth (x) is set against the real connector
     # ---- case --------------------------------------------------------------------------------------------------------
     clear=0.30,                   # DESIGN: board edge to inner wall
     wall=1.80,                    # SEEN: GCT's panel thickness for the gasket pocket; also our wall everywhere
@@ -68,14 +68,20 @@ P = dict(
     screw_from_face=1.5,          # DESIGN: cover screws sit in the lug roots, this far outside the case end faces
     screw=(1.4, 1.12, 2.6, 5.0),  # EST: M1.4 thread-forming screw: thread dia, pilot hole, head dia, length. Not selected from a catalogue
     rib=(1.5, 3.0),               # DESIGN: wall ribs that the board's top face stops against (reach over the board, length)
-    post_d=3.0, pin_d=1.45,       # DESIGN: back-cover posts under the two lower board holes, with locating pins (holes are 1.6)
+    post_d=2.6, pin_d=1.10,       # DESIGN: posts and locating pins. Pins are 0.5 mm loose in the 1.6 holes because two different parts carry them
+    post_foam=0.5,                # DESIGN: cover posts stop this far below the board; a foam pad takes up the gap (the ribs above set the board's height)
     # ---- button ------------------------------------------------------------------------------------------------------
     plunger=(2.0, 3.0, 0.6),      # DESIGN: shaft dia, inner head dia, how far the cap stands proud of the case
-    plunger_oring=(1.5, 0.5),     # EST: O-ring inner dia x section (gland per Apple Rubber table: depth 0.33-0.36, width 0.89 SEEN)
+    plunger_pad=0.5,              # DESIGN: soft pad between plunger and switch: absorbs the +/-0.4 mm stack-up, lets the board pass on assembly
+    plunger_bore=2.30, gland=(2.72, 0.89),   # DESIGN bore for the 2.0 shaft; gland diameter and width (Apple Rubber table for a 0.5 section: depth 0.33-0.36, width 0.89 SEEN)
+    button_boss=(5.0, 1.0),       # DESIGN: round boss on the outer wall at the button (dia, height). The 1.8 mm wall cannot hold a head counterbore, a gland and 0.6 mm lands (re-audit N1)
+    plunger_retract=0.25,         # DESIGN: how far the plunger can slide outward, so the board and switch pass it on assembly
+    gland_land=0.6,               # DESIGN: minimum wall each side of the O-ring groove
+    plunger_oring=(2.0, 0.5),     # EST, NOT SOURCED: O-ring inner dia x section for the 2.0 shaft (gland per Apple Rubber table: depth 0.33-0.36, width 0.89 SEEN)
     # ---- lugs and strap (Archer 20 mm quick-release silicone) -----------------------------------------------------------
     lug_gap=20.0,                 # DESIGN: +0.10 / -0; model 20.2 for printed parts and ream
     lug_w=4.0, lug_len=5.6, lug_h=4.4,       # DESIGN
-    bar_from_face=3.2,            # DESIGN: bar centre from the case end face (clears a 3 mm strap end swinging)
+    bar_from_face=3.5,            # DESIGN: bar centre from the case end face (clears a 3 mm strap end swinging)
     bar_z_from_back=2.2,          # DESIGN: bar centre above the back face
     bar=(1.8, 0.9, 1.9),          # SEEN Archer quick-release bar body dia and tip dia; EST tip engagement
     lug_hole=(1.0, 1.9),          # DESIGN: hole dia for a 0.9 tip, depth
@@ -83,6 +89,11 @@ P = dict(
     # ---- process tolerances used by the tolerance report -----------------------------------------------------------------
     tol_mjf=0.25, tol_cnc=0.13, tol_pcb=0.10, tol_place=0.10,   # SEEN (service-bureau design guides), EST placement
 )
+# Allowances for a first fit-check print in MJF nylon (+/-0.25): PQ_PROCESS=mjf python3 cad/build.py writes cad/step_mjf/.
+MJF = dict(aperture_margin=0.40, clear=0.45, lug_gap=20.3, lug_hole=(1.3, 1.9), lens_recess_margin=0.30, plate_gap=0.40)
+P["lens_recess_margin"] = 0.10
+PROCESS = os.environ.get("PQ_PROCESS", "nominal")
+if PROCESS == "mjf": P.update(MJF)
 
 def derived(P=P):
     """Stack and envelope numbers that follow from P. Returned as a dict so the report and the drawings use the same values."""
@@ -107,10 +118,11 @@ def derived(P=P):
     D["x_flange"] = D["x_pocket"] + P["gasket_compressed"]     # front face of the receptacle flange when the gasket is at target
     D["usb_overhang"] = -(D["x_flange"] - P["usb_nose"][2])    # nose tip past the board edge (GCT: 2.10)
     D["land_margin"] = (D["z_usb_c"] - P["gasket_outer"][1] / 2) - D["z_bay"]   # wall material below the gasket's lower edge
+    D["pocket_floor_margin"] = (D["z_usb_c"] - P["pocket"][1] / 2) - D["z_bay"]  # plate material below the pocket
     D["cell_z1"] = D["z_board_bot"] - P["cell_gap"]; D["cell_z0"] = D["cell_z1"] - P["cell"][2]
     D["cell_swell_room"] = D["cell_z0"] - D["z_bay"]
     return D
 
 if __name__ == "__main__":
     D = derived()
-    for k in ("case_w", "case_l", "thickness", "lug_to_lug", "usb_overhang", "land_margin", "cell_swell_room"): print(f"{k:16s} {D[k]:.2f}")
+    for k in ("case_w", "case_l", "thickness", "lug_to_lug", "usb_overhang", "land_margin", "pocket_floor_margin", "cell_swell_room"): print(f"{k:16s} {D[k]:.2f}")

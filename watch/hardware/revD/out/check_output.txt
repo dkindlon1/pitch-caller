@@ -13,10 +13,10 @@ board check: 62 footprints, 142 vias, 434 track segments, copper layers 6, pad-n
 DRC (KiCad 7.0.11): errors 0 {}, unconnected 0, warnings 68 {'silk_over_copper': 2, 'lib_footprint_issues': 66}
 antenna strip check (full width y 0-4.0 mm, module zone x 6.5-23.5 y 0-4.45 mm, 6 layers): foreign copper items 0
 == 3 BOM: every fitted part has an MPN, a source and (if machine-placed) an LCSC number
-CPL rows: 48
-BOM lines 39, SMT parts 48, unique SMT part numbers 25
+CPL rows: 46
+BOM lines 39, SMT parts 46, unique SMT part numbers 23
 on-board parts incl. battery+motor: $25.61 @1, $20.34 @~100; display +$12.39 @1 / +$7.97 @100; with display: $38.00 @1, $28.31 @~100
-JLCPCB sides: {'F': 39, 'B': 9}
+JLCPCB sides: {'F': 38, 'B': 8}
 SMT parts without an LCSC number: []
 BOM lines missing MPN or source: []
 == 4 manufacturing files present

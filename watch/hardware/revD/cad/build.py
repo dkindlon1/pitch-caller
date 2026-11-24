@@ -91,11 +91,16 @@ def build():
     case = rrect(X0, X1, Y0, Y1, r, ZBAY, ZT)
     case = case.cut(rrect(IX0, IX1, IY0, IY1, PM.BOARD_R + P["clear"], ZBAY - 1, D["z_lcd0"] - 0.15))        # cavity up to the underside of the bezel
     case = case.cut(box(ax0, ax1, ay0, ay1, D["z_lcd0"] - 1, ZT + 1))                                         # display opening
-    case = case.cut(rrect(Lx0 - 0.1, Lx1 + 0.1, Ly0 - 0.1, Ly1 + 0.1, 1.6, D["z_lcd1"], ZT + 1))              # lens recess (ledge at the glass top level)
+    lm = P["lens_recess_margin"]
+    case = case.cut(rrect(Lx0 - lm, Lx1 + lm, Ly0 - lm, Ly1 + lm, 1.6, D["z_lcd1"], ZT + 1))              # lens recess (ledge at the glass top level)
     g = P["plate_gap"]
     case = case.cut(box(X0 - 1, D["x_wall_in"] + 0.01, usb_y - pw / 2 - g, usb_y + pw / 2 + g, ZBAY - 1, ptop + g))   # window for the port plate
-    case = case.cut(xcyl(IX1 - 0.5, X1 + 1, sw[1], zsw, P["plunger"][0] + 0.15))                              # button bore
-    case = case.cut(xcyl(IX1 - 0.01, IX1 + 0.5, sw[1], zsw, P["plunger"][1] + 0.3))                           # counterbore for the plunger's retaining head
+    bb = P["button_boss"]; XB = X1 + bb[1]                                                                    # outer face of the button boss
+    case = case.union(xcyl(X1 - 0.5, XB, sw[1], zsw, bb[0]))                                                   # local boss: wall is 1.8 + boss here
+    CB = 0.45 + P["plunger_retract"]; G0 = IX1 + CB + P["gland_land"]                                          # counterbore depth; where the gland starts
+    case = case.cut(xcyl(IX1 - 0.5, XB + 1, sw[1], zsw, P["plunger_bore"]))                                    # button bore
+    case = case.cut(xcyl(G0, G0 + P["gland"][1], sw[1], zsw, P["gland"][0]))                                   # O-ring gland in the bore
+    case = case.cut(xcyl(IX1 - 0.01, IX1 + CB, sw[1], zsw, P["plunger"][1] + 0.3))                            # counterbore for the plunger's retaining head, with room to retract
     rb = P["rib"]                                                                                             # ribs the board's top face stops against
     for (x, y, sx, sy) in ((IX0, IY0, 1, 1), (IX1, IY0, -1, 1)):                                               # two at the antenna end (plastic only there)
         case = case.union(box(min(x, x + sx * (rb[0] + P["clear"])), max(x, x + sx * (rb[0] + P["clear"])), min(y, y + sy * rb[1]), max(y, y + sy * rb[1]), 0.0, D["z_lcd0"] - 0.14))
@@ -129,8 +134,10 @@ def build():
     back = back.cut(groove)
     for x, y in sc: back = back.cut(cyl(x, y, scr[0] + 0.2, ZBACK - 1, ZBAY + 1)).cut(cyl(x, y, scr[2] + 0.3, ZBACK - 0.01, ZBACK + 0.45))
     for hx, hy in PM.HOLES[2:]:                                                                                # posts under the lower board holes, with locating pins
-        back = back.union(cyl(hx, hy, P["post_d"], ZBAY - 0.01, zb)).union(cyl(hx, hy, P["pin_d"], zb - 0.01, 0.4))
-    back = back.union(box(cx + 2, cx + cw - 2, cy + cl + 0.4, cy + cl + 1.2, ZBAY - 0.01, ZBAY + 1.5))         # cell stop rib (lower end)
+        back = back.union(cyl(hx, hy, P["post_d"], ZBAY - 0.01, zb - P["post_foam"])).union(cyl(hx, hy, P["pin_d"], zb - P["post_foam"] - 0.01, 0.4))
+    back = back.union(box(cx + 2, cx + cw - 2, cy + cl + 0.4, cy + cl + 1.2, ZBAY - 0.01, ZBAY + 1.5))         # cell stop ribs: lower end, upper end, and one each side
+    back = back.union(box(cx + 2, cx + cw - 2, cy - 1.2, cy - 0.4, ZBAY - 0.01, ZBAY + 1.5))
+    back = back.union(box(cx - 0.9, cx - 0.3, cy + 17.0, cy + 23.0, ZBAY - 0.01, ZBAY + 1.5)).union(box(cx + cw + 0.3, cx + cw + 0.75, cy + 14.0, cy + 20.0, ZBAY - 0.01, ZBAY + 1.5))
     parts["back_cover"] = back
     parts["back_gasket"] = groove.translate((0, 0, 0))                                                         # drawn at its compressed size (fills the groove)
     screws = None
@@ -140,8 +147,10 @@ def build():
     parts["cover_screws"] = screws
     # ------------------------------------------------------------------ button plunger and its O-ring
     pl = P["plunger"]; orr = P["plunger_oring"]
-    parts["button_plunger"] = xcyl(W - 0.02, X1 + pl[2], sw[1], zsw, pl[0]).union(xcyl(IX1 + 0.02, IX1 + 0.45, sw[1], zsw, pl[1]))
-    parts["button_oring"] = xcyl(IX1 + 0.75, IX1 + 0.75 + 0.5, sw[1], zsw, pl[0] + 0.14).cut(xcyl(IX1, X1, sw[1], zsw, pl[0]))   # marker ring at the gland position
+    xt = W - 0.06 + P["plunger_pad"]                                                                          # plunger's inner end: one pad thickness clear of the switch stem
+    parts["button_plunger"] = xcyl(xt, XB + pl[2], sw[1], zsw, pl[0]).union(xcyl(IX1 + 0.02, IX1 + 0.45, sw[1], zsw, pl[1]))
+    parts["button_pad"] = xcyl(W - 0.05, xt, sw[1], zsw, pl[0])                                                # soft silicone pad on the plunger tip (touches the switch stem)
+    parts["button_oring"] = xcyl(G0 + 0.2, G0 + 0.7, sw[1], zsw, P["gland"][0] - 0.02).cut(xcyl(IX1, XB, sw[1], zsw, pl[0]))   # 2.0 x 0.5 O-ring in its gland, drawn compressed
     # ------------------------------------------------------------------ spring bars and strap stubs
     bars = None; straps = None; b = P["bar"]; st = P["strap"]
     for ybar, sgn in ((Y0 - P["bar_from_face"], -1), (Y1 + P["bar_from_face"], 1)):
@@ -157,7 +166,7 @@ def build():
 # overlap between them still gets reported if it exceeds the tolerance below)
 MARKERS = {"antenna_keepout"}
 PRESS = {("button_oring", "case"), ("back_gasket", "back_cover"), ("usb_gasket", "port_plate"), ("usb_gasket", "usb_c"), ("lcd_fpc", "fpc_connector"),
-         ("cover_screws", "case"), ("spring_bars", "case"), ("spring_bars", "strap"), ("pcb", "usb_c"), ("back_gasket", "port_plate")}
+         ("cover_screws", "case"), ("spring_bars", "case"), ("spring_bars", "strap"), ("button_pad", "side_switch"), ("button_pad", "button_plunger")}
 
 def vol(s): return s.val().Volume()
 def checks(parts, verbose=True):
@@ -174,11 +183,20 @@ def checks(parts, verbose=True):
     need = [("cell", "usb_c", 0.15), ("cell", "side_switch", 0.30), ("cell", "back_cover", 0.10), ("cell", "pcb", 0.30), ("lcd", "ble_module", 0.20), ("lcd", "motor", 0.20),
             ("lcd", "fpc_connector", 0.20), ("lcd", "case", 0.10), ("usb_c", "back_cover", 0.15), ("usb_c", "case", 0.20), ("side_switch", "back_cover", 0.20),
             ("pcb", "case", 0.0), ("lens", "lcd", 0.10), ("strap", "case", 0.05), ("motor", "case", 0.15), ("ble_module", "case", 0.15), ("fpc_connector", "case", 0.15),
-            ("lcd_fpc", "case", 0.15), ("lcd_fpc", "back_cover", 0.15), ("spring_bars", "cover_screws", 0.25), ("button_plunger", "side_switch", 0.0)]
+            ("lcd_fpc", "case", 0.15), ("lcd_fpc", "back_cover", 0.15), ("spring_bars", "cover_screws", 0.25), ("button_plunger", "side_switch", 0.30),
+            ("back_cover", "pcb", 0.20), ("cell", "port_plate", 0.50)]
     cl = []
     for a, b, req in need:
         d = dist(a, b); ok = d + 1e-6 >= req
         cl.append((a, b, d, req, ok)); hard += 0 if ok else 1
+    # design rules that are numbers rather than distances between solids
+    rules = [("plate material under the gasket pocket", D["pocket_floor_margin"], 0.60), ("wall under the gasket's sealing face", D["land_margin"], 0.60),
+             ("flex bend start beyond the glass edge", P["fpc_loop"] - 0.3 - P["fpc_t"] - (D["z_lcd0"] - (P["fpc_conn"][2] - 0.6) - P["fpc_t"]) / 2, 0.80), ("cell swelling room", D["cell_swell_room"], 0.30),
+             ("pin clearance in the 1.6 mm board holes", (1.6 - P["pin_d"]) / 2, 0.20), ("pocket clear of the gasket, per side (smaller of the two directions)", min(P["pocket"][0] - P["gasket_outer"][0], P["pocket"][1] - P["gasket_outer"][1]) / 2, 0.15),
+             ("wall each side of the button O-ring groove", min(P["gland_land"], P["wall"] + P["button_boss"][1] - 0.45 - P["plunger_retract"] - P["gland_land"] - P["gland"][1]), 0.60),
+             ("web between cover-screw pilot and spring-bar hole", P["bar_from_face"] - P["screw_from_face"] - P["screw"][1] / 2 - P["lug_hole"][0] / 2, 0.75)]
+    for name, val, req in rules:
+        ok = val + 1e-6 >= req; cl.append((name, "(rule)", val, req, ok)); hard += 0 if ok else 1
     return out, cl, hard
 
 def main():
@@ -189,17 +207,19 @@ def main():
     for a, b, d, req, ok in clear: print(f"  clearance {a} - {b}: {d:.2f} mm (need {req:.2f}) {'ok' if ok else 'TOO SMALL'}")
     print("CAD CHECK:", "PASS" if hard == 0 else f"FAIL ({hard} hard findings)")
     if "--check" in sys.argv: sys.exit(1 if hard else 0)
-    os.makedirs(os.path.join(HERE, "step"), exist_ok=True); os.makedirs(os.path.join(HERE, "views"), exist_ok=True)
+    STEP = "step" if PM.PROCESS == "nominal" else "step_" + PM.PROCESS
+    os.makedirs(os.path.join(HERE, STEP), exist_ok=True); os.makedirs(os.path.join(HERE, "views"), exist_ok=True)
     colors = {"pcb": (0.1, 0.45, 0.2), "case": (0.15, 0.15, 0.17), "back_cover": (0.2, 0.2, 0.22), "lens": (0.6, 0.8, 0.95), "lcd": (0.75, 0.78, 0.7), "cell": (0.7, 0.7, 0.75),
               "usb_c": (0.8, 0.8, 0.82), "strap": (0.05, 0.05, 0.05), "port_plate": (0.35, 0.35, 0.4), "usb_gasket": (0.9, 0.3, 0.2), "back_gasket": (0.9, 0.3, 0.2), "button_oring": (0.9, 0.3, 0.2)}
     asm = cq.Assembly(name="pitchiq_watch_revD")
     for n, s in parts.items():
         if n in MARKERS: continue
-        cq.exporters.export(s, os.path.join(HERE, "step", n + ".step"))
+        cq.exporters.export(s, os.path.join(HERE, STEP, n + ".step"))
         c = colors.get(n, (0.6, 0.6, 0.6)); asm.add(s, name=n, color=cq.Color(*c, 0.35 if n == "lens" else 1.0))
+    if PM.PROCESS != "nominal": print("wrote", STEP, "(fit-check allowances); nominal assembly, views and report left untouched"); sys.exit(1 if hard else 0)
     asm.save(os.path.join(HERE, "assembly.step"))
     # exploded view: move groups apart along z
-    lift = {"lens": 14, "lens_adhesive": 11, "lcd": 8, "lcd_fpc": 8, "case": 3, "port_plate": 3, "usb_gasket": 0, "button_plunger": 3, "button_oring": 3, "pcb": -6, "ble_module": -6, "motor": -6,
+    lift = {"lens": 14, "lens_adhesive": 11, "lcd": 8, "lcd_fpc": 8, "case": 3, "port_plate": 3, "usb_gasket": 0, "button_plunger": 3, "button_oring": 3, "button_pad": 3, "pcb": -6, "ble_module": -6, "motor": -6,
             "fpc_connector": -6, "pmic": -6, "accelerometer": -6, "usb_c": -6, "side_switch": -6, "cell": -12, "back_gasket": -17, "back_cover": -20, "cover_screws": -27, "spring_bars": 3, "strap": 3}
     ex = cq.Assembly(name="exploded")
     for n, s in parts.items():

@@ -1,4 +1,4 @@
-# PitchIQ watch firmware (rev C; the history below was written for rev B, see "Rev C changes" at the end), Zephyr v4.4.2
+# PitchIQ watch firmware (rev D; the history below was written for rev B, see "Rev C changes" and "Rev D changes" at the end), Zephyr v4.4.2
 
 First working firmware for the custom watch (nRF52840 in a Raytac MDBT50Q module). The message logic is the tested portable C in
 `core/` (not modified); everything else here is hardware glue.
@@ -173,3 +173,16 @@ Compile-checked only (nothing was flashed or run on hardware); logs in `build_lo
 * Still open from the rev C review (not fixed): the charger code never clears charger errors and does not disable the charger before
   changing the charge current; no trickle-charge setting for a deeply discharged cell; the motor duty cap uses a battery reading that can
   be up to 60 s old; no guard against repeated watchdog resets; the connection interval is fixed at 20 ms.
+
+## Rev D changes (2026-11-23)
+
+* Flat cell: the charger is told to charge a cell below the low-battery threshold (`BCHGVBATLOWCHARGE`, register 0x50 = 1) before it is
+  enabled. Charger errors: while USB is present the lite code reads the error reason (0x36), clears it (0x00) and re-enables charging, at
+  most 5 times per plug-in (`app/src/power.c`). Register addresses come from Nordic's product specification v1.3; none of this has run on
+  a chip.
+* Board file: model string is rev D; BUCK1 is not fitted on the board (no inductor, pins open), only BUCK2 (3.0 V) is used.
+* Rebuilt after the last source change: `pitchiq_watch` exit 0, 226,516 B flash (46.88 %), 50,656 B RAM; `nrf52840dk/nrf52840` exit 0;
+  core host tests all pass. Logs: `build_logs/boss_revD_pitchiq.log`, `boss_revD_dk.log`, `boss_revD_core.log`.
+* A clean compile is all that exists. Nothing here has run on a watch board, and the dev-kit build has not been flashed either.
+* Still open: charger is not disabled before changing the charge current; the motor duty cap uses a battery reading up to 60 s old; no
+  guard against repeated watchdog resets; connection interval fixed at 20 ms.

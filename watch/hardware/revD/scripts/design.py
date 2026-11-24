@@ -38,8 +38,8 @@ other = {"3": "P1.10", "4": "P1.11", "5": "P1.12", "6": "P1.13", "7": "P1.14", "
          "52": "P0.09", "54": "P0.10", "56": "P1.04", "57": "P1.06", "58": "P1.07", "59": "P1.05", "60": "P1.03", "61": "P1.01"}
 part("U1", "MDBT50Q-1MV2", "RF_Module:Raytac_MDBT50Q",
      [(n,) + used[n] if n in used else (n, other[n], NC, "nc") for n in map(str, range(1, 62))],
-     mpn="MDBT50Q-1MV2", mfr="Raytac", lcsc="C5118826", desc="nRF52840 BLE module, chip antenna, FCC ID SH6MDBT50Q (LCSC out of stock Nov 23: consign)",
-     src="https://www.sparkfun.com/nordic-nrf52840-ble-module-mdbt50q-1mv2.html")
+     mpn="MDBT50Q-1MV2", mfr="Raytac", lcsc="C5118826", desc="nRF52840 BLE module, chip antenna, FCC ID SH6MDBT50Q. Not in the assembler's files (LCSC out of stock Nov 23): fit with hot air or a hot plate after the board arrives, or supply it to the assembler if they accept customer parts",
+     src="https://www.sparkfun.com/nordic-nrf52840-ble-module-mdbt50q-1mv2.html", hand=True)
 C10u("C1", "3V0", "module bulk decoupling, next to VDD/VDDH pads"); C100n("C2", "3V0", "module decoupling")
 two("Y1", "32.768kHz", "Crystal:Crystal_SMD_3215-2Pin_3.2x1.5mm", "XL1", "XL2", mpn="Q13FC13500004", mfr="Epson", lcsc="C32346", desc="FC-135 32.768 kHz 12.5 pF")
 for r, n in (("C3", "XL1"), ("C4", "XL2")):
@@ -94,7 +94,9 @@ C100n("C13", "3V0", "accelerometer decoupling, Vdd (pin 9)"); C100n("C26", "3V0"
 # face UP (away from the board) and terminal 1 is still on the right (east). So: TOP-contact connector (Sharp names a
 # top-contact type for the folded arrangement), cable entry toward the lower board edge, and Sharp terminal 1 on the east end.
 # This footprint's pad 1 is at the WEST end with the cable entry south, so pad n carries Sharp terminal 11 - n.
-# Evidence and remaining doubt: reviews/p1_display_connector.md. Must be confirmed with a real panel before boards are ordered.
+# Cable-entry side checked on KiCad's own 3D model of this connector (actuator and slot at footprint +y = toward the lower
+# board edge at rotation 0). Evidence and remaining doubt: reviews/p1_display_connector.md. Sharp's contact face and tail
+# length must still be confirmed on a real panel: do a power-off continuity check before first power (pads 1, 2 = panel VSS).
 part("J1", "LCD FPC 10p 0.5mm, top contact", "Connector_FFC-FPC:Hirose_FH12-10S-0.5SH_1x10-1MP_P0.50mm_Horizontal",
      [("10", "T1 SCLK", "LCD_SCK", "in"), ("9", "T2 SI", "LCD_MOSI", "in"), ("8", "T3 SCS", "LCD_CS", "in"), ("7", "T4 EXTCOMIN", "LCD_EXTCOMIN", "in"), ("6", "T5 DISP", "LCD_DISP", "in"),
       ("5", "T6 VDDA", "3V0", "pi"), ("4", "T7 VDD", "3V0", "pi"), ("3", "T8 EXTMODE", "LCD_EXTMODE", "in"), ("2", "T9 VSS", "GND", "pi"), ("1", "T10 VSSA", "GND", "pi"), ("MP", "MP", "GND")],
@@ -124,7 +126,7 @@ part("J3", "USB-C receptacle (power only, IP67)", "PQ:USB4715",
      [("A12", "GND", "GND", "pi"), ("B12", "GND", "GND", "pi"), ("A9", "VBUS", "VBUS", "po"), ("B9", "VBUS", "VBUS", "pas"), ("A5", "CC1", "CC1", "pas"), ("B5", "CC2", "CC2", "pas"),
       ("S1", "SHELL", "GND", "pas"), ("S2", "SHELL", "GND", "pas"), ("S3", "SHELL", "GND", "pas"), ("S4", "SHELL", "GND", "pas")],
      mpn="USB4715-GF-A", mfr="GCT", lcsc="C6906846", desc="waterproof USB Type-C, charging only; gasket USBTJ-04 is fitted after soldering (kit: USB4715-GF-A-KIT, C5984345). LCSC out of stock Nov 23: buy at Mouser and consign",
-     src="https://octopart.com/part/gct/USB4715-GF-A", side="B")
+     src="https://octopart.com/part/gct/USB4715-GF-A", side="B", hand=True)   # hand-fitted: out of stock at LCSC, its placement origin is the notch edge, and the shell stakes are hand-soldered anyway
 
 # No external CC pull-downs, on purpose: the nPM1300 has its own 5.1 k Rd on CC1/CC2 (Product Specification v1.3, table 9).
 # External 5.1 k in parallel would present about 2.55 k, outside the USB Type-C sink range. Whether the internal Rd is
