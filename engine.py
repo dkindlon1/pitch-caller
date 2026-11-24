@@ -32,8 +32,13 @@ from run_tables import IN_PLAY_BY_LEVEL   # v0.5: untyped in-play tables (calibr
 # app/export_data.py copies the selected tables into app/engine_data.json for the JS engine.
 # ---------------------------------------------------------------------------
 TABLES_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "data_tables")
-TABLE_DEFAULT = {"zone": "v13", "count": "v13core", "run": "v13core"}   # v1.3 core (feat/hitter-v13-core): zone_v13 (ruling 2, gate H = 0), count / run v13core (D1 + HS candidates, HS pitch kind x velocity; D2 / D3 v1.2 count layer)
-TABLE_ENV = {"zone": "PITCH_ZONE_TABLE", "count": "PITCH_COUNT_TABLE", "run": "PITCH_RUN_TABLE"}
+TABLE_DEFAULT = {"zone": "v13", "count": "v13core", "run": "v13core", "mp": "v13"}   # v1.3 core (feat/hitter-v13-core): zone_v13 (ruling 2, gate H = 0), count / run v13core (D1 + HS candidates, HS pitch kind x velocity; D2 / D3 v1.2 count layer)
+TABLE_ENV = {"zone": "PITCH_ZONE_TABLE", "count": "PITCH_COUNT_TABLE", "run": "PITCH_RUN_TABLE", "mp": "PITCH_MP_TABLE"}
+# v1.3 (Drew's Nov 24 ruling 12): the per-count mean-preservation scalars (mp_<v>.json): per level and count, one logit level
+# shift per outcome, added to every band, zone cell, pitch kind and speed in that count (count_cells folds them in), computed
+# by hitter_data/mean_preserve.py so the reference world reproduces the fitted count layer. mp_v0 = all 0 (before the ruling).
+T_MP_OUT = ("swing", "whiff", "foul", "cstrike", "bip_gb")
+T_MP_LEVELS = ("mlb", "college_d1", "college_d2", "college_d3", "hs")
 T_BANDS = ("heart", "edge", "off", "noncomp")
 T_PROFILES = ("FB", "SI", "FC", "SL", "SW", "CB", "CH", "SP")
 T_COUNT_GROUPS = ("first", "ahead", "even", "behind", "two")
@@ -81,6 +86,11 @@ def check_table(t, path="table"):
             for o in T_ZONE_OUT:
                 _need(all(num(cells.get(o, {}).get(z, {}).get(p, {}).get(g, {}).get(h)) for z in T_BANDS for p in T_PROFILES
                           for g in T_COUNT_GROUPS for h in T_HEIGHTS), path, f"{name}.{o} needs band > profile > count group > height")
+    elif kind == "mp":
+        for lv in T_MP_LEVELS:
+            L = t.get("levels", {}).get(lv)
+            _need(isinstance(L, dict) and all(num(L.get(o, {}).get(c)) for o in T_MP_OUT for c in T_COUNTS), path,
+                  f"levels.{lv} needs swing / whiff / foul / cstrike / bip_gb > count (levels: {', '.join(T_MP_LEVELS)})")
     elif kind == "count":
         for lv, L in t.get("levels", {}).items():
             for o in T_COUNT_BAND_OUT:
@@ -1310,18 +1320,42 @@ def zone_cells(level, prof, cg, ht):
 
 TABLE_LEVEL_ALIAS = {"travel": "hs", "college": "college_d1"}
 _CT = TABLES["count"]["levels"]
+_MP = TABLES["mp"]["levels"]
 _CNT = {}
+
+
+def mp_cells(level, b, k):
+    """v1.3 ruling 12: the mean-preservation scalars (swing, whiff, foul, cstrike, bip_gb logit shifts) for this level and count"""
+    M = _MP.get(level) or _MP[TABLE_LEVEL_ALIAS[level]]
+    c = f"{b}-{k}"
+    return tuple(M[o][c] for o in T_MP_OUT)
+
+
+def use_mp_table(t):
+    """Swap the mean-preservation table in place (fit code). Returns the table it replaced. Python only (JS: engine_data.json)."""
+    global _MP
+    check_table(t)
+    old = TABLES["mp"]
+    TABLES["mp"] = t
+    TABLE_VERSIONS["mp"] = t["version"]
+    _MP = t["levels"]
+    _CNT.clear()
+    _GBV.clear()
+    return old
 
 
 def count_cells(level, b, k):
     """the count table's row for this level and count: ({band: (swing, whiff, foul, hard)}, called-strike kappa, ball-in-play
-    ground-ball offset). Travel uses high school's, 'college' D1's; a level the file lacks raises KeyError."""
+    ground-ball offset), with the mean-preservation scalars (mp_cells, ruling 12) added to swing / whiff / foul on every band,
+    to the kappa and to the ground-ball offset. Travel uses high school's, 'college' D1's; a level the file lacks raises KeyError."""
     key = (level, b, k)
     v = _CNT.get(key)
     if v is None:
         L = _CT.get(level) or _CT[TABLE_LEVEL_ALIAS[level]]
         c = f"{b}-{k}"
-        v = ({z: tuple(L[o][c][z] for o in T_COUNT_BAND_OUT) for z in T_BANDS}, L["cstrike"][c], L["bip_gb"][c])
+        msw, mwh, mfo, mcs, mgb = mp_cells(level, b, k)
+        v = ({z: (L["swing"][c][z] + msw, L["whiff"][c][z] + mwh, L["foul"][c][z] + mfo, L["hard"][c][z]) for z in T_BANDS},
+             L["cstrike"][c] + mcs, L["bip_gb"][c] + mgb)
         _CNT[key] = v
     return v
 
@@ -1337,7 +1371,7 @@ def gb_by_count(level):
     v = _GBV.get(level)
     if v is None:
         L = _CT.get(level) or _CT.get(TABLE_LEVEL_ALIAS.get(level, ""))
-        v = _GBV[level] = bool(L) and len(set(L["bip_gb"].values())) > 1
+        v = _GBV[level] = bool(L) and len({count_cells(level, b, k)[2] for b in range(4) for k in range(3)}) > 1
     return v
 
 

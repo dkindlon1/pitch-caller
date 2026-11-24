@@ -340,6 +340,7 @@ def main():
     pin = {"ars": ARS, "cases": probes, "calls": spots, "levels": ["college_d1", "college_d3"]}
     ref = json.loads(run_py(HERE, pin, REFIT_ENV))
     REFIT_T = {k: json.load(open(e.table_path(k, "v13refit"), encoding="utf8")) for k in ("zone", "count", "run")}
+    REFIT_T["mp"] = json.load(open(e.table_path("mp", "v0"), encoding="utf8"))      # v1.3 ruling 12: the zero scalar table
 
     def perturbed(kind, mutate, tag):
         # perturbations start from the v13refit files (whatever the default is), with the other two kinds on v13refit too
@@ -415,13 +416,19 @@ def main():
         t["levels"]["college_d3"]["re"]["0|000"] = 1.0; t["levels"]["hs"]["cv"]["3-2"] = 0.13
         t["levels"]["mlb"]["lw"]["k"] = -0.3
 
+    def mpmix(t):          # v1.3 ruling 12: the mean-preservation scalars (a zero table plus a few shifts)
+        for lv in ("college_d1", "hs", "mlb"):
+            M = t["levels"][lv]
+            M["swing"]["1-1"] = 0.12; M["whiff"]["0-2"] = -0.15; M["foul"]["2-2"] = 0.1; M["cstrike"]["3-2"] = -0.2
+            M["bip_gb"]["1-0"] = 0.07
+
     env = {e.TABLE_ENV["zone"]: perturbed("zone", zmix, "mix"), e.TABLE_ENV["count"]: perturbed("count", cmix, "mix"),
-           e.TABLE_ENV["run"]: perturbed("run", rmix, "mix")}
+           e.TABLE_ENV["run"]: perturbed("run", rmix, "mix"), e.TABLE_ENV["mp"]: perturbed("mp", mpmix, "mix")}
     dpath = os.path.join(tmp, "engine_data_mix.json")
     export(env, dpath)
     Dm = json.load(open(dpath, encoding="utf8"))
     check("app/export_data.py --out writes the overridden tables (versions scratch-mix) for the JS engine",
-          Dm["TABLES"]["versions"] == {"zone": "scratch-mix", "count": "scratch-mix", "run": "scratch-mix"})
+          Dm["TABLES"]["versions"] == {"zone": "scratch-mix", "count": "scratch-mix", "run": "scratch-mix", "mp": "scratch-mix"})
     inp2 = {"ars": ARS, "cases": cases(300, 21), "calls": calls(8, 22), "levels": LEVELS}
     pm, jm = json.loads(run_py(HERE, inp2, env)), json.loads(run_js(HERE, inp2, dpath))
     js_ship = json.loads(run_js(HERE, inp2, refit_data))

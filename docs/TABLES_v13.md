@@ -20,6 +20,7 @@ tip 21f44ac bit for bit (`tests_v13_tables.py`). The run-scale denominator is pi
 | `zone_v13.json` | `4c9f98efb96a3e66a2f1367b6635caf451b2521efeb1169a707625643f253323` | The approved zone table (ruling 2; `docs/ZONE_v13_APPROVED.md`, built by `python -m hitter_data.zone_v13`): Single-A cells, per-level cells for college D1 / D2 / D3 (trend carried one step down) and HS (two steps), `class.gb_kind.SI` = -0.0221 (P3 from Triple-A), the flat hanger and flat chase removed, `class.hanger_gate` H = 0 (ruling 3, sized later) |
 | `count_v13core.json` | `349f6a848fa5e4f5f5bc1579be5c3a4d92b766e366b0e7d9c02daa4cdf6e06ae` | college_d1 and hs: the PROVISIONAL count candidates (D1 `shared`, HS `sep`, thru 2025) calibrated under zone_v13 and the harness's h3 landing on top of count_v13refit; hs also carries `pitch_velo` (ruling 4). college_d2 / college_d3: **v1.2 count layer pending the coverage rule** (count terms v1.2's; kappas and in-play tables the refit's; labelled in the file). mlb: count_v13refit |
 | `run_v13core.json` | `ea99383c9af5606462453a1024a5c00c934707a8fb0fd02e690fa2391bca2d98` | re / cv for college_d1 and hs from the fits (cv relative to 0-0); college_d3, mlb and every lw the refit's; no college_d2 (D3's: PLACEHOLDER) |
+| `mp_v13.json` | see `tests_v13_meanpreserve.py` (inputs' sha256 in the file) | Drew's Nov 24 ruling 12: the per-count mean-preservation scalars, computed by `python -m hitter_data.mean_preserve solve` (not tuned). `mp_v0.json` = all 0 (the engine before the ruling) |
 
 - Rebuild: `PITCH_ZONE_TABLE=v13 PITCH_COUNT_TABLE=v13refit PITCH_RUN_TABLE=v13refit python -m hitter_data.export_candidates --core`
   (needs `python -m hitter_data.fit_count_hs --pitch-table` first). It rewrites the two files, so their shas change:
@@ -137,6 +138,26 @@ Each file also has `"kind"`, `"version"` (a string, recorded with the export) an
   - It has no `out_table` / `runner`, so `_fill_d2_placeholders` still gives it D3's and lists `OUT_TABLE` / `RUNNER_FIT`.
 - The level offsets `zsw osw wz wo cs hbp cmd wild` stay in `outcome_params.py` (written by `fit_all.py`, the pitcher-side
   recalibration that follows the core fit).
+
+## `mp_<v>.json`: the per-count mean-preservation scalars (Drew's Nov 24 ruling 12)
+
+```
+{"kind": "mp", "version": "v13", "about": "...", "reference": {level: text}, "harness_assumption": "...",
+ "inputs": {name: {"path", "sha256"}}, "max_abs_rate_error": {level: x},
+ "levels": {level: {"swing" | "whiff" | "foul" | "cstrike" | "bip_gb": {count: logit shift}}}}
+```
+
+- Levels: `mlb`, `college_d1`, `college_d2`, `college_d3`, `hs` (all required; travel reads `hs`, `college` reads `college_d1`).
+- The engines add each shift to the count table's row as they read it (`engine.count_cells` / engine.js `countCells`):
+  `swing` / `whiff` / `foul` to every band's offset, `cstrike` to the kappa, `bip_gb` to the ground-ball offset. `hard` and
+  `swing_base_out` are untouched. So in a count every band, zone cell, pitch kind and speed moves by the same logit:
+  relative effects are unchanged and only the per-count level is pinned. The count table itself never changes.
+- Computed by `hitter_data/mean_preserve.py`: per level and count, Newton in logit space (5 x 5 Jacobian per count) until
+  the reference world (the real pitch mix by count + the harness's h3 average-pitcher landing; HS: real HS kind usage at
+  real HS speeds; MLB: D1's frozen rows with MLB Statcast landing) gives back the fitted count layer's per-count swing,
+  whiff | swing, foul | contact, called strike | take and ground ball | in play to < 1e-10. `inputs` records the sha256 of
+  every file the solve read; `tests_v13_meanpreserve.py` fails if one changed (re-solve).
+- Select with `PITCH_MP_TABLE` (`v0` = the engine before the ruling).
 
 ## `run_<v>.json`: run values, per level (`levels.<level>`)
 

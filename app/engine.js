@@ -29,13 +29,13 @@
   // (ruling 2's P3 row; zone class.gb_kind, absent = 0), as engine.py HANGER_GATE / HANGER_GATE_FULL / GB_KIND
   let HANGER_GATE = 0.0, GB_KIND = {};
   const HANGER_GATE_FULL = 0.30;
-  let ZT = null, CT = null;
+  let ZT = null, CT = null, MP = null;   // MP: v1.3 ruling 12, the mean-preservation scalars (mp_<v>.json; engine.py mp_cells)
   const ZCELL = new Map(), CNTC = new Map(), CNTBO = new Map(), GBV = new Map();
   const T_ZONE_OUT = ["swing", "cstrike", "whiff", "foul", "hard"], T_COUNT_BAND_OUT = ["swing", "whiff", "foul", "hard"];
   const TABLE_LEVEL_ALIAS = { travel: "hs", college: "college_d1" };
   const T_HT = { up: "up", middle: "mid", down: "down" };
   function initTables(T) {
-    ZT = T.zone; CT = T.count.levels; ZCLASS = ZT.class;
+    ZT = T.zone; CT = T.count.levels; MP = T.mp.levels; ZCLASS = ZT.class;
     const b = ZT.base;
     S0 = b.swing; C0 = b.cstrike; W0 = b.whiff; F0 = b.foul; Q0 = b.quality; ZONE_IN = b.zone_in;
     W_FB = ZCLASS.whiff_fb; KIND_W_OS = ZCLASS.whiff_os; HANGER = ZCLASS.hanger_hard;
@@ -63,8 +63,10 @@
     let v = CNTC.get(key);
     if (!v) {
       const L = ctLevel(level), c = b + "-" + k, byZ = {};
-      for (const z of ZONES) byZ[z] = T_COUNT_BAND_OUT.map((o) => L[o][c][z]);
-      v = [byZ, L.cstrike[c], L.bip_gb[c]];
+      const M = MP[level] || MP[TABLE_LEVEL_ALIAS[level]];   // v1.3 ruling 12: + the mean-preservation scalars (engine.py count_cells)
+      const msw = M.swing[c], mwh = M.whiff[c], mfo = M.foul[c], mcs = M.cstrike[c], mgb = M.bip_gb[c];
+      for (const z of ZONES) byZ[z] = [L.swing[c][z] + msw, L.whiff[c][z] + mwh, L.foul[c][z] + mfo, L.hard[c][z]];
+      v = [byZ, L.cstrike[c] + mcs, L.bip_gb[c] + mgb];
       CNTC.set(key, v);
     }
     return v;
@@ -74,7 +76,7 @@
     let v = GBV.get(level);
     if (v === undefined) {
       const L = CT[level] || CT[TABLE_LEVEL_ALIAS[level] || ""];
-      v = !!L && new Set(Object.values(L.bip_gb)).size > 1;
+      v = !!L && new Set(COUNTS.map(([b, k]) => countCells(level, b, k)[2])).size > 1;
       GBV.set(level, v);
     }
     return v;
@@ -2035,7 +2037,7 @@
     classTerms,
     v12: { landingPre, leanDelta, leanHbpWp, geoNcdf, geoShares, geoSigma, geoTarget, geoHbpWeight, hasLean, leanKey,
       LEAN_MAX, SPREAD_MIN, SPREAD_MAX, HIT_FIT, HIT_PATH_RULE, HIT_OS_PRIOR, HIT_OS_N0, HIT_TAG_VALUES, hitTag, pathCost, damage, typeMix },   // v1.2 location model, Part B hitter tags
-    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, countBaseOut, zoneProfile, countGroup, hangerGate, pitchVeloFactors, fbFloor, fbNames, applyFbFloor, policyFromCosts } };   // v1.3 Part 2
+    v13tables: { versions: () => (D && D.TABLES ? D.TABLES.versions : null), zoneCells, countCells, mpCells: (level, b, k) => { const M = MP[level] || MP[TABLE_LEVEL_ALIAS[level]], c = b + "-" + k; return [M.swing[c], M.whiff[c], M.foul[c], M.cstrike[c], M.bip_gb[c]]; }, countBaseOut, zoneProfile, countGroup, hangerGate, pitchVeloFactors, fbFloor, fbNames, applyFbFloor, policyFromCosts } };   // v1.3 Part 2
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PitchEngine = api;
 })(typeof window !== "undefined" ? window : this);

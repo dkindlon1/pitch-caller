@@ -34,6 +34,7 @@ _cnt = e.TABLES["count"]
 data["TABLES"] = {
     "versions": dict(e.TABLE_VERSIONS),
     "zone": e.TABLES["zone"],
+    "mp": e.TABLES["mp"],          # v1.3 (Drew's Nov 24 ruling 12): the mean-preservation scalars
     "count": dict({k: v for k, v in _cnt.items() if k != "levels"},
                   levels={lv: {k: v for k, v in L.items() if k not in ("out_table", "runner")} for lv, L in _cnt["levels"].items()}),
 }
