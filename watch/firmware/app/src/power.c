@@ -97,6 +97,7 @@ static const struct device *const charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_c
 #define CHGR_TRICKLE_SEL 0x0EU
 #define CHGR_ITERM_SEL 0x0FU
 #define CHGR_CHG_STAT 0x34U
+#define CHGR_VBATLOW_EN 0x50U /* BCHGVBATLOWCHARGE: allow charging when VBAT is below VBATLOW (2.1 V). Reset value 0 = a flat cell never charges. */
 #define ADC_TASK_VBAT 0x00U
 #define ADC_NTCR_SEL 0x0AU
 #define ADC_TASK_AUTO 0x0CU
@@ -167,6 +168,10 @@ static int charger_lite_init(void) {
   rc |= pm_wr(ADC_BASE, ADC_TASK_AUTO, 1U);
   /* bit 0: no automatic recharge, bit 1: NTC disabled.  Neither: the NTC is fitted. */
   rc |= pm_wr(CHGR_BASE, CHGR_DIS_SET, (DT_PROP(CHG, disable_recharge) ? 1U : 0U) | (DT_ENUM_IDX(CHG, thermistor_ohms) == 0 ? 2U : 0U));
+  /* A cell run flat (or whose protection circuit has opened: 0 V at the pads) must still be allowed to charge. The chip
+   * then trickle-charges at 10 % of the set current until VBAT passes the trickle threshold (nPM1300 PS v1.3, 6.2.1).
+   * Same register and value as Zephyr's own driver (CHGR_OFFSET_VBATLOW_EN).  Compiles; not run on hardware. */
+  rc |= pm_wr(CHGR_BASE, CHGR_VBATLOW_EN, 1U);
   if (DT_PROP(CHG, charging_enable)) {
     rc |= pm_wr(CHGR_BASE, CHGR_EN_SET, 1U);
   }

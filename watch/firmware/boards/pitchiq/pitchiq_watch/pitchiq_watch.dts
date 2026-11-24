@@ -1,5 +1,5 @@
 /*
- * PitchIQ watch rev C: nRF52840 (QIAA) in a Raytac MDBT50Q module, Sharp memory LCD, LIS2DH12, nPM1300 (no heart-rate sensor, no 5 V boost).
+ * PitchIQ watch rev D: nRF52840 (QIAA) in a Raytac MDBT50Q module, Sharp memory LCD, LIS2DH12, nPM1300 (no heart-rate sensor, no 5 V boost).
  * Pin numbers live in pitchiq_watch-pinctrl.dtsi (PQ_PIN_*); this file refers to them by name.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -13,7 +13,7 @@
 #include <zephyr/dt-bindings/sensor/lis2dh.h>
 
 / {
-	model = "PitchIQ watch rev C";
+	model = "PitchIQ watch rev D";
 	compatible = "pitchiq,watch-rev-c";
 
 	chosen {
@@ -111,11 +111,11 @@
 		npm1300_regulators: regulators {
 			compatible = "nordic,npm1300-regulator";
 
-			/* BUCK1 (the 1.8 V rail) is NOT used on rev C and deliberately has NO node here. VSET1 is tied to
-			 * ground, so the chip leaves BUCK1 off at start-up; its inductor and output capacitor stay fitted (as on
-			 * Nordic's evaluation kit) only so that the pins are terminated. Nothing is connected to the rail, so never
-			 * enable it. Because no BUCK1 child node exists, the regulator driver does not initialise it and the
-			 * application cannot look it up (nothing in app/ refers to buck1). */
+			/* BUCK1 is NOT used and deliberately has NO node here. VSET1 is tied to ground, so the chip leaves
+			 * BUCK1 off at start-up, and rev D fits no inductor or output capacitor on it (as in Nordic's one-buck
+			 * reference configuration): pins VOUT1 and SW1 are open. Never enable it. Because no BUCK1 child node
+			 * exists, the regulator driver does not initialise it and the application cannot look it up
+			 * (nothing in app/ refers to buck1). */
 
 			/* System rail 3.0 V, always on: set at start-up by a 150 k resistor on VSET2, the nRF52840 is already
 			 * running from it before this code executes; the firmware only confirms it.  The PMIC's VDDIO is tied to

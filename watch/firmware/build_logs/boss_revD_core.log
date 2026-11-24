@@ -1,0 +1,15 @@
+make: Entering directory '/home/claude/pitchiq-watch/watch/firmware/core'
+build/test_core tests/vectors.json
+[software AES] 19 known-answer checks, 231 crypto vectors, 82 scenarios (1941 steps, 1424 events) compared: all identical to the JS
+[hook AES] 19 known-answer checks, 231 crypto vectors, 82 scenarios (1941 steps, 1424 events) compared: all identical to the JS
+[hook AES] the hook was called 2802 times
+ALL PASS
+--- again with -fsanitize=address,undefined
+build/test_core_san tests/vectors.json
+[software AES] 19 known-answer checks, 231 crypto vectors, 82 scenarios (1941 steps, 1424 events) compared: all identical to the JS
+[hook AES] 19 known-answer checks, 231 crypto vectors, 82 scenarios (1941 steps, 1424 events) compared: all identical to the JS
+[hook AES] the hook was called 2802 times
+ALL PASS
+sanitizer run: clean (no ASan/UBSan reports, exit 0)
+make: Leaving directory '/home/claude/pitchiq-watch/watch/firmware/core'
+EXIT 0
