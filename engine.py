@@ -1976,20 +1976,19 @@ def hanger_gate(p, s):
     return HANGER_GATE * min(1.0, wt / HANGER_GATE_FULL) if wt > 0 else 0.0
 
 
-def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=None, sit=None, zout=None):
-    if p.fb_mph is None:
-        resolve_speeds(arsenal)
-        if p.fb_mph is None:          # a pitch passed with an arsenal that doesn't hold it
-            resolve_speeds([p] + [x for x in arsenal if x is not p])
+class _OPConst:
+    """Speed only (feat/sim-speed): the parts of outcome_probs that don't depend on the hitter's look or sit, for one
+    (pitch, target, situation apart from its look). Each float is built by the same expression, in the same order, as the
+    single-pass form it replaced, so outcome_probs returns bit-identical numbers (hitter_data/sim_speed.py proof).
+    solve_table keeps these per (pitch, target, count) for one solve, where only the look and the sit change."""
+    __slots__ = ("big", "hL", "pv", "bands")
+
+
+def _op_const(p, q, s, arsenal):
     L = LEVEL[s.level]
     A = OUTCOME_ADJ[s.level]
     big = is_big_spot(s)
     cL = L["cL"] * (1.5 if big else 1.0)
-    if sit is None:
-        sit = ("mix", s.sit_sigma if s.sit_sigma is not None else sit_prior(arsenal, s))
-    m_t, m_h, v_sit = sit_shift(p, q, arsenal, s, sit)          # 2.2 what he's sitting on
-    pw, ps = pair_terms(p, q, s, arsenal)
-    tB = RHO_L.get(s.level, 1.0) * timing_B(p, q, s, v_sit) * (0.5 if big else 1.0)   # 4: pair terms halved in a big spot
     hL = L["hL"]
     gr = s.grades or GRADES_OVERRIDE    # 8.2 (override: fit hook)
     ct = class_terms(p, q, s)
@@ -2008,19 +2007,19 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
     # -0.1 in 2026 D3 and D1 lines), so better command must not also buy many more strikeouts. Precise pitchers work in
     # and around the zone, where hitters make more contact; this term sets how much (fit_spread.py). 0 = off.
     cw = L.get("cmd_whiff", 0.0) * (command - 3)
-    out = {"ball": 0, "cstrike": 0, "whiff": 0, "foul": 0, "weak": 0, "solid": 0, "hard": 0, "wp_ball": 0, "hbp": 0}
     # v1.3 Part 2: the count layer (count table: offsets by count and band, by base-out, the called-strike kappa) and the zone
     # table's fitted cells (by band, profile, count group, height of the target). v12 files: v1.2's count terms, cells 0.
     cnt, kap, _ = count_cells(s.level, s.balls, s.strikes)
     bo_sw = count_base_out(s.level, s.outs, s.bases)
     zcell = zone_cells(s.level, zone_profile(p), count_group(s.balls, s.strikes), _T_HT[target_height(q, p.kind)])
     gate = hanger_gate(p, s)
-
+    bands = []
     for z, pz in land.items():
         c_sw, c_wh, c_fo, c_hd = cnt[z]
         z_sw, z_cs, z_wh, z_fo, z_hd = zcell[z]
         # swing (hitter behavior by count: modeled, not a pitcher rule). v1.2's count terms (count_v12.json): +0.9 at two
-        # strikes, -0.4 at 0-0, -2.0 at 3-0, hitter's counts +0.3 in the zone and -0.4 out of it
+        # strikes, -0.4 at 0-0, -2.0 at 3-0, hitter's counts +0.3 in the zone and -0.4 out of it.
+        # The swing logit is built as: sl (here) + the sit term + (off the zone) the pair term ps + each of sl_post in turn.
         sl = logit(S0[z])
         sl += c_sw
         sl += bo_sw
@@ -2030,58 +2029,129 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
         wz_ = ZONE_IN[z]            # v0.6: share of this landing band inside the rulebook zone
         sl += wz_ * A["zsw"] + (1 - wz_) * A["osw"]
         offz = z in ("off", "noncomp")
-        sl += hL * (P08["sit_tS"] * m_t + P08["sit_hS"] * m_h)
-        if offz:
-            sl += ps
+        sl_post = []
         if gr and offz:
-            sl -= gval("g_d", s.level) * (gr.get("d", 3) - 3)
-        sl += side_shift(p, q, s, z, "swing")
+            sl_post.append(-(gval("g_d", s.level) * (gr.get("d", 3) - 3)))     # x - y is exactly x + (-y)
+        sl_post.append(side_shift(p, q, s, z, "swing"))
         if t_appr and (s.balls, s.strikes) in EARLY_COUNTS:      # v1.2 Part B: early-count approach, in-zone swings
-            sl += rho_h * HIT_FIT["approach"] * t_appr * wz_
+            sl_post.append(rho_h * HIT_FIT["approach"] * t_appr * wz_)
         if offz:
-            sl += pt["chase"]
-        S = sig(sl) if S0[z] > 0 else 0
+            sl_post.append(pt["chase"])
         if z in ("edge", "off"):
             C = sig(logit(C0[z]) + A["cs"] + kap + s.ump_u + ct["cstrike"] + pt["cstrike"] + z_cs)
         else:
             C = C0[z]
-        # whiff
-        wl = logit(W0[z]) + W_FB + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6)
-        ex = -hL * (P08["sit_tW"] * m_t + P08["sit_hW"] * m_h) + hL * 0.6 * tau_eff + P08["beta_T"] * tB
-        ex = max(-P08["capW"] * hL, min(P08["capW"] * hL, ex))
-        wl += ex - hL * 0.4 * DMG_SCALE * dmg
-        wl += pw + ct["whiff"]
-        wl += c_wh + z_wh
-        wl += wz_ * A["wz"] + (1 - wz_) * A["wo"]
+        # whiff: wl0, + (the clamped sit / timing term ex - the damage term), + (pw + class whiff), + each of wl_post
+        wl0 = logit(W0[z]) + W_FB + gs * (grade - 3) + cL * 1.5 * (p.conf - 0.6)
+        w_tau = hL * 0.6 * tau_eff
+        w_lo, w_hi = -P08["capW"] * hL, P08["capW"] * hL
+        w_dmg = hL * 0.4 * DMG_SCALE * dmg
+        wl_post = [c_wh + z_wh, wz_ * A["wz"] + (1 - wz_) * A["wo"]]
         if cw:
-            wl -= cw
+            wl_post.append(-cw)
         if gr:
-            wl -= gval("g_c", s.level) * (gr.get("c", 3) - 3)
+            wl_post.append(-(gval("g_c", s.level) * (gr.get("c", 3) - 3)))
         if s.matchup:
-            wl += matchup_whiff(p, q, s)
-        wl += side_shift(p, q, s, z, "whiff")
-        wl += pt["whiff"]
-        W = sig(wl)
+            wl_post.append(matchup_whiff(p, q, s))
+        wl_post.append(side_shift(p, q, s, z, "whiff"))
+        wl_post.append(pt["whiff"])
         F = sig(logit(F0[z]) + c_fo + z_fo)          # v1.2: +0.3 at two strikes (count_v12.json)
-        # contact quality: shift hard share
-        hx = hL * (P08["sit_tH"] * m_t + P08["sit_hH"] * m_h) - hL * 0.5 * tau_eff - P08["gamma_T"] * tB
-        hx = max(-P08["capH"] * hL, min(P08["capH"] * hL, hx))
-        hl = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6) + hx + hL * 0.8 * DMG_SCALE * dmg + ct["hard"]
+        # contact quality: shift hard share. hl0 + the clamped sit / timing term hx + damage + class hard + each of hl_post
+        h_tau = hL * 0.5 * tau_eff
+        h_lo, h_hi = -P08["capH"] * hL, P08["capH"] * hL
+        hl0 = -gs * (grade - 3) - cL * 0.5 * (p.conf - 0.6)
+        h_dmg = hL * 0.8 * DMG_SCALE * dmg
         c_ = "OS" if is_offspeed(p.kind) else "FB"
-        hl += RHO_L.get(s.level, 1.0) * min(P08["fam_cap"], P08["phi_" + c_] * s.familiar.get(c_, 0))     # familiarity within the game (#19: x RHO_L)
+        hl_post = [RHO_L.get(s.level, 1.0) * min(P08["fam_cap"], P08["phi_" + c_] * s.familiar.get(c_, 0))]   # familiarity within the game (#19: x RHO_L)
         if gr:
-            hl += gval("g_w", s.level) * (gr.get("w", 3) - 3)
+            hl_post.append(gval("g_w", s.level) * (gr.get("w", 3) - 3))
         if s.crowding and q in ("up-in", "down-in"):
-            hl -= P08["crowd"]
+            hl_post.append(-P08["crowd"])
         if z == "heart" and is_offspeed(p.kind):
-            hl += HANGER       # hanger: off-speed over the middle gets hit hard (zone table class term; v1.2 +0.5)
+            hl_post.append(HANGER)     # hanger: off-speed over the middle gets hit hard (zone table class term; v1.2 +0.5)
             if gate:
-                hl += gate     # v1.3 core (ruling 3): the quality-gated hanger, only while he isn't landing it today
-        hl += c_hd + z_hd
-        hl += side_shift(p, q, s, z, "hard")
-        hl += pt["hard"]
+                hl_post.append(gate)   # v1.3 core (ruling 3): the quality-gated hanger, only while he isn't landing it today
+        hl_post.append(c_hd + z_hd)
+        hl_post.append(side_shift(p, q, s, z, "hard"))
+        hl_post.append(pt["hard"])
         weak, solid, hard = Q0[z]
-        hard2 = sig(logit(hard) + hl)
+        hb = wp = None
+        if z in ("noncomp", "off") and A["hbp"] > 0:   # v0.6: hit by pitch
+            hb = min(0.9, A["hbp"] * hbp_loc(p, q) * (1.0 if z == "noncomp" else 0.1))
+            if lean_h != 1.0:
+                hb = min(0.9, hb * lean_h)
+        if z == "noncomp" and any(s.bases):   # wild pitch risk with runners on
+            wp = (0.12 if is_offspeed(p.kind) else 0.04) * (1 - 0.15 * (s.catcher_block - 3))
+            if lean_w != 1.0:
+                wp = min(0.9, wp * lean_w)
+        bands.append((z, pz, sl, offz, tuple(sl_post), S0[z] > 0, C, wl0, w_tau, w_lo, w_hi, w_dmg, ct["whiff"],
+                      tuple(wl_post), F, h_tau, h_lo, h_hi, hl0, h_dmg, ct["hard"], tuple(hl_post), logit(hard), weak,
+                      solid, hb, wp, wz_))
+    K = _OPConst()
+    K.big, K.hL, K.bands = big, hL, tuple(bands)
+    K.pv = pitch_velo_factors(p, s, arsenal)
+    return K
+
+
+def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=None, sit=None, zout=None, _pre=None):
+    """_pre (speed only): a dict solve_table keeps for one solve, holding _op_const per (pitch, target, count). Every call
+    sharing it must have the same situation apart from its look."""
+    if p.fb_mph is None:
+        resolve_speeds(arsenal)
+        if p.fb_mph is None:          # a pitch passed with an arsenal that doesn't hold it
+            resolve_speeds([p] + [x for x in arsenal if x is not p])
+    if sit is None:
+        sit = ("mix", s.sit_sigma if s.sit_sigma is not None else sit_prior(arsenal, s))
+    if _pre is None:
+        K = _op_const(p, q, s, arsenal)
+    else:
+        key = (p.name, q, s.balls, s.strikes)
+        K = _pre.get(key)
+        if K is None:
+            K = _pre[key] = _op_const(p, q, s, arsenal)
+    big, hL = K.big, K.hL
+    if _pre is None or sit[0] == "pure":
+        m_t, m_h, v_sit = sit_shift(p, q, arsenal, s, sit)          # 2.2 what he's sitting on
+    else:                         # the same sums as sit_shift's mix branch, with its members / speeds looked up
+        ks = ("sit", p.name, q, s.balls, s.strikes)
+        hm_sp = _pre.get(ks)
+        if hm_sp is None:
+            hm_sp = _pre[ks] = ({j: height_member(q, p.kind, j) for j in HEIGHTS},
+                                {x.name: speed_today(x, s) for x in arsenal})
+        hm, sp_ = hm_sp
+        sigma = sit[1]
+        m_t = sum(v for (n, j), v in sigma.items() if n == p.name) - 1 / len(arsenal)
+        m_h = sum(v * hm[j] for (n, j), v in sigma.items()) - 1 / len(HEIGHTS)
+        v_sit = sum(v * sp_[n] for (n, j), v in sigma.items())
+    pw, ps = pair_terms(p, q, s, arsenal)
+    tB = RHO_L.get(s.level, 1.0) * timing_B(p, q, s, v_sit) * (0.5 if big else 1.0)   # 4: pair terms halved in a big spot
+    sitS = hL * (P08["sit_tS"] * m_t + P08["sit_hS"] * m_h)
+    exW = -hL * (P08["sit_tW"] * m_t + P08["sit_hW"] * m_h)
+    bTtB = P08["beta_T"] * tB
+    exH = hL * (P08["sit_tH"] * m_t + P08["sit_hH"] * m_h)
+    gTtB = P08["gamma_T"] * tB
+    o_ball = o_cs = o_wh = o_fo = o_weak = o_solid = o_hard = o_wp = o_hbp = 0
+    for (z, pz, sl, offz, sl_post, s_on, C, wl, w_tau, w_lo, w_hi, w_dmg, ctw, wl_post, F, h_tau, h_lo, h_hi, hl, h_dmg,
+         cth, hl_post, lg_hard, weak, solid, hb, wp, wz_) in K.bands:
+        sl += sitS
+        if offz:
+            sl += ps
+        for x in sl_post:
+            sl += x
+        S = sig(sl) if s_on else 0
+        ex = exW + w_tau + bTtB
+        ex = max(w_lo, min(w_hi, ex))
+        wl += ex - w_dmg
+        wl += pw + ctw
+        for x in wl_post:
+            wl += x
+        W = sig(wl)
+        hx = exH - h_tau - gTtB
+        hx = max(h_lo, min(h_hi, hx))
+        hl = hl + hx + h_dmg + cth
+        for x in hl_post:
+            hl += x
+        hard2 = sig(lg_hard + hl)
         if zout is not None:
             zout[z] = dict(L=pz, S=S, C=C, W=W, F=F, H=hard2, offz=offz, cz=z in ("edge", "off"))
         scale = (1 - hard2) / (weak + solid)
@@ -2089,26 +2159,20 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
 
         take = 1 - S
         ball_p = pz * take * (1 - C)
-        if z in ("noncomp", "off") and A["hbp"] > 0:   # v0.6: hit by pitch
-            hb = min(0.9, A["hbp"] * hbp_loc(p, q) * (1.0 if z == "noncomp" else 0.1))
-            if lean_h != 1.0:
-                hb = min(0.9, hb * lean_h)
-            out["hbp"] += ball_p * hb
+        if hb is not None:
+            o_hbp += ball_p * hb
             ball_p *= (1 - hb)
-        if z == "noncomp" and any(s.bases):   # wild pitch risk with runners on
-            wp = (0.12 if is_offspeed(p.kind) else 0.04) * (1 - 0.15 * (s.catcher_block - 3))
-            if lean_w != 1.0:
-                wp = min(0.9, wp * lean_w)
-            out["wp_ball"] += ball_p * wp
+        if wp is not None:
+            o_wp += ball_p * wp
             ball_p *= (1 - wp)
-        out["ball"] += ball_p
-        out["cstrike"] += pz * take * C
-        out["whiff"] += pz * S * W
-        out["foul"] += pz * S * (1 - W) * F
+        o_ball += ball_p
+        o_cs += pz * take * C
+        o_wh += pz * S * W
+        o_fo += pz * S * (1 - W) * F
         contact = pz * S * (1 - W) * (1 - F)
-        out["weak"] += contact * weak2
-        out["solid"] += contact * solid2
-        out["hard"] += contact * hard2
+        o_weak += contact * weak2
+        o_solid += contact * solid2
+        o_hard += contact * hard2
         if stats is not None:
             stats["pitches"] += pz
             stats["zone"] += pz * wz_
@@ -2116,7 +2180,9 @@ def outcome_probs(p: Pitch, q: str, s: Situation, arsenal, policy=None, stats=No
             stats["oswing"] += pz * S * (1 - wz_)
             stats["zcontact"] += pz * S * (1 - W) * wz_
             stats["ocontact"] += pz * S * (1 - W) * (1 - wz_)
-    pv = pitch_velo_factors(p, s, arsenal)
+    out = {"ball": o_ball, "cstrike": o_cs, "whiff": o_wh, "foul": o_fo, "weak": o_weak, "solid": o_solid, "hard": o_hard,
+           "wp_ball": o_wp, "hbp": o_hbp}
+    pv = K.pv
     if pv is not None:            # v1.3 core (ruling 4): HS / travel pitch kind x velocity, then renormalise (as the fit)
         mb, mh, mc, mw, mf, mi = pv
         for k_, m_ in (("ball", mb), ("wp_ball", mb), ("hbp", mh), ("cstrike", mc), ("whiff", mw), ("foul", mf),
@@ -2545,10 +2611,14 @@ class Table:
 
     def value(self, b, k, look, which="V"):
         tab = (self.V if which == "V" else self.N)[(b, k)]
+        lk = (look[0], look[1])
+        ws = self.__dict__.setdefault("_w", {}).get(lk)
+        if ws is None:          # speed only: the interpolation weights (wv * wy, as before) per look
+            ws = self._w[lk] = tuple(((iv, iy), wv * wy) for iv, wv in _interp_axis(look[0] / self.vfb, V_CENTERS)
+                                     for iy, wy in _interp_axis(look[1], Y_CENTERS))
         tot = 0.0
-        for iv, wv in _interp_axis(look[0] / self.vfb, V_CENTERS):
-            for iy, wy in _interp_axis(look[1], Y_CENTERS):
-                tot += wv * wy * tab[(iv, iy)]
+        for key, w in ws:
+            tot += w * tab[key]
         return tot
 
 
@@ -2649,6 +2719,9 @@ def policy_from_costs(costs, s, temp, fb=None):
     return apply_fb_floor(pi, s, fb, costs, temp)
 
 
+from operator import mul as _mul    # noqa: E402  (speed only: solve_sit_game's sums)
+
+
 def solve_sit_game(M, ks, s, temp, b_h=None, usage=None, fb=None):
     """2.3 (A2) the quantal-response balance point. pi = Phi(M sigma) exactly at every step, so the residual is
     ||sigma - sigma*(pi~)||_inf; sigma moves by a damped step w (0.3, halved whenever the residual grows, floor 0.002)
@@ -2660,14 +2733,30 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None, fb=None):
     def tilde(p_):
         return {a: (4 * p_.get(a, 0.0) + usage.get(a, 0)) / (4 + n_u) for a in calls} if n_u else p_
 
+    # speed only: M as rows (per call) and columns (per sit), so each sum below runs over the same products in the same
+    # order as sum(sg[k] * M[a][k] for k in ks) and sit_response's sit_payoff
+    rows = [[M[a][k] for k in ks] for a in calls]
+    cols = [[M[a][k] for a in calls] for k in ks]
+
     def phi(sg):
-        return policy_from_costs({a: sum(sg[k] * M[a][k] for k in ks) for a in calls}, s, temp, fb)
+        sgl = [sg[k] for k in ks]
+        return policy_from_costs({a: sum(map(_mul, sgl, r)) for a, r in zip(calls, rows)}, s, temp, fb)
+
+    def response(pi_):
+        """sit_response(M, ks, pi_, temp, b_h)"""
+        pil = [pi_.get(a, 0.0) for a in calls]
+        cb = {k: sum(map(_mul, pil, c)) for k, c in zip(ks, cols)}
+        u = {k: cb[k] / temp + (b_h.get(k, 0.0) if b_h else 0.0) for k in ks}
+        mx = max(u.values())
+        w_ = {k: exp(u[k] - mx) for k in ks}
+        t_ = sum(w_.values())
+        return {k: w_[k] / t_ for k in ks}
 
     sg = {k: 1.0 / len(ks) for k in ks}
     w, last = 0.3, None
     for t in range(QRE_ITERS):
         pi = phi(sg)
-        f = sit_response(M, ks, tilde(pi), temp, b_h)
+        f = response(tilde(pi))
         res = max(abs(sg[k] - f[k]) for k in ks)
         if res < QRE_TOL:
             return pi, sg, res
@@ -2676,7 +2765,7 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None, fb=None):
         last = res
         sg = {k: (1 - w) * sg[k] + w * f[k] for k in ks}
     pi = phi(sg)
-    f = sit_response(M, ks, tilde(pi), temp, b_h)
+    f = response(tilde(pi))
     return pi, sg, max(abs(sg[k] - f[k]) for k in ks)
 
 
@@ -2747,51 +2836,86 @@ def allowed_calls(arsenal, s, exclude=None, extra=()):
     return out
 
 
-def cost08(p, q, s, arsenal, tab, look, sit, myopic=False):
-    """Cost of call (p, q) in the v0.8 solve: outcome probabilities at this look and sit, next counts read from the
-    table at the look this pitch leaves (myopic: at the PA's starting look), every PA end through v_end."""
-    s_ = s if s.look is look else replace(s, look=look)
-    P = outcome_probs(p, q, s_, arsenal, sit=sit)
+def _cost_const(p, q, s, arsenal, tab):
+    """Speed only: the parts of cost08 that don't depend on the look, the sit or the table's values (PA-end values,
+    in-play values, the mashed / ground-ball / coaching terms), each built by the expression cost08 used before."""
     b, k, o, B = s.balls, s.strikes, s.outs, s.bases
-    nl = tab.h0 if myopic else look_update(look, p, q, s)
     base_end = v_end(s, o, B, 0)
-
-    def tv(b_, k_):
-        return tab.value(b_, k_, nl)
 
     def walk_end(bases, runs):
         b1, b2, b3 = bases
         r_ = 1 if (b1 and b2 and b3) else 0
         return v_end(s, o, (True, b1 or b2, b3 or (b1 and b2)), runs + r_)
 
-    v = 0.0
-    v += P["ball"] * (walk_end(B, 0) if b + 1 == 4 else tv(b + 1, k))
+    walk0 = walk_end(B, 0)
     nb, r = advance_all(B)
-    v += P["wp_ball"] * (walk_end(nb, r) if b + 1 == 4 else tv(b + 1, k) + v_end(s, o, nb, r) - base_end)
-    v += P["hbp"] * walk_end(B, 0)
-    v += (P["cstrike"] + P["whiff"]) * (v_end(s, o + 1, B, 0) if k + 1 == 3 else tv(b, k + 1))
-    v += P["foul"] * (tv(b, k + 1) if k < 2 else tv(b, k))
+    if b + 1 == 4:
+        wp_end, wp_shift = walk_end(nb, r), None
+    else:
+        wp_end, wp_shift = None, v_end(s, o, nb, r)
+    k_end = v_end(s, o + 1, B, 0) if k + 1 == 3 else None
     ipv = _ipv_cached(tab, p, q, s)
-    for j, c in enumerate(("weak", "solid", "hard")):
-        v += P[c] * ipv[j]
-    if s.steal and s.steal.get("a", 0) > 0:
-        v += steal_cost(p, q, s, tab, nl)
-    if s.matchup and mashed(p, q, s):
-        v += MASHED_PENALTY * run_scale(s.level)     # v1.0 D3: mashed twice at this height today
-    if q in GB_RULE_TARGETS and ground_ball_spot(s):
-        v -= GB_RULE_BONUS * run_scale(s.level)     # v1.0 Step 7: the ground-ball rule
+    mash = MASHED_PENALTY * run_scale(s.level) if (s.matchup and mashed(p, q, s)) else None   # v1.0 D3: mashed twice at this height today
+    gb = GB_RULE_BONUS * run_scale(s.level) if (q in GB_RULE_TARGETS and ground_ball_spot(s)) else None   # v1.0 Step 7: the ground-ball rule
     cc = coach_credit(p, q, s, arsenal)
     sp = setup_payoff(p, q, s, arsenal)[0] if s.pa_log else 0.0      # v1.1 Step 3 (root only: tables have no pa_log)
     if sp:
         cc = min(cc + sp, max(cc, SETUP_CAP)) if sp > 0 else cc + sp  # stacking cap on the setup part only
-    if cc:
-        v -= cc * run_scale(s.level)                # v1.0 Step 7: the coaching reads (COACH_RULE); v1.1: + setup credits
+    ccv = cc * run_scale(s.level) if cc else None    # v1.0 Step 7: the coaching reads (COACH_RULE); v1.1: + setup credits
+    return base_end, walk0, wp_end, wp_shift, k_end, ipv, mash, gb, ccv
+
+
+def cost08(p, q, s, arsenal, tab, look, sit, myopic=False, _pre=None):
+    """Cost of call (p, q) in the v0.8 solve: outcome probabilities at this look and sit, next counts read from the
+    table at the look this pitch leaves (myopic: at the PA's starting look), every PA end through v_end.
+    _pre: speed only, solve_table's per-solve cache (see outcome_probs); same numbers with or without it."""
+    s_ = s if s.look is look else replace(s, look=look)
+    P = outcome_probs(p, q, s_, arsenal, sit=sit, _pre=_pre)
+    b, k = s.balls, s.strikes
+    if _pre is None:
+        nl = tab.h0 if myopic else look_update(look, p, q, s)
+        cst = _cost_const(p, q, s, arsenal, tab)
+    else:
+        if myopic:
+            nl = tab.h0
+        else:
+            kn = ("nl", look, p.name, q, b, k)
+            nl = _pre.get(kn)
+            if nl is None:
+                nl = _pre[kn] = look_update(look, p, q, s)
+        kc = ("cost", p.name, q, b, k)
+        cst = _pre.get(kc)
+        if cst is None:
+            cst = _pre[kc] = _cost_const(p, q, s, arsenal, tab)
+    base_end, walk0, wp_end, wp_shift, k_end, ipv, mash, gb, ccv = cst
+    value = tab.value
+    v = 0.0
+    if b + 1 == 4:
+        v += P["ball"] * walk0
+        v += P["wp_ball"] * wp_end
+    else:
+        t_b = value(b + 1, k, nl)
+        v += P["ball"] * t_b
+        v += P["wp_ball"] * (t_b + wp_shift - base_end)
+    v += P["hbp"] * walk0
+    t_k = value(b, k + 1, nl) if k < 2 else None
+    v += (P["cstrike"] + P["whiff"]) * (k_end if k + 1 == 3 else t_k)
+    v += P["foul"] * (t_k if k < 2 else value(b, k, nl))
+    v += P["weak"] * ipv[0]
+    v += P["solid"] * ipv[1]
+    v += P["hard"] * ipv[2]
+    if s.steal and s.steal.get("a", 0) > 0:
+        v += steal_cost(p, q, s, tab, nl)
+    if mash is not None:
+        v += mash
+    if gb is not None:
+        v -= gb
+    if ccv is not None:
+        v -= ccv
     if s.level in ("hs", "travel"):
         w_ = min(1.0, max(0.0, (s.pitch_count - (s.pitch_cap - 20)) / 20))
         if w_ > 0:
-            nxt = P["ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N")) + \
-                  (P["cstrike"] + P["whiff"]) * (0 if k + 1 == 3 else tab.value(b, k + 1, nl, "N")) + \
-                  P["foul"] * tab.value(b, min(k + 1, 2), nl, "N") + P["wp_ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N"))
+            nxt = P["ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N")) +                   (P["cstrike"] + P["whiff"]) * (0 if k + 1 == 3 else tab.value(b, k + 1, nl, "N")) +                   P["foul"] * tab.value(b, min(k + 1, 2), nl, "N") + P["wp_ball"] * (0 if b + 1 == 4 else tab.value(b + 1, k, nl, "N"))
             v += 0.002 * run_scale(s.level) * w_ * (1 + nxt)
     return v, P
 
@@ -2853,6 +2977,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
     ks = sit_options(arsenal)
     by = {x.name: x for x in arsenal}
     fb = fb_names(arsenal, s)     # v1.3 ruling 8 (None off HS / travel)
+    pre = {}                      # speed only: look / sit-free outcome terms per (pitch, target, count), this solve
     # start: v0.7c count values on top of the base-out value, flat across looks; N from a rough 4 pitches
     for (b, k) in COUNTS:
         v0 = v_end(s, s.outs, s.bases, 0) + CV_BY_LEVEL[s.level][(b, k)]
@@ -2869,7 +2994,8 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
             calls = allowed_calls(arsenal, sc)
             # sit game at the PA's starting look
             scH = replace(sc, look=tab.h0)
-            M = {a: {kk: cost08(by[a[0]], a[1], scH, arsenal, tab, tab.h0, ("pure",) + kk)[0] for kk in ks} for a in calls}
+            M = {a: {kk: cost08(by[a[0]], a[1], scH, arsenal, tab, tab.h0, ("pure",) + kk, _pre=pre)[0] for kk in ks}
+                 for a in calls}
             pi, sg, res = solve_sit_game(M, ks, sc, temp, sc.b_h)
             tab.sigma[(b, k)] = sg
             tab.residuals.append(res)
@@ -2878,7 +3004,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
                 cs, Ps = {}, {}
                 scL = replace(sc, look=look)
                 for a in calls:
-                    cs[a], Ps[a] = cost08(by[a[0]], a[1], scL, arsenal, tab, look, ("mix", sg))
+                    cs[a], Ps[a] = cost08(by[a[0]], a[1], scL, arsenal, tab, look, ("mix", sg), _pre=pre)
                 pol = policy_from_costs(cs, sc, temp, fb)
                 new = sum(pv * cs[a] for a, pv in pol.items())
                 delta = max(delta, abs(new - tab.V[(b, k)][bn]))
@@ -2949,12 +3075,15 @@ def _root_solve(arsenal, s, tab, exclude=None, look_value=True, extra=(), cache=
         calls = allowed_calls(rest, s) if hard and rest else allowed_calls(arsenal, s)
     sL = replace(s, look=look)
     my = s.balls == 3 or not look_value     # three-ball counts rank by myopic cost (no setups); test switch
+    pre = {}        # speed only: every cost below is at sL with this arsenal, so the look / sit-free terms are shared
     if cache is None:
-        M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks} for a in calls}
+        M = {a: {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my, _pre=pre)[0] for kk in ks}
+             for a in calls}
     else:       # v1.2.2: the blend's combinations share one cost per call (a call's sit costs don't depend on the allowed set)
         for a in calls:
             if a not in cache:
-                cache[a] = {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my)[0] for kk in ks}
+                cache[a] = {kk: cost08(by[a[0]], a[1], sL, arsenal, tab, look, ("pure",) + kk, myopic=my, _pre=pre)[0]
+                            for kk in ks}
         M = {a: cache[a] for a in calls}
     usage = s.usage_by_call
     fb = fb_names(arsenal, s)     # v1.3 ruling 8 (None off HS / travel)
