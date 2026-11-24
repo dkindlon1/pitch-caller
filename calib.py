@@ -176,12 +176,11 @@ def evaluate(level, adj=None, policy_cache=None):
 RV = json.load(open("college_run_values.json"))
 MLB_PITCH = {"zone": 0.494, "z_swing": 0.672, "o_swing": 0.285, "z_contact": 0.846, "o_contact": 0.587,
              "f_strike": 0.617}
-PA_TARGETS = {
-    "mlb": {k: RV["mlb_check"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},
-    "college_d1": {k: RV["college_d1"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},
-    "college_d2": {k: RV["college_d2"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},   # v1.3 full data
-    "college_d3": {k: RV["college_d3"][kk] for k, kk in (("K", "K"), ("BB", "BB"), ("HBP", "HBP"))},
-}
+# v1.3 (Drew's Nov 24 ruling 12): the targets are on the count chain's PA definition (no sacrifices / bunt PAs, intentional
+# walks or interference), target_all x the level's own scored / all ratio (hitter_data/pa_targets.py -> pa_targets_v13.json)
+PA_TARGET_FILE = json.load(open("pa_targets_v13.json"))
+PA_TARGETS = {lv: {k: L[k] for k in ("K", "BB", "HBP")} for lv, L in PA_TARGET_FILE["levels"].items()}
+PA_TARGETS_ALL = {lv: dict(L["target_all"]) for lv, L in PA_TARGET_FILE["levels"].items()}   # every PA (college_run_values.json)
 
 
 PRIOR_W = 0.05

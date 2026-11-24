@@ -69,7 +69,7 @@ def realism(repo, env):
             f"out = {{}}\n"
             f"for lvl, key in {REALISM!r}:\n"
             "    m = calib.evaluate(lvl)\n"
-            "    out[lvl] = {k: [m[k], calib.RV[key][k]] for k in ('K', 'BB', 'HBP')}\n"
+            "    out[lvl] = {k: [m[k], calib.PA_TARGETS[lvl][k]] for k in ('K', 'BB', 'HBP')}\n"
             "    out[lvl].update({k: m[k] for k in ('H', 'HR', 'pitches_per_PA', 'zone', 'z_swing', 'o_swing', 'z_contact', 'o_contact', 'f_strike')})\n"
             "print('REALISM ' + json.dumps(out))\n")
     p = subprocess.run([sys.executable, "-c", code], cwd=repo, env=env, capture_output=True, text=True)

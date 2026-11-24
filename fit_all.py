@@ -37,7 +37,7 @@ if os.environ.get("PITCH_RECAL_PITCHER_ONLY") == "1":
     gaps = {}
     for lvl in ["mlb"] + [l for l in levels if l != "mlb"]:
         key = "mlb_check" if lvl == "mlb" else lvl
-        tg = {k: RV[key][k] for k in ("K", "BB", "HBP")}
+        tg = dict(PA_TARGETS[lvl])          # v1.3 ruling 12: the chain's PA definition (pa_targets_v13.json)
         OUTCOME_ADJ[lvl].update(OUT.get(lvl, {}))
         OUTCOME_ADJ[lvl].setdefault("wild", 0.0)
         start = {k: OUTCOME_ADJ[lvl].get(k, 0.0) for k in PO}

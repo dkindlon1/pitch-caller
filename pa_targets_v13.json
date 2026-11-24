@@ -1,0 +1,85 @@
+{
+ "about": "v1.3 K / BB / HBP targets on the count chain's PA definition (Drew's Nov 24 ruling 12): target_all x rate_scored / rate_all, the ratio from each level's own play-by-play (hitter_data/pa_targets.py). Scored PAs drop sacrifices / bunt PAs, intentional walks and interference, exactly as the harness and the count layer do. target_all = college_run_values.json.",
+ "levels": {
+  "mlb": {
+   "K": 0.22644635784270448,
+   "BB": 0.08179431697716262,
+   "HBP": 0.011009211866572163,
+   "target_all": {
+    "K": 0.2242,
+    "BB": 0.0839,
+    "HBP": 0.0109
+   },
+   "ratio": {
+    "K": 1.0100194373001983,
+    "BB": 0.9749024669506868,
+    "HBP": 1.0100194373001983
+   },
+   "source": "Statcast MLB regular season 2021-2025 (half-life 2), B/A PA share 0.9901"
+  },
+  "college_d1": {
+   "K": 0.1972795558897857,
+   "BB": 0.10813621010155196,
+   "HBP": 0.03437498682980646,
+   "target_all": {
+    "K": 0.19301027244305494,
+    "BB": 0.10786065207682001,
+    "HBP": 0.03363108530594015
+   },
+   "ratio": {
+    "K": 1.0221194623099161,
+    "BB": 1.0025547594922353,
+    "HBP": 1.022119462309916
+   },
+   "source": "chain_check A -> B (D1_shared_w_thru2025.json, weighted=True, B/A PA share 0.9784)"
+  },
+  "college_d2": {
+   "K": 0.17457349499087688,
+   "BB": 0.11277571631268367,
+   "HBP": 0.037445105354766195,
+   "target_all": {
+    "K": 0.17048598013328303,
+    "BB": 0.11192513831258645,
+    "HBP": 0.036568354708914876
+   },
+   "ratio": {
+    "K": 1.0239756656494468,
+    "BB": 1.00759952601284,
+    "HBP": 1.0239756656494468
+   },
+   "source": "chain_check A -> B (D2_borrow_w_thru2025.json, weighted=True, B/A PA share 0.9766)"
+  },
+  "college_d3": {
+   "K": 0.16627015964501807,
+   "BB": 0.11428359533598706,
+   "HBP": 0.04333365135753517,
+   "target_all": {
+    "K": 0.16205190681876916,
+    "BB": 0.11378151880976115,
+    "HBP": 0.04223428212795806
+   },
+   "ratio": {
+    "K": 1.0260302572740867,
+    "BB": 1.0044126368805584,
+    "HBP": 1.0260302572740867
+   },
+   "source": "chain_check A -> B (D3_borrow_w_thru2025.json, weighted=True, B/A PA share 0.9746)"
+  },
+  "hs": {
+   "K": 0.21324318314539784,
+   "BB": 0.1418202843293875,
+   "HBP": 0.041686870114110895,
+   "target_all": {
+    "K": 0.21011058451816747,
+    "BB": 0.1406003159557662,
+    "HBP": 0.04107424960505529
+   },
+   "ratio": {
+    "K": 1.0149092851957655,
+    "BB": 1.008676853713509,
+    "HBP": 1.0149149531627768
+   },
+   "source": "hs.sqlite3 full-log games ['2022', '2023', '2024', '2025'] (hs_sep fit weights), B/A PA share 0.9853"
+  }
+ }
+}
