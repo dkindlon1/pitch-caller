@@ -31,13 +31,17 @@ levels = sys.argv[1:] or ["college_d1", "college_d2", "college_d3", "hs"]   # v1
 # wo, cs) stay at the values the fitted count layer was calibrated under, so the count layer is held to the data. A level
 # that can't land K / BB / HBP within 1 point is reported (GAP line), not forced.
 import os
+# Drew's Nov 24 ruling 12: with the count layer pinned by per-count mean preservation (mp_v13.json), the pitcher keys fit BB,
+# HBP and command (the reference world's zone rate, calib.COMMAND_TARGETS) only; K is left free (K above target in the
+# engine's own calls is its calling edge, ruling 13, reported, not fitted).
 if os.environ.get("PITCH_RECAL_PITCHER_ONLY") == "1":
-    from calib import PA_TARGETS
+    from calib import PA_TARGETS, COMMAND_TARGETS
     PO = ["wild", "cmd", "hbp"]
     gaps = {}
     for lvl in ["mlb"] + [l for l in levels if l != "mlb"]:
         key = "mlb_check" if lvl == "mlb" else lvl
-        tg = dict(PA_TARGETS[lvl])          # v1.3 ruling 12: the chain's PA definition (pa_targets_v13.json)
+        tg = {"BB": PA_TARGETS[lvl]["BB"], "HBP": PA_TARGETS[lvl]["HBP"], "zone": COMMAND_TARGETS[lvl]}
+        pa_tg = dict(PA_TARGETS[lvl])       # the chain's PA definition (pa_targets_v13.json)
         OUTCOME_ADJ[lvl].update(OUT.get(lvl, {}))
         OUTCOME_ADJ[lvl].setdefault("wild", 0.0)
         start = {k: OUTCOME_ADJ[lvl].get(k, 0.0) for k in PO}
@@ -49,11 +53,13 @@ if os.environ.get("PITCH_RECAL_PITCHER_ONLY") == "1":
             INP[lvl] = tab
             mm = show(lvl, f"{lvl} pitcher-only pass {outer+1}")
             save()
-        gap = {k: mm[k] - tg[k] for k in ("K", "BB", "HBP")}
+        gap = {k: mm[k] - pa_tg[k] for k in ("K", "BB", "HBP")}
+        gap["zone"] = mm["zone"] - tg["zone"]
         gaps[lvl] = gap
-        flag = "GAP" if any(abs(v) > 0.01 for v in gap.values()) else "ok"
-        print(f"[{time.time()-t0:.0f}s] {flag} {lvl}: K {mm['K']:.1%} (target {tg['K']:.1%}) BB {mm['BB']:.1%} ({tg['BB']:.1%}) "
-              f"HBP {mm['HBP']:.1%} ({tg['HBP']:.1%})", flush=True)
+        flag = "GAP" if any(abs(gap[k]) > 0.01 for k in ("BB", "HBP")) else "ok"
+        print(f"[{time.time()-t0:.0f}s] {flag} {lvl}: BB {mm['BB']:.1%} ({pa_tg['BB']:.1%}) HBP {mm['HBP']:.1%} ({pa_tg['HBP']:.1%}) "
+              f"zone {mm['zone']:.1%} ({tg['zone']:.1%}) | K {mm['K']:.1%} (target {pa_tg['K']:.1%}, calling edge "
+              f"{100 * gap['K']:+.1f})", flush=True)
     saved["OUT"]["mlb"] = OUT["mlb"]
     saved["INP"]["mlb"] = {c: list(v) for c, v in INP["mlb"].items()}
     json.dump(saved, open("fit_mlb.json", "w", newline="\n"), indent=1)

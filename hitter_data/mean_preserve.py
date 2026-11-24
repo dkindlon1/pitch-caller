@@ -46,6 +46,7 @@ from . import DATA, assert_not_heldout
 from .harness_adapters import ROOT, COUNTS, PRIMARY_ASSUMPTION, Assumption, HARNESS_ASSUMPTION_VERSION
 
 OUT_DIR = os.path.join(DATA, "mean_preserve")
+COMMAND_PATH = os.path.join(ROOT, "command_targets_v13.json")
 MP_PATH = os.path.join(ROOT, "data_tables", "mp_v13.json")
 LEVELS = ("mlb", "college_d1", "college_d2", "college_d3", "hs")
 DL = {"mlb": "MLB", "college_d1": "D1", "college_d2": "D2", "college_d3": "D3", "hs": "HS"}
@@ -406,9 +407,45 @@ def verify_level(lv):
         per[ck] = row
     ch_ = chain(p6)
     tg = calib.PA_TARGETS[lv]
-    return dict(level=lv, versions=dict(e.TABLE_VERSIONS), reference=desc, per_count=per,
+    # the reference world's zone rate (command target, ruling 12): each count's landed-band mix x the zone table's share of
+    # the band inside the rulebook zone (engine.ZONE_IN, as calib.evaluate counts "zone"), weighted by the chain's visits to
+    # the count (two-strike fouls loop), so it is per pitch exactly as calib.evaluate's zone
+    vis = visits(p6)
+    zc = {}
+    for i, (b, k) in enumerate(COUNTS):
+        ss = probe.assumption.same_share(probe.dl, b, k)
+        zc[CK[i]] = sum(sw * sum(w * e.ZONE_IN[z] for _, _, _, z, w in probe.assumption.mix(probe.dl, side, b, k))
+                        for side, sw in (("same", ss), ("opp", 1 - ss)))
+    zone = sum(vis[ck] * zc[ck] for ck in CK) / sum(vis.values())
+    return dict(level=lv, versions=dict(e.TABLE_VERSIONS), reference=desc, per_count=per, zone=zone, zone_by_count=zc,
                 max_abs_diff=max(abs(per[ck][k]["diff"]) for ck in CK for k in TERMS), worst_diff_over_se=worst_z,
                 chain=ch_, target=tg, gap={k: ch_[k] - tg[k] for k in ("K", "BB", "HBP")}, p6=p6)
+
+
+def visits(p6_by_ck):
+    """expected pitches thrown in each count per PA (the count chain from 0-0; two-strike fouls loop)"""
+    reach = defaultdict(float)
+    reach[(0, 0)] = 1.0
+    out = {}
+    for b, k in sorted(COUNTS, key=lambda c: c[0] + c[1]):
+        ball, hbp, cs, wh, fo, ip = p6_by_ck[f"{b}-{k}"]
+        v = reach[(b, k)] / (1 - (fo if k == 2 else 0.0))
+        out[f"{b}-{k}"] = v
+        if b < 3:
+            reach[(b + 1, k)] += v * ball
+        if k < 2:
+            reach[(b, k + 1)] += v * (cs + wh + fo)
+    return out
+
+
+def write_command(res):
+    out = {"about": ("v1.3 (Drew's Nov 24 ruling 12): the command target the pitcher-side keys fit with BB and HBP: the share of "
+                     "pitches in the rulebook zone in each level's reference world (hitter_data/mean_preserve.py verify: the "
+                     "real landing by count, engine.ZONE_IN per band, weighted by the count chain's visits)."),
+           "levels": {lv: {"zone": r["zone"], "zone_by_count": r["zone_by_count"], "reference": r["reference"]} for lv, r in res.items()}}
+    with open(COMMAND_PATH, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(out, f, indent=1)
+        f.write("\n")
 
 
 def _verify_worker(lv):
@@ -429,7 +466,7 @@ def pool_run(fn, levels, env):
 def main(argv=None):
     a = list(sys.argv[1:] if argv is None else argv)
     cmd = a.pop(0) if a else "solve"
-    levels = tuple(a) or LEVELS
+    levels = tuple(x for x in a if not x.startswith("--")) or LEVELS
     if cmd == "data":
         hs_kind_usage()
         mlb_statcast()
@@ -448,11 +485,14 @@ def main(argv=None):
         tag = os.environ.get("PITCH_MP_TABLE", "v13")
         with open(os.path.join(OUT_DIR, f"verify_{tag}.json"), "w", encoding="utf-8") as f:
             json.dump(out, f, indent=1)
+        if "--write-command" in sys.argv and set(out) == set(LEVELS):
+            write_command(out)
         for r in res:
             print(f"{r['level']:11s} mp {r['versions']['mp']}: max |engine - fitted| {r['max_abs_diff']:.2e} "
                   f"(worst {r['worst_diff_over_se']:.4f} SE) | chain K {100 * r['chain']['K']:.2f} BB {100 * r['chain']['BB']:.2f} "
                   f"HBP {100 * r['chain']['HBP']:.2f} vs target {100 * r['target']['K']:.2f} / {100 * r['target']['BB']:.2f} / "
-                  f"{100 * r['target']['HBP']:.2f}: gap " + " ".join(f"{k} {100 * v:+.2f}" for k, v in r["gap"].items()))
+                  f"{100 * r['target']['HBP']:.2f}: gap " + " ".join(f"{k} {100 * v:+.2f}" for k, v in r["gap"].items())
+                  + f" | zone {100 * r['zone']:.1f}")
     else:
         raise SystemExit(__doc__)
 

@@ -181,6 +181,9 @@ MLB_PITCH = {"zone": 0.494, "z_swing": 0.672, "o_swing": 0.285, "z_contact": 0.8
 PA_TARGET_FILE = json.load(open("pa_targets_v13.json"))
 PA_TARGETS = {lv: {k: L[k] for k in ("K", "BB", "HBP")} for lv, L in PA_TARGET_FILE["levels"].items()}
 PA_TARGETS_ALL = {lv: dict(L["target_all"]) for lv, L in PA_TARGET_FILE["levels"].items()}   # every PA (college_run_values.json)
+# v1.3 ruling 12: the command target (share of pitches in the rulebook zone, engine.ZONE_IN per band) of each level's reference
+# world, hitter_data/mean_preserve.py verify --write-command -> command_targets_v13.json; fit with BB / HBP by the pitcher keys
+COMMAND_TARGETS = {lv: L["zone"] for lv, L in json.load(open("command_targets_v13.json"))["levels"].items()}
 
 
 PRIOR_W = 0.05
