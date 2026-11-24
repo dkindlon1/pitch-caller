@@ -1,4 +1,4 @@
-# PitchIQ watch firmware (rev D; the history below was written for rev B, see "Rev C changes" and "Rev D changes" at the end), Zephyr v4.4.2
+# PitchIQ watch firmware (rev E; the history below was written for rev B, see "Rev C changes", "Rev D changes" and "Rev E changes" at the end), Zephyr v4.4.2
 
 First working firmware for the custom watch (nRF52840 in a Raytac MDBT50Q module). The message logic is the tested portable C in
 `core/` (not modified); everything else here is hardware glue.
@@ -186,3 +186,26 @@ Compile-checked only (nothing was flashed or run on hardware); logs in `build_lo
 * A clean compile is all that exists. Nothing here has run on a watch board, and the dev-kit build has not been flashed either.
 * Still open: charger is not disabled before changing the charge current; the motor duty cap uses a battery reading up to 60 s old; no
   guard against repeated watchdog resets; connection interval fixed at 20 ms.
+
+## Rev E changes (2026-11-23)
+
+Status: compiles only. Nothing here has run on a watch board; the host tests are the only tests that ran. Logs: `build_logs/boss_revE_*.log`.
+
+* Board: model string and comments say rev E. Pin map unchanged. New on the board: P0.05 = UART TX and P0.08 = UART RX top-side test pads (used only by the
+  bring-up variant, below). nRESET is P0.18 (10 k pull-up, programming pad): `&uicr { gpio-as-nreset; }` was already in `pitchiq_watch.dts` and is kept.
+* Charger (`app/src/power.c`, lite code): `charger_lite_init()` now writes 1 to BCHGENABLECLR (charger base 0x03, offset 0x05, same as the stock
+  driver's `CHGR_OFFSET_EN_CLR`) before the charge-current (ISET) write; charging is enabled again by the existing BCHGENABLESET write at the end of the function.
+* Bring-up variant, off by default (`CONFIG_PQ_BRINGUP`, `app/Kconfig`). `app/bringup.conf` + `app/bringup.overlay` enable uart0 (115200, TX P0.05, RX P0.08)
+  as console and log backend (RTT stays). New file `app/src/bringup.c` (compiled only with the option) logs: a boot line (version, reset cause, MCUboot
+  confirmed flag); the nPM1300 state every 5 s; LIS2DH12 WHO_AM_I once, then x/y/z in mg every 1 s; a 300 ms motor buzz 3 s after boot and on a short button
+  press (released before the 5 s hold; the hold behaviour is unchanged); the BLE passkey; "LCD init ok/failed". Small hooks guarded by
+  `IS_ENABLED(CONFIG_PQ_BRINGUP)` are in `main.c`, `app_glue.c`, `ble_pq.c`, `ui.c`; `haptics.c` gained `haptics_buzz_ms()` (bring-up only) because the
+  existing patterns are 450 ms and 2 x 120 ms, not 300 ms.
+* Build the variant into its own folder:
+
+      west build -p always -b pitchiq_watch --sysbuild -d build_bringup /home/claude/pitchiq-watch/watch/firmware/app -- \
+          -DBOARD_ROOT=/home/claude/pitchiq-watch/watch/firmware -DEXTRA_CONF_FILE=bringup.conf -DEXTRA_DTC_OVERLAY_FILE=bringup.overlay
+
+* The normal build is not changed by the option (checked in `build_pitchiq/app/zephyr/.config`: `# CONFIG_PQ_BRINGUP is not set`, `# CONFIG_SERIAL is not set`; uart0 `status = "disabled"` in its zephyr.dts).
+* Not done / not verified: nothing run on hardware; reset cause is Zephyr's `hwinfo` flags (MCUboot or the bootloader may already have cleared RESETREAS: unchecked);
+  the accelerometer log shares the I2C bus with normal code and was not tested for contention.

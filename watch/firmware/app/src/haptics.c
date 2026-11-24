@@ -88,6 +88,24 @@ int haptics_init(void) {
   return 0;
 }
 
+#if IS_ENABLED(CONFIG_PQ_BRINGUP)
+void haptics_buzz_ms(uint16_t ms) {
+  static struct step one[2] = {{0, true}, {0, false}};
+  if (!ready) {
+    LOG_WRN("buzz ignored: motor not initialised");
+    return;
+  }
+  (void)k_work_cancel_delayable(&work);
+  k_spinlock_key_t k = k_spin_lock(&lock);
+  one[0].ms = ms;
+  pat = one;
+  pos = 0;
+  k_spin_unlock(&lock, k);
+  LOG_INF("buzz %u ms", (unsigned)ms);
+  k_work_schedule(&work, K_NO_WAIT);
+}
+#endif
+
 void haptics_buzz(enum pq_buzz_kind kind) {
   if (!ready) {
     LOG_WRN("buzz ignored: motor not initialised");

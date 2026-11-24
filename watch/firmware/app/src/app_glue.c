@@ -275,6 +275,9 @@ static void handle(const struct app_evt *e) {
     k_work_reschedule(&hold_work, K_MSEC(CONFIG_PQ_BOND_CLEAR_HOLD_MS));
     break;
   case EVT_BTN_RELEASE:
+    if (IS_ENABLED(CONFIG_PQ_BRINGUP) && k_work_delayable_busy_get(&hold_work) != 0) {
+      bringup_button_short(); /* released before the hold timer fired: a short press */
+    }
     (void)k_work_cancel_delayable(&hold_work);
     break;
   case EVT_CHARGER:

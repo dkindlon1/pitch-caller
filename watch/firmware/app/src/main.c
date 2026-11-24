@@ -101,9 +101,13 @@ int main(void) {
   app_wdt_init();
   LOG_INF("PitchIQ watch firmware starting");
   uint32_t cause = 0;
-  if (hwinfo_get_reset_cause(&cause) == 0) {
+  bool have_cause = hwinfo_get_reset_cause(&cause) == 0;
+  if (have_cause) {
     LOG_INF("reset cause 0x%08x (RESETREAS)", cause);
     (void)hwinfo_clear_reset_cause();
+  }
+  if (IS_ENABLED(CONFIG_PQ_BRINGUP)) {
+    bringup_boot(have_cause, cause);
   }
   if (fatal_count()) {
     LOG_ERR("previous run ended in a fatal error, reason %u, %u consecutive (halt at %d)", fatal_reason, fatal_count(), FATAL_MAX);
@@ -139,5 +143,8 @@ int main(void) {
     LOG_ERR("start-up incomplete");
   }
   app_glue_set_healthy(essential);
+  if (IS_ENABLED(CONFIG_PQ_BRINGUP)) {
+    bringup_start();
+  }
   return 0;
 }

@@ -56,4 +56,17 @@ config PQ_LIGHT_ON_MOTION
 	default y
 	depends on PQ_HAVE_ACCEL
 
+config PQ_BRINGUP
+	bool "Bring-up build: UART log, PMIC/accelerometer/motor/passkey diagnostics (rev E)"
+	default n
+	help
+	  Off (default): nothing changes, no code is added.  On (app/bringup.conf + app/bringup.overlay): src/bringup.c logs the boot
+	  line, the nPM1300 state every 5 s, the LIS2DH12 every second, buzzes the motor 3 s after boot and on a short button press,
+	  and logs the BLE passkey.  Needs uart0 on P0.05 (TX) / P0.08 (RX) from the overlay.
+
+config PQ_FW_VERSION
+	string "Firmware version string printed by the bring-up boot line"
+	default "revE-0.1"
+	depends on PQ_BRINGUP
+
 source "Kconfig.zephyr"

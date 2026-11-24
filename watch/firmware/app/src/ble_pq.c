@@ -307,6 +307,9 @@ static void passkey_display(struct bt_conn *c, unsigned int passkey) {
   struct app_evt e = {.type = EVT_PASSKEY, .value = passkey};
   app_post(&e);
   LOG_INF("passkey for pairing is on the screen");
+  if (IS_ENABLED(CONFIG_PQ_BRINGUP)) {
+    bringup_passkey(passkey);
+  }
 }
 
 static void pair_cancel(struct bt_conn *c) {

@@ -1,0 +1,29 @@
+== 1 schematic parses in KiCad and its netlist equals design.py
+netlist check: 40 nets in schematic, 40 in design, 71 components, differences: 0
+== 1b scripted electrical-rule check (own script: voltage limits, supply rails, straps)
+scripted ERC: 71 parts, 40 nets, errors 0, strap/passive-driven notes 5
+  note  net BTN: input(s) set only by passive parts (strap or switch): U2.15, SW1.1, D3.1
+  note  net LCD_EXTMODE: input(s) set only by passive parts (strap or switch): J1.3, R11.2, R12.1
+  note  net NRESET: input(s) set only by passive parts (strap or switch): U1.40, R19.1, R16.2
+  note  net SWDCLK: input(s) set only by passive parts (strap or switch): U1.53, R18.1
+  note  net UART_RX: input(s) set only by passive parts (strap or switch): U1.24, TP14.1
+== 1c KiCad's own ERC (schematic editor driven on a virtual screen; report in out/erc_report_kicad.txt)
+ ** ERC messages: 0  Errors 0  Warnings 0
+== 2 board copper equals design.py (pad nets) and KiCad DRC
+board check: 71 footprints, 152 vias, 471 track segments, copper layers 6, pad-net differences: 0
+DRC (KiCad 7.0.11): errors 0 {}, unconnected 0, warnings 77 {'silk_over_copper': 2, 'lib_footprint_issues': 75}
+antenna strip check (full width y 0-4.0 mm, module zone x 6.5-23.5 y 0-4.45 mm, 6 layers): foreign copper items 0
+== 3 BOM: every fitted part has an MPN, a source and (if machine-placed) an LCSC number
+CPL rows: 46
+BOM lines 47, SMT parts 46, unique SMT part numbers 23
+on-board parts incl. battery+motor: $25.61 @1, $20.34 @~100; display +$12.39 @1 / +$7.97 @100; with display: $38.00 @1, $28.31 @~100
+JLCPCB sides: {'F': 38, 'B': 8}
+SMT parts without an LCSC number: []
+fab check: 46 placement rows, worst position difference 0.000 mm, bottom silk texts ['+', '-'], problems: 0
+BOM lines missing MPN or source: []
+== 4 manufacturing files present
+== 5 firmware: C core tests against the JavaScript app (host build)
+[hook AES] the hook was called 2802 times
+ALL PASS
+sanitizer run: clean (no ASan/UBSan reports, exit 0)
+CHECK: PASS (design files consistent and rule-clean; this says nothing about a built board)

@@ -57,6 +57,7 @@ void ui_light(void);                    /* frontlight on for a few seconds */
 /* ---- haptics.c ---- */
 int haptics_init(void);
 void haptics_buzz(enum pq_buzz_kind kind); /* returns at once; the motor is run from a k_work */
+void haptics_buzz_ms(uint16_t ms);         /* bring-up only (CONFIG_PQ_BRINGUP): one buzz of this length, same motor path */
 
 /* ---- power.c ---- */
 struct power_status {
@@ -78,6 +79,13 @@ void power_ship(void);                      /* low-battery / commanded shutdown:
 int sensors_init(void);
 bool sensors_idle(void);                    /* no motion for a while (idle power policy input) */
 bool sensors_identity_ok(void);             /* accelerometer WHO_AM_I answers 0x33 (DK: true) */
+
+/* ---- bringup.c (compiled only with CONFIG_PQ_BRINGUP; every call site is guarded by IS_ENABLED) ---- */
+void bringup_boot(bool have_cause, uint32_t cause); /* boot line; call once, early in main() */
+void bringup_start(void);                           /* start the periodic logs and the 3 s motor buzz */
+void bringup_lcd(bool ok);                          /* "LCD init ok/failed" */
+void bringup_passkey(uint32_t passkey);             /* log the pairing passkey */
+void bringup_button_short(void);                    /* short press: buzz 300 ms */
 
 /* ---- main.c / app_glue.c ---- */
 void app_wdt_feed(void);   /* feed the watchdog (no-op until it is armed) */

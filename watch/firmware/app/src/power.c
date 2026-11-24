@@ -89,6 +89,7 @@ static const struct device *const charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_c
 #define ADC_BASE 0x05U
 #define VBUS_BASE 0x02U
 #define CHGR_EN_SET 0x04U
+#define CHGR_EN_CLR 0x05U     /* BCHGENABLECLR: write 1 to stop charging (stock driver CHGR_OFFSET_EN_CLR 0x05U) */
 #define CHGR_DIS_SET 0x06U
 #define CHGR_ISET 0x08U
 #define CHGR_ISET_DISCHG 0x0AU
@@ -159,6 +160,9 @@ static int charger_lite_init(void) {
   rc |= pm_wr(ADC_BASE, ADC_NTCR_SEL, DT_ENUM_IDX(CHG, thermistor_ohms));
   rc |= pm_wr(CHGR_BASE, CHGR_VTERM, TERM_IDX(term));
   rc |= pm_wr(CHGR_BASE, CHGR_VTERM_R, TERM_IDX(warm));
+  /* Rev E: stop charging before the charge current is rewritten (the chip must not charge while ISET changes); charging is
+   * switched on again by CHGR_EN_SET at the end of this function, as before. */
+  rc |= pm_wr(CHGR_BASE, CHGR_EN_CLR, 1U);
   rc |= pm_wr_burst(CHGR_BASE, CHGR_ISET, (uint8_t[]){iset / 2U, iset & 1U}, 2U);
   rc |= pm_wr_burst(CHGR_BASE, CHGR_ISET_DISCHG, (uint8_t[]){DISCHG_LIMIT / 2U, DISCHG_LIMIT & 1U}, 2U);
   rc |= pm_wr(VBUS_BASE, VBUS_ILIMSTARTUP, VBUS_IDX(DT_PROP(CHG, vbus_limit_microamp)));

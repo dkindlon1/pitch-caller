@@ -1,5 +1,5 @@
 /*
- * PitchIQ watch rev D: nRF52840 (QIAA) in a Raytac MDBT50Q module, Sharp memory LCD, LIS2DH12, nPM1300 (no heart-rate sensor, no 5 V boost).
+ * PitchIQ watch rev E: nRF52840 (QIAA) in a Raytac MDBT50Q module, Sharp memory LCD, LIS2DH12, nPM1300 (no heart-rate sensor, no 5 V boost).
  * Pin numbers live in pitchiq_watch-pinctrl.dtsi (PQ_PIN_*); this file refers to them by name.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -13,7 +13,7 @@
 #include <zephyr/dt-bindings/sensor/lis2dh.h>
 
 / {
-	model = "PitchIQ watch rev D";
+	model = "PitchIQ watch rev E";
 	compatible = "pitchiq,watch-rev-c";
 
 	chosen {

@@ -99,6 +99,9 @@ int ui_init(void) {
 #if IS_ENABLED(CONFIG_PQ_HAVE_DISPLAY)
   if (!device_is_ready(lcd)) {
     LOG_ERR("display not ready");
+    if (IS_ENABLED(CONFIG_PQ_BRINGUP)) {
+      bringup_lcd(false);
+    }
     return -ENODEV;
   }
   /* The ls0xx driver has already sent the all-clear at its init.  Draw the first picture into panel memory, and only
@@ -106,9 +109,15 @@ int ui_init(void) {
   refresh();
 #if DT_NODE_HAS_PROP(USER, lcd_disp_gpios)
   if (!gpio_is_ready_dt(&disp) || gpio_pin_configure_dt(&disp, GPIO_OUTPUT_ACTIVE)) {
+    if (IS_ENABLED(CONFIG_PQ_BRINGUP)) {
+      bringup_lcd(false);
+    }
     return -ENODEV;
   }
 #endif
+  if (IS_ENABLED(CONFIG_PQ_BRINGUP)) {
+    bringup_lcd(true);
+  }
 #else
   LOG_WRN("no display: STUB, the screen is described in the log");
 #endif

@@ -20,4 +20,5 @@ target_sources(app PRIVATE
   ${PQ_CORE}/pq_sec.c
   ${PQ_CORE}/pq_core.c
 )
+target_sources_ifdef(CONFIG_PQ_BRINGUP app PRIVATE src/bringup.c)
 target_include_directories(app PRIVATE src ${PQ_CORE})
