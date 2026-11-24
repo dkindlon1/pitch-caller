@@ -32,7 +32,7 @@ import sys
 import time
 from collections import defaultdict
 
-OUT = "C:/dev/pitchiq-data/kgap_diag"
+OUT = os.environ.get("KGAP_OUT", "C:/dev/pitchiq-data/kgap_diag")     # KGAP_OUT: the fixed core's K-gap table (Nov 23)
 LEVELS = ("mlb", "college_d1", "college_d2", "college_d3", "hs")
 VARIANTS = ("base", "landswap", "trendoff", "velooff", "hsmedian", "edgereal", "probe", "hsbal", "oscenter")
 CK = [f"{b}-{k}" for k in range(3) for b in range(4)]
@@ -279,6 +279,11 @@ def worker(level, variant, seeds, outdir, stub=True):
                         x.velo = HS_MEDIAN[x.kind]
             return dict(a, name="Starter (R)"), dict(b, name="Reliever (R)")
         simulate.our_staff = hs_staff
+    if variant == "cguard":
+        # v1.3 ruling 8, college REPORT ONLY: the HS-style fastball-share floor at Single-A's real range (10th percentile of
+        # pitcher-season fastball share by count, Statcast 2021-25, >= 25 pitches), in this process only
+        fl = json.load(open("C:/dev/pitchiq-data/fits/hs/college_fb_guard_report.json", encoding="utf-8"))["real"]["A"]["p10_min25"]
+        engine._CT[level]["fb_floor"] = dict(fl)
     if variant == "oscenter":
         # diagnostic: the hidden lineup's off-speed damage without its built-in -0.2 (os = skill - 0.2 + noise in
         # simulate.their_lineup); same draws, so games pair with base seed for seed

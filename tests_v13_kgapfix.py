@@ -83,7 +83,12 @@ def main():
     hi = {("Fastball", "middle"): 0.9, ("Slider", "chase"): 0.1}
     check("above the floor: unchanged", e.apply_fb_floor(hi, s, frozenset({"Fastball"})) is hi)
     zero = {("Slider", "chase"): 1.0}
-    check("no fastball in the policy (outside the window or shaken off): unchanged", e.apply_fb_floor(zero, s, frozenset({"Fastball"})) is zero)
+    check("no fastball in the policy and no costs given (shaken off): unchanged", e.apply_fb_floor(zero, s, frozenset({"Fastball"})) is zero)
+    costs = {("Slider", "chase"): 0.10, ("Fastball", "middle"): 0.30, ("Fastball", "down-away"): 0.3005}
+    back = e.apply_fb_floor(zero, s, frozenset({"Fastball"}), costs, 0.01)
+    check("fastball outside the never-pick window (share 0): brought back at the floor, split by the location softmax",
+          abs(back[("Fastball", "middle")] + back[("Fastball", "down-away")] - f32) < 1e-12 and abs(sum(back.values()) - 1) < 1e-12
+          and back[("Fastball", "middle")] > back[("Fastball", "down-away")] and abs(back[("Slider", "chase")] - (1 - f32)) < 1e-12)
     check("fb_floor is None off HS / travel; travel reads hs",
           all(e.fb_floor(e.Situation(1, 1, 0, (False, False, False), level=lv)) is None for lv in ("mlb", "college_d1", "college_d2", "college_d3"))
           and e.fb_floor(e.Situation(1, 1, 0, (False, False, False), level="travel")) == F["1-1"])
@@ -110,10 +115,10 @@ def main():
         ars_kinds = {d["name"]: d["kind"] for d in inp["ars"][c["a"]]}
         w = sum(pr for pr, n, q in dist if ars_kinds[n] in ("FB", "SI", "FC"))
         f = F[f"{c['b']}-{c['k']}"]
-        if w > 0 and w < f - 1e-6:
+        if w < f - 1e-6:          # the zero-share case included: a fastball outside the window is brought back
             below.append((c["b"], c["k"], round(w, 4), f))
         raised += abs(w - f) < 1e-6
-    check("every HS / travel call's fastball share >= the floor (call_v08's dist)", not below, str(below[:5]))
+    check("every HS / travel call's fastball share >= the floor (call_v08's dist; every test arsenal has a fastball)", not below, str(below[:5]))
     print(f"     ({raised} of {len(calls) - 8} calls sit exactly at the floor)")
     nof = copy.deepcopy(C)
     nof["levels"]["hs"].pop("fb_floor")

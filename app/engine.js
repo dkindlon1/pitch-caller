@@ -1116,23 +1116,42 @@
     if (fbFloor(s) == null) return null;
     return new Set(arsenal.filter((x) => isFastball(x.kind)).map((x) => x.name));
   }
-  function applyFbFloor(pi, s, fb) {   // pi: {callKey: prob} -> fastball calls' share raised to the floor
+  function applyFbFloor(pi, s, fb, costs, temp) {   // pi: {callKey: prob} -> fastball calls' share raised to the floor
     if (!fb || !fb.size) return pi;
     const f = fbFloor(s);
     let w = 0.0, t = 0.0;
     for (const a in pi) { t += pi[a]; if (fb.has(skName(a))) w += pi[a]; }
+    if (w === 0.0 && costs && t > 0.0) {   // the fastball outside the never-pick window: brought back at the floor
+      const fbc = Object.keys(costs).filter((a) => fb.has(skName(a))).map((a) => [a, costs[a]]);
+      if (!fbc.length) return pi;
+      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
+      const loc = soft(fbc, temp, windows(s)[1], best), o = {};
+      for (const a in pi) o[a] = pi[a] * (1.0 - f);
+      for (const [a, pq] of loc) o[a] = (o[a] ?? 0.0) + f * t * pq;
+      return o;
+    }
     if (!(w > 0.0 && w < f * t)) return pi;
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w), o = {};
     for (const a in pi) o[a] = pi[a] * (fb.has(skName(a)) ? kf : ko);
     return o;
   }
-  function floorArr(piOut, st, s, fb) {   // applyFbFloor on policyArr's array (group order = policy_from_costs' dict order)
+  function floorArr(piOut, st, s, fb, cost, temp, lwin) {   // applyFbFloor on policyArr's array (group order = policy_from_costs' dict order)
     if (!fb || !fb.size) return piOut;
     const f = fbFloor(s);
     let w = 0.0, t = 0.0;
     for (let g = 0; g < st.groups.length; g++) {
       const isF = fb.has(st.names[g]);
       for (const i of st.groups[g]) if (piOut[i] > 0) { t += piOut[i]; if (isF) w += piOut[i]; }
+    }
+    if (w === 0.0 && t > 0.0) {   // the fastball outside the never-pick window: brought back at the floor (costs in call order)
+      const fbc = [];
+      for (let i = 0; i < st.calls.length; i++) if (fb.has(skName(st.calls[i]))) fbc.push([i, cost[i]]);
+      if (!fbc.length) return piOut;
+      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
+      const loc = soft(fbc, temp, lwin, best);
+      for (let i = 0; i < piOut.length; i++) if (piOut[i] > 0) piOut[i] = piOut[i] * (1.0 - f);
+      for (const [i, pq] of loc) piOut[i] = piOut[i] + f * t * pq;
+      return piOut;
     }
     if (!(w > 0.0 && w < f * t)) return piOut;
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w);
@@ -1156,7 +1175,7 @@
       if (!softArr(tmpC, idx.length, temp, lw, best[g], tmpW)) continue;
       for (let j = 0; j < idx.length; j++) if (tmpW[j] > 0) piOut[idx[j]] = pn[g] * tmpW[j];
     }
-    return floorArr(piOut, st, s, fb);
+    return floorArr(piOut, st, s, fb, cost, temp, lwin);
   }
   function piToObject(pi, st) {   // insertion order as Python's dict: by pitch (first appearance), then its targets
     const o = {};
@@ -1716,7 +1735,7 @@
     const fb = fbNames(arsenal, s);   // v1.3 ruling 8 (null off HS / travel)
     const [pi0, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
-    const pi = applyFbFloor(tieBreak(pi0, full, arsenal, s, exclude, M), s, fb);   // v1.1 Step 3 (E5); v1.3 ruling 8
+    const pi = applyFbFloor(tieBreak(pi0, full, arsenal, s, exclude, M), s, fb, full, temp);   // v1.1 Step 3 (E5); v1.3 ruling 8
     return [pi, sg, full, res, M];
   }
   function callV08(arsenal, s, opts = {}) {
