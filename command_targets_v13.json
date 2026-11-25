@@ -20,7 +20,7 @@
    "reference": "MLB: D1 frozen rows, landing reweighted to MLB Statcast class x band (2021-25, hl 2)"
   },
   "college_d1": {
-   "zone": 0.388066709102322,
+   "zone": 0.3880833672978868,
    "zone_by_count": {
     "0-0": 0.39877549962655,
     "0-1": 0.37082299893322473,
@@ -38,7 +38,7 @@
    "reference": "D1: harness h3 (single_a), D1_shared_w_thru2025.json"
   },
   "college_d2": {
-   "zone": 0.38881439481353175,
+   "zone": 0.38876447080488696,
    "zone_by_count": {
     "0-0": 0.3987752445700202,
     "0-1": 0.37084477951862327,
@@ -56,7 +56,7 @@
    "reference": "D2: harness h3 (single_a), D2_borrow_w_thru2025.json"
   },
   "college_d3": {
-   "zone": 0.38839378708202926,
+   "zone": 0.3883770633117123,
    "zone_by_count": {
     "0-0": 0.3987755248102606,
     "0-1": 0.37086664287633353,
@@ -74,7 +74,7 @@
    "reference": "D3: harness h3 (single_a), D3_borrow_w_thru2025.json"
   },
   "hs": {
-   "zone": 0.4028727371230969,
+   "zone": 0.40287273712233174,
    "zone_by_count": {
     "0-0": 0.41120887747696244,
     "0-1": 0.3880137332806037,
