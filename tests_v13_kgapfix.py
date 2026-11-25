@@ -86,8 +86,30 @@ def main():
     check("no fastball in the policy and no costs given (shaken off): unchanged", e.apply_fb_floor(zero, s, frozenset({"Fastball"})) is zero)
     costs = {("Slider", "chase"): 0.10, ("Fastball", "middle"): 0.30, ("Fastball", "down-away"): 0.3005}
     back = e.apply_fb_floor(zero, s, frozenset({"Fastball"}), costs, 0.01)
-    check("ruling 14: fastball outside the never-pick window (share 0, costs given): unchanged, the window outranks the floor",
-          back is zero)
+    check("ruling 16: fastball outside the never-pick window (share 0, costs given): brought back at the floor, split by the "
+          "location softmax (the floor outranks the model-made window)",
+          abs(back[("Fastball", "middle")] + back[("Fastball", "down-away")] - f32) < 1e-12 and abs(sum(back.values()) - 1) < 1e-12
+          and back[("Fastball", "middle")] > back[("Fastball", "down-away")] and abs(back[("Slider", "chase")] - (1 - f32)) < 1e-12)
+    fbm = e._FbSet({"Fastball"})
+    fbm.block = frozenset({("Fastball", "middle")})
+    backm = e.apply_fb_floor(zero, s, fbm, costs, 0.01)
+    check("ruling 16: a mashed fastball call (hard rule) is never brought back; the floor goes to the eligible calls only",
+          ("Fastball", "middle") not in backm and abs(backm[("Fastball", "down-away")] - f32) < 1e-12)
+    fbm2 = e._FbSet({"Fastball"})
+    fbm2.block = frozenset({("Fastball", "middle"), ("Fastball", "down-away")})
+    check("ruling 16: every fastball call mashed: unchanged", e.apply_fb_floor(zero, s, fbm2, costs, 0.01) is zero)
+    pim = {("Fastball", "middle"): 0.1, ("Fastball", "down-away"): 0.05, ("Slider", "chase"): 0.85}
+    outm = e.apply_fb_floor(pim, s, fbm, costs, 0.01)
+    check("ruling 16: a mashed call in the policy is neither counted toward the floor nor raised",
+          abs(outm[("Fastball", "down-away")] - f32) < 1e-12 and outm[("Fastball", "middle")] < 0.1)
+    mu = {"hard|FB|middle": 1, "hard|FB|up-in": 1, "hard|FB|down-away": 2}
+    sm = e.Situation(3, 2, 0, (False, False, False), level="hs", matchup=mu)
+    ars_m = [e.Pitch("Fastball", "FB", 3, 3, 0.8), e.Pitch("Curve", "CB", 3, 3, 0.8)]
+    blk = e.fb_names(ars_m, sm).block
+    check("fb_names' block = the mashed fastball calls (engine.mashed): down targets blocked, up / middle not",
+          blk == frozenset(("Fastball", q) for q in e.QUADS if e.mashed(ars_m[0], q, sm)) and ("Fastball", "down-away") in blk
+          and ("Fastball", "up-in") not in blk, str(sorted(blk)))
+    check("no matchup: empty block (bit for bit the unblocked floor)", e.fb_names(ars_m, s).block == frozenset())
     check("fb_floor is None off HS / travel; travel reads hs",
           all(e.fb_floor(e.Situation(1, 1, 0, (False, False, False), level=lv)) is None for lv in ("mlb", "college_d1", "college_d2", "college_d3"))
           and e.fb_floor(e.Situation(1, 1, 0, (False, False, False), level="travel")) == F["1-1"])
@@ -114,11 +136,20 @@ def main():
         ars_kinds = {d["name"]: d["kind"] for d in inp["ars"][c["a"]]}
         w = sum(pr for pr, n, q in dist if ars_kinds[n] in ("FB", "SI", "FC"))
         f = F[f"{c['b']}-{c['k']}"]
-        if 0 < w < f - 1e-6:      # ruling 14: the floor holds among the allowed calls (share 0 = no fastball call allowed)
+        if w < f - 1e-6:          # ruling 16: the floor holds on every call (only hard rules beat it; none set here)
             below.append((c["b"], c["k"], round(w, 4), f))
         zero_share += w == 0
         raised += abs(w - f) < 1e-6
-    check("every HS / travel call that allows a fastball has fastball share >= the floor (call_v08's dist)", not below, str(below[:5]))
+    check("ruling 16: every HS / travel call has fastball share >= the floor (call_v08's dist; no hard rule set)", not below, str(below[:5]))
+    # ruling 16, Python = JS with a mashed fastball height (the hard rule) on HS calls
+    callsm = [dict(c, mu={"hard|FB|down-away": 1, "hard|FB|down-in": 1, "hard|SI|down-away": 2, "hard|FC|up-in": 2})
+              for c in calls[:-8] if c["k"] == 2][:12]
+    inpm = dict(inp, calls=callsm)
+    pym = json.loads(TT.run_py(HERE, inpm))
+    jsm = json.loads(TT.run_js(HERE, inpm))
+    wm = TT.worst(pym["calls"], jsm["calls"])
+    check(f"ruling 16: Python = JS on {len(callsm)} two-strike HS / travel calls with mashed fastball heights (within 1e-9)",
+          wm <= 1e-9, f"largest difference {wm:.1e}")
     print(f"     ({raised} of {len(calls) - 8} calls sit exactly at the floor; {zero_share} allow no fastball call)")
     nof = copy.deepcopy(C)
     nof["levels"]["hs"].pop("fb_floor")

@@ -61,7 +61,7 @@ def ars(i):
     return a
 def sit(c):
     return e.Situation(c["b"], c["k"], c["o"], tuple(c["bases"]), level=c["lv"], same_side=c["same"], pitch_count=c["pc"],
-                       inning=c.get("inning", 1), margin=c.get("margin", 0))
+                       inning=c.get("inning", 1), margin=c.get("margin", 0), **({"matchup": c["mu"]} if c.get("mu") else {}))
 out = {"cases": [], "calls": [], "extras": {}}
 for c in inp["cases"]:
     a = ars(c["a"]); p = a[c["i"]]; s = sit(c); z = {}
@@ -82,7 +82,7 @@ JS_RUN = r"""
 const E = require('./app/engine.js'); E.init(JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')));
 const inp = JSON.parse(require('fs').readFileSync(0, 'utf8'));
 const ars = (i) => { const a = inp.ars[i].map((d) => E.Pitch(Object.assign({}, d))); E.resolveSpeeds(a); return a; };
-const sit = (c) => E.Situation({ balls: c.b, strikes: c.k, outs: c.o, bases: c.bases, level: c.lv, same_side: c.same, pitch_count: c.pc, inning: c.inning || 1, margin: c.margin || 0 });
+const sit = (c) => E.Situation({ balls: c.b, strikes: c.k, outs: c.o, bases: c.bases, level: c.lv, same_side: c.same, pitch_count: c.pc, inning: c.inning || 1, margin: c.margin || 0, ...(c.mu ? { matchup: c.mu } : {}) });
 const out = { cases: [], calls: [], extras: {} };
 for (const c of inp.cases) {
   const a = ars(c.a), p = a[c.i], s = sit(c), z = {};

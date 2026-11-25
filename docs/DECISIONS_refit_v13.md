@@ -13,6 +13,44 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 25): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_edge_rulings_2026-11-25.md` (after Part 2 of `docs/BUILD_v13_fulldata_REPORT.md`, tip
+1f4c928). Carried out on `feat/hitter-v13-fulldata` (report Part 3). The count layer and the per-count scalars are never
+changed.
+
+16. **The floor beats exclusions the engine makes itself** (revises ruling 14). The HS fastball floor is outranked only by
+    hard rules: coach bans, hitter-specific damage rules ("mashed"), fatigue or injury limits, and Drew's standing hard
+    checks. Exclusions derived from the engine's own pitch values, such as the never-pick window, do not outrank it.
+    The classification of each rule is listed below, **proposed**, for Drew to check.
+17. **Judge the calling edge by runs and graded rows.** The reference-world gate stays (it passed). For engine-called sims,
+    report K, BB, HBP and runs per game against a paired staff throwing the reference mix (same hitters, same seeds), per
+    level, with SE. The edge is accepted at a level when engine-called runs per game are not higher than the reference
+    staff's **and** Drew passes the two-strike graded rows behind it. Draft those rows (the two-strike situations that
+    contribute most to the K and BB edge, with call menus and **proposed** grades). Keep the +1.5 K flag in the report.
+18. **Trend extension and edge called strike stay as they are.** The edge called strike stays mean-preserved (setting it to
+    the real rate contradicts each level's own called-strike data). The trend extension stays as approved; the three-way
+    read-through can still reverse it.
+19. **Command:** each level's reference-world zone rate (`command_targets_v13.json`), as proposed in Part 2. The zone-rate
+    gap is reported, not a gate.
+
+### Ruling 16: how each rule is classified (PROPOSED, Claude; Drew checks the split)
+
+| rule (where) | what it removes | class | vs the floor |
+|---|---|---|---|
+| shake-off / coach's "not that pitch" (`allowed_calls`, `shaken_names`; twice = `hard_shaken`) | the pitch, every spot | **hard** (coach ban) | outranks: a shaken-off fastball is never brought back |
+| confidence cutoff and band (`candidates`, `band_weight`) | a pitch he doesn't trust today (feel / logged results) | **hard** (pitcher's state today, an input, not a pitch value) | outranks |
+| not landing today (`LAND_BLOCK_*`, `not_landing`) | a pitch missing today, when behind or on 0-0 | **hard** (named coach rule, Nov 11) | outranks |
+| no chase at 3-0 / 3-1, zone at 2-2 (`targets`, `NO_CHASE`) | the chase target | **hard** (coach rules A1 / A2 / A3) | outranks: the floor never adds a chase there |
+| mashed (`mashed`, `MASHED_PENALTY`) | a pitch type's target height he hit hard twice today | **hard** (hitter-specific damage rule). In the costs it is a penalty, so for the floor it is now an explicit block (`fb_names().block`) | outranks: a mashed fastball spot is never raised or brought back |
+| fatigue / injury limits | none exist as exclusions: fatigue lowers speed and grade inside the costs (`LEVEL.fatigue`, the app's fatigue point); injury is the app's "mark changed" (history weight) | **hard if one is added**; nothing to apply now | – |
+| Drew's standing hard checks (`readthrough/hard_checks_v13.py`: hard foul = foul, hit hard once / twice, no chase 3-0 / 3-1, no scouting, robustness) | checks, not exclusions; "hit hard twice" is the mashed rule, "no chase" is `targets` | **hard** (via the rules above) | rerun on every change (task 4) |
+| pitch-type never-pick window and its taper (`policy_from_costs`, `windows`, `TAPER`) | a pitch whose best cost is 0.030 × run scale × stakes behind | **model-made** | **the floor outranks it**: the fastball comes back at the floor |
+| location window (`LOC_WINDOW`) | spots far behind that pitch's best spot | model-made | chooses WHICH fastball spot gets the floor's share; doesn't keep the fastball out |
+| tie-break (`tie_break`), the 0.5% display cut (`call_v08` keep_n) | small shifts / tiny shares | model-made | the floor applies after both |
+| soft coaching credits (ground-ball rule, late_fb, squared_up, …) | nothing (cost terms) | not exclusions | – |
+| the coach's own pitch in the sims (`OVERRIDE`, 0 in these sims) | – | coach's call (ruling 14 floors it; unchanged) | – |
+
 ## Drew's rulings (Nov 24): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_meanpreserve_2026-11-24.md` (after `docs/BUILD_v13_fulldata_REPORT.md` and

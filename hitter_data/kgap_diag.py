@@ -34,7 +34,7 @@ from collections import defaultdict
 
 OUT = os.environ.get("KGAP_OUT", "C:/dev/pitchiq-data/kgap_diag")     # KGAP_OUT: the fixed core's K-gap table (Nov 23)
 LEVELS = ("mlb", "college_d1", "college_d2", "college_d3", "hs")
-VARIANTS = ("base", "landswap", "trendoff", "velooff", "hsmedian", "edgereal", "probe", "hsbal", "oscenter")
+VARIANTS = ("base", "landswap", "trendoff", "velooff", "hsmedian", "edgereal", "probe", "hsbal", "oscenter", "refstaff")
 CK = [f"{b}-{k}" for k in range(3) for b in range(4)]
 COUNTS = [(b, k) for k in range(3) for b in range(4)]
 BANDS = ("heart", "edge", "off", "noncomp")
@@ -254,6 +254,35 @@ def _six(P):
     return (P["ball"] + P["wp_ball"], P["hbp"], P["cstrike"], P["whiff"], P["foul"], P["weak"] + P["solid"] + P["hard"])
 
 
+REF_DL = {"mlb": "MLB", "college_d1": "D1", "college_d2": "D2", "college_d3": "D3", "hs": "HS"}
+REF_GROUP = {"FB": "Fastball", "SI": "Fastball", "FC": "Fastball", "SL": "Slider", "CB": "Curveball", "CH": "Change-Up"}
+
+
+def ref_mix(level):
+    """v1.3 ruling 17: the level's REFERENCE WORLD mix (hitter_data.mean_preserve.reference: the world the gate and the
+    mean-preservation scalars use) as {(side, (b, k)): {group: [(target, landed band, weight), ...]}}: college the
+    harness h3 (single_a), HS D3's h3 rows with real HS kind-group usage by count, MLB D1's rows with MLB Statcast
+    landing. Each row is a (pitch kind, target, landed band) with its weight; only the kind's group is kept."""
+    from hitter_data import mean_preserve as MP
+    from hitter_data import export_candidates as X
+    if level == "mlb":
+        A = MP.MLBRefAssumption()
+    elif level == "hs":
+        A = MP._hs_ref_class()(MP.PRIMARY_ASSUMPTION)
+    else:
+        A = MP.probe_college(X, level).assumption
+    dl = REF_DL[level]
+    out = {}
+    for side in ("same", "opp"):
+        for b, k in COUNTS:
+            g = defaultdict(list)
+            for a, j, q, z, w in A.mix(dl, side, b, k):
+                if w > 0:
+                    g[REF_GROUP[A.arsenals[a][j]["kind"]]].append((q, z, w))
+            out[(side, (b, k))] = dict(g)
+    return out
+
+
 def worker(level, variant, seeds, outdir, stub=True):
     os.environ["LEVEL"] = level
     sys.argv = ["kgap"]
@@ -272,9 +301,42 @@ def worker(level, variant, seeds, outdir, stub=True):
         r = engine.call_v08(ars, s, *a, **k)
         LASTCALL["fb"] = sum(pr for pr, _, p_, _ in r[1] if engine.is_fastball(p_.kind))
         return r
+    REFZ = {"z": None}
+    if variant == "refstaff":
+        # v1.3 ruling 17: the paired REFERENCE STAFF. Same staff, hitters, seeds and game loop (shake-offs included); each
+        # pitch is drawn from the level's reference-world mix in this count and side (ref_mix: kind group, target and
+        # landed band) instead of the engine's call, and lands in the drawn band. A group the arsenal lacks (or that is
+        # shaken off) is dropped and the rest renormalized; within a group the arsenal's pitches split evenly. One
+        # rng.random() per call, as call_v08 draws.
+        RM = ref_mix(level)
+
+        def call_ref(ars, s, rng=None, exclude=None, tab=None, **k):
+            ex = engine.shaken_names(exclude)
+            byg = defaultdict(list)
+            for x in ars:
+                byg[REF_GROUP[x.kind]].append(x)
+            live = {g: [x for x in xs if x.name not in ex] for g, xs in byg.items()}
+            live = {g: xs for g, xs in live.items() if xs} or dict(byg)
+            rows = []
+            for g, lst in RM[("same" if s.same_side else "opp", (s.balls, s.strikes))].items():
+                if g in live:
+                    for q, z, w in lst:
+                        for x in live[g]:
+                            rows.append((w / len(live[g]), x, q, z))
+            t = sum(r_[0] for r_ in rows)
+            u, acc, pick = rng.random() * t, 0.0, rows[-1]
+            for r_ in rows:
+                acc += r_[0]
+                if u <= acc:
+                    pick = r_
+                    break
+            REFZ["z"] = pick[3]
+            sg = tab.sigma.get((s.balls, s.strikes)) if tab is not None else None
+            info = dict(sigma=sg or {("ref", "ref"): 1.0}, residual=0.0, M={}, table=tab)
+            return (pick[1], pick[2], pick[0] / t, 0.0), [(pick[0] / t, 0.0, pick[1], pick[2])], tab, info
     if stub:
         simulate.CALLER = _Proxy(engine, why_line=lambda *a, **k: ("",), intent_label=lambda *a, **k: ("",),
-                                 call_v08=call_v08_tracked)
+                                 call_v08=call_ref if variant == "refstaff" else call_v08_tracked)
         simulate.engine = _Proxy(engine, root_costs=lambda *a, **k: _ZeroCosts())
     if level == "hs":
         def hs_staff():
@@ -308,7 +370,16 @@ def worker(level, variant, seeds, outdir, stub=True):
 
     def wrapped(p, q, ts, ars, *a, **k):
         zo = {}
-        P = ORIG(p, q, ts, ars, *a, zout=zo, **k)
+        if variant == "refstaff":       # the reference staff's pitch lands in its drawn band
+            zb = REFZ["z"]
+            saved = engine.landing
+            engine.landing = lambda p_, q_, s_: {z_: (1.0 if z_ == zb else 0.0) for z_ in BANDS}
+            try:
+                P = ORIG(p, q, ts, ars, *a, zout=zo, **k)
+            finally:
+                engine.landing = saved
+        else:
+            P = ORIG(p, q, ts, ars, *a, zout=zo, **k)
         cls = "OS" if engine.is_offspeed(p.kind) else "FB"
         ck = f"{ts.balls}-{ts.strikes}"
         Ls = LST["same" if ts.same_side else "opp"][ck][cls]

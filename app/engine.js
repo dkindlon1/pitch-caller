@@ -1114,19 +1114,32 @@
   // v1.3 (Drew's Nov 23 ruling 8): the HS / travel fastball-share floor by count (engine.py fb_floor / fb_names /
   // apply_fb_floor; count table levels.hs.fb_floor). Same operations in the same order as engine.py.
   function fbFloor(s) { const L = ctLevel(s.level); const T = L ? L.fb_floor : null; return T ? T[cntKey(s.balls, s.strikes)] : null; }
-  function fbNames(arsenal, s) {
+  function fbNames(arsenal, s) {   // ruling 16: .block = the mashed fastball calls (a hard rule keeps them out of the floor)
     if (fbFloor(s) == null) return null;
-    return new Set(arsenal.filter((x) => isFastball(x.kind)).map((x) => x.name));
+    const out = new Set(arsenal.filter((x) => isFastball(x.kind)).map((x) => x.name));
+    out.block = new Set();
+    if (s.matchup && Object.keys(s.matchup).length)
+      for (const x of arsenal) if (isFastball(x.kind)) for (const q of QUADS) if (mashed(x, q, s)) out.block.add(sk(x.name, q));
+    return out;
   }
-  function applyFbFloor(pi, s, fb, costs, temp) {   // pi: {callKey: prob} -> fastball calls' share raised to the floor
+  const fbElig = (fb, a) => fb.has(skName(a)) && !(fb.block && fb.block.has(a));
+  function applyFbFloor(pi, s, fb, costs, temp) {   // pi: {callKey: prob} -> eligible fastball calls' share raised to the floor
     if (!fb || !fb.size) return pi;
     const f = fbFloor(s);
     let w = 0.0, t = 0.0;
-    for (const a in pi) { t += pi[a]; if (fb.has(skName(a))) w += pi[a]; }
-    // ruling 14: only among the allowed calls; no allowed fastball call (outside the never-pick window / shaken off): unchanged
+    for (const a in pi) { t += pi[a]; if (fbElig(fb, a)) w += pi[a]; }
+    if (w === 0.0 && costs && t > 0.0) {   // ruling 16: the fastball outside the never-pick window is brought back at the floor
+      const fbc = Object.keys(costs).filter((a) => fbElig(fb, a)).map((a) => [a, costs[a]]);
+      if (!fbc.length) return pi;
+      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
+      const loc = soft(fbc, temp, windows(s)[1], best), o = {};
+      for (const a in pi) o[a] = pi[a] * (1.0 - f);
+      for (const [a, pq] of loc) o[a] = (o[a] ?? 0.0) + f * t * pq;
+      return o;
+    }
     if (!(w > 0.0 && w < f * t)) return pi;
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w), o = {};
-    for (const a in pi) o[a] = pi[a] * (fb.has(skName(a)) ? kf : ko);
+    for (const a in pi) o[a] = pi[a] * (fbElig(fb, a) ? kf : ko);
     return o;
   }
   function floorArr(piOut, st, s, fb, cost, temp, lwin) {   // applyFbFloor on policyArr's array (group order = policy_from_costs' dict order)
@@ -1134,14 +1147,22 @@
     const f = fbFloor(s);
     let w = 0.0, t = 0.0;
     for (let g = 0; g < st.groups.length; g++) {
-      const isF = fb.has(st.names[g]);
-      for (const i of st.groups[g]) if (piOut[i] > 0) { t += piOut[i]; if (isF) w += piOut[i]; }
+      for (const i of st.groups[g]) if (piOut[i] > 0) { t += piOut[i]; if (fbElig(fb, st.calls[i])) w += piOut[i]; }
     }
-    if (!(w > 0.0 && w < f * t)) return piOut;   // ruling 14: only among the allowed calls
+    if (w === 0.0 && t > 0.0) {   // ruling 16: brought back at the floor (costs in call order)
+      const fbc = [];
+      for (let i = 0; i < st.calls.length; i++) if (fbElig(fb, st.calls[i])) fbc.push([i, cost[i]]);
+      if (!fbc.length) return piOut;
+      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
+      const loc = soft(fbc, temp, lwin, best);
+      for (let i = 0; i < piOut.length; i++) if (piOut[i] > 0) piOut[i] = piOut[i] * (1.0 - f);
+      for (const [i, pq] of loc) piOut[i] = piOut[i] + f * t * pq;
+      return piOut;
+    }
+    if (!(w > 0.0 && w < f * t)) return piOut;
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w);
     for (let g = 0; g < st.groups.length; g++) {
-      const isF = fb.has(st.names[g]);
-      for (const i of st.groups[g]) if (piOut[i] > 0) piOut[i] = piOut[i] * (isF ? kf : ko);
+      for (const i of st.groups[g]) if (piOut[i] > 0) piOut[i] = piOut[i] * (fbElig(fb, st.calls[i]) ? kf : ko);
     }
     return piOut;
   }

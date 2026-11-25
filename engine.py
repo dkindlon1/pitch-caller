@@ -2659,10 +2659,18 @@ def _soft(costs, temp, w, ref):
 # the floor inside the quantal-response map the solve cycles instead of converging (2-2 residual 0.17 after 3000 steps on a
 # travel sinker / cutter arsenal), so the floor is a guard on the output, not a term of the game. When the allowed calls' fastball share
 # w is above 0 and below the floor f, every fastball call is scaled by f / w and every other call by (1 - f) / (1 - w)
-# (shares of the policy's own total). Drew's Nov 24 ruling 14: the never-pick window and every other safety / hitter rule
-# outrank the floor, which applies only among the allowed calls (the policy's support): when no fastball call is allowed
-# (every one outside the never-pick window, or shaken off) the policy is left as it is. (Nov 23's e00cfe5 brought the
-# fastball back from outside the window; withdrawn.) The simulator also floors the coach's own pitch (simulate.py).
+# (shares of the policy's own total). Drew's Nov 25 ruling 16 (revises ruling 14): the floor is outranked only by HARD
+# rules, never by exclusions the engine makes from its own pitch values. Hard (the floor never brings a call back past
+# them): a shake-off / coach's "not that pitch" (allowed_calls), the confidence cutoff and band (candidates: his trust in
+# the pitch today), the not-landing block (LAND_BLOCK_*), the no-chase targets at 3-0 / 3-1 / 2-2 (targets), and the
+# hitter-specific damage rule "mashed" (a fastball target height he has hit hard MASHED_N+ times today: fb_names' block
+# set; those calls neither count toward the floor nor get raised). Model-made (the floor outranks them): the pitch-type
+# never-pick window and its taper. So when the eligible fastball calls' share is 0 (every one outside the never-pick
+# window) the floor brings them in, as Nov 23's e00cfe5 did: the rest of the policy x (1 - f), and f spread over the
+# eligible fastball calls by the location softmax of policy_from_costs (temperature and location window as there, from
+# the best eligible fastball call's cost; the location window chooses WHICH fastball, it doesn't keep the fastball out).
+# The engine has no fatigue / injury exclusion (fatigue lowers speed and grade inside the costs), so none applies here.
+# The simulator also floors the coach's own pitch (simulate.py). docs/DECISIONS_refit_v13.md ruling 16 lists the split.
 # Every other level, and any count table without fb_floor (v12, v13refit): no change.
 def fb_floor(s):
     """the fastball-share floor at s's count, or None (level without a floor table)"""
@@ -2671,30 +2679,50 @@ def fb_floor(s):
     return T[f"{s.balls}-{s.strikes}"] if T else None
 
 
+class _FbSet(frozenset):
+    """fb_names' result: the fastball-class pitch names, plus .block = the (name, target) calls a hard rule keeps out of
+    the floor (ruling 16: mashed)"""
+    block = frozenset()
+
+
 def fb_names(arsenal, s):
-    """the arsenal's fastball-class pitch names when s's level has a floor table, else None (the floor is off)"""
+    """the arsenal's fastball-class pitch names when s's level has a floor table, else None (the floor is off); .block:
+    its mashed (name, target) calls at s (ruling 16)"""
     if fb_floor(s) is None:
         return None
-    return frozenset(x.name for x in arsenal if is_fastball(x.kind))
+    out = _FbSet(x.name for x in arsenal if is_fastball(x.kind))
+    if s.matchup:
+        out.block = frozenset((x.name, q) for x in arsenal if is_fastball(x.kind) for q in QUADS if mashed(x, q, s))
+    return out
 
 
 def apply_fb_floor(pi, s, fb, costs=None, temp=None):
-    """pi {(name, q): prob} -> pi with the allowed fastball calls' share raised to fb_floor(s) (see above); plain
-    left-to-right sums in pi's order (app/engine.js applyFbFloor does the same operations). costs / temp: unused since
-    ruling 14 (kept for the callers)."""
+    """pi {(name, q): prob} -> pi with the eligible fastball calls' share raised to fb_floor(s) (see above); plain
+    left-to-right sums in pi's order (app/engine.js applyFbFloor does the same operations). costs {(name, q): cost} of
+    the allowed calls and temp: needed to bring the fastball back when its share is 0 (ruling 16)."""
     if not fb:
         return pi
     f = fb_floor(s)
+    blk = getattr(fb, "block", ())
     w = t = 0.0
     for a, v in pi.items():
         t += v
-        if a[0] in fb:
+        if a[0] in fb and a not in blk:
             w += v
+    if w == 0.0 and costs is not None and t > 0.0:
+        fbc = {a: c for a, c in costs.items() if a[0] in fb and a not in blk}
+        if not fbc:
+            return pi
+        loc = _soft(fbc, temp, windows(s)[1], min(fbc.values()))
+        out = {a: v * (1.0 - f) for a, v in pi.items()}
+        for a, pq in loc.items():
+            out[a] = out.get(a, 0.0) + f * t * pq
+        return out
     if not (w > 0.0 and w < f * t):
         return pi
     kf = f * t / w
     ko = (1.0 - f) * t / (t - w)
-    return {a: v * (kf if a[0] in fb else ko) for a, v in pi.items()}
+    return {a: v * (kf if (a[0] in fb and a not in blk) else ko) for a, v in pi.items()}
 
 
 def policy_from_costs(costs, s, temp, fb=None):
