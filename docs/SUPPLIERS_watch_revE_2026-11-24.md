@@ -166,3 +166,33 @@ Read in the suppliers' own instant-quote forms in a browser, not signed in. Thes
 - The Standard form has no filled-and-capped via option (only tenting / plugged with solder mask); the page points to its Advanced PCB form for resin-filled vias and via-in-pad. Not priced. Their assembly quote was not opened.
 
 Still needing a human answer from each: the notch's 0.5 mm inside-corner relief, outline tolerance at the notch without precision routing, customer-supplied nPM1300, and assembled price.
+
+## Supplier reply received 2026-11-24 (pasted by Drew; signed "Bruce")
+
+The reply does not name the company. Its terms (Parts Manager, Consign Part, Economic/Standard assembly, POFV, $7.86 panel fee, DFM Analysis under Order History) and its fees match JLCPCB's site, so it is treated as JLCPCB's until Drew confirms. It is a capability-level answer: "We have not yet inspected the actual files".
+
+| Question | Their answer | Status for rev E |
+|---|---|---|
+| 6 layers at 0.8 mm, 1 oz / 0.5 oz, ENIG, TG155 | Producible. Stack-up chosen by their engineers from standard combinations; no custom stack-ups. Thickness tolerance +/-0.1 mm below 1.0 mm | Closed. No controlled-impedance tracks on the board, so a standard stack-up is fine |
+| Filled and capped vias, 0.2 / 0.5 mm | Supported, included at no charge on 6 layers. With Gerber orders the solder-mask Gerber governs via treatment | Closed. Vias are tented in the mask files and the order form option is set |
+| Outline tolerance | +/-0.2 mm standard. +/-0.1 mm precision needs three locating holes and is not available for a single board under 50 mm; a panel is "assessed against the panel locating holes" | **Open risk, not removable in the design.** See below |
+| Notch corner relief 0.5 mm radius | Equals their minimum corner radius | Closed on paper; they confirm the bit on the files |
+| Plated slots 0.50 x 1.10 mm | 0.5 mm is their minimum; tolerance +0.13/-0.08 mm; "margin is tight" | **Open: needs the real connector.** Finished slot can be 0.42 mm |
+| Panel | Rails 3-5 mm and fiducials added by them; V-cut for regular boards, mouse-bites for irregular; $7.86 per design; customer panel accepted | Closed. Ask for mouse-bites at order (rounded corners and a notch) |
+| Assembly | Economic is single-sided, from 10 x 10 mm. Standard is the only two-sided option, rails added below 70 x 70 mm. Setup $25 one side / $50 two sides; stencil $7.86 / $15.71 | Closed. (Their site greyed out Economic for this board, so Standard it is) |
+| Top side only, bottom by hand | Acceptable; say so in the PCBA remark | Closed; available as a cost option |
+| Part placement | 0402, SOD-323, SOT-23, 3215 crystal, QFN-32: standard. **LGA-12 is a restricted package, confirmed case by case from pad geometry. The side switch may need manual placement or a fixture** | Open until their file review. Footprints are KiCad's standard ones |
+| Customer-supplied nPM1300 | Possible through Consign Part; $45 clearance fee plus freight and duties | Not needed: their parts page showed the nPM1300 in stock and it matched in the quote |
+| Shortages | Order proceeds, shipment held; they ask before substituting anything except equivalent resistors and capacitors | Closed |
+| Rotation and polarity | Follows BOM/CPL and silkscreen; unclear cases confirmed by email; placement can be reviewed in DFM Analysis; Confirm Parts Placement gives an approval window, otherwise auto-confirm after 48 hours; finished-board photos are an option | Closed as a process. The check itself still happens at order time |
+| Lead time, shipping, duties | 8-9 days for the board before assembly; express 2-5 days; DDP channels prepay duties | Closed |
+| DFM | Will flag rail fit, LGA pad rules, notch and slot margin, vias in the QFN pad, bottom polarity marks; hand-fitted parts must not be in the placement list | Placement list already excludes U1, J1 and J3 (verified in `reviews/e4_fab_reverify.md`) |
+
+### What this means for the design
+
+1. **Notch and connector fit under +/-0.2 mm routing.** The notch is 10.30 mm wide, the connector body 9.94 mm (0.18 mm clear per side), and the shell-stake pads start 0.20 mm outside the notch edges. GCT's own layout drawing asks for +/-0.05 mm. With +/-0.2 mm, the worst cases are a notch 0.02 mm too narrow for the body (needs a light file) or an edge that reaches the stake pads. Widening the notch is not possible without cutting into the stake pads, which GCT's stake spacing fixes. Action at order time: request precision routing on the panel (the railed panel is over 50 mm); if refused, accept filing as prototype rework. No board change made.
+2. **Slot width.** 0.50 mm is GCT's figure and the fab's minimum; the finished slot can be as small as 0.42 mm. Whether the stake fits depends on the stake's thickness, which no drawing here gives. Measure it on the sample connector (must be 0.40 mm or less). If it is thicker, widen the slots to 0.60 mm before ordering.
+3. **Board thickness 0.8 +/-0.1 mm.** The mid-mount connector has a slot sized for a 0.80 mm board. Measure that slot on the sample connector: it must accept 0.90 mm. Also carry +/-0.1 mm into the case stack check.
+4. **LGA-12 accelerometer and side switch** may be refused for machine placement. Fallbacks: hot-air fit the accelerometer by hand; the switch is a bottom-side part and can be hand-soldered.
+
+Three measurements to add to the sample checklist (USB-C section): stake thickness and width; the connector's board-slot height; body width.
