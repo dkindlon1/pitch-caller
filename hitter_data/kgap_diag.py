@@ -32,6 +32,7 @@ import sys
 import time
 from collections import defaultdict
 
+DATA_ROOT = os.environ.get("PITCHIQ_DATA", "C:/dev/pitchiq-data")      # v1.3 final archive: every data path follows PITCHIQ_DATA
 OUT = os.environ.get("KGAP_OUT", "C:/dev/pitchiq-data/kgap_diag")     # KGAP_OUT: the fixed core's K-gap table (Nov 23)
 LEVELS = ("mlb", "college_d1", "college_d2", "college_d3", "hs")
 VARIANTS = ("base", "landswap", "trendoff", "velooff", "hsmedian", "edgereal", "probe", "hsbal", "oscenter", "refstaff")
@@ -101,7 +102,7 @@ def p6_from_rates(r):
 
 
 def real_counts_fit(level):
-    with open(os.path.join("C:/dev/pitchiq-data/fits/count_layer", CORE_COUNT[level]), encoding="utf-8") as f:
+    with open(os.path.join(DATA_ROOT, "fits", "count_layer", CORE_COUNT[level]), encoding="utf-8") as f:
         j = json.load(f)
     p6 = {c: j["count"][f"{c[0]}-{c[1]}"]["p6"] for c in COUNTS}
     n = {c: j["count"][f"{c[0]}-{c[1]}"]["n_weighted"] for c in COUNTS}
@@ -199,7 +200,7 @@ def real():
         res["edge_cs"][grp] = dict(by_count=ecs, all=tot, season=2025)
         res["landing_half_life"] = hl
         print(grp, "edge cs/take 2025", round(tot, 3), flush=True)
-    diag = os.path.join("C:/dev/pitchiq-data/fits", "edge_cs_diag.json")
+    diag = os.path.join(DATA_ROOT, "fits", "edge_cs_diag.json")
     if os.path.exists(diag):
         r = json.load(open(diag, encoding="utf-8"))["real"]
         res["edge_inner_outer_A2025"] = {k: r[k] for k in ("inner", "outer", "edge")}
@@ -355,7 +356,7 @@ def worker(level, variant, seeds, outdir, stub=True):
     if variant == "cguard":
         # v1.3 ruling 8, college REPORT ONLY: the HS-style fastball-share floor at Single-A's real range (10th percentile of
         # pitcher-season fastball share by count, Statcast 2021-25, >= 25 pitches), in this process only
-        fl = json.load(open("C:/dev/pitchiq-data/fits/hs/college_fb_guard_report.json", encoding="utf-8"))["real"]["A"]["p10_min25"]
+        fl = json.load(open(os.path.join(DATA_ROOT, "fits", "hs", "college_fb_guard_report.json"), encoding="utf-8"))["real"]["A"]["p10_min25"]
         engine._CT[level]["fb_floor"] = dict(fl)
     if variant == "oscenter":
         # diagnostic: the hidden lineup's off-speed damage without its built-in -0.2 (os = skill - 0.2 + noise in
@@ -1077,7 +1078,7 @@ def realkind():
     import sqlite3
     import pandas as pd
     out = {}
-    con = sqlite3.connect("file:C:/dev/pitchiq-data/hs/hs.sqlite3?mode=ro", uri=True)
+    con = sqlite3.connect(f"file:{DATA_ROOT}/hs/hs.sqlite3?mode=ro", uri=True)
     q = """select p.balls || '-' || p.strikes ck, p.pitch_type, count(*) n, sum(p.letter = 'B') b, sum(p.letter = 'X') x
            from hs_pitch p join hs_games g using(game_id) where g.season between 2022 and 2025
            and coalesce(p.count_ok, 1) = 1 and p.balls between 0 and 3 and p.strikes between 0 and 2 group by 1, 2"""
@@ -1089,7 +1090,7 @@ def realkind():
     out["hs"] = T
     BALL = {"ball", "blocked_ball", "automatic_ball", "intent_ball", "pitchout"}
     for key, lv, seasons in (("college", "A", range(2021, 2026)), ("mlb", "MLB", (2025,))):
-        d = pd.concat([pd.read_parquet(f"C:/dev/pitchiq-data/refit/cache/{lv}_{s}.parquet",
+        d = pd.concat([pd.read_parquet(f"{DATA_ROOT}/refit/cache/{lv}_{s}.parquet",
                                        columns=["pitch_type", "description", "des", "game_type", "balls", "strikes"])
                        for s in seasons], ignore_index=True)
         d = d[d.game_type.fillna("R") == "R"]

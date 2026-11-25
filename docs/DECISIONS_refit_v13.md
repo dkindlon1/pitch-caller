@@ -13,6 +13,22 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 25, final archive): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_final_archive_2026-11-25.md`. The edge-rulings run is preserved as tag
+`frozen-archive-run-2026-11-25` (2cf56d9, `feat/hitter-v13-fulldata`); this work is on `feat/hitter-v13-final`.
+
+20. **The final archive is the single college source**: `C:/Users/kindl/Downloads/college-baseball-final/archive.sqlite3`
+    (11,015,741,440 bytes, mtime 2026-11-25 08:40; 251,281 games, 24,224,745 plays, 7,286,803 lineup rows, 413,847 roster
+    rows, 432,788 roster_sources rows, 940 schools, 28,745 seasons), opened read-only. The old `college-baseball-data` copy
+    and its `derived/` folder are not sources. Undated games take their season from the source URL (`/stats/YYYY/`,
+    `/YYYY/`, Presto `/YYYY-YY/`); a game whose season can't be determined is excluded from fit and scoring and counted.
+21. **Re-freeze the game list**: college from the final archive, HS unchanged at 21,707 games, the same lock.
+22. **The pass bar, the 2025 scoring set and the 2026 holdout are redefined on the final data** (every eligible 2025 game
+    in the final archive; 2026 stays held out).
+23. **Rulings 16 to 19 stand unchanged.**
+24. **All rulings of `PROMPT_hitter_v13_fulldata_2026-11-22.md` (1 to 3) and its addendum still stand.**
+
 ## Drew's rulings (Nov 25): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_edge_rulings_2026-11-25.md` (after Part 2 of `docs/BUILD_v13_fulldata_REPORT.md`, tip

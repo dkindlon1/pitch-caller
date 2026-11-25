@@ -57,10 +57,9 @@ def season_of(iso, url):
     m = re.search(r"/(20\d\d|19\d\d)-(\d\d)/", url or "")        # PrestoSports 2023-24 -> 2024 (spring)
     if m:
         return int(m[1]) + 1
-    m = re.search(r"/(20\d\d|19\d\d)/", url or "")
-    if m:
-        return int(m[1])
-    m = re.search(r"(20\d\d|19\d\d)", url or "")
+    # v1.3 final archive (Drew's Nov 25 ruling 20): no looser fallback (a year anywhere in the URL). An undated game whose
+    # URL names no season path gets season NULL and is left out of every fit and score (never a guess that could be 2026).
+    m = re.search(r"/(20\d\d|19\d\d)/", url or "")          # Sidearm /stats/YYYY/, StatCrew /YYYY/
     return int(m[1]) if m else None
 
 
@@ -129,10 +128,55 @@ def copy(con, arc, log=print, chunk=1500):
     con.executemany("INSERT OR REPLACE INTO rosters VALUES (?,?,?,?,?,?,?,?,?)",
                     arc.execute("SELECT school, season, source_order, player, number, position, bats, throws, class_year "
                                 "FROM rosters"))
+    roster_supplement(con, arc, log)
+    # ruling 20: every undated game's season from its URL by season_of's rule (rows copied earlier used a looser one)
+    und = con.execute("SELECT id, source_url, season FROM games WHERE COALESCE(date_iso,'')=''").fetchall()
+    fix = [(season_of("", u), g) for g, u, s0 in und if season_of("", u) != s0]
+    con.executemany("UPDATE games SET season=? WHERE id=?", fix)
+    con.commit()
+    log(f"undated games {len(und)}: season from the URL; {sum(1 for g, u, s0 in und if season_of('', u) is None)} "
+        f"without one (excluded); {len(fix)} re-derived")
     con.execute("INSERT INTO ingest_runs VALUES (?,?,?,?,?,?)",
                 (time.time(), len(new), len(changed), len(removed), len(src), time.time() - t0))
     con.commit()
     return len(new), len(changed), len(removed)
+
+
+def roster_supplement(con, arc, log=print):
+    """v1.3 final archive (Nov 25 prompt): rebuild the roster join on rosters PLUS roster_sources. The final archive keeps
+    every roster page it read in roster_sources; rosters holds one row per (school, season, source_order). A player in
+    roster_sources but not in rosters for that school-season is added (source_order 100000+), and a rosters row with an
+    empty bats / throws takes the value roster_sources has for the same player. Returns (added, filled)."""
+    try:
+        rs = arc.execute("SELECT school, season, player, number, position, bats, throws, class_year FROM roster_sources "
+                         "ORDER BY school, season, source_order").fetchall()
+    except sqlite3.OperationalError:
+        return 0, 0                                  # an archive without roster_sources (the older copy)
+    have = {}
+    for school, season, player, bats, throws in con.execute("SELECT school, season, player, bats, throws FROM rosters"):
+        have[(school, str(season), (player or "").strip())] = ((bats or "").strip(), (throws or "").strip())
+    nxt = {}
+    added = filled = 0
+    for school, season, player, num, pos, bats, throws, cy in rs:
+        k = (school, str(season), (player or "").strip())
+        b, t = (bats or "").strip(), (throws or "").strip()
+        if k not in have:
+            o = nxt.get(k[:2], 100000)
+            nxt[k[:2]] = o + 1
+            con.execute("INSERT OR REPLACE INTO rosters VALUES (?,?,?,?,?,?,?,?,?)", (school, season, o, player, num, pos,
+                                                                                    bats, throws, cy))
+            have[k] = (b, t)
+            added += 1
+        else:
+            hb, ht = have[k]
+            if (not hb and b) or (not ht and t):
+                con.execute("UPDATE rosters SET bats=COALESCE(NULLIF(TRIM(bats),''), ?), throws=COALESCE(NULLIF(TRIM(throws),''), ?) "
+                            "WHERE school=? AND season=? AND TRIM(player)=?", (b or None, t or None, school, season, k[2]))
+                have[k] = (hb or b, ht or t)
+                filled += 1
+    con.commit()
+    log(f"rosters + roster_sources: {added} players added, {filled} rows' bats / throws filled")
+    return added, filled
 
 
 # ---------- dedupe ----------
