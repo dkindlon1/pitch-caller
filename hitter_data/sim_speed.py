@@ -106,6 +106,49 @@ def bench(level, seed, k=6):
     print(f"{level}: {dt / len(rec):.3f} s/solve over {len(rec)} solves, tables {h.hexdigest()[:16]}", flush=True)
 
 
+def js_vs_py(level="college_d1", k=12, engine_dir=None):
+    """option (a), measurement only: the same golden full-solve cases (golden_v10.json set to LEVEL) solved by this
+    Python engine (or the one in engine_dir) and by app/engine.js under Node; seconds per solve and how many table
+    values agree exactly / within the parity tolerance (1e-9)."""
+    import subprocess
+    from dataclasses import replace
+    root = engine_dir or os.getcwd()
+    sys.path[:0] = [root, os.path.join(root, "golden")]
+    os.environ["LEVEL"] = level
+    import engine as e
+    import cases as G
+    cs = [c for c in json.load(open(os.path.join(root, "golden", "golden_v10.json"), encoding="utf-8")) if c["full"]][:k]
+    py_t, py_tabs = [], []
+    for c in cs:
+        c["s"]["level"] = level
+        ars, s = G.from_dicts(c)
+        s_w = replace(s, win=e.win_constants(s)) if s.home is not None else s
+        t = time.perf_counter()
+        tab = e.solve_table(ars, replace(s_w, balls=0, strikes=0, last=None))
+        py_t.append(time.perf_counter() - t)
+        py_tabs.append(tab)
+    js = json.loads(subprocess.run(["node", os.path.join(os.getcwd(), "hitter_data", "sim_speed_js.js"), level, str(k)],
+                                   capture_output=True, text=True, check=True, cwd=os.getcwd()).stdout)
+    n = same = within = 0
+    worst = 0.0
+    for tab, jt in zip(py_tabs, js["tables"]):
+        for which in ("V", "N"):
+            for (b, kk), d in getattr(tab, which).items():
+                for bn, v in d.items():
+                    w = jt[which][f"{b}-{kk}"][f"{bn[0]},{bn[1]}"] if f"{b}-{kk}" in jt[which] else None
+                    if w is None:
+                        continue
+                    n += 1
+                    same += v == w
+                    within += abs(v - w) <= 1e-9
+                    worst = max(worst, abs(v - w))
+    res = dict(level=level, cases=len(cs), py_s_per_solve=sum(py_t) / len(py_t), js_s_per_solve=sum(js["secs"]) / len(js["secs"]),
+               values=n, exactly_equal=same, within_1e9=within, max_abs_diff=worst, engine_dir=root)
+    res["js_speedup"] = res["py_s_per_solve"] / res["js_s_per_solve"]
+    print(json.dumps(res), flush=True)
+    return res
+
+
 def compare(a, b, levels=("mlb", "college_d1", "college_d2", "college_d3", "hs")):
     """byte-compare every game JSON / pitch CSV under A/sims and B/sims; per-game wall time from each pool log"""
     import filecmp
@@ -118,8 +161,11 @@ def compare(a, b, levels=("mlb", "college_d1", "college_d2", "college_d3", "hs")
                 or not filecmp.cmp(os.path.join(da, f), os.path.join(db, f), shallow=False)]
 
         def secs(d):
-            t = re.findall(r"pitches (\d+) ([\d.]+) s", open(os.path.join(d, "_pool.log"), encoding="utf-8").read())
-            return sum(int(p) for p, _ in t), sum(float(x) for _, x in t), len(t)
+            t = {}           # first time each seed was played (two runners may share a pool log)
+            for sd, p_, x in re.findall(r"seed (\d+): .*? pitches (\d+) ([\d.]+) s",
+                                        open(os.path.join(d, "_pool.log"), encoding="utf-8").read()):
+                t.setdefault(sd, (int(p_), float(x)))
+            return sum(p_ for p_, _ in t.values()), sum(x for _, x in t.values()), len(t)
         pa, ta, na = secs(da)
         pb, tb, nb = secs(db)
         res["levels"][lv] = dict(games=na, files=len(names), identical=not diff, differing=diff, pitches=pa,
@@ -143,5 +189,7 @@ if __name__ == "__main__":
         capture(sys.argv[2], sys.argv[3])
     elif cmd == "bench":
         bench(sys.argv[2], sys.argv[3], *(int(x) for x in sys.argv[4:5]))
+    elif cmd == "jsvspy":
+        js_vs_py(sys.argv[2], int(sys.argv[3]), *(sys.argv[4:5]))
     elif cmd == "compare":
         sys.exit(0 if compare(sys.argv[2], sys.argv[3]) else 1)
