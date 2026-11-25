@@ -1,0 +1,66 @@
+{
+ "levels": {
+  "mlb": {
+   "games": 20,
+   "files": 40,
+   "identical": true,
+   "differing": [],
+   "pitches": 3240,
+   "s_per_game_before": 57.5,
+   "s_per_game_after": 17.5,
+   "ms_per_pitch_before": 355,
+   "ms_per_pitch_after": 108,
+   "speedup": 3.28
+  },
+  "college_d1": {
+   "games": 20,
+   "files": 40,
+   "identical": true,
+   "differing": [],
+   "pitches": 3127,
+   "s_per_game_before": 57.7,
+   "s_per_game_after": 17.4,
+   "ms_per_pitch_before": 369,
+   "ms_per_pitch_after": 111,
+   "speedup": 3.32
+  },
+  "college_d2": {
+   "games": 20,
+   "files": 40,
+   "identical": true,
+   "differing": [],
+   "pitches": 3542,
+   "s_per_game_before": 66.3,
+   "s_per_game_after": 20.3,
+   "ms_per_pitch_before": 375,
+   "ms_per_pitch_after": 115,
+   "speedup": 3.27
+  },
+  "college_d3": {
+   "games": 20,
+   "files": 40,
+   "identical": true,
+   "differing": [],
+   "pitches": 3477,
+   "s_per_game_before": 66.1,
+   "s_per_game_after": 20.1,
+   "ms_per_pitch_before": 380,
+   "ms_per_pitch_after": 115,
+   "speedup": 3.3
+  },
+  "hs": {
+   "games": 20,
+   "files": 40,
+   "identical": true,
+   "differing": [],
+   "pitches": 3280,
+   "s_per_game_before": 63.5,
+   "s_per_game_after": 15.4,
+   "ms_per_pitch_before": 387,
+   "ms_per_pitch_after": 94,
+   "speedup": 4.13
+  }
+ },
+ "identical": true,
+ "speedup_all": 3.43
+}

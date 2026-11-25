@@ -175,3 +175,136 @@ arithmetic, Python = JS, every HS call meets the floor, other levels bit for bit
   so the run stopped before scoring; MLB sits 0.8 below.
 - The chain itself is exact; part of the college gap is the target counting bunts / IBB / interference that the model never
   sees (+0.4), and the rest is two-strike whiff — Drew's calls on that, the trend / edge pieces and the floor's window override.
+
+---
+
+# Part 2 (Nov 24–25): per-count mean preservation, then the full-data run
+
+Prompt: `docs/PROMPT_hitter_v13_meanpreserve_2026-11-24.md`. Rulings 12–15 in `docs/DECISIONS_refit_v13.md`.
+
+| commit | what |
+|---|---|
+| 5045018 | rulings 12–15 recorded |
+| 0831ffe | target fix: K / BB / HBP on the chain's PA definition (`pa_targets_v13.json`) |
+| bd71234 | ruling 12: `mp_v13.json`, both engines, parity-tested |
+| 2adf88e | ruling 14: the window outranks the floor; the coach's pitch floored too |
+| 510e617 | task 2: pitcher keys fit BB, HBP and command only; mp re-solved |
+| cf697a8 | sim speedup merged from `feat/sim-speed` (fast-forward); proof on this tip in section 7 |
+
+**Stopped at task 3 (ruling 13): the calling edge is above +1.5 at D1, D2, D3 and HS.** Task 5 was not run. Step 6 stays
+locked.
+
+## 1. Target fix
+
+Each target × the scored / all ratio from the level's own play-by-play (no sacrifices / bunt PAs, intentional walks or
+interference, the harness's definition). K: MLB 22.42 → 22.64, D1 19.30 → 19.73, D2 17.05 → 17.46, D3 16.21 → 16.63,
+HS 21.01 → 21.32. BB and HBP get the same treatment.
+
+## 2. The scalar table and the proof
+
+- `data_tables/mp_v13.json` (sha256 `bd9422cd…2e6f13`): per level and count, one logit shift each on swing,
+  whiff | swing, foul | contact, called strike | take and ground ball | in play. The engines add it to the count table's
+  row as they read it (`count_cells` / `countCells`). It is the same shift on every band, zone cell, kind and speed, and
+  the count table is unchanged. `mp_v0.json` is all zeros (the engine before the ruling).
+- Computed by `hitter_data/mean_preserve.py`, not tuned: a per-count Newton solve with a 5 × 5 Jacobian, no cap. The
+  first per-term secant oscillated at HS 0-2 / 1-2, where the terms interact. Every file the solve read is hashed in the
+  table, and the test fails if one changes.
+- Reference worlds:
+  - **College:** the harness's h3 (Single-A landing) and the weighted ship candidates.
+  - **HS:** D3's h3 rows at real HS speeds, with kind groups set to real HS usage by count from hs.sqlite3, using the HS
+    fit's games and weights.
+  - **MLB:** D1's frozen rows with the MLB Statcast class × band landing and MLB Statcast per-count targets, 2021–25,
+    half-life 2. The MLB count table was never calibrated to any world before.
+- Shift sizes: college 0 (to 1e-6; the count table was already calibrated in exactly this world); HS up to +0.31 whiff,
+  ±0.2 called strike; MLB up to +0.89 called strike, ±0.5 swing / whiff.
+- **Proof** (`tests_v13_meanpreserve.py` 13/13, fresh process, shipped file): at all 12 counts × 5 outcomes the engine
+  gives back the fitted count layer to ≤ 7e-12 (≤ 1e-8 sampling SE) at every level. Python = JS within 9e-14 on 300 cases
+  and 24 calls.
+
+## 3. Landing under the reference world (the gate, after recalibration): passes
+
+| points, chain − target | MLB | D1 | D2 | D3 | HS |
+|---|---|---|---|---|---|
+| K | +0.12 | +0.03 | +0.27 | +0.36 | −0.90 |
+| BB | +0.13 | +0.41 | −0.07 | −0.86 | +0.25 |
+| HBP | −0.38 | +0.74 | +0.55 | +0.83 | +0.26 |
+
+Recalibration (`core_recal --pitcher-only`, 3 passes): wild / cmd / hbp fit BB, HBP and command. **Proposed reading:**
+"command" = the share of pitches in the rulebook zone, taken from the reference world (`command_targets_v13.json`:
+44.9 / 38.8 / 38.9 / 38.8 / 40.3 %). In the engine's own calls BB and HBP land within 0.2. Zone stays high at college
+(41.6 / 40.6 / 40.2 %) and MLB (46.8 %): cmd can't take it lower while BB is held.
+
+## 4. Calling edge (ruling 13): engine-called sims, 480 games per level, 900 at HS (`docs/MP_v13_SIMS.md`)
+
+| | MLB | D1 | D2 | D3 | HS |
+|---|---|---|---|---|---|
+| K sims (target) | 22.3 (22.6) | 21.3 (19.7) | 19.9 (17.5) | 18.3 (16.6) | 28.5 (21.3) |
+| **calling edge** | **−0.3 ± 0.3** | **+1.6 ± 0.3** | **+2.5 ± 0.3** | **+1.7 ± 0.3** | **+7.2 ± 0.3** |
+| BB − target | **+2.4** | **+2.1** | **+2.3** | **+1.9** | +0.6 |
+| HBP − target | +0.0 | +0.4 | +0.4 | +0.8 | +0.4 |
+| K vs the fixed core (paired) | +0.8 | −0.3 | +0.1 | −0.0 | +5.5 |
+
+- **Above +1.5: D1, D2, D3, HS → stop for Drew's review.** Sim BB misses by 1.9–2.4 points at MLB and college. The exact
+  calibration chain has BB on target, so the extra walks come from what only the sims carry (as before Part 2).
+- **What drives the edge** (the sims' per-count rates put back to the count layer one count at a time): it sits in the
+  two-strike counts.
+  - **College:** 1-2, 0-2 and 2-2 carry 1.5–1.7 of the 1.5–1.9 chain gap. Whiff | swing runs 0.30 / 0.33 / 0.26
+    against real 0.26 / 0.28 / 0.23 at D1; called strike | take runs ~0.01 high.
+  - **HS:** 0-2 to 3-2 carry 6.2 of 7.9 points. Whiff | swing runs 0.40–0.44 against 0.27–0.30, and at 2-2 / 3-2 called
+    strike | take runs 0.24 / 0.32 against 0.18 / 0.19. The HS jump vs the fixed core (+5.5) is ruling 14 (section 5)
+    plus the HS scalars, which raise whiff by up to 0.31 because the real HS mix is fastball-heavy.
+
+## 5. The floor after the never-pick fix (ruling 14)
+
+| HS count | 0-0 | 1-0 | 2-0 | 3-0 | 0-1 | 1-1 | 2-1 | 3-1 | 0-2 | 1-2 | 2-2 | 3-2 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| floor | .536 | .636 | .667 | .837 | .385 | .455 | .583 | .667 | .364 | .333 | .400 | .545 |
+| thrown, where the final call allowed a fastball | .603 | .683 | .718 | .897 | .551 | .565 | .667 | .724 | .531 | .518 | .539 | .641 |
+| thrown, all pitches | .553 | .618 | .638 | .761 | .534 | .544 | .591 | .625 | .407 | .326 | .284 | .257 |
+| pitches where a fastball was allowed | .92 | .91 | .89 | .85 | .97 | .96 | .89 | .86 | .77 | .63 | .53 | .40 |
+
+Where a fastball is allowed, the floor is met in every count. The window keeps it out on 47–60% of 2-2 / 3-2 pitches, so
+the overall share there is .28 / .26. This is the main reason HS K rose. Coach overrides are floored too (`OVERRIDE` is 0
+in these sims).
+
+## 6. Trend / edge, for Drew's ruling (task 4, mean-preserved: scalars re-solved for each variant)
+
+| K change (paired) | MLB | D1 | D2 | D3 | HS |
+|---|---|---|---|---|---|
+| zone trend extension off | – | +0.1 ± 0.3 | +0.1 ± 0.3 | +0.1 ± 0.3 | −0.7 ± 0.3 |
+| … largest fastball-share / landing change in a count | – | 5.8 / 2.3 pts | 4.4 / 2.9 | 4.0 / 2.7 | 5.0 / 3.3 |
+| edge called strike set to real | +1.3 ± 0.4 | +2.3 ± 0.4 | +1.2 ± 0.3 | +1.5 ± 0.3 | +2.8 ± 0.3 |
+
+- **Trend:** as expected, it now reshapes calls without shifting K at college (HS −0.7).
+- **Edge real can't be mean-preserved.** With the edge called strike fixed to real by count, called strike | take can
+  only move on the off band, and the count layer's rate is out of reach (the solve overflows). With the other four
+  outcomes pinned, called strike | take sits about 2 points above the count layer at college / MLB and 5.4 at HS. That is
+  where its K comes from. (Scratch snapshot `C:/dev/pitchiq-data/kgap_mp/engine`; nothing in the tree.)
+
+## 7. Sim speedup (merged; proof on this tip)
+
+`feat/sim-speed` (1bc1cca engine.py, cf697a8 tools / tests) fast-forwarded onto 510e617, with no conflict. Proof: 20
+seeded base games per level, before (510e617) vs after (cf697a8). **All 200 files (game JSON + pitch log) are
+byte-identical.** 3.43× (MLB 3.28, D1 3.32, D2 3.27, D3 3.30, HS 4.13; `docs/SIM_SPEED_PROOF_mp.json`).
+`tests_sim_speed.py` passes, `golden/fast.py 60` and `FAST_LEVEL=hs golden/fast.py 40` pass, and the v1.3 suites are
+unchanged (table tests: the same 4 failures as before Part 2). Every run from here uses it. The Part 2 sims above ran
+before the merge, on 510e617.
+
+## 8. Task 5: not run (gate failed at task 3)
+
+## Stop points for Drew (Part 2)
+
+1. **Calling edge over +1.5 at D1 / D2 / D3 / HS** (+1.6 / +2.5 / +1.7 / +7.2), driven by two-strike whiff (and at HS,
+   the window keeping fastballs out at 2-2 / 3-2). The graded rows to review are the two-strike HS / college calls.
+2. **Sim BB 1.9–2.4 points high** at MLB / college (outside the 1-point bar).
+3. **The trend / edge ruling** (section 6). Edge real isn't mean-preservable as built.
+4. **"Command" read as the reference zone rate** (proposed). The zone can't reach it at college.
+5. Still pending, unchanged: the pass bar per level, the graded rows, the changed-call list, `stage2 D5`, the go for 2026.
+
+## Summary (Part 2)
+- Mean preservation is built and proven: the reference world reproduces every level's count layer to 7e-12, both engines
+  match, and the reference-world gate passes (K / BB / HBP within 1 point everywhere after the BB / HBP / command recal).
+- In the engine's own calls K is above target by +1.6 / +2.5 / +1.7 at D1 / D2 / D3 and +7.2 at HS (two-strike whiff; at
+  HS the never-pick window now beats the floor at 2-2 / 3-2), and sim BB is ~2 points high, so the run stopped at task 3.
+- Trend off now reshapes calls without moving K; edge real still adds 1.2–2.8 and can't be mean-preserved. The 3.43×
+  sim speedup is merged with 200 byte-identical games and used from here on.
