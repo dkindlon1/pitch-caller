@@ -1,0 +1,194 @@
+H = 0.0  : fails: E2, HG-1b, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.4% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) ok  pass rule ok; SL:middle 0.111 vs H=0 0.111
+     HG-1b  HG (PROPOSED) NO  pass rule ok; SL:middle 0.100 vs half of HG-1a's 0.111 = 0.056
+     HG-2   HG (PROPOSED) NO  not 9.8% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 0.1  : fails: E2, HG-1b, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.4% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) ok  pass rule ok; SL:middle 0.111 vs H=0 0.111
+     HG-1b  HG (PROPOSED) NO  pass rule ok; SL:middle 0.096 vs half of HG-1a's 0.111 = 0.056
+     HG-2   HG (PROPOSED) NO  not 9.5% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 0.2  : fails: E2, HG-1b, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.4% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) ok  pass rule ok; SL:middle 0.111 vs H=0 0.111
+     HG-1b  HG (PROPOSED) NO  pass rule ok; SL:middle 0.092 vs half of HG-1a's 0.111 = 0.055
+     HG-2   HG (PROPOSED) NO  not 9.1% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 0.3  : fails: E2, HG-1a, HG-1b, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.3% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.111 vs H=0 0.111
+     HG-1b  HG (PROPOSED) NO  pass rule ok; SL:middle 0.089 vs half of HG-1a's 0.111 = 0.055
+     HG-2   HG (PROPOSED) NO  not 8.8% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 0.4  : fails: E2, HG-1a, HG-1b, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.3% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.110 vs H=0 0.111
+     HG-1b  HG (PROPOSED) NO  pass rule ok; SL:middle 0.086 vs half of HG-1a's 0.110 = 0.055
+     HG-2   HG (PROPOSED) NO  not 8.5% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 0.5  : fails: E2, HG-1a, HG-1b, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.3% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.110 vs H=0 0.111
+     HG-1b  HG (PROPOSED) NO  pass rule ok; SL:middle 0.084 vs half of HG-1a's 0.110 = 0.055
+     HG-2   HG (PROPOSED) NO  not 8.2% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 0.75 : fails: E2, HG-1a, HG-1b, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.3% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.109 vs H=0 0.111
+     HG-1b  HG (PROPOSED) NO  pass rule ok; SL:middle 0.077 vs half of HG-1a's 0.109 = 0.055
+     HG-2   HG (PROPOSED) NO  not 8.1% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 1.0  : fails: E2, HG-1a, HG-2
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.3% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.109 vs H=0 0.111
+     HG-1b  HG (PROPOSED) ok  pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.109 = 0.054
+     HG-2   HG (PROPOSED) NO  not 7.4% > 5%
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 1.5  : fails: E2, HG-1a
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.2% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.107 vs H=0 0.111
+     HG-1b  HG (PROPOSED) ok  pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.107 = 0.054
+     HG-2   HG (PROPOSED) ok  pass rule ok
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 2.0  : fails: E2, HG-1a
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.2% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.106 vs H=0 0.111
+     HG-1b  HG (PROPOSED) ok  pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.106 = 0.053
+     HG-2   HG (PROPOSED) ok  pass rule ok
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 3.0  : fails: E2, HG-1a
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 66.1% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.104 vs H=0 0.111
+     HG-1b  HG (PROPOSED) ok  pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.104 = 0.052
+     HG-2   HG (PROPOSED) ok  pass rule ok
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+H = 5.0  : fails: E2, HG-1a
+     A5     gated         ok  passes
+     B7     gated         ok  passes
+     E2     gated         NO  acceptable 65.9% < 70%
+     C7     gated         ok  passes
+     D3     gated         ok  passes
+     B8     gated         ok  passes
+     E8     gated         ok  passes
+     E1     control       ok  off-speed 0.877 vs 0.877 at H=0
+     E3     control       ok  off-speed 0.936 vs 0.936 at H=0
+     A4     control       ok  off-speed 0.762 vs 0.762 at H=0
+     HG-1a  HG (PROPOSED) NO  pass rule ok; SL:middle 0.099 vs H=0 0.111
+     HG-1b  HG (PROPOSED) ok  pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.099 = 0.049
+     HG-2   HG (PROPOSED) ok  pass rule ok
+     HG-3   HG (PROPOSED) ok  pass rule ok; CH:middle 0.082 vs H=0 0.082
+     HG-4   HG (PROPOSED) ok  pass rule ok
+smallest passing H on the grid: None
+wrote results/v13p4/hanger_gate_size.json

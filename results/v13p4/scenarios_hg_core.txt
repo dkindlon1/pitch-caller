@@ -1,0 +1,4 @@
+scenario suite hg_v13, sha256 771b4b579ff4ce767ada60f2cef9fae62ed5f290ae48888a8293f7a1686d34f2 (5 rows)
+== v09: 4/5 scenarios pass; hard-rule rows with any Not-acceptable share: none
+  FAIL HG-2 not 9.8% > 5% | top: SL down-away 20% (acc), CH down-away 18% (acc), CU down-away 15% (acc), FA down-away 14% (acc)
+wrote results/v13p4/scenarios_hg_core.json

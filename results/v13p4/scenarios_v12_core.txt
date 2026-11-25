@@ -1,0 +1,16 @@
+scenario suite v12, sha256 be03f8849870fdcbe6ea70ec2f1991d8c2021d4106a7b3dc551e2b2e2adee84f (98 rows)
+== v09: 85/98 scenarios pass; hard-rule rows with any Not-acceptable share: none
+  FAIL A2   acceptable 53.5% < 70% | top: FA middle 54% (acc), CH middle 29% (arg), SL middle 17% (arg)
+  FAIL A6   acceptable 66.7% < 70% | top: FA middle 67% (acc), CU middle 33% (arg)
+  FAIL C5   acceptable 61.2% < 70% | top: CU down-away 38% (acc), FA chase 18% (acc), FA down-away 10% (arg), SL middle 10% (arg)
+  FAIL D6   acceptable 65.5% < 70% | top: FA down-away 13% (acc), SL down-away 13% (acc), SL down-middle 13% (acc), CH down-away 13% (arg)
+  FAIL E2   acceptable 66.4% < 70% | top: FA middle 57% (acc), CH middle 34% (arg), FA down-middle 9% (acc)
+  FAIL F5   not 10.3% > 5% | top: FA down-away 16% (acc), SL down-middle 14% (acc), SL down-away 13% (acc), FA down-middle 11% (acc)
+  FAIL F6   acceptable 66.8% < 70% | top: FA up-away 29% (acc), FA down-in 19% (acc), FA up-in 18% (acc), SL middle 6% (arg)
+  FAIL H4   acceptable 62.0% < 70% | top: FA down-in 31% (acc), FA up-in 31% (acc), CH down-away 9% (arg), CH down-middle 9% (arg)
+  FAIL I2   acceptable 60.8% < 70% | top: CH down-away 61% (acc), FA down-away 18% (arg), SL down-away 9% (arg), SL middle 8% (arg)
+  FAIL J7   acceptable 65.5% < 70% | top: CH down-away 59% (acc), SL down-away 15% (arg), SL middle 15% (arg), FA down-away 6% (acc)
+  FAIL S6f  FB:zone 33.5% < floor 41% | top: CH down-away 19% (acc), SL down-away 12% (acc), CU down-away 11% (acc), SL down-middle 11% (acc)
+  FAIL S7f  FB:chase 0.0% < floor 5% | top: CH down-away 28% (acc), FA down-away 26% (acc), CU down-away 15% (acc), CU middle 14% (acc)
+  FAIL P7   FF:down 22.3% > ceiling 12% | top: SI middle 18% (acc), SI down-middle 14% (acc), FA down-away 12% (acc), SI down-away 12% (acc)
+wrote results/v13p4/scenarios_v12_core.json

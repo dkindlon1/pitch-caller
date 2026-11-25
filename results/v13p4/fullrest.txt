@@ -1,0 +1,8 @@
+C:/dev/pitchiq-data/college/reports/representativeness.csv
+  D1: K +0.77 (0.07), BB -0.19 (0.06), HBP -0.11 (0.03)  -> PASS (each within 1 point)
+  D2: K +0.00 (0.10), BB -0.60 (0.08), HBP -0.11 (0.04)  -> PASS (each within 1 point)
+  D3: K +0.37 (0.15), BB -0.03 (0.12), HBP -0.11 (0.07)  -> PASS (each within 1 point)
+C:/dev/pitchiq-data-final/college/reports/representativeness.csv
+  D1: K +0.63 (0.06), BB -0.18 (0.04), HBP -0.11 (0.02)  -> PASS (each within 1 point)
+  D2: K +0.01 (0.07), BB -0.47 (0.05), HBP -0.08 (0.03)  -> PASS (each within 1 point)
+  D3: K +0.13 (0.09), BB -0.04 (0.08), HBP -0.09 (0.04)  -> PASS (each within 1 point)
