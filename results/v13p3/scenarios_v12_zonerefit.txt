@@ -1,0 +1,10 @@
+scenario suite v12, sha256 be03f8849870fdcbe6ea70ec2f1991d8c2021d4106a7b3dc551e2b2e2adee84f (98 rows)
+== v09: 91/98 scenarios pass; hard-rule rows with any Not-acceptable share: none
+  FAIL C4   acceptable 64.6% < 70% | top: FA chase 39% (acc), SL chase 18% (arg), CH chase 17% (arg), CH down-away 11% (acc)
+  FAIL F5   not 10.0% > 5% | top: SL down-away 19% (acc), FA down-away 15% (acc), SL down-middle 15% (acc), FA down-middle 14% (acc)
+  FAIL I2   acceptable 59.8% < 70% | top: CH down-away 60% (acc), FA down-away 22% (arg), SL down-away 10% (arg), FA up-away 8% (arg)
+  FAIL I4   acceptable 65.8% < 70% | top: FA down-middle 34% (arg), FA down-away 24% (acc), SL down-middle 8% (acc), SL down-away 8% (acc)
+  FAIL N2f  SI:any 53.0% > ceiling 47% | top: CU down-away 29% (acc), CH down-away 18% (acc), SI down-away 11% (acc), SI up-away 10% (acc)
+  FAIL P3   SL:zone 0.0% < floor 10% | top: CU middle 45% (acc), CU down-middle 29% (acc), FA middle 23% (acc), CU middle 2% (acc)
+  FAIL P7   FF:down 13.0% > ceiling 12% | top: SI middle 27% (acc), SI down-middle 20% (acc), FA middle 14% (acc), FA down-middle 13% (acc)
+wrote results/v13p3/scenarios_v12_zonerefit.json

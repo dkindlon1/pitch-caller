@@ -50,6 +50,9 @@ SEASON = 2025
 OUT = os.environ.get("SCORE_CORE_OUT") or os.path.join(FD.FITS, "score_core")
 CAND = os.environ.get("SCORE_CORE_S2024") or os.path.join(FD.FITS, "candidates")
 S2024 = {"count": os.path.join(CAND, "count_v13core_s2024.json"), "run": os.path.join(CAND, "run_v13core_s2024.json")}
+# v1.3 Part 3: the as-scored copy's own mean-preservation scalars (MP_AS_SCORED=2024 python -m hitter_data.mean_preserve solve
+# college_d1 college_d2 college_d3 hs, with PITCH_COUNT_TABLE / PITCH_RUN_TABLE = the copies above)
+S2024_MP = os.path.join(CAND, "mp_v13_s2024.json")
 S2024_NOPV = os.path.join(CAND, "count_v13core_s2024_nopv.json")
 S2024_NOBO = os.path.join(CAND, "count_v13core_s2024_nobo.json")      # step 2: swing_base_out zeroed at every fitted level
 CORE_DIR = os.path.abspath(os.environ.get("SCORE_CORE_ENGINE") or ROOT)
@@ -59,13 +62,14 @@ CFGS = ("v123", "core", "core_nopv", "core_nobo")
 
 # engine configs: name -> (engine dir key, env, [(adapter name, data level, d2_as, assumption)])
 def configs(v123_dir):
-    core_env = {"PITCH_ZONE_TABLE": "v13", "PITCH_COUNT_TABLE": S2024["count"], "PITCH_RUN_TABLE": S2024["run"]}
+    core_env = {"PITCH_ZONE_TABLE": "v13", "PITCH_COUNT_TABLE": S2024["count"], "PITCH_RUN_TABLE": S2024["run"],
+                "PITCH_MP_TABLE": S2024_MP}
     nopv_env = dict(core_env, PITCH_COUNT_TABLE=S2024_NOPV)
     nobo_env = dict(core_env, PITCH_COUNT_TABLE=S2024_NOBO)
     v12 = [("v1.2", lv, "college_d1", a) for lv in LEVELS for a in ("single_a", "calib_world")]
     v12 += [("v1.2@D3", "D2", "college_d3", a) for a in ("single_a", "calib_world")]
     core = [("core", lv, "college_d2", a) for lv in LEVELS for a in ("single_a", "calib_world")]
-    return {"v123": (v123_dir, {"PITCH_ZONE_TABLE": "", "PITCH_COUNT_TABLE": "", "PITCH_RUN_TABLE": ""}, v12),
+    return {"v123": (v123_dir, {"PITCH_ZONE_TABLE": "", "PITCH_COUNT_TABLE": "", "PITCH_RUN_TABLE": "", "PITCH_MP_TABLE": ""}, v12),
             "core": (CORE_DIR, core_env, core),
             "core_nopv": (CORE_DIR, nopv_env, [("core_nopv", "HS", "college_d2", "single_a")]),
             "core_nobo": (CORE_DIR, nobo_env, [("core_nobo", lv, "college_d2", "single_a") for lv in LEVELS])}

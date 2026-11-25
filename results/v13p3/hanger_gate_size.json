@@ -1,0 +1,9469 @@
+{
+ "grid": [
+  0.0,
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5,
+  0.75,
+  1.0,
+  1.5,
+  2.0,
+  3.0,
+  5.0
+ ],
+ "chosen": null,
+ "table": [
+  {
+   "H": 0.0,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.3% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.062 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.101 vs half of HG-1a's 0.062 = 0.031"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 10.0% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 0.1,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.3% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.062 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.097 vs half of HG-1a's 0.062 = 0.031"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 9.7% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 0.2,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.3% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.061 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.093 vs half of HG-1a's 0.061 = 0.031"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 9.4% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 0.3,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.3% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.061 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.090 vs half of HG-1a's 0.061 = 0.031"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 9.0% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 0.4,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.3% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.061 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.087 vs half of HG-1a's 0.061 = 0.030"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 8.7% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 0.5,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.3% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.061 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.084 vs half of HG-1a's 0.061 = 0.030"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 8.4% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 0.75,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.2% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.060 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "pass rule ok; SL:middle 0.077 vs half of HG-1a's 0.060 = 0.030"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 8.1% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 1.0,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.2% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.109 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.040 vs half of HG-1a's 0.109 = 0.055"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": false,
+     "why": "not 8.4% > 5%"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 1.5,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.2% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.108 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.108 = 0.054"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 2.0,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.1% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.107 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.107 = 0.053"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 3.0,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 66.0% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.104 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.104 = 0.052"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  },
+  {
+   "H": 5.0,
+   "all_ok": false,
+   "rows": {
+    "A5": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E2": {
+     "kind": "gated",
+     "ok": false,
+     "why": "acceptable 65.8% < 70%"
+    },
+    "C7": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "D3": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "B8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E8": {
+     "kind": "gated",
+     "ok": true,
+     "why": "passes"
+    },
+    "E1": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.867 vs 0.867 at H=0"
+    },
+    "E3": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.928 vs 0.928 at H=0"
+    },
+    "A4": {
+     "kind": "control",
+     "ok": true,
+     "why": "off-speed 0.766 vs 0.766 at H=0"
+    },
+    "HG-1a": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.100 vs H=0 0.062"
+    },
+    "HG-1b": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; SL:middle 0.000 vs half of HG-1a's 0.100 = 0.050"
+    },
+    "HG-2": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    },
+    "HG-3": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok; CH:middle 0.084 vs H=0 0.084"
+    },
+    "HG-4": {
+     "kind": "HG (PROPOSED)",
+     "ok": true,
+     "why": "pass rule ok"
+    }
+   }
+  }
+ ],
+ "runs": {
+  "0.0": {
+   "H": 0.0,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2692,
+     "middle": {
+      "SL:middle": 0.2692,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6551,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2692,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0757,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.35,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2613,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.215,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1737,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7555,
+      "arg": 0.2445,
+      "not": 0.0
+     },
+     "os_share": 0.5222,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2492,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.2438,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2332,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.186,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0585,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.3% < 70%"
+     ],
+     "shares": {
+      "acc": 0.663,
+      "arg": 0.337,
+      "not": 0.0
+     },
+     "os_share": 0.337,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.337,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6019,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.337,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0611,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.3009
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.3242,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.3009,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1852,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1806,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0091,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5706,
+     "middle": {
+      "SL:middle": 0.0619,
+      "CH:middle": 0.0932,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1638,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1343,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1312,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1133,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1049,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8016,
+      "arg": 0.1984,
+      "not": 0.0
+     },
+     "os_share": 0.5988,
+     "middle": {
+      "SL:middle": 0.1009,
+      "CH:middle": 0.1003,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1428,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.139,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1193,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1071,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1038,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 10.0% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8175,
+      "arg": 0.0822,
+      "not": 0.1003
+     },
+     "os_share": 0.7803,
+     "middle": {
+      "SL:middle": 0.0822,
+      "CH:middle": 0,
+      "CB:middle": 0.1003
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.1838,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1734,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1538,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1428,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.1003,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "0.1": {
+   "H": 0.1,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2692,
+     "middle": {
+      "SL:middle": 0.2692,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.655,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2692,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0758,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.35,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2613,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2149,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1738,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7552,
+      "arg": 0.2448,
+      "not": 0.0
+     },
+     "os_share": 0.5208999999999999,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.2703,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.2506,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2344,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1869,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0579,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.3% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6629,
+      "arg": 0.3371,
+      "not": 0.0
+     },
+     "os_share": 0.3371,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3371,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6015,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3371,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0614,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2991
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.3201,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2991,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1867,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1809,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0132,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5703,
+     "middle": {
+      "SL:middle": 0.0616,
+      "CH:middle": 0.0932,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1639,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1344,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1313,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1132,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1048,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8082,
+      "arg": 0.1918,
+      "not": 0.0
+     },
+     "os_share": 0.5944,
+     "middle": {
+      "SL:middle": 0.0969,
+      "CH:middle": 0.1015,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1443,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1406,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1207,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1084,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1049,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 9.7% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8207,
+      "arg": 0.0824,
+      "not": 0.0969
+     },
+     "os_share": 0.7787999999999999,
+     "middle": {
+      "SL:middle": 0.0824,
+      "CH:middle": 0,
+      "CB:middle": 0.0969
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.185,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1681,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1496,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1432,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.0969,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "0.2": {
+   "H": 0.2,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2692,
+     "middle": {
+      "SL:middle": 0.2692,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6548,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2692,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.076,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.35,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2613,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2149,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1738,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7544,
+      "arg": 0.2456,
+      "not": 0.0
+     },
+     "os_share": 0.5192,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.2672,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.252,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2353,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1876,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0579,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.3% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6628,
+      "arg": 0.3372,
+      "not": 0.0
+     },
+     "os_share": 0.3372,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3372,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.601,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3372,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0618,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2973
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.3146,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2973,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1882,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1812,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0187,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5701,
+     "middle": {
+      "SL:middle": 0.0614,
+      "CH:middle": 0.0933,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.164,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1345,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1314,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1131,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1048,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8147,
+      "arg": 0.1853,
+      "not": 0.0
+     },
+     "os_share": 0.5897,
+     "middle": {
+      "SL:middle": 0.0929,
+      "CH:middle": 0.1026,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.146,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1422,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.122,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1096,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.106,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 9.4% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8257,
+      "arg": 0.0808,
+      "not": 0.0936
+     },
+     "os_share": 0.7774,
+     "middle": {
+      "SL:middle": 0.0808,
+      "CH:middle": 0,
+      "CB:middle": 0.0936
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.1863,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1646,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1445,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1434,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.0936,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "0.3": {
+   "H": 0.3,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2692,
+     "middle": {
+      "SL:middle": 0.2692,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6546,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2692,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0761,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3499,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2613,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2149,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1739,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7537,
+      "arg": 0.2463,
+      "not": 0.0
+     },
+     "os_share": 0.5174000000000001,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.264,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.2534,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2363,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1884,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0579,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.3% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6627,
+      "arg": 0.3373,
+      "not": 0.0
+     },
+     "os_share": 0.3373,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3373,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6005,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3373,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0622,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2955
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.3095,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2955,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1897,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1815,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0238,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5697,
+     "middle": {
+      "SL:middle": 0.0611,
+      "CH:middle": 0.0933,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.164,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1346,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1315,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1047,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8202,
+      "arg": 0.1798,
+      "not": 0.0
+     },
+     "os_share": 0.586,
+     "middle": {
+      "SL:middle": 0.0896,
+      "CH:middle": 0.1036,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1474,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1435,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1231,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1105,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1069,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 9.0% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8304,
+      "arg": 0.0794,
+      "not": 0.0903
+     },
+     "os_share": 0.7757,
+     "middle": {
+      "SL:middle": 0.0794,
+      "CH:middle": 0,
+      "CB:middle": 0.0903
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.1873,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1615,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1435,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.139,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.0903,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "0.4": {
+   "H": 0.4,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2692,
+     "middle": {
+      "SL:middle": 0.2692,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6545,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2692,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0763,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3499,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2613,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2149,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1739,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7529,
+      "arg": 0.2471,
+      "not": 0.0
+     },
+     "os_share": 0.5154000000000001,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.2606,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.2548,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2374,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1893,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0578,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.3% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6626,
+      "arg": 0.3374,
+      "not": 0.0
+     },
+     "os_share": 0.3374,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3374,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3374,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0627,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6668000000000001,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2938
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.3043,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2938,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1912,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1818,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.029,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5696,
+     "middle": {
+      "SL:middle": 0.0609,
+      "CH:middle": 0.0934,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1641,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1348,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1316,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1128,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1047,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8248,
+      "arg": 0.1752,
+      "not": 0.0
+     },
+     "os_share": 0.5829,
+     "middle": {
+      "SL:middle": 0.0866,
+      "CH:middle": 0.1044,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1485,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1446,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.124,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1113,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1075,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 8.7% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8349,
+      "arg": 0.078,
+      "not": 0.0871
+     },
+     "os_share": 0.7744,
+     "middle": {
+      "SL:middle": 0.078,
+      "CH:middle": 0,
+      "CB:middle": 0.0871
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.1886,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1587,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1436,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1348,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.0871,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "0.5": {
+   "H": 0.5,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2693,
+     "middle": {
+      "SL:middle": 0.2693,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6543,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2693,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0764,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3499,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2613,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2149,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.174,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7519,
+      "arg": 0.2481,
+      "not": 0.0
+     },
+     "os_share": 0.5134,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.2572,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.2562,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2385,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1902,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0579,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.3% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6626,
+      "arg": 0.3374,
+      "not": 0.0
+     },
+     "os_share": 0.3374,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3374,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.5995,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3374,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.063,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.292
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.3001,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.292,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1927,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.182,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0332,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5693,
+     "middle": {
+      "SL:middle": 0.0606,
+      "CH:middle": 0.0935,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1642,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1349,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1317,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1127,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1046,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8294,
+      "arg": 0.1706,
+      "not": 0.0
+     },
+     "os_share": 0.5799,
+     "middle": {
+      "SL:middle": 0.0838,
+      "CH:middle": 0.1051,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1496,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1457,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1249,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1121,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1083,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 8.4% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8393,
+      "arg": 0.0768,
+      "not": 0.0839
+     },
+     "os_share": 0.7729,
+     "middle": {
+      "SL:middle": 0.0768,
+      "CH:middle": 0,
+      "CB:middle": 0.0839
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.19,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.156,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1436,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1309,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.0839,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "0.75": {
+   "H": 0.75,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2693,
+     "middle": {
+      "SL:middle": 0.2693,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6539,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2693,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0768,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3497,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2613,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2149,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.174,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7496,
+      "arg": 0.2504,
+      "not": 0.0
+     },
+     "os_share": 0.5082,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2598,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.2484,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2414,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1925,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0579,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.2% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6623,
+      "arg": 0.3377,
+      "not": 0.0
+     },
+     "os_share": 0.3377,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3377,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.5984,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3377,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.064,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6668000000000001,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2876
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.2948,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2876,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1966,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1826,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0385,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5685,
+     "middle": {
+      "SL:middle": 0.06,
+      "CH:middle": 0.0936,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1644,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1352,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1319,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1123,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1045,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8406,
+      "arg": 0.1594,
+      "not": 0.0
+     },
+     "os_share": 0.5727,
+     "middle": {
+      "SL:middle": 0.0769,
+      "CH:middle": 0.1071,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1522,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1481,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.127,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1141,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1102,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 8.1% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8422,
+      "arg": 0.0767,
+      "not": 0.0811
+     },
+     "os_share": 0.77,
+     "middle": {
+      "SL:middle": 0.0767,
+      "CH:middle": 0,
+      "CB:middle": 0.0811
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.1937,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1555,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1517,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1303,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.0811,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "1.0": {
+   "H": 1.0,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2694,
+     "middle": {
+      "SL:middle": 0.2694,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6533,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2694,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0773,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3496,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2614,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2149,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1741,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7474,
+      "arg": 0.2526,
+      "not": 0.0
+     },
+     "os_share": 0.5033,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2638,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.244,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.2395,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1946,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.058,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.2% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6621,
+      "arg": 0.3379,
+      "not": 0.0
+     },
+     "os_share": 0.3379,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3379,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.5969,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3379,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0652,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2833
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.2906,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2833,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.2004,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.183,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0427,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5680000000000001,
+     "middle": {
+      "SL:middle": 0.1094,
+      "CH:middle": 0.0938,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1646,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1354,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1322,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1094,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1044,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8648,
+      "arg": 0.1352,
+      "not": 0.0
+     },
+     "os_share": 0.5684,
+     "middle": {
+      "SL:middle": 0.0402,
+      "CH:middle": 0.1087,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1537,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1496,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1283,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1159,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1119,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": false,
+     "fails": [
+      "not 8.4% > 5%"
+     ],
+     "shares": {
+      "acc": 0.8387,
+      "arg": 0.0776,
+      "not": 0.0837
+     },
+     "os_share": 0.767,
+     "middle": {
+      "SL:middle": 0.0776,
+      "CH:middle": 0,
+      "CB:middle": 0.0837
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.1977,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1713,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1579,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1345,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.0837,
+       "not"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "1.5": {
+   "H": 1.5,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2695,
+     "middle": {
+      "SL:middle": 0.2695,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6528,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2695,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0777,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3493,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2616,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.215,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1741,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7427,
+      "arg": 0.2573,
+      "not": 0.0
+     },
+     "os_share": 0.49470000000000003,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2727,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.248,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.222,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1977,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0596,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.2% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6619,
+      "arg": 0.3381,
+      "not": 0.0
+     },
+     "os_share": 0.3381,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3381,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.5948,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3381,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0671,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2753
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.2851,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2753,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.2081,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1833,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0482,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5664,
+     "middle": {
+      "SL:middle": 0.1081,
+      "CH:middle": 0.094,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1649,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1359,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1327,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1081,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1041,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.896,
+      "arg": 0.104,
+      "not": 0.0
+     },
+     "os_share": 0.5609999999999999,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.1114,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1561,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1522,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1307,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.1149,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.8993,
+      "arg": 0.0833,
+      "not": 0.0175
+     },
+     "os_share": 0.7636999999999999,
+     "middle": {
+      "SL:middle": 0.0833,
+      "CH:middle": 0,
+      "CB:middle": 0.0175
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Curveball",
+       "down-away",
+       0.2379,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.2045,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1593,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1173,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.0833,
+       "arg"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "2.0": {
+   "H": 2.0,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2698,
+     "middle": {
+      "SL:middle": 0.2698,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6524,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2698,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0778,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3489,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2618,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2152,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1741,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7387,
+      "arg": 0.2613,
+      "not": 0.0
+     },
+     "os_share": 0.4853,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2811,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2533,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.2042,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.202,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0593,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.1% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6614,
+      "arg": 0.3386,
+      "not": 0.0
+     },
+     "os_share": 0.3386,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3386,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.5936,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3386,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0677,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6668000000000001,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2684
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.2846,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "middle",
+       0.2684,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.2153,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1831,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.0487,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.565,
+     "middle": {
+      "SL:middle": 0.1069,
+      "CH:middle": 0.0943,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "down-away",
+       0.1653,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1365,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1331,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1069,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1039,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.948,
+      "arg": 0.052,
+      "not": 0.0
+     },
+     "os_share": 0.5546,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.1142,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1581,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1546,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1481,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1327,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1222,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9135,
+      "arg": 0.0865,
+      "not": 0.0
+     },
+     "os_share": 0.7572,
+     "middle": {
+      "SL:middle": 0.0865,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Curveball",
+       "down-away",
+       0.2323,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-away",
+       0.2126,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1629,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1165,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.0865,
+       "arg"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "3.0": {
+   "H": 3.0,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2699,
+     "middle": {
+      "SL:middle": 0.2699,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6524,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2699,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0778,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3482,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.262,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2155,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1743,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2538,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.731,
+      "arg": 0.269,
+      "not": 0.0
+     },
+     "os_share": 0.4689,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2962,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2621,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.209,
+       "arg"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1727,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.06,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 66.0% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6602,
+      "arg": 0.3398,
+      "not": 0.0
+     },
+     "os_share": 0.3398,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3398,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.5901,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3398,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.07,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6667,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.2561
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Curveball",
+       "middle",
+       0.2561,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2316,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.2281,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.1825,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1017,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6034,
+     "middle": {
+      "SL:middle": 0.1044,
+      "CH:middle": 0.0949,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1375,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.134,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.125,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1044,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1034,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5424,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.1193,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.1716,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.162,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1591,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1365,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1279,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9101,
+      "arg": 0.0899,
+      "not": 0.0
+     },
+     "os_share": 0.7445999999999999,
+     "middle": {
+      "SL:middle": 0.0899,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2271,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1892,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1717,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.0899,
+       "arg"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  },
+  "5.0": {
+   "H": 5.0,
+   "versions": {
+    "zone": "v13",
+    "count": "v13core",
+    "run": "v13core",
+    "mp": "v13"
+   },
+   "rows": {
+    "A4": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9926,
+      "arg": 0.0074,
+      "not": 0.0
+     },
+     "os_share": 0.7659,
+     "middle": {
+      "SL:middle": 0.2073,
+      "CH:middle": 0.0074,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.132,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "down-away",
+       0.3333,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2179,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2073,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1189,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1152,
+       "acc"
+      ]
+     ]
+    },
+    "A5": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.234
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    },
+    "B7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.2699,
+     "middle": {
+      "SL:middle": 0.2699,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.6527,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.2699,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0775,
+       "acc"
+      ]
+     ]
+    },
+    "B8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.3471,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2623,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.216,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1746,
+       "acc"
+      ]
+     ]
+    },
+    "C7": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6668000000000001,
+     "middle": {
+      "SL:middle": 0.4129,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": 0.17
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.4129,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.2539,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1765,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1567,
+       "acc"
+      ]
+     ]
+    },
+    "D3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.7218,
+      "arg": 0.2782,
+      "not": 0.0
+     },
+     "os_share": 0.4497,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.3152,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2721,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.2172,
+       "arg"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1345,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.061,
+       "arg"
+      ]
+     ]
+    },
+    "E1": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.8668,
+     "middle": {
+      "SL:middle": 0.8595,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": -0.11,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Slider",
+       "middle",
+       0.8595,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.1332,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.0073,
+       "acc"
+      ]
+     ]
+    },
+    "E2": {
+     "suite": "v12",
+     "passed": false,
+     "fails": [
+      "acceptable 65.8% < 70%"
+     ],
+     "shares": {
+      "acc": 0.6585,
+      "arg": 0.3415,
+      "not": 0.0
+     },
+     "os_share": 0.3415,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.3415,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.5867,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "middle",
+       0.3415,
+       "arg"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.0717,
+       "acc"
+      ]
+     ]
+    },
+    "E3": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.9276,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.9276,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.087
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "middle",
+       0.9276,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "middle",
+       0.0724,
+       "acc"
+      ]
+     ]
+    },
+    "E8": {
+     "suite": "v12",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6444,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0.238
+     },
+     "wild_today": {
+      "Curveball": 0.174
+     },
+     "relation": null,
+     "top": [
+      [
+       "Curveball",
+       "middle",
+       0.238,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.2334,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.2014,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-middle",
+       0.173,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "up-away",
+       0.1542,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1a": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.6077,
+     "middle": {
+      "SL:middle": 0.0996,
+      "CH:middle": 0.0962,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.014,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle stays acceptable at no less than the zone-table-only share (the share at H = 0)",
+      "pattern": "SL:middle",
+      "type": "not_below_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1393,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1357,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1173,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1066,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1029,
+       "acc"
+      ]
+     ]
+    },
+    "HG-1b": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5285,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0.126,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.2,
+      "Changeup": 0.0
+     },
+     "relation": {
+      "rule": "slider middle falls by at least half when it isn't landing: share(HG-1b, SL:middle) <= 0.5 x share(HG-1a, SL:middle) at the same H",
+      "pattern": "SL:middle",
+      "type": "at_most_half_of",
+      "of": "HG-1a"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1667,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.1641,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1406,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1367,
+       "acc"
+      ],
+      [
+       "Changeup",
+       "down-middle",
+       0.1352,
+       "acc"
+      ]
+     ]
+    },
+    "HG-2": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 0.9068,
+      "arg": 0.0932,
+      "not": 0.0
+     },
+     "os_share": 0.731,
+     "middle": {
+      "SL:middle": 0.0932,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Curveball": 0.234,
+      "Changeup": 0.0
+     },
+     "relation": null,
+     "top": [
+      [
+       "Changeup",
+       "down-away",
+       0.2428,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-away",
+       0.1817,
+       "acc"
+      ],
+      [
+       "Curveball",
+       "down-away",
+       0.1432,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1349,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.0932,
+       "arg"
+      ]
+     ]
+    },
+    "HG-3": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0.5481,
+     "middle": {
+      "SL:middle": 0.1257,
+      "CH:middle": 0.0835,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Slider": 0.0,
+      "Changeup": -0.023
+     },
+     "relation": {
+      "rule": "the gate must not touch it: changeup middle share equals its share at H = 0",
+      "pattern": "CH:middle",
+      "type": "equal_h0"
+     },
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       0.1758,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-middle",
+       0.152,
+       "acc"
+      ],
+      [
+       "Slider",
+       "middle",
+       0.1257,
+       "acc"
+      ],
+      [
+       "Fastball",
+       "down-away",
+       0.1241,
+       "acc"
+      ],
+      [
+       "Slider",
+       "down-middle",
+       0.1009,
+       "acc"
+      ]
+     ]
+    },
+    "HG-4": {
+     "suite": "hg_v13",
+     "passed": true,
+     "fails": [],
+     "shares": {
+      "acc": 1.0,
+      "arg": 0.0,
+      "not": 0.0
+     },
+     "os_share": 0,
+     "middle": {
+      "SL:middle": 0,
+      "CH:middle": 0,
+      "CB:middle": 0
+     },
+     "wild_today": {
+      "Curveball": 0.168
+     },
+     "relation": null,
+     "top": [
+      [
+       "Fastball",
+       "middle",
+       1.0,
+       "acc"
+      ]
+     ]
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,6 @@
+100
+200
+300
+400
+500
+wrote C:\dev\pc-fulldata\golden\golden_v13core.json: 500 cases (225 in v1.1 terms)

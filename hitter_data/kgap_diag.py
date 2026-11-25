@@ -318,7 +318,10 @@ def worker(level, variant, seeds, outdir, stub=True):
             live = {g: [x for x in xs if x.name not in ex] for g, xs in byg.items()}
             live = {g: xs for g, xs in live.items() if xs} or dict(byg)
             rows = []
-            for g, lst in RM[("same" if s.same_side else "opp", (s.balls, s.strikes))].items():
+            mix = RM[("same" if s.same_side else "opp", (s.balls, s.strikes))]
+            if not any(g in live for g in mix):     # what is left after shake-offs is never thrown here: shakes set aside
+                live = dict(byg)
+            for g, lst in mix.items():
                 if g in live:
                     for q, z, w in lst:
                         for x in live[g]:

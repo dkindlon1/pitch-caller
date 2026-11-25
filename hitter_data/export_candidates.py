@@ -310,7 +310,7 @@ def run(write_files=True, log=print, prove=True):
     t0 = time.time()
     sys.path.insert(0, ROOT)
     import engine as e
-    if dict(e.TABLE_VERSIONS) != CORE_BASE:     # v1.3 core: calibrated on the refit's count layer under zone_v13
+    if {k: e.TABLE_VERSIONS[k] for k in CORE_BASE} != CORE_BASE or e.TABLE_VERSIONS.get("mp", "v0") != "v0":     # v1.3 core: calibrated on the refit's count layer under zone_v13
         raise RuntimeError(f"run with {' '.join(f'{k}={v}' for k, v in CORE_ENV.items())} (loaded: {e.TABLE_VERSIONS})")
     with open(os.path.join(ROOT, "data_tables", "count_v13refit.json"), encoding="utf8") as f:
         C = json.load(f)
@@ -366,7 +366,8 @@ CORE_COUNT = {"college_d1": "D1_shared_w_thru2025.json", "college_d2": "D2_borro
 CORE_RUN = {"college_d1": "D1_thru2025.json", "college_d2": "D2_thru2025.json", "college_d3": "D3_thru2025.json",
             "hs": "hs_thru2025.json"}
 CORE_BASE = {"zone": "v13", "count": "v13refit", "run": "v13refit"}
-CORE_ENV = {"PITCH_ZONE_TABLE": "v13", "PITCH_COUNT_TABLE": "v13refit", "PITCH_RUN_TABLE": "v13refit"}
+CORE_ENV = {"PITCH_ZONE_TABLE": "v13", "PITCH_COUNT_TABLE": "v13refit", "PITCH_RUN_TABLE": "v13refit", "PITCH_MP_TABLE": "v0"}
+# (Part 3: the count layer is calibrated with the mean-preservation scalars OFF; mean_preserve solves them on top of it)
 V12_PENDING = ("v1.2 count layer pending the coverage rule: count terms are v1.2's (swing / whiff / foul / hard by count and "
                "band, base-out swing, ground ball by count); the called-strike kappas and in-play tables are the shared "
                "refit's (as count_v13refit)")
@@ -390,7 +391,7 @@ def run_core(log=print, prove=True, thru=2025, out_paths=None):
     from . import fit_count_hs as HS
     sys.path.insert(0, os.path.join(ROOT, "data_tables"))
     import build_v12
-    if dict(e.TABLE_VERSIONS) != CORE_BASE:
+    if {k: e.TABLE_VERSIONS[k] for k in CORE_BASE} != CORE_BASE or e.TABLE_VERSIONS.get("mp", "v0") != "v0":
         raise RuntimeError(f"run with {' '.join(f'{k}={v}' for k, v in CORE_ENV.items())} (loaded: {e.TABLE_VERSIONS})")
     with open(os.path.join(ROOT, "data_tables", "count_v13refit.json"), encoding="utf8") as f:
         C = json.load(f)
@@ -510,7 +511,7 @@ def relevel(levels, fb_floor=False, log=print):
     sys.path.insert(0, os.path.join(ROOT, "data_tables"))
     import build_v12
     from . import hs_fb_floor
-    if dict(e.TABLE_VERSIONS) != CORE_BASE:
+    if {k: e.TABLE_VERSIONS[k] for k in CORE_BASE} != CORE_BASE or e.TABLE_VERSIONS.get("mp", "v0") != "v0":
         raise RuntimeError(f"run with {' '.join(f'{k}={v}' for k, v in CORE_ENV.items())} (loaded: {e.TABLE_VERSIONS})")
     path = core_paths()["count"]
     with open(path, encoding="utf8") as f:

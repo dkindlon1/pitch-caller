@@ -46,8 +46,23 @@ from . import DATA, assert_not_heldout
 from .harness_adapters import ROOT, COUNTS, PRIMARY_ASSUMPTION, Assumption, HARNESS_ASSUMPTION_VERSION
 
 OUT_DIR = os.path.join(DATA, "mean_preserve")
+# v1.3 Part 3: MP_AS_SCORED=2024 solves the scalars of score_core's "as scored" copy (fit <= 2024: the *_thru2024 candidates,
+# with PITCH_COUNT_TABLE / PITCH_RUN_TABLE set to fits/candidates/{count,run}_v13core_s2024.json) into
+# fits/candidates/mp_v13_s2024.json, so the 2025 score sees the same mean preservation as the ship build. Not the default.
+AS_SCORED = os.environ.get("MP_AS_SCORED")
+if AS_SCORED:
+    OUT_DIR = os.path.join(OUT_DIR, f"s{AS_SCORED}")
 COMMAND_PATH = os.path.join(ROOT, "command_targets_v13.json")
 MP_PATH = os.path.join(ROOT, "data_tables", "mp_v13.json")
+if AS_SCORED:
+    MP_PATH = os.path.join(DATA, "fits", "candidates", f"mp_v13_s{AS_SCORED}.json")
+
+
+def core_count(lv):
+    """the level's count-layer candidate file name (the as-scored copy's *_thru<year> under MP_AS_SCORED)"""
+    from . import export_candidates as X
+    fn = X.CORE_COUNT[lv]
+    return fn.replace("thru2025", f"thru{AS_SCORED}") if AS_SCORED else fn
 LEVELS = ("mlb", "college_d1", "college_d2", "college_d3", "hs")
 DL = {"mlb": "MLB", "college_d1": "D1", "college_d2": "D2", "college_d3": "D3", "hs": "HS"}
 CK = [f"{b}-{k}" for b, k in COUNTS]                 # harness order (balls-major)
@@ -79,7 +94,7 @@ def hs_kind_usage():
     p = os.path.join(OUT_DIR, "hs_kind_usage.json")
     if os.path.exists(p):
         return json.load(open(p, encoding="utf-8"))["usage"]
-    j = json.load(open(os.path.join(DATA, "fits", "count_layer", "hs_sep_thru2025.json"), encoding="utf-8"))
+    j = json.load(open(os.path.join(DATA, "fits", "count_layer", core_count("hs")), encoding="utf-8"))
     con = sqlite3.connect(f"file:{os.path.join(DATA, 'hs', 'hs.sqlite3')}?mode=ro", uri=True)
     acc = defaultdict(float)
     for s, w in j["fit_seasons"].items():
@@ -242,13 +257,13 @@ def reference(e, lv):
         probe = X.Probe("mlb", "MLB", assumption=MLBRefAssumption())
         n = {ck: t[ck]["n"] for ck in CK}
         return probe, t, n_bo, late, n, "MLB: D1 frozen rows, landing reweighted to MLB Statcast class x band (2021-25, hl 2)"
-    j = X.load_cand(X.CORE_COUNT[lv])
+    j = X.load_cand(core_count(lv))
     t, _, n_bo, late = X.targets(j)
     n = {ck: float(np.asarray(j["n_count_bo"])[i].sum()) for i, ck in enumerate(CK)}
     if lv == "hs":
         probe = X.Probe("hs", "HS", assumption=_hs_ref_class()(PRIMARY_ASSUMPTION))
         return probe, t, n_bo, late, n, "HS: D3 h3 rows at real HS speeds, kind groups set to real HS usage by count"
-    return probe_college(X, lv), t, n_bo, late, n, f"{DL[lv]}: harness h3 (single_a), {X.CORE_COUNT[lv]}"
+    return probe_college(X, lv), t, n_bo, late, n, f"{DL[lv]}: harness h3 (single_a), {core_count(lv)}"
 
 
 def probe_college(X, lv):
@@ -335,9 +350,10 @@ def inputs():
     files = {"count table": e.table_path("count"), "zone table": e.table_path("zone"),
              "outcome_params.py": os.path.join(ROOT, "outcome_params.py")}
     for lv in ("college_d1", "college_d2", "college_d3", "hs"):
-        files[f"fit {lv}"] = os.path.join(DATA, "fits", "count_layer", X.CORE_COUNT[lv])
+        files[f"fit {lv}"] = os.path.join(DATA, "fits", "count_layer", core_count(lv))
     files["hs kind usage"] = os.path.join(OUT_DIR, "hs_kind_usage.json")
-    files["mlb statcast"] = os.path.join(OUT_DIR, "mlb_statcast.json")
+    if not AS_SCORED:
+        files["mlb statcast"] = os.path.join(OUT_DIR, "mlb_statcast.json")
     files["harness_frozen_a.py"] = os.path.join(ROOT, "hitter_data", "harness_frozen_a.py")
     return {k: {"path": os.path.relpath(v, ROOT) if v.startswith(ROOT) else v.replace(DATA, "{DATA}"), "sha256": sha(v)}
             for k, v in files.items()}
@@ -346,8 +362,13 @@ def inputs():
 def write_table(levels=LEVELS):
     import engine as e
     t = copy.deepcopy(e.load_table("mp", "v0"))
-    t["version"] = "v13"
+    t["version"] = f"v13_s{AS_SCORED}" if AS_SCORED else "v13"
     res = {lv: json.load(open(os.path.join(OUT_DIR, f"{lv}.json"), encoding="utf-8")) for lv in levels}
+    if AS_SCORED:      # levels not solved for the as-scored copy keep the ship table's shifts (MLB: not scored on 2025)
+        ship = json.load(open(os.path.join(ROOT, "data_tables", "mp_v13.json"), encoding="utf-8"))
+        for lv in LEVELS:
+            if lv not in levels:
+                t["levels"][lv] = ship["levels"][lv]
     t["about"] = ("v1.3 (Drew's Nov 24 ruling 12): per-count mean-preservation scalars, computed by hitter_data/mean_preserve.py "
                   "(not tuned): per level and count one logit level shift per outcome (swing, whiff | swing, foul | contact, "
                   "called strike | take, ground ball | in play) on top of the zone table, the pitch-kind effects and the HS pitch "
@@ -473,11 +494,12 @@ def main(argv=None):
         print("cached HS kind usage and MLB Statcast in", OUT_DIR)
     elif cmd == "solve":
         hs_kind_usage()
-        mlb_statcast()
+        if "mlb" in levels:
+            mlb_statcast()
         for lv, err in pool_run(_solve_worker, levels, {"PITCH_MP_TABLE": "v0", "PYTHONUTF8": "1"}):
             print(f"{lv}: max |rate - target| {err:.2e}")
-        if set(levels) == set(LEVELS):
-            write_table()
+        if set(levels) == set(LEVELS) or AS_SCORED:
+            write_table(levels)
     elif cmd == "verify":
         res = pool_run(_verify_worker, levels, {"PITCH_MP_TABLE": os.environ.get("PITCH_MP_TABLE", "v13"), "PYTHONUTF8": "1"})
         out = {r["level"]: r for r in res}
