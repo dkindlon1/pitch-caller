@@ -308,3 +308,231 @@ before the merge, on 510e617.
   HS the never-pick window now beats the floor at 2-2 / 3-2), and sim BB is ~2 points high, so the run stopped at task 3.
 - Trend off now reshapes calls without moving K; edge real still adds 1.2–2.8 and can't be mean-preserved. The 3.43×
   sim speedup is merged with 200 byte-identical games and used from here on.
+
+---
+
+# Part 3 (Nov 25): calling-edge rulings 16–19, then the held items
+
+Prompt: `docs/PROMPT_hitter_v13_edge_rulings_2026-11-25.md`. Rulings 16–19 are recorded in `docs/DECISIONS_refit_v13.md`
+as decided, with the rule classification. The count layer and the per-count scalars (`mp_v13.json`) are unchanged. 2026
+was never read. The Step 6 script still refuses without `--drew-go` (exit 2; it has never run). Every grade here is
+**proposed**.
+
+| commit | what |
+|---|---|
+| 7b72080 | rulings 16–19 recorded; ruling 16 in both engines; the `refstaff` sim variant |
+| cd1d530 | engine vs reference-staff summary, two-strike menus, goldens, changed-call list, task-4 checks |
+| 75cccc7 | app/dist rebuilt, engine copied to web/lib |
+| (this commit) | this section, 400-game sims, suite results |
+
+**Compute.** Sims ran on 22 workers under the 48 GB guard (peak 36 GB), with fixed seeds, on the faster engine
+(snapshot `C:/dev/pitchiq-data/edge16/engine` = 7b72080).
+
+**Orphaned workers.** The 12 Python workers from 6:45 PM yesterday are orphans: their parent (PID 44792) is gone, and
+they are idle at about 1.4 GB. **I couldn't end them**, because the permission check blocked `Stop-Process`. To end them:
+`Stop-Process -Id (Get-CimInstance Win32_Process -Filter "ParentProcessId=44792").ProcessId`.
+
+## 1. Ruling 16: how each rule is classified (proposed; full table in DECISIONS)
+
+- **Hard: these outrank the floor.**
+  - Shake-offs and the coach's "not that pitch".
+  - The confidence cutoff and band (his trust in the pitch today).
+  - The not-landing block.
+  - The no-chase targets at 3-0, 3-1 and 2-2.
+  - **Mashed** (a fastball target height he has hit hard twice today). In the engine it is a cost penalty, so for the floor
+    it is now an explicit block: those calls are never counted toward the floor, raised or brought back.
+  - Fatigue and injury limits don't exist as exclusions: fatigue lowers speed and grade inside the costs. Either would be
+    hard if one is added.
+- **Model-made: the floor outranks these.**
+  - The pitch-type never-pick window and its taper.
+  - The location window, which only picks *which* fastball spot gets the floor's share.
+  - The tie-break and the 0.5% display cut, which both run before the floor.
+- **How it works:** when the eligible fastball share is 0, the floor brings the fastball back at the floor share. This is
+  e00cfe5's method, minus the hard rules.
+- **Tests:** `tests_v13_kgapfix.py` all pass.
+  - Python = JS on 44 floored calls and on 12 two-strike calls with mashed heights.
+  - Every HS / travel call meets the floor.
+
+## 2. HS after ruling 16 (900 engine-called games, seeds paired with Part 2)
+
+| HS count | 0-0 | 1-0 | 2-0 | 3-0 | 0-1 | 1-1 | 2-1 | 3-1 | 0-2 | 1-2 | 2-2 | 3-2 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| floor | .536 | .636 | .667 | .837 | .385 | .455 | .583 | .667 | .364 | .333 | .400 | .545 |
+| thrown, all pitches | .566 | .622 | .645 | .755 | .550 | .568 | .604 | .629 | .491 | .449 | .475 | .521 |
+| Part 2 (ruling 14) | .553 | .618 | .638 | .761 | .534 | .544 | .591 | .625 | .407 | .326 | .284 | .257 |
+| pitches whose call allowed a fastball | .93 | .91 | .88 | .84 | 1.00 | .99 | .89 | .85 | .99 | .99 | .99 | .88 |
+
+- **The floor now holds at two strikes:** 2-2 goes from .28 to .48 and 3-2 from .26 to .52.
+  - The share stays under the floor only where a hard rule kept the fastball out (7–16% of pitches at 0-0 and the
+    three-ball counts).
+- **Paired vs Part 2:** K **−2.4 ± 0.3**, BB +0.3 ± 0.2, HBP −0.2 ± 0.1, runs per game +0.74 ± 0.19.
+- **HS edge vs target:** K 26.1 against 21.3, so **+4.8** (it was +7.2). BB is 15.1 against 14.5.
+
+## 3. Ruling 17: the engine against a paired reference staff (`docs/EDGE_v13_SIMS.md`)
+
+How the reference staff works:
+- Same staff, hitters, seeds and game loop (shake-offs included). 480 games per level, 900 at HS.
+- Each pitch is drawn from the level's reference-world mix (kind group, target, landed band) for that count and side,
+  and lands in the drawn band. This is the same world the gate and the scalars use.
+
+| engine − reference, paired (per PA; runs per game) | MLB (control) | D1 | D2 | D3 | HS |
+|---|---|---|---|---|---|
+| K | −2.3 ± 0.4 | −0.2 ± 0.4 | +1.0 ± 0.4 | +0.5 ± 0.4 | **+6.3 ± 0.3** |
+| BB | +2.9 ± 0.3 | +2.6 ± 0.3 | +2.9 ± 0.3 | +3.4 ± 0.3 | +1.3 ± 0.2 |
+| HBP | +0.3 ± 0.1 | −0.3 ± 0.2 | +0.2 ± 0.2 | +0.3 ± 0.2 | +0.1 ± 0.1 |
+| **runs per game** | **+0.00 ± 0.19** | **−0.15 ± 0.21** | **−0.18 ± 0.30** | **+0.20 ± 0.29** | **−1.55 ± 0.20** |
+| runs, engine / reference | 4.54 / 4.54 | 5.90 / 6.05 | 7.65 / 7.83 | 8.34 / 8.14 | 7.41 / 8.96 |
+| runs test (engine not higher) | **higher by 0.002** | pass | pass | **higher (+0.20, 0.7 SE)** | pass |
+| K − target (the +1.5 flag, kept) | −0.3 | **+1.6** | **+2.5** | **+1.7** | **+4.8** |
+| zone %: engine / reference / command target | 43.9 / 45.6 / 44.9 | 38.6 / 39.2 / 38.8 | 38.0 / 39.5 / 38.9 | 37.2 / 39.4 / 38.8 | 39.1 / 40.4 / 40.3 |
+
+- **The reference staff also strikes out above target** against these hitters: D1 21.5, D2 18.9, D3 17.8 (about +2 at
+  college); MLB 24.6 vs 22.6.
+  - So most of college's old +1.5 edge is the sim world, not the calls. Against the reference staff the college K edge is
+    −0.2 to +1.0.
+- **The engine's real cost is walks:** +2.6 to +3.4 points at college / MLB.
+  - The chain splits it over 0-0, 2-0, 3-1 and 3-2.
+  - The engine's zone rate runs 1–2 points under the reference staff's, and swings are lower (3-2: .60–.67 vs .64–.71).
+- **Runs:** level at MLB, D1 and D2 (all within 1 SE), 0.20 higher at D3 (0.7 SE), and 1.55 lower at HS, where the extra
+  strikeouts outweigh the walks.
+- **Where the K edge sits** (chain; the engine's rates put to the reference staff's one count at a time):
+  - College: 0-2 and 1-2, +0.3 to +0.5 each. Whiff per swing there is .30–.33 vs .26–.31.
+  - HS: the four two-strike counts carry +4.8 of +6.6. Whiff per swing is .33–.41 vs .27–.29, and called strike per take
+    at 2-2 / 3-2 is .23 / .29 vs .16 / .18.
+
+## 4. The two-strike rows behind the edge (DRAFT; grades proposed)
+
+Menus come from `hitter_data/edge_rows.py` (`C:/dev/pitchiq-data/edge16/edge_rows.json`). Each one is the level's sim
+starter in this spot:
+- bases empty, 1 out, 3rd inning, tied, pitch 40;
+- first look at the count, same-side hitter unless noted;
+- college / MLB arsenal FB / SL / CH; HS = the data staff's q5 starter (FB 77 mph / SL / CH).
+
+| row | count (level): why it's here | the engine's menu (top spots, %) | proposed grade |
+|---|---|---|---|
+| E-1 | 0-2 (D1): K +0.27 | CH down-away 26, FB down-away 19, SL down-away 15, SL middle 11, SL down-middle 10, SL chase 9 (chase 14, middle 11) | **Acceptable** (C1 expand; the slider middle is the arguable part) |
+| E-2 | 1-2 (D1): K +0.38 | FB down-away 28, SL down-away 19, SL middle 14, SL down-middle 12, CH down-away 11, CH middle 10 (chase 0, middle 25) | **Arguable** (C3: no chase at all at 1-2; a quarter middle) |
+| E-3 | 1-2 (D3): K +0.51, the largest college count | SL down-away 27, FB down-away 26, SL middle 17, SL down-middle 14, CH down-away 8, CH middle 7 (chase 0, middle 24) | **Arguable** (as E-2) |
+| E-4 | 3-2 (D3): BB +0.45 | SL middle 64, FB down-middle 21, FB middle 15 | **Arguable** (C7 / C8: a strike, but a 64% slider-middle bet) |
+| E-5 | 3-2 (MLB control): BB +0.65 | SL middle 27, SL down-middle 23, FB down-middle 19, CH middle 16, FB middle 14 | **Acceptable** (zone, mixed) |
+| E-6 | 0-2 (HS): K +0.98 | FB chase 36 (the floor's share, all on one spot), SL down-away 16, SL down-middle 11, SL middle 11, SL chase 10 | **Acceptable** (C1: elevated fastball and the slider off the plate) |
+| E-7 | 1-2 (HS): K +1.40, the largest HS count | same side: SL down-away 18, SL middle 16, SL down-middle 14, FB chase 12, FB down-away 11, FB up-away 10; opposite: **SL down-in 66**, FB chase 11 | **Acceptable** (same side); **Arguable** (opposite: two thirds on one spot) |
+| E-8 | 2-2 (HS): K +1.28 | SL middle 35, SL down-middle 18, FB down-away 12, FB up-away 8, FB down-middle 7, FB middle 7 | **Acceptable** (A3 hard rule: zone pitches); the 35% slider middle is worth a look |
+| E-9 | 3-2 (HS): K +1.10, BB −0.54 | **FB middle 55, SL middle 45** (both sides; the fastball sits exactly at the floor) | **Arguable** (every call middle; floor-driven) |
+
+## 5. Task 4, run on this core
+
+**2025 scores vs raw v1.2** (`C:/dev/pitchiq-data/fits/score_core_p3/scores.md`; h3 harness, B = 1000):
+- The as-scored copy (fit ≤ 2024, fixes 8–10 in) was rebuilt and given its own scalars (`mp_v13_s2024.json`, solved to
+  ≤ 7e-12).
+- **All four levels pass:** D1 −0.0306 (SE 0.0008, z −39), D2 −0.0293 (0.0011, −27), D3 −0.0326 (0.0021, −16), HS −0.0040
+  (0.0007, −5.5).
+- **D2 / D3 now pass**, with their own count layers. So the Nov 22 explanation held: their failure was shared offsets on
+  v1.2's count layer.
+- **HS caveat:** HS scores 0.012 worse than recalibrated v1.2 on the table score. The HS scalars are solved for the real
+  HS mix, but the harness asks every HS engine about D3's Single-A mix. The HS pitch kind × velocity terms add −0.0123
+  on top (core with them vs v1.2: −0.0266 ± 0.0006).
+
+**Candidate terms** (`fits/candidate_terms.md`; none wired, 2025 gain in nats per pitch):
+- Times through the order, the previous pitch and scoring position clear 2 SE at every level.
+- Platoon clears at D3 and HS.
+- HS event format clears, and HS velocity vs his own norm clears (+0.00044 on top of the kind × velocity table).
+- Late and close clears at D1 only.
+- Base-out (the one wired term) gains +0.0003 at D1 / D2 / D3 and +0.00007 at HS.
+
+**Hanger grid** (H = 0 to 5): no H passes, so H stays 0.
+- E2 (a changeup that is landing) fails at every H.
+- HG-1b and HG-2 fail up to H 0.75. From H 1 up, everything but E2 passes.
+- The HG suite at H = 0 is 4/5 (HG-2: 0-2 curve middle 10%).
+
+**Hard checks** (`results/v13p3/hard_checks_core.json`):
+- Pass: hard foul = foul (0.0), hit hard twice (0%), no chase at 3-0 / 3-1 (0 of 180), no scouting (chase 0).
+- Hit hard once: another call moves 11.5 points against the 5-point limit. It fails as written, as before.
+- **Robustness fails.** The 2-2 top call moves **20.8** points at three calls (the recalibrated core moved 6.5, v1.2.3
+  18.6). At 3-2 it moves 26.0 at three calls and 42.6 at six.
+
+**Fuzz 3000** (`results/v13p3/fuzz_core.txt`):
+- Better stuff is never worse: 3000/3000. The 2-for-10 rule: 145/150 (a number, not a gate).
+- "Inside the never-pick windows" drops to 267/300 (from 279). That is ruling 16 by design.
+- **New fail:** the HS fastball share against a hitter who crushes fastballs stays at 46→45% over 0–40 looks (the core
+  went 49→36%). The floor holds it there, because that hitter read is soft, not a hard rule.
+
+**400-game sims vs v1.2.3** (seeds 1001–1400, each release in its own sim world; `results/v13p3/sims400_paired.txt`):
+
+| core − v1.2.3, runs per game (SE) | HS | D3 | D2 (vs v1.2.3 at D3) | D1 | MLB |
+|---|---|---|---|---|---|
+| runs | −3.83 (0.26) | −0.37 (0.33) | −0.85 (0.33) | −0.37 (0.25) | **+0.36 (0.21), flagged** |
+| K / BB, v1.2.3 → core | 20.7 → 33.9 / 17.2 → 14.2 | 15.9 → 18.6 / 14.9 → 14.0 | 15.9 → 19.8 / 14.9 → 13.5 | 18.9 → 21.1 / 14.2 → 13.1 | 20.3 → 22.2 / 11.1 → 10.5 |
+
+- MLB is flagged again, with HR per PA 2.4% → 3.3% (the refit's MLB world, as in the core report).
+- At HS this runner uses the simulator's default 86 / 89 mph staff, not the HS data staff the sims in sections 2–3 use. So
+  HS K 33.9 is that fast staff's number, not the HS calling edge.
+
+**Three-way read-through:**
+- As built **85/98**; refit zone table swapped back 91/98; flat hanger restored 86/98 (v1.2.3 94).
+- Failing as built: A2, A6, C5, D6, E2, F5, F6, H4, I2, J7, S6f, S7f, P7. No hard-rule row has a Not-acceptable share.
+- Switching off the floor alone, or the scalars alone, still gives 85.
+- The swap-back gain is in the zone cells. The trend extension stays (ruling 18).
+
+**Goldens and the changed-call list** (`docs/P3_v13_CHANGED_CALLS.md`):
+- `golden_v13core` is regenerated on this engine.
+- Against v1.2.3: golden **125/250** changed (65 college / MLB, **60 HS / travel**), and 55/98 read-through rows.
+- **Floor-driven** (the floor off alone moves the call back): **24 HS golden cases** and 1 row. Mean preservation drives
+  13 + 12 golden cases.
+
+**Suites** (logs in `C:/dev/pitchiq-data/p3/suites/`). Each was run alone, in a keep-going copy (`set -uo` instead of
+`set -euo`) so that every suite reports.
+- **`scripts/test-sql.sh`:** 15/15 pass.
+- **`scripts/test-app.sh`:** 50 of 68 suites pass. The build, `app/dist`, the `web/lib` copies, smoke, golden_v13core
+  and every UI e2e except the two below all pass.
+
+The re-pin table. **No re-pins are applied.** The explained ones would freeze calls that Drew hasn't graded yet, so they
+wait for the grading (proposed).
+
+| suite (failed checks) | what moved | explained by an approved change? |
+|---|---|---|
+| tests.py (7) | realism: D3 K 17.9 vs 16.2, HS K 26.3 vs 21.0; v1.0 grid D1 3-1 (2); the 3-1 slider landing row; LAND_GAIN; coaching read "squared up"; exact v1.0 | realism = the open calling edge (ruling 17). Grid / landing / squared-up as in the core report. Exact v1.0 is history. |
+| tests_v11 (2) | exact v1.0; **Q4: HS riding four-seam up 36.4% of two-strike calls (cap 36)** | Q4 is **new and floor-driven** (ruling 16); for Drew |
+| tests_v12 (3) | exact v1.1 (2); S5 | history; S5 as in the core report |
+| tests_v12b (1) | the hitter-fit coefficient pin (results/v12) | pinned to the old fit: yes (refit) |
+| tests_v121 / v122 / v123 (1 / 3 / 1) | bit for bit vs v1.2 / v1.2.1 / v1.2.2 commits | history (v1.3 numbers are in) |
+| tests_v13_d2 (4), d2_e2e (1) | PLACEHOLDER_D2: D2 = D3 | obsolete: D2 has its own count layer and run values (Nov 22 rulings 1 and 10) |
+| tests_v13_sim (4) | no traits = e202169's games byte for byte | pinned to an older engine: yes |
+| tests_v13_core (7) | frozen shas / defaults (now with `mp` v13); D2 / D3 "v1.2 count layer"; run_v13core contents; count / run switch-off | yes: rulings 1, 10 and 12, fixes 8–10 |
+| tests_v13_tables (4) | v13refit bit for bit (Python / JS, difference inf); run-file D1 1-1 ranking; D2 placeholders | yes: v13refit runs under the default `mp` v13 (needs `mp` v0, ruling 12); D2 obsolete. The D1 1-1 probe should be re-pointed. |
+| golden_v123 (1) | the v1.2.3 reference | history (expected) |
+| **stage2_test (2)** | noise-chasing learner off 27/40 (needs ≥ 32); **real learner off 2/40 = `stage2 D5`** | **D5 stays open**; 27/40 is new (the recalibrated core had 32), so **not explained** |
+| **worlds_test (1)** | trait recovery: power biased at 400 PAs (3.49 vs 1.5) | **not explained**; new |
+| **game_mix_e2e (1)** | 4 of 21 games have a top pitch over 70% (limit 3) | **not explained**; likely the floor (HS fastball share up) |
+| logging_exact (1), drift_exact (5) | event counts vs an older build | pinned to an older engine's outputs (as before) |
+
+## 6. Zone-rate gap (ruling 19; reported, not a gate)
+Engine minus the command target: MLB −1.0, D1 −0.2, D2 −0.9, D3 −1.6, HS −1.2. It is now low everywhere; in Part 2,
+college was high. The reference staff lands 0.4–0.7 over target, because its bands are drawn as real.
+
+## Stop points for Drew (Part 3), all graded together
+1. **The two-strike edge rows E-1 to E-9** (section 4), and the hard / model split in DECISIONS ruling 16.
+2. The 6 HS rows, HG-1 to HG-4 and the 35 scenarios.
+3. The changed-call list: 125 golden cases, 24 of them floor-driven.
+4. **Runs higher than the reference staff:**
+   - **D3: +0.20 ± 0.29** (0.7 SE), so the runs test fails on the point estimate;
+   - MLB: +0.002 ± 0.19 (a tie).
+5. Levels failing the pass bar: **none**. All four pass 2025.
+6. `stage2 D5`.
+7. **New findings:**
+   - robustness at 2-2 / 3-2 (20.8 / 26.0 points);
+   - the floor overrides the fastball-crusher read at HS (should a strong read count as a hard rule?);
+   - sim walks run +2.6 to +3.4 points above the reference staff;
+   - MLB +0.36 runs per game vs v1.2.3;
+   - the unexplained suite moves: stage2 noise learner 27/40, worlds_test power bias, game_mix 4 games over 70%, and Q4
+     HS 36.4%.
+8. The go for 2026.
+
+## Summary (Part 3)
+- Ruling 16 is built and tested: only hard rules (shake-offs, trust, not landing, no-chase targets, mashed) beat the HS
+  floor. The fastball now meets it at 2-2 / 3-2, and HS K drops 2.4 points (edge vs target +4.8).
+- Against a paired reference staff, the engine allows the same runs at MLB / D1 / D2, 1.55 fewer at HS and 0.20 more at D3
+  (0.7 SE). Its strikeout edge is real only at HS; college's +1.5 flag is mostly the sim world. Walks run about 3 points
+  high.
+- All four levels pass 2025. Waiting on Drew: rows E-1 to E-9 and the standing grading list, D3's runs, the robustness and
+  fastball-crusher findings, and the go for 2026.
