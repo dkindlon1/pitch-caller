@@ -536,3 +536,245 @@ college was high. The reference staff lands 0.4–0.7 over target, because its b
   high.
 - All four levels pass 2025. Waiting on Drew: rows E-1 to E-9 and the standing grading list, D3's runs, the robustness and
   fastball-crusher findings, and the go for 2026.
+
+---
+
+# Part 4 (Nov 25, final archive): the refit on the final college archive
+
+Prompt: `docs/PROMPT_hitter_v13_final_archive_2026-11-25.md`. Rulings 20–24 are recorded in DECISIONS as decided. The
+edge-rulings run had already finished; it is preserved as tag **`frozen-archive-run-2026-11-25`** (2cf56d9 on
+`feat/hitter-v13-fulldata`). Its numbers are the "frozen" column below. This work is on **`feat/hitter-v13-final`**
+(worktree `C:/dev/pc-final`).
+
+The frozen run's data root (`C:/dev/pitchiq-data`) is untouched. This run uses `C:/dev/pitchiq-data-final`: a copy of the
+old college DB as the incremental base, plus HS, derived, refit and fits without caches. Statcast, statsapi and
+retrosheet are linked read-only. 2026 was never fit or scored; Step 6 still refuses (exit 2).
+
+| commit | what |
+|---|---|
+| f5ebfda | rulings 20–24; undated seasons from the URL only; rosters + roster_sources join |
+| 54517a7 | full-vs-rest summary |
+| b58ede5 | refit, core export, pitcher-only recal, scalars re-solved |
+| 598c96a | JS data re-exported, app/dist, web/lib |
+| c57e662 | sims, frozen vs final, goldens, changed-call list, task-7 checks |
+
+**The 12 orphaned workers from Nov 24 are still running.** The permission check blocked `Stop-Process` again. They are
+idle and hold about 1.4 GB. To end them:
+`Stop-Process -Id (Get-CimInstance Win32_Process -Filter "ParentProcessId=44792").ProcessId`.
+
+## 1. Archive, intake, frozen list
+- **Source** (ruling 20): `C:/Users/kindl/Downloads/college-baseball-final/archive.sqlite3`.
+  - Read-only; 11,015,741,440 bytes; mtime Nov 25 08:40.
+  - 251,281 games, 24,224,745 plays, 7,286,803 lineup rows, 413,847 roster rows, 432,788 roster_sources rows.
+- **Intake** (`update --reparse`):
+  - 95,589 games copied; no old game changed or dropped.
+  - **Every game re-parsed** (251,281, 0 parser errors), so the old games pick up the final archive's handedness.
+  - Dedupe over the whole archive (date / teams / score / play text): 2,725 same-text groups and 10,553 disagreeing
+    groups; 24,384 same-score pairs judged separate games.
+  - Quality: lines parsed 99.78%; count replay 99.27% of 6.93M strings (frozen 98.89%).
+- **Handedness:** the roster join now runs on rosters + roster_sources.
+  - roster_sources added 70 players and filled 12 rows.
+  - Batters with bats 28.4% → **44.0%**; pitchers with throws 26.2% → **40.4%**.
+- **Undated games:** 2,025, all assigned a season from the URL: 1,309 Sidearm `/stats/YYYY/`, 483 StatCrew `/YYYY/`,
+  230 Presto plus 3 StatCrew `/YYYY-YY/`.
+  - **0 excluded.**
+  - The loose "any year in the URL" fallback is removed; a game it would have been needed for gets no season.
+  - Undated games aren't deduped, because dedupe keys on the date.
+- **StatCrew and anomaly rules:** unchanged.
+- **Frozen list** (ruling 21): `freeze/game_ids_2026-11-25_1335.json.gz`, 238,003 canonical college games + **21,707 HS**,
+  under the same lock.
+
+College games per level and season, frozen archive → final (full games on the final archive):
+
+| | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 | 2026 (count only) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| D1 | 3,591 → 10,104 (4,625) | 3,725 → 10,464 (5,377) | 3,876 → 10,782 (5,528) | 1,110 → 3,106 (1,420) | 3,453 → 8,964 (4,783) | 3,988 → 9,789 (5,782) | 3,874 → 9,645 (5,910) | 9,643 (5,926) | 9,393 (6,209) | 9,249 (7,827) |
+| D2 | 624 → 2,628 (874) | 657 → 6,744 (2,510) | 761 → 6,455 (2,235) | 293 → 2,314 (734) | 605 → 4,557 (1,630) | 781 → 6,374 (2,287) | 811 → 6,497 (2,173) | 6,598 → 6,614 (2,255) | 6,643 → 6,665 (2,038) | 6,337 (4,335) |
+| D3 | 366 → 2,408 (326) | 403 → 7,205 (1,059) | 433 → 7,328 (829) | 149 → 1,877 (141) | 340 → 5,218 (646) | 578 → 7,253 (882) | 585 → 7,186 (741) | 7,013 → 7,196 (761) | 6,903 → 7,059 (713) | 6,954 (5,287) |
+
+## 2. Cross-check on the final data (`results/v13p4/crosscheck_final.md`; nothing looks wrong)
+
+| | final archive (repo) | old table |
+|---|---|---|
+| count replay consistent | 99.30% (all seasons), 99.88% (≤ 2025) | 98.5 |
+| full-game share 2025, D1 / D2 / D3 | 0.661 / 0.306 / 0.101 | 0.657 / 0.295 / 0.101 |
+| full games 2025, D1 / D2 / D3 | 6,209 / 2,038 / 713 | 6,226 / 1,880 / 689 |
+| K / BB / HBP 2025, D1 | 19.19 / 11.33 / 3.48 | 19.3 / 11.4 / 3.5 |
+| K / BB / HBP 2025, D2 | 17.05 / 11.20 / 3.66 | 17.3 / 11.2 / 3.7 |
+| K / BB / HBP 2025, D3 | 16.48 / 10.89 / 3.90 | 16.4 / 11.1 / 4.1 |
+| whiff per swing, D1 / D2 / D3 | 22.75 / 21.91 / 20.16 | 22.4 / 21.6 / 20.1 |
+
+- 2025 hardly changed between the archives (D1 / D2 / D3 2025 games +0 / +22 / +156).
+- D2's stored target (from the 2025 parse) matches its re-count exactly, so `college_run_values.json` stays.
+
+## 3. Full-vs-rest (Nov 22 ruling 1)
+Seasons ≤ 2025, recency half-life 2, game-clustered SEs (`hitter_data/fullrest_summary.py`):
+
+| full − rest, points (SE) | frozen archive | final archive |
+|---|---|---|
+| D1 | K +0.77 (0.07), BB −0.19, HBP −0.11 | K **+0.63** (0.06), BB −0.18, HBP −0.11 |
+| D2 | K +0.00, BB −0.60 (0.08), HBP −0.11 | K +0.01, BB **−0.47** (0.05), HBP −0.08 |
+| D3 | K +0.37 (0.15), BB −0.03, HBP −0.11 | K **+0.13** (0.09), BB −0.04, HBP −0.09 |
+
+**All pass**, with smaller gaps and SEs: the extra D2 / D3 seasons help, as expected.
+
+## 4. Refit and the frozen vs final comparison
+
+**Refit run:**
+- `refit_all` with ingest and zone skipped (Statcast is unchanged, so the zone table stays `zone_v13`).
+- Then the weighted college fits, the chain check, the chain-definition targets, and `export_candidates --core` (D1
+  shared_w; D2 / D3 borrow_w; HS sep with the kind × velocity table and the floor).
+- Then the scalars, the command targets, the pitcher-only recal (3 passes, last move 0.001), and the scalars re-solved
+  (≤ 7e-12; `tests_v13_meanpreserve.py` 13/13).
+
+**Level split:** sep vs shared is within 1 SE at every level, so D1 ships shared and D2 / D3 ship borrow, as before.
+
+**Tuned half-lives:** D1 1, D2 1, D3 4 seasons (borrow).
+
+| | frozen archive | final archive |
+|---|---|---|
+| largest per-count change in the ship count layers (D1 / D2 / D3) | – | swing 0.1 / 0.2 / 0.6, whiff per swing 0.2 / 0.7 / 0.8, cs per take 0.1 / 0.2 / 0.8 points |
+| fitted chain K, D1 / D2 / D3 | 19.93 / 17.88 / 17.26 | 19.93 / 17.99 / 17.36 |
+| chain-definition K targets, D1 / D2 / D3 | 19.73 / 17.46 / 16.63 | 19.73 / 17.45 / 16.62 |
+| **reference-world gate**, K / BB / HBP vs target (points) | MLB +0.12 / +0.13 / −0.38; D1 +0.03 / +0.41 / +0.74; D2 +0.27 / −0.07 / +0.55; D3 +0.36 / −0.86 / +0.83; HS −0.90 / +0.25 / +0.26 | MLB +0.12 / +0.13 / −0.38; D1 +0.08 / +0.42 / +0.73; D2 +0.37 / −0.15 / +0.60; **D3 +0.44 / −1.17 / +0.78**; HS −0.91 / +0.25 / +0.27 |
+| 2025 pass bar, core − raw v1.2 (SE) | D1 −0.0306 (0.0008), D2 −0.0293 (0.0011), D3 −0.0326 (0.0021), HS −0.0040 (0.0007): all PASS | D1 −0.0306 (0.0008), D2 −0.0293 (0.0011), D3 −0.0328 (0.0020), HS −0.0040 (0.0007): **all PASS** |
+
+**The gate misses at D3 BB (−1.17).**
+- The D3 count layer's walk rate is the count fit itself, untouched. With a 4-season half-life it now leans on the much
+  larger 2018–2023 D3 volume, where walks ran about 10.0–10.7%, against the 2025 conference total (11.4).
+- Ruling 12 says to stop and report a gate miss. Nothing ships from this run, so I kept going at every level. **D3's
+  downstream numbers are conditional on Drew's call on this** (stop point).
+
+## 5. Rulings 16–19 on the new data
+
+**Rule classification (ruling 16, proposed):** unchanged from Part 3; see DECISIONS.
+- Hard: shake-offs, the confidence cutoff and band, not landing, the no-chase targets, mashed.
+- Model-made: the never-pick window and its taper, and the location window.
+
+**HS after the floor (900 games):** essentially the frozen run.
+- Thrown fastball share at 0-2 / 1-2 / 2-2 / 3-2: .491 / .451 / .465 / .513 (floor .364 / .333 / .400 / .545).
+- At 3-2, 12% of pitches have a hard rule keeping the fastball out.
+- HS K 26.1, so +4.8 over target.
+
+**Paired engine vs reference staff** (`docs/EDGE_v13_SIMS_final.md`; 480 games per level, 900 at HS):
+
+| engine − reference | MLB | D1 | D2 | D3 | HS |
+|---|---|---|---|---|---|
+| K | −2.3 ± 0.4 | −0.6 ± 0.4 | +1.3 ± 0.4 | +0.7 ± 0.4 | +6.4 ± 0.3 |
+| BB | +2.8 ± 0.3 | +2.8 ± 0.3 | +2.9 ± 0.3 | +4.1 ± 0.3 | +1.2 ± 0.2 |
+| HBP | +0.4 ± 0.1 | −0.4 ± 0.2 | +0.1 ± 0.2 | +0.1 ± 0.2 | +0.1 ± 0.1 |
+| **runs / game** | −0.11 ± 0.19 | **+0.30 ± 0.22** | −0.23 ± 0.29 | −0.09 ± 0.29 | −1.39 ± 0.21 |
+| runs test (engine not higher) | pass | **higher (1.4 SE)** | pass | pass | pass |
+| frozen archive, runs | +0.00 | −0.15 | −0.18 | +0.20 | −1.55 |
+| K − target (+1.5 flag) | −0.3 | +1.3 | **+3.0** | **+2.1** | **+4.8** |
+| zone %, engine / command target (gap) | 44.0 / 44.9 (−1.0) | 38.5 / 38.8 (−0.3) | 37.7 / 38.9 (−1.1) | 36.9 / 38.8 (−2.0) | 39.0 / 40.3 (−1.3) |
+
+**Final vs frozen, paired by seed** (`results/v13p4/archive_compare.md`):
+- Engine-called runs per game: MLB −0.11, D1 **+0.37 ± 0.20**, D2 −0.02, D3 −0.18, HS +0.20.
+- K moves −0.3 to +0.5 points; BB −0.1 to +0.2.
+- So the final archive moves the D1 engine up by about one run in three games, and the runs test flips to fail at D1
+  (1.4 SE). D3 flips to pass.
+
+**The two-strike rows (DRAFT, proposed grades).** Menus are unchanged from Part 3 to within 2 points (same setup,
+`C:/dev/pitchiq-data-final/edge/edge_rows.json`). Two rows are added for D1, the level whose runs now fail. Where the
+edge sits in the chain:
+- college: 0-2 / 1-2 (K +0.26 to +0.49 each), 3-2 (BB +0.36 to +0.45);
+- HS: all four two-strike counts (K +1.0 to +1.4).
+
+| row | count (level): why | menu (top spots, %) | proposed grade |
+|---|---|---|---|
+| E-1 | 0-2 (D1): K +0.26 | CH down-away 26, FB down-away 20, SL down-away 15, SL middle 11, SL down-middle 10, SL chase 9 | **Acceptable** (C1; slider middle arguable) |
+| E-2 | 1-2 (D1): K +0.36 | FB down-away 28, SL down-away 19, SL middle 14, SL down-middle 12, CH down-away 11, CH middle 10 (chase 0) | **Arguable** (C3: no chase; a quarter middle) |
+| E-3 | 1-2 (D2): K +0.49, the largest college count | FB down-away 27, SL down-away 26, SL middle 18, SL down-middle 14, CH down-away 8, CH middle 8 (chase 0) | **Arguable** (as E-2) |
+| E-4 | 3-2 (D3): BB +0.45 | SL middle 63, FB down-middle 22, FB middle 15 | **Arguable** (a 63% slider-middle bet) |
+| E-4b | 3-2 (D1): BB +0.36, **new** (D1's runs) | SL middle 60, FB down-middle 20, FB middle 11, FB down-away 9; opposite side SL middle 37 | **Arguable** (as E-4) |
+| E-5 | 3-2 (MLB control): BB +0.65 | as Part 3 (zone, mixed) | **Acceptable** |
+| E-6 | 0-2 (HS): K +0.97 | FB chase 36, SL down-away 16, SL down-middle 11, SL middle 11, SL chase 10, SL up-away 9 | **Acceptable** |
+| E-7 | 1-2 (HS): K +1.38 | same side: SL down-away 18, SL middle 16, SL down-middle 14, FB chase 12; opposite: **SL down-in 66** | **Acceptable** / **Arguable** (opposite) |
+| E-8 | 2-2 (HS): K +1.30 | SL middle 36, SL down-middle 18, FB down-away 12, FB up-away 8 | **Acceptable** (A3); slider middle worth a look |
+| E-9 | 3-2 (HS): K +1.12, BB −0.56 | **FB middle 55, SL middle 45** (floor-driven) | **Arguable** |
+
+**Zone-rate gap (ruling 19):** engine minus target is MLB −1.0, D1 −0.3, D2 −1.1, D3 −2.0, HS −1.3. Reported, not a gate.
+
+## 6. Task 7, on the final-archive core
+
+**2025 pass bar:** all four levels pass (section 4 table). The as-scored copy and its scalars (`mp_v13_s2024.json`) are
+rebuilt.
+
+**Candidate terms** (none wired):
+- Times through the order, the previous pitch and scoring position clear at every level.
+- **Platoon now clears at D1** (+0.00046 ± 0.00019) and **no longer at D3** (+0.00029 ± 0.00017), after the handedness
+  join. It still clears at HS.
+- HS event format and HS velocity-vs-norm clear.
+- Late and close clears at D1 only.
+- Base-out: +0.0003 at D1 / D2 / D3, +0.00007 at HS.
+
+**Hanger grid:** no H passes, so H = 0.
+- E2 fails at every H; HG-1a fails from H 0.3; HG-1b fails to H 0.75 and HG-2 to H 1.
+- The HG suite at H = 0 is 4/5 (HG-2).
+
+**Hard checks:**
+- Pass: hard foul = foul (0.0), hit hard twice (0%), no chase at 3-0 / 3-1 (0 / 180), no scouting (chase 0).
+- Hit hard once: another call moves 11.6 points (fails as written).
+- **Robustness fails:** 2-2 moves 21.7 points at three calls; 3-2 moves 26.1 (42.9 at six).
+
+**Fuzz 3000:**
+- Better stuff never worse 3000/3000; 2-for-10 145/150; never-pick 267/300 (ruling 16).
+- The HS fastball-crusher read is still held by the floor (46 → 45%).
+
+**400-game sims vs v1.2.3** (seeds 1001–1400; `results/v13p4/sims400_paired.txt`). The v1.2.3 games are Part 3's (same
+tree, same seeds; they don't depend on the college data).
+
+| core − v1.2.3, runs / game (SE) | HS | D3 | D2 (vs v1.2.3 at D3) | D1 | MLB |
+|---|---|---|---|---|---|
+| final archive | −3.53 (0.27) | −0.77 (0.31) | −1.16 (0.31) | −0.24 (0.26) | **+0.28 (0.21), flagged** |
+| frozen archive | −3.83 | −0.37 | −0.85 | −0.37 | +0.36 |
+
+HS here plays the simulator's default 86 / 89 mph staff, not the HS data staff.
+
+**Three-way read-through:**
+- As built **85/98**; refit zone table 91/98; flat hanger 87/98 (v1.2.3 94).
+- Same failing rows as Part 3; no hard-rule row has a Not-acceptable share.
+- Floor off or scalars off alone: 85.
+
+**Changed calls vs v1.2.3** (`docs/P4_v13_CHANGED_CALLS.md`; `golden_v13core` regenerated):
+- Golden **126/250** (66 college / MLB, **60 HS**); read-through rows 52/98.
+- **Floor-driven: 25 HS golden cases** and 1 row. Scalars: 13 + 10 cases.
+
+**Suites** (logs in `C:/dev/pitchiq-data-final/p4/suites/`; keep-going copies, each run alone):
+- **test-sql:** 15/15 pass.
+- **test-app:** 51 of 68 suites pass. The build, `app/dist`, `web/lib`, smoke, golden_v13core and the UI e2es pass;
+  game_mix_e2e now passes too.
+- **No re-pins are applied** (proposed: they wait for the grading).
+
+Changes from Part 3's table:
+
+| suite | final archive vs Part 3 | explained? |
+|---|---|---|
+| tests.py (8; was 7) | + **the ground-ball rule row**: at 1-1 with a runner on 1st, down targets go 76 → 84% with the rule (the check's bar isn't met). The others are as in Part 3 (realism D3 K 17.9 vs 16.2, HS 26.2 vs 21.0; v1.0 grid; LAND_GAIN; coaching reads; exact v1.0). | **new, not explained** (refit run values / in-play tables move the run-math base) |
+| tests_v13_tables (5; was 4) | + the count-file probe (D1 1-1 called strike +0.5 no longer changes the D1 1-1 call's ranking) | probe to re-point, as the run-file probe |
+| tests_v13_core (7) | frozen shas now also differ for the new count / run tables | yes (rulings 20–22: refit) |
+| drift_exact (4; was 5), logging_exact (1) | event counts vs an older build | pinned to an older engine |
+| game_mix_e2e | **now passes** (it failed in Part 3) | – |
+| stage2_test (2) | noise learner off 27 / 40; **real learner off 2 / 40 = `stage2 D5`, left open** | 27 / 40 not explained (as in Part 3) |
+| worlds_test (1) | power bias 3.53 vs 1.5 | not explained (as in Part 3) |
+| tests_v11 / v12 / v12b / v121 / v122 / v123 / v13_d2 / v13_sim, d2_e2e, golden_v123 | unchanged from Part 3 | history / obsolete placeholders / Q4 HS 36.4% (floor) |
+
+## Stop points for Drew (Part 4), all graded together
+1. **The two-strike rows E-1 to E-9**, plus E-4b (new, D1 3-2), and the ruling-16 classification.
+2. The 6 HS rows, HG-1 to HG-4 and the 35 scenarios.
+3. The changed-call list: 126 golden cases, 25 floor-driven.
+4. **D1's engine-called runs are higher than the reference staff's: +0.30 ± 0.22.** D3 now passes.
+5. Levels failing the pass bar: **none**.
+6. **D3's reference-world gate: BB −1.17** (ruling 12's stop rule; it comes from the count layer, not from the calls).
+7. `stage2 D5`, robustness at 2-2 / 3-2, the fastball-crusher read, MLB +0.28 runs per game vs v1.2.3.
+8. The go for 2026.
+
+## Summary (Part 4)
+- The final archive (251,281 games; 2017–2023 grew 2.5–20×, 2024–25 almost unchanged) is parsed, deduped and frozen, with
+  every undated game seasoned from its URL (0 excluded). Handedness coverage rose from 28% to 44%, and full-vs-rest passes
+  with smaller gaps at every level.
+- The refit moves the count layers by at most 0.8 points, all four levels still pass 2025, and the gate passes except
+  **D3 BB −1.17**.
+- Against the reference staff, runs are level or better everywhere except **D1 (+0.30 ± 0.22)**. HS stays clearly ahead
+  (−1.39); walks run about 3 points high.
