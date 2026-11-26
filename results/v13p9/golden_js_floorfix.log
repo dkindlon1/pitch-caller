@@ -1,0 +1,19 @@
+500 v13coreFloor golden cases (250 with full solves). Largest JS-vs-golden differences:
+  probs       3.33e-16
+  tableV      3.55e-15
+  tableN      4.17e-14
+  tableSigma  2.60e-14
+  pick        3.63e-14
+  dist        3.66e-14
+  distCost    2.78e-15
+  rootSigma   1.30e-14
+  residual    9.55e-14
+  whyDelta    1.78e-15
+  grade       2.22e-16
+  shaken      1.58e-14
+  ump         1.11e-16
+  h0          1.71e-13
+  take        1.80e-16
+  walk        1.33e-15
+  gradeEst    4.44e-16
+PASS: JS engine reproduces v13coreFloor

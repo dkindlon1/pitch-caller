@@ -2660,9 +2660,9 @@ def _soft(costs, temp, w, ref):
 # hs_fb_floor.py). Applied to the policy the engine plays: the PA table's per-count policy (so the continuation values see
 # the floored mix) and the root call after its tie-break. The hitter's sit game is solved on the unfloored operator: with
 # the floor inside the quantal-response map the solve cycles instead of converging (2-2 residual 0.17 after 3000 steps on a
-# travel sinker / cutter arsenal), so the floor is a guard on the output, not a term of the game. When the allowed calls' fastball share
-# w is above 0 and below the floor f, every fastball call is scaled by f / w and every other call by (1 - f) / (1 - w)
-# (shares of the policy's own total). Drew's Nov 25 ruling 16 (revises ruling 14): the floor is outranked only by HARD
+# travel sinker / cutter arsenal), so the floor is a guard on the output, not a term of the game. Until ruling 33 (below), when the allowed
+# calls' fastball share w was above 0 and below the floor f, every fastball call was scaled by f / w and every other call by
+# (1 - f) / (1 - w) (shares of the policy's own total). Drew's Nov 25 ruling 16 (revises ruling 14): the floor is outranked only by HARD
 # rules, never by exclusions the engine makes from its own pitch values. Hard (the floor never brings a call back past
 # them): a shake-off / coach's "not that pitch" (allowed_calls), the confidence cutoff and band (candidates: his trust in
 # the pitch today), the not-landing block (LAND_BLOCK_*), the no-chase targets at 3-0 / 3-1 / 2-2 (targets), and the

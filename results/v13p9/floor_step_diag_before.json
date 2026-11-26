@@ -1,0 +1,155 @@
+{
+ "cell": "hs|four_cut|3-2",
+ "rows": [
+  {
+   "n": 0,
+   "root_floor_calls": [
+    {
+     "f": 0.5455,
+     "t": 1.0,
+     "w": 0.0025172221446157234,
+     "branch": "0 < w < f: scale fb by f*t/w",
+     "kf": 216.70713535029523,
+     "fb_pre": {
+      "Cutter down-middle": 0.0025172221446157234
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.874,
+      "Fastball up-away": 0.87546,
+      "Fastball down-in": 0.87142,
+      "Fastball down-away": 0.86341,
+      "Fastball chase": 0.96307,
+      "Fastball middle": 0.83652,
+      "Fastball down-middle": 0.8473,
+      "Cutter up-in": 0.88092,
+      "Cutter up-away": 0.88268,
+      "Cutter down-in": 0.85951,
+      "Cutter down-away": 0.84934,
+      "Cutter chase": 0.9573,
+      "Cutter middle": 0.84533,
+      "Cutter down-middle": 0.83488
+     },
+     "fb_post": {
+      "Cutter down-middle": 0.5455
+     },
+     "pre_top": {
+      "Slider middle": 0.5251,
+      "Curve middle": 0.4724,
+      "Cutter down-middle": 0.0025
+     },
+     "post_top": {
+      "Cutter down-middle": 0.5455,
+      "Slider middle": 0.2392,
+      "Curve middle": 0.2153
+     }
+    }
+   ],
+   "final": {
+    "Cutter down-middle": 0.5455,
+    "Slider middle": 0.2392,
+    "Curve middle": 0.2153
+   }
+  },
+  {
+   "n": 1,
+   "root_floor_calls": [
+    {
+     "f": 0.5455,
+     "t": 1.0,
+     "w": 0,
+     "branch": "w == 0: cost softmax",
+     "kf": null,
+     "fb_pre": {},
+     "fb_costs": {
+      "Fastball up-in": 0.87414,
+      "Fastball up-away": 0.87561,
+      "Fastball down-in": 0.87166,
+      "Fastball down-away": 0.86369,
+      "Fastball chase": 0.96317,
+      "Fastball middle": 0.8364,
+      "Fastball down-middle": 0.84758,
+      "Cutter up-in": 0.88116,
+      "Cutter up-away": 0.88294,
+      "Cutter down-in": 0.85986,
+      "Cutter down-away": 0.84973,
+      "Cutter chase": 0.95749,
+      "Cutter middle": 0.84538,
+      "Cutter down-middle": 0.83529
+     },
+     "fb_post": {
+      "Fastball middle": 0.2547,
+      "Cutter down-middle": 0.2908
+     },
+     "pre_top": {
+      "Slider middle": 0.5294,
+      "Curve middle": 0.4706
+     },
+     "post_top": {
+      "Cutter down-middle": 0.2908,
+      "Fastball middle": 0.2547,
+      "Slider middle": 0.2406,
+      "Curve middle": 0.2139
+     }
+    }
+   ],
+   "move_of_top": 0.2547,
+   "final": {
+    "Cutter down-middle": 0.2908,
+    "Fastball middle": 0.2547,
+    "Slider middle": 0.2406,
+    "Curve middle": 0.2139
+   }
+  },
+  {
+   "n": 2,
+   "root_floor_calls": [
+    {
+     "f": 0.5455,
+     "t": 1.0,
+     "w": 0,
+     "branch": "w == 0: cost softmax",
+     "kf": null,
+     "fb_pre": {},
+     "fb_costs": {
+      "Fastball up-in": 0.87427,
+      "Fastball up-away": 0.87577,
+      "Fastball down-in": 0.87191,
+      "Fastball down-away": 0.86398,
+      "Fastball chase": 0.96327,
+      "Fastball middle": 0.83627,
+      "Fastball down-middle": 0.84787,
+      "Cutter up-in": 0.88142,
+      "Cutter up-away": 0.88322,
+      "Cutter down-in": 0.86025,
+      "Cutter down-away": 0.85017,
+      "Cutter chase": 0.9577,
+      "Cutter middle": 0.84546,
+      "Cutter down-middle": 0.83573
+     },
+     "fb_post": {
+      "Fastball middle": 0.264,
+      "Cutter down-middle": 0.2815
+     },
+     "pre_top": {
+      "Slider middle": 0.5328,
+      "Curve middle": 0.4672
+     },
+     "post_top": {
+      "Cutter down-middle": 0.2815,
+      "Fastball middle": 0.264,
+      "Slider middle": 0.2421,
+      "Curve middle": 0.2124
+     }
+    }
+   ],
+   "move_of_top": 0.264,
+   "final": {
+    "Cutter down-middle": 0.2815,
+    "Fastball middle": 0.264,
+    "Slider middle": 0.2421,
+    "Curve middle": 0.2124
+   }
+  }
+ ],
+ "top_call_n0": "Cutter down-middle"
+}

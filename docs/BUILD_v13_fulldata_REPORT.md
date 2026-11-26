@@ -1176,3 +1176,197 @@ Each commit's own `hard_checks_v13.py` was run at W = 4 in a `git archive` scrat
 - W = 32 is committed and pushed. Parity holds, robustness passes at 2-2 / 3-2, 2025 scoring is byte-identical, fuzz is unchanged, and test-sql is 15/15. test-app has two new weight-driven failures (`golden_v13core`, a drift-note check); the ground-ball row now passes.
 - Sims: no level is over the stop lines. D1's runs now pass (−0.20 vs +0.30), the BB gap is unchanged, D1 raises the K flag (+2.0), and MLB is no longer flagged vs v1.2.3.
 - The 2-2 jump came from the college run-scale engine change (5dccec9, 6.5 → 19.0) plus the pitcher-side table recal (99b22fb, the flatter menu). The HS step came from the floor (24d4f66).
+
+
+# Part 9 (Nov 26): the HS floor step fixed (ruling 33)
+
+Carries out `docs/PROMPT_hitter_v13_floor_step_2026-11-26.md` on `feat/hitter-v13-final` (worktree `C:/dev/pc-final`), on the desktop
+(22 workers, 48 GB guard, fixed seeds, the faster engine). Step 6 stays locked (not run); 2026 not read. W = 32, the floor table
+(`fb_floor`), the count layers, zone table, per-count scalars and the 10-point limit are unchanged. **No re-pin is applied**; every grade
+is **proposed**. Data and logs: `C:/dev/pitchiq-data-final/p9/`; small results: `results/v13p9/`. Fix commit: **fae37d2**.
+
+## Ruling 33 (recorded in `docs/DECISIONS_refit_v13.md`)
+Fix the HS floor step now, separately from the weight. Drew also accepted the D1 K flag (+2.0) as judged by runs (ruling 17 stands)
+and chose to grade the changed calls before the `golden_v13core` re-pin.
+
+## The cause, with numbers (`readthrough/floor_step_diag_v13.py`, `results/v13p9/floor_step_diag_before.json`)
+HS / four_cut / 3-2, the root call's inputs to `apply_fb_floor` (floor f = 0.5455):
+
+| repeats of the top call | pre-floor fastball-class shares | w | floor branch | after the floor |
+|---|---|---|---|---|
+| n = 0 | Cutter down-middle 0.25%; every other cutter / fastball call 0 (SL middle 52.5, CB middle 47.2) | 0.0025 | 0 < w < f: every fastball call x f / w = **x 216.7** | **Cutter down-middle 54.5**, SL middle 23.9, CB middle 21.5 |
+| n = 1 | none (the never-pick taper drops the cutter to 0) | 0 | w = 0: f spread by the cost softmax | Cutter down-middle 29.1, **Fastball middle 25.5**, SL middle 24.1, CB middle 21.4 |
+
+The cause is the one the prompt describes (its 0.7% is 0.25% on this tip). The whole floor went to the only fastball call with a share
+just above 0. One repeat tipped that share to 0, and the `w == 0` branch split the floor by cost between the near-tied cutter (cost .8353)
+and fastball middle (.8364). The learning term only supplies the push; the jump is in the floor.
+
+## The change (both engines, same operations in the same order)
+- **Before**, for 0 < w < f t: each eligible fastball call x f t / w; every other call x (1 - f) t / (t - w).
+- **After**, for 0 <= w < f t with costs given: the eligible fastball calls **keep** their share, and the shortfall **(f t - w)** is added
+  over the eligible fastball calls by the cost softmax the `w == 0` branch already used (same temperature and location window, from the
+  best eligible fastball call's cost). Every other call x (1 - f) t / (t - w) as before (x (1 - f) at w = 0, so that branch is unchanged
+  bit for bit).
+- As w -> 0 this is the old `w == 0` branch; as w -> f t nothing is added. So it is continuous in the costs at both ends. New checks in
+  `tests_v13_kgapfix.py`: within 1e-8 at w = 1e-9 and at f t - 1e-9. Without costs (a caller passing only pi) the old scaling stays; no
+  engine path does that.
+- Kept:
+  - the fastball share is exactly f when it was below f, and unchanged at or above it;
+  - the hard-rule block (mashed) and the calls kept out upstream (shake-offs, confidence band, not-landing, no-chase targets) neither
+    count nor get raised;
+  - levels without a floor table are untouched.
+- I kept the proposed form. Of the obvious candidates, it is the only one that reduces exactly to the existing `w == 0` branch, so cells
+  that were already at w = 0 do not move.
+- Files: `engine.py apply_fb_floor`; `app/engine.js` = `web/lib/engine.js` (`applyFbFloor`, `floorArr`); `app/dist` rebuilt (4052 KB).
+
+## Parity, floor checks, hard checks
+| check | result |
+|---|---|
+| `golden/fast.py 40`, with FAST_LEANS, FAST_TAGS, FAST_LEVEL=college_d2, and (new here) FAST_LEVEL=hs and =travel | **PASS, 0 mismatches** in all six (`p9/parity/`) |
+| `tests_v13_kgapfix.py` | **ALL PASS**: the 3 new ruling-33 checks, Python = JS on 44 floored calls and 12 mashed calls, every HS / travel call at or above the floor, college_d1 bit for bit |
+| `node golden/golden_v11.js v13coreFloor` (the new golden) | **PASS**: the JS engine reproduces it |
+| `hard_checks_v13.py` (`p9/hard_checks.txt`) | identical to Part 8 except one number: the no-scouting row h13_29, top Curveball middle 27.16 -> 27.28 (same top). The 2-2 / 3-2 robustness rows, hard foul, hit hard twice and no chase at 3-0 / 3-1 pass as before |
+| Floor check, engine root share (`readthrough/floor_share_check_v13.py`: 10 arsenals x 12 counts x HS / travel = 240 cells) | **0 cells below the floor**, before and after. **156 sit exactly at it**, before and after. Largest fastball-share change **0.34 points** (HS / travel three 0-1, 43.5 -> 43.2, a cell above the floor whose table continuation values moved); 16 cells move by more than 0.05 points. Top call changed in 12 (6 per level), because the floor share is no longer all on one fastball spot |
+| Floor check, thrown in the sims (`results/v13p9/edge_summary_floorfix.md`) | thrown fastball share by count moves at most 1.8 points vs Part 8 (3-0 .749 -> .767); the final call's share is within 0.3 points in every count |
+
+## Robustness grid (`robust_diag_v13.py --mode grid`, 100 cells; `results/v13p9/rob_grid_before_after.md`)
+**The HS cell:** HS / four_cut / 3-2, top Cutter down-middle **54.5% -> 30.1%**.
+- Moves at n = 1..6 before: **25.4, 27.3, 28.7, 29.6, 30.3, 30.2**.
+- After: **1.0, 1.9, 2.9, 3.8, 4.8, 5.8**, under 10 at every n.
+
+**Every other cell:** 91 of 100 are identical, cell for cell (every college / MLB cell is among them). The 9 that changed are all HS:
+
+| HS cell | top before (share) | max move before | top after (share) | max move after |
+|---|---|---|---|---|
+| four_cut 3-2 | Cutter down-middle (54.5) | **30.2** | Cutter down-middle (30.1) | **5.8** |
+| four 2-2 | Fastball down-away (40.0) | **11.4** | Slider middle (26.5) | 3.3 |
+| four_cut 2-2 | Slider middle (26.3) | 2.9 | Slider middle (26.4) | 3.1 |
+| **ride126 2-2** | Fastball down-away (40.0) | **0.0** | Curve middle (39.6) | **2.9 (+2.9)** |
+| hs_two, sink_sweep, deadzone, three, two (all 2-2) | same tops | 1.1, 1.5, 0.9, 0.9, 0.9 | same tops | same to 0.1 |
+
+- **One cell crosses "no worse by more than 2 points": HS / ride126 / 2-2 (0.0 -> 2.9).**
+  - This changes *which* call is on top, not how any call responds.
+  - Before, the top call was Fastball down-away, pinned at exactly the floor (40.0%, the whole floor on the one spot with a share), so
+    repeating it could not move it.
+  - Now the floor is spread over the fastball spots (FB down-away 20.1%), and the top is Curve middle at 39.6%.
+  - **Repeat that same Curve middle on the old engine and it moves 2.9 points too** (36.6% at n = 6 on both engines;
+    `results/v13p9/floor_diag_hs_ride126_2-2_*.json`).
+  - Still far under 10. Stop point for Drew.
+- Cells over 10 points: **13 -> 11** (HS four_cut 3-2 and HS four 2-2 drop out). The other 11 are the ruling-32 cells, unchanged.
+
+## HS changed calls vs bb63e33 (`results/v13p9/CHANGED_CALLS_FLOOR.md`, `golden/changed_calls_floor.py`)
+**Every move is floor-driven.** The only code change is the floor, and no case off HS / travel changed in any output. In every listed
+case the fastball-class share is the same before and after: the floor total is unchanged, only which fastball spots carry it.
+
+**Goldens** (500 inputs; old = Part 8's proposed `golden_v13coreW32.json`, new = the fix):
+- **19 menus move by 0.05 points or more, all HS / travel.** Picks change in **11**, the top-share call in **1** (case 42, HS 0-1: Fastball
+  up-away 15% -> Slider down-away 12%).
+- 27 more menus move by under 0.05 points (ripple through the PA table).
+- Outside the call, the PA `table` (up to 0.10) and the `walk` estimate (up to 0.005) move in 48 HS / travel cases, because the floor also
+  applies to the table's per-count policies. Probs, take, grade and ump do not move.
+
+**The 11 pick changes** (old and new menus for each are in the file):
+
+| case | level, count | what moved |
+|---|---|---|
+| #42 | hs 0-1 | the top-share change above |
+| #100 | travel 2-0 | FB up-in 66.7 -> 35.4; the rest spreads to FB middle 7.7, FB up-away 7.2 |
+| #116 | hs 1-0 | FB down-in 63.6 -> 42.7 |
+| #246 | travel 0-0 | one of Drew's 6 rows (below) |
+| #316 | travel 1-0 | FB middle 63.6 -> 47.3; FB down-middle 16.3 is new |
+| #358 | travel 1-0 | FB down-away 63.6 -> 27.7 |
+| #360 | travel 1-1 | see the file |
+| #434 | hs 0-0 | a 0.1-point move |
+| #472 | travel 1-1 | see the file |
+| #476 | travel 3-1 | one of Drew's 6 rows (below) |
+| #496 | hs 2-1 | FB middle 48.6 -> 26.3 |
+
+The pattern: the floor used to put the whole fastball share on the one spot that had a share. Now it spreads it over the fastball spots
+by cost, so the pinned 60%+ spots drop and other fastball spots appear.
+
+**The 6 HS rows Drew grades:**
+- #92, #410 and #460: **unchanged**. #154: moved under 0.05 points (the menu is identical at 0.1%).
+- **#476 moved.** Menu FB up-away 33.6 / FB up-in 33.1 / CB middle 8.7 -> FB up-away 21.9 / FB up-in 21.6 / **FB down-away 14.4** /
+  FB down-in 8.8 / CB middle 8.7. Shown pick FB up-in -> FB down-away.
+- **#246 moved.** FB up-in 42.3 -> 36.3, and FB chase (11.3) drops out of the top 5. Pick CB middle -> CB down-middle.
+- The fastball share is unchanged in both (66.7 and 53.6).
+
+**HG-1 to HG-4: none moved.** HG-1a to HG-3 are D3; HG-4 is HS 3-2 with Fastball middle 100%. Pass 4/5 as before (HG-2 fails as before).
+
+**Read-through (v12 suite): 85/98, no row flips.** 5 menus move:
+- B8, D10, G4 and J3 by under 0.4 points;
+- **E8 (HS 1-2): top FB down-away 32.3 -> Curveball middle 30.2** (FB down-away 25.4).
+
+**Also moved, outside the prompt's list: E-6**, one of the pending E rows (HS 0-2, starter):
+- same side: FB chase 36.4 (the whole floor on one spot) -> FB chase 23.2 + FB down-away 6.6 + FB up-away 6.6;
+- opposite side: FB chase 36.4 -> 24.7, plus FB down-away 5.5 and FB up-away 6.2;
+- the fastball share is 36.4 both before and after, and the chase share drops from 46 to 33;
+- E-7 moves under 0.6 points. E-8, E-9 and every college / MLB E row are unchanged (`results/v13p9/edge_rows_*.json`).
+
+## HS sims vs Part 8 (snapshot `p9/engine` = fae37d2; `results/v13p9/edge_summary_floorfix.md`, `fix_pair_hs.md`, `sims400_hs_paired.txt`)
+**No stop line crossed.** HS runs get worse by 1.8 SE (under 2). The K gap moves -0.4 and the BB gap +0.1 (both under 1 point).
+
+The 900 reference-staff games were rerun on the fix. **All 900 have events identical to Part 8**; only the per-count expected-rate field
+reads the table, and it moves at the 1e-7 level.
+
+| HS, engine − reference staff (paired, 900 games) | Part 8 | Part 9 (floor fix) |
+|---|---|---|
+| K | +6.7 ± 0.3 | **+6.3 ± 0.3** |
+| BB | +1.1 ± 0.2 | +1.2 ± 0.2 |
+| HBP | +0.2 ± 0.1 | +0.4 ± 0.1 |
+| runs / game | −1.64 ± 0.21 | **−1.29 ± 0.21** (pass: engine not higher) |
+| K − target (+1.5 flag) | +5.1 | **+4.7** |
+| zone % gap vs command target | −1.3 | −1.3 |
+
+The prompt quotes "K 4.8 over target, runs about −1.4". Those are Part 4's numbers, shown in brackets in Part 8; Part 8's own are +5.1
+and −1.64.
+- Engine-called, fix − Part 8, same seeds: **runs +0.35 ± 0.19**, K −0.4 ± 0.3, BB +0.1 ± 0.2, HBP +0.2 ± 0.1. The engine gives back about
+  a third of a run of its HS edge.
+- 400-game sims on the simulator's default 86 / 89 mph staff (seeds 1001–1400): fix − Part 8 **−0.34 ± 0.23** runs per game (the other
+  direction); vs v1.2.3 −3.47 ± 0.27 (Part 8: −3.13).
+
+## Fuzz 3000 (`results/v13p9/fuzz_floorfix.txt`, 1506 s)
+**Identical, line for line, to Part 8** except the timing line:
+- better stuff never worse 3000/3000;
+- never-pick 267/300, 2-for-10 145/150, nothing below the trust line 238/300;
+- HS fastball-crusher read 45%;
+- 12 straight balls on the changeup fails, as before.
+
+## Suites (logs `p9/suites/`; keep-going copies, run alone after the sims)
+- **test-sql: 15/15** (Part 8: 15/15).
+- **test-app: 50 of the 68 suites with a summary line pass, the same count as Part 8.** Every suite's pass / fail counts are the same
+  except one, and **no new failure**:
+
+| suite / check | Part 8 -> Part 9 | why |
+|---|---|---|
+| **tests_v11** | 2 -> **1** failed check | **Q4 now passes**: the riding four-seam up is 34.0% of HS two-strike calls (was 36.4%, over the 36% cap). The floor no longer stacks the whole fastball share on the up spot. The remaining failure ("exactly v1.0 ... same call mix") is as before |
+| golden_v13core | fails, 3842 -> **15085** differences | it compares against the frozen pre-W32 reference; the floor's 48 HS / travel cases (call and table) add to the W = 32 differences. The new proposed re-pin below reproduces in JS |
+| the sim-trait identity check (in the tests_v13_d2 block; vs 9ad0b81) | fails as before; HS seed 11: 558 -> 494 field differences (190 pitch events, was 185) | already failing against an older build; the HS game's calls moved with the floor |
+| every other failing suite | unchanged counts and lines | as in Part 8 (golden_v123, drift_exact, logging_exact, tests_v13_sim, stage2, worlds_test, ...) |
+
+None is re-pinned.
+
+## New proposed re-pin (none applied)
+- **`golden_v13core` -> `C:/dev/pitchiq-data-final/p9/golden_v13coreFloor.json`.** It was made by `golden_v11.py make --tag v13coreFloor`
+  in the fae37d2 snapshot, and `node golden/golden_v11.js v13coreFloor` passes.
+- It **supersedes Part 8's `p8/golden_v13coreW32.json`**, which is kept as is. The frozen `golden/golden_v13core.json` is untouched.
+- It differs from Part 8's proposal in **48 cases** beyond the 1e-9 tolerance (10,933 values), **all HS (20) or travel (28)**; every
+  college / MLB case is identical. List: `results/v13p9/repin_diff_vs_part8.json`.
+- Grade the changed-call list above first, then apply.
+
+## Stop points for Drew (Part 9)
+1. **The HS changed calls from the floor fix:**
+   - 11 picks and 1 top call in the goldens (all HS / travel, all floor-driven);
+   - read-through E8's top call;
+   - two of your 6 HS rows (**#476, #246**) and the pending **E-6** row moved. HG-1 to HG-4 did not.
+2. **Worse than Part 8 at HS:**
+   - engine-called HS runs +0.35 ± 0.19 per game (1.8 SE). The HS edge goes from −1.64 to −1.29 and still passes;
+   - one robustness cell, HS ride126 2-2, goes 0.0 -> 2.9, over the 2-point "no worse" line. It is a top-call swap, and that call responds
+     the same as before.
+3. **The proposed `golden_v13core` re-pin** (`p9/golden_v13coreFloor.json`), after grading.
+4. Still waiting: E-1 to E-9 plus E-4b, the hard vs engine-made rule list, the 35 scenarios, `stage2 D5`, and the go for 2026.
+
+## Summary (Part 9)
+- Cause confirmed by numbers: at HS four_cut 3-2 the cutter's 0.25% pre-floor share took the whole 54.5% floor (x 216.7). One repeat dropped that share to 0, and the cost softmax split the floor cutter 29 / fastball 25. The floor now adds its shortfall by that same softmax (both engines, parity 0 mismatches, fae37d2), so that cell moves 1.0 to 5.8 points at n = 1..6 (was 25 to 30). 91 of 100 grid cells are identical; one HS cell (ride126 2-2) goes 0.0 -> 2.9 through a top-call swap.
+- Floor holds everywhere (0 cells below; largest share change 0.34 points). Fuzz is identical, test-sql 15/15, test-app 50/68 with no new failure (tests_v11 Q4 now passes). HS sims: no stop line crossed (runs +0.35 +/- 0.19 vs Part 8, K gap -0.4, BB +0.1).
+- Changed calls (all HS / travel, all floor-driven): 11 golden picks, 1 top call, #476 and #246 of the 6 graded rows, E-6 and read-through E8. New proposed re-pin: p9/golden_v13coreFloor.json (48 cases differ from Part 8's proposal), not applied.

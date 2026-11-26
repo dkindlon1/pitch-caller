@@ -1,0 +1,308 @@
+{
+ "sha256": "771b4b579ff4ce767ada60f2cef9fae62ed5f290ae48888a8293f7a1686d34f2",
+ "results": {
+  "v09": [
+   {
+    "id": "HG-1a",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "down-away",
+      0.1649,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "middle",
+      0.1304,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-middle",
+      0.1294,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1112,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.1077,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-middle",
+      0.1004,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.0993,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0919,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-middle",
+      0.0647,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "HG-1b",
+    "hard": false,
+    "shares": {
+     "acc": 0.8023,
+     "arg": 0.1977,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.1386,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-middle",
+      0.1375,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1208,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-middle",
+      0.1084,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1065,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0997,
+      "arg"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0996,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-middle",
+      0.0979,
+      "arg"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.0909,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "HG-2",
+    "hard": false,
+    "shares": {
+     "acc": 0.8354,
+     "arg": 0.0665,
+     "not": 0.0981
+    },
+    "passed": false,
+    "fails": [
+     "not 9.8% > 5%"
+    ],
+    "calls": [
+     [
+      "Slider",
+      "down-away",
+      0.204,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.1825,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "down-away",
+      0.1464,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1436,
+      "acc"
+     ],
+     [
+      "Curveball",
+      "middle",
+      0.0981,
+      "not"
+     ],
+     [
+      "Curveball",
+      "down-middle",
+      0.0715,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.0665,
+      "arg"
+     ],
+     [
+      "Fastball",
+      "chase",
+      0.0467,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0298,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-middle",
+      0.0108,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "HG-3",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      0.1693,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-middle",
+      0.15,
+      "acc"
+     ],
+     [
+      "Slider",
+      "middle",
+      0.1259,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "down-away",
+      0.1251,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-middle",
+      0.1032,
+      "acc"
+     ],
+     [
+      "Slider",
+      "down-away",
+      0.0854,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-middle",
+      0.0825,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "middle",
+      0.0822,
+      "acc"
+     ],
+     [
+      "Changeup",
+      "down-away",
+      0.0756,
+      "acc"
+     ],
+     [
+      "Fastball",
+      "up-away",
+      0.0008,
+      "acc"
+     ]
+    ]
+   },
+   {
+    "id": "HG-4",
+    "hard": false,
+    "shares": {
+     "acc": 1.0,
+     "arg": 0.0,
+     "not": 0.0
+    },
+    "passed": true,
+    "fails": [],
+    "calls": [
+     [
+      "Fastball",
+      "middle",
+      1.0,
+      "acc"
+     ]
+    ]
+   }
+  ]
+ }
+}

@@ -13,6 +13,18 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's ruling (Nov 26): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_floor_step_2026-11-26.md` (after Part 8 of `docs/BUILD_v13_fulldata_REPORT.md`, tip
+bb63e33 on `feat/hitter-v13-final`).
+
+33. **Fix the HS floor step now, separately from the weight.** (Revises the last sentence of ruling 32: the floor step is
+    no longer left as is.) Drew also accepted the D1 K flag (+2.0) as judged by runs (ruling 17 stands) and chose to grade
+    the changed calls before the `golden_v13core` re-pin. Applied in report Part 9: when the eligible fastball calls'
+    share is above 0 and below the floor, the shortfall is added by the location softmax the share-0 branch already
+    used, instead of scaling the existing fastball calls up (W = 32, the floor table, the count layers, the zone table,
+    the per-count scalars and the 10-point limit unchanged; no re-pin applied).
+
 ## Drew's rulings (Nov 25, night): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_learning_weight_2026-11-25.md` (after Part 5 of `docs/BUILD_v13_fulldata_REPORT.md`).

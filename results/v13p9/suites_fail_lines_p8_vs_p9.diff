@@ -1,0 +1,6 @@
+20c20
+<   FAIL seed 11 with LEVEL=hs TRUE_POWER=1 TRUE_TAGS=1 STAFF=power: identical (64846 CSV bytes, 185 pitch events, 558 field differences)
+---
+>   FAIL seed 11 with LEVEL=hs TRUE_POWER=1 TRUE_TAGS=1 STAFF=power: identical (66364 CSV bytes, 190 pitch events, 494 field differences)
+30d29
+< [FAIL] Step 4 Q4 (v1.2 Step 5, Q5): not leaned on: the riding four-seam up is at most 36% of two-strike calls at every level on every grid arsenal with a riding four-seam  (hs 36.4%, college_d3 17.8%, college_d1 17.7%)

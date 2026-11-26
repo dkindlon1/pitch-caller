@@ -1,0 +1,2928 @@
+{
+ "mlb": {
+  "0-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball chase",
+     0.1468
+    ],
+    [
+     "Changeup down-away",
+     0.1336
+    ],
+    [
+     "Slider down-away",
+     0.1278
+    ],
+    [
+     "Slider chase",
+     0.1267
+    ],
+    [
+     "Changeup chase",
+     0.1266
+    ],
+    [
+     "Fastball down-away",
+     0.1238
+    ],
+    [
+     "Slider down-middle",
+     0.0845
+    ],
+    [
+     "Slider down-in",
+     0.0494
+    ],
+    [
+     "Slider middle",
+     0.0456
+    ],
+    [
+     "Changeup down-middle",
+     0.0353
+    ]
+   ],
+   "fastball": 0.2705793644014461,
+   "chase": 0.40008299304082073,
+   "middle": 0.04562473244557192
+  },
+  "0-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider down-in",
+     0.3036
+    ],
+    [
+     "Fastball chase",
+     0.237
+    ],
+    [
+     "Slider chase",
+     0.1732
+    ],
+    [
+     "Changeup chase",
+     0.1489
+    ],
+    [
+     "Changeup down-away",
+     0.1328
+    ],
+    [
+     "Changeup down-middle",
+     0.0043
+    ],
+    [
+     "Slider down-away",
+     0.0003
+    ]
+   ],
+   "fastball": 0.23696124218625852,
+   "chase": 0.5590913085833153,
+   "middle": 0
+  },
+  "1-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider down-away",
+     0.1462
+    ],
+    [
+     "Fastball down-away",
+     0.141
+    ],
+    [
+     "Changeup down-away",
+     0.135
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Slider chase",
+     0.1067
+    ],
+    [
+     "Slider down-middle",
+     0.0944
+    ],
+    [
+     "Changeup chase",
+     0.0887
+    ],
+    [
+     "Slider middle",
+     0.074
+    ],
+    [
+     "Changeup down-middle",
+     0.0636
+    ],
+    [
+     "Slider down-in",
+     0.0367
+    ]
+   ],
+   "fastball": 0.254591141136261,
+   "chase": 0.3090235362808583,
+   "middle": 0.07402389812754676
+  },
+  "1-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider down-in",
+     0.4921
+    ],
+    [
+     "Changeup down-away",
+     0.0796
+    ],
+    [
+     "Fastball up-in",
+     0.0796
+    ],
+    [
+     "Fastball down-away",
+     0.0734
+    ],
+    [
+     "Fastball chase",
+     0.0734
+    ],
+    [
+     "Changeup chase",
+     0.0663
+    ],
+    [
+     "Changeup down-middle",
+     0.0657
+    ],
+    [
+     "Changeup middle",
+     0.0619
+    ],
+    [
+     "Slider chase",
+     0.0081
+    ]
+   ],
+   "fastball": 0.2263042984633461,
+   "chase": 0.14772318373183765,
+   "middle": 0.061912263482262093
+  },
+  "2-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider down-away",
+     0.1933
+    ],
+    [
+     "Slider down-middle",
+     0.1521
+    ],
+    [
+     "Fastball down-away",
+     0.1391
+    ],
+    [
+     "Slider middle",
+     0.1324
+    ],
+    [
+     "Fastball up-in",
+     0.0945
+    ],
+    [
+     "Changeup down-away",
+     0.0889
+    ],
+    [
+     "Changeup middle",
+     0.0765
+    ],
+    [
+     "Changeup down-middle",
+     0.0716
+    ],
+    [
+     "Fastball middle",
+     0.0515
+    ]
+   ],
+   "fastball": 0.28507904043265,
+   "chase": 0,
+   "middle": 0.2603228972605841
+  },
+  "2-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider down-in",
+     0.4901
+    ],
+    [
+     "Changeup middle",
+     0.162
+    ],
+    [
+     "Fastball up-in",
+     0.1001
+    ],
+    [
+     "Changeup down-middle",
+     0.089
+    ],
+    [
+     "Fastball middle",
+     0.0819
+    ],
+    [
+     "Fastball down-away",
+     0.0769
+    ]
+   ],
+   "fastball": 0.2588818985310953,
+   "chase": 0,
+   "middle": 0.24385761958874275
+  },
+  "3-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider middle",
+     0.2742
+    ],
+    [
+     "Slider down-middle",
+     0.2349
+    ],
+    [
+     "Fastball down-middle",
+     0.1902
+    ],
+    [
+     "Changeup middle",
+     0.1573
+    ],
+    [
+     "Fastball middle",
+     0.1433
+    ]
+   ],
+   "fastball": 0.3335912863679915,
+   "chase": 0,
+   "middle": 0.574862864855705
+  },
+  "3-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider down-in",
+     0.2765
+    ],
+    [
+     "Changeup middle",
+     0.2704
+    ],
+    [
+     "Fastball middle",
+     0.1633
+    ],
+    [
+     "Fastball down-middle",
+     0.1458
+    ],
+    [
+     "Slider middle",
+     0.1295
+    ],
+    [
+     "Fastball down-away",
+     0.0145
+    ]
+   ],
+   "fastball": 0.32357270038965635,
+   "chase": 0,
+   "middle": 0.5631495568715931
+  },
+  "0-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball down-away",
+     0.1311
+    ],
+    [
+     "Fastball down-away",
+     0.1293
+    ],
+    [
+     "Changeup chase",
+     0.1241
+    ],
+    [
+     "Fastball chase",
+     0.1226
+    ],
+    [
+     "Changeup down-away",
+     0.1225
+    ],
+    [
+     "Curveball chase",
+     0.1077
+    ],
+    [
+     "Curveball down-middle",
+     0.0901
+    ],
+    [
+     "Fastball up-away",
+     0.0768
+    ],
+    [
+     "Curveball middle",
+     0.0635
+    ],
+    [
+     "Curveball down-in",
+     0.0281
+    ],
+    [
+     "Fastball up-in",
+     0.0042
+    ]
+   ],
+   "fastball": 0.33285777015427725,
+   "chase": 0.35434665155226247,
+   "middle": 0.06352472210004562
+  },
+  "0-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Changeup chase",
+     0.0925
+    ],
+    [
+     "Curveball down-away",
+     0.0909
+    ],
+    [
+     "Curveball chase",
+     0.0859
+    ],
+    [
+     "Fastball chase",
+     0.0833
+    ],
+    [
+     "Changeup down-away",
+     0.082
+    ],
+    [
+     "Curveball down-middle",
+     0.0739
+    ],
+    [
+     "Fastball down-away",
+     0.0683
+    ],
+    [
+     "Fastball up-in",
+     0.0639
+    ],
+    [
+     "Changeup down-middle",
+     0.0635
+    ],
+    [
+     "Curveball down-in",
+     0.0598
+    ],
+    [
+     "Curveball middle",
+     0.056
+    ],
+    [
+     "Changeup down-in",
+     0.0559
+    ],
+    [
+     "Fastball down-in",
+     0.0454
+    ],
+    [
+     "Fastball middle",
+     0.0417
+    ],
+    [
+     "Fastball down-middle",
+     0.0298
+    ],
+    [
+     "Fastball up-away",
+     0.0073
+    ]
+   ],
+   "fastball": 0.33961572202310647,
+   "chase": 0.26170911156582566,
+   "middle": 0.09765431291592919
+  },
+  "1-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Changeup down-away",
+     0.2335
+    ],
+    [
+     "Curveball down-away",
+     0.1475
+    ],
+    [
+     "Fastball down-away",
+     0.1169
+    ],
+    [
+     "Curveball down-middle",
+     0.1034
+    ],
+    [
+     "Curveball middle",
+     0.0806
+    ],
+    [
+     "Curveball chase",
+     0.0756
+    ],
+    [
+     "Fastball chase",
+     0.0745
+    ],
+    [
+     "Fastball up-in",
+     0.0591
+    ],
+    [
+     "Fastball middle",
+     0.0462
+    ],
+    [
+     "Fastball up-away",
+     0.0433
+    ],
+    [
+     "Curveball down-in",
+     0.0193
+    ]
+   ],
+   "fastball": 0.34004027782795293,
+   "chase": 0.15015412666836567,
+   "middle": 0.12680941759616016
+  },
+  "1-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball down-away",
+     0.1001
+    ],
+    [
+     "Curveball down-middle",
+     0.0867
+    ],
+    [
+     "Changeup down-away",
+     0.0731
+    ],
+    [
+     "Curveball middle",
+     0.0692
+    ],
+    [
+     "Fastball down-away",
+     0.0666
+    ],
+    [
+     "Curveball chase",
+     0.0654
+    ],
+    [
+     "Fastball up-in",
+     0.0651
+    ],
+    [
+     "Curveball down-in",
+     0.0637
+    ],
+    [
+     "Changeup down-middle",
+     0.0597
+    ],
+    [
+     "Changeup chase",
+     0.0593
+    ],
+    [
+     "Fastball chase",
+     0.0566
+    ],
+    [
+     "Changeup down-in",
+     0.0488
+    ],
+    [
+     "Fastball middle",
+     0.046
+    ],
+    [
+     "Changeup middle",
+     0.0421
+    ],
+    [
+     "Fastball down-in",
+     0.0401
+    ],
+    [
+     "Fastball down-middle",
+     0.0392
+    ],
+    [
+     "Fastball up-away",
+     0.0184
+    ]
+   ],
+   "fastball": 0.3319134896751454,
+   "chase": 0.18127227668299822,
+   "middle": 0.15731702854774937
+  },
+  "2-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.1492
+    ],
+    [
+     "Curveball down-away",
+     0.1421
+    ],
+    [
+     "Curveball down-middle",
+     0.1328
+    ],
+    [
+     "Changeup down-away",
+     0.1324
+    ],
+    [
+     "Fastball down-away",
+     0.1282
+    ],
+    [
+     "Fastball middle",
+     0.1068
+    ],
+    [
+     "Changeup down-middle",
+     0.1019
+    ],
+    [
+     "Fastball up-in",
+     0.0876
+    ],
+    [
+     "Fastball down-middle",
+     0.019
+    ]
+   ],
+   "fastball": 0.3416400963957291,
+   "chase": 0,
+   "middle": 0.2559606749177573
+  },
+  "2-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.1281
+    ],
+    [
+     "Curveball down-middle",
+     0.1178
+    ],
+    [
+     "Fastball up-in",
+     0.1043
+    ],
+    [
+     "Fastball middle",
+     0.0885
+    ],
+    [
+     "Fastball down-away",
+     0.0873
+    ],
+    [
+     "Curveball down-away",
+     0.087
+    ],
+    [
+     "Changeup down-middle",
+     0.0855
+    ],
+    [
+     "Changeup middle",
+     0.0765
+    ],
+    [
+     "Changeup down-away",
+     0.0726
+    ],
+    [
+     "Fastball down-middle",
+     0.0569
+    ],
+    [
+     "Curveball down-in",
+     0.0436
+    ],
+    [
+     "Changeup down-in",
+     0.0395
+    ],
+    [
+     "Fastball down-in",
+     0.0125
+    ]
+   ],
+   "fastball": 0.3494676457714406,
+   "chase": 0,
+   "middle": 0.2930356273128902
+  },
+  "3-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.3091
+    ],
+    [
+     "Fastball middle",
+     0.1533
+    ],
+    [
+     "Fastball down-middle",
+     0.1532
+    ],
+    [
+     "Curveball down-middle",
+     0.152
+    ],
+    [
+     "Changeup middle",
+     0.1092
+    ],
+    [
+     "Fastball down-away",
+     0.0622
+    ],
+    [
+     "Changeup down-middle",
+     0.061
+    ]
+   ],
+   "fastball": 0.3686998361332087,
+   "chase": 0,
+   "middle": 0.571592689760719
+  },
+  "3-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.2974
+    ],
+    [
+     "Changeup middle",
+     0.1661
+    ],
+    [
+     "Fastball middle",
+     0.1524
+    ],
+    [
+     "Fastball down-middle",
+     0.1429
+    ],
+    [
+     "Changeup down-middle",
+     0.1181
+    ],
+    [
+     "Fastball down-away",
+     0.0689
+    ],
+    [
+     "Curveball down-middle",
+     0.0543
+    ]
+   ],
+   "fastball": 0.36417615674369413,
+   "chase": 0,
+   "middle": 0.6158520583030296
+  }
+ },
+ "college_d1": {
+  "0-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Changeup down-away",
+     0.2638
+    ],
+    [
+     "Fastball down-away",
+     0.1987
+    ],
+    [
+     "Slider down-away",
+     0.153
+    ],
+    [
+     "Slider middle",
+     0.1057
+    ],
+    [
+     "Slider down-middle",
+     0.1004
+    ],
+    [
+     "Slider chase",
+     0.0859
+    ],
+    [
+     "Fastball chase",
+     0.0547
+    ],
+    [
+     "Slider up-away",
+     0.0378
+    ]
+   ],
+   "fastball": 0.2534705888774549,
+   "chase": 0.1406576394900682,
+   "middle": 0.10571925077310595
+  },
+  "0-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.128
+    ],
+    [
+     "Fastball chase",
+     0.1257
+    ],
+    [
+     "Changeup down-away",
+     0.1187
+    ],
+    [
+     "Slider down-in",
+     0.1088
+    ],
+    [
+     "Slider down-away",
+     0.1048
+    ],
+    [
+     "Changeup middle",
+     0.1014
+    ],
+    [
+     "Changeup down-middle",
+     0.0898
+    ],
+    [
+     "Slider down-middle",
+     0.078
+    ],
+    [
+     "Slider middle",
+     0.0736
+    ],
+    [
+     "Slider chase",
+     0.0713
+    ]
+   ],
+   "fastball": 0.2536876902601187,
+   "chase": 0.19697810059209148,
+   "middle": 0.17501818348324288
+  },
+  "1-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2804
+    ],
+    [
+     "Slider down-away",
+     0.1925
+    ],
+    [
+     "Slider middle",
+     0.1411
+    ],
+    [
+     "Slider down-middle",
+     0.1205
+    ],
+    [
+     "Changeup down-away",
+     0.1113
+    ],
+    [
+     "Changeup middle",
+     0.1043
+    ],
+    [
+     "Slider up-away",
+     0.0498
+    ]
+   ],
+   "fastball": 0.2803590445986747,
+   "chase": 0,
+   "middle": 0.2454458643705108
+  },
+  "1-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2404
+    ],
+    [
+     "Slider down-in",
+     0.1466
+    ],
+    [
+     "Changeup middle",
+     0.1318
+    ],
+    [
+     "Slider down-away",
+     0.1172
+    ],
+    [
+     "Changeup down-away",
+     0.1042
+    ],
+    [
+     "Slider middle",
+     0.1014
+    ],
+    [
+     "Slider down-middle",
+     0.0855
+    ],
+    [
+     "Changeup down-middle",
+     0.0655
+    ],
+    [
+     "Fastball chase",
+     0.0075
+    ]
+   ],
+   "fastball": 0.2478787185652908,
+   "chase": 0.007454332127616278,
+   "middle": 0.23311697916711285
+  },
+  "2-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.3172
+    ],
+    [
+     "Slider middle",
+     0.2378
+    ],
+    [
+     "Changeup middle",
+     0.1588
+    ],
+    [
+     "Slider down-away",
+     0.1576
+    ],
+    [
+     "Slider down-middle",
+     0.1286
+    ]
+   ],
+   "fastball": 0.31721178624318885,
+   "chase": 0,
+   "middle": 0.3965370206477138
+  },
+  "2-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.267
+    ],
+    [
+     "Changeup middle",
+     0.2492
+    ],
+    [
+     "Slider down-in",
+     0.1843
+    ],
+    [
+     "Slider middle",
+     0.1369
+    ],
+    [
+     "Slider down-middle",
+     0.0837
+    ],
+    [
+     "Slider down-away",
+     0.0506
+    ],
+    [
+     "Fastball middle",
+     0.0284
+    ]
+   ],
+   "fastball": 0.2953351994279503,
+   "chase": 0,
+   "middle": 0.414464365328721
+  },
+  "3-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider middle",
+     0.5975
+    ],
+    [
+     "Fastball down-middle",
+     0.1979
+    ],
+    [
+     "Fastball middle",
+     0.1105
+    ],
+    [
+     "Fastball down-away",
+     0.094
+    ]
+   ],
+   "fastball": 0.402477425929674,
+   "chase": 0,
+   "middle": 0.7080699640016123
+  },
+  "3-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider middle",
+     0.3692
+    ],
+    [
+     "Fastball middle",
+     0.1618
+    ],
+    [
+     "Slider down-in",
+     0.1553
+    ],
+    [
+     "Fastball down-middle",
+     0.1445
+    ],
+    [
+     "Fastball down-away",
+     0.0982
+    ],
+    [
+     "Changeup middle",
+     0.0711
+    ]
+   ],
+   "fastball": 0.40442597624125415,
+   "chase": 0,
+   "middle": 0.6020650118329982
+  },
+  "0-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.1851
+    ],
+    [
+     "Curveball down-away",
+     0.1683
+    ],
+    [
+     "Changeup down-away",
+     0.1558
+    ],
+    [
+     "Curveball middle",
+     0.1227
+    ],
+    [
+     "Curveball down-middle",
+     0.1192
+    ],
+    [
+     "Fastball chase",
+     0.1186
+    ],
+    [
+     "Fastball up-away",
+     0.1044
+    ],
+    [
+     "Fastball middle",
+     0.0258
+    ],
+    [
+     "Fastball down-middle",
+     0.0
+    ]
+   ],
+   "fastball": 0.4339974498888402,
+   "chase": 0.11862380532754403,
+   "middle": 0.14847479319949256
+  },
+  "0-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Changeup down-away",
+     0.1983
+    ],
+    [
+     "Curveball down-away",
+     0.1427
+    ],
+    [
+     "Curveball middle",
+     0.1228
+    ],
+    [
+     "Fastball down-away",
+     0.1179
+    ],
+    [
+     "Curveball down-middle",
+     0.1169
+    ],
+    [
+     "Fastball chase",
+     0.0955
+    ],
+    [
+     "Fastball middle",
+     0.0732
+    ],
+    [
+     "Fastball down-middle",
+     0.0687
+    ],
+    [
+     "Fastball up-away",
+     0.0642
+    ]
+   ],
+   "fastball": 0.4193474642494702,
+   "chase": 0.09546779672289121,
+   "middle": 0.19592792923586955
+  },
+  "1-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2085
+    ],
+    [
+     "Curveball down-away",
+     0.1723
+    ],
+    [
+     "Curveball middle",
+     0.1499
+    ],
+    [
+     "Changeup down-away",
+     0.1354
+    ],
+    [
+     "Curveball down-middle",
+     0.1225
+    ],
+    [
+     "Fastball up-away",
+     0.1018
+    ],
+    [
+     "Fastball middle",
+     0.0837
+    ],
+    [
+     "Fastball chase",
+     0.022
+    ],
+    [
+     "Fastball down-middle",
+     0.004
+    ],
+    [
+     "Curveball up-away",
+     0.0
+    ]
+   ],
+   "fastball": 0.419950361801745,
+   "chase": 0.02200446246844255,
+   "middle": 0.23360279423414537
+  },
+  "1-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Changeup down-away",
+     0.1832
+    ],
+    [
+     "Curveball middle",
+     0.1474
+    ],
+    [
+     "Fastball down-away",
+     0.1351
+    ],
+    [
+     "Curveball down-away",
+     0.1335
+    ],
+    [
+     "Curveball down-middle",
+     0.1163
+    ],
+    [
+     "Fastball middle",
+     0.0887
+    ],
+    [
+     "Fastball down-middle",
+     0.0722
+    ],
+    [
+     "Fastball chase",
+     0.0716
+    ],
+    [
+     "Fastball up-away",
+     0.0521
+    ]
+   ],
+   "fastball": 0.41960712224610736,
+   "chase": 0.07155492178246713,
+   "middle": 0.2360311732096556
+  },
+  "2-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2897
+    ],
+    [
+     "Curveball middle",
+     0.2785
+    ],
+    [
+     "Curveball down-middle",
+     0.137
+    ],
+    [
+     "Fastball middle",
+     0.1258
+    ],
+    [
+     "Curveball down-away",
+     0.1125
+    ],
+    [
+     "Changeup down-away",
+     0.0288
+    ],
+    [
+     "Changeup middle",
+     0.0276
+    ],
+    [
+     "Changeup down-middle",
+     0.0002
+    ]
+   ],
+   "fastball": 0.4154539199043039,
+   "chase": 0,
+   "middle": 0.4318741951103452
+  },
+  "2-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.2874
+    ],
+    [
+     "Fastball down-away",
+     0.1832
+    ],
+    [
+     "Curveball down-middle",
+     0.1519
+    ],
+    [
+     "Fastball middle",
+     0.1195
+    ],
+    [
+     "Fastball down-middle",
+     0.1117
+    ],
+    [
+     "Changeup middle",
+     0.0932
+    ],
+    [
+     "Changeup down-middle",
+     0.0531
+    ]
+   ],
+   "fastball": 0.4144216404372308,
+   "chase": 0,
+   "middle": 0.500085576958839
+  },
+  "3-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.548
+    ],
+    [
+     "Fastball down-middle",
+     0.2374
+    ],
+    [
+     "Fastball middle",
+     0.1664
+    ],
+    [
+     "Fastball down-away",
+     0.0482
+    ]
+   ],
+   "fastball": 0.45195586038368013,
+   "chase": 0,
+   "middle": 0.7144459838279726
+  },
+  "3-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.4078
+    ],
+    [
+     "Fastball down-middle",
+     0.2357
+    ],
+    [
+     "Fastball middle",
+     0.1815
+    ],
+    [
+     "Changeup middle",
+     0.1402
+    ],
+    [
+     "Fastball down-away",
+     0.0348
+    ]
+   ],
+   "fastball": 0.45201380306205924,
+   "chase": 0,
+   "middle": 0.7294866221603025
+  }
+ },
+ "college_d2": {
+  "0-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Changeup down-away",
+     0.2104
+    ],
+    [
+     "Slider down-away",
+     0.2099
+    ],
+    [
+     "Fastball down-away",
+     0.1637
+    ],
+    [
+     "Slider middle",
+     0.1221
+    ],
+    [
+     "Slider down-middle",
+     0.1114
+    ],
+    [
+     "Slider chase",
+     0.0955
+    ],
+    [
+     "Fastball chase",
+     0.0713
+    ],
+    [
+     "Slider up-away",
+     0.0156
+    ]
+   ],
+   "fastball": 0.23508729322219396,
+   "chase": 0.16687559745184904,
+   "middle": 0.12213819324036265
+  },
+  "0-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Changeup down-away",
+     0.1533
+    ],
+    [
+     "Slider down-away",
+     0.1342
+    ],
+    [
+     "Changeup middle",
+     0.1224
+    ],
+    [
+     "Slider down-in",
+     0.1167
+    ],
+    [
+     "Fastball chase",
+     0.116
+    ],
+    [
+     "Fastball down-away",
+     0.1143
+    ],
+    [
+     "Slider down-middle",
+     0.0847
+    ],
+    [
+     "Slider middle",
+     0.0799
+    ],
+    [
+     "Slider chase",
+     0.0785
+    ]
+   ],
+   "fastball": 0.23030972266474398,
+   "chase": 0.19448537920369843,
+   "middle": 0.20236923843162877
+  },
+  "1-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2685
+    ],
+    [
+     "Slider down-away",
+     0.2588
+    ],
+    [
+     "Slider middle",
+     0.1771
+    ],
+    [
+     "Slider down-middle",
+     0.1363
+    ],
+    [
+     "Changeup down-away",
+     0.0827
+    ],
+    [
+     "Changeup middle",
+     0.0766
+    ]
+   ],
+   "fastball": 0.26846436750811337,
+   "chase": 0,
+   "middle": 0.253752852339997
+  },
+  "1-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2406
+    ],
+    [
+     "Slider down-in",
+     0.1531
+    ],
+    [
+     "Changeup middle",
+     0.1486
+    ],
+    [
+     "Slider down-away",
+     0.1393
+    ],
+    [
+     "Changeup down-away",
+     0.1171
+    ],
+    [
+     "Slider middle",
+     0.1111
+    ],
+    [
+     "Slider down-middle",
+     0.09
+    ]
+   ],
+   "fastball": 0.24057146365196622,
+   "chase": 0,
+   "middle": 0.2597687004860749
+  },
+  "2-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.3225
+    ],
+    [
+     "Slider middle",
+     0.2929
+    ],
+    [
+     "Slider down-away",
+     0.1689
+    ],
+    [
+     "Slider down-middle",
+     0.1309
+    ],
+    [
+     "Changeup middle",
+     0.0847
+    ]
+   ],
+   "fastball": 0.32251188620991,
+   "chase": 0,
+   "middle": 0.37762046332488874
+  },
+  "2-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.298
+    ],
+    [
+     "Changeup middle",
+     0.2059
+    ],
+    [
+     "Slider middle",
+     0.1757
+    ],
+    [
+     "Slider down-in",
+     0.163
+    ],
+    [
+     "Slider down-middle",
+     0.0821
+    ],
+    [
+     "Slider down-away",
+     0.0754
+    ]
+   ],
+   "fastball": 0.297992179154328,
+   "chase": 0,
+   "middle": 0.38155680765802025
+  },
+  "3-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider middle",
+     0.6187
+    ],
+    [
+     "Fastball down-middle",
+     0.2214
+    ],
+    [
+     "Fastball middle",
+     0.1599
+    ]
+   ],
+   "fastball": 0.38129921740951134,
+   "chase": 0,
+   "middle": 0.7785554995592802
+  },
+  "3-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider middle",
+     0.5283
+    ],
+    [
+     "Fastball middle",
+     0.1824
+    ],
+    [
+     "Fastball down-middle",
+     0.1501
+    ],
+    [
+     "Fastball down-away",
+     0.1066
+    ],
+    [
+     "Slider down-in",
+     0.0326
+    ]
+   ],
+   "fastball": 0.43909353713138355,
+   "chase": 0,
+   "middle": 0.7107311706223172
+  },
+  "0-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2467
+    ],
+    [
+     "Curveball down-away",
+     0.1904
+    ],
+    [
+     "Fastball chase",
+     0.1457
+    ],
+    [
+     "Curveball middle",
+     0.1203
+    ],
+    [
+     "Fastball up-away",
+     0.1178
+    ],
+    [
+     "Curveball down-middle",
+     0.1112
+    ],
+    [
+     "Changeup down-away",
+     0.0678
+    ]
+   ],
+   "fastball": 0.51023967052507,
+   "chase": 0.14566172425951485,
+   "middle": 0.12033607135441785
+  },
+  "0-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball down-away",
+     0.1622
+    ],
+    [
+     "Fastball down-away",
+     0.1562
+    ],
+    [
+     "Fastball chase",
+     0.1256
+    ],
+    [
+     "Curveball middle",
+     0.1233
+    ],
+    [
+     "Curveball down-middle",
+     0.1152
+    ],
+    [
+     "Changeup down-away",
+     0.1044
+    ],
+    [
+     "Fastball middle",
+     0.0778
+    ],
+    [
+     "Fastball down-middle",
+     0.0683
+    ],
+    [
+     "Fastball up-away",
+     0.067
+    ]
+   ],
+   "fastball": 0.4948152117906321,
+   "chase": 0.12556865708265194,
+   "middle": 0.2011075947782972
+  },
+  "1-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.3091
+    ],
+    [
+     "Curveball down-away",
+     0.1796
+    ],
+    [
+     "Curveball middle",
+     0.1611
+    ],
+    [
+     "Fastball up-away",
+     0.1174
+    ],
+    [
+     "Curveball down-middle",
+     0.1113
+    ],
+    [
+     "Changeup down-away",
+     0.0501
+    ],
+    [
+     "Fastball middle",
+     0.0455
+    ],
+    [
+     "Fastball chase",
+     0.0261
+    ]
+   ],
+   "fastball": 0.4979534894917041,
+   "chase": 0.026070496361683265,
+   "middle": 0.2065566063132921
+  },
+  "1-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2073
+    ],
+    [
+     "Curveball middle",
+     0.1538
+    ],
+    [
+     "Curveball down-away",
+     0.1418
+    ],
+    [
+     "Fastball middle",
+     0.1144
+    ],
+    [
+     "Curveball down-middle",
+     0.113
+    ],
+    [
+     "Fastball chase",
+     0.1087
+    ],
+    [
+     "Changeup down-away",
+     0.0871
+    ],
+    [
+     "Fastball down-middle",
+     0.0661
+    ],
+    [
+     "Fastball up-away",
+     0.0078
+    ]
+   ],
+   "fastball": 0.5043307683397713,
+   "chase": 0.10867023117328045,
+   "middle": 0.268229182341153
+  },
+  "2-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.3781
+    ],
+    [
+     "Curveball middle",
+     0.3779
+    ],
+    [
+     "Fastball middle",
+     0.1224
+    ],
+    [
+     "Curveball down-middle",
+     0.1211
+    ],
+    [
+     "Curveball down-away",
+     0.0005
+    ]
+   ],
+   "fastball": 0.5005063011308677,
+   "chase": 0,
+   "middle": 0.5003399229586085
+  },
+  "2-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.3868
+    ],
+    [
+     "Fastball down-away",
+     0.2369
+    ],
+    [
+     "Fastball middle",
+     0.1482
+    ],
+    [
+     "Fastball down-middle",
+     0.1305
+    ],
+    [
+     "Curveball down-middle",
+     0.0792
+    ],
+    [
+     "Changeup down-middle",
+     0.0063
+    ],
+    [
+     "Changeup middle",
+     0.0061
+    ],
+    [
+     "Changeup down-away",
+     0.006
+    ]
+   ],
+   "fastball": 0.5156377733591389,
+   "chase": 0,
+   "middle": 0.5410889459404344
+  },
+  "3-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.4949
+    ],
+    [
+     "Fastball middle",
+     0.2291
+    ],
+    [
+     "Fastball down-middle",
+     0.1981
+    ],
+    [
+     "Fastball down-away",
+     0.0779
+    ]
+   ],
+   "fastball": 0.505060188536533,
+   "chase": 0,
+   "middle": 0.724006111810299
+  },
+  "3-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.402
+    ],
+    [
+     "Fastball middle",
+     0.3348
+    ],
+    [
+     "Fastball down-middle",
+     0.2632
+    ]
+   ],
+   "fastball": 0.5979985503560642,
+   "chase": 0,
+   "middle": 0.7368225853489272
+  }
+ },
+ "college_d3": {
+  "0-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider down-away",
+     0.2336
+    ],
+    [
+     "Changeup down-away",
+     0.205
+    ],
+    [
+     "Fastball down-away",
+     0.1311
+    ],
+    [
+     "Slider middle",
+     0.1223
+    ],
+    [
+     "Slider down-middle",
+     0.1178
+    ],
+    [
+     "Fastball chase",
+     0.1033
+    ],
+    [
+     "Slider chase",
+     0.0868
+    ]
+   ],
+   "fastball": 0.2344392757441401,
+   "chase": 0.19015383471934708,
+   "middle": 0.12230170564877098
+  },
+  "0-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Changeup down-away",
+     0.1546
+    ],
+    [
+     "Slider down-away",
+     0.1492
+    ],
+    [
+     "Fastball chase",
+     0.1189
+    ],
+    [
+     "Changeup middle",
+     0.1165
+    ],
+    [
+     "Fastball down-away",
+     0.1112
+    ],
+    [
+     "Slider down-in",
+     0.0978
+    ],
+    [
+     "Slider down-middle",
+     0.0883
+    ],
+    [
+     "Slider chase",
+     0.0822
+    ],
+    [
+     "Slider middle",
+     0.0812
+    ]
+   ],
+   "fastball": 0.2300841485232883,
+   "chase": 0.20108365867072758,
+   "middle": 0.1977879526647412
+  },
+  "1-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider down-away",
+     0.2791
+    ],
+    [
+     "Fastball down-away",
+     0.269
+    ],
+    [
+     "Slider middle",
+     0.1692
+    ],
+    [
+     "Slider down-middle",
+     0.1332
+    ],
+    [
+     "Changeup down-away",
+     0.0786
+    ],
+    [
+     "Changeup middle",
+     0.0708
+    ]
+   ],
+   "fastball": 0.26904681781472883,
+   "chase": 0,
+   "middle": 0.2400502564877748
+  },
+  "1-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2441
+    ],
+    [
+     "Slider down-away",
+     0.161
+    ],
+    [
+     "Changeup middle",
+     0.1425
+    ],
+    [
+     "Slider down-in",
+     0.1308
+    ],
+    [
+     "Changeup down-away",
+     0.1174
+    ],
+    [
+     "Slider middle",
+     0.1113
+    ],
+    [
+     "Slider down-middle",
+     0.0929
+    ]
+   ],
+   "fastball": 0.24412536625439804,
+   "chase": 0,
+   "middle": 0.25373242584000866
+  },
+  "2-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.32
+    ],
+    [
+     "Slider middle",
+     0.2856
+    ],
+    [
+     "Slider down-away",
+     0.1819
+    ],
+    [
+     "Slider down-middle",
+     0.131
+    ],
+    [
+     "Changeup middle",
+     0.0815
+    ]
+   ],
+   "fastball": 0.31999610573987014,
+   "chase": 0,
+   "middle": 0.3671035564252809
+  },
+  "2-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2979
+    ],
+    [
+     "Changeup middle",
+     0.2046
+    ],
+    [
+     "Slider middle",
+     0.1761
+    ],
+    [
+     "Slider down-in",
+     0.143
+    ],
+    [
+     "Slider down-away",
+     0.0916
+    ],
+    [
+     "Slider down-middle",
+     0.0868
+    ]
+   ],
+   "fastball": 0.2978911494117052,
+   "chase": 0,
+   "middle": 0.3807026534810145
+  },
+  "3-2|starter (FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider middle",
+     0.6317
+    ],
+    [
+     "Fastball down-middle",
+     0.2164
+    ],
+    [
+     "Fastball middle",
+     0.1518
+    ]
+   ],
+   "fastball": 0.36827978001827766,
+   "chase": 0,
+   "middle": 0.7835513520832166
+  },
+  "3-2|starter (FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider middle",
+     0.4746
+    ],
+    [
+     "Fastball middle",
+     0.1996
+    ],
+    [
+     "Fastball down-middle",
+     0.1534
+    ],
+    [
+     "Slider down-in",
+     0.1007
+    ],
+    [
+     "Fastball down-away",
+     0.0717
+    ]
+   ],
+   "fastball": 0.42472915583178955,
+   "chase": 0,
+   "middle": 0.674171549600417
+  },
+  "0-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.239
+    ],
+    [
+     "Curveball down-away",
+     0.2024
+    ],
+    [
+     "Fastball chase",
+     0.1496
+    ],
+    [
+     "Curveball middle",
+     0.1159
+    ],
+    [
+     "Fastball up-away",
+     0.1136
+    ],
+    [
+     "Curveball down-middle",
+     0.111
+    ],
+    [
+     "Changeup down-away",
+     0.0684
+    ]
+   ],
+   "fastball": 0.5022362363173447,
+   "chase": 0.14955362533584654,
+   "middle": 0.11594288066354978
+  },
+  "0-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball down-away",
+     0.1728
+    ],
+    [
+     "Fastball down-away",
+     0.1604
+    ],
+    [
+     "Fastball chase",
+     0.1345
+    ],
+    [
+     "Curveball middle",
+     0.1178
+    ],
+    [
+     "Curveball down-middle",
+     0.114
+    ],
+    [
+     "Changeup down-away",
+     0.1057
+    ],
+    [
+     "Fastball middle",
+     0.0758
+    ],
+    [
+     "Fastball up-away",
+     0.0612
+    ],
+    [
+     "Fastball down-middle",
+     0.0578
+    ]
+   ],
+   "fastball": 0.48976501840719555,
+   "chase": 0.13453037086326006,
+   "middle": 0.19357338508678823
+  },
+  "1-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.3065
+    ],
+    [
+     "Curveball down-away",
+     0.1965
+    ],
+    [
+     "Curveball middle",
+     0.1551
+    ],
+    [
+     "Fastball up-away",
+     0.1138
+    ],
+    [
+     "Curveball down-middle",
+     0.1085
+    ],
+    [
+     "Fastball chase",
+     0.0592
+    ],
+    [
+     "Changeup down-away",
+     0.0468
+    ],
+    [
+     "Fastball middle",
+     0.0136
+    ]
+   ],
+   "fastball": 0.4930470020273118,
+   "chase": 0.05922422281812624,
+   "middle": 0.16863323663500063
+  },
+  "1-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.2202
+    ],
+    [
+     "Curveball down-away",
+     0.1574
+    ],
+    [
+     "Curveball middle",
+     0.1443
+    ],
+    [
+     "Fastball chase",
+     0.1235
+    ],
+    [
+     "Fastball middle",
+     0.112
+    ],
+    [
+     "Curveball down-middle",
+     0.1107
+    ],
+    [
+     "Changeup down-away",
+     0.0888
+    ],
+    [
+     "Fastball down-middle",
+     0.0416
+    ],
+    [
+     "Fastball up-away",
+     0.0016
+    ]
+   ],
+   "fastball": 0.4987822714863798,
+   "chase": 0.12347463248482009,
+   "middle": 0.25623524580618356
+  },
+  "2-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball down-away",
+     0.3758
+    ],
+    [
+     "Curveball middle",
+     0.3585
+    ],
+    [
+     "Fastball middle",
+     0.1174
+    ],
+    [
+     "Curveball down-middle",
+     0.0955
+    ],
+    [
+     "Curveball down-away",
+     0.0528
+    ]
+   ],
+   "fastball": 0.4932141275902703,
+   "chase": 0,
+   "middle": 0.4759206061645983
+  },
+  "2-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.3761
+    ],
+    [
+     "Fastball down-away",
+     0.2397
+    ],
+    [
+     "Fastball middle",
+     0.146
+    ],
+    [
+     "Fastball down-middle",
+     0.1273
+    ],
+    [
+     "Curveball down-middle",
+     0.089
+    ],
+    [
+     "Changeup down-away",
+     0.0076
+    ],
+    [
+     "Changeup down-middle",
+     0.0073
+    ],
+    [
+     "Changeup middle",
+     0.007
+    ]
+   ],
+   "fastball": 0.5129799996793326,
+   "chase": 0,
+   "middle": 0.5290901692983252
+  },
+  "3-2|reliever (FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.4956
+    ],
+    [
+     "Fastball middle",
+     0.2235
+    ],
+    [
+     "Fastball down-middle",
+     0.1923
+    ],
+    [
+     "Fastball down-away",
+     0.0886
+    ]
+   ],
+   "fastball": 0.5043737231601393,
+   "chase": 0,
+   "middle": 0.7190892322903835
+  },
+  "3-2|reliever (FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.3979
+    ],
+    [
+     "Fastball middle",
+     0.3355
+    ],
+    [
+     "Fastball down-middle",
+     0.2667
+    ]
+   ],
+   "fastball": 0.6021395610981406,
+   "chase": 0,
+   "middle": 0.733346783232538
+  }
+ },
+ "hs": {
+  "0-2|starter (HS q5, FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball chase",
+     0.2317
+    ],
+    [
+     "Slider down-away",
+     0.1604
+    ],
+    [
+     "Slider down-middle",
+     0.1093
+    ],
+    [
+     "Slider middle",
+     0.1082
+    ],
+    [
+     "Slider chase",
+     0.0986
+    ],
+    [
+     "Slider up-away",
+     0.0915
+    ],
+    [
+     "Changeup down-away",
+     0.0684
+    ],
+    [
+     "Fastball down-away",
+     0.0663
+    ],
+    [
+     "Fastball up-away",
+     0.0656
+    ]
+   ],
+   "fastball": 0.36359999999999987,
+   "chase": 0.3303554117252987,
+   "middle": 0.10817410041070286
+  },
+  "0-2|starter (HS q5, FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball chase",
+     0.2467
+    ],
+    [
+     "Slider down-in",
+     0.2116
+    ],
+    [
+     "Slider down-away",
+     0.1278
+    ],
+    [
+     "Slider chase",
+     0.0977
+    ],
+    [
+     "Slider down-middle",
+     0.0803
+    ],
+    [
+     "Slider middle",
+     0.0623
+    ],
+    [
+     "Fastball up-away",
+     0.062
+    ],
+    [
+     "Changeup down-away",
+     0.0567
+    ],
+    [
+     "Fastball down-away",
+     0.0548
+    ]
+   ],
+   "fastball": 0.3635999999999999,
+   "chase": 0.34442151600149146,
+   "middle": 0.06233995928959692
+  },
+  "1-2|starter (HS q5, FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider down-away",
+     0.1776
+    ],
+    [
+     "Slider middle",
+     0.1589
+    ],
+    [
+     "Slider down-middle",
+     0.1374
+    ],
+    [
+     "Fastball chase",
+     0.1105
+    ],
+    [
+     "Fastball down-away",
+     0.1079
+    ],
+    [
+     "Fastball up-away",
+     0.0996
+    ],
+    [
+     "Slider up-away",
+     0.0912
+    ],
+    [
+     "Changeup down-away",
+     0.0453
+    ],
+    [
+     "Slider chase",
+     0.0419
+    ],
+    [
+     "Changeup middle",
+     0.0145
+    ],
+    [
+     "Fastball down-middle",
+     0.0123
+    ],
+    [
+     "Fastball up-in",
+     0.003
+    ]
+   ],
+   "fastball": 0.33329999999999993,
+   "chase": 0.1523905926774367,
+   "middle": 0.17338046296708168
+  },
+  "1-2|starter (HS q5, FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider down-in",
+     0.6559
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0057
+    ],
+    [
+     "Changeup down-away",
+     0.0051
+    ]
+   ],
+   "fastball": 0.33329999999999993,
+   "chase": 0.11358040263052593,
+   "middle": 0.005721889342758237
+  },
+  "2-2|starter (HS q5, FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Slider middle",
+     0.3567
+    ],
+    [
+     "Slider down-middle",
+     0.1796
+    ],
+    [
+     "Fastball down-away",
+     0.1156
+    ],
+    [
+     "Fastball up-away",
+     0.0845
+    ],
+    [
+     "Fastball middle",
+     0.0722
+    ],
+    [
+     "Fastball down-middle",
+     0.072
+    ],
+    [
+     "Slider down-away",
+     0.0637
+    ],
+    [
+     "Fastball up-in",
+     0.0557
+    ]
+   ],
+   "fastball": 0.4,
+   "chase": 0,
+   "middle": 0.4289305725076731
+  },
+  "2-2|starter (HS q5, FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Slider down-in",
+     0.3576
+    ],
+    [
+     "Slider middle",
+     0.2424
+    ],
+    [
+     "Fastball down-away",
+     0.0956
+    ],
+    [
+     "Fastball middle",
+     0.0811
+    ],
+    [
+     "Fastball up-away",
+     0.0697
+    ],
+    [
+     "Fastball down-middle",
+     0.0662
+    ],
+    [
+     "Fastball up-in",
+     0.066
+    ],
+    [
+     "Fastball down-in",
+     0.0214
+    ]
+   ],
+   "fastball": 0.4,
+   "chase": 0,
+   "middle": 0.323535316134004
+  },
+  "3-2|starter (HS q5, FB / SL / CH)|same": {
+   "menu": [
+    [
+     "Fastball middle",
+     0.5455
+    ],
+    [
+     "Slider middle",
+     0.4545
+    ]
+   ],
+   "fastball": 0.5455,
+   "chase": 0,
+   "middle": 1.0
+  },
+  "3-2|starter (HS q5, FB / SL / CH)|opp": {
+   "menu": [
+    [
+     "Fastball middle",
+     0.5455
+    ],
+    [
+     "Slider middle",
+     0.4545
+    ]
+   ],
+   "fastball": 0.5455,
+   "chase": 0,
+   "middle": 1.0
+  },
+  "0-2|reliever (HS q7, FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball down-away",
+     0.165
+    ],
+    [
+     "Fastball chase",
+     0.1451
+    ],
+    [
+     "Fastball down-away",
+     0.1312
+    ],
+    [
+     "Fastball up-away",
+     0.1178
+    ],
+    [
+     "Curveball down-middle",
+     0.1165
+    ],
+    [
+     "Curveball middle",
+     0.1125
+    ],
+    [
+     "Fastball down-middle",
+     0.0663
+    ],
+    [
+     "Curveball up-away",
+     0.0434
+    ],
+    [
+     "Fastball middle",
+     0.0375
+    ],
+    [
+     "Changeup chase",
+     0.0329
+    ],
+    [
+     "Changeup down-away",
+     0.0319
+    ]
+   ],
+   "fastball": 0.49781945238881453,
+   "chase": 0.17797976964523166,
+   "middle": 0.14995926243573016
+  },
+  "0-2|reliever (HS q7, FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball down-away",
+     0.1566
+    ],
+    [
+     "Fastball chase",
+     0.1552
+    ],
+    [
+     "Fastball down-away",
+     0.1211
+    ],
+    [
+     "Curveball down-middle",
+     0.1179
+    ],
+    [
+     "Curveball middle",
+     0.1152
+    ],
+    [
+     "Fastball up-away",
+     0.1076
+    ],
+    [
+     "Fastball down-middle",
+     0.0721
+    ],
+    [
+     "Fastball middle",
+     0.0517
+    ],
+    [
+     "Changeup chase",
+     0.0389
+    ],
+    [
+     "Changeup down-away",
+     0.0367
+    ],
+    [
+     "Curveball up-away",
+     0.0269
+    ]
+   ],
+   "fastball": 0.5077362902956118,
+   "chase": 0.1940582965091618,
+   "middle": 0.1669710652982834
+  },
+  "1-2|reliever (HS q7, FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.1664
+    ],
+    [
+     "Curveball down-away",
+     0.1557
+    ],
+    [
+     "Curveball down-middle",
+     0.1343
+    ],
+    [
+     "Fastball down-away",
+     0.1305
+    ],
+    [
+     "Fastball up-away",
+     0.1077
+    ],
+    [
+     "Fastball chase",
+     0.0993
+    ],
+    [
+     "Fastball down-middle",
+     0.0665
+    ],
+    [
+     "Fastball middle",
+     0.0661
+    ],
+    [
+     "Changeup down-away",
+     0.0447
+    ],
+    [
+     "Curveball up-away",
+     0.0287
+    ]
+   ],
+   "fastball": 0.47013400392780536,
+   "chase": 0.09929567627289311,
+   "middle": 0.2324990582047194
+  },
+  "1-2|reliever (HS q7, FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.181
+    ],
+    [
+     "Curveball down-away",
+     0.1567
+    ],
+    [
+     "Curveball down-middle",
+     0.1452
+    ],
+    [
+     "Fastball down-away",
+     0.1144
+    ],
+    [
+     "Fastball chase",
+     0.1022
+    ],
+    [
+     "Fastball up-away",
+     0.0929
+    ],
+    [
+     "Fastball middle",
+     0.0696
+    ],
+    [
+     "Fastball down-middle",
+     0.0689
+    ],
+    [
+     "Changeup down-away",
+     0.0407
+    ],
+    [
+     "Changeup chase",
+     0.0151
+    ],
+    [
+     "Curveball up-away",
+     0.0132
+    ]
+   ],
+   "fastball": 0.44797867162924215,
+   "chase": 0.11730756240572773,
+   "middle": 0.2506218578209437
+  },
+  "2-2|reliever (HS q7, FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.4518
+    ],
+    [
+     "Fastball down-away",
+     0.1257
+    ],
+    [
+     "Fastball middle",
+     0.1256
+    ],
+    [
+     "Curveball down-middle",
+     0.1227
+    ],
+    [
+     "Fastball down-middle",
+     0.0919
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ]
+   ],
+   "fastball": 0.4255110928401947,
+   "chase": 0,
+   "middle": 0.5773886201349463
+  },
+  "2-2|reliever (HS q7, FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Curveball middle",
+     0.452
+    ],
+    [
+     "Fastball middle",
+     0.1415
+    ],
+    [
+     "Fastball down-away",
+     0.1253
+    ],
+    [
+     "Fastball down-middle",
+     0.102
+    ],
+    [
+     "Curveball down-middle",
+     0.1004
+    ],
+    [
+     "Fastball up-away",
+     0.0788
+    ]
+   ],
+   "fastball": 0.44763495495993205,
+   "chase": 0,
+   "middle": 0.593524752390544
+  },
+  "3-2|reliever (HS q7, FB / CB / CH)|same": {
+   "menu": [
+    [
+     "Fastball middle",
+     0.5455
+    ],
+    [
+     "Curveball middle",
+     0.4545
+    ]
+   ],
+   "fastball": 0.5455,
+   "chase": 0,
+   "middle": 1.0
+  },
+  "3-2|reliever (HS q7, FB / CB / CH)|opp": {
+   "menu": [
+    [
+     "Fastball middle",
+     0.5455
+    ],
+    [
+     "Curveball middle",
+     0.4545
+    ]
+   ],
+   "fastball": 0.5455,
+   "chase": 0,
+   "middle": 1.0
+  }
+ }
+}

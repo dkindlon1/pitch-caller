@@ -1,0 +1,331 @@
+{
+ "cell": "hs|ride126|2-2",
+ "rows": [
+  {
+   "n": 0,
+   "root_floor_calls": [
+    {
+     "f": 0.4,
+     "t": 1.0,
+     "w": 0.09651809203722464,
+     "branch": "0 < w < f*t",
+     "kf": 4.144300737376055,
+     "fb_pre": {
+      "Fastball down-away": 0.09651809203722464
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.65582,
+      "Fastball up-away": 0.63907,
+      "Fastball down-in": 0.65638,
+      "Fastball down-away": 0.63305,
+      "Fastball middle": 0.63665,
+      "Fastball down-middle": 0.63767
+     },
+     "fb_post": {
+      "Fastball down-away": 0.4
+     },
+     "pre_top": {
+      "Curve middle": 0.5953,
+      "Changeup middle": 0.1743,
+      "Changeup down-middle": 0.1339,
+      "Fastball down-away": 0.0965
+     },
+     "post_top": {
+      "Fastball down-away": 0.4,
+      "Curve middle": 0.3954,
+      "Changeup middle": 0.1157,
+      "Changeup down-middle": 0.0889
+     }
+    }
+   ],
+   "final": {
+    "Fastball down-away": 0.4,
+    "Curve middle": 0.3954,
+    "Changeup middle": 0.1157,
+    "Changeup down-middle": 0.0889
+   }
+  },
+  {
+   "n": 1,
+   "root_floor_calls": [
+    {
+     "f": 0.4,
+     "t": 1.0,
+     "w": 0.09755543668797227,
+     "branch": "0 < w < f*t",
+     "kf": 4.1002327864041686,
+     "fb_pre": {
+      "Fastball down-away": 0.09755543668797227
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.65579,
+      "Fastball up-away": 0.63904,
+      "Fastball down-in": 0.65633,
+      "Fastball down-away": 0.63299,
+      "Fastball middle": 0.63663,
+      "Fastball down-middle": 0.63761
+     },
+     "fb_post": {
+      "Fastball down-away": 0.4
+     },
+     "pre_top": {
+      "Curve middle": 0.5877,
+      "Changeup middle": 0.1779,
+      "Changeup down-middle": 0.1369,
+      "Fastball down-away": 0.0976
+     },
+     "post_top": {
+      "Fastball down-away": 0.4,
+      "Curve middle": 0.3907,
+      "Changeup middle": 0.1183,
+      "Changeup down-middle": 0.091
+     }
+    }
+   ],
+   "move_of_top": 0.0046,
+   "final": {
+    "Fastball down-away": 0.4,
+    "Curve middle": 0.3907,
+    "Changeup middle": 0.1183,
+    "Changeup down-middle": 0.091
+   }
+  },
+  {
+   "n": 2,
+   "root_floor_calls": [
+    {
+     "f": 0.4,
+     "t": 1.0,
+     "w": 0.09854606134767277,
+     "branch": "0 < w < f*t",
+     "kf": 4.059015596663887,
+     "fb_pre": {
+      "Fastball down-away": 0.09854606134767277
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.65576,
+      "Fastball up-away": 0.639,
+      "Fastball down-in": 0.65628,
+      "Fastball down-away": 0.63294,
+      "Fastball middle": 0.63661,
+      "Fastball down-middle": 0.63756
+     },
+     "fb_post": {
+      "Fastball down-away": 0.4
+     },
+     "pre_top": {
+      "Curve middle": 0.5801,
+      "Changeup middle": 0.1815,
+      "Changeup down-middle": 0.1398,
+      "Fastball down-away": 0.0985
+     },
+     "post_top": {
+      "Fastball down-away": 0.4,
+      "Curve middle": 0.3861,
+      "Changeup middle": 0.1208,
+      "Changeup down-middle": 0.0931
+     }
+    }
+   ],
+   "move_of_top": 0.0092,
+   "final": {
+    "Fastball down-away": 0.4,
+    "Curve middle": 0.3861,
+    "Changeup middle": 0.1208,
+    "Changeup down-middle": 0.0931
+   }
+  },
+  {
+   "n": 3,
+   "root_floor_calls": [
+    {
+     "f": 0.4,
+     "t": 1.0,
+     "w": 0.09934216263533534,
+     "branch": "0 < w < f*t",
+     "kf": 4.0264877408429065,
+     "fb_pre": {
+      "Fastball down-away": 0.09934216263533534
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.65574,
+      "Fastball up-away": 0.63898,
+      "Fastball down-in": 0.65624,
+      "Fastball down-away": 0.63289,
+      "Fastball middle": 0.63659,
+      "Fastball down-middle": 0.63751
+     },
+     "fb_post": {
+      "Fastball down-away": 0.4
+     },
+     "pre_top": {
+      "Curve middle": 0.5728,
+      "Changeup middle": 0.1848,
+      "Changeup down-middle": 0.1424,
+      "Fastball down-away": 0.0993,
+      "Changeup down-away": 0.0006
+     },
+     "post_top": {
+      "Fastball down-away": 0.4,
+      "Curve middle": 0.3816,
+      "Changeup middle": 0.1231,
+      "Changeup down-middle": 0.0949,
+      "Changeup down-away": 0.0004
+     }
+    }
+   ],
+   "move_of_top": 0.0137,
+   "final": {
+    "Fastball down-away": 0.4,
+    "Curve middle": 0.3816,
+    "Changeup middle": 0.1231,
+    "Changeup down-middle": 0.0949
+   }
+  },
+  {
+   "n": 4,
+   "root_floor_calls": [
+    {
+     "f": 0.4,
+     "t": 1.0,
+     "w": 0.09908411987183027,
+     "branch": "0 < w < f*t",
+     "kf": 4.0369738411908775,
+     "fb_pre": {
+      "Fastball down-away": 0.09908411987183027
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.65571,
+      "Fastball up-away": 0.63894,
+      "Fastball down-in": 0.65624,
+      "Fastball down-away": 0.63289,
+      "Fastball middle": 0.63645,
+      "Fastball down-middle": 0.63752
+     },
+     "fb_post": {
+      "Fastball down-away": 0.4
+     },
+     "pre_top": {
+      "Curve middle": 0.5651,
+      "Changeup middle": 0.1792,
+      "Changeup down-middle": 0.1354,
+      "Fastball down-away": 0.0991,
+      "Changeup down-away": 0.0213
+     },
+     "post_top": {
+      "Fastball down-away": 0.4,
+      "Curve middle": 0.3763,
+      "Changeup middle": 0.1193,
+      "Changeup down-middle": 0.0902,
+      "Changeup down-away": 0.0142
+     }
+    }
+   ],
+   "move_of_top": 0.019,
+   "final": {
+    "Fastball down-away": 0.4,
+    "Curve middle": 0.3763,
+    "Changeup middle": 0.1193,
+    "Changeup down-middle": 0.0902,
+    "Changeup down-away": 0.0142
+   }
+  },
+  {
+   "n": 5,
+   "root_floor_calls": [
+    {
+     "f": 0.4,
+     "t": 1.0,
+     "w": 0.09895036858666628,
+     "branch": "0 < w < f*t",
+     "kf": 4.042430621667241,
+     "fb_pre": {
+      "Fastball down-away": 0.09895036858666628
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.65568,
+      "Fastball up-away": 0.63891,
+      "Fastball down-in": 0.65624,
+      "Fastball down-away": 0.63289,
+      "Fastball middle": 0.63632,
+      "Fastball down-middle": 0.63752
+     },
+     "fb_post": {
+      "Fastball down-away": 0.4
+     },
+     "pre_top": {
+      "Curve middle": 0.5575,
+      "Changeup middle": 0.1745,
+      "Changeup down-middle": 0.1298,
+      "Fastball down-away": 0.099,
+      "Changeup down-away": 0.0392
+     },
+     "post_top": {
+      "Fastball down-away": 0.4,
+      "Curve middle": 0.3712,
+      "Changeup middle": 0.1162,
+      "Changeup down-middle": 0.0864,
+      "Changeup down-away": 0.0261
+     }
+    }
+   ],
+   "move_of_top": 0.0241,
+   "final": {
+    "Fastball down-away": 0.4,
+    "Curve middle": 0.3712,
+    "Changeup middle": 0.1162,
+    "Changeup down-middle": 0.0864,
+    "Changeup down-away": 0.0261
+   }
+  },
+  {
+   "n": 6,
+   "root_floor_calls": [
+    {
+     "f": 0.4,
+     "t": 1.0,
+     "w": 0.09891374047602364,
+     "branch": "0 < w < f*t",
+     "kf": 4.043927548134313,
+     "fb_pre": {
+      "Fastball down-away": 0.09891374047602364
+     },
+     "fb_costs": {
+      "Fastball up-in": 0.65565,
+      "Fastball up-away": 0.63888,
+      "Fastball down-in": 0.65623,
+      "Fastball down-away": 0.63288,
+      "Fastball middle": 0.63622,
+      "Fastball down-middle": 0.63751
+     },
+     "fb_post": {
+      "Fastball down-away": 0.4
+     },
+     "pre_top": {
+      "Curve middle": 0.5501,
+      "Changeup middle": 0.1707,
+      "Changeup down-middle": 0.1253,
+      "Fastball down-away": 0.0989,
+      "Changeup down-away": 0.0549
+     },
+     "post_top": {
+      "Fastball down-away": 0.4,
+      "Curve middle": 0.3663,
+      "Changeup middle": 0.1137,
+      "Changeup down-middle": 0.0834,
+      "Changeup down-away": 0.0366
+     }
+    }
+   ],
+   "move_of_top": 0.029,
+   "final": {
+    "Fastball down-away": 0.4,
+    "Curve middle": 0.3663,
+    "Changeup middle": 0.1137,
+    "Changeup down-middle": 0.0834,
+    "Changeup down-away": 0.0366
+   }
+  }
+ ],
+ "top_call_n0": "Curve middle"
+}
