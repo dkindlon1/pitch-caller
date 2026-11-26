@@ -1043,3 +1043,136 @@ HS four 2-2 (11.4); D1 four 2-2 (10.8); MLB four 3-2 (10.7); D2 four 2-2 (10.5);
 - W = 32 is in Python, the JS engine, the web copy and the rebuilt app page, and the two engines agree (parity 0 mismatches in four variants).
 - The default 2-2 and 3-2 robustness rows now pass; 13 of 100 sweep cells stay over 10 as you accepted, one of them the HS floor step. In the goldens only 10 top calls change.
 - `golden_v13core` now fails (3842 differences) and needs a re-pin; the sims, test suites, fuzz and the commit still have to run from the desktop.
+
+
+# Part 8 (Nov 25 night): W = 32 finished
+
+Carries out `docs/PROMPT_hitter_v13_finish_W32_2026-11-25.md` on `feat/hitter-v13-final` (worktree `C:/dev/pc-final`), on the desktop
+(22 workers, 48 GB guard, fixed seeds, the faster engine). Step 6 stays locked (not run); 2026 not read. No count layer, zone table,
+per-count scalar or limit was changed. **No re-pin is applied**; everything graded below is **proposed**. Data and logs:
+`C:/dev/pitchiq-data-final/p8/`; small results: `results/v13p8/`.
+
+**The 12 orphaned workers (parent 44792, gone) are still there.** They are idle (~12 MB each). The permission check blocked
+`Stop-Process` again. To end them: `Stop-Process -Id (Get-CimInstance Win32_Process -Filter "ParentProcessId=44792").ProcessId`.
+
+## Step 0: commits and checks
+| commit | what |
+|---|---|
+| eec6ce7 | `LEARN_PRIOR_W = 32` (engine.py, app/engine.js, web/lib/engine.js, app/dist) and the ground-ball test (ruling 30) |
+| 5bf28d0 | Parts 5–7 report, rulings 25–32, `robust_diag_v13.py`, `gb_rule_check_v13.py`, `results/v13p5/`, `results/v13p6/` |
+| a619c96 + this report | Part 8 results (`results/v13p8/`), the rebuilt changed-call list, `golden/changed_calls_w32.py`, `hitter_data/score_w_check.py` |
+
+- Diff reviewed: only the named constant replacing the literal 4 (Python and JS), plus the `tests.py` condition. `web/lib/engine.js` = `app/engine.js`.
+- `app/dist` rebuilt (`python3 build.py`, 4052 KB): byte-identical to the worktree copy.
+- `hard_checks_v13.py`: 2-2 moves **−2.4** at 3 repeats (max 1.0), 3-2 **+3.7** (max 7.4): both pass. Hard foul, hit hard twice, no chase at 3-0 / 3-1 pass; hit hard once still fails as written (another call moves 11.6, as in Part 4).
+- `golden/fast.py 40`: PASS, 0 mismatches. All pushed.
+
+## Suites (logs `p8/suites/`; keep-going copies, run alone after the sims; `results/v13p8/suites_vs_p4.txt`)
+- **test-sql: 15/15** (Part 5: 15/15).
+- **test-app:** 49 of the 67 suites that print a summary line pass (Part 5 on the same count: 50/67; the report's 51/68 counts one suite that prints none). 18 fail; Part 5 had 17.
+
+| suite | Part 5 → Part 8 | weight explains it? |
+|---|---|---|
+| **golden_v13core** | pass → **FAIL, 3842 differences** (the Part 7 number) | **yes**: every difference is in a case with `usage_by_call` (see the changed-call list) |
+| **drift_exact_test** | 4 → **5** failed checks. New: "drift notes really showed during the compared games" (0 shown) | **most likely yes**: the seeded games are charted through the engine's own calls, which now repeat less, so the "slider gone bad" setup no longer reaches a drift note in 2 games. Not traced pitch by pitch. The 4 old event-count checks fail as before, with different counts (vs an older build) |
+| **tests.py** | 8 → **7** | the ground-ball row now passes (ruling 30). The other 7 are as in Part 5 |
+| logging_exact_test, tests_v13_sim | same counts, numbers moved | yes: pinned to older engines; the call sequences moved |
+| golden_v123 | 241,061 → 241,077 differences | yes: history; the call mix moved |
+| the other 12 failing suites | unchanged | as in Part 5 (stage2 27/40 and worlds_test still not explained) |
+
+**Proposed re-pins** (none applied; wait for Drew):
+1. `golden_v13core` → the W = 32 reference `C:/dev/pitchiq-data-final/p8/golden_v13coreW32.json`. It was made by `golden_v11.py make` in the eec6ce7 snapshot, and **`node golden/golden_v11.js` reproduces it (PASS)**. To apply: copy it over `golden/golden_v13core.json`.
+2. `drift_exact_test`'s "notes really showed" check: give it enough games (or a seed) so the bad slider still triggers a note under W = 32. This needs its own check before pinning.
+3. Event-count pins (`logging_exact`, `drift_exact`, `tests_v13_sim`): already failing against older builds; no change proposed here.
+
+## Fuzz 3000 (`results/v13p8/fuzz_W32.txt`, 1339 s)
+**Identical, line for line, to Part 4:**
+- better stuff never worse **3000/3000**;
+- never-pick **267/300**, 2-for-10 **145/150**, nothing below the trust line 238/300;
+- HS fastball-crusher read 46 → 45% (floor);
+- 12 straight balls on the changeup fails, as before.
+
+The learning weight doesn't touch any fuzz check.
+
+## Sims, W = 32 (`results/v13p8/edge_summary_W32.md`, `w_pair.md`, `sims400_paired.txt`)
+**Nothing went over the stop lines:** no level's engine-called runs exceed the reference staff's by more than 2 SE, and no K or BB gap moved by more than 1 point.
+
+The reference staff never uses the engine's calls. Its first 10 games per level (50 files) are **byte-identical** to Part 4's, so the
+pairing uses Part 4's 480 / 900 reference games with the same seeds and hitters. The engine-called games are new: 900 HS, 480 per other level.
+
+| engine − reference (paired); Part 4 in brackets | MLB | D1 | D2 | D3 | HS |
+|---|---|---|---|---|---|
+| K | −2.3 ± 0.4 (−2.3) | +0.0 ± 0.4 (−0.6) | +0.5 ± 0.4 (+1.3) | +0.5 ± 0.4 (+0.7) | +6.7 ± 0.3 (+6.4) |
+| BB | +2.9 ± 0.3 (+2.8) | +2.6 ± 0.3 (+2.8) | +2.7 ± 0.3 (+2.9) | +4.1 ± 0.3 (+4.1) | +1.1 ± 0.2 (+1.2) |
+| HBP | +0.4 ± 0.1 | −0.1 ± 0.2 | +0.2 ± 0.2 | +0.0 ± 0.2 | +0.2 ± 0.1 |
+| **runs / game** | +0.11 ± 0.18 (−0.11) | **−0.20 ± 0.20 (+0.30)** | −0.01 ± 0.28 (−0.23) | +0.12 ± 0.29 (−0.09) | −1.64 ± 0.21 (−1.39) |
+| runs test (engine not higher) | higher (0.6 SE) | **pass** (was 1.4 SE higher) | pass | higher (0.4 SE) | pass |
+| K − target (+1.5 flag) | −0.3 (−0.3) | **+2.0 (+1.3)** | +2.1 (+3.0) | +1.9 (+2.1) | +5.1 (+4.8) |
+| zone % gap vs command target | −1.2 | −0.3 | −1.1 | −2.0 | −1.3 |
+
+- W = 32 − W = 4, engine-called, same seeds (runs / game): MLB +0.21 ± 0.18, **D1 −0.49 ± 0.22**, D2 +0.21 ± 0.23, D3 +0.21 ± 0.26, HS −0.25 ± 0.18. K moves −0.9 (D2) to +0.6 (D1); BB within 0.2.
+- **D1 runs now pass; MLB and D3 tip to "higher"**, but by under 1 SE. **D1 now raises the K flag (+2.0)**; D2 drops from +3.0 to +2.1. The walk gap (+2.6 to +4.1) is unchanged.
+
+**400-game sims vs v1.2.3** (seeds 1001–1400; HS plays the simulator's default 86 / 89 mph staff):
+
+| core − v1.2.3, runs / game (SE) | HS | D3 | D2 (vs v1.2.3 at D3) | D1 | MLB |
+|---|---|---|---|---|---|
+| W = 32 | −3.13 (0.25) | −0.90 (0.32) | −1.01 (0.30) | −0.60 (0.26) | +0.17 (0.21) |
+| W = 4 (Part 4) | −3.53 | −0.77 | −1.16 | −0.24 | **+0.28 flagged** |
+| W = 32 − W = 4, paired | **+0.40 (0.20)** | −0.14 (0.27) | +0.15 (0.28) | −0.36 (0.24) | −0.11 (0.21) |
+
+MLB is no longer over the flag. HS gives up 0.40 runs per game against its own W = 4 run (2.0 SE) on the default staff, though it stays 3.1 runs better than v1.2.3. The HS data-staff sims above move the other way (−0.25).
+
+## 2025 scoring unchanged (`results/v13p8/score_w_check.json`)
+`score_core --all` was run on a W = 4 snapshot (5731b39) and on the W = 32 snapshot (eec6ce7), with the same inputs, each into its own folder.
+- **All 4 table files (92 arrays: P6 / BIP / RE / CV per adapter and level) are byte-identical files**, and so is `scores.md`.
+- `scores.json` and the tables metadata are identical apart from the engine path / fingerprint.
+- The pass bar is unchanged: D1 −0.03055 (0.00078), D2 −0.02927, D3 −0.03275, HS −0.00402, all PASS.
+
+## Bisect of the 2-2 jump (ruling 31; report only; `results/v13p8/bisect_table.md`)
+Each commit's own `hard_checks_v13.py` was run at W = 4 in a `git archive` scratch tree. The HS four_cut 3-2 cell was run at W = 32 (the literal 4 → 32 in the scratch copy).
+
+| commit | 2-2 top (share) | 2-2 move@3 | 3-2 top (share) | 3-2 move@3 | HS four_cut 3-2 at W = 32: top (share), move n1 / n3 / n6 |
+|---|---|---|---|---|---|
+| 629c553 recalibrated core | SL middle (28.9) | 6.5 | SL middle (45.4) | 22.1 | CB middle (64.4), 0.5 / 1.6 / 3.1 |
+| 5613ab6 | SL middle (28.9) | 6.5 | SL middle (45.4) | 22.1 | same |
+| **5dccec9** college run scale 1 (engine) | SL middle (31.3) | **19.0** | SL middle (48.3) | 28.4 | (not run) |
+| **99b22fb** pitcher-side recal (tables) | **FB down-away (21.6)** | **21.6** | SL middle (49.9) | 26.2 | SL middle (53.0), 1.0 / 3.2 / 6.1 |
+| 15ef1c6 fix 9 | same | 21.6 | same | 26.2 | same |
+| **24d4f66** fix 8, HS floor | same | 21.6 | same | 26.2 | **Cutter down-middle (54.5), 0.0 / 54.5 / 54.5** |
+| c393047, c3e21be | FB down-away (21.0 / 20.8) | 21.0 / 20.8 | SL middle (50.1) | 26.0 | as 24d4f66 |
+| **e00cfe5** floor correction | FB down-away (20.8) | 20.8 | SL middle (50.1) | 26.0 | Cutter (54.5), 0.0 / **23.1 / 28.1** |
+| 938fc4e, bd71234 (scalars) | 20.8 | 20.8 | 50.1 | 26.0 | 0.0 / 23.7–26.4 / 29 |
+| 2adf88e ruling 14 | 20.8 | 20.8 | 50.1 | 26.0 | 0.0 / 54.5 / 54.5 |
+| 510e617, 1bc1cca | 20.8 | 20.8 | 50.1 | 26.0 | **54.5** / 54.5 / 54.5 |
+| **7b72080** ruling 16 (as now) | 20.8 | 20.8 | 50.1 | 26.0 | **25.4 / 27.3 / 30.3** |
+| 2cf56d9 → 5731b39 (final archive) | FB down-away (21.7) | 21.7 | SL middle (49.9) | 26.1 | 25.5 / 27.4 / 30.2 |
+
+- **The 2-2 jump happens in two steps between 5613ab6 and 99b22fb.**
+  1. **5dccec9 (engine code: college run scale 1, ruling 10)** raises the move from 6.5 to 19.0, while slider middle stays on top (31.3%).
+  2. **99b22fb (refit tables: the pitcher-side recalibration on the frozen list, with count / run tables and outcome params)** flattens the menu: fastball down-away becomes the top call at 21.6%, a near-tie in a 7-call mix, and the move reaches 21.6.
+
+  Nothing after that moves it by more than a point (the floor, scalars and final archive included).
+- **The HS floor step comes from the floor.** It first appears at **24d4f66** (fix 8): before it the cell is smooth, and after it the cutter step is there. Its shape then changes with each floor ruling: e00cfe5, 2adf88e (ruling 14) and 510e617 / 7b72080 (ruling 16, today's 25-point step at n = 1). It is not from the learning term or the tables.
+
+## Changed-call list (`results/v13p6/CHANGED_CALLS_W32.md`, rebuilt from the proposed re-pin golden by `golden/changed_calls_w32.py`)
+- 250 golden cases carry a call; 182 carry `usage_by_call`. The call mix moved in **121**, all with usage, so **all are learning-driven**.
+- **Pick changed: 24** (18 college / MLB: MLB 12, D1 3, D3 3; **HS / travel 7**). **Top-share call changed: 10**, the same 10 as Part 7.
+  Part 7's chunked run said 120; this full golden says 121.
+- Probabilities, table, take, grade and ump changed in **0** cases. Only the call and its explanation, shake-off alternative and intent line moved.
+- Largest single share move: 24.0 points (case 84, MLB 3-2). Read-through rows changed: 0 of 98 (85/98 kept).
+
+## Stop points for Drew (Part 8)
+1. **The changed calls from the weight** (24 picks, 10 top calls; 7 HS / travel). Then **the proposed re-pins**: `golden_v13core` first (the
+   file is ready and the JS engine reproduces it), then the drift-note check.
+2. **Did anything get worse?** No level crossed a stop line. To watch:
+   - D1's K flag now shows (+2.0);
+   - MLB and D3 runs tip to "higher" by under 1 SE;
+   - HS on the default staff gives up 0.40 ± 0.20 runs per game against W = 4 (still −3.1 vs v1.2.3).
+3. **The HS floor step** (HS four_cut 3-2, 30 points): it comes from the floor (24d4f66, reshaped by rulings 14 / 16). Fix it separately?
+4. Still waiting: E-1 to E-9 plus E-4b, the hard vs engine-made rule list, the 6 HS rows, HG-1 to HG-4, the 35 scenarios, `stage2 D5`, the go for 2026.
+
+## Summary (Part 8)
+- W = 32 is committed and pushed. Parity holds, robustness passes at 2-2 / 3-2, 2025 scoring is byte-identical, fuzz is unchanged, and test-sql is 15/15. test-app has two new weight-driven failures (`golden_v13core`, a drift-note check); the ground-ball row now passes.
+- Sims: no level is over the stop lines. D1's runs now pass (−0.20 vs +0.30), the BB gap is unchanged, D1 raises the K flag (+2.0), and MLB is no longer flagged vs v1.2.3.
+- The 2-2 jump came from the college run-scale engine change (5dccec9, 6.5 → 19.0) plus the pitcher-side table recal (99b22fb, the flatter menu). The HS step came from the floor (24d4f66).
