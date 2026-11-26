@@ -372,7 +372,9 @@ def main():
         ("count", "levels.college_d1.swing.0-0.heart -0.4 -> 0", lambda t: t["levels"]["college_d1"]["swing"]["0-0"].__setitem__("heart", 0.0),
          lambda r: S(r, 0) > S(ref, 0) and S(r, 3) == S(ref, 3) and S(r, 0, "edge") == S(ref, 0, "edge"), "D1's first-pitch heart swing up; D3 and the edge stay", 0),
         ("count", "levels.college_d1.cstrike.1-1 +0.5", lambda t: t["levels"]["college_d1"]["cstrike"].__setitem__("1-1", t["levels"]["college_d1"]["cstrike"]["1-1"] + 0.5),
-         lambda r: r["cases"][4]["z"]["edge"]["C"] > ref["cases"][4]["z"]["edge"]["C"] and r["cases"][4]["kap"] == ref["cases"][4]["kap"] + 0.5
+         # v1.3 Part 10 (task 5): the kappa moves by +0.5 within 1e-12 (the stored sum is not always ref + 0.5 bit for bit:
+         # -0.20565847827288986 + 0.5 differs from the file's value in the last place on the final-archive tables)
+         lambda r: r["cases"][4]["z"]["edge"]["C"] > ref["cases"][4]["z"]["edge"]["C"] and abs(r["cases"][4]["kap"] - (ref["cases"][4]["kap"] + 0.5)) <= 1e-12
          and r["cases"][0]["kap"] == ref["cases"][0]["kap"], "the 1-1 called strike on the edge rises; 0-0 stays", 1),
         ("count", "levels.college_d1.swing_base_out.1|020 +0.5", lambda t: t["levels"]["college_d1"]["swing_base_out"].__setitem__("1|020", 0.5),
          lambda r: S(r, 6) > S(ref, 6) and S(r, 0) == S(ref, 0), "swings rise with one out and a runner on second only", 3),
@@ -383,8 +385,14 @@ def main():
          lambda r: r["cases"][0]["ipv"][2] > ref["cases"][0]["ipv"][2] and r["cases"][0]["ipv"][0] == ref["cases"][0]["ipv"][0]
          and r["cases"][3]["ipv"] == ref["cases"][3]["ipv"], "hard contact is worth more at D1; weak contact and D3 stay", 1),
         ("run", "levels.college_d1.re.0|000 0.7 -> 0.9", lambda t: t["levels"]["college_d1"]["re"].__setitem__("0|000", 0.9),
-         lambda r: r["extras"]["college_d1"]["run_scale"] > ref["extras"]["college_d1"]["run_scale"] and r["extras"]["college_d3"] == ref["extras"]["college_d3"],
-         "D1's run scale rises; D3's stays", 1),
+         # v1.3 Part 10 (task 5), rule-aware: under ruling 10 (engine.RUN_SCALE_OWN) a college level's run scale is 1 by rule,
+         # so the RE file shows up in D1's ball-in-play values (the base-out end values), not in its run scale
+         (lambda r: r["extras"]["college_d1"]["run_scale"] == ref["extras"]["college_d1"]["run_scale"] == 1.0
+          and r["cases"][0]["ipv"] != ref["cases"][0]["ipv"] and r["cases"][3]["ipv"] == ref["cases"][3]["ipv"]
+          and r["extras"]["college_d3"] == ref["extras"]["college_d3"]) if "college_d1" in e.RUN_SCALE_OWN else
+         (lambda r: r["extras"]["college_d1"]["run_scale"] > ref["extras"]["college_d1"]["run_scale"] and r["extras"]["college_d3"] == ref["extras"]["college_d3"]),
+         ("D1's run scale stays 1 (ruling 10) and its ball-in-play values move; D3's stay" if "college_d1" in e.RUN_SCALE_OWN
+          else "D1's run scale rises; D3's stays"), 1),
         ("run", "levels.college_d1.lw.bb +0.1", lambda t: t["levels"]["college_d1"]["lw"].__setitem__("bb", t["levels"]["college_d1"]["lw"]["bb"] + 0.1),
          lambda r: r["extras"]["college_d1"]["stakes"][3] > ref["extras"]["college_d1"]["stakes"][3] and r["extras"]["college_d3"] == ref["extras"]["college_d3"],
          "the 3-0 stakes at D1 rise (a walk is worth more); D3 stays", 1),

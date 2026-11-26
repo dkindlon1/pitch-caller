@@ -6,6 +6,7 @@
  * included (ids and clock stamps aside); the new build is run twice first so a difference can't be noise. The new run
  * must really have computed drift (PCPeak loaded, the Notes button drawn, notes evaluated).
  * Usage (from app/, after python3 build.py): node drift_exact_test.js [games=2]   BASE_REF (default 3e4660b)
+ * scripts/test-app.sh runs 4 games (v1.3 Part 10, W = 32: seed 3 first shows a drift note in its 4th game).
  */
 const { chromium } = require("playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), { execFileSync } = require("child_process");

@@ -72,5 +72,5 @@ echo "smoke: passed"
 (cd app && ../$run logging_exact_test node logging_exact_test.js 2)   # Build 1: logging the full mix changes no call (old build vs new, same seeded games, every event field for field)
 (cd app && ../$run opponent_exact_test node opponent_exact_test.js 2)   # Build 2: every new opponent field set = identical calls
 (cd app && ../$run peak_sim node peak_sim.js 200)   # Build 3: findings and drift on simulated seasons (false-alarm targets)
-(cd app && ../$run drift_exact_test node drift_exact_test.js 2)   # Build 3: drift notes change no call (before vs with outcome tracking, every event field for field)
+(cd app && ../$run drift_exact_test node drift_exact_test.js 4)   # Build 3: drift notes change no call (before vs with outcome tracking, every event field for field). v1.3 Part 10: 4 games (was 2): under W = 32 the engine repeats calls less, and seed 3 first shows a drift note in its 4th game (2 or 3 games: 0 notes; seed 29 shows 2 at every length)
 (cd app && ../$run drift_e2e node drift_e2e.js)   # Build 3: the Notes button's badge, plain-words note, undo, reload; no sound, no pop-up
