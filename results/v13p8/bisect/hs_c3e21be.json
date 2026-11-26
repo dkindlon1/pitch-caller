@@ -1,0 +1,58 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core"
+ },
+ "rows": [
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.5455,
+   "gap_to_second": 0.3043,
+   "move_n1": 0.0,
+   "move_n2": 0.0,
+   "move_n3": 0.5455,
+   "move_n6": 0.5455
+  },
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2593,
+   "gap_to_second": 0.0135,
+   "move_n1": 0.0072,
+   "move_n2": 0.0141,
+   "move_n3": 0.0208,
+   "move_n6": 0.0355
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.5455,
+   "gap_to_second": 0.292,
+   "move_n1": 0.0,
+   "move_n2": 0.0,
+   "move_n3": 0.0,
+   "move_n6": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2454,
+   "gap_to_second": 0.0014,
+   "move_n1": 0.0043,
+   "move_n2": 0.0085,
+   "move_n3": 0.0124,
+   "move_n6": 0.023
+  }
+ ],
+ "seconds": 72.5
+}

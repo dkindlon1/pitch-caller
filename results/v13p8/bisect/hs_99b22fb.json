@@ -1,0 +1,58 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core"
+ },
+ "rows": [
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.53,
+   "gap_to_second": 0.11,
+   "move_n1": 0.0098,
+   "move_n2": 0.0221,
+   "move_n3": 0.0321,
+   "move_n6": 0.061
+  },
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.3496,
+   "gap_to_second": 0.0491,
+   "move_n1": 0.0077,
+   "move_n2": 0.0151,
+   "move_n3": 0.0222,
+   "move_n6": 0.0432
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.5264,
+   "gap_to_second": 0.1481,
+   "move_n1": 0.01,
+   "move_n2": 0.0198,
+   "move_n3": 0.0293,
+   "move_n6": 0.0568
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.3649,
+   "gap_to_second": 0.0375,
+   "move_n1": 0.0075,
+   "move_n2": 0.0147,
+   "move_n3": 0.0217,
+   "move_n6": 0.0497
+  }
+ ],
+ "seconds": 44.5
+}

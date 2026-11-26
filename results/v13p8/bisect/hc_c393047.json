@@ -1,0 +1,213 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core"
+ },
+ "hanger_gate": 0.0,
+ "hard_foul": {
+  "tv": 0.0,
+  "limit": 0.01,
+  "ok": true,
+  "top_hard": [
+   "Fastball down-away",
+   0.2526
+  ],
+  "top_plain": [
+   "Fastball down-away",
+   0.2526
+  ]
+ },
+ "hit_hard": {
+  "base_fb_upin": 0,
+  "once_fb_upin": 0,
+  "twice_fb_upin": 0,
+  "once_drop": 0,
+  "once_max_other_move": 0.1144,
+  "tv_once": 0.1406,
+  "once_ok": false,
+  "twice_ok": true,
+  "top_base": [
+   "Changeup middle",
+   0.288
+  ],
+  "top_once": [
+   "Changeup middle",
+   0.3142
+  ],
+  "top_twice": [
+   "Changeup middle",
+   0.279
+  ]
+ },
+ "no_chase_30_31": {
+  "cells": 180,
+  "worst_chase": 0.0,
+  "ok": true,
+  "h13_30_top": [
+   "Fastball middle",
+   0.4987
+  ],
+  "h13_30_chase": 0
+ },
+ "no_scouting": {
+  "h13_28_top": [
+   "Fastball middle",
+   0.1785
+  ],
+  "h13_28_chase": 0,
+  "h13_29_top": [
+   "Curveball middle",
+   0.352
+  ],
+  "h13_29_chase": 0
+ },
+ "robustness": {
+  "2-2": {
+   "no_history_top": "Fastball down-away",
+   "no_history_share": 0.2099,
+   "by_n": [
+    {
+     "n": 0,
+     "share": 0.2099,
+     "move": 0.0,
+     "top": [
+      "Fastball down-away",
+      0.2099
+     ]
+    },
+    {
+     "n": 1,
+     "share": 0.165,
+     "move": 0.0449,
+     "top": [
+      "Changeup middle",
+      0.2691
+     ]
+    },
+    {
+     "n": 2,
+     "share": 0.0637,
+     "move": 0.1462,
+     "top": [
+      "Slider middle",
+      0.3633
+     ]
+    },
+    {
+     "n": 3,
+     "share": 0,
+     "move": 0.2099,
+     "top": [
+      "Slider middle",
+      0.5038
+     ]
+    },
+    {
+     "n": 4,
+     "share": 0,
+     "move": 0.2099,
+     "top": [
+      "Slider middle",
+      0.708
+     ]
+    },
+    {
+     "n": 5,
+     "share": 0,
+     "move": 0.2099,
+     "top": [
+      "Slider middle",
+      0.7956
+     ]
+    },
+    {
+     "n": 6,
+     "share": 0,
+     "move": 0.2099,
+     "top": [
+      "Slider middle",
+      0.8288
+     ]
+    }
+   ],
+   "move_at_3": 0.2099,
+   "max_move": 0.2099,
+   "ok_at_3": false,
+   "ok_all": false
+  },
+  "3-2": {
+   "no_history_top": "Slider middle",
+   "no_history_share": 0.5013,
+   "by_n": [
+    {
+     "n": 0,
+     "share": 0.5013,
+     "move": 0.0,
+     "top": [
+      "Slider middle",
+      0.5013
+     ]
+    },
+    {
+     "n": 1,
+     "share": 0.4051,
+     "move": 0.0962,
+     "top": [
+      "Slider middle",
+      0.4051
+     ]
+    },
+    {
+     "n": 2,
+     "share": 0.3185,
+     "move": 0.1828,
+     "top": [
+      "Slider middle",
+      0.3185
+     ]
+    },
+    {
+     "n": 3,
+     "share": 0.2416,
+     "move": 0.2597,
+     "top": [
+      "Fastball down-middle",
+      0.3327
+     ]
+    },
+    {
+     "n": 4,
+     "share": 0.1749,
+     "move": 0.3264,
+     "top": [
+      "Fastball down-middle",
+      0.3731
+     ]
+    },
+    {
+     "n": 5,
+     "share": 0.1194,
+     "move": 0.3819,
+     "top": [
+      "Fastball down-middle",
+      0.4099
+     ]
+    },
+    {
+     "n": 6,
+     "share": 0.076,
+     "move": 0.4253,
+     "top": [
+      "Fastball down-middle",
+      0.4415
+     ]
+    }
+   ],
+   "move_at_3": 0.2597,
+   "max_move": 0.4253,
+   "ok_at_3": false,
+   "ok_all": false
+  }
+ }
+}

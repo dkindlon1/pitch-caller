@@ -1,0 +1,213 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core"
+ },
+ "hanger_gate": 0.0,
+ "hard_foul": {
+  "tv": 0.0,
+  "limit": 0.01,
+  "ok": true,
+  "top_hard": [
+   "Slider middle",
+   0.2011
+  ],
+  "top_plain": [
+   "Slider middle",
+   0.2011
+  ]
+ },
+ "hit_hard": {
+  "base_fb_upin": 0,
+  "once_fb_upin": 0,
+  "twice_fb_upin": 0,
+  "once_drop": 0,
+  "once_max_other_move": 0.0008,
+  "tv_once": 0.0008,
+  "once_ok": true,
+  "twice_ok": true,
+  "top_base": [
+   "Fastball middle",
+   0.4936
+  ],
+  "top_once": [
+   "Fastball middle",
+   0.4939
+  ],
+  "top_twice": [
+   "Fastball middle",
+   0.502
+  ]
+ },
+ "no_chase_30_31": {
+  "cells": 180,
+  "worst_chase": 0.0,
+  "ok": true,
+  "h13_30_top": [
+   "Fastball middle",
+   0.5132
+  ],
+  "h13_30_chase": 0
+ },
+ "no_scouting": {
+  "h13_28_top": [
+   "Fastball middle",
+   0.313
+  ],
+  "h13_28_chase": 0,
+  "h13_29_top": [
+   "Curveball middle",
+   0.3983
+  ],
+  "h13_29_chase": 0
+ },
+ "robustness": {
+  "2-2": {
+   "no_history_top": "Slider middle",
+   "no_history_share": 0.3127,
+   "by_n": [
+    {
+     "n": 0,
+     "share": 0.3127,
+     "move": 0.0,
+     "top": [
+      "Slider middle",
+      0.3127
+     ]
+    },
+    {
+     "n": 1,
+     "share": 0.2782,
+     "move": 0.0345,
+     "top": [
+      "Slider middle",
+      0.2782
+     ]
+    },
+    {
+     "n": 2,
+     "share": 0.2012,
+     "move": 0.1115,
+     "top": [
+      "Changeup middle",
+      0.2372
+     ]
+    },
+    {
+     "n": 3,
+     "share": 0.1231,
+     "move": 0.1896,
+     "top": [
+      "Fastball down-away",
+      0.2342
+     ]
+    },
+    {
+     "n": 4,
+     "share": 0.0681,
+     "move": 0.2446,
+     "top": [
+      "Fastball down-away",
+      0.2616
+     ]
+    },
+    {
+     "n": 5,
+     "share": 0.0077,
+     "move": 0.3049,
+     "top": [
+      "Fastball down-away",
+      0.2887
+     ]
+    },
+    {
+     "n": 6,
+     "share": 0,
+     "move": 0.3127,
+     "top": [
+      "Fastball down-away",
+      0.3077
+     ]
+    }
+   ],
+   "move_at_3": 0.1896,
+   "max_move": 0.3127,
+   "ok_at_3": false,
+   "ok_all": false
+  },
+  "3-2": {
+   "no_history_top": "Slider middle",
+   "no_history_share": 0.4831,
+   "by_n": [
+    {
+     "n": 0,
+     "share": 0.4831,
+     "move": 0.0,
+     "top": [
+      "Slider middle",
+      0.4831
+     ]
+    },
+    {
+     "n": 1,
+     "share": 0.3806,
+     "move": 0.1025,
+     "top": [
+      "Fastball middle",
+      0.4876
+     ]
+    },
+    {
+     "n": 2,
+     "share": 0.2858,
+     "move": 0.1973,
+     "top": [
+      "Fastball middle",
+      0.585
+     ]
+    },
+    {
+     "n": 3,
+     "share": 0.1995,
+     "move": 0.2836,
+     "top": [
+      "Fastball middle",
+      0.6801
+     ]
+    },
+    {
+     "n": 4,
+     "share": 0.1236,
+     "move": 0.3595,
+     "top": [
+      "Fastball middle",
+      0.7718
+     ]
+    },
+    {
+     "n": 5,
+     "share": 0.0696,
+     "move": 0.4135,
+     "top": [
+      "Fastball middle",
+      0.87
+     ]
+    },
+    {
+     "n": 6,
+     "share": 0,
+     "move": 0.4831,
+     "top": [
+      "Fastball middle",
+      0.9585
+     ]
+    }
+   ],
+   "move_at_3": 0.2836,
+   "max_move": 0.4831,
+   "ok_at_3": false,
+   "ok_all": false
+  }
+ }
+}

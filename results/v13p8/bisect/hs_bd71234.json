@@ -1,0 +1,59 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core",
+  "mp": "v13"
+ },
+ "rows": [
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.5455,
+   "gap_to_second": 0.3004,
+   "move_n1": 0.0,
+   "move_n2": 0.2543,
+   "move_n3": 0.2636,
+   "move_n6": 0.2921
+  },
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2759,
+   "gap_to_second": 0.0528,
+   "move_n1": 0.0072,
+   "move_n2": 0.0141,
+   "move_n3": 0.0208,
+   "move_n6": 0.0355
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.5455,
+   "gap_to_second": 0.2882,
+   "move_n1": 0.0,
+   "move_n2": 0.0,
+   "move_n3": 0.0,
+   "move_n6": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.335,
+   "gap_to_second": 0.0655,
+   "move_n1": 0.0317,
+   "move_n2": 0.0622,
+   "move_n3": 0.0901,
+   "move_n6": 0.1213
+  }
+ ],
+ "seconds": 42.0
+}

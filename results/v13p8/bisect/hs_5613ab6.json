@@ -1,0 +1,58 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core"
+ },
+ "rows": [
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Curve middle",
+   "top_share": 0.6443,
+   "gap_to_second": 0.2885,
+   "move_n1": 0.0055,
+   "move_n2": 0.0109,
+   "move_n3": 0.0161,
+   "move_n6": 0.0309
+  },
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.5273,
+   "gap_to_second": 0.1061,
+   "move_n1": 0.0064,
+   "move_n2": 0.0127,
+   "move_n3": 0.0187,
+   "move_n6": 0.0361
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Curveball middle",
+   "top_share": 0.5987,
+   "gap_to_second": 0.1975,
+   "move_n1": 0.0067,
+   "move_n2": 0.0132,
+   "move_n3": 0.0196,
+   "move_n6": 0.0376
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Curveball middle",
+   "top_share": 0.5117,
+   "gap_to_second": 0.0857,
+   "move_n1": 0.0078,
+   "move_n2": 0.0152,
+   "move_n3": 0.0223,
+   "move_n6": 0.0395
+  }
+ ],
+ "seconds": 53.6
+}
