@@ -1,0 +1,52 @@
+cells changed (any amount): 66 | same side: 0 | robustness arsenals: 0
+changed staff: ['staff0', 'staff2', 'staff4']
+matches the Part 10 scratch set (>=0.0005): True 60
+robustness, data staff 2-2 / 3-2 (old max -> new max, top):
+  hs|staff0|2-2|opp            Slider down-in        31.0   0.6 -> Slider middle         28.8   1.5
+  hs|staff0|2-2|same           Slider middle         33.0   1.6 -> Slider middle         33.0   1.6
+  hs|staff0|3-2|opp            Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff0|3-2|same           Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff1|2-2|opp            Curveball middle      46.4   2.0 -> Curveball middle      46.4   2.0
+  hs|staff1|2-2|same           Curveball middle      43.7   1.0 -> Curveball middle      43.7   1.0
+  hs|staff1|3-2|opp            Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff1|3-2|same           Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff2|2-2|opp            Slider down-in        35.8   0.6 -> Slider middle         29.0   0.8
+  hs|staff2|2-2|same           Slider middle         35.7   1.6 -> Slider middle         35.7   1.6
+  hs|staff2|3-2|opp            Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff2|3-2|same           Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff3|2-2|opp            Curveball middle      45.2   5.0 -> Curveball middle      45.2   5.0
+  hs|staff3|2-2|same           Curveball middle      45.2   4.9 -> Curveball middle      45.2   4.9
+  hs|staff3|3-2|opp            Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff3|3-2|same           Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff4|2-2|opp            Slider down-in        37.2   0.6 -> Slider middle         28.1   0.8
+  hs|staff4|2-2|same           Slider middle         34.3   1.7 -> Slider middle         34.3   1.7
+  hs|staff4|3-2|opp            Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff4|3-2|same           Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff5|2-2|opp            Curveball middle      47.4   4.7 -> Curveball middle      47.4   4.7
+  hs|staff5|2-2|same           Curveball middle      43.9   2.6 -> Curveball middle      43.9   2.6
+  hs|staff5|3-2|opp            Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  hs|staff5|3-2|same           Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff0|2-2|opp        Slider down-in        31.0   0.6 -> Slider middle         28.8   1.5
+  travel|staff0|2-2|same       Slider middle         33.0   1.6 -> Slider middle         33.0   1.6
+  travel|staff0|3-2|opp        Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff0|3-2|same       Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff1|2-2|opp        Curveball middle      46.4   2.0 -> Curveball middle      46.4   2.0
+  travel|staff1|2-2|same       Curveball middle      43.7   1.0 -> Curveball middle      43.7   1.0
+  travel|staff1|3-2|opp        Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff1|3-2|same       Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff2|2-2|opp        Slider down-in        35.8   0.6 -> Slider middle         29.0   0.8
+  travel|staff2|2-2|same       Slider middle         35.7   1.6 -> Slider middle         35.7   1.6
+  travel|staff2|3-2|opp        Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff2|3-2|same       Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff3|2-2|opp        Curveball middle      45.2   5.0 -> Curveball middle      45.2   5.0
+  travel|staff3|2-2|same       Curveball middle      45.2   4.9 -> Curveball middle      45.2   4.9
+  travel|staff3|3-2|opp        Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff3|3-2|same       Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff4|2-2|opp        Slider down-in        37.2   0.6 -> Slider middle         28.1   0.8
+  travel|staff4|2-2|same       Slider middle         34.3   1.7 -> Slider middle         34.3   1.7
+  travel|staff4|3-2|opp        Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff4|3-2|same       Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff5|2-2|opp        Curveball middle      47.4   4.7 -> Curveball middle      47.4   4.7
+  travel|staff5|2-2|same       Curveball middle      43.9   2.6 -> Curveball middle      43.9   2.6
+  travel|staff5|3-2|opp        Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0
+  travel|staff5|3-2|same       Fastball middle       54.5   0.0 -> Fastball middle       54.5   0.0

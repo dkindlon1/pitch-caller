@@ -1619,3 +1619,164 @@ Power preset, truth 1.5, mean estimate over 40 seasons (SE of the mean) (`result
 - worlds_test's power bias is the estimator: it doesn't normalize a clamped row. Normalized: 1.54 at 400 PAs, 1.52 at 6400.
 - Applied: the golden re-pin (5d78ffe), rulings 34-40, two probe re-points and the drift-note games (test-only). Fuzz is identical,
   test-sql 15/15, test-app 51/67 (was 50) with no new failure. No engine fix applied.
+
+
+# Part 11 (Nov 26): the E-7 fix (ruling 41), the stage2 bar and the worlds_test estimator (rulings 42-44)
+
+Carries out `docs/PROMPT_hitter_v13_e7_fix_2026-11-26.md` on `feat/hitter-v13-final` (worktree `C:/dev/pc-final`), on the desktop
+(22 workers, 48 GB guard, fixed seeds). Step 6 stays locked (not run); 2026 not read. **The proposed golden re-pin is NOT applied.**
+Every grade below is proposed; Drew grades the rows. Data and logs: `C:/dev/pitchiq-data-final/p11/` (snapshots `engine` = cdaf0eb,
+`engine_old` = b74abdb); small results: `results/v13p11/`.
+
+## Commits
+| commit | what |
+|---|---|
+| cdaf0eb | **the fix (ruling 41)**: `coach_credit` / `coachCredit`, plus_opp x RHO_L; engine.py, app/engine.js, web/lib/engine.js (= app), app/dist rebuilt (4052 KB) |
+| d889134 | **tests (rulings 42, 43)** and rulings 41-44 recorded in `docs/DECISIONS_refit_v13.md`; the prompt |
+| (this report) | Part 11, `golden/changed_calls_e7.py`, `readthrough/e7_cells_v13.py`, `results/v13p11/` |
+
+## Task 1: the fix, and parity
+- `COACH_RULE["plus_opp"]` (J7: opposite-side hitter, grade-4+ slider down-in or grade-4+ changeup down-away / chase) is now
+  multiplied by `RHO_L` (0.6 at HS / travel, 1 elsewhere), like ride_up_2k, the path rule and the other MLB-sized terms. Same
+  operation, same place, in both engines.
+- `golden/fast.py 40`: **PASS, 0 mismatches** in all six variants (plain, FAST_LEANS, FAST_TAGS, FAST_LEVEL = college_d2 / hs / travel;
+  `p11/parity/`). `tests_v13_kgapfix.py` (floor checks, Python = JS on the floored and mashed calls): **ALL PASS**.
+
+**E-7 before / after** (HS 1-2, opposite side, data staff q5; `edge_rows.py`):
+
+| | menu | fastball share |
+|---|---|---|
+| before (b74abdb) | **Slider down-in 65.6**, FB chase 11.4, FB down-away 8.2, FB up-away 8.2, FB up-in 5.5, CH middle 0.6, CH down-away 0.5 | 33.3 (floor) |
+| after (cdaf0eb) | **Slider down-in 19.4**, SL middle 13.8, SL down-away 13.8, FB chase 13.2, SL down-middle 11.9, FB down-away 7.4, FB up-away 6.9, FB up-in 4.6, CH middle 2.1, CH down-away 2.1, CH down-middle 1.8, SL up-away 1.8, FB down-middle 1.2 | 33.3 (floor) |
+
+It matches the Part 10 scratch run (`e7_diag_rho.json`).
+
+## Task 2: blast radius and robustness
+**Robustness grid** (`robust_diag_v13.py --mode grid`, 5 levels x 10 arsenals x 2-2 / 3-2 = 100 cells, n = 1..6):
+- **All 100 cells are identical** to before. HS / college vs Part 9's files; MLB vs a run in the b74abdb snapshot.
+- Cells over 10 points: **11**, the same 11 known cells (D1 4, D2 3, D3 1, MLB 3). HS 2-2 / 3-2: every cell under 10.
+- ride126 2-2 is unchanged (2.9).
+- The grid plays the scenarios' default, a same-side hitter, so it cannot see J7. I added the opposite side (next item).
+
+**Every cell, both sides** (`readthrough/e7_cells_v13.py` in both snapshots; `results/v13p11/cells_summary.txt`). Cells: HS / travel x
+(10 robustness arsenals + 6 HS data-staff pitchers) x 12 counts x same / opposite side = 768.
+- **66 cells changed** (33 HS, 33 travel):
+  - **0 on the same side; 0 on the robustness arsenals.**
+  - All are opposite side, on the three data-staff pitchers with a grade-4 slider (q1, q5, q9).
+  - At 0.05 points or more: exactly the **60** cells of the Part 10 scratch set (30 + 30). The other 6 move by less than 0.05 points
+    (same pitchers, opposite side).
+- **The repeat check on the opposite side** (data staff, 2-2 and 3-2, n = 1..6), worst move before -> after:
+  - q1 2-2: 0.6 -> 1.5 (top SL down-in 31.0 -> SL middle 28.8);
+  - q5 2-2: 0.6 -> 0.8 (SL down-in 35.8 -> SL middle 29.0);
+  - q9 2-2: 0.6 -> 0.8 (SL down-in 37.2 -> SL middle 28.1);
+  - every 3-2 cell 0.0 -> 0.0;
+  - every other data-staff cell is identical.
+- **No cell gets worse by more than 2 points** (largest increase +0.9, q1 2-2), and none is over 10.
+
+**Floor:** the 240-cell floor check (robustness arsenals, HS / travel, 12 counts) is **identical to Part 9**: 0 cells below, 156 at
+the floor. On all 288 data-staff cells (both sides) the fastball share is at or above the floor (minimum gap 0.0).
+
+**Hard checks** (`hard_checks_v13.py`): identical to Part 9, so none of the 35 H13 rows moves.
+
+## Task 3: HS sims (900 engine-called + 900 reference staff, same seeds as Part 9; `results/v13p11/edge_summary_e7.md`, `fix_pair_hs.md`)
+- The 900 reference-staff games were rerun on the fix. **Every event, count, run and outcome is identical to Part 9.** The only fields
+  that differ are the per-count expected-rate values (`counts.*.P / Ps`, read from the engine's table), at the 1e-5 level (881 games).
+
+| HS, engine − reference staff (paired, 900 games) | Part 9 | Part 11 (E-7 fix) |
+|---|---|---|
+| K | +6.3 ± 0.3 | **+6.1 ± 0.3** |
+| BB | +1.2 ± 0.2 | +1.1 ± 0.2 |
+| HBP | +0.4 ± 0.1 | +0.1 ± 0.1 |
+| runs / game | −1.29 ± 0.21 | **−1.75 ± 0.20** (pass: engine not higher) |
+| K − target (+1.5 flag) | +4.7 | +4.6 |
+| zone % gap vs command target | −1.3 | −1.3 |
+
+- Engine-called, fix − Part 9, same seeds: **runs −0.46 ± 0.18**, K −0.1 ± 0.3, BB −0.1 ± 0.2, HBP −0.4 ± 0.1.
+  - The engine gives up fewer runs, and fewer batters are hit: fewer back-foot sliders to opposite-side hitters.
+- **No stop line crossed.** The engine is not higher than the reference staff, and no K or BB gap moved by more than 1 point.
+
+## Task 4: changed calls and the proposed re-pin (`results/v13p11/CHANGED_CALLS_E7.md`, `golden/changed_calls_e7.py`)
+**Proposed re-pin (NOT applied): `C:/dev/pitchiq-data-final/p11/golden_v13coreE7.json`.**
+- sha256 `99c37b63b50515e5c869714993762977510f8d19caf15b3031abfe6ca6c575d6`.
+- Made by `golden_v11.py make --tag v13coreE7` in the cdaf0eb snapshot; `node golden/golden_v11.js v13coreE7` **PASS** (the JS engine
+  reproduces it).
+- It differs from the current `golden/golden_v13core.json` in **9 cases**, all HS / travel. **0 cases off HS / travel** change in any
+  output.
+
+**Goldens:**
+- 8 call menus move by 0.05 points or more (plus 1 by less). **All 8 are opposite side and J7-eligible; 0 are on the same side.**
+- **Picks change in 6**, the top-share call in **1** (case 78).
+- Outside the call, the PA table (largest 0.25) and the walk estimate (up to 0.05) move in those 8. The credit is a cost term inside
+  the table's per-count policies.
+
+| case | level, count | what moved |
+|---|---|---|
+| #68 | travel 3-2 | pick SL down-in -> SL middle; SL down-in 58.0 -> 44.6, SL middle 25.6 -> 32.4 |
+| #78 **top** | hs 0-0 | SL down-in 21.8 (top) -> 13.0; top SL middle 24.0; pick SL down-middle -> SL down-away |
+| #106 | hs 1-2 | CH down-away 31.0 -> 25.4, CH chase 19.8 -> 15.1; pick CH chase -> CB down-away |
+| #166 | hs 0-2 | CH down-away 61.6 -> 63.1 (no pick change) |
+| #206 | travel 2-2 | **SL down-in 80.0 -> 23.0**; spreads over SL down-away 18.2, SL middle 15.8, SL down-middle 14.2, CH down-away 11.0; pick -> SL middle |
+| #298 | hs 1-0 | CH down-away 48.4 -> 29.7; pick FB down-away -> FB down-middle |
+| #300 | hs 1-2 | CH down-away 23.8 -> 18.9, CB down-away 16.6 -> 21.7; pick CH down-away -> CB down-away |
+| #464 | travel 2-2 | CH down-away 23.7 -> 21.9 (no pick change) |
+
+**What else moved:**
+- **The 6 HS rows Drew grades** (#92, #154, #476, #410, #246, #460): **none moved.**
+- **HG-1 to HG-4:** none moved (pass 4/5, as before).
+- **Read-through, v12 suite:** **0 of 98 rows moved** (85/98, as before). E8 is a different HS 1-2 row and does not move.
+- **E rows** (80 two-strike rows, every level): **3 moved, all HS, starter q5, opposite side**:
+  - **E-7 (1-2)**: 65.6 -> 19.4, as above;
+  - **0-2**: SL down-in 21.2 -> 10.9; FB chase stays top (24.7 -> 25.0);
+  - **2-2**: top SL down-in 35.8 -> SL middle 29.0 (SL down-in 17.0).
+- Every college / MLB E row, every reliever row and every same-side row is unchanged. The E rows already graded acceptable (ruling
+  35) are unchanged except the HS starter 0-2 / 2-2 opposite-side rows above.
+
+## Task 5: tests (d889134)
+- **stage2_test**: the noise-chasing learner bar is now 70% of seasons (ruling 42), with a comment citing the 200-season result
+  (70.5% / 73.0%).
+  - **It still fails on this tip: 27 of 40 = 67.5%, and 70% of 40 needs 28.** The ruling was applied as written.
+  - The 200-season rate (73.0%) clears 70%; the test's fixed 40 seasons fall one season short.
+  - For Drew: lower the bar to 65% (26 / 40), or run more seasons (the 200 fresh seasons pass at 70%). Not changed here.
+- **stage2_test, second check:** the real-learner check (2 of 40, limit 1) still fails. It is `stage2 D5`, closed by ruling 38 and
+  documented as history (ruling 44).
+- **worlds_test**: the power estimator divides each `powerRow` by its sum (ruling 43).
+  - **The estimator is not shared with production code.** It is defined only inside `app/worlds_test.js`.
+  - `powerRow` itself lives in `app/worlds.js`, the test world used by the JS tests (its Python twin `simulate.power_row` is
+    parity-checked by `tests_v13_sim.py`). Neither file is part of the app build, and neither changed.
+  - Section 14 now passes: power preset **1.54 at 400 PAs** (1.43 / 1.41 at 60 / 150), free_swinger 0.54, contact −0.49, average
+    hitter −0.13 (sd 0.37). **worlds_test passes in full** (36 / 36).
+
+## Task 6: fuzz and suites (logs `p11/suites/`; keep-going copies, run alone after the sims)
+- **Fuzz 3000** (`results/v13p11/fuzz_e7.txt`, 866 s): **identical, line for line, to Part 10.**
+- **test-sql: 15/15.**
+- **test-app: 51 of the 67 suites with an exit line pass**, the same count as Part 10. Every failing line is as in Part 10 except:
+
+| suite | Part 10 -> Part 11 | why |
+|---|---|---|
+| **worlds_test** | 1 failed -> **pass** | task 5 (ruling 43) |
+| **golden_v13core** | pass -> **FAIL, 2360 differences** | the fix moves 9 HS / travel cases; the proposed re-pin `p11/golden_v13coreE7.json` (JS reproduces it) is not applied, waiting on Drew's grading |
+| stage2_test | 2 failed -> 2 failed | the bar is now 70%, but 27 / 40 is under it (task 5); D5 as before |
+| every other suite | unchanged counts and lines | history (ruling 44) |
+
+**No new failure** apart from golden_v13core, which the fix changes on purpose.
+
+## What still stands between this and the 2026 go
+1. **Drew grades the E-7 changed calls**: the 8 golden cases (6 picks, 1 top call: #78), E-7 and the HS starter 0-2 / 2-2
+   opposite-side E rows.
+2. Then **apply the re-pin** `p11/golden_v13coreE7.json` (its own commit, old / new shas). golden_v13core fails until then.
+3. **The stage2 bar**: 70% leaves the 40-season check at 27 / 40, one season short. Drew picks 65%, more seasons, or leaves it
+   documented.
+4. Everything else that fails is history, documented and not re-pinned (ruling 44).
+5. Then the go itself: Step 6 (`--drew-go`), still locked and not run; 2026 not read.
+
+## Summary (Part 11)
+- Ruling 41 is applied in both engines (cdaf0eb; parity 0 mismatches in six variants). E-7 opposite side: Slider down-in 65.6% ->
+  19.4%, with the slider spread over four spots and the fastball floor unchanged.
+- **Blast radius as predicted:** 60 cells (+6 under 0.05 points), all opposite side, on the three grade-4-slider data-staff pitchers.
+  The robustness grid is identical in all 100 cells. No cell is worse by more than 2 points, and none is over 10. The floor holds.
+- HS sims: no stop line crossed. The engine gives up 0.46 fewer runs per game than Part 9 (edge vs the reference staff −1.29 ->
+  −1.75); K, BB and HBP gaps move by 0.4 points or less.
+- Changed calls: 8 golden cases (6 picks, 1 top call), 3 HS E rows. 0 of Drew's 6 HS rows, HG rows or read-through rows. Proposed
+  re-pin `p11/golden_v13coreE7.json` is ready (JS reproduces it), not applied.
+- Tests: worlds_test passes (power 1.54 at 400 PAs). The stage2 bar is now 70%, but its 40 seasons read 27 (one short). Fuzz is
+  identical, test-sql 15/15, test-app 51/67 (golden_v13core fails until the re-pin; worlds_test now passes).
