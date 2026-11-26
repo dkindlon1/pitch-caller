@@ -13,6 +13,22 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 26, after Part 10): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_e7_fix_2026-11-26.md` (after Part 10 of `docs/BUILD_v13_fulldata_REPORT.md`, tip b74abdb).
+Results in report Part 11.
+
+41. **Apply the E-7 fix:** the J7 `plus_opp` coaching credit is scaled by RHO_L (0.6) at HS and travel, as the other
+    MLB-sized coaching terms are. College, MLB and same-side cells stay untouched (RHO_L is 1 there; J7 is opposite-side only).
+42. **Noise-chasing learner (stage2 D5 first check): a known limit.** The test bar goes from 80% to 70% (test change only, no
+    engine change). Evidence: on 200 fresh seasons (seeds 600-799) the safety switch caught the noise-chasing learner in
+    **70.5%** of seasons on 5dccec9 (the recalibrated core's college tables in the app) and **73.0%** on the v1.3 tip, with
+    the real learner switched off in 2.5% (5 of 200) on both. The 40 test seasons read 32 or 27 depending on which seasons the
+    tables roll (report Part 10 task 2).
+43. **worlds_test power estimator, test-only fix:** each `powerRow` is divided by its sum in the estimator, as the generator
+    draws it (expected about 1.54 at 400 PAs and 1.52 at 6400 vs truth 1.5).
+44. **The other failing suites stay documented as history; no re-pins for them.**
+
 ## Drew's rulings (Nov 26, after Part 9): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_pregate_diagnose_2026-11-26.md` (supersedes `PROMPT_hitter_v13_e7_check_2026-11-26.md`;

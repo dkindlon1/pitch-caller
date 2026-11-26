@@ -39,7 +39,10 @@ console.log("D5. The safety switch trips on a learner that chases noise");
   }
   const nC = caught.filter((x) => x.length).length, nF = falseOff.filter((x) => x.length).length;
   console.log(`     right grades, ${SEASONS} seasons: noise-chasing learner switched off in ${nC} | the real learner in ${nF}`);
-  check(nC >= 0.8 * SEASONS, `the noise-chasing learner is switched off in at least 80% of seasons (${nC} of ${SEASONS})`);
+  // v1.3 ruling 42 (Drew, Nov 26): bar 80% -> 70%, a known limit (DECISIONS_refit_v13.md). On 200 fresh seasons (seeds
+  // 600-799) the switch caught 70.5% on 5dccec9 and 73.0% on the v1.3 tip (report Part 10 task 2); the 40 seasons here read
+  // 32 or 27 depending on which seasons the tables roll.
+  check(nC >= 0.7 * SEASONS, `the noise-chasing learner is switched off in at least 70% of seasons (${nC} of ${SEASONS})`);
   check(nF <= 1, `the real learner on the same seasons is switched off at most once (${nF} of ${SEASONS})`);
 }
 

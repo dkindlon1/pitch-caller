@@ -271,7 +271,10 @@ console.log("14. Hitter world (v1.3 Part 5): hidden traits recovered from realis
       if (pa.bip) bips.push(pa.bip);
     }
     const OT = require("./engine_data.json").V08.OUT_TABLE.college_d3;
-    const power = numFit((th) => { let s = 0; for (const b of bips) { let p = 0; for (const t of ["GB", "LD", "FB", "PU"]) p += b.mix[t] * HW.powerRow(OT[b.contact][t], th)[b.ev]; s += Math.log(Math.max(p, 1e-300)); } return s; });
+    // v1.3 ruling 43: each row divided by its sum, as the generator draws it (pick normalizes). powerRow clamps the outs at 0,
+    // so a row can sum above 1 (hard line drives on the refit table at power 1.5: 1.051); unnormalized, the likelihood
+    // over-credited high power (400 PAs 3.53 vs 1.5; report Part 10 task 4).
+    const power = numFit((th) => { let s = 0; for (const b of bips) { let p = 0; for (const t of ["GB", "LD", "FB", "PU"]) { const r = HW.powerRow(OT[b.contact][t], th); let z = 0; for (const v of r) z += v; p += b.mix[t] * r[b.ev] / z; } s += Math.log(Math.max(p, 1e-300)); } return s; });
     return { early: logitFit(early), two_strike_swing: logitFit(twoSw), two_strike_foul: logitFit(twoFo), contact: logitFit(con), power };
   }
   const TR = ["early", "two_strike_swing", "two_strike_foul", "contact", "power"], cover = [0, 0], need = {}, res = {};
