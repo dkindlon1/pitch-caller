@@ -1,0 +1,20 @@
+seed 3, 4 games
+  ok   no page errors
+  ok   the new build ran the drift check (baselines for 2 pitcher(s), Notes button drawn); the old build has none
+  ok   drift notes really showed during the compared games (up to 1 at once on the Notes badge, the drift check run after every pitch)
+  ok   new vs new (deterministic): same number of logged events (504 vs 504)
+  ok   new vs new (deterministic): every event identical field for field, the engine's full mix included
+  FAIL before vs with outcome tracking: same number of logged events (489 vs 504)
+    first difference at event 0: mix, pred, prob, quad, sit, styledMix, v08
+  FAIL before vs with outcome tracking: every event identical field for field, the engine's full mix included
+seed 29, 4 games
+  ok   no page errors
+  ok   the new build ran the drift check (baselines for 2 pitcher(s), Notes button drawn); the old build has none
+  ok   drift notes really showed during the compared games (up to 2 at once on the Notes badge, the drift check run after every pitch)
+  ok   new vs new (deterministic): same number of logged events (468 vs 468)
+  ok   new vs new (deterministic): every event identical field for field, the engine's full mix included
+  FAIL before vs with outcome tracking: same number of logged events (500 vs 468)
+    first difference at event 0: mix, pred, prob, sit, styledMix, v08
+  FAIL before vs with outcome tracking: every event identical field for field, the engine's full mix included
+981 pitches compared; 10/14 checks passed
+4 drift exact-match check(s) FAILED

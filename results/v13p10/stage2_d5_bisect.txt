@@ -1,0 +1,17 @@
+629c553            32 /40 caught, 0 false off | ....CCCCCCCCC.CCCCC.CCCCC.CCCCCCC.CCCCCC | season sigs a47a c914 e114
+0535806            32 /40 caught, 0 false off | ....CCCCCCCCC.CCCCC.CCCCC.CCCCCCC.CCCCCC | season sigs a47a c914 e114
+5dccec9            32 /40 caught, 0 false off | ....CCCCCCCCC.CCCCC.CCCCC.CCCCCCC.CCCCCC | season sigs a47a c914 e114
+24d4f66            28 /40 caught, 2 false off | C.C.CCCCC.C.CCCCCC.C.CCC.CC.CCCCCC..CC.. | season sigs 63d0 782c cb61
+c393047            32 /40 caught, 2 false off | CCC.CCCCCCCCCCCCC.CCCCC..CC.CCCC..CCCC.C | season sigs cb3c 7225 28b8
+c3e21be            28 /40 caught, 4 false off | CCC.CCCCCCCCCCCCC.CCCC..CCC....C..CCC..C | season sigs 555f 8b76 3700
+e00cfe5            28 /40 caught, 4 false off | CCC.CCCCCCCCCCCCC.CCCC..CCC....C..CCC..C | season sigs 555f 8b76 3700
+938fc4e            28 /40 caught, 4 false off | CCC.CCCCCCCCCCCCC.CCCC..CCC....C..CCC..C | season sigs 555f 8b76 3700
+bd71234            28 /40 caught, 4 false off | CCC.CCCCCCCCCCCCC.CCCC..CCC....C..CCC..C | season sigs ba40 6481 db13
+2adf88e            28 /40 caught, 4 false off | CCC.CCCCCCCCCCCCC.CCCC..CCC....C..CCC..C | season sigs ba40 6481 db13
+510e617            27 /40 caught, 2 false off | C.C.CCCCCCCCCCCCC..CCCCC.CC....C.C..CC.C | season sigs 98b5 fc97 3939
+7b72080            27 /40 caught, 2 false off | C.C.CCCCCCCCCCCCC..CCCCC.CC....C.C..CC.C | season sigs 98b5 fc97 3939
+598c96a            27 /40 caught, 2 false off | CCCC.CCCCCC.CCCCCCCC.C...CC....CCCCC...C | season sigs 04e2 f1f7 8401
+eec6ce7            27 /40 caught, 2 false off | CCCC.CCCCCC.CCCCCCCC.C...CC....CCCCC...C | season sigs 04e2 f1f7 8401
+fae37d2            27 /40 caught, 2 false off | CCCC.CCCCCC.CCCCCCCC.C...CC....CCCCC...C | season sigs 04e2 f1f7 8401
+swap_code5_data24  28 /40 caught, 2 false off | C.C.CCCCC.C.CCCCCC.C.CCC.CC.CCCCCC..CC.. | season sigs 63d0 782c cb61
+swap_24_nofloor    28 /40 caught, 2 false off | C.C.CCCCC.C.CCCCCC.C.CCC.CC.CCCCCC..CC.. | season sigs 63d0 782c cb61

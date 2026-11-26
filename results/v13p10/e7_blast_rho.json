@@ -1,0 +1,5513 @@
+{
+ "summary": {
+  "variant": "rho",
+  "cells": 768,
+  "changed": 60,
+  "changed_same_side": 0,
+  "top_changed": 22,
+  "cells_top_over_60_before": 96,
+  "cells_top_over_60_after": 92
+ },
+ "changed": {
+  "hs|staff0|0|0|False": {
+   "max_move": 0.1004,
+   "top_before": [
+    "Slider down-in",
+    0.1891
+   ],
+   "top_after": [
+    "Fastball up-in",
+    0.1175
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.1891
+    ],
+    [
+     "Fastball middle",
+     0.1447
+    ],
+    [
+     "Fastball down-away",
+     0.1301
+    ],
+    [
+     "Fastball down-middle",
+     0.1296
+    ],
+    [
+     "Slider middle",
+     0.1171
+    ],
+    [
+     "Slider down-middle",
+     0.0861
+    ],
+    [
+     "Fastball up-away",
+     0.073
+    ],
+    [
+     "Changeup middle",
+     0.0365
+    ],
+    [
+     "Changeup down-away",
+     0.032
+    ],
+    [
+     "Fastball up-in",
+     0.0315
+    ],
+    [
+     "Fastball down-in",
+     0.0269
+    ],
+    [
+     "Changeup down-middle",
+     0.0035
+    ]
+   ],
+   "after": [
+    [
+     "Fastball up-in",
+     0.1175
+    ],
+    [
+     "Slider middle",
+     0.1036
+    ],
+    [
+     "Fastball middle",
+     0.1034
+    ],
+    [
+     "Fastball down-middle",
+     0.0919
+    ],
+    [
+     "Fastball down-away",
+     0.0913
+    ],
+    [
+     "Slider down-in",
+     0.0887
+    ],
+    [
+     "Slider down-middle",
+     0.0768
+    ],
+    [
+     "Fastball up-away",
+     0.0749
+    ],
+    [
+     "Changeup middle",
+     0.0587
+    ],
+    [
+     "Fastball down-in",
+     0.0568
+    ],
+    [
+     "Slider up-away",
+     0.0537
+    ],
+    [
+     "Changeup down-away",
+     0.0516
+    ],
+    [
+     "Slider down-away",
+     0.0186
+    ],
+    [
+     "Changeup down-middle",
+     0.0127
+    ]
+   ]
+  },
+  "hs|staff0|0|1|False": {
+   "max_move": 0.1021,
+   "top_before": [
+    "Fastball down-away",
+    0.1707
+   ],
+   "top_after": [
+    "Fastball up-away",
+    0.0933
+   ],
+   "before": [
+    [
+     "Fastball down-away",
+     0.1707
+    ],
+    [
+     "Fastball down-middle",
+     0.154
+    ],
+    [
+     "Slider down-in",
+     0.1482
+    ],
+    [
+     "Slider middle",
+     0.0985
+    ],
+    [
+     "Slider down-away",
+     0.0976
+    ],
+    [
+     "Slider down-middle",
+     0.0949
+    ],
+    [
+     "Changeup down-away",
+     0.0579
+    ],
+    [
+     "Changeup middle",
+     0.0535
+    ],
+    [
+     "Changeup down-middle",
+     0.0533
+    ],
+    [
+     "Fastball up-away",
+     0.0135
+    ],
+    [
+     "Fastball middle",
+     0.0134
+    ],
+    [
+     "Fastball up-in",
+     0.0121
+    ],
+    [
+     "Slider up-away",
+     0.0115
+    ],
+    [
+     "Fastball down-in",
+     0.0113
+    ],
+    [
+     "Fastball chase",
+     0.0097
+    ]
+   ],
+   "after": [
+    [
+     "Fastball up-away",
+     0.0933
+    ],
+    [
+     "Slider down-in",
+     0.0867
+    ],
+    [
+     "Slider middle",
+     0.0861
+    ],
+    [
+     "Slider down-away",
+     0.0835
+    ],
+    [
+     "Slider down-middle",
+     0.0821
+    ],
+    [
+     "Changeup down-away",
+     0.0777
+    ],
+    [
+     "Changeup middle",
+     0.0726
+    ],
+    [
+     "Changeup down-middle",
+     0.0719
+    ],
+    [
+     "Fastball down-away",
+     0.0686
+    ],
+    [
+     "Fastball down-middle",
+     0.0628
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Slider up-away",
+     0.0549
+    ],
+    [
+     "Fastball down-in",
+     0.0506
+    ],
+    [
+     "Fastball middle",
+     0.0401
+    ],
+    [
+     "Fastball chase",
+     0.0144
+    ]
+   ]
+  },
+  "hs|staff0|0|2|False": {
+   "max_move": 0.1089,
+   "top_before": [
+    "Fastball chase",
+    0.2403
+   ],
+   "top_after": [
+    "Fastball chase",
+    0.2512
+   ],
+   "before": [
+    [
+     "Fastball chase",
+     0.2403
+    ],
+    [
+     "Slider down-in",
+     0.2171
+    ],
+    [
+     "Slider down-away",
+     0.1306
+    ],
+    [
+     "Slider chase",
+     0.1003
+    ],
+    [
+     "Slider down-middle",
+     0.0741
+    ],
+    [
+     "Changeup down-away",
+     0.0644
+    ],
+    [
+     "Fastball up-away",
+     0.062
+    ],
+    [
+     "Fastball down-away",
+     0.0613
+    ],
+    [
+     "Slider middle",
+     0.0499
+    ]
+   ],
+   "after": [
+    [
+     "Fastball chase",
+     0.2512
+    ],
+    [
+     "Slider down-away",
+     0.1171
+    ],
+    [
+     "Slider down-in",
+     0.1082
+    ],
+    [
+     "Changeup down-away",
+     0.0929
+    ],
+    [
+     "Slider down-middle",
+     0.0859
+    ],
+    [
+     "Slider chase",
+     0.0841
+    ],
+    [
+     "Slider middle",
+     0.0825
+    ],
+    [
+     "Slider up-away",
+     0.0656
+    ],
+    [
+     "Fastball down-away",
+     0.0569
+    ],
+    [
+     "Fastball up-away",
+     0.0555
+    ]
+   ]
+  },
+  "hs|staff0|1|0|False": {
+   "max_move": 0.0489,
+   "top_before": [
+    "Fastball middle",
+    0.1955
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1907
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.1955
+    ],
+    [
+     "Fastball down-middle",
+     0.1372
+    ],
+    [
+     "Slider down-in",
+     0.128
+    ],
+    [
+     "Fastball down-away",
+     0.1135
+    ],
+    [
+     "Slider middle",
+     0.0981
+    ],
+    [
+     "Fastball up-in",
+     0.0937
+    ],
+    [
+     "Fastball up-away",
+     0.0857
+    ],
+    [
+     "Changeup middle",
+     0.0753
+    ],
+    [
+     "Slider down-middle",
+     0.0621
+    ],
+    [
+     "Fastball down-in",
+     0.0108
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1907
+    ],
+    [
+     "Fastball down-middle",
+     0.1349
+    ],
+    [
+     "Slider middle",
+     0.113
+    ],
+    [
+     "Fastball down-away",
+     0.112
+    ],
+    [
+     "Changeup middle",
+     0.0984
+    ],
+    [
+     "Fastball up-in",
+     0.0941
+    ],
+    [
+     "Fastball up-away",
+     0.0872
+    ],
+    [
+     "Slider down-in",
+     0.0792
+    ],
+    [
+     "Slider down-middle",
+     0.0729
+    ],
+    [
+     "Fastball down-in",
+     0.0176
+    ]
+   ]
+  },
+  "hs|staff0|1|1|False": {
+   "max_move": 0.0823,
+   "top_before": [
+    "Fastball down-away",
+    0.178
+   ],
+   "top_after": [
+    "Fastball down-away",
+    0.1282
+   ],
+   "before": [
+    [
+     "Fastball down-away",
+     0.178
+    ],
+    [
+     "Slider down-in",
+     0.1695
+    ],
+    [
+     "Fastball middle",
+     0.136
+    ],
+    [
+     "Slider middle",
+     0.1282
+    ],
+    [
+     "Slider down-middle",
+     0.1046
+    ],
+    [
+     "Changeup middle",
+     0.0764
+    ],
+    [
+     "Fastball down-middle",
+     0.0763
+    ],
+    [
+     "Changeup down-middle",
+     0.0286
+    ],
+    [
+     "Fastball up-away",
+     0.0223
+    ],
+    [
+     "Fastball up-in",
+     0.0222
+    ],
+    [
+     "Changeup down-away",
+     0.0205
+    ],
+    [
+     "Fastball down-in",
+     0.0197
+    ],
+    [
+     "Slider down-away",
+     0.0177
+    ]
+   ],
+   "after": [
+    [
+     "Fastball down-away",
+     0.1282
+    ],
+    [
+     "Slider middle",
+     0.0966
+    ],
+    [
+     "Fastball middle",
+     0.0908
+    ],
+    [
+     "Slider down-in",
+     0.0872
+    ],
+    [
+     "Changeup middle",
+     0.0852
+    ],
+    [
+     "Slider down-middle",
+     0.0794
+    ],
+    [
+     "Fastball up-in",
+     0.0785
+    ],
+    [
+     "Fastball up-away",
+     0.0709
+    ],
+    [
+     "Slider down-away",
+     0.0682
+    ],
+    [
+     "Slider up-away",
+     0.0522
+    ],
+    [
+     "Fastball down-in",
+     0.0441
+    ],
+    [
+     "Changeup down-middle",
+     0.0424
+    ],
+    [
+     "Fastball down-middle",
+     0.042
+    ],
+    [
+     "Changeup down-away",
+     0.0343
+    ]
+   ]
+  },
+  "hs|staff0|1|2|False": {
+   "max_move": 0.2597,
+   "top_before": [
+    "Slider down-in",
+    0.4121
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1524
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.4121
+    ],
+    [
+     "Slider down-away",
+     0.1314
+    ],
+    [
+     "Slider middle",
+     0.1096
+    ],
+    [
+     "Fastball chase",
+     0.1073
+    ],
+    [
+     "Fastball down-away",
+     0.0817
+    ],
+    [
+     "Fastball up-away",
+     0.0775
+    ],
+    [
+     "Fastball up-in",
+     0.0532
+    ],
+    [
+     "Fastball down-middle",
+     0.0135
+    ],
+    [
+     "Changeup middle",
+     0.0069
+    ],
+    [
+     "Changeup down-away",
+     0.0067
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1524
+    ],
+    [
+     "Fastball chase",
+     0.1416
+    ],
+    [
+     "Slider down-away",
+     0.1344
+    ],
+    [
+     "Slider middle",
+     0.1308
+    ],
+    [
+     "Slider down-middle",
+     0.114
+    ],
+    [
+     "Slider up-away",
+     0.0691
+    ],
+    [
+     "Fastball down-away",
+     0.0687
+    ],
+    [
+     "Fastball up-away",
+     0.0566
+    ],
+    [
+     "Fastball up-in",
+     0.0394
+    ],
+    [
+     "Changeup down-away",
+     0.0309
+    ],
+    [
+     "Changeup middle",
+     0.0306
+    ],
+    [
+     "Fastball down-middle",
+     0.0205
+    ],
+    [
+     "Fastball down-in",
+     0.0066
+    ],
+    [
+     "Changeup down-middle",
+     0.0032
+    ],
+    [
+     "Slider chase",
+     0.0013
+    ]
+   ]
+  },
+  "hs|staff0|2|0|False": {
+   "max_move": 0.1279,
+   "top_before": [
+    "Fastball middle",
+    0.4153
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.4151
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.4153
+    ],
+    [
+     "Fastball down-middle",
+     0.2514
+    ],
+    [
+     "Slider down-in",
+     0.1279
+    ],
+    [
+     "Slider middle",
+     0.1177
+    ],
+    [
+     "Changeup middle",
+     0.0877
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.4151
+    ],
+    [
+     "Fastball down-middle",
+     0.2516
+    ],
+    [
+     "Slider middle",
+     0.2389
+    ],
+    [
+     "Changeup middle",
+     0.0944
+    ]
+   ]
+  },
+  "hs|staff0|2|1|False": {
+   "max_move": 0.0736,
+   "top_before": [
+    "Fastball middle",
+    0.2033
+   ],
+   "top_after": [
+    "Slider middle",
+    0.214
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.2033
+    ],
+    [
+     "Slider down-in",
+     0.1438
+    ],
+    [
+     "Fastball down-middle",
+     0.1418
+    ],
+    [
+     "Slider middle",
+     0.1404
+    ],
+    [
+     "Fastball down-away",
+     0.1148
+    ],
+    [
+     "Fastball up-in",
+     0.113
+    ],
+    [
+     "Changeup middle",
+     0.1066
+    ],
+    [
+     "Slider down-middle",
+     0.0259
+    ],
+    [
+     "Fastball down-in",
+     0.0104
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.214
+    ],
+    [
+     "Fastball middle",
+     0.1938
+    ],
+    [
+     "Fastball down-middle",
+     0.1356
+    ],
+    [
+     "Changeup middle",
+     0.116
+    ],
+    [
+     "Fastball down-away",
+     0.1099
+    ],
+    [
+     "Fastball up-in",
+     0.109
+    ],
+    [
+     "Slider down-in",
+     0.0766
+    ],
+    [
+     "Fastball down-in",
+     0.035
+    ],
+    [
+     "Slider down-middle",
+     0.0101
+    ]
+   ]
+  },
+  "hs|staff0|2|2|False": {
+   "max_move": 0.1684,
+   "top_before": [
+    "Slider down-in",
+    0.3096
+   ],
+   "top_after": [
+    "Slider middle",
+    0.2877
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3096
+    ],
+    [
+     "Slider middle",
+     0.2491
+    ],
+    [
+     "Fastball down-away",
+     0.1045
+    ],
+    [
+     "Fastball middle",
+     0.0752
+    ],
+    [
+     "Fastball up-away",
+     0.0728
+    ],
+    [
+     "Fastball up-in",
+     0.0701
+    ],
+    [
+     "Fastball down-middle",
+     0.0682
+    ],
+    [
+     "Slider down-middle",
+     0.0335
+    ],
+    [
+     "Fastball down-in",
+     0.0091
+    ],
+    [
+     "Changeup middle",
+     0.0078
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.2877
+    ],
+    [
+     "Slider down-middle",
+     0.1472
+    ],
+    [
+     "Slider down-in",
+     0.1412
+    ],
+    [
+     "Fastball down-away",
+     0.1069
+    ],
+    [
+     "Fastball up-away",
+     0.0733
+    ],
+    [
+     "Fastball middle",
+     0.072
+    ],
+    [
+     "Fastball up-in",
+     0.07
+    ],
+    [
+     "Fastball down-middle",
+     0.0694
+    ],
+    [
+     "Changeup middle",
+     0.0223
+    ],
+    [
+     "Fastball down-in",
+     0.0084
+    ],
+    [
+     "Slider down-away",
+     0.0016
+    ]
+   ]
+  },
+  "hs|staff0|3|0|False": {
+   "max_move": 0.1633,
+   "top_before": [
+    "Fastball middle",
+    0.8367
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.8674
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.8367
+    ],
+    [
+     "Slider down-in",
+     0.1633
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.8674
+    ],
+    [
+     "Slider middle",
+     0.1326
+    ]
+   ]
+  },
+  "hs|staff2|0|0|False": {
+   "max_move": 0.1265,
+   "top_before": [
+    "Slider down-in",
+    0.2182
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1085
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2182
+    ],
+    [
+     "Fastball middle",
+     0.1501
+    ],
+    [
+     "Fastball down-away",
+     0.1383
+    ],
+    [
+     "Fastball down-middle",
+     0.1352
+    ],
+    [
+     "Slider middle",
+     0.1251
+    ],
+    [
+     "Slider down-middle",
+     0.0571
+    ],
+    [
+     "Fastball up-away",
+     0.0443
+    ],
+    [
+     "Fastball up-in",
+     0.036
+    ],
+    [
+     "Fastball down-in",
+     0.0319
+    ],
+    [
+     "Changeup middle",
+     0.0282
+    ],
+    [
+     "Changeup down-away",
+     0.0244
+    ],
+    [
+     "Changeup down-middle",
+     0.0114
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1085
+    ],
+    [
+     "Slider middle",
+     0.099
+    ],
+    [
+     "Fastball down-away",
+     0.098
+    ],
+    [
+     "Fastball down-middle",
+     0.097
+    ],
+    [
+     "Fastball up-in",
+     0.0927
+    ],
+    [
+     "Slider down-in",
+     0.0917
+    ],
+    [
+     "Fastball up-away",
+     0.0814
+    ],
+    [
+     "Slider down-middle",
+     0.0728
+    ],
+    [
+     "Fastball down-in",
+     0.0581
+    ],
+    [
+     "Slider down-away",
+     0.0572
+    ],
+    [
+     "Changeup middle",
+     0.047
+    ],
+    [
+     "Changeup down-away",
+     0.0407
+    ],
+    [
+     "Slider up-away",
+     0.0308
+    ],
+    [
+     "Changeup down-middle",
+     0.0251
+    ]
+   ]
+  },
+  "hs|staff2|0|1|False": {
+   "max_move": 0.0682,
+   "top_before": [
+    "Fastball down-away",
+    0.1655
+   ],
+   "top_after": [
+    "Fastball down-away",
+    0.0973
+   ],
+   "before": [
+    [
+     "Fastball down-away",
+     0.1655
+    ],
+    [
+     "Slider down-in",
+     0.1641
+    ],
+    [
+     "Slider middle",
+     0.1027
+    ],
+    [
+     "Fastball up-away",
+     0.1022
+    ],
+    [
+     "Slider down-away",
+     0.1009
+    ],
+    [
+     "Slider down-middle",
+     0.0985
+    ],
+    [
+     "Fastball down-middle",
+     0.0583
+    ],
+    [
+     "Changeup down-away",
+     0.0514
+    ],
+    [
+     "Changeup middle",
+     0.0494
+    ],
+    [
+     "Changeup down-middle",
+     0.0484
+    ],
+    [
+     "Fastball middle",
+     0.0169
+    ],
+    [
+     "Fastball up-in",
+     0.015
+    ],
+    [
+     "Fastball down-in",
+     0.0142
+    ],
+    [
+     "Fastball chase",
+     0.0124
+    ]
+   ],
+   "after": [
+    [
+     "Fastball down-away",
+     0.0973
+    ],
+    [
+     "Slider down-in",
+     0.0973
+    ],
+    [
+     "Slider middle",
+     0.091
+    ],
+    [
+     "Fastball up-away",
+     0.0882
+    ],
+    [
+     "Slider down-away",
+     0.0875
+    ],
+    [
+     "Slider down-middle",
+     0.0866
+    ],
+    [
+     "Changeup down-away",
+     0.0707
+    ],
+    [
+     "Changeup middle",
+     0.0688
+    ],
+    [
+     "Changeup down-middle",
+     0.067
+    ],
+    [
+     "Fastball down-middle",
+     0.0654
+    ],
+    [
+     "Fastball up-in",
+     0.0555
+    ],
+    [
+     "Slider up-away",
+     0.0466
+    ],
+    [
+     "Fastball middle",
+     0.0386
+    ],
+    [
+     "Fastball down-in",
+     0.0371
+    ],
+    [
+     "Fastball chase",
+     0.0025
+    ]
+   ]
+  },
+  "hs|staff2|0|2|False": {
+   "max_move": 0.1022,
+   "top_before": [
+    "Fastball chase",
+    0.2467
+   ],
+   "top_after": [
+    "Fastball chase",
+    0.2497
+   ],
+   "before": [
+    [
+     "Fastball chase",
+     0.2467
+    ],
+    [
+     "Slider down-in",
+     0.2116
+    ],
+    [
+     "Slider down-away",
+     0.1278
+    ],
+    [
+     "Slider chase",
+     0.0977
+    ],
+    [
+     "Slider down-middle",
+     0.0803
+    ],
+    [
+     "Slider middle",
+     0.0623
+    ],
+    [
+     "Fastball up-away",
+     0.062
+    ],
+    [
+     "Changeup down-away",
+     0.0567
+    ],
+    [
+     "Fastball down-away",
+     0.0548
+    ]
+   ],
+   "after": [
+    [
+     "Fastball chase",
+     0.2497
+    ],
+    [
+     "Slider down-away",
+     0.1181
+    ],
+    [
+     "Slider down-in",
+     0.1093
+    ],
+    [
+     "Slider down-middle",
+     0.0881
+    ],
+    [
+     "Slider middle",
+     0.0865
+    ],
+    [
+     "Slider chase",
+     0.083
+    ],
+    [
+     "Changeup down-away",
+     0.0822
+    ],
+    [
+     "Slider up-away",
+     0.0691
+    ],
+    [
+     "Fastball down-away",
+     0.0575
+    ],
+    [
+     "Fastball up-away",
+     0.0564
+    ]
+   ]
+  },
+  "hs|staff2|1|0|False": {
+   "max_move": 0.0406,
+   "top_before": [
+    "Fastball middle",
+    0.1976
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.167
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.1976
+    ],
+    [
+     "Fastball down-middle",
+     0.1399
+    ],
+    [
+     "Slider down-in",
+     0.1322
+    ],
+    [
+     "Fastball down-away",
+     0.1168
+    ],
+    [
+     "Slider middle",
+     0.1002
+    ],
+    [
+     "Fastball up-in",
+     0.0965
+    ],
+    [
+     "Fastball up-away",
+     0.076
+    ],
+    [
+     "Changeup middle",
+     0.0685
+    ],
+    [
+     "Slider down-middle",
+     0.0627
+    ],
+    [
+     "Fastball down-in",
+     0.0096
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.167
+    ],
+    [
+     "Fastball up-in",
+     0.1341
+    ],
+    [
+     "Slider middle",
+     0.1277
+    ],
+    [
+     "Fastball down-middle",
+     0.1199
+    ],
+    [
+     "Changeup middle",
+     0.1017
+    ],
+    [
+     "Fastball down-away",
+     0.1006
+    ],
+    [
+     "Slider down-in",
+     0.0915
+    ],
+    [
+     "Fastball up-away",
+     0.0789
+    ],
+    [
+     "Slider down-middle",
+     0.0427
+    ],
+    [
+     "Fastball down-in",
+     0.0359
+    ]
+   ]
+  },
+  "hs|staff2|1|1|False": {
+   "max_move": 0.0919,
+   "top_before": [
+    "Slider down-in",
+    0.1802
+   ],
+   "top_after": [
+    "Fastball down-away",
+    0.1434
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.1802
+    ],
+    [
+     "Fastball down-away",
+     0.1749
+    ],
+    [
+     "Fastball middle",
+     0.1354
+    ],
+    [
+     "Slider middle",
+     0.1347
+    ],
+    [
+     "Slider down-middle",
+     0.1082
+    ],
+    [
+     "Changeup middle",
+     0.0791
+    ],
+    [
+     "Fastball down-middle",
+     0.074
+    ],
+    [
+     "Changeup down-middle",
+     0.032
+    ],
+    [
+     "Fastball up-away",
+     0.0246
+    ],
+    [
+     "Fastball up-in",
+     0.0239
+    ],
+    [
+     "Fastball down-in",
+     0.0216
+    ],
+    [
+     "Changeup down-away",
+     0.0113
+    ]
+   ],
+   "after": [
+    [
+     "Fastball down-away",
+     0.1434
+    ],
+    [
+     "Fastball middle",
+     0.1001
+    ],
+    [
+     "Slider middle",
+     0.0957
+    ],
+    [
+     "Slider down-in",
+     0.0883
+    ],
+    [
+     "Slider down-middle",
+     0.078
+    ],
+    [
+     "Fastball up-away",
+     0.0777
+    ],
+    [
+     "Fastball up-in",
+     0.0759
+    ],
+    [
+     "Changeup middle",
+     0.07
+    ],
+    [
+     "Slider down-away",
+     0.0668
+    ],
+    [
+     "Slider up-away",
+     0.057
+    ],
+    [
+     "Changeup down-middle",
+     0.0523
+    ],
+    [
+     "Fastball down-middle",
+     0.0425
+    ],
+    [
+     "Changeup down-away",
+     0.0374
+    ],
+    [
+     "Fastball down-in",
+     0.0149
+    ]
+   ]
+  },
+  "hs|staff2|1|2|False": {
+   "max_move": 0.462,
+   "top_before": [
+    "Slider down-in",
+    0.6559
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1939
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.6559
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0057
+    ],
+    [
+     "Changeup down-away",
+     0.0051
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1939
+    ],
+    [
+     "Slider middle",
+     0.1382
+    ],
+    [
+     "Slider down-away",
+     0.1375
+    ],
+    [
+     "Fastball chase",
+     0.1325
+    ],
+    [
+     "Slider down-middle",
+     0.1191
+    ],
+    [
+     "Fastball down-away",
+     0.0738
+    ],
+    [
+     "Fastball up-away",
+     0.0691
+    ],
+    [
+     "Fastball up-in",
+     0.0462
+    ],
+    [
+     "Changeup middle",
+     0.0213
+    ],
+    [
+     "Changeup down-away",
+     0.0207
+    ],
+    [
+     "Changeup down-middle",
+     0.0182
+    ],
+    [
+     "Slider up-away",
+     0.0179
+    ],
+    [
+     "Fastball down-middle",
+     0.0117
+    ]
+   ]
+  },
+  "hs|staff2|2|0|False": {
+   "max_move": 0.1368,
+   "top_before": [
+    "Fastball middle",
+    0.4139
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.4081
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.4139
+    ],
+    [
+     "Fastball down-middle",
+     0.2528
+    ],
+    [
+     "Slider down-in",
+     0.1368
+    ],
+    [
+     "Slider middle",
+     0.1162
+    ],
+    [
+     "Changeup middle",
+     0.0803
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.4081
+    ],
+    [
+     "Fastball down-middle",
+     0.2515
+    ],
+    [
+     "Slider middle",
+     0.2406
+    ],
+    [
+     "Changeup middle",
+     0.0927
+    ],
+    [
+     "Fastball up-in",
+     0.0071
+    ]
+   ]
+  },
+  "hs|staff2|2|1|False": {
+   "max_move": 0.0334,
+   "top_before": [
+    "Fastball middle",
+    0.2001
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1959
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.2001
+    ],
+    [
+     "Fastball down-middle",
+     0.1398
+    ],
+    [
+     "Slider down-in",
+     0.1284
+    ],
+    [
+     "Slider middle",
+     0.1255
+    ],
+    [
+     "Fastball down-away",
+     0.114
+    ],
+    [
+     "Fastball up-in",
+     0.1121
+    ],
+    [
+     "Changeup middle",
+     0.1103
+    ],
+    [
+     "Slider down-middle",
+     0.0525
+    ],
+    [
+     "Fastball down-in",
+     0.0173
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1959
+    ],
+    [
+     "Slider middle",
+     0.1488
+    ],
+    [
+     "Fastball down-middle",
+     0.1376
+    ],
+    [
+     "Changeup middle",
+     0.1157
+    ],
+    [
+     "Fastball down-away",
+     0.1124
+    ],
+    [
+     "Fastball up-in",
+     0.1111
+    ],
+    [
+     "Slider down-in",
+     0.095
+    ],
+    [
+     "Slider down-middle",
+     0.0572
+    ],
+    [
+     "Fastball down-in",
+     0.0263
+    ]
+   ]
+  },
+  "hs|staff2|2|2|False": {
+   "max_move": 0.1876,
+   "top_before": [
+    "Slider down-in",
+    0.3576
+   ],
+   "top_after": [
+    "Slider middle",
+    0.2904
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3576
+    ],
+    [
+     "Slider middle",
+     0.2424
+    ],
+    [
+     "Fastball down-away",
+     0.0956
+    ],
+    [
+     "Fastball middle",
+     0.0811
+    ],
+    [
+     "Fastball up-away",
+     0.0697
+    ],
+    [
+     "Fastball down-middle",
+     0.0662
+    ],
+    [
+     "Fastball up-in",
+     0.066
+    ],
+    [
+     "Fastball down-in",
+     0.0214
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.2904
+    ],
+    [
+     "Slider down-in",
+     0.17
+    ],
+    [
+     "Slider down-middle",
+     0.1396
+    ],
+    [
+     "Fastball down-away",
+     0.0981
+    ],
+    [
+     "Fastball middle",
+     0.0778
+    ],
+    [
+     "Fastball up-away",
+     0.0703
+    ],
+    [
+     "Fastball down-middle",
+     0.0675
+    ],
+    [
+     "Fastball up-in",
+     0.0658
+    ],
+    [
+     "Fastball down-in",
+     0.0205
+    ]
+   ]
+  },
+  "hs|staff2|3|0|False": {
+   "max_move": 0.062,
+   "top_before": [
+    "Fastball middle",
+    0.938
+   ],
+   "top_after": [
+    "Fastball middle",
+    1.0
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.938
+    ],
+    [
+     "Slider down-in",
+     0.062
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     1.0
+    ]
+   ]
+  },
+  "hs|staff4|0|0|False": {
+   "max_move": 0.1217,
+   "top_before": [
+    "Slider down-in",
+    0.2162
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1086
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2162
+    ],
+    [
+     "Fastball middle",
+     0.1525
+    ],
+    [
+     "Fastball down-away",
+     0.1398
+    ],
+    [
+     "Fastball down-middle",
+     0.1363
+    ],
+    [
+     "Slider middle",
+     0.127
+    ],
+    [
+     "Slider down-middle",
+     0.065
+    ],
+    [
+     "Fastball up-away",
+     0.0429
+    ],
+    [
+     "Fastball up-in",
+     0.0335
+    ],
+    [
+     "Fastball down-in",
+     0.0308
+    ],
+    [
+     "Changeup middle",
+     0.0303
+    ],
+    [
+     "Changeup down-away",
+     0.0259
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1086
+    ],
+    [
+     "Slider middle",
+     0.1045
+    ],
+    [
+     "Fastball down-away",
+     0.0969
+    ],
+    [
+     "Fastball down-middle",
+     0.0961
+    ],
+    [
+     "Slider down-in",
+     0.0945
+    ],
+    [
+     "Fastball up-in",
+     0.0935
+    ],
+    [
+     "Fastball up-away",
+     0.0812
+    ],
+    [
+     "Slider down-middle",
+     0.076
+    ],
+    [
+     "Slider down-away",
+     0.0595
+    ],
+    [
+     "Fastball down-in",
+     0.0594
+    ],
+    [
+     "Changeup middle",
+     0.0528
+    ],
+    [
+     "Changeup down-away",
+     0.0451
+    ],
+    [
+     "Slider up-away",
+     0.0299
+    ],
+    [
+     "Changeup down-middle",
+     0.0021
+    ]
+   ]
+  },
+  "hs|staff4|0|1|False": {
+   "max_move": 0.1063,
+   "top_before": [
+    "Slider down-in",
+    0.2083
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1021
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2083
+    ],
+    [
+     "Fastball down-away",
+     0.1314
+    ],
+    [
+     "Fastball up-away",
+     0.1239
+    ],
+    [
+     "Slider middle",
+     0.1109
+    ],
+    [
+     "Slider down-away",
+     0.0888
+    ],
+    [
+     "Slider down-middle",
+     0.0695
+    ],
+    [
+     "Fastball down-middle",
+     0.0684
+    ],
+    [
+     "Changeup down-away",
+     0.047
+    ],
+    [
+     "Changeup middle",
+     0.0457
+    ],
+    [
+     "Changeup down-middle",
+     0.0451
+    ],
+    [
+     "Fastball middle",
+     0.0179
+    ],
+    [
+     "Fastball up-in",
+     0.0155
+    ],
+    [
+     "Fastball down-in",
+     0.0151
+    ],
+    [
+     "Fastball chase",
+     0.0124
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1021
+    ],
+    [
+     "Fastball up-away",
+     0.1015
+    ],
+    [
+     "Slider middle",
+     0.0883
+    ],
+    [
+     "Slider down-away",
+     0.0848
+    ],
+    [
+     "Slider down-middle",
+     0.0841
+    ],
+    [
+     "Fastball down-away",
+     0.0773
+    ],
+    [
+     "Fastball down-middle",
+     0.0707
+    ],
+    [
+     "Slider up-away",
+     0.0693
+    ],
+    [
+     "Changeup down-away",
+     0.0634
+    ],
+    [
+     "Changeup middle",
+     0.0622
+    ],
+    [
+     "Changeup down-middle",
+     0.0612
+    ],
+    [
+     "Fastball up-in",
+     0.0598
+    ],
+    [
+     "Fastball middle",
+     0.0362
+    ],
+    [
+     "Fastball down-in",
+     0.0338
+    ],
+    [
+     "Fastball chase",
+     0.0054
+    ]
+   ]
+  },
+  "hs|staff4|0|2|False": {
+   "max_move": 0.2375,
+   "top_before": [
+    "Slider down-in",
+    0.3699
+   ],
+   "top_after": [
+    "Fastball chase",
+    0.2406
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3699
+    ],
+    [
+     "Fastball chase",
+     0.2346
+    ],
+    [
+     "Slider down-away",
+     0.1755
+    ],
+    [
+     "Slider chase",
+     0.0677
+    ],
+    [
+     "Fastball up-away",
+     0.0662
+    ],
+    [
+     "Fastball down-away",
+     0.0628
+    ],
+    [
+     "Changeup down-away",
+     0.0122
+    ],
+    [
+     "Changeup chase",
+     0.0104
+    ],
+    [
+     "Changeup down-middle",
+     0.0006
+    ]
+   ],
+   "after": [
+    [
+     "Fastball chase",
+     0.2406
+    ],
+    [
+     "Slider down-in",
+     0.1324
+    ],
+    [
+     "Slider down-away",
+     0.1127
+    ],
+    [
+     "Slider chase",
+     0.088
+    ],
+    [
+     "Slider down-middle",
+     0.0873
+    ],
+    [
+     "Slider middle",
+     0.0856
+    ],
+    [
+     "Slider up-away",
+     0.0681
+    ],
+    [
+     "Fastball up-away",
+     0.0615
+    ],
+    [
+     "Fastball down-away",
+     0.0615
+    ],
+    [
+     "Changeup down-away",
+     0.046
+    ],
+    [
+     "Changeup down-middle",
+     0.0158
+    ],
+    [
+     "Changeup middle",
+     0.0005
+    ]
+   ]
+  },
+  "hs|staff4|1|0|False": {
+   "max_move": 0.0829,
+   "top_before": [
+    "Fastball middle",
+    0.2611
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1782
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.2611
+    ],
+    [
+     "Fastball down-middle",
+     0.1828
+    ],
+    [
+     "Slider down-in",
+     0.162
+    ],
+    [
+     "Slider middle",
+     0.1081
+    ],
+    [
+     "Fastball down-away",
+     0.0993
+    ],
+    [
+     "Changeup middle",
+     0.0589
+    ],
+    [
+     "Fastball up-in",
+     0.0393
+    ],
+    [
+     "Fastball up-away",
+     0.0371
+    ],
+    [
+     "Slider down-middle",
+     0.0345
+    ],
+    [
+     "Fastball down-in",
+     0.0168
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1782
+    ],
+    [
+     "Fastball down-middle",
+     0.1272
+    ],
+    [
+     "Fastball down-away",
+     0.1065
+    ],
+    [
+     "Slider middle",
+     0.1049
+    ],
+    [
+     "Fastball up-in",
+     0.0898
+    ],
+    [
+     "Changeup middle",
+     0.0889
+    ],
+    [
+     "Slider down-in",
+     0.086
+    ],
+    [
+     "Fastball up-away",
+     0.0842
+    ],
+    [
+     "Slider down-middle",
+     0.0664
+    ],
+    [
+     "Fastball down-in",
+     0.0506
+    ],
+    [
+     "Slider down-away",
+     0.0174
+    ]
+   ]
+  },
+  "hs|staff4|1|1|False": {
+   "max_move": 0.1436,
+   "top_before": [
+    "Slider down-in",
+    0.2489
+   ],
+   "top_after": [
+    "Changeup middle",
+    0.1503
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2489
+    ],
+    [
+     "Fastball down-away",
+     0.172
+    ],
+    [
+     "Slider middle",
+     0.1628
+    ],
+    [
+     "Fastball middle",
+     0.135
+    ],
+    [
+     "Changeup middle",
+     0.1079
+    ],
+    [
+     "Fastball down-middle",
+     0.0722
+    ],
+    [
+     "Slider down-middle",
+     0.0259
+    ],
+    [
+     "Fastball up-in",
+     0.0258
+    ],
+    [
+     "Fastball up-away",
+     0.0258
+    ],
+    [
+     "Fastball down-in",
+     0.0237
+    ]
+   ],
+   "after": [
+    [
+     "Changeup middle",
+     0.1503
+    ],
+    [
+     "Fastball down-away",
+     0.1408
+    ],
+    [
+     "Slider down-in",
+     0.1053
+    ],
+    [
+     "Slider middle",
+     0.1002
+    ],
+    [
+     "Fastball middle",
+     0.0992
+    ],
+    [
+     "Slider down-middle",
+     0.0819
+    ],
+    [
+     "Fastball up-in",
+     0.0763
+    ],
+    [
+     "Fastball up-away",
+     0.0759
+    ],
+    [
+     "Slider down-away",
+     0.069
+    ],
+    [
+     "Fastball down-middle",
+     0.0407
+    ],
+    [
+     "Slider up-away",
+     0.0388
+    ],
+    [
+     "Fastball down-in",
+     0.0216
+    ]
+   ]
+  },
+  "hs|staff4|1|2|False": {
+   "max_move": 0.468,
+   "top_before": [
+    "Slider down-in",
+    0.6653
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1973
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.6653
+    ],
+    [
+     "Fastball chase",
+     0.0986
+    ],
+    [
+     "Fastball up-away",
+     0.0801
+    ],
+    [
+     "Fastball down-away",
+     0.078
+    ],
+    [
+     "Fastball up-in",
+     0.0506
+    ],
+    [
+     "Fastball down-middle",
+     0.0201
+    ],
+    [
+     "Fastball down-in",
+     0.0074
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1973
+    ],
+    [
+     "Slider middle",
+     0.1374
+    ],
+    [
+     "Slider down-away",
+     0.1357
+    ],
+    [
+     "Slider down-middle",
+     0.1177
+    ],
+    [
+     "Fastball chase",
+     0.0946
+    ],
+    [
+     "Fastball down-away",
+     0.0809
+    ],
+    [
+     "Fastball up-away",
+     0.0665
+    ],
+    [
+     "Fastball up-in",
+     0.0413
+    ],
+    [
+     "Fastball down-middle",
+     0.0313
+    ],
+    [
+     "Changeup middle",
+     0.0284
+    ],
+    [
+     "Changeup down-away",
+     0.0262
+    ],
+    [
+     "Slider up-away",
+     0.024
+    ],
+    [
+     "Fastball down-in",
+     0.0188
+    ]
+   ]
+  },
+  "hs|staff4|2|0|False": {
+   "max_move": 0.1326,
+   "top_before": [
+    "Fastball middle",
+    0.4123
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.4014
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.4123
+    ],
+    [
+     "Fastball down-middle",
+     0.2515
+    ],
+    [
+     "Slider down-in",
+     0.1326
+    ],
+    [
+     "Slider middle",
+     0.1091
+    ],
+    [
+     "Changeup middle",
+     0.0916
+    ],
+    [
+     "Fastball up-in",
+     0.0028
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.4014
+    ],
+    [
+     "Fastball down-middle",
+     0.2469
+    ],
+    [
+     "Slider middle",
+     0.2262
+    ],
+    [
+     "Changeup middle",
+     0.1071
+    ],
+    [
+     "Fastball up-in",
+     0.0184
+    ]
+   ]
+  },
+  "hs|staff4|2|1|False": {
+   "max_move": 0.0401,
+   "top_before": [
+    "Fastball middle",
+    0.1922
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1914
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.1922
+    ],
+    [
+     "Slider down-in",
+     0.1505
+    ],
+    [
+     "Slider middle",
+     0.1443
+    ],
+    [
+     "Fastball down-middle",
+     0.133
+    ],
+    [
+     "Changeup middle",
+     0.1148
+    ],
+    [
+     "Fastball down-away",
+     0.1088
+    ],
+    [
+     "Fastball up-in",
+     0.1067
+    ],
+    [
+     "Fastball down-in",
+     0.0426
+    ],
+    [
+     "Slider down-middle",
+     0.0071
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1914
+    ],
+    [
+     "Slider middle",
+     0.1693
+    ],
+    [
+     "Fastball down-middle",
+     0.1334
+    ],
+    [
+     "Changeup middle",
+     0.1193
+    ],
+    [
+     "Slider down-in",
+     0.1104
+    ],
+    [
+     "Fastball down-away",
+     0.1094
+    ],
+    [
+     "Fastball up-in",
+     0.1077
+    ],
+    [
+     "Fastball down-in",
+     0.0414
+    ],
+    [
+     "Slider down-middle",
+     0.0177
+    ]
+   ]
+  },
+  "hs|staff4|2|2|False": {
+   "max_move": 0.1878,
+   "top_before": [
+    "Slider down-in",
+    0.3722
+   ],
+   "top_after": [
+    "Slider middle",
+    0.2806
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3722
+    ],
+    [
+     "Slider middle",
+     0.2278
+    ],
+    [
+     "Fastball down-away",
+     0.0912
+    ],
+    [
+     "Fastball middle",
+     0.0858
+    ],
+    [
+     "Fastball up-away",
+     0.0684
+    ],
+    [
+     "Fastball down-middle",
+     0.0646
+    ],
+    [
+     "Fastball up-in",
+     0.0611
+    ],
+    [
+     "Fastball down-in",
+     0.0289
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.2806
+    ],
+    [
+     "Slider down-in",
+     0.1844
+    ],
+    [
+     "Slider down-middle",
+     0.135
+    ],
+    [
+     "Fastball down-away",
+     0.0944
+    ],
+    [
+     "Fastball middle",
+     0.0816
+    ],
+    [
+     "Fastball up-away",
+     0.0688
+    ],
+    [
+     "Fastball down-middle",
+     0.0663
+    ],
+    [
+     "Fastball up-in",
+     0.0607
+    ],
+    [
+     "Fastball down-in",
+     0.0281
+    ]
+   ]
+  },
+  "hs|staff4|3|0|False": {
+   "max_move": 0.0556,
+   "top_before": [
+    "Fastball middle",
+    0.9444
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.9762
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.9444
+    ],
+    [
+     "Slider down-in",
+     0.0556
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.9762
+    ],
+    [
+     "Slider middle",
+     0.0238
+    ]
+   ]
+  },
+  "travel|staff0|0|0|False": {
+   "max_move": 0.1004,
+   "top_before": [
+    "Slider down-in",
+    0.1891
+   ],
+   "top_after": [
+    "Fastball up-in",
+    0.1175
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.1891
+    ],
+    [
+     "Fastball middle",
+     0.1447
+    ],
+    [
+     "Fastball down-away",
+     0.1301
+    ],
+    [
+     "Fastball down-middle",
+     0.1296
+    ],
+    [
+     "Slider middle",
+     0.1171
+    ],
+    [
+     "Slider down-middle",
+     0.0861
+    ],
+    [
+     "Fastball up-away",
+     0.073
+    ],
+    [
+     "Changeup middle",
+     0.0365
+    ],
+    [
+     "Changeup down-away",
+     0.032
+    ],
+    [
+     "Fastball up-in",
+     0.0315
+    ],
+    [
+     "Fastball down-in",
+     0.0269
+    ],
+    [
+     "Changeup down-middle",
+     0.0035
+    ]
+   ],
+   "after": [
+    [
+     "Fastball up-in",
+     0.1175
+    ],
+    [
+     "Slider middle",
+     0.1036
+    ],
+    [
+     "Fastball middle",
+     0.1034
+    ],
+    [
+     "Fastball down-middle",
+     0.0919
+    ],
+    [
+     "Fastball down-away",
+     0.0913
+    ],
+    [
+     "Slider down-in",
+     0.0887
+    ],
+    [
+     "Slider down-middle",
+     0.0768
+    ],
+    [
+     "Fastball up-away",
+     0.0749
+    ],
+    [
+     "Changeup middle",
+     0.0587
+    ],
+    [
+     "Fastball down-in",
+     0.0568
+    ],
+    [
+     "Slider up-away",
+     0.0537
+    ],
+    [
+     "Changeup down-away",
+     0.0516
+    ],
+    [
+     "Slider down-away",
+     0.0186
+    ],
+    [
+     "Changeup down-middle",
+     0.0127
+    ]
+   ]
+  },
+  "travel|staff0|0|1|False": {
+   "max_move": 0.1021,
+   "top_before": [
+    "Fastball down-away",
+    0.1707
+   ],
+   "top_after": [
+    "Fastball up-away",
+    0.0933
+   ],
+   "before": [
+    [
+     "Fastball down-away",
+     0.1707
+    ],
+    [
+     "Fastball down-middle",
+     0.154
+    ],
+    [
+     "Slider down-in",
+     0.1482
+    ],
+    [
+     "Slider middle",
+     0.0985
+    ],
+    [
+     "Slider down-away",
+     0.0976
+    ],
+    [
+     "Slider down-middle",
+     0.0949
+    ],
+    [
+     "Changeup down-away",
+     0.0579
+    ],
+    [
+     "Changeup middle",
+     0.0535
+    ],
+    [
+     "Changeup down-middle",
+     0.0533
+    ],
+    [
+     "Fastball up-away",
+     0.0135
+    ],
+    [
+     "Fastball middle",
+     0.0134
+    ],
+    [
+     "Fastball up-in",
+     0.0121
+    ],
+    [
+     "Slider up-away",
+     0.0115
+    ],
+    [
+     "Fastball down-in",
+     0.0113
+    ],
+    [
+     "Fastball chase",
+     0.0097
+    ]
+   ],
+   "after": [
+    [
+     "Fastball up-away",
+     0.0933
+    ],
+    [
+     "Slider down-in",
+     0.0867
+    ],
+    [
+     "Slider middle",
+     0.0861
+    ],
+    [
+     "Slider down-away",
+     0.0835
+    ],
+    [
+     "Slider down-middle",
+     0.0821
+    ],
+    [
+     "Changeup down-away",
+     0.0777
+    ],
+    [
+     "Changeup middle",
+     0.0726
+    ],
+    [
+     "Changeup down-middle",
+     0.0719
+    ],
+    [
+     "Fastball down-away",
+     0.0686
+    ],
+    [
+     "Fastball down-middle",
+     0.0628
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Slider up-away",
+     0.0549
+    ],
+    [
+     "Fastball down-in",
+     0.0506
+    ],
+    [
+     "Fastball middle",
+     0.0401
+    ],
+    [
+     "Fastball chase",
+     0.0144
+    ]
+   ]
+  },
+  "travel|staff0|0|2|False": {
+   "max_move": 0.1089,
+   "top_before": [
+    "Fastball chase",
+    0.2403
+   ],
+   "top_after": [
+    "Fastball chase",
+    0.2512
+   ],
+   "before": [
+    [
+     "Fastball chase",
+     0.2403
+    ],
+    [
+     "Slider down-in",
+     0.2171
+    ],
+    [
+     "Slider down-away",
+     0.1306
+    ],
+    [
+     "Slider chase",
+     0.1003
+    ],
+    [
+     "Slider down-middle",
+     0.0741
+    ],
+    [
+     "Changeup down-away",
+     0.0644
+    ],
+    [
+     "Fastball up-away",
+     0.062
+    ],
+    [
+     "Fastball down-away",
+     0.0613
+    ],
+    [
+     "Slider middle",
+     0.0499
+    ]
+   ],
+   "after": [
+    [
+     "Fastball chase",
+     0.2512
+    ],
+    [
+     "Slider down-away",
+     0.1171
+    ],
+    [
+     "Slider down-in",
+     0.1082
+    ],
+    [
+     "Changeup down-away",
+     0.0929
+    ],
+    [
+     "Slider down-middle",
+     0.0859
+    ],
+    [
+     "Slider chase",
+     0.0841
+    ],
+    [
+     "Slider middle",
+     0.0825
+    ],
+    [
+     "Slider up-away",
+     0.0656
+    ],
+    [
+     "Fastball down-away",
+     0.0569
+    ],
+    [
+     "Fastball up-away",
+     0.0555
+    ]
+   ]
+  },
+  "travel|staff0|1|0|False": {
+   "max_move": 0.0489,
+   "top_before": [
+    "Fastball middle",
+    0.1955
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1907
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.1955
+    ],
+    [
+     "Fastball down-middle",
+     0.1372
+    ],
+    [
+     "Slider down-in",
+     0.128
+    ],
+    [
+     "Fastball down-away",
+     0.1135
+    ],
+    [
+     "Slider middle",
+     0.0981
+    ],
+    [
+     "Fastball up-in",
+     0.0937
+    ],
+    [
+     "Fastball up-away",
+     0.0857
+    ],
+    [
+     "Changeup middle",
+     0.0753
+    ],
+    [
+     "Slider down-middle",
+     0.0621
+    ],
+    [
+     "Fastball down-in",
+     0.0108
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1907
+    ],
+    [
+     "Fastball down-middle",
+     0.1349
+    ],
+    [
+     "Slider middle",
+     0.113
+    ],
+    [
+     "Fastball down-away",
+     0.112
+    ],
+    [
+     "Changeup middle",
+     0.0984
+    ],
+    [
+     "Fastball up-in",
+     0.0941
+    ],
+    [
+     "Fastball up-away",
+     0.0872
+    ],
+    [
+     "Slider down-in",
+     0.0792
+    ],
+    [
+     "Slider down-middle",
+     0.0729
+    ],
+    [
+     "Fastball down-in",
+     0.0176
+    ]
+   ]
+  },
+  "travel|staff0|1|1|False": {
+   "max_move": 0.0823,
+   "top_before": [
+    "Fastball down-away",
+    0.178
+   ],
+   "top_after": [
+    "Fastball down-away",
+    0.1282
+   ],
+   "before": [
+    [
+     "Fastball down-away",
+     0.178
+    ],
+    [
+     "Slider down-in",
+     0.1695
+    ],
+    [
+     "Fastball middle",
+     0.136
+    ],
+    [
+     "Slider middle",
+     0.1282
+    ],
+    [
+     "Slider down-middle",
+     0.1046
+    ],
+    [
+     "Changeup middle",
+     0.0764
+    ],
+    [
+     "Fastball down-middle",
+     0.0763
+    ],
+    [
+     "Changeup down-middle",
+     0.0286
+    ],
+    [
+     "Fastball up-away",
+     0.0223
+    ],
+    [
+     "Fastball up-in",
+     0.0222
+    ],
+    [
+     "Changeup down-away",
+     0.0205
+    ],
+    [
+     "Fastball down-in",
+     0.0197
+    ],
+    [
+     "Slider down-away",
+     0.0177
+    ]
+   ],
+   "after": [
+    [
+     "Fastball down-away",
+     0.1282
+    ],
+    [
+     "Slider middle",
+     0.0966
+    ],
+    [
+     "Fastball middle",
+     0.0908
+    ],
+    [
+     "Slider down-in",
+     0.0872
+    ],
+    [
+     "Changeup middle",
+     0.0852
+    ],
+    [
+     "Slider down-middle",
+     0.0794
+    ],
+    [
+     "Fastball up-in",
+     0.0785
+    ],
+    [
+     "Fastball up-away",
+     0.0709
+    ],
+    [
+     "Slider down-away",
+     0.0682
+    ],
+    [
+     "Slider up-away",
+     0.0522
+    ],
+    [
+     "Fastball down-in",
+     0.0441
+    ],
+    [
+     "Changeup down-middle",
+     0.0424
+    ],
+    [
+     "Fastball down-middle",
+     0.042
+    ],
+    [
+     "Changeup down-away",
+     0.0343
+    ]
+   ]
+  },
+  "travel|staff0|1|2|False": {
+   "max_move": 0.2597,
+   "top_before": [
+    "Slider down-in",
+    0.4121
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1524
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.4121
+    ],
+    [
+     "Slider down-away",
+     0.1314
+    ],
+    [
+     "Slider middle",
+     0.1096
+    ],
+    [
+     "Fastball chase",
+     0.1073
+    ],
+    [
+     "Fastball down-away",
+     0.0817
+    ],
+    [
+     "Fastball up-away",
+     0.0775
+    ],
+    [
+     "Fastball up-in",
+     0.0532
+    ],
+    [
+     "Fastball down-middle",
+     0.0135
+    ],
+    [
+     "Changeup middle",
+     0.0069
+    ],
+    [
+     "Changeup down-away",
+     0.0067
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1524
+    ],
+    [
+     "Fastball chase",
+     0.1416
+    ],
+    [
+     "Slider down-away",
+     0.1344
+    ],
+    [
+     "Slider middle",
+     0.1308
+    ],
+    [
+     "Slider down-middle",
+     0.114
+    ],
+    [
+     "Slider up-away",
+     0.0691
+    ],
+    [
+     "Fastball down-away",
+     0.0687
+    ],
+    [
+     "Fastball up-away",
+     0.0566
+    ],
+    [
+     "Fastball up-in",
+     0.0394
+    ],
+    [
+     "Changeup down-away",
+     0.0309
+    ],
+    [
+     "Changeup middle",
+     0.0306
+    ],
+    [
+     "Fastball down-middle",
+     0.0205
+    ],
+    [
+     "Fastball down-in",
+     0.0066
+    ],
+    [
+     "Changeup down-middle",
+     0.0032
+    ],
+    [
+     "Slider chase",
+     0.0013
+    ]
+   ]
+  },
+  "travel|staff0|2|0|False": {
+   "max_move": 0.1279,
+   "top_before": [
+    "Fastball middle",
+    0.4153
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.4151
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.4153
+    ],
+    [
+     "Fastball down-middle",
+     0.2514
+    ],
+    [
+     "Slider down-in",
+     0.1279
+    ],
+    [
+     "Slider middle",
+     0.1177
+    ],
+    [
+     "Changeup middle",
+     0.0877
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.4151
+    ],
+    [
+     "Fastball down-middle",
+     0.2516
+    ],
+    [
+     "Slider middle",
+     0.2389
+    ],
+    [
+     "Changeup middle",
+     0.0944
+    ]
+   ]
+  },
+  "travel|staff0|2|1|False": {
+   "max_move": 0.0736,
+   "top_before": [
+    "Fastball middle",
+    0.2033
+   ],
+   "top_after": [
+    "Slider middle",
+    0.214
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.2033
+    ],
+    [
+     "Slider down-in",
+     0.1438
+    ],
+    [
+     "Fastball down-middle",
+     0.1418
+    ],
+    [
+     "Slider middle",
+     0.1404
+    ],
+    [
+     "Fastball down-away",
+     0.1148
+    ],
+    [
+     "Fastball up-in",
+     0.113
+    ],
+    [
+     "Changeup middle",
+     0.1066
+    ],
+    [
+     "Slider down-middle",
+     0.0259
+    ],
+    [
+     "Fastball down-in",
+     0.0104
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.214
+    ],
+    [
+     "Fastball middle",
+     0.1938
+    ],
+    [
+     "Fastball down-middle",
+     0.1356
+    ],
+    [
+     "Changeup middle",
+     0.116
+    ],
+    [
+     "Fastball down-away",
+     0.1099
+    ],
+    [
+     "Fastball up-in",
+     0.109
+    ],
+    [
+     "Slider down-in",
+     0.0766
+    ],
+    [
+     "Fastball down-in",
+     0.035
+    ],
+    [
+     "Slider down-middle",
+     0.0101
+    ]
+   ]
+  },
+  "travel|staff0|2|2|False": {
+   "max_move": 0.1684,
+   "top_before": [
+    "Slider down-in",
+    0.3096
+   ],
+   "top_after": [
+    "Slider middle",
+    0.2877
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3096
+    ],
+    [
+     "Slider middle",
+     0.2491
+    ],
+    [
+     "Fastball down-away",
+     0.1045
+    ],
+    [
+     "Fastball middle",
+     0.0752
+    ],
+    [
+     "Fastball up-away",
+     0.0728
+    ],
+    [
+     "Fastball up-in",
+     0.0701
+    ],
+    [
+     "Fastball down-middle",
+     0.0682
+    ],
+    [
+     "Slider down-middle",
+     0.0335
+    ],
+    [
+     "Fastball down-in",
+     0.0091
+    ],
+    [
+     "Changeup middle",
+     0.0078
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.2877
+    ],
+    [
+     "Slider down-middle",
+     0.1472
+    ],
+    [
+     "Slider down-in",
+     0.1412
+    ],
+    [
+     "Fastball down-away",
+     0.1069
+    ],
+    [
+     "Fastball up-away",
+     0.0733
+    ],
+    [
+     "Fastball middle",
+     0.072
+    ],
+    [
+     "Fastball up-in",
+     0.07
+    ],
+    [
+     "Fastball down-middle",
+     0.0694
+    ],
+    [
+     "Changeup middle",
+     0.0223
+    ],
+    [
+     "Fastball down-in",
+     0.0084
+    ],
+    [
+     "Slider down-away",
+     0.0016
+    ]
+   ]
+  },
+  "travel|staff0|3|0|False": {
+   "max_move": 0.1633,
+   "top_before": [
+    "Fastball middle",
+    0.8367
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.8674
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.8367
+    ],
+    [
+     "Slider down-in",
+     0.1633
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.8674
+    ],
+    [
+     "Slider middle",
+     0.1326
+    ]
+   ]
+  },
+  "travel|staff2|0|0|False": {
+   "max_move": 0.1265,
+   "top_before": [
+    "Slider down-in",
+    0.2182
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1085
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2182
+    ],
+    [
+     "Fastball middle",
+     0.1501
+    ],
+    [
+     "Fastball down-away",
+     0.1383
+    ],
+    [
+     "Fastball down-middle",
+     0.1352
+    ],
+    [
+     "Slider middle",
+     0.1251
+    ],
+    [
+     "Slider down-middle",
+     0.0571
+    ],
+    [
+     "Fastball up-away",
+     0.0443
+    ],
+    [
+     "Fastball up-in",
+     0.036
+    ],
+    [
+     "Fastball down-in",
+     0.0319
+    ],
+    [
+     "Changeup middle",
+     0.0282
+    ],
+    [
+     "Changeup down-away",
+     0.0244
+    ],
+    [
+     "Changeup down-middle",
+     0.0114
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1085
+    ],
+    [
+     "Slider middle",
+     0.099
+    ],
+    [
+     "Fastball down-away",
+     0.098
+    ],
+    [
+     "Fastball down-middle",
+     0.097
+    ],
+    [
+     "Fastball up-in",
+     0.0927
+    ],
+    [
+     "Slider down-in",
+     0.0917
+    ],
+    [
+     "Fastball up-away",
+     0.0814
+    ],
+    [
+     "Slider down-middle",
+     0.0728
+    ],
+    [
+     "Fastball down-in",
+     0.0581
+    ],
+    [
+     "Slider down-away",
+     0.0572
+    ],
+    [
+     "Changeup middle",
+     0.047
+    ],
+    [
+     "Changeup down-away",
+     0.0407
+    ],
+    [
+     "Slider up-away",
+     0.0308
+    ],
+    [
+     "Changeup down-middle",
+     0.0251
+    ]
+   ]
+  },
+  "travel|staff2|0|1|False": {
+   "max_move": 0.0682,
+   "top_before": [
+    "Fastball down-away",
+    0.1655
+   ],
+   "top_after": [
+    "Fastball down-away",
+    0.0973
+   ],
+   "before": [
+    [
+     "Fastball down-away",
+     0.1655
+    ],
+    [
+     "Slider down-in",
+     0.1641
+    ],
+    [
+     "Slider middle",
+     0.1027
+    ],
+    [
+     "Fastball up-away",
+     0.1022
+    ],
+    [
+     "Slider down-away",
+     0.1009
+    ],
+    [
+     "Slider down-middle",
+     0.0985
+    ],
+    [
+     "Fastball down-middle",
+     0.0583
+    ],
+    [
+     "Changeup down-away",
+     0.0514
+    ],
+    [
+     "Changeup middle",
+     0.0494
+    ],
+    [
+     "Changeup down-middle",
+     0.0484
+    ],
+    [
+     "Fastball middle",
+     0.0169
+    ],
+    [
+     "Fastball up-in",
+     0.015
+    ],
+    [
+     "Fastball down-in",
+     0.0142
+    ],
+    [
+     "Fastball chase",
+     0.0124
+    ]
+   ],
+   "after": [
+    [
+     "Fastball down-away",
+     0.0973
+    ],
+    [
+     "Slider down-in",
+     0.0973
+    ],
+    [
+     "Slider middle",
+     0.091
+    ],
+    [
+     "Fastball up-away",
+     0.0882
+    ],
+    [
+     "Slider down-away",
+     0.0875
+    ],
+    [
+     "Slider down-middle",
+     0.0866
+    ],
+    [
+     "Changeup down-away",
+     0.0707
+    ],
+    [
+     "Changeup middle",
+     0.0688
+    ],
+    [
+     "Changeup down-middle",
+     0.067
+    ],
+    [
+     "Fastball down-middle",
+     0.0654
+    ],
+    [
+     "Fastball up-in",
+     0.0555
+    ],
+    [
+     "Slider up-away",
+     0.0466
+    ],
+    [
+     "Fastball middle",
+     0.0386
+    ],
+    [
+     "Fastball down-in",
+     0.0371
+    ],
+    [
+     "Fastball chase",
+     0.0025
+    ]
+   ]
+  },
+  "travel|staff2|0|2|False": {
+   "max_move": 0.1022,
+   "top_before": [
+    "Fastball chase",
+    0.2467
+   ],
+   "top_after": [
+    "Fastball chase",
+    0.2497
+   ],
+   "before": [
+    [
+     "Fastball chase",
+     0.2467
+    ],
+    [
+     "Slider down-in",
+     0.2116
+    ],
+    [
+     "Slider down-away",
+     0.1278
+    ],
+    [
+     "Slider chase",
+     0.0977
+    ],
+    [
+     "Slider down-middle",
+     0.0803
+    ],
+    [
+     "Slider middle",
+     0.0623
+    ],
+    [
+     "Fastball up-away",
+     0.062
+    ],
+    [
+     "Changeup down-away",
+     0.0567
+    ],
+    [
+     "Fastball down-away",
+     0.0548
+    ]
+   ],
+   "after": [
+    [
+     "Fastball chase",
+     0.2497
+    ],
+    [
+     "Slider down-away",
+     0.1181
+    ],
+    [
+     "Slider down-in",
+     0.1093
+    ],
+    [
+     "Slider down-middle",
+     0.0881
+    ],
+    [
+     "Slider middle",
+     0.0865
+    ],
+    [
+     "Slider chase",
+     0.083
+    ],
+    [
+     "Changeup down-away",
+     0.0822
+    ],
+    [
+     "Slider up-away",
+     0.0691
+    ],
+    [
+     "Fastball down-away",
+     0.0575
+    ],
+    [
+     "Fastball up-away",
+     0.0564
+    ]
+   ]
+  },
+  "travel|staff2|1|0|False": {
+   "max_move": 0.0406,
+   "top_before": [
+    "Fastball middle",
+    0.1976
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.167
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.1976
+    ],
+    [
+     "Fastball down-middle",
+     0.1399
+    ],
+    [
+     "Slider down-in",
+     0.1322
+    ],
+    [
+     "Fastball down-away",
+     0.1168
+    ],
+    [
+     "Slider middle",
+     0.1002
+    ],
+    [
+     "Fastball up-in",
+     0.0965
+    ],
+    [
+     "Fastball up-away",
+     0.076
+    ],
+    [
+     "Changeup middle",
+     0.0685
+    ],
+    [
+     "Slider down-middle",
+     0.0627
+    ],
+    [
+     "Fastball down-in",
+     0.0096
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.167
+    ],
+    [
+     "Fastball up-in",
+     0.1341
+    ],
+    [
+     "Slider middle",
+     0.1277
+    ],
+    [
+     "Fastball down-middle",
+     0.1199
+    ],
+    [
+     "Changeup middle",
+     0.1017
+    ],
+    [
+     "Fastball down-away",
+     0.1006
+    ],
+    [
+     "Slider down-in",
+     0.0915
+    ],
+    [
+     "Fastball up-away",
+     0.0789
+    ],
+    [
+     "Slider down-middle",
+     0.0427
+    ],
+    [
+     "Fastball down-in",
+     0.0359
+    ]
+   ]
+  },
+  "travel|staff2|1|1|False": {
+   "max_move": 0.0919,
+   "top_before": [
+    "Slider down-in",
+    0.1802
+   ],
+   "top_after": [
+    "Fastball down-away",
+    0.1434
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.1802
+    ],
+    [
+     "Fastball down-away",
+     0.1749
+    ],
+    [
+     "Fastball middle",
+     0.1354
+    ],
+    [
+     "Slider middle",
+     0.1347
+    ],
+    [
+     "Slider down-middle",
+     0.1082
+    ],
+    [
+     "Changeup middle",
+     0.0791
+    ],
+    [
+     "Fastball down-middle",
+     0.074
+    ],
+    [
+     "Changeup down-middle",
+     0.032
+    ],
+    [
+     "Fastball up-away",
+     0.0246
+    ],
+    [
+     "Fastball up-in",
+     0.0239
+    ],
+    [
+     "Fastball down-in",
+     0.0216
+    ],
+    [
+     "Changeup down-away",
+     0.0113
+    ]
+   ],
+   "after": [
+    [
+     "Fastball down-away",
+     0.1434
+    ],
+    [
+     "Fastball middle",
+     0.1001
+    ],
+    [
+     "Slider middle",
+     0.0957
+    ],
+    [
+     "Slider down-in",
+     0.0883
+    ],
+    [
+     "Slider down-middle",
+     0.078
+    ],
+    [
+     "Fastball up-away",
+     0.0777
+    ],
+    [
+     "Fastball up-in",
+     0.0759
+    ],
+    [
+     "Changeup middle",
+     0.07
+    ],
+    [
+     "Slider down-away",
+     0.0668
+    ],
+    [
+     "Slider up-away",
+     0.057
+    ],
+    [
+     "Changeup down-middle",
+     0.0523
+    ],
+    [
+     "Fastball down-middle",
+     0.0425
+    ],
+    [
+     "Changeup down-away",
+     0.0374
+    ],
+    [
+     "Fastball down-in",
+     0.0149
+    ]
+   ]
+  },
+  "travel|staff2|1|2|False": {
+   "max_move": 0.462,
+   "top_before": [
+    "Slider down-in",
+    0.6559
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1939
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.6559
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0057
+    ],
+    [
+     "Changeup down-away",
+     0.0051
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1939
+    ],
+    [
+     "Slider middle",
+     0.1382
+    ],
+    [
+     "Slider down-away",
+     0.1375
+    ],
+    [
+     "Fastball chase",
+     0.1325
+    ],
+    [
+     "Slider down-middle",
+     0.1191
+    ],
+    [
+     "Fastball down-away",
+     0.0738
+    ],
+    [
+     "Fastball up-away",
+     0.0691
+    ],
+    [
+     "Fastball up-in",
+     0.0462
+    ],
+    [
+     "Changeup middle",
+     0.0213
+    ],
+    [
+     "Changeup down-away",
+     0.0207
+    ],
+    [
+     "Changeup down-middle",
+     0.0182
+    ],
+    [
+     "Slider up-away",
+     0.0179
+    ],
+    [
+     "Fastball down-middle",
+     0.0117
+    ]
+   ]
+  },
+  "travel|staff2|2|0|False": {
+   "max_move": 0.1368,
+   "top_before": [
+    "Fastball middle",
+    0.4139
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.4081
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.4139
+    ],
+    [
+     "Fastball down-middle",
+     0.2528
+    ],
+    [
+     "Slider down-in",
+     0.1368
+    ],
+    [
+     "Slider middle",
+     0.1162
+    ],
+    [
+     "Changeup middle",
+     0.0803
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.4081
+    ],
+    [
+     "Fastball down-middle",
+     0.2515
+    ],
+    [
+     "Slider middle",
+     0.2406
+    ],
+    [
+     "Changeup middle",
+     0.0927
+    ],
+    [
+     "Fastball up-in",
+     0.0071
+    ]
+   ]
+  },
+  "travel|staff2|2|1|False": {
+   "max_move": 0.0334,
+   "top_before": [
+    "Fastball middle",
+    0.2001
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1959
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.2001
+    ],
+    [
+     "Fastball down-middle",
+     0.1398
+    ],
+    [
+     "Slider down-in",
+     0.1284
+    ],
+    [
+     "Slider middle",
+     0.1255
+    ],
+    [
+     "Fastball down-away",
+     0.114
+    ],
+    [
+     "Fastball up-in",
+     0.1121
+    ],
+    [
+     "Changeup middle",
+     0.1103
+    ],
+    [
+     "Slider down-middle",
+     0.0525
+    ],
+    [
+     "Fastball down-in",
+     0.0173
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1959
+    ],
+    [
+     "Slider middle",
+     0.1488
+    ],
+    [
+     "Fastball down-middle",
+     0.1376
+    ],
+    [
+     "Changeup middle",
+     0.1157
+    ],
+    [
+     "Fastball down-away",
+     0.1124
+    ],
+    [
+     "Fastball up-in",
+     0.1111
+    ],
+    [
+     "Slider down-in",
+     0.095
+    ],
+    [
+     "Slider down-middle",
+     0.0572
+    ],
+    [
+     "Fastball down-in",
+     0.0263
+    ]
+   ]
+  },
+  "travel|staff2|2|2|False": {
+   "max_move": 0.1876,
+   "top_before": [
+    "Slider down-in",
+    0.3576
+   ],
+   "top_after": [
+    "Slider middle",
+    0.2904
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3576
+    ],
+    [
+     "Slider middle",
+     0.2424
+    ],
+    [
+     "Fastball down-away",
+     0.0956
+    ],
+    [
+     "Fastball middle",
+     0.0811
+    ],
+    [
+     "Fastball up-away",
+     0.0697
+    ],
+    [
+     "Fastball down-middle",
+     0.0662
+    ],
+    [
+     "Fastball up-in",
+     0.066
+    ],
+    [
+     "Fastball down-in",
+     0.0214
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.2904
+    ],
+    [
+     "Slider down-in",
+     0.17
+    ],
+    [
+     "Slider down-middle",
+     0.1396
+    ],
+    [
+     "Fastball down-away",
+     0.0981
+    ],
+    [
+     "Fastball middle",
+     0.0778
+    ],
+    [
+     "Fastball up-away",
+     0.0703
+    ],
+    [
+     "Fastball down-middle",
+     0.0675
+    ],
+    [
+     "Fastball up-in",
+     0.0658
+    ],
+    [
+     "Fastball down-in",
+     0.0205
+    ]
+   ]
+  },
+  "travel|staff2|3|0|False": {
+   "max_move": 0.062,
+   "top_before": [
+    "Fastball middle",
+    0.938
+   ],
+   "top_after": [
+    "Fastball middle",
+    1.0
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.938
+    ],
+    [
+     "Slider down-in",
+     0.062
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     1.0
+    ]
+   ]
+  },
+  "travel|staff4|0|0|False": {
+   "max_move": 0.1217,
+   "top_before": [
+    "Slider down-in",
+    0.2162
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1086
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2162
+    ],
+    [
+     "Fastball middle",
+     0.1525
+    ],
+    [
+     "Fastball down-away",
+     0.1398
+    ],
+    [
+     "Fastball down-middle",
+     0.1363
+    ],
+    [
+     "Slider middle",
+     0.127
+    ],
+    [
+     "Slider down-middle",
+     0.065
+    ],
+    [
+     "Fastball up-away",
+     0.0429
+    ],
+    [
+     "Fastball up-in",
+     0.0335
+    ],
+    [
+     "Fastball down-in",
+     0.0308
+    ],
+    [
+     "Changeup middle",
+     0.0303
+    ],
+    [
+     "Changeup down-away",
+     0.0259
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1086
+    ],
+    [
+     "Slider middle",
+     0.1045
+    ],
+    [
+     "Fastball down-away",
+     0.0969
+    ],
+    [
+     "Fastball down-middle",
+     0.0961
+    ],
+    [
+     "Slider down-in",
+     0.0945
+    ],
+    [
+     "Fastball up-in",
+     0.0935
+    ],
+    [
+     "Fastball up-away",
+     0.0812
+    ],
+    [
+     "Slider down-middle",
+     0.076
+    ],
+    [
+     "Slider down-away",
+     0.0595
+    ],
+    [
+     "Fastball down-in",
+     0.0594
+    ],
+    [
+     "Changeup middle",
+     0.0528
+    ],
+    [
+     "Changeup down-away",
+     0.0451
+    ],
+    [
+     "Slider up-away",
+     0.0299
+    ],
+    [
+     "Changeup down-middle",
+     0.0021
+    ]
+   ]
+  },
+  "travel|staff4|0|1|False": {
+   "max_move": 0.1063,
+   "top_before": [
+    "Slider down-in",
+    0.2083
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1021
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2083
+    ],
+    [
+     "Fastball down-away",
+     0.1314
+    ],
+    [
+     "Fastball up-away",
+     0.1239
+    ],
+    [
+     "Slider middle",
+     0.1109
+    ],
+    [
+     "Slider down-away",
+     0.0888
+    ],
+    [
+     "Slider down-middle",
+     0.0695
+    ],
+    [
+     "Fastball down-middle",
+     0.0684
+    ],
+    [
+     "Changeup down-away",
+     0.047
+    ],
+    [
+     "Changeup middle",
+     0.0457
+    ],
+    [
+     "Changeup down-middle",
+     0.0451
+    ],
+    [
+     "Fastball middle",
+     0.0179
+    ],
+    [
+     "Fastball up-in",
+     0.0155
+    ],
+    [
+     "Fastball down-in",
+     0.0151
+    ],
+    [
+     "Fastball chase",
+     0.0124
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1021
+    ],
+    [
+     "Fastball up-away",
+     0.1015
+    ],
+    [
+     "Slider middle",
+     0.0883
+    ],
+    [
+     "Slider down-away",
+     0.0848
+    ],
+    [
+     "Slider down-middle",
+     0.0841
+    ],
+    [
+     "Fastball down-away",
+     0.0773
+    ],
+    [
+     "Fastball down-middle",
+     0.0707
+    ],
+    [
+     "Slider up-away",
+     0.0693
+    ],
+    [
+     "Changeup down-away",
+     0.0634
+    ],
+    [
+     "Changeup middle",
+     0.0622
+    ],
+    [
+     "Changeup down-middle",
+     0.0612
+    ],
+    [
+     "Fastball up-in",
+     0.0598
+    ],
+    [
+     "Fastball middle",
+     0.0362
+    ],
+    [
+     "Fastball down-in",
+     0.0338
+    ],
+    [
+     "Fastball chase",
+     0.0054
+    ]
+   ]
+  },
+  "travel|staff4|0|2|False": {
+   "max_move": 0.2375,
+   "top_before": [
+    "Slider down-in",
+    0.3699
+   ],
+   "top_after": [
+    "Fastball chase",
+    0.2406
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3699
+    ],
+    [
+     "Fastball chase",
+     0.2346
+    ],
+    [
+     "Slider down-away",
+     0.1755
+    ],
+    [
+     "Slider chase",
+     0.0677
+    ],
+    [
+     "Fastball up-away",
+     0.0662
+    ],
+    [
+     "Fastball down-away",
+     0.0628
+    ],
+    [
+     "Changeup down-away",
+     0.0122
+    ],
+    [
+     "Changeup chase",
+     0.0104
+    ],
+    [
+     "Changeup down-middle",
+     0.0006
+    ]
+   ],
+   "after": [
+    [
+     "Fastball chase",
+     0.2406
+    ],
+    [
+     "Slider down-in",
+     0.1324
+    ],
+    [
+     "Slider down-away",
+     0.1127
+    ],
+    [
+     "Slider chase",
+     0.088
+    ],
+    [
+     "Slider down-middle",
+     0.0873
+    ],
+    [
+     "Slider middle",
+     0.0856
+    ],
+    [
+     "Slider up-away",
+     0.0681
+    ],
+    [
+     "Fastball up-away",
+     0.0615
+    ],
+    [
+     "Fastball down-away",
+     0.0615
+    ],
+    [
+     "Changeup down-away",
+     0.046
+    ],
+    [
+     "Changeup down-middle",
+     0.0158
+    ],
+    [
+     "Changeup middle",
+     0.0005
+    ]
+   ]
+  },
+  "travel|staff4|1|0|False": {
+   "max_move": 0.0829,
+   "top_before": [
+    "Fastball middle",
+    0.2611
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1782
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.2611
+    ],
+    [
+     "Fastball down-middle",
+     0.1828
+    ],
+    [
+     "Slider down-in",
+     0.162
+    ],
+    [
+     "Slider middle",
+     0.1081
+    ],
+    [
+     "Fastball down-away",
+     0.0993
+    ],
+    [
+     "Changeup middle",
+     0.0589
+    ],
+    [
+     "Fastball up-in",
+     0.0393
+    ],
+    [
+     "Fastball up-away",
+     0.0371
+    ],
+    [
+     "Slider down-middle",
+     0.0345
+    ],
+    [
+     "Fastball down-in",
+     0.0168
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1782
+    ],
+    [
+     "Fastball down-middle",
+     0.1272
+    ],
+    [
+     "Fastball down-away",
+     0.1065
+    ],
+    [
+     "Slider middle",
+     0.1049
+    ],
+    [
+     "Fastball up-in",
+     0.0898
+    ],
+    [
+     "Changeup middle",
+     0.0889
+    ],
+    [
+     "Slider down-in",
+     0.086
+    ],
+    [
+     "Fastball up-away",
+     0.0842
+    ],
+    [
+     "Slider down-middle",
+     0.0664
+    ],
+    [
+     "Fastball down-in",
+     0.0506
+    ],
+    [
+     "Slider down-away",
+     0.0174
+    ]
+   ]
+  },
+  "travel|staff4|1|1|False": {
+   "max_move": 0.1436,
+   "top_before": [
+    "Slider down-in",
+    0.2489
+   ],
+   "top_after": [
+    "Changeup middle",
+    0.1503
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.2489
+    ],
+    [
+     "Fastball down-away",
+     0.172
+    ],
+    [
+     "Slider middle",
+     0.1628
+    ],
+    [
+     "Fastball middle",
+     0.135
+    ],
+    [
+     "Changeup middle",
+     0.1079
+    ],
+    [
+     "Fastball down-middle",
+     0.0722
+    ],
+    [
+     "Slider down-middle",
+     0.0259
+    ],
+    [
+     "Fastball up-in",
+     0.0258
+    ],
+    [
+     "Fastball up-away",
+     0.0258
+    ],
+    [
+     "Fastball down-in",
+     0.0237
+    ]
+   ],
+   "after": [
+    [
+     "Changeup middle",
+     0.1503
+    ],
+    [
+     "Fastball down-away",
+     0.1408
+    ],
+    [
+     "Slider down-in",
+     0.1053
+    ],
+    [
+     "Slider middle",
+     0.1002
+    ],
+    [
+     "Fastball middle",
+     0.0992
+    ],
+    [
+     "Slider down-middle",
+     0.0819
+    ],
+    [
+     "Fastball up-in",
+     0.0763
+    ],
+    [
+     "Fastball up-away",
+     0.0759
+    ],
+    [
+     "Slider down-away",
+     0.069
+    ],
+    [
+     "Fastball down-middle",
+     0.0407
+    ],
+    [
+     "Slider up-away",
+     0.0388
+    ],
+    [
+     "Fastball down-in",
+     0.0216
+    ]
+   ]
+  },
+  "travel|staff4|1|2|False": {
+   "max_move": 0.468,
+   "top_before": [
+    "Slider down-in",
+    0.6653
+   ],
+   "top_after": [
+    "Slider down-in",
+    0.1973
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.6653
+    ],
+    [
+     "Fastball chase",
+     0.0986
+    ],
+    [
+     "Fastball up-away",
+     0.0801
+    ],
+    [
+     "Fastball down-away",
+     0.078
+    ],
+    [
+     "Fastball up-in",
+     0.0506
+    ],
+    [
+     "Fastball down-middle",
+     0.0201
+    ],
+    [
+     "Fastball down-in",
+     0.0074
+    ]
+   ],
+   "after": [
+    [
+     "Slider down-in",
+     0.1973
+    ],
+    [
+     "Slider middle",
+     0.1374
+    ],
+    [
+     "Slider down-away",
+     0.1357
+    ],
+    [
+     "Slider down-middle",
+     0.1177
+    ],
+    [
+     "Fastball chase",
+     0.0946
+    ],
+    [
+     "Fastball down-away",
+     0.0809
+    ],
+    [
+     "Fastball up-away",
+     0.0665
+    ],
+    [
+     "Fastball up-in",
+     0.0413
+    ],
+    [
+     "Fastball down-middle",
+     0.0313
+    ],
+    [
+     "Changeup middle",
+     0.0284
+    ],
+    [
+     "Changeup down-away",
+     0.0262
+    ],
+    [
+     "Slider up-away",
+     0.024
+    ],
+    [
+     "Fastball down-in",
+     0.0188
+    ]
+   ]
+  },
+  "travel|staff4|2|0|False": {
+   "max_move": 0.1326,
+   "top_before": [
+    "Fastball middle",
+    0.4123
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.4014
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.4123
+    ],
+    [
+     "Fastball down-middle",
+     0.2515
+    ],
+    [
+     "Slider down-in",
+     0.1326
+    ],
+    [
+     "Slider middle",
+     0.1091
+    ],
+    [
+     "Changeup middle",
+     0.0916
+    ],
+    [
+     "Fastball up-in",
+     0.0028
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.4014
+    ],
+    [
+     "Fastball down-middle",
+     0.2469
+    ],
+    [
+     "Slider middle",
+     0.2262
+    ],
+    [
+     "Changeup middle",
+     0.1071
+    ],
+    [
+     "Fastball up-in",
+     0.0184
+    ]
+   ]
+  },
+  "travel|staff4|2|1|False": {
+   "max_move": 0.0401,
+   "top_before": [
+    "Fastball middle",
+    0.1922
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.1914
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.1922
+    ],
+    [
+     "Slider down-in",
+     0.1505
+    ],
+    [
+     "Slider middle",
+     0.1443
+    ],
+    [
+     "Fastball down-middle",
+     0.133
+    ],
+    [
+     "Changeup middle",
+     0.1148
+    ],
+    [
+     "Fastball down-away",
+     0.1088
+    ],
+    [
+     "Fastball up-in",
+     0.1067
+    ],
+    [
+     "Fastball down-in",
+     0.0426
+    ],
+    [
+     "Slider down-middle",
+     0.0071
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.1914
+    ],
+    [
+     "Slider middle",
+     0.1693
+    ],
+    [
+     "Fastball down-middle",
+     0.1334
+    ],
+    [
+     "Changeup middle",
+     0.1193
+    ],
+    [
+     "Slider down-in",
+     0.1104
+    ],
+    [
+     "Fastball down-away",
+     0.1094
+    ],
+    [
+     "Fastball up-in",
+     0.1077
+    ],
+    [
+     "Fastball down-in",
+     0.0414
+    ],
+    [
+     "Slider down-middle",
+     0.0177
+    ]
+   ]
+  },
+  "travel|staff4|2|2|False": {
+   "max_move": 0.1878,
+   "top_before": [
+    "Slider down-in",
+    0.3722
+   ],
+   "top_after": [
+    "Slider middle",
+    0.2806
+   ],
+   "before": [
+    [
+     "Slider down-in",
+     0.3722
+    ],
+    [
+     "Slider middle",
+     0.2278
+    ],
+    [
+     "Fastball down-away",
+     0.0912
+    ],
+    [
+     "Fastball middle",
+     0.0858
+    ],
+    [
+     "Fastball up-away",
+     0.0684
+    ],
+    [
+     "Fastball down-middle",
+     0.0646
+    ],
+    [
+     "Fastball up-in",
+     0.0611
+    ],
+    [
+     "Fastball down-in",
+     0.0289
+    ]
+   ],
+   "after": [
+    [
+     "Slider middle",
+     0.2806
+    ],
+    [
+     "Slider down-in",
+     0.1844
+    ],
+    [
+     "Slider down-middle",
+     0.135
+    ],
+    [
+     "Fastball down-away",
+     0.0944
+    ],
+    [
+     "Fastball middle",
+     0.0816
+    ],
+    [
+     "Fastball up-away",
+     0.0688
+    ],
+    [
+     "Fastball down-middle",
+     0.0663
+    ],
+    [
+     "Fastball up-in",
+     0.0607
+    ],
+    [
+     "Fastball down-in",
+     0.0281
+    ]
+   ]
+  },
+  "travel|staff4|3|0|False": {
+   "max_move": 0.0556,
+   "top_before": [
+    "Fastball middle",
+    0.9444
+   ],
+   "top_after": [
+    "Fastball middle",
+    0.9762
+   ],
+   "before": [
+    [
+     "Fastball middle",
+     0.9444
+    ],
+    [
+     "Slider down-in",
+     0.0556
+    ]
+   ],
+   "after": [
+    [
+     "Fastball middle",
+     0.9762
+    ],
+    [
+     "Slider middle",
+     0.0238
+    ]
+   ]
+  }
+ }
+}

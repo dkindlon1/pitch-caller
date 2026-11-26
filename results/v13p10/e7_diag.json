@@ -1,0 +1,1306 @@
+{
+ "cell": "hs|staff2|1-2|opp",
+ "soft_loc": null,
+ "n0": {
+  "temp": 0.013492939219675674,
+  "type_window": 0.04047881765902703,
+  "loc_window": 0.013492939219675674,
+  "sit_mix": {
+   "Fastball up": 0.0401,
+   "Fastball middle": 0.0404,
+   "Fastball down": 0.0738,
+   "Slider up": 0.1668,
+   "Slider middle": 0.1679,
+   "Slider down": 0.3235,
+   "Changeup up": 0.0486,
+   "Changeup middle": 0.0489,
+   "Changeup down": 0.0899
+  },
+  "residual": 0.0008443360718372594,
+  "floor": 0.3333,
+  "pre_floor_fastball": 0,
+  "type_softmax": {
+   "Slider": 0.9838,
+   "Changeup": 0.0162
+  },
+  "pitch_best_cost": {
+   "Fastball": 0.31707,
+   "Slider": 0.2745,
+   "Changeup": 0.31271
+  },
+  "removed_before_solve": [],
+  "rows": [
+   {
+    "call": "Slider down-in",
+    "cost": 0.2745,
+    "gap_best": 0.0,
+    "gap_pitch_best": 0.0,
+    "loc_window": 0.01349,
+    "loc_taper": 1.0,
+    "type_share": 0.9838,
+    "pre_floor": 0.9838,
+    "after_tiebreak": 0.9838,
+    "final_root": 0.6559,
+    "menu": 0.6559,
+    "P": {
+     "ball": 0.3726,
+     "cstrike": 0.09,
+     "whiff": 0.2175,
+     "foul": 0.1283,
+     "weak": 0.0776,
+     "solid": 0.0635,
+     "hard": 0.0231,
+     "hbp": 0.0274
+    }
+   },
+   {
+    "call": "Slider middle",
+    "cost": 0.28811,
+    "gap_best": 0.01362,
+    "gap_pitch_best": 0.01362,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.9838,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3258,
+     "cstrike": 0.1321,
+     "whiff": 0.2087,
+     "foul": 0.1361,
+     "weak": 0.077,
+     "solid": 0.0757,
+     "hard": 0.0369,
+     "hbp": 0.0076
+    }
+   },
+   {
+    "call": "Slider down-away",
+    "cost": 0.28896,
+    "gap_best": 0.01447,
+    "gap_pitch_best": 0.01447,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.9838,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.4102,
+     "cstrike": 0.1025,
+     "whiff": 0.2068,
+     "foul": 0.121,
+     "weak": 0.0748,
+     "solid": 0.0614,
+     "hard": 0.0182,
+     "hbp": 0.0051
+    }
+   },
+   {
+    "call": "Slider down-middle",
+    "cost": 0.29104,
+    "gap_best": 0.01655,
+    "gap_pitch_best": 0.01655,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.9838,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3678,
+     "cstrike": 0.1136,
+     "whiff": 0.1992,
+     "foul": 0.1332,
+     "weak": 0.0805,
+     "solid": 0.0728,
+     "hard": 0.0247,
+     "hbp": 0.0081
+    }
+   },
+   {
+    "call": "Slider up-away",
+    "cost": 0.29651,
+    "gap_best": 0.02201,
+    "gap_pitch_best": 0.02201,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.9838,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3989,
+     "cstrike": 0.0906,
+     "whiff": 0.2065,
+     "foul": 0.1322,
+     "weak": 0.0692,
+     "solid": 0.0546,
+     "hard": 0.043,
+     "hbp": 0.005
+    }
+   },
+   {
+    "call": "Slider chase",
+    "cost": 0.29817,
+    "gap_best": 0.02367,
+    "gap_pitch_best": 0.02367,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.9838,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.5274,
+     "cstrike": 0.0403,
+     "whiff": 0.2341,
+     "foul": 0.0896,
+     "weak": 0.0531,
+     "solid": 0.0318,
+     "hard": 0.0091,
+     "hbp": 0.0146
+    }
+   },
+   {
+    "call": "Slider up-in",
+    "cost": 0.30673,
+    "gap_best": 0.03223,
+    "gap_pitch_best": 0.03223,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.9838,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3779,
+     "cstrike": 0.105,
+     "whiff": 0.1843,
+     "foul": 0.1351,
+     "weak": 0.0742,
+     "solid": 0.0591,
+     "hard": 0.0371,
+     "hbp": 0.0273
+    }
+   },
+   {
+    "call": "Changeup middle",
+    "cost": 0.31271,
+    "gap_best": 0.03821,
+    "gap_pitch_best": 0.0,
+    "loc_window": 0.0027,
+    "loc_taper": 1.0,
+    "type_share": 0.0162,
+    "pre_floor": 0.0086,
+    "after_tiebreak": 0.0086,
+    "final_root": 0.0057,
+    "menu": 0.0057,
+    "P": {
+     "ball": 0.3805,
+     "cstrike": 0.0481,
+     "whiff": 0.1925,
+     "foul": 0.1532,
+     "weak": 0.0895,
+     "solid": 0.0783,
+     "hard": 0.049,
+     "hbp": 0.0089
+    }
+   },
+   {
+    "call": "Changeup down-away",
+    "cost": 0.31427,
+    "gap_best": 0.03977,
+    "gap_pitch_best": 0.00156,
+    "loc_window": 0.0027,
+    "loc_taper": 1.0,
+    "type_share": 0.0162,
+    "pre_floor": 0.0076,
+    "after_tiebreak": 0.0076,
+    "final_root": 0.0051,
+    "menu": 0.0051,
+    "P": {
+     "ball": 0.4404,
+     "cstrike": 0.0449,
+     "whiff": 0.1655,
+     "foul": 0.1444,
+     "weak": 0.089,
+     "solid": 0.0777,
+     "hard": 0.0317,
+     "hbp": 0.0064
+    }
+   },
+   {
+    "call": "Changeup down-middle",
+    "cost": 0.3161,
+    "gap_best": 0.0416,
+    "gap_pitch_best": 0.00339,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0162,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.4203,
+     "cstrike": 0.0432,
+     "whiff": 0.17,
+     "foul": 0.1494,
+     "weak": 0.0917,
+     "solid": 0.0798,
+     "hard": 0.0355,
+     "hbp": 0.0101
+    }
+   },
+   {
+    "call": "Fastball chase",
+    "cost": 0.31707,
+    "gap_best": 0.04257,
+    "gap_pitch_best": 0.0,
+    "loc_window": 0.0027,
+    "loc_taper": 1.0,
+    "type_share": 0.0,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.1136,
+    "menu": 0.1136,
+    "P": {
+     "ball": 0.5148,
+     "cstrike": 0.0308,
+     "whiff": 0.1187,
+     "foul": 0.1781,
+     "weak": 0.0793,
+     "solid": 0.0466,
+     "hard": 0.0277,
+     "hbp": 0.0041
+    }
+   },
+   {
+    "call": "Changeup chase",
+    "cost": 0.32137,
+    "gap_best": 0.04687,
+    "gap_pitch_best": 0.00866,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0162,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.5345,
+     "cstrike": 0.0235,
+     "whiff": 0.169,
+     "foul": 0.1142,
+     "weak": 0.0704,
+     "solid": 0.0469,
+     "hard": 0.0178,
+     "hbp": 0.0237
+    }
+   },
+   {
+    "call": "Fastball down-away",
+    "cost": 0.32139,
+    "gap_best": 0.04689,
+    "gap_pitch_best": 0.00432,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0825,
+    "menu": 0.0825,
+    "P": {
+     "ball": 0.3187,
+     "cstrike": 0.0638,
+     "whiff": 0.1143,
+     "foul": 0.2339,
+     "weak": 0.1186,
+     "solid": 0.0874,
+     "hard": 0.059,
+     "hbp": 0.0044
+    }
+   },
+   {
+    "call": "Fastball up-away",
+    "cost": 0.32141,
+    "gap_best": 0.04691,
+    "gap_pitch_best": 0.00434,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0823,
+    "menu": 0.0823,
+    "P": {
+     "ball": 0.3422,
+     "cstrike": 0.0738,
+     "whiff": 0.1016,
+     "foul": 0.224,
+     "weak": 0.1087,
+     "solid": 0.0798,
+     "hard": 0.0655,
+     "hbp": 0.0044
+    }
+   },
+   {
+    "call": "Changeup up-away",
+    "cost": 0.3239,
+    "gap_best": 0.0494,
+    "gap_pitch_best": 0.01119,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0162,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.4309,
+     "cstrike": 0.039,
+     "whiff": 0.1621,
+     "foul": 0.1534,
+     "weak": 0.078,
+     "solid": 0.064,
+     "hard": 0.0664,
+     "hbp": 0.0063
+    }
+   },
+   {
+    "call": "Fastball up-in",
+    "cost": 0.32687,
+    "gap_best": 0.05237,
+    "gap_pitch_best": 0.0098,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0549,
+    "menu": 0.0549,
+    "P": {
+     "ball": 0.2902,
+     "cstrike": 0.0574,
+     "whiff": 0.1049,
+     "foul": 0.2442,
+     "weak": 0.1335,
+     "solid": 0.0994,
+     "hard": 0.0469,
+     "hbp": 0.0236
+    }
+   },
+   {
+    "call": "Changeup down-in",
+    "cost": 0.32695,
+    "gap_best": 0.05245,
+    "gap_pitch_best": 0.01424,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0162,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3975,
+     "cstrike": 0.039,
+     "whiff": 0.1751,
+     "foul": 0.1488,
+     "weak": 0.0895,
+     "solid": 0.0778,
+     "hard": 0.0379,
+     "hbp": 0.0343
+    }
+   },
+   {
+    "call": "Fastball down-middle",
+    "cost": 0.3307,
+    "gap_best": 0.0562,
+    "gap_pitch_best": 0.01363,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.282,
+     "cstrike": 0.0676,
+     "whiff": 0.0985,
+     "foul": 0.2447,
+     "weak": 0.122,
+     "solid": 0.1055,
+     "hard": 0.0723,
+     "hbp": 0.0074
+    }
+   },
+   {
+    "call": "Fastball down-in",
+    "cost": 0.33162,
+    "gap_best": 0.05712,
+    "gap_pitch_best": 0.01455,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.2986,
+     "cstrike": 0.0649,
+     "whiff": 0.1029,
+     "foul": 0.2385,
+     "weak": 0.1231,
+     "solid": 0.0911,
+     "hard": 0.0576,
+     "hbp": 0.0232
+    }
+   },
+   {
+    "call": "Fastball middle",
+    "cost": 0.33449,
+    "gap_best": 0.05999,
+    "gap_pitch_best": 0.01742,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.2389,
+     "cstrike": 0.0739,
+     "whiff": 0.1016,
+     "foul": 0.2473,
+     "weak": 0.1223,
+     "solid": 0.1253,
+     "hard": 0.0832,
+     "hbp": 0.0074
+    }
+   },
+   {
+    "call": "Changeup up-in",
+    "cost": 0.33647,
+    "gap_best": 0.06197,
+    "gap_pitch_best": 0.02375,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0162,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3974,
+     "cstrike": 0.046,
+     "whiff": 0.1481,
+     "foul": 0.1586,
+     "weak": 0.0848,
+     "solid": 0.0711,
+     "hard": 0.0597,
+     "hbp": 0.0344
+    }
+   }
+  ],
+  "menu": [
+   [
+    "Slider down-in",
+    0.6559
+   ],
+   [
+    "Fastball chase",
+    0.1136
+   ],
+   [
+    "Fastball down-away",
+    0.0825
+   ],
+   [
+    "Fastball up-away",
+    0.0823
+   ],
+   [
+    "Fastball up-in",
+    0.0549
+   ],
+   [
+    "Changeup middle",
+    0.0057
+   ],
+   [
+    "Changeup down-away",
+    0.0051
+   ]
+  ]
+ },
+ "top_call_n0": "Slider down-in",
+ "repeats": [
+  {
+   "n": 1,
+   "top_share": 0.6558,
+   "move": 0.0,
+   "top": "Slider down-in",
+   "menu": [
+    [
+     "Slider down-in",
+     0.6558
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0057
+    ],
+    [
+     "Changeup down-away",
+     0.0051
+    ]
+   ]
+  },
+  {
+   "n": 2,
+   "top_share": 0.6558,
+   "move": 0.0001,
+   "top": "Slider down-in",
+   "menu": [
+    [
+     "Slider down-in",
+     0.6558
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0058
+    ],
+    [
+     "Changeup down-away",
+     0.0051
+    ]
+   ]
+  },
+  {
+   "n": 3,
+   "top_share": 0.6558,
+   "move": 0.0001,
+   "top": "Slider down-in",
+   "menu": [
+    [
+     "Slider down-in",
+     0.6558
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0058
+    ],
+    [
+     "Changeup down-away",
+     0.0052
+    ]
+   ]
+  },
+  {
+   "n": 4,
+   "top_share": 0.6557,
+   "move": 0.0002,
+   "top": "Slider down-in",
+   "menu": [
+    [
+     "Slider down-in",
+     0.6557
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0058
+    ],
+    [
+     "Changeup down-away",
+     0.0052
+    ]
+   ]
+  },
+  {
+   "n": 5,
+   "top_share": 0.6557,
+   "move": 0.0002,
+   "top": "Slider down-in",
+   "menu": [
+    [
+     "Slider down-in",
+     0.6557
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0058
+    ],
+    [
+     "Changeup down-away",
+     0.0052
+    ]
+   ]
+  },
+  {
+   "n": 6,
+   "top_share": 0.6557,
+   "move": 0.0002,
+   "top": "Slider down-in",
+   "menu": [
+    [
+     "Slider down-in",
+     0.6557
+    ],
+    [
+     "Fastball chase",
+     0.1136
+    ],
+    [
+     "Fastball down-away",
+     0.0825
+    ],
+    [
+     "Fastball up-away",
+     0.0823
+    ],
+    [
+     "Fastball up-in",
+     0.0549
+    ],
+    [
+     "Changeup middle",
+     0.0058
+    ],
+    [
+     "Changeup down-away",
+     0.0052
+    ]
+   ]
+  }
+ ],
+ "other_side": {
+  "side": "same",
+  "menu": [
+   [
+    "Slider down-away",
+    0.1776
+   ],
+   [
+    "Slider middle",
+    0.1589
+   ],
+   [
+    "Slider down-middle",
+    0.1374
+   ],
+   [
+    "Fastball chase",
+    0.1105
+   ],
+   [
+    "Fastball down-away",
+    0.1079
+   ],
+   [
+    "Fastball up-away",
+    0.0996
+   ],
+   [
+    "Slider up-away",
+    0.0912
+   ],
+   [
+    "Changeup down-away",
+    0.0453
+   ],
+   [
+    "Slider chase",
+    0.0419
+   ],
+   [
+    "Changeup middle",
+    0.0145
+   ],
+   [
+    "Fastball down-middle",
+    0.0123
+   ],
+   [
+    "Fastball up-in",
+    0.003
+   ]
+  ],
+  "rows": [
+   {
+    "call": "Slider down-away",
+    "cost": 0.29158,
+    "gap_best": 0.0,
+    "gap_pitch_best": 0.0,
+    "loc_window": 0.01349,
+    "loc_taper": 1.0,
+    "type_share": 0.8622,
+    "pre_floor": 0.2522,
+    "after_tiebreak": 0.2522,
+    "final_root": 0.1776,
+    "menu": 0.1776,
+    "P": {
+     "ball": 0.411,
+     "cstrike": 0.1009,
+     "whiff": 0.2178,
+     "foul": 0.1164,
+     "weak": 0.0735,
+     "solid": 0.0607,
+     "hard": 0.0148,
+     "hbp": 0.0051
+    }
+   },
+   {
+    "call": "Slider middle",
+    "cost": 0.29308,
+    "gap_best": 0.0015,
+    "gap_pitch_best": 0.0015,
+    "loc_window": 0.01349,
+    "loc_taper": 1.0,
+    "type_share": 0.8622,
+    "pre_floor": 0.2257,
+    "after_tiebreak": 0.2257,
+    "final_root": 0.1589,
+    "menu": 0.1589,
+    "P": {
+     "ball": 0.3277,
+     "cstrike": 0.1325,
+     "whiff": 0.2052,
+     "foul": 0.1366,
+     "weak": 0.0787,
+     "solid": 0.0775,
+     "hard": 0.0341,
+     "hbp": 0.0077
+    }
+   },
+   {
+    "call": "Slider down-middle",
+    "cost": 0.29504,
+    "gap_best": 0.00346,
+    "gap_pitch_best": 0.00346,
+    "loc_window": 0.01349,
+    "loc_taper": 1.0,
+    "type_share": 0.8622,
+    "pre_floor": 0.1952,
+    "after_tiebreak": 0.1952,
+    "final_root": 0.1374,
+    "menu": 0.1374,
+    "P": {
+     "ball": 0.3706,
+     "cstrike": 0.1147,
+     "whiff": 0.2011,
+     "foul": 0.1305,
+     "weak": 0.0803,
+     "solid": 0.0732,
+     "hard": 0.0215,
+     "hbp": 0.0082
+    }
+   },
+   {
+    "call": "Slider up-away",
+    "cost": 0.30058,
+    "gap_best": 0.00899,
+    "gap_pitch_best": 0.00899,
+    "loc_window": 0.01349,
+    "loc_taper": 1.0,
+    "type_share": 0.8622,
+    "pre_floor": 0.1295,
+    "after_tiebreak": 0.1295,
+    "final_root": 0.0912,
+    "menu": 0.0912,
+    "P": {
+     "ball": 0.4006,
+     "cstrike": 0.0901,
+     "whiff": 0.2062,
+     "foul": 0.1318,
+     "weak": 0.0721,
+     "solid": 0.0574,
+     "hard": 0.0368,
+     "hbp": 0.005
+    }
+   },
+   {
+    "call": "Slider chase",
+    "cost": 0.30353,
+    "gap_best": 0.01195,
+    "gap_pitch_best": 0.01195,
+    "loc_window": 0.01349,
+    "loc_taper": 0.572,
+    "type_share": 0.8622,
+    "pre_floor": 0.0595,
+    "after_tiebreak": 0.0595,
+    "final_root": 0.0419,
+    "menu": 0.0419,
+    "P": {
+     "ball": 0.5319,
+     "cstrike": 0.0407,
+     "whiff": 0.2349,
+     "foul": 0.0866,
+     "weak": 0.052,
+     "solid": 0.0314,
+     "hard": 0.0078,
+     "hbp": 0.0146
+    }
+   },
+   {
+    "call": "Slider down-in",
+    "cost": 0.3055,
+    "gap_best": 0.01392,
+    "gap_pitch_best": 0.01392,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.8622,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3779,
+     "cstrike": 0.0932,
+     "whiff": 0.2097,
+     "foul": 0.1276,
+     "weak": 0.0782,
+     "solid": 0.0644,
+     "hard": 0.0214,
+     "hbp": 0.0277
+    }
+   },
+   {
+    "call": "Slider up-in",
+    "cost": 0.31277,
+    "gap_best": 0.02118,
+    "gap_pitch_best": 0.02118,
+    "loc_window": 0.01349,
+    "loc_taper": 0.0,
+    "type_share": 0.8622,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.3808,
+     "cstrike": 0.1062,
+     "whiff": 0.1795,
+     "foul": 0.1353,
+     "weak": 0.0747,
+     "solid": 0.0594,
+     "hard": 0.0368,
+     "hbp": 0.0274
+    }
+   },
+   {
+    "call": "Changeup down-away",
+    "cost": 0.32287,
+    "gap_best": 0.03128,
+    "gap_pitch_best": 0.0,
+    "loc_window": 0.0027,
+    "loc_taper": 1.0,
+    "type_share": 0.0849,
+    "pre_floor": 0.0643,
+    "after_tiebreak": 0.0643,
+    "final_root": 0.0453,
+    "menu": 0.0453,
+    "P": {
+     "ball": 0.4533,
+     "cstrike": 0.0443,
+     "whiff": 0.1602,
+     "foul": 0.1409,
+     "weak": 0.0839,
+     "solid": 0.0735,
+     "hard": 0.0373,
+     "hbp": 0.0065
+    }
+   },
+   {
+    "call": "Changeup middle",
+    "cost": 0.32536,
+    "gap_best": 0.03377,
+    "gap_pitch_best": 0.00249,
+    "loc_window": 0.0027,
+    "loc_taper": 0.385,
+    "type_share": 0.0849,
+    "pre_floor": 0.0206,
+    "after_tiebreak": 0.0206,
+    "final_root": 0.0145,
+    "menu": 0.0145,
+    "P": {
+     "ball": 0.3921,
+     "cstrike": 0.0483,
+     "whiff": 0.1742,
+     "foul": 0.1556,
+     "weak": 0.0846,
+     "solid": 0.0735,
+     "hard": 0.0626,
+     "hbp": 0.0091
+    }
+   },
+   {
+    "call": "Fastball chase",
+    "cost": 0.32579,
+    "gap_best": 0.03421,
+    "gap_pitch_best": 0.0,
+    "loc_window": 0.0027,
+    "loc_taper": 1.0,
+    "type_share": 0.0529,
+    "pre_floor": 0.0184,
+    "after_tiebreak": 0.0184,
+    "final_root": 0.1105,
+    "menu": 0.1105,
+    "P": {
+     "ball": 0.5225,
+     "cstrike": 0.031,
+     "whiff": 0.1155,
+     "foul": 0.1752,
+     "weak": 0.0762,
+     "solid": 0.0448,
+     "hard": 0.0306,
+     "hbp": 0.0041
+    }
+   },
+   {
+    "call": "Fastball down-away",
+    "cost": 0.32612,
+    "gap_best": 0.03453,
+    "gap_pitch_best": 0.00032,
+    "loc_window": 0.0027,
+    "loc_taper": 1.0,
+    "type_share": 0.0529,
+    "pre_floor": 0.018,
+    "after_tiebreak": 0.018,
+    "final_root": 0.1079,
+    "menu": 0.1079,
+    "P": {
+     "ball": 0.3387,
+     "cstrike": 0.0725,
+     "whiff": 0.117,
+     "foul": 0.2191,
+     "weak": 0.1084,
+     "solid": 0.0799,
+     "hard": 0.06,
+     "hbp": 0.0044
+    }
+   },
+   {
+    "call": "Changeup down-middle",
+    "cost": 0.32643,
+    "gap_best": 0.03485,
+    "gap_pitch_best": 0.00357,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0849,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.4341,
+     "cstrike": 0.0438,
+     "whiff": 0.1579,
+     "foul": 0.1477,
+     "weak": 0.0866,
+     "solid": 0.0755,
+     "hard": 0.044,
+     "hbp": 0.0103
+    }
+   },
+   {
+    "call": "Fastball up-away",
+    "cost": 0.3272,
+    "gap_best": 0.03561,
+    "gap_pitch_best": 0.00141,
+    "loc_window": 0.0027,
+    "loc_taper": 1.0,
+    "type_share": 0.0529,
+    "pre_floor": 0.0166,
+    "after_tiebreak": 0.0166,
+    "final_root": 0.0996,
+    "menu": 0.0996,
+    "P": {
+     "ball": 0.3579,
+     "cstrike": 0.0808,
+     "whiff": 0.1001,
+     "foul": 0.2142,
+     "weak": 0.1018,
+     "solid": 0.0748,
+     "hard": 0.0659,
+     "hbp": 0.0045
+    }
+   },
+   {
+    "call": "Changeup chase",
+    "cost": 0.33168,
+    "gap_best": 0.0401,
+    "gap_pitch_best": 0.00882,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0849,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.5515,
+     "cstrike": 0.024,
+     "whiff": 0.156,
+     "foul": 0.1114,
+     "weak": 0.0664,
+     "solid": 0.0444,
+     "hard": 0.0221,
+     "hbp": 0.0242
+    }
+   },
+   {
+    "call": "Changeup up-away",
+    "cost": 0.33563,
+    "gap_best": 0.04404,
+    "gap_pitch_best": 0.01276,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0849,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.444,
+     "cstrike": 0.039,
+     "whiff": 0.1476,
+     "foul": 0.1536,
+     "weak": 0.073,
+     "solid": 0.0598,
+     "hard": 0.0767,
+     "hbp": 0.0064
+    }
+   },
+   {
+    "call": "Fastball down-middle",
+    "cost": 0.33837,
+    "gap_best": 0.04678,
+    "gap_pitch_best": 0.01258,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0529,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0123,
+    "menu": 0.0123,
+    "P": {
+     "ball": 0.2863,
+     "cstrike": 0.068,
+     "whiff": 0.1006,
+     "foul": 0.241,
+     "weak": 0.1163,
+     "solid": 0.1007,
+     "hard": 0.0795,
+     "hbp": 0.0075
+    }
+   },
+   {
+    "call": "Fastball up-in",
+    "cost": 0.33905,
+    "gap_best": 0.04747,
+    "gap_pitch_best": 0.01326,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0529,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.003,
+    "menu": 0.003,
+    "P": {
+     "ball": 0.2811,
+     "cstrike": 0.0515,
+     "whiff": 0.0964,
+     "foul": 0.2549,
+     "weak": 0.1348,
+     "solid": 0.1002,
+     "hard": 0.0576,
+     "hbp": 0.0236
+    }
+   },
+   {
+    "call": "Changeup down-in",
+    "cost": 0.33931,
+    "gap_best": 0.04773,
+    "gap_pitch_best": 0.01645,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0849,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.4125,
+     "cstrike": 0.0407,
+     "whiff": 0.156,
+     "foul": 0.1487,
+     "weak": 0.0844,
+     "solid": 0.0733,
+     "hard": 0.0493,
+     "hbp": 0.0352
+    }
+   },
+   {
+    "call": "Fastball down-in",
+    "cost": 0.34326,
+    "gap_best": 0.05168,
+    "gap_pitch_best": 0.01747,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0529,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.2879,
+     "cstrike": 0.0575,
+     "whiff": 0.0985,
+     "foul": 0.2484,
+     "weak": 0.1237,
+     "solid": 0.0915,
+     "hard": 0.0691,
+     "hbp": 0.0233
+    }
+   },
+   {
+    "call": "Fastball middle",
+    "cost": 0.3443,
+    "gap_best": 0.05272,
+    "gap_pitch_best": 0.01851,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0529,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.2412,
+     "cstrike": 0.0735,
+     "whiff": 0.0996,
+     "foul": 0.247,
+     "weak": 0.1161,
+     "solid": 0.1188,
+     "hard": 0.0962,
+     "hbp": 0.0075
+    }
+   },
+   {
+    "call": "Changeup up-in",
+    "cost": 0.35043,
+    "gap_best": 0.05885,
+    "gap_pitch_best": 0.02757,
+    "loc_window": 0.0027,
+    "loc_taper": 0.0,
+    "type_share": 0.0849,
+    "pre_floor": 0.0,
+    "after_tiebreak": 0.0,
+    "final_root": 0.0,
+    "menu": 0.0,
+    "P": {
+     "ball": 0.4106,
+     "cstrike": 0.0467,
+     "whiff": 0.1313,
+     "foul": 0.159,
+     "weak": 0.0762,
+     "solid": 0.0628,
+     "hard": 0.0781,
+     "hbp": 0.0351
+    }
+   }
+  ],
+  "pre_floor_fastball": 0.0529
+ }
+}

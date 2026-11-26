@@ -1370,3 +1370,252 @@ None is re-pinned.
 - Cause confirmed by numbers: at HS four_cut 3-2 the cutter's 0.25% pre-floor share took the whole 54.5% floor (x 216.7). One repeat dropped that share to 0, and the cost softmax split the floor cutter 29 / fastball 25. The floor now adds its shortfall by that same softmax (both engines, parity 0 mismatches, fae37d2), so that cell moves 1.0 to 5.8 points at n = 1..6 (was 25 to 30). 91 of 100 grid cells are identical; one HS cell (ride126 2-2) goes 0.0 -> 2.9 through a top-call swap.
 - Floor holds everywhere (0 cells below; largest share change 0.34 points). Fuzz is identical, test-sql 15/15, test-app 50/68 with no new failure (tests_v11 Q4 now passes). HS sims: no stop line crossed (runs +0.35 +/- 0.19 vs Part 8, K gap -0.4, BB +0.1).
 - Changed calls (all HS / travel, all floor-driven): 11 golden picks, 1 top call, #476 and #246 of the 6 graded rows, E-6 and read-through E8. New proposed re-pin: p9/golden_v13coreFloor.json (48 cases differ from Part 8's proposal), not applied.
+
+
+# Part 10 (Nov 26): pre-gate diagnosis, test re-points and the golden re-pin (rulings 34-40)
+
+Carries out `docs/PROMPT_hitter_v13_pregate_diagnose_2026-11-26.md` on `feat/hitter-v13-final` (worktree `C:/dev/pc-final`), on the
+desktop (fixed seeds). It supersedes the E-7 check prompt. Step 6 stays locked (not run); 2026 not read. **No engine code or table changed.**
+Tasks 1 to 4 only diagnose; every fix they propose is **proposed, not applied**. Data and logs: `C:/dev/pitchiq-data-final/p10/`;
+small results: `results/v13p10/`.
+
+## Commits
+| commit | what |
+|---|---|
+| 5d78ffe | **task 6: golden re-pin** (its own commit). `golden/golden_v13core.json` <- `p9/golden_v13coreFloor.json`. Old sha256 `eae5e41c…7949` (blob 6b42d68), new `8e1edaef…36f4` (blob 28dcf8d). `node golden/golden_v11.js v13core`: **PASS** |
+| 1548fa9 | rulings 34-40 recorded in `docs/DECISIONS_refit_v13.md`; the prompt and the E-7 prompt it supersedes |
+| bafb16a | task 5: the two D1 1-1 table probes and the drift-note check re-pointed (test-only) |
+| (this report) | diagnosis scripts `readthrough/e7_diag_v13.py`, `readthrough/e7_blast_v13.py`, results `results/v13p10/`, Part 10 |
+
+## Task 1: E-7 opposite side (HS 1-2, SL down-in 66%): **engine-made** (a soft coaching credit plus the location window)
+Cell: `edge_rows.py`'s "1-2 | starter (HS q5, FB / SL / CH) | opp": HS data staff q5 (FB 3/4, **SL grade 4**, CH 3/2), bases
+empty, 1 out, inning 3, tied, pitch count 40. Script `readthrough/e7_diag_v13.py` hooks the root solve (asserting it equals the
+engine's own output); full rows in `results/v13p10/e7_diag.json`.
+
+**The menu** (cost = the call's cost at the sit mix; gap = behind that pitch's best spot; the location window here is 0.01349):
+
+| call | cost | gap to its pitch's best | pre-floor share | final share |
+|---|---|---|---|---|
+| **Slider down-in** | **0.2745** | 0 | **98.4** | **65.6** |
+| Slider middle | 0.2881 | **0.01362** (window 0.01349) | 0 | 0 |
+| Slider down-away | 0.2890 | 0.01447 | 0 | 0 |
+| Slider down-middle / up-away / chase / up-in | 0.2910-0.3067 | 0.017-0.032 | 0 | 0 |
+| Changeup middle / down-away | 0.3127 / 0.3143 | 0 / 0.0016 | 0.9 / 0.8 | 0.6 / 0.5 |
+| Fastball chase / down-away / up-away / up-in | 0.3171-0.3269 | (fastball 0.0426 behind the best: outside the 0.0405 type window) | 0 | 11.4 / 8.3 / 8.2 / 5.5 |
+
+**What made the concentration, step by step:**
+1. **Hard rules: none.** Every call (3 pitches x 7 targets) is allowed: no shake-off, every pitch above the HS confidence cutoff, no
+   landing record, 1-2 has no target rule (A1 / A2 / A3 are 3-0 / 3-1 / 2-2), no matchup so nothing mashed.
+2. **The cost: a soft coaching credit.** `COACH_RULE["plus_opp"]` (J7: to an opposite-side hitter, a grade-4+ slider at the back
+   foot, or a grade-4+ changeup away) takes **0.015 x run scale (1.669 at HS) = 0.0250** off Slider down-in's cost. The zone / take
+   tables barely separate it: down-in's outcome mix is close to the other slider spots and to its own same-side numbers (ball .373
+   vs .378, whiff .218 vs .210, hard .023 vs .021). Without the credit, slider down-in costs 0.2995, behind slider middle (0.2881).
+   On the same side (no credit) it is 6th of the 7 slider spots.
+3. **The location window.** The credit puts every other slider spot just past the location window: the next spot is 0.01362
+   behind and the window is 0.01349 (LOC_WINDOW x run scale x stakes). So the location softmax gives Slider down-in **100%** of
+   the slider's share. The pitch-type softmax gives the slider 98.4%; the fastball is outside the never-pick window.
+4. **The floor: dilution only.** The fastball share is 0, so the w = 0 branch scales every other call by (1 - f) = 2/3
+   (98.4 -> 65.6). It also spreads the 33.3% fastball floor by cost over chase / down-away / up-away / up-in. The floor didn't
+   make the concentration. It cut it from 98% to 66%.
+
+Under ruling 37 (only coach bans, mashed, fatigue / injury and A1 / A2 / A3 are hard), this is **engine-made**: the J7 credit is a
+cost term, and the window is model-made (ruling 16's table).
+
+**No history, then n = 1..6 repeats of the top call** (usage_by_call on Slider down-in): 65.59 -> 65.58, 65.58, 65.58, 65.57, 65.57,
+65.57. **The move is 0.0 to 0.02 points.** The top call never changes. With every other slider spot outside the window, the learning
+term has nowhere to send the share.
+
+**Proposed (not applied): scale `plus_opp` by RHO_L at HS / travel (0.6).** Every other MLB-sized coaching term already gets that
+scaling (ride_up_2k, the path rule, the behavioral terms; engine.py line 189's RHO_L comment). J7 was left at the full MLB size. At
+0.009 x 1.669 = 0.0150 the credit still makes Slider down-in the top call, but the other slider spots come back inside the window
+(scratch run, `results/v13p10/e7_diag_rho.json`):
+
+| E-7 opposite side | now | with plus_opp x RHO_L |
+|---|---|---|
+| menu | SL down-in 65.6, FB chase 11.4, FB down-away 8.3, FB up-away 8.2, FB up-in 5.5, CH middle 0.6, CH down-away 0.5 | **SL down-in 19.4**, SL middle 13.8, SL down-away 13.8, FB chase 13.3, SL down-middle 11.9, FB down-away 7.4, FB up-away 6.9, FB up-in 4.6, CH middle 2.1, CH down-away 2.1, CH down-middle 1.8, SL up-away 1.8, FB down-middle 1.2 |
+| pre-floor | SL down-in 98.4 | SL down-in 28.0, SL middle 19.9, SL down-away 19.8, SL down-middle 17.2, CH 8.7, FB chase 3.8 |
+| fastball share | 33.3 (at the floor) | 33.3 (at the floor) |
+| repeats n = 1..6, move of the top call | 0.0 to 0.02 | 0.04 to 0.20 |
+
+For contrast, credit 0 (J7 off) puts Fastball chase on top at 15.7%, with SL down-in at 6.3% (`e7_diag_nocredit.json`).
+
+**Blast radius** (`readthrough/e7_blast_v13.py --variant rho`, `results/v13p10/e7_blast_rho.json`). Cells: HS and travel x (the 10
+robustness arsenals + the 6 HS data-staff pitchers) x 12 counts x same / opposite side = 768 cells, default situation, no history.
+- **College / MLB: untouched by construction** (RHO_L is HS / travel only). **Same side: untouched** (J7 is opposite-side only).
+- **Changed: 30 HS cells (the same 30 at travel).** All are opposite side. All are on the three data-staff pitchers with a grade-4
+  slider (q1, q5, q9: staff0 / 2 / 4). None of the 10 robustness arsenals moves.
+  - 26 of the 30 move more than 5 points; 11 change the top call.
+  - The biggest moves are the 1-2 cells (q9 66.5 -> 19.7, q5 65.6 -> 19.4, q1 41.2 -> 15.2), then 0-2 at q9 (37.0 -> FB chase
+    24.1) and 2-2 (SL down-in 31-37 -> SL middle 28-29).
+  - 3-0 tips further to the fastball (q1: FB middle 83.7 -> 86.7). 3-1 and 3-2 don't move.
+- HS / travel cells with a top call over 60%: 96 -> 92.
+- Goldens: **29 of the 212 HS / travel golden cases** are opposite side with a grade-4+ slider or changeup. Those are the cases that
+  could move. Their HS sims and goldens would need a rerun and re-pin, so the fix is a fresh grading round.
+- A general alternative, the location window x 1.5 at HS / travel (`--variant loc15`), changes **700 of the 768** cells (152 top
+  calls, same side included). It is much broader, so not proposed.
+
+## Task 2: the noise-chasing learner, 32/40 -> 27/40: **cause = the refit tables reaching the app (not the floor)**
+Test: `stage2_test.js` D5, 40 seasons (seeds 500-539), college D3, sample staff. The D5 block alone is in `results/v13p10/stage2_d5_alone.js`,
+same code and seeds. It was run against `git archive <commit> app` for every commit since the recalibrated core that touched `app/`
+(`results/v13p10/stage2_d5_bisect.txt`):
+
+| commit | caught (needs 32) | real learner off | seasons (first 3 event sigs) |
+|---|---|---|---|
+| 629c553 recalibrated core, 0535806, 5dccec9 | **32** | 0 | a47a c914 e114 (same seasons) |
+| **24d4f66** fix 8 (HS floor) | **28** | 2 | **63d0 782c cb61 (new seasons)** |
+| c393047 fix 10 (college count layers on full games) | 32 | 2 | new |
+| c3e21be, e00cfe5, 938fc4e | 28 | 4 | new |
+| bd71234, 2adf88e (per-count scalars) | 28 | 4 | new |
+| 510e617, 7b72080 (pitcher-side keys) | 27 | 2 | new |
+| 598c96a (final archive), eec6ce7 (W = 32), fae37d2 (floor fix) = this tip's app | **27** | 2 | new |
+| scratch: 5dccec9's engine.js + 24d4f66's engine_data.json | **28** | 2 | 63d0 782c cb61 (= 24d4f66) |
+| scratch: 24d4f66 with the floor switched off (fbFloor -> null) | **28** | 2 | 63d0 782c cb61 (= 24d4f66) |
+
+- **The first move (32 -> 28) is data, not code.** Putting 24d4f66's `app/engine_data.json` under 5dccec9's engine reproduces it
+  exactly. Switching the floor off at 24d4f66 changes nothing (college D3 has no floor table).
+- **Why that commit:** 24d4f66 re-exported `app/engine_data.json`. Until then the app's copy still carried 629c553's college count
+  tables. Python had switched to 99b22fb's pitcher-side recalibration (the same commit the Part 8 bisect found flattening the 2-2
+  menu), but the JS file was never re-exported. So 24d4f66 is where the JS app first plays the refit tables: college D3 count layer
+  (swing, whiff, foul, called strike, ground ball by count), in-play tables, run values and runner fit. The same 40 seeds now play
+  different seasons.
+- **After that, every table refit re-rolls the seasons again**, and the count wanders 27 to 32: c393047 32, c3e21be 28, 510e617 27,
+  598c96a 27. W = 32 (eec6ce7) and the floor fix leave the seasons byte-identical, so they can't move it (27 = 27).
+- **Is it a real drop, or the seasons?** 200 fresh seasons (seeds 600-799), same switch, same learner (`results/v13p10/stage2_d5_fresh.txt`):
+
+  | app | seasons | noise learner caught | rate (SE) | real learner off |
+  |---|---|---|---|---|
+  | 5dccec9 (32/40 on the test's seeds) | 200 | 141 | **70.5% (3.2)** | 5 (2.5%) |
+  | fae37d2 = this tip (27/40) | 200 | 146 | **73.0% (3.1)** | 5 (2.5%) |
+- Verdict: **not a real drop.** On fresh seasons the tip catches as often as 5dccec9 (+2.5 +/- 4.5 points). 32/40 was a lucky draw
+  of the 40 test seasons, and 27/40 (67.5%) is within noise of the ~72% both engines show. The switch's sensitivity didn't change:
+  each table commit re-rolls which 40 seasons get played.
+- **But the test's bar is not met on fresh seasons by either engine.** It needs 80% caught, and both sit at 70-73%. The real-learner
+  false switch-off rate is 2.5%, the test's own limit (1 in 40).
+- This was already true on the recalibrated core's tables (5dccec9 plays 629c553's college tables in the app). The 32/40 pass there
+  was luck.
+- **Needs a ruling, not an engine fix:**
+  - (a) retune the switch (`learner.js` margin / window, as on Nov 6 and Nov 11, on fresh seeds and checked on held-out ones); or
+  - (b) accept ~72% and re-pin the bar.
+  - Blast radius of (a): the learner's switch-off only (no engine call); it would need its own false-switch-off check.
+
+## Task 3: game_mix_e2e (4 of 21 over 70%): **not the floor; passes on this tip (2 of 21)**
+The 4 games were in **Part 3's log** (`C:/dev/pitchiq-data/p3/suites/test_app.log`, the frozen-archive engine 2cf56d9). Parts 4, 8 and
+9 pass with 2 games over 70%. The test plays **college D3**, the sample staff (FB / SL / CH), 82 pitches a game, every call the app's
+own. There is no floor at D3: `engine_data.json` has `fb_floor` only at `levels.hs`, and travel reads HS.
+
+| game (Part 3, 2cf56d9) | mix | top |
+|---|---|---|
+| tier 2, seed 7 | Fastball 66, Slider 16 | **Fastball 80%** |
+| tier 2, seed 57 | Slider 58, Fastball 19, Changeup 5 | **Slider 71%** |
+| tier 3, seed 69 | Slider 58, Fastball 19, Changeup 5 | **Slider 71%** |
+| tier 3, forced reads, seed 7 | Fastball 65, Slider 16, Changeup 1 | **Fastball 79%** |
+
+Two of the four are slider games, so this isn't a fastball-share story. **The floor tested directly** (`results/v13p10/game_mix_floor_test.txt`;
+the saved `app/dist` of each commit, run by this tip's `game_mix_e2e.js`; "no floor" = the same dist with `fbFloor` returning null):
+
+| dist | games over 70% | average top pitch | vs its no-floor copy |
+|---|---|---|---|
+| 2cf56d9 (Part 3) | **4** (FAIL) | 56.6% | **identical, game for game** |
+| 598c96a (final archive) | 2 | 55.5% | – |
+| f69c9b6 (this tip) | **2** (pass) | 54.2% | **identical, game for game** |
+
+Verdict: **not a problem now, and not the floor.** It was the frozen-archive tables at college D3. The final archive (Part 4) brought
+it back to 2, and it has stayed there through W = 32 and the floor fix. The over-70% games sit near the line (71%, 76%), as the test's
+own history notes (v1.2.3 raised the limit to 3 for the same reason). **No fix proposed.**
+
+## Task 4: worlds_test power bias (3.53 at 400 PAs vs truth 1.5): **the estimator**
+Section 14 of `app/worlds_test.js`, the power preset (power 1.5, contact -1).
+- The world generator (`worlds.js hitterSeason`) draws the in-play result from `powerRow(OUT_TABLE.college_d3[contact][type], power)`.
+  The estimator maximizes the likelihood of the same `powerRow`.
+- `powerRow` raises the extra-base shares and takes the increase out of the outs, clamped at 0.
+- **On the refit tables the clamp binds at power 1.5.** The hard line drive row has out = 0.109; at 1.5 its extra-base increase is
+  larger than that, so the row sums to **1.051** (`results/v13p10/worlds_power_rows_tip.txt`). On the recalibrated core's table (out
+  0.135, smaller extra-base shares) it binds only near power 3.
+- The generator's `pick` normalizes the row. The estimator does not, so its likelihood over-credits high power, and the bias grows
+  with PAs instead of shrinking.
+- **The engine is not involved.** It only supplies the out table. The Python simulator's `power_row` has the same clamp, and its
+  `sample` normalizes too.
+
+Power preset, truth 1.5, mean estimate over 40 seasons (SE of the mean) (`results/v13p10/worlds_power_*.json`, script `worlds_power_estimator.js`):
+
+| PAs | 150 | 400 | 1600 | 6400 |
+|---|---|---|---|---|
+| test's estimator, this tip | 3.03 (0.26) | **3.53 (0.20)** | 3.65 (0.15) | **3.97 (0.02)** |
+| estimator normalizes each row (as the generator draws) | 1.42 (0.11) | **1.54 (0.07)** | 1.49 (0.04) | **1.52 (0.02)** |
+| scratch world: no clamp (the increase taken from out and 1B in proportion), test's estimator | 1.40 (0.10) | 1.48 (0.07) | 1.51 (0.03) | 1.52 (0.02) |
+| recalibrated core's tables (629c553), test's estimator | 1.91 (0.24) | 2.01 (0.14) | 1.91 (0.07) | 1.98 (0.05) |
+
+- free_swinger (0.5) and contact (-0.5) are unbiased at 1600 / 6400 PAs on every variant (0.51 / -0.48).
+- The 629c553 row shows the same bias was already there, just under the test's limit (2.01 - 1.5 = 0.51 < 0.60). The refit's
+  hard-line-drive table pushed it over.
+- Verdict: **needs a fix, test side.** **Proposed:** the estimator divides each `powerRow` by its sum, the way the generator draws
+  (one line in `worlds_test.js`). The 400-PA mean becomes 1.54 vs 1.5.
+  - Blast radius: test-only; no engine or sim number moves.
+  - Alternative: remove the clamp in `powerRow` / `power_row` (take the increase from out and 1B). That changes the simulated worlds
+    of power hitters (JS and Python), so not proposed.
+  - Not applied (Tasks 1-4 are diagnosis only).
+
+## Task 5: test re-points (bafb16a, test-only)
+- `tests_v13_tables.py`, count-file probe (D1 called strike 1-1 +0.5). It failed on exact float equality. The kappa moved by +0.5,
+  but -0.20565847827288986 + 0.5 is not the stored sum bit for bit. Now: within 1e-12. Edge called strike up, 0-0 unchanged, the
+  D1 1-1 call changes (as before).
+- `tests_v13_tables.py`, run-file probe (D1 RE 0|000 0.7 -> 0.9). It asked D1's run scale to rise, but ruling 10 pins every
+  college run scale at 1 (`engine.RUN_SCALE_OWN`). Rule-aware now, like the ground-ball test:
+  - with the rule, the run scale stays 1, D1's ball-in-play values move (hard contact 0.924 -> 0.945), and D3's extras and in-play
+    values stay;
+  - without the rule, the old condition.
+  - The D1 1-1 call changes either way.
+- `tests_v13_tables.py`: **38/43 -> 40/43**. Still failing: the v13refit bit-for-bit pair (needs `mp` v0, ruling 12) and the D2
+  placeholder check, as in every part since Part 3.
+- `drift_exact_test`, the "drift notes really showed" check. Under W = 32 seed 3 shows **0 notes in 2 or 3 games and 1 in 4**;
+  seed 29 shows 2 at every length (`p10/drift3.log`, `drift4.log`). `scripts/test-app.sh` now runs it with **4 games** (was 2).
+  The event-for-event checks against the old build (3e4660b) fail as before; they are pinned to an older engine.
+
+## Task 6: golden re-pin (5d78ffe)
+`golden/golden_v13core.json` = `p9/golden_v13coreFloor.json`, applied as its own commit with the old and new shas (table above).
+`node golden/golden_v11.js v13core` passes. Both changed-call lists behind it are graded (rulings 35, 36).
+
+## Task 7: suites and fuzz, at the end (logs `p10/suites/`; keep-going copies, run alone)
+- **Fuzz 3000** (`results/v13p10/fuzz_part10.txt`, 1007 s): **identical, line for line, to Part 9** apart from the timing line.
+- **test-sql: 15/15.**
+- **test-app: 51 of the 67 suites with an exit line pass** (Part 9, same count: 50). Every failing line in Part 9's log is still
+  there, except the four this part fixed, and **no new failure**:
+
+| suite | Part 9 -> Part 10 | why |
+|---|---|---|
+| golden_v13core | fail -> **pass** | the re-pin (task 6) |
+| tests_v13_tables | 38/43 -> **40/43** | the two D1 1-1 probes (task 5) |
+| drift_exact_test | 5 -> **4** failed | the notes check passes at 4 games (task 5); the 4 event checks vs 3e4660b fail as before |
+| stage2_test | 2 failed, as before | noise learner 27/40 (task 2: the bar, not a drop) and real learner 2/40 (= D5, closed by ruling 38) |
+| worlds_test | 1 failed, as before | power 3.53 vs 1.5 (task 4: the estimator) |
+| game_mix_e2e | passes, as before | 2 games over 70% (task 3) |
+| the other 10 failing suites | unchanged counts and lines | history / older-engine pins / D2 placeholders, as in Parts 5-9 |
+
+## Verdicts
+| item | verdict | proposed fix (not applied) | blast radius |
+|---|---|---|---|
+| E-7 opposite side (task 1) | **engine-made**: the J7 `plus_opp` credit (0.025 runs at HS) pushes every other slider spot just outside the location window | `plus_opp` x RHO_L (0.6) at HS / travel, like the other MLB-sized coaching terms: E-7 SL down-in 65.6 -> 19.4 | 30 HS + 30 travel cells, all opposite side, the 3 grade-4-slider data-staff pitchers (26 move > 5 points, 11 top calls); 29 of 212 HS / travel golden cases eligible; college / MLB and same side untouched. Needs HS sims, goldens and a grading round |
+| noise learner 27/40 (task 2) | **not a drop**: the refit tables (99b22fb) reached the app at 24d4f66 and re-rolled the 40 seasons; fresh seasons 70.5% (5dccec9) vs 73.0% (tip) | a ruling: retune the switch on fresh seeds, or accept ~72% and re-pin the bar | learner switch only; no call moves |
+| game_mix_e2e (task 3) | **not a problem**: Part 3's frozen-archive tables at college D3; the floor is identical on and off; passes at 2 of 21 since Part 4 | none | – |
+| worlds_test power (task 4) | **the estimator** (an unnormalized likelihood over a clamped row; the refit table makes the clamp bind at 1.5) | normalize each row in the estimator (one line): 400 PAs 3.53 -> 1.54 | test-only |
+
+## What still stands between this and the 2026 go
+1. **Drew's ruling on the E-7 fix** (task 1). If yes: apply it in both engines, rerun the HS sims, the goldens (and re-pin
+   `golden_v13core` again), the E rows and the robustness grid, then grade the changed calls.
+2. **Drew's ruling on the stage2 bar** (task 2): retune the switch, or accept ~72% and re-pin.
+3. **Drew's go on the worlds_test estimator fix** (task 4; test-only).
+4. The remaining failing suites are all history or older-engine pins. They need **a re-pin decision**: golden_v123, tests_v12 /
+   v121 / v122 / v123 / v12b / v11 "exact" rows, logging_exact / drift_exact event counts, tests_v13_sim, tests_v13_core frozen
+   shas, the v13refit bit-for-bit pair. tests_v13_d2 / d2_e2e are the obsolete D2 placeholders.
+5. Then the go itself: Step 6 (`--drew-go`), still locked and not run; 2026 not read.
+
+## Summary (Part 10)
+- E-7 opposite side is engine-made, not a hard rule and not the floor. The J7 back-foot-slider credit makes Slider down-in 0.0136
+  better than any other slider spot, just past the 0.0135 location window, so it takes 98% before the floor and 66% after. Repeats
+  can't move it (0.0-0.02 points). Proposed: scale J7 by RHO_L at HS / travel (E-7 -> 19.4%; 30 HS cells move, all opposite side).
+- The stage2 move from 32 is the refit tables reaching the app (24d4f66 carried 99b22fb's tables into `engine_data.json`), not the
+  floor, and on 200 fresh seasons it isn't a drop (70.5% vs 73.0%). Both engines miss the 80% bar.
+- game_mix passes (2 of 21); its Part 3 failure was the frozen-archive tables, and the floor is identical on and off.
+- worlds_test's power bias is the estimator: it doesn't normalize a clamped row. Normalized: 1.54 at 400 PAs, 1.52 at 6400.
+- Applied: the golden re-pin (5d78ffe), rulings 34-40, two probe re-points and the drift-note games (test-only). Fuzz is identical,
+  test-sql 15/15, test-app 51/67 (was 50) with no new failure. No engine fix applied.
