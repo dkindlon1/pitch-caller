@@ -13,6 +13,27 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 26, after Part 9): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_pregate_diagnose_2026-11-26.md` (supersedes `PROMPT_hitter_v13_e7_check_2026-11-26.md`;
+after Part 9 of `docs/BUILD_v13_fulldata_REPORT.md`, tip f69c9b6 on `feat/hitter-v13-final`). Results in report Part 10.
+
+34. **Floor fix accepted.** HS ride126 2-2 (0.0 -> 2.9) is a named exception. HS engine-called runs +0.35 +/- 0.19 are
+    accepted, judged by the edge vs the reference staff (-1.64 -> -1.29, passes).
+35. **Graded acceptable:** the floor's changed calls (#476, #246, E-6, read-through E8, case 42); E-1, E-2, E-3, E-4, E-4b,
+    E-5, E-6, E-8, E-9; E-7 same side. E-7 opposite side was pending the Part 10 task 1 check.
+36. **The whole W = 32 changed-call list (24 picks, 10 top-call changes) is acceptable.** With 35, the `golden_v13core`
+    re-pin (`p9/golden_v13coreFloor.json`) is applied (Part 10 task 6).
+37. **A strong hitter read (the fastball-crusher read) is NOT a hard rule: the floor wins.** Ruling 16's hard list stands as
+    written: coach bans, the "mashed" damage rules, fatigue / injury limits, and Drew's standing rules A1 / A2 / A3.
+    Everything else is engine-made (soft coaching credits included).
+38. **`stage2 D5` (the real learner switched off in 2 of 40 seasons) is closed as accepted.** Recorded here; no longer tracked.
+39. **The 35 scenarios are the H13 hard-check rows. They pass.** Only h13_29 moved with the floor fix (Curveball middle
+    27.16 -> 27.28, 0.12 points). Drew accepts them.
+40. **Before the 2026 go, three suite moves must be diagnosed** (Drew's call): the noise-chasing learner at 27/40 (needs
+    32), game_mix_e2e (4 of 21 games with a top pitch over 70%, limit 3), worlds_test (power biased at 400 PAs, 3.49 vs
+    1.5). Diagnosis only (report Part 10 tasks 2-4); any engine fix they propose waits for Drew.
+
 ## Drew's ruling (Nov 26): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_floor_step_2026-11-26.md` (after Part 8 of `docs/BUILD_v13_fulldata_REPORT.md`, tip
