@@ -288,7 +288,7 @@ GB_RULE_TARGETS = ("down-in", "down-away", "down-middle")
 #   away        he hit this pitch hard on one side earlier today: the same pitch to the other side (H3)
 #   went_back   this pitch got a swing-and-miss or called strike at this spot earlier today: go back to it (I2)
 #   hot         the pitch is landing clearly better than his normal today: lean on it (C5)
-#   plus_opp    to an opposite-side hitter, a plus changeup (grade 4+) away and a plus slider at the back foot (J7)
+#   plus_opp    to an opposite-side hitter, a plus changeup (grade 4+) away and a plus slider at the back foot (J7); x RHO_L at HS / travel (v1.3 ruling 41)
 # Sizes (runs before run_scale), each the smallest round size that passes its row with room (share of acceptable calls
 # on its row at the size: F6 84%, F7 79%, H4 87%, F5 0% not-acceptable, H3 77%, I2 80%, C5 76%, J7 82%; all 71 rows pass).
 # v1.1 Step 2: "away" 0.01 -> 0.012. Under the profile terms (the fastball's inside / away lines by batter side) 0.01
@@ -544,7 +544,7 @@ def coach_credit(p, q, s, arsenal=None):
     if s.landing_today and landing_hot(p, s):
         c += R["hot"] * hot_fade(p, s, arsenal)
     if not s.same_side and p.grade >= 4 and ((p.kind == "CH" and q in ("down-away", "chase")) or (p.kind == "SL" and q == "down-in")):
-        c += R["plus_opp"]
+        c += R["plus_opp"] * RHO_L.get(s.level, 1.0)   # v1.3 ruling 41: x RHO_L at HS / travel, like every MLB-sized term
     if ride_up_2k(p, q, s):
         c += R["ride_up_2k"] * RHO_L.get(s.level, 1.0)   # v1.2 Step 5 (Q5): x RHO_L at HS / travel, like every MLB-sized term
     c -= path_cost(p, q, s)

@@ -1558,7 +1558,7 @@
       if (m["succ|" + keyKind(p.kind) + "|" + q]) c += R.went_back;
     }
     if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot * hotFade(p, s, arsenal);
-    if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp;
+    if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp * (RHO_L[s.level] ?? 1.0);   // v1.3 ruling 41: x RHO_L at HS / travel (engine.py)
     if (rideUp2k(p, q, s)) c += R.ride_up_2k * (RHO_L[s.level] ?? 1.0);   // v1.2 Step 5 (Q5): x RHO_L at HS / travel (engine.py)
     c -= pathCost(p, q, s);   // v1.2 Part B
     return c;
