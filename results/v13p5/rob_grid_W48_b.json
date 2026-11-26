@@ -1,0 +1,651 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core",
+  "mp": "v13"
+ },
+ "rows": [
+  {
+   "level": "college_d3",
+   "arsenal": "three",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.2167,
+   "moves_n1_6": [
+    0.0088,
+    0.0067,
+    -0.0097,
+    -0.028,
+    -0.0211,
+    -0.0148
+   ],
+   "max_move": 0.0088
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "three",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4987,
+   "moves_n1_6": [
+    0.0084,
+    0.0168,
+    0.0251,
+    0.0333,
+    0.0415,
+    0.0496
+   ],
+   "max_move": 0.0496
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "two",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2692,
+   "moves_n1_6": [
+    0.0077,
+    0.0153,
+    0.0227,
+    0.0299,
+    0.037,
+    0.044
+   ],
+   "max_move": 0.044
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "two",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.5825,
+   "moves_n1_6": [
+    0.0082,
+    0.0163,
+    0.0245,
+    0.0326,
+    0.0407,
+    0.0488
+   ],
+   "max_move": 0.0488
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Curveball middle",
+   "top_share": 0.2703,
+   "moves_n1_6": [
+    -0.0066,
+    0.0048,
+    0.0161,
+    0.0273,
+    0.0382,
+    0.049
+   ],
+   "max_move": 0.049
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4054,
+   "moves_n1_6": [
+    0.01,
+    0.02,
+    0.0297,
+    0.0394,
+    0.0491,
+    0.0586
+   ],
+   "max_move": 0.0586
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.3478,
+   "moves_n1_6": [
+    0.0105,
+    0.0208,
+    0.0309,
+    0.041,
+    0.0509,
+    0.0606
+   ],
+   "max_move": 0.0606
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Curve middle",
+   "top_share": 0.3492,
+   "moves_n1_6": [
+    0.0102,
+    0.0202,
+    0.0302,
+    0.04,
+    0.0497,
+    0.0593
+   ],
+   "max_move": 0.0593
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "cut_ch",
+   "count": "2-2",
+   "top": "Cutter down-away",
+   "top_share": 0.3567,
+   "moves_n1_6": [
+    0.0094,
+    0.0187,
+    0.028,
+    0.037,
+    0.0459,
+    0.0547
+   ],
+   "max_move": 0.0547
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "cut_ch",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.4775,
+   "moves_n1_6": [
+    0.0092,
+    0.0184,
+    0.0275,
+    0.0365,
+    0.0455,
+    0.0548
+   ],
+   "max_move": 0.0548
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "deadzone",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2768,
+   "moves_n1_6": [
+    0.0113,
+    0.0223,
+    0.032,
+    0.0405,
+    0.0488,
+    0.0588
+   ],
+   "max_move": 0.0588
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "deadzone",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4951,
+   "moves_n1_6": [
+    0.0094,
+    0.0185,
+    0.0275,
+    0.0365,
+    0.0455,
+    0.0544
+   ],
+   "max_move": 0.0544
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "fd",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.4395,
+   "moves_n1_6": [
+    0.0107,
+    0.0213,
+    0.0318,
+    0.0424,
+    0.0546,
+    0.0657
+   ],
+   "max_move": 0.0657
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "fd",
+   "count": "3-2",
+   "top": "Curve middle",
+   "top_share": 0.499,
+   "moves_n1_6": [
+    0.0094,
+    0.0187,
+    0.028,
+    0.0373,
+    0.0465,
+    0.0557
+   ],
+   "max_move": 0.0557
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "hs_two",
+   "count": "2-2",
+   "top": "Curveball middle",
+   "top_share": 0.4792,
+   "moves_n1_6": [
+    0.0224,
+    0.0439,
+    0.0649,
+    0.0851,
+    0.1044,
+    0.1232
+   ],
+   "max_move": 0.1232
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "hs_two",
+   "count": "3-2",
+   "top": "Curveball middle",
+   "top_share": 0.5721,
+   "moves_n1_6": [
+    0.0084,
+    0.0168,
+    0.0252,
+    0.0335,
+    0.0419,
+    0.0502
+   ],
+   "max_move": 0.0502
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "ride126",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.2791,
+   "moves_n1_6": [
+    0.0117,
+    0.0233,
+    0.0347,
+    0.046,
+    0.0572,
+    0.0681
+   ],
+   "max_move": 0.0681
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "ride126",
+   "count": "3-2",
+   "top": "Changeup middle",
+   "top_share": 0.5243,
+   "moves_n1_6": [
+    0.0084,
+    0.0167,
+    0.0251,
+    0.0333,
+    0.0415,
+    0.0497
+   ],
+   "max_move": 0.0497
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "sink_sweep",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.4278,
+   "moves_n1_6": [
+    0.0111,
+    0.0222,
+    0.0332,
+    0.0442,
+    0.0551,
+    0.066
+   ],
+   "max_move": 0.066
+  },
+  {
+   "level": "college_d3",
+   "arsenal": "sink_sweep",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.5442,
+   "moves_n1_6": [
+    0.0095,
+    0.0191,
+    0.0286,
+    0.038,
+    0.0472,
+    0.0557
+   ],
+   "max_move": 0.0557
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "three",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.1956,
+   "moves_n1_6": [
+    0.0084,
+    0.0151,
+    0.0219,
+    0.0299,
+    0.0296,
+    0.0207
+   ],
+   "max_move": 0.0299
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "three",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4494,
+   "moves_n1_6": [
+    0.0094,
+    0.0188,
+    0.028,
+    0.0372,
+    0.0463,
+    0.0553
+   ],
+   "max_move": 0.0553
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "two",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2633,
+   "moves_n1_6": [
+    0.0078,
+    0.0153,
+    0.0227,
+    0.03,
+    0.0371,
+    0.044
+   ],
+   "max_move": 0.044
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "two",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.5736,
+   "moves_n1_6": [
+    0.0085,
+    0.017,
+    0.0255,
+    0.034,
+    0.0424,
+    0.0509
+   ],
+   "max_move": 0.0509
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.2442,
+   "moves_n1_6": [
+    0.0127,
+    0.0252,
+    0.0376,
+    0.0497,
+    0.0617,
+    0.0735
+   ],
+   "max_move": 0.0735
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.3729,
+   "moves_n1_6": [
+    0.0107,
+    0.0213,
+    0.0318,
+    0.0422,
+    0.0525,
+    0.0628
+   ],
+   "max_move": 0.0628
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.3318,
+   "moves_n1_6": [
+    0.0108,
+    0.0216,
+    0.0322,
+    0.0426,
+    0.053,
+    0.0631
+   ],
+   "max_move": 0.0631
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.3377,
+   "moves_n1_6": [
+    0.0121,
+    0.0241,
+    0.0359,
+    0.0477,
+    0.0594,
+    0.071
+   ],
+   "max_move": 0.071
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "cut_ch",
+   "count": "2-2",
+   "top": "Cutter down-away",
+   "top_share": 0.289,
+   "moves_n1_6": [
+    0.0081,
+    0.0162,
+    0.0241,
+    0.032,
+    0.0397,
+    0.0472
+   ],
+   "max_move": 0.0472
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "cut_ch",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.4557,
+   "moves_n1_6": [
+    0.01,
+    0.0199,
+    0.0298,
+    0.0396,
+    0.0493,
+    0.059
+   ],
+   "max_move": 0.059
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "deadzone",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2373,
+   "moves_n1_6": [
+    0.0101,
+    0.0192,
+    0.0286,
+    0.0373,
+    0.0447,
+    0.0509
+   ],
+   "max_move": 0.0509
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "deadzone",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4615,
+   "moves_n1_6": [
+    0.01,
+    0.02,
+    0.03,
+    0.0399,
+    0.0498,
+    0.0596
+   ],
+   "max_move": 0.0596
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "fd",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.343,
+   "moves_n1_6": [
+    0.0122,
+    0.0239,
+    0.0353,
+    0.0467,
+    0.0579,
+    0.0665
+   ],
+   "max_move": 0.0665
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "fd",
+   "count": "3-2",
+   "top": "Curve middle",
+   "top_share": 0.5011,
+   "moves_n1_6": [
+    0.0096,
+    0.0191,
+    0.0286,
+    0.038,
+    0.0475,
+    0.0569
+   ],
+   "max_move": 0.0569
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "hs_two",
+   "count": "2-2",
+   "top": "Curveball middle",
+   "top_share": 0.3892,
+   "moves_n1_6": [
+    0.0184,
+    0.0329,
+    0.047,
+    0.0607,
+    0.0741,
+    0.087
+   ],
+   "max_move": 0.087
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "hs_two",
+   "count": "3-2",
+   "top": "Curveball middle",
+   "top_share": 0.5722,
+   "moves_n1_6": [
+    0.0086,
+    0.0172,
+    0.0257,
+    0.0342,
+    0.0427,
+    0.0511
+   ],
+   "max_move": 0.0511
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "ride126",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.29,
+   "moves_n1_6": [
+    0.0114,
+    0.0231,
+    0.0346,
+    0.046,
+    0.0573,
+    0.0684
+   ],
+   "max_move": 0.0684
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "ride126",
+   "count": "3-2",
+   "top": "Changeup middle",
+   "top_share": 0.4905,
+   "moves_n1_6": [
+    0.0088,
+    0.0175,
+    0.0269,
+    0.0433,
+    0.059,
+    0.0741
+   ],
+   "max_move": 0.0741
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "sink_sweep",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.336,
+   "moves_n1_6": [
+    0.0119,
+    0.0236,
+    0.0353,
+    0.0468,
+    0.0562,
+    0.0606
+   ],
+   "max_move": 0.0606
+  },
+  {
+   "level": "college_d1",
+   "arsenal": "sink_sweep",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.5214,
+   "moves_n1_6": [
+    0.0099,
+    0.0199,
+    0.0292,
+    0.0385,
+    0.0477,
+    0.0569
+   ],
+   "max_move": 0.0569
+  }
+ ],
+ "seconds": 72.1
+}

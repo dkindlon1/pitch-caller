@@ -1,0 +1,220 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core",
+  "mp": "v13"
+ },
+ "college_d3|three|2-2": {
+  "no_history_top": "Fastball down-away",
+  "gap_top_to_second": 0.032,
+  "calls_at_n0": 7,
+  "rows": [
+   {
+    "n": 0,
+    "top": [
+     "Fastball down-away"
+    ],
+    "tv_vs_n0": 0.0,
+    "call_share": 0.2167,
+    "menu": {
+     "Fastball down-away": 0.2167,
+     "Slider middle": 0.1847,
+     "Changeup middle": 0.1382,
+     "Slider down-away": 0.1374,
+     "Slider down-middle": 0.1106,
+     "Fastball middle": 0.1092,
+     "Changeup down-away": 0.1032
+    }
+   },
+   {
+    "n": 1,
+    "top": [
+     "Changeup middle"
+    ],
+    "tv_vs_n0": 0.2326,
+    "call_share": 0.1831,
+    "menu": {
+     "Changeup middle": 0.2701,
+     "Slider middle": 0.2667,
+     "Fastball down-away": 0.1831,
+     "Slider down-away": 0.1484,
+     "Slider down-middle": 0.1182,
+     "Fastball middle": 0.0135
+    }
+   },
+   {
+    "n": 2,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.3828,
+    "call_share": 0.0832,
+    "menu": {
+     "Slider middle": 0.365,
+     "Changeup middle": 0.298,
+     "Slider down-away": 0.1801,
+     "Fastball down-away": 0.0832,
+     "Slider down-middle": 0.0737
+    }
+   },
+   {
+    "n": 3,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.5175,
+    "call_share": 0,
+    "menu": {
+     "Slider middle": 0.4788,
+     "Changeup middle": 0.3029,
+     "Slider down-away": 0.1961,
+     "Slider down-middle": 0.0222
+    }
+   },
+   {
+    "n": 4,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.6031,
+    "call_share": 0,
+    "menu": {
+     "Slider middle": 0.6746,
+     "Changeup middle": 0.2514,
+     "Slider down-away": 0.074
+    }
+   },
+   {
+    "n": 5,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.6771,
+    "call_share": 0,
+    "menu": {
+     "Slider middle": 0.7966,
+     "Changeup middle": 0.2034
+    }
+   },
+   {
+    "n": 6,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.6771,
+    "call_share": 0,
+    "menu": {
+     "Slider middle": 0.8298,
+     "Changeup middle": 0.1702
+    }
+   }
+  ]
+ },
+ "college_d3|three|3-2": {
+  "no_history_top": "Slider middle",
+  "gap_top_to_second": 0.2935,
+  "calls_at_n0": 4,
+  "rows": [
+   {
+    "n": 0,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.0,
+    "call_share": 0.4987,
+    "menu": {
+     "Slider middle": 0.4987,
+     "Fastball down-middle": 0.2052,
+     "Fastball middle": 0.1518,
+     "Changeup middle": 0.1443
+    }
+   },
+   {
+    "n": 1,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.0968,
+    "call_share": 0.4019,
+    "menu": {
+     "Slider middle": 0.4019,
+     "Fastball down-middle": 0.2534,
+     "Fastball middle": 0.1918,
+     "Changeup middle": 0.1529
+    }
+   },
+   {
+    "n": 2,
+    "top": [
+     "Slider middle"
+    ],
+    "tv_vs_n0": 0.184,
+    "call_share": 0.3148,
+    "menu": {
+     "Slider middle": 0.3148,
+     "Fastball down-middle": 0.3001,
+     "Fastball middle": 0.2323,
+     "Changeup middle": 0.1528
+    }
+   },
+   {
+    "n": 3,
+    "top": [
+     "Fastball down-middle"
+    ],
+    "tv_vs_n0": 0.2612,
+    "call_share": 0.2376,
+    "menu": {
+     "Fastball down-middle": 0.3449,
+     "Fastball middle": 0.2729,
+     "Slider middle": 0.2376,
+     "Changeup middle": 0.1446
+    }
+   },
+   {
+    "n": 4,
+    "top": [
+     "Fastball down-middle"
+    ],
+    "tv_vs_n0": 0.3427,
+    "call_share": 0.1707,
+    "menu": {
+     "Fastball down-middle": 0.3871,
+     "Fastball middle": 0.3125,
+     "Slider middle": 0.1707,
+     "Changeup middle": 0.1296
+    }
+   },
+   {
+    "n": 5,
+    "top": [
+     "Fastball down-middle"
+    ],
+    "tv_vs_n0": 0.4185,
+    "call_share": 0.1154,
+    "menu": {
+     "Fastball down-middle": 0.4255,
+     "Fastball middle": 0.35,
+     "Slider middle": 0.1154,
+     "Changeup middle": 0.1091
+    }
+   },
+   {
+    "n": 6,
+    "top": [
+     "Fastball down-middle"
+    ],
+    "tv_vs_n0": 0.4855,
+    "call_share": 0.0701,
+    "menu": {
+     "Fastball down-middle": 0.4592,
+     "Fastball middle": 0.3833,
+     "Changeup middle": 0.0874,
+     "Slider middle": 0.0701
+    }
+   }
+  ]
+ },
+ "seconds": 3.7
+}

@@ -13,6 +13,35 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 25, night): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_learning_weight_2026-11-25.md` (after Part 5 of `docs/BUILD_v13_fulldata_REPORT.md`).
+
+28. **Weaken the within-game learning term.** The prior weight W in the hitter's belief about the pitcher's mix,
+    `(W * p + n_call) / (W + n)` in `solve_sit_game` (W = 4 until now), goes up. Drew's range: about 16 to 32. **Not applied yet:** no W from 8 to 48 passes the check in every cell (report Part 6).
+29. **The 10-point robustness limit covers repeated-call anticipation.** The check stays as written
+    (`readthrough/hard_checks_v13.py` H13-16, n = 0 to 6 repeats); the model has to meet it.
+30. **The ground-ball test is re-pointed** (`tests.py`): rule on >= 70% and the rule adds at least 5 points, replacing
+    "rule off < 70%". Proposed grade of the call: Acceptable.
+31. **Bisect the 2-2 jump, report only** (default 2-2 move 6.5 on the recalibrated core, 20.8 / 21.7 now).
+32. **W = 32, and the cells that still exceed the limit are accepted** (Drew, Nov 25 night, after report Part 6 showed no W from 8 to 48 passes
+    every cell). 13 of 100 sweep cells (2-2 and 3-2, 5 levels x 10 arsenals) exceed 10 points at W = 32: 12 by 0 to 7.5 points (mostly at n = 5 or 6)
+    and one HS cell (four_cut at 3-2, 30 points) that is a step from the HS fastball floor, not from the learning weight. Applied as
+    `LEARN_PRIOR_W = 32` (report Part 7). The floor step is left as is.
+
+## Drew's rulings (Nov 25, evening): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_robustness_2026-11-25.md` (after Part 4 of `docs/BUILD_v13_fulldata_REPORT.md`, tip
+5731b39 on `feat/hitter-v13-final`).
+
+25. **D3 walk gap accepted as is.** D3 keeps the fitted count layer with its 4-season half-life. The reference-world walk
+    gap stays at **-1.17** points (the frozen-archive run had -0.86); this is an accepted exception to ruling 12. Cause: the
+    long half-life leans on 2018-23 D3 data, when D3 walks ran 10.0-10.7% against the 11.4 target. D3 is not retuned.
+26. **D1 engine runs treated as noise.** +0.30 +/- 0.22 runs per game against the reference staff (1.4 SE; the frozen run
+    had -0.15) is accepted, with no rerun. Drew grades the D1 two-strike rows, including E-4b, as written.
+27. **Robustness is diagnosed before any go for 2026.** Report only; no model, limit or check changes in that task
+    (report Part 5).
+
 ## Drew's rulings (Nov 25, final archive): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_final_archive_2026-11-25.md`. The edge-rulings run is preserved as tag

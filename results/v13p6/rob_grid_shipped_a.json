@@ -1,0 +1,971 @@
+{
+ "engine": {
+  "zone": "v13",
+  "count": "v13core",
+  "run": "v13core",
+  "mp": "v13"
+ },
+ "rows": [
+  {
+   "level": "hs",
+   "arsenal": "three",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.4024,
+   "moves_n1_6": [
+    0.0016,
+    0.0032,
+    0.0047,
+    0.0062,
+    0.0076,
+    0.0089
+   ],
+   "max_move": 0.0089
+  },
+  {
+   "level": "hs",
+   "arsenal": "three",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.5455,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "two",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.4043,
+   "moves_n1_6": [
+    0.0016,
+    0.0032,
+    0.0047,
+    0.0062,
+    0.0075,
+    0.0089
+   ],
+   "max_move": 0.0089
+  },
+  {
+   "level": "hs",
+   "arsenal": "two",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.5455,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.4,
+   "moves_n1_6": [
+    0.0,
+    -0.0,
+    0.0179,
+    0.0516,
+    0.0839,
+    0.1141
+   ],
+   "max_move": 0.1141
+  },
+  {
+   "level": "hs",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.5455,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2632,
+   "moves_n1_6": [
+    0.0073,
+    0.0144,
+    0.0183,
+    0.0221,
+    0.0258,
+    0.0293
+   ],
+   "max_move": 0.0293
+  },
+  {
+   "level": "hs",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.5455,
+   "moves_n1_6": [
+    0.2547,
+    0.264,
+    0.2735,
+    0.2831,
+    0.2928,
+    0.3025
+   ],
+   "max_move": 0.3025
+  },
+  {
+   "level": "hs",
+   "arsenal": "cut_ch",
+   "count": "2-2",
+   "top": "Changeup middle",
+   "top_share": 0.1962,
+   "moves_n1_6": [
+    0.0046,
+    0.0075,
+    0.0081,
+    0.006,
+    0.0002,
+    -0.0048
+   ],
+   "max_move": 0.0081
+  },
+  {
+   "level": "hs",
+   "arsenal": "cut_ch",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.3986,
+   "moves_n1_6": [
+    0.0129,
+    0.0254,
+    0.0377,
+    0.0498,
+    0.0615,
+    0.073
+   ],
+   "max_move": 0.073
+  },
+  {
+   "level": "hs",
+   "arsenal": "deadzone",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.3977,
+   "moves_n1_6": [
+    0.0016,
+    0.0031,
+    0.0045,
+    0.0059,
+    0.0072,
+    0.0085
+   ],
+   "max_move": 0.0085
+  },
+  {
+   "level": "hs",
+   "arsenal": "deadzone",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4545,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "fd",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.6,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0001
+   ],
+   "max_move": 0.0001
+  },
+  {
+   "level": "hs",
+   "arsenal": "fd",
+   "count": "3-2",
+   "top": "Sinker middle",
+   "top_share": 0.5455,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "hs_two",
+   "count": "2-2",
+   "top": "Curveball middle",
+   "top_share": 0.5852,
+   "moves_n1_6": [
+    0.0019,
+    0.0037,
+    0.0055,
+    0.0073,
+    0.009,
+    0.0107
+   ],
+   "max_move": 0.0107
+  },
+  {
+   "level": "hs",
+   "arsenal": "hs_two",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.5455,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "ride126",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.4,
+   "moves_n1_6": [
+    0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0,
+    -0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "ride126",
+   "count": "3-2",
+   "top": "Fastball middle",
+   "top_share": 0.5455,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "hs",
+   "arsenal": "sink_sweep",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.476,
+   "moves_n1_6": [
+    0.0027,
+    0.0053,
+    0.0079,
+    0.0104,
+    0.0128,
+    0.0152
+   ],
+   "max_move": 0.0152
+  },
+  {
+   "level": "hs",
+   "arsenal": "sink_sweep",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4545,
+   "moves_n1_6": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_move": 0.0
+  },
+  {
+   "level": "mlb",
+   "arsenal": "three",
+   "count": "2-2",
+   "top": "Slider down-away",
+   "top_share": 0.161,
+   "moves_n1_6": [
+    0.0049,
+    0.0097,
+    0.0146,
+    0.0193,
+    0.0239,
+    0.0283
+   ],
+   "max_move": 0.0283
+  },
+  {
+   "level": "mlb",
+   "arsenal": "three",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.2412,
+   "moves_n1_6": [
+    0.0142,
+    0.0278,
+    0.0411,
+    0.054,
+    0.0664,
+    0.0784
+   ],
+   "max_move": 0.0784
+  },
+  {
+   "level": "mlb",
+   "arsenal": "two",
+   "count": "2-2",
+   "top": "Slider down-away",
+   "top_share": 0.2552,
+   "moves_n1_6": [
+    0.0049,
+    0.0099,
+    0.0147,
+    0.0194,
+    0.0241,
+    0.0287
+   ],
+   "max_move": 0.0287
+  },
+  {
+   "level": "mlb",
+   "arsenal": "two",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.3651,
+   "moves_n1_6": [
+    0.0123,
+    0.0244,
+    0.0363,
+    0.0478,
+    0.059,
+    0.07
+   ],
+   "max_move": 0.07
+  },
+  {
+   "level": "mlb",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Slider down-away",
+   "top_share": 0.1191,
+   "moves_n1_6": [
+    0.0048,
+    0.0093,
+    0.0135,
+    0.0175,
+    0.0213,
+    0.0251
+   ],
+   "max_move": 0.0251
+  },
+  {
+   "level": "mlb",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Curveball middle",
+   "top_share": 0.2337,
+   "moves_n1_6": [
+    0.019,
+    0.0376,
+    0.0558,
+    0.0734,
+    0.0905,
+    0.107
+   ],
+   "max_move": 0.107
+  },
+  {
+   "level": "mlb",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Cutter down-away",
+   "top_share": 0.1926,
+   "moves_n1_6": [
+    0.0096,
+    0.0193,
+    0.0289,
+    0.0384,
+    0.0105,
+    -0.028
+   ],
+   "max_move": 0.0384
+  },
+  {
+   "level": "mlb",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.3585,
+   "moves_n1_6": [
+    0.0176,
+    0.0351,
+    0.0524,
+    0.0695,
+    0.0863,
+    0.1029
+   ],
+   "max_move": 0.1029
+  },
+  {
+   "level": "mlb",
+   "arsenal": "cut_ch",
+   "count": "2-2",
+   "top": "Cutter down-away",
+   "top_share": 0.2619,
+   "moves_n1_6": [
+    0.0106,
+    0.0212,
+    0.0311,
+    0.0399,
+    0.0486,
+    0.0572
+   ],
+   "max_move": 0.0572
+  },
+  {
+   "level": "mlb",
+   "arsenal": "cut_ch",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.4528,
+   "moves_n1_6": [
+    0.0154,
+    0.0306,
+    0.0458,
+    0.0608,
+    0.0758,
+    0.0921
+   ],
+   "max_move": 0.0921
+  },
+  {
+   "level": "mlb",
+   "arsenal": "deadzone",
+   "count": "2-2",
+   "top": "Slider down-away",
+   "top_share": 0.1999,
+   "moves_n1_6": [
+    0.0036,
+    0.0071,
+    0.0106,
+    0.015,
+    0.0227,
+    0.0313
+   ],
+   "max_move": 0.0313
+  },
+  {
+   "level": "mlb",
+   "arsenal": "deadzone",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.2685,
+   "moves_n1_6": [
+    0.0148,
+    0.0292,
+    0.0432,
+    0.0568,
+    0.0654,
+    0.0692
+   ],
+   "max_move": 0.0692
+  },
+  {
+   "level": "mlb",
+   "arsenal": "fd",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.1674,
+   "moves_n1_6": [
+    0.0106,
+    0.0224,
+    0.0335,
+    0.0426,
+    0.0511,
+    0.0591
+   ],
+   "max_move": 0.0591
+  },
+  {
+   "level": "mlb",
+   "arsenal": "fd",
+   "count": "3-2",
+   "top": "Curve middle",
+   "top_share": 0.4477,
+   "moves_n1_6": [
+    0.0144,
+    0.0288,
+    0.0431,
+    0.0572,
+    0.0712,
+    0.0849
+   ],
+   "max_move": 0.0849
+  },
+  {
+   "level": "mlb",
+   "arsenal": "hs_two",
+   "count": "2-2",
+   "top": "Curveball down-away",
+   "top_share": 0.2072,
+   "moves_n1_6": [
+    0.0041,
+    0.0082,
+    0.0122,
+    0.017,
+    0.0215,
+    0.0255
+   ],
+   "max_move": 0.0255
+  },
+  {
+   "level": "mlb",
+   "arsenal": "hs_two",
+   "count": "3-2",
+   "top": "Curveball middle",
+   "top_share": 0.4126,
+   "moves_n1_6": [
+    0.0173,
+    0.0343,
+    0.0511,
+    0.0644,
+    0.0765,
+    0.0858
+   ],
+   "max_move": 0.0858
+  },
+  {
+   "level": "mlb",
+   "arsenal": "ride126",
+   "count": "2-2",
+   "top": "Changeup down-away",
+   "top_share": 0.1709,
+   "moves_n1_6": [
+    0.003,
+    0.0078,
+    0.0132,
+    0.0183,
+    0.0231,
+    0.0272
+   ],
+   "max_move": 0.0272
+  },
+  {
+   "level": "mlb",
+   "arsenal": "ride126",
+   "count": "3-2",
+   "top": "Changeup middle",
+   "top_share": 0.2591,
+   "moves_n1_6": [
+    0.0135,
+    0.0264,
+    0.0389,
+    0.051,
+    0.0622,
+    0.073
+   ],
+   "max_move": 0.073
+  },
+  {
+   "level": "mlb",
+   "arsenal": "sink_sweep",
+   "count": "2-2",
+   "top": "Changeup middle",
+   "top_share": 0.1989,
+   "moves_n1_6": [
+    0.0163,
+    0.0485,
+    0.0805,
+    0.1099,
+    0.1279,
+    0.1436
+   ],
+   "max_move": 0.1436
+  },
+  {
+   "level": "mlb",
+   "arsenal": "sink_sweep",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4633,
+   "moves_n1_6": [
+    0.0147,
+    0.0293,
+    0.0438,
+    0.0582,
+    0.0726,
+    0.0868
+   ],
+   "max_move": 0.0868
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "three",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.2174,
+   "moves_n1_6": [
+    0.0132,
+    0.0217,
+    0.0036,
+    -0.0171,
+    -0.0087,
+    -0.0018
+   ],
+   "max_move": 0.0217
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "three",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4789,
+   "moves_n1_6": [
+    0.0133,
+    0.0264,
+    0.0394,
+    0.0522,
+    0.0648,
+    0.0773
+   ],
+   "max_move": 0.0773
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "two",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2668,
+   "moves_n1_6": [
+    0.0116,
+    0.0228,
+    0.0336,
+    0.0441,
+    0.0543,
+    0.0641
+   ],
+   "max_move": 0.0641
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "two",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.575,
+   "moves_n1_6": [
+    0.0126,
+    0.0251,
+    0.0376,
+    0.0501,
+    0.0625,
+    0.0749
+   ],
+   "max_move": 0.0749
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "four",
+   "count": "2-2",
+   "top": "Fastball down-away",
+   "top_share": 0.2557,
+   "moves_n1_6": [
+    0.0186,
+    0.0369,
+    0.0547,
+    0.0721,
+    0.089,
+    0.1054
+   ],
+   "max_move": 0.1054
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "four",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.3899,
+   "moves_n1_6": [
+    0.0155,
+    0.0307,
+    0.0458,
+    0.0607,
+    0.0753,
+    0.0897
+   ],
+   "max_move": 0.0897
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "four_cut",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.348,
+   "moves_n1_6": [
+    0.0157,
+    0.0311,
+    0.0463,
+    0.0611,
+    0.0756,
+    0.0897
+   ],
+   "max_move": 0.0897
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "four_cut",
+   "count": "3-2",
+   "top": "Curve middle",
+   "top_share": 0.3489,
+   "moves_n1_6": [
+    0.0156,
+    0.0309,
+    0.0459,
+    0.0607,
+    0.0752,
+    0.0894
+   ],
+   "max_move": 0.0894
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "cut_ch",
+   "count": "2-2",
+   "top": "Cutter down-away",
+   "top_share": 0.3512,
+   "moves_n1_6": [
+    0.0141,
+    0.0279,
+    0.0414,
+    0.0547,
+    0.0656,
+    0.0494
+   ],
+   "max_move": 0.0656
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "cut_ch",
+   "count": "3-2",
+   "top": "Cutter down-middle",
+   "top_share": 0.4703,
+   "moves_n1_6": [
+    0.0142,
+    0.0283,
+    0.0422,
+    0.056,
+    0.0696,
+    0.0832
+   ],
+   "max_move": 0.0832
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "deadzone",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.2685,
+   "moves_n1_6": [
+    0.017,
+    0.0328,
+    0.0453,
+    0.056,
+    0.0626,
+    0.063
+   ],
+   "max_move": 0.063
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "deadzone",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.4842,
+   "moves_n1_6": [
+    0.0141,
+    0.0279,
+    0.0418,
+    0.0554,
+    0.0689,
+    0.0824
+   ],
+   "max_move": 0.0824
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "fd",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.4115,
+   "moves_n1_6": [
+    0.0153,
+    0.0315,
+    0.0493,
+    0.0665,
+    0.074,
+    0.075
+   ],
+   "max_move": 0.075
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "fd",
+   "count": "3-2",
+   "top": "Curve middle",
+   "top_share": 0.4975,
+   "moves_n1_6": [
+    0.0143,
+    0.0284,
+    0.0425,
+    0.0565,
+    0.0705,
+    0.0843
+   ],
+   "max_move": 0.0843
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "hs_two",
+   "count": "2-2",
+   "top": "Curveball middle",
+   "top_share": 0.4674,
+   "moves_n1_6": [
+    0.0321,
+    0.0634,
+    0.0931,
+    0.1211,
+    0.1476,
+    0.1693
+   ],
+   "max_move": 0.1693
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "hs_two",
+   "count": "3-2",
+   "top": "Curveball middle",
+   "top_share": 0.5691,
+   "moves_n1_6": [
+    0.0128,
+    0.0255,
+    0.0382,
+    0.0509,
+    0.0635,
+    0.0761
+   ],
+   "max_move": 0.0761
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "ride126",
+   "count": "2-2",
+   "top": "Curve middle",
+   "top_share": 0.2835,
+   "moves_n1_6": [
+    0.0176,
+    0.035,
+    0.052,
+    0.0686,
+    0.0849,
+    0.1007
+   ],
+   "max_move": 0.1007
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "ride126",
+   "count": "3-2",
+   "top": "Changeup middle",
+   "top_share": 0.5063,
+   "moves_n1_6": [
+    0.0131,
+    0.0261,
+    0.039,
+    0.0517,
+    0.0644,
+    0.0769
+   ],
+   "max_move": 0.0769
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "sink_sweep",
+   "count": "2-2",
+   "top": "Slider middle",
+   "top_share": 0.4129,
+   "moves_n1_6": [
+    0.0173,
+    0.0336,
+    0.0502,
+    0.0667,
+    0.0712,
+    0.0748
+   ],
+   "max_move": 0.0748
+  },
+  {
+   "level": "college_d2",
+   "arsenal": "sink_sweep",
+   "count": "3-2",
+   "top": "Slider middle",
+   "top_share": 0.5414,
+   "moves_n1_6": [
+    0.0144,
+    0.0288,
+    0.043,
+    0.056,
+    0.069,
+    0.0819
+   ],
+   "max_move": 0.0819
+  }
+ ],
+ "seconds": 101.7
+}

@@ -778,3 +778,268 @@ Changes from Part 3's table:
   **D3 BB −1.17**.
 - Against the reference staff, runs are level or better everywhere except **D1 (+0.30 ± 0.22)**. HS stays clearly ahead
   (−1.39); walks run about 3 points high.
+
+
+# Part 5 (Nov 25, evening): rulings 25-27, robustness diagnosis
+
+Carries out `docs/PROMPT_hitter_v13_robustness_2026-11-25.md` on `feat/hitter-v13-final` (worktree `C:/dev/pc-final`, tip 5731b39
+when started). Run from a Claude session in claude.ai, on the files in the worktree: that session's machine has 2 cores and 3 GB, so
+only the cheap deterministic checks were run here (no simulations); git is not reachable from there, so **nothing in this part is
+committed**. No model, limit, check, count layer or table was changed. Step 6 untouched (never run). 2026 not read. Everything
+marked proposed is Claude's, not Drew's grade.
+
+New files (all uncommitted): `readthrough/robust_diag_v13.py` (the diagnosis script; it reuses `readthrough/scenarios.py` the way
+`hard_checks_v13.py` does) and `readthrough/gb_rule_check_v13.py` (the ground-ball numbers in section 7) and `results/v13p5/rob_*.json` (the numbers below; `rob_prior_weight_N.json` are the scratch-copy runs of section 5). Rulings 25-27 are recorded in
+`docs/DECISIONS_refit_v13.md`.
+
+## 1. Rulings 25-27 as recorded
+- **25.** D3 walk gap accepted as is: -1.17 points (frozen run -0.86), 4-season half-life kept, D3 not retuned.
+- **26.** D1 runs +0.30 +/- 0.22 (1.4 SE) treated as noise, no rerun. Drew grades E-1 to E-9 and E-4b as written.
+- **27.** Robustness diagnosed first; this part is that diagnosis.
+
+## 2. Robustness: what the check measures, and what fails
+**Reproduced exactly.** `hard_checks_v13.py` rerun on this engine gives a robustness block identical to
+`results/v13p4/hard_checks_core.json` (2-2 top call "Fastball down-away" 21.67%, moves 21.67 at 3 calls; 3-2 "Slider middle" 49.87%,
+moves 26.12). The frozen-archive worktree gives 20.84 (Part 3 said 20.8).
+
+**What is perturbed.** One input: `usage_by_call`, the number of times the no-history top call (pitch, target) has already been called
+in this count today, n = 0..6. In the engine (`solve_sit_game`) the hitter's belief about the pitcher's mix is
+`(4 * p + n_call) / (4 + n)`, so the prior weight is 4 calls and three repeats move the belief 3/7 = 43% toward the repeated call.
+The plan's text (PLAN section on adaptation) says to sweep "the cap"; the check as written sweeps n at the fixed weight 4. The
+scenario draft (`docs/SCENARIOS_v13_DRAFT.md`, H13-16) already flagged that this is v1.2's anti-predictability term "working as built"
+and asked Drew whether the 10-point limit should cover it. I found no ruling on that question in the decision sheet (I did not search the whole repo).
+
+**The default 2-2 row (D3, three-pitch arsenal, 19 faced, pitch count 70), by n:**
+
+| n repeats | top-call share | whole mix moved (total variation) | what leads |
+|---|---|---|---|
+| 0 | 21.7 (Fastball down-away) | 0 | FB down-away 21.7, SL middle 18.5, CH middle 13.8, SL down-away 13.7, SL down-middle 11.1 (7 live calls) |
+| 1 | 18.3 | 23.3 | CH middle 27.0, SL middle 26.7 |
+| 2 | 8.3 | 38.3 | SL middle 36.5, CH middle 29.8 |
+| 3 | 0 | 51.8 | SL middle 47.9, CH middle 30.3, SL down-away 19.6 |
+| 6 | 0 | 67.7 | SL middle 83.0, CH middle 17.0 |
+
+**Read.** The 21.7 is the call's whole share, because three repeats remove the call entirely. Two things are both true:
+1. **At 2-2 the "top call" is a near-tie** (21.7 vs 18.5, a 3.2-point lead in a 7-call mix), so which call the check follows is
+   fragile and a "move" can never exceed the call's own share. That part is the check being strict.
+2. **It is not only a tie artifact.** The whole mix moves 52 points at three repeats, and the 3-2 row, which has a clear
+   29-point leader (SL middle 49.9), moves 26.1 (49.9 to 23.8). So the within-game learning term, as built, is large. The 10-point
+   limit is not met by the model as it stands in either reading.
+
+## 3. Is 2-2 alone? No: it is nearly everywhere (`rob_sweep_*.json`)
+Same check, at 0-2, 1-2, 2-2 and 3-2, five levels x ten arsenals (`scenarios_v12.json`), move of the no-history top call at 3 repeats:
+
+| cells over 10 points at n = 3 | final | frozen run |
+|---|---|---|
+| 0-2 (50 cells) | 24 | 25 |
+| 1-2 | 35 | 36 |
+| 2-2 | 37 | 37 |
+| 3-2 | 42 | 42 |
+
+By level, 2-2 and 3-2 only (20 cells each): HS 5, D3 20, D2 20, D1 20, MLB 14 (final; the frozen run is the same). The median 2-2 / 3-2
+move at three repeats is 23.1 points (four levels: HS, D3, D1, MLB). HS is the least affected (medians 5.1 points at 2-2 and 0.0 at 3-2).
+The final and frozen runs are within a point or two cell for cell, so **the new archive did not change this**.
+
+## 4. Is it new? Mixed, and partly not testable here
+- **Saved v1.2.3 check** (`results/v13core/hard_checks_v123.json`): default 2-2 moves 18.6, 3-2 14.9. v1.2.3 failed the same check.
+- **Saved recalibrated core** (`results/v13core_recal/hard_checks_core.json`): default 2-2 moved 6.5 (top call SL middle 28.9%), 3-2 22.1.
+  Parts 3 and 4 (default 2-2 20.8 / 21.7) are higher, with a flatter menu (top call 21.7%, FB down-away).
+  **I did not find which change did that**: bisecting needs earlier commits and git is not reachable from this session. That is for
+  Claude Code (`15ef1c6`, `24d4f66`, `c393047`, `c3e21be`, `e00cfe5`, `938fc4e`, then the mean-preserve and edge-rulings work).
+- **Current engine code with the v1.2 tables** (`PITCH_ZONE/COUNT/RUN_TABLE=v12`, `PITCH_MP_TABLE=v0`): 47 of 80 two-strike cells over
+  10 (final tables: 59 of 80) and median move 12.7 against 23.1. **This is an approximation of v1.2.3, not v1.2.3** (its default 2-2
+  row is 12.4 here against 18.6 in the saved v1.2.3 run, because the engine code also differs). It says the v1.3 tables roughly
+  double the median response overall (23 against 13), mostly at D3 and D1 at 1-2 and 3-2; HS and MLB are about the same, and the large
+  baseline response is v1.2's.
+
+## 5. What would it take to pass? (scratch copies only; nothing applied)
+Changing only the prior weight 4 in the belief blend (copies of the engine in a scratch folder; D3 / D1 / HS / MLB, 3 arsenals, 2-2 and 3-2, 24 cells):
+
+| prior weight | cells over 10 at n = 3 | at n = 6 | median move at 3 | max move at 3 | default D3 2-2 / 3-2 |
+|---|---|---|---|---|---|
+| 4 (as built; matches the repo) | 16 | 16 | 22.5 | 30.7 | 21.7 / 26.1 |
+| 8 | 14 | 16 | 12.2 | 19.1 | 8.6 / 14.2 |
+| 16 | 3 | 14 | 6.7 | 11.4 | 0.0 / 7.4 |
+| 32 | 0 | 3 | 3.3 | 5.6 | -2.4 / 3.7 |
+
+About 16 passes at three repeats in most cells; about 32 would pass across the whole 0-6 range. That is a hitter who barely reads a
+repeated call within a game. This is a measurement of what the limit implies, not a recommendation to apply it. One related
+finding from earlier in this work: real hitters showed almost no within-pitcher adaptation in the outcome data (slopes about 0, K-gap
+diagnosis); that was measured on outcomes, not on how a hitter anticipates a repeated call, so it points the same way but does not
+settle this.
+
+## 6. Options for Drew (proposed; none applied)
+1. **Weaken the learning term** (raise the prior weight): passes the check, changes every two-strike call, needs its own changed-call
+   list and re-grading. Weight 16 leaves 3 of 24 cells just over at three repeats (max 11.4); 32 passes all 24 at three repeats and all but 3 across the range.
+2. **Re-point the check**, not the model: for example follow the whole mix (total variation) or only counts where the top call leads by
+   a real margin, and say what limit applies. Keeps the model, loosens a standing hard check, and 3-2 still moves 26.
+3. **Accept it as v1.2's anti-predictability, as shipped**, and say so in the sheet. v1.2.3 already failed at 18.6.
+
+My lean: option 1 or 3, not 2. The clear-leader 3-2 row moves 26 points, so loosening the check hides a real effect. Between 1 and 3:
+whether coaches want the call to switch away after three repeats is a coaching call, which is Drew's to rule.
+
+## 7. The ground-ball rule failure (`tests.py`, 1 of the 8 failed checks)
+The check is `d_on[1-1] >= 0.70 > d_off[1-1] and gb_spots == [...]`: with the rule on, at least 70% of 1-1 calls with a runner on 1st
+and 0 out go down, and with the rule off the run math alone must be under 70%. Rerun here (D3, three-pitch arsenal):
+| engine | rule off | rule on |
+|---|---|---|
+| final | 76% | 84% |
+| frozen run | 69% | 81% |
+| current code with v1.2 tables | 42% | 67% |
+
+- **The rule works** (it still adds 8 points) and the "on" half of the check passes (84 >= 70). **The "off" half fails:** the run math
+  alone now sends 76% of calls down at D3, so the rule is no longer what takes it over 70.
+- The frozen run passed by one point (69). Between the frozen and final runs only the data-driven tables changed (count layer, run values,
+  mean-preservation scalars); **I did not isolate which one moved the 7 points**.
+- The other half of the test (`gb_spots`) is a plain function of outs, balls, strikes and runners and does not depend on the fit.
+- **Proposed fix** (marked proposed; not applied; Drew's grade): the test is stale, not the rule. Re-point it to "on >= 70% and the rule adds
+  at least 5 points", and drop "off < 70%". Proposed grade of the call itself: **Acceptable** (down targets with a runner on 1st, 1-1, is what
+  the rule intends either way). D1 off 68 -> 82 and MLB 94 -> 99 are not covered by this test.
+
+## 8. test-app.sh: all 17 failing suites (51 of 68 pass; log `C:/dev/pitchiq-data-final/p4/suites/test_app.log`)
+| suite | failed | cause | status |
+|---|---|---|---|
+| tests.py | 8 | realism D3 K 17.9 vs 16.2 and HS K 26.2 vs 21.0 (the open calling edge); v1.0 grid D1 3-1 (2); 3-1 slider landing; LAND_GAIN; coaching read "squared up"; exact v1.0; **ground-ball rule (section 7)** | the rule row is **new, not explained until section 7**; the rest as in Part 3 |
+| tests_v11 | 2 | exact v1.0; **Q4: HS riding four-seam up is 36.4% of two-strike calls, cap 36** | Q4 floor-driven (ruling 16), for Drew |
+| tests_v12 | 3 | exact v1.1 (2); S5 sinker lean gate | history; S5 as in the core report |
+| tests_v12b | 1 | hitter-fit coefficient pin (results/v12) | pinned to the old fit |
+| tests_v121 / v122 / v123 | 1 / 3 / 1 | bit for bit vs v1.2 / v1.2.1 / v1.2.2 commits | history |
+| tests_v13_d2 | 4 | PLACEHOLDER_D2 (D2 = D3) | obsolete: D2 has its own layer and run values |
+| d2_e2e | 1 | same placeholder (D2 call = D3 call) | obsolete |
+| tests_v13_sim | 4 | "no traits" games byte for byte vs e202169 | pinned to an older engine |
+| tests_v13_core | 7 | frozen shas / defaults (now with `mp` v13); D2 / D3 "v1.2 count layer"; run_v13core contents; count / run switch-off | explained: rulings 1, 10, 12 and the refit |
+| tests_v13_tables | 5 | v13refit bit for bit (Python / JS, difference inf); D1 1-1 count-file probe; D1 1-1 run-file probe; D2 placeholders | explained, the two D1 1-1 probes need re-pointing |
+| golden_v123 | 1 | the v1.2.3 reference (241,061 differences) | history, expected |
+| stage2_test | 2 | noise-chasing learner off in 27 of 40 seasons (needs 32); **real learner off in 2 of 40 = `stage2 D5`** | **D5 stays open; 27/40 not explained** |
+| worlds_test | 1 | power bias at 400 PAs 3.53 vs 1.5 | **not explained** |
+| logging_exact_test | 1 | event counts vs an older build (218 vs 247) | pinned to an older engine |
+| drift_exact_test | 4 | event counts / fields vs an older build | pinned to an older engine |
+
+17 suites; 2 are unexplained (`stage2_test` 27 of 40 and `worlds_test`). The ground-ball row is explained by section 7, so `tests.py` is explained apart from the open calling edge.
+`game_mix_e2e` passes in this log. **No re-pins applied.**
+
+## Stop points for Drew (Part 5)
+- Robustness: weaken the learning term, re-point the check, or accept (section 6); and whether the 10-point limit should cover this
+  input at all (the Nov scenario draft's question, still unruled).
+- The ground-ball test fix and its proposed grade (section 7).
+- Waiting from Parts 3-4: E-1 to E-9 plus E-4b, the hard vs engine-made rule list, the 6 HS rows, HG-1 to HG-4, the 35 scenarios,
+  the changed-call list, `stage2 D5`, and the go for 2026.
+- For Claude Code: bisect the 2-2 jump (6.5 to 20.8) once git is available; the commits are listed in section 4.
+
+## Summary (Part 5)
+- Robustness fails nearly everywhere, not just 2-2: about 79 of 100 two-strike cells move more than 10 points at three repeats, on
+  both the final and frozen runs. The saved v1.2.3 also failed (18.6).
+- The cause is the within-game learning term (prior weight 4): the 21.7 is a near-tie call removed entirely, but the mix itself
+  moves 52 points and the clear-leader 3-2 row moves 26. A weight near 16 would nearly pass at three repeats and 32 would pass; that is a model change for you to rule.
+- The ground-ball rule still works (+8 points); its test is stale because the run math alone now gives 76%. Nothing was changed or committed.
+
+
+# Part 6 (Nov 25, night): weight grid and ground-ball test (stopped at the weight)
+
+Carries out part of `docs/PROMPT_hitter_v13_learning_weight_2026-11-25.md`, run from a claude.ai session on the worktree files
+(`C:/dev/pc-final`). That session has 2 cores, 3 GB and no usable git, so **the weight was not applied, and nothing is committed**.
+Rulings 28-31 are recorded in `docs/DECISIONS_refit_v13.md`. No count layer, table, engine or limit was changed. 2026 not read; Step 6 untouched.
+
+## What ran, what stopped, what did not run
+- **Ran:** the weight grid on the full check (section 1); the ground-ball test re-point (ruling 30, section 3).
+- **Stopped at the weight (the prompt's own rule):** no W up to 48 passes every cell, so W is not applied in Python or JS.
+- **Not run (not possible here):** the bisect (ruling 31, needs earlier commits), the engine-called and paired sims, the 400-game sims,
+  the read-through, goldens / changed-call list, `test-app.sh` / `test-sql.sh`, fuzz 3000. None of these changed, because the engines did not change.
+- **Not committed:** new / edited files: `readthrough/robust_diag_v13.py` (new `--mode grid`), `readthrough/gb_rule_check_v13.py`,
+  `tests.py` (ruling 30), `results/v13p5/rob_grid_W32_*.json`, `rob_grid_W48_*.json`, `docs/*`.
+
+## 1. The weight grid (`robust_diag_v13.py --mode grid`: 5 levels x 10 arsenals x 2-2 and 3-2 = 100 cells, n = 1..6, move of the no-history top call)
+| W | cells over 10 points | max move | median of the per-cell max |
+|---|---|---|---|
+| 4 (as built) | 79 of 100 at n = 3 (Part 5; this grid was not run at W = 4) | | |
+| 32 | 13 | 30.2 | 7.5 |
+| 48 | 4 | 28.3 | 5.4 |
+
+W = 8, 12, 16, 20 and 24 were not run on the full grid, because 32 already fails 13 cells. The earlier 24-cell scratch table (Part 5) had 14 failing at W = 8
+and 3 at W = 16 at n = 3 only.
+
+**The four cells still failing at W = 48:**
+| cell | moves at n = 1 .. 6 (points) | what it needs |
+|---|---|---|
+| D3 / hs_two / 2-2 (Curveball middle 47.9%) | 2.2, 4.4, 6.5, 8.5, 10.4, 12.3 | W of about 64 |
+| D2 / hs_two / 2-2 | 2.1, 4.3, 6.3, 8.3, 10.3, 12.1 | about 64 |
+| MLB / sink_sweep / 2-2 (Changeup middle 19.9%) | 1.1, 2.6, 4.9, 7.0, 9.1, 11.0 | about 56 |
+| **HS / four_cut / 3-2 (Cutter down-middle 54.5%)** | **25.2 at n = 1**, then 25.8 .. 28.3 | **no W: see below** |
+
+Re-run at W = 56, 64, 80 and 100 on the three smooth cells (plus D1 / hs_two): all pass at 64 (max 9.5); at 56 two of the four pass (D3 and D2 hs_two are 10.7 and 10.5 there).
+So **the smooth cells need W of about 64**, outside Drew's 16 to 32 range. At W = 64 a call repeated three times shifts the hitter's belief by 4.5%, so within-game learning is nearly gone.
+
+## 2. The cell no weight fixes is the HS fastball floor, not the learning term
+HS / four_cut / 3-2: the top call's share jumps from 54.5% to 29% as soon as the belief shifts by about 2% (W = 48: 25 points at n = 1; W = 100 holds at n = 1 and jumps at n = 2;
+W = 200 and up hold through n = 2; at W = 4096 nothing moves). That is a step, not a slope.
+On a scratch copy with the floor switched off (`apply_fb_floor` returns its input), the same cell has a smooth response: Slider middle 53 / Curve middle 46 / Cutter 0.7%,
+and the move at W = 48 is 0.7 points at n = 1. With the floor on, the base mix is Cutter 54.5 / Slider 23.9 / Curve 21.5, and at n = 1 Fastball middle (32%) appears.
+My reading (not proven): the floor (ruling 16) puts the fastball share back among the eligible fastball calls by cost, the cutter and the fastball are near-tied there,
+and a small cost change flips which one it picks. That is the floor interaction, and it appears only at HS in the sweep (no other level has a step above 15 points at n = 1).
+**Raising W cannot remove it** short of removing the learning term; fixing it is a floor change.
+
+## 3. Ruling 30: the ground-ball test, re-pointed
+`tests.py`: the condition is now rule on >= 70% **and** the rule adds at least 5 points (was "rule off < 70%"), plus the same `gb_spots` list; the label says so.
+Not run through `tests.py` (it takes the whole suite's time); the condition was evaluated by `readthrough/gb_rule_check_v13.py`, which computes it the way the test does:
+D3, 1-1, runner on 1st, 0 out: **on 83.9%, off 76.0% (+7.9 points), gb_spots [True, False, False, False, True, False]: condition True**. Proposed grade of the call: Acceptable.
+Re-run `tests.py` (or `scripts/test-app.sh`) to confirm the row passes inside the suite.
+
+## Stop points for Drew (Part 6)
+- **The weight.** Nothing in 8 to 48 passes every cell. Options:
+  1. Raise W to about 64: the 96 cells that pass at 48 and the three smooth failing cells pass (the latter re-run at 64; the 96 assumed to keep passing at higher W, not re-run), but within-game learning is nearly gone (outside your 16 to 32).
+  2. Keep W in your range (for example 32: 13 cells still over 10, max about 30) and rule that the check is met except where a rule says otherwise.
+  3. Fix the HS floor step separately (so the one discontinuous cell passes) and apply W at 64 or the smallest weight that then passes everywhere. A floor change needs its own
+     HS changed-call list and 900-game HS sims.
+- Bisect (ruling 31) still to run by Claude Code with git; the floor result suggests the 6.5 to 21.7 jump may be partly the HS floor and partly refit tables, but only for the HS cells; the default row is D3.
+- Everything from Parts 3 to 5 still waiting: E-1 to E-9 plus E-4b, the hard vs engine-made rule list, the 6 HS rows, HG-1 to HG-4, the 35 scenarios, `stage2 D5`, the go for 2026.
+
+## Summary (Part 6)
+- No weight from 8 to 48 passes the 10-point check in every cell: 13 cells fail at 32 and 4 at 48. Three of those four are smooth and pass at about 64.
+- The fourth, HS / four_cut / 3-2, is a 25-point step caused by the HS fastball floor choosing between near-tied fastball calls. Weight cannot fix it.
+- The ground-ball test is re-pointed (condition true on the D3 numbers: on 83.9, off 76.0). Nothing else changed and nothing is committed.
+
+
+# Part 7 (Nov 25, night): W = 32 applied (ruling 32)
+
+Drew chose W = 32 and to accept the cells that still exceed the limit (Part 6). Done from the same claude.ai session as Parts 5 and 6 (2 cores, 3 GB, no usable git),
+so **nothing is committed and the sims, `test-app.sh` / `test-sql.sh` and fuzz 3000 were not run**. Step 6 untouched; 2026 not read.
+
+## What changed (uncommitted, in `C:/dev/pc-final`)
+- `engine.py`: the hitter's belief is now `(LEARN_PRIOR_W * mix + calls here today) / (LEARN_PRIOR_W + calls)` with `LEARN_PRIOR_W = 32` (was the literal 4). Three repeats of a call now move the belief 8.6% (was 43%).
+- `app/engine.js` and `web/lib/engine.js`: the same constant and formula (the two copies are identical). `app/dist/pitch-caller.html` rebuilt with `cd app && python3 build.py` (4052 KB; the old formula no longer appears in it).
+- `tests.py` (ruling 30, Part 6). Nothing else: no table, count layer, zone file or limit.
+
+## Checked here
+| check | result |
+|---|---|
+| Python vs JS parity, `golden/fast.py 40` (usage_by_call is in those inputs) | PASS 0 mismatches; also with leans, with tags, and at D2: all PASS 0 mismatches |
+| Hard checks (`results/v13p6/hard_checks_W32.json`) | robustness 2-2: -2.4 at 3 repeats, max 1.0; 3-2: 3.7, max 7.4; both pass. Hard foul = foul 0.0 (pass); hit hard twice (pass); no chase at 3-0 / 3-1: 0 (pass); no scouting rows unchanged. Hit hard once: another call moves 11.6, **fails as written, same as Part 4** |
+| Robustness grid, shipped engine (`results/v13p6/rob_grid_shipped_*.json`) | identical, cell for cell, to the scratch W = 32 grid; **13 of 100 cells over 10 points** (list below) |
+| Read-through, v12 suite (`results/v13p6/scenarios_v12_W32.json`) | **85/98, same as Part 4; no row's top call changed and no row flipped pass / fail** (those rows carry no `usage_by_call`) |
+| Goldens: 500 inputs, W = 4 vs 32, same engine otherwise (`results/v13p6/CHANGED_CALLS_W32.md`) | 250 of the 500 carry a call; 182 of those carry usage; **the call mix changed in 120 (all with usage), the pick in 24, the top-share call in 10**: HS 2, travel 2, MLB 5, D1 1, D3 0. Largest single share move 24 points; median among the usage cases 0.2 points. No other output (probabilities, table, take, grade, ump) changed |
+
+**The 13 cells still over 10 (all accepted by ruling 32):** HS four_cut 3-2 (30.2, the floor step); D3 hs_two 2-2 (17.5); D2 hs_two 2-2 (16.9); MLB sink_sweep 2-2 (14.4); D1 hs_two 2-2 (12.4);
+HS four 2-2 (11.4); D1 four 2-2 (10.8); MLB four 3-2 (10.7); D2 four 2-2 (10.5); D1 four_cut 3-2 (10.5); MLB four_cut 3-2 (10.3); D2 ride126 2-2 (10.07); D1 ride126 2-2 (10.07).
+
+## What this breaks, on purpose (for Drew)
+- **`golden_v13core` now fails**: `node golden/golden_v11.js v13core` reports **3842 differences** (cases with usage_by_call), where Part 4 had it passing. The frozen reference needs a re-pin after you accept the new weight. **Not applied.**
+  The same is likely for other suites that pin call mixes with usage (not run here: `tests_v13_core`, `tests_v13_sim`, `drift_exact`, `logging_exact`, etc.).
+- The weight changes calls, not outcome probabilities, so the count layers, the 2025 scoring and the reference-world gate are unchanged by construction. I did not run anything to prove that for 2025 scoring.
+
+## Not run (needs the desktop session / git)
+- Bisect of the 2-2 jump (ruling 31); the engine-called, paired (480 per level, 900 HS) and 400-game sims, which show what the weaker learning does to K, BB and runs per game and to the +1.5 K flag;
+  the three-way read-through; `scripts/test-app.sh` and `scripts/test-sql.sh`; fuzz 3000 (`python3 fuzz.py 3000 300` timed out at 168 s here; `results/v13p6/fuzz_W32.txt` says so).
+- Committing and pushing: files are uncommitted. New / changed: `engine.py`, `app/engine.js`, `web/lib/engine.js`, `app/dist/pitch-caller.html`, `tests.py`, `readthrough/robust_diag_v13.py`,
+  `readthrough/gb_rule_check_v13.py`, `docs/BUILD_v13_fulldata_REPORT.md`, `docs/DECISIONS_refit_v13.md`, `results/v13p5/`, `results/v13p6/`.
+- The first attempt to write a `golden_v13W32` reference timed out before writing anything, so no such file exists; the changed-call comparison used chunked runs of the same inputs instead.
+
+## Stop points for Drew (Part 7)
+- Accept the changed calls: 10 top-call changes in the goldens (list in `CHANGED_CALLS_W32.md`), HS and travel marked.
+- The re-pin of `golden_v13core` (and any other suite that fails on the new weight), once the sims below say the weight is safe.
+- Sims: whether engine-called runs per game stay at or below the reference staff's at every level with the weaker learning (the D1 run gap was +0.30 +/- 0.22 with W = 4).
+- Still waiting from before: E-1 to E-9 plus E-4b, the hard vs engine-made rule list, the 6 HS rows, HG-1 to HG-4, the 35 scenarios, `stage2 D5`, the go for 2026.
+
+## Summary (Part 7)
+- W = 32 is in Python, the JS engine, the web copy and the rebuilt app page, and the two engines agree (parity 0 mismatches in four variants).
+- The default 2-2 and 3-2 robustness rows now pass; 13 of 100 sweep cells stay over 10 as you accepted, one of them the HS floor step. In the goldens only 10 top calls change.
+- `golden_v13core` now fails (3842 differences) and needs a re-pin; the sims, test suites, fuzz and the commit still have to run from the desktop.
