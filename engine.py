@@ -271,6 +271,9 @@ def mashed(p, q, s):
 # (aiming low adds ~6 points of balls, and a weak grounder is worse than a weak pop-up), and Drew wants a coach's
 # "get a ground ball" call there. With three balls the goal is a strike, with two strikes the strikeout.
 GB_RULE_BONUS = 0.005
+# v1.3 ruling 28 (Drew, Nov 25 night): the hitter's belief about the pitcher's mix is (W * mix + calls here today) / (W + calls); W was 4 (v1.0 to
+# v1.2.3), now 32, so three repeats of a call move the belief 8.6% (was 43%). Same constant in app/engine.js (LEARN_PRIOR_W).
+LEARN_PRIOR_W = 32
 GB_RULE_TARGETS = ("down-in", "down-away", "down-middle")
 
 
@@ -2759,7 +2762,7 @@ def solve_sit_game(M, ks, s, temp, b_h=None, usage=None, fb=None):
     n_u = sum(usage.values())
 
     def tilde(p_):
-        return {a: (4 * p_.get(a, 0.0) + usage.get(a, 0)) / (4 + n_u) for a in calls} if n_u else p_
+        return {a: (LEARN_PRIOR_W * p_.get(a, 0.0) + usage.get(a, 0)) / (LEARN_PRIOR_W + n_u) for a in calls} if n_u else p_
 
     # speed only: M as rows (per call) and columns (per sit), so each sum below runs over the same products in the same
     # order as sum(sg[k] * M[a][k] for k in ks) and sit_response's sit_payoff

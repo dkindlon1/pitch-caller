@@ -7,6 +7,7 @@
 (function (root) {
   "use strict";
   let D = null;                       // tables, set by init(data)
+  const LEARN_PRIOR_W = 32;             // v1.3 ruling 28 (Nov 25 night): prior weight of the hitter's belief about the pitcher's mix; engine.py LEARN_PRIOR_W (was 4)
 
   const QUADS = ["up-in", "up-away", "down-in", "down-away", "chase", "middle", "down-middle"];   // v1.0 Step 7: down-middle = "keep it down"
   // v0.7b coach rule W1 (Drew): never a chase target at 3-0 or 3-1
@@ -1217,7 +1218,7 @@
       return policyArr(cost, st, temp, win, lwin, pi, s, fb);
     };
     const response = (p_) => {   // f = sigma*(p~)
-      for (let a = 0; a < nA; a++) pt[a] = nU ? (4 * p_[a] + us[a]) / (4 + nU) : p_[a];
+      for (let a = 0; a < nA; a++) pt[a] = nU ? (LEARN_PRIOR_W * p_[a] + us[a]) / (LEARN_PRIOR_W + nU) : p_[a];
       let mx = -Infinity;
       for (let k = 0; k < nK; k++) {
         let s_ = 0, c = 0.0, first = true;

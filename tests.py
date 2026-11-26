@@ -516,9 +516,9 @@ finally:
     _e.GB_RULE_BONUS = _saved
 gb_spots = [_e.ground_ball_spot(x) for x in (dp, _rp(dp, outs=2), _rp(dp, balls=3), _rp(dp, strikes=2),
                                              Situation(1, 1, 1, R3), Situation(1, 1, 1, E))]
-check("v1.0 Step 7 ground-ball rule (Drew): double play on, 1-1: most calls go down (a coach rule on top of the run math); "
+check("v1.0 Step 7 ground-ball rule (Drew): double play on, 1-1: most calls go down (the rule adds at least 5 points on top of the run math); "
       "off with 2 outs, 3 balls, 2 strikes or nobody on",
-      d_on[(1, 1)] >= 0.70 > d_off[(1, 1)] and gb_spots == [True, False, False, False, True, False],
+      d_on[(1, 1)] >= 0.70 and d_on[(1, 1)] - d_off[(1, 1)] >= 0.05 and gb_spots == [True, False, False, False, True, False],   # ruling 30 (Nov 25): was "off < 70%"
       f"1-1, runner on 1st, 0 outs: down targets {d_off[(1, 1)]:.0%} on the run math alone -> {d_on[(1, 1)]:.0%} with the rule")
 
 # v1.0 Step 7 (Drew): the coaching reads. Each read, switched off and on, on the situation of its read-through row
