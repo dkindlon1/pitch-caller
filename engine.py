@@ -2672,6 +2672,12 @@ def _soft(costs, temp, w, ref):
 # window) the floor brings them in, as Nov 23's e00cfe5 did: the rest of the policy x (1 - f), and f spread over the
 # eligible fastball calls by the location softmax of policy_from_costs (temperature and location window as there, from
 # the best eligible fastball call's cost; the location window chooses WHICH fastball, it doesn't keep the fastball out).
+# Drew's Nov 26 ruling 33: the same softmax also places the floor when the eligible fastball share w is above 0: the
+# fastball calls keep their own shares and the shortfall f * t - w is ADDED by that softmax (the other calls x
+# (1 - f) t / (t - w) as before). Before, every fastball call was scaled by f t / w, so the whole floor went to whichever
+# fastball calls happened to have a share just above 0, and the allocation jumped when the never-pick taper let one in
+# or out (HS four_cut 3-2: 25 points at one repeat). The new form equals the w = 0 branch as w -> 0 and adds nothing as
+# w -> f t, so it is continuous in the costs. Without costs (a caller that gives only pi) the old scaling stays.
 # The engine has no fatigue / injury exclusion (fatigue lowers speed and grade inside the costs), so none applies here.
 # The simulator also floors the coach's own pitch (simulate.py). docs/DECISIONS_refit_v13.md ruling 16 lists the split.
 # Every other level, and any count table without fb_floor (v12, v13refit): no change.
@@ -2702,7 +2708,7 @@ def fb_names(arsenal, s):
 def apply_fb_floor(pi, s, fb, costs=None, temp=None):
     """pi {(name, q): prob} -> pi with the eligible fastball calls' share raised to fb_floor(s) (see above); plain
     left-to-right sums in pi's order (app/engine.js applyFbFloor does the same operations). costs {(name, q): cost} of
-    the allowed calls and temp: needed to bring the fastball back when its share is 0 (ruling 16)."""
+    the allowed calls and temp: they place the shortfall (ruling 16 when the share is 0, ruling 33 when it is above 0)."""
     if not fb:
         return pi
     f = fb_floor(s)
@@ -2712,16 +2718,19 @@ def apply_fb_floor(pi, s, fb, costs=None, temp=None):
         t += v
         if a[0] in fb and a not in blk:
             w += v
-    if w == 0.0 and costs is not None and t > 0.0:
+    if not (w < f * t and t > 0.0):
+        return pi
+    if costs is not None:       # ruling 33: the shortfall f * t - w goes by the cost softmax (continuous in the costs)
         fbc = {a: c for a, c in costs.items() if a[0] in fb and a not in blk}
         if not fbc:
             return pi
         loc = _soft(fbc, temp, windows(s)[1], min(fbc.values()))
-        out = {a: v * (1.0 - f) for a, v in pi.items()}
+        ko = (1.0 - f) if w == 0.0 else (1.0 - f) * t / (t - w)
+        out = {a: v * (1.0 if (a[0] in fb and a not in blk) else ko) for a, v in pi.items()}
         for a, pq in loc.items():
-            out[a] = out.get(a, 0.0) + f * t * pq
+            out[a] = out.get(a, 0.0) + (f * t - w) * pq
         return out
-    if not (w > 0.0 and w < f * t):
+    if w == 0.0:
         return pi
     kf = f * t / w
     ko = (1.0 - f) * t / (t - w)

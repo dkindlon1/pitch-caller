@@ -102,6 +102,28 @@ def main():
     outm = e.apply_fb_floor(pim, s, fbm, costs, 0.01)
     check("ruling 16: a mashed call in the policy is neither counted toward the floor nor raised",
           abs(outm[("Fastball", "down-away")] - f32) < 1e-12 and outm[("Fastball", "middle")] < 0.1)
+    # ruling 33 (Nov 26): with costs, a fastball share above 0 keeps its own calls and ADDS the shortfall by the same
+    # location softmax as the share-0 branch, so the allocation is continuous in the costs (no step when a call enters)
+    pw = {("Fastball", "down-away"): 0.004, ("Slider", "chase"): 0.996}
+    o33 = e.apply_fb_floor(pw, s, frozenset({"Fastball"}), costs, 0.01)
+    loc = e._soft({a: c for a, c in costs.items() if a[0] == "Fastball"}, 0.01, e.windows(s)[1], 0.30)
+    check("ruling 33: share above 0 and below the floor: fastball share = floor, its calls keep their share plus the "
+          "shortfall by the location softmax, the rest x (1 - f) / (1 - w)",
+          abs(o33[("Fastball", "middle")] + o33[("Fastball", "down-away")] - f32) < 1e-12 and abs(sum(o33.values()) - 1) < 1e-12
+          and abs(o33[("Fastball", "middle")] - (f32 - 0.004) * loc[("Fastball", "middle")]) < 1e-12
+          and abs(o33[("Fastball", "down-away")] - (0.004 + (f32 - 0.004) * loc[("Fastball", "down-away")])) < 1e-12
+          and abs(o33[("Slider", "chase")] - (1 - f32)) < 1e-12)
+
+    def _gap(eps):
+        p1 = {("Fastball", "down-away"): eps, ("Slider", "chase"): 1.0 - eps}
+        a1 = e.apply_fb_floor(p1, s, frozenset({"Fastball"}), costs, 0.01)
+        return max(abs(a1.get(k, 0.0) - back.get(k, 0.0)) for k in set(a1) | set(back))
+    check("ruling 33: continuous at share 0: a share of 1e-9 gives the share-0 allocation within 1e-8 (before: the whole "
+          "floor on that one call)", _gap(1e-9) < 1e-8, f"gap {_gap(1e-9):.1e}")
+    pt = {("Fastball", "down-away"): f32 - 1e-9, ("Slider", "chase"): 1.0 - f32 + 1e-9}
+    at = e.apply_fb_floor(pt, s, frozenset({"Fastball"}), costs, 0.01)
+    check("ruling 33: continuous at the floor: a share 1e-9 under it changes nothing by more than 1e-8",
+          max(abs(at.get(k, 0.0) - pt.get(k, 0.0)) for k in set(at) | set(pt)) < 1e-8)
     mu = {"hard|FB|middle": 1, "hard|FB|up-in": 1, "hard|FB|down-away": 2}
     sm = e.Situation(3, 2, 0, (False, False, False), level="hs", matchup=mu)
     ars_m = [e.Pitch("Fastball", "FB", 3, 3, 0.8), e.Pitch("Curve", "CB", 3, 3, 0.8)]

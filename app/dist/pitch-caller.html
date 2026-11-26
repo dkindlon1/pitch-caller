@@ -1979,16 +1979,18 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
     const f = fbFloor(s);
     let w = 0.0, t = 0.0;
     for (const a in pi) { t += pi[a]; if (fbElig(fb, a)) w += pi[a]; }
-    if (w === 0.0 && costs && t > 0.0) {   // ruling 16: the fastball outside the never-pick window is brought back at the floor
+    if (!(w < f * t && t > 0.0)) return pi;
+    if (costs) {   // ruling 16 (w = 0) and ruling 33 (w > 0): the shortfall f * t - w goes by the cost softmax over the eligible fastball calls
       const fbc = Object.keys(costs).filter((a) => fbElig(fb, a)).map((a) => [a, costs[a]]);
       if (!fbc.length) return pi;
       let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
       const loc = soft(fbc, temp, windows(s)[1], best), o = {};
-      for (const a in pi) o[a] = pi[a] * (1.0 - f);
-      for (const [a, pq] of loc) o[a] = (o[a] ?? 0.0) + f * t * pq;
+      const ko = w === 0.0 ? (1.0 - f) : (1.0 - f) * t / (t - w);
+      for (const a in pi) o[a] = pi[a] * (fbElig(fb, a) ? 1.0 : ko);
+      for (const [a, pq] of loc) o[a] = (o[a] ?? 0.0) + (f * t - w) * pq;
       return o;
     }
-    if (!(w > 0.0 && w < f * t)) return pi;
+    if (w === 0.0) return pi;
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w), o = {};
     for (const a in pi) o[a] = pi[a] * (fbElig(fb, a) ? kf : ko);
     return o;
@@ -2000,21 +2002,16 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
     for (let g = 0; g < st.groups.length; g++) {
       for (const i of st.groups[g]) if (piOut[i] > 0) { t += piOut[i]; if (fbElig(fb, st.calls[i])) w += piOut[i]; }
     }
-    if (w === 0.0 && t > 0.0) {   // ruling 16: brought back at the floor (costs in call order)
-      const fbc = [];
-      for (let i = 0; i < st.calls.length; i++) if (fbElig(fb, st.calls[i])) fbc.push([i, cost[i]]);
-      if (!fbc.length) return piOut;
-      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
-      const loc = soft(fbc, temp, lwin, best);
-      for (let i = 0; i < piOut.length; i++) if (piOut[i] > 0) piOut[i] = piOut[i] * (1.0 - f);
-      for (const [i, pq] of loc) piOut[i] = piOut[i] + f * t * pq;
-      return piOut;
-    }
-    if (!(w > 0.0 && w < f * t)) return piOut;
-    const kf = f * t / w, ko = (1.0 - f) * t / (t - w);
-    for (let g = 0; g < st.groups.length; g++) {
-      for (const i of st.groups[g]) if (piOut[i] > 0) piOut[i] = piOut[i] * (fbElig(fb, st.calls[i]) ? kf : ko);
-    }
+    if (!(w < f * t && t > 0.0)) return piOut;
+    // ruling 16 (w = 0) and ruling 33 (w > 0): the shortfall f * t - w goes by the cost softmax (costs in call order)
+    const fbc = [];
+    for (let i = 0; i < st.calls.length; i++) if (fbElig(fb, st.calls[i])) fbc.push([i, cost[i]]);
+    if (!fbc.length) return piOut;
+    let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
+    const loc = soft(fbc, temp, lwin, best);
+    const ko = w === 0.0 ? (1.0 - f) : (1.0 - f) * t / (t - w);
+    for (let i = 0; i < piOut.length; i++) if (piOut[i] > 0 && !fbElig(fb, st.calls[i])) piOut[i] = piOut[i] * ko;
+    for (const [i, pq] of loc) piOut[i] = piOut[i] + (f * t - w) * pq;
     return piOut;
   }
   function policyArr(cost, st, temp, win, lwin, piOut, s, fb) {   // pi over calls (Float64Array); zero where not picked
@@ -7298,16 +7295,18 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     const f = fbFloor(s);
     let w = 0.0, t = 0.0;
     for (const a in pi) { t += pi[a]; if (fbElig(fb, a)) w += pi[a]; }
-    if (w === 0.0 && costs && t > 0.0) {   // ruling 16: the fastball outside the never-pick window is brought back at the floor
+    if (!(w < f * t && t > 0.0)) return pi;
+    if (costs) {   // ruling 16 (w = 0) and ruling 33 (w > 0): the shortfall f * t - w goes by the cost softmax over the eligible fastball calls
       const fbc = Object.keys(costs).filter((a) => fbElig(fb, a)).map((a) => [a, costs[a]]);
       if (!fbc.length) return pi;
       let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
       const loc = soft(fbc, temp, windows(s)[1], best), o = {};
-      for (const a in pi) o[a] = pi[a] * (1.0 - f);
-      for (const [a, pq] of loc) o[a] = (o[a] ?? 0.0) + f * t * pq;
+      const ko = w === 0.0 ? (1.0 - f) : (1.0 - f) * t / (t - w);
+      for (const a in pi) o[a] = pi[a] * (fbElig(fb, a) ? 1.0 : ko);
+      for (const [a, pq] of loc) o[a] = (o[a] ?? 0.0) + (f * t - w) * pq;
       return o;
     }
-    if (!(w > 0.0 && w < f * t)) return pi;
+    if (w === 0.0) return pi;
     const kf = f * t / w, ko = (1.0 - f) * t / (t - w), o = {};
     for (const a in pi) o[a] = pi[a] * (fbElig(fb, a) ? kf : ko);
     return o;
@@ -7319,21 +7318,16 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     for (let g = 0; g < st.groups.length; g++) {
       for (const i of st.groups[g]) if (piOut[i] > 0) { t += piOut[i]; if (fbElig(fb, st.calls[i])) w += piOut[i]; }
     }
-    if (w === 0.0 && t > 0.0) {   // ruling 16: brought back at the floor (costs in call order)
-      const fbc = [];
-      for (let i = 0; i < st.calls.length; i++) if (fbElig(fb, st.calls[i])) fbc.push([i, cost[i]]);
-      if (!fbc.length) return piOut;
-      let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
-      const loc = soft(fbc, temp, lwin, best);
-      for (let i = 0; i < piOut.length; i++) if (piOut[i] > 0) piOut[i] = piOut[i] * (1.0 - f);
-      for (const [i, pq] of loc) piOut[i] = piOut[i] + f * t * pq;
-      return piOut;
-    }
-    if (!(w > 0.0 && w < f * t)) return piOut;
-    const kf = f * t / w, ko = (1.0 - f) * t / (t - w);
-    for (let g = 0; g < st.groups.length; g++) {
-      for (const i of st.groups[g]) if (piOut[i] > 0) piOut[i] = piOut[i] * (fbElig(fb, st.calls[i]) ? kf : ko);
-    }
+    if (!(w < f * t && t > 0.0)) return piOut;
+    // ruling 16 (w = 0) and ruling 33 (w > 0): the shortfall f * t - w goes by the cost softmax (costs in call order)
+    const fbc = [];
+    for (let i = 0; i < st.calls.length; i++) if (fbElig(fb, st.calls[i])) fbc.push([i, cost[i]]);
+    if (!fbc.length) return piOut;
+    let best = Infinity; for (const [, c] of fbc) if (c < best) best = c;
+    const loc = soft(fbc, temp, lwin, best);
+    const ko = w === 0.0 ? (1.0 - f) : (1.0 - f) * t / (t - w);
+    for (let i = 0; i < piOut.length; i++) if (piOut[i] > 0 && !fbElig(fb, st.calls[i])) piOut[i] = piOut[i] * ko;
+    for (const [i, pq] of loc) piOut[i] = piOut[i] + (f * t - w) * pq;
     return piOut;
   }
   function policyArr(cost, st, temp, win, lwin, piOut, s, fb) {   // pi over calls (Float64Array); zero where not picked
