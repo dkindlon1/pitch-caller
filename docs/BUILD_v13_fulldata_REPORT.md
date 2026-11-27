@@ -1924,3 +1924,28 @@ run; no 2026 data was read, loaded or scored, and `--drew-go` was not used.** Th
 ## Summary (Part 13)
 - 2025 rescored on the tip: byte-identical to Part 8. All four levels clear 0.002 (HS 0.00402 is the smallest), so the Step 6
   pass rule is now "> 2 SE and ≥ 0.002 nats per pitch" (d659a40). Step 6 not run; waiting on Drew's go.
+
+# Step 6 (Nov 27): the 2026 held-out test, scored once: ALL FOUR LEVELS PASS
+
+Drew gave the go in this session (he confirmed "Yes, run it now" for Claude to run it; this overrides ruling 47 for this run).
+Files: `C:/dev/pitchiq-data-final/final_test/` (scores.json, scores.md, tables, `RAN.json`); copies in `results/v13step6/`.
+
+| Level | 2026 games / pitches | reference | core − reference (SE) | z | ≥ 0.002 | verdict |
+|---|---|---|---|---|---|---|
+| D1 | 7,827 / 2,312,956 | v1.2 | −0.03225 (0.00074) | −43.6 | yes | **PASS** |
+| D2 | 4,335 / 1,175,983 | v1.2@D3 (the better raw setting on 2026: 1.47141 vs 1.47150) | −0.02827 (0.00085) | −33.1 | yes | **PASS** |
+| D3 | 5,287 / 1,468,773 | v1.2 | −0.03218 (0.00088) | −36.7 | yes | **PASS** |
+| HS / travel | 3,774 / 782,367 | v1.2 | −0.00817 (0.00071) | −11.5 | yes | **PASS** |
+
+Rule (rulings 1 and 49): > 2 SE and ≥ 0.002 nats per pitch; SE = the largest clustered SE, B = 1000, seed 1. Recorded: git
+af7b441 on `feat/hitter-v13-final`, no frozen file dirty, 83 s.
+
+**Run 1 crashed, before 2026 was opened** (on 25865e9; `results/v13step6/run1_crash.log`). `score()` imported `Tables` from
+`harness` (it lives in `harness_adapters`). The crash came after both engines' tables were built and before
+`_final_test_unlock`, so no 2026 data was read and `RAN.json` was not written. Fix af7b441: that import, plus `cache=False` on the
+HS 2026 season load so no 2026 pickle lands in the shared fits cache (none exists, checked). Before the rerun, `score()` was run
+end to end on 2025 only (unlock stubbed, B = 20; `results/v13step6/dry_score_2025.*`): all four levels ran, and the game and pitch
+counts equal score_core's. Pass rule, lock and guards unchanged. Run 2 is the scored run; `RAN.json` now blocks any other.
+
+vs 2025: D1 −0.0306 -> −0.0323, D2 −0.0293 -> −0.0283, D3 −0.0328 -> −0.0322, HS −0.0040 -> −0.0082. D3 has 7× the 2025 games, so its
+SE fell from 0.00204 to 0.00088. Nothing is fit, tuned or changed after this.

@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\dev\pc-final\hitter_data\final_test.py", line 206, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\dev\pc-final\hitter_data\final_test.py", line 184, in main
+    res = score(a.v123_dir, B=a.boot)
+  File "C:\dev\pc-final\hitter_data\final_test.py", line 112, in score
+    from .harness import Tables
+ImportError: cannot import name 'Tables' from 'hitter_data.harness' (C:\dev\pc-final\hitter_data\harness.py)
+exit 1

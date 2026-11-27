@@ -1,0 +1,15 @@
+  D1: core - v1.2 = -0.03225 (SE 0.00074) -> PASS
+  D2: core - v1.2@D3 = -0.02827 (SE 0.00085) -> PASS
+  D3: core - v1.2 = -0.03218 (SE 0.00088) -> PASS
+  HS: core - v1.2 = -0.00817 (SE 0.00071) -> PASS
+# Step 6: the frozen core vs raw v1.2 on 2026 (scored once)
+
+Run 2026-11-27 11:39:09; git af7b4414fb58a7c7d3a7cff4b0cc1e70b221fec6; pitch_5way log loss per pitch; SE = largest of the game / home / two-team bootstrap SEs (B = 1000). PASS = core - reference < -2 SE AND core - reference <= -0.002 nats per pitch (rulings 1 and 49; D2: the better raw v1.2 setting).
+
+| Level | games / pitches | reference | core - reference (SE) | z | verdict |
+|---|---|---|---|---|---|
+| D1 | 7,827 / 2,312,956 | v1.2 | -0.03225 (0.00074) | -43.6 | PASS |
+| D2 | 4,335 / 1,175,983 | v1.2@D3 | -0.02827 (0.00085) | -33.1 | PASS |
+| D3 | 5,287 / 1,468,773 | v1.2 | -0.03218 (0.00088) | -36.7 | PASS |
+| HS | 3,774 / 782,367 | v1.2 | -0.00817 (0.00071) | -11.5 | PASS |
+exit 0
