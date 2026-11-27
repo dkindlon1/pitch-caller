@@ -53,6 +53,8 @@ $run watch_app node watch/bangle/test.js   # watch prototype: the Bangle app aga
 node app/smoke.js
 echo "smoke: passed"
 (cd app && ../$run rules_e2e node rules_e2e.js)
+(cd app && ../$run engine_down_e2e_1 node engine_down_e2e.js 1)   # audit Nov 27: callV08 throws mid-game: no stale call, own sign, pitches kept, engine back next pitch
+(cd app && ../$run engine_down_e2e_2 node engine_down_e2e.js 2)   # the same with solveTable and gradeCall throwing too
 (cd app && ../$run v10_step1_e2e node v10_step1_e2e.js)   # v1.0 Step 1: shake-off by pitch (D2), re-solve on bases/outs (#2)
 (cd app && ../$run v10_step3_e2e node v10_step3_e2e.js)   # v1.0 Step 3: chase balls, HBP, landing record, old-format games
 (cd app && ../$run v10_step5_e2e node v10_step5_e2e.js)

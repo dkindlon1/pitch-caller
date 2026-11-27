@@ -162,6 +162,10 @@ S.setup.engine = "v09";      // a setup saved on v0.8 or v0.7c opens on v0.9: th
 let undo = [];
 let pending = null;
 let pickMode = false;
+// Audit fix (Nov 27): set when the engine failed to make a call for this pitch (game, pitch number and count), so the
+// screen doesn't retry it on every render; cleared by recall() and by a successful call. Not saved: a reload retries.
+let engineDown = null;
+function engineKey() { const g = G(); return `${g.inning}|${g.pitchNo}|${g.balls}${g.strikes}|${g.outs}|${g.pitcher}`; }
 let pickSel = { pitch: null, quad: null };
 
 function save() { try { localStorage.setItem("pitchcaller.v2", JSON.stringify(S)); } catch (e) {} }
@@ -359,12 +363,24 @@ function makeCall() {
   // with 3 outs, which it rejects (seen as "impossible number of outs 3" in web/tests/offline_game_e2e.js, Nov 11).
   if (G().inningOver) return;
   const ars = arsenal();
-  let s = situation();
-  const tab = paTable(ars, s);
-  s = Object.assign({}, situation(), { look: G().pa.look });
-  s.b_h = E.v08.leanBh(ars, s, G().pa.fooled);
-  const shakenPA = G().pa.shaken || [];   // v1.0 #6 / D2: pitches shaken off this at-bat, any spot
-  const r = E.callV08(ars, s, { exclude: shakenPA, tab });
+  let s, tab, r, shakenPA;
+  // Audit fix (Nov 27): an engine error used to escape here, skip save()/render() in recall() and leave the last call and
+  // count on screen while the game moved on (and the next pitches were lost on reload). Now the old call is cleared, the
+  // coach is told, and he gives his own sign (the pick box opens by itself); the engine tries again after the next pitch.
+  try {
+    s = situation();
+    tab = paTable(ars, s);
+    s = Object.assign({}, situation(), { look: G().pa.look });
+    s.b_h = E.v08.leanBh(ars, s, G().pa.fooled);
+    shakenPA = G().pa.shaken || [];   // v1.0 #6 / D2: pitches shaken off this at-bat, any spot (paTable sets up G().pa)
+    r = E.callV08(ars, s, { exclude: shakenPA, tab });
+  } catch (e) {
+    console.error("PitchIQ engine: no call", e);
+    G().call = null; engineDown = engineKey(); pickMode = true; pickSel = { pitch: null, quad: null };
+    toast("No engine call for this pitch. Give your own sign below and record the pitch.");
+    return;
+  }
+  engineDown = null;
   const walk = E.v08.walkSuggestion(ars, r.info.s, tab)[0] && !G().strikes && !G().balls;
   const c = G().call = { id: nextCallId(), pitch: r.pick.pitch.name, quad: r.pick.quad, prob: r.pick.prob, coach: false, v08: true, walk,
     sigma: r.info.sigma, why: null, intent: null, mechanism: null, intentLine: null,
@@ -385,7 +401,8 @@ function makeCall() {
 function recall() {
   watchSync();   // the call on screen is about to change (a recorded pitch, a shake-off): the watches clear now, not after the engine
   document.body.classList.add("thinking");
-  setTimeout(() => { makeCall(); document.body.classList.remove("thinking"); save(); render(); }, 15);
+  engineDown = null;   // a new pitch (or a shake-off): the engine gets another try
+  setTimeout(() => { try { makeCall(); } finally { document.body.classList.remove("thinking"); save(); render(); } }, 15);
 }
 
 // ------------------------------------------------------------------ learning (same rules as the simulator)
@@ -938,7 +955,7 @@ function peakPanel() {
 // ------------------------------------------------------------------ game screen
 function liveView() {
   const g = G();
-  if (!g.call && !g.inningOver) makeCall();
+  if (!g.call && !g.inningOver && engineDown !== engineKey()) makeCall();
   const ars = arsenal();
   const pcReal = g.pc[pKey()] || 0, pcAdj = pcReal + fatigueShift(pitcherDef());
   const st = E.pitcherStatus(ars, S.setup.level, pcAdj, g.recent[pKey()] || []);
@@ -1021,6 +1038,10 @@ function callPanel() {
   const hitter = h("div", { class: "hitter" },
     h("div", {}, h("b", {}, b.name || `${ord(i + 1)} hitter`), h("span", {}, `  ${handTxt}, ${ord(trip)} time up`)),
     h("span", {}, hitterRead()));
+  if (!c && engineDown === engineKey())   // audit fix: the engine couldn't make this call; the coach calls it himself
+    return h("section", { class: "panel glass span-8 call-panel" }, hitter,
+      h("p", { class: "why" }, h("b", {}, "No engine call for this pitch. "), "Give your own sign, then record the pitch. The engine tries again on the next one."),
+      pickBox());
   if (!c) return h("section", { class: "panel glass span-8 call-panel" }, hitter, h("p", { class: "why" }, "Working out the call…"));
   const kind = kindOf(c.pitch);
   const ck = `${g.pitchNo}|${g.balls}${g.strikes}|${c.pitch}|${c.quad}|${!!c.coach}`, fresh = ck !== lastZoneKey; lastZoneKey = ck;
@@ -1174,13 +1195,16 @@ function pickBox() {
   const ars = arsenal();
   const go = () => {
     let gr; const g = G();
-    {
+    try {
       const tab = paTable(ars, situation());
       const s = Object.assign({}, situation(), { look: g.pa.look }); s.b_h = E.v08.leanBh(ars, s, g.pa.fooled);
       gr = E.v08.gradeCall(ars, s, pickSel.pitch, pickSel.quad, tab, { exclude: g.pa.shaken || [] });   // graded against the mix on screen: pitches shaken off this at-bat aren't in it
+    } catch (e) {   // audit fix: the engine is down, so the coach's call is used ungraded (it still records like any call)
+      console.error("PitchIQ engine: no grade", e);
+      gr = { runs_vs_best: 0, verdict: null, allowed: true, ungraded: true };
     }
-    g.call = Object.assign({}, g.call, { id: nextCallId(), pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
-      verdict: gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
+    g.call = Object.assign({ dist: [], mix: [] }, g.call, { id: nextCallId(), pitch: pickSel.pitch, quad: pickSel.quad, coach: true, runs: gr.runs_vs_best,
+      verdict: gr.ungraded ? "Your call (the engine couldn't grade it)" : gr.allowed === false ? "Against the rule: no chase pitch at 3-0 or 3-1" : gr.verdict === "in the engine's mix" ? "In the engine's mix" : gr.verdict === "close" ? "Close to the engine's best" : "Costly" });
     pickMode = false; save(); render();
   };
   return h("div", { class: "pick" }, h("span", { class: "t" }, "Your call"),
