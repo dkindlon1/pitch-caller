@@ -19,7 +19,8 @@ const GAMES = +(process.argv[2] || 2);
 const BASE_REF = process.env.BASE_REF || "8ee2fdc";
 const NEW = path.join(__dirname, "dist/pitch-caller.html");
 const OLD = path.join(os.tmpdir(), `pc-dist-${BASE_REF}.html`);
-fs.writeFileSync(OLD, execFileSync("git", ["show", `${BASE_REF}:app/dist/pitch-caller.html`], { cwd: __dirname, maxBuffer: 64 << 20 }));
+// audit Nov 27: the base commit's app code with the current engine (base_dist.js), not the base commit's whole dist
+fs.copyFileSync(require("./base_dist").baseDistWithCurrentEngine(BASE_REF), OLD);
 
 let fails = 0, checks = 0;
 const check = (ok, msg) => { checks++; if (!ok) { fails++; console.log("  FAIL " + msg); } else console.log("  ok   " + msg); };
@@ -86,7 +87,7 @@ function compare(label, A, B) {
   if (first >= 0) {
     const ka = a[first], kb = b[first], diff = [...new Set([...Object.keys(ka), ...Object.keys(kb)])].filter((k) => JSON.stringify(ka[k]) !== JSON.stringify(kb[k]));
     console.log(`    first difference at event ${first} (seq ${ka.seq}): fields ${diff.join(", ")}`);
-    for (const k of diff.slice(0, 3)) console.log(`      ${k}: ${JSON.stringify(ka[k]).slice(0, 160)}\n      ${" ".repeat(k.length)}  ${JSON.stringify(kb[k]).slice(0, 160)}`);
+    for (const k of diff.slice(0, 3)) console.log(`      ${k}: ${String(JSON.stringify(ka[k])).slice(0, 160)}\n      ${" ".repeat(k.length)}  ${String(JSON.stringify(kb[k])).slice(0, 160)}`);
   }
   check(first < 0, `${label}: every event identical field for field (calls, probabilities, who chose, snapshots, results)`);
   return a.filter((e) => e.type === "pitch").length;

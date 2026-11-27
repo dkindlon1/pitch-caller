@@ -77,8 +77,8 @@ const num = (s) => parseInt(String(s).replace(/[^0-9]/g, ""), 10);
     check((await page.locator("#top").getAttribute("data-stop")) === "2" && (await page.locator(".pq-ledger .pq-lg.is-a li").count()) === 4, "stop 2 lists the situation in the ledger");
     await filmTo(page, 0.46);
     const chips = await page.locator(".pq-chip").evaluateAll((els) => els.map((e) => ({ name: e.dataset.group, pct: +e.dataset.pct, o: +getComputedStyle(e).opacity, x: e.getBoundingClientRect().left })));
-    check(chips.length === 5 && chips.every((c) => c.o > 0.9), "stop 4 puts five candidate calls around the watch");
-    check(chips.every((c, i) => i === 0 || c.x >= chips[i - 1].x - 1) && chips[4].x > chips[0].x + 40, "the likelier a call, the closer it sits to the watch");
+    check(chips.length === 4 && chips.every((c) => c.o > 0.9), "stop 4 puts four candidate calls around the watch");   // v1.3: four candidates at this spot (Drew, Nov 27; was five on v1.2.3)
+    check(chips.every((c, i) => i === 0 || c.x >= chips[i - 1].x - 1) && chips[chips.length - 1].x > chips[0].x + 40, "the likelier a call, the closer it sits to the watch");
 
     // the hybrid opening, behind its flag
     const hyb = await ctx.newPage();

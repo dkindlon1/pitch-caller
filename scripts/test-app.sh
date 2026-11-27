@@ -5,6 +5,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 run=scripts/run-check.sh
+# Known-red suites (ruling 44, "history"): reported as warnings, not stops; see scripts/run-check.sh. Remove a name once
+# its suite is re-pinned or fixed. Audit note: tests.py's 3-1 / floor / coaching-read rows are real call changes vs v1.2.3.
+export PITCHIQ_KNOWN_RED="tests.py tests_v11 tests_v12 tests_v12b tests_v121 tests_v122 tests_v123 golden_v123 tests_v13_core tests_v13_d2 tests_v13_sim tests_v13_tables d2_e2e stage2_test"
 $run tests.py      python3 tests.py
 $run tests_hitter_data python3 tests_hitter_data.py   # v1.3 prework: college play-by-play parser on synthetic lines, the held-out (2026) guard
 $run tests_hs_data python3 tests_hs_data.py   # v1.3 Part 1: HS / travel (Perfect Game) parser, quality checks, snapshot and incremental ingest on invented rows

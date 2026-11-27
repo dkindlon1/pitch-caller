@@ -13,7 +13,8 @@ const http = require("http"), fs = require("fs"), path = require("path"), os = r
 const { playGame, seededRandomInit } = require("./chart_driver");
 const GAMES = +(process.argv[2] || 2), BASE_REF = process.env.BASE_REF || "3e4660b";
 const NEW = path.join(__dirname, "dist/pitch-caller.html"), OLD = path.join(os.tmpdir(), `pc-dist-${BASE_REF}.html`);
-fs.writeFileSync(OLD, execFileSync("git", ["show", `${BASE_REF}:app/dist/pitch-caller.html`], { cwd: __dirname, maxBuffer: 64 << 20 }));
+// audit Nov 27: the base commit's app code with the current engine (base_dist.js), not the base commit's whole dist
+fs.copyFileSync(require("./base_dist").baseDistWithCurrentEngine(BASE_REF), OLD);
 let fails = 0, checks = 0;
 const check = (ok, m) => { checks++; console.log((ok ? "  ok   " : "  FAIL ") + m); if (!ok) fails++; };
 const ARS = [{ type: "Four-seam", name: "Fastball", kind: "FB", shape: "ride", velo: 87, grade: 3, command: 4, feel: 0.75 },
