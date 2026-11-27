@@ -109,7 +109,7 @@ def core_fit_seasons():
 
 def score(v123_dir, B=1000, log=print):
     from .score_core import FixedAdapter
-    from .harness import Tables
+    from .harness_adapters import Tables
     fixed = {}
     for cfg in SPECS:
         z = np.load(os.path.join(OUT, f"tables_{cfg}.npz"))
@@ -124,7 +124,7 @@ def score(v123_dir, B=1000, log=print):
     for lv in LEVELS:
         if lv == "HS":
             from . import fit_count_hs as HS
-            S = HS.load_season(HS.connect(), season)
+            S = HS.load_season(HS.connect(), season, cache=False)   # no 2026 pickle in the fits cache
         else:
             S = H.build_season(con, lv, season)
         ads = [FixedAdapter("v1.2", fixed["v1.2"])]
