@@ -57,7 +57,7 @@ if "--check" in sys.argv:
         if isinstance(a, list):
             return [x for i, (u, v) in enumerate(zip(a, b or [])) for x in diff(u, v, f"{p}[{i}]")] + ([p + " length"] if len(a) != len(b or []) else [])
         return [] if (a == b or (isinstance(a, (int, float)) and isinstance(b, (int, float)) and abs(a - b) < 1e-12)) else [f"{p}: {a} vs {b}"]
-    d = diff(data, cur)
+    d = diff(json.loads(json.dumps(data)), cur)   # audit fix: compare as JSON (tuples vs lists gave false differences)
     print("identical to the current engine_data.json" if not d else f"{len(d)} differences, e.g. {d[:5]}")
     sys.exit(1 if d else 0)
 json.dump(data, open(path, "w"), separators=(",", ":"))
