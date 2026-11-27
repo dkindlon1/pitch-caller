@@ -1590,6 +1590,10 @@ async function startPlanned(rec) {
   const staffIds = (rec.staffIds || []).filter((id) => DB.pitchers.has(id));
   if (!staffIds.length) throw new Error("None of this plan's pitchers are on this device's roster yet. Sync under Setup, then try again.");
   const st = S.setup, s = rec.setup || {};
+  // audit fix (Nov 27): a plan from a newer website can carry a level this app doesn't know (main's app went blank on a
+  // college_d2 plan, and stayed blank after reloads because the level was saved); refuse it with a message instead
+  if (rec.level && !(typeof FATIGUE === "object" && rec.level in FATIGUE))
+    throw new Error(`This plan is for a level this app version doesn't have (${rec.level}). Open the app on Wi-Fi to update it, then try again.`);
   if (rec.level) st.level = rec.level;
   st.inputs = [1, 2, 3, 4].includes(+rec.inputs) ? +rec.inputs : st.inputs;
   st.logLoc = !!rec.logLoc; st.radar = !!rec.radar;
