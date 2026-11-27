@@ -1780,3 +1780,113 @@ the floor. On all 288 data-staff cells (both sides) the fastball share is at or 
   re-pin `p11/golden_v13coreE7.json` is ready (JS reproduces it), not applied.
 - Tests: worlds_test passes (power 1.54 at 400 PAs). The stage2 bar is now 70%, but its 40 seasons read 27 (one short). Fuzz is
   identical, test-sql 15/15, test-app 51/67 (golden_v13core fails until the re-pin; worlds_test now passes).
+
+
+# Part 12 (Nov 26): re-pin, stage2 bar, PRE-GO READINESS (rulings 45-47)
+
+Carries out `docs/PROMPT_hitter_v13_repin_pregate_2026-11-26.md` on `feat/hitter-v13-final` (worktree `C:/dev/pc-final`). No
+engine code or table changed. **Step 6 was not run; 2026 was not read or unlocked.** Logs: `C:/dev/pitchiq-data-final/p12/`.
+
+## What was done
+| commit | what |
+|---|---|
+| 38903a3 | **ruling 45, re-pin** (its own commit). `golden/golden_v13core.json` <- `p11/golden_v13coreE7.json`. Old sha256 `8e1edaef…36f4` (blob 28dcf8d), new `99c37b63…75d6` (blob c7ee3c3). Checked first: `node golden/golden_v11.js v13core` **PASS** |
+| 3ca6e31 | **ruling 46, test only.** `app/stage2_test.js`: bar 70% -> 65% (26 of 40), history in the comment. Reads 27 of 40: passes |
+| this commit | rulings 45-47 in `docs/DECISIONS_refit_v13.md`, this Part, `results/v13p12/fuzz_repin.txt` |
+
+**Suites** (keep-going copies, run alone; `p12/suites/`):
+- **Fuzz 3000:** identical, line for line, to Part 11.
+- **test-sql: 15/15.**
+- **test-app: 52 of 67 pass** (Part 11: 51). Every failing line was diffed against Part 11. Exactly two changes, both expected:
+  `golden_v13core` fail -> **pass**; `stage2_test` 2 failed -> **1 failed** (the 65% check passes, 27 >= 26).
+- The suites still failing (15, plus `stage2_test` for its D5 real-learner check, closed by ruling 38) are the ones documented as
+  history under ruling 44 (`tests.py`, `tests_v11`, `tests_v12`, `tests_v12b`,
+  `tests_v121`, `tests_v122`, `tests_v123`, `golden_v123`, `tests_v13_core`, `tests_v13_d2`, `tests_v13_sim`, `tests_v13_tables`,
+  `d2_e2e`, `logging_exact_test`, `drift_exact_test`). **No other difference.** (Counts as in Parts 4-11: exit lines, where
+  `readout_sessions_e2e` prints two.)
+
+## PRE-GO READINESS (one page, no new analysis)
+
+**1. What is frozen, and how to check it**
+- **Commit:** the tip of `feat/hitter-v13-final` after this Part (pushed). Step 6 records `git HEAD` itself and refuses if any frozen
+  file has uncommitted changes.
+- **sha256 of the frozen files** (the list Step 6 hashes and records):
+
+| file | sha256 |
+|---|---|
+| engine.py | `adaa6290ad939e0ae513dca69137a8b4121182a6098be7c873129e942418f94a` |
+| outcome_params.py | `087b62b0712a69cfd238c7afb2e25190ae6bd24a134a5fa2ab58c26a1f2e5954` |
+| fit_mlb.json | `1d53d09b580ea5672ae7b522058f5a3795e4d21dcaf998c5d02fb552ff08ac74` |
+| hitter_spread_params.py | `d256f539758bb66552320547bc9e58a278e7d0f6f599068c5dbe5f4dc2dd108b` |
+| inplay_typed_params.py | `09267def5e2627f7d6b124b0420898745cb65254d4e1b37857b2601fced694f4` |
+| data_tables/zone_v13.json | `4c9f98efb96a3e66a2f1367b6635caf451b2521efeb1169a707625643f253323` |
+| data_tables/count_v13core.json | `966a35b89770cccd60ce90865bc243ba8337f1da4a0371b22ad817d95b9287b6` |
+| data_tables/run_v13core.json | `23857e0e4e0ca62aa81391c0cb5857bc839b9244a6b8e961e5dc69ca5cb081fb` |
+| data_tables/mp_v13.json (not in Step 6's list; the per-count scalars) | `2f0713bb6d63c0138e9a3ed8855d57bea7a80915b0488cb7310e8be64755a8d7` |
+| app/engine_data.json (the JS app's copy) | `bafd20038ee554a67ca02b261bd7318c9d07557193a21a9520a3c8b137090be6` |
+| golden/golden_v13core.json | `99c37b63b50515e5c869714993762977510f8d19caf15b3031abfe6ca6c575d6` |
+
+  Check: `sha256sum` on those paths, and `node golden/golden_v11.js v13core` (PASS).
+- **Final archive game list:** `C:/dev/pitchiq-data-final/freeze/` - `LOCK.json` (frozen 2026-11-25 13:35, sha256 `b3e0b022…f1b9a`),
+  `manifest_2026-11-25_1335.json` (sha256 `1388b605…a0a6`), `game_ids_2026-11-25_1335.json.gz` (sha256 `641fd075…61ea`).
+  238,003 canonical college games + 21,707 HS. The manifest counts 2026 too (counted, never fit).
+  Check: `PITCHIQ_DATA=C:/dev/pitchiq-data-final python -m hitter_data.freeze --check` -> "freeze check: OK" (ran Nov 26).
+- **Seeds:** Step 6's bootstrap is seed 1, B = 1000 (as `score_core`). The test seeds are fixed in the tests (stage2 500-539; fuzz 3000).
+- **Step 6 has never run:** `C:/dev/pitchiq-data-final/final_test/` does not exist (no `RAN.json`).
+
+**2. The 2025 pass bars and current results** (file: `C:/dev/pitchiq-data-final/fits/score_core/scores.md`, Nov 25, h3 harness)
+- Bar per level (ruling 1): core − raw v1.2 < −2 SE in `pitch_5way` log loss per pitch; SE = the largest clustered SE (B = 1000);
+  D2 against the better raw v1.2 setting.
+
+| level | games / pitches | core − raw v1.2 (SE) | z | 2025 |
+|---|---|---|---|---|
+| D1 | 6,209 / 1,870,087 | −0.03055 (0.00078) | −39.2 | PASS |
+| D2 | 2,038 / 561,020 | −0.02927 (0.00110) | −26.7 | PASS |
+| D3 | 713 / 204,341 | −0.03275 (0.00204) | −16.1 | PASS |
+| HS | 3,897 / 815,375 | −0.00402 (0.00073) | −5.5 | PASS |
+
+- Scored on 5731b39; rescored byte-identical on the W = 32 engine (Part 8, `results/v13p8/score_w_check.json`). Parts 9-11 changed
+  only the call policy (the floor step, the J7 credit), which the harness tables (zone responses, not calls) don't use. Not rescored
+  since.
+
+**3. Rulings that carry a known limit** (one line each)
+- **D3 walk gap** (ruling 25): reference-world BB −1.17 points, accepted; D3 not retuned.
+- **D1 K flag +2.0** (ruling 33, ruling 17 stands): accepted, judged by runs.
+- **HS runs vs Part 8** (ruling 34): +0.35 ± 0.19 per game after the floor fix, accepted; judged by the edge vs the reference staff
+  (now −1.75 after E-7, passes).
+- **HS ride126 2-2** (ruling 34): fastball share 0.0 -> 2.9, a named exception.
+- **Stage2 noise-learner bar** (ruling 46): 65% (was 80%, then 70%); the test reads 27 of 40; 200 seasons 73.0%.
+- **11 robustness cells over 10 points** (ruling 32; 13 -> 11 after Part 9): D1 4, D2 3, D3 1, MLB 3; every HS cell under 10.
+
+**4. What Step 6 does when run** (`hitter_data/final_test.py`; read, not run)
+- **Runs once.** It refuses (exit 3) if `{DATA}/final_test/RAN.json` exists, and refuses (exit 4) if a frozen file is dirty.
+- **Records** git HEAD, branch and sha256 of the frozen files, and the harness version.
+- **Builds tables** in two subprocesses:
+  - raw v1.2 = `git archive main` into `%TEMP%/v123_engine_final` (main's engine files unchanged since d078cf0, v1.2.3, Nov 14) at its
+    D1 and D3 settings;
+  - core = this tree at its defaults (the frozen tables, fit on seasons ≤ 2025; it refuses if `count_v13core.json` is not the
+    thru-2025 build).
+  - Landing: the h3 Single-A assumption, as 2025.
+- **Reads** the 2026 games from `{DATA}/college/college.sqlite3` (D1, D2, D3) and `{DATA}/hs/hs.sqlite3` (HS), read-only, after
+  `_final_test_unlock(2026, "--drew-go")`.
+- **Scores** `pitch_5way`, paired, per level, SE = largest of the game / home-team / two-team bootstrap SEs (B = 1000, seed 1).
+- **Pass / fail per level:** core − raw v1.2 < −2 SE → PASS, else FAIL. D2 is scored against the better of v1.2's D1 / D3 settings
+  on 2026. (The code has no minimum-effect term: `MIN_EFFECT` in HARNESS_v13 section 9 was proposed and is not implemented.)
+- **Writes** `{DATA}/final_test/scores.json`, `scores.md`, `tables_v123.*`, `tables_core.*` and the marker `RAN.json`.
+- **Prints** one line per level (`D1: core - v1.2 = … (SE …) -> PASS/FAIL`), then the scores.md table.
+- Nothing is fit, tuned or changed afterwards.
+
+**5. What Drew types** (from Git Bash; not run here)
+```
+cd /c/dev/pc-final
+PITCHIQ_DATA=C:/dev/pitchiq-data-final PYTHONUTF8=1 python -m hitter_data.final_test --drew-go
+```
+- `PITCHIQ_DATA` must point at the final data root: the default is the old root (`C:/dev/pitchiq-data`).
+- Without `--drew-go` the same command prints the plan and the frozen record and exits 2, reading no 2026 data.
+
+## Summary (Part 12)
+- Re-pin applied (38903a3, JS reproduces it); stage2 bar 65% (3ca6e31, test only; 27 of 40 passes). Rulings 45-47 recorded.
+- Fuzz identical, test-sql 15/15, test-app 52/67: the only changes are golden_v13core and stage2's bar check, now passing. The rest is
+  history (ruling 44).
+- The readiness page above lists what is frozen, the 2025 results, the known limits and the Step 6 command. Step 6 not run; waiting on
+  Drew's go.

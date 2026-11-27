@@ -13,6 +13,19 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 26, after Part 11): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_repin_pregate_2026-11-26.md` (after Part 11 of `docs/BUILD_v13_fulldata_REPORT.md`, tip
+a1ed804). Results and the pre-go readiness page in report Part 12.
+
+45. **The E-7 changed calls are graded acceptable:** golden cases 68, 78, 106, 166, 206, 298, 300, 464, and the three HS
+    q5 starter opposite-side E rows (0-2, 1-2, 2-2). The proposed re-pin `p11/golden_v13coreE7.json` is applied as its own
+    commit (sha256 `8e1edaef…36f4` -> `99c37b63…75d6`).
+46. **Stage2 noise-learner bar lowered from 70% to 65% (26 of 40 seasons).** Test change only, a known limit. The history,
+    plainly: the bar was **80%**, then **70%** (ruling 42), now **65%**. The 40-season test reads **27**. On 200 fresh
+    seasons (seeds 600-799) the rate is **73.0%** on the v1.3 tip (the old engine, 5dccec9: **70.5%**). Nothing regressed.
+47. **Drew gives the 2026 go himself.** Claude does not run Step 6 (`hitter_data.final_test --drew-go`).
+
 ## Drew's rulings (Nov 26, after Part 10): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_e7_fix_2026-11-26.md` (after Part 10 of `docs/BUILD_v13_fulldata_REPORT.md`, tip b74abdb).
