@@ -1,0 +1,32 @@
+diff --git a/scripts/run-check.sh b/scripts/run-check.sh
+index b48f332..b3e3fb0 100755
+--- a/scripts/run-check.sh
++++ b/scripts/run-check.sh
+@@ -11,6 +11,13 @@ passed=$(grep -cE '^[[:space:]]+ok[[:space:]]|\[PASS\]|^PASS:' "$log" || true)
+ failed=$(grep -cE '^[[:space:]]+FAIL[[:space:]]|\[FAIL\]|^FAIL:' "$log" || true)
+ rm -f "$log"
+ echo "::group::summary"; echo "$name: exit=$code passed=$passed failed=$failed"; echo "::endgroup::"
++# Audit (Nov 27): suites Drew ruled "history" (ruling 44, docs/DECISIONS_refit_v13.md) are listed in PITCHIQ_KNOWN_RED by
++# scripts/test-app.sh. They still run and print every failure, as a warning, but no longer stop the script, so the gates
++# after them (parity, goldens, dist, web/lib, app e2e) actually run in CI. Before this, set -e ended CI at tests.py.
++if [[ " ${PITCHIQ_KNOWN_RED:-} " == *" $name "* ]] && { [ "$code" -ne 0 ] || [ "$failed" -gt 0 ]; }; then
++  echo "::warning::$name is a known-red suite (ruling 44): exit=$code, $failed failing check(s), $passed passing"
++  exit 0
++fi
+ if [ "$code" -ne 0 ]; then echo "::error::$name exited $code"; exit 1; fi
+ if [ "$failed" -gt 0 ]; then echo "::error::$name printed $failed failing check(s)"; exit 1; fi
+ if [ "$passed" -eq 0 ]; then echo "::error::$name ran 0 checks"; exit 1; fi
+diff --git a/scripts/test-app.sh b/scripts/test-app.sh
+index ea37582..4b94beb 100755
+--- a/scripts/test-app.sh
++++ b/scripts/test-app.sh
+@@ -5,6 +5,9 @@
+ set -euo pipefail
+ cd "$(dirname "$0")/.."
+ run=scripts/run-check.sh
++# Known-red suites (ruling 44, "history"): reported as warnings, not stops; see scripts/run-check.sh. Remove a name once
++# its suite is re-pinned or fixed. Audit note: tests.py's 3-1 / floor / coaching-read rows are real call changes vs v1.2.3.
++export PITCHIQ_KNOWN_RED="tests.py tests_v11 tests_v12 tests_v12b tests_v121 tests_v122 tests_v123 golden_v123 tests_v13_core tests_v13_d2 tests_v13_sim tests_v13_tables d2_e2e logging_exact_test drift_exact_test stage2_test"
+ $run tests.py      python3 tests.py
+ $run tests_hitter_data python3 tests_hitter_data.py   # v1.3 prework: college play-by-play parser on synthetic lines, the held-out (2026) guard
+ $run tests_hs_data python3 tests_hs_data.py   # v1.3 Part 1: HS / travel (Perfect Game) parser, quality checks, snapshot and incremental ingest on invented rows
