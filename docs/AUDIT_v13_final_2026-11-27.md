@@ -164,6 +164,14 @@ No engine code, table or call changed: golden v13core still PASS after all commi
 reports the 16 ruling-44 suites as warnings so the other gates run. The permission system blocked it because it weakens a gate,
 so it needs Drew's go (`docs/audit_v13/ci_known_red.patch`).
 
+**GitHub CI on `audit/v13-final-audit` (after these fixes):**
+- Supabase SQL: green.
+- **Web shell: green, now including** offline game, coach portal, billing, player/admin, uploads, retention and Game Day e2e
+  on a real local Supabase. On c602f1c this job died at `npm run build`.
+- Web app: unit tests 109/109 and the build now pass. It is still red only on the `site_e2e` 5-candidate film pin (needs
+  Drew's ruling).
+- Engine/app: still stops at `tests.py` (7 known-red rows, see finding 3).
+
 ## Tests performed (headline)
 - Read-through `--suite v12`, both engines: 94/98 vs 85/98.
 - 70 hand-built coaching situations, both engines.
