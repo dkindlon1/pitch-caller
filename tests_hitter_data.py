@@ -244,6 +244,23 @@ def t_heldout():
     r = _sp.run([sys.executable, "-m", "hitter_data.final_test"], capture_output=True, text=True,
                 cwd=_os.path.dirname(_os.path.abspath(__file__)))
     check("final_test without --drew-go exits 2 (prepared, not run)", r.returncode == 2 and "NOT RUN" in r.stdout)
+    check("final_test plan prints the pass rule with the 0.002 minimum", "0.002" in r.stdout and "Pass rule" in r.stdout)
+    # ruling 49: pass = beats raw v1.2 by more than 2 SE AND by at least 0.002 nats per pitch (pure function; no 2026 path)
+    from hitter_data.final_test import passes, MIN_EFFECT
+    check("Step 6 MIN_EFFECT is 0.002", MIN_EFFECT == 0.002, MIN_EFFECT)
+    for diff, se, want, why in ((-0.0300, 0.0010, True, "big gain, small SE"),
+                                (-0.0030, 0.0020, False, "clears 0.002, not 2 SE"),
+                                (-0.0015, 0.0001, False, "clears 2 SE (z -15), under 0.002"),
+                                (-0.0020, 0.0005, True, "exactly 0.002, z -4"),
+                                (-0.0019999, 0.0001, False, "just under 0.002"),
+                                (-0.0040, 0.0020, False, "exactly 2 SE is not more than 2 SE"),
+                                (+0.0050, 0.0010, False, "core worse"),
+                                (0.0, 0.0, False, "no difference")):
+        check(f"pass rule: {why} -> {want}", passes(diff, se) is want, (diff, se))
+    # the 2025 numbers (h3 harness; Part 8 = the Part 13 rescore, byte-identical): all four pass the new rule
+    for lv, diff, se in (("D1", -0.03055, 0.00078), ("D2", -0.02927, 0.00110), ("D3", -0.03275, 0.00204),
+                         ("HS", -0.00402, 0.00073)):
+        check(f"pass rule on 2025 {lv} ({diff:+.5f}, SE {se:.5f}) -> PASS", passes(diff, se))
 
 
 # ---------- representativeness (task D) ----------

@@ -15,7 +15,8 @@ What it does on --drew-go, in order:
      Landing: the h3 (Single-A) primary assumption, as every 2025 score. HS / travel: the D3 Single-A mix (as 2025).
   4. Opens 2026 (hitter_data._final_test_unlock), builds each level's 2026 season and scores pitch_5way paired, SE =
      the largest of the game / home-team / two-team bootstrap SEs (B = 1000), as score_core.
-  5. Verdict per level (ruling 1): core - raw v1.2 < -2 SE. D2 against the better of v1.2's D1 / D3 settings ON 2026
+  5. Verdict per level (rulings 1 and 49): PASS = core - raw v1.2 < -2 SE AND core beats raw v1.2 by at least
+     MIN_EFFECT = 0.002 nats per pitch (`passes`). D2 against the better of v1.2's D1 / D3 settings ON 2026
      (the harder of the two). A level whose count layer fell back to v1.2's (the 2025 pass bar) is still scored and labelled.
   6. Writes {DATA}/final_test/scores.json + scores.md and the marker. Nothing is fit, tuned or changed afterwards.
 
@@ -39,6 +40,17 @@ SPECS = {   # cfg -> [(adapter name, data level, engine level for D2)]
     "v123": [("v1.2", lv, "college_d1") for lv in LEVELS] + [("v1.2@D3", "D2", "college_d3")],
     "core": [("core", lv, "college_d2") for lv in LEVELS],
 }
+# Ruling 49 (Nov 27): the minimum effect from HARNESS_v13 section 9, added because all four levels cleared it on 2025
+# (HS 0.00402, D3 0.03275, D2 0.02927, D1 0.03055 nats per pitch). Fixed here, not read from the harness.
+MIN_EFFECT = 0.002
+RULE = (f"PASS = core - reference < -2 SE AND core - reference <= -{MIN_EFFECT} nats per pitch "
+        "(rulings 1 and 49; D2: the better raw v1.2 setting)")
+
+
+def passes(diff, se):
+    """The Step 6 pass rule per level. diff = core - reference (pitch_5way nats per pitch; negative = core better), se = the
+    largest clustered SE. Beats the reference by more than 2 SE AND by at least MIN_EFFECT."""
+    return bool(diff < -2 * se and -diff >= MIN_EFFECT)
 
 
 def sha(path):
@@ -129,7 +141,8 @@ def score(v123_dir, B=1000, log=print):
         d = pm["diff"][ref]["core"]
         diff, se = d[0], max(d[1].values())
         res[lv] = dict(n_games=S.n_games, n_pitches=int(len(S.pit["y"])), means=A, reference=ref, core_minus_ref=diff,
-                       se=se, z=diff / se if se else None, verdict="PASS" if diff < -2 * se else "FAIL")
+                       se=se, z=diff / se if se else None, min_effect=MIN_EFFECT,
+                       verdict="PASS" if passes(diff, se) else "FAIL")
         log(f"  {lv}: core - {ref} = {diff:+.5f} (SE {se:.5f}) -> {res[lv]['verdict']}")
         del S
     return res
@@ -150,6 +163,7 @@ def main(argv=None):
     if not a.drew_go:
         print("Step 6 final test: PREPARED, NOT RUN. It needs Drew's explicit go: --drew-go.")
         print("It would score, once, on 2026: the frozen core vs raw v1.2 (git archive main), per level", LEVELS)
+        print("Pass rule:", RULE)
         print("Frozen now:", json.dumps(rec, indent=1))
         if os.path.exists(MARKER):
             print("NOTE: it has already run:", open(MARKER, encoding="utf-8").read())
@@ -168,13 +182,14 @@ def main(argv=None):
     tables_subprocess("v123", a.v123_dir, {})
     tables_subprocess("core", ROOT, {})
     res = score(a.v123_dir, B=a.boot)
-    out = dict(run_at=time.strftime("%Y-%m-%d %H:%M:%S"), season=HELDOUT_SEASON, frozen=rec, boot=a.boot, levels=res,
+    out = dict(run_at=time.strftime("%Y-%m-%d %H:%M:%S"), season=HELDOUT_SEASON, frozen=rec, boot=a.boot, rule=RULE,
+               min_effect=MIN_EFFECT, levels=res,
                seconds=round(time.time() - t0, 1))
     with open(os.path.join(OUT, "scores.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, indent=1, default=str)
     L = [f"# Step 6: the frozen core vs raw v1.2 on {HELDOUT_SEASON} (scored once)", "",
          f"Run {out['run_at']}; git {rec['git_head']}; pitch_5way log loss per pitch; SE = largest of the game / home / "
-         f"two-team bootstrap SEs (B = {a.boot}).", "",
+         f"two-team bootstrap SEs (B = {a.boot}). {RULE}.", "",
          "| Level | games / pitches | reference | core - reference (SE) | z | verdict |", "|---|---|---|---|---|---|"]
     for lv, r in res.items():
         L.append(f"| {lv} | {r['n_games']:,} / {r['n_pitches']:,} | {r['reference']} | {r['core_minus_ref']:+.5f} "
