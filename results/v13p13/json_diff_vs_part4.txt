@@ -1,0 +1,45 @@
+== scores.json: 16851 leaves, 9 differ
+   /engines/core/dir: 'C:\\dev\\pc-final' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine'
+   /engines/core/file: 'C:\\dev\\pc-final\\engine.py' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine\\engine.py'
+   /engines/core/fingerprint/engine_sha: '598c96a' -> ''
+   /engines/core_nobo/dir: 'C:\\dev\\pc-final' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine'
+   /engines/core_nobo/file: 'C:\\dev\\pc-final\\engine.py' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine\\engine.py'
+   /engines/core_nobo/fingerprint/engine_sha: '598c96a' -> ''
+   /engines/core_nopv/dir: 'C:\\dev\\pc-final' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine'
+   /engines/core_nopv/file: 'C:\\dev\\pc-final\\engine.py' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine\\engine.py'
+   /engines/core_nopv/fingerprint/engine_sha: '598c96a' -> ''
+== tables_core.json: 32 leaves, 11 differ
+   /_engine/dir: 'C:\\dev\\pc-final' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine'
+   /_engine/file: 'C:\\dev\\pc-final\\engine.py' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine\\engine.py'
+   /_engine/fingerprint/engine_sha: '598c96a' -> ''
+   /core[calib_world]|D1/seconds: 6.0 -> 5.0
+   /core[calib_world]|D2/seconds: 6.2 -> 4.9
+   /core[calib_world]|D3/seconds: 4.5 -> 4.7
+   /core[calib_world]|HS/seconds: 5.9 -> 5.1
+   /core|D1/seconds: 4.8 -> 3.9
+   /core|D2/seconds: 6.1 -> 5.0
+   /core|D3/seconds: 4.6 -> 4.3
+   /core|HS/seconds: 5.7 -> 4.8
+== tables_core_nobo.json: 20 leaves, 7 differ
+   /_engine/dir: 'C:\\dev\\pc-final' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine'
+   /_engine/file: 'C:\\dev\\pc-final\\engine.py' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine\\engine.py'
+   /_engine/fingerprint/engine_sha: '598c96a' -> ''
+   /core_nobo|D1/seconds: 4.8 -> 3.6
+   /core_nobo|D2/seconds: 6.2 -> 4.8
+   /core_nobo|D3/seconds: 5.9 -> 4.1
+   /core_nobo|HS/seconds: 6.4 -> 4.8
+== tables_core_nopv.json: 11 leaves, 4 differ
+   /_engine/dir: 'C:\\dev\\pc-final' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine'
+   /_engine/file: 'C:\\dev\\pc-final\\engine.py' -> 'C:\\dev\\pitchiq-data-final\\p13\\engine\\engine.py'
+   /_engine/fingerprint/engine_sha: '598c96a' -> ''
+   /core_nopv|HS/seconds: 4.6 -> 3.5
+== tables_v123.json: 34 leaves, 9 differ
+   /v1.2@D3[calib_world]|D2/seconds: 5.8 -> 4.5
+   /v1.2@D3|D2/seconds: 5.3 -> 4.3
+   /v1.2[calib_world]|D2/seconds: 4.7 -> 4.4
+   /v1.2[calib_world]|D3/seconds: 5.3 -> 4.2
+   /v1.2[calib_world]|HS/seconds: 5.5 -> 4.0
+   /v1.2|D1/seconds: 4.2 -> 3.3
+   /v1.2|D2/seconds: 4.2 -> 4.4
+   /v1.2|D3/seconds: 5.3 -> 4.1
+   /v1.2|HS/seconds: 5.6 -> 3.7

@@ -13,6 +13,15 @@ The refit is on `feat/hitter-v13-refit` (numbers commit 1dfc81e; "before" = d141
 its old value, then reran the check, one group at a time (about 40 runs, nothing committed). If putting a group back
 restores the old result, that group moved it.
 
+## Drew's rulings (Nov 27, after Part 12): DECIDED
+
+Source: `docs/PROMPT_hitter_v13_prego_rescore_2026-11-27.md` (tip b775f01). Results in report Part 12 (updated) and Part 13.
+
+48. **Rescore 2025 on the tip (b775f01) and byte-compare it to Part 8.** Done: `scores.md` and all 92 table arrays are
+    identical. The JSON files differ only in the engine folder path, timing seconds and the git-sha label.
+49. **Minimum effect.** If all four levels clear 0.002 nats per pitch on 2025, the Step 6 pass rule becomes: beats raw v1.2
+    by more than 2 SE AND by at least 0.002. All four cleared (HS 0.00402 is the smallest), so the minimum was added (d659a40).
+
 ## Drew's rulings (Nov 26, after Part 11): DECIDED
 
 Source: `docs/PROMPT_hitter_v13_repin_pregate_2026-11-26.md` (after Part 11 of `docs/BUILD_v13_fulldata_REPORT.md`, tip

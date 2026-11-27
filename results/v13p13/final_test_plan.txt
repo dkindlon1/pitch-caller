@@ -1,0 +1,19 @@
+Step 6 final test: PREPARED, NOT RUN. It needs Drew's explicit go: --drew-go.
+It would score, once, on 2026: the frozen core vs raw v1.2 (git archive main), per level ('D1', 'D2', 'D3', 'HS')
+Pass rule: PASS = core - reference < -2 SE AND core - reference <= -0.002 nats per pitch (rulings 1 and 49; D2: the better raw v1.2 setting)
+Frozen now: {
+ "git_head": "b775f01b649c71adad7b44ef6364828e4a05093d",
+ "branch": "feat/hitter-v13-final",
+ "dirty_frozen_files": [],
+ "sha256": {
+  "engine.py": "adaa6290ad939e0ae513dca69137a8b4121182a6098be7c873129e942418f94a",
+  "outcome_params.py": "087b62b0712a69cfd238c7afb2e25190ae6bd24a134a5fa2ab58c26a1f2e5954",
+  "fit_mlb.json": "1d53d09b580ea5672ae7b522058f5a3795e4d21dcaf998c5d02fb552ff08ac74",
+  "hitter_spread_params.py": "d256f539758bb66552320547bc9e58a278e7d0f6f599068c5dbe5f4dc2dd108b",
+  "inplay_typed_params.py": "09267def5e2627f7d6b124b0420898745cb65254d4e1b37857b2601fced694f4",
+  "data_tables/zone_v13.json": "4c9f98efb96a3e66a2f1367b6635caf451b2521efeb1169a707625643f253323",
+  "data_tables/count_v13core.json": "966a35b89770cccd60ce90865bc243ba8337f1da4a0371b22ad817d95b9287b6",
+  "data_tables/run_v13core.json": "23857e0e4e0ca62aa81391c0cb5857bc839b9244a6b8e961e5dc69ca5cb081fb"
+ },
+ "harness": null
+}

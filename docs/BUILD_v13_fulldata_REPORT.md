@@ -1808,7 +1808,7 @@ engine code or table changed. **Step 6 was not run; 2026 was not read or unlocke
 ## PRE-GO READINESS (one page, no new analysis)
 
 **1. What is frozen, and how to check it**
-- **Commit:** the tip of `feat/hitter-v13-final` after this Part (pushed). Step 6 records `git HEAD` itself and refuses if any frozen
+- **Commit:** the tip of `feat/hitter-v13-final` after Part 13 (pushed; d659a40 added the 0.002 minimum to the pass rule). Step 6 records `git HEAD` itself and refuses if any frozen
   file has uncommitted changes.
 - **sha256 of the frozen files** (the list Step 6 hashes and records):
 
@@ -1834,20 +1834,26 @@ engine code or table changed. **Step 6 was not run; 2026 was not read or unlocke
 - **Seeds:** Step 6's bootstrap is seed 1, B = 1000 (as `score_core`). The test seeds are fixed in the tests (stage2 500-539; fuzz 3000).
 - **Step 6 has never run:** `C:/dev/pitchiq-data-final/final_test/` does not exist (no `RAN.json`).
 
-**2. The 2025 pass bars and current results** (file: `C:/dev/pitchiq-data-final/fits/score_core/scores.md`, Nov 25, h3 harness)
-- Bar per level (ruling 1): core − raw v1.2 < −2 SE in `pitch_5way` log loss per pitch; SE = the largest clustered SE (B = 1000);
-  D2 against the better raw v1.2 setting.
+**2. The 2025 pass bars and current results** (file: `C:/dev/pitchiq-data-final/fits/score_core/scores.md`, Nov 25, h3 harness;
+rescored on the tip Nov 27: `results/v13p13/scores_2025_tip.md`)
+- Bar per level (rulings 1 and 49): core − raw v1.2 < −2 SE **and** core beats raw v1.2 by at least **0.002** nats per pitch, in
+  `pitch_5way` log loss per pitch; SE = the largest clustered SE (B = 1000); D2 against the better raw v1.2 setting.
 
-| level | games / pitches | core − raw v1.2 (SE) | z | 2025 |
-|---|---|---|---|---|
-| D1 | 6,209 / 1,870,087 | −0.03055 (0.00078) | −39.2 | PASS |
-| D2 | 2,038 / 561,020 | −0.02927 (0.00110) | −26.7 | PASS |
-| D3 | 713 / 204,341 | −0.03275 (0.00204) | −16.1 | PASS |
-| HS | 3,897 / 815,375 | −0.00402 (0.00073) | −5.5 | PASS |
+| level | games / pitches | improvement over raw v1.2 (nats / pitch) | SE | z | > 2 SE | ≥ 0.002 (margin) | 2025 |
+|---|---|---|---|---|---|---|---|
+| HS / travel | 3,897 / 815,375 | 0.00402 | 0.00073 | −5.5 | yes | yes (+0.00202) | PASS |
+| D3 | 713 / 204,341 | 0.03275 | 0.00204 | −16.1 | yes | yes (+0.03075) | PASS |
+| D2 | 2,038 / 561,020 | 0.02927 | 0.00110 | −26.7 | yes | yes (+0.02727) | PASS |
+| D1 | 6,209 / 1,870,087 | 0.03055 | 0.00078 | −39.2 | yes | yes (+0.02855) | PASS |
+| MLB | not scored | – | – | – | – | – | – |
 
-- Scored on 5731b39; rescored byte-identical on the W = 32 engine (Part 8, `results/v13p8/score_w_check.json`). Parts 9-11 changed
-  only the call policy (the floor step, the J7 credit), which the harness tables (zone responses, not calls) don't use. Not rescored
-  since.
+- **MLB has no 2025 number:** the h3 harness scores college and HS seasons only (no MLB season is built), and Step 6 has no MLB
+  level. Ruling 49 counts the four levels above.
+- **Rescored on the tip (ruling 48, resolved):** Part 8's command, run in a `git archive b775f01` snapshot
+  (`results/v13p13/rescore.sh`, log `C:/dev/pitchiq-data-final/p13/score_tip.log`). Compared with Part 8 (`p8/score_w32`) and with
+  the Nov 25 run (`fits/score_core`): **`scores.md` and all 4 table files (92 arrays) are byte-identical**. The JSON files differ
+  only in the engine folder path, the timing seconds, and (vs Nov 25 only) the git-sha label, blank because the snapshot is not
+  a repo. Every differing field is listed in `results/v13p13/json_diff_vs_part8.txt` / `json_diff_vs_part4.txt`.
 
 **3. Rulings that carry a known limit** (one line each)
 - **D3 walk gap** (ruling 25): reference-world BB −1.17 points, accepted; D3 not retuned.
@@ -1870,10 +1876,10 @@ engine code or table changed. **Step 6 was not run; 2026 was not read or unlocke
 - **Reads** the 2026 games from `{DATA}/college/college.sqlite3` (D1, D2, D3) and `{DATA}/hs/hs.sqlite3` (HS), read-only, after
   `_final_test_unlock(2026, "--drew-go")`.
 - **Scores** `pitch_5way`, paired, per level, SE = largest of the game / home-team / two-team bootstrap SEs (B = 1000, seed 1).
-- **Pass / fail per level:** core − raw v1.2 < −2 SE → PASS, else FAIL. D2 is scored against the better of v1.2's D1 / D3 settings
-  on 2026. (The code has no minimum-effect term: `MIN_EFFECT` in HARNESS_v13 section 9 was proposed and is not implemented.)
+- **Pass / fail per level (rulings 1 and 49):** core − raw v1.2 < −2 SE **and** core − raw v1.2 ≤ −0.002 nats per pitch → PASS,
+  else FAIL (`final_test.passes`, `MIN_EFFECT = 0.002`). D2 is scored against the better of v1.2's D1 / D3 settings on 2026.
 - **Writes** `{DATA}/final_test/scores.json`, `scores.md`, `tables_v123.*`, `tables_core.*` and the marker `RAN.json`.
-- **Prints** one line per level (`D1: core - v1.2 = … (SE …) -> PASS/FAIL`), then the scores.md table.
+- **Prints** one line per level (`D1: core - v1.2 = … (SE …) -> PASS/FAIL`), then the scores.md table, which states the rule.
 - Nothing is fit, tuned or changed afterwards.
 
 **5. What Drew types** (from Git Bash; not run here)
@@ -1882,7 +1888,7 @@ cd /c/dev/pc-final
 PITCHIQ_DATA=C:/dev/pitchiq-data-final PYTHONUTF8=1 python -m hitter_data.final_test --drew-go
 ```
 - `PITCHIQ_DATA` must point at the final data root: the default is the old root (`C:/dev/pitchiq-data`).
-- Without `--drew-go` the same command prints the plan and the frozen record and exits 2, reading no 2026 data.
+- Without `--drew-go` the same command prints the plan, the pass rule and the frozen record and exits 2, reading no 2026 data.
 
 ## Summary (Part 12)
 - Re-pin applied (38903a3, JS reproduces it); stage2 bar 65% (3ca6e31, test only; 27 of 40 passes). Rulings 45-47 recorded.
@@ -1890,3 +1896,31 @@ PITCHIQ_DATA=C:/dev/pitchiq-data-final PYTHONUTF8=1 python -m hitter_data.final_
   history (ruling 44).
 - The readiness page above lists what is frozen, the 2025 results, the known limits and the Step 6 command. Step 6 not run; waiting on
   Drew's go.
+
+# Part 13 (Nov 27): 2025 rescore and minimum effect (rulings 48-49)
+
+Carries out `docs/PROMPT_hitter_v13_prego_rescore_2026-11-27.md` on `feat/hitter-v13-final` (from tip b775f01). **Step 6 was not
+run; no 2026 data was read, loaded or scored, and `--drew-go` was not used.** The Part 12 readiness page above is updated in place
+(frozen commit, 2025 table, Step 6 pass rule).
+
+| commit | what |
+|---|---|
+| d659a40 | **ruling 49, code.** `hitter_data/final_test.py`: `MIN_EFFECT = 0.002` and `passes(diff, se)`, the one pass rule (> 2 SE **and** ≥ 0.002); the plan, `scores.md` and `scores.json` print it. Lock and guards unchanged. `tests_hitter_data.py`: 12 new checks (8 synthetic edge cases, the 4 levels' 2025 numbers, the plan printout): **all passed** (`results/v13p13/tests_hitter_data.txt`) |
+| this commit | rulings 48-49 in `docs/DECISIONS_refit_v13.md`, the Part 12 updates, this Part, `results/v13p13/` |
+
+- **Ruling 48 (rescore):** identical. Part 8's `score_core --all` on a `git archive b775f01` snapshot reproduces `scores.md` and
+  all 92 table arrays byte for byte (vs Part 8's `p8/score_w32` and vs the Nov 25 `fits/score_core`); `score_w_check` says
+  identical both ways (`results/v13p13/score_check_vs_part{8,4}.json`). The JSON files differ only in the engine path, timing
+  seconds and the blank git-sha label of a snapshot (every field: `results/v13p13/json_diff_vs_part{8,4}.txt`).
+- **Ruling 49 (minimum effect):** all four levels clear 0.002 on 2025 (table in Part 12 section 2; `results/v13p13/effect_sizes.md`).
+  HS / travel is the closest, at 0.00402 ± 0.00073, which is 0.00202 over the bar. So the minimum was added. `passes()` on the
+  full-precision 2025 numbers: PASS at all four levels (`results/v13p13/passes_on_2025.txt`). MLB is not a harness level, so it
+  has no number.
+- Not changed: `docs/HARNESS_v13.md` section 9 still describes the proposal (with `v1.2_recal` as the reference); Step 6's code and
+  the readiness page are the rule as decided.
+- `final_test` without `--drew-go` still exits 2 and now prints the rule (`results/v13p13/final_test_plan.txt`).
+  `C:/dev/pitchiq-data-final/final_test/` still does not exist.
+
+## Summary (Part 13)
+- 2025 rescored on the tip: byte-identical to Part 8. All four levels clear 0.002 (HS 0.00402 is the smallest), so the Step 6
+  pass rule is now "> 2 SE and ≥ 0.002 nats per pitch" (d659a40). Step 6 not run; waiting on Drew's go.

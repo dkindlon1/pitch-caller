@@ -1,0 +1,133 @@
+  ok   walk letters kept
+  ok   struck out looking ends in K
+  ok   struck out swinging ends in S
+  ok   count replay: walk (count before the last B)
+  ok   count replay: in play (string reaches count)
+  ok   count only: no letters, count kept
+  ok   replay rule: fouls stop at two strikes
+  ok   inconsistent string flagged
+  ok   result HBP: X. Xu hit by pitch (0-1 K).
+  ok   result IBB: X. Xu intentionally walked.
+  ok   result 1B: X. Xu singled to left field.
+  ok   result 2B: X. Xu doubled down the lf line.
+  ok   result 3B: X. Xu tripled to right center.
+  ok   result HR: X. Xu homered to left field, RBI.
+  ok   result E: X. Xu reached first on an error by ss.
+  ok   result E: X. Xu reached on a fielding error by 3b.
+  ok   result FC: X. Xu reached on a fielder's choice.
+  ok   result CI: X. Xu reached on catcher's interference.
+  ok   result PO: X. Xu popped up to 2b.
+  ok   result LO: X. Xu lined out to cf.
+  ok   result FOUL_O: X. Xu fouled out to c.
+  ok   result SH: X. Xu out at first p to 2b, SAC, bunt.
+  ok   result SF: X. Xu flied out to rf, SF, RBI.
+  ok   result SF: X. Xu sacrifice fly to right center putout by cf, RBI.
+  ok   result K: X. Xu struck out.
+  ok   result GDP: X. Xu grounded into double play ss to 2b to 1b.
+  ok   result 1B: X. Xu infield singled to short.
+  ok   batter name strips 'infield'
+  ok   dropped third strike reaches
+  ok   dropped third strike thrown out = one out
+  ok   grounder to ss: ground, left
+  ok   single through the right side: ground, right
+  ok   double down the lf line: left
+  ok   single up the middle: center ground
+  ok   to right center: RC
+  ok   bunt
+  ok   popped up: pop
+  ok   fouled out to lf: fly
+  ok   liner
+  ok   walk: no ball in play
+  ok   bases before: runner on first
+  ok   bases before: first and second
+  ok   two runners score on one play
+  ok   runner to third on a ground out (the wild pitch comes during the next PA)
+  ok   wild-pitch run counted during E. Ely's PA
+  ok   top 1st: 3 runs total
+  ok   runs rest of inning from A. Able's PA = 3
+  ok   error on throw: batter to second
+  ok   pinch hitter takes the batting slot
+  ok   steal interrupts J. Jones's PA: bases before the PA = first
+  ok   double play: two outs
+  ok   bottom 1st ends with 3 outs
+  ok   final score parsed
+  ok   bases-loaded walk forces in a run
+  ok   double play with a silent runner: two outs
+  ok   comma names don't move the batter ('to third base' is the ball, not him)
+  ok   'Last, F.' names: batter on first, runner on third, no run
+  ok   Presto inning label and (n out)
+  ok   'advanced from first base to third base'
+  ok   extra-inning runner placed on second
+  ok   starter from the lineup pitches first
+  ok   pitching change by the fielding team
+  ok   other side's starter
+  ok   '/ for' continuation names the replaced starter
+  ok   'pitching change: X replaces Y' changes the pitcher and names the starter
+  ok   name keys: 'S. Pace' = 'Pace, Sawyer'
+  ok   name keys: 'PACE' = 'Sawyer Pace'
+  ok   name keys: different initials differ
+  ok   grouped paragraph split into plays
+  ok   grouped half is the home team's (bottom)
+  ok   grouped: 3 outs
+  ok   wrapped rows rejoined
+  ok   wrapped: count carried across the row break
+  ok   non-play: Offensive timeout (ECU)
+  ok   non-play: UCI coach visits mound. Pitches: 59, 38 
+  ok   non-play: MIFL position change: Milano,Gabriel rem
+  ok   non-play: Tommy Atkinson Failed pickoff attempt.
+  ok   non-play: Distance:402 Exit velo:104 mph.
+  ok   non-play: No play.
+  ok   'substitution: ... pinch hitting for' is a sub
+  ok   dates: 4/19/2025
+  ok   dates: Mar 21, 2025
+  ok   season from Presto url 2023-24 -> 2024
+  ok   same team: Middle Tenn. ~ Middle Tennessee
+  ok   different teams
+  ok   2025 allowed
+  ok   held-out guard trips on 2026
+  ok   held-out guard trips on '2026'
+  ok   held-out guard trips on 2027
+  ok   held-out guard trips on None
+  ok   held-out guard trips on 'Unknown'
+  ok   fit_seasons refuses a list containing 2026
+  ok   held-out unlock refuses token None
+  ok   held-out unlock refuses token ''
+  ok   held-out unlock refuses token 'yes'
+  ok   held-out unlock refuses token '--drew_go'
+  ok   held-out unlock refuses token True
+  ok   2026 still held out after refused unlocks
+  ok   final_test without --drew-go exits 2 (prepared, not run)
+  ok   final_test plan prints the pass rule with the 0.002 minimum
+  ok   Step 6 MIN_EFFECT is 0.002
+  ok   pass rule: big gain, small SE -> True
+  ok   pass rule: clears 0.002, not 2 SE -> False
+  ok   pass rule: clears 2 SE (z -15), under 0.002 -> False
+  ok   pass rule: exactly 0.002, z -4 -> True
+  ok   pass rule: just under 0.002 -> False
+  ok   pass rule: exactly 2 SE is not more than 2 SE -> False
+  ok   pass rule: core worse -> False
+  ok   pass rule: no difference -> False
+  ok   pass rule on 2025 D1 (-0.03055, SE 0.00078) -> PASS
+  ok   pass rule on 2025 D2 (-0.02927, SE 0.00110) -> PASS
+  ok   pass rule on 2025 D3 (-0.03275, SE 0.00204) -> PASS
+  ok   pass rule on 2025 HS (-0.00402, SE 0.00073) -> PASS
+  ok   full: 9 of 10 lettered
+  ok   full: 8 lettered + one first-pitch 0-0 in play
+  ok   not full: 0-0 alone does not make a game full
+  ok   not full: 8 of 10
+  ok   ratio: equal games -> rate exact, SE 0
+  ok   ratio: two games -> 0.2 with game-clustered SE 0.1
+  ok   ratio: one game -> no SE
+  ok   summarize: one level-season, 4 games, 2 full
+  ok   summarize: full K% = 17/82
+  ok   fingerprint stable when nothing changes
+  ok   fingerprint changes when a Statcast file lands
+  ok   zone skipped when Statcast unchanged
+  ok   fits always run
+  ok   zone runs when new Statcast landed
+  ok   --skip-ingest skips ingest
+  ok   score runs after fit_count
+  ok   no step passes the held-out season
+  ok   summary labeled PROVISIONAL and lists skipped steps
+
+all passed
