@@ -224,9 +224,10 @@ function bullpenView() {
         h("p", { class: "note" }, `${nm}: ${x.flag.length ? x.flag.join("; ") : "no clear lean yet"} (side ${x.x.sides.join(" arm / ")} glove targets)`))) : null] : null));
 }
 
-// Drew, Nov 28 (V1.3 audit): learned values fit against one engine's outcome tables aren't carried into another. A model
-// records the engine data it was learned against; when that changes, the pitcher is relearned from his games once, and
-// what the calls get restarts from one step (prev = null) instead of keeping offsets learned against the old tables.
+// Drew, Nov 28 (V1.3 audit): a model records the engine data it was learned against; when that changes (or a model synced
+// from an older app has none), the pitcher is relearned once from his games against the current tables. Served values
+// step from what he had (prev), so the usual 0.15-a-game cap bounds the move: a model synced in from a not-yet-updated
+// iPad doesn't reset his learning to the coach's grades (round-2 review), and the refit reaches the calls game by game.
 const staleModel = (m) => !!m && m.data !== E.dataVersion();
 async function relearnPitcher(pid) {
   const p0 = DB.pitchers.get(pid); if (!p0 || !DB.D) return null;
@@ -234,7 +235,7 @@ async function relearnPitcher(pid) {
   const dups = await dupGameIds();
   const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt && PCDB.isPitch(e) && !dups.has(e.gameId));
   DB.counts.set(pid, evs.length);
-  const was0 = pModel(pid), was = staleModel(was0) ? null : was0;   // stale engine data: start the served values over
+  const was0 = pModel(pid), was = was0;   // round-2 review: a stale model is relearned from prev, so the 0.15-a-game cap bounds the move
   let r;
   try { r = await learnCall({ type: "pitcher", pitcher: p, events: evs, level: levelOf(), prev: was ? was.served : null }); }
   catch (e) { console.error(e); toast("Couldn't learn from his games just now; the calls keep using what they had"); return was0 || null; }

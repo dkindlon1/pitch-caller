@@ -1,6 +1,7 @@
 // Drew, Nov 28 (V1.3 audit): a pitcher's learned model records the engine data it was learned against. When the engine
-// data changes (an outcome-table change, e.g. V1.3), the next load relearns him once from his games and what the calls
-// get restarts from one step; with the same data, a reload relearns nothing. Run from app/: node relearn_data_e2e.js
+// data changes (an outcome-table change, e.g. V1.3) or a synced model has no stamp (an older app), the next load relearns
+// him once from his games against the current tables; served values step from what he had (the 0.15-a-game cap), so
+// nothing snaps back to the coach's grades. With the same data, a reload relearns nothing. Run from app/: node relearn_data_e2e.js
 const { chromium } = require("playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const DIST = path.join(__dirname, "dist/pitch-caller.html");
@@ -40,18 +41,18 @@ const server = http.createServer((req, res) => {
   await page.reload(); await ready();
   check(await page.evaluate(([id, at]) => DB.models.get("v2:" + id).at === at, [pid, cur.at]), "model untouched after the reload");
 
-  console.log("3. Older engine data: relearned once on load, served values start over from one step");
-  await page.evaluate(async (id) => {
-    const m = DB.models.get("v2:" + id); m.data = "older-tables";
-    for (const x of Object.values(m.served.pitches)) if (x.learned) { x.command = x.coach.command + 0.9; x.grade = x.coach.grade - 0.9; }
+  console.log("3. A model synced in from an older app (no engine data stamp): relearned once on load, served values kept");
+  const before = await page.evaluate(async (id) => {
+    const m = DB.models.get("v2:" + id); delete m.data; m.profile = Object.assign({}, m.profile, { at: 1 });   // marks the old profile
+    for (const x of Object.values(m.served.pitches)) if (x.learned) { x.command = x.coach.command + 0.3; x.grade = x.coach.grade - 0.3; }
     await DB.D.put("learned", m);
+    return JSON.stringify(Object.fromEntries(Object.entries(m.served.pitches).map(([k, x]) => [k, [x.command, x.grade]])));
   }, pid);
   await page.reload(); await ready();
-  const re = await page.evaluate((id) => { const m = DB.models.get("v2:" + id); return { at: m.at, data: m.data, v: E.dataVersion(),
-    learned: Object.values(m.served.pitches).filter((x) => x.learned).length,
-    oneStep: Object.values(m.served.pitches).every((x) => !x.learned || (Math.abs(x.command - x.coach.command) <= 0.15 + 1e-9 && Math.abs(x.grade - x.coach.grade) <= 0.15 + 1e-9)) }; }, pid);
-  check(re.data === re.v && re.at > cur.at, "relearned on load and stamped with the current engine data");
-  check(re.oneStep, `the 0.9 offsets learned against the old tables are gone: every served value is within one 0.15 step of his grades (${re.learned} learned pitch(es))`);
+  const re = await page.evaluate((id) => { const m = DB.models.get("v2:" + id); return { at: m.at, data: m.data, v: E.dataVersion(), pat: m.profile.at,
+    served: JSON.stringify(Object.fromEntries(Object.entries(m.served.pitches).map(([k, x]) => [k, [x.command, x.grade]]))) }; }, pid);
+  check(re.data === re.v && re.at > cur.at && re.pat !== 1, "relearned on load (a fresh profile from his games) and stamped with the current engine data");
+  check(re.served === before, "served values carried over (no new game, so no step): nothing snapped back to the coach's grades");
   await page.reload(); await ready();
   check(await page.evaluate(([id, at]) => DB.models.get("v2:" + id).at === at, [pid, re.at]), "the next reload leaves it alone");
   check(errs.length === 0, `no page errors (${errs.slice(0, 2).join(" | ")})`);

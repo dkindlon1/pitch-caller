@@ -3086,8 +3086,7 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
     """the root mix (_root_call_core), then Drew's Nov 27 guards on it: the hot read's share cap (cap_hot) and the college
     hitter's-count floor (hitters_count_floor), the cap last. Neither changes any outcome probability or cost."""
-    pi, sg, full, res, M = _root_call_core(arsenal, s, tab, exclude, look_value)
-    pi = hitters_count_floor(pi, full, arsenal, s)
+    pi, sg, full, res, M = _root_call_core(arsenal, s, tab, exclude, look_value)   # floors applied inside, per combination
     pi = cap_hot(pi, arsenal, s, tab, exclude, look_value)   # Drew, Nov 28: the cap wins over every floor, so it runs last
     return pi, sg, full, res, M
 
@@ -3111,8 +3110,7 @@ def cap_hot(pi, arsenal, s, tab, exclude=None, look_value=True):
         return pi
     _HOT_OFF[0] = True
     try:
-        pi0, _, full0, _, _ = _root_call_core(arsenal, s, tab, exclude, look_value)
-        pi0 = hitters_count_floor(pi0, full0, arsenal, s)     # compared floored to floored (Drew, Nov 28: the cap wins)
+        pi0 = _root_call_core(arsenal, s, tab, exclude, look_value)[0]   # floored inside, like pi (the cap wins)
     finally:
         _HOT_OFF[0] = False
     lam = 1.0
@@ -3138,36 +3136,38 @@ HC_FLOOR_OS = 0.50  # the floor when the best pitch isn't the fastball: the 72% 
 HC_FB_ALWAYS = ("hs", "travel")   # Drew, Nov 28: at HS / travel 2-0 and 3-1 the 72% goes to the fastball whenever it's allowed
 # and not under his expectation today (wild_today <= 0); a fastball landing under it keeps the best-pitch rule (Nov 9:
 # 3-1 is the best pitch being controlled today), so the tests.py slider-landing row and A6 both hold
+HC_RAMP = 0.05     # wild_today over which the HS / travel 2-0 / 3-1 fastball rule fades out (round-2 review: no 5-pt step)
 HC_FB_E = 0.002     # x run scale: a fastball within this of the best pitch's cost takes the floor (the audit's model-noise size)
 
 
-def hitters_count_floor(pi, full, arsenal, s):
-    f = HC_FLOOR.get((s.balls, s.strikes))
-    if f is None or s.level not in HC_LEVELS or not pi:
-        return pi
+def _hc_pick(pi, full, arsenal, s, mash):
+    """the engine's best pitch and its best fastball among the calls in pi, by full cost, mashed calls left out"""
     best_n, best_c, fb_n, fb_c = None, None, None, None
     for a, c in full.items():
-        if a in pi:
+        if a in pi and a not in mash:
             if best_c is None or c < best_c:
                 best_n, best_c = a[0], c
             if is_fastball(_pitch_by(arsenal, a[0]).kind) and (fb_c is None or c < fb_c):
                 fb_n, fb_c = a[0], c
-    if fb_n is not None and (fb_c - best_c <= HC_FB_E * run_scale(s.level)
-                             or (s.level in HC_FB_ALWAYS and (s.balls, s.strikes) in ((2, 0), (3, 1))
-                                 and wild_today(_pitch_by(arsenal, fb_n), s) <= 0.0)):
+    return best_n, best_c, fb_n, fb_c
+
+
+def _hc_floor_once(pi, full, arsenal, s, f, mash, force_fb):
+    best_n, best_c, fb_n, fb_c = _hc_pick(pi, full, arsenal, s, mash)
+    if fb_n is not None and (force_fb or fb_c - best_c <= HC_FB_E * run_scale(s.level)):
         best_n = fb_n       # a practical tie goes to the fastball; at HS / travel 2-0 and 3-1 it always does (Drew, Nov 28)
     if best_n != fb_n:
         f = HC_FLOOR_OS     # an off-speed best pitch (the fastball off today, or a hot pitch) keeps the 50% rule
     w = t = 0.0
     for a, v in pi.items():
         t += v
-        if a[0] == best_n:
+        if a[0] == best_n and a not in mash:
             w += v
     if not (t > 0.0 and 0.0 < w < f * t):
         return pi
     kf = f * t / w
     ko = (1.0 - f) * t / (t - w)
-    out = {a: v * (kf if a[0] == best_n else ko) for a, v in pi.items()}
+    out = {a: v * (kf if (a[0] == best_n and a not in mash) else ko) for a, v in pi.items()}
     # audit fix (Nov 28): scaling the other pitches down must never take the HS / travel fastball under its own floor
     # table (ruling 8; found by the HS kind x velocity refit run, A6 fastball 72% -> 50%). Re-applied the ruling-33 way:
     # the shortfall goes by the cost softmax over the fastball calls (not the proportional branch ruling 33 retired).
@@ -3175,6 +3175,31 @@ def hitters_count_floor(pi, full, arsenal, s):
     if not fb:
         return out
     return apply_fb_floor(out, s, fb, {a: c for a, c in full.items() if a in out}, temperature(arsenal, s))
+
+
+def hitters_count_floor(pi, full, arsenal, s):
+    """Runs inside each confidence-band combination's root solve (_root_solve), so a pitch barely in the band is lifted
+    only in proportion to its band weight (round-2 review: a fastball at conf 0.402 went 1% -> 72% when this ran after the
+    blend). Mashed calls are left out of the best-pitch choice and of the lift (a fastball mashed at every height went 29%
+    -> 72%). At HS / travel 2-0 and 3-1 the 72% fastball rule ramps out over HC_RAMP of wild_today (no 72% -> 66.7% step
+    the moment the fastball is a hair under his expectation)."""
+    f = HC_FLOOR.get((s.balls, s.strikes))
+    if f is None or s.level not in HC_LEVELS or not pi:
+        return pi
+    mash = {a for a in pi if s.matchup and mashed(_pitch_by(arsenal, a[0]), a[1], s)}
+    if s.level in HC_FB_ALWAYS and (s.balls, s.strikes) in ((2, 0), (3, 1)):
+        fb_n = _hc_pick(pi, full, arsenal, s, mash)[2]
+        if fb_n is not None:
+            u = min(1.0, max(0.0, wild_today(_pitch_by(arsenal, fb_n), s)) / HC_RAMP)
+            if u <= 0.0:
+                return _hc_floor_once(pi, full, arsenal, s, f, mash, True)
+            if u >= 1.0:
+                return _hc_floor_once(pi, full, arsenal, s, f, mash, False)
+            a_ = _hc_floor_once(pi, full, arsenal, s, f, mash, True)
+            b_ = _hc_floor_once(pi, full, arsenal, s, f, mash, False)
+            keys = list(a_) + [k for k in b_ if k not in a_]
+            return {k: (1.0 - u) * a_.get(k, 0.0) + u * b_.get(k, 0.0) for k in keys}
+    return _hc_floor_once(pi, full, arsenal, s, f, mash, False)
 
 
 def _root_call_core(arsenal, s, tab, exclude=None, look_value=True):
@@ -3253,6 +3278,7 @@ def _root_solve(arsenal, s, tab, exclude=None, look_value=True, extra=(), cache=
     pi, sg, res = solve_sit_game(M, ks, s, temp, s.b_h, usage)
     full = {a: sum(sg[kk] * M[a][kk] for kk in ks) for a in M}
     pi = apply_fb_floor(tie_break(pi, full, arsenal, s, exclude, M), s, fb, full, temp)
+    pi = hitters_count_floor(pi, full, arsenal, s)     # Nov 27-28 rulings; per band combination (round-2 review)
     return pi, sg, full, res, M
 
 

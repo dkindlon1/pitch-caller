@@ -103,5 +103,62 @@ for lvl in ("hs", "college_d3"):
                     bad.append(f"{lvl} {name} shakes {seq} {b}-{k}: {seq[-1]} {sh[seq[-1]]:.2f}")
 check(not bad, f"the last-shaken pitch is never the next call while another is left ({len(bad)} misses: {bad[:3]})")
 
+# 5. round 2: a fastball barely in the confidence band is lifted only in proportion to its band weight (it went 1% -> 72%)
+cut = e.LEVEL["hs"]["cutoff"]
+steps = []
+for lvl in ("hs", "college_d3"):
+    cut = e.LEVEL[lvl]["cutoff"]
+    prev = None
+    for conf in [cut - e.RAMP_W + d for d in (0.0, 0.001, 0.002, 0.005, 0.01, 0.02)]:
+        ars = [replace(AVG3[0], conf=conf)] + AVG3[1:]
+        s = Situation(3, 1, 1, E3, inning=4, level=lvl, pitch_count=40, batters_faced=10)
+        w = fbw(ars, shares(ars, s, e.solve_table(ars, replace(s, balls=0, strikes=0))))
+        if prev is not None and w - prev > 0.08:
+            steps.append(f"{lvl} conf {conf:.3f}: FB {prev:.3f} -> {w:.3f}")
+        prev = w
+check(not steps, f"no jump when the fastball enters the confidence band at 3-1 (HS, D3) ({steps[:3]})")
+
+# 6. round 2: a fastball mashed at every height is not lifted to 72% (it went 29% -> 72%), nor is a mashed spot
+mash = {"hard|" + e.key_kind("FB") + "|" + q: e.MASHED_N for q in e.QUADS}
+bad = []
+for lvl in ("hs", "college_d3"):
+    s = Situation(3, 1, 1, E3, inning=4, level=lvl, pitch_count=40, batters_faced=10, matchup=mash)
+    s0 = replace(s, balls=0, strikes=0)
+    tab = e.solve_table(AVG3, s0)
+    sh = shares(AVG3, s, tab)
+    base = shares(AVG3, replace(s, matchup=None), e.solve_table(AVG3, replace(s0, matchup=None)))
+    if fbw(AVG3, sh) > fbw(AVG3, base) - 1e-9 and fbw(AVG3, sh) >= 0.72 - 1e-9:
+        bad.append(f"{lvl}: mashed FB {fbw(AVG3, sh):.3f} (not mashed {fbw(AVG3, base):.3f})")
+check(not bad, f"a fastball mashed at every height isn't forced to 72% at 3-1 ({bad})")
+
+# 7. round 2: the HS 3-1 fastball rule fades out smoothly as the fastball slips under his expectation (no 5-pt step)
+jumps = []
+prev = None
+for st in (10, 9, 8, 7, 6, 5, 4, 3):
+    s = Situation(3, 1, 1, E3, inning=4, level="hs", pitch_count=40, batters_faced=10,
+                  landing_today={"Fastball": (st, 10), "Slider": (6, 10)})
+    w = fbw(AVG3, shares(AVG3, s, e.solve_table(AVG3, replace(s, balls=0, strikes=0))))
+    if prev is not None and abs(w - prev) > 0.25:
+        jumps.append(f"{st}/10: {prev:.3f} -> {w:.3f}")
+    prev = w
+s_a = Situation(3, 1, 1, E3, inning=4, level="hs", pitch_count=40, batters_faced=10)
+w0 = fbw(AVG3, shares(AVG3, s_a, e.solve_table(AVG3, replace(s_a, balls=0, strikes=0))))
+orig = e.wild_today
+e.wild_today = lambda p, s_: 0.0014 if e.is_fastball(p.kind) else orig(p, s_)
+try:
+    w1 = fbw(AVG3, shares(AVG3, s_a, e.solve_table(AVG3, replace(s_a, balls=0, strikes=0))))
+finally:
+    e.wild_today = orig
+check(abs(w1 - w0) < 0.01, f"HS 3-1 fastball: wild_today 0 -> 0.0014 moves {w0:.3f} -> {w1:.3f} (the ramp, no 5-pt step)")
+# report only (pre-existing, for Drew): the not-landing block still flips HS 3-1 when the fastball drops one more strike
+print(f"[INFO] HS 3-1 fastball as it lands 10..3 of 10 (the not-landing block is older than this audit): {jumps or 'no step'}")
+
+# 8. stable pitcher ids: the same id in separate processes (Python's hash() of text changed every process)
+import subprocess
+code = "import sys; sys.path.insert(0, '.'); from hitter_data.fit_count_hs import stable_pid; print(stable_pid('PG-12345'), stable_pid('x'))"
+outs = {subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env={"PYTHONHASHSEED": h, "PATH": ""}).stdout
+        for h in ("1", "2", "random")}
+check(len(outs) == 1 and all(int(v) < 2 ** 40 for v in next(iter(outs)).split()), f"stable_pid is the same in three processes and < 2^40 ({outs})")
+
 print(f"{checks - fails}/{checks} checks passed")
 sys.exit(1 if fails else 0)

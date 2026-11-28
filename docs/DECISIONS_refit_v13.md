@@ -670,3 +670,21 @@ keeps its off-speed share, the same rule used for the ride-up credit.
   HS calls no single group explained (58, 138, 266, 314, 338, 358, 410).
 - Ride-up sizes: `readthrough/scenarios.py --suite v12` on scratch copies with `COACH_RULE["ride_up_2k"]` at 0, 0.003,
   0.005 and 0.006, plus the Q4 / C5 / R1 probe at each size.
+
+## Post-audit call-policy rulings (Drew, Nov 27-28; docs/AUDIT_v13_final_2026-11-27.md)
+Call policy only (no outcome table; Step 6 untouched). Engine 1.3.1. Checked by `tests_audit_v13.py` (must-pass).
+- Shake-off: the pitch shaken off on the last sign is never the very next call while any other pitch is left.
+- Landing hot: credit scaled by count (`HOT_COUNT_W`) and the hot pitch's share gain capped at `HOT_CAP` = 0.22 over the
+  same solve without the read. **The cap wins over every floor** (it runs last, against the floored no-hot mix).
+- Hitter's counts (`hitters_count_floor`, inside each confidence-band combination's root solve): the engine's best pitch
+  gets 72% at 2-0 / 3-1 when it's the fastball (a fastball within 0.002 runs of the best counts as best), 50% otherwise,
+  50% at 2-1; college and HS / travel. Mashed calls are left out of the choice and the lift.
+- HS / travel 2-0 and 3-1: the fastball gets 72% whenever it's allowed, fading out over `wild_today` 0-0.05
+  (`HC_RAMP`) as it slips under his expectation (Nov 9's best-pitch rule then applies). The HS fastball floor table
+  (ruling 8) is never undercut, so at HS / travel the 50% off-speed floor (`HC_FLOOR_OS`) doesn't bind.
+- Six coaching reads and two setups resized on V1.3, the v1.0 way: late_fb .032, crowd .04, squared_up .01,
+  went_back .045, plus_opp .025, hot .04; S6 .012, S7 .012. Read-through v12 96/98 (D6 open, P7 proposed).
+- Learner: a model records the engine data it was learned against; on a change (or an unstamped model from an older
+  app) the pitcher is relearned once, and served values step from what he had (the 0.15-a-game cap).
+- Open for Drew: the not-landing block still flips HS 3-1 from 72% fastball to 0% when the fastball drops one more
+  strike (5/10 -> 4/10); D6.

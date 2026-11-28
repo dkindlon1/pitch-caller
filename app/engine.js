@@ -870,6 +870,7 @@
   const byName = (arsenal, n) => arsenal.find((x) => x.name === n);
   const sk = (n, j) => n + "|" + j;                    // sit option key
   const skName = (key) => key.slice(0, key.lastIndexOf("|"));
+  const skQuad = (key) => key.slice(key.lastIndexOf("|") + 1);   // the target of a "name|quad" call key (audit Nov 28)
   const skH = (key) => key.slice(key.lastIndexOf("|") + 1);
   const cntKey = (b, k) => b + "-" + k;
 
@@ -1528,7 +1529,7 @@
   const HOT_COUNT_W = { "0-0": 0.5, "1-0": 0.5, "0-1": 0.5, "1-1": 0.5, "2-0": 0.6, "3-0": 0.6, "2-1": 0.6, "3-1": 0.6, "0-2": 1.25, "1-2": 1.25, "2-2": 1.25, "3-2": 1.25 };
   const HOT_CAP = 0.22, HOT_OFF = { on: false };
   // Drew, Nov 27: in a hitter's count the engine's best pitch gets at least this share (engine.py HC_FLOOR, hitters_count_floor)
-  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50, HC_FB_ALWAYS = ["hs", "travel"];
+  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50, HC_FB_ALWAYS = ["hs", "travel"], HC_RAMP = 0.05;
   // v1.1: "lean on it" wears off once he has leaned (mirror of engine.py HOT_FADE / hot_fade)
   const HOT_FADE = [1.2, 1.6];   // v1.2 Step 5 (L6): by ratio to the normal share (engine.py)
   function hotFade(p, s, arsenal) {
@@ -1694,9 +1695,8 @@
   }
   // v1.2.2: with band pitches, the blend over each with / without combination (engine.py root_call); none: one solve
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {   // the root mix, then Drew's Nov 27 guards (engine.py root_call)
-    const [pi0, sg, full, res, M] = rootCallCore(arsenal, s, tab, exclude, lookValue);
-    let pi = hittersCountFloor(pi0, full, arsenal, s);
-    pi = capHot(pi, arsenal, s, tab, exclude, lookValue);   // Drew, Nov 28: the cap wins over every floor, so it runs last
+    const [pi0, sg, full, res, M] = rootCallCore(arsenal, s, tab, exclude, lookValue);   // floors applied inside, per combination
+    const pi = capHot(pi0, arsenal, s, tab, exclude, lookValue);   // Drew, Nov 28: the cap wins over every floor, so it runs last
     return [pi, sg, full, res, M];
   }
   function shareOf(pi, name) { let w = 0.0; for (const a in pi) if (skName(a) === name) w += pi[a]; return w; }
@@ -1706,10 +1706,8 @@
     if (!hot.length) return pi;
     let pi0;
     HOT_OFF.on = true;
-    try {
-      const r0 = rootCallCore(arsenal, s, tab, exclude, lookValue);
-      pi0 = hittersCountFloor(r0[0], r0[2], arsenal, s);   // floored to floored (Drew, Nov 28: the cap wins)
-    } finally { HOT_OFF.on = false; }
+    try { pi0 = rootCallCore(arsenal, s, tab, exclude, lookValue)[0]; }   // floored inside, like pi (the cap wins)
+    finally { HOT_OFF.on = false; }
     let lam = 1.0;
     for (const n of hot) { const g = shareOf(pi, n) - shareOf(pi0, n); if (g > HOT_CAP) lam = Math.min(lam, HOT_CAP / g); }
     if (lam >= 1.0) return pi;
@@ -1717,27 +1715,46 @@
     for (const a of [...Object.keys(pi), ...Object.keys(pi0).filter((a) => !(a in pi))]) out[a] = (pi0[a] ?? 0.0) + lam * ((pi[a] ?? 0.0) - (pi0[a] ?? 0.0));
     return out;
   }
-  function hittersCountFloor(pi, full, arsenal, s) {   // engine.py hitters_count_floor
-    const f = HC_FLOOR[s.balls + "-" + s.strikes];
-    if (f === undefined || !HC_LEVELS.includes(s.level) || !Object.keys(pi).length) return pi;
+  function hcPick(pi, full, arsenal, mash) {   // engine.py _hc_pick
     let bestN = null, bestC = null, fbN = null, fbC = null;
     for (const a in full) {
-      if (!(a in pi)) continue;
+      if (!(a in pi) || mash.has(a)) continue;
       if (bestC === null || full[a] < bestC) { bestN = skName(a); bestC = full[a]; }
       if (isFastball(byName(arsenal, skName(a)).kind) && (fbC === null || full[a] < fbC)) { fbN = skName(a); fbC = full[a]; }
     }
-    if (fbN !== null && (fbC - bestC <= HC_FB_E * runScale(s.level) || (HC_FB_ALWAYS.includes(s.level) && ((s.balls === 2 && s.strikes === 0) || (s.balls === 3 && s.strikes === 1)) && wildToday(byName(arsenal, fbN), s) <= 0.0)))
-      bestN = fbN;   // a practical tie goes to the fastball; at HS / travel 2-0 and 3-1 it always does (engine.py, Drew Nov 28)
-    const fl = bestN === fbN ? f : HC_FLOOR_OS;   // an off-speed best pitch keeps the 50% rule (engine.py)
+    return [bestN, bestC, fbN, fbC];
+  }
+  function hcFloorOnce(pi, full, arsenal, s, f, mash, forceFb) {   // engine.py _hc_floor_once
+    let [bestN, bestC, fbN, fbC] = hcPick(pi, full, arsenal, mash);
+    if (fbN !== null && (forceFb || fbC - bestC <= HC_FB_E * runScale(s.level))) bestN = fbN;
+    const fl = bestN === fbN ? f : HC_FLOOR_OS;
     let w = 0.0, t = 0.0;
-    for (const a in pi) { t += pi[a]; if (skName(a) === bestN) w += pi[a]; }
+    for (const a in pi) { t += pi[a]; if (skName(a) === bestN && !mash.has(a)) w += pi[a]; }
     if (!(t > 0.0 && w > 0.0 && w < fl * t)) return pi;
     const kf = fl * t / w, ko = (1.0 - fl) * t / (t - w), out = {};
-    for (const a in pi) out[a] = pi[a] * (skName(a) === bestN ? kf : ko);
-    const fb = fbNames(arsenal, s);   // audit fix (Nov 28): never under the HS / travel fastball floor, ruling-33 way (engine.py)
+    for (const a in pi) out[a] = pi[a] * ((skName(a) === bestN && !mash.has(a)) ? kf : ko);
+    const fb = fbNames(arsenal, s);   // never under the HS / travel fastball floor, ruling-33 way (engine.py)
     if (!fb || !fb.size) return out;
     const fc = {}; for (const a in full) if (a in out) fc[a] = full[a];
     return applyFbFloor(out, s, fb, fc, temperature(arsenal, s));
+  }
+  function hittersCountFloor(pi, full, arsenal, s) {   // engine.py hitters_count_floor: per band combination, mashed calls out, HS ramp
+    const f = HC_FLOOR[s.balls + "-" + s.strikes];
+    if (f === undefined || !HC_LEVELS.includes(s.level) || !Object.keys(pi).length) return pi;
+    const mash = new Set();
+    if (s.matchup) for (const a in pi) if (mashed(byName(arsenal, skName(a)), skQuad(a), s)) mash.add(a);
+    if (HC_FB_ALWAYS.includes(s.level) && ((s.balls === 2 && s.strikes === 0) || (s.balls === 3 && s.strikes === 1))) {
+      const fbN = hcPick(pi, full, arsenal, mash)[2];
+      if (fbN !== null) {
+        const u = Math.min(1.0, Math.max(0.0, wildToday(byName(arsenal, fbN), s)) / HC_RAMP);
+        if (u <= 0.0) return hcFloorOnce(pi, full, arsenal, s, f, mash, true);
+        if (u >= 1.0) return hcFloorOnce(pi, full, arsenal, s, f, mash, false);
+        const a_ = hcFloorOnce(pi, full, arsenal, s, f, mash, true), b_ = hcFloorOnce(pi, full, arsenal, s, f, mash, false), o = {};
+        for (const k of [...Object.keys(a_), ...Object.keys(b_).filter((k) => !(k in a_))]) o[k] = (1.0 - u) * (a_[k] ?? 0.0) + u * (b_[k] ?? 0.0);
+        return o;
+      }
+    }
+    return hcFloorOnce(pi, full, arsenal, s, f, mash, false);
   }
   function rootCallCore(arsenal, s, tab, exclude, lookValue = true) {
     const band = bandPitches(arsenal, s, exclude);
@@ -1800,7 +1817,8 @@
     const fb = fbNames(arsenal, s);   // v1.3 ruling 8 (null off HS / travel)
     const [pi0, sg, res] = solveSitGame(M, ks, s, temp, s.b_h, s.usage_by_call);
     const full = {}; for (const a in M) full[a] = psum(ks.map((kk) => sg[kk] * M[a][kk]));
-    const pi = applyFbFloor(tieBreak(pi0, full, arsenal, s, exclude, M), s, fb, full, temp);   // v1.1 Step 3 (E5); v1.3 ruling 8
+    let pi = applyFbFloor(tieBreak(pi0, full, arsenal, s, exclude, M), s, fb, full, temp);   // v1.1 Step 3 (E5); v1.3 ruling 8
+    pi = hittersCountFloor(pi, full, arsenal, s);   // Nov 27-28 rulings; per band combination (engine.py _root_solve)
     return [pi, sg, full, res, M];
   }
   function callV08(arsenal, s, opts = {}) {
