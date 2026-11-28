@@ -1275,6 +1275,11 @@
     for (const e of exclude || []) { const k = typeof e === "string" ? e : e[0]; n[k] = (n[k] || 0) + 1; }
     return new Set(Object.keys(n).filter((k) => n[k] >= 2));
   }
+  function lastShaken(exclude) {   // the pitch shaken off on the most recent sign (exclude is in shake order), or null
+    if (!exclude || !exclude.length) return null;
+    const e = exclude[exclude.length - 1];
+    return typeof e === "string" ? e : e[0];
+  }
   function allowedCalls(arsenal, s, exclude, extra) {
     const tq = targets(s.balls, s.strikes), ex = shakenNames(exclude);
     let out = [];
@@ -1305,7 +1310,7 @@
     return (r <= 1 ? "up" : "down") + (inside ? "-in" : "-away");
   }
   // ---------------------------------------------------------------- v1.1 Step 3: setup and payoff rules (mirror of engine.py)
-  const SETUP_RULE = { S1: 0.002, S2: 0.0, S3: 0.003, S4: 0.0, S5: 0.0, S6: 0.004, S7: 0.005, S9: 0.001, N2: 0.001 };   // v1.2 Step 5: S2 / S4 / S5 dropped (engine.py)   // v1.1 Step 4: halved (Drew: lower all sizes; engine.py SETUP_RULE)
+  const SETUP_RULE = { S1: 0.002, S2: 0.0, S3: 0.003, S4: 0.0, S5: 0.0, S6: 0.012, S7: 0.012, S9: 0.001, N2: 0.001 };   // v1.2 Step 5: S2 / S4 / S5 dropped (engine.py)   // v1.1 Step 4: halved (Drew: lower all sizes; engine.py SETUP_RULE)   // Drew, Nov 27: S6 / S7 resized on V1.3 (engine.py)
   const SETUP_CAP = 0.02, TIE_CAP = 0.05;
   const S4_GAP = 8.0;   // v1.2 Step 5 (L7): engine.py S4_GAP
   const UPS = ["up-in", "up-away"], INS = ["up-in", "down-in"], AWAYS = ["up-away", "down-away"], STRIKE_RES = ["cstrike", "whiff", "foul"];
@@ -1517,8 +1522,13 @@
   const GB_RULE_BONUS = 0.005, GB_RULE_TARGETS = ["down-in", "down-away", "down-middle"];
   const groundBallSpot = (s) => s.outs < 2 && (s.bases[0] || s.bases[2]) && s.balls < 3 && s.strikes < 2;
   // v1.0 Step 7 (Drew): the coaching reads, each a named soft credit (engine.py COACH_RULE and coach_credit)
-  const COACH_RULE = { late_fb: 0.027, early_os: 0.02, crowd: 0.03, squared_up: 0.005, away: 0.012, went_back: 0.03, hot: 0.03, plus_opp: 0.015, ride_up_2k: 0.003 };   // v1.3 (ruling 5): ride_up_2k 0.008 -> 0.003 (engine.py)   // v1.1 Step 4: ride_up_2k (engine.py)   // v1.1 Step 2: away 0.01 -> 0.012 (engine.py)
+  const COACH_RULE = { late_fb: 0.032, early_os: 0.02, crowd: 0.04, squared_up: 0.01, away: 0.012, went_back: 0.045, hot: 0.04, plus_opp: 0.025, ride_up_2k: 0.003 };   // Drew, Nov 27: six reads resized on V1.3 to pass their graded rows (engine.py)   // v1.3 (ruling 5): ride_up_2k 0.008 -> 0.003 (engine.py)   // v1.1 Step 4: ride_up_2k (engine.py)   // v1.1 Step 2: away 0.01 -> 0.012 (engine.py)
   const READ_T = 0.2, HOT_EST = 0.10, SIDE_TARGETS = { in: ["up-in", "down-in"], away: ["up-away", "down-away"] };
+  // Drew, Nov 27: the hot read is scaled by count and its share gain capped (engine.py HOT_COUNT_W, HOT_CAP, cap_hot)
+  const HOT_COUNT_W = { "0-0": 0.5, "1-0": 0.5, "0-1": 0.5, "1-1": 0.5, "2-0": 0.6, "3-0": 0.6, "2-1": 0.6, "3-1": 0.6, "0-2": 1.25, "1-2": 1.25, "2-2": 1.25, "3-2": 1.25 };
+  const HOT_CAP = 0.22, HOT_OFF = { on: false };
+  // Drew, Nov 27: in a hitter's count the engine's best pitch gets at least this share (engine.py HC_FLOOR, hitters_count_floor)
+  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50;
   // v1.1: "lean on it" wears off once he has leaned (mirror of engine.py HOT_FADE / hot_fade)
   const HOT_FADE = [1.2, 1.6];   // v1.2 Step 5 (L6): by ratio to the normal share (engine.py)
   function hotFade(p, s, arsenal) {
@@ -1557,7 +1567,7 @@
       }
       if (m["succ|" + keyKind(p.kind) + "|" + q]) c += R.went_back;
     }
-    if (s.landing_today && Object.keys(s.landing_today).length && landingHot(p, s)) c += R.hot * hotFade(p, s, arsenal);
+    if (s.landing_today && Object.keys(s.landing_today).length && !HOT_OFF.on && landingHot(p, s)) c += R.hot * hotFade(p, s, arsenal) * (HOT_COUNT_W[s.balls + "-" + s.strikes] ?? 1.0);   // Drew, Nov 27: scaled by count (engine.py)
     if (!s.same_side && p.grade >= 4 && ((p.kind === "CH" && (q === "down-away" || q === "chase")) || (p.kind === "SL" && q === "down-in"))) c += R.plus_opp * (RHO_L[s.level] ?? 1.0);   // v1.3 ruling 41: x RHO_L at HS / travel (engine.py)
     if (rideUp2k(p, q, s)) c += R.ride_up_2k * (RHO_L[s.level] ?? 1.0);   // v1.2 Step 5 (Q5): x RHO_L at HS / travel (engine.py)
     c -= pathCost(p, q, s);   // v1.2 Part B
@@ -1683,7 +1693,46 @@
     return tab;
   }
   // v1.2.2: with band pitches, the blend over each with / without combination (engine.py root_call); none: one solve
-  function rootCall(arsenal, s, tab, exclude, lookValue = true) {
+  function rootCall(arsenal, s, tab, exclude, lookValue = true) {   // the root mix, then Drew's Nov 27 guards (engine.py root_call)
+    const [pi0, sg, full, res, M] = rootCallCore(arsenal, s, tab, exclude, lookValue);
+    let pi = capHot(pi0, arsenal, s, tab, exclude, lookValue);
+    pi = hittersCountFloor(pi, full, arsenal, s);
+    return [pi, sg, full, res, M];
+  }
+  function shareOf(pi, name) { let w = 0.0; for (const a in pi) if (skName(a) === name) w += pi[a]; return w; }
+  function capHot(pi, arsenal, s, tab, exclude, lookValue) {   // engine.py cap_hot
+    if (!s.landing_today || !Object.keys(s.landing_today).length) return pi;
+    const hot = arsenal.filter((x) => landingHot(x, s) && hotFade(x, s, arsenal) > 0.0).map((x) => x.name);
+    if (!hot.length) return pi;
+    let pi0;
+    HOT_OFF.on = true;
+    try { pi0 = rootCallCore(arsenal, s, tab, exclude, lookValue)[0]; } finally { HOT_OFF.on = false; }
+    let lam = 1.0;
+    for (const n of hot) { const g = shareOf(pi, n) - shareOf(pi0, n); if (g > HOT_CAP) lam = Math.min(lam, HOT_CAP / g); }
+    if (lam >= 1.0) return pi;
+    const out = {};
+    for (const a of [...Object.keys(pi), ...Object.keys(pi0).filter((a) => !(a in pi))]) out[a] = (pi0[a] ?? 0.0) + lam * ((pi[a] ?? 0.0) - (pi0[a] ?? 0.0));
+    return out;
+  }
+  function hittersCountFloor(pi, full, arsenal, s) {   // engine.py hitters_count_floor
+    const f = HC_FLOOR[s.balls + "-" + s.strikes];
+    if (f === undefined || !HC_LEVELS.includes(s.level) || !Object.keys(pi).length) return pi;
+    let bestN = null, bestC = null, fbN = null, fbC = null;
+    for (const a in full) {
+      if (!(a in pi)) continue;
+      if (bestC === null || full[a] < bestC) { bestN = skName(a); bestC = full[a]; }
+      if (isFastball(byName(arsenal, skName(a)).kind) && (fbC === null || full[a] < fbC)) { fbN = skName(a); fbC = full[a]; }
+    }
+    if (fbN !== null && fbC - bestC <= HC_FB_E * runScale(s.level)) bestN = fbN;   // a practical tie goes to the fastball (engine.py)
+    const fl = bestN === fbN ? f : HC_FLOOR_OS;   // an off-speed best pitch keeps the 50% rule (engine.py)
+    let w = 0.0, t = 0.0;
+    for (const a in pi) { t += pi[a]; if (skName(a) === bestN) w += pi[a]; }
+    if (!(t > 0.0 && w > 0.0 && w < fl * t)) return pi;
+    const kf = fl * t / w, ko = (1.0 - fl) * t / (t - w), out = {};
+    for (const a in pi) out[a] = pi[a] * (skName(a) === bestN ? kf : ko);
+    return out;
+  }
+  function rootCallCore(arsenal, s, tab, exclude, lookValue = true) {
     const band = bandPitches(arsenal, s, exclude);
     if (!band.length) return rootSolve(arsenal, s, tab, exclude, lookValue, []);
     const w = {}; for (const x of arsenal) if (band.includes(x.name)) w[x.name] = bandWeight(x, s);
@@ -1722,8 +1771,14 @@
     const temp = temperature(arsenal, s);
     let calls = allowedCalls(arsenal, s, exclude, extra);
     if (!calls.length) {   // v1.2.1: shaken once may come back; shaken twice this at-bat stays out while any pitch is left (engine.py)
-      const hard = hardShaken(exclude), rest = arsenal.filter((x) => !hard.has(x.name));
-      calls = hard.size && rest.length ? allowedCalls(rest, s) : allowedCalls(arsenal, s);
+      // Drew, Nov 27: the pitch shaken off on the last sign is never the very next call while any other pitch is left (engine.py)
+      const hard = hardShaken(exclude), last = lastShaken(exclude);
+      const fresh = arsenal.filter((x) => !hard.has(x.name) && x.name !== last);
+      calls = last !== null && fresh.length ? allowedCalls(fresh, s) : [];
+      if (!calls.length) {
+        const rest = arsenal.filter((x) => !hard.has(x.name));
+        calls = hard.size && rest.length ? allowedCalls(rest, s) : allowedCalls(arsenal, s);
+      }
     }
     const sL = replace(s, { look });
     // v1.0 Step 2 (#1, #25): no guardrail cut; the never-pick window in policyFromCosts is the only rule (one operator)

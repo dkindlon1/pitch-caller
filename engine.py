@@ -293,12 +293,25 @@ GB_RULE_TARGETS = ("down-in", "down-away", "down-middle")
 # on its row at the size: F6 84%, F7 79%, H4 87%, F5 0% not-acceptable, H3 77%, I2 80%, C5 76%, J7 82%; all 71 rows pass).
 # v1.1 Step 2: "away" 0.01 -> 0.012. Under the profile terms (the fastball's inside / away lines by batter side) 0.01
 # moved its calls 19.9 points, just short of Drew's 20; 0.012 moves them 23.
-COACH_RULE = {"late_fb": 0.027, "early_os": 0.02, "crowd": 0.03, "squared_up": 0.005, "away": 0.012, "went_back": 0.03,
-              "hot": 0.03, "plus_opp": 0.015, "ride_up_2k": 0.003}
+COACH_RULE = {"late_fb": 0.032, "early_os": 0.02, "crowd": 0.04, "squared_up": 0.01, "away": 0.012, "went_back": 0.045,
+              "hot": 0.04, "plus_opp": 0.025, "ride_up_2k": 0.003}
+# Drew (Nov 27, "grades are hard: fix the engine"): on the V1.3 engine six reads no longer passed their graded rows, so
+# each is resized the v1.0 way, the smallest round size that passes its row with room (acceptable share at the size):
+# late_fb 0.027 -> 0.032 (F6 79%), crowd 0.03 -> 0.04 (H4 76%), squared_up 0.005 -> 0.01 (F5 not-acceptable 0%),
+# went_back 0.03 -> 0.045 (I2 78%), plus_opp 0.015 -> 0.025 (J7 81%), hot 0.03 -> 0.04 (C5 76%; with HOT_COUNT_W and
+# HOT_CAP below). Sizes from /home/claude/audit/lead/size_reads.py, recorded in docs/AUDIT_v13_final_2026-11-27.md.
 # v1.3 (Drew's ruling 5, Nov 21): ride_up_2k 0.008 -> 0.003, the smallest size that passes every graded row on the refit
 # engine (C5 78% acceptable, E7 passes, S7f's climb-the-ladder floor holds); the 36% cap (tests_v11 Q4) is unchanged.
 READ_T = 0.2           # the app labels a hitter "late on"/"early on" a pitch class from |timing| 0.2
 HOT_EST = 0.10         # landing better than his normal by this much (the not-landing rule's shrinkage), at least LAND_BLOCK_N thrown
+# Drew (Nov 27, after the V1.3 audit: one 8-for-10 read made one pitch 94-100% of the calls in nearly every count, 3-0
+# included): "scale it by count and cap the gain". HOT_COUNT_W scales the hot credit by count: a smaller lean early and in
+# neutral counts, the full lean in the big two-strike counts. HOT_CAP: after the root solve, the hot pitch's share may sit
+# at most this far above its share in the same solve without the hot read (root_call blends the two mixes back to the cap).
+HOT_COUNT_W = {(0, 0): 0.5, (1, 0): 0.5, (0, 1): 0.5, (1, 1): 0.5, (2, 0): 0.6, (3, 0): 0.6, (2, 1): 0.6, (3, 1): 0.6,
+               (0, 2): 1.25, (1, 2): 1.25, (2, 2): 1.25, (3, 2): 1.25}
+HOT_CAP = 0.22
+_HOT_OFF = [False]     # root_call's no-hot comparison solve switches the hot credit off (module state, reset in finally)
 SIDE_TARGETS = {"in": ("up-in", "down-in"), "away": ("up-away", "down-away")}
 
 # ---------------------------------------------------------------------------
@@ -385,7 +398,9 @@ def landing_hot(p, s):
 # all three at those sizes the rate was 17-22% (S4 and S2 drove it); S2 and S4 can't lift their rows and stay in the band,
 # so they're dropped (size 0; their code stays). S5 at 0.004 kept the band (4.9% / 3.5% / 10.0%) but 2 of game_mix_e2e's 21
 # games went over 70% of one pitch; Drew (Nov 13): drop S5 too (size 0; code and its lean gate stay).
-SETUP_RULE = {"S1": 0.002, "S2": 0.0, "S3": 0.003, "S4": 0.0, "S5": 0.0, "S6": 0.004, "S7": 0.005, "S9": 0.001, "N2": 0.001}
+SETUP_RULE = {"S1": 0.002, "S2": 0.0, "S3": 0.003, "S4": 0.0, "S5": 0.0, "S6": 0.012, "S7": 0.012, "S9": 0.001, "N2": 0.001}
+# Drew (Nov 27): S6f / S7f held hard; on V1.3 S6 0.004 -> 0.012 (S6f fastball in the zone 45%, floor 41%) and S7 0.005 -> 0.012
+# (S7f fastball above the zone 12%, floor 5%), the smallest round sizes that pass with room.
 SETUP_CAP = 0.02            # setup credit <= 0.02 x run scale; coach + setup <= max(coach, 0.02 x run scale)
 UPS, DOWNS, INS, AWAYS = ("up-in", "up-away"), ("down-in", "down-away", "down-middle"), ("up-in", "down-in"), ("up-away", "down-away")
 STRIKE_RES = ("cstrike", "whiff", "foul")
@@ -541,8 +556,8 @@ def coach_credit(p, q, s, arsenal=None):
                 c += R["away"]
         if m.get(f"succ|{key_kind(p.kind)}|{q}", 0):
             c += R["went_back"]
-    if s.landing_today and landing_hot(p, s):
-        c += R["hot"] * hot_fade(p, s, arsenal)
+    if s.landing_today and not _HOT_OFF[0] and landing_hot(p, s):
+        c += R["hot"] * hot_fade(p, s, arsenal) * HOT_COUNT_W.get((s.balls, s.strikes), 1.0)   # Drew, Nov 27: scaled by count
     if not s.same_side and p.grade >= 4 and ((p.kind == "CH" and q in ("down-away", "chase")) or (p.kind == "SL" and q == "down-in")):
         c += R["plus_opp"] * RHO_L.get(s.level, 1.0)   # v1.3 ruling 41: x RHO_L at HS / travel, like every MLB-sized term
     if ride_up_2k(p, q, s):
@@ -2864,6 +2879,14 @@ def hard_shaken(exclude):
     return {k for k, v in n.items() if v >= 2}
 
 
+def last_shaken(exclude):
+    """the pitch shaken off on the most recent sign (the exclude list is in shake order), or None"""
+    if not exclude:
+        return None
+    e_ = list(exclude)[-1]
+    return e_ if isinstance(e_, str) else e_[0]
+
+
 def allowed_calls(arsenal, s, exclude=None, extra=()):
     tq = targets(s.balls, s.strikes)
     ex = shaken_names(exclude)
@@ -3061,6 +3084,86 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
 
 
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
+    """the root mix (_root_call_core), then Drew's Nov 27 guards on it: the hot read's share cap (cap_hot) and the college
+    hitter's-count floor (hitters_count_floor). Neither changes any outcome probability or cost."""
+    pi, sg, full, res, M = _root_call_core(arsenal, s, tab, exclude, look_value)
+    pi = cap_hot(pi, arsenal, s, tab, exclude, look_value)
+    pi = hitters_count_floor(pi, full, arsenal, s)
+    return pi, sg, full, res, M
+
+
+def _share(pi, name):
+    w = 0.0
+    for a, v in pi.items():
+        if a[0] == name:
+            w += v
+    return w
+
+
+def cap_hot(pi, arsenal, s, tab, exclude=None, look_value=True):
+    """Drew, Nov 27: a pitch landing hot may gain at most HOT_CAP of share over the same root solve without the hot read.
+    Above that, the mix is blended back toward the no-hot mix (pi0 + lam (pi - pi0)) until every hot pitch is at the cap."""
+    if not s.landing_today:
+        return pi
+    hot = [x.name for x in arsenal if landing_hot(x, s) and hot_fade(x, s, arsenal) > 0.0]
+    if not hot:
+        return pi
+    _HOT_OFF[0] = True
+    try:
+        pi0 = _root_call_core(arsenal, s, tab, exclude, look_value)[0]
+    finally:
+        _HOT_OFF[0] = False
+    lam = 1.0
+    for n in hot:
+        g = _share(pi, n) - _share(pi0, n)
+        if g > HOT_CAP:
+            lam = min(lam, HOT_CAP / g)
+    if lam >= 1.0:
+        return pi
+    keys = list(pi) + [a for a in pi0 if a not in pi]
+    return {a: pi0.get(a, 0.0) + lam * (pi.get(a, 0.0) - pi0.get(a, 0.0)) for a in keys}
+
+
+# Drew (Nov 27, after the V1.3 audit: college 3-1 fastball 42-44%, top pitch type under 50% in 11 of 18 college hitter's
+# count cells): restore his rule. In a hitter's count the engine's best pitch (lowest full cost among the calls
+# it allows) gets at least this share; the rest is scaled down in proportion. HS / travel keep their fastball floor table.
+# Drew, same day: his graded rows win over the moderate 3-1 band, so 2-0 and 3-1 get 72% (A2, E2, A6 pass), at college and
+# at HS / travel (on top of the HS fastball floor table); 2-1 keeps the 50% floor.
+HC_FLOOR = {(2, 0): 0.72, (2, 1): 0.50, (3, 1): 0.72}
+HC_LEVELS = ("college_d1", "college_d2", "college_d3", "hs", "travel")
+HC_FLOOR_OS = 0.50  # the floor when the best pitch isn't the fastball: the 72% rows are "attack with the fastball", and 72% on
+                    # a hot off-speed pitch broke Drew's whole-game mix gate (game_mix_e2e: 4 of 21 games over 70%, at most 3)
+HC_FB_E = 0.002     # x run scale: a fastball within this of the best pitch's cost takes the floor (the audit's model-noise size)
+
+
+def hitters_count_floor(pi, full, arsenal, s):
+    f = HC_FLOOR.get((s.balls, s.strikes))
+    if f is None or s.level not in HC_LEVELS or not pi:
+        return pi
+    best_n, best_c, fb_n, fb_c = None, None, None, None
+    for a, c in full.items():
+        if a in pi:
+            if best_c is None or c < best_c:
+                best_n, best_c = a[0], c
+            if is_fastball(_pitch_by(arsenal, a[0]).kind) and (fb_c is None or c < fb_c):
+                fb_n, fb_c = a[0], c
+    if fb_n is not None and fb_c - best_c <= HC_FB_E * run_scale(s.level):
+        best_n = fb_n       # a practical tie goes to the fastball (his hitter's-count rows favor it)
+    if best_n != fb_n:
+        f = HC_FLOOR_OS     # an off-speed best pitch (the fastball off today, or a hot pitch) keeps the 50% rule
+    w = t = 0.0
+    for a, v in pi.items():
+        t += v
+        if a[0] == best_n:
+            w += v
+    if not (t > 0.0 and 0.0 < w < f * t):
+        return pi
+    kf = f * t / w
+    ko = (1.0 - f) * t / (t - w)
+    return {a: v * (kf if a[0] == best_n else ko) for a, v in pi.items()}
+
+
+def _root_call_core(arsenal, s, tab, exclude=None, look_value=True):
     """6.3/6.4 the pitch being called now: live look, last pitch and lean; sit game re-solved. v1.0 Step 2 (#1, #25): no
     separate guardrail cut. The stakes-scaled never-pick window inside policy_from_costs is the only rule that removes a
     call, so the root and the table (solve_table) use one operator. Three-ball counts rank by myopic cost (no setups).
@@ -3110,9 +3213,15 @@ def _root_solve(arsenal, s, tab, exclude=None, look_value=True, extra=(), cache=
         # can be re-called); a pitch shaken twice this at-bat stays out, and the call goes to the rest of his pitches,
         # trusted first, else his most-trusted of them (candidates' own fallback). Only if every pitch is shaken twice
         # are the shake-offs set aside, so there is always a call.
+        # Drew, Nov 27: the pitch shaken off on the last sign is never the very next call while any other pitch is left
+        # (a strong pitch shaken once can still come back later in the at-bat); then the v1.2.1 order follows.
         hard = hard_shaken(exclude)
-        rest = [x for x in arsenal if x.name not in hard]
-        calls = allowed_calls(rest, s) if hard and rest else allowed_calls(arsenal, s)
+        last = last_shaken(exclude)
+        fresh = [x for x in arsenal if x.name not in hard and x.name != last]
+        calls = allowed_calls(fresh, s) if last is not None and fresh else []
+        if not calls:
+            rest = [x for x in arsenal if x.name not in hard]
+            calls = allowed_calls(rest, s) if hard and rest else allowed_calls(arsenal, s)
     sL = replace(s, look=look)
     my = s.balls == 3 or not look_value     # three-ball counts rank by myopic cost (no setups); test switch
     pre = {}        # speed only: every cost below is at sL with this arsenal, so the look / sit-free terms are shared
