@@ -106,9 +106,11 @@ PI_Q = """SELECT game_id, pa_idx, seq, letter, outcome, pitch_type, pitch_class,
           FROM hs_pitch WHERE game_id IN ({}) ORDER BY game_id, pa_idx, pitch_no, seq"""
 
 
-def build_hs_season(con, season):
+def build_hs_season(con, season, keep_extra=False):
     """-> a harness Season for HS / travel (S.level = 'HS'), plus per-pitch cls / kind / velo / vrel and per-game lev /
-    age / phase / series arrays."""
+    age / phase / series arrays. keep_extra (hs_hanger_cv task B; not cached by load_season): also keep per pitch the
+    pitcher (pid, a hash of pitcher_id; 0 = unknown) and, on the in-play pitch of a scored ball in play, its harness
+    result (br, H.bip_result; -1 on every other pitch)."""
     assert_not_heldout(season)
     games = hs_games(con, season)
     gidx = {g["id"]: i for i, g in enumerate(games)}
@@ -170,6 +172,7 @@ def build_hs_season(con, season):
         if c5 >= 0:
             for k_, v in (("g", g), ("o", o), ("bi", bi), ("sd", sd), ("lt", lt), ("y", c5)):
                 pa["p_" + k_].append(v)
+        br = -1
         if ip and (balls, strikes) in CI:
             t = BIP_TYPES.index(bt) if bt in BIP_TYPES else -1
             br = H.bip_result(res)
@@ -202,12 +205,15 @@ def build_hs_season(con, season):
             pit["kind"].append(kind_index(r[5]))
             pit["velo"].append(r[7] if r[7] is not None else np.nan)
             pit["pid"].append(hash(r[8]) if r[8] else 0)
+            if keep_extra:
+                pit["br"].append(br if e6 == 5 else -1)
     small = {"g": np.int32, "rr": np.int16, "r_y": np.int16, "velo": np.float32, "pid": np.int64}
     S.pa = {k: np.asarray(v, dtype=np.int32 if k.endswith("_g") else small.get(k, np.int16)) for k, v in pa.items()}
     S.pit = {k: np.asarray(v, dtype=small.get(k, np.int8)) for k, v in pit.items()}
     S.pit["vrel"] = relative_velo(S.pit)
     S.pit["vday"] = day_velo(S.pit)
-    del S.pit["pid"]
+    if not keep_extra:
+        del S.pit["pid"]
     S.reasons, S.lettered_pas, S.n_pa_rows, S.n_games = reasons, lettered, len(pas), len(games)
     S.extra = dict(hand=hand, weak=weak, hard=hard, bipn=bipn)
     return S
@@ -657,16 +663,41 @@ def pitch_table(Ss, thru=VALID, alpha=TERM_ALPHA):
     with open(FC.out_path(LEVEL, "sep", thru), encoding="utf-8") as fh:
         t = FC.tables_from_json(json.load(fh))
     S_list = [Ss[x] for x in seasons]
-    Pf = [base_p6(t, S) for S in S_list]
+    r = _fit_pv_stack([base_p6(t, S) for S in S_list], S_list, alpha)
+    about = ("HS / travel pitch kind x velocity (Drew's ruling 4), exported by hitter_data.fit_count_hs.pitch_table from the "
+             "fit that gained +0.0104 nats per pitch on 2025 (FITS_COUNT_v13 12.2, stack kind + velo_rel + velo_abs), refit "
+             f"on {seasons[0]}-{seasons[-1]} on top of hs_sep_thru{thru}. ")
+    return _pv_dict(r, seasons, alpha, about)
+
+
+def _fit_pv_stack(Pf, S_list, alpha):
     r = {}
     for term in PV_TERMS:
         r[term] = fit_term(Pf, S_list, term, alpha=alpha)
         Pf = [apply_term(P, S, term, r[term]) for P, S in zip(Pf, S_list)]
+    return r
+
+
+def pitch_table_engine_base(Ss, base_fn, thru=VALID, alpha=TERM_ALPHA, base_label="the engine before pitch_velo"):
+    """V1.3 audit item 9: the same stack as pitch_table (kind, velo_rel, velo_abs; sequential; shrunk with alpha), but fit as
+    residuals on the probabilities the engine itself produces before pitch_velo: base_fn(S) -> [n pitches, 6], the HS
+    count row plus the zone table's class and location terms for each pitch's kind, through the harness adapter
+    (hitter_data.hs_hanger_cv). pitch_table's base (hs_sep) has no kind or location terms, so on top of the engine's
+    class terms it counted pitch class twice. Returns the engine table dict (count_<v>.json levels.hs.pitch_velo)."""
+    seasons = fit_seasons([x for x in SEASONS if x <= thru])
+    S_list = [Ss[x] for x in seasons]
+    r = _fit_pv_stack([base_fn(S) for S in S_list], S_list, alpha)
+    about = ("HS / travel pitch kind x velocity (Drew's ruling 4), refit for the V1.3 audit (item 9) by "
+             "hitter_data.fit_count_hs.pitch_table_engine_base on " f"{seasons[0]}-{seasons[-1]}" " as residuals on top of "
+             + base_label + ", so pitch class is no longer counted twice (docs/REPORT_hs_hanger_cv_2026-11-27.md: 2025 "
+             "pitch_5way -0.0124 vs the shipped table, fit <= 2024). ")
+    return _pv_dict(r, seasons, alpha, about)
+
+
+def _pv_dict(r, seasons, alpha, about):
     cls_names = CLASSES[:4]
     out = {
-        "about": "HS / travel pitch kind x velocity (Drew's ruling 4), exported by hitter_data.fit_count_hs.pitch_table from the "
-                 "fit that gained +0.0104 nats per pitch on 2025 (FITS_COUNT_v13 12.2, stack kind + velo_rel + velo_abs), refit "
-                 f"on {seasons[0]}-{seasons[-1]} on top of hs_sep_thru{thru}. Each term multiplies the pitch's six event "
+        "about": about + "Each term multiplies the pitch's six event "
                  "probabilities (outcomes) at its count and renormalises: P(y) ~ P_engine(y) x kind[count][kind][y] x "
                  "velo_rel[count][class][bin][y] x velo_abs[count][class][bin][y]. A velocity term is skipped when the pitch has "
                  "no entered speed (the fit's missing-data rule).",
