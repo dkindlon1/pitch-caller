@@ -2,3 +2,4 @@
 numpy==2.5.3
 scipy==1.18.1
 pandas==3.0.5   # tests_zone_seed.py (it never ran in CI while test-app.sh stopped at tests.py; audit Nov 27)
+pyarrow==26.0.1   # parquet for tests_refit_v13.py (pandas has no parquet engine without it)
