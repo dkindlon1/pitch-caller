@@ -1,3 +1,4 @@
 # Python packages for the engine and its checks (README: Python 3.11+ with numpy and scipy)
 numpy==2.5.3
 scipy==1.18.1
+pandas==3.0.5   # tests_zone_seed.py (it never ran in CI while test-app.sh stopped at tests.py; audit Nov 27)

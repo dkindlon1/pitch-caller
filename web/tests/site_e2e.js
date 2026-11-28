@@ -164,7 +164,7 @@ const num = (s) => parseInt(String(s).replace(/[^0-9]/g, ""), 10);
       msgs: [...document.querySelectorAll(".pq-msg")].filter((m) => +getComputedStyle(m).opacity === 1 && m.getBoundingClientRect().height > 0).length, chips: [...document.querySelectorAll(".pq-chip")].filter((m) => +getComputedStyle(m).opacity === 1).length,
       call: getComputedStyle(document.querySelector(".pq-callname")).position, scrub: document.querySelectorAll(".is-scrub").length, wrists: [...document.querySelectorAll(".pq-tw-watch .pq-w")].map((e) => e.classList.contains("is-blank")) }));
     check(!still.lenis && still.frame === "" && still.pin === "relative" && still.filmH < 8, "under reduced motion the film is one still: no smooth scroll, no frames drawn, nothing pinned");
-    check(still.msgs === 5 && still.chips === 5 && still.call === "static", "its stops are a plain stacked list, with the call named");
+    check(still.msgs === 5 && still.chips === 4 && still.call === "static", "its stops are a plain stacked list, with the call named");   // v1.3: four candidates (Drew, Nov 27)
     check(still.scrub === 0 && still.wrists.every((b) => !b), "the at-bat is a plain list and both watches already show the call");
     await rp.getByRole("button", { name: "One more strike" }).isDisabled().then((d) => check(d, "the playground still works there (2 strikes is the limit)"));
     await rp.getByRole("button", { name: "One fewer strike" }).evaluate((b) => b.click()); await wait(1500);
