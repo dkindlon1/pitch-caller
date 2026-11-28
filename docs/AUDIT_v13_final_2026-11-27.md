@@ -46,8 +46,11 @@ probability, table or cost model changed and the one-shot Step 6 result still de
   - That includes rules, both engine-down modes, shake, game mix, fold, watch, sync, opponent, logging/drift exact, peak
     and drift.
 - Web: typecheck clean, 110/110 unit tests, build OK, site_e2e passes.
-- GitHub CI on 863872e: SQL and public site green. Engine and web-shell results are listed under "CI" at the end of this
-  section once they land.
+- **GitHub CI on 863872e: all four jobs green**, the first full green CI V1.3 has had.
+  - Engine/app: 84 suite runs. The only warnings are the 14 ruling-44 known-red suites, which now print their failures
+    instead of stopping the run.
+  - Web shell: offline game, portal, billing, Game Day on a real local Supabase.
+  - Public site, and SQL.
 
 **Still open before a YES**
 1. The desktop HS table / hanger run, then a re-check of read-through, tests.py realism and game mix.
