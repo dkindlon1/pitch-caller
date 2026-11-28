@@ -48,7 +48,14 @@ LEVEL = "hs"
 DL = "HS"                        # the harness data level (engine level 'hs' through V12_LEVEL)
 SEASONS = (2022, 2023, 2024, 2025)
 VALID = 2025
-CACHE_VERSION = "hs4"      # hs4 (full data): the season keeps per-pitch vday (today's fastball vs his season norm)
+def stable_pid(pitcher_id):
+    """a pitcher's id as a stable int64 (40 bits of sha1). Python's hash() of a text id changes with every process
+    (PYTHONHASHSEED), so ids built in different runs or seasons didn't match (audit Nov 28). 0 = no pitcher."""
+    return int(hashlib.sha1(str(pitcher_id).encode()).hexdigest()[:10], 16) if pitcher_id else 0   # 40 bits: room for pid * 8 * 100000 in int64
+
+
+CACHE_VERSION = "hs5"      # hs5 (audit Nov 28): stable pitcher ids (stable_pid), so cached seasons agree across runs
+CACHE_VERSION_PREV = "hs4"      # hs4 (full data): the season keeps per-pitch vday (today's fastball vs his season norm)
 OUT = os.path.join(FD.FITS, "hs")
 CLASSES = ("fastball", "breaking", "offspeed", "other", "unknown")
 KINDS = ("Fastball", "Curveball", "Slider", "Change-Up", "other")
@@ -201,7 +208,7 @@ def build_hs_season(con, season):
             pit["cls"].append(class_index(r[6]))
             pit["kind"].append(kind_index(r[5]))
             pit["velo"].append(r[7] if r[7] is not None else np.nan)
-            pit["pid"].append(hash(r[8]) if r[8] else 0)
+            pit["pid"].append(stable_pid(r[8]))
     small = {"g": np.int32, "rr": np.int16, "r_y": np.int16, "velo": np.float32, "pid": np.int64}
     S.pa = {k: np.asarray(v, dtype=np.int32 if k.endswith("_g") else small.get(k, np.int16)) for k, v in pa.items()}
     S.pit = {k: np.asarray(v, dtype=small.get(k, np.int8)) for k, v in pit.items()}
