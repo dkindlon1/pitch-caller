@@ -67,7 +67,8 @@ async function boot() {
       if (await D.get("meta", "checkDups")) { await checkDuplicates().catch((e) => console.warn("duplicate check", e)); await D.del("meta", "checkDups"); }
       for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
       await refreshOutings().catch((e) => console.warn("outings", e));
-      for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
+      // Drew, Nov 28: a model learned against older engine data (an outcome-table change, e.g. V1.3) is relearned once
+      for (const p of S.setup.staff) if (DB.counts.get(p.id) && (!pModel(p.id) || staleModel(pModel(p.id)))) await relearnPitcher(p.id);
       await refreshLineupMemory();
       if (S.view === "roster") render();
     } finally { DB.warm = true; } }, 50);
@@ -223,17 +224,21 @@ function bullpenView() {
         h("p", { class: "note" }, `${nm}: ${x.flag.length ? x.flag.join("; ") : "no clear lean yet"} (side ${x.x.sides.join(" arm / ")} glove targets)`))) : null] : null));
 }
 
+// Drew, Nov 28 (V1.3 audit): learned values fit against one engine's outcome tables aren't carried into another. A model
+// records the engine data it was learned against; when that changes, the pitcher is relearned from his games once, and
+// what the calls get restarts from one step (prev = null) instead of keeping offsets learned against the old tables.
+const staleModel = (m) => !!m && m.data !== E.dataVersion();
 async function relearnPitcher(pid) {
   const p0 = DB.pitchers.get(pid); if (!p0 || !DB.D) return null;
   const p = JSON.parse(JSON.stringify(p0));   // the record as it was when learning started (D3 compares against it)
   const dups = await dupGameIds();
   const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt && PCDB.isPitch(e) && !dups.has(e.gameId));
   DB.counts.set(pid, evs.length);
-  const was = pModel(pid);
+  const was0 = pModel(pid), was = staleModel(was0) ? null : was0;   // stale engine data: start the served values over
   let r;
   try { r = await learnCall({ type: "pitcher", pitcher: p, events: evs, level: levelOf(), prev: was ? was.served : null }); }
-  catch (e) { console.error(e); toast("Couldn't learn from his games just now; the calls keep using what they had"); return was || null; }
-  const m = { id: "v2:" + pid, pitcherId: pid, profile: r.profile, served: r.served, at: Date.now() };
+  catch (e) { console.error(e); toast("Couldn't learn from his games just now; the calls keep using what they had"); return was0 || null; }
+  const m = { id: "v2:" + pid, pitcherId: pid, profile: r.profile, served: r.served, at: Date.now(), data: E.dataVersion() };
   // v1.2 Step 3 / 4: each pitch's miss lean from his logged cells, games and charted bullpens (a flag until the gate admits it)
   try {
     const pens = (await DB.D.byIndex("sessions", "pitcherId", pid)).filter((x) => x.type === "charted" && !x.deletedAt);

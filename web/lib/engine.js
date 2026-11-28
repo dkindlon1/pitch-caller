@@ -156,7 +156,7 @@
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.3.0";    // engine logic version (v1.3.0, Nov 27: the V1.3 hitter model, count / zone / run tables and per-level models, plus Drew's Nov 27 call-policy rulings; v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.3.1";    // engine logic version (v1.3.1, Nov 28: hitter's-count floor keeps the HS fastball floor (ruling 33 way), HS 2-0/3-1 fastball 72%, hot cap after the floors; v1.3.0, Nov 27: the V1.3 hitter model, count / zone / run tables and per-level models, plus Drew's Nov 27 call-policy rulings; v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -1528,7 +1528,7 @@
   const HOT_COUNT_W = { "0-0": 0.5, "1-0": 0.5, "0-1": 0.5, "1-1": 0.5, "2-0": 0.6, "3-0": 0.6, "2-1": 0.6, "3-1": 0.6, "0-2": 1.25, "1-2": 1.25, "2-2": 1.25, "3-2": 1.25 };
   const HOT_CAP = 0.22, HOT_OFF = { on: false };
   // Drew, Nov 27: in a hitter's count the engine's best pitch gets at least this share (engine.py HC_FLOOR, hitters_count_floor)
-  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50;
+  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50, HC_FB_ALWAYS = ["hs", "travel"];
   // v1.1: "lean on it" wears off once he has leaned (mirror of engine.py HOT_FADE / hot_fade)
   const HOT_FADE = [1.2, 1.6];   // v1.2 Step 5 (L6): by ratio to the normal share (engine.py)
   function hotFade(p, s, arsenal) {
@@ -1695,8 +1695,8 @@
   // v1.2.2: with band pitches, the blend over each with / without combination (engine.py root_call); none: one solve
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {   // the root mix, then Drew's Nov 27 guards (engine.py root_call)
     const [pi0, sg, full, res, M] = rootCallCore(arsenal, s, tab, exclude, lookValue);
-    let pi = capHot(pi0, arsenal, s, tab, exclude, lookValue);
-    pi = hittersCountFloor(pi, full, arsenal, s);
+    let pi = hittersCountFloor(pi0, full, arsenal, s);
+    pi = capHot(pi, arsenal, s, tab, exclude, lookValue);   // Drew, Nov 28: the cap wins over every floor, so it runs last
     return [pi, sg, full, res, M];
   }
   function shareOf(pi, name) { let w = 0.0; for (const a in pi) if (skName(a) === name) w += pi[a]; return w; }
@@ -1706,7 +1706,10 @@
     if (!hot.length) return pi;
     let pi0;
     HOT_OFF.on = true;
-    try { pi0 = rootCallCore(arsenal, s, tab, exclude, lookValue)[0]; } finally { HOT_OFF.on = false; }
+    try {
+      const r0 = rootCallCore(arsenal, s, tab, exclude, lookValue);
+      pi0 = hittersCountFloor(r0[0], r0[2], arsenal, s);   // floored to floored (Drew, Nov 28: the cap wins)
+    } finally { HOT_OFF.on = false; }
     let lam = 1.0;
     for (const n of hot) { const g = shareOf(pi, n) - shareOf(pi0, n); if (g > HOT_CAP) lam = Math.min(lam, HOT_CAP / g); }
     if (lam >= 1.0) return pi;
@@ -1723,14 +1726,18 @@
       if (bestC === null || full[a] < bestC) { bestN = skName(a); bestC = full[a]; }
       if (isFastball(byName(arsenal, skName(a)).kind) && (fbC === null || full[a] < fbC)) { fbN = skName(a); fbC = full[a]; }
     }
-    if (fbN !== null && fbC - bestC <= HC_FB_E * runScale(s.level)) bestN = fbN;   // a practical tie goes to the fastball (engine.py)
+    if (fbN !== null && (fbC - bestC <= HC_FB_E * runScale(s.level) || (HC_FB_ALWAYS.includes(s.level) && ((s.balls === 2 && s.strikes === 0) || (s.balls === 3 && s.strikes === 1)) && wildToday(byName(arsenal, fbN), s) <= 0.0)))
+      bestN = fbN;   // a practical tie goes to the fastball; at HS / travel 2-0 and 3-1 it always does (engine.py, Drew Nov 28)
     const fl = bestN === fbN ? f : HC_FLOOR_OS;   // an off-speed best pitch keeps the 50% rule (engine.py)
     let w = 0.0, t = 0.0;
     for (const a in pi) { t += pi[a]; if (skName(a) === bestN) w += pi[a]; }
     if (!(t > 0.0 && w > 0.0 && w < fl * t)) return pi;
     const kf = fl * t / w, ko = (1.0 - fl) * t / (t - w), out = {};
     for (const a in pi) out[a] = pi[a] * (skName(a) === bestN ? kf : ko);
-    return out;
+    const fb = fbNames(arsenal, s);   // audit fix (Nov 28): never under the HS / travel fastball floor, ruling-33 way (engine.py)
+    if (!fb || !fb.size) return out;
+    const fc = {}; for (const a in full) if (a in out) fc[a] = full[a];
+    return applyFbFloor(out, s, fb, fc, temperature(arsenal, s));
   }
   function rootCallCore(arsenal, s, tab, exclude, lookValue = true) {
     const band = bandPitches(arsenal, s, exclude);

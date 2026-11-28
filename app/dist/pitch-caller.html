@@ -1006,7 +1006,7 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.3.0";    // engine logic version (v1.3.0, Nov 27: the V1.3 hitter model, count / zone / run tables and per-level models, plus Drew's Nov 27 call-policy rulings; v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.3.1";    // engine logic version (v1.3.1, Nov 28: hitter's-count floor keeps the HS fastball floor (ruling 33 way), HS 2-0/3-1 fastball 72%, hot cap after the floors; v1.3.0, Nov 27: the V1.3 hitter model, count / zone / run tables and per-level models, plus Drew's Nov 27 call-policy rulings; v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -2378,7 +2378,7 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
   const HOT_COUNT_W = { "0-0": 0.5, "1-0": 0.5, "0-1": 0.5, "1-1": 0.5, "2-0": 0.6, "3-0": 0.6, "2-1": 0.6, "3-1": 0.6, "0-2": 1.25, "1-2": 1.25, "2-2": 1.25, "3-2": 1.25 };
   const HOT_CAP = 0.22, HOT_OFF = { on: false };
   // Drew, Nov 27: in a hitter's count the engine's best pitch gets at least this share (engine.py HC_FLOOR, hitters_count_floor)
-  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50;
+  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50, HC_FB_ALWAYS = ["hs", "travel"];
   // v1.1: "lean on it" wears off once he has leaned (mirror of engine.py HOT_FADE / hot_fade)
   const HOT_FADE = [1.2, 1.6];   // v1.2 Step 5 (L6): by ratio to the normal share (engine.py)
   function hotFade(p, s, arsenal) {
@@ -2545,8 +2545,8 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
   // v1.2.2: with band pitches, the blend over each with / without combination (engine.py root_call); none: one solve
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {   // the root mix, then Drew's Nov 27 guards (engine.py root_call)
     const [pi0, sg, full, res, M] = rootCallCore(arsenal, s, tab, exclude, lookValue);
-    let pi = capHot(pi0, arsenal, s, tab, exclude, lookValue);
-    pi = hittersCountFloor(pi, full, arsenal, s);
+    let pi = hittersCountFloor(pi0, full, arsenal, s);
+    pi = capHot(pi, arsenal, s, tab, exclude, lookValue);   // Drew, Nov 28: the cap wins over every floor, so it runs last
     return [pi, sg, full, res, M];
   }
   function shareOf(pi, name) { let w = 0.0; for (const a in pi) if (skName(a) === name) w += pi[a]; return w; }
@@ -2556,7 +2556,10 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
     if (!hot.length) return pi;
     let pi0;
     HOT_OFF.on = true;
-    try { pi0 = rootCallCore(arsenal, s, tab, exclude, lookValue)[0]; } finally { HOT_OFF.on = false; }
+    try {
+      const r0 = rootCallCore(arsenal, s, tab, exclude, lookValue);
+      pi0 = hittersCountFloor(r0[0], r0[2], arsenal, s);   // floored to floored (Drew, Nov 28: the cap wins)
+    } finally { HOT_OFF.on = false; }
     let lam = 1.0;
     for (const n of hot) { const g = shareOf(pi, n) - shareOf(pi0, n); if (g > HOT_CAP) lam = Math.min(lam, HOT_CAP / g); }
     if (lam >= 1.0) return pi;
@@ -2573,14 +2576,18 @@ input[type="checkbox"]:disabled { opacity: 0.45; cursor: not-allowed; }
       if (bestC === null || full[a] < bestC) { bestN = skName(a); bestC = full[a]; }
       if (isFastball(byName(arsenal, skName(a)).kind) && (fbC === null || full[a] < fbC)) { fbN = skName(a); fbC = full[a]; }
     }
-    if (fbN !== null && fbC - bestC <= HC_FB_E * runScale(s.level)) bestN = fbN;   // a practical tie goes to the fastball (engine.py)
+    if (fbN !== null && (fbC - bestC <= HC_FB_E * runScale(s.level) || (HC_FB_ALWAYS.includes(s.level) && ((s.balls === 2 && s.strikes === 0) || (s.balls === 3 && s.strikes === 1)) && wildToday(byName(arsenal, fbN), s) <= 0.0)))
+      bestN = fbN;   // a practical tie goes to the fastball; at HS / travel 2-0 and 3-1 it always does (engine.py, Drew Nov 28)
     const fl = bestN === fbN ? f : HC_FLOOR_OS;   // an off-speed best pitch keeps the 50% rule (engine.py)
     let w = 0.0, t = 0.0;
     for (const a in pi) { t += pi[a]; if (skName(a) === bestN) w += pi[a]; }
     if (!(t > 0.0 && w > 0.0 && w < fl * t)) return pi;
     const kf = fl * t / w, ko = (1.0 - fl) * t / (t - w), out = {};
     for (const a in pi) out[a] = pi[a] * (skName(a) === bestN ? kf : ko);
-    return out;
+    const fb = fbNames(arsenal, s);   // audit fix (Nov 28): never under the HS / travel fastball floor, ruling-33 way (engine.py)
+    if (!fb || !fb.size) return out;
+    const fc = {}; for (const a in full) if (a in out) fc[a] = full[a];
+    return applyFbFloor(out, s, fb, fc, temperature(arsenal, s));
   }
   function rootCallCore(arsenal, s, tab, exclude, lookValue = true) {
     const band = bandPitches(arsenal, s, exclude);
@@ -6377,7 +6384,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.3.0";    // engine logic version (v1.3.0, Nov 27: the V1.3 hitter model, count / zone / run tables and per-level models, plus Drew's Nov 27 call-policy rulings; v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.3.1";    // engine logic version (v1.3.1, Nov 28: hitter's-count floor keeps the HS fastball floor (ruling 33 way), HS 2-0/3-1 fastball 72%, hot cap after the floors; v1.3.0, Nov 27: the V1.3 hitter model, count / zone / run tables and per-level models, plus Drew's Nov 27 call-policy rulings; v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own
@@ -7749,7 +7756,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   const HOT_COUNT_W = { "0-0": 0.5, "1-0": 0.5, "0-1": 0.5, "1-1": 0.5, "2-0": 0.6, "3-0": 0.6, "2-1": 0.6, "3-1": 0.6, "0-2": 1.25, "1-2": 1.25, "2-2": 1.25, "3-2": 1.25 };
   const HOT_CAP = 0.22, HOT_OFF = { on: false };
   // Drew, Nov 27: in a hitter's count the engine's best pitch gets at least this share (engine.py HC_FLOOR, hitters_count_floor)
-  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50;
+  const HC_FLOOR = { "2-0": 0.72, "2-1": 0.50, "3-1": 0.72 }, HC_LEVELS = ["college_d1", "college_d2", "college_d3", "hs", "travel"], HC_FB_E = 0.002, HC_FLOOR_OS = 0.50, HC_FB_ALWAYS = ["hs", "travel"];
   // v1.1: "lean on it" wears off once he has leaned (mirror of engine.py HOT_FADE / hot_fade)
   const HOT_FADE = [1.2, 1.6];   // v1.2 Step 5 (L6): by ratio to the normal share (engine.py)
   function hotFade(p, s, arsenal) {
@@ -7916,8 +7923,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
   // v1.2.2: with band pitches, the blend over each with / without combination (engine.py root_call); none: one solve
   function rootCall(arsenal, s, tab, exclude, lookValue = true) {   // the root mix, then Drew's Nov 27 guards (engine.py root_call)
     const [pi0, sg, full, res, M] = rootCallCore(arsenal, s, tab, exclude, lookValue);
-    let pi = capHot(pi0, arsenal, s, tab, exclude, lookValue);
-    pi = hittersCountFloor(pi, full, arsenal, s);
+    let pi = hittersCountFloor(pi0, full, arsenal, s);
+    pi = capHot(pi, arsenal, s, tab, exclude, lookValue);   // Drew, Nov 28: the cap wins over every floor, so it runs last
     return [pi, sg, full, res, M];
   }
   function shareOf(pi, name) { let w = 0.0; for (const a in pi) if (skName(a) === name) w += pi[a]; return w; }
@@ -7927,7 +7934,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
     if (!hot.length) return pi;
     let pi0;
     HOT_OFF.on = true;
-    try { pi0 = rootCallCore(arsenal, s, tab, exclude, lookValue)[0]; } finally { HOT_OFF.on = false; }
+    try {
+      const r0 = rootCallCore(arsenal, s, tab, exclude, lookValue);
+      pi0 = hittersCountFloor(r0[0], r0[2], arsenal, s);   // floored to floored (Drew, Nov 28: the cap wins)
+    } finally { HOT_OFF.on = false; }
     let lam = 1.0;
     for (const n of hot) { const g = shareOf(pi, n) - shareOf(pi0, n); if (g > HOT_CAP) lam = Math.min(lam, HOT_CAP / g); }
     if (lam >= 1.0) return pi;
@@ -7944,14 +7954,18 @@ if (typeof module !== "undefined" && module.exports) module.exports = { pcLearnM
       if (bestC === null || full[a] < bestC) { bestN = skName(a); bestC = full[a]; }
       if (isFastball(byName(arsenal, skName(a)).kind) && (fbC === null || full[a] < fbC)) { fbN = skName(a); fbC = full[a]; }
     }
-    if (fbN !== null && fbC - bestC <= HC_FB_E * runScale(s.level)) bestN = fbN;   // a practical tie goes to the fastball (engine.py)
+    if (fbN !== null && (fbC - bestC <= HC_FB_E * runScale(s.level) || (HC_FB_ALWAYS.includes(s.level) && ((s.balls === 2 && s.strikes === 0) || (s.balls === 3 && s.strikes === 1)) && wildToday(byName(arsenal, fbN), s) <= 0.0)))
+      bestN = fbN;   // a practical tie goes to the fastball; at HS / travel 2-0 and 3-1 it always does (engine.py, Drew Nov 28)
     const fl = bestN === fbN ? f : HC_FLOOR_OS;   // an off-speed best pitch keeps the 50% rule (engine.py)
     let w = 0.0, t = 0.0;
     for (const a in pi) { t += pi[a]; if (skName(a) === bestN) w += pi[a]; }
     if (!(t > 0.0 && w > 0.0 && w < fl * t)) return pi;
     const kf = fl * t / w, ko = (1.0 - fl) * t / (t - w), out = {};
     for (const a in pi) out[a] = pi[a] * (skName(a) === bestN ? kf : ko);
-    return out;
+    const fb = fbNames(arsenal, s);   // audit fix (Nov 28): never under the HS / travel fastball floor, ruling-33 way (engine.py)
+    if (!fb || !fb.size) return out;
+    const fc = {}; for (const a in full) if (a in out) fc[a] = full[a];
+    return applyFbFloor(out, s, fb, fc, temperature(arsenal, s));
   }
   function rootCallCore(arsenal, s, tab, exclude, lookValue = true) {
     const band = bandPitches(arsenal, s, exclude);
@@ -9371,7 +9385,7 @@ function toast(msg) { const t = document.getElementById("toast"); t.textContent 
 const G = () => S.game;
 // every call gets its own id (the watch is sent the call on screen by id: the same pitch and spot twice in a row are two calls)
 const nextCallId = () => (G().callSeq = (G().callSeq || 0) + 1);
-const APP_VERSION = "1.5.0";   // logged with every pitch and shown under Game on the setup screen (1.5.0: engine 1.3.0 (V1.3), engine-down fallback, unknown-level guard; 1.4.0: builds 1-4 release: reports, opponents, outcome tracking and drift notes, watch security; 1.3.0: watch prototype, opt-in; 1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
+const APP_VERSION = "1.5.1";   // logged with every pitch and shown under Game on the setup screen (1.5.1: engine 1.3.1, relearn on engine data change; 1.5.0: engine 1.3.0 (V1.3), engine-down fallback, unknown-level guard; 1.4.0: builds 1-4 release: reports, opponents, outcome tracking and drift notes, watch security; 1.3.0: watch prototype, opt-in; 1.2.3: umpire prior, game-app fixes; 1.2.2: the confidence band; 1.2.1: the second shake-off rule; was "2026.11.05" through v1.1)
 const pitcherDef = () => S.setup.staff[G().pitcher] || S.setup.staff[0];
 const slotIdx = () => G().batter % S.setup.lineup.length;
 const batterDef = () => S.setup.lineup[slotIdx()];
@@ -10850,7 +10864,8 @@ async function boot() {
       if (await D.get("meta", "checkDups")) { await checkDuplicates().catch((e) => console.warn("duplicate check", e)); await D.del("meta", "checkDups"); }
       for (const p of DB.pitchers.values()) DB.counts.set(p.id, (await D.byIndex("events", "pitcherId", p.id)).filter((e) => !e.legacy && PCDB.isPitch(e)).length);
       await refreshOutings().catch((e) => console.warn("outings", e));
-      for (const p of S.setup.staff) if (!pModel(p.id) && DB.counts.get(p.id)) await relearnPitcher(p.id);
+      // Drew, Nov 28: a model learned against older engine data (an outcome-table change, e.g. V1.3) is relearned once
+      for (const p of S.setup.staff) if (DB.counts.get(p.id) && (!pModel(p.id) || staleModel(pModel(p.id)))) await relearnPitcher(p.id);
       await refreshLineupMemory();
       if (S.view === "roster") render();
     } finally { DB.warm = true; } }, 50);
@@ -11006,17 +11021,21 @@ function bullpenView() {
         h("p", { class: "note" }, `${nm}: ${x.flag.length ? x.flag.join("; ") : "no clear lean yet"} (side ${x.x.sides.join(" arm / ")} glove targets)`))) : null] : null));
 }
 
+// Drew, Nov 28 (V1.3 audit): learned values fit against one engine's outcome tables aren't carried into another. A model
+// records the engine data it was learned against; when that changes, the pitcher is relearned from his games once, and
+// what the calls get restarts from one step (prev = null) instead of keeping offsets learned against the old tables.
+const staleModel = (m) => !!m && m.data !== E.dataVersion();
 async function relearnPitcher(pid) {
   const p0 = DB.pitchers.get(pid); if (!p0 || !DB.D) return null;
   const p = JSON.parse(JSON.stringify(p0));   // the record as it was when learning started (D3 compares against it)
   const dups = await dupGameIds();
   const evs = (await DB.D.byIndex("events", "pitcherId", pid)).filter((e) => !e.legacy && !e.deletedAt && PCDB.isPitch(e) && !dups.has(e.gameId));
   DB.counts.set(pid, evs.length);
-  const was = pModel(pid);
+  const was0 = pModel(pid), was = staleModel(was0) ? null : was0;   // stale engine data: start the served values over
   let r;
   try { r = await learnCall({ type: "pitcher", pitcher: p, events: evs, level: levelOf(), prev: was ? was.served : null }); }
-  catch (e) { console.error(e); toast("Couldn't learn from his games just now; the calls keep using what they had"); return was || null; }
-  const m = { id: "v2:" + pid, pitcherId: pid, profile: r.profile, served: r.served, at: Date.now() };
+  catch (e) { console.error(e); toast("Couldn't learn from his games just now; the calls keep using what they had"); return was0 || null; }
+  const m = { id: "v2:" + pid, pitcherId: pid, profile: r.profile, served: r.served, at: Date.now(), data: E.dataVersion() };
   // v1.2 Step 3 / 4: each pitch's miss lean from his logged cells, games and charted bullpens (a flag until the gate admits it)
   try {
     const pens = (await DB.D.byIndex("sessions", "pitcherId", pid)).filter((x) => x.type === "charted" && !x.deletedAt);

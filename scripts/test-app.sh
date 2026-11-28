@@ -11,6 +11,7 @@ export PITCHIQ_KNOWN_RED="tests.py tests_v11 tests_v12 tests_v12b tests_v121 tes
 $run tests.py      python3 tests.py
 $run tests_hitter_data python3 tests_hitter_data.py   # v1.3 prework: college play-by-play parser on synthetic lines, the held-out (2026) guard
 $run tests_hs_data python3 tests_hs_data.py   # v1.3 Part 1: HS / travel (Perfect Game) parser, quality checks, snapshot and incremental ingest on invented rows
+$run tests_audit_v13 python3 tests_audit_v13.py   # audit Nov 27-28: HS floor, hitter's-count floor, hot cap on the final call, shake-off
 $run tests_zone_seed python3 tests_zone_seed.py   # v1.3 Part 2: zone seed math on synthetic pitches (not wired into the engine)
 $run tests_harness  python3 tests_harness.py       # v1.3 Part 4: scoring harness (held-out + in-sample guards, bootstrap, frozen landing)
 $run tests_refit_v13 python3 tests_refit_v13.py   # v1.3 Part 2.5: shared-refit loaders (new data layout, 2026 guard, recency weights) and refit math, synthetic
@@ -56,6 +57,7 @@ $run watch_app node watch/bangle/test.js   # watch prototype: the Bangle app aga
 node app/smoke.js
 echo "smoke: passed"
 (cd app && ../$run rules_e2e node rules_e2e.js)
+(cd app && ../$run relearn_data_e2e node relearn_data_e2e.js)   # Drew Nov 28: a model learned on older engine data is relearned once, served values restart
 (cd app && ../$run engine_down_e2e_1 node engine_down_e2e.js 1)   # audit Nov 27: callV08 throws mid-game: no stale call, own sign, pitches kept, engine back next pitch
 (cd app && ../$run engine_down_e2e_2 node engine_down_e2e.js 2)   # the same with solveTable and gradeCall throwing too
 (cd app && ../$run v10_step1_e2e node v10_step1_e2e.js)   # v1.0 Step 1: shake-off by pitch (D2), re-solve on bases/outs (#2)

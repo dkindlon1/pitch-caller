@@ -3085,10 +3085,10 @@ def solve_table(arsenal, s, sweeps=10, tol=0.001):
 
 def root_call(arsenal, s, tab, exclude=None, look_value=True):
     """the root mix (_root_call_core), then Drew's Nov 27 guards on it: the hot read's share cap (cap_hot) and the college
-    hitter's-count floor (hitters_count_floor). Neither changes any outcome probability or cost."""
+    hitter's-count floor (hitters_count_floor), the cap last. Neither changes any outcome probability or cost."""
     pi, sg, full, res, M = _root_call_core(arsenal, s, tab, exclude, look_value)
-    pi = cap_hot(pi, arsenal, s, tab, exclude, look_value)
     pi = hitters_count_floor(pi, full, arsenal, s)
+    pi = cap_hot(pi, arsenal, s, tab, exclude, look_value)   # Drew, Nov 28: the cap wins over every floor, so it runs last
     return pi, sg, full, res, M
 
 
@@ -3102,7 +3102,8 @@ def _share(pi, name):
 
 def cap_hot(pi, arsenal, s, tab, exclude=None, look_value=True):
     """Drew, Nov 27: a pitch landing hot may gain at most HOT_CAP of share over the same root solve without the hot read.
-    Above that, the mix is blended back toward the no-hot mix (pi0 + lam (pi - pi0)) until every hot pitch is at the cap."""
+    Above that, the mix is blended back toward the no-hot mix (pi0 + lam (pi - pi0)) until every hot pitch is at the cap.
+    Both mixes have the hitter's-count floor on, so the cap holds on the final call (Drew, Nov 28: the cap wins)."""
     if not s.landing_today:
         return pi
     hot = [x.name for x in arsenal if landing_hot(x, s) and hot_fade(x, s, arsenal) > 0.0]
@@ -3110,7 +3111,8 @@ def cap_hot(pi, arsenal, s, tab, exclude=None, look_value=True):
         return pi
     _HOT_OFF[0] = True
     try:
-        pi0 = _root_call_core(arsenal, s, tab, exclude, look_value)[0]
+        pi0, _, full0, _, _ = _root_call_core(arsenal, s, tab, exclude, look_value)
+        pi0 = hitters_count_floor(pi0, full0, arsenal, s)     # compared floored to floored (Drew, Nov 28: the cap wins)
     finally:
         _HOT_OFF[0] = False
     lam = 1.0
@@ -3133,6 +3135,9 @@ HC_FLOOR = {(2, 0): 0.72, (2, 1): 0.50, (3, 1): 0.72}
 HC_LEVELS = ("college_d1", "college_d2", "college_d3", "hs", "travel")
 HC_FLOOR_OS = 0.50  # the floor when the best pitch isn't the fastball: the 72% rows are "attack with the fastball", and 72% on
                     # a hot off-speed pitch broke Drew's whole-game mix gate (game_mix_e2e: 4 of 21 games over 70%, at most 3)
+HC_FB_ALWAYS = ("hs", "travel")   # Drew, Nov 28: at HS / travel 2-0 and 3-1 the 72% goes to the fastball whenever it's allowed
+# and not under his expectation today (wild_today <= 0); a fastball landing under it keeps the best-pitch rule (Nov 9:
+# 3-1 is the best pitch being controlled today), so the tests.py slider-landing row and A6 both hold
 HC_FB_E = 0.002     # x run scale: a fastball within this of the best pitch's cost takes the floor (the audit's model-noise size)
 
 
@@ -3147,8 +3152,10 @@ def hitters_count_floor(pi, full, arsenal, s):
                 best_n, best_c = a[0], c
             if is_fastball(_pitch_by(arsenal, a[0]).kind) and (fb_c is None or c < fb_c):
                 fb_n, fb_c = a[0], c
-    if fb_n is not None and fb_c - best_c <= HC_FB_E * run_scale(s.level):
-        best_n = fb_n       # a practical tie goes to the fastball (his hitter's-count rows favor it)
+    if fb_n is not None and (fb_c - best_c <= HC_FB_E * run_scale(s.level)
+                             or (s.level in HC_FB_ALWAYS and (s.balls, s.strikes) in ((2, 0), (3, 1))
+                                 and wild_today(_pitch_by(arsenal, fb_n), s) <= 0.0)):
+        best_n = fb_n       # a practical tie goes to the fastball; at HS / travel 2-0 and 3-1 it always does (Drew, Nov 28)
     if best_n != fb_n:
         f = HC_FLOOR_OS     # an off-speed best pitch (the fastball off today, or a hot pitch) keeps the 50% rule
     w = t = 0.0
@@ -3160,7 +3167,14 @@ def hitters_count_floor(pi, full, arsenal, s):
         return pi
     kf = f * t / w
     ko = (1.0 - f) * t / (t - w)
-    return {a: v * (kf if a[0] == best_n else ko) for a, v in pi.items()}
+    out = {a: v * (kf if a[0] == best_n else ko) for a, v in pi.items()}
+    # audit fix (Nov 28): scaling the other pitches down must never take the HS / travel fastball under its own floor
+    # table (ruling 8; found by the HS kind x velocity refit run, A6 fastball 72% -> 50%). Re-applied the ruling-33 way:
+    # the shortfall goes by the cost softmax over the fastball calls (not the proportional branch ruling 33 retired).
+    fb = fb_names(arsenal, s)
+    if not fb:
+        return out
+    return apply_fb_floor(out, s, fb, {a: c for a, c in full.items() if a in out}, temperature(arsenal, s))
 
 
 def _root_call_core(arsenal, s, tab, exclude=None, look_value=True):
