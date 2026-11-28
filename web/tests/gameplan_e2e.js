@@ -102,8 +102,12 @@ const status = () => JSON.parse(execFileSync("npx", [...CLI, "status", "-o", "js
     const sheet = coach.getByRole("form", { name: "Set up a game" });
     await sheet.getByLabel("Opponent").selectOption({ label: "Ithaca College" });
     const lvOpts = await sheet.locator("label.narrow select option").allInnerTexts();   // the Level select (its label wraps it)   // v1.3 Part 3 (plan 3.5)
-    check(lvOpts.includes("College D2") && lvOpts.indexOf("College D3") < lvOpts.indexOf("College D2") && lvOpts.indexOf("College D2") < lvOpts.indexOf("College D1"),
-      `the level picker offers College D2, between D3 and D1 (${lvOpts.join(", ")})`);
+    if (process.env.NEXT_PUBLIC_PITCHIQ_D2 === "1")   // Drew, Nov 27: D2 only once the release switch is on (web/lib/levels.ts)
+      check(lvOpts.includes("College D2") && lvOpts.indexOf("College D3") < lvOpts.indexOf("College D2") && lvOpts.indexOf("College D2") < lvOpts.indexOf("College D1"),
+        `the level picker offers College D2, between D3 and D1 (${lvOpts.join(", ")})`);
+    else
+      check(!lvOpts.includes("College D2") && lvOpts.includes("College D3") && lvOpts.includes("College D1"),
+        `with the D2 switch off (the default until the iPads run V1.3), the level picker has no College D2 (${lvOpts.join(", ")})`);
     await sheet.getByLabel("First pitch (optional)").fill("13:05");
     await sheet.getByRole("button", { name: "Home", exact: true }).click();
     await sheet.getByRole("button", { name: /Next: Our staff/ }).click();
