@@ -7,7 +7,60 @@ and graded it. The lead checked the engineering claims directly. Fixes are on br
 main, production or Supabase. Each agent's full report, with its commands and outputs, is in `docs/audit_v13/`; this is the consolidated
 version.
 
-## Verdict
+## Update: Drew's rulings applied (Nov 27, evening)
+
+The verdict below was the call **at c602f1c**. After it, Drew ruled on the open questions. This section covers what was
+built on `audit/v13-final-audit` and how it tested. Every change is call policy or release plumbing, so no outcome
+probability, table or cost model changed and the one-shot Step 6 result still describes this engine's outcome model.
+
+**Rulings and what was built**
+
+| Ruling (Drew) | What changed | Result |
+|---|---|---|
+| Graded rows are hard: fix the engine | Six coaching reads and two setups resized the v1.0 way (smallest round size passing its row with room): late_fb .032, crowd .04, squared_up .01, went_back .045, plus_opp .025, hot .04; S6 .012, S7 .012 | Read-through **96/98** (v1.2.3: 94/98; c602f1c: 85/98). All 10 rows Drew graded that had failed now pass except D6 |
+| 3-1 / hitter's counts: restore the rule; rows win (72%) | `hitters_count_floor` after the root solve. The engine's best pitch gets ≥72% at 2-0 and 3-1 when it's the fastball, 50% when it's another pitch, 50% at 2-1. College and HS/travel. A fastball within 0.002 runs of the best pitch counts as best | A2, E2, A6 pass. tests.py 3-1 grid, hitter's-count floor and slider-landing rows pass. The 50% off-speed floor and the 0.002 fastball tie are **my choices**: they keep Drew's game-mix gate and the same-side changeup check passing. Drew should confirm both |
+| Landing hot: scale by count and cap the gain | `HOT_COUNT_W` (0.5 early, 0.6 in hitter's counts, 1.25 with two strikes) plus `cap_hot`: the hot pitch may gain at most **22 points** over the same solve without the read | D1 slider 8/10: 94–100% in most counts → 57–78%. **22 is where two of Drew's gates meet exactly:** the hot read moves +20 points on its tests.py row (bar 20) and game_mix_e2e has 3 of 21 games over 70% (bar 3). Neither has room |
+| Shake-off: not on the very next sign | The pitch shaken on the last sign is never the next call while any other pitch is left. It can still come back later in the at-bat | Python = JS. v121_shake_e2e case 1 rewritten to the new rule, passes |
+| D2: ship labelled, iPads first | App description "Its own count and run tables; D3 settings where D2 data is thin". `web/lib/levels.ts`: the website offers D2 only when `NEXT_PUBLIC_PITCHIQ_D2=1`, off by default | gameplan unit test and gameplan_e2e cover both states |
+| D6: small steal-threat cost | **Not shipped.** Acceptable share by size was 65.5 (none), 70.3 (.002), 70.7 (.0025), then 67–68 (.003–.01): the penalty pushes both off-speed pitches to the middle. It passes only on a knife edge | Back to Drew: regrade D6, or rule on a different mechanism |
+| S6f / S7f held hard | S6 and S7 resized (above) | Both pass |
+| CI patch + re-pin what's provably stale | History suites warn instead of stopping. logging/drift exact tests rebuilt against "base app code + current engine" (`app/base_dist.js`) | Both pass (775 and 964 pitches field for field) and came off the known-red list |
+| Site film shows 4 candidates | site_e2e film and reduced-motion pins set to 4 | Pass |
+| HS kind × velocity + hanger, validated through 2025 | Needs the archives: `docs/PROMPT_hitter_v13_hs_hanger_cv_2026-11-27.md` for the desktop | Pending. Note: every hanger row Drew graded now passes at any H (the floor and reads fixed them). Only the proposed HG-1a/HG-2 rows fail, so H must come from data |
+
+**Also done.**
+- Version line "PitchIQ 1.5.0 · engine 1.3.0", with 4 e2e pins updated.
+- CI dependencies the suite never reached before: pandas, pyarrow.
+- The site's demo data: V1.3's per-level tables trimmed to D3 (985 → 778 KB).
+  - Main's site_e2e hybrid opening already took 13.5 s of its 15 s budget in CI. V1.3 took 14.4 s after the trim and timed
+    out before it.
+  - That timeout is fragile on main too.
+
+**Checks on the final engine (all run, output captured).**
+- Read-through v12: 96/98.
+- tests.py: 42/45. Left: D3/HS sim realism (the HS table work targets this) and the old LAND_GAIN pin.
+- golden_v13core re-made: JS PASS. fast.py 40: 0 mismatches.
+- Local keep-going run of every suite in test-app.sh:
+  - Every Python suite passes except the 14 known-red.
+  - Every app unit and e2e suite passes except known-red `d2_e2e` and `stage2_test` (D2 = D3 pins).
+  - That includes rules, both engine-down modes, shake, game mix, fold, watch, sync, opponent, logging/drift exact, peak
+    and drift.
+- Web: typecheck clean, 110/110 unit tests, build OK, site_e2e passes.
+- GitHub CI on 863872e: SQL and public site green. Engine and web-shell results are listed under "CI" at the end of this
+  section once they land.
+
+**Still open before a YES**
+1. The desktop HS table / hanger run, then a re-check of read-through, tests.py realism and game mix.
+2. D6 ruling.
+3. Confirm my two floor choices (50% off-speed floor, 0.002 fastball tie) and the hot cap sitting exactly on both bars.
+4. Release steps:
+   - Update and check every iPad's version line before turning on `NEXT_PUBLIC_PITCHIQ_D2`.
+   - Turn on branch protection for main.
+   - Merge with `--no-ff`, then tag.
+5. Not done, lower priority: the why line still can't name V1.3 drivers; the unknown-hitter lineup-slot prior; the stale
+   win tables (saber S1); the 14 known-red suites.
+
+## Verdict (at c602f1c, before the rulings above)
 
 **NO. V1.3 is not ready for deployment.**
 
