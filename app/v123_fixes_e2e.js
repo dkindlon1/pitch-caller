@@ -6,7 +6,7 @@
  *   - the third out clears the bases (no stranded runners or steal buttons on the three-outs screen);
  *   - a coach's own call on a pitch shaken off this at-bat isn't graded "In the engine's mix", and the runs wording says
  *     "worse than";
- *   - the setup screen reads "PitchIQ 1.2.3 · engine 1.2.3".
+ *   - the setup screen reads the current version line ("PitchIQ 1.5.0 · engine 1.3.0" since V1.3).
  * Run from app/ after a build: node v123_fixes_e2e.js
  */
 const { chromium } = require("playwright");
@@ -75,7 +75,7 @@ const server = http.createServer((req, res) => {
   // 6. version line
   await page.getByRole("button", { name: "Setup" }).first().click(); await page.waitForTimeout(200);
   const ver = await page.evaluate(() => (document.body.innerText.match(/PitchIQ [\d.]+ · engine [\d.]+/) || [""])[0]);
-  check(ver === "PitchIQ 1.4.0 · engine 1.2.3", `setup screen version line: ${JSON.stringify(ver)}`);
+  check(ver === "PitchIQ 1.5.0 · engine 1.3.0", `setup screen version line: ${JSON.stringify(ver)}`);
 
   check(!errs.length, `no page errors${errs.length ? ": " + errs.join(" | ") : ""}`);
   await browser.close(); server.close();

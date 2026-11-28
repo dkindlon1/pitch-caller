@@ -156,7 +156,7 @@
 
   // One engine, v0.9 (Drew, Nov 6): no flags. Same logic as engine.py; golden/golden_v09.js checks both against one reference.
 
-  const VERSION = "1.2.3";    // engine logic version (v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
+  const VERSION = "1.3.0";    // engine logic version (v1.3.0, Nov 27: the V1.3 hitter model, count / zone / run tables and per-level models, plus Drew's Nov 27 call-policy rulings; v1.2.3, Nov 14: umpire prior 200 takes; v1.2.2, Nov 14: confidence band under the cutoff; v1.2.1, Nov 14: second shake-off is a hard switch; v1.2, Nov 14; was "1.0" through v1.1; the saved setup label stays "v09"); the tables carry their own fingerprint (data.version)
   function init(data) {
     D = data;
     // v0.7c travel ball (Drew): uses the high school numbers until there's travel-ball data of its own

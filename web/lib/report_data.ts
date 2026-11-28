@@ -308,7 +308,7 @@ export const LEVEL_AVG: Record<string, { AVG: number; K: number; BB: number; lab
   hs: { AVG: 0.286, K: 0.210, BB: 0.141, label: "high school" },
   travel: { AVG: 0.286, K: 0.210, BB: 0.141, label: "travel ball (high school numbers)" },
   college_d3: { AVG: 0.295, K: 0.162, BB: 0.114, label: "D3" },
-  college_d2: { AVG: 0.295, K: 0.162, BB: 0.114, label: "D2 (D3 numbers)" },   // PLACEHOLDER_D2: D3's averages until there is D2 data (v1.3)
+  college_d2: { AVG: 0.295, K: 0.162, BB: 0.114, label: "D2 (D3 averages)" },   // PLACEHOLDER_D2: D3's averages until there is D2 data (v1.3)
   college_d1: { AVG: 0.265, K: 0.193, BB: 0.108, label: "D1" },
   mlb: { AVG: 0.246, K: 0.224, BB: 0.084, label: "pro" },
 };

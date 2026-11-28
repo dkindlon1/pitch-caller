@@ -7,6 +7,7 @@ import { hasAccepted } from "@/lib/legal";
 import { AgreeForm } from "../agree-form";
 import { Shell } from "../../shell";
 import { createOrganization } from "../billing/actions";
+import { D2_ENABLED } from "@/lib/levels";
 
 export const metadata: Metadata = { title: "Start your organization · PitchIQ", robots: { index: false } };
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -37,7 +38,7 @@ async function Body({ searchParams }: { searchParams: Search }) {
         <label>Organization name<input name="name" required maxLength={120} placeholder="Lakeside High Baseball" /></label>
         <label>Level<select name="level" defaultValue="hs">
           <option value="hs">High school</option><option value="travel">Travel ball</option>
-          <option value="college_d3">College D3</option><option value="college_d2">College D2</option><option value="college_d1">College D1</option><option value="mlb">Pro</option>
+          <option value="college_d3">College D3</option>{D2_ENABLED ? <option value="college_d2">College D2</option> : null}<option value="college_d1">College D1</option><option value="mlb">Pro</option>
         </select></label>
         <label>Teams, one per line (blank: one team with the organization&apos;s name)<textarea name="teams" rows={3} placeholder={"Varsity\nJV"} /></label>
         <label>You, on the first team<select name="role" defaultValue="head">

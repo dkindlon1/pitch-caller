@@ -61,3 +61,12 @@ test("a game opens on one device only", () => {
   assert.equal(openable({ status: "final", deviceId: "dev_a" }, "dev_a"), "over");
   assert.equal(openable(null, "dev_a"), "missing");
 });
+
+test("D2 plans wait for the release switch (lib/levels.ts): an iPad on the v1.4 game app goes blank on a D2 plan", () => {
+  // the unit tests run without NEXT_PUBLIC_PITCHIQ_D2, i.e. with the switch off (audit Nov 27)
+  assert.equal(process.env.NEXT_PUBLIC_PITCHIQ_D2, undefined);
+  const { doc, errors } = buildPlan({ ...base, level: "college_d2" }, known);
+  assert.equal(doc, null);
+  assert.deepEqual(errors.map((e) => e.msg), ["Pick the level."]);
+  assert.equal(buildPlan({ ...base, level: "college_d1" }, known).errors.length, 0, "the other college levels still plan");
+});

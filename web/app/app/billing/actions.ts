@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getServerSupabase, getUser } from "@/lib/supabase/server";
 import { billingConfigured, billingIds, checkoutUrl, portalUrl, setQuantity } from "@/lib/billing";
+import { levelOffered } from "@/lib/levels";
 
 // The owner's billing actions. Each checks ownership as the signed-in user (pc_billing_info raises for anyone else),
 // asks Stripe, and goes back to the page with a code for a fixed message. Stripe's answer reaches the database only
@@ -35,7 +36,7 @@ async function owned(f: FormData): Promise<{ org: string; info: Info }> {
 export async function createOrganization(f: FormData) {
   if (!(await getUser())) redirect("/login?next=/app/new");
   if (!(await hasAccepted(await getServerSupabase()))) redirect("/app/new?error=agree");
-  const name = str(f, "name").slice(0, 120), level = LEVELS.has(str(f, "level")) ? str(f, "level") : null;
+  const name = str(f, "name").slice(0, 120), level = LEVELS.has(str(f, "level")) && levelOffered(str(f, "level")) ? str(f, "level") : null;   // D2 only once the switch is on (lib/levels.ts)
   const role = PRESETS.has(str(f, "role")) ? str(f, "role") : null;
   if (!name) redirect("/app/new?error=name");
   const teams = [...new Set(str(f, "teams").split(/\r?\n/).map((x) => x.trim().slice(0, 120)).filter(Boolean))];

@@ -3,6 +3,8 @@
 // starter and radar choice. The game app on any device opens it with ?game=<id> and starts the game on this record.
 // Pure: no database, so the checks run in unit tests (gameplan.test.ts).
 
+import { levelOffered } from "./levels.ts";
+
 export const LEVELS: Record<string, string> = { hs: "High school", travel: "Travel ball", college_d3: "College D3", college_d2: "College D2", college_d1: "College D1" };
 export const TIERS: [number, string, string][] = [
   [1, "Results only", "Ball, strike, foul, in play, hit or out. The minimum a charter can keep up with."],
@@ -37,7 +39,7 @@ export function buildPlan(inp: PlanInput, known: Known, prev?: GameDoc | null): 
   const date = String(inp.date || "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(Date.parse(date + "T12:00:00Z"))) err(1, "Pick the game’s date.");
   const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(inp.time || "")) ? String(inp.time) : null;
-  if (!(inp.level in LEVELS)) err(1, "Pick the level.");
+  if (!(inp.level in LEVELS) || !levelOffered(inp.level)) err(1, "Pick the level.");   // D2 only once the switch is on (lib/levels.ts)
   const innings = inp.innings == null || (inp.innings as unknown) === "" ? null : Math.round(Number(inp.innings));
   if (innings !== null && !(innings >= 5 && innings <= 12)) err(1, "Scheduled innings are between 5 and 12.");
   const home = inp.home === true ? true : inp.home === false ? false : null;

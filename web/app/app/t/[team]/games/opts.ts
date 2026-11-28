@@ -1,6 +1,7 @@
 import "server-only";
 import { availability, catchersOf, dayName, hittersOf, ourTeamOf, pitchersOf, teamRule, teamToday, teamsOf, type TeamRow } from "@/lib/team";
 import { LEVELS, TIERS, defaultInnings, type GameDoc, type PlanInput } from "@/lib/gameplan";
+import { levelOffered } from "@/lib/levels";
 import { abilities } from "@/lib/nav";
 import type { Opts, HitterOpt } from "./GamePlanForm";
 
@@ -15,7 +16,7 @@ export async function planOptions(t: TeamRow, game: string | null): Promise<Opts
   for (const h of hitters) if (!h.deletedAt) (byTeam[h.teamId] = byTeam[h.teamId] || []).push({ id: h.id, name: h.name, number: h.number || "", bats: h.bats || "R" });
   const a = abilities(t);
   return {
-    team, game, today: teamToday(t.timezone), levels: Object.entries(LEVELS), tiers: TIERS,
+    team, game, today: teamToday(t.timezone), levels: Object.entries(LEVELS).filter(([k]) => levelOffered(k)), tiers: TIERS,
     pitchers: live.map((p) => { const e = avail.find((x) => x.pitcher.id === p.id)?.eligible;
       return { id: p.id, name: p.name, number: p.number || "", hand: p.hand, kinds: [...new Set((p.pitches || []).filter((d) => d.active !== false).map((d) => d.kind as string))],
         eligible: e && !e.today ? dayName(e.date) : null, restNote: e && !e.today ? e.why || null : null }; }),
@@ -27,7 +28,7 @@ export async function planOptions(t: TeamRow, game: string | null): Promise<Opts
 }
 
 export function blankPlan(t: TeamRow, today: string): PlanInput {
-  return { date: today, time: "", home: null, innings: null, extrasRunner: false, level: t.level && t.level in LEVELS ? t.level : "hs", opponentId: null, newOpponent: "",
+  return { date: today, time: "", home: null, innings: null, extrasRunner: false, level: t.level && t.level in LEVELS && levelOffered(t.level) ? t.level : "hs", opponentId: null, newOpponent: "",
     staffIds: [], starterId: null, catcherId: null, lineup: Array.from({ length: 9 }, () => ({ hitterId: null, name: "", hand: "R" as const })),
     inputs: 2, logLoc: true, radar: false, umpSeed: "normal" };   // location logging on by default (Drew, Nov 13; matches the game app)
 }
